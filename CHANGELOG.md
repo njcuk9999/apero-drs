@@ -5772,3 +5772,60 @@
 	- cal_WAVE_E2DS_EA_spirou.py - few logic checks and pep8 changes (rev.cc8c4969)
 	- extract_trigger.py - update run time parameters (rev.e7a3d9af)
 	- extract_trigger.py - fix incompatible version of cal_shape in reprocessing code (rev.b796998b)
+
+
+
+================================================================================
+* Sun Dec 16 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.010
+
+================================================================================
+	- wave_sol_to_header.py - code to update header of all e2ds/e2dsff (object and fpfps) in a night_name or all files (rev.37605873)
+
+
+
+================================================================================
+* Mon Dec 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.011
+
+================================================================================
+	- obj_mk_obj_template.py - fix bug when forcing calibDB from wave solution (calibDB needs to be re-read each time) (rev.4687dfe6)
+	- obj_mk_obj_template.py - fix bug when forcing calibDB from wave solution (calibDB needs to be re-read each time) (rev.5f70210b)
+	- obj_mk_obj_template.py - fix bug when forcing calibDB from wave solution (calibDB needs to be re-read each time) (rev.a5310966)
+	- spirouLog.py - update log to allow option to be added (by default uses "RECIPE" or "LOG_OPT" or '') (rev.9b01e846)
+
+
+
+================================================================================
+* Tue Dec 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.012
+
+================================================================================
+	- spirouStartup.py - update display (rev.ee002954)
+	- spirouConst.py - update colours and themes and Color Class (rev.123fb988)
+	- spirouLog.py - add debug and custom colour modes to log messages (rev.770686a3)
+	- spirouLog.py - add debug and custom colour modes to log messages (rev.86d4f714)
+	- spirouConst.py - update log constants (rev.be0181d9)
+	- obj_mk_obj_template.py - adjust log message to be more clear (rev.b165e004)
+	- test codes for testing bug in BigCube/telluDB (rev.e4ee7a8f)
+	- spirouFile.sort_by_name - return sort indices not array (so we can sort multiple arrays) (rev.8f5a675b)
+	- obj_mk_obj_template.py - fix bug in sorting files (wrong OBJNAME for filename) (rev.06bb3cd1)
+
+
+
+================================================================================
+* Wed Dec 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.013
+
+================================================================================
+	- spirouLog.py - fix for printlogandcmd now having argument "colour" (rev.9173cf21)
+	- spirouLog.py - update of ipdb to allow magic commands (rev.e9f7928d)
+
+
+
+================================================================================
+* Mon Jan 07 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.014
+
+================================================================================
+	- spirouDB.py - changed from reading human date to reading julian date, changed to use astropy.timea (rev.770e16e9)
+	- spirouCDB.py - reformatted calibDB functions to use spirouDB wherever possible, changed from reading human date to reading julian date, changed to use astropy.time (rev.768bf28d)
+	- spirouDB.__init__.py - moved location of get_acqtime (moved to spirouDB) (rev.9b0a19da)
+	- spirouKeywords.py - removed KW_ACQTIME_KEY and KW_ACQTIME_KEY_JUL in place of KW_ACQTIME (which is the modified julian date) - with supporting format in case of change (uses astropy.time) (rev.b7e0890f)
+	- spirouConst.py - removed the use of ACQTIME_KEY_JUL now uses KW_ACQTIME (which is the modified julian date by definition) (rev.0c4488f9)
+	- cal_HC_E2DS_EA_spirou.py - changed acqtime to ACQTIME (for consistency) (rev.6c6f3a42)
