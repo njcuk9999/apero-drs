@@ -14,6 +14,7 @@ from __future__ import division
 import numpy as np
 import filecmp
 from astropy.io import fits
+from astropy.time import Time
 import os
 import shutil
 import time
@@ -49,7 +50,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # User functions
 # =============================================================================
-def update_datebase(p, keys, filenames, hdrs, timekey=None):
+def update_datebase(p, keys, filenames, hdrs):
     """
     Updates (or creates) the calibDB with an entry or entries in the form:
 
@@ -83,19 +84,6 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     :return None:
     """
     funcname = __NAME__ + '.update_database()'
-    # deal with time key
-    if timekey is None:
-        kwacqkey = 'kw_ACQTIME_KEY'
-    else:
-        kwacqkey = timekey
-    # key acqtime_key from parameter dictionary
-    if kwacqkey not in p:
-        emsg = ('Key {0} not defined in ParamDict (or SpirouKeywords.py)'
-                ' - function = {1}')
-        WLOG(p, 'error', emsg.format(kwacqkey, funcname))
-        acqtime_key = None
-    else:
-        acqtime_key = p[kwacqkey][0]
 
     # deal with single entry
     if type(keys) != list:
@@ -108,129 +96,20 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
                 ' - function = {0}')
         WLOG(p, 'error', emsg.format(funcname))
 
-    # get and check the lock file (Any errors must close and remove lock file
-    #     after this point)
-    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # construct lines for each key in keys
     lines = []
     for k_it in range(len(keys)):
         # get iteration
         key, filename, hdr = keys[k_it], filenames[k_it], hdrs[k_it]
-
-        # get ACQT time from header or
-        t, t_fmt = None, None
-        if acqtime_key in hdr:
-            # get the header time
-            header_time = hdr[acqtime_key]
-            # get the header format for dates
-            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
-            # get the calib DB format for dates
-            calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
-            # get the unix time from header time (header time assumes GMT/UTC)
-            t = spirouMath.stringtime2unixtime(header_time, header_fmt)
-            # get the formatted string time for calib DB (GMT/UTC)
-            t_fmt = spirouMath.unixtime2stringtime(t, calibdb_fmt)
-        else:
-            emsg = 'File {0} has no HEADER keyword {1} - function = {2}'
-            eargs = [hdr['@@@hname'], acqtime_key, funcname]
-            spirouDB.close_lock_file(p, lock, lock_file)
-            WLOG(p, 'error', emsg.format(*eargs))
-
+        # get h_time and u_time
+        h_time, u_time = spirouDB.get_times_from_header(p, hdr)
         # construct database line entry
-        lineargs = [key, p['ARG_NIGHT_NAME'], filename, t_fmt, t]
+        lineargs = [key, p['ARG_NIGHT_NAME'], filename, h_time, u_time]
         line = '\n{0} {1} {2} {3} {4}'.format(*lineargs)
         # add line to lines list
         lines.append(line)
-    # write lines to master
-    write_files_to_master(p, lines, keys, lock, lock_file)
-    # finally close the lock file and remove it for next access
-    spirouDB.close_lock_file(p, lock, lock_file)
 
-
-def get_acquisition_time(p, header=None, kind='human', filename=None):
-    """
-    Get the acquision time from the header file, if there is not header file
-    use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
-                log_opt: string, log option, normally the program name
-                kw_ACQTIME_KEY: list, the keyword store for acquisition time
-                                (string timestamp)
-                            [name, value, comment] = [string, object, string]
-    :param header: dictionary or None, the header dictionary created by
-                   spirouFITS.ReadImage, if header is None code tries to get
-                   header from p['ARG_FILE_NAMES'][0]
-    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss'
-    :param filename: string or None, location of the file if header is None
-
-    :return acqtime: string, the human or unix time from header file
-    """
-    func_name = __NAME__ + '.get_acquisition_time()'
-
-    acqtime = None
-
-    # deal with kinds
-    if kind == 'human':
-        kwakey = 'kw_ACQTIME_KEY'
-        dtype = str
-    elif kind == 'julian':
-        kwakey = 'kw_ACQTIME_KEY_JUL'
-        dtype = float
-    else:
-        emsg1 = 'Acquisition "kind" not supported'
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2])
-        kwakey = None
-        dtype = None
-
-    # key acqtime_key from parameter dictionary
-    if kwakey not in p and kind == 'human':
-        emsg = ('Error "{0}" not defined in keyword config files'
-                ' - function = {1}')
-        WLOG(p, 'error', emsg.format(kwakey, func_name))
-        acqtime_key = None
-    else:
-        acqtime_key = p[kwakey][0]
-
-    # if we don't have header get it (using 'fitsfilename')
-    if header is None:
-        # deal with no filename
-        if filename is None:
-            if os.path.exists(p['ARG_FILE_NAMES'][0]):
-                rfile = p['ARG_FILE_NAMES'][0]
-            else:
-                rfile = os.path.join(p['ARG_FILE_DIR'], p['ARG_FILE_NAMES'][0])
-
-            if not os.path.exists(rfile):
-                emsg1 = '"header" and "filename" not defined in {0}'
-                emsg2 = '   AND "arg_file_names" not defined in ParamDict'
-                eargs = func_name
-                WLOG(p, 'error', [emsg1.format(eargs), emsg2])
-        # else we have a filename defined
-        else:
-            rfile = filename
-            # if rawfile does not exist make error
-            if not os.path.exists(rfile):
-                emsg = ('"header" not defined in {0} and "filename" '
-                        'path not found.')
-                WLOG(p, 'error', emsg.format(func_name))
-        # get file
-        header = fits.getheader(rfile, ext=0)
-
-    # get max_time from file
-    if acqtime_key not in header:
-        eargs = [acqtime_key, p['ARG_FILE_NAMES'][0], func_name]
-        WLOG(p, 'error', ('Key {0} not in HEADER file of {1}'
-                                     ' for function {2}'.format(*eargs)))
-    # else get acqtime from header key
-    else:
-        acqtime = dtype(header[acqtime_key])
-
-    return acqtime
+    spirouDB.update_datebase(p, keys, lines, dbkind='Calibration')
 
 
 def get_database(p, max_time=None, update=False, header=None):
@@ -262,89 +141,98 @@ def get_database(p, max_time=None, update=False, header=None):
     # if we already have calib database don't load it
     if 'calibDB' in p and not update:
         return p['CALIBDB'], p
-
+    # get the max time (from input header file)
     if max_time is None:
-        max_time = get_acquisition_time(p, header=header)
+        # get h_time and u_time
+        h_time, u_time = spirouDB.get_times_from_header(p, header)
+        # htime here should have a space instead of "_"
+        h_time = h_time.replace('_', ' ')
+        # set max human/unix time
+        max_time_human = h_time
+        max_time_unix = u_time
+    else:
+        a_fmt = spirouConfig.Constants.ASTROPY_DATE_FMT_CALIBDB()
+        a_time = Time(max_time, format=a_fmt)
+        max_time_human = a_time.iso
+        max_time_unix = a_time.unix
     # add max_time to p
-    p['MAX_TIME_HUMAN'] = max_time
+    p['MAX_TIME_HUMAN'] = max_time_human
     p.set_source('MAX_TIME_HUMAN', func_name)
-    # check that max_time is a valid unix time (i.e. a float)
-    try:
-        # get the header format for dates
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
-        # get the unix time from header time (assume max_time is in GMT/UTC)
-        max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
-    except ValueError:
-        emsg = 'max_time {0} is not a valid float - function {1}'
-        WLOG(p, 'error', emsg.format(max_time, func_name))
     # add max_time to p
-    p['MAX_TIME_UNIX'] = max_time
+    p['MAX_TIME_UNIX'] = max_time_unix
     p.set_source('MAX_TIME_UNIX', func_name)
-    # get and check the lock file
-    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
-    # try to open the master file
-    lines = read_master_file(p, lock, lock_file)
-    # store all lines that have unix time <= max_time
+    # get the calibration database (all lines)
+    c_database_all = spirouDB.get_database(p, dbkind='Calibration')
+    # extract parameters from database values
     keys, dirnames, filenames, utimes = [], [], [], []
-    for l_it, line in enumerate(lines):
-        # ignore blank lines or lines starting with '#'
-        if len(line) == 0:
-            continue
-        if line == '\n':
-            continue
-        if line.strip()[0] == '#':
-            continue
-        # get elements from database
-        try:
-            key, dirname, filename, t_fmt, t = line.split()
-            t = float(t)
-        # will crash if we don't have 5 variables --> thus log and exit
-        except ValueError:
-            # Must close and remove lock file before exiting
-            spirouDB.close_lock_file(p, lock, lock_file)
-            emsg1 = 'Incorrectly formatted line in calibDB - function = {0}'
-            lineedit = line.replace('\n', '')
-            emsg2 = '   Line {0}: "{1}"'.format(l_it + 1, lineedit)
-            WLOG(p, 'error', [emsg1.format(func_name), emsg2])
-            key, dirname, filename, t_fmt, t = None, None, None, None, None
+    # use only
+    for db_key in c_database_all:
+        for value in c_database_all[db_key]:
+            if len(value) != 5:
+                emsgs = ['Incorrectly read line in DB']
+                emsgs.append('Line reads: "{0}"'.format(value))
+                WLOG(p, 'error', emsgs)
+            # get this iterations value from value
+            _, dirname, filename, htime, utime = value
+            key = db_key
+            # need to remove _ and replace with spaces
+            htime = htime.replace('_', ' ')
 
-        # Make sure unix time and t_fmt agree
-        calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
-        # get unix time (assume t_fmt is in GMT/UTC)
-        t_fmt_unix = spirouMath.stringtime2unixtime(t_fmt, calibdb_fmt)
-        # get human time in UTC/GMT
-        t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
-        if t_fmt_unix != t:
-            spirouDB.close_lock_file(p, lock, lock_file)
-            emsg1 = 'Times do not match in calibDB'
-            emsg2 = '\tHuman time = {0}'.format(t_fmt)
-            emsg3 = '\tUnix time = {0}'.format(t_human)
-            emsg4 = ' - function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
-        # t must be a float here --> exception
-        try:
-            t = float(t)
-        except ValueError:
-            # Must close and remove lock file before exiting
-            spirouDB.close_lock_file(p, lock, lock_file)
-            emsg1 = 'unix time="{0}" is not a valid float'.format(t)
-            emsg2 = '    for key {0}="{1}"'.format(key, line)
-            emsg3 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2, emsg3])
-        # append all database elements to lists
-        utimes.append(t)
-        keys.append(key)
-        dirnames.append(dirname)
-        filenames.append(filename)
+            # convert to astropy time
+            try:
+                a_fmt = spirouConfig.Constants.ASTROPY_DATE_FMT_CALIBDB()
+                a_htime = Time(htime, format=a_fmt)
+            except:
+                # try previous date version (for old drs times)
+                # TODO: Remove fix for old calibDB times once all calibDB/
+                # TODO:    telluDB time formats updated
+                # TODO:   OLD FORMAT: YYYY-MM-DD-HH:MM:SS.SSS
+                # TODO:   NEW FORMAT: YYYY-MM-DD_HH:MM:SS.SSS
+                # TODO: ------------------------------- START -----------------
+                try:
+                    from datetime import datetime
+                    old_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
+                    t_time = datetime.strptime(htime, old_fmt)
+                    a_htime = Time(t_time, format='datetime')
+                except:
+                    emsgs = ['Problem with human time input (htime={0})'
+                             ''.format(htime)]
+                    emsgs.append('\tLine: "{0}"'.format(' '.join(value)))
+                    WLOG(p, 'error', emsgs)
+                    a_htime = None
+                # TODO: ------------------------------- END -------------------
+
+            try:
+                a_utime = Time(float(utime), format='unix')
+            except:
+                emsgs = ['Problem with unix time input (utime={0})'
+                         ''.format(utime)]
+                emsgs.append('\tLine: "{0}"'.format(' '.join(value)))
+                WLOG(p, 'error', emsgs)
+                a_utime = None
+
+            # check that htime and utime agree (iso string comparison)
+            if a_htime.iso != a_utime.iso:
+                emsg1 = 'Times do not match in calibDB'
+                eargs2 = [a_htime.iso, a_htime.unix]
+                emsg2 = '\tHuman time = {0} (u={1})'.format(*eargs2)
+                eargs3 = [a_utime.iso, a_utime.unix]
+                emsg3 = '\tUnix time = {0} (u={1})'.format(*eargs3)
+                emsg4 = ' - function = {0}'.format(func_name)
+                WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
+            # append all database elements to lists
+            utimes.append(float(utime))
+            keys.append(key)
+            dirnames.append(dirname)
+            filenames.append(filename)
     # convert to numpy arrays
-    utimes = np.array(utimes)
+    utimes = np.array(utimes, dtype=float)
     keys = np.array(keys)
     dirnames = np.array(dirnames)
     filenames = np.array(filenames)
     # Need to check if lists are empty after loop
     # Must close and remove lock file before exiting
     if len(keys) == 0:
-        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         calibdb_file = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg1 = 'There are no entries in calibDB'
@@ -360,13 +248,10 @@ def get_database(p, max_time=None, update=False, header=None):
     try:
         c_database = choose_keys(p, utimes, keys, dirnames, filenames)
     except ConfigError as e:
-        spirouDB.close_lock_file(p, lock, lock_file)
         # log error in standard way
         WLOG(e.level, p['LOG_OPT'], e.msg)
         c_database = None
 
-    # Must close and remove lock file before continuing
-    spirouDB.close_lock_file(p, lock, lock_file)
     # return calibDB dictionary
     return c_database, p
 
@@ -451,7 +336,8 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
         # find where in original array utimes = closest_time
         pos = np.where((utimes == closest_time) & cmask)[0][-1]
         # add to c_database
-        humantime = spirouMath.unixtime2stringtime(utimes[pos])
+        a_time = Time(float(utimes[pos]), format='unix')
+        humantime = a_time.iso
         c_database[ukey] = [dirnames[pos], filenames[pos], humantime,
                             utimes[pos]]
         # set the source of each entry
@@ -514,9 +400,11 @@ def copy_files(p, header=None):
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
-        acqtime = get_acquisition_time(p, header)
+        htime, utime = spirouDB.get_times_from_header(p, header)
+        # htime here should have a space instead of "_"
+        htime = htime.replace('_', ' ')
         # get calibDB
-        c_database, p = get_database(p, acqtime)
+        c_database, p = get_database(p, htime)
     else:
         c_database = p['CALIBDB']
 

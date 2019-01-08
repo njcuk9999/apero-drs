@@ -243,7 +243,7 @@ class Logger:
                 key = 'error'
             if error[0] not in used:
                 self.logger_storage(key, error[2], error[0])
-                printlogandcmd(p, *error, wrap=wrap)
+                printlogandcmd(p, *error, wrap=wrap, colour=colour)
                 used.append(error[0])
 
         # deal with errors (if key is in EXIT_LEVELS) then exit after log/print

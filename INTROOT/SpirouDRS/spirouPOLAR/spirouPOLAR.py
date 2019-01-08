@@ -881,11 +881,14 @@ def polar_products_header(p, loc, polardict):
     rawfile = os.path.basename(p['FITSFILENAME'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_INFILE'], value=rawfile)
     # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_STOKES'],
+                               value=loc['STOKES'])
     # add number of exposures parameter keyword to header
-    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_NEXP'],
+                               value=loc['NEXPOSURES'])
     # add the polarimetry method parameter keyword to header
-    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_METHOD'],
+                               value=loc['METHOD'])
     
     mjd_first, mjd_last = 0.0, 0.0
     meanbjd, tot_exptime = 0.0, 0.0
@@ -905,11 +908,11 @@ def polar_products_header(p, loc, polardict):
             tot_exptime += hdr[p['KW_EXPTIME'][0]]
             # get values for BJDCEN calculation
             if expnum == 1:
-                mjd_first = hdr[p['KW_ACQTIME_KEY_JUL'][0]]
+                mjd_first = hdr[p['KW_ACQTIME'][0]]
                 bjd_first = hdr[p['KW_BJD'][0]]
                 berv_first = hdr[p['KW_BERV'][0]]
             elif expnum == loc['NEXPOSURES']:
-                mjd_last = hdr[p['KW_ACQTIME_KEY_JUL'][0]]
+                mjd_last = hdr[p['KW_ACQTIME'][0]]
                 bjd_last = hdr[p['KW_BJD'][0]]
                 berv_last = hdr[p['KW_BERV'][0]]
                 exptime_last = hdr[p['KW_EXPTIME'][0]]
@@ -924,7 +927,7 @@ def polar_products_header(p, loc, polardict):
             # add MJDATE for each exposure
             mjdexp = p['kw_POL_MJDATE{0}'.format(expnum)]
             hdict = spirouImage.AddKey(p, hdict, mjdexp,
-                                       value=hdr[p['KW_ACQTIME_KEY_JUL'][0]])
+                                       value=hdr[p['KW_ACQTIME'][0]])
             # add MJDEND for each exposure
             mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
             hdict = spirouImage.AddKey(p, hdict, mjdendexp,
@@ -954,7 +957,7 @@ def polar_products_header(p, loc, polardict):
     # add central MJD
     hdict = spirouImage.AddKey(p, hdict, p['KW_POL_MJDCEN'], value=mjdcen)
     # update existing MJD keyword
-    hdict = spirouImage.AddKey(p, hdict, p['KW_ACQTIME_KEY_JUL'], value=mjdcen)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_ACQTIME'], value=mjdcen)
 
     # calculate BJD at center of polarimetric sequence
     bjdcen = bjd_first + (bjd_last - bjd_first + exptime_last/86400.)/2.0
