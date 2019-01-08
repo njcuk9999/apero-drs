@@ -2917,6 +2917,16 @@ def DEFAULT_LOG_OPT():
     return program
 
 
+# noinspection PyPep8Naming
+def MAX_DISPLAY_LIMIT():
+    """
+    Maximum display limit for files/directory when argument error raise
+    :return:
+    """
+    max_display_limit = 15
+    return max_display_limit
+
+
 # =============================================================================
 # Plot functions
 # =============================================================================
