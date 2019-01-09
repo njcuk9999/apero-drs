@@ -56,7 +56,7 @@ STRTYPE[np.ndarray] = 'np.ndarray'
 INDEX_FILE = 'index.fits'
 INDEX_FILE_NAME_COL = 'FILENAME'
 
-DEBUG = True
+DEBUG = False
 # -----------------------------------------------------------------------------
 
 
@@ -190,14 +190,8 @@ class _CheckFiles(argparse.Action):
             return files, types
         # else deal with errors
         else:
-            # get input dir
-            input_dir = self.recipe._get_input_dir()
-            fullpath = os.path.join(input_dir, directory)
-            # get listing message
-            lmsgs = _print_list_msg(self.parser, self.recipe, fullpath,
-                                    dircond=False, return_string=True)
             # log messages
-            WLOG(self.recipe.drs_params, 'error', emsgs + lmsgs)
+            WLOG(self.recipe.drs_params, 'error', emsgs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -515,7 +509,7 @@ class _DisplayInfo(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
         parser._has_help()
-        recipe = parser.recipe
+        self.recipe = parser.recipe
         # display version
         self._display_info()
         # quit after call
@@ -1318,8 +1312,6 @@ class DrsRecipe(object):
         arg = _get_arg(self, argname)
         drs_files = arg.files
         drs_logic = arg.filelogic
-        # storage of errors
-        errors = []
         # ---------------------------------------------------------------------
         # Step 1: Check file location is valid
         # ---------------------------------------------------------------------
@@ -1335,15 +1327,20 @@ class DrsRecipe(object):
                 return False, None, None, error
             else:
                 return False, None, None
-        errors += error
-
         # ---------------------------------------------------------------------
         # The next steps are different depending on the DRS file and
         # we may have multiple files
         out_files = []
         out_types = []
+        # storage of errors (if we have no files)
+        errors = []
         # loop around filename
         for filename in files:
+            # start of with the file not being valid
+            valid = False
+            # storage of errors (reset)
+            errors = []
+            header_errors = dict()
             # loop around file types
             for drs_file in drs_files:
                 # if in debug mode print progres
@@ -1358,8 +1355,8 @@ class DrsRecipe(object):
                 ext = drs_file.ext
                 # check the extension
                 exargs = [self, argname, filename]
-                valid1, error = _check_file_extension(*exargs, ext=ext)
-                errors += error
+                valid1, error1 = _check_file_extension(*exargs, ext=ext)
+
                 # -------------------------------------------------------------
                 # Step 3: Check file header is valid
                 # -------------------------------------------------------------
@@ -1368,35 +1365,66 @@ class DrsRecipe(object):
                 if '.fits' in ext:
                     out = _check_file_header(self, argname, drs_file, filename,
                                              directory)
-                    valid2, filetype, error = out
-                    errors += error
+                    valid2, filetype, error2 = out
+                    valid2a, valid2b = valid2
+                    error2a, error2b = error2
                 else:
-                    valid2 = True
+                    valid2a, valid2b = True, True
+                    error2a, error2b = [], dict()
                     filetype = None
                 # -------------------------------------------------------------
                 # Step 4: Check exclusivity
                 # -------------------------------------------------------------
                 exargs = [self, filename, argname, drs_file, drs_logic,
                           out_types, alltypelist]
-                valid3, error = _check_file_exclusivity(*exargs)
-                errors += error
+                valid3, error3 = _check_file_exclusivity(*exargs)
 
                 # -------------------------------------------------------------
-                # Step 5: Check exclusivity
+                # Step 5: Combine
                 # -------------------------------------------------------------
-                valid = valid1 and valid2 and valid3
+                valid = valid1 and valid2a and valid2b and valid3
+
+                if not valid1:
+                    errors += error1
+                if not valid2a:
+                    errors += error2a
+                if not valid2b:
+                    header_errors[drs_file.name]  = error2b
+                if not valid3:
+                    errors += error3
+
                 # check validity and append if valid
                 if valid:
+
+                    if DEBUG:
+                        dmsg = 'DEBUG: File "{0}" Passes all criteria'
+                        dargs = [os.path.basename(filename)]
+                        WLOG(params, 'info', dmsg.format(*dargs))
+
                     out_files.append(filename)
                     out_types.append(filetype)
                     # break out the inner loop if valid (we don't need to
                     #    check other drs_files)
                     break
+            # if this file is not valid we should break here
+            if not valid:
+                # add header errors (needed outside drs_file loop)
+                errors += _gen_header_errors(header_errors)
+                # add file error (needed only once per filename)
+                errors += ['\tfile = {0}'.format(filename)]
+                break
+
+        # ---------------------------------------------------------------------
+        # clean up errors (do not repeat same lines)
+        cleaned_errors = []
+        for error in errors:
+            # if error not in cleaned_errors:
+            cleaned_errors.append(error)
         # ---------------------------------------------------------------------
         # deal with return types:
         # a. if we don't have the right number of files then we failed
         if len(out_files) != len(files):
-            return False, None, None, errors
+            return False, None, None, cleaned_errors
         # b. if we did but expect an error returned return True with an error
         elif return_error:
             return True, out_files, out_types, []
@@ -2124,6 +2152,34 @@ def _filter_index(p, index, filters=None):
 # =============================================================================
 # Define worker functions
 # =============================================================================
+def _gen_header_errors(header_errors):
+    # set up message storage
+    emsgs = []
+    # set up initial argname
+    argname = ''
+    # loop around drs files in header_errors
+    for drsfile in header_errors.keys():
+        # get this iterations values in this drs_file
+        header_error = header_errors[drsfile]
+        # append this file
+        emsgs.append(' - File is not a "{0}" file'.format(drsfile))
+        # loop around keys in this drs_file
+        for key in header_error:
+            # get this iterations entry
+            entry = header_error[key]
+            # get the argname
+            argname = entry[0]
+            # construct error message
+            emsg = '\t {0} = "{1}" (Required: {2})'
+            eargs = [key, entry[3], entry[2]]
+            if not entry[0]:
+                emsgs.append(emsg.format(*eargs))
+
+    emsg0 = ['Argument {0}: File could not be identified - incorrect '
+             'HEADER values:'.format(argname)]
+
+    return emsg0 + emsgs
+
 def _get_uncommon_path(path1, path2):
     """
     Get the uncommon path of "path1" compared to "path2"
