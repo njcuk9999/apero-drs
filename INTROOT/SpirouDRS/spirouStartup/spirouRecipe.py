@@ -98,7 +98,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         WLOG(params, 'error', [emsg1, emsg2], logonly=True)
 
     def _print_message(self, message, file=None):
-        # get parameterse from drs_params
+        # get parameters from drs_params
         program = self.recipe.drs_params['RECIPE']
         # construct error message
         underline = COLOR.UNDERLINE
@@ -113,10 +113,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         print(green + HEADER + end)
         print(green + ' Help for: {0}.py'.format(program) + end)
         print(green + HEADER + end)
-        print(green + '\tVERSION: {0}'.format(__version__) + end)
-        print(green + '\tAUTHORS: {0}'.format(__author__) + end)
-        print(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
-        print(green + '\tRELEASE STATUS: {0}'.format(__release__) + end)
+        imsgs = get_version_info(self.recipe.drs_params, green, end)
+        for imsg in imsgs:
+            print(imsg)
         print()
         print(blue + self.format_help() + end)
 
@@ -356,6 +355,9 @@ class CheckOptions(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+# =============================================================================
+# Define Special Actions
+# =============================================================================
 class MakeListing(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
@@ -383,7 +385,51 @@ class MakeListing(argparse.Action):
         # ---------------------------------------------------------------------
         # construct listing message
         # ---------------------------------------------------------------------
-        print_listing_message(self.parser, self.recipe, fulldir, dircond)
+        print_listing_message(self.parser, self.recipe, fulldir, dircond,
+                              list_all=False)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        parser.has_help()
+        # store parser
+        self.parser = parser
+        # get drs parameters
+        self.recipe = parser.recipe
+        # display listing
+        self.display_listing(namespace)
+        # quit after call
+        parser.exit()
+
+
+class MakeAllListing(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        self.namespace = None
+        self.parser = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def display_listing(self, namespace):
+        # get input dir
+        input_dir = self.recipe.get_input_dir()
+        # check if "directory" is in namespace
+        directory = getattr(namespace, 'directory', None)
+        # deal with non set directory
+        if directory is None:
+            # path is just the input directory
+            fulldir = input_dir
+            # whether to list only directories
+            dircond = True
+        else:
+            # create full dir path
+            fulldir = os.path.join(input_dir, directory)
+            # whether to list only directories
+            dircond = False
+        # ---------------------------------------------------------------------
+        # construct listing message
+        # ---------------------------------------------------------------------
+        print_listing_message(self.parser, self.recipe, fulldir, dircond,
+                              list_all=True)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
@@ -403,15 +449,34 @@ class DisplayVersion(argparse.Action):
     def display_version(self, recipe):
         # get params
         params = recipe.drs_params
-        # get version
-        if 'DRS_VERSION' in params:
-            version = params['DRS_VERSION']
+        # get colours
+        if params['COLOURED_LOG']:
+            green, end = COLOR.GREEN1, COLOR.ENDC
         else:
-            version = __version__
-        # get parameterse from drs_params
-        program = recipe.drs_params['RECIPE']
-        # construct error message
-        underline = COLOR.UNDERLINE
+            green, end = COLOR.ENDC, COLOR.ENDC
+        # print start header
+        print(green + HEADER + end)
+        # print version info message
+        imsgs = get_version_info(params, green, end)
+        for imsg in imsgs:
+            print(imsg)
+        # end header
+        print(green + HEADER + end)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        parser.has_help()
+        # display version
+        self.display_version(parser.recipe)
+        # quit after call
+        parser.exit()
+
+
+class DisplayInfo(argparse.Action):
+    def display_info(self, recipe):
+        # get params
+        params = recipe.drs_params
+        program = params['RECIPE']
         # get colours
         if recipe.drs_params['COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
@@ -419,16 +484,30 @@ class DisplayVersion(argparse.Action):
         else:
             green, end = COLOR.ENDC, COLOR.ENDC
             yellow, blue = COLOR.ENDC, COLOR.ENDC
-        # print message
-        wargs = [green, blue, yellow, program, version, end]
-        wmsg = '{0} Version for {1} {3}.py {0} = V{2} {4} {5}'.format(*wargs)
-        print(wmsg.format(*wargs))
+        # print usage
+        print(green + HEADER + end)
+        print(green + ' Info for: {0}.py'.format(program) + end)
+        print(green + HEADER + end)
+        # print version info message
+        imsgs = get_version_info(params, green, end)
+        for imsg in imsgs:
+            print(imsg)
+        print()
+        print(blue + 'usage: ' + recipe.drs_usage() + end)
+        print(blue + recipe.description + end)
+        # print examples
+        print(blue + recipe.epilog + end)
+        # print see help
+        print(green + 'use --help for more detailed help' + end)
+        print()
+        # end header
+        print(green + HEADER + end)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
         parser.has_help()
         # display version
-        self.display_version(parser.recipe)
+        self.display_info(parser.recipe)
         # quit after call
         parser.exit()
 
@@ -707,7 +786,8 @@ class DrsRecipe(object):
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
         parser = DRSArgumentParser(self, description=desc, epilog=epilog,
-                                   formatter_class=fmt_class)
+                                   formatter_class=fmt_class,
+                                   usage=self.drs_usage())
         # deal with function call
         self.parse_args(fkwargs)
         # ---------------------------------------------------------------------
@@ -933,20 +1013,42 @@ class DrsRecipe(object):
         :return None:
         """
         # make listing functionality
-        listingprops = make_listing()
-        name = listingprops['name']
-        listing = DrsArgument(name, kind='special',
-                              altnames=listingprops['altnames'])
-        listing.assign_properties(listingprops)
+        lprops = make_listing()
+        name = lprops['name']
+        listing = DrsArgument(name, kind='special', altnames=lprops['altnames'])
+        listing.assign_properties(lprops)
         self.specialargs[name] = listing
 
+        # make listing all functionality
+        aprops = make_alllisting()
+        name = aprops['name']
+        alllist = DrsArgument(name, kind='special', altnames=aprops['altnames'])
+        alllist.assign_properties(aprops)
+        self.specialargs[name] = alllist
+
         # make version functionality
-        versionprops = make_version()
-        name = versionprops['name']
-        version = DrsArgument(name, kind='special',
-                              altnames=versionprops['altnames'])
-        version.assign_properties(versionprops)
+        vprops = make_version()
+        name = vprops['name']
+        version = DrsArgument(name, kind='special', altnames=vprops['altnames'])
+        version.assign_properties(vprops)
         self.specialargs[name] = version
+
+        # make info functionality
+        iprops = make_info()
+        name = iprops['name']
+        info = DrsArgument(name, kind='special', altnames=iprops['altnames'])
+        info.assign_properties(iprops)
+        self.specialargs[name] = info
+
+    def drs_usage(self):
+        # get positional arguments
+        pos_args = list(self.args.keys())
+        if len(pos_args) == 0:
+            pos_args = ['[positional arguments]']
+        # define usage
+        uargs = [self.name, ' '.join(pos_args)]
+        usage = '{0}.py {1} [options]'.format(*uargs)
+        return usage
 
     def get_drs_params(self, quiet=False, **kwargs):
         func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
@@ -1394,7 +1496,6 @@ class DrsRecipe(object):
             cmd_args_groups.append(cmd_arg)
         # ---------------------------------------------------------------------
         return cmd_args_groups
-
 
     def get_non_file_arg(self, argname, kwargs, kind='arg'):
         """
@@ -2073,7 +2174,7 @@ def get_uncommon_path(path1, path2):
 
 
 def get_file_list(path, limit=None, ext=None, recursive=False,
-                  dir_only=False):
+                  dir_only=False, list_all=False):
     """
     Get a list of files in a path
 
@@ -2083,6 +2184,9 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
     :param ext: string, the extension to limit the file search to, if None
                 does not filter by extension
     :param recursive: bool, if True searches sub-directories recursively
+    :param dir_only: bool, if True only lists directories (not files)
+    :param list_all: bool, if True overides the limit feature and lists all
+                     directories/files
 
     :return file_list: list of strings, the files found with extension (if not
                        None, up to the number limit
@@ -2090,6 +2194,8 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
     # deal with no limit - set hard limit
     if limit is None:
         limit = HARD_DISPLAY_LIMIT
+    if list_all:
+        limit = np.inf
     # deal with extension
     if ext is None:
         ext = ''
@@ -2097,31 +2203,47 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
     file_list = []
     # set up test of limit being reached
     limit_reached = False
+    # set up level
+    levelsep = '\t'
+    level = ''
     # walk through directories
     for root, dirs, files in os.walk(path):
         if len(file_list) > limit:
-            file_list.append('...')
+            file_list.append(level + '...')
             return file_list
         if not recursive and root != path:
             continue
         if len(files) > 0 and recursive:
             limit += 1
         if not dir_only:
+            # add root to file list (minus path)
+            if root != path:
+                directory = get_uncommon_path(root, path) + os.sep
+                # count number of separators in directory
+                num = directory.count(os.sep)
+                level = levelsep * num
+                # append to list
+                file_list.append(level + directory)
+            # add root to file list (minus path)
             for filename in files:
+                filelevel = level + levelsep
                 # do not display all (if limit reached)
                 if len(file_list) > limit:
-                    file_list.append('...')
+                    file_list.append(filelevel + '...')
                     limit_reached = True
                     return file_list, limit_reached
                 # do not display if extension is true
                 if not filename.endswith(ext):
                     continue
                 # add to file list
-                file_list.append('\t\t' + filename)
-        elif len(files) > 0 and recursive:
+                file_list.append(filelevel + filename)
+        elif len(files) > 0:
             # add root to file list (minus path)
-            directory = get_uncommon_path(root, path)
-            file_list.append('\t' + directory)
+            if root != path:
+                directory = get_uncommon_path(root, path) + os.sep
+                # append to list
+                file_list.append(level + levelsep + directory)
+
     # if empty list add none found
     if len(file_list) == 0:
         file_list = ['No valid files found.']
@@ -2319,6 +2441,28 @@ def get_file_groups(recipe, arg):
     return groups
 
 
+def get_version_info(p, green='', end=''):
+
+    # get name
+    if 'DRS_NAME' in p:
+        name = p['DRS_NAME']
+    else:
+        name = p['program']
+    # get version
+    if 'DRS_VERSION' in p:
+        version = p['DRS_VERSION']
+    else:
+        version = __version__
+    # construct version info string
+    imsgs = []
+    imsgs.append(green + '\tNAME: {0}'.format(name))
+    imsgs.append(green + '\tVERSION: {0}'.format(version) + end)
+    imsgs.append(green + '\tAUTHORS: {0}'.format(__author__) + end)
+    imsgs.append(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
+    imsgs.append(green + '\tRELEASE STATUS: {0}'.format(__release__) + end)
+    return imsgs
+
+
 def match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
     """
     Match multiple argument lists so we have the same number of matches as
@@ -2470,7 +2614,21 @@ def make_listing():
     props['nargs'] = 0
     props['help'] = ('Lists the night name directories in the input directory '
                      'if used without a "directory" argument or lists the '
-                     'files in the given "directory" (if defined)')
+                     'files in the given "directory" (if defined).'
+                     'Only lists up to {0} files/directories'
+                     ''.format(HARD_DISPLAY_LIMIT))
+    return props
+
+
+def make_alllisting():
+    props = OrderedDict()
+    props['name'] = '--listingall'
+    props['altnames'] = ['--listall']
+    props['action'] = MakeAllListing
+    props['nargs'] = 0
+    props['help'] = ('Lists ALL the night name directories in the input '
+                     'directory if used without a "directory" argument or '
+                     'lists the files in the given "directory" (if defined)')
     return props
 
 
@@ -2485,6 +2643,20 @@ def make_version():
     props['action'] = DisplayVersion
     props['nargs'] = 0
     props['help'] = 'Displays the current version of this recipe.'
+    return props
+
+
+def make_info():
+    """
+    Make a custom special argument that lists a short version of the help
+    :return props: dictionary for argparser
+    """
+    props = OrderedDict()
+    props['name'] = '--info'
+    props['altnames'] = ['--i', '--usage']
+    props['action'] = DisplayInfo
+    props['nargs'] = 0
+    props['help'] = 'Displays the short version of the help menu'
     return props
 
 
@@ -2542,10 +2714,24 @@ def print_check_error(p, argname, idnum, filename, recipename, errors,
 
 
 def print_listing_message(parser, recipe, fulldir, dircond=False,
-                          return_string=False):
+                          return_string=False, list_all=False):
+    """
+    Prints the listing message (using "get_file_list")
+
+    :param parser: DrsArgumentParser instance
+    :param recipe: DrsRecipe instance
+    :param fulldir: string, the full "root" (top level) directory
+    :param dircond: bool, if True only prints directories (passed to
+                    get_file_list)
+    :param return_string: bool, if True returns string output instead of
+                          printing
+    :param list_all: bool, if True overrides lmit (set by HARD_DISPLAY_LIMIT)
+    :return:
+    """
+
     # generate a file list
     filelist, limitreached = get_file_list(fulldir, recursive=True,
-                                           dir_only=dircond)
+                                           dir_only=dircond, list_all=list_all)
     # get parameterse from drs_params
     program = recipe.drs_params['RECIPE']
     # construct error message
@@ -2572,22 +2758,22 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
     wmsgs = []
     if limitreached:
         if dircond:
-            wmsgs.append('Options for "directory"')
-            wmsgs.append('\tdisplaying first {0} directories in '
-                         'location="{1}"'.format(*wargs))
+            wmsgs.append('Valid inputs for "directory"')
+            wmsgs.append('\t(displaying first {0} directories in '
+                         'location="{1}")'.format(*wargs))
         else:
-            wmsgs.append('Options for {2}'.format(*wargs))
-            wmsgs.append('\tdisplaying first {0} files in '
-                         'directory="{1}"'.format(*wargs))
+            wmsgs.append('Valid inputs for {2}'.format(*wargs))
+            wmsgs.append('\t(displaying first {0} files in '
+                         'directory="{1}")'.format(*wargs))
     else:
         if dircond:
-            wmsgs.append('Options for: "directory"')
-            wmsgs.append('\tdisplaying all directories in '
-                         'location="{1}"'.format(*wargs))
+            wmsgs.append('Valid inputs for: "directory"')
+            wmsgs.append('\t(displaying all directories in '
+                         'location="{1}")'.format(*wargs))
         else:
-            wmsgs.append('Options for: {2}'.format(*wargs))
-            wmsgs.append('\tdisplaying all files in '
-                         'directory="{1}"'.format(*wargs))
+            wmsgs.append('Valid inputs for: {2}'.format(*wargs))
+            wmsgs.append('\t(displaying all files in '
+                         'directory="{1}")'.format(*wargs))
     # loop around files and add to list
     for filename in filelist:
         wmsgs.append('\t' + filename)
@@ -2599,10 +2785,8 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
         pmsgs.append(green + HEADER + end)
         pmsgs.append(green + ' Listing for: {0}.py'.format(program) + end)
         pmsgs.append(green + HEADER + end)
-        pmsgs.append(green + '\tVERSION: {0}'.format(__version__) + end)
-        pmsgs.append(green + '\tAUTHORS: {0}'.format(__author__) + end)
-        pmsgs.append(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
-        pmsgs.append(green + '\tRELEASE STATUS: {0}'.format(__release__) + end)
+        imsgs = get_version_info(recipe.drs_params, green, end)
+        pmsgs += imsgs
         pmsgs.append('')
         pmsgs.append(blue + parser.format_usage() + end)
         pmsgs.append('')
@@ -2614,6 +2798,8 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
     else:
         for pmsg in pmsgs:
             print(pmsg)
+
+
 
 
 # =============================================================================
