@@ -229,7 +229,7 @@ class DrsFitsFile(DrsInputFile):
 
             - ext: string or None, the extension for the DRS input file
                    (without the '.' i.e. A.txt  ext='txt'). This will be
-                   checked if used in a DrsArgument if not None.
+                   checked if used in a DrsArgument is not None.
 
             - fiber: string or None, the fiber of the Fits File.
 
@@ -243,10 +243,10 @@ class DrsFitsFile(DrsInputFile):
         """
         # define a name
         self.name = name
-        # if ext in kwargs then we have a file extension to check
-        self.ext = kwargs.get('ext', None)
         # get super init
         DrsInputFile.__init__(self, name, **kwargs)
+        # if ext in kwargs then we have a file extension to check
+        self.ext = kwargs.get('ext', '.fits')
         # get fiber type (if set)
         self.fiber = kwargs.get('fiber', None)
         # get tag
@@ -317,6 +317,10 @@ class DrsFitsFile(DrsInputFile):
         else:
             return 'DrsFitsFile[{0}_{1}]'.format(self.name, self.fiber)
 
+    def set_required_key(self, key, value):
+        if 'KW_' in key:
+            self.required_header_keys[key] = value
+
     def __str__(self):
         """
         Defines the str(DrsFitsFile) return for DrsFitsFile
@@ -369,13 +373,18 @@ class DrsFitsFile(DrsInputFile):
                 eargs = [argstring, key, self.filename]
                 emsgs = ['{0} Header key "{1}" not found for '
                          'file "{2}"'.format(*eargs)]
-                return False, None, emsgs
+                return [False, True], None, [emsgs, None]
             elif debug:
                 dmsg = '{0} Header key {1} found for {2}'
                 dargs = [argstring, key, self.filename]
                 WLOG(params, '', dmsg.format(*dargs))
         # -----------------------------------------------------------------
         # Step 2: search for correct value for each header key
+        found = True
+
+        # storage
+        errors = dict()
+
         # loop around required keys
         for drskey in rkeys:
             # check whether header key is in param dict (i.e. from a
@@ -387,26 +396,33 @@ class DrsFitsFile(DrsInputFile):
             # get value and required value
             value = self.header[key].strip()
             rvalue = rkeys[drskey].strip()
+
+            # write error message
+            # emsg1 = '{0} Header key {1} value is incorrect'
+            # emsg2 = '\tvalue = {2}   required = {3}'
+            # eargs = [argstring, key, value, rvalue, self.filename]
+            # emsgs = [emsg1.format(*eargs), emsg2.format(*eargs)]
+
+
             # check if key is valid
             if rvalue != value:
                 if debug:
                     dmsg = '{0} Header key {1} value is incorrect ({2})'
                     dargs = [argstring, key, rvalue]
                     WLOG(params, '', dmsg.format(*dargs))
-
-                emsg1 = '{0} Header key {1} value is incorrect'
-                emsg2 = '\tvalue = {2}   required = {3}'
-                emsg3 = '\tfile = {4}'
-                eargs = [argstring, key, value, rvalue, self.filename]
-                emsgs = [emsg1.format(*eargs), emsg2.format(*eargs),
-                         emsg3.format(*eargs)]
-                return False, None, emsgs
+                found = False
             elif debug:
-                dmsg = '{0} File "{1}" valid for recipe {2}="{3}"'
-                dargs = [argstring, self.basename, key, value]
+                dmsg = '{0} Header key {1} valid for recipe ("{2}")'
+                dargs = [argstring, key, value]
                 WLOG(params, '', dmsg.format(*dargs))
-        # else file is valid
-        return True, self, []
+            # store info
+            errors[key] = (found, argstring, rvalue, value)
+        # return:
+        #       [valid cond1, valid cond2], self, [errors1, errors2]
+        if found:
+            return [True, True], self, [None, None]
+        else:
+            return [True, False], self, [None, errors]
 
 
     def check_excluivity(self, drs_file, logic, quiet=False):
@@ -1148,6 +1164,32 @@ class DrsFitsFile(DrsInputFile):
             key, dvalue, comment = None, None, None
         # return values
         return key, dvalue, comment
+
+
+# =============================================================================
+# User functions
+# =============================================================================
+def add_required_keywords(drs_filelist, keys):
+    # setup new list
+    drs_filelist1 = []
+    # loop around the DrsFitsFiles in "drs_filelist"
+    for drs_file in drs_filelist:
+        # create a copy of the DrsFitsfile
+        drs_file1 = drs_file.new()
+        # storage for addition to drs_file1 name
+        nameadd = []
+        # loop around the key, value pairs
+        for key in keys:
+            if 'KW_' in key:
+                drs_file1.set_required_key(key, keys[key])
+                nameadd.append(keys[key])
+        # add to name
+        if len(nameadd) > 0:
+            drs_file1.name += '({0})'.format(','.join(nameadd))
+        # append to new list
+        drs_filelist1.append(drs_file1)
+    # return new file list
+    return drs_filelist1
 
 
 # =============================================================================
