@@ -387,6 +387,33 @@ All files used will be combined into a single frame.
 """
 
 
+
+class HcE2DS:
+    if LANGUAGE == 'ENG':
+        description = """
+====================================================
+ Description: 
+====================================================
+
+Wavelength solution finding recipe for SPIRou @ CFHT
+Uses the less accurate method using only a HCONE_HCONE file 
+
+====================================================
+"""
+        example = """
+====================================================
+ Example uses:
+====================================================
+    recipe.py [NIGHT_NAME] [ARG1]
+
+====================================================
+"""
+        files_help = General.files_help + """
+Currently allowed type: 
+    DRS_EOUT = EXT_E2DS_AB (HCONE_HCONE) or EXT_E2DS_A (HCONE_HCONE)
+               or EXT_E2DS_B (HCONE_HCONE) or EXT_E2DS_C (HCONE_HCONE)
+"""
+
 # =============================================================================
 # End of code
 # =============================================================================
