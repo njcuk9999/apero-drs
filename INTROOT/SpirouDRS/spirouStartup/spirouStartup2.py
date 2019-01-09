@@ -228,7 +228,14 @@ def special_keys_present(recipe, quiet, fkwargs):
 
     :return quiet: bool, the updated status of quiet flag
     """
-    skeys = list(recipe.specialargs.keys()) + ['--help', '-h']
+    # get the special keys
+    skeys = []
+    for sarg in recipe.specialargs:
+        specialarg = recipe.specialargs[sarg]
+        skeys += specialarg.names
+    # add help keys
+    skeys += ['--help', '-h']
+    # see if we have a key
     if len(skeys) > 0:
         for skey in skeys:
             cond1 = skey in fkwargs.keys()
