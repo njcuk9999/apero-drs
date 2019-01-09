@@ -19,7 +19,7 @@ from collections import OrderedDict
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
-from . import spirouFile
+
 
 # =============================================================================
 # Define variables
@@ -101,7 +101,6 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # get parameters from drs_params
         program = self.recipe.drs_params['RECIPE']
         # construct error message
-        underline = COLOR.UNDERLINE
         if self.recipe.drs_params['COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
@@ -113,13 +112,13 @@ class DRSArgumentParser(argparse.ArgumentParser):
         print(green + HEADER + end)
         print(green + ' Help for: {0}.py'.format(program) + end)
         print(green + HEADER + end)
-        imsgs = get_version_info(self.recipe.drs_params, green, end)
+        imsgs = _get_version_info(self.recipe.drs_params, green, end)
         for imsg in imsgs:
             print(imsg)
         print()
         print(blue + self.format_help() + end)
 
-    def has_help(self):
+    def _has_help(self):
         if '-h' in sys.argv:
             self.print_help()
             # quit after call
@@ -134,24 +133,24 @@ class DRSArgumentParser(argparse.ArgumentParser):
             return False
 
 
-class CheckDirectory(argparse.Action):
+class _CheckDirectory(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         self.parser = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def check_directory(self, value):
-        out = self.recipe.valid_directory(value, return_error=True)
+    def _check_directory(self, value):
+        out = self.recipe._valid_directory(value, return_error=True)
         cond, directory, emsgs = out
         if cond:
             return directory
         else:
             # get input dir
-            input_dir = self.recipe.get_input_dir()
+            input_dir = self.recipe._get_input_dir()
             # get listing message
-            lmsgs = print_listing_message(self.parser, self.recipe, input_dir,
-                                          dircond=True, return_string=True)
+            lmsgs = _print_list_msg(self.parser, self.recipe, input_dir,
+                                    dircond=True, return_string=True)
             # log messages
             WLOG(self.recipe.drs_params, 'error', emsgs + lmsgs)
 
@@ -160,31 +159,31 @@ class CheckDirectory(argparse.Action):
         self.recipe = parser.recipe
         self.parser = parser
         # check for help
-        parser.has_help()
+        parser._has_help()
         if type(values) == list:
-            value = list(map(self.check_directory, values))[0]
+            value = list(map(self._check_directory, values))[0]
         else:
-            value = self.check_directory(values)
+            value = self._check_directory(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
-class CheckFiles(argparse.Action):
+class _CheckFiles(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         self.namespace = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def check_files(self, value, current_typelist=None):
+    def _check_files(self, value, current_typelist=None):
         # check if "directory" is in namespace
         directory = getattr(self.namespace, 'directory', '')
         # get the argument name
         argname = self.dest
         # check if files are valid
-        out = self.recipe.valid_files(argname, value, directory,
-                                      return_error=True,
-                                      alltypelist=current_typelist)
+        out = self.recipe._valid_files(argname, value, directory,
+                                       return_error=True,
+                                       alltypelist=current_typelist)
         cond, files, types, emsgs = out
         # if they are return files
         if cond:
@@ -192,11 +191,11 @@ class CheckFiles(argparse.Action):
         # else deal with errors
         else:
             # get input dir
-            input_dir = self.recipe.get_input_dir()
+            input_dir = self.recipe._get_input_dir()
             fullpath = os.path.join(input_dir, directory)
             # get listing message
-            lmsgs = print_listing_message(self.parser, self.recipe, fullpath,
-                                          dircond=False, return_string=True)
+            lmsgs = _print_list_msg(self.parser, self.recipe, fullpath,
+                                    dircond=False, return_string=True)
             # log messages
             WLOG(self.recipe.drs_params, 'error', emsgs + lmsgs)
 
@@ -207,29 +206,29 @@ class CheckFiles(argparse.Action):
         # store the namespace
         self.namespace = namespace
         # check for help
-        skip = parser.has_help()
+        skip = parser._has_help()
         if skip:
             return 0
         if type(values) in [list, np.ndarray]:
             files, types = [], []
             for value in values:
-                filelist, typelist = self.check_files(value, types)
+                filelist, typelist = self._check_files(value, types)
                 files += filelist
                 types += typelist
         else:
-            filelist, typelist = self.check_files(values, [])
+            filelist, typelist = self._check_files(values, [])
             files, types = filelist, typelist
         # Add the attribute
         setattr(namespace, self.dest, [files, types])
 
 
-class CheckBool(argparse.Action):
+class _CheckBool(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def check_bool(self, value):
+    def _check_bool(self, value):
         # get parameters
         params = self.recipe.drs_params
         # conditions
@@ -245,24 +244,24 @@ class CheckBool(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         # check for help
-        skip = parser.has_help()
+        skip = parser._has_help()
         if skip:
             return 0
         if type(values) == list:
-            value = list(map(self.check_bool, values))
+            value = list(map(self._check_bool, values))
         else:
-            value = self.check_bool(values)
+            value = self._check_bool(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
-class CheckType(argparse.Action):
+class _CheckType(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def eval_type(self, value):
+    def _eval_type(self, value):
         # get parameters
         params = self.recipe.drs_params
         # get type error
@@ -275,7 +274,7 @@ class CheckType(argparse.Action):
         except TypeError as _:
             WLOG(params, 'error', emsg.format(*eargs))
 
-    def check_type(self, value):
+    def _check_type(self, value):
         # get parameters
         params = self.recipe.drs_params
         # check that type matches
@@ -287,12 +286,12 @@ class CheckType(argparse.Action):
                 emsg = 'Argument "{0}" should not be an empty list.'
                 WLOG(params, 'error', emsg.format(self.dest))
             else:
-                return self.eval_type(value[0])
+                return self._eval_type(value[0])
         # else if we have a list we should iterate
         elif type(value) is list:
             values = []
             for it in self.nargs:
-                values.append(self.eval_type(values[it]))
+                values.append(self._eval_type(values[it]))
             if len(values) < len(value):
                 wmsg = 'Argument too long (expected {0} got {1})'
                 wargs = [self.nargs, len(value)]
@@ -309,26 +308,26 @@ class CheckType(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         # check for help
-        skip = parser.has_help()
+        skip = parser._has_help()
         if skip:
             return 0
         if self.nargs == 1:
-            value = self.check_type(values)
+            value = self._check_type(values)
         elif type(values) == list:
-            value = list(map(self.check_type, values))
+            value = list(map(self._check_type, values))
         else:
-            value = self.check_type(values)
+            value = self._check_type(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
-class CheckOptions(argparse.Action):
+class _CheckOptions(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def check_options(self, value):
+    def _check_options(self, value):
         # get parameters
         params = self.recipe.drs_params
         # check options
@@ -344,13 +343,13 @@ class CheckOptions(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         # check for help
-        skip = parser.has_help()
+        skip = parser._has_help()
         if skip:
             return 0
         if type(values) == list:
-            value = list(map(self.check_options, values))
+            value = list(map(self._check_options, values))
         else:
-            value = self.check_options(values)
+            value = self._check_options(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
@@ -358,7 +357,7 @@ class CheckOptions(argparse.Action):
 # =============================================================================
 # Define Special Actions
 # =============================================================================
-class MakeListing(argparse.Action):
+class _MakeListing(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         self.namespace = None
@@ -366,9 +365,9 @@ class MakeListing(argparse.Action):
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def display_listing(self, namespace):
+    def _display_listing(self, namespace):
         # get input dir
-        input_dir = self.recipe.get_input_dir()
+        input_dir = self.recipe._get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', None)
         # deal with non set directory
@@ -385,23 +384,23 @@ class MakeListing(argparse.Action):
         # ---------------------------------------------------------------------
         # construct listing message
         # ---------------------------------------------------------------------
-        print_listing_message(self.parser, self.recipe, fulldir, dircond,
-                              list_all=False)
+        _print_list_msg(self.parser, self.recipe, fulldir, dircond,
+                        list_all=False)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        parser._has_help()
         # store parser
         self.parser = parser
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
-        self.display_listing(namespace)
+        self._display_listing(namespace)
         # quit after call
         parser.exit()
 
 
-class MakeAllListing(argparse.Action):
+class _MakeAllListing(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         self.namespace = None
@@ -409,9 +408,9 @@ class MakeAllListing(argparse.Action):
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def display_listing(self, namespace):
+    def _display_listing(self, namespace):
         # get input dir
-        input_dir = self.recipe.get_input_dir()
+        input_dir = self.recipe._get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', None)
         # deal with non set directory
@@ -428,27 +427,31 @@ class MakeAllListing(argparse.Action):
         # ---------------------------------------------------------------------
         # construct listing message
         # ---------------------------------------------------------------------
-        print_listing_message(self.parser, self.recipe, fulldir, dircond,
-                              list_all=True)
+        _print_list_msg(self.parser, self.recipe, fulldir, dircond,
+                        list_all=True)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        parser._has_help()
         # store parser
         self.parser = parser
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
-        self.display_listing(namespace)
+        self._display_listing(namespace)
         # quit after call
         parser.exit()
 
 
-class DisplayVersion(argparse.Action):
+class _DisplayVersion(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
 
-    def display_version(self, recipe):
+    def _display_version(self):
         # get params
-        params = recipe.drs_params
+        params = self.recipe.drs_params
         # get colours
         if params['COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
@@ -457,7 +460,7 @@ class DisplayVersion(argparse.Action):
         # print start header
         print(green + HEADER + end)
         # print version info message
-        imsgs = get_version_info(params, green, end)
+        imsgs = _get_version_info(params, green, end)
         for imsg in imsgs:
             print(imsg)
         # end header
@@ -465,20 +468,26 @@ class DisplayVersion(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        parser._has_help()
+        self.recipe = parser.recipe
         # display version
-        self.display_version(parser.recipe)
+        self._display_version()
         # quit after call
         parser.exit()
 
 
-class DisplayInfo(argparse.Action):
-    def display_info(self, recipe):
+class _DisplayInfo(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def _display_info(self):
         # get params
-        params = recipe.drs_params
+        params = self.recipe.drs_params
         program = params['RECIPE']
         # get colours
-        if recipe.drs_params['COLOURED_LOG']:
+        if self.recipe.drs_params['COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -489,14 +498,14 @@ class DisplayInfo(argparse.Action):
         print(green + ' Info for: {0}.py'.format(program) + end)
         print(green + HEADER + end)
         # print version info message
-        imsgs = get_version_info(params, green, end)
+        imsgs = _get_version_info(params, green, end)
         for imsg in imsgs:
             print(imsg)
         print()
-        print(blue + 'usage: ' + recipe.drs_usage() + end)
-        print(blue + recipe.description + end)
+        print(blue + 'usage: ' + self.recipe._drs_usage() + end)
+        print(blue + self.recipe.description + end)
         # print examples
-        print(blue + recipe.epilog + end)
+        print(blue + self.recipe.epilog + end)
         # print see help
         print(green + 'use --help for more detailed help' + end)
         print()
@@ -505,9 +514,10 @@ class DisplayInfo(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        parser._has_help()
+        recipe = parser.recipe
         # display version
-        self.display_info(parser.recipe)
+        self._display_info()
         # quit after call
         parser.exit()
 
@@ -649,29 +659,29 @@ class DrsArgument(object):
             raise ValueError(emsg)
         # deal with dtype
         if self.dtype == 'files':
-            self.props['action'] = CheckFiles
+            self.props['action'] = _CheckFiles
             self.props['nargs'] = '+'
             self.props['type'] = str
         elif self.dtype == 'file':
-            self.props['action'] = CheckFiles
+            self.props['action'] = _CheckFiles
             self.props['nargs'] = 1
             self.props['type'] = str
         elif self.dtype == 'directory':
-            self.props['action'] = CheckDirectory
+            self.props['action'] = _CheckDirectory
             self.props['nargs'] = 1
             self.props['type'] = str
         elif self.dtype == 'bool':
-            self.props['action'] = CheckBool
+            self.props['action'] = _CheckBool
             self.props['type'] = str
             self.props['choices'] = ['True', 'False', '1', '0']
         elif self.dtype == 'options':
-            self.props['action'] = CheckOptions
+            self.props['action'] = _CheckOptions
             self.props['type'] = str
             self.props['choices'] = self.options
         elif self.dtype == 'switch':
             self.props['action'] = 'store_true'
         elif type(self.dtype) is type:
-            self.props['action'] = CheckType
+            self.props['action'] = _CheckType
             self.props['type'] = self.dtype
             self.props['nargs'] = 1
         else:
@@ -759,7 +769,7 @@ class DrsRecipe(object):
         self.kwargs = OrderedDict()
         self.specialargs = OrderedDict()
         # make special arguments
-        self.make_specials()
+        self._make_specials()
         # define arg list
         self.arg_list = []
         self.str_arg_list = None
@@ -767,29 +777,91 @@ class DrsRecipe(object):
         self.drs_params = ParamDict()
         self.input_params = OrderedDict()
 
+    def get_drs_params(self, quiet=False, **kwargs):
+        func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
+        const_name = 'spirouConfig.Constants'
+        # Get config parameters from primary file
+        try:
+            self.drs_params, warn_messages = spirouConfig.ReadConfigFile()
+        except ConfigError as e:
+            WLOG(self.__error__(), e.level, e.message)
+            self.drs_params, warn_messages = self.__error__(), []
+        # ---------------------------------------------------------------------
+        # assign parameters from kwargs
+        for kwarg in kwargs:
+            self.drs_params[kwarg] = kwargs[kwarg]
+            self.drs_params.set_source(kwarg, func_name + ' --kwargs')
+        # ---------------------------------------------------------------------
+        # log warning messages
+        if len(warn_messages) > 0:
+            WLOG(self.drs_params, 'warning', warn_messages)
+        # ---------------------------------------------------------------------
+        # set recipe name
+        while self.name.endswith('.py'):
+            self.name = self.name[:-3]
+        self.drs_params['RECIPE'] = self.name
+        self.drs_params.set_source('RECIPE', func_name)
+        # ---------------------------------------------------------------------
+        # get variables from spirouConst
+        self.drs_params['DRS_NAME'] = CONSTANTS.NAME()
+        self.drs_params['DRS_VERSION'] = CONSTANTS.VERSION()
+        self.drs_params.set_sources(['DRS_NAME', 'DRS_VERSION'], const_name)
+        # get program name
+        self.drs_params['PROGRAM'] = CONSTANTS.PROGRAM(self.drs_params)
+        self.drs_params.set_source('PROGRAM', func_name)
+        # TODO: Phase out use of LOG_OPT
+        self.drs_params['LOG_OPT'] = self.drs_params['PROGRAM']
+        self.drs_params.set_source('LOG_OPT', func_name)
+        # check input parameters
+        self.drs_params = spirouConfig.CheckCparams(self.drs_params)
+        # ---------------------------------------------------------------------
+        # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
+        if not self.drs_params['DRS_INTERACTIVE']:
+            self.drs_params['DRS_PLOT'] = 0
+        # ---------------------------------------------------------------------
+        # set up array to store inputs/outputs
+        self.drs_params['INPUTS'] = OrderedDict()
+        self.drs_params['OUTPUTS'] = OrderedDict()
+        self.drs_params.set_sources(['INPUTS', 'OUTPUTS'], func_name)
+        # ---------------------------------------------------------------------
+        # load ICDP config file
+        logthis = not quiet
+        cargs = [self.drs_params, 'ICDP_NAME',]
+        ckwargs = dict(required=True, logthis=logthis)
+        self.drs_params = _load_other_config_file(*cargs, **ckwargs)
+        # ---------------------------------------------------------------------
+        # load keywords
+        try:
+            kout = spirouConfig.GetKeywordArguments(self.drs_params)
+            self.drs_params, warnlogs = kout
+            # print warning logs
+            for warnlog in warnlogs:
+                WLOG(self.drs_params, 'warning', warnlog)
+        except spirouConfig.ConfigError as e:
+            WLOG(self.drs_params, e.level, e.message)
+
     def recipe_setup(self, fkwargs):
         """
         Interface between "recipe", inputs to function ("fkwargs") and argparse
         parser (inputs from command line)
 
-        :param recipe: DrsRecipe instance, the Drs Recipe object
         :param fkwargs: dictionary, a dictionary where the keys match
-                        arguments/keyword arguments in recipe (without -/--), and
-                        the values are those to set in the output
+                        arguments/keyword arguments in recipe (without -/--),
+                        and the values are those to set in the output
                         (set to None for not value set)
 
-        :return params:  dictionary, a dictionary where the keys match arguments/
-                         keywords (without -/--) and values are the values to be
-                         used for this recipe
+        :return params:  dictionary, a dictionary where the keys match
+                         arguments/keywords (without -/--) and values are the
+                         values to be used for this recipe
         """
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
         parser = DRSArgumentParser(self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
-                                   usage=self.drs_usage())
+                                   usage=self._drs_usage())
         # deal with function call
-        self.parse_args(fkwargs)
+        self._parse_args(fkwargs)
         # ---------------------------------------------------------------------
         # add arguments from recipe
         for rarg in self.args:
@@ -821,11 +893,10 @@ class DrsRecipe(object):
 
     def option_manager(self):
         """
-        Takes all the optional parameters and deals with them.
+        Takes all the optional parameters and deals with them (i.e. puts them
+        into self.drs_params
 
-        :param recipe:
-        :param input_parameters:
-        :return:
+        :return None:
         """
         func_name = __NAME__ + '.DrsRecipe.option_manager()'
         # get drs params
@@ -892,6 +963,7 @@ class DrsRecipe(object):
         Add an argument to the recipe
 
         :param name: string or None, the name and reference of the argument
+        :param kwargs: arguments that can be assigned to DrsArgument kwargs
 
         :return None:
         """
@@ -912,17 +984,7 @@ class DrsRecipe(object):
         Add a keyword argument to the recipe
 
         :param name: string or None, the name and reference of the argument
-        :param dtype: type or None, the type expected for the argument (will
-                      raise error if not this type)
-
-        :param default: object or None, the default value for the keyword
-                        argument
-        :param helpstr: string or  None, the help string
-        :param options: list of strings or None: the options allowed for
-                        keyword argument
-        :param altnames: list of strings or None: alternative names for the
-                         reference of the argument
-
+        :param kwargs: arguments that can be assigned to DrsArgument kwargs
         :return None:
         """
         if name is None:
@@ -935,360 +997,6 @@ class DrsRecipe(object):
         name = keywordargument.name
         # set to keyword argument
         self.kwargs[name] = keywordargument
-
-    def parse_args(self, dictionary):
-        """
-        Parse a dictionary of arguments into argparser in the format required
-        to match up to the recipe.args/recipe.kwarg assigned to this
-        DrsRecipe by calls to "recipe.arg" and "recipe.kwarg"
-
-        :param dictionary: list of key value pairs where the keys must match
-                           the names (without "-" and "--") of the arguments
-                           and keyword arguments. This is then passed into
-                           "recipe.str_arg_list" for parsing into argparser
-                           directly (and overiding run time arguments)
-        :return None:
-        """
-        self.str_arg_list = []
-        if dictionary is None:
-            return None
-        for argname in self.args:
-            # check if key in dictionary
-            if argname not in dictionary:
-                continue
-            # get value(s)
-            values = dictionary[argname]
-            # pass this argument
-            self.parse_arg(self.args[argname], values)
-        for kwargname in self.kwargs:
-            # check if key in dictionary
-            if kwargname not in dictionary:
-                continue
-            # get value(s)
-            values = dictionary[kwargname]
-            # pass this argument
-            self.parse_arg(self.kwargs[kwargname], values)
-        # check if we have parameters
-        if len(self.str_arg_list) == 0:
-            self.str_arg_list = None
-
-    def parse_arg(self, arg, values):
-        """
-        Parse argument to "recipe.str_arg_list"
-
-        :param arg: str, the name of the argument (with "-" and "--" for
-                    optional arguments)
-        :param values: object, the object to push into the value of argument.
-                       The string representation of this value must be
-                       readable by argparser i.e. int/float/str etc
-        :return None:
-        """
-        # check that value is not None
-        if values is None:
-            return
-        # if we have an optional argument
-        if '-' in arg.argname:
-            strfmt = '{0}={1}'
-        # if we have a positional argument
-        else:
-            strfmt = '{1}'
-        # now add these arguments (as a string) to str_arg_list
-        if type(values) == list:
-            for value in values:
-                strarg = [arg.argname, value]
-                self.str_arg_list.append(strfmt.format(*strarg))
-        else:
-            strarg = [arg.argname, values]
-            self.str_arg_list.append(strfmt.format(*strarg))
-
-    def make_specials(self):
-        """
-        Make special arguments based on pre-defined static properties
-        (i.e. a valid kwargs for parser.add_argument)
-
-        Currently adds the following special arguments:
-
-        --listing, --list     List the files in the given input directory
-
-        :return None:
-        """
-        # make listing functionality
-        lprops = make_listing()
-        name = lprops['name']
-        listing = DrsArgument(name, kind='special', altnames=lprops['altnames'])
-        listing.assign_properties(lprops)
-        self.specialargs[name] = listing
-
-        # make listing all functionality
-        aprops = make_alllisting()
-        name = aprops['name']
-        alllist = DrsArgument(name, kind='special', altnames=aprops['altnames'])
-        alllist.assign_properties(aprops)
-        self.specialargs[name] = alllist
-
-        # make version functionality
-        vprops = make_version()
-        name = vprops['name']
-        version = DrsArgument(name, kind='special', altnames=vprops['altnames'])
-        version.assign_properties(vprops)
-        self.specialargs[name] = version
-
-        # make info functionality
-        iprops = make_info()
-        name = iprops['name']
-        info = DrsArgument(name, kind='special', altnames=iprops['altnames'])
-        info.assign_properties(iprops)
-        self.specialargs[name] = info
-
-    def drs_usage(self):
-        # get positional arguments
-        pos_args = list(self.args.keys())
-        if len(pos_args) == 0:
-            pos_args = ['[positional arguments]']
-        # define usage
-        uargs = [self.name, ' '.join(pos_args)]
-        usage = '{0}.py {1} [options]'.format(*uargs)
-        return usage
-
-    def get_drs_params(self, quiet=False, **kwargs):
-        func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
-        const_name = 'spirouConfig.Constants'
-        # Get config parameters from primary file
-        try:
-            self.drs_params, warn_messages = spirouConfig.ReadConfigFile()
-        except ConfigError as e:
-            WLOG(self.__error__(), e.level, e.message)
-            self.drs_params, warn_messages = self.__error__(), []
-        # ---------------------------------------------------------------------
-        # assign parameters from kwargs
-        for kwarg in kwargs:
-            self.drs_params[kwarg] = kwargs[kwarg]
-            self.drs_params.set_source(kwarg, func_name + ' --kwargs')
-        # ---------------------------------------------------------------------
-        # log warning messages
-        if len(warn_messages) > 0:
-            WLOG(self.drs_params, 'warning', warn_messages)
-        # ---------------------------------------------------------------------
-        # set recipe name
-        while self.name.endswith('.py'):
-            self.name = self.name[:-3]
-        self.drs_params['RECIPE'] = self.name
-        self.drs_params.set_source('RECIPE', func_name)
-        # ---------------------------------------------------------------------
-        # get variables from spirouConst
-        self.drs_params['DRS_NAME'] = CONSTANTS.NAME()
-        self.drs_params['DRS_VERSION'] = CONSTANTS.VERSION()
-        self.drs_params.set_sources(['DRS_NAME', 'DRS_VERSION'], const_name)
-        # get program name
-        self.drs_params['PROGRAM'] = CONSTANTS.PROGRAM(self.drs_params)
-        self.drs_params.set_source('PROGRAM', func_name)
-        # TODO: Phase out use of LOG_OPT
-        self.drs_params['LOG_OPT'] = self.drs_params['PROGRAM']
-        self.drs_params.set_source('LOG_OPT', func_name)
-        # check input parameters
-        self.drs_params = spirouConfig.CheckCparams(self.drs_params)
-        # ---------------------------------------------------------------------
-        # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
-        if not self.drs_params['DRS_INTERACTIVE']:
-            self.drs_params['DRS_PLOT'] = 0
-        # ---------------------------------------------------------------------
-        # set up array to store inputs/outputs
-        self.drs_params['INPUTS'] = OrderedDict()
-        self.drs_params['OUTPUTS'] = OrderedDict()
-        self.drs_params.set_sources(['INPUTS', 'OUTPUTS'], func_name)
-        # ---------------------------------------------------------------------
-        # load ICDP config file
-        logthis = not quiet
-        self.drs_params = load_other_config_file(self.drs_params, 'ICDP_NAME',
-                                                 required=True, logthis=logthis)
-        # ---------------------------------------------------------------------
-        # load keywords
-        try:
-            kout = spirouConfig.GetKeywordArguments(self.drs_params)
-            self.drs_params, warnlogs = kout
-            # print warning logs
-            for warnlog in warnlogs:
-                WLOG(self.drs_params, 'warning', warnlog)
-        except spirouConfig.ConfigError as e:
-            WLOG(self.drs_params, e.level, e.message)
-
-    def valid_directory(self, directory, return_error=False):
-
-        # ---------------------------------------------------------------------
-        # Make sure directory is a string
-        if type(directory) not in [str, np.str_]:
-            emsg = 'directory = "{0}" is not valid (type = {1})'
-            eargs = [directory, type(directory)]
-            if return_error:
-                return False, [emsg.format(*eargs)]
-            else:
-                return False
-        # ---------------------------------------------------------------------
-        # step 1: check if directory is full absolute path
-        if os.path.exists(directory):
-            if DEBUG:
-                'Directory found (absolute path): {0}'.format(directory)
-            if return_error:
-                return True, directory, []
-            else:
-                return False, directory
-        # ---------------------------------------------------------------------
-        # step 2: check if directory is in input directory
-        input_dir = self.get_input_dir()
-        test_path = os.path.join(input_dir, directory)
-        if os.path.exists(test_path):
-            if return_error:
-                return True, test_path, []
-            else:
-                return True, test_path
-        # ---------------------------------------------------------------------
-        # else deal with errors
-        emsgs = ['Directory = "{0}" not found'.format(directory),
-                 '\tTried:',
-                 '\t\t{0}'.format(directory),
-                 '\t\t{0}'.format(test_path)]
-        return False, None, emsgs
-
-    def valid_files(self, argname, files, directory=None, return_error=False,
-                    alltypelist=None):
-        # deal with no current typelist (alltypelist=None)
-        if alltypelist is None:
-            alltypelist = []
-        # deal with non-lists
-        if type(files) not in [list, np.ndarray]:
-            files = [files]
-        # loop around files
-        all_files = []
-        all_types = []
-        for filename in files:
-            # check single file
-            out = self.valid_file(argname, filename, directory, True,
-                                  alltypelist=alltypelist)
-            file_valid, filelist, typelist, error = out
-            # if single file is not valid return the error (and False)
-            if not file_valid:
-                if return_error:
-                    return False, None, None, error
-                else:
-                    return False, None, None
-            # else we append filelist to all_files
-            else:
-                all_files += filelist
-                all_types += typelist
-        # if we are at this point everything passed and file is valid
-        if return_error:
-            return True, all_files, all_types, []
-        else:
-            return True, all_files, all_types, []
-
-    def valid_file(self, argname, filename, directory=None, return_error=False,
-                   alltypelist=None):
-        """
-        Test for whether a file is valid for this recipe
-
-        :param filename: string, the filename to test
-        :param return_error: bool, if True returns error list
-
-        :return cond: bool, if True file is valid, if False file is not valid
-        :return filelist: list of strings, list of files found
-        :return error: list of strings, if there was an error (cond = False)
-                       and return_error=True, return a list of strings
-                       describing the error
-        """
-        # get drs parameters
-        params = self.drs_params
-        # deal with no current typelist (alltypelist=None)
-        if alltypelist is None:
-            alltypelist = []
-        # get the argument that we are checking the file of
-        arg = get_arg(self, argname)
-        drs_files = arg.files
-        drs_logic = arg.filelogic
-        # storage of errors
-        errors = []
-        # ---------------------------------------------------------------------
-        # Step 1: Check file location is valid
-        # ---------------------------------------------------------------------
-        # if debug mode print progress
-        if DEBUG:
-            dmsg = 'DEBUG: Checking file locations for "{0}"'
-            WLOG(params, 'info', dmsg.format(filename))
-        # perform check
-        out = check_file_location(self, argname, directory, filename)
-        valid, files, error = out
-        if not valid:
-            if return_error:
-                return False, None, None, error
-            else:
-                return False, None, None
-        errors += error
-
-        # ---------------------------------------------------------------------
-        # The next steps are different depending on the DRS file and
-        # we may have multiple files
-        out_files = []
-        out_types = []
-        # loop around filename
-        for filename in files:
-            # loop around file types
-            for drs_file in drs_files:
-                # if in debug mode print progres
-                if DEBUG:
-                    dmsg = 'DEBUG: Checking drs_file="{0}" filename="{1}"'
-                    dargs = [drs_file.name, os.path.basename(filename)]
-                    WLOG(params, 'info', dmsg.format(*dargs))
-                # -------------------------------------------------------------
-                # Step 2: Check extension
-                # -------------------------------------------------------------
-                # get extension
-                ext = drs_file.ext
-                # check the extension
-                exargs = [self, argname, filename]
-                valid1, error = check_file_extension(*exargs, ext=ext)
-                errors += error
-                # -------------------------------------------------------------
-                # Step 3: Check file header is valid
-                # -------------------------------------------------------------
-                # this step is just for 'fits' files, if not fits
-                #    files we can return here
-                if '.fits' in ext:
-                    out = check_file_header(self, argname, drs_file, filename,
-                                            directory)
-                    valid2, filetype, error = out
-                    errors += error
-                else:
-                    valid2 = True
-                    filetype = None
-                # -------------------------------------------------------------
-                # Step 4: Check exclusivity
-                # -------------------------------------------------------------
-                exargs = [self, filename, argname, drs_file, drs_logic,
-                          out_types, alltypelist]
-                valid3, error = check_file_exclusivity(*exargs)
-                errors += error
-
-                # -------------------------------------------------------------
-                # Step 5: Check exclusivity
-                # -------------------------------------------------------------
-                valid = valid1 and valid2 and valid3
-                # check validity and append if valid
-                if valid:
-                    out_files.append(filename)
-                    out_types.append(filetype)
-                    # break out the inner loop if valid (we don't need to
-                    #    check other drs_files)
-                    break
-        # ---------------------------------------------------------------------
-        # deal with return types:
-        # a. if we don't have the right number of files then we failed
-        if len(out_files) != len(files):
-            return False, None, None, errors
-        # b. if we did but expect an error returned return True with an error
-        elif return_error:
-            return True, out_files, out_types, []
-        # c. if we did and don't expect an error return True without an error
-        else:
-            return True, out_files, out_types
 
     def generate_runs_from_filelist(self, __files__, __filters__=None,
                                     **kwargs):
@@ -1324,15 +1032,14 @@ class DrsRecipe(object):
                        expects "x" as an argument
         :return:
         """
-        func_name = __NAME__ + '.DrsRecipe.generate_runs_from_filelist()'
         # get input directory
-        input_dir = self.get_input_dir()
+        input_dir = self._get_input_dir()
         # get directories and filter out unusable file (due to wrong location)
-        filelist = dir_file_filter(input_dir, __files__)
+        filelist = _dir_file_filter(input_dir, __files__)
         # from the unique directory list search for index files (should be one
         #   per file)
         dir_list = list(filelist.keys())
-        index_files = get_index_files(self, input_dir, dir_list)
+        index_files = _get_index_files(self, input_dir, dir_list)
         # ---------------------------------------------------------------------
         # loop around arguments
         for argname in self.args:
@@ -1347,20 +1054,18 @@ class DrsRecipe(object):
             # look for it in the index file else we need to look in
             # **kwargs
             elif dtype not in ['files', 'file']:
-                self.get_non_file_arg(argname, kwargs, kind='arg')
+                self._get_non_file_arg(argname, kwargs, kind='arg')
             # -----------------------------------------------------------------
             # else we are dealing with a set of files
             else:
-                self.get_file_arg(argname, index_files, filelist, dir_list,
-                                  kind='arg', filters=__filters__)
+                self._get_file_arg(argname, index_files, filelist, dir_list,
+                                   kind='arg', filters=__filters__)
         # ---------------------------------------------------------------------
         # loop around keyword arguments
         for kwargname in self.kwargs:
-            # get dtype for arg
-            dtype = self.kwargs[kwargname].dtype
             # -----------------------------------------------------------------
             # just get arg from kwargs
-            self.get_non_file_arg(kwargname, kwargs, kind='kwarg')
+            self._get_non_file_arg(kwargname, kwargs, kind='kwarg')
 
         # ---------------------------------------------------------------------
         # from the above process we now have the following:
@@ -1380,7 +1085,7 @@ class DrsRecipe(object):
         cmd = '{0}.py'.format(self.name)
         # ---------------------------------------------------------------------
         # first deal with positional arguments
-        cmd_args_groups = self.generate_arg_groups()
+        cmd_args_groups = self._generate_arg_groups()
         # ---------------------------------------------------------------------
         # now deal with keyword arguments
         cmd_kwargs = ''
@@ -1404,7 +1109,302 @@ class DrsRecipe(object):
         #       runs[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
         return runs
 
-    def generate_arg_groups(self):
+    # =========================================================================
+    # Private Methods (Not to be used externally to spirouRecipe.py)
+    # =========================================================================
+    def _parse_args(self, dictionary):
+        """
+        Parse a dictionary of arguments into argparser in the format required
+        to match up to the recipe.args/recipe.kwarg assigned to this
+        DrsRecipe by calls to "recipe.arg" and "recipe.kwarg"
+
+        :param dictionary: list of key value pairs where the keys must match
+                           the names (without "-" and "--") of the arguments
+                           and keyword arguments. This is then passed into
+                           "recipe.str_arg_list" for parsing into argparser
+                           directly (and overiding run time arguments)
+        :return None:
+        """
+        self.str_arg_list = []
+        if dictionary is None:
+            return None
+        for argname in self.args:
+            # check if key in dictionary
+            if argname not in dictionary:
+                continue
+            # get value(s)
+            values = dictionary[argname]
+            # pass this argument
+            self._parse_arg(self.args[argname], values)
+        for kwargname in self.kwargs:
+            # check if key in dictionary
+            if kwargname not in dictionary:
+                continue
+            # get value(s)
+            values = dictionary[kwargname]
+            # pass this argument
+            self._parse_arg(self.kwargs[kwargname], values)
+        # check if we have parameters
+        if len(self.str_arg_list) == 0:
+            self.str_arg_list = None
+
+    def _parse_arg(self, arg, values):
+        """
+        Parse argument to "recipe.str_arg_list"
+
+        :param arg: str, the name of the argument (with "-" and "--" for
+                    optional arguments)
+        :param values: object, the object to push into the value of argument.
+                       The string representation of this value must be
+                       readable by argparser i.e. int/float/str etc
+        :return None:
+        """
+        # check that value is not None
+        if values is None:
+            return
+        # if we have an optional argument
+        if '-' in arg.argname:
+            strfmt = '{0}={1}'
+        # if we have a positional argument
+        else:
+            strfmt = '{1}'
+        # now add these arguments (as a string) to str_arg_list
+        if type(values) == list:
+            for value in values:
+                strarg = [arg.argname, value]
+                self.str_arg_list.append(strfmt.format(*strarg))
+        else:
+            strarg = [arg.argname, values]
+            self.str_arg_list.append(strfmt.format(*strarg))
+
+    def _make_specials(self):
+        """
+        Make special arguments based on pre-defined static properties
+        (i.e. a valid kwargs for parser.add_argument)
+
+        Currently adds the following special arguments:
+
+        --listing, --list     List the files in the given input directory
+
+        :return None:
+        """
+        # make listing functionality
+        lprops = _make_listing()
+        name = lprops['name']
+        listing = DrsArgument(name, kind='special', altnames=lprops['altnames'])
+        listing.assign_properties(lprops)
+        self.specialargs[name] = listing
+
+        # make listing all functionality
+        aprops = _make_alllisting()
+        name = aprops['name']
+        alllist = DrsArgument(name, kind='special', altnames=aprops['altnames'])
+        alllist.assign_properties(aprops)
+        self.specialargs[name] = alllist
+
+        # make version functionality
+        vprops = _make_version()
+        name = vprops['name']
+        version = DrsArgument(name, kind='special', altnames=vprops['altnames'])
+        version.assign_properties(vprops)
+        self.specialargs[name] = version
+
+        # make info functionality
+        iprops = _make_info()
+        name = iprops['name']
+        info = DrsArgument(name, kind='special', altnames=iprops['altnames'])
+        info.assign_properties(iprops)
+        self.specialargs[name] = info
+
+    def _drs_usage(self):
+        # get positional arguments
+        pos_args = list(self.args.keys())
+        if len(pos_args) == 0:
+            pos_args = ['[positional arguments]']
+        # define usage
+        uargs = [self.name, ' '.join(pos_args)]
+        usage = '{0}.py {1} [options]'.format(*uargs)
+        return usage
+
+    def _valid_directory(self, directory, return_error=False):
+
+        # ---------------------------------------------------------------------
+        # Make sure directory is a string
+        if type(directory) not in [str, np.str_]:
+            emsg = 'directory = "{0}" is not valid (type = {1})'
+            eargs = [directory, type(directory)]
+            if return_error:
+                return False, [emsg.format(*eargs)]
+            else:
+                return False
+        # ---------------------------------------------------------------------
+        # step 1: check if directory is full absolute path
+        if os.path.exists(directory):
+            if DEBUG:
+                'Directory found (absolute path): {0}'.format(directory)
+            if return_error:
+                return True, directory, []
+            else:
+                return False, directory
+        # ---------------------------------------------------------------------
+        # step 2: check if directory is in input directory
+        input_dir = self._get_input_dir()
+        test_path = os.path.join(input_dir, directory)
+        if os.path.exists(test_path):
+            if return_error:
+                return True, test_path, []
+            else:
+                return True, test_path
+        # ---------------------------------------------------------------------
+        # else deal with errors
+        emsgs = ['Directory = "{0}" not found'.format(directory),
+                 '\tTried:',
+                 '\t\t{0}'.format(directory),
+                 '\t\t{0}'.format(test_path)]
+        return False, None, emsgs
+
+    def _valid_files(self, argname, files, directory=None, return_error=False,
+                     alltypelist=None):
+        # deal with no current typelist (alltypelist=None)
+        if alltypelist is None:
+            alltypelist = []
+        # deal with non-lists
+        if type(files) not in [list, np.ndarray]:
+            files = [files]
+        # loop around files
+        all_files = []
+        all_types = []
+        for filename in files:
+            # check single file
+            out = self._valid_file(argname, filename, directory, True,
+                                   alltypelist=alltypelist)
+            file_valid, filelist, typelist, error = out
+            # if single file is not valid return the error (and False)
+            if not file_valid:
+                if return_error:
+                    return False, None, None, error
+                else:
+                    return False, None, None
+            # else we append filelist to all_files
+            else:
+                all_files += filelist
+                all_types += typelist
+        # if we are at this point everything passed and file is valid
+        if return_error:
+            return True, all_files, all_types, []
+        else:
+            return True, all_files, all_types, []
+
+    def _valid_file(self, argname, filename, directory=None, return_error=False,
+                    alltypelist=None):
+        """
+        Test for whether a file is valid for this recipe
+
+        :param filename: string, the filename to test
+        :param return_error: bool, if True returns error list
+
+        :return cond: bool, if True file is valid, if False file is not valid
+        :return filelist: list of strings, list of files found
+        :return error: list of strings, if there was an error (cond = False)
+                       and return_error=True, return a list of strings
+                       describing the error
+        """
+        # get drs parameters
+        params = self.drs_params
+        # deal with no current typelist (alltypelist=None)
+        if alltypelist is None:
+            alltypelist = []
+        # get the argument that we are checking the file of
+        arg = _get_arg(self, argname)
+        drs_files = arg.files
+        drs_logic = arg.filelogic
+        # storage of errors
+        errors = []
+        # ---------------------------------------------------------------------
+        # Step 1: Check file location is valid
+        # ---------------------------------------------------------------------
+        # if debug mode print progress
+        if DEBUG:
+            dmsg = 'DEBUG: Checking file locations for "{0}"'
+            WLOG(params, 'info', dmsg.format(filename))
+        # perform check
+        out = _check_file_location(self, argname, directory, filename)
+        valid, files, error = out
+        if not valid:
+            if return_error:
+                return False, None, None, error
+            else:
+                return False, None, None
+        errors += error
+
+        # ---------------------------------------------------------------------
+        # The next steps are different depending on the DRS file and
+        # we may have multiple files
+        out_files = []
+        out_types = []
+        # loop around filename
+        for filename in files:
+            # loop around file types
+            for drs_file in drs_files:
+                # if in debug mode print progres
+                if DEBUG:
+                    dmsg = 'DEBUG: Checking drs_file="{0}" filename="{1}"'
+                    dargs = [drs_file.name, os.path.basename(filename)]
+                    WLOG(params, 'info', dmsg.format(*dargs))
+                # -------------------------------------------------------------
+                # Step 2: Check extension
+                # -------------------------------------------------------------
+                # get extension
+                ext = drs_file.ext
+                # check the extension
+                exargs = [self, argname, filename]
+                valid1, error = _check_file_extension(*exargs, ext=ext)
+                errors += error
+                # -------------------------------------------------------------
+                # Step 3: Check file header is valid
+                # -------------------------------------------------------------
+                # this step is just for 'fits' files, if not fits
+                #    files we can return here
+                if '.fits' in ext:
+                    out = _check_file_header(self, argname, drs_file, filename,
+                                             directory)
+                    valid2, filetype, error = out
+                    errors += error
+                else:
+                    valid2 = True
+                    filetype = None
+                # -------------------------------------------------------------
+                # Step 4: Check exclusivity
+                # -------------------------------------------------------------
+                exargs = [self, filename, argname, drs_file, drs_logic,
+                          out_types, alltypelist]
+                valid3, error = _check_file_exclusivity(*exargs)
+                errors += error
+
+                # -------------------------------------------------------------
+                # Step 5: Check exclusivity
+                # -------------------------------------------------------------
+                valid = valid1 and valid2 and valid3
+                # check validity and append if valid
+                if valid:
+                    out_files.append(filename)
+                    out_types.append(filetype)
+                    # break out the inner loop if valid (we don't need to
+                    #    check other drs_files)
+                    break
+        # ---------------------------------------------------------------------
+        # deal with return types:
+        # a. if we don't have the right number of files then we failed
+        if len(out_files) != len(files):
+            return False, None, None, errors
+        # b. if we did but expect an error returned return True with an error
+        elif return_error:
+            return True, out_files, out_types, []
+        # c. if we did and don't expect an error return True without an error
+        else:
+            return True, out_files, out_types
+
+    def _generate_arg_groups(self):
         """
         Generate argument runs from self.args[ARG].value
         (For use after self.get_file_arg and self.get_non_file_arg for
@@ -1443,7 +1443,7 @@ class DrsRecipe(object):
                 # get grouped values and directories
                 #   Note groups returned in following format:
                 #      group[directory][dtype][sequence] = [files]
-                groups = get_file_groups(self, arg)
+                groups = _get_file_groups(self, arg)
                 values = groups[0]
                 dirs = groups[1]
                 dates = groups[-1]
@@ -1467,7 +1467,7 @@ class DrsRecipe(object):
             number_runs = len(directories[file_args[0]])
         elif len(file_args) > 1:
             margs = [self, file_args, arg_list, directories, file_dates]
-            arg_list, number_runs = match_multi_arg_lists(*margs)
+            arg_list, number_runs = _match_multi_arg_lists(*margs)
         else:
             number_runs = 1
         # ---------------------------------------------------------------------
@@ -1497,7 +1497,7 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         return cmd_args_groups
 
-    def get_non_file_arg(self, argname, kwargs, kind='arg'):
+    def _get_non_file_arg(self, argname, kwargs, kind='arg'):
         """
         Deal with obtaining and setting the values for non file arguments
 
@@ -1531,8 +1531,8 @@ class DrsRecipe(object):
         else:
             self.kwargs[argname] = arg
 
-    def get_file_arg(self, argname, index_files, filelist, dir_list,
-                     kind='arg', filters=None):
+    def _get_file_arg(self, argname, index_files, filelist, dir_list,
+                      kind='arg', filters=None):
         """
         Deal with obtaining and sorting the values for file arguments
 
@@ -1558,22 +1558,22 @@ class DrsRecipe(object):
             directory = dir_list[it]
             dir_filelist = filelist[directory]
             # get index
-            index = get_index_data(self.drs_params, index_file, directory)
+            index = _get_index_data(self.drs_params, index_file, directory)
             # apply filters
-            index = filter_index(self.drs_params, index, filters)
+            index = _filter_index(self.drs_params, index, filters)
             # deal with no index
             if index is None:
                 continue
             # else get list of valid files for this argument
             gargs = [arg, index, directory, dir_filelist]
-            arg.value += self.get_files_valid_for_arg(*gargs)
+            arg.value += self._get_files_valid_for_arg(*gargs)
         # update self
         if kind == 'arg':
             self.args[argname] = arg
         else:
             self.kwargs[argname] = arg
 
-    def get_input_dir(self):
+    def _get_input_dir(self):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
@@ -1605,7 +1605,7 @@ class DrsRecipe(object):
         # return input_dir
         return input_dir
 
-    def get_files_valid_for_arg(self, arg, index, directory, dfilelist):
+    def _get_files_valid_for_arg(self, arg, index, directory, dfilelist):
         """
         Gets all files in filelist that are in "index" that meet the
         requirements of "arg.files"
@@ -1615,7 +1615,7 @@ class DrsRecipe(object):
                       directory
         :param directory: string, the sub-directory tree (night name) under
                           the input_dir
-        :param filelist: list of strings, the base filenames of the files
+        :param dfilelist: list of strings, the base filenames of the files
                          in "directory" that we want to filter from
 
         :return valid_files: dictionary, the files (from "filelist" that are
@@ -1632,7 +1632,7 @@ class DrsRecipe(object):
         ifile = os.path.join(directory, INDEX_FILE)
         icol = INDEX_FILE_NAME_COL
         # get input directory
-        input_dir = self.get_input_dir()
+        input_dir = self._get_input_dir()
         # get path of directory
         path = os.path.join(input_dir, directory)
         # get params from recipe
@@ -1705,7 +1705,7 @@ class DrsRecipe(object):
                 tmp_file.directory = directory
                 tmp_file.inputdir = input_dir
                 # make a header from index data table
-                tmp_file.index = make_dict_from_table(indexdata[mask][v_it])
+                tmp_file.index = _make_dict_from_table(indexdata[mask][v_it])
                 # append to list
                 valid_entries.append(tmp_file)
             valid_files += valid_entries
@@ -1751,7 +1751,7 @@ class DrsRecipe(object):
 # =============================================================================
 # Define file check functions
 # =============================================================================
-def check_file_location(recipe, argname, directory, filename):
+def _check_file_location(recipe, argname, directory, filename):
     """
     Checks file location is valid on:
         "filename" as full link to file (including wildcards)
@@ -1775,7 +1775,7 @@ def check_file_location(recipe, argname, directory, filename):
     if directory is not None:
         input_dir = str(directory)
     else:
-        input_dir = recipe.get_input_dir()
+        input_dir = recipe._get_input_dir()
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
@@ -1870,12 +1870,12 @@ def check_file_location(recipe, argname, directory, filename):
     return False, None, emsgs
 
 
-def check_file_extension(recipe, argname, filename, ext=None):
+def _check_file_extension(recipe, argname, filename, ext=None):
     """
     If '.fits' file checks the file extension is valid.
 
     :param argname: string, the argument name (for error reporting)
-    :param files: list of strings, the files to check
+    :param filename: list of strings, the files to check
     :param ext: string or None, the extension to check, if None skips
 
     :return cond: bool, True if extension valid
@@ -1903,21 +1903,21 @@ def check_file_extension(recipe, argname, filename, ext=None):
         return False, emsgs
 
 
-def check_file_header(recipe, argname, drs_file, filename, directory):
+def _check_file_header(recipe, argname, drs_file, filename, directory):
     # get the input directory
-    inputdir = recipe.get_input_dir()
+    inputdir = recipe._get_input_dir()
     # create an instance of this drs_file with the filename set
     file_instance = drs_file.new(filename=filename, recipe=recipe)
     file_instance.read()
     # set the directory
-    file_instance.directory = get_uncommon_path(directory, inputdir)
+    file_instance.directory = _get_uncommon_path(directory, inputdir)
     # -----------------------------------------------------------------
     # use file_instances check file header method
     return file_instance.check_file_header(argname=argname, debug=DEBUG)
 
 
-def check_file_exclusivity(recipe, filename, argname, drs_file, logic,
-                           outtypes, alltypelist=None):
+def _check_file_exclusivity(recipe, filename, argname, drs_file, logic,
+                            outtypes, alltypelist=None):
     # get drs parameters
     params = recipe.drs_params
     # deal with no alltypelist
@@ -1971,7 +1971,7 @@ def check_file_exclusivity(recipe, filename, argname, drs_file, logic,
 # =============================================================================
 # Define run making functions
 # =============================================================================
-def dir_file_filter(inputdir, infilelist):
+def _dir_file_filter(inputdir, infilelist):
     """
     Take an input directory "inputdir" and a file list "infilelist" and only
     keep those files that are within "inputdir" also extract the sub-directory
@@ -2009,7 +2009,7 @@ def dir_file_filter(inputdir, infilelist):
     return out_dict
 
 
-def get_index_files(recipe, inputdir, outudirlist):
+def _get_index_files(recipe, inputdir, outudirlist):
     """
     From a list of directories "outudirlist" and an input directory root
     "inputdir" find all the current "INDEX_FILE" files, if they don't exist
@@ -2044,7 +2044,7 @@ def get_index_files(recipe, inputdir, outudirlist):
     return index_list
 
 
-def get_index_data(p, index_file, directory):
+def _get_index_data(p, index_file, directory):
     """
     Get the index data from "index_file" in directory "directory"
 
@@ -2072,7 +2072,7 @@ def get_index_data(p, index_file, directory):
     return indexdata
 
 
-def filter_index(p, index, filters=None):
+def _filter_index(p, index, filters=None):
     """
     Filters index by filters. Filters are expected to be in a dictionary format
     in the form:
@@ -2124,37 +2124,7 @@ def filter_index(p, index, filters=None):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def get_dir_list(dirroot, limit=np.inf):
-    """
-    Get the list of sub-directories from a root folder.
-    Must contain at least 1 file to be a valid directory.
-
-    :param dirroot: string, the root directory to search for sub-directories
-    :param limit: int, the limit after which we do not look for more directories
-
-    :return: list of strings, the list of directories up to the number "limit"
-    """
-    dir_list = []
-    for root, dirs, files in os.walk(dirroot):
-        # skip dirs that are empty (or full of directories)
-        if len(files) == 0:
-            continue
-        # do not display all
-        if len(dir_list) > limit:
-            dir_list.append('...')
-            return dir_list
-        # find the relative root of directories compared to ARG_FILE_DIR
-        relroot = get_uncommon_path(root, dirroot)
-        # append relative roots
-        dir_list.append(relroot)
-    # if empty list add none found
-    if len(dir_list) == 0:
-        dir_list = ['No valid directories found.']
-    # return night_dirs
-    return dir_list
-
-
-def get_uncommon_path(path1, path2):
+def _get_uncommon_path(path1, path2):
     """
     Get the uncommon path of "path1" compared to "path2"
 
@@ -2173,8 +2143,8 @@ def get_uncommon_path(path1, path2):
     return path1.split(common)[-1]
 
 
-def get_file_list(path, limit=None, ext=None, recursive=False,
-                  dir_only=False, list_all=False):
+def _get_file_list(path, limit=None, ext=None, recursive=False,
+                   dir_only=False, list_all=False):
     """
     Get a list of files in a path
 
@@ -2218,7 +2188,7 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
         if not dir_only:
             # add root to file list (minus path)
             if root != path:
-                directory = get_uncommon_path(root, path) + os.sep
+                directory = _get_uncommon_path(root, path) + os.sep
                 # count number of separators in directory
                 num = directory.count(os.sep)
                 level = levelsep * num
@@ -2227,6 +2197,9 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
             # add root to file list (minus path)
             for filename in files:
                 filelevel = level + levelsep
+                # skip "index.fits"
+                if filename == 'index.fits':
+                    continue
                 # do not display all (if limit reached)
                 if len(file_list) > limit:
                     file_list.append(filelevel + '...')
@@ -2240,7 +2213,7 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
         elif len(files) > 0:
             # add root to file list (minus path)
             if root != path:
-                directory = get_uncommon_path(root, path) + os.sep
+                directory = _get_uncommon_path(root, path) + os.sep
                 # append to list
                 file_list.append(level + levelsep + directory)
 
@@ -2251,7 +2224,7 @@ def get_file_list(path, limit=None, ext=None, recursive=False,
     return file_list, limit_reached
 
 
-def get_arg(recipe, argname):
+def _get_arg(recipe, argname):
     """
     Find an argument in the DrsRecipes argument dictionary or if not found
     find argument in the DrsRecipes keyword argument dictionary or it not found
@@ -2273,7 +2246,7 @@ def get_arg(recipe, argname):
     return arg
 
 
-def get_exposure_set(nums, bad='skip'):
+def _get_exposure_set(nums, bad='skip'):
     """
     Take a set of number that are assumed to represent sequences and group
     the by sequence set
@@ -2281,9 +2254,9 @@ def get_exposure_set(nums, bad='skip'):
 
         group as following: 1,2,2,2,3,3,3,4,5,6,6,6,6
 
-    :param exp_nums: list of int/str, it integers will group the numbers
-                     else will ignore and set the group to -1 if bad="skip" or
-                     creates a new group if bad="new"
+    :param nums: list of int/str, it integers will group the numbers
+                 else will ignore and set the group to -1 if bad="skip" or
+                 creates a new group if bad="new"
     :param bad: string, either "skip" or "new" decides what to do if nums is
                 invalid, if "skip" sets the group to -1, if "new" creates a new
                 group (with just this num in)
@@ -2323,7 +2296,7 @@ def get_exposure_set(nums, bad='skip'):
     return group_numbers
 
 
-def get_file_groups(recipe, arg):
+def _get_file_groups(recipe, arg):
     """
 
     For a file argument of dtype "file"/"files" get the files/directories/
@@ -2349,8 +2322,7 @@ def get_file_groups(recipe, arg):
     """
     # get parameters
     params = recipe.drs_params
-    # get position
-    pos = str(arg.pos)
+    # get number of arguments
     nargs = arg.props['nargs']
     # storage
     directories, filenames, dtypes = [], [], []
@@ -2382,7 +2354,7 @@ def get_file_groups(recipe, arg):
 
     # -------------------------------------------------------------------------
     # group by directory
-    group_files, group_dir , group_dtype = [], [], []
+    group_files, group_dir, group_dtype = [], [], []
     group_exp_set, group_dates = [], []
     for gdir in np.unique(directories):
         # mask directories
@@ -2405,8 +2377,8 @@ def get_file_groups(recipe, arg):
             if arg.limit == 1:
                 exp_sets = np.arange(1, len(exp_nums[dirmask & typemask]) + 1)
             else:
-                exp_sets = get_exposure_set(exp_nums[dirmask & typemask],
-                                            bad='new')
+                exp_sets = _get_exposure_set(exp_nums[dirmask & typemask],
+                                             bad='new')
             # -----------------------------------------------------------------
             # group by exposure set
             for gexp in np.unique(exp_sets):
@@ -2419,7 +2391,7 @@ def get_file_groups(recipe, arg):
                     files = filenames[dirmask & typemask][expmask]
                     gdate = dates[dirmask & typemask][expmask]
                 # deal with only allowing 1 file per set (dtype=file)
-                if (nargs == 1):
+                if nargs == 1:
                     if DEBUG:
                         dmsg = '\tOnly using last entry'
                         WLOG(params, '', dmsg)
@@ -2441,7 +2413,7 @@ def get_file_groups(recipe, arg):
     return groups
 
 
-def get_version_info(p, green='', end=''):
+def _get_version_info(p, green='', end=''):
 
     # get name
     if 'DRS_NAME' in p:
@@ -2454,16 +2426,15 @@ def get_version_info(p, green='', end=''):
     else:
         version = __version__
     # construct version info string
-    imsgs = []
-    imsgs.append(green + '\tNAME: {0}'.format(name))
-    imsgs.append(green + '\tVERSION: {0}'.format(version) + end)
-    imsgs.append(green + '\tAUTHORS: {0}'.format(__author__) + end)
-    imsgs.append(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
-    imsgs.append(green + '\tRELEASE STATUS: {0}'.format(__release__) + end)
+    imsgs = [green + '\tNAME: {0}'.format(name),
+             green + '\tVERSION: {0}'.format(version) + end,
+             green + '\tAUTHORS: {0}'.format(__author__) + end,
+             green + '\tLAST UPDATED: {0}'.format(__date__) + end,
+             green + '\tRELEASE STATUS: {0}'.format(__release__) + end]
     return imsgs
 
 
-def match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
+def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
     """
     Match multiple argument lists so we have the same number of matches as
     the argument which has the most files
@@ -2573,7 +2544,7 @@ def match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
     return arg_list, number_of_runs
 
 
-def make_dict_from_table(itable):
+def _make_dict_from_table(itable):
     """
     Make dictionary from table evaluating the values as float/integers or
     strings
@@ -2601,7 +2572,7 @@ def make_dict_from_table(itable):
     return dict(zip(ikeys, ivalues))
 
 
-def make_listing():
+def _make_listing():
     """
     Make a custom special argument that lists the files in the given
     input directory
@@ -2610,7 +2581,7 @@ def make_listing():
     props = OrderedDict()
     props['name'] = '--listing'
     props['altnames'] = ['--list']
-    props['action'] = MakeListing
+    props['action'] = _MakeListing
     props['nargs'] = 0
     props['help'] = ('Lists the night name directories in the input directory '
                      'if used without a "directory" argument or lists the '
@@ -2620,11 +2591,11 @@ def make_listing():
     return props
 
 
-def make_alllisting():
+def _make_alllisting():
     props = OrderedDict()
     props['name'] = '--listingall'
     props['altnames'] = ['--listall']
-    props['action'] = MakeAllListing
+    props['action'] = _MakeAllListing
     props['nargs'] = 0
     props['help'] = ('Lists ALL the night name directories in the input '
                      'directory if used without a "directory" argument or '
@@ -2632,7 +2603,7 @@ def make_alllisting():
     return props
 
 
-def make_version():
+def _make_version():
     """
     Make a custom special argument that lists the version number
     :return props: dictionary for argparser
@@ -2640,13 +2611,13 @@ def make_version():
     props = OrderedDict()
     props['name'] = '--version'
     props['altnames'] = ['--v']
-    props['action'] = DisplayVersion
+    props['action'] = _DisplayVersion
     props['nargs'] = 0
     props['help'] = 'Displays the current version of this recipe.'
     return props
 
 
-def make_info():
+def _make_info():
     """
     Make a custom special argument that lists a short version of the help
     :return props: dictionary for argparser
@@ -2654,13 +2625,13 @@ def make_info():
     props = OrderedDict()
     props['name'] = '--info'
     props['altnames'] = ['--i', '--usage']
-    props['action'] = DisplayInfo
+    props['action'] = _DisplayInfo
     props['nargs'] = 0
     props['help'] = 'Displays the short version of the help menu'
     return props
 
 
-def load_other_config_file(p, key, logthis=True, required=False):
+def _load_other_config_file(p, key, logthis=True, required=False):
     """
     Load a secondary configuration file from p[key] with wrapper to deal
     with ConfigErrors (pushed to WLOG)
@@ -2696,25 +2667,8 @@ def load_other_config_file(p, key, logthis=True, required=False):
     return pp
 
 
-def print_check_error(p, argname, idnum, filename, recipename, errors,
-                      value):
-    # construct main error message
-    eargs = [argname, idnum, filename, recipename]
-    emsgs = ['Arg "{0}"[{1}]: File "{2}" not valid for recipe "{3}"'
-             ''.format(*eargs)]
-    # add addition error information
-    for error in errors:
-        emsgs.append('\t' + error)
-    # add warning for wildcards
-    if '*' in value:
-        wmsg = 'Arg "{0}"[{1}]: Wildcards found in "{0}"'
-        WLOG(p, 'warning', wmsg.format(argname, idnum, value))
-    # log error
-    WLOG(p, 'error', emsgs, wrap=False)
-
-
-def print_listing_message(parser, recipe, fulldir, dircond=False,
-                          return_string=False, list_all=False):
+def _print_list_msg(parser, recipe, fulldir, dircond=False,
+                    return_string=False, list_all=False):
     """
     Prints the listing message (using "get_file_list")
 
@@ -2730,13 +2684,11 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
     """
 
     # generate a file list
-    filelist, limitreached = get_file_list(fulldir, recursive=True,
-                                           dir_only=dircond, list_all=list_all)
+    filelist, limitreached = _get_file_list(fulldir, recursive=True,
+                                            dir_only=dircond, list_all=list_all)
     # get parameterse from drs_params
     program = recipe.drs_params['RECIPE']
     # construct error message
-    underline = COLOR.UNDERLINE
-
     if return_string:
         green, end = '', ''
         yellow, blue = '', ''
@@ -2758,20 +2710,20 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
     wmsgs = []
     if limitreached:
         if dircond:
-            wmsgs.append('Valid inputs for "directory"')
+            wmsgs.append('Possible inputs for "directory"')
             wmsgs.append('\t(displaying first {0} directories in '
                          'location="{1}")'.format(*wargs))
         else:
-            wmsgs.append('Valid inputs for {2}'.format(*wargs))
+            wmsgs.append('Possible inputs for {2}'.format(*wargs))
             wmsgs.append('\t(displaying first {0} files in '
                          'directory="{1}")'.format(*wargs))
     else:
         if dircond:
-            wmsgs.append('Valid inputs for: "directory"')
+            wmsgs.append('Possible inputs for: "directory"')
             wmsgs.append('\t(displaying all directories in '
                          'location="{1}")'.format(*wargs))
         else:
-            wmsgs.append('Valid inputs for: {2}'.format(*wargs))
+            wmsgs.append('Possible inputs for: {2}'.format(*wargs))
             wmsgs.append('\t(displaying all files in '
                          'directory="{1}")'.format(*wargs))
     # loop around files and add to list
@@ -2785,7 +2737,7 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
         pmsgs.append(green + HEADER + end)
         pmsgs.append(green + ' Listing for: {0}.py'.format(program) + end)
         pmsgs.append(green + HEADER + end)
-        imsgs = get_version_info(recipe.drs_params, green, end)
+        imsgs = _get_version_info(recipe.drs_params, green, end)
         pmsgs += imsgs
         pmsgs.append('')
         pmsgs.append(blue + parser.format_usage() + end)
@@ -2800,11 +2752,6 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
             print(pmsg)
 
 
-
-
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-
