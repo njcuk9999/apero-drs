@@ -9,20 +9,12 @@ Created on 2019-01-08 at 17:26
 
 @author: cook
 """
-
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
-
+from SpirouDRS import spirouConfig
 
 # =============================================================================
 # Define variables
 # =============================================================================
-LANGUAGE = 'ENG'
+LANGUAGE = spirouConfig.Constants.LANGUAGE()
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -53,6 +45,11 @@ class General:
         backsub_help = """
 [BOOLEAN] Whether to do background subtraction
 """
+        blazefile_help = """
+[STRING] Define a custom file to use for blaze correction. If unset uses 
+         closest file from calibDB. Checks for an absolute path and then 
+         checks "directory"
+"""
         combine_help = """
 [BOOLEAN] Whether to combine fits files in file list or to process them 
           separately
@@ -72,6 +69,11 @@ class General:
 """
         extfiber_help = """
 [STRING] Define which fibers to extract
+"""
+        flatfile_help = """
+[STRING] Define a custom file to use for flat correction. If unset uses 
+         closest file from calibDB. Checks for an absolute path and then 
+         checks "directory"
 """
         flipimage_help = """
 [BOOLEAN] Whether to flip fits image
@@ -94,6 +96,11 @@ class General:
 [STRING] Define a custom file to use for tilt  correction. If unset uses 
          closest file from calibDB. Checks for an absolute path and then 
          checks "directory"
+"""
+        wavefile_help = """
+[STRING] Define a custom file to use for the wave solution. If unset uses 
+         closest file from header or calibDB (depending on setup). 
+         Checks for an absolute path and then checks "directory"
 """
 
 
@@ -379,14 +386,6 @@ Extraction recipe for SPIRou @ CFHT
 All files used will be combined into a single frame.
 """
 
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
