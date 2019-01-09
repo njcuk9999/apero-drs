@@ -1,4 +1,5 @@
 from . import spirouRecipe
+from . import spirouFile
 from . import files_spirou as sf
 from . import recipe_descriptions as rd
 from SpirouDRS import spirouConfig
@@ -198,6 +199,7 @@ cal_pp.name = 'cal_preprocess_spirou.py'
 cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
 cal_pp.inputtype = 'raw'
+cal_pp.extension = 'fits'
 cal_pp.description = rd.Preprocess.description
 cal_pp.epilog = rd.Preprocess.example
 cal_pp.arg(pos=0, **directory)
@@ -213,6 +215,7 @@ cal_badpix.name = 'cal_BADPIX_spirou.py'
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
+cal_badpix.extension = 'fits'
 cal_badpix.description = rd.Badpix.description
 cal_badpix.epilog = rd.Badpix.example
 cal_badpix.run_order = 1
@@ -240,6 +243,7 @@ cal_dark.name = 'cal_DARK_spirou.py'
 cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
 cal_dark.intputtype = 'pp'
+cal_dark.extension = 'fits'
 cal_dark.description = rd.Dark.description
 cal_dark.epilog = rd.Dark.example
 cal_dark.run_order = 2
@@ -261,6 +265,7 @@ cal_loc.name = 'cal_loc_RAW_spirou.py'
 cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'
 cal_loc.inputtype = 'pp'
+cal_loc.extension = 'fits'
 cal_loc.description = rd.Localisation.description
 cal_loc.epilog = rd.Localisation.example
 cal_loc.run_order = 3
@@ -288,6 +293,7 @@ cal_slit.name = 'cal_SLIT_spirou.py'
 cal_slit.outputdir = 'reduced'
 cal_slit.inputdir = 'tmp'
 cal_slit.inputtype = 'pp'
+cal_slit.extension = 'fits'
 cal_slit.description = rd.Slit.description
 cal_slit.epilog = rd.Slit.example
 cal_slit.run_order = 4
@@ -314,6 +320,7 @@ cal_shape.name = 'cal_SHAPE_spirou.py'
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
 cal_shape.inputtype = 'pp'
+cal_shape.extension = 'fits'
 cal_shape.description = rd.Shape.description
 cal_shape.epilog = rd.Shape.example
 cal_shape.run_order = 4
@@ -342,6 +349,7 @@ cal_ff.name = 'cal_FF_RAW_spirou.py'
 cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
 cal_ff.inputtype = 'pp'
+cal_ff.extension = 'fits'
 cal_ff.description = rd.Flat.description
 cal_ff.epilog = rd.Flat.example
 cal_ff.run_order = 5
@@ -373,6 +381,7 @@ cal_extract.name = 'cal_extract_RAW_spirou.py'
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
+cal_extract.extension = 'fits'
 cal_extract.description = rd.Extract.description
 cal_extract.epilog = rd.Extract.example
 cal_extract.run_order = 6
@@ -403,17 +412,27 @@ cal_hc.name = 'cal_HC_E2DS_spirou.py'
 cal_hc.outputdir = 'reduced'
 cal_hc.inputdir = 'reduced'
 cal_hc.inputtype = 'e2ds'
-cal_hc.description = ''
-cal_hc.epilog = ''
+cal_hc.extension = 'fits'
+cal_hc.description = rd.HcE2DS.description
+cal_hc.epilog = rd.HcE2DS.example
 cal_hc.run_order = 7
+# -----------------------------------------------------------------------------
+# setup custom files (add a required keyword in the header to each file)
+#    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
+cal_hc_files1 = [sf.out_ext_e2ds_ab, sf.out_ext_e2ds_c,
+                 sf.out_ext_e2dsff_ab, sf.out_ext_e2dsff_c]
+cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
+cal_hc_files2 = spirouFile.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
+# -----------------------------------------------------------------------------
+# set up arguments
 cal_hc.arg(pos=0, **directory)
-cal_hc.arg(name='files', dtype='files', pos='1+',
-           files=[sf.out_ext_e2ds_ab, sf.out_ext_e2dsff_ab, sf.out_ext_e2ds_c,
-                  sf.out_ext_e2dsff_c],
-           limit=1, helpstr='')
+cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
+           filelogic='exclusive', limit=1, helpstr=rd.HcE2DS.files_help)
 cal_hc.kwarg(**add_cal)
 cal_hc.kwarg(**plot)
-
+cal_hc.kwarg(**blazefile)
+cal_hc.kwarg(**flatfile)
+cal_hc.kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
