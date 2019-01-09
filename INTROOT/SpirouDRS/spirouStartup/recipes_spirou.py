@@ -30,10 +30,7 @@ add_cal = dict(name='--add2calib', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 dobad = dict(name='--badcorr', dtype='bool', default=True,
              helpstr=rd.General.dobad_help)
-# -----------------------------------------------------------------------------
-badfile = dict(name='--badpixfile', dtype='file', default='None',
-               files=[sf.out_badpix],
-               helpstr=rd.General.badfile_help)
+
 # -----------------------------------------------------------------------------
 backsub = dict(name='--backsub', dtype='bool', default=True,
                helpstr=rd.General.backsub_help, default_ref='option_backsub')
@@ -47,10 +44,6 @@ debug = dict(name='--debug', dtype=int, default_ref='DRS_DEBUG',
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=rd.General.dodark_help)
-# -----------------------------------------------------------------------------
-darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[sf.out_dark],
-                helpstr=rd.General.darkfile_help)
 # -----------------------------------------------------------------------------
 # Must set default_ref per recipe!!
 extractmethod = dict(name='--extractmethod', dtype='options',
@@ -73,6 +66,27 @@ plot = dict(name='--plot', dtype='bool', helpstr=rd.General.plot_help,
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=rd.General.resize_help)
+
+# =============================================================================
+# File option definitions
+# =============================================================================
+badfile = dict(name='--badpixfile', dtype='file', default='None',
+               files=[sf.out_badpix],
+               helpstr=rd.General.badfile_help)
+# -----------------------------------------------------------------------------
+blazefile = dict(name='--blazefile', dtype='file', default='None',
+                 files=[sf.out_ff_blaze_ab, sf.out_ff_blaze_a,
+                        sf.out_ff_blaze_b, sf.out_ff_blaze_c],
+                 helpstr=rd.General.blazefile_help)
+# -----------------------------------------------------------------------------
+darkfile = dict(name='--darkfile', dtype='file', default='None',
+                files=[sf.out_dark],
+                helpstr=rd.General.darkfile_help)
+# -----------------------------------------------------------------------------
+flatfile = dict(name='--flatfile', dtype='file', default='None',
+                files=[sf.out_ff_flat_ab, sf.out_ff_flat_a,
+                       sf.out_ff_flat_b, sf.out_ff_flat_c],
+                helpstr=rd.General.flatfile_help)
 # -----------------------------------------------------------------------------
 shapefile = dict(name='--shapefile', dtype='file', default='None',
                  files=[sf.out_silt_shape],
@@ -81,6 +95,11 @@ shapefile = dict(name='--shapefile', dtype='file', default='None',
 tiltfile = dict(name='--tiltfile', dtype='file', default='None',
                 files=[sf.out_slit_tilt],
                 helpstr=rd.General.tiltfile_help)
+# -----------------------------------------------------------------------------
+wavefile = dict(name='--wavefile', dtype='file', default='None',
+                files=[sf.out_wave_ab, sf.out_wave_a,
+                       sf.out_wave_b, sf.out_wave_c],
+                helpstr=rd.General.wavefile_help)
 
 # =============================================================================
 # List of usable recipes
@@ -381,6 +400,20 @@ cal_extract.kwarg(**tiltfile)
 # cal_HC_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_hc.name = 'cal_HC_E2DS_spirou.py'
+cal_hc.outputdir = 'reduced'
+cal_hc.inputdir = 'reduced'
+cal_hc.inputtype = 'e2ds'
+cal_hc.description = ''
+cal_hc.epilog = ''
+cal_hc.run_order = 7
+cal_hc.arg(pos=0, **directory)
+cal_hc.arg(name='files', dtype='files', pos='1+',
+           files=[sf.out_ext_e2ds_ab, sf.out_ext_e2dsff_ab, sf.out_ext_e2ds_c,
+                  sf.out_ext_e2dsff_c],
+           limit=1, helpstr='')
+cal_hc.kwarg(**add_cal)
+cal_hc.kwarg(**plot)
+
 
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
