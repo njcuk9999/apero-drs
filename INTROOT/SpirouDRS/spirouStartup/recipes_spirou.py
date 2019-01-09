@@ -40,58 +40,47 @@ backsub = dict(name='--backsub', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr='[BOOLEAN] Whether to combine fits files in file list '
-                       'or to process them separately')
+               helpstr=rd.General.combine_help)
 # -----------------------------------------------------------------------------
 debug = dict(name='--debug', dtype=int, default_ref='DRS_DEBUG',
-             helpstr='[INTEGER] Whether to run in debug mode')
+             helpstr=rd.General.debug_help)
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
-              helpstr='[BOOLEAN] Whether to correct for the dark file')
+              helpstr=rd.General.dodark_help)
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
                 files=[sf.out_dark],
-                helpstr='[STRING] Define a custom file to use for dark '
-                        'correction. Checks for an absolute path and '
-                        'then checks "directory".')
+                helpstr=rd.General.darkfile_help)
 # -----------------------------------------------------------------------------
 # Must set default_ref per recipe!!
 extractmethod = dict(name='--extractmethod', dtype='options',
-                     helpstr='[STRING] Define a custom extraction method',
+                     helpstr=rd.General.extractmethod_help,
                      options=['1', '2', '3a', '3b', '3c', '3d', '4a', '4b'])
 # -----------------------------------------------------------------------------
 extfiber = dict(name='--extfiber', dtype='options', default='ALL',
-                helpstr='[STRING] Define which fibers to extract',
+                helpstr=rd.General.extfiber_help,
                 options=['ALL', 'AB', 'A', 'B', 'C'])
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
-                 helpstr='[BOOLEAN] Whether to flip fits image',
+                 helpstr=rd.General.flipimage_help,
                  options=['None', 'x', 'y', 'both'])
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
-                 helpstr='[BOOLEAN] Output units for flux',
-                 options=['ADU/s', 'e-'])
+                 helpstr=rd.General.fluxunits_help, options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype='bool',
-            helpstr='[BOOLEAN] Manually turn on/off plot of graphs',
+plot = dict(name='--plot', dtype='bool', helpstr=rd.General.plot_help,
             default_ref='DRS_PLOT')
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
-              helpstr='[BOOLEAN] Whether to resize image')
+              helpstr=rd.General.resize_help)
 # -----------------------------------------------------------------------------
 shapefile = dict(name='--shapefile', dtype='file', default='None',
                  files=[sf.out_silt_shape],
-                 helpstr='[STRING] Define a custom file to use for shape '
-                         'correction. If unset uses closest file from calibDB.'
-                         ' Checks for an absolute path and then checks '
-                         '"directory".')
+                 helpstr=rd.General.shapefile_help)
 # -----------------------------------------------------------------------------
 tiltfile = dict(name='--tiltfile', dtype='file', default='None',
                 files=[sf.out_slit_tilt],
-                helpstr='[STRING] Define a custom file to use for tilt '
-                        ' correction. If unset uses closest file from calibDB.'
-                        ' Checks for an absolute path and then checks '
-                        '"directory".')
+                helpstr=rd.General.tiltfile_help)
 
 # =============================================================================
 # List of usable recipes
@@ -168,8 +157,9 @@ test.extension = 'fits'
 test.description = rd.Test.description
 test.epilog = rd.Test.example
 test.arg(pos=0, **directory)
-test.arg(pos='1+', name='filelist', dtype='files', helpstr=rd.Test.help,
-         files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive')
+test.arg(pos='1+', name='filelist', dtype='files',
+         files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
+         helpstr=rd.Test.filelist_help)
 test.kwarg(**plot)
 test.kwarg(**add_cal)
 test.kwarg(**dobad)
@@ -189,10 +179,11 @@ cal_pp.name = 'cal_preprocess_spirou.py'
 cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
 cal_pp.inputtype = 'raw'
-cal_pp.description = 'Pre-processing recipe for SPIRou @ CFHT'
+cal_pp.description = rd.Preprocess.description
+cal_pp.epilog = rd.Preprocess.example
 cal_pp.arg(pos=0, **directory)
 cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
-           helpstr='- The fits files to use, separated by spaces')
+           helpstr=rd.Preprocess.ufiles_help)
 cal_pp.kwarg(**debug)
 cal_pp.kwarg(**plot)
 
@@ -203,15 +194,14 @@ cal_badpix.name = 'cal_BADPIX_spirou.py'
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
-cal_badpix.description = 'Bad pixel finding recipe for SPIRou @ CFHT'
+cal_badpix.description = rd.Badpix.description
+cal_badpix.epilog = rd.Badpix.example
 cal_badpix.run_order = 1
 cal_badpix.arg(pos=0, **directory)
 cal_badpix.arg(name='flatfile', dtype='file', files=[sf.pp_flat_flat], pos=1,
-               filelogic='exclusive',
-               helpstr=rd.General.file_help + 'Current allowed types: FLAT_FLAT')
+               filelogic='exclusive', helpstr=rd.Badpix.flatfile_help)
 cal_badpix.arg(name='darkfile', dtype='file', files=[sf.pp_dark_dark], pos=2,
-               filelogic='exclusive',
-               helpstr=rd.General.file_help + 'Current allowed types: DARK_DARK')
+               filelogic='exclusive', helpstr=rd.Badpix.darkfile_help)
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
@@ -231,11 +221,12 @@ cal_dark.name = 'cal_DARK_spirou.py'
 cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
 cal_dark.intputtype = 'pp'
-cal_dark.description = 'Dark finding recipe for SPIRou @ CFHT'
+cal_dark.description = rd.Dark.description
+cal_dark.epilog = rd.Dark.example
 cal_dark.run_order = 2
 cal_dark.arg(pos=0, **directory)
 cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
-             helpstr=rd.General.files_help + 'Current allowed types: DARK_DARK')
+             helpstr=rd.Dark.files_help)
 cal_dark.kwarg(**add_cal)
 cal_dark.kwarg(default=True, **combine)
 cal_dark.kwarg(**debug)
@@ -251,13 +242,13 @@ cal_loc.name = 'cal_loc_RAW_spirou.py'
 cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'
 cal_loc.inputtype = 'pp'
-cal_loc.description = 'Localisation finding recipe for SPIRou @ CFHT'
+cal_loc.description = rd.Localisation.description
+cal_loc.epilog = rd.Localisation.example
 cal_loc.run_order = 3
 cal_loc.arg(pos=0, **directory)
 cal_loc.arg(name='files', dtype='files', filelogic='exclusive',
             files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
-            helpstr=rd.General.files_help + ('Current allowed types: DARK_FLAT OR FLAT_DARK'
-                                ' but not both (exlusive)'))
+            helpstr=rd.Localisation.files_help)
 cal_loc.kwarg(**add_cal)
 cal_loc.kwarg(**badfile)
 cal_loc.kwarg(**dobad)
@@ -278,12 +269,12 @@ cal_slit.name = 'cal_SLIT_spirou.py'
 cal_slit.outputdir = 'reduced'
 cal_slit.inputdir = 'tmp'
 cal_slit.inputtype = 'pp'
-cal_slit.description = ('Tilt finding recipe for SPIRou @ CFHT'
-                        '\nOLD - use cal_SHAPE_spirou.py instead')
+cal_slit.description = rd.Slit.description
+cal_slit.epilog = rd.Slit.example
 cal_slit.run_order = 4
 cal_slit.arg(pos=0, **directory)
 cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+', 
-             helpstr=rd.General.files_help + 'Current allowed types: FP_FP')
+             helpstr=rd.Slit.files_help)
 cal_slit.kwarg(**add_cal)
 cal_slit.kwarg(**badfile)
 cal_slit.kwarg(**dobad)
@@ -304,13 +295,14 @@ cal_shape.name = 'cal_SHAPE_spirou.py'
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
 cal_shape.inputtype = 'pp'
-cal_shape.description = 'Shape finding recipe for SPIRou @ CFHT'
+cal_shape.description = rd.Shape.description
+cal_shape.epilog = rd.Shape.example
 cal_shape.run_order = 4
 cal_shape.arg(pos=0, **directory)
 cal_shape.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1', 
-             helpstr=rd.General.file_help + 'Current allowed type: HCONE_HCONE')
+             helpstr=rd.Shape.hcfile_help)
 cal_shape.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+', 
-             helpstr=rd.General.files_help + 'Current allowed types: FP_FP')
+             helpstr=rd.Shape.fpfiles_help)
 cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
 cal_shape.kwarg(**dobad)
@@ -331,13 +323,13 @@ cal_ff.name = 'cal_FF_RAW_spirou.py'
 cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
 cal_ff.inputtype = 'pp'
-cal_ff.description = 'Flat/Blaze finding recipe for SPIRou @ CFHT'
+cal_ff.description = rd.Flat.description
+cal_ff.epilog = rd.Flat.example
 cal_ff.run_order = 5
 cal_ff.arg(pos=0, **directory)
 cal_ff.arg(name='files', dtype='files', filelogic='exclusive',
            files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
-           helpstr=rd.General.files_help + ('Current allowed types: FLAT_FLAT OR DARK_FLAT '
-                                'OR FLAT_DARK but not a mixture (exlusive)'))
+           helpstr=rd.Flat.files_help)
 cal_ff.kwarg(**add_cal)
 cal_ff.kwarg(**badfile)
 cal_ff.kwarg(**dobad)
@@ -362,13 +354,12 @@ cal_extract.name = 'cal_extract_RAW_spirou.py'
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
-cal_extract.description = 'Extraction recipe for SPIRou @ CFHT'
+cal_extract.description = rd.Extract.description
+cal_extract.epilog = rd.Extract.example
 cal_extract.run_order = 6
 cal_extract.arg(pos=0, **directory)
 cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
-                limit=1,
-                helpstr=rd.General.files_help + ('All files used will be combined into a '
-                                     'single frame.'))
+                limit=1, helpstr=rd.Extract.files_help)
 cal_extract.kwarg(**add_cal)
 cal_extract.kwarg(**badfile)
 cal_extract.kwarg(**dobad)
@@ -390,93 +381,26 @@ cal_extract.kwarg(**tiltfile)
 # cal_HC_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_hc.name = 'cal_HC_E2DS_spirou.py'
-# cal_hc.outputdir = 'reduced'
-# cal_hc.inputdir = 'reduced'
-# cal_hc.inputtype = 'reduced'
-# cal_hc.run_order = 7
-# cal_hc.arg(name='directory', dtype='directory', pos=0)
-# cal_hc.arg(name='files', dtype='files', pos='1+')
-# cal_hc.arg(name='files', dtype='files', pos='1+')
-# cal_hc.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_wave.name = 'cal_WAVE_E2DS_spirou.py'
-# cal_wave.outputdir = 'reduced'
-# cal_wave.inputdir = 'reduced'
-# cal_wave.inputtype = 'reduced'
-# cal_wave.run_order = 8
-# cal_wave.arg(name='directory', dtype='directory', pos=0)
-# cal_wave.arg(name='fpfile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
-#              dtype='files', pos=1)
-# cal_wave.arg(name='fpfile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
-#              dtype='files', pos=1)
-# cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
-#              dtype='files', pos='2+')
-# cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
-#              dtype='files', pos='2+')
-# cal_wave.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_drift1.name = 'cal_DRIFT_E2DS_spirou.py'
-cal_drift1.outputdir = 'reduced'
-cal_drift1.inputdir = 'reduced'
-cal_drift1.inputtype = 'reduced'
-cal_drift1.run_order = 9
-# cal_drift1.arg(name='directory', dtype='directory', pos=0)
-# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
-#                dtype='files', pos=1)
-# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
-#                dtype='files', pos=1)
-# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
-#                dtype='files', pos=1)
-# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
-#                dtype='files', pos=1)
-# cal_drift1.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFTPEAK_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_drift2.name = 'cal_DRIFTPEAK_E2DS_spirou.py'
-cal_drift2.outputdir = 'reduced'
-cal_drift2.inputdir = 'reduced'
-cal_drift2.inputtype = 'reduced'
-cal_drift2.run_order = 10
-# cal_drift2.arg(name='directory', dtype='directory', pos=0)
-# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
-#                dtype='files', pos=1)
-# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
-#                dtype='files', pos=1)
-# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
-#                dtype='files', pos=1)
-# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
-#                dtype='files', pos=1)
-# cal_drift2.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_CCF_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
-cal_ccf.outputdir = 'reduced'
-cal_ccf.inputdir = 'reduced'
-cal_ccf.inputtype = 'reduced'
-cal_ccf.run_order = 11
-# cal_ccf.arg(name='directory', dtype='directory', pos=0)
-# cal_ccf.arg(name='e2dsfile', key1='EXTRACT_E2DS_FILE', dtype='files', pos=1)
-# cal_ccf.arg(name='e2dsfile', key1='EXTRACT_E2DSFF_FILE', dtype='files', pos=1)
-# cal_ccf.arg(name='e2dsfile', key1='TELLU_CORRECTED', dtype='files', pos=1)
-# cal_ccf.arg(name='e2dsfile', key1='TELLU_CORRECTED', dtype='files', pos=1)
-# cal_ccf.arg(name='e2dsfile', key1='POL_DEG', dtype='files', pos=1)
-# cal_ccf.arg(name='e2dsfile', key1='POL_STOKES_I', dtype='files', pos=1)
-# cal_ccf.arg(name='e2dsfile', key1='POL_LSD', dtype='files', pos=1)
-# cal_ccf.arg(name='mask', dtype=str, pos=2)
-# cal_ccf.arg(name='rv', dtype=float, pos=3)
-# cal_ccf.arg(name='width', dtype=float, pos=4)
-# cal_ccf.arg(name='step', dtype=float, pos=5)
-# cal_ccf.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
