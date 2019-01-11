@@ -54,9 +54,6 @@ class General:
 [BOOLEAN] Whether to combine fits files in file list or to process them 
           separately
 """
-        debug_help = """
-[INTEGER] Whether to run in debug mode
-"""
         dodark_help = """
 [BOOLEAN] Whether to correct for the dark file
 """
