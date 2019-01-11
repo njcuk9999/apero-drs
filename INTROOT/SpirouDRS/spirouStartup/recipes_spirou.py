@@ -174,9 +174,11 @@ test.extension = 'fits'
 test.description = rd.Test.description
 test.epilog = rd.Test.example
 test.arg(pos=0, **directory)
-test.arg(pos='1+', name='filelist', dtype='files',
-         files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
-         helpstr=rd.Test.filelist_help)
+test.kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
+           files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
+           helpstr='test 1')
+test.kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
+           files=[sf.pp_fp_fp], helpstr='test 2')
 test.kwarg(**plot)
 test.kwarg(**add_cal)
 test.kwarg(**dobad)
