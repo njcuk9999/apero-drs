@@ -65,30 +65,39 @@ def input_setup(name=None, fkwargs=None, quiet=False):
     recipe = find_recipe(name)
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid)
+    # need to set debug mode now
+    recipe = set_debug_from_input(recipe, fkwargs)
     # do not need to display if we have special keywords
     quiet = special_keys_present(recipe, quiet, fkwargs)
+    # -------------------------------------------------------------------------
     # display
     if not quiet:
         # display title
         display_drs_title(recipe.drs_params)
-        # display initial parameterisation
-        display_initial_parameterisation(recipe.drs_params)
-        # display system info (log only)
-        display_system_info(recipe.drs_params)
     # -------------------------------------------------------------------------
-    # log to screen and log file
-    if not quiet:
-        display_arg_setup(recipe.drs_params)
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(fkwargs)
     # -------------------------------------------------------------------------
     # deal with options from input_parameters
     recipe.option_manager()
+    # -------------------------------------------------------------------------
+    # deal with options from input_parameters
+    recipe.option_manager()
     # update default params
     spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
-    # print out of the parameters used
+    # -------------------------------------------------------------------------
+    # display
     if not quiet:
+        # display initial parameterisation
+        if recipe.drs_params['DRS_DEBUG'] == 42:
+            display_ee(recipe.drs_params)
+        # display initial parameterisation
+        display_initial_parameterisation(recipe.drs_params)
+        # display system info (log only)
+        display_system_info(recipe.drs_params)
+        # print out of the parameters used
         display_run_time_arguments(recipe, fkwargs)
+    # -------------------------------------------------------------------------
     # return arguments
     return recipe, recipe.drs_params
 
@@ -262,9 +271,6 @@ def display_drs_title(p):
     # Log title
     display_title(p, title)
 
-    if p['DRS_DEBUG'] == 42:
-        display_ee(p)
-
 
 def display_title(p, title):
     """
@@ -365,7 +371,7 @@ def display_initial_parameterisation(p):
                      ''.format(**p))
     # log to screen and file
     WLOG(p, 'info', 'DRS Setup:')
-    WLOG(p, '', wmsgs, wrap=False)
+    WLOG(p, 'info', wmsgs, wrap=False)
     WLOG(p, '', HEADER)
 
 
@@ -459,7 +465,7 @@ def display_run_time_arguments(recipe, fkwargs=None):
     # -------------------------------------------------------------------------
     # log to screen and log file
     WLOG(p, 'info', ' Arguments used:')
-    WLOG(p, '', log_strings, wrap=False)
+    WLOG(p, 'info', log_strings, wrap=False)
     WLOG(p, '', HEADER)
 
 
@@ -658,6 +664,178 @@ def find_recipe(name=None):
     return found_recipe
 
 
+def get_arg_strval(value):
+    """
+    Get the string value representation of "value" (specifically for a listof
+    DrsFitsFiles)
+
+    :param value: object, the value to be printed
+    :return out: string, the string representation of "object"
+    """
+    drs_file_type = spirouFile.DrsFitsFile
+
+    # if list is empty --> return
+    if len(value) == 0:
+        return value
+
+    # if we don't have a list of lists --> 1D array --> return
+    if len(value) == 1:
+        return value
+
+    if type(value[1]) not in [list, np.ndarray]:
+        return value
+
+    # if we have a list of list we may have a DrsFile return
+    if type(value[1][0]) == drs_file_type:
+        out = []
+        for it in range(len(value[0])):
+            filename = os.path.basename(value[0][it])
+            kind = value[1][it].name
+            out.append('[{0}] {1}'.format(kind, filename))
+        return out
+
+
+def get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
+    """
+    Obtain the recipe keys from reipce "args"
+
+    :param args: Dictionary containing key, value pairs where keys are the
+                 argument names and values are instances of DrsArgument
+    :param remove_prefix: string or None, a prefix to remove from keys if None
+                          removes nothing
+    :param add: list of strings or None, if not None each string is added to
+                output "keys" as additional extra keys to check
+    :param allow_skips: bool, if True allows special args to skip, if False
+                        does not skip any special args
+
+    :return keys: list of strings, the defined recipe keys (may be stipped of
+                  a prefix if remove_prefix is not None)
+    """
+    # get the special keys
+    keys = []
+
+    for argname in args:
+        arg = args[argname]
+        # deal with skips (skips should not be added to keys here - unless
+        #   allow_skips is set to False)
+        if allow_skips and arg.kind == 'special':
+            if arg.skip:
+                keys += arg.names
+        else:
+            keys += arg.names
+
+    # add additional keys (manually)
+    if add is not None:
+        keys += add
+    # deal with removing prefixes
+    if remove_prefix is not None:
+        # set up storage
+        old_keys = list(keys)
+        keys = []
+        for key in old_keys:
+            # remove prefix
+            while key[0] == remove_prefix:
+                key = key[1:]
+            # append to skeys
+            keys.append(key)
+    # return keys
+    return keys
+
+
+def keys_present(recipe, fkwargs=None, remove_prefix=None):
+    """
+    Returns a list of keys present in argument parsing (i.e. from sys.argv/or
+    "fkwargs" - that is from call to function)
+
+    :param recipe: DrsRecipe instance
+    :param fkwargs: dictionary or None, the call dictionary to search (as well
+                    as sys.argv)
+    :param remove_prefix: string or None, a prefix to remove from keys if None
+                          removes nothing
+    :return keys: list of strings, the present keys (may be stipped of a prefix
+                  if remove_prefix is not None)
+    """
+    # deal with no fkwargs
+    if fkwargs is None:
+        fkwargs = dict()
+    # get they keys to check for
+    arg_keys = get_recipe_keys(recipe.args)
+    kwarg_keys = get_recipe_keys(recipe.kwargs)
+    skeys = get_recipe_keys(recipe.specialargs, add=['--help', '-h'],
+                            allow_skips=False)
+    # need all positional keys
+    keys = arg_keys
+    # search for optional/special keys
+    search_keys = kwarg_keys + skeys
+    if len(search_keys) > 0:
+        for search_key in search_keys:
+            if search_for_key(search_key, fkwargs):
+                keys.append(search_key)
+    # deal with removing prefixes
+    if remove_prefix is not None:
+        # set up storage
+        old_keys = list(keys)
+        keys = []
+        for key in old_keys:
+            # remove prefix
+            while key[0] == remove_prefix:
+                key = key[1:]
+            # append to skeys
+            keys.append(key)
+    # return found keys
+    return keys
+
+
+def search_for_key(key, fkwargs=None):
+    """
+    Search for a key in sys.argv (list of strings) and fkwargs (dictionary)
+    in order to quickly tell if key was present when parsing arguments
+
+    :param key: string, the key to look for
+    :param fkwargs: dictionary or None, contains keywords from call
+
+    :return cond: bool, True if key found in fkwargs/sys.argv, False otherwise
+    """
+    # deal with no fkwargs
+    if fkwargs is None:
+        fkwargs = dict()
+    # search in fkwargs
+    cond1 = key in fkwargs.keys()
+    # search in sys.argv list of strings
+    cond2 = False
+    for argv in sys.argv:
+        if key in argv:
+            cond2 = True
+    # return True if found and False otherwise
+    if cond1 | cond2:
+        return True
+    else:
+        return False
+
+
+def set_debug_from_input(recipe, fkwargs):
+
+    # assume debug is not there
+    debug_arg = False
+    # check sys.argv
+    for arg in sys.argv:
+        if '--debug' in arg:
+            debug_arg = True
+    # check fkwargs
+    for kwarg in fkwargs:
+        if '--debug' in kwarg:
+            debug_arg = True
+
+    # set DRS_DEBUG
+    if debug_arg:
+        # set the drs debug level to 1
+        recipe.drs_params['DRS_DEBUG'] = 1
+        # update the constants file
+        spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
+    # return recipe
+    return recipe
+
+
 def sort_version(messages=None):
     """
     Obtain and sort version info
@@ -704,145 +882,6 @@ def sort_version(messages=None):
 
     # return updated messages
     return messages
-
-
-def get_arg_strval(value):
-    """
-    Get the string value representation of "value" (specifically for a listof
-    DrsFitsFiles)
-
-    :param value: object, the value to be printed
-    :return out: string, the string representation of "object"
-    """
-    drs_file_type = spirouFile.DrsFitsFile
-
-    # if list is empty --> return
-    if len(value) == 0:
-        return value
-
-    # if we don't have a list of lists --> 1D array --> return
-    if len(value) == 1:
-        return value
-
-    if type(value[1]) not in [list, np.ndarray]:
-        return value
-
-    # if we have a list of list we may have a DrsFile return
-    if type(value[1][0]) == drs_file_type:
-        out = []
-        for it in range(len(value[0])):
-            filename = os.path.basename(value[0][it])
-            kind = value[1][it].name
-            out.append('[{0}] {1}'.format(kind, filename))
-        return out
-
-
-def search_for_key(key, fkwargs=None):
-    """
-    Search for a key in sys.argv (list of strings) and fkwargs (dictionary)
-    in order to quickly tell if key was present when parsing arguments
-
-    :param key: string, the key to look for
-    :param fkwargs: dictionary or None, contains keywords from call
-
-    :return cond: bool, True if key found in fkwargs/sys.argv, False otherwise
-    """
-    # deal with no fkwargs
-    if fkwargs is None:
-        fkwargs = dict()
-    # search in fkwargs
-    cond1 = key in fkwargs.keys()
-    # search in sys.argv list of strings
-    cond2 = False
-    for argv in sys.argv:
-        if key in argv:
-            cond2 = True
-    # return True if found and False otherwise
-    if cond1 | cond2:
-        return True
-    else:
-        return False
-
-
-def keys_present(recipe, fkwargs=None, remove_prefix=None):
-    """
-    Returns a list of keys present in argument parsing (i.e. from sys.argv/or
-    "fkwargs" - that is from call to function)
-
-    :param recipe: DrsRecipe instance
-    :param fkwargs: dictionary or None, the call dictionary to search (as well
-                    as sys.argv)
-    :param remove_prefix: string or None, a prefix to remove from keys if None
-                          removes nothing
-    :return keys: list of strings, the present keys (may be stipped of a prefix
-                  if remove_prefix is not None)
-    """
-    # deal with no fkwargs
-    if fkwargs is None:
-        fkwargs = dict()
-    # get they keys to check for
-    arg_keys = get_recipe_keys(recipe.args)
-    kwarg_keys = get_recipe_keys(recipe.kwargs)
-    skeys = get_recipe_keys(recipe.specialargs, add=['--help', '-h'])
-    # need all positional keys
-    keys = arg_keys
-    # search for optional/special keys
-    search_keys = kwarg_keys + skeys
-    if len(search_keys) > 0:
-        for search_key in search_keys:
-            if search_for_key(search_key, fkwargs):
-                keys.append(search_key)
-    # deal with removing prefixes
-    if remove_prefix is not None:
-        # set up storage
-        old_keys = list(keys)
-        keys = []
-        for key in old_keys:
-            # remove prefix
-            while key[0] == remove_prefix:
-                key = key[1:]
-            # append to skeys
-            keys.append(key)
-    # return found keys
-    return keys
-
-
-def get_recipe_keys(args, remove_prefix=None, add=None):
-    """
-    Obtain the recipe keys from reipce "args"
-
-    :param args: Dictionary containing key, value pairs where keys are the
-                 argument names and values are instances of DrsArgument
-    :param remove_prefix: string or None, a prefix to remove from keys if None
-                          removes nothing
-    :param add: list of strings or None, if not None each string is added to
-                output "keys" as additional extra keys to check
-
-    :return keys: list of strings, the defined recipe keys (may be stipped of
-                  a prefix if remove_prefix is not None)
-    """
-    # get the special keys
-    keys = []
-
-    for argname in args:
-        arg = args[argname]
-        keys += arg.names
-    # add additional keys
-    if add is not None:
-        keys += add
-    # deal with removing prefixes
-    if remove_prefix is not None:
-        # set up storage
-        old_keys = list(keys)
-        keys = []
-        for key in old_keys:
-            # remove prefix
-            while key[0] == remove_prefix:
-                key = key[1:]
-            # append to skeys
-            keys.append(key)
-    # return keys
-    return keys
 
 
 # =============================================================================
