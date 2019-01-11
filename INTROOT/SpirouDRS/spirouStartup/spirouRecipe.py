@@ -91,14 +91,6 @@ class DRSArgumentParser(argparse.ArgumentParser):
         program = self.recipe.drs_params['RECIPE']
         # get parameters from drs_params
         params = self.recipe.drs_params
-        # construct error message
-        underline = COLOR.UNDERLINE
-        if self.recipe.drs_params['COLOURED_LOG']:
-            red, end = COLOR.RED1, COLOR.ENDC
-            yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
-        else:
-            red, end = COLOR.ENDC, COLOR.ENDC
-            yellow, blue = COLOR.ENDC, COLOR.ENDC
         # log message
         emsg1 = 'Argument Error:'
         emsg2 = '\t {0}'.format(message)
@@ -773,7 +765,6 @@ class DrsArgument(object):
                       ['action', 'nargs', 'type', 'choices', 'default', 'help']
         :return None:
         """
-
         # loop around properties
         for prop in self.propkeys:
             if prop in props:
@@ -1176,7 +1167,7 @@ class DrsRecipe(object):
     # =========================================================================
     # Private Methods (Not to be used externally to spirouRecipe.py)
     # =========================================================================
-    def _parse_args(self, dictionary):
+    def _parse_args(self, dictionary=None):
         """
         Parse a dictionary of arguments into argparser in the format required
         to match up to the recipe.args/recipe.kwarg assigned to this
@@ -1208,6 +1199,20 @@ class DrsRecipe(object):
             values = dictionary[kwargname]
             # pass this argument
             self._parse_arg(self.kwargs[kwargname], values)
+        for sname in self.specialargs:
+            # copy sname
+            sname1 = str(sname)
+            # remove '-'
+            while sname1[0] == '-':
+                sname1 = sname1[1:]
+            # check if key in dictionary
+            if sname1 not in dictionary:
+                continue
+            # get value(s)
+            values = dictionary[sname1]
+            # pass this argument
+            self._parse_arg(self.specialargs[sname], values)
+
         # check if we have parameters
         if len(self.str_arg_list) == 0:
             self.str_arg_list = None
