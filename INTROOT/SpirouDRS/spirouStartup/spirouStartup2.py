@@ -80,9 +80,6 @@ def input_setup(name=None, fkwargs=None, quiet=False):
     # -------------------------------------------------------------------------
     # deal with options from input_parameters
     recipe.option_manager()
-    # -------------------------------------------------------------------------
-    # deal with options from input_parameters
-    recipe.option_manager()
     # update default params
     spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
     # -------------------------------------------------------------------------
@@ -760,9 +757,10 @@ def keys_present(recipe, fkwargs=None, remove_prefix=None):
         fkwargs = dict()
     # get they keys to check for
     arg_keys = get_recipe_keys(recipe.args)
-    kwarg_keys = get_recipe_keys(recipe.kwargs)
+    kwarg_keys = get_recipe_keys(recipe.kwargs, remove_prefix='-')
     skeys = get_recipe_keys(recipe.specialargs, add=['--help', '-h'],
-                            allow_skips=False)
+                            allow_skips=False, remove_prefix='-')
+
     # need all positional keys
     keys = arg_keys
     # search for optional/special keys
