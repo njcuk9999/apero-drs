@@ -350,7 +350,7 @@ class DrsFitsFile(DrsInputFile):
         if argname is None:
             argstring = ''
         else:
-            argstring = 'Argument {0}:'.format(argname)
+            argstring = 'Argument "{0}":'.format(argname)
         # -----------------------------------------------------------------
         # check file has been read
         self.read()
@@ -370,13 +370,12 @@ class DrsFitsFile(DrsInputFile):
                 key = drskey
             # check if key is in header
             if key not in self.header:
-                eargs = [argstring, key, self.filename]
-                emsgs = ['{0} Header key "{1}" not found for '
-                         'file "{2}"'.format(*eargs)]
+                eargs = [argstring, key]
+                emsgs = ['{0} Header key "{1}" not found'.format(*eargs)]
                 return [False, True], None, [emsgs, None]
             elif debug:
                 dmsg = '{0} Header key {1} found for {2}'
-                dargs = [argstring, key, self.filename]
+                dargs = [argstring, key, os.path.basename(self.filename)]
                 WLOG(params, '', dmsg.format(*dargs))
         # -----------------------------------------------------------------
         # Step 2: search for correct value for each header key
@@ -420,18 +419,18 @@ class DrsFitsFile(DrsInputFile):
         # return:
         #       [valid cond1, valid cond2], self, [errors1, errors2]
         if found:
-            return [True, True], self, [None, None]
+            return [True, True], self, [None, errors]
         else:
             return [True, False], self, [None, errors]
 
 
-    def check_excluivity(self, drs_file, logic, quiet=False):
+    def check_excluivity(self, drs_file, logic, quiet=False, debug=False):
         if drs_file is None:
             emsg = 'File type not set'
             cond = True
         elif logic == 'exclusive':
             cond = drs_file.name == self.name
-            if cond:
+            if cond and debug:
                 emsg = 'File identified as "{0}" files match'
                 emsg = emsg.format(self.name, drs_file.name)
             else:
@@ -439,7 +438,8 @@ class DrsFitsFile(DrsInputFile):
                         'identified as "{1}" - files must match')
                 emsg = emsg.format(self.name, drs_file.name)
         elif logic == 'inclusive':
-            emsg = 'Logic is inclusive'
+            if debug:
+                emsg = 'Logic is inclusive'
             cond = True
         else:
             cond = False
