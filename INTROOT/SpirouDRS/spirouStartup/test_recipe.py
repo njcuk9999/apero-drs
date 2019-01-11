@@ -20,7 +20,6 @@ from SpirouDRS import spirouCore
 # Define variables
 # =============================================================================
 __NAME__ = 'test.py'
-__NAME__ = 'cal_HC_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -35,7 +34,7 @@ WLOG = spirouCore.wlog
 # Define functions
 # =============================================================================
 def main(directory=None, filelist=None, **kwargs):
-    # assign function calls
+    # assign function calls (must add positional)
     fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
     recipe, p = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
