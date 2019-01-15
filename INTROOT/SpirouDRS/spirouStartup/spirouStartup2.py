@@ -99,13 +99,17 @@ def input_setup(name=None, fkwargs=None, quiet=False):
     return recipe, recipe.drs_params
 
 
-def get_params():
+def get_params(**kwargs):
     """
     Wrapper for input_setup
 
     :return p: parameter dictionary
     """
     _, params = input_setup(None, quiet=True)
+    # overwrite parameters with kwargs
+    for kwarg in kwargs:
+        params[kwarg] = kwargs[kwarg]
+    # return parameters
     return params
 
 
