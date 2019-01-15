@@ -11,6 +11,7 @@ Created on 2018-09-14 at 18:19
 """
 import numpy as np
 from astropy.table import Table
+import importlib
 import argparse
 import sys
 import os
@@ -808,6 +809,8 @@ class DrsRecipe(object):
                 self.name = self.name.split('.py')[0]
         else:
             self.name = name
+        # import module
+        self.module = self._import_module()
         # output directory
         self.outputdir = 'reduced'
         # input directory
@@ -1118,9 +1121,19 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # loop around keyword arguments
         for kwargname in self.kwargs:
+            # get dtype for arg
+            dtype = self.kwargs[kwargname].dtype
             # -----------------------------------------------------------------
-            # just get arg from kwargs
-            self._get_non_file_arg(kwargname, kwargs, kind='kwarg')
+            # if argument is of dtype "files" or "file" then we need to
+            # look for it in the index file else we need to look in
+            # **kwargs
+            if dtype not in ['files', 'file']:
+                self._get_non_file_arg(kwargname, kwargs, kind='kwarg')
+            # -----------------------------------------------------------------
+            # else we are dealing with a set of files
+            else:
+                self._get_file_arg(kwargname, index_files, filelist, dir_list,
+                                   kind='kwarg', filters=__filters__)
 
         # ---------------------------------------------------------------------
         # from the above process we now have the following:
@@ -1140,7 +1153,7 @@ class DrsRecipe(object):
         cmd = '{0}.py'.format(self.name)
         # ---------------------------------------------------------------------
         # first deal with positional arguments
-        cmd_args_groups = self._generate_arg_groups()
+        cmd_args_groups, dict_arg_groups = self._generate_arg_groups()
         # ---------------------------------------------------------------------
         # now deal with keyword arguments
         cmd_kwargs = ''
@@ -1148,10 +1161,13 @@ class DrsRecipe(object):
             # get kwarg value
             value = self.kwargs[kwarg].value
             # construct command
+            if type(value) is list:
+                if len(value) == 0:
+                    continue
             if value is not None:
                 cmd_kwargs += '--{0}={1} '.format(kwarg, value)
         # ---------------------------------------------------------------------
-        runs = []
+        printruns = []
         for cmd_args in cmd_args_groups:
             # generate command
             run_it = '{0} {1} {2}'.format(cmd, cmd_args, cmd_kwargs)
@@ -1159,14 +1175,43 @@ class DrsRecipe(object):
             while "  " in run_it:
                 run_it = run_it.replace("  ", " ")
             # append to runs
-            runs.append(run_it)
+            printruns.append(run_it)
         # return in form:
         #       runs[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
-        return runs
+        return printruns, dict_arg_groups
+
+    def main(self, **kwargs):
+        """
+        Run the main function associated with this recipe
+
+        :param kwargs: kwargs passed to the main functions
+
+        :return:
+        """
+
+        # need to check if module is defined
+        if self.module is None:
+            self.module = self._import_module()
+        if self.module is None:
+            emsg1 = 'Dev Error: Cannot find module "{0}"'.format(self.name)
+            emsg2 = '\tProblem with recipe definition'
+            emsg3 = ('\tRecipe name must match recipe python file name and be '
+                     'in PYTHONPATH')
+            WLOG(self.drs_params, 'error', [emsg1, emsg2, emsg3])
+
+        # run main
+        return self.module.main(**kwargs)
 
     # =========================================================================
     # Private Methods (Not to be used externally to spirouRecipe.py)
     # =========================================================================
+    def _import_module(self):
+        # get local copy of module
+        try:
+            return importlib.import_module(self.name)
+        except Exception as e:
+            return None
+
     def _parse_args(self, dictionary=None):
         """
         Parse a dictionary of arguments into argparser in the format required
@@ -1611,9 +1656,12 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # storage for cmd arg groups
         cmd_args_groups = []
+        # storage for dict arg groups
+        dict_args_groups = []
         # loop around number of runs
         for it in range(number_runs):
             cmd_arg = ''
+            dict_arg = dict()
             # loop around arguments (in order)
             for poskey in positions:
                 # get values
@@ -1625,15 +1673,18 @@ class DrsRecipe(object):
                         continue
                     # construct command argument
                     cmd_arg += ' '.join(values) + ' '
+                    dict_arg[poskey] = list(values)
                 else:
                     # may have Nones (where matching failed)
                     if values is None:
                         continue
                     # construct command argument
                     cmd_arg += '{0} '.format(values)
+                    dict_arg[poskey] = values
             cmd_args_groups.append(cmd_arg)
+            dict_args_groups.append(dict_arg)
         # ---------------------------------------------------------------------
-        return cmd_args_groups
+        return cmd_args_groups, dict_args_groups
 
     def _get_non_file_arg(self, argname, kwargs, kind='arg'):
         """
@@ -1704,7 +1755,11 @@ class DrsRecipe(object):
                 continue
             # else get list of valid files for this argument
             gargs = [arg, index, directory, dir_filelist]
-            arg.value += self._get_files_valid_for_arg(*gargs)
+            new_values = self._get_files_valid_for_arg(*gargs)
+
+            if new_values is not None:
+                arg.value += new_values
+
         # update self
         if kind == 'arg':
             self.args[argname] = arg
@@ -1812,9 +1867,7 @@ class DrsRecipe(object):
                     key = str(rkey)
                 # deal with rkey not in indexdata
                 if key not in indexdata.colnames:
-                    emsg = 'DevError: Key "{0}" not in index file {1}'
-                    eargs = [key, ifile]
-                    WLOG(params, 'error', emsg.format(*eargs))
+                    return None
                 # mask by rkey value
                 indexdatakey = np.array(indexdata[key], dtype=str)
                 indexdatakey = np.char.strip(indexdatakey, ' ')
@@ -2512,7 +2565,7 @@ def _get_file_groups(recipe, arg):
         filenames.append(value.index['FILENAME'])
         exp_nums.append(value.index[params['KW_CMPLTEXP'][0]])
         nexps.append(value.index[params['KW_NEXP'][0]])
-        dates.append(value.index[params['KW_ACQTIME_KEY_JUL'][0]])
+        dates.append(value.index[params['KW_ACQTIME'][0]])
         # deal with separating out files by logic
         #   i..e if "exclusive" need to separate by value.name
         #        else we don't need to so set to "FILE"
