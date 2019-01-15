@@ -34,7 +34,7 @@ printl = spirouCore.PrintLog
 # -----------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = ['/spirouUnitTests/', '/documentation/', '/man/',
-                    '/spirouTools/']
+                    '/spirouTools/', '/misc/']
 # dependencies to exclude
 EXCLUDE_MOD_STR = ['SpirouDRS', 'spirou']
 
@@ -181,13 +181,13 @@ def get_current_versions(importslist):
 
 def main(return_locals=False):
     # ----------------------------------------------------------------------
-    # title
-    spirouStartup.DisplayTitle(' * DRS Dependencies')
-    # list the version of python found
-    spirouStartup.DisplaySysInfo(logonly=False)
     # get p
     p = spirouStartup.Begin('None')
     p['RECIPE'] = __NAME__
+    # title
+    spirouStartup.DisplayTitle(p, ' * DRS Dependencies')
+    # list the version of python found
+    spirouStartup.DisplaySysInfo(p, logonly=False)
     # get all python files
     WLOG(p, '', 'Getting python files')
     python_files = get_python_files(PATH)
