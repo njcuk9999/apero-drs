@@ -19,7 +19,7 @@ from SpirouDRS import spirouCore
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'test.py'
+__NAME__ = 'test_recipe.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
