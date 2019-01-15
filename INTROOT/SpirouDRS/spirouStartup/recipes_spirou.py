@@ -166,7 +166,7 @@ out_recipe = drs_recipe()
 # -----------------------------------------------------------------------------
 # test.py
 # -----------------------------------------------------------------------------
-test.name = 'test.py'
+test.name = 'test_recipe.py'
 test.outputdir = 'tmp'
 test.inputdir = 'tmp'
 test.inputtype = 'pp'
@@ -174,10 +174,10 @@ test.extension = 'fits'
 test.description = rd.Test.description
 test.epilog = rd.Test.example
 test.arg(pos=0, **directory)
-test.kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
+test.kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
            files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
            helpstr='test 1')
-test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
+test.kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
            files=[sf.pp_fp_fp], helpstr='test 2')
 test.kwarg(**plot)
 test.kwarg(**add_cal)
