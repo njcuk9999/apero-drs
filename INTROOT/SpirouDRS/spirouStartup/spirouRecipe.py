@@ -81,7 +81,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # overritten functionality
         args, argv = self.parse_known_args(args, namespace)
         if argv:
-            msg = _('unrecognized arguments: %s')
+            msg = 'unrecognized arguments: %s'
             self.error(msg % ' '.join(argv))
         return args
 
@@ -118,6 +118,45 @@ class DRSArgumentParser(argparse.ArgumentParser):
             print(imsg)
         print()
         print(blue + self.format_help() + end)
+
+    def format_help(self):
+
+        hmsgs = []
+
+        hmsgs += ['usage: ' + self.recipe._drs_usage()]
+
+        # add description
+        if self.recipe.description is not None:
+            hmsgs += [self.recipe.description]
+
+        # deal with required arguments
+        hmsgs += ['', 'Required Arguments:', '']
+        for arg in self.recipe.required_args:
+            hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
+        # deal with optional arguments
+        hmsgs += ['', '', 'Optional Arguments:', '']
+        for arg in self.recipe.optional_args:
+            hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
+        # deal with special arguments
+        hmsgs += ['', '', 'Special Arguments:', '']
+        for arg in self.recipe.special_args:
+            hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
+
+        # add help
+        helpstr = 'show this help message and exit'
+        hmsgs.append(_help_format(['--help', '-h'], helpstr))
+
+        # add epilog
+        if self.recipe.epilog is not None:
+            hmsgs += [self.recipe.epilog]
+
+        # return string
+        return_string = ''
+        for hmsg in hmsgs:
+            return_string += hmsg + '\n'
+
+        # return messages
+        return return_string
 
     def _has_special(self):
 
@@ -687,6 +726,9 @@ class DrsArgument(object):
         # get default_ref
         self.default_ref = kwargs.get('default_ref', None)
 
+        # get required
+        self.required = kwargs.get('required', False)
+
         # set empty
         self.props = OrderedDict()
         self.value = None
@@ -719,18 +761,22 @@ class DrsArgument(object):
             self.props['action'] = _CheckFiles
             self.props['nargs'] = '+'
             self.props['type'] = str
+            self.options = ['FILENAME1', 'FILENAME2', '...']
         elif self.dtype == 'file':
             self.props['action'] = _CheckFiles
             self.props['nargs'] = 1
             self.props['type'] = str
+            self.options = ['FILENAME']
         elif self.dtype == 'directory':
             self.props['action'] = _CheckDirectory
             self.props['nargs'] = 1
             self.props['type'] = str
+            self.options = ['DIRECTORY']
         elif self.dtype == 'bool':
             self.props['action'] = _CheckBool
             self.props['type'] = str
             self.props['choices'] = ['True', 'False', '1', '0']
+            self.options = ['True', 'False', '1', '0']
         elif self.dtype == 'options':
             self.props['action'] = _CheckOptions
             self.props['type'] = str
@@ -741,12 +787,17 @@ class DrsArgument(object):
             self.props['action'] = _CheckType
             self.props['type'] = self.dtype
             self.props['nargs'] = 1
+            self.options = [self.name.upper()]
         else:
             self.props['type'] = str
             self.props['nargs'] = 1
+            self.options = [self.name.upper()]
         # deal with default argument
         if self.default is not None:
             self.props['default'] = self.default
+        # deal with required (for optional arguments)
+        if self.kind != 'arg':
+            self.props['required'] = self.required
         # add help string
         self.props['help'] = self.helpstr
 
@@ -834,6 +885,9 @@ class DrsRecipe(object):
         # get drs parameters
         self.drs_params = ParamDict()
         self.input_params = OrderedDict()
+        self.required_args = []
+        self.optional_args = []
+        self.special_args = []
 
     def get_drs_params(self, quiet=False, **kwargs):
         func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
@@ -943,6 +997,7 @@ class DrsRecipe(object):
             rkwargs = self.specialargs[rarg].props
             # parse into parser
             parser.add_argument(*rname, **rkwargs)
+
         # get params
         params = vars(parser.parse_args(args=self.str_arg_list))
         del parser
@@ -1090,6 +1145,7 @@ class DrsRecipe(object):
                        expects "x" as an argument
         :return:
         """
+        func_name = __NAME__ + '.DrsRecipe.generate_runs_from_filelist()'
         # get input directory
         input_dir = self._get_input_dir()
         # get directories and filter out unusable file (due to wrong location)
@@ -1153,24 +1209,67 @@ class DrsRecipe(object):
         cmd = '{0}.py'.format(self.name)
         # ---------------------------------------------------------------------
         # first deal with positional arguments
-        cmd_args_groups, dict_arg_groups = self._generate_arg_groups()
+        out1 = self._generate_arg_groups(argkind='args')
+        cmd_args_groups, dict_arg_groups, dirs1 = out1
+        out2 = self._generate_arg_groups(argkind='kwargs')
+        cmd_kwargs_groups, dict_kwarg_groups, dirs2 = out2
+
+        # need to match directories based on dirs1 and dirs2
+        cmd_groups = []
+        dict_groups = []
+
+        # if the first set in dirs1 is None we have no fileargs from "args"
+        if dirs1[0] is None:
+            # loop around runs (from kwargs_groups)
+            for it in range(len(cmd_kwargs_groups)):
+                # merge cmd
+                cmd_groups.append(cmd_args_groups[0] + cmd_kwargs_groups[it])
+                # merge dict
+                tmp = OrderedDict()
+                for key in dict_arg_groups[0]:
+                    tmp[key] = dict_arg_groups[0][key]
+                for key in dict_kwarg_groups[it]:
+                    tmp[key] = dict_kwarg_groups[it][key]
+                dict_groups.append(tmp)
+
+        # if the first set in dirs2 is None we have no fileargs from "kwargs"
+        elif dirs2[0] is None:
+            # loop around runs (from kwargs_groups)
+            for it in range(len(cmd_args_groups)):
+                # merge cmd
+                cmd_groups.append(cmd_args_groups[it] + cmd_kwargs_groups[0])
+                # merge dict
+                tmp = OrderedDict()
+                for key in dict_arg_groups[it]:
+                    tmp[key] = dict_arg_groups[it][key]
+                for key in dict_kwarg_groups[0]:
+                    tmp[key] = dict_kwarg_groups[0][key]
+                dict_groups.append(tmp)
+
+        # else we have to match directories to directores - crash for now
+        else:
+            emsg1 = ('Neil Error: Cannot have "files" in both positional and '
+                     'optional args')
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG(self.drs_params, 'error', [emsg1, emsg2])
+
         # ---------------------------------------------------------------------
-        # now deal with keyword arguments
-        cmd_kwargs = ''
-        for kwarg in self.kwargs:
-            # get kwarg value
-            value = self.kwargs[kwarg].value
-            # construct command
-            if type(value) is list:
-                if len(value) == 0:
-                    continue
-            if value is not None:
-                cmd_kwargs += '--{0}={1} '.format(kwarg, value)
+        # # now deal with keyword arguments
+        # cmd_kwargs = ''
+        # for kwarg in self.kwargs:
+        #     # get kwarg value
+        #     value = self.kwargs[kwarg].value
+        #     # construct command
+        #     if type(value) is list:
+        #         if len(value) == 0:
+        #             continue
+        #     if value is not None:
+        #         cmd_kwargs += '--{0} {1} '.format(kwarg, value)
         # ---------------------------------------------------------------------
         printruns = []
-        for cmd_args in cmd_args_groups:
+        for cmd_args in cmd_groups:
             # generate command
-            run_it = '{0} {1} {2}'.format(cmd, cmd_args, cmd_kwargs)
+            run_it = '{0} {1}'.format(cmd, cmd_args)
             # tidy up
             while "  " in run_it:
                 run_it = run_it.replace("  ", " ")
@@ -1309,6 +1408,7 @@ class DrsRecipe(object):
         debug = DrsArgument(name, kind='special', altnames=dprops['altnames'])
         debug.assign_properties(dprops)
         debug.skip = False
+        debug.helpstr = dprops['help']
         self.specialargs[name] = debug
         # ---------------------------------------------------------------------
         # make listing functionality
@@ -1317,6 +1417,7 @@ class DrsRecipe(object):
         listing = DrsArgument(name, kind='special', altnames=lprops['altnames'])
         listing.assign_properties(lprops)
         listing.skip = True
+        listing.helpstr = lprops['help']
         self.specialargs[name] = listing
         # ---------------------------------------------------------------------
         # make listing all functionality
@@ -1325,6 +1426,7 @@ class DrsRecipe(object):
         alllist = DrsArgument(name, kind='special', altnames=aprops['altnames'])
         alllist.assign_properties(aprops)
         alllist.skip = True
+        alllist.helpstr = aprops['help']
         self.specialargs[name] = alllist
         # ---------------------------------------------------------------------
         # make version functionality
@@ -1333,6 +1435,7 @@ class DrsRecipe(object):
         version = DrsArgument(name, kind='special', altnames=vprops['altnames'])
         version.assign_properties(vprops)
         version.skip = True
+        version.helpstr = vprops['help']
         self.specialargs[name] = version
         # ---------------------------------------------------------------------
         # make info functionality
@@ -1341,11 +1444,50 @@ class DrsRecipe(object):
         info = DrsArgument(name, kind='special', altnames=iprops['altnames'])
         info.assign_properties(iprops)
         info.skip = True
+        info.helpstr = iprops['help']
         self.specialargs[name] = info
 
     def _drs_usage(self):
+        # reset required args
+        self.required_args = []
+        self.optional_args = []
+        self.special_args = []
+        # ---------------------------------------------------------------------
+        # add arguments from recipe
+        for rarg in self.args:
+            # add to required
+            self.required_args.append(self.args[rarg])
+        # ---------------------------------------------------------------------
+        # add keyword arguments
+        for rarg in self.kwargs:
+            # extract out kwargs from rarg
+            rkwargs = self.kwargs[rarg].props
+            # add to required
+            if 'required' in rkwargs:
+                if rkwargs['required']:
+                    self.required_args.append(self.kwargs[rarg])
+                else:
+                    self.optional_args.append(self.kwargs[rarg])
+            else:
+                self.optional_args.append(self.kwargs[rarg])
+        # add special arguments
+        for rarg in self.specialargs:
+            # extract out kwargs from rarg
+            rkwargs = self.specialargs[rarg].props
+            # add to required
+            if 'required' in rkwargs:
+                if rkwargs['required']:
+                    self.required_args.append(self.specialargs[rarg])
+                else:
+                    self.special_args.append(self.specialargs[rarg])
+            else:
+                self.special_args.append(self.specialargs[rarg])
+        # ---------------------------------------------------------------------
         # get positional arguments
-        pos_args = list(self.args.keys())
+        pos_args = []
+        for rarg in self.required_args:
+            pos_args.append(rarg.names[0])
+        # deal with no positional arguments
         if len(pos_args) == 0:
             pos_args = ['[positional arguments]']
         # define usage
@@ -1587,7 +1729,7 @@ class DrsRecipe(object):
         else:
             return True, out_files, out_types
 
-    def _generate_arg_groups(self):
+    def _generate_arg_groups(self, argkind='args'):
         """
         Generate argument runs from self.args[ARG].value
         (For use after self.get_file_arg and self.get_non_file_arg for
@@ -1599,19 +1741,36 @@ class DrsRecipe(object):
         :return runs: list of runs in form:
                runs[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
         """
+        func_name = __NAME__ + '.DrsRecipe._generate_arg_groups()'
+        # --------------------------------------------------------------------
+        # deal with kind
+        if argkind == 'args':
+            args = self.args
+            cmdfmt = '{1} '
+        elif argkind == 'kwargs':
+            args = self.kwargs
+            cmdfmt = '--{0} {1} '
+        else:
+            emsg1 = 'Dev Error: Kind="{0}" not supported'.format(argkind)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG(self.drs_params, 'error', [emsg1, emsg2])
+            args, cmdfmt = None, ''
+        # ---------------------------------------------------------------------
         # storage
-        positions = [[]]*len(self.args)
+        positions = OrderedDict()
         file_args = []
         directories, lengths = OrderedDict(), OrderedDict()
         arg_list, file_dates = OrderedDict(), OrderedDict()
         # ---------------------------------------------------------------------
         # find file args (use last)
-        for argname in self.args:
+        for argname in args:
             # get this instances arg
-            arg = self.args[argname]
+            arg = args[argname]
             # get position
-            pos = int(str(arg.pos).strip('+'))
-            positions[pos] = argname
+            if argkind == 'args':
+                pos = int(str(arg.pos).strip('+'))
+            else:
+                pos = argname
             # set dirs, kind and dates to None
             dirs, kind, dates = None, None, None
             # -----------------------------------------------------------------
@@ -1621,8 +1780,14 @@ class DrsRecipe(object):
             # -----------------------------------------------------------------
             # deal with files
             elif arg.dtype in ['file', 'files']:
+                # do not consider if None
+                if arg.value is None:
+                    continue
+                # do not consider if list is empty
+                if len(arg.value) == 0:
+                    continue
                 # Now only deal with file arg
-                arg = self.args[argname]
+                arg = args[argname]
                 # get grouped values and directories
                 #   Note groups returned in following format:
                 #      group[directory][dtype][sequence] = [files]
@@ -1635,6 +1800,8 @@ class DrsRecipe(object):
             # deal with other non-file arguments
             else:
                 values = [arg.value] * len(self.args)
+            # add the position to dictionary
+            positions[pos] = argname
             # -----------------------------------------------------------------
             # add them to arg_list
             arg_list[argname] = values
@@ -1645,14 +1812,19 @@ class DrsRecipe(object):
         # We need to then match the files with directories, and if there is
         #   more than one argument with files we need to match them
         if len(file_args) == 1:
-            if 'directory' in arg_list:
-                arg_list['directory'] = directories[file_args[0]]
+            arg_list['directory'] = directories[file_args[0]]
             number_runs = len(directories[file_args[0]])
         elif len(file_args) > 1:
             margs = [self, file_args, arg_list, directories, file_dates]
             arg_list, number_runs = _match_multi_arg_lists(*margs)
         else:
             number_runs = 1
+        # ---------------------------------------------------------------------
+        # get directories as special
+        if 'directory' in arg_list:
+            outdirs = arg_list['directory']
+        else:
+            outdirs = [None]
         # ---------------------------------------------------------------------
         # storage for cmd arg groups
         cmd_args_groups = []
@@ -1663,28 +1835,33 @@ class DrsRecipe(object):
             cmd_arg = ''
             dict_arg = dict()
             # loop around arguments (in order)
-            for poskey in positions:
+            for key in positions:
+                # get position key value
+                poskey = positions[key]
                 # get values
-                values = arg_list[poskey][it]
+                if poskey in file_args:
+                    values = arg_list[poskey][it]
+                else:
+                    values = arg_list[poskey][0]
                 # construct cmd arg
                 if type(values) in [list, np.ndarray]:
                     # may have Nones (where matching failed)
                     if None in values:
                         continue
                     # construct command argument
-                    cmd_arg += ' '.join(values) + ' '
+                    cmd_arg += cmdfmt.format(poskey, ' '.join(values))
                     dict_arg[poskey] = list(values)
                 else:
                     # may have Nones (where matching failed)
                     if values is None:
                         continue
                     # construct command argument
-                    cmd_arg += '{0} '.format(values)
+                    cmd_arg += cmdfmt.format(poskey, values)
                     dict_arg[poskey] = values
             cmd_args_groups.append(cmd_arg)
             dict_args_groups.append(dict_arg)
         # ---------------------------------------------------------------------
-        return cmd_args_groups, dict_args_groups
+        return cmd_args_groups, dict_args_groups, outdirs
 
     def _get_non_file_arg(self, argname, kwargs, kind='arg'):
         """
@@ -2666,6 +2843,78 @@ def _get_version_info(p, green='', end=''):
     return imsgs
 
 
+def _help_format(keys, helpstr, options=None):
+
+    fmtstring = ''
+    sep = 19
+    maxsize = 60
+
+
+    # construct key string and add to output
+    keystr = ','.join(keys)
+    fmtstring += keystr
+
+    # construct options string
+    if options is None:
+        optionstr = ''
+    else:
+        options = np.array(options, dtype=str)
+        optionstr = '{{{0}}}'.format(','.join(options))
+    # add option string
+    helpstr = ' '.join([optionstr, helpstr])
+
+    # add help
+    # Assume help string is a string with escape characters
+
+    # first remove all escape characters
+    for char in ['\n', '\t']:
+        helpstr = helpstr.replace(char, '')
+
+    # remove any double spaces
+    while '  ' in helpstr:
+        helpstr = helpstr.replace('  ', ' ')
+
+    # split by max number of characters allowed
+    if len(helpstr) > maxsize:
+        helpstrs = _textwrap(helpstr, maxsize)
+    else:
+        helpstrs = [helpstr]
+
+    # add start separation
+    for hstr in helpstrs:
+        fmtstring += '\n' +  ' '*sep + hstr
+
+    # return formatted string
+    return fmtstring
+
+
+def _textwrap(input_string, length):
+    # Modified version of this: https://stackoverflow.com/a/16430754
+    new_string = []
+    for s in input_string.split("\n"):
+        if s == "":
+            new_string.append('')
+        wlen = 0
+        line = []
+        for dor in s.split():
+            if wlen + len(dor) + 1 <= length:
+                line.append(dor)
+                wlen += len(dor) + 1
+            else:
+                new_string.append(" ".join(line))
+                line = [dor]
+                wlen = len(dor)
+        if len(line):
+            new_string.append(" ".join(line))
+
+    # add a tab to all but first line
+    new_string2 = [new_string[0]]
+    for it in range(1, len(new_string)):
+        new_string2.append('\t' + new_string[it])
+
+    return new_string2
+
+
 def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
     """
     Match multiple argument lists so we have the same number of matches as
@@ -2736,7 +2985,11 @@ def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
         for jt in range(len(files[largest_it])):
             # get this iterations values
             dir_jt = dirs[largest_it][jt]
-            date_jt = dates[largest_it][jt]
+            # can be a set of dates
+            if len(dates[largest_it][jt]) > 1:
+                date_jt = np.mean(dates[largest_it][jt])
+            else:
+                date_jt = dates[largest_it][jt]
             # get all matching directories
             dirmask = other_dirs_arr == dir_jt
             # deal with no matching directories
@@ -2756,7 +3009,10 @@ def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
                     mask_files.append(files[it][kt])
                     mask_dirs.append(dirs[it][kt])
             # if we have multiple files we want the closest in time
-            closest = np.argmin(abs(other_dates_arr[dirmask] - date_jt))
+            diff_value = []
+            for oda_i in other_dates_arr[dirmask]:
+                diff_value.append(np.mean(oda_i) - date_jt)
+            closest = np.argmin(abs(np.array(diff_value)))
             # select this files set and dir as the correct one
             new_files[args[it]].append(mask_files[closest])
             new_dirs[args[it]].append(mask_dirs[closest])
@@ -2767,8 +3023,7 @@ def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
         directories[file_arg] = new_dirs[file_arg]
 
     # set arg_list directories to largest
-    if 'directory' in arg_list:
-        arg_list['directory'] = directories[largest]
+    arg_list['directory'] = directories[largest]
     # set the number of runs
     number_of_runs = len(directories[largest])
 
