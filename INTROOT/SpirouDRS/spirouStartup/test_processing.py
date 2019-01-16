@@ -215,11 +215,11 @@ if __name__ == "__main__":
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == "__main__":
-    # run main with no arguments (get from command line - sys.argv)
-    ll = main()
-    # exit message if in debug mode
-    spirouStartup.Exit(ll, has_plots=False)
+# if __name__ == "__main__":
+#     # run main with no arguments (get from command line - sys.argv)
+#     ll = main()
+#     # exit message if in debug mode
+#     spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
