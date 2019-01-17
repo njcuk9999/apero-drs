@@ -531,12 +531,43 @@ class DrsFitsFile(DrsInputFile):
             hdu.close()
 
         # push into storage
-        self.data = np.array(data)
+        # TODO: Note this used to be "self.data = np.array(data)"
+        # TODO:    But this is over 55% of the time of this function
+        # TODO     May be needed if "data" linked to "hdu"
+        self.data = data
         self.header = OrderedDict(zip(header.keys(), header.values()))
         self.comments = OrderedDict(zip(header.keys(), header.comments))
 
         # set the shape
         self.shape = self.data.shape
+
+    def read_header(self, ext=0):
+        func_name = __NAME__ + '.DrsFitsFile.read_header()'
+        # check that filename is set
+        self.check_filename()
+        # try to open header
+        try:
+            self.header = fits.getheader(self.filename, ext=ext)
+        except Exception as e:
+            emsg1 = ('Could not open header for file "{0}" extention={1}'
+                     ''.format(self.basename, ext))
+            emsg2 = '\tError {0}: {1}'.format(type(e), e)
+            emsg3 = '\tfunction = {0}'.format(func_name)
+            self.__error__([emsg1, emsg2, emsg3])
+
+    def read_data(self, ext=0):
+        func_name = __NAME__ + '.DrsFitsFile.read_data()'
+        # check that filename is set
+        self.check_filename()
+        # try to open header
+        try:
+            self.header = fits.getdata(self.filename, ext=ext)
+        except Exception as e:
+            emsg1 = ('Could not open data for file "{0}" extention={1}'
+                     ''.format(self.basename, ext))
+            emsg2 = '\tError {0}: {1}'.format(type(e), e)
+            emsg3 = '\tfunction = {0}'.format(func_name)
+            self.__error__([emsg1, emsg2, emsg3])
 
     def check_read(self):
         # check that data/header/comments is not None
