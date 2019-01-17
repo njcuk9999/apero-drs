@@ -1222,10 +1222,12 @@ class DrsRecipe(object):
         if dirs1[0] is None:
             # loop around runs (from kwargs_groups)
             for it in range(len(cmd_kwargs_groups)):
+                # need to add directory onto cmd_args_group (at start)
+                cmd_str = '{0} {1}'.format(dirs2[it], cmd_args_groups[0])
                 # merge cmd
-                cmd_groups.append(cmd_args_groups[0] + cmd_kwargs_groups[it])
+                cmd_groups.append(cmd_str + cmd_kwargs_groups[it])
                 # merge dict
-                tmp = OrderedDict()
+                tmp = OrderedDict(directory=dirs2[it])
                 for key in dict_arg_groups[0]:
                     tmp[key] = dict_arg_groups[0][key]
                 for key in dict_kwarg_groups[it]:
@@ -1254,19 +1256,9 @@ class DrsRecipe(object):
             WLOG(self.drs_params, 'error', [emsg1, emsg2])
 
         # ---------------------------------------------------------------------
-        # # now deal with keyword arguments
-        # cmd_kwargs = ''
-        # for kwarg in self.kwargs:
-        #     # get kwarg value
-        #     value = self.kwargs[kwarg].value
-        #     # construct command
-        #     if type(value) is list:
-        #         if len(value) == 0:
-        #             continue
-        #     if value is not None:
-        #         cmd_kwargs += '--{0} {1} '.format(kwarg, value)
-        # ---------------------------------------------------------------------
+        # Now deal with printing the runs (combine command with arguments)
         printruns = []
+        # loop around the cmd_groups (combined arg + kwarg)
         for cmd_args in cmd_groups:
             # generate command
             run_it = '{0} {1}'.format(cmd, cmd_args)
@@ -1277,7 +1269,7 @@ class DrsRecipe(object):
             printruns.append(run_it)
         # return in form:
         #       runs[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
-        return printruns, dict_arg_groups
+        return printruns, dict_groups
 
     def main(self, **kwargs):
         """
