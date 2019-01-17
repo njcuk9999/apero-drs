@@ -11,7 +11,7 @@ Created on 2018-12-19 at 16:44
 """
 import glob
 import time
-from multiprocessing import Process
+from multiprocessing import Manager, Process
 from collections import OrderedDict
 
 from SpirouDRS import spirouStartup
@@ -30,12 +30,15 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Define some paths
 PATH = '/scratch/Projects/spirou/data_dev/tmp/*/*/*'
+
+
+# PATH = '/scratch/Projects/spirou/data_dev/tmp/TEST1a/20180805/*d_pp.fits'
+
 RECIPES = recipes_spirou.recipes
-DEBUG = True
+DEBUG = False
 MAX_CORES = 5
 # global variables
-ERRORS = OrderedDict()
-TIMES = OrderedDict()
+MANAGER = Manager()
 # -----------------------------------------------------------------------------
 
 
@@ -63,7 +66,9 @@ def generate_runs(__recipe__, __files__, __filters__=None, **kwargs):
     return [pruns, druns], recipe
 
 
-def execute_runs(recipe, runs, processes=1):
+def execute_runs(p, recipe, runs, processes=1):
+
+
     if DEBUG:
         return 0
 
@@ -73,54 +78,68 @@ def execute_runs(recipe, runs, processes=1):
 
     # run parallel processes
     if processes > 1:
+        errors = MANAGER.dict()
+        times = MANAGER.dict()
         pp = []
         for sub_group in pgroups:
             # start the process
-            pargs = (recipe, dgroups[sub_group], pgroups[sub_group])
+            pargs = (p, recipe, dgroups[sub_group], pgroups[sub_group],
+                     times, errors)
             process = Process(target=run_wrapper, args=pargs)
             process.start()
+            # append process to list
+            pp.append(process)
         # do not continue with code until all cores have finished
         for process in pp:
             while process.is_alive():
                 pass
+        # get results
+        for process in pp:
+            process.join()
+
     # run single processes
     else:
+        times, errors = OrderedDict(), OrderedDict()
         for sub_group in pgroups:
-            run_wrapper(recipe, dgroups[sub_group], pgroups[sub_group])
+            pargs = [p, recipe, dgroups[sub_group], pgroups[sub_group],
+                     times, errors]
+            times, errors = run_wrapper(*pargs)
+
+    # return times and errors
+    return times, errors
 
 
-def run_wrapper(recipe, druns, pruns):
-    # allow changing of global constants (for storage)
-    global ERRORS
-    global TIMES
+def run_wrapper(p, recipe, druns, pruns, times, errors):
     # loop around runs
     for it in range(len(druns)):
         # get this iterations run arguments
         run_kwargs = druns[it]
         run_statement = pruns[it]
         # print progress
-        WLOG(recipe.drs_params, 'warning', ['', run_statement, ''])
+        WLOG(p, 'warning', ['', run_statement, ''])
         # try to run
         try:
             start = time.time()
             recipe.main(**run_kwargs)
-            TIMES[run_statement] = time.time() - start
+            times[run_statement] = time.time() - start
         # Manage unexpected errors
         except Exception as e:
             wmsgs = ['Run had an unexpected error']
             for msg in str(e).split('\n'):
                 wmsgs.append('\t' + msg)
-            WLOG(recipe.drs_params, 'warning', wmsgs)
-            ERRORS[run_statement] = [str(e)]
+            WLOG(p, 'warning', wmsgs)
+            errors[run_statement] = [str(e)]
         # Manage expected errors
         except SystemExit as e:
             wmsgs = ['Run had an expected error']
             for msg in str(e).split('\n'):
                 wmsgs.append('\t' + msg)
-            WLOG(recipe.drs_params, 'warning', wmsgs)
-            ERRORS[run_statement] = [str(e)]
+            WLOG(p, 'warning', wmsgs)
+            errors[run_statement] = [str(e)]
         # make sure all plots are closed
         sPlt.closeall()
+        # return times and errors
+        return times, errors
 
 
 def parallelize(jobs, processes):
@@ -140,38 +159,45 @@ def parallelize(jobs, processes):
 
 # def main():
 if __name__ == "__main__":
-    p = spirouStartup2.get_params(recipe=__NAME__.replace('.py', ''))
+    pp = spirouStartup2.get_params(recipe=__NAME__.replace('.py', ''))
     # get list of files to test
     files = glob.glob(PATH)
+    # storage for times
+    times, errors = OrderedDict(), OrderedDict()
 
     # ----------------------------------------------------------------------
     # log
-    WLOG(p, 'info', 'Test for test_recipe.py')
+    WLOG(pp, 'info', 'Test for test_recipe.py')
     # trigger
     test_runs, test_recipe = generate_runs('test_recipe.py', files)
-    execute_runs(test_recipe, test_runs, processes=MAX_CORES)
+    exargs = [pp, test_recipe, test_runs]
+    test_times, test_errors = execute_runs(*exargs, processes=MAX_CORES)
+    for key in test_times:
+        times[key] = test_times[key]
+    for key in test_errors:
+        errors[key] = test_errors[key]
     # ----------------------------------------------------------------------
     # log
-    WLOG(p, 'info', 'Test for cal_dark')
+    WLOG(pp, 'info', 'Test for cal_dark')
     # trigger
     dark_runs, dark_recipe = generate_runs('cal_DARK_spirou.py', files,
                                            plot=1, debug=1)
     # execute_runs(dark_recipe, dark_runs, processes=MAX_CORES)
     # ----------------------------------------------------------------------
     # log
-    WLOG(p, 'info', 'Test for cal_badpix')
+    WLOG(pp, 'info', 'Test for cal_badpix')
     # trigger
     badpix_runs, badpix_recipe = generate_runs('cal_BADPIX_spirou.py', files,
                                                plot=1)
     # ----------------------------------------------------------------------
     # log
-    WLOG(p, 'info', 'Test for cal_loc')
+    WLOG(pp, 'info', 'Test for cal_loc')
     # trigger
     loc_runs, loc_recipe = generate_runs('cal_loc_RAW_spirou.py', files,
                                          plot=1)
     # ----------------------------------------------------------------------
     # log
-    WLOG(p, 'info', 'Test for cal_extract')
+    WLOG(pp, 'info', 'Test for cal_extract')
     # define filters
     filters = dict(DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
     # trigger
@@ -182,29 +208,32 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Print timing
     # ----------------------------------------------------------------------
-    WLOG(p, 'info', ['', 'Timings:', ''])
-    tlog = []
-    for key in TIMES:
-        tlog.append(key)
-        tlog.append('\t\tTime taken = {0:.3f} s'.format(TIMES[key]))
-    WLOG(p, 'info', tlog)
+    if len(times) > 0:
+        WLOG(pp, 'info', ['', 'Timings:', ''])
+        tlog = []
+        for key in times:
+            tlog.append(key)
+            tlog.append('\t\tTime taken = {0:.3f} s'.format(times[key]))
+            tlog.append('')
+        WLOG(pp, '', tlog)
 
     # ----------------------------------------------------------------------
     # Print Errors
     # ----------------------------------------------------------------------
-    WLOG(p, '', ['', 'Errors:', ''])
-    emsgs = []
-    for key in ERRORS:
-        emsgs.append(key)
-        emsgs += ERRORS[key]
-        emsgs += ['', '']
-    WLOG(p, 'warning', emsgs)
+    if len(errors) > 0:
+        WLOG(pp, '', ['', 'Errors:', ''])
+        emsgs = []
+        for key in errors:
+            emsgs.append(key)
+            emsgs += errors[key]
+            emsgs += ['', '']
+        WLOG(pp, 'warning', emsgs)
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
+    WLOG(pp, 'info', wmsg.format(pp['PROGRAM']))
     # return a copy of locally defined variables in the memory
     # return dict(locals())
 
