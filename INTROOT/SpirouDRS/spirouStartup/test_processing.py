@@ -159,7 +159,7 @@ def parallelize(jobs, processes):
 
 # def main():
 if __name__ == "__main__":
-    pp = spirouStartup2.get_params(recipe=__NAME__.replace('.py', ''))
+    pp = spirouStartup2.get_params(recipe=__NAME__)
     # get list of files to test
     files = glob.glob(PATH)
     # storage for times
