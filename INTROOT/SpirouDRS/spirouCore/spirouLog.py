@@ -132,7 +132,7 @@ class Logger:
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
-        debug = p.get('DRS_DEBUG', 1)
+        debug = p.get('DRS_DEBUG', 0)
         if key == 'debug' and debug == 0:
             return
 
@@ -256,7 +256,7 @@ class Logger:
                 # noinspection PyTypeChecker
                 errorstring += error[0] + '\n'
             # deal with debugging
-            if p['DRS_DEBUG']:
+            if debug:
                 debug_start(errorstring)
             else:
                 EXIT_TYPE(errorstring)
