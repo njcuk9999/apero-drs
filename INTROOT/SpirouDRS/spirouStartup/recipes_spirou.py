@@ -167,6 +167,7 @@ out_recipe = drs_recipe()
 # test.py
 # -----------------------------------------------------------------------------
 test.name = 'test_recipe.py'
+test.instrument = 'SPIROU'
 test.outputdir = 'tmp'
 test.inputdir = 'tmp'
 test.inputtype = 'pp'
@@ -194,6 +195,7 @@ test.kwarg(**resize)
 # cal_preprocess_spirou
 # -----------------------------------------------------------------------------
 cal_pp.name = 'cal_preprocess_spirou.py'
+cal_pp.instrument = 'SPIROU'
 cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
 cal_pp.inputtype = 'raw'
@@ -209,6 +211,7 @@ cal_pp.kwarg(**plot)
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
 cal_badpix.name = 'cal_BADPIX_spirou.py'
+cal_badpix.instrument = 'SPIROU'
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
@@ -236,6 +239,7 @@ cal_badpix.kwarg(**resize)
 # cal_dark_spirou
 # -----------------------------------------------------------------------------
 cal_dark.name = 'cal_DARK_spirou.py'
+cal_dark.instrument = 'SPIROU'
 cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
 cal_dark.intputtype = 'pp'
@@ -257,6 +261,7 @@ cal_dark.kwarg(**resize)
 # cal_loc_RAW_spirou
 # -----------------------------------------------------------------------------
 cal_loc.name = 'cal_loc_RAW_spirou.py'
+cal_loc.instrument = 'SPIROU'
 cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'
 cal_loc.inputtype = 'pp'
@@ -284,6 +289,7 @@ cal_loc.kwarg(**resize)
 # cal_SLIT_spirou
 # -----------------------------------------------------------------------------
 cal_slit.name = 'cal_SLIT_spirou.py'
+cal_slit.instrument = 'SPIROU'
 cal_slit.outputdir = 'reduced'
 cal_slit.inputdir = 'tmp'
 cal_slit.inputtype = 'pp'
@@ -310,6 +316,7 @@ cal_slit.kwarg(**resize)
 # cal_SHAPE_spirou
 # -----------------------------------------------------------------------------
 cal_shape.name = 'cal_SHAPE_spirou.py'
+cal_shape.instrument = 'SPIROU'
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
 cal_shape.inputtype = 'pp'
@@ -338,6 +345,7 @@ cal_shape.kwarg(**resize)
 # cal_FF_RAW_spirou
 # -----------------------------------------------------------------------------
 cal_ff.name = 'cal_FF_RAW_spirou.py'
+cal_ff.instrument = 'SPIROU'
 cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
 cal_ff.inputtype = 'pp'
@@ -369,6 +377,7 @@ cal_ff.kwarg(**tiltfile)
 # cal_extract_RAW_spirou
 # -----------------------------------------------------------------------------
 cal_extract.name = 'cal_extract_RAW_spirou.py'
+cal_extract.instrument = 'SPIROU'
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
@@ -399,6 +408,7 @@ cal_extract.kwarg(**tiltfile)
 # cal_HC_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_hc.name = 'cal_HC_E2DS_spirou.py'
+cal_hc.instrument = 'SPIROU'
 cal_hc.outputdir = 'reduced'
 cal_hc.inputdir = 'reduced'
 cal_hc.inputtype = 'e2ds'
@@ -406,14 +416,12 @@ cal_hc.extension = 'fits'
 cal_hc.description = rd.HcE2DS.description
 cal_hc.epilog = rd.HcE2DS.example
 cal_hc.run_order = 7
-# -----------------------------------------------------------------------------
 # setup custom files (add a required keyword in the header to each file)
 #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
 cal_hc_files1 = [sf.out_ext_e2ds_ab, sf.out_ext_e2ds_c,
                  sf.out_ext_e2dsff_ab, sf.out_ext_e2dsff_c]
 cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
 cal_hc_files2 = spirouFile.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
-# -----------------------------------------------------------------------------
 # set up arguments
 cal_hc.arg(pos=0, **directory)
 cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
