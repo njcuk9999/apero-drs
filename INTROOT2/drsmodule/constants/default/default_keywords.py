@@ -1,5 +1,5 @@
 # This is the main config file
-from .._package import package
+from drsmodule.constants.core import constant_functions
 
 # -----------------------------------------------------------------------------
 # Define variables
@@ -12,9 +12,9 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_OBJRA', 'KW_OBJDEC',
            'KW_CMPLTEXP', 'KW_NEXP']
 
 # Constants definition
-Const = package.Const
+Const = constant_functions.Const
 # Keyword defintion
-Keyword = package.Keyword
+Keyword = constant_functions.Keyword
 
 # -----------------------------------------------------------------------------
 # Required header keys (general)
