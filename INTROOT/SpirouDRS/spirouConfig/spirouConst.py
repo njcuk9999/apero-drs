@@ -2879,7 +2879,7 @@ def EXIT():
     my_exit = LOG_EXIT_TYPE()
     if my_exit == 'sys':
         my_exit = sys.exit
-    elif EXIT == 'os':
+    elif my_exit == 'os':
         # noinspection PyProtectedMember
         my_exit = os._exit
     else:
