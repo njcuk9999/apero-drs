@@ -860,6 +860,8 @@ class DrsRecipe(object):
                 self.name = self.name.split('.py')[0]
         else:
             self.name = name
+        # get instrument
+        self.instrument = None
         # import module
         self.module = self._import_module()
         # output directory
