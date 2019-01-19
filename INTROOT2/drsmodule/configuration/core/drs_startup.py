@@ -20,6 +20,8 @@ from collections import OrderedDict
 from drsmodule import constants
 from drsmodule import plot
 from . import drs_log
+from . import drs_recipe
+from . import drs_file
 
 
 # =============================================================================
@@ -557,6 +559,7 @@ def indexing(p, outputs, icolumns, abspath):
     # deal with file existing (add existing rows)
     if os.path.exists(abspath):
         # get the current index fits file
+        # TODO: Need to move over reading of files
         idict = spirouImage.ReadFitsTable(p, abspath, return_dict=True)
         # check that all keys are in idict
         for key in icolumns:
@@ -594,6 +597,7 @@ def sort_and_save_outputs(p, istore, abspath):
         istore[icol] = np.array(istore[icol])[sortmask]
     # ------------------------------------------------------------------------
     # Make fits table and write fits table
+    # TODO: Need to move over reading of tables
     itable = spirouImage.MakeFitsTable(istore)
     spirouImage.WriteFitsTable(p, itable, abspath)
 
@@ -651,9 +655,8 @@ def find_recipe(name=None):
     # TODO: Need to make it search all instrument defintions (or
     #       start search based on instrument
 
-
     if name is None:
-        empty = spirouRecipe.DrsRecipe(name='Empty')
+        empty = drs_recipe.DrsRecipe(name='Empty')
         return empty
 
     found_recipe = None
@@ -678,7 +681,7 @@ def get_arg_strval(value):
     :param value: object, the value to be printed
     :return out: string, the string representation of "object"
     """
-    drs_file_type = spirouFile.DrsFitsFile
+    drs_file_type = drs_file.DrsFitsFile
 
     # if list is empty --> return
     if len(value) == 0:
@@ -838,7 +841,7 @@ def set_debug_from_input(recipe, fkwargs):
         # set the drs debug level to 1
         recipe.drs_params['DRS_DEBUG'] = 1
         # update the constants file
-        spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
+        # # # spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
     # return recipe
     return recipe
 
@@ -903,4 +906,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
