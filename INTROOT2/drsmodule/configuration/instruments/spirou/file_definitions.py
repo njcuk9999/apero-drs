@@ -14,7 +14,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from drsmodule import constants
-from drsmodule.configuration.core import File
+from drsmodule.configuration.core import drs_file
 
 
 # =============================================================================
@@ -27,14 +27,14 @@ Constants = constants.load(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['LATEST_EDIT']
+__date__ = Constants['DATE']
 __release__ = Constants['RELEASE']
 
 # =============================================================================
 # Define Files
 # =============================================================================
-drs_input = File.DrsInputFile
-drs_finput = File.DrsFitsFile
+drs_input = drs_file.DrsInputFile
+drs_finput = drs_file.DrsFitsFile
 
 drs_finput('', KW_CCAS='', KW_CREF='')
 drs_finput('', KW_DPRTYPE='', ext='')

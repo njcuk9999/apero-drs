@@ -1,9 +1,9 @@
 from drsmodule import constants
-from drsmodule.configuration.core import Recipe
-from drsmodule.configuration.core import File
+from drsmodule.configuration.core import drs_recipe
+from drsmodule.configuration.core import drs_file
+from drsmodule.configuration.locale.eng import recipe_descriptions as rd
 
 from . import file_definitions as sf
-from . import recipe_descriptions as rd
 
 
 # =============================================================================
@@ -12,11 +12,11 @@ from . import recipe_descriptions as rd
 __NAME__ = 'recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
-Constants = constants.load_config(__INSTRUMENT__)
+Constants = constants.load(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['LATEST_EDIT']
+__date__ = Constants['DATE']
 __release__ = Constants['RELEASE']
 
 # =============================================================================
@@ -108,24 +108,24 @@ wavefile = dict(name='--wavefile', dtype='file', default='None',
 # =============================================================================
 # List of usable recipes
 # =============================================================================
-drs_recipe = Recipe.DrsRecipe
+drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
-cal_badpix = drs_recipe()
-cal_ccf = drs_recipe()
-cal_dark = drs_recipe()
-cal_drift1 = drs_recipe()
-cal_drift2 = drs_recipe()
-cal_extract = drs_recipe()
-cal_ff = drs_recipe()
-cal_hc = drs_recipe()
-cal_loc = drs_recipe()
-cal_pp = drs_recipe()
-cal_slit = drs_recipe()
-cal_shape = drs_recipe()
-cal_wave = drs_recipe()
+cal_badpix = drs_recipe(__INSTRUMENT__)
+cal_ccf = drs_recipe(__INSTRUMENT__)
+cal_dark = drs_recipe(__INSTRUMENT__)
+cal_drift1 = drs_recipe(__INSTRUMENT__)
+cal_drift2 = drs_recipe(__INSTRUMENT__)
+cal_extract = drs_recipe(__INSTRUMENT__)
+cal_ff = drs_recipe(__INSTRUMENT__)
+cal_hc = drs_recipe(__INSTRUMENT__)
+cal_loc = drs_recipe(__INSTRUMENT__)
+cal_pp = drs_recipe(__INSTRUMENT__)
+cal_slit = drs_recipe(__INSTRUMENT__)
+cal_shape = drs_recipe(__INSTRUMENT__)
+cal_wave = drs_recipe(__INSTRUMENT__)
 
-test = drs_recipe()
+test = drs_recipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2,
            cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
@@ -165,9 +165,9 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2,
 # -----------------------------------------------------------------------------
 # generic recipe
 # -----------------------------------------------------------------------------
-raw_recipe = drs_recipe()
-pp_recipe = drs_recipe()
-out_recipe = drs_recipe()
+raw_recipe = drs_recipe(__INSTRUMENT__)
+pp_recipe = drs_recipe(__INSTRUMENT__)
+out_recipe = drs_recipe(__INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
 # test.py
@@ -332,9 +332,9 @@ cal_shape.epilog = rd.Shape.example
 cal_shape.run_order = 4
 cal_shape.arg(pos=0, **directory)
 cal_shape.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1', 
-             helpstr=rd.Shape.hcfile_help)
+              helpstr=rd.Shape.hcfile_help)
 cal_shape.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+', 
-             helpstr=rd.Shape.fpfiles_help)
+              helpstr=rd.Shape.fpfiles_help)
 cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
 cal_shape.kwarg(**dobad)
@@ -427,7 +427,7 @@ cal_hc.run_order = 7
 cal_hc_files1 = [sf.out_ext_e2ds_ab, sf.out_ext_e2ds_c,
                  sf.out_ext_e2dsff_ab, sf.out_ext_e2dsff_c]
 cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
-cal_hc_files2 = File.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
+cal_hc_files2 = drs_file.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
 # set up arguments
 cal_hc.arg(pos=0, **directory)
 cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
@@ -491,9 +491,3 @@ cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
 # -----------------------------------------------------------------------------
 # visu_E2DS_spirou
 # -----------------------------------------------------------------------------
-
-
-# -----------------------------------------------------------------------------
-# define valid recipes as a list
-# -----------------------------------------------------------------------------
-

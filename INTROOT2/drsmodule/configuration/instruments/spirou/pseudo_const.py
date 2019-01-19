@@ -17,7 +17,7 @@ from drsmodule.constants.default import pseudo_const
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'recipe_definitions.py'
+__NAME__ = 'spirou.pseudo_const'
 __INSTRUMENT__ = 'SPIROU'
 # get parameters
 PARAMS = constants.load(__INSTRUMENT__)
@@ -36,6 +36,26 @@ class PseudoConstants(DefaultConstants):
     # -------------------------------------------------------------------------
     # OVERWRITE PSEUDO-CONSTANTS from constants.default.pseudo_const.py here
     # -------------------------------------------------------------------------
+
+
+    # =========================================================================
+    # HEADER SETTINGS
+    # =========================================================================
+    # noinspection PyPep8Naming
+    def FORBIDDEN_COPY_KEYS(self):
+        """
+        Defines the keys in a HEADER file not to copy when copying over all
+        HEADER keys to a new fits file
+
+        :return forbidden_keys: list of strings, the keys in a HEADER file not
+                                to copy from and old fits file
+        """
+        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
+                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
+                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
+                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
+        # return keys
+        return forbidden_keys
 
 # =============================================================================
 # End of code
