@@ -92,7 +92,7 @@ LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG'])
 # Instrument Constants
 # =============================================================================
 # Instrument Name
-INSTRUMENT = Const('INSTRUMENT', value='None', dtype=str,
+INSTRUMENT = Const('INSTRUMENT', value=None, dtype=str,
                    options=['None', 'SPIROU', 'NIRPS'])
 
 # =============================================================================

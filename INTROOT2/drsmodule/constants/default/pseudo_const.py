@@ -13,11 +13,127 @@ import sys
 import os
 
 # =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'default.pseudo_const'
+
+# =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
 class PseudoConstants:
     def __init__(self, instrument=None):
         self.instrument = instrument
+
+    # =========================================================================
+    # HEADER SETTINGS
+    # =========================================================================
+    # noinspection PyPep8Naming
+    def FORBIDDEN_COPY_KEYS(self):
+        """
+        Defines the keys in a HEADER file not to copy when copying over all
+        HEADER keys to a new fits file
+
+        :return forbidden_keys: list of strings, the keys in a HEADER file not
+                                to copy from and old fits file
+        """
+        forbidden_keys = []
+        # return keys
+        return forbidden_keys
+
+    # =========================================================================
+    # INDEXING SETTINGS
+    # =========================================================================
+    # noinspection PyPep8Naming
+    def INDEX_OUTPUT_FILENAME(self):
+        filename = 'index.fits'
+        return filename
+
+    # noinspection PyPep8Naming
+    def OUTPUT_FILE_HEADER_KEYS(self, p):
+        """
+        Output file header keys.
+
+        This list is the master list and RAW_OUTPUT_COLUMNS, REDUC_OUTPUT_COLUMNS
+        etc must be in this list
+        :param p:
+        :return:
+        """
+        # Get required header keys from spirouKeywords.py (via p)
+        output_keys = [p['KW_DATE_OBS'][0],
+                       p['KW_UTC_OBS'][0],
+                       p['KW_ACQTIME'][0],
+                       p['KW_OBJNAME'][0],
+                       p['KW_OBSTYPE'][0],
+                       p['KW_EXPTIME'][0],
+                       p['KW_CCAS'][0],
+                       p['KW_CREF'][0],
+                       p['KW_CDEN'][0],
+                       p['KW_DPRTYPE'][0],
+                       p['KW_OUTPUT'][0],
+                       p['KW_EXT_TYPE'][0],
+                       p['KW_CMPLTEXP'][0],
+                       p['KW_NEXP'][0]]
+        # return output_keys
+        return output_keys
+
+    # noinspection PyPep8Naming
+    def RAW_OUTPUT_COLUMNS(self, p):
+        func_name = __NAME__ + '.RAW_OUTPUT_COLUMNS()'
+        # define selected keys
+        output_keys = [p['KW_DATE_OBS'][0],
+                       p['KW_UTC_OBS'][0],
+                       p['KW_ACQTIME'][0],
+                       p['KW_OBJNAME'][0],
+                       p['KW_OBSTYPE'][0],
+                       p['KW_EXPTIME'][0],
+                       p['KW_DPRTYPE'][0],
+                       p['KW_CCAS'][0],
+                       p['KW_CREF'][0],
+                       p['KW_CDEN'][0],
+                       p['KW_CMPLTEXP'][0],
+                       p['KW_NEXP'][0]]
+        # check in master list
+        masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
+        for key in output_keys:
+            if key not in self.OUTPUT_FILE_HEADER_KEYS(p):
+                emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
+                emsg2 = '\tfunction = {0}'.format(func_name)
+                raise ValueError(emsg1 + '\n' + emsg2)
+        # return keys
+        return output_keys
+
+    # noinspection PyPep8Naming
+    def REDUC_OUTPUT_COLUMNS(self, p):
+        func_name = __NAME__ + '.REDUC_OUTPUT_COLUMNS()'
+
+        output_keys = [p['KW_DATE_OBS'][0],
+                       p['KW_UTC_OBS'][0],
+                       p['KW_ACQTIME'][0],
+                       p['KW_OBJNAME'][0],
+                       p['KW_OUTPUT'][0],
+                       p['KW_EXT_TYPE'][0]]
+        # check in master list
+        masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
+        for key in output_keys:
+            if key not in self.OUTPUT_FILE_HEADER_KEYS(p):
+                emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
+                emsg2 = '\tfunction = {0}'.format(func_name)
+                raise ValueError(emsg1 + '\n' + emsg2)
+        # return keys
+        return output_keys
+
+    # noinspection PyPep8Naming
+    def GEN_OUTPUT_COLUMNS(self, p):
+        output_keys = [p['KW_DATE_OBS'][0],
+                       p['KW_UTC_OBS'][0],
+                       p['KW_ACQTIME'][0],
+                       p['KW_OBJNAME'][0],
+                       p['KW_OBSTYPE'][0],
+                       p['KW_EXPTIME'][0],
+                       p['KW_OUTPUT'][0],
+                       p['KW_EXT_TYPE'][0]]
+        return output_keys
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -139,8 +255,6 @@ class PseudoConstants:
         # construct the logfile path
         largs = [host, pid, recipe]
         lpath = os.path.join(dir_data_msg, 'DRS-{0}_{1}_{2}'.format(*largs))
-
-        print(lpath)
 
         # return lpath
         return lpath
