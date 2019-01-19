@@ -26,6 +26,7 @@ from drsmodule.configuration.math import time
 # =============================================================================
 # Name of program
 __NAME__ = 'log.py'
+__INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(None)
 # Get version and author
@@ -137,6 +138,13 @@ class Logger:
             p['PID'] = None
             wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
             warnings.warn(wmsg, Warning)
+
+        # deal with no instrument
+        if 'INSTRUMENT' not in p:
+            p['INSTRUMENT'] = None
+
+        # update pin and pconstant from p (selects instrument)
+        self.update_param_dict(p)
 
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
