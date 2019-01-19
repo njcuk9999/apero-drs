@@ -865,9 +865,6 @@ class DrsRecipe(object):
         :param name: string, name of the recipe (the .py file) relating to
                      this recipe object
         """
-        if instrument is None:
-            emsg = 'Dev Error: Recipe must be associated with an instrument'
-            WLOG(None, 'error', emsg)
         # get instrument
         self.instrument = instrument
         # name
