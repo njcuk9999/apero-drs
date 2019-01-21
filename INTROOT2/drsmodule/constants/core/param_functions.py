@@ -10,6 +10,7 @@ Created on 2019-01-17 at 15:24
 @author: cook
 """
 import numpy as np
+import sys
 import os
 import pkg_resources
 import importlib
@@ -540,11 +541,6 @@ class ParamDict(CaseInsensitiveDict):
 def load_config(instrument=None):
     # get instrument sub-package constants files
     modules = get_module_names(instrument)
-    # deal with no instrument
-    if instrument is None:
-        quiet = True
-    else:
-        quiet = False
     # get constants from modules
     keys, values, sources = _load_from_module(modules, True)
     params = ParamDict(zip(keys, values))
@@ -555,7 +551,11 @@ def load_config(instrument=None):
     # get instrument user config files
     files = _get_file_names(params, instrument)
     # get constants from user config files
-    keys, values, sources = _load_from_file(files, modules)
+    try:
+        keys, values, sources = _load_from_file(files, modules)
+    except ConfigError as e:
+        print_error(e)
+        sys.exit(1)
     # add to params
     for it in range(len(keys)):
         params[keys[it]] = values[it]
@@ -663,6 +663,21 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         raise ConfigError(emsgs, level='error')
     # return modules
     return mods
+
+
+def print_error(error):
+    print('\n')
+    print('='*70)
+    print(' Configuration file {0}:'.format(error.level))
+    print('=' * 70, '\n')
+    estring = error.message
+    if type(estring) is not list:
+        estring = [estring]
+    for emsg in estring:
+        emsg = emsg.replace('\n', '\n\t')
+        print('\t' + emsg)
+
+    print('='*70, '\n')
 
 
 # =============================================================================
