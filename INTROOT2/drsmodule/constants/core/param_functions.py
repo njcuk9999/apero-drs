@@ -871,7 +871,8 @@ def _load_from_file(files, modules):
                 wmsg1 = 'Key {0} duplicated in "{1}"'
                 wargs1 = [fkeyi, filename]
                 wmsg2 = '\tOther configs: {0}'.format(','.join(set(fsources)))
-                ConfigWarning([wmsg1.format(*wargs1), wmsg2])
+                wmsg3 = '\tConfig File = "{0}"'.format(filename)
+                ConfigWarning([wmsg1.format(*wargs1), wmsg2, wmsg3])
             # append to list
             fkeys.append(fkeyi)
             fvalues.append(fvaluei)
@@ -895,7 +896,7 @@ def _load_from_file(files, modules):
                 if fkeys[jt] != mkeys[it]:
                     continue
                 # if we are then we need to validate
-                value = mvalue.validate(fvalues[jt])
+                value = mvalue.validate(fvalues[jt], source=fsources[jt])
                 # now append to output lists
                 keys.append(fkeys[jt])
                 values.append(value)
