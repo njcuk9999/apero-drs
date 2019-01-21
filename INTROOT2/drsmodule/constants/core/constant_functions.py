@@ -6,6 +6,7 @@ Created on 2019-01-17 at 14:09
 @author: cook
 """
 import numpy as np
+import os
 import importlib
 import string
 import warnings
@@ -130,9 +131,8 @@ class Const:
         self.options = options
         self.maximum, self.minimum = maximum, minimum
         self.kind = 'Const'
-        self.true_value = None
 
-    def validate(self, test_value=None):
+    def validate(self, test_value=None, quiet=False):
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -141,13 +141,18 @@ class Const:
         # get true value (and test test_value)
         true_value = _validate_value(self.name, self.dtype, value,
                                      self.dtypei, self.options,
-                                     self.maximum, self.minimum)
+                                     self.maximum, self.minimum,
+                                     quiet=quiet)
         # deal with storing
         if test_value is None:
             self.true_value = true_value
             return True
         else:
             return true_value
+
+    def copy(self):
+        return Const(self.name, self.value, self.dtype, self.dtypei,
+                     self.options, self.maximum, self.minimum)
 
 
 class Keyword(Const):
@@ -170,7 +175,8 @@ class Keyword(Const):
         if options is not None:
             self.options = options
 
-    def validate(self, test_value=None):
+
+    def validate(self, test_value=None, quiet=False):
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -179,7 +185,8 @@ class Keyword(Const):
         # get true value (and test test_value)
         true_value = _validate_value(self.name, self.dtype, value,
                                      self.dtypei, self.options,
-                                     self.maximum, self.minimum)
+                                     self.maximum, self.minimum,
+                                     quiet=quiet)
         # deal with no comment
         if self.comment is None:
             self.comment = ''
@@ -196,6 +203,9 @@ class Keyword(Const):
         else:
             return true_value
 
+    def copy(self):
+        return Keyword(self.name, self.key, self.value, self.dtype,
+                       self.comment, self.options, self.maximum, self.minimum)
 
 # =============================================================================
 # Define functions
@@ -343,16 +353,33 @@ def _read_lines(filename, comments='#', delimiter=' '):
     return np.array(raw)
 
 
-def _test_dtype(name, invalue, dtype):
+def _test_dtype(name, invalue, dtype, quiet=False):
 
     # if we don't have a value (i.e. it is None) don't test
     if invalue is None:
         return None
 
+    # check paths (must be strings and must exist)
+    if dtype == 'path':
+        if type(invalue) is not str:
+            eargs = [name, type(invalue), invalue]
+            emsg1 = 'DevError: Parameter "{0}" must be a string.'
+            emsg2 = '\tType: "{1}"\tValue: "{2}"'.format(*eargs)
+            if not quiet:
+                raise ConfigError([emsg1.format(*eargs), emsg2], level='error')
+        if not os.path.exists(invalue):
+            emsg = 'Key {0}: Path does not exist "{1}"'
+            eargs = [name, invalue]
+            if not quiet:
+                raise ConfigError(emsg.format(*eargs), level='error')
+
+        return str(invalue)
+
     # deal with casting a string into a list
     if (dtype is list) and (type(invalue) is str):
         emsg = 'DevError: Parameter "{0}" should be a list not a string.'
-        raise ConfigError(emsg.format(name), level='error')
+        if not quiet:
+            raise ConfigError(emsg.format(name), level='error')
     # now try to cast value
     try:
         outvalue = dtype(invalue)
@@ -361,38 +388,51 @@ def _test_dtype(name, invalue, dtype):
         emsg1 = ('DevError: Parameter "{0}" dtype is incorrect. '
                  'Expected "{1}" value="{2}"')
         emsg2 = '\tError was "{0}": "{1}"'.format(type(e), e)
-        raise ConfigError([emsg1.format(*eargs), emsg2], level='error')
+        if not quiet:
+            raise ConfigError([emsg1.format(*eargs), emsg2], level='error')
+        outvalue = invalue
     # return out value
     return outvalue
 
 
-def _validate_value(name, dtype, value, dtypei, options, maximum, minimum):
+def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
+                    quiet=False):
     # ---------------------------------------------------------------------
     # check that we only have simple dtype
     if dtype is None:
         emsg = 'DevError: Parameter "{0}" dtype not set'
-        ConfigError(emsg.format(name), level='error')
-    if dtype not in SIMPLE_TYPES:
+        if not quiet:
+            raise ConfigError(emsg.format(name), level='error')
+    if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
         emsg1 = ('DevError: Parameter "{0}" dtype is incorrect. Must be'
                  ' one of the following:'.format(name))
         emsg2 = '\t' + ', '.join(SIMPLE_STYPES)
-        ConfigError(emsg1, emsg2)
+        if not quiet:
+            raise ConfigError(emsg1, emsg2)
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
         emsg = 'DevError: Parameter "{0}" value is not set.'.format(name)
-        ConfigError(emsg, level='error')
+        if not quiet:
+            raise ConfigError(emsg, level='error')
 
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
+
+        if type(value) is str:
+            if value.lower() in ['1', '0', 'true', 'false']:
+                value = bool(value)
+
         if value not in [True, 1, False, 0]:
             emsg1 = 'DevError: Parameter "{0}" must be True or False [1 or 0]'
             emsg2 = '\tCurrent value: "{0}"'.format(value)
-            ConfigError([emsg1, emsg2], level='error')
+            if not quiet:
+                raise ConfigError([emsg1.format(value), emsg2], level='error')
+
     # ---------------------------------------------------------------------
     # Check if dtype is correct
-    true_value = _test_dtype(name, value, dtype)
+    true_value = _test_dtype(name, value, dtype, quiet=quiet)
     # ---------------------------------------------------------------------
     # check dtypei if list
     if dtype == list:
@@ -408,7 +448,9 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum):
             emsg1 = 'DevError: Parameter "{0}" value is incorrect.'
             emsg2 = '\tOptions are: {0}'.format(','.join(options))
             emsg3 = '\tCurrent value: {0}'.format(true_value)
-            ConfigError([emsg1.format(name), emsg2, emsg3], level='error')
+            if not quiet:
+                raise ConfigError([emsg1.format(name), emsg2, emsg3],
+                                  level='error')
     # ---------------------------------------------------------------------
     # check limits if not a list or str or bool
     if dtype in [int, float]:
@@ -417,12 +459,15 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum):
                 emsg1 = ('DevError: Parameter "{0}" too large'
                          ''.format(name))
                 emsg2 = '\tValue must be less than {0}'.format(maximum)
-                ConfigError([emsg1.format(name), emsg2], level='error')
+                if not quiet:
+                    raise ConfigError([emsg1.format(name), emsg2],
+                                      level='error')
         if minimum is not None:
             if true_value < minimum:
                 emsg1 = ('DevError: Parameter "{0}" too large'.format(name))
                 emsg2 = '\tValue must be less than {0}'.format(maximum)
-                ConfigError([emsg1, emsg2], level='error')
+                if not quiet:
+                    raise ConfigError([emsg1, emsg2], level='error')
     # return true value
     return true_value
 
