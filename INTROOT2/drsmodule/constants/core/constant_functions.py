@@ -132,7 +132,7 @@ class Const:
         self.maximum, self.minimum = maximum, minimum
         self.kind = 'Const'
 
-    def validate(self, test_value=None, quiet=False):
+    def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -142,7 +142,7 @@ class Const:
         true_value = _validate_value(self.name, self.dtype, value,
                                      self.dtypei, self.options,
                                      self.maximum, self.minimum,
-                                     quiet=quiet)
+                                     quiet=quiet, source=source)
         # deal with storing
         if test_value is None:
             self.true_value = true_value
@@ -163,7 +163,8 @@ class Keyword(Const):
         self.comment = comment
         self.kind = 'Keyword'
 
-    def set(self, key=None, value=None, dtype=None, comment=None, options=None):
+    def set(self, key=None, value=None, dtype=None, comment=None,
+            options=None):
         if key is not None:
             self.key = key
         if value is not None:
@@ -176,7 +177,7 @@ class Keyword(Const):
             self.options = options
 
 
-    def validate(self, test_value=None, quiet=False):
+    def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -186,7 +187,7 @@ class Keyword(Const):
         true_value = _validate_value(self.name, self.dtype, value,
                                      self.dtypei, self.options,
                                      self.maximum, self.minimum,
-                                     quiet=quiet)
+                                     quiet=quiet, source=source)
         # deal with no comment
         if self.comment is None:
             self.comment = ''
@@ -396,25 +397,33 @@ def _test_dtype(name, invalue, dtype, quiet=False):
 
 
 def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
-                    quiet=False):
+                    quiet=False, source=None):
+
+    func_name = __NAME__ + '._validate_value()'
+    # deal with no source
+    if source is None:
+        source = 'Unknown ({0})'.format(func_name)
     # ---------------------------------------------------------------------
     # check that we only have simple dtype
     if dtype is None:
-        emsg = 'DevError: Parameter "{0}" dtype not set'
+        emsg1 = 'DevError: Parameter "{0}" dtype not set'
+        emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError(emsg.format(name), level='error')
+            raise ConfigError([emsg2.format(name), emsg2], level='error')
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
         emsg1 = ('DevError: Parameter "{0}" dtype is incorrect. Must be'
                  ' one of the following:'.format(name))
         emsg2 = '\t' + ', '.join(SIMPLE_STYPES)
+        emsg3 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError(emsg1, emsg2)
+            raise ConfigError([emsg1, emsg2, emsg3])
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
-        emsg = 'DevError: Parameter "{0}" value is not set.'.format(name)
+        emsg1 = 'DevError: Parameter "{0}" value is not set.'.format(name)
+        emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError(emsg, level='error')
+            raise ConfigError([emsg1, emsg2], level='error')
 
     # ---------------------------------------------------------------------
     # check bools
@@ -427,8 +436,10 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
         if value not in [True, 1, False, 0]:
             emsg1 = 'DevError: Parameter "{0}" must be True or False [1 or 0]'
             emsg2 = '\tCurrent value: "{0}"'.format(value)
+            emsg3 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
-                raise ConfigError([emsg1.format(name), emsg2], level='error')
+                raise ConfigError([emsg1.format(name), emsg2, emsg3],
+                                  level='error')
 
     # ---------------------------------------------------------------------
     # Check if dtype is correct
@@ -448,8 +459,9 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
             emsg1 = 'DevError: Parameter "{0}" value is incorrect.'
             emsg2 = '\tOptions are: {0}'.format(','.join(options))
             emsg3 = '\tCurrent value: {0}'.format(true_value)
+            emsg4 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
-                raise ConfigError([emsg1.format(name), emsg2, emsg3],
+                raise ConfigError([emsg1.format(name), emsg2, emsg3, emsg4],
                                   level='error')
     # ---------------------------------------------------------------------
     # check limits if not a list or str or bool
@@ -459,15 +471,17 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                 emsg1 = ('DevError: Parameter "{0}" too large'
                          ''.format(name))
                 emsg2 = '\tValue must be less than {0}'.format(maximum)
+                emsg3 = '\tConfig File = "{0}"'.format(source)
                 if not quiet:
-                    raise ConfigError([emsg1.format(name), emsg2],
+                    raise ConfigError([emsg1.format(name), emsg2, emsg3],
                                       level='error')
         if minimum is not None:
             if true_value < minimum:
                 emsg1 = ('DevError: Parameter "{0}" too large'.format(name))
                 emsg2 = '\tValue must be less than {0}'.format(maximum)
+                emsg3 = '\tConfig File = "{0}"'.format(source)
                 if not quiet:
-                    raise ConfigError([emsg1, emsg2], level='error')
+                    raise ConfigError([emsg1, emsg2, emsg3], level='error')
     # return true value
     return true_value
 
