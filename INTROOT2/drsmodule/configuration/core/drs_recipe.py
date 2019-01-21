@@ -28,7 +28,7 @@ from . import drs_log
 __NAME__ = 'drs_recipe.py'
 __INSTRUMENT__ = None
 # Get constants
-Constants = constants.load(None)
+Constants = constants.load(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
@@ -1651,7 +1651,7 @@ class DrsRecipe(object):
                     errors += error1
                 if (not valid2a) and valid1 and valid3:
                     errors += error2a
-                if valid1:
+                if valid1 and valid2a:
                     header_errors[drs_file.name] = error2b
                 # only add check3 if check2 was valid
                 if (not valid3) and valid2a and valid2b and valid1:
@@ -1670,6 +1670,8 @@ class DrsRecipe(object):
                     #    check other drs_files)
                     break
             # if this file is not valid we should break here
+
+            # WLOG(params, 'error', 'Neil Stop')
             if not valid:
                 # add header errors (needed outside drs_file loop)
                 errors += _gen_header_errors(header_errors)
@@ -2066,10 +2068,14 @@ class DrsRecipe(object):
 
         :return log_opt: string, the log_opt message for WLOG
         """
+        func_name = __NAME__ + 'DrsRecipe.__error__()'
+
         if 'PID' not in self.drs_params:
             self.drs_params['PID'] = None
+            self.drs_params.set_source('PID', func_name)
         if 'RECIPE' not in self.drs_params:
             self.drs_params['RECIPE'] = __NAME__.replace('.py', '')
+            self.drs_params.set_source('RECIPE', func_name)
         # return drs_params
         return self.drs_params
 

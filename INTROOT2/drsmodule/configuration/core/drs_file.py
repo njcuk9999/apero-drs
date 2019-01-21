@@ -26,7 +26,7 @@ from drsmodule import constants
 __NAME__ = 'drs_file.py'
 __INSTRUMENT__ = None
 # Get constants
-Constants = constants.load(None)
+Constants = constants.load(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']

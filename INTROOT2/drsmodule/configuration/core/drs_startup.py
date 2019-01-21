@@ -16,9 +16,11 @@ import os
 import time
 import code
 from collections import OrderedDict
+import importlib
 
 from drsmodule import constants
 from drsmodule import plot
+from drsmodule.io import drs_table
 from . import drs_log
 from . import drs_recipe
 from . import drs_file
@@ -30,6 +32,8 @@ from . import drs_file
 # Name of program
 __NAME__ = 'drs_startup.py'
 __INSTRUMENT__ = None
+# Define package name
+PACKAGE = 'drsmodule'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
@@ -45,14 +49,17 @@ COLOR = constants.Colors
 ParamDict = constants.ParamDict
 # get the config error
 ConfigError = constants.ConfigError
-# get recipes
+# recipe control path
+INSTRUMENT_PATH = './configuration/instruments/'
+CORE_PATH = './configuration/core/default/'
+
 # # # RECIPES = recipes_spirou.recipes
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def input_setup(name=None, fkwargs=None, quiet=False):
+def input_setup(name=None, instrument=None, fkwargs=None, quiet=False):
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -61,7 +68,7 @@ def input_setup(name=None, fkwargs=None, quiet=False):
     # Clean WLOG
     WLOG.clean_log(pid)
     # find recipe
-    recipe = find_recipe(name)
+    recipe = find_recipe(name, instrument)
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid)
     # need to set debug mode now
@@ -123,7 +130,7 @@ def main_end_script(p, outputs='reduced'):
         index_outputs(p)
     # log end message
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['RECIPE']))
     # add the logger messsages to p
     p = WLOG.output_param_dict(p)
     # finally clear out the log in WLOG
@@ -149,16 +156,13 @@ def exit_script(ll, has_plots=True):
     if 'p' in ll:
         p = ll['p']
     else:
-        p = OrderedDict()
+        p = Constants
     # make sure we have DRS_PLOT
     if 'DRS_PLOT' not in p:
         p['DRS_PLOT'] = 0
     # make sure we have DRS_INTERACTIVE
     if 'DRS_INTERACTIVE' not in p:
         p['DRS_INTERACTIVE'] = 1
-    # make sure we have log_opt
-    if 'log_opt' not in p:
-        p['LOG_OPT'] = sys.argv[0]
     # if DRS_INTERACTIVE is False just return 0
     if not p['DRS_INTERACTIVE']:
         # print('Interactive mode off')
@@ -173,7 +177,7 @@ def exit_script(ll, has_plots=True):
     WLOG(p, '', '')
     WLOG(p, '', p['DRS_HEADER'], printonly=True)
     WLOG(p, 'warning', wmsg.format(kind), printonly=True)
-    WLOG(p, '', ['DRS_HEADER'], printonly=True)
+    WLOG(p, '', p['DRS_HEADER'], printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
@@ -263,8 +267,8 @@ def display_drs_title(p):
 
     # create title
     title = ' * '
-    title += colors.RED1 + ' {DRS_NAME} ' + colors.okgreen + '@{PID}'
-    title += ' (' + colors.BLUE1 + 'V{DRS_VERSION}' + colors.okgreen + ')'
+    title += colors.RED1 + ' {INSTRUMENT} ' + colors.okgreen + '@{PID}'
+    title += ' (' + colors.BLUE1 + 'V{VERSION}' + colors.okgreen + ')'
     title += colors.ENDC
     title = title.format(**p)
 
@@ -282,30 +286,22 @@ def display_title(p, title):
     :return None:
     """
     # Log title
-    WLOG(p, '', p['DRS_HEADER'])
-    WLOG(p, '', '{0}'.format(title), wrap=False)
-    WLOG(p, '', p['DRS_HEADER'])
+    wmsgs = []
+    wmsgs.append(p['DRS_HEADER'])
+    wmsgs.append('{0}'.format(title))
+    wmsgs.append(p['DRS_HEADER'])
+    # print and log
+    WLOG(p, '', wmsgs, wrap=False)
+
 
 
 def display_ee(p):
     # get colours
     colors = COLOR()
-
+    # get pconstant
+    pconstant = constants.pload(p['INSTRUMENT'])
     # noinspection PyPep8
-    logo = ['',
-            '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
-            '    `ohmmmmmmmmmdy: +mmmmmmmmmmmmmy- `ydmmmh: sdddmmmmmmddho-                               ',
-            '   `ymmmmmdmmmmmmmd./mmmmmmhhhmmmmmm-/mmmmmmo ymmmmmmmmmmmmmmo                              ',
-            '   /mmmmm:.-:+ydmm/ :mmmmmy``.smmmmmo.ydmdho` ommmmmhsshmmmmmm.      ```                    ',
-            '   ommmmmhs+/-..::  .mmmmmmoshmmmmmd- `.-::-  +mmmmm:  `hmmmmm`  `-/+ooo+:.   .:::.   .:/// ',
-            '   .dmmmmmmmmmdyo.   mmmmmmmmmmmddo. oyyyhm/  :mmmmmy+osmmmmms  `osssssssss+` /sss-   :ssss ',
-            '    .ohdmmmmmmmmmmo  dmmmmmdo+/:.`   ymmmmm/  .mmmmmmmmmmmmms`  +sss+..-ossso`+sss-   :ssss ',
-            '   --.`.:/+sdmmmmmm: ymmmmmh         ymmmmm/   mmmmmmmmmddy-    ssss`   :ssss.osss.   :ssss ',
-            '  +mmmhs/-.-smmmmmm- ommmmmm`        hmmmmm/   dmmmmm/sysss+.  `ssss-  `+ssss`osss`   :ssss ',
-            ' -mmmmmmmmmmmmmmmms  /mmmmmm.        hmmmmm/   ymmmmm``+sssss/` /sssso+sssss- +sss:` .ossso ',
-            ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
-            '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
-            '']
+    logo = pconstant.SPLASH()
     for line in logo:
         WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
     WLOG(p, '', p['DRS_HEADER'])
@@ -350,14 +346,16 @@ def display_initial_parameterisation(p):
     # Add initial parameterisation
     wmsgs = ['\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p),
              '\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p),
-             '\tDRS_CONFIG={DRS_CONFIG}'.format(**p),
-             '\tDRS_UCONFIG={DRS_UCONFIG}'.format(**p),
              '\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p),
              '\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p),
-             '\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p),
-             '\tPRINT_LEVEL={PRINT_LEVEL}'.format(**p),
-             '\tLOG_LEVEL={LOG_LEVEL}'.format(**p),
-             '\tDRS_PLOT={DRS_PLOT}'.format(**p)]
+             '\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p)]
+    # add config sources
+    for source in p['DRS_CONFIG']:
+        wmsgs.append('\tDRS_CONFIG={0}'.format(source))
+    # add others
+    wmsgs += ['\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p),
+              '\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p),
+              '\tDRS_PLOT={DRS_PLOT}'.format(**p)]
     if p['DRS_DATA_WORKING'] is None:
         wmsgs.append('\tDRS_DATA_WORKING is not set, running on-line mode')
     else:
@@ -425,9 +423,10 @@ def display_run_time_arguments(recipe, fkwargs=None):
     """
     Display for arguments used (got from p['INPUT'])
 
-    :param p: dictionary, parameter dictionary
-        Must contain at least:
-            INPUT: parameters obtained for this recipe
+    :param recipe: DrsRecipe instance
+    :param fkwargs: dictionary or None, key/value pairs from run time call
+                    if None does not use
+
     :return None:
     """
     log_strings = []
@@ -559,8 +558,7 @@ def indexing(p, outputs, icolumns, abspath):
     # deal with file existing (add existing rows)
     if os.path.exists(abspath):
         # get the current index fits file
-        # TODO: Need to move over reading of files
-        idict = spirouImage.ReadFitsTable(p, abspath, return_dict=True)
+        idict = drs_table.read_fits_table(p, abspath, return_dict=True)
         # check that all keys are in idict
         for key in icolumns:
             if key not in list(idict.keys()):
@@ -598,8 +596,8 @@ def sort_and_save_outputs(p, istore, abspath):
     # ------------------------------------------------------------------------
     # Make fits table and write fits table
     # TODO: Need to move over reading of tables
-    itable = spirouImage.MakeFitsTable(istore)
-    spirouImage.WriteFitsTable(p, itable, abspath)
+    itable = drs_table.make_fits_table(istore)
+    drs_table.write_fits_table(p, itable, abspath)
 
 
 # =============================================================================
@@ -650,17 +648,28 @@ def assign_pid():
     return 'PID-{0:020d}'.format(int(time.time() * 1e7))
 
 
-def find_recipe(name=None):
+def find_recipe(name=None, instrument=None):
 
-    # TODO: Need to make it search all instrument defintions (or
-    #       start search based on instrument
+    # deal with no instrument
+    if instrument is None:
+        WLOG(None, 'error', 'Dev Error: Must define an instrument.')
 
+    # deal with no name or no instrument
     if name is None:
-        empty = drs_recipe.DrsRecipe(name='Empty')
+        empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty
 
+    # else we have a name and an instrument
+    margs = [instrument, ['recipe_definitions.py'], INSTRUMENT_PATH, CORE_PATH]
+    modules = constants.getmodnames(*margs)
+
+    # load module
+    mod = importlib.import_module(modules[0])
+    # get a list of all recipes from modules
+    all_recipes = mod.recipes
+    # try to locate this recipe
     found_recipe = None
-    for recipe in RECIPES:
+    for recipe in all_recipes:
         if recipe.name == name:
             found_recipe = recipe
         elif recipe.name + '.py' == name:
