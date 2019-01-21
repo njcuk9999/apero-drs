@@ -36,9 +36,6 @@ __release__ = Constants['RELEASE']
 drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
 
-drs_finput('', KW_CCAS='', KW_CREF='')
-drs_finput('', KW_DPRTYPE='', ext='')
-
 # =============================================================================
 # Raw Files
 # =============================================================================
