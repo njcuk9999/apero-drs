@@ -9,9 +9,11 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
+import numpy as np
 import os
 import pkg_resources
 import importlib
+from collections import OrderedDict
 
 from . import constant_functions
 
@@ -154,7 +156,6 @@ class ParamDict(CaseInsensitiveDict):
     Custom dictionary to retain source of a parameter (added via setSource,
     retreived via getSource). String keys are case insensitive.
     """
-
     def __init__(self, *arg, **kw):
         """
         Constructor for parameter dictionary, calls dict.__init__
@@ -223,6 +224,12 @@ class ParamDict(CaseInsensitiveDict):
         :return None:
         """
         super(ParamDict, self).__delitem__(key)
+
+    def __repr__(self):
+        return self._string_print()
+
+    def __str__(self):
+        return self._string_print()
 
     def get(self, key, default=None):
         """
@@ -494,18 +501,57 @@ class ParamDict(CaseInsensitiveDict):
         # return new param dict filled
         return pp
 
+    def _string_print(self):
+        pfmt = '\t{0:30s}{1:45s}// {2}'
+
+        # get keys and values
+        keys = list(self.keys())
+        values = list(self.values())
+
+        # string storage
+        return_string = 'ParamDict:\n'
+        strvalues = []
+        # loop around each key in keys
+        for k_it, key in enumerate(keys):
+            # get this iterations values
+            value = values[k_it]
+            # print value
+            if type(value) in [list, np.ndarray]:
+                sargs = [key, list(value), self.sources[key], pfmt]
+                strvalues  += _string_repr_list(*sargs)
+            elif type(value) in [dict, OrderedDict, ParamDict]:
+                strvalue = list(value.keys()).__repr__()[:40]
+                sargs = [key + '[DICT]', strvalue, self.sources[key]]
+                strvalues += [pfmt.format(*sargs)]
+            else:
+                strvalue = value.__repr__()[:40]
+                sargs = [key + ':', strvalue, self.sources[key]]
+                strvalues += [pfmt.format(*sargs)]
+        # combine list into single string
+        for string_value in strvalues:
+            return_string += '\n {0}'.format(string_value)
+        # return string
+        return return_string + '\n'
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def load_config(instrument=None):
     # get instrument sub-package constants files
-    modules = _get_module_names(instrument)
+    modules = get_module_names(instrument)
+    # deal with no instrument
+    if instrument is None:
+        quiet = True
+    else:
+        quiet = False
     # get constants from modules
-    keys, values, sources = _load_from_module(modules)
+    keys, values, sources = _load_from_module(modules, True)
     params = ParamDict(zip(keys, values))
     # Set the source
     params.set_sources(keys=keys, sources=sources)
+    # save sources to params
+    params = _save_config_params(params, sources)
     # get instrument user config files
     files = _get_file_names(params, instrument)
     # get constants from user config files
@@ -520,7 +566,7 @@ def load_config(instrument=None):
 
 def load_pconfig(instrument=None):
     # get instrument sub-package constants files
-    modules = _get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
+    modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
     # get PseudoConstants class from modules
 
     mod = importlib.import_module(modules[0])
@@ -538,7 +584,7 @@ def load_pconfig(instrument=None):
 
 
 def get_config_all():
-    modules = _get_module_names(None)
+    modules = get_module_names(None)
 
     for module in modules:
         rawlist = constant_functions.generate_consts(module)[0]
@@ -549,6 +595,74 @@ def get_config_all():
         print('')
         print('__all__ = [\'{0}\']'.format('\', \''.join(rawlist)))
         print('')
+
+
+def get_module_names(instrument=None, mod_list=None, instrument_path=None,
+                     default_path=None):
+    func_name = __NAME__ + '._get_module_names()'
+
+    # deal with no module list
+    if mod_list is None:
+        mod_list = SCRIPTS
+    # deal with no path
+    if instrument_path is None:
+        instrument_path = CONST_PATH
+    if default_path is None:
+        default_path = CORE_PATH
+
+    # get constants package path
+    const_path = _get_relative_folder(PACKAGE, instrument_path)
+    core_path = _get_relative_folder(PACKAGE, default_path)
+    # get the directories within const_path
+    filelist = os.listdir(const_path)
+    directories = []
+    for filename in filelist:
+        if os.path.isdir(filename):
+            directories.append(filename)
+    # construct sub-module name
+    relpath = instrument_path.replace('.', '').replace(os.sep, '.')
+    relpath = relpath.strip('.')
+    corepath = default_path.replace('.', '').replace(os.sep, '.')
+    corepath = corepath.strip('.')
+
+    # construct module import name
+    if instrument is None:
+        modpath = '{0}.{1}'.format(PACKAGE, corepath)
+        filepath = os.path.join(core_path, '')
+    else:
+        modpath = '{0}.{1}.{2}'.format(PACKAGE, relpath, instrument.lower())
+        filepath = os.path.join(const_path, instrument.lower())
+
+    # get module names
+    mods, paths = [], []
+    for script in mod_list:
+        # make sure script doesn't end with .py
+        mscript = script.split('.')[0]
+        # get mod path
+        mod = '{0}.{1}'.format(modpath, mscript)
+        # get file path
+        fpath = os.path.join(filepath, script)
+        # append if path exists
+        if not os.path.exists(fpath):
+            emsgs = ['DevError: Const mod path "{0}" does not exist.'
+                     ''.format(mod),
+                     '\tpath = {0}'.format(fpath),
+                     '\tfunction = {0}'.format(func_name)]
+            raise ConfigError(emsgs, level='error')
+        # append mods
+        mods.append(mod)
+    # make sure we found something
+    if len(mods) == 0:
+        emsgs = ['DevError: No config dirs found',
+                 '\tfunction = {0}'.format(func_name)]
+        raise ConfigError(emsgs, level='error')
+    if len(mods) != len(mod_list):
+        emsgs = ['DevError: Const mod scrips missing found=[{0}]'
+                 ''.format(','.join(mods)),
+                 '\tfunction = {0}'.format(func_name)]
+        raise ConfigError(emsgs, level='error')
+    # return modules
+    return mods
 
 
 # =============================================================================
@@ -656,68 +770,6 @@ def _get_subdir(directory, instrument, source):
     return subdir
 
 
-def _get_module_names(instrument=None, mod_list=None):
-    func_name = __NAME__ + '._get_module_names()'
-
-    # deal with no module list
-    if mod_list is None:
-        mod_list = SCRIPTS
-
-    # get constants package path
-    const_path = _get_relative_folder(PACKAGE, CONST_PATH)
-    core_path = _get_relative_folder(PACKAGE, CORE_PATH)
-    # get the directories within const_path
-    filelist = os.listdir(const_path)
-    directories = []
-    for filename in filelist:
-        if os.path.isdir(filename):
-            directories.append(filename)
-    # construct sub-module name
-    relpath = CONST_PATH.replace('.', '').replace(os.sep, '.')
-    relpath = relpath.strip('.')
-    corepath = CORE_PATH.replace('.', '').replace(os.sep, '.')
-    corepath = corepath.strip('.')
-
-    # construct module import name
-    if instrument is None:
-        modpath = '{0}.{1}'.format(PACKAGE, corepath)
-        filepath = os.path.join(core_path, '')
-    else:
-        modpath = '{0}.{1}.{2}'.format(PACKAGE, relpath, instrument.lower())
-        filepath = os.path.join(const_path, instrument.lower())
-
-    # get module names
-    mods, paths = [], []
-    for script in mod_list:
-        # make sure script doesn't end with .py
-        mscript = script.split('.')[0]
-        # get mod path
-        mod = '{0}.{1}'.format(modpath, mscript)
-        # get file path
-        fpath = os.path.join(filepath, script)
-        # append if path exists
-        if not os.path.exists(fpath):
-            emsgs = ['DevError: Const mod path "{0}" does not exist.'
-                     ''.format(mod),
-                     '\tpath = {0}'.format(fpath),
-                     '\tfunction = {0}'.format(func_name)]
-            raise ConfigError(emsgs, level='error')
-        # append mods
-        mods.append(mod)
-    # make sure we found something
-    if len(mods) == 0:
-        emsgs = ['DevError: No config dirs found',
-                 '\tfunction = {0}'.format(func_name)]
-        raise ConfigError(emsgs, level='error')
-    if len(mods) != len(mod_list):
-        emsgs = ['DevError: Const mod scrips missing found=[{0}]'
-                 ''.format(','.join(mods)),
-                 '\tfunction = {0}'.format(func_name)]
-        raise ConfigError(emsgs, level='error')
-    # return modules
-    return mods
-
-
 def _get_relative_folder(package, folder):
     """
     Get the absolute path of folder defined at relative path
@@ -755,7 +807,7 @@ def _get_relative_folder(package, folder):
     return data_folder
 
 
-def _load_from_module(modules):
+def _load_from_module(modules, quiet=False):
     func_name = __NAME__ + '._load_from_module()'
     # storage for returned values
     keys, values, sources = [], [], []
@@ -777,7 +829,7 @@ def _load_from_module(modules):
                          '\tfunction = {0}'.format(func_name)]
                 raise ConfigError(emsgs, level='error')
             # valid parameter
-            cond = mvalue.validate()
+            cond = mvalue.validate(quiet=quiet)
             # if validated append to keys/values/sources
             if cond:
                 keys.append(key)
@@ -837,6 +889,19 @@ def _load_from_file(files, modules):
     return keys, values, sources
 
 
+def _save_config_params(params, sources):
+    func_name = __NAME__ + '._save_config_params()'
+    # get unique sources
+    usources = set(sources)
+    # set up storage
+    params['DRS_CONFIG'] = []
+    params.set_source('DRS_CONFIG', func_name)
+    # loop around and add to param
+    for source in usources:
+        params['DRS_CONFIG'].append(source)
+    # return the parameters
+    return params
+
 # =============================================================================
 # Other private functions
 # =============================================================================
@@ -856,6 +921,12 @@ def _capitalise_key(key):
         key = key.upper()
     return key
 
+
+def _string_repr_list(key, values, source, fmt):
+    str_value = list(values).__repr__()
+    if len(str_value) > 40:
+        str_value = str_value[:40] + '...'
+    return [fmt.format(key, str_value, source)]
 
 # =============================================================================
 # Start of code
