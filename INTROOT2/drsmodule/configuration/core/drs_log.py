@@ -28,7 +28,7 @@ from drsmodule.configuration.math import time
 __NAME__ = 'log.py'
 __INSTRUMENT__ = None
 # Get constants
-Constants = constants.load(None)
+Constants = constants.load(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
@@ -51,6 +51,7 @@ class Logger:
         Construct logger (storage param dict here)
         :param paramdict:
         """
+        func_name = __NAME__ + 'Logger.__init__()'
         # ---------------------------------------------------------------------
         # save the parameter dictionary for access to constants
         if paramdict is not None:
@@ -73,9 +74,9 @@ class Logger:
         # add log stats to pout
         for key in storekey:
             self.pout[storekey[key]] = []
+            self.pout.set_source(storekey[key], func_name)
         self.pout['LOGGER_FULL'] = []
-        # add tdata_warning key
-        self.pout['TDATA_WARNING'] = 1
+        self.pout.set_source('LOGGER_FULL', func_name)
 
     def __call__(self, p=None, key='', message='', printonly=False,
                  logonly=False, wrap=True, option=None, colour=None):
@@ -159,8 +160,6 @@ class Logger:
             option = option
         elif 'RECIPE' in p:
             option = p['RECIPE']
-        elif 'LOG_OPT' in p:
-            option = p['LOG_OPT']
         else:
             option = ''
         # ---------------------------------------------------------------------
@@ -229,15 +228,23 @@ class Logger:
             # get logfilepath
             logfilepath, warning = get_logfilepath(self, p)
             # write to log file
-            if (not printonly) and (not warning):
+            if (not printonly) and (len(warning) == 0):
                 for cmd in cmds:
                     writelog(self, p, cmd, key, logfilepath)
+            # see if we have warning
+            if warning and ('DRS_LOG_WARNING_ACTIVE' in p):
+                negate_warning = p['DRS_LOG_WARNING_ACTIVE']
+            elif warning:
+                negate_warning = False
+                p['DRS_LOG_WARNING_ACTIVE'] = True
+                p.set_source('DRS_LOG_WARNING_ACTIVE', func_name)
+            else:
+                negate_warning = True
             # if warning is True then we used TDATA and should report that
-            if warning:
-                wmsg = ('Warning "DRS_DATA_MSG" path was not found or was '
-                        'missing from config. Log file not written.')
+            if len(warning) > 0 and (not negate_warning):
                 if not logonly:
-                    errors.append([wmsg, 'warning', human_time, option])
+                    for warn in warning:
+                        errors.append([warn, 'warning', human_time, option])
 
         # print any errors caused above (and set key to error to exit after)
         used = []
@@ -302,10 +309,12 @@ class Logger:
         self.pout['LOGGER_FULL'].append([[ttime, mess]])
 
     def clean_log(self, processid):
+        func_name = __NAME__ + 'Logger.clean_log()'
         # get log storage keys
         storekey = self.pconstant.LOG_STORAGE_KEYS()
         # clean out for this ID
         self.pout[processid] = ParamDict()
+        self.pout.set_source(processid, func_name)
         # populate log keys
         for key in storekey:
             self.pout[processid][storekey[key]] = []
@@ -519,28 +528,29 @@ def get_logfilepath(logobj, p):
     # -------------------------------------------------------------------------
     # Get DRS_DATA_MSG folder directory
     dir_data_msg = p.get(msgkey, None)
+    print_warnings = []
     # if None use "TDATA"
     if dir_data_msg is None:
-        emsg1 = 'Fatal error: Cannot write to log file.'
+        emsg1 = 'Cannot write to log file.'
         emsg2 = '\t"{0}" missing from config'.format(msgkey)
-        warnings.warn(emsg1 + '\n' + emsg2, Warning)
+        print_warnings += [emsg1, emsg2]
         warning = True
     # if it doesn't exist also set to TDATA
     elif not os.path.exists(dir_data_msg):
-        emsg1 = 'Fatal error: Cannot write to log file.'
+        emsg1 = 'Cannot write to log file.'
         emsg2 = ' "{0}" does not exist.'.format(msgkey)
         emsg3 = '    "{0}" = {1}'.format(msgkey, p[msgkey])
-        warnings.warn(emsg1 + '\n' + emsg2 + '\n' + emsg3, Warning)
+        print_warnings += [emsg1, emsg2, emsg3]
         warning = True
     else:
         warning = False
     # do not save to log file
     if warning:
-        return None, warning
+        return None, print_warnings
     else:
         lpath = logobj.pconstant.LOG_FILE_NAME(p, dir_data_msg)
         # return the logpath and the warning
-        return lpath, warning
+        return lpath, print_warnings
 
 
 def correct_level(logobj, key, level):
