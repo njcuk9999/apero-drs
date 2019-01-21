@@ -428,7 +428,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
             emsg1 = 'DevError: Parameter "{0}" must be True or False [1 or 0]'
             emsg2 = '\tCurrent value: "{0}"'.format(value)
             if not quiet:
-                raise ConfigError([emsg1.format(value), emsg2], level='error')
+                raise ConfigError([emsg1.format(name), emsg2], level='error')
 
     # ---------------------------------------------------------------------
     # Check if dtype is correct
