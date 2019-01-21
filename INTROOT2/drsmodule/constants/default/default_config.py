@@ -12,8 +12,9 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DATE', 'LANGUAGE', 'INSTRUMENT', 'DRS_PACKAGE', 'DRS_USERENV',
            'DRS_USER_DEFAULT', 'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL',
            'DRS_COLOURED_LOG', 'DRS_THEME', 'DRS_MAX_IO_DISPLAY_LIMIT',
-           'DRS_HEADER', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
-           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE']
+           'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS', 'DRS_LOG_EXIT_TYPE',
+           'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT', 'DRS_PLOT_FONT_SIZE',
+           'DRS_PLOT_STYLE']
 
 # Constants definition
 Const = constant_functions.Const
@@ -39,25 +40,25 @@ DRS_DEBUG = Const('DRS_DEBUG', value=0, dtype=int)
 # path settings
 # =============================================================================
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = Const('DRS_ROOT', dtype=str)
+DRS_ROOT = Const('DRS_ROOT', dtype='path')
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = Const('DRS_DATA_RAW', dtype=str)
+DRS_DATA_RAW = Const('DRS_DATA_RAW', dtype='path')
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype=str)
+DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype='path')
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = Const('DRS_CALIB_DB', dtype=str)
+DRS_CALIB_DB = Const('DRS_CALIB_DB', dtype='path')
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_TELLU_DB = Const('DRS_TELLU_DB', dtype=str)
+DRS_TELLU_DB = Const('DRS_TELLU_DB', dtype='path')
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype=str)
+DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path')
 
 #   Define the working directory
-DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype=str)
+DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path')
 
 
 # =============================================================================
