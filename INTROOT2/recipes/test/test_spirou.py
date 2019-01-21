@@ -12,16 +12,16 @@ Created on 2018-09-14 at 13:57
 from __future__ import division
 
 from drsmodule import constants
-from drsmodule.configuration.core import drs_log
-from drsmodule.configuration.core import drs_startup
+from drsmodule.configuration import drs_log
+from drsmodule.configuration import drs_startup
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'test_recipe.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'SPIROU'
 # Get constants
-Constants = constants.load(None)
+Constants = constants.load(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
@@ -39,14 +39,14 @@ def main(directory=None, filelist=None, **kwargs):
     # assign function calls (must add positional)
     fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
-    recipe, p = drs_startup.input_setup(__NAME__, fkwargs)
+    recipe, p = drs_startup.input_setup(__NAME__, __INSTRUMENT__, fkwargs)
     # display everything that comes from "INPUT"
     for i in range(10):
         WLOG(p, '', 'Line {0} of code'.format(i+1))
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = drs_startup.exit_script(p, outputs=None)
+    p = drs_startup.main_end_script(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
