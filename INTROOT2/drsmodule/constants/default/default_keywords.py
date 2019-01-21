@@ -9,7 +9,8 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_OBJRA', 'KW_OBJDEC',
            'KW_OBJNAME', 'KW_OBJEQUIN', 'KW_OBJRAPM', 'KW_OBJDECPM',
            'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_OBSTYPE', 'KW_CCAS',
            'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
-           'KW_CMPLTEXP', 'KW_NEXP']
+           'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION', 'KW_PPVERSION',
+           'KW_DPRTYPE']
 
 # Constants definition
 Const = constant_functions.Const
@@ -88,3 +89,13 @@ KW_CMPLTEXP = Keyword('KW_CMPLTEXP', key='', dtype=int)
 
 # define the total number of exposures HEADER key
 KW_NEXP = Keyword('KW_NEXP', key='', dtype=int)
+
+# -----------------------------------------------------------------------------
+# Define general keywords
+# -----------------------------------------------------------------------------
+# DRS version
+KW_VERSION = Keyword('KW_VERSION', key='', dtype=str)
+KW_PPVERSION = Keyword('KW_PPVERSION', key='', dtype=str)
+
+# Define the key to get the data fits file type
+KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str)

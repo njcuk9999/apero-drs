@@ -183,14 +183,13 @@ class PseudoConstants:
         """
         my_exit = params['DRS_LOG_EXIT_TYPE']
         if my_exit == 'sys':
-            my_exit = sys.exit
+            return sys.exit
         elif my_exit == 'os':
             # noinspection PyProtectedMember
-            my_exit = os._exit
+            return os._exit
         else:
             def my_exit(_):
                 return None
-        return my_exit
 
     def EXIT_LEVELS(self):
         """
@@ -316,6 +315,20 @@ class PseudoConstants:
         write_level = dict(error=3, warning=2, info=1, graph=0, all=0,
                            debug=0)
         return write_level
+
+    def SPLASH(self):
+        logo = [" .----------------.  .----------------.  .----------------.   ",
+                " | .--------------. || .--------------. || .--------------. | ",
+                " | |  ________    | || |  _______     | || |    _______   | | ",
+                " | | |_   ___ `.  | || | |_   __ \    | || |   /  ___  |  | | ",
+                " | |   | |   `. \ | || |   | |__) |   | || |  |  (__ \_|  | | ",
+                " | |   | |    | | | || |   |  __ /    | || |   '.___`-.   | | ",
+                " | |  _| |___.' / | || |  _| |  \ \_  | || |  |`\____) |  | | ",
+                " | | |________.'  | || | |____| |___| | || |  |_______.'  | | ",
+                " | |              | || |              | || |              | | ",
+                " | '--------------' || '--------------' || '--------------' | ",
+                "  '----------------'  '----------------'  '----------------'  "]
+        return logo
 
     # =========================================================================
     # PLOT SETTINGS
