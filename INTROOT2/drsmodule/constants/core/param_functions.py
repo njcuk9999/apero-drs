@@ -27,7 +27,7 @@ __NAME__ = 'config.py'
 # Define package name
 PACKAGE = 'drsmodule'
 # Define relative path to 'const' sub-package
-CONST_PATH = './configuration/instruments/'
+CONST_PATH = './config/instruments/'
 CORE_PATH = './constants/default/'
 # Define config/constant/keyword scripts to open
 SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
@@ -597,6 +597,58 @@ def get_config_all():
         print('')
 
 
+def get_file_names(instrument=None, file_list=None, instrument_path=None,
+                     default_path=None):
+    func_name = __NAME__ + '.get_file_names()'
+
+    # get core path
+    core_path = _get_relative_folder(PACKAGE, default_path)
+    # get constants package path
+    if instrument is not None:
+        const_path = _get_relative_folder(PACKAGE, instrument_path)
+        # get the directories within const_path
+        filelist = os.listdir(const_path)
+        directories = []
+        for filename in filelist:
+            if os.path.isdir(filename):
+                directories.append(filename)
+    else:
+        const_path = None
+        # get the directories within const_path
+        filelist = os.listdir(core_path)
+        directories = []
+        for filename in filelist:
+            if os.path.isdir(filename):
+                directories.append(filename)
+
+    # construct module import name
+    if instrument is None:
+        filepath = os.path.join(core_path, '')
+    else:
+        filepath = os.path.join(const_path, instrument.lower())
+
+    # get module names
+    paths = []
+    for filename in file_list:
+        # get file path
+        fpath = os.path.join(filepath, filename)
+        # append if path exists
+        if not os.path.exists(fpath):
+            emsgs = ['DevError: Filepath "{0}" does not exist.'
+                     ''.format(fpath),
+                     '\tfunction = {0}'.format(func_name)]
+            raise ConfigError(emsgs, level='error')
+        # append mods
+        paths.append(fpath)
+    # make sure we found something
+    if len(paths) == 0:
+        emsgs = ['DevError: No files found',
+                 '\tfunction = {0}'.format(func_name)]
+        raise ConfigError(emsgs, level='error')
+    # return modules
+    return paths
+
+
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
                      default_path=None):
     func_name = __NAME__ + '._get_module_names()'
@@ -762,7 +814,7 @@ def _get_file_names(params, instrument=None):
     if len(files) == 0:
         wmsg1 = ('User config defined but instrument "{0}" directory '
                  'has not configurations files')
-        wmsg2 = '\tValid configuration files: {0}'.format(','.join(USCRIPTS))
+        wmsg2 = '\tValid config files: {0}'.format(','.join(USCRIPTS))
         ConfigWarning([wmsg1.format(instrument), wmsg2])
 
     # return files
@@ -791,7 +843,7 @@ def _get_relative_folder(package, folder):
     folder from package
 
     :param package: string, the python package name
-    :param folder: string, the relative path of the configuration folder
+    :param folder: string, the relative path of the config folder
 
     :return data: string, the absolute path and filename of the default config
                   file
