@@ -100,7 +100,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         params = self.recipe.drs_params
         program = params['RECIPE']
         # construct error message
-        if self.recipe.drs_params['COLOURED_LOG']:
+        if self.recipe.drs_params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -558,7 +558,7 @@ class _DisplayVersion(argparse.Action):
         # get params
         params = self.recipe.drs_params
         # get colours
-        if params['COLOURED_LOG']:
+        if params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
         else:
             green, end = COLOR.ENDC, COLOR.ENDC
@@ -593,7 +593,7 @@ class _DisplayInfo(argparse.Action):
         params = self.recipe.drs_params
         program = params['RECIPE']
         # get colours
-        if self.recipe.drs_params['COLOURED_LOG']:
+        if self.recipe.drs_params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -2809,7 +2809,7 @@ def _get_version_info(p, green='', end=''):
     if 'DRS_NAME' in p:
         name = p['DRS_NAME']
     else:
-        name = p['program']
+        name = p['RECIPE']
     # get version
     if 'DRS_VERSION' in p:
         version = p['DRS_VERSION']
@@ -3144,7 +3144,7 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
     if return_string:
         green, end = '', ''
         yellow, blue = '', ''
-    elif params['COLOURED_LOG']:
+    elif params['DRS_COLOURED_LOG']:
         green, end = COLOR.GREEN1, COLOR.ENDC
         yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
     else:
