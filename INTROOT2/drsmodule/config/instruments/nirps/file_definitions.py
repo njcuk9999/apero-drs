@@ -14,7 +14,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from drsmodule import constants
-from drsmodule.configuration.core import drs_file
+from drsmodule.config import drs_file
 
 
 # =============================================================================

@@ -19,7 +19,7 @@ import sys
 import warnings
 
 from drsmodule import constants
-from drsmodule.configuration.math import time
+from drsmodule.config.math import time
 
 # =============================================================================
 # Define variables
@@ -170,7 +170,11 @@ class Logger:
         if printonly and logonly:
             printonly, logonly = False, False
         # deal with message type (make into a list)
-        if type(message) == str:
+
+        # TODO: Add type(message) = ErrorText soon
+        #if type(message) is
+
+        if type(message) is str:
             message = [message]
         elif type(list):
             message = list(message)
