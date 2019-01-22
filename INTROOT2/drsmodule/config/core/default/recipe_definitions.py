@@ -1,6 +1,6 @@
 from drsmodule import constants
 from drsmodule.config import drs_recipe
-from drsmodule.config.locale.core import recipe_descriptions as rd
+from drsmodule.config import drs_text
 
 from . import file_definitions as sf
 
@@ -11,6 +11,8 @@ __NAME__ = 'recipe_definitions.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
+# Get Help
+Help = drs_text.HelpText(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
@@ -21,7 +23,7 @@ __release__ = Constants['RELEASE']
 # Commonly used arguments
 # =============================================================================
 directory = dict(name='directory', dtype='directory',
-                 helpstr=rd.General.directory_help)
+                 helpstr=Help['DIRECTORY_HELP'])
 
 # =============================================================================
 # List of usable recipes
@@ -79,8 +81,8 @@ test.outputdir = 'tmp'
 test.inputdir = 'tmp'
 test.inputtype = 'pp'
 test.extension = 'fits'
-test.description = rd.Test.description
-test.epilog = rd.Test.example
+test.description = Help['TEST_DESCRIPTION']
+test.epilog = Help['TEST_EXAMPLE']
 test.arg(pos=0, **directory)
 test.kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
            files=[sf.pp_file], filelogic='inclusive',
