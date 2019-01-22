@@ -1,7 +1,7 @@
 from drsmodule import constants
 from drsmodule.config import drs_recipe
 from drsmodule.config import drs_file
-from drsmodule.config.locale.core import recipe_descriptions as rd
+from drsmodule.config.locale.core import drs_text
 
 from . import file_definitions as sf
 
@@ -13,6 +13,8 @@ __NAME__ = 'recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
+# Get Help
+Help = drs_text.HelpText(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
 __version__ = Constants['VERSION']
 __author__ = Constants['AUTHORS']
@@ -23,7 +25,7 @@ __release__ = Constants['RELEASE']
 # Commonly used arguments
 # =============================================================================
 directory = dict(name='directory', dtype='directory',
-                 helpstr=rd.General.directory_help)
+                 helpstr=Help['DIRECTORY_HELP'])
 
 # =============================================================================
 # Option definitions
@@ -33,77 +35,77 @@ directory = dict(name='directory', dtype='directory',
 #
 # -----------------------------------------------------------------------------
 add_cal = dict(name='--add2calib', dtype='bool', default=True,
-               helpstr=rd.General.add_cal_help)
+               helpstr=Help['ADD_CAL_HELP'])
 # -----------------------------------------------------------------------------
 dobad = dict(name='--badcorr', dtype='bool', default=True,
-             helpstr=rd.General.dobad_help)
+             helpstr=Help['DOBAD_HELP'])
 
 # -----------------------------------------------------------------------------
 backsub = dict(name='--backsub', dtype='bool', default=True,
-               helpstr=rd.General.backsub_help, default_ref='option_backsub')
+               helpstr=Help['BACKSUB_HELP'], default_ref='option_backsub')
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr=rd.General.combine_help)
+               helpstr=Help['COMBINE_HELP'])
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
-              helpstr=rd.General.dodark_help)
+              helpstr=Help['DODARK_HELP'])
 # -----------------------------------------------------------------------------
 # Must set default_ref per recipe!!
 extractmethod = dict(name='--extractmethod', dtype='options',
-                     helpstr=rd.General.extractmethod_help,
+                     helpstr=Help['EXTRACT_METHOD_HELP'],
                      options=['1', '2', '3a', '3b', '3c', '3d', '4a', '4b'])
 # -----------------------------------------------------------------------------
 extfiber = dict(name='--extfiber', dtype='options', default='ALL',
-                helpstr=rd.General.extfiber_help,
+                helpstr=Help['EXTFIBER_HELP'],
                 options=['ALL', 'AB', 'A', 'B', 'C'])
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
-                 helpstr=rd.General.flipimage_help,
+                 helpstr=Help['FLIPIMAGE_HELP'],
                  options=['None', 'x', 'y', 'both'])
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
-                 helpstr=rd.General.fluxunits_help, options=['ADU/s', 'e-'])
+                 helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype='bool', helpstr=rd.General.plot_help,
+plot = dict(name='--plot', dtype='bool', helpstr=Help['PLOT_HELP'],
             default_ref='DRS_PLOT')
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
-              helpstr=rd.General.resize_help)
+              helpstr=Help['RESIZE_HELP'])
 
 # =============================================================================
 # File option definitions
 # =============================================================================
 badfile = dict(name='--badpixfile', dtype='file', default='None',
                files=[sf.out_badpix],
-               helpstr=rd.General.badfile_help)
+               helpstr=Help['BADFILE_HELP'])
 # -----------------------------------------------------------------------------
 blazefile = dict(name='--blazefile', dtype='file', default='None',
                  files=[sf.out_ff_blaze_ab, sf.out_ff_blaze_a,
                         sf.out_ff_blaze_b, sf.out_ff_blaze_c],
-                 helpstr=rd.General.blazefile_help)
+                 helpstr=Help['BLAZEFILE_HELP'])
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
                 files=[sf.out_dark],
-                helpstr=rd.General.darkfile_help)
+                helpstr=Help['DARKFILE_HELP'])
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[sf.out_ff_flat_ab, sf.out_ff_flat_a,
                        sf.out_ff_flat_b, sf.out_ff_flat_c],
-                helpstr=rd.General.flatfile_help)
+                helpstr=Help['FLATFILE_HELP'])
 # -----------------------------------------------------------------------------
 shapefile = dict(name='--shapefile', dtype='file', default='None',
                  files=[sf.out_silt_shape],
-                 helpstr=rd.General.shapefile_help)
+                 helpstr=Help['SHAPEFILE_HELP'])
 # -----------------------------------------------------------------------------
 tiltfile = dict(name='--tiltfile', dtype='file', default='None',
                 files=[sf.out_slit_tilt],
-                helpstr=rd.General.tiltfile_help)
+                helpstr=Help['TILTFILE_HELP'])
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
                 files=[sf.out_wave_ab, sf.out_wave_a,
                        sf.out_wave_b, sf.out_wave_c],
-                helpstr=rd.General.wavefile_help)
+                helpstr=Help['WAVEFILE_HELP'])
 
 # =============================================================================
 # List of usable recipes
@@ -178,14 +180,15 @@ test.outputdir = 'tmp'
 test.inputdir = 'tmp'
 test.inputtype = 'pp'
 test.extension = 'fits'
-test.description = rd.Test.description
-test.epilog = rd.Test.example
+test.description = Help['TEST_DESC']
+test.epilog = Help['TEST_EXAMPLE']
 test.arg(pos=0, **directory)
 test.kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
            files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
-           helpstr='test 1', required=True)
+           helpstr=Help['TEST_FILELIST1_HELP'], required=True)
 test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
-           files=[sf.pp_fp_fp], helpstr='test 2', required=True)
+           files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
+           required=True)
 test.kwarg(**plot)
 test.kwarg(**add_cal)
 test.kwarg(**dobad)
@@ -206,11 +209,11 @@ cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
 cal_pp.inputtype = 'raw'
 cal_pp.extension = 'fits'
-cal_pp.description = rd.Preprocess.description
-cal_pp.epilog = rd.Preprocess.example
+cal_pp.description = Help['PREPROCESS_DESC']
+cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
 cal_pp.arg(pos=0, **directory)
 cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
-           helpstr=rd.Preprocess.ufiles_help)
+           helpstr=Help['PREPROCESS_UFILES_HELP'])
 cal_pp.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
@@ -222,14 +225,14 @@ cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
 cal_badpix.extension = 'fits'
-cal_badpix.description = rd.Badpix.description
-cal_badpix.epilog = rd.Badpix.example
+cal_badpix.description = Help['BADPIX_DESC']
+cal_badpix.epilog = Help['BADPIX_EXAMPLE']
 cal_badpix.run_order = 1
 cal_badpix.arg(pos=0, **directory)
 cal_badpix.arg(name='flatfile', dtype='file', files=[sf.pp_flat_flat], pos=1,
-               filelogic='exclusive', helpstr=rd.Badpix.flatfile_help)
+               filelogic='exclusive', helpstr=Help['BADPIX_FLATFILE_HELP'])
 cal_badpix.arg(name='darkfile', dtype='file', files=[sf.pp_dark_dark], pos=2,
-               filelogic='exclusive', helpstr=rd.Badpix.darkfile_help)
+               filelogic='exclusive', helpstr=Help['BADPIX_DARKFILE_HELP'])
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
@@ -250,12 +253,12 @@ cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
 cal_dark.intputtype = 'pp'
 cal_dark.extension = 'fits'
-cal_dark.description = rd.Dark.description
-cal_dark.epilog = rd.Dark.example
+cal_dark.description = Help['DARK_DESC']
+cal_dark.epilog = Help['DARK_EXAMPLE']
 cal_dark.run_order = 2
 cal_dark.arg(pos=0, **directory)
 cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
-             helpstr=rd.Dark.files_help)
+             helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
 cal_dark.kwarg(**add_cal)
 cal_dark.kwarg(default=True, **combine)
 cal_dark.kwarg(**flipimage)
@@ -272,13 +275,13 @@ cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'
 cal_loc.inputtype = 'pp'
 cal_loc.extension = 'fits'
-cal_loc.description = rd.Localisation.description
-cal_loc.epilog = rd.Localisation.example
+cal_loc.description = Help['LOC_DESC']
+cal_loc.epilog = Help['LOC_EXAMPLE']
 cal_loc.run_order = 3
 cal_loc.arg(pos=0, **directory)
 cal_loc.arg(name='files', dtype='files', filelogic='exclusive',
             files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
-            helpstr=rd.Localisation.files_help)
+            helpstr=Help['FILES_HELP'] + Help['LOC_FILES_HELP'])
 cal_loc.kwarg(**add_cal)
 cal_loc.kwarg(**badfile)
 cal_loc.kwarg(**dobad)
@@ -300,12 +303,12 @@ cal_slit.outputdir = 'reduced'
 cal_slit.inputdir = 'tmp'
 cal_slit.inputtype = 'pp'
 cal_slit.extension = 'fits'
-cal_slit.description = rd.Slit.description
-cal_slit.epilog = rd.Slit.example
+cal_slit.description = Help['SLIT_DESC']
+cal_slit.epilog = Help['SLIT_EXAMPLE']
 cal_slit.run_order = 4
 cal_slit.arg(pos=0, **directory)
 cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+', 
-             helpstr=rd.Slit.files_help)
+             helpstr=Help['FILES_HELP'] + Help['SLIT_FILES_HELP'])
 cal_slit.kwarg(**add_cal)
 cal_slit.kwarg(**badfile)
 cal_slit.kwarg(**dobad)
@@ -327,14 +330,14 @@ cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
 cal_shape.inputtype = 'pp'
 cal_shape.extension = 'fits'
-cal_shape.description = rd.Shape.description
-cal_shape.epilog = rd.Shape.example
+cal_shape.description = Help['SHAPE_DESC']
+cal_shape.epilog = Help['SHAPE_EXAMPLE']
 cal_shape.run_order = 4
 cal_shape.arg(pos=0, **directory)
 cal_shape.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1', 
-              helpstr=rd.Shape.hcfile_help)
+              helpstr=Help['SHAPE_HCFILES_HELP'])
 cal_shape.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+', 
-              helpstr=rd.Shape.fpfiles_help)
+              helpstr=Help['SHAPE_FPFILES_HELP'])
 cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
 cal_shape.kwarg(**dobad)
@@ -356,13 +359,13 @@ cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
 cal_ff.inputtype = 'pp'
 cal_ff.extension = 'fits'
-cal_ff.description = rd.Flat.description
-cal_ff.epilog = rd.Flat.example
+cal_ff.description = Help['FLAT_DESC']
+cal_ff.epilog = Help['FLAT_EXAMPLE']
 cal_ff.run_order = 5
 cal_ff.arg(pos=0, **directory)
 cal_ff.arg(name='files', dtype='files', filelogic='exclusive',
            files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
-           helpstr=rd.Flat.files_help)
+           helpstr=Help['FILES_HELP'] + Help['FLAT_FILES_HELP'])
 cal_ff.kwarg(**add_cal)
 cal_ff.kwarg(**badfile)
 cal_ff.kwarg(**dobad)
@@ -388,12 +391,13 @@ cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
 cal_extract.extension = 'fits'
-cal_extract.description = rd.Extract.description
-cal_extract.epilog = rd.Extract.example
+cal_extract.description = Help['EXTRACT_DESC']
+cal_extract.epilog = Help['EXTRACT_EXAMPLE']
 cal_extract.run_order = 6
 cal_extract.arg(pos=0, **directory)
 cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
-                limit=1, helpstr=rd.Extract.files_help)
+                helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                limit=1)
 cal_extract.kwarg(**add_cal)
 cal_extract.kwarg(**badfile)
 cal_extract.kwarg(**dobad)
@@ -419,8 +423,8 @@ cal_hc.outputdir = 'reduced'
 cal_hc.inputdir = 'reduced'
 cal_hc.inputtype = 'e2ds'
 cal_hc.extension = 'fits'
-cal_hc.description = rd.HcE2DS.description
-cal_hc.epilog = rd.HcE2DS.example
+cal_hc.description = Help['HC_E2DS_DESC']
+cal_hc.epilog = Help['HC_E2DS_EXAMPLE']
 cal_hc.run_order = 7
 # setup custom files (add a required keyword in the header to each file)
 #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
@@ -431,7 +435,8 @@ cal_hc_files2 = drs_file.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
 # set up arguments
 cal_hc.arg(pos=0, **directory)
 cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
-           filelogic='exclusive', limit=1, helpstr=rd.HcE2DS.files_help)
+           filelogic='exclusive', limit=1,
+           helpstr=Help['FILES_HELP'] + Help['HC_E2DS_FILES_HELP'])
 cal_hc.kwarg(**add_cal)
 cal_hc.kwarg(**plot)
 cal_hc.kwarg(**blazefile)
