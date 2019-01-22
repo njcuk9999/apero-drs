@@ -19,6 +19,7 @@ import sys
 import warnings
 
 from drsmodule import constants
+from drsmodule.config.locale.core import drs_text
 from drsmodule.config.math import time
 
 # =============================================================================
@@ -38,6 +39,11 @@ __release__ = Constants['RELEASE']
 ParamDict = constants.ParamDict
 # Get the Config error
 ConfigError = constants.ConfigError
+# Get the text types
+ErrorEntry = drs_text.ErrorEntry
+ErrorText = drs_text.ErrorText
+HelpEntry = drs_text.HelpEntry
+HelpText = drs_text.HelpText
 # Get the Color dict
 Color = constants.Colors
 
@@ -57,15 +63,21 @@ class Logger:
         if paramdict is not None:
             self.pin = paramdict
             self.instrument = paramdict['INSTRUMENT']
+            self.language = paramdict['LANGUAGE']
             self.pconstant = constants.pload(self.instrument)
+            self.errortext = ErrorText(instrument, self.language)
         elif instrument is not None:
             self.pin = constants.load(instrument)
             self.instrument = instrument
+            self.language = paramdict['LANGUAGE']
             self.pconstant = constants.pload(instrument)
+            self.errortext = ErrorText(instrument, self.language)
         else:
             self.pin = constants.load()
+            self.language = ['ENG']
             self.instrument = None
             self.pconstant = constants.pload()
+            self.errortext = ErrorText(instrument, self.language)
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -143,6 +155,9 @@ class Logger:
         # deal with no instrument
         if 'INSTRUMENT' not in p:
             p['INSTRUMENT'] = None
+        # deal with no language
+        if 'LANGUAGE' not in p:
+            p['LANGUAGE'] = 'ENG'
 
         # update pin and pconstant from p (selects instrument)
         self.update_param_dict(p)
@@ -172,9 +187,10 @@ class Logger:
         # deal with message type (make into a list)
 
         # TODO: Add type(message) = ErrorText soon
-        #if type(message) is
-
-        if type(message) is str:
+        if type(message) is ErrorEntry:
+            rawmsg = message.print() + self.errortext[message.key]
+            message = rawmsg.split('\n')
+        elif type(message) is str:
             message = [message]
         elif type(list):
             message = list(message)
@@ -276,14 +292,26 @@ class Logger:
                 self.pconstant.EXIT(p)(errorstring)
 
     def update_param_dict(self, paramdict):
+        # update the parameter dictionary
         for key in paramdict:
             # set pin value from paramdict
             self.pin[key] = paramdict[key]
             # set source from paramdict (or set to None)
             self.pin.set_source(key, paramdict.sources.get(key, None))
-            # update instrument and pconstant
+        # update these if "instrument" or "language" have changed
+        cond1 = paramdict['INSTRUMENT'] != self.instrument
+        cond2 = paramdict['LANGUAGE'] != self.language
+        # only update if one of these has changed
+        if cond1 or cond2:
+            # update instrument
             self.instrument = paramdict['INSTRUMENT']
+            # update language
+            self.language = paramdict['LANGUAGE']
+            # update pconstant
             self.pconstant = constants.pload(self.instrument)
+            # update error text
+            self.errortext = ErrorText(self.instrument, self.language)
+
 
     def output_param_dict(self, paramdict):
         for key in self.pout:
