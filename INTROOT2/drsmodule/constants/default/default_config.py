@@ -86,7 +86,7 @@ RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str)
 DATE = Const('DATE', value='2019-01-18', dtype=str)
 
 # Language
-LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG'])
+LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'])
 
 
 # =============================================================================
