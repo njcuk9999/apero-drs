@@ -12,8 +12,8 @@ Created on 2018-09-14 at 13:57
 from __future__ import division
 
 from drsmodule import constants
-from drsmodule.configuration import drs_log
-from drsmodule.configuration import drs_startup
+from drsmodule.config import drs_log
+from drsmodule.config import drs_startup
 
 # =============================================================================
 # Define variables
