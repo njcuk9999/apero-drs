@@ -50,8 +50,8 @@ ParamDict = constants.ParamDict
 # get the config error
 ConfigError = constants.ConfigError
 # recipe control path
-INSTRUMENT_PATH = './configuration/instruments/'
-CORE_PATH = './configuration/core/default/'
+INSTRUMENT_PATH = './config/instruments/'
+CORE_PATH = './config/core/default/'
 
 # # # RECIPES = recipes_spirou.recipes
 
