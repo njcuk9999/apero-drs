@@ -41,6 +41,9 @@ pload = param_functions.load_pconfig
 # get module names
 getmodnames = param_functions.get_module_names
 
+# get file names
+get_filenames = param_functions.get_file_names
+
 # param dict
 ParamDict = param_functions.ParamDict
 
