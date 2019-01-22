@@ -14,7 +14,7 @@ import os
 import time
 
 from drsmodule import constants
-from drsmodule.configuration.core import drs_log
+from drsmodule.config import drs_log
 
 
 # =============================================================================
