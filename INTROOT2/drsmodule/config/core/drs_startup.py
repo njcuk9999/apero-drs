@@ -20,6 +20,7 @@ import importlib
 
 from drsmodule import constants
 from drsmodule import plot
+from drsmodule.locale import drs_text
 from drsmodule.io import drs_table
 from . import drs_log
 from . import drs_recipe
@@ -49,6 +50,11 @@ COLOR = constants.Colors
 ParamDict = constants.ParamDict
 # get the config error
 ConfigError = constants.ConfigError
+# Get the text types
+ErrorEntry = drs_text.ErrorEntry
+ErrorText = drs_text.ErrorText
+HelpEntry = drs_text.HelpEntry
+HelpText = drs_text.HelpText
 # recipe control path
 INSTRUMENT_PATH = './config/instruments/'
 CORE_PATH = './config/core/default/'
@@ -343,6 +349,8 @@ def display_initial_parameterisation(p):
 
     :return None:
     """
+    # get help text
+    helptext = HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     # Add initial parameterisation
     wmsgs = ['\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p),
              '\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p),
@@ -357,18 +365,21 @@ def display_initial_parameterisation(p):
               '\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p),
               '\tDRS_PLOT={DRS_PLOT}'.format(**p)]
     if p['DRS_DATA_WORKING'] is None:
-        wmsgs.append('\tDRS_DATA_WORKING is not set, running on-line mode')
+        wargs = ['DRS_DATA_WORKING']
+        wmsgs.append(HelpEntry('DRS_SETUP_TEXT2', args=wargs))
     else:
         wmsgs.append('\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
     if p['DRS_INTERACTIVE'] == 0:
-        wmsgs.append('\tDRS_INTERACTIVE is not set, running on-line mode')
+        wargs = ['DRS_INTERACTIVE']
+        wmsgs.append(HelpEntry('DRS_SETUP_TEXT3', args=wargs))
     else:
-        wmsgs.append('\tDRS_INTERACTIVE is set')
+        wargs = ['DRS_INTERACTIVE']
+        wmsgs.append(HelpEntry('DRS_SETUP_TEXT4', args=wargs))
     if p['DRS_DEBUG'] > 0:
-        wmsgs.append('\tDRS_DEBUG is set, debug mode level:{DRS_DEBUG}'
-                     ''.format(**p))
+        wargs =['DRS_DEBUG', p['DRS_DEBUG']]
+        wmsgs.append(HelpEntry('DRS_SETUP_TEXT5', args=wargs))
     # log to screen and file
-    WLOG(p, 'info', 'DRS Setup:')
+    WLOG(p, 'info', HelpEntry('DRS_SETUP_TEXT1'))
     WLOG(p, 'info', wmsgs, wrap=False)
     WLOG(p, '', p['DRS_HEADER'])
 
