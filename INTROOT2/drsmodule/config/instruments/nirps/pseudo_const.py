@@ -57,8 +57,6 @@ class PseudoConstants(DefaultConstants):
         # return keys
         return forbidden_keys
 
-
-
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
@@ -80,7 +78,6 @@ class PseudoConstants(DefaultConstants):
                 "                          (,       ,         ,           ,,,      ,,                   *(((/,       ",
                 "                                                                                                    "]
         return logo
-
 
 
 # =============================================================================
