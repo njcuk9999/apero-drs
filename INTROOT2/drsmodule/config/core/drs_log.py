@@ -19,7 +19,7 @@ import sys
 import warnings
 
 from drsmodule import constants
-from drsmodule.config.locale.core import drs_text
+from drsmodule.locale import drs_text
 from drsmodule.config.math import time
 
 # =============================================================================
@@ -46,6 +46,8 @@ HelpEntry = drs_text.HelpEntry
 HelpText = drs_text.HelpText
 # Get the Color dict
 Color = constants.Colors
+# define log format
+LOGFMT = '{0} - {1} |{2}|{3}'
 
 
 # =============================================================================
@@ -66,18 +68,21 @@ class Logger:
             self.language = paramdict['LANGUAGE']
             self.pconstant = constants.pload(self.instrument)
             self.errortext = ErrorText(instrument, self.language)
+            self.helptext = HelpText(instrument, self.language)
         elif instrument is not None:
             self.pin = constants.load(instrument)
             self.instrument = instrument
             self.language = paramdict['LANGUAGE']
             self.pconstant = constants.pload(instrument)
             self.errortext = ErrorText(instrument, self.language)
+            self.helptext = HelpText(instrument, self.language)
         else:
             self.pin = constants.load()
             self.language = ['ENG']
             self.instrument = None
             self.pconstant = constants.pload()
             self.errortext = ErrorText(instrument, self.language)
+            self.helptext = HelpText(instrument, self.language)
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -90,7 +95,7 @@ class Logger:
         self.pout['LOGGER_FULL'] = []
         self.pout.set_source('LOGGER_FULL', func_name)
 
-    def __call__(self, p=None, key='', message='', printonly=False,
+    def __call__(self, p=None, key='', message=None, printonly=False,
                  logonly=False, wrap=True, option=None, colour=None):
         """
         Function-like cal to instance of logger (i.e. WLOG)
@@ -131,6 +136,24 @@ class Logger:
         func_name = __NAME__ + '.Logger.__call__()'
 
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
+        # ---------------------------------------------------------------------
+        # deal with message format (convert to ErrorEntry)
+        if message is None:
+            msg_obj = ErrorEntry('Unknown')
+        elif type(message) is str:
+            msg_obj = ErrorEntry(message)
+        elif type(message) is list:
+            msg_obj = ErrorEntry(message[0])
+            for msg in message[1:]:
+                msg_obj += ErrorEntry(msg)
+        elif type(message) is ErrorEntry:
+            msg_obj = message
+        elif type(message) is HelpEntry:
+            msg_obj = message.convert(ErrorEntry)
+        else:
+            msg_obj = ErrorEntry('00-005-00001', args=[message])
+            key = 'error'
+
         # ---------------------------------------------------------------------
         # TODO: Remove deprecation warning (once all code changed)
         if type(p) is str:
@@ -184,41 +207,45 @@ class Logger:
         # deal with both printonly and logonly set to True (bad)
         if printonly and logonly:
             printonly, logonly = False, False
-        # deal with message type (make into a list)
-
-        # TODO: Add type(message) = ErrorText soon
-        if type(message) is ErrorEntry:
-            rawmsg = message.print() + self.errortext[message.key]
-            message = rawmsg.split('\n')
-        elif type(message) is str:
-            message = [message]
-        elif type(list):
-            message = list(message)
-        else:
-            message = [('Logging error: message="{0}" is not a valid string or '
-                        'list').format(message)]
-            key = 'error'
         # check that key is valid
         if key not in self.pconstant.LOG_TRIG_KEYS():
-            emsg = 'Logging error: key="{0}" not in LOG_TRIG_KEYS()'
-            message.append(emsg.format(key))
+            eargs = [key, 'LOG_TRIG_KEYS()']
+            msg_obj += ErrorEntry('00-005-00002', args=eargs)
             key = 'error'
         if key not in self.pconstant.WRITE_LEVEL():
-            emsg = 'Logging error: key="{0}" not in WRITE_LEVEL()'
-            message.append(emsg.format(key))
+            eargs = [key, 'WRITE_LEVEL()']
+            msg_obj += ErrorEntry('00-005-00003', args=eargs)
             key = 'error'
         if key not in self.pconstant.COLOUREDLEVELS():
-            emsg = 'Logging error: key="{0}" not in COLOUREDLEVELS()'
-            message.append(emsg.format(key))
+            eargs = [key, 'COLOUREDLEVELS()']
+            msg_obj += ErrorEntry('00-005-00004', args=eargs)
+            key = 'error'
+        if key not in self.pconstant.REPORT_KEYS():
+            eargs = [key, 'REPORT_KEYS()']
+            msg_obj += ErrorEntry('00-005-00005', args=eargs)
             key = 'error'
         # loop around message (now all are lists)
         errors = []
-
-        for mess in message:
+        # ---------------------------------------------------------------------
+        # get log parameters
+        # ---------------------------------------------------------------------
+        # Get the key code (default is a whitespace)
+        code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
+        report = self.pconstant.REPORT_KEYS().get(key, False)
+        # get messages
+        if type(message) is HelpEntry:
+            raw_message = msg_obj.get(self.helptext, report=report,
+                                      reportlevel=key)
+        else:
+            raw_message = msg_obj.get(self.errortext, report=report,
+                                      reportlevel=key)
+        # split by '\n'
+        raw_messages = raw_message.split('\n')
+        # ---------------------------------------------------------------------
+        # loop around raw messages
+        for mess in raw_messages:
             # Get the time now in human readable format
-            human_time = time.get_time_now()
-            # Get the key code (default is a whitespace)
-            code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
+            human_time = time.get_hhmmss_now()
             # storage for cmds
             cmds = []
             # check if line is over 80 chars
@@ -227,7 +254,7 @@ class Logger:
                 new_messages = textwrap(mess, char_len)
                 for new_message in new_messages:
                     cmdargs = [human_time, code, option, new_message]
-                    cmd = '{0} - {1} |{2}|{3}'.format(*cmdargs)
+                    cmd = LOGFMT.format(*cmdargs)
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
@@ -237,7 +264,7 @@ class Logger:
                         printlog(self, p, cmd, key, colour)
             else:
                 cmdargs = [human_time, code, option, mess]
-                cmd = '{0} - {1} |{2}|{3}'.format(*cmdargs)
+                cmd = LOGFMT.format(*cmdargs)
                 # append separate commands for log writing
                 cmds.append(cmd)
                 # add to logger storage
@@ -280,7 +307,7 @@ class Logger:
         if key in self.pconstant.EXIT_LEVELS():
             # prepare error string
             errorstring = ''
-            for mess in message:
+            for mess in raw_messages:
                 errorstring += mess + '\n'
             for error in errors:
                 # noinspection PyTypeChecker
