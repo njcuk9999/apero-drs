@@ -23,8 +23,26 @@ from astropy.time import Time
 # Define functions
 # =============================================================================
 def get_time_now():
+    """
+    Returns the time now (YYYY-mm-dd HH:MM:SS.SSS)
+
+    :return time: string time YYYY-mm-dd HH:MM:SS.SSS
+    """
     atime = Time.now()
     return atime.iso
+
+
+def get_hhmmss_now():
+    """
+    Returns the time (HH:MM:SS.SSS)
+
+    Assumes get_time_now() gives YYYY-mm-dd HH:MM:SS.SSS
+
+    :return time: string time HH:MM:SS.SSS
+    """
+    full_time = get_time_now()
+    return full_time.split(' ')[-1]
+
 
 # =============================================================================
 # Start of code
