@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+Constants parameter functions
 
-# CODE DESCRIPTION HERE
+DRS Import Rules:
+
+- only from drsmodule.locale
 
 Created on 2019-01-17 at 15:24
 
@@ -16,7 +18,9 @@ import pkg_resources
 import importlib
 from collections import OrderedDict
 
+from drsmodule.locale import drs_text
 from . import constant_functions
+
 
 
 # =============================================================================
@@ -37,7 +41,6 @@ PSEUDO_CONST_CLASS = 'PseudoConstants'
 # Define the Config Exception
 ConfigError = constant_functions.ConfigError
 ConfigWarning = constant_functions.ConfigWarning
-
 
 
 # =============================================================================
@@ -538,18 +541,19 @@ class ParamDict(CaseInsensitiveDict):
 # =============================================================================
 # Define functions
 # =============================================================================
-def load_config(instrument=None):
+def load_config(instrument=None, language=None):
     # get instrument sub-package constants files
-    modules = get_module_names(instrument)
+    modules = get_module_names(instrument, language)
     # get constants from modules
-    keys, values, sources = _load_from_module(modules, True)
+    keys, values, sources = _load_from_module(modules, True, instrument,
+                                              language)
     params = ParamDict(zip(keys, values))
     # Set the source
     params.set_sources(keys=keys, sources=sources)
     # save sources to params
     params = _save_config_params(params, sources)
     # get instrument user config files
-    files = _get_file_names(params, instrument)
+    files = _get_file_names(params, instrument, language)
     # get constants from user config files
     try:
         keys, values, sources = _load_from_file(files, modules)
@@ -598,7 +602,7 @@ def get_config_all():
 
 
 def get_file_names(instrument=None, file_list=None, instrument_path=None,
-                     default_path=None):
+                     default_path=None, language=None):
     func_name = __NAME__ + '.get_file_names()'
 
     # get core path
@@ -650,8 +654,11 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
 
 
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
-                     default_path=None):
+                     default_path=None, language=None):
     func_name = __NAME__ + '._get_module_names()'
+
+    # get language dictionaries
+    errortext = drs_text.ErrorText(instrument, language)
 
     # deal with no module list
     if mod_list is None:
@@ -735,7 +742,7 @@ def print_error(error):
 # =============================================================================
 # Config loading private functions
 # =============================================================================
-def _get_file_names(params, instrument=None):
+def _get_file_names(params, instrument=None, language=None):
 
     # deal with no instrument
     if instrument is None:
@@ -813,7 +820,7 @@ def _get_file_names(params, instrument=None):
     # deal with no files found
     if len(files) == 0:
         wmsg1 = ('User config defined but instrument "{0}" directory '
-                 'has not configurations files')
+                 'has no configurations files')
         wmsg2 = '\tValid config files: {0}'.format(','.join(USCRIPTS))
         ConfigWarning([wmsg1.format(instrument), wmsg2])
 
@@ -830,9 +837,10 @@ def _get_subdir(directory, instrument, source):
             subdir = filename
     # deal with instrument sub-folder not found
     if subdir is None:
-        wmsg = ('User config defined in {0} but instrument '
+        wmsg1 = ('User config defined in {0} but instrument '
                 '"{1}" directory not found')
-        ConfigWarning(wmsg.format(source, instrument))
+        wmsg2 = 'Looked in directory: {0}'.format(os.path.join(directory))
+        ConfigWarning([wmsg1.format(source, instrument.lower()), wmsg2])
     # return the subdir
     return subdir
 
@@ -874,7 +882,7 @@ def _get_relative_folder(package, folder):
     return data_folder
 
 
-def _load_from_module(modules, quiet=False):
+def _load_from_module(modules, quiet=False, instrument=None, language=None):
     func_name = __NAME__ + '._load_from_module()'
     # storage for returned values
     keys, values, sources = [], [], []
