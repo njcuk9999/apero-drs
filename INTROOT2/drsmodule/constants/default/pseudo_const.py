@@ -316,6 +316,18 @@ class PseudoConstants:
                            debug=0)
         return write_level
 
+    def REPORT_KEYS(self):
+        """
+        The report levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
+
+        If True then the input code is printed (used for errors /warning/debug)
+
+        if False just the message is printed
+        """
+        write_level = dict(error=True, warning=True, info=False, graph=False,
+                           all=False, debug=True)
+        return write_level
+
     def SPLASH(self):
         logo = [" .----------------.  .----------------.  .----------------.   ",
                 " | .--------------. || .--------------. || .--------------. | ",
