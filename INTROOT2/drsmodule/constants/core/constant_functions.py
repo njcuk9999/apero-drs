@@ -25,6 +25,9 @@ VALID_CHARS = list(string.ascii_letters) + list(string.digits)
 VALID_CHARS += list(string.punctuation) + list(string.whitespace)
 
 
+USED_WARNINGS = []
+
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================
@@ -94,6 +97,7 @@ class ConfigError(ConfigException):
 
 
 class ConfigWarning:
+    global USED_WARNINGS
 
     def __init__(self, message=None, level=None):
         # deal with message
@@ -115,7 +119,12 @@ class ConfigWarning:
                 amessage += '\n\t\t{0}'.format(mess)
             else:
                 amessage += mess
-        print(amessage)
+
+        if amessage in USED_WARNINGS:
+            pass
+        else:
+            print(amessage)
+            USED_WARNINGS.append(amessage)
 
 
 # =============================================================================
