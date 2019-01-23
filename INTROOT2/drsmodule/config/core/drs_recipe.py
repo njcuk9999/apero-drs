@@ -19,6 +19,7 @@ import glob
 from collections import OrderedDict
 
 from drsmodule import constants
+from drsmodule.locale import drs_text
 from . import drs_log
 
 
@@ -42,6 +43,10 @@ COLOR = constants.Colors()
 ParamDict = constants.ParamDict
 # get the config error
 ConfigError = constants.ConfigError
+# Get the text types
+ErrorEntry = drs_text.ErrorEntry
+ErrorText = drs_text.ErrorText
+HelpText = drs_text.HelpText
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -65,6 +70,9 @@ DEBUG = False
 class DRSArgumentParser(argparse.ArgumentParser):
     def __init__(self, recipe, **kwargs):
         self.recipe = recipe
+        params = self.recipe.drs_params
+        self.errortext = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+        self.helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
         self.args = None
         self.argv = None
         self.namespace = None
@@ -78,8 +86,8 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # overritten functionality
         args, argv = self.parse_known_args(args, namespace)
         if argv:
-            msg = 'unrecognized arguments: %s'
-            self.error(msg % ' '.join(argv))
+            msg = self.errortext['09-001-00002']
+            self.error(msg.format(' '.join(argv)))
         return args
 
     def error(self, message):
@@ -90,10 +98,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # get parameters from drs_params
         params = self.recipe.drs_params
         # log message
-        emsg1 = 'Argument Error:'
-        emsg2 = '\t {0}'.format(message)
-        emsg3 = '\t Use: "{0}.py --help" for help'.format(program)
-        WLOG(params, 'error', [emsg1, emsg2, emsg3])
+        emsg_args = [message, program]
+        emsg_obj = ErrorEntry('09-002-00001', args=emsg_args)
+        WLOG(params, 'error', emsg_obj)
 
     def _print_message(self, message, file=None):
         # get parameters from drs_params
@@ -109,7 +116,8 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # Manually print error message (with help)
         print()
         print(green + params['DRS_HEADER'] + end)
-        print(green + ' Help for: {0}.py'.format(program) + end)
+        helptitletext = self.errortext['40-002-00001'].format(program)
+        print(green + ' ' + helptitletext + end)
         print(green + params['DRS_HEADER'] + end)
         imsgs = _get_version_info(self.recipe.drs_params, green, end)
         for imsg in imsgs:
@@ -122,33 +130,41 @@ class DRSArgumentParser(argparse.ArgumentParser):
         hmsgs = []
 
         # noinspection PyProtectedMember
-        hmsgs += ['usage: ' + self.recipe._drs_usage()]
+        hmsgs += [' ' + self.helptext['USAGE_TEXT'] + ' ' +
+                  self.recipe._drs_usage()]
 
         # add description
         if self.recipe.description is not None:
-            hmsgs += [self.recipe.description]
+            hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
+            hmsgs += [' ' + self.helptext['DESCRIPTION_TEXT']]
+            hmsgs += [self.recipe.drs_params['DRS_HEADER'], '']
+            hmsgs += [' ' + self.recipe.description]
+            hmsgs += [self.recipe.drs_params['DRS_HEADER']]
 
         # deal with required arguments
-        hmsgs += ['', 'Required Arguments:', '']
+        hmsgs += ['', self.errortext['40-002-00002'], '']
         for arg in self.recipe.required_args:
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with optional arguments
-        hmsgs += ['', '', 'Optional Arguments:', '']
+        hmsgs += ['', '', self.errortext['40-002-00003'], '']
         for arg in self.recipe.optional_args:
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with special arguments
-        hmsgs += ['', '', 'Special Arguments:', '']
+        hmsgs += ['', '', self.errortext['40-002-00004'], '']
         for arg in self.recipe.special_args:
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
 
         # add help
-        helpstr = 'show this help message and exit'
+        helpstr = self.errortext['40-002-00005']
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
 
         # add epilog
         if self.recipe.epilog is not None:
-            hmsgs += [self.recipe.epilog]
-
+            hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
+            hmsgs += [' ' + self.helptext['EXAMPLES_TEXT']]
+            hmsgs += [self.recipe.drs_params['DRS_HEADER'], '']
+            hmsgs += [' ' + self.recipe.epilog]
+            hmsgs += [self.recipe.drs_params['DRS_HEADER']]
         # return string
         return_string = ''
         for hmsg in hmsgs:
@@ -837,7 +853,7 @@ class DrsArgument(object):
                 self.props[prop] = props[prop]
 
     def exception(self, message):
-        log_opt = 'DrsArgument[{0}] Error'.format(self.name)
+        log_opt = 'DrsArgument[{0}] Error: '.format(self.name)
         raise Exception(log_opt + message)
 
     def __str__(self):
@@ -899,6 +915,7 @@ class DrsRecipe(object):
         # get drs parameters
         self.drs_params = ParamDict()
         self.drs_pconstant = None
+        self.errortext = None
         self.input_params = OrderedDict()
         self.required_args = []
         self.optional_args = []
@@ -913,6 +930,8 @@ class DrsRecipe(object):
         # Get config parameters from primary file
         self.drs_params = constants.load(self.instrument)
         self.drs_pconstant = constants.pload(self.instrument)
+        self.errortext = ErrorText(self.instrument, self.drs_params['LANGUAGE'])
+        self.helptext = HelpText(self.instrument, self.drs_params['LANGUAGE'])
         # ---------------------------------------------------------------------
         # assign parameters from kwargs
         for kwarg in kwargs:
@@ -982,7 +1001,8 @@ class DrsRecipe(object):
 
         # get params
         params = vars(parser.parse_args(args=self.str_arg_list))
-        del parser
+        #del parser
+        self.parser = parser
         # update params
         self.input_params = params
 
@@ -1007,8 +1027,8 @@ class DrsRecipe(object):
             # check that kwarg is in input_parameters
             if kwarg.name not in input_parameters:
                 eargs = [kwarg.name, self.name]
-                emsg = 'Cannot find input "{0}" for recipe "{1}"'
-                kwarg.exception(emsg.format(*eargs))
+                emsg = self.errortext['00-006-00001'].format(*eargs)
+                kwarg.exception(emsg)
             # check that kwarg is None (should be None if we need to change it)
             if input_parameters[kwarg.name] is not None:
                 # if we have the value we should pipe it into default_ref
@@ -1024,16 +1044,15 @@ class DrsRecipe(object):
             # else check that we have default_ref
             elif kwarg.default_ref is None:
                 eargs = [kwarg.name, self.name]
-                emsg = '"default_ref" is unset for "{0}" for recipe "{1}"'
-                kwarg.exception(emsg.format(*eargs))
+                emsg = self.errortext['00-006-00002'].format(*eargs)
+                kwarg.exception(emsg)
                 value, param_key = None, None
             # else check that default_ref is in drs_params (i.e. defined in a
             #   constant file)
             elif kwarg.default_ref not in params:
                 eargs = [kwarg.default_ref, kwarg.name, self.name]
-                emsg = ('"default_ref"="{0}" not found in constant params for '
-                        ' "{1}" for recipe "{2}"')
-                kwarg.exception(emsg.format(*eargs))
+                emsg = self.errortext['00-006-00003'].format(*eargs)
+                kwarg.exception(emsg)
                 value, param_key = None, None
             # else we have all we need to reset the value
             else:
@@ -1266,11 +1285,8 @@ class DrsRecipe(object):
         if self.module is None:
             self.module = self._import_module()
         if self.module is None:
-            emsg1 = 'Dev Error: Cannot find module "{0}"'.format(self.name)
-            emsg2 = '\tProblem with recipe definition'
-            emsg3 = ('\tRecipe name must match recipe python file name and be '
-                     'in PYTHONPATH')
-            WLOG(self.drs_params, 'error', [emsg1, emsg2, emsg3])
+            emsg = ErrorEntry('00-000-00001', args=[self.name])
+            WLOG(self.drs_params, 'error', emsg)
 
         # run main
         return self.module.main(**kwargs)
@@ -1377,7 +1393,7 @@ class DrsRecipe(object):
         """
         # ---------------------------------------------------------------------
         # make debug functionality
-        dprops = _make_debug()
+        dprops = _make_debug(self.drs_params)
         name = dprops['name']
         debug = DrsArgument(name, kind='special', altnames=dprops['altnames'])
         debug.assign_properties(dprops)
@@ -1386,7 +1402,7 @@ class DrsRecipe(object):
         self.specialargs[name] = debug
         # ---------------------------------------------------------------------
         # make listing functionality
-        lprops = _make_listing(self.drs_params['DRS_MAX_IO_DISPLAY_LIMIT'])
+        lprops = _make_listing(self.drs_params)
         name = lprops['name']
         listing = DrsArgument(name, kind='special', altnames=lprops['altnames'])
         listing.assign_properties(lprops)
@@ -1395,7 +1411,7 @@ class DrsRecipe(object):
         self.specialargs[name] = listing
         # ---------------------------------------------------------------------
         # make listing all functionality
-        aprops = _make_alllisting()
+        aprops = _make_alllisting(self.drs_params)
         name = aprops['name']
         alllist = DrsArgument(name, kind='special', altnames=aprops['altnames'])
         alllist.assign_properties(aprops)
@@ -1404,7 +1420,7 @@ class DrsRecipe(object):
         self.specialargs[name] = alllist
         # ---------------------------------------------------------------------
         # make version functionality
-        vprops = _make_version()
+        vprops = _make_version(self.drs_params)
         name = vprops['name']
         version = DrsArgument(name, kind='special', altnames=vprops['altnames'])
         version.assign_properties(vprops)
@@ -1413,7 +1429,7 @@ class DrsRecipe(object):
         self.specialargs[name] = version
         # ---------------------------------------------------------------------
         # make info functionality
-        iprops = _make_info()
+        iprops = _make_info(self.drs_params)
         name = iprops['name']
         info = DrsArgument(name, kind='special', altnames=iprops['altnames'])
         info.assign_properties(iprops)
@@ -1463,10 +1479,10 @@ class DrsRecipe(object):
             pos_args.append(rarg.names[0])
         # deal with no positional arguments
         if len(pos_args) == 0:
-            pos_args = ['[positional arguments]']
+            pos_args = ['[{0}]'.format(self.helptext['POS_ARG_TEXT'])]
         # define usage
-        uargs = [self.name, ' '.join(pos_args)]
-        usage = '{0}.py {1} [options]'.format(*uargs)
+        uargs = [self.name, ' '.join(pos_args), self.helptext['OPTIONS_TEXT']]
+        usage = '{0}.py {1} [{2}]'.format(*uargs)
         return usage
 
     def _valid_directory(self, directory, return_error=False):
@@ -2815,12 +2831,21 @@ def _get_version_info(p, green='', end=''):
         version = p['DRS_VERSION']
     else:
         version = __version__
+
+    # get text strings
+    helptext = HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    namestr = helptext['NAME_TEXT']
+    versionstr = helptext['VERSION_TEXT']
+    authorstr = helptext['AUTHOR_TEXT']
+    authors = ', '.join(__author__)
+    datestr = helptext['DATE_TEXT']
+    releasestr = helptext['RELEASE_TEXT']
     # construct version info string
-    imsgs = [green + '\tNAME: {0}'.format(name),
-             green + '\tVERSION: {0}'.format(version) + end,
-             green + '\tAUTHORS: {0}'.format(__author__) + end,
-             green + '\tLAST UPDATED: {0}'.format(__date__) + end,
-             green + '\tRELEASE STATUS: {0}'.format(__release__) + end]
+    imsgs = [green + '\t{0}: {1}'.format(namestr, name),
+             green + '\t{0}: {1}'.format(versionstr, version) + end,
+             green + '\t{0}: {1}'.format(authorstr, authors) + end,
+             green + '\t{0}: {1}'.format(datestr, __date__) + end,
+             green + '\t{0}: {1}'.format(releasestr, __release__) + end]
     return imsgs
 
 
@@ -3041,78 +3066,77 @@ def _make_dict_from_table(itable):
     return dict(zip(ikeys, ivalues))
 
 
-def _make_listing(limit):
+def _make_listing(p):
     """
     Make a custom special argument that lists the files in the given
     input directory
     :return props: dictionary for argparser
     """
+    limit = p['DRS_MAX_IO_DISPLAY_LIMIT']
+    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--listing'
     props['altnames'] = ['--list']
     props['action'] = _MakeListing
     props['nargs'] = 0
-    props['help'] = ('Lists the night name directories in the input directory '
-                     'if used without a "directory" argument or lists the '
-                     'files in the given "directory" (if defined).'
-                     'Only lists up to {0} files/directories'
-                     ''.format(limit))
+    props['help'] = Help['LISTING_HELP'].format(limit)
     return props
 
 
-def _make_alllisting():
+def _make_alllisting(p):
+    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--listingall'
     props['altnames'] = ['--listall']
     props['action'] = _MakeAllListing
     props['nargs'] = 0
-    props['help'] = ('Lists ALL the night name directories in the input '
-                     'directory if used without a "directory" argument or '
-                     'lists the files in the given "directory" (if defined)')
+    props['help'] = Help['ALLLISTING_HELP']
     return props
 
 
-def _make_debug():
+def _make_debug(p):
     """
     Make a custom special argument that switches on debug mode (as it needs to
     be done as soon as possible)
     :return:
     """
+    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--debug'
     props['altnames'] = ['--d', '--verbose']
     props['action'] = _ActivateDebug
     props['nargs'] = '?'
-    props['help'] = ('Activates debug mode (Advanced mode [INTEGER] value must '
-                     'be an integer greater than 0, setting the debug level)')
+    props['help'] = Help['DEBUG_HELP']
     return props
 
 
-def _make_version():
+def _make_version(p):
     """
     Make a custom special argument that lists the version number
     :return props: dictionary for argparser
     """
+    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--version'
     props['altnames'] = []
     props['action'] = _DisplayVersion
     props['nargs'] = 0
-    props['help'] = 'Displays the current version of this recipe.'
+    props['help'] = Help['VERSION_HELP']
     return props
 
 
-def _make_info():
+def _make_info(p):
     """
     Make a custom special argument that lists a short version of the help
     :return props: dictionary for argparser
     """
+    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--info'
     props['altnames'] = ['--i', '--usage']
     props['action'] = _DisplayInfo
     props['nargs'] = 0
-    props['help'] = 'Displays the short version of the help menu'
+    props['help'] = Help['INFO_HELP']
     return props
 
 
