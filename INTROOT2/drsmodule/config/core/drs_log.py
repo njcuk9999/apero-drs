@@ -20,6 +20,7 @@ import warnings
 
 from drsmodule import constants
 from drsmodule.locale import drs_text
+from drsmodule.locale import drs_exceptions
 from drsmodule.config.math import time
 
 # =============================================================================
@@ -38,7 +39,12 @@ __release__ = Constants['RELEASE']
 # Get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the Config error
-ConfigError = constants.ConfigError
+DrsError = drs_exceptions.DrsError
+DrsWarning = drs_exceptions.DrsWarning
+TextError = drs_exceptions.TextError
+TextWarning = drs_exceptions.TextWarning
+ConfigError = drs_exceptions.ConfigError
+ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText
@@ -168,12 +174,12 @@ class Logger:
             p['PID'] = None
             p.set_source('PID', func_name)
             wmsg = 'Dev: Undefined PID not recommended (p is None)'
-            warnings.warn(wmsg, Warning)
+            DrsWarning(wmsg, level='warning')
         # deal with no PID
         if 'PID' not in p:
             p['PID'] = None
             wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
-            warnings.warn(wmsg, Warning)
+            DrsWarning(wmsg, level='warning')
 
         # deal with no instrument
         if 'INSTRUMENT' not in p:
@@ -338,7 +344,6 @@ class Logger:
             self.pconstant = constants.pload(self.instrument)
             # update error text
             self.errortext = ErrorText(self.instrument, self.language)
-
 
     def output_param_dict(self, paramdict):
         for key in self.pout:
