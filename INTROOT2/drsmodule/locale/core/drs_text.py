@@ -10,14 +10,12 @@ Created on 2019-01-22 at 09:53
 @author: cook
 """
 import numpy as np
-from astropy.time import Time
 import os
-import sys
 from astropy.table import Table
 from collections import OrderedDict
 import pkg_resources
-import warnings
 
+from . import drs_exceptions
 
 # =============================================================================
 # Define variables
@@ -36,72 +34,13 @@ FILE_FMT = 'csv'
 DEFAULT_LANGUAGE = 'ENG'
 # define escape characters
 ESCAPE_CHARS = {'\n': '\\n', '\t': '\\t'}
-
-
-# -----------------------------------------------------------------------------
-class TextException(Exception):
-    """Raised when config file is incorrect"""
-    pass
-
-
-class TextError(TextException):
-    """
-    Custom Config Error for passing to the log
-    """
-
-    def __init__(self, message=None, level=None):
-        """
-        Constructor for ConfigError sets message to self.message and level to
-        self.level
-
-        if key is not None defined self.message reads "key [key] must be
-        defined in config file (located at [config_file]
-
-        if config_file is None then deafult config file is used in its place
-
-        :param message: list or string, the message to print in the error
-        :param level: string, level (for logging) must be key in TRIG key above
-                      default = all, error, warning, info or graph
-        """
-        # deal with message
-        if message is None:
-            self.message = 'Text Error'
-        elif type(message) == str:
-            self.message = message
-        else:
-            self.message = list(message)
-        # set logging level
-        if level is None:
-            self.level = 'error'
-        else:
-            self.level = level
-        # deal with a list message (for printing)
-        if type(self.message) == list:
-            amessage = ''
-            for mess in message:
-                amessage += '\n\t\t{0}'.format(mess)
-            message = amessage
-        # set args to message (for printing)
-        argmessage = 'level={0}: {1}'
-        self.args = (argmessage.format(self.level, message),)
-
-    # overwrite string repr message with args[0]
-    def __repr__(self):
-        """
-        String representation of ConfigError
-
-        :return message: string, the message assigned in constructor
-        """
-        return self.args[0]
-
-    # overwrite print message with args[0]
-    def __str__(self):
-        """
-        String printing of ConfigError
-
-        :return message: string, the message assigned in constructor
-        """
-        return self.args[0]
+# get the Drs Exceptions
+DrsError = drs_exceptions.DrsError
+DrsWarning = drs_exceptions.DrsWarning
+TextError = drs_exceptions.TextError
+TextWarning = drs_exceptions.TextWarning
+ConfigError = drs_exceptions.ConfigError
+ConfigWarning = drs_exceptions.ConfigWarning
 
 
 # =============================================================================
@@ -130,16 +69,16 @@ class Text:
     def get(self, key):
         if self.name == 'Text':
             emsg = 'Dev Error: Cannot load Abstract class "{0}"'
-            raise TextError(message=emsg.format(self.name), level='error')
+            TextError(message=emsg.format(self.name), level='error')
         # deal with no dict loaded
         if len(self.dict) == 0:
             emsg = '"{0}" dictionary not loaded. Please load using {0}.{1}'
             eargs = [self.name, self.load_func]
-            raise TextError(message=emsg.format(*eargs), level='error')
+            TextError(message=emsg.format(*eargs), level='error')
         if key not in self.dict:
             emsg = 'Key "{0}" not found in {1} translation matrix.'
             eargs = [key, self.name]
-            raise TextError(message=emsg.format(*eargs), level='error')
+            TextError(message=emsg.format(*eargs), level='error')
         return self.dict[key]
 
     def getsouce(self, key):
@@ -195,7 +134,7 @@ class Entry:
         if type(key) is list:
             self.keys = key
             if args is None:
-                args = [[]*len(key)]
+                args = [[]]*len(key)
             self.args = args
         else:
             self.keys = [key]
@@ -281,6 +220,8 @@ class HelpEntry(Entry):
 
     def __add__(self, self2):
         keys = self.keys + self2.keys
+
+        # add args
         args = self.args + self2.args
         kwargs = self.kwargs
         for kwarg2 in self2.kwargs:
@@ -289,50 +230,13 @@ class HelpEntry(Entry):
 
 
 # =============================================================================
-# Define basic log function (for when we don't have full logger functionality)
-#   i.e. within drsmodule.locale or drmodule.constants
-#   Note this can't be language specific
-# =============================================================================
-def basiclogger(message=None, level=None):
-    # deal with no level
-    if level is None:
-        level = 'error'
-    # deal with message format (convert to ErrorEntry)
-    if message is None:
-        message = ['Unknown']
-    elif type(message) is str:
-        message = [message]
-    elif type(message) is not list:
-        basiclogger('Basic logger error. Cannot read message="{0}"'
-                    ''.format(message), level='error')
-    # deal with levels
-    if level == 'error':
-        exit = True
-        key = '{0} | {1} Error | {2} '
-    elif level == 'warning':
-        exit = False
-        key = '{0} | {1} Warning | {2}'
-    else:
-        exit = False
-        key = '{0} | {1} Log | {2}'
-    # deal with printing log messages
-    for mess in message:
-        # get time
-        atime = Time.now()
-        htime = atime.iso.split(' ')[-1]
-        # print log message
-        print(key.format(htime, PACKAGE.upper(), mess))
-    # deal with exiting
-    if exit:
-        sys.exit()
-
-
-# =============================================================================
 # Define private functions
 # =============================================================================
 def _get_dict_files(instrument, filelist):
     # setup storage for return file list
     return_files = []
+    # get instrument path
+    ifolder = _get_relative_folder(PACKAGE, INSTRUMENT_PATH)
     # get default file
     dfolder = _get_relative_folder(PACKAGE, DEFAULT_PATH)
     dfiles = []
@@ -341,9 +245,11 @@ def _get_dict_files(instrument, filelist):
         if os.path.exists(abspath_d):
             dfiles.append(abspath_d)
         else:
-            warnings.warn('DRS Warning: Language file "{0}" not found.')
+            wmsg = 'DRS Warning: Language file "{0}" not found.'
+            TextWarning(wmsg.format(file_d), level='warning')
     if len(dfiles) == 0:
-        raise ValueError('DRS Error: No language files found.')
+        emsg = 'DRS Error: No language files found.'
+        TextError(emsg, level='error')
     # add the default files to return file list
     return_files += dfiles
     # loop around files in dmods
@@ -360,11 +266,10 @@ def _get_dict_files(instrument, filelist):
             continue
         else:
             # remove extension add instrument name and readd extension
-            iargs = [dfilename.split(ext), instrument.lower(), ext]
+            iargs = [dfilename.split(ext)[0], instrument.lower(), ext]
             ifilename = '{0}_{1}{2}'.format(*iargs)
             # construct full path for ifilename
-            ifilepath = os.path.join(INSTRUMENT_PATH, ifilename)
-
+            ifilepath = os.path.join(ifolder, ifilename)
             # check for ifilename existence
             if os.path.exists(ifilepath):
                 return_files.append(ifilepath)
