@@ -3,7 +3,7 @@
 ## import rules
 
 - sub-modules to the constants package cannot import any other DRS sub-modules
-
+- with the exception of the locale package
 
 ## core
 
