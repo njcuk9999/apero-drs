@@ -2833,13 +2833,13 @@ def _get_version_info(p, green='', end=''):
         version = __version__
 
     # get text strings
-    helptext = HelpText(p['INSTRUMENT'], p['LANGUAGE'])
-    namestr = helptext['NAME_TEXT']
-    versionstr = helptext['VERSION_TEXT']
-    authorstr = helptext['AUTHOR_TEXT']
+    text = ErrorText(p['INSTRUMENT'], p['LANGUAGE'])
+    namestr = text['40-001-00001']
+    versionstr = text['40-001-00002']
+    authorstr = text['40-001-00003']
     authors = ', '.join(__author__)
-    datestr = helptext['DATE_TEXT']
-    releasestr = helptext['RELEASE_TEXT']
+    datestr = text['40-001-00004']
+    releasestr = text['40-001-00005']
     # construct version info string
     imsgs = [green + '\t{0}: {1}'.format(namestr, name),
              green + '\t{0}: {1}'.format(versionstr, version) + end,
