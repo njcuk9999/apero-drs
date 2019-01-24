@@ -21,6 +21,7 @@ import importlib
 from drsmodule import constants
 from drsmodule import plot
 from drsmodule.locale import drs_text
+from drsmodule.locale import drs_exceptions
 from drsmodule.io import drs_table
 from . import drs_log
 from . import drs_recipe
@@ -48,8 +49,13 @@ WLOG = drs_log.wlog
 COLOR = constants.Colors
 # get param dict
 ParamDict = constants.ParamDict
-# get the config error
-ConfigError = constants.ConfigError
+# get the Drs Exceptions
+DrsError = drs_exceptions.DrsError
+DrsWarning = drs_exceptions.DrsWarning
+TextError = drs_exceptions.TextError
+TextWarning = drs_exceptions.TextWarning
+ConfigError = drs_exceptions.ConfigError
+ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText
@@ -127,20 +133,27 @@ def get_params(**kwargs):
 
 def main_end_script(p, outputs='reduced'):
     # func_name = __NAME__ + '.main_end_script()'
-
+    # -------------------------------------------------------------------------
     if outputs == 'pp':
         # index outputs to pp dir
         index_pp(p)
+    # -------------------------------------------------------------------------
     elif outputs == 'reduced':
         # index outputs to reduced dir
         index_outputs(p)
+    # -------------------------------------------------------------------------
     # log end message
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG(p, 'info', wmsg.format(p['RECIPE']))
+    WLOG(p, 'info', ErrorEntry('40-003-00001', args=[p['RECIPE']]))
+    # -------------------------------------------------------------------------
     # add the logger messsages to p
     p = WLOG.output_param_dict(p)
+    # -------------------------------------------------------------------------
     # finally clear out the log in WLOG
     WLOG.clean_log(p['PID'])
+    # -------------------------------------------------------------------------
+    # deal with clearing warnings
+    drs_exceptions.clear_warnings()
+    # -------------------------------------------------------------------------
     # return p
     return p
 
@@ -158,11 +171,13 @@ def exit_script(ll, has_plots=True):
 
     :return None:
     """
+    # -------------------------------------------------------------------------
     # get parameter dictionary of constants (or create it)
     if 'p' in ll:
         p = ll['p']
     else:
         p = Constants
+    # -------------------------------------------------------------------------
     # make sure we have DRS_PLOT
     if 'DRS_PLOT' not in p:
         p['DRS_PLOT'] = 0
@@ -179,18 +194,16 @@ def exit_script(ll, has_plots=True):
     else:
         kind = 'python'
     # log message
-    wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
-    WLOG(p, '', '')
-    WLOG(p, '', p['DRS_HEADER'], printonly=True)
-    WLOG(p, 'warning', wmsg.format(kind), printonly=True)
-    WLOG(p, '', p['DRS_HEADER'], printonly=True)
+    wmsg = ErrorEntry('40-003-00002', args=[kind])
+    WLOG(p, 'info', wmsg, printonly=True)
+    WLOG(p, '', ErrorEntry(p['DRS_HEADER']), printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
         uinput = raw_input('')  # note python 3 wont find this!
     else:
         uinput = input('')
-
+    # -------------------------------------------------------------------------
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
@@ -349,37 +362,29 @@ def display_initial_parameterisation(p):
 
     :return None:
     """
-    # get help text
-    helptext = HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     # Add initial parameterisation
-    wmsgs = ['\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p),
-             '\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p),
-             '\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p),
-             '\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p),
-             '\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p)]
+    wmsgs = ErrorEntry('\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    wmsgs += ErrorEntry('\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
+    wmsgs += ErrorEntry('\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
+    wmsgs += ErrorEntry('\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    wmsgs += ErrorEntry('\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
+    wmsgs += ErrorEntry('\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
     # add config sources
     for source in p['DRS_CONFIG']:
-        wmsgs.append('\tDRS_CONFIG={0}'.format(source))
+        wmsgs += ErrorEntry('\tDRS_CONFIG={0}'.format(source))
     # add others
-    wmsgs += ['\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p),
-              '\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p),
-              '\tDRS_PLOT={DRS_PLOT}'.format(**p)]
-    if p['DRS_DATA_WORKING'] is None:
-        wargs = ['DRS_DATA_WORKING']
-        wmsgs.append(HelpEntry('DRS_SETUP_TEXT2', args=wargs))
-    else:
-        wmsgs.append('\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
+    wmsgs += ErrorEntry('\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
+    wmsgs += ErrorEntry('\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
+    wmsgs += ErrorEntry('\tDRS_PLOT={DRS_PLOT}'.format(**p))
     if p['DRS_INTERACTIVE'] == 0:
-        wargs = ['DRS_INTERACTIVE']
-        wmsgs.append(HelpEntry('DRS_SETUP_TEXT3', args=wargs))
+        wmsgs += ErrorEntry('40-001-00007', args=['DRS_INTERACTIVE'])
     else:
-        wargs = ['DRS_INTERACTIVE']
-        wmsgs.append(HelpEntry('DRS_SETUP_TEXT4', args=wargs))
+        wmsgs += ErrorEntry('40-001-00008', args=['DRS_INTERACTIVE'])
     if p['DRS_DEBUG'] > 0:
-        wargs =['DRS_DEBUG', p['DRS_DEBUG']]
-        wmsgs.append(HelpEntry('DRS_SETUP_TEXT5', args=wargs))
+        wargs = ['DRS_DEBUG', p['DRS_DEBUG']]
+        wmsgs += ErrorEntry('40-001-00009', args=wargs)
     # log to screen and file
-    WLOG(p, 'info', HelpEntry('DRS_SETUP_TEXT1'))
+    WLOG(p, 'info', ErrorEntry('40-001-00006'))
     WLOG(p, 'info', wmsgs, wrap=False)
     WLOG(p, '', p['DRS_HEADER'])
 
@@ -398,36 +403,28 @@ def display_system_info(p, logonly=True, return_message=False):
     :return None:
     """
     # noinspection PyListCreation
-    messages = []
+    messages = ErrorEntry('')
     if return_message:
-        messages.append(p['DRS_HEADER'])
-        messages.append(" * System information:")
-        messages.append(p['DRS_HEADER'])
+        messages += ErrorEntry(p['DRS_HEADER'])
+        messages += ErrorEntry('40-001-00010')
+        messages += ErrorEntry(p['DRS_HEADER'])
+
     messages = sort_version(messages)
-    messages.append("    Path = \"{0}\"".format(sys.executable))
-    messages.append("    Platform = \"{0}\"".format(sys.platform))
+
+    messages += ErrorEntry('40-001-00011', args=[sys.executable])
+    messages += ErrorEntry('40-001-00012', args=[sys.platform])
+
     for it, arg in enumerate(sys.argv):
-        messages.append("    Arg {0} = \"{1}\"".format(it + 1, arg))
+        messages += ErrorEntry('\t Arg {0} = \'{1}\''.format(it + 1, arg))
     if return_message:
-        messages.append(p['DRS_HEADER'])
+        messages += ErrorEntry(p['DRS_HEADER'])
         return messages
     else:
         # return messages for logger
-        WLOG(p, '', p['DRS_HEADER'], logonly=logonly)
-        WLOG(p, 'info', " * System information:", logonly=logonly)
-        WLOG(p, '', p['DRS_HEADER'], logonly=logonly)
+        WLOG(p, 'info', ErrorEntry('40-001-00010'), logonly=logonly)
+        WLOG(p, '', ErrorEntry(p['DRS_HEADER']), logonly=logonly)
         WLOG(p, '', messages, logonly=logonly)
-        WLOG(p, '', p['DRS_HEADER'], logonly=logonly)
-
-
-def display_arg_setup(p):
-    """
-    Display for setting up and checking arguments
-    :param p: dictionary, parameter dictionary
-    :return None:
-    """
-    WLOG(p, '', ' Setting up and checking arguments')
-    WLOG(p, '', p['DRS_HEADER'])
+        WLOG(p, '', ErrorEntry(p['DRS_HEADER']), logonly=logonly)
 
 
 def display_run_time_arguments(recipe, fkwargs=None):
@@ -474,9 +471,9 @@ def display_run_time_arguments(recipe, fkwargs=None):
                 log_strings.append('\t--{0}[{1}]: {2}'.format(*largs))
     # -------------------------------------------------------------------------
     # log to screen and log file
-    WLOG(p, 'info', ' Arguments used:')
-    WLOG(p, 'info', log_strings, wrap=False)
-    WLOG(p, '', p['DRS_HEADER'])
+    WLOG(p, 'info', ErrorEntry('40-001-00017'))
+    WLOG(p, 'info', ErrorEntry(log_strings), wrap=False)
+    WLOG(p, '', ErrorEntry(p['DRS_HEADER']))
 
 
 # =============================================================================
@@ -887,28 +884,28 @@ def sort_version(messages=None):
     version = '{0}.{1}.{2}'.format(major, minor, micro)
 
     # add version info to messages
-    messages.append('    Python version = {0}'.format(version))
+    messages += ErrorEntry('40-001-00013', args=[version])
 
     # add distribution if possible
     try:
         build = sys.version.split('|')[1].strip()
-        messages.append('    Python distribution = {0}'.format(build))
+        messages += ErrorEntry('40-001-00014', args=[build])
     except IndexError:
         pass
 
     # add date information if possible
     try:
         date = sys.version.split('(')[1].split(')')[0].strip()
-        messages.append('    Distribution date = {0}'.format(date))
+        messages += ErrorEntry('40-001-00015', args=[date])
     except IndexError:
         pass
 
     # add Other info information if possible
     try:
         other = sys.version.split('[')[1].split(']')[0].strip()
-        messages.append('    Dist Other = {0}'.format(other))
+        messages += ErrorEntry('40-001-00016', args=[other])
     except IndexError:
-        pass
+            pass
 
     # return updated messages
     return messages
