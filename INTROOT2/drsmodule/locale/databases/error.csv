@@ -1,74 +1,103 @@
 "KEY","KIND","COMMENT","ARGUMENTS","ENG","FR","ES"
-"00-000-00000","ERROR","Dev Error","None","Dev Error: General Error",,
-"00-000-00001","ERROR","Means that recipe was not found in PYTHONPATH (either PYTHONPATH is wrong or recipe is not in PYTHONPATH)","{0} = module (recipe) name","Cannot find module '{0}' \n\t Problem with recipe defintion \n\tRecipe name must match recipe python file name and be in PYTHONPATH",,
-,,,,,,
-"00-001-00000","ERROR","Dev Function Input Error","None","Dev Error: Function Input Error",,
-,,,,,,
-"00-002-00000","ERROR","Dev Class Input Error","None","Dev Error: Class Input Error",,
-,,,,,,
-"00-003-00000","ERROR","Dev Constant Error","None","Dev Error: Constant Error",,
-,,,,,,
-"00-004-00000","ERROR","Dev Deprecated Error","None","Dev Error: Deprecated Error",,
-,,,,,,
-"00-005-00000","ERROR","Dev Log Error","None","Dev Error: Logging Error",,
-,,,,,,
-"00-005-00001","ERROR","Log error input 'message' is incorrect","{0} = message input","Log Error: Message: '{0}' is not a valid log message",,
-"00-005-00002","ERROR","Log error when 'key' is not found in LOG_TRIG_KEYS()","{0} = input key; {1} = LOG_TRIG_KEYS()","Log Error: Key '{0}' is not in '{1}'",,
-"00-005-00003","ERROR","Log error when 'key' is not found in WRITE_LEVEL()","{0} = input key; {1} = WRITE_LEVEL()","Log Error: Key '{0}' is not in '{1}'",,
-"00-005-00004","ERROR","Log error when 'key' is not found in ColOUREDLEVELS()","{0} = input key; {1} = COLOUREDLEVEL()","Log Error: Key '{0}' is not in '{1}'",,
-,,,,,,
-"00-006-00000","ERROR","Dev Argument Error","None","Dev Error: Argument Error",,
-"00-006-00001","ERROR","Cannot find input name in recipe definition (means there was a problem with 'recipe_setup' when parsing to argparse)","{0} = argument name; {1} = program name","Cannot find input '{0}' for recipe '{1}'",,
-"00-006-00002","ERROR","Means that we need a default reference but it is not defined","{0} = argument name; {1} = program name","Attribute 'default_ref' is unset for '{0}' for recipe '{1}'",,
-"00-006-00003","ERROR","Means that the default reference (which has to also be in the constants parameter dictionary) is not present in constants parameter dictionary","{0} = default reference key; {1} = argument name; {2} = program name","Attribute 'default_ref' is not found in constants for '{1}' for recipe '{2}'",,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-"01-001-00000","ERROR","IO Error","None","IO Error: General Error",,
-,,,,,,
-"01-001-00000","ERROR","IO File Error","None","IO Error: File Error",,
-,,,,,,
-"01-002-00000","ERROR","IO System Error","None","IO Error: System Error",,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-"09-000-00000","ERROR","User Error","None","User Error: General Error",,
-,,,,,,
-"09-001-00000","ERROR","User Argument Error","None","User Error: Argument Error",,
-"09-001-00001","ERROR","User Argument Error in DRSArgumentParser message is an internal ArgParse error message","{0} = message; {1} = program","Argument Error: \n\t {0} \n\t Use: '{1}.py –help' for help.",,
-"09-001-00002","ERROR","Text for ArgParse: arguments were unrecognized","{0} = argument list = Arg1, Arg2, Arg3","unrecognized arguments: {0}",,
-,,,,,,
-,,,,,,
-"09-002-00000","ERROR","User Constant Error","None","User Error: Constant Error",,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-"10-000-00000","WARNING","Warning Messages","None","\t",,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-"20-000-00000","INFO","Info Messages","None","\t",,
-,,,,,,
-"30-000-00000","GRAPH","Graph Messages","None","\t",,
-,,,,,,
-"40-000-00000","ALL","All Messages","None","\t",,
-,,,,,,
-"40-001-00000","ALL","Setup Messages","None","\t",,
-,,,,,,
-"40-002-00000","ALL","Help Messages","None","\t",,
-"40-002-00001","ALL","Help title","{0} = program name","Help for: '{0}.py'","Aide pour: '{0}.py'",
-"40-002-00002","ALL","Required arguments","None","Required Arguments:","Arguments requis:",
-"40-002-00003","ALL","Optional arguments","None","Optional Arguments:","Arguments optionnels:",
-"40-002-00004","ALL","Special Arguments","None","Special Arguments:","Arguments spéciaux:",
-"40-002-00005","ALL","help message","None","show this help message and exit","afficher ce message d'aide et quitter",
-,,,,,,
-,,,,,,
-,,,,,,
-"90-001-00000","DEBUG","Debug Messages","None","\t",,
+0,"ERROR","None","None","This is the Default error message","",""
+"00-000-00000","ERROR","Dev Error","None","Dev Error: General Error","",""
+"00-000-00001","ERROR","Means that recipe was not found in PYTHONPATH (either PYTHONPATH is wrong or recipe is not in PYTHONPATH)","{0} = module (recipe) name","Cannot find module '{0}' \n\t Problem with recipe defintion \n\tRecipe name must match recipe python file name and be in PYTHONPATH","",""
+"","","","","","",""
+"00-001-00000","ERROR","Dev Function Input Error","None","Dev Error: Function Input Error","",""
+"","","","","","",""
+"00-002-00000","ERROR","Dev Class Input Error","None","Dev Error: Class Input Error","",""
+"","","","","","",""
+"00-003-00000","ERROR","Dev Constant Error","None","Dev Error: Constant Error","",""
+"","","","","","",""
+"00-004-00000","ERROR","Dev Deprecated Error","None","Dev Error: Deprecated Error","",""
+"","","","","","",""
+"00-005-00000","ERROR","Dev Log Error","None","Dev Error: Logging Error","",""
+"","","","","","",""
+"00-005-00001","ERROR","Log error input 'message' is incorrect","{0} = message input","Log Error: Message: '{0}' is not a valid log message","",""
+"00-005-00002","ERROR","Log error when 'key' is not found in LOG_TRIG_KEYS()","{0} = input key; {1} = LOG_TRIG_KEYS()","Log Error: Key '{0}' is not in '{1}'","",""
+"00-005-00003","ERROR","Log error when 'key' is not found in WRITE_LEVEL()","{0} = input key; {1} = WRITE_LEVEL()","Log Error: Key '{0}' is not in '{1}'","",""
+"00-005-00004","ERROR","Log error when 'key' is not found in ColOUREDLEVELS()","{0} = input key; {1} = COLOUREDLEVEL()","Log Error: Key '{0}' is not in '{1}'","",""
+"","","","","","",""
+"00-006-00000","ERROR","Dev Argument Error","None","Dev Error: Argument Error","",""
+"00-006-00001","ERROR","Cannot find input name in recipe definition (means there was a problem with 'recipe_setup' when parsing to argparse)","{0} = argument name; {1} = program name","Cannot find input '{0}' for recipe '{1}'","",""
+"00-006-00002","ERROR","Means that we need a default reference but it is not defined","{0} = argument name; {1} = program name","Attribute 'default_ref' is unset for '{0}' for recipe '{1}'","",""
+"00-006-00003","ERROR","Means that the default reference (which has to also be in the constants parameter dictionary) is not present in constants parameter dictionary","{0} = default reference key; {1} = argument name; {2} = program name","Attribute 'default_ref' is not found in constants for '{1}' for recipe '{2}'","",""
+"","","","","","",""
+"01-001-00000","ERROR","IO Error","None","IO Error: General Error","",""
+"","","","","","",""
+"01-001-00000","ERROR","IO File Error","None","IO Error: File Error","",""
+"","","","","","",""
+"01-002-00000","ERROR","IO System Error","None","IO Error: System Error","",""
+"","","","","","",""
+"09-000-00000","ERROR","User Error","None","User Error: General Error","",""
+"","","","","","",""
+"09-001-00000","ERROR","User Argument Error","None","User Error: Argument Error","",""
+"09-001-00001","ERROR","User Argument Error in DRSArgumentParser message is an internal ArgParse error message","{0} = message; {1} = program","Argument Error: \n\t {0} \n\t Use: '{1}.py –help' for help.","",""
+"09-001-00002","ERROR","Text for ArgParse: arguments were unrecognized","{0} = argument list = Arg1, Arg2, Arg3","unrecognized arguments: {0}","",""
+"","","","","","",""
+"","","","","","",""
+"09-002-00000","ERROR","User Constant Error","None","User Error: Constant Error","",""
+"","","","","","",""
+"","","","","","",""
+"10-000-00000","WARNING","Warning Messages","None","\t","",""
+"","","","","","",""
+"20-000-00000","INFO","Info Messages","None","\t","",""
+"","","","","","",""
+"30-000-00000","GRAPH","Graph Messages","None","\t","",""
+"","","","","","",""
+"40-000-00000","ALL","All Messages","None","\t","",""
+"","","","","","",""
+"40-001-00000","ALL","Setup Messages","None","\t","",""
+"40-001-00001","ALL","Name string – used in setup","None"," NAME:","NOM:",""
+"40-001-00002","ALL","Version string – used in setup","None"," VERSION:","VERSION:",""
+"40-001-00003","ALL","Authors string – used in setup","None"," AUTHORS:","AUTEURS:",""
+"40-001-00004","ALL","last updated string – used in setup","None"," LAST UPDATED:","DERNIÈRE MISE À JOUR:",""
+"40-001-00005","ALL","release string – used in setup","None"," RELEASE STATUS:","STATUS DE LIBERATION:",""
+"40-001-00006","ALL","setup title text","None","DRS Setup:","Configuration de DRS:",""
+"40-001-00007","ALL","display for interactive mode set off","{0} = DRS_INTERACTIVE","\t{0} is not set, running in on-line mode","\t{0} n'est pas défini, fonctionne en mode en ligne",""
+"40-001-00008","ALL","display for interactive mode set on","{0} = DRS_INTERACTIVE","\t{0} is set","\t est défini",""
+"40-001-00009","ALL","display for debug mode","{0} = DRS_DEBUG; {1} = DRS debug mode","\t{0} is set, debug mode level: {1}","\t{0} est défini, niveau de mode débogage: {1}",""
+"40-001-00010","ALL","system information title text","None","System information","Le système d'information",""
+"40-001-00011","ALL","system info path text","{0} = Path","\t Path = '{0}'","",""
+"40-001-00012","ALL","system info platform text","{0} = platform (operating system)","\t Platform = '{0}'","",""
+"40-001-00013","ALL","system info version","{0} = version","\t Python version = '{0}'","",""
+"40-001-00014","ALL","system info python distribution","{0} = python distribution","\t Python distribution = '{0}'","",""
+"40-001-00015","ALL","system info distribution date","{0} = distribution date","\t Distribution date = '{0}'","",""
+"40-001-00016","ALL","system info distribution other info","{0} = other info","\t Dist Other = '{0}'","",""
+"40-001-00017","ALL","text for arguments used","None","Arguments used:","",""
+"","","","","","",""
+"40-002-00000","ALL","Help Messages","None","\t","",""
+"40-002-00001","ALL","Help title","{0} = program name","Help for: '{0}.py'","Aide pour: '{0}.py'",""
+"40-002-00002","ALL","Required arguments","None","Required Arguments:","Arguments requis:",""
+"40-002-00003","ALL","Optional arguments","None","Optional Arguments:","Arguments optionnels:",""
+"40-002-00004","ALL","Special Arguments","None","Special Arguments:","Arguments spéciaux:",""
+"40-002-00005","ALL","help message","None","show this help message and exit","afficher ce message d'aide et quitter",""
+"","","","","","",""
+"40-003-00000","ALL","Exit Messages","None","\t","",""
+"40-003-00001","ALL","Successful completion message","{0} = program name","Recipe {0} has been successfully completed","La recette {0} a été complétée avec succès",""
+"40-003-00002","ALL","Enter to exit message","{0} = 'python' or 'ipython'","Press 'Enter' to exit or [Y]es to continue in {0}","Appuyez sur 'Entrée' pour quitter ou sur [Y] pour continuer dans {0}",""
+"40-003-00003","","","","","",""
+"40-003-00004","","","","","",""
+"40-003-00005","","","","","",""
+"40-003-00006","","","","","",""
+"40-003-00007","","","","","",""
+"40-003-00008","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"","","","","","",""
+"90-001-00000","DEBUG","Debug Messages","None","\t","",""
