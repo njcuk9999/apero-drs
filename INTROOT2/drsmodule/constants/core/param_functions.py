@@ -19,8 +19,8 @@ import importlib
 from collections import OrderedDict
 
 from drsmodule.locale import drs_text
+from drsmodule.locale import drs_exceptions
 from . import constant_functions
-
 
 
 # =============================================================================
@@ -38,9 +38,15 @@ SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
-# Define the Config Exception
-ConfigError = constant_functions.ConfigError
-ConfigWarning = constant_functions.ConfigWarning
+# get the Drs Exceptions
+DRSError = drs_exceptions.DrsError
+DRSWarning = drs_exceptions.DrsWarning
+TextError = drs_exceptions.TextError
+TextWarning = drs_exceptions.TextWarning
+ConfigError = drs_exceptions.ConfigError
+ConfigWarning = drs_exceptions.ConfigWarning
+# get the logger
+BLOG = drs_exceptions.basiclogger
 
 
 # =============================================================================
@@ -271,6 +277,10 @@ class ParamDict(CaseInsensitiveDict):
         """
         # capitalise
         key = _capitalise_key(key)
+
+        # don't put full path for sources in package
+        source = _check_mod_source(source)
+
         # only add if key is in main dictionary
         if key in self.keys():
             self.sources[key] = source
@@ -506,7 +516,7 @@ class ParamDict(CaseInsensitiveDict):
         return pp
 
     def _string_print(self):
-        pfmt = '\t{0:30s}{1:45s}// {2}'
+        pfmt = '\t{0:30s}{1:45s} # {2}'
 
         # get keys and values
         keys = list(self.keys())
@@ -541,29 +551,30 @@ class ParamDict(CaseInsensitiveDict):
 # =============================================================================
 # Define functions
 # =============================================================================
-def load_config(instrument=None, language=None):
+def load_config(instrument=None):
     # get instrument sub-package constants files
-    modules = get_module_names(instrument, language)
+    modules = get_module_names(instrument)
     # get constants from modules
-    keys, values, sources = _load_from_module(modules, True, instrument,
-                                              language)
+    try:
+        keys, values, sources = _load_from_module(modules, True)
+    except ConfigError:
+        sys.exit(1)
     params = ParamDict(zip(keys, values))
     # Set the source
     params.set_sources(keys=keys, sources=sources)
-    # save sources to params
-    params = _save_config_params(params, sources)
     # get instrument user config files
-    files = _get_file_names(params, instrument, language)
+    files = _get_file_names(params, instrument)
     # get constants from user config files
     try:
         keys, values, sources = _load_from_file(files, modules)
-    except ConfigError as e:
-        print_error(e)
+    except ConfigError:
         sys.exit(1)
     # add to params
     for it in range(len(keys)):
         params[keys[it]] = values[it]
     params.set_sources(keys=keys, sources=sources)
+    # save sources to params
+    params = _save_config_params(params)
     # return the parameter dictionary
     return params
 
@@ -580,8 +591,9 @@ def load_pconfig(instrument=None):
         PsConst = getattr(mod, PSEUDO_CONST_CLASS)
     # else raise error
     else:
-        emsg = 'DevError: Module "{0}" is required to have class "{1}"'
-        raise ConfigError(emsg.format(modules[0], PSEUDO_CONST_CLASS))
+        emsg = 'Module "{0}" is required to have class "{1}"'
+        ConfigError(emsg.format(modules[0], PSEUDO_CONST_CLASS))
+        sys.exit(1)
 
     # return instance of PseudoClass
     return PsConst(instrument=instrument)
@@ -602,7 +614,7 @@ def get_config_all():
 
 
 def get_file_names(instrument=None, file_list=None, instrument_path=None,
-                     default_path=None, language=None):
+                     default_path=None):
     func_name = __NAME__ + '.get_file_names()'
 
     # get core path
@@ -654,11 +666,8 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
 
 
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
-                     default_path=None, language=None):
+                     default_path=None):
     func_name = __NAME__ + '._get_module_names()'
-
-    # get language dictionaries
-    errortext = drs_text.ErrorText(instrument, language)
 
     # deal with no module list
     if mod_list is None:
@@ -742,7 +751,7 @@ def print_error(error):
 # =============================================================================
 # Config loading private functions
 # =============================================================================
-def _get_file_names(params, instrument=None, language=None):
+def _get_file_names(params, instrument=None):
 
     # deal with no instrument
     if instrument is None:
@@ -839,8 +848,9 @@ def _get_subdir(directory, instrument, source):
     if subdir is None:
         wmsg1 = ('User config defined in {0} but instrument '
                 '"{1}" directory not found')
-        wmsg2 = 'Looked in directory: {0}'.format(os.path.join(directory))
-        ConfigWarning([wmsg1.format(source, instrument.lower()), wmsg2])
+        wmsg2 = '\tDirectory = "{1}"'.format(source, os.path.join(directory))
+        wmsg3 = '\tUsing default configuration files.'
+        ConfigWarning([wmsg1.format(source, instrument.lower()), wmsg2, wmsg3])
     # return the subdir
     return subdir
 
@@ -882,7 +892,7 @@ def _get_relative_folder(package, folder):
     return data_folder
 
 
-def _load_from_module(modules, quiet=False, instrument=None, language=None):
+def _load_from_module(modules, quiet=False):
     func_name = __NAME__ + '._load_from_module()'
     # storage for returned values
     keys, values, sources = [], [], []
@@ -909,7 +919,7 @@ def _load_from_module(modules, quiet=False, instrument=None, language=None):
             if cond:
                 keys.append(key)
                 values.append(mvalue.true_value)
-                sources.append(module)
+                sources.append(mvalue.source)
     # return keys
     return keys, values, sources
 
@@ -965,8 +975,10 @@ def _load_from_file(files, modules):
     return keys, values, sources
 
 
-def _save_config_params(params, sources):
+def _save_config_params(params,):
     func_name = __NAME__ + '._save_config_params()'
+    # get sources from paramater dictionary
+    sources = params.sources.values()
     # get unique sources
     usources = set(sources)
     # set up storage
@@ -977,6 +989,27 @@ def _save_config_params(params, sources):
         params['DRS_CONFIG'].append(source)
     # return the parameters
     return params
+
+
+def _check_mod_source(source):
+    # get package path
+    package_path = _get_relative_folder(PACKAGE, '')
+    # if package path not in source then skip
+    if package_path not in source:
+        return source
+    # if source doesn't exist also skip
+    if not os.path.exists(source):
+        return source
+    # remove package path and replace with PACKAGE
+    source = source.replace(package_path, PACKAGE.lower())
+    # replace separators with .
+    source = source.replace(os.sep, '.')
+    # remove double dots
+    while '..' in source:
+        source = source.replace('..', '.')
+    # return edited source
+    return source
+
 
 # =============================================================================
 # Other private functions
