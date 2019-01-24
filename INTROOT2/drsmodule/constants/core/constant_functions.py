@@ -1,6 +1,10 @@
 """
 Package containing all constants Classes and functionality
 
+DRS Import Rules:
+
+- only from drsmodule.locale
+
 Created on 2019-01-17 at 14:09
 
 @author: cook
@@ -10,6 +14,9 @@ import os
 import importlib
 import string
 import warnings
+
+from drsmodule.locale import drs_text
+from drsmodule.locale import drs_exceptions
 
 
 # =============================================================================
@@ -23,108 +30,15 @@ SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list']
 # define valid characters
 VALID_CHARS = list(string.ascii_letters) + list(string.digits)
 VALID_CHARS += list(string.punctuation) + list(string.whitespace)
-
-
-USED_WARNINGS = []
-
-
-# =============================================================================
-# Define Custom classes
-# =============================================================================
-class ConfigException(Exception):
-    """Raised when config file is incorrect"""
-    pass
-
-
-class ConfigError(ConfigException):
-    """
-    Custom Config Error for passing to the log
-    """
-
-    def __init__(self, message=None, level=None):
-        """
-        Constructor for ConfigError sets message to self.message and level to
-        self.level
-
-        if key is not None defined self.message reads "key [key] must be
-        defined in config file (located at [config_file]
-
-        if config_file is None then deafult config file is used in its place
-
-        :param message: list or string, the message to print in the error
-        :param level: string, level (for logging) must be key in TRIG key above
-                      default = all, error, warning, info or graph
-        """
-        # deal with message
-        if message is None:
-            self.message = 'Config Error'
-        elif type(message) == str:
-            self.message = message
-        else:
-            self.message = list(message)
-        # set logging level
-        if level is None:
-            self.level = 'error'
-        else:
-            self.level = level
-        # deal with a list message (for printing)
-        if type(self.message) == list:
-            amessage = ''
-            for mess in message:
-                amessage += '\n\t\t{0}'.format(mess)
-            message = amessage
-        # set args to message (for printing)
-        argmessage = 'level={0}: {1}'
-        self.args = (argmessage.format(self.level, message),)
-
-    # overwrite string repr message with args[0]
-    def __repr__(self):
-        """
-        String representation of ConfigError
-
-        :return message: string, the message assigned in constructor
-        """
-        return self.args[0]
-
-    # overwrite print message with args[0]
-    def __str__(self):
-        """
-        String printing of ConfigError
-
-        :return message: string, the message assigned in constructor
-        """
-        return self.args[0]
-
-
-class ConfigWarning:
-    global USED_WARNINGS
-
-    def __init__(self, message=None, level=None):
-        # deal with message
-        if message is None:
-            self.message = 'Config Error'
-        elif type(message) == str:
-            self.message = [message]
-        else:
-            self.message = list(message)
-        # set logging level
-        if level is None:
-            self.level = 'warning'
-        else:
-            self.level = level
-        # deal with a list message (for printing)
-        amessage = 'DRS Warning: '
-        for it, mess in enumerate(self.message):
-            if it > 0:
-                amessage += '\n\t\t{0}'.format(mess)
-            else:
-                amessage += mess
-
-        if amessage in USED_WARNINGS:
-            pass
-        else:
-            print(amessage)
-            USED_WARNINGS.append(amessage)
+# get the Drs Exceptions
+DRSError = drs_exceptions.DrsError
+DRSWarning = drs_exceptions.DrsWarning
+TextError = drs_exceptions.TextError
+TextWarning = drs_exceptions.TextWarning
+ConfigError = drs_exceptions.ConfigError
+ConfigWarning = drs_exceptions.ConfigWarning
+# get the logger
+BLOG = drs_exceptions.basiclogger
 
 
 # =============================================================================
@@ -132,7 +46,7 @@ class ConfigWarning:
 # =============================================================================
 class Const:
     def __init__(self, name, value=None, dtype=None, dtypei=None,
-                 options=None, maximum=None, minimum=None):
+                 options=None, maximum=None, minimum=None, source=None):
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -140,6 +54,7 @@ class Const:
         self.options = options
         self.maximum, self.minimum = maximum, minimum
         self.kind = 'Const'
+        self.source = source
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
@@ -159,18 +74,27 @@ class Const:
         else:
             return true_value
 
-    def copy(self):
+    def copy(self, source=None):
+        # check that source is valid
+        if source is None:
+            emsg1 = 'Must define new source when copying a Constant'
+            emsg2 = ('\tSyntax: Constant.copy(source)\twhere "source" is a '
+                     'string')
+            raise ConfigError([emsg1, emsg2], level='error')
+        # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
-                     self.options, self.maximum, self.minimum)
+                     self.options, self.maximum, self.minimum, source=source)
 
 
 class Keyword(Const):
     def __init__(self, name, key=None, value=None, dtype=None, comment=None,
-                 options=None, maximum=None, minimum=None):
-        Const.__init__(self, name, value, dtype, options, maximum, minimum)
+                 options=None, maximum=None, minimum=None, source=None):
+        Const.__init__(self, name, value, dtype, options, maximum, minimum,
+                       source=source)
         self.key = key
         self.comment = comment
         self.kind = 'Keyword'
+        self.source = source
 
     def set(self, key=None, value=None, dtype=None, comment=None,
             options=None):
@@ -202,8 +126,8 @@ class Keyword(Const):
             self.comment = ''
         # need a key
         if self.key is None:
-            emsg = 'DevError: Keyword "{0}" must have a key'
-            ConfigError(emsg.format(self.name), level='error')
+            emsg = 'Keyword "{0}" must have a key'
+            raise ConfigError(emsg.format(self.name), level='error')
         # construct true value as keyword store
         true_value = [self.key, true_value, self.comment]
         # deal with storing
@@ -213,9 +137,18 @@ class Keyword(Const):
         else:
             return true_value
 
-    def copy(self):
+    def copy(self, source=None):
+        # check that source is valid
+        if source is None:
+            emsg1 = 'Must define new source when copying a Keyword'
+            emsg2 = ('\tSyntax: Constant.copy(source)\twhere "source" is a '
+                     'string')
+            raise ConfigError([emsg1, emsg2], level='error')
+        # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
-                       self.comment, self.options, self.maximum, self.minimum)
+                       self.comment, self.options, self.maximum,
+                       self.minimum, source=source)
+
 
 # =============================================================================
 # Define functions
@@ -349,11 +282,12 @@ def _read_lines(filename, comments='#', delimiter=' '):
             try:
                 key, value = line.split(delimiter)
             except ValueError as _:
-                emsg = ('\n\t\t Wrong format for line {0} in file {1}'
-                        '\n\t\t Lines must be "key" = "value"'
-                        '\n\t\t Where "key" and "value" are a valid python '
-                        'strings and contains no equal signs')
-                raise ConfigError(emsg.format(l + 1, filename, line))
+                emsg = ['Wrong format for line {0} in file {1}'
+                        ''.format(l + 1, filename, line),
+                        'Lines must be "key" = "value"',
+                        'Where "key" and "value" are a valid python ',
+                        'strings and contains no equal signs']
+                raise ConfigError(emsg)
 
             raw.append([key, value])
     # check that raw has entries
@@ -373,7 +307,7 @@ def _test_dtype(name, invalue, dtype, quiet=False):
     if dtype == 'path':
         if type(invalue) is not str:
             eargs = [name, type(invalue), invalue]
-            emsg1 = 'DevError: Parameter "{0}" must be a string.'
+            emsg1 = 'Parameter "{0}" must be a string.'
             emsg2 = '\tType: "{1}"\tValue: "{2}"'.format(*eargs)
             if not quiet:
                 raise ConfigError([emsg1.format(*eargs), emsg2], level='error')
@@ -387,7 +321,7 @@ def _test_dtype(name, invalue, dtype, quiet=False):
 
     # deal with casting a string into a list
     if (dtype is list) and (type(invalue) is str):
-        emsg = 'DevError: Parameter "{0}" should be a list not a string.'
+        emsg = 'Parameter "{0}" should be a list not a string.'
         if not quiet:
             raise ConfigError(emsg.format(name), level='error')
     # now try to cast value
@@ -395,7 +329,7 @@ def _test_dtype(name, invalue, dtype, quiet=False):
         outvalue = dtype(invalue)
     except Exception as e:
         eargs = [name, dtype, invalue]
-        emsg1 = ('DevError: Parameter "{0}" dtype is incorrect. '
+        emsg1 = ('Parameter "{0}" dtype is incorrect. '
                  'Expected "{1}" value="{2}"')
         emsg2 = '\tError was "{0}": "{1}"'.format(type(e), e)
         if not quiet:
@@ -415,12 +349,12 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # ---------------------------------------------------------------------
     # check that we only have simple dtype
     if dtype is None:
-        emsg1 = 'DevError: Parameter "{0}" dtype not set'
+        emsg1 = 'Parameter "{0}" dtype not set'
         emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg2.format(name), emsg2], level='error')
+            raise ConfigError([emsg1.format(name), emsg2], level='error')
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
-        emsg1 = ('DevError: Parameter "{0}" dtype is incorrect. Must be'
+        emsg1 = ('Parameter "{0}" dtype is incorrect. Must be'
                  ' one of the following:'.format(name))
         emsg2 = '\t' + ', '.join(SIMPLE_STYPES)
         emsg3 = '\tConfig File = "{0}"'.format(source)
@@ -429,7 +363,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
-        emsg1 = 'DevError: Parameter "{0}" value is not set.'.format(name)
+        emsg1 = 'Parameter "{0}" value is not set.'.format(name)
         emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
             raise ConfigError([emsg1, emsg2], level='error')
@@ -443,7 +377,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                 value = bool(value)
 
         if value not in [True, 1, False, 0]:
-            emsg1 = 'DevError: Parameter "{0}" must be True or False [1 or 0]'
+            emsg1 = 'Parameter "{0}" must be True or False [1 or 0]'
             emsg2 = '\tCurrent value: "{0}"'.format(value)
             emsg3 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
@@ -465,9 +399,10 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # check options if not a list
     if dtype in [str, int, float] and options is not None:
         if true_value not in options:
-            emsg1 = 'DevError: Parameter "{0}" value is incorrect.'
-            emsg2 = '\tOptions are: {0}'.format(','.join(options))
-            emsg3 = '\tCurrent value: {0}'.format(true_value)
+            emsg1 = 'Parameter "{0}" value is incorrect.'
+            stroptions = ['"{0}"'.format(opt) for opt in options]
+            emsg2 = '\tOptions are: {0}'.format(', '.join(stroptions))
+            emsg3 = '\tCurrent value: "{0}"'.format(true_value)
             emsg4 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
                 raise ConfigError([emsg1.format(name), emsg2, emsg3, emsg4],
@@ -477,7 +412,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     if dtype in [int, float]:
         if maximum is not None:
             if true_value > maximum:
-                emsg1 = ('DevError: Parameter "{0}" too large'
+                emsg1 = ('Parameter "{0}" too large'
                          ''.format(name))
                 emsg2 = '\tValue must be less than {0}'.format(maximum)
                 emsg3 = '\tConfig File = "{0}"'.format(source)
@@ -486,7 +421,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                                       level='error')
         if minimum is not None:
             if true_value < minimum:
-                emsg1 = ('DevError: Parameter "{0}" too large'.format(name))
+                emsg1 = ('Parameter "{0}" too large'.format(name))
                 emsg2 = '\tValue must be less than {0}'.format(maximum)
                 emsg3 = '\tConfig File = "{0}"'.format(source)
                 if not quiet:
@@ -534,7 +469,7 @@ def _validate_text_file(filename, comments='#'):
         emsg += '\n\n\tfunction = {0}'.format(func_name)
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
-            raise ConfigException(emsg)
+            raise ConfigError(emsg, level='error')
 
 
 # =============================================================================
