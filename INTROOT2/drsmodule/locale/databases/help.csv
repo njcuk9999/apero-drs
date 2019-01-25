@@ -1,5 +1,5 @@
 "KEY","KIND","COMMENT","ARGUMENTS","ENG","FR","ES"
-"DRS_DESCRIPTION","HELP","","None","This is the default DRS description message","",""
+"DRS_DESCRIPTION","HELP","","None","This is the default DRS description message","None","None"
 "ADD_CAL_HELP","HELP","","None","[BOOLEAN] Whether to add outputs to calibration database","[BOOLEAN] S'il faut ajouter des sorties à la base de données d'étalonnage ",""
 "ALLLISTING_HELP","HELP","","None","Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)","Répertorie TOUS les répertoires de noms de nuit du répertoire d'entrée s'il est utilisé sans l'argument 'directory' ou répertorie les fichiers du 'répertoire' donné (si défini)",""
 "DEBUG_HELP","HELP","","None","Activates debug mode (Advanced mode [INTEGER] value must be an integer greater than 0, setting the debug level)","Active le mode débogage (la valeur en mode avancé [INTEGER] doit être un entier supérieur à 0, définissant le niveau de débogage)",""

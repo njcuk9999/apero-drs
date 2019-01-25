@@ -1,5 +1,5 @@
 "KEY","KIND","COMMENT","ARGUMENTS","ENG","FR","ES"
-0,"ERROR","None","None","This is the NIRPS error message","",""
+0,"ERROR","None","None","This is the NIRPS error message","None","None"
 "00-000-00000","ERROR","Dev Error","None","Dev Error: General Error","",""
 "","","","","","",""
 "00-001-00000","ERROR","Dev Function Input Error","None","Dev Error: Function Input Error","",""

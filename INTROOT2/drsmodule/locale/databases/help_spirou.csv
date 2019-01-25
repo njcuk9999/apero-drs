@@ -1,5 +1,5 @@
 "KEY","KIND","COMMENT","ARGUMENTS","ENG","FR","ES"
-"DRS_DESCRIPTION","HELP","","None","This is the SPIROU description message","",""
+"DRS_DESCRIPTION","HELP","","None","This is the SPIROU description message","None","None"
 "BACKSUB_HELP","HELP","","None","[BOOLEAN] Whether to do background subtraction","[BOOLEAN] S'il faut faire une soustraction de fond ",""
 "BADFILE_HELP","HELP","","None","[STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks ""directory""","[STRING] Définissez un fichier personnalisé à utiliser pour corriger les pixels défectueux. Vérifie un chemin absolu puis vérifie ""répertoire"" ",""
 "BADPIX_DARKFILE_HELP","HELP","","None","Current allowed types: DARK_DARK","Types actuellement autorisés: DARK_DARK ",""
