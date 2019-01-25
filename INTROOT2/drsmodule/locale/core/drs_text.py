@@ -336,6 +336,9 @@ def _read_dict_files(dict_files, language):
             # get the data
             data = Table.read(filename, format=FILE_FMT)
             columns = data.colnames
+            # fill values to "N/A"
+            data = data.filled()
+            # save to file
             np.save(cachedfile, data)
         # append to dictionary and overwrite older values
         for row in range(len(data['KEY'])):
@@ -346,7 +349,7 @@ def _read_dict_files(dict_files, language):
             else:
                 col = str(language)
             # check if masked (and use default language)
-            if str(data[col][row]) == '--':
+            if str(data[col][row]) in ['--', 'N/A', 'inf', '999999']:
                 col = DEFAULT_LANGUAGE
             # get this row/columns values
             value = str(data[col][row])
