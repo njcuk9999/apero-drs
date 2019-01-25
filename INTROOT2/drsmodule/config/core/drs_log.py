@@ -50,6 +50,8 @@ ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText
 HelpEntry = drs_text.HelpEntry
 HelpText = drs_text.HelpText
+# get the default language
+DEFAULT_LANGUAGE = drs_text.DEFAULT_LANGUAGE
 # Get the Color dict
 Color = constants.Colors
 # define log format
@@ -72,23 +74,20 @@ class Logger:
             self.pin = paramdict
             self.instrument = paramdict['INSTRUMENT']
             self.language = paramdict['LANGUAGE']
-            self.pconstant = constants.pload(self.instrument)
-            self.errortext = ErrorText(instrument, self.language)
-            self.helptext = HelpText(instrument, self.language)
         elif instrument is not None:
             self.pin = constants.load(instrument)
             self.instrument = instrument
             self.language = paramdict['LANGUAGE']
-            self.pconstant = constants.pload(instrument)
-            self.errortext = ErrorText(instrument, self.language)
-            self.helptext = HelpText(instrument, self.language)
         else:
             self.pin = constants.load()
             self.language = ['ENG']
             self.instrument = None
-            self.pconstant = constants.pload()
-            self.errortext = ErrorText(instrument, self.language)
-            self.helptext = HelpText(instrument, self.language)
+        # load additional resources based on instrument/language
+        self.pconstant = constants.pload(self.instrument)
+        self.errortext = ErrorText(self.instrument, self.language)
+        self.helptext = HelpText(self.instrument, self.language)
+        self.d_errortext = ErrorText(self.instrument, DEFAULT_LANGUAGE)
+        self.d_helptext = HelpText(self.instrument, DEFAULT_LANGUAGE)
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -140,7 +139,7 @@ class Logger:
         :return None:
         """
         func_name = __NAME__ + '.Logger.__call__()'
-
+        # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
         # ---------------------------------------------------------------------
         # deal with message format (convert to ErrorEntry)
@@ -159,7 +158,6 @@ class Logger:
         else:
             msg_obj = ErrorEntry('00-005-00001', args=[message])
             key = 'error'
-
         # ---------------------------------------------------------------------
         # TODO: Remove deprecation warning (once all code changed)
         if type(p) is str:
@@ -180,24 +178,20 @@ class Logger:
             p['PID'] = None
             wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
             DrsWarning(wmsg, level='warning')
-
         # deal with no instrument
         if 'INSTRUMENT' not in p:
             p['INSTRUMENT'] = None
         # deal with no language
         if 'LANGUAGE' not in p:
             p['LANGUAGE'] = 'ENG'
-
         # update pin and pconstant from p (selects instrument)
         self.update_param_dict(p)
-
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
         debug = p.get('DRS_DEBUG', 0)
         if key == 'debug' and debug == 0:
             return
-
         # ---------------------------------------------------------------------
         # deal with option
         if option is not None:
@@ -233,72 +227,109 @@ class Logger:
         # loop around message (now all are lists)
         errors = []
         # ---------------------------------------------------------------------
-        # get log parameters
+        # get log parameters (in set language)
         # ---------------------------------------------------------------------
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
         if type(message) is HelpEntry:
-            raw_message = msg_obj.get(self.helptext, report=report,
+            raw_message1 = msg_obj.get(self.helptext, report=report,
                                       reportlevel=key)
         else:
-            raw_message = msg_obj.get(self.errortext, report=report,
+            raw_message1 = msg_obj.get(self.errortext, report=report,
                                       reportlevel=key)
         # split by '\n'
-        raw_messages = raw_message.split('\n')
+        raw_messages1 = raw_message1.split('\n')
         # ---------------------------------------------------------------------
-        # loop around raw messages
-        for mess in raw_messages:
-            # Get the time now in human readable format
-            human_time = time.get_hhmmss_now()
-            # storage for cmds
-            cmds = []
-            # check if line is over 80 chars
-            if (len(mess) > char_len) and wrap:
-                # get new messages (wrapped at CHAR_LEN)
-                new_messages = textwrap(mess, char_len)
-                for new_message in new_messages:
-                    cmdargs = [human_time, code, option, new_message]
+        # deal with printing
+        # ---------------------------------------------------------------------
+        if not logonly:
+            # loop around raw messages
+            for mess in raw_messages1:
+                # Get the time now in human readable format
+                human_time = time.get_hhmmss_now()
+                # storage for cmds
+                cmds = []
+                # check if line is over 80 chars
+                if (len(mess) > char_len) and wrap:
+                    # get new messages (wrapped at CHAR_LEN)
+                    new_messages = textwrap(mess, char_len)
+                    for new_message in new_messages:
+                        cmdargs = [human_time, code, option, new_message]
+                        cmd = LOGFMT.format(*cmdargs)
+                        # append separate commands for log writing
+                        cmds.append(cmd)
+                        # add to logger storage
+                        self.logger_storage(key, human_time, new_message,
+                                            printonly)
+                        # print to stdout
+                        printlog(self, p, cmd, key, colour)
+                else:
+                    cmdargs = [human_time, code, option, mess]
                     cmd = LOGFMT.format(*cmdargs)
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
-                    self.logger_storage(key, human_time, new_message, printonly)
+                    self.logger_storage(key, human_time, mess, printonly)
                     # print to stdout
-                    if not logonly:
-                        printlog(self, p, cmd, key, colour)
-            else:
+                    printlog(self, p, cmd, key, colour)
+        # ---------------------------------------------------------------------
+        # get log parameters (in set language)
+        # ---------------------------------------------------------------------
+        # Get the key code (default is a whitespace)
+        code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
+        report = self.pconstant.REPORT_KEYS().get(key, False)
+        # get messages
+        if type(message) is HelpEntry:
+            raw_message2 = msg_obj.get(self.d_helptext, report=report,
+                                      reportlevel=key)
+        else:
+            raw_message2 = msg_obj.get(self.d_errortext, report=report,
+                                      reportlevel=key)
+        # split by '\n'
+        raw_messages2 = raw_message2.split('\n')
+        # ---------------------------------------------------------------------
+        # deal with logging (in default language)
+        # ---------------------------------------------------------------------
+        if not printonly:
+            # loop around raw messages
+            for mess in raw_messages2:
+                # Get the time now in human readable format
+                human_time = time.get_hhmmss_now()
+
+                # clean up log message (no colour codes)
+                mess = _clean_message(mess)
+
+                # storage for cmds
+                cmds = []
                 cmdargs = [human_time, code, option, mess]
                 cmd = LOGFMT.format(*cmdargs)
                 # append separate commands for log writing
                 cmds.append(cmd)
-                # add to logger storage
-                self.logger_storage(key, human_time, mess, printonly)
-                # print to stdout
-                if not logonly:
-                    printlog(self, p, cmd, key, colour)
-            # get logfilepath
-            logfilepath, warning = get_logfilepath(self, p)
-            # write to log file
-            if (not printonly) and (len(warning) == 0):
-                for cmd in cmds:
-                    writelog(self, p, cmd, key, logfilepath)
-            # see if we have warning
-            if warning and ('DRS_LOG_WARNING_ACTIVE' in p):
-                negate_warning = p['DRS_LOG_WARNING_ACTIVE']
-            elif warning:
-                negate_warning = False
-                p['DRS_LOG_WARNING_ACTIVE'] = True
-                p.set_source('DRS_LOG_WARNING_ACTIVE', func_name)
-            else:
-                negate_warning = True
-            # if warning is True then we used TDATA and should report that
-            if len(warning) > 0 and (not negate_warning):
-                if not logonly:
-                    for warn in warning:
-                        errors.append([warn, 'warning', human_time, option])
-
+                # get logfilepath
+                logfilepath, warning = get_logfilepath(self, p)
+                # write to log file
+                if len(warning) == 0:
+                    for cmd in cmds:
+                        writelog(self, p, cmd, key, logfilepath)
+                # see if we have warning
+                if warning and ('DRS_LOG_WARNING_ACTIVE' in p):
+                    negate_warning = p['DRS_LOG_WARNING_ACTIVE']
+                elif warning:
+                    negate_warning = False
+                    p['DRS_LOG_WARNING_ACTIVE'] = True
+                    p.set_source('DRS_LOG_WARNING_ACTIVE', func_name)
+                else:
+                    negate_warning = True
+                # if warning is True then we used TDATA and should report that
+                if len(warning) > 0 and (not negate_warning):
+                    if not logonly:
+                        for warn in warning:
+                            errors.append([warn, 'warning', human_time, option])
+        # ---------------------------------------------------------------------
+        # deal with errors caused by logging (print)
+        # --------------------------------------------------------------------
         # print any errors caused above (and set key to error to exit after)
         used = []
         for error in errors:
@@ -308,12 +339,14 @@ class Logger:
                 self.logger_storage(key, error[2], error[0])
                 printlogandcmd(self, p, *error, wrap=wrap, colour=colour)
                 used.append(error[0])
-
+        # ---------------------------------------------------------------------
+        # deal with exiting
+        # --------------------------------------------------------------------
         # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
         if key in self.pconstant.EXIT_LEVELS():
             # prepare error string
             errorstring = ''
-            for mess in raw_messages:
+            for mess in raw_messages1:
                 errorstring += mess + '\n'
             for error in errors:
                 # noinspection PyTypeChecker
@@ -342,8 +375,9 @@ class Logger:
             self.language = paramdict['LANGUAGE']
             # update pconstant
             self.pconstant = constants.pload(self.instrument)
-            # update error text
+            # updatetext
             self.errortext = ErrorText(self.instrument, self.language)
+            self.helptext = HelpText(self.instrument, self.language)
 
     def output_param_dict(self, paramdict):
         for key in self.pout:
@@ -895,6 +929,30 @@ def writelog(logobj, p, message, key, logfilepath):
             emsg1 = 'Cannot open {0}, error was: {1}'
             emsg2 = '   function = {0}'.format(func_name)
             raise ConfigError(message=[emsg1.format(logfilepath, e), emsg2])
+
+
+
+def _clean_message(message):
+
+    # get all attributes of Color
+    all_attr = Color.__dict__
+    # storeage for codes
+    codes = []
+    # loop around and find codes
+    for attr in all_attr:
+        # get value for this attribute
+        value = all_attr[attr]
+        # find codes
+        if type(value) is str:
+            if value.__repr__().startswith('\'\\x'):
+                codes.append(value)
+
+    # find codes in message
+    for code in codes:
+        if code in message:
+            message = str(message.replace(code, ''))
+    # return message
+    return message
 
 
 # =============================================================================
