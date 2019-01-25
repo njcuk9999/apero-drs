@@ -403,28 +403,23 @@ def display_system_info(p, logonly=True, return_message=False):
     :return None:
     """
     # noinspection PyListCreation
-    messages = ErrorEntry('')
-    if return_message:
-        messages += ErrorEntry(p['DRS_HEADER'])
-        messages += ErrorEntry('40-001-00010')
-        messages += ErrorEntry(p['DRS_HEADER'])
-
+    messages = ErrorEntry('40-001-00010')
+    messages += ErrorEntry(p['DRS_HEADER'])
+    # add version /python dist keys
     messages = sort_version(messages)
-
+    # add os keys
     messages += ErrorEntry('40-001-00011', args=[sys.executable])
     messages += ErrorEntry('40-001-00012', args=[sys.platform])
-
+    # add arguments (from sys.argv)
     for it, arg in enumerate(sys.argv):
         messages += ErrorEntry('\t Arg {0} = \'{1}\''.format(it + 1, arg))
+    # add ending header
+    messages += ErrorEntry(p['DRS_HEADER'])
     if return_message:
-        messages += ErrorEntry(p['DRS_HEADER'])
         return messages
     else:
         # return messages for logger
-        WLOG(p, 'info', ErrorEntry('40-001-00010'), logonly=logonly)
-        WLOG(p, '', ErrorEntry(p['DRS_HEADER']), logonly=logonly)
         WLOG(p, '', messages, logonly=logonly)
-        WLOG(p, '', ErrorEntry(p['DRS_HEADER']), logonly=logonly)
 
 
 def display_run_time_arguments(recipe, fkwargs=None):
