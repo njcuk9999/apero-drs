@@ -23,7 +23,7 @@ INSTRUMENT.value = 'NIRPS'
 # -----------------------------------------------------------------------------
 # global settings
 # -----------------------------------------------------------------------------
-# Whether to plot (True or 1 to plot)
+# Whether to plotting (True or 1 to plotting)
 DRS_PLOT = DRS_PLOT.copy(__NAME__)
 DRS_PLOT.value = False
 

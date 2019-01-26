@@ -16,10 +16,10 @@ Constants = constants.load(__INSTRUMENT__)
 # Get Help
 Help = drs_text.HelpText(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 
 # =============================================================================
 # Commonly used arguments
@@ -66,6 +66,10 @@ flipimage = dict(name='--flipimage', dtype='options', default='both',
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
+# -----------------------------------------------------------------------------
+interactive = dict(name='--interactive', dtype='bool',
+                   helpstr=Help['INTERACTIVE_HELP'],
+                   default_ref='DRS_INTERACTIVE')
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype='bool', helpstr=Help['PLOT_HELP'],
             default_ref='DRS_PLOT')
@@ -190,6 +194,7 @@ test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
            files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
            required=True)
 test.kwarg(**plot)
+test.kwarg(**interactive)
 test.kwarg(**add_cal)
 test.kwarg(**dobad)
 test.kwarg(**badfile)
@@ -215,6 +220,7 @@ cal_pp.arg(pos=0, **directory)
 cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
            helpstr=Help['PREPROCESS_UFILES_HELP'])
 cal_pp.kwarg(**plot)
+cal_pp.kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
@@ -242,6 +248,7 @@ cal_badpix.kwarg(**dodark)
 cal_badpix.kwarg(**flipimage)
 cal_badpix.kwarg(**fluxunits)
 cal_badpix.kwarg(**plot)
+cal_badpix.kwarg(**interactive)
 cal_badpix.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -264,6 +271,7 @@ cal_dark.kwarg(default=True, **combine)
 cal_dark.kwarg(**flipimage)
 cal_dark.kwarg(**fluxunits)
 cal_dark.kwarg(**plot)
+cal_dark.kwarg(**interactive)
 cal_dark.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -292,6 +300,7 @@ cal_loc.kwarg(**dodark)
 cal_loc.kwarg(**flipimage)
 cal_loc.kwarg(**fluxunits)
 cal_loc.kwarg(**plot)
+cal_loc.kwarg(**interactive)
 cal_loc.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -319,6 +328,7 @@ cal_slit.kwarg(**dodark)
 cal_slit.kwarg(**flipimage)
 cal_slit.kwarg(**fluxunits)
 cal_slit.kwarg(**plot)
+cal_slit.kwarg(**interactive)
 cal_slit.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -348,6 +358,7 @@ cal_shape.kwarg(**dodark)
 cal_shape.kwarg(**flipimage)
 cal_shape.kwarg(**fluxunits)
 cal_shape.kwarg(**plot)
+cal_shape.kwarg(**interactive)
 cal_shape.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -378,6 +389,7 @@ cal_ff.kwarg(**extfiber)
 cal_ff.kwarg(**flipimage)
 cal_ff.kwarg(**fluxunits)
 cal_ff.kwarg(**plot)
+cal_ff.kwarg(**interactive)
 cal_ff.kwarg(**resize)
 cal_ff.kwarg(**shapefile)
 cal_ff.kwarg(**tiltfile)
@@ -410,6 +422,7 @@ cal_extract.kwarg(**extfiber)
 cal_extract.kwarg(**flipimage)
 cal_extract.kwarg(**fluxunits)
 cal_extract.kwarg(**plot)
+cal_extract.kwarg(**interactive)
 cal_extract.kwarg(**resize)
 cal_extract.kwarg(**shapefile)
 cal_extract.kwarg(**tiltfile)
@@ -439,6 +452,7 @@ cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
            helpstr=Help['FILES_HELP'] + Help['HC_E2DS_FILES_HELP'])
 cal_hc.kwarg(**add_cal)
 cal_hc.kwarg(**plot)
+cal_hc.kwarg(**interactive)
 cal_hc.kwarg(**blazefile)
 cal_hc.kwarg(**flatfile)
 cal_hc.kwarg(**wavefile)
