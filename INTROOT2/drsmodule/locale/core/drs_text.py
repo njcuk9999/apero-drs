@@ -68,7 +68,7 @@ class Text:
 
     def get(self, key):
         if self.name == 'Text':
-            emsg = 'Dev Error: Cannot load Abstract class "{0}"'
+            emsg = 'Cannot load Abstract class "{0}"'
             TextError(message=emsg.format(self.name), level='error')
         # deal with no dict loaded
         if len(self.dict) == 0:
@@ -163,7 +163,20 @@ class Entry:
         return Entry(keys, args, kwargs)
 
     def get(self, tobj=None, report=False, reportlevel=None):
+        """
+        Use a Text, ErrorText or HelpText instance (the translation matrix
+        object) to turn Entry into a valid python string
 
+        :param tobj: Text, ErrorText or HelpText instance, the translation
+                     matrix object
+        :param report: bool, if True adds a "name" for the Entry and the
+                       key-code used to identify it (i.e. Error[00-000-00000])
+        :param reportlevel: string or None, the "name" for the report i.e.
+                            if report is True:
+                                 "Reportlevel[00-000-00000]" is printed infront
+                                 of level
+        :return:
+        """
         # deal with no reportlevel
         if reportlevel is None:
             reportlevel = self.short
@@ -176,10 +189,14 @@ class Entry:
         for it, key in enumerate(self.keys):
             # get msg_value with args/kwargs
             if (tobj is not None) and (key not in tobj.dict):
-                msg_value = key.format(*self.args[it], **self.kwargs)
+                args = self._convert_args(it, tobj)
+                kwargs = self._convert_kwargs(tobj)
+                msg_value = key.format(*args, **kwargs)
                 valuestr += '{1}'.format(reportlevel, msg_value)
             elif tobj is not None:
-                msg_value = tobj[key].format(*self.args[it], **self.kwargs)
+                args = self._convert_args(it, tobj)
+                kwargs = self._convert_kwargs(tobj)
+                msg_value = tobj[key].format(*args, **kwargs)
                 vargs = [reportlevel, key, msg_value]
                 if report:
                     valuestr += '{0}[{1}]: {2}'.format(*vargs)
@@ -195,6 +212,52 @@ class Entry:
 
     def convert(self, obj):
         return obj(self.keys, self.args, self.kwargs)
+
+    def _convert_args(self, it, tobj):
+        """
+        Convert args that are Entry, ErrorEntry and HelpEntry to strings
+        based on tobj
+
+        :param it: int, the iteration of args to convert
+        :param tobj: Text, ErrorText or HelpText instance, the translation
+                     matrix object
+
+        :return args: list, the list of args (where Entry, ErrorEntry and
+                      HelpEntry values are now strings)
+        """
+        # get raw arguments for this iteration
+        raw_args = self.args[it]
+        # storage for args
+        args = []
+        # loop around raw_args and look for entries - we need to translate them
+        # now
+        for raw_arg in raw_args:
+            if type(raw_arg) in [Entry, ErrorEntry, HelpEntry]:
+                args.append(raw_arg.get(tobj, report=False))
+            else:
+                args.append(raw_arg)
+        # return args
+        return args
+
+    def _convert_kwargs(self, tobj):
+        """
+        Convert kwargs that are Entry, ErrorEntry and HelpEntry to strings
+        based on tobj
+
+        :param tobj: Text, ErrorText or HelpText instance, the translation
+                     matrix object
+        :return kwargs: dictionary, the dictionary of kwargs (where Entry,
+                        ErrorEntry and HelpEntry values are now strings)
+        """
+        # loop around kwargs
+        kwargs = dict()
+        for kwarg in self.kwargs:
+            if type(self.kwargs[kwarg]) in [Entry, ErrorEntry, HelpEntry]:
+                kwargs[kwarg] = self.kwargs[kwarg].get(tobj, report=False)
+            else:
+                kwargs[kwarg] = self.kwargs[kwarg]
+        # return kwargs
+        return kwargs
 
 
 class ErrorEntry(Entry):
