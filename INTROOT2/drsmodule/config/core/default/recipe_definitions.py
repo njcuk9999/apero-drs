@@ -14,10 +14,10 @@ Constants = constants.load(__INSTRUMENT__)
 # Get Help
 Help = drs_text.HelpText(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 
 # =============================================================================
 # Commonly used arguments
