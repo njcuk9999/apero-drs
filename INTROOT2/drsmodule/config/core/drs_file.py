@@ -18,6 +18,7 @@ from collections import OrderedDict
 
 from . import drs_log
 from drsmodule import constants
+from drsmodule.locale import drs_text
 
 
 # =============================================================================
@@ -28,12 +29,16 @@ __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+ErrorEntry = drs_text.ErrorEntry
+ErrorText = drs_text.ErrorText
+HelpText = drs_text.HelpText
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):
@@ -159,13 +164,11 @@ class DrsInputFile:
 
     def __log__(self, messages, kind):
         # format initial error message
-        message0 = ['{0}: {1}'.format(kind.capitalize(), self.__repr__()),
-                    '-'*10]
+        m0args = [kind.capitalize(), self.__repr__()]
+        message0 = ErrorEntry('{0}: {1}'.format(*m0args))
+
         # append initial error message to messages
-        if isinstance(messages, list):
-            messages = message0 + messages
-        elif isinstance(messages, str):
-            messages = message0 + [messages]
+        messages = message0 + messages
         # get log_opt
         if self.recipe is not None:
             params = self.recipe.drs_params
@@ -180,41 +183,37 @@ class DrsInputFile:
     def check_file_exists(self, quiet=False):
         cond = os.path.exists(self.filename)
         if cond:
-            msg = 'File "{0}" found in directory "{1}"'
-            args = [self.basename, self.path]
+            eargs = [self.basename, self.path]
+            emsg = ErrorEntry('09-000-00001', args=eargs)
         else:
-            msg = 'File "{0}" does not exist in directory "{1}".'
-            args = [self.basename, self.path]
-
+            eargs = [self.basename, self.path]
+            emsg = ErrorEntry('09-000-00002', args=eargs)
         # deal with printout and return
         if (not cond) and (not quiet):
-            self.__error__(msg.format(*args))
+            self.__error__(emsg)
         elif not quiet:
-            self.__message__(msg.format(*args))
-        return cond, msg.format(*args)
+            self.__message__(emsg)
+        return cond, emsg
 
     def check_file_extension(self, quiet=False):
         if self.ext is None:
-            msg = 'File "{0}" extension not checked.'
-            args = [self.basename]
+            msg = ErrorEntry('09-000-00003', args=[self.basename])
             cond = True
         elif self.filename.endswith(self.ext):
+            msg = ErrorEntry('09-000-00004', args=[self.basename, self.ext])
             cond = True
-            msg = 'File "{0}" has correct extension'
-            args = [self.basename]
         else:
-            msg = 'File "{0}" must have extension "{1}".'
-            args = [self.basename, self.ext]
+            msg = ErrorEntry('09-000-00005', args=[self.basename, self.ext])
             cond = False
         # deal with printout and return
         if (not cond) and (not quiet):
-            self.__error__(msg.format(*args))
+            self.__error__(msg)
         elif not quiet:
-            self.__message__(msg.format(*args))
-        return cond, msg.format(*args)
+            self.__message__(msg)
+        return cond, msg
 
     def check_file_header(self, quiet=False):
-        return True, ''
+        return True, ErrorEntry('')
 
 
 class DrsFitsFile(DrsInputFile):
@@ -339,7 +338,7 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file checking
     # -------------------------------------------------------------------------
-    def check_file_header(self, quiet=False, argname=None, debug=False):
+    def check_file_header(self, quiet=False, argname=None):
         """
         Check file header has all required header keys
         :param quiet:
@@ -349,19 +348,17 @@ class DrsFitsFile(DrsInputFile):
 
         :return:
         """
-        # deal with no argument name
-        if argname is None:
-            argstring = ''
-        else:
-            argstring = 'Argument "{0}":'.format(argname)
         # -----------------------------------------------------------------
         # check file has been read
         self.read()
         # check recipe has been set
         self.check_recipe()
         params = self.recipe.drs_params
-
         rkeys = self.required_header_keys
+        # -----------------------------------------------------------------
+        # deal with no argument name
+        if argname is None:
+            argname = ErrorEntry('40-001-00018')
         # -----------------------------------------------------------------
         # Step 1: Check that required keys are in header
         for drskey in rkeys:
@@ -373,13 +370,13 @@ class DrsFitsFile(DrsInputFile):
                 key = drskey
             # check if key is in header
             if key not in self.header:
-                eargs = [argstring, key]
-                emsgs = ['{0} Header key "{1}" not found'.format(*eargs)]
-                return [False, True], None, [emsgs, None]
-            elif debug:
-                dmsg = '{0} Header key {1} found for {2}'
-                dargs = [argstring, key, os.path.basename(self.filename)]
-                WLOG(params, '', dmsg.format(*dargs))
+                eargs = [argname, key]
+                emsg = ErrorEntry('09-001-00007', args=eargs)
+                return [False, True], None, [emsg, None]
+            else:
+                dargs = [argname, key, os.path.basename(self.filename)]
+                WLOG(params, 'debug', ErrorEntry('90-001-00010', args=dargs),
+                     wrap=False)
         # -----------------------------------------------------------------
         # Step 2: search for correct value for each header key
         found = True
@@ -407,17 +404,16 @@ class DrsFitsFile(DrsInputFile):
 
             # check if key is valid
             if rvalue != value:
-                if debug:
-                    dmsg = '{0} Header key {1} value is incorrect ({2})'
-                    dargs = [argstring, key, rvalue]
-                    WLOG(params, '', dmsg.format(*dargs))
+                dargs = [argname, key, rvalue]
+                WLOG(params, 'debug', ErrorEntry('90-001-00011', args=dargs),
+                     wrap=False)
                 found = False
-            elif debug:
-                dmsg = '{0} Header key {1} valid for recipe ("{2}")'
-                dargs = [argstring, key, value]
-                WLOG(params, '', dmsg.format(*dargs))
+            else:
+                dargs = [argname, key, rvalue]
+                WLOG(params, 'debug', ErrorEntry('90-001-00012', args=dargs),
+                     wrap=False)
             # store info
-            errors[key] = (found, argstring, rvalue, value)
+            errors[key] = (found, argname, rvalue, value)
         # return:
         #       [valid cond1, valid cond2], self, [errors1, errors2]
         if found:

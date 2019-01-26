@@ -32,10 +32,10 @@ __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 # Get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the Config error
