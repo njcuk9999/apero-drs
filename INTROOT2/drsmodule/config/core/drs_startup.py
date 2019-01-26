@@ -19,7 +19,7 @@ from collections import OrderedDict
 import importlib
 
 from drsmodule import constants
-from drsmodule import plot
+from drsmodule import plotting
 from drsmodule.locale import drs_text
 from drsmodule.locale import drs_exceptions
 from drsmodule.io import drs_table
@@ -39,10 +39,10 @@ PACKAGE = 'drsmodule'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
 # get print colours
@@ -99,7 +99,7 @@ def input_setup(name=None, instrument=None, fkwargs=None, quiet=False):
     # deal with options from input_parameters
     recipe.option_manager()
     # update default params
-    # # # spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
+    # WLOG.update_param_dict(recipe.drs_params)
     # -------------------------------------------------------------------------
     # display
     if not quiet:
@@ -167,25 +167,25 @@ def exit_script(ll, has_plots=True):
     :param ll: dict, the local variables
     :param has_plots: bool, if True looks for and deal with having plots
                       (i.e. asks the user to close or closest automatically),
-                      if False no plot windows are assumed to be open
+                      if False no plotting windows are assumed to be open
 
     :return None:
     """
     # -------------------------------------------------------------------------
     # get parameter dictionary of constants (or create it)
     if 'p' in ll:
-        p = ll['p']
+        params = ll['p']
     else:
-        p = Constants
+        params = Constants
     # -------------------------------------------------------------------------
     # make sure we have DRS_PLOT
-    if 'DRS_PLOT' not in p:
-        p['DRS_PLOT'] = 0
+    if 'DRS_PLOT' not in params:
+        params['DRS_PLOT'] = 0
     # make sure we have DRS_INTERACTIVE
-    if 'DRS_INTERACTIVE' not in p:
-        p['DRS_INTERACTIVE'] = 1
+    if 'DRS_INTERACTIVE' not in params:
+        params['DRS_INTERACTIVE'] = 1
     # if DRS_INTERACTIVE is False just return 0
-    if not p['DRS_INTERACTIVE']:
+    if not params['DRS_INTERACTIVE']:
         # print('Interactive mode off')
         return 0
     # find whether user is in ipython or python
@@ -194,21 +194,25 @@ def exit_script(ll, has_plots=True):
     else:
         kind = 'python'
     # log message
-    wmsg = ErrorEntry('40-003-00002', args=[kind])
-    WLOG(p, 'info', wmsg, printonly=True)
-    WLOG(p, '', ErrorEntry(p['DRS_HEADER']), printonly=True)
+    WLOG(params, '', ErrorEntry(''), printonly=True)
+    WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
+    WLOG(params, 'info', ErrorEntry('40-003-00002', args=[kind]),
+         printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
-        uinput = raw_input('')  # note python 3 wont find this!
+        uinput = raw_input('[Y]es or [N]o:\t')  # note python 3 wont find this!
     else:
-        uinput = input('')
+        uinput = input('[Y]es or [N]o:\t')
     # -------------------------------------------------------------------------
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
+        WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
         # if user in ipython we need to try opening ipython
         if kind == 'ipython':
+            WLOG(params, '', ErrorEntry('40-003-00004', args=['ipython']),
+                 printonly=True)
             # noinspection PyBroadException
             try:
                 from IPython import embed
@@ -219,8 +223,10 @@ def exit_script(ll, has_plots=True):
             except Exception:
                 pass
         if not find_interactive():
+            WLOG(params, '', ErrorEntry('40-003-00004', args=['python']),
+                 printonly=True)
             # add some imports to locals
-            ll['np'], ll['plt'], ll['WLOG'] = np, plot.core.plt, WLOG
+            ll['np'], ll['plt'], ll['WLOG'] = np, plotting.core.plt, WLOG
             ll['os'], ll['sys'], ll['ParamDict'] = os, sys, ParamDict
             # run code
             code.interact(local=ll)
@@ -231,20 +237,21 @@ def exit_script(ll, has_plots=True):
     # if interactive ask about closing plots
     if find_interactive() and has_plots:
         # deal with closing plots
-        wmsg = 'Close plots? [Y]es or [N]o?'
-        WLOG(p, '', p['DRS_HEADER'], printonly=True)
-        WLOG(p, 'warning', wmsg.format(kind), printonly=True)
-        WLOG(p, '', p['DRS_HEADER'], printonly=True)
+        WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
+        WLOG(params, 'info', ErrorEntry('40-003-00003'), printonly=True)
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
+            # note python 3 wont find this!
             # noinspection PyUnresolvedReferences
-            uinput = raw_input('')  # note python 3 wont find this!
+            uinput = raw_input('[Y]es or [N]o:\t')
         else:
-            uinput = input('')
+            uinput = input('[Y]es or [N]o:\t')
+        # print end banner
+        WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
         # if yes close all plots
         if 'Y' in uinput.upper():
             # close any open plots properly
-            plot.closeall()
+            plotting.closeall()
 
 
 # =============================================================================
@@ -287,7 +294,7 @@ def display_drs_title(p):
     # create title
     title = ' * '
     title += colors.RED1 + ' {INSTRUMENT} ' + colors.okgreen + '@{PID}'
-    title += ' (' + colors.BLUE1 + 'V{VERSION}' + colors.okgreen + ')'
+    title += ' (' + colors.BLUE1 + 'V{DRS_VERSION}' + colors.okgreen + ')'
     title += colors.ENDC
     title = title.format(**p)
 
@@ -350,7 +357,7 @@ def display_initial_parameterisation(p):
                                   'info' - to print info/warning/error events
                                   'warning' - to print warning/error events
                                   'error' - to print only error events
-                DRS_PLOT: bool, Whether to plot (True to plot)
+                DRS_PLOT: bool, Whether to plotting (True to plotting)
                 DRS_USED_DATE: string, the DRS USED DATE (not really used)
                 DRS_DATA_WORKING: (optional) string, the temporary working
                                   directory
@@ -376,7 +383,7 @@ def display_initial_parameterisation(p):
     wmsgs += ErrorEntry('\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
     wmsgs += ErrorEntry('\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
     wmsgs += ErrorEntry('\tDRS_PLOT={DRS_PLOT}'.format(**p))
-    if p['DRS_INTERACTIVE'] == 0:
+    if not p['DRS_INTERACTIVE']:
         wmsgs += ErrorEntry('40-001-00007', args=['DRS_INTERACTIVE'])
     else:
         wmsgs += ErrorEntry('40-001-00008', args=['DRS_INTERACTIVE'])
@@ -487,7 +494,7 @@ def index_pp(p):
     outputs = p['OUTPUTS']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(p, '', 'No outputs to index, skipping indexing')
+        WLOG(p, '', ErrorEntry('40-004-00001'))
         return 0
     # get the index columns
     icolumns = pconstant.RAW_OUTPUT_COLUMNS(p)
@@ -512,7 +519,7 @@ def index_outputs(p):
     outputs = p['OUTPUTS']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(p, '', 'No outputs to index, skipping indexing')
+        WLOG(p, '', ErrorEntry('40-004-00001'))
         return 0
     # get the index columns
     icolumns = pconstant.REDUC_OUTPUT_COLUMNS(p)
@@ -527,8 +534,7 @@ def index_outputs(p):
 def indexing(p, outputs, icolumns, abspath):
     # ------------------------------------------------------------------------
     # log indexing
-    wmsg = 'Indexing outputs onto {0}'
-    WLOG(p, '', wmsg.format(abspath))
+    WLOG(p, '', ErrorEntry('40-004-00002', args=abspath))
     # construct a dictionary from outputs and icolumns
     istore = OrderedDict()
     # get output path
@@ -565,10 +571,9 @@ def indexing(p, outputs, icolumns, abspath):
         # check that all keys are in idict
         for key in icolumns:
             if key not in list(idict.keys()):
-                wmsg1 = ('Warning: Index file does not have column="{0}"'
-                         ''.format(key))
-                wmsg2 = '\tPlease run the appropriate off_listing recipe'
-                WLOG(p, 'warning', [wmsg1, wmsg2])
+                wargs = [key, 'off_listing recipe']
+                wmsg = ErrorEntry('10-004-00001', args=wargs)
+                WLOG(p, 'warning', wmsg)
         # loop around rows in idict
         for row in range(len(idict['FILENAME'])):
             # skip if we already have this file
@@ -652,20 +657,18 @@ def assign_pid():
 
 
 def find_recipe(name=None, instrument=None):
-
+    func_name = __NAME__ + '.find_recipe()'
     # deal with no instrument
     if instrument is None:
-        WLOG(None, 'error', 'Dev Error: Must define an instrument.')
+        WLOG(None, 'error', ErrorEntry('00-001-00001', args=[func_name]))
 
     # deal with no name or no instrument
     if name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty
-
     # else we have a name and an instrument
     margs = [instrument, ['recipe_definitions.py'], INSTRUMENT_PATH, CORE_PATH]
     modules = constants.getmodnames(*margs)
-
     # load module
     mod = importlib.import_module(modules[0])
     # get a list of all recipes from modules
@@ -680,7 +683,7 @@ def find_recipe(name=None, instrument=None):
         elif recipe.name.strip('.py') == name:
             found_recipe = recipe
     if found_recipe is None:
-        raise ValueError('No recipe named {0}'.format(name))
+        WLOG(None, 'error', ErrorEntry('00-007-00001', args=name))
     # return
     return found_recipe
 
@@ -826,7 +829,7 @@ def search_for_key(key, fkwargs=None):
     # search in sys.argv list of strings
     cond2 = False
     for argv in sys.argv:
-        if key in argv:
+        if key == argv.split('=')[0]:
             cond2 = True
     # return True if found and False otherwise
     if cond1 | cond2:
@@ -837,21 +840,37 @@ def search_for_key(key, fkwargs=None):
 
 def set_debug_from_input(recipe, fkwargs):
 
+    debug_key = '--debug'
     # assume debug is not there
-    debug_arg = False
+    debug_mode = None
+    pos = None
     # check sys.argv
-    for arg in sys.argv:
-        if '--debug' in arg:
-            debug_arg = True
+    for it, arg in enumerate(sys.argv):
+        if debug_key in arg:
+            if '=' in arg:
+                pos = None
+                debug_mode = arg.split('=')[-1]
+            else:
+                pos = it
+                debug_mode = None
+    # deal with position
+    if pos is not None:
+        debug_mode = sys.argv[pos + 1]
+
     # check fkwargs
     for kwarg in fkwargs:
-        if '--debug' in kwarg:
-            debug_arg = True
-
+        if 'debug' in kwarg:
+            debug_mode = fkwargs[kwarg]
+    # try to find value of debug mode
+    if debug_mode is not None:
+        try:
+            debug_mode = int(debug_mode)
+        except:
+            debug_mode = 1
     # set DRS_DEBUG
-    if debug_arg:
+    if debug_mode is not None:
         # set the drs debug level to 1
-        recipe.drs_params['DRS_DEBUG'] = 1
+        recipe.drs_params['DRS_DEBUG'] = debug_mode
         # update the constants file
         # # # spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
     # return recipe
