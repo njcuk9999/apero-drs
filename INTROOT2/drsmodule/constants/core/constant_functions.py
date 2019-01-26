@@ -371,10 +371,11 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
-
         if type(value) is str:
-            if value.lower() in ['1', '0', 'true', 'false']:
-                value = bool(value)
+            if value.lower() in ['1', 'true']:
+                value = True
+            if value.lower() in ['0', 'false']:
+                value = False
 
         if value not in [True, 1, False, 0]:
             emsg1 = 'Parameter "{0}" must be True or False [1 or 0]'
@@ -383,7 +384,6 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
             if not quiet:
                 raise ConfigError([emsg1.format(name), emsg2, emsg3],
                                   level='error')
-
     # ---------------------------------------------------------------------
     # Check if dtype is correct
     true_value = _test_dtype(name, value, dtype, quiet=quiet)
