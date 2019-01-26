@@ -8,13 +8,13 @@ from drsmodule.constants.core import constant_functions
 # all definition
 __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB', 'DRS_TELLU_DB',
-           'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'VERSION', 'AUTHORS', 'RELEASE',
-           'DATE', 'LANGUAGE', 'INSTRUMENT', 'DRS_PACKAGE', 'DRS_USERENV',
-           'DRS_USER_DEFAULT', 'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL',
-           'DRS_COLOURED_LOG', 'DRS_THEME', 'DRS_MAX_IO_DISPLAY_LIMIT',
-           'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS', 'DRS_LOG_EXIT_TYPE',
-           'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT', 'DRS_PLOT_FONT_SIZE',
-           'DRS_PLOT_STYLE']
+           'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_VERSION', 'AUTHORS',
+           'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE', 'INSTRUMENT', 'DRS_PACKAGE',
+           'DRS_USERENV', 'DRS_USER_DEFAULT', 'DRS_PRINT_LEVEL',
+           'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
+           'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
+           'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
+           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE']
 
 # set name
 __NAME__ = 'drsmodule.constants.default.default_config'
@@ -25,13 +25,13 @@ Const = constant_functions.Const
 # =============================================================================
 # global settings
 # =============================================================================
-# Whether to plot (True or 1 to plot)
+# Whether to plotting (True or 1 to plotting)
 DRS_PLOT = Const('DRS_PLOT', value=True, dtype=bool, source=__NAME__)
 
 # Whether to run in interactive mode - False or 0 to be in non-interactive mode
 #    (If 0 DRS_PLOT will be forced to 0)
 #    Will stop any user input at the end of recipes if set to 0
-DRS_INTERACTIVE = Const('DRS_INTERACTIVE', value=True, dtype=bool,
+DRS_INTERACTIVE = Const('DRS_INTERACTIVE', value=False, dtype=bool,
                         source=__NAME__)
 
 # Whether to run in debug mode
@@ -75,7 +75,7 @@ DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__)
 # General properites
 # =============================================================================
 # Version
-VERSION = Const('VERSION', value='0.4.016', dtype=str, source=__NAME__)
+DRS_VERSION = Const('DRS_VERSION', value='0.4.016', dtype=str, source=__NAME__)
 
 # Authors
 AUTHORS = Const('AUTHOR',
@@ -84,11 +84,11 @@ AUTHORS = Const('AUTHOR',
                 dtype=list, dtypei=str, source=__NAME__)
 
 # Release version
-RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
+DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                 source=__NAME__)
 
 # Date
-DATE = Const('DATE', value='2019-01-18', dtype=str, source=__NAME__)
+DRS_DATE = Const('DATE', value='2019-01-18', dtype=str, source=__NAME__)
 
 # Language
 LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
@@ -184,7 +184,7 @@ DRS_PLOT_FONT_WEIGHT = Const('DRS_PLOT_FONT_WEIGHT', value='None', dtype=str,
 DRS_PLOT_FONT_SIZE = Const('DRS_PLOT_FONT_SIZE', value=-1, dtype=int,
                            source=__NAME__)
 
-# Set the default plot style
+# Set the default plotting style
 #     (i.e. seaborn or dark_background) "None" for not set
 DRS_PLOT_STYLE = Const('DRS_PLOT_STYLE', value='None', dtype=str,
                        source=__NAME__)
