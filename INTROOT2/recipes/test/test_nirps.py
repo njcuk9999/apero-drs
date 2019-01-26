@@ -23,10 +23,10 @@ __INSTRUMENT__ = 'NIRPS'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    drs_startup.exit_script(ll, has_plots=False)
+    drs_startup.exit_script(ll, has_plots=True)
 
 # =============================================================================
 # End of code
