@@ -16,10 +16,10 @@ Constants = constants.load(__INSTRUMENT__)
 # Get Help
 Help = drs_text.HelpText(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
-__version__ = Constants['VERSION']
+__version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
-__date__ = Constants['DATE']
-__release__ = Constants['RELEASE']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 
 # =============================================================================
 # Commonly used arguments
@@ -42,8 +42,13 @@ add_cal = dict(name='--add2calib', dtype='bool', default=True,
 #                      helpstr=Help['EXTRACT_METHOD_HELP'],
 #                      options=['1', '2', '3a', '3b', '3c', '3d', '4a', '4b'])
 # -----------------------------------------------------------------------------
+interactive = dict(name='--interactive', dtype='bool',
+                   helpstr=Help['INTERACTIVE_HELP'],
+                   default_ref='DRS_INTERACTIVE')
+# -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype='bool', helpstr=Help['PLOT_HELP'],
             default_ref='DRS_PLOT')
+
 
 
 # =============================================================================
@@ -137,4 +142,5 @@ test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
            files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
            required=True)
 test.kwarg(**plot)
+test.kwarg(**interactive)
 test.kwarg(**add_cal)
