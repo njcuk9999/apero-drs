@@ -9,6 +9,7 @@
 "FILE_HELP","HELP","","None","[STRING] A single fits files. ","[STRING] Un seul correspond à des fichiers. ",""
 "FILES_HELP","HELP","","None","[STRING/STRINGS] A list of fits files to use separated by spaces. ","[STRING / STRINGS] Liste des fichiers de correspondance à utiliser séparés par des espaces. ",""
 "INFO_HELP","HELP","","None","Displays the short version of the help menu","Affiche la version courte du menu d'aide",""
+"INTERACTIVE_HELP","HELP","","None","[BOOLEAN] Whether to run in interactive mode – 0 to be in non-interactive mode","",""
 "LISTING_HELP","HELP","Here the limit is the number of files/directorys shown","{0} = limit","Lists the night name directories in the input directory if used without a ""directory"" argument or lists the files in the given ""directory"" (if defined). Only lists up to {0} files/directories","Répertorie les répertoires de noms de nuit dans le répertoire d'entrée s'ils sont utilisés sans l'argument ""directory"" ou répertorie les fichiers du ""répertoire"" donné (si défini). Ne répertorie que jusqu'à {0} fichiers / répertoires",""
 "OPTIONS_TEXT","HELP","","None"," options"," les options ",""
 "PLOT_HELP","HELP","","None","[BOOLEAN] Manually turn on/off plot of graphs","[BOOLEAN] Activer / désactiver manuellement le tracé des graphiques ",""
