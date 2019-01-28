@@ -496,7 +496,7 @@ class DrsFitsFile(DrsInputFile):
             n_ext = None
         # deal with unknown number of extensions
         if n_ext is None:
-            data, header = deal_with_bad_header(params, hdu)
+            data, header = deal_with_bad_header(params, hdu, self.filename)
         # else get the data and header based on how many extnesions there are
         else:
             # deal with extension number
@@ -1227,7 +1227,7 @@ def add_required_keywords(drs_filelist, keys):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def deal_with_bad_header(p, hdu):
+def deal_with_bad_header(p, hdu, filename):
     """
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
@@ -1257,8 +1257,8 @@ def deal_with_bad_header(p, hdu):
         it += 1
     # print message
     if len(datastore) > 0:
-        WLOG(p, 'warning', '\tPartially recovered fits file')
-        WLOG(p, 'warning', '\tProblem with ext={0}'.format(it - 1))
+        dargs = [it-1, filename]
+        WLOG(p, 'warning', ErrorEntry('10-001-00001', args=dargs))
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -1266,8 +1266,7 @@ def deal_with_bad_header(p, hdu):
             valid.append(d_it)
     # if valid is empty we have a problem
     if len(valid) == 0:
-        emsg = 'Recovery failed: Fatal I/O Error cannot load file.'
-        WLOG(p, 'error', emsg)
+        WLOG(p, 'error', ErrorEntry('01-001-00001', args=[filename]))
         data, header = None, None
     else:
         data = datastore[valid[0]]
