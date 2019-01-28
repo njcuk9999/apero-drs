@@ -15,6 +15,7 @@ import time
 
 from drsmodule import constants
 from drsmodule.config import drs_log
+from drsmodule.locale import drs_text
 
 
 # =============================================================================
@@ -32,6 +33,10 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+ErrorEntry = drs_text.ErrorEntry
+ErrorText = drs_text.ErrorText
+HelpText = drs_text.HelpText
 
 
 # =============================================================================
@@ -46,27 +51,22 @@ def check_fits_lock_file(p, filename):
         lock_file = filename.replace('.fits', '.lock')
     else:
         lock_file = filename + '.lock'
-
     # check if lock file already exists
     if os.path.exists(lock_file):
-        WLOG(p, 'warning', '{0} locked. Waiting...'.format(filename))
+        WLOG(p, 'warning', ErrorEntry('10-001-00002', args=[filename]))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     while os.path.exists(lock_file) or wait_time > max_wait_time:
         time.sleep(1)
         wait_time += 1
     if wait_time > max_wait_time:
-        emsg1 = ('{0} can not be accessed (file locked and max wait time '
-                 'exceeded.'.format(filename))
-        emsg2 = ('\tPlease make sure {0} is not being used and '
-                 'manually delete {1}').format(filename, lock_file)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [filename, lock_file]
+        WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     lock = open_fits_lock_file(p, lock_file, filename)
     # return lock file and name
     return lock, lock_file
-
 
 
 def open_fits_lock_file(p, lock_file, filename):
@@ -81,15 +81,12 @@ def open_fits_lock_file(p, lock_file, filename):
             open_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to open fits lock')
+                WLOG(p, 'warning', ErrorEntry('10-001-00003'))
             time.sleep(1)
             wait_time += 1
     if wait_time > p['FITSOPEN_MAX_WAIT']:
-        emsg1 = ('File Error: {0}. Cannot close lock file and max '
-                 'wait time exceeded.'.format(filename))
-        emsg2 = ('\tPlease make sure fits file is not being used and '
-                 'manually delete {0}').format(lock_file)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [filename, lock_file]
+        WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
     return lock
 
 
@@ -106,15 +103,12 @@ def close_fits_lock_file(p, lock, lock_file, filename):
             close_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to close fits lock')
+                WLOG(p, 'warning', ErrorEntry('10-001-00004'))
             time.sleep(1)
             wait_time += 1
     if wait_time > p['FITSOPEN_MAX_WAIT']:
-        emsg1 = ('File Error: {0}. Cannot close lock file and max '
-                 'wait time exceeded.'.format(filename))
-        emsg2 = ('\tPlease make sure fits file is not being used and '
-                 'manually delete {0}').format(lock_file)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [filename, lock_file]
+        WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
 
 
 
