@@ -5841,3 +5841,13 @@
 	- spirouCDB.py/spirouDB.py - change all human times to be in format YYYY-mm-dd_HH:MM:SS.f for consistency (rev.3667e33b)
 	- test.run - update test.run to finish testing (start before last failure) (rev.9bf132d5)
 	- spirouDB.py - fix database definitions in modified "get_database" function (rev.0e06e038)
+	- update the reset files for the calibDB and telluDB (rev.efbb2ecb)
+
+
+
+================================================================================
+* Tue Jan 15 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.016
+
+================================================================================
+	- spirouLog.py - fixed an error with logging (if p not set crashes because there was no DRS_DEBUG key -- fixed now) (rev.295e54e3)
+	- spirouRV.py - fixed bug found with part of correlbin - only affects spectra which have peaks with start/end different by +2 (rare?) but for now using the old correlbin which works for these (rev.94541178)
