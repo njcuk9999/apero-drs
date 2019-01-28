@@ -593,6 +593,7 @@ def warninglogger(p, w, funcname=None):
                      function/module warning was generated in)
     :return:
     """
+    errortext = ErrorText(p['INSTRUMENT'], p['LANGUAGE'])
     # deal with warnings
     displayed_warnings = []
     if p['LOG_CAUGHT_WARNINGS'] and (len(w) > 0):
@@ -603,15 +604,14 @@ def warninglogger(p, w, funcname=None):
                 wargs = [wi.lineno, '', wi.message]
             else:
                 wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
-
             # log message
-            wmsg = 'python warning Line {0} {1} warning reads: {2}'
-            wmsg = wmsg.format(*wargs)
+            key = '10-005-00001'
+            wmsg = errortext[key].format(*wargs)
             # if we have already display this warning don't again
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog(p, 'warning', wmsg)
+                wlog(p, 'warning', ErrorEntry(key, args=wargs))
                 displayed_warnings.append(wmsg)
 
 
