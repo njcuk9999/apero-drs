@@ -349,8 +349,12 @@ class Logger:
             for mess in raw_messages1:
                 errorstring += mess + '\n'
             for error in errors:
-                # noinspection PyTypeChecker
-                errorstring += error[0] + '\n'
+                # must deal with lists of strings
+                if type(error[0]) is list:
+                    errorstring += ' \n'.join(error[0]) + '\n'
+                # else we have a string
+                else:
+                    errorstring += error[0] + '\n'
             # deal with debugging
             if debug:
                 debug_start(self, p, errorstring)
