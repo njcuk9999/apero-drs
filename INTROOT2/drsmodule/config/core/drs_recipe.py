@@ -940,6 +940,7 @@ class DrsRecipe(object):
         self.drs_params = ParamDict()
         self.drs_pconstant = None
         self.errortext = None
+        self.helptext = None
         self.input_params = OrderedDict()
         self.required_args = []
         self.optional_args = []
@@ -1022,11 +1023,10 @@ class DrsRecipe(object):
             rkwargs = self.specialargs[rarg].props
             # parse into parser
             parser.add_argument(*rname, **rkwargs)
-
         # get params
         params = vars(parser.parse_args(args=self.str_arg_list))
-        #del parser
-        self.parser = parser
+        # delete parser - no longer needed
+        del parser
         # update params
         self.input_params = params
 
@@ -1099,7 +1099,6 @@ class DrsRecipe(object):
         # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
         if not self.drs_params['DRS_INTERACTIVE']:
             self.drs_params['DRS_PLOT'] = False
-
 
     def arg(self, name=None, **kwargs):
         """
@@ -1278,12 +1277,10 @@ class DrsRecipe(object):
                     tmp[key] = dict_kwarg_groups[0][key]
                 dict_groups.append(tmp)
 
-        # else we have to match directories to directores - crash for now
+        # else we have to match directories to directories - crash for now
         else:
-            emsg1 = ('Neil Error: Cannot have "files" in both positional and '
-                     'optional args')
-            emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG(self.drs_params, 'error', [emsg1, emsg2])
+            emsg = ErrorEntry('00-006-00005', args=[func_name])
+            WLOG(self.drs_params, 'error', emsg)
 
         # ---------------------------------------------------------------------
         # Now deal with printing the runs (combine command with arguments)
@@ -1777,9 +1774,8 @@ class DrsRecipe(object):
             args = self.kwargs
             cmdfmt = '--{0} {1} '
         else:
-            emsg1 = 'Dev Error: Kind="{0}" not supported'.format(argkind)
-            emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG(self.drs_params, 'error', [emsg1, emsg2])
+            emsg = ErrorEntry('00-006-00006', args=[argkind, func_name])
+            WLOG(self.drs_params, 'error', emsg)
             args, cmdfmt = None, ''
         # ---------------------------------------------------------------------
         # storage
@@ -1914,8 +1910,8 @@ class DrsRecipe(object):
             # update self.args
             arg.value = value
         elif kind == 'arg':
-            emsg = ('DevError: {0} "{1}" is not defined in call to {2}'
-                    ''.format(arg_string, argname, func_name))
+            eargs = [arg_string, argname, func_name]
+            emsg = ErrorEntry('00-006-00007', args=eargs)
             WLOG(self.drs_params, 'error', emsg)
         # update self
         if kind == 'arg':
@@ -2037,15 +2033,14 @@ class DrsRecipe(object):
         mask = np.in1d(ifilelist, dfilelist)
         # deal with no entries
         if np.sum(mask) == 0:
-            if DEBUG:
-                wmsg = 'No matching files for index_file "{0}"'.format(ifile)
-                WLOG(params, '', wmsg.format(index))
+            WLOG(params, 'debug', ErrorEntry('90-001-00022', args=[ifile]),
+                 wrap=False)
             return []
         else:
-            if DEBUG:
-                wargs = [np.sum(mask), ifile]
-                wmsg = 'Found {0} files for index_file "{1}"'
-                WLOG(params, '', wmsg.format(*wargs))
+            wargs = [np.sum(mask), ifile]
+            WLOG(params, 'debug', ErrorEntry('90-001-00023', args=wargs),
+                 wrap=False)
+
         # apply mask to index data
         indexdata = index[mask]
         # ---------------------------------------------------------------------
@@ -2102,10 +2097,9 @@ class DrsRecipe(object):
                 valid_entries.append(tmp_file)
             valid_files += valid_entries
 
-            if DEBUG:
-                wargs = [len(valid_files), drs_file.name]
-                wmsg = '\t - Found {0} valid files for DrsFileType "{1}"'
-                WLOG(params, '', wmsg.format(*wargs))
+            wargs = [len(valid_files), drs_file.name]
+            WLOG(params, 'debug', ErrorEntry('90-001-00024', args=wargs),
+                 wrap=False)
 
         # return valid files
         return valid_files
@@ -2240,7 +2234,6 @@ def _check_file_location(recipe, argname, directory, filename):
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, os.path.join(input_dir, filename + '.fits')]
-        dargs = [argname, filename + '.fits']
         WLOG(params, 'debug', ErrorEntry('90-001-00003', args=dargs),
              wrap=False)
     # if we have file(s) then add them to output files
@@ -2418,14 +2411,12 @@ def _get_index_files(recipe, inputdir, outudirlist):
         abspath = os.path.join(inputdir, directory, INDEX_FILE)
         # test whether it exists
         if os.path.exists(abspath):
-            if DEBUG:
-                dmsg = 'Found index file at {0}'
-                WLOG(params, '', dmsg.format(abspath))
+            WLOG(params, 'debug', ErrorEntry('90-001-00025', args=[abspath]),
+                 wrap=False)
             index_list.append(abspath)
         else:
-            if DEBUG:
-                dmsg = 'Index file not found at {0}'
-                WLOG(params, '', dmsg.format(abspath))
+            WLOG(params, 'debug', ErrorEntry('90-001-00026', args=[abspath]),
+                 wrap=False)
             index_list.append(None)
     # return index_list
     return index_list
@@ -2442,18 +2433,16 @@ def _get_index_data(p, index_file, directory):
     """
     # deal with no directory
     if index_file is None:
-        wmsg = ('Warning. No index file for {0}. Please run '
-                'off_listing on directory'.format(directory))
-        WLOG(p, 'warning', wmsg)
+        wargs = [directory, 'off_listing']
+        WLOG(p, 'warning', ErrorEntry('10-004-00002', args=wargs))
         return None
 
     # load index file
     try:
         indexdata = Table.read(index_file)
     except Exception as e:
-        emsg1 = 'Error opening index file: "{0}"'.format(directory)
-        emsg2 = '\tError was {0}: {1}'.format(type(e), e)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [[directory], type(e), e]
+        WLOG(p, 'error', ErrorEntry('00-009-00001', args=eargs))
         indexdata = None
     # return index data
     return indexdata
@@ -2496,9 +2485,8 @@ def _filter_index(p, index, filters=None):
         # check we have key in index columns
         if key in index.colnames:
             # debug message
-            if DEBUG:
-                dmsg = 'Filtering by "{0}" for values "{1}"'
-                WLOG(p, '', dmsg.format(key, ' or '.join(values)))
+            dargs = [key, ' or '.join(values)]
+            WLOG(p, 'debug', ErrorEntry('90-001-00027', args=dargs))
             # loop around allowed values for filter
             for value in values:
                 mask_set |= (index[key] == value)
@@ -2817,17 +2805,13 @@ def _get_file_groups(recipe, arg):
                     gdate = dates[dirmask & typemask][expmask]
                 # deal with only allowing 1 file per set (dtype=file)
                 if nargs == 1:
-                    if DEBUG:
-                        dmsg = '\tOnly using last entry'
-                        WLOG(params, '', dmsg)
+                    WLOG(params, 'debug', ErrorEntry('90-001-00028'))
                     files = np.array([files[-1]])
                     gdate = np.array([gdate[-1]])
                 # add to groups (only if we have more than one file)
                 if len(files) > 0:
-                    if DEBUG:
-                        dmsg = 'Adding {0} files to group ({1},{2},{3})'
-                        dargs = [len(files), gdir, gdtype, gexp]
-                        WLOG(params, '', dmsg.format(*dargs))
+                    dgs = [len(files), '{0},{1},{2}'.format(gdir, gdtype, gexp)]
+                    WLOG(params, 'debug', ErrorEntry('90-001-00029', args=dgs))
                     group_files.append(files)
                     group_dir.append(gdir)
                     group_dtype.append(gdtype)
@@ -3018,11 +3002,9 @@ def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
             dirmask = other_dirs_arr == dir_jt
             # deal with no matching directories
             if np.sum(dirmask) == 0:
-                if DEBUG:
-                    dmsg1 = 'Cannot identify closest file (No directory match)'
-                    dmsg2 = 'Target = {0}    Choices = {1}'
-                    dargs = [dir_jt, other_dirs_arr]
-                    WLOG(params, 'warning', [dmsg1, dmsg2.format(*dargs)])
+                dargs = [dir_jt, other_dirs_arr]
+                WLOG(params, 'debug', ErrorEntry('90-001-00030', args=dargs),
+                     wrap=False)
                 new_files[args[it]].append(None)
                 new_dirs[args[it]].append(None)
                 continue
@@ -3092,24 +3074,24 @@ def _make_listing(p):
     :return props: dictionary for argparser
     """
     limit = p['DRS_MAX_IO_DISPLAY_LIMIT']
-    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--listing'
     props['altnames'] = ['--list']
     props['action'] = _MakeListing
     props['nargs'] = 0
-    props['help'] = Help['LISTING_HELP'].format(limit)
+    props['help'] = htext['LISTING_HELP'].format(limit)
     return props
 
 
 def _make_alllisting(p):
-    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--listingall'
     props['altnames'] = ['--listall']
     props['action'] = _MakeAllListing
     props['nargs'] = 0
-    props['help'] = Help['ALLLISTING_HELP']
+    props['help'] = htext['ALLLISTING_HELP']
     return props
 
 
@@ -3119,13 +3101,13 @@ def _make_debug(p):
     be done as soon as possible)
     :return:
     """
-    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--debug'
     props['altnames'] = ['--d', '--verbose']
     props['action'] = _ActivateDebug
     props['nargs'] = '?'
-    props['help'] = Help['DEBUG_HELP']
+    props['help'] = htext['DEBUG_HELP']
     return props
 
 
@@ -3134,13 +3116,13 @@ def _make_version(p):
     Make a custom special argument that lists the version number
     :return props: dictionary for argparser
     """
-    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--version'
     props['altnames'] = []
     props['action'] = _DisplayVersion
     props['nargs'] = 0
-    props['help'] = Help['VERSION_HELP']
+    props['help'] = htext['VERSION_HELP']
     return props
 
 
@@ -3149,13 +3131,13 @@ def _make_info(p):
     Make a custom special argument that lists a short version of the help
     :return props: dictionary for argparser
     """
-    Help = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--info'
     props['altnames'] = ['--usage']
     props['action'] = _DisplayInfo
     props['nargs'] = 0
-    props['help'] = Help['INFO_HELP']
+    props['help'] = htext['INFO_HELP']
     return props
 
 
@@ -3250,4 +3232,3 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
 # =============================================================================
 # End of code
 # =============================================================================
-
