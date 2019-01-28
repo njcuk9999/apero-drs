@@ -5851,3 +5851,11 @@
 ================================================================================
 	- spirouLog.py - fixed an error with logging (if p not set crashes because there was no DRS_DEBUG key -- fixed now) (rev.295e54e3)
 	- spirouRV.py - fixed bug found with part of correlbin - only affects spectra which have peaks with start/end different by +2 (rare?) but for now using the old correlbin which works for these (rev.94541178)
+
+
+
+================================================================================
+* Mon Jan 28 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.017
+
+================================================================================
+	- spirouLog.py - fix a bug in logger (only a problem when log breaks) (rev.9751cb5c)

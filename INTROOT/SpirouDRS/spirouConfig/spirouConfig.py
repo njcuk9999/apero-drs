@@ -61,7 +61,7 @@ class ConfigError(ConfigException):
         if message is None:
             self.message = 'Config Error'
         elif type(message) == str:
-            self.message = message
+            self.message = [message]
         else:
             self.message = list(message)
         # set logging level
