@@ -32,6 +32,10 @@ __all__ = ['CheckBlackList', 'ConstructConvKernel1', 'ConstructConvKernel2',
 # Define functions
 # =============================================================================
 
+ApplyTemplate = spirouTelluric.apply_template
+
+CalcTelluAbsorption = spirouTelluric.calculate_telluric_absorption
+
 CheckBlackList = spirouTelluric.check_blacklist
 
 ConstructConvKernel1 = spirouTelluric.construct_convolution_kernal1
