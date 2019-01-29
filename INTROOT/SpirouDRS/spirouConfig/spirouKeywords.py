@@ -218,6 +218,8 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_TELLU_DV_TELL2',
             'KW_TELLU_FIT_DPC',
             'KW_TELLU_NPC',
+            'KW_TELLU_AIRMASS',
+            'KW_TELLU_WATER',
             'KW_TH_NAXIS1',
             'KW_TH_NAXIS2',
             'KW_TILT',
@@ -598,6 +600,10 @@ KW_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
 # Telluric principle component derivatives
 KW_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
 KW_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
+
+# Telluric keys for mk_tellu
+KW_TELLU_AIRMASS = ['TAU_H20', None, 'TAPAS tau H20']
+KW_TELLU_WATER = ['TAU_OTHE', None, 'TAPAS tau for o2, O3, CH4, N20, CO2']
 
 # File list for template
 KW_OBJFILELIST = ['INA', None, 'Input FILE']
