@@ -2319,6 +2319,52 @@ def wave_ea_plot_single_order(p, loc):
 # =============================================================================
 # telluric plotting function
 # =============================================================================
+def mk_tellu_wave_flux_plot(order_num, wave, tau1, sp, sp3, sed, sed_update,
+                            keep):
+    # get order values
+    good = keep[order_num]
+    x = wave[order_num]
+    y1 = tau1[order_num]
+    y2 = sp[order_num]
+    y3 = sp[order_num] / sed[order_num]
+    y4 = sp3
+    y5 = sed_update
+
+    # deal with no good values
+    if np.sum(good) == 0:
+        y4 = np.repeat(np.nan, len(x))
+        good = np.ones(len(x), dtype=bool)
+
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot data
+    frame.plot(x, y1, color='c', label='tapas fit')
+    frame.plot(x, y2, color='k', label='input spectrum')
+    frame.plot(x, y3, color='b', label='measured transmission')
+
+    frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
+               label='SED calculation value')
+    frame.plot(x, y5, color='g', linestyle='--', label='SED best guess')
+
+    # get max / min y
+    values = list(y1) + list(y2) + list(y3) + list(y4[good]) + list(y5)
+    mins = 0.95 * np.nanmin([0, np.nanmin(values)])
+    maxs = 1.05 * np.nanmax(values)
+
+    # plot legend and set up labels / limits / title
+    frame.legend(loc=0)
+    frame.set(xlim=(np.min(x[good]), np.max(x[good])),
+              ylim=(mins, maxs),
+              xlabel='Wavelength [nm]', ylabel='Normalised flux',
+              title='Order: {0}'.format(order_num))
+    # end plotting function properly
+    end_plotting()
+
+
 def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
     # get data from loc
     wave = loc['WAVE'][order_num, :]
