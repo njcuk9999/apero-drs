@@ -60,6 +60,12 @@ LinMini = spirouTelluric.lin_mini
 
 Wave2Wave = spirouTelluric.wave2wave
 
+FindTelluricStars = spirouTelluric.find_telluric_stars
+
+UpdateProcessDB = spirouTelluric.update_process
+
+GetDBarguments = spirouTelluric.get_arguments
+
 # =============================================================================
 # Start of code
 # =============================================================================
