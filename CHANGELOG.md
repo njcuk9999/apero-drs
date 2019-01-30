@@ -5859,3 +5859,33 @@
 
 ================================================================================
 	- spirouLog.py - fix a bug in logger (only a problem when log breaks) (rev.9751cb5c)
+
+
+
+================================================================================
+* Tue Jan 29 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.020
+
+================================================================================
+	- update .gitignore to ignore .npy files (rev.3102dda5)
+	- spirouTelluric.py - added aliases to two new mk_tellu functions (rev.241a639f)
+	- spirouTelluric.__init__.py - added aliases to two new mk_tellu functions (rev.9831cd9f)
+	- spirouKeywords.py - added two new keywords for new mk_tellu recipe (rev.d0df6a87)
+	- spirouConfig.py - update bug in ConfigError (forced list) (rev.058ca76a)
+	- combine_tapas.py - new mk_tellu recipe (original code from E.A.) (rev.5b61430e)
+	- obj_mk_tellu_new.py - new mk_tellu recipe (rev.61ed4431)
+
+
+
+================================================================================
+* Wed Jan 30 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.020
+
+================================================================================
+	- spirouTelluric.py - continue to write/upgrade new mk_tellu functions and functions for mk_tellu_db (rev.d82ed3d1)
+	- spirouPlot.py - add new mk_tellu plot (rev.3c6bc979)
+	- spirouConst.py - add definition of whitelist file (rev.74195499)
+	- tellu_whitelist.txt - add a white list of all possible telluric star names (rev.a2f6aaf3)
+	- constants_SPIROU_H4RG.py - add constants from new recipes (rev.2c92099a)
+	- obj_mk_tellu_db.py - move constants to constants files and functions to spirouTelluric (rev.1aa8bcdd)
+	- obj_mk_tellu_new.py - move constants to constants file (rev.36bd4823)
+	- obj_mk_tellu_new.py - update code with Etienne's changes (rev.a915f5c4)
+	- obj_mk_tellu_db.py - new wrapper script for mk_tellu + fit_tellu on tellurics -- creates the telluric database (rev.28f58782)
