@@ -37,27 +37,31 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # Get sigma FWHM
 SIG_FWHM = spirouCore.spirouMath.fwhm()
+# whether to plot debug plot per order
+DEBUG_PLOT = False
 
 
 # =============================================================================
-# Define functions
+# Define new mk_tellu functions
 # =============================================================================
 def apply_template(p, loc):
     func_name = __NAME__ + '.apply_template()'
     # get constants from p
-    default_conv_width = p['TELLU_DEFAULT_CONV_WIDTH']
-    finer_conv_width = p['TELLU_FINER_CONV_WIDTH']
-    clean_orders = np.array(p['TELLU_CLEAN_ORDERS'])
-    med_filt = p['TELLU_TRANS_TEMPLATE_MED_FILTER']
+    default_conv_width = p['MKTELLU_DEFAULT_CONV_WIDTH']
+    finer_conv_width = p['MKTELLU_FINER_CONV_WIDTH']
+    clean_orders = np.array(p['MKTELLU_CLEAN_ORDERS'])
+    med_filt = p['MKTELLU_TEMPLATE_MED_FILTER']
     # get data from loc
     template = loc['TEMPLATE']
     wave = loc['WAVE']
     # get dimensions of data
     norders, npix = loc['SP'].shape
     # set the default convolution width for each order
-    wconv = np.repeat(default_conv_width, norders)
+    wconv = np.repeat(default_conv_width, norders).astype(float)
 
     # need to deal with when we don't have a template
     if not loc['FLAG_TEMPLATE']:
@@ -121,25 +125,24 @@ def apply_template(p, loc):
 def calculate_telluric_absorption(p, loc):
     func_name = __NAME__ + 'calculate_telluric_absorption()'
     # get parameters from p
-    dparam_threshold = p['TELLU_DPARAM_THRESHOLD']
-    maximum_iteration = p['TELLU_ABSO_MAX_ITER']
-    threshold_transmission_fit = p['TELLU_THRES_TRANS_FIT']
-    transfit_upper_bad = p['TELLU_TRANS_FIT_UPPER_BAD']
-    min_watercol = p['TELLU_TRANS_MIN_WATERCOL']
-    max_watercol = p['TELLU_TRANS_MAX_WATERCOL']
-
-    min_number_good_points = p['TELLU_TRANS_MIN_NUM_GOOD']
-    btrans_percentile = p['TELLU_TRANS_TAU_PERCENTILE']
-
-    nsigclip = p['TELLU_TRANS_SIGMA_CLIP']
-    med_filt = p['TELLU_TRANS_TEMPLATE_MED_FILTER']
-
-    tellu_med_sampling = p['TELLU_MED_SAMPLING']
+    dparam_threshold = p['MKTELLU_DPARAM_THRES']
+    maximum_iteration = p['MKTELLU_MAX_ITER']
+    threshold_transmission_fit = p['MKTELLU_THRES_TRANSFIT']
+    transfit_upper_bad = p['MKTELLU_TRANS_FIT_UPPER_BAD']
+    min_watercol = p['MKTELLU_TRANS_MIN_WATERCOL']
+    max_watercol = p['MKTELLU_TRANS_MAX_WATERCOL']
+    min_number_good_points = p['MKTELLU_TRANS_MIN_NUM_GOOD']
+    btrans_percentile = p['MKTELLU_TRANS_TAU_PERCENTILE']
+    nsigclip = p['MKTELLU_TRANS_SIGMA_CLIP']
+    med_filt = p['MKTELLU_TRANS_TEMPLATE_MEDFILT']
+    small_weight = p['MKTELLU_SMALL_WEIGHTING_ERROR']
+    tellu_med_sampling = p['MKTELLU_MED_SAMPLING']
+    plot_order_nums = p['MKTELLU_PLOT_ORDER_NUMS']
 
     # get data from loc
     airmass = loc['AIRMASS']
     wave = loc['WAVE']
-    sp = loc['SP']
+    sp = np.array(loc['SP'])
     wconv = loc['WCONV']
     # get dimensions of data
     norders, npix = loc['SP'].shape
@@ -171,11 +174,17 @@ def calculate_telluric_absorption(p, loc):
     # if the code goes out-of-bound, then we'll get out of the loop with this
     #    keyword
     fail = False
+    skip = False
 
     # conditions to carry on looping
     cond1 = dparam > dparam_threshold
     cond2 = iteration < maximum_iteration
     cond3 = not fail
+
+    # set up empty arrays
+    sp3_arr = np.zeros((norders, npix), dtype=float)
+    sed_update_arr = np.zeros(npix, dtype=float)
+    keep = np.zeros(npix, dtype=bool)
 
     # loop around until one condition not met
     while cond1 and cond2 and cond3:
@@ -260,9 +269,10 @@ def calculate_telluric_absorption(p, loc):
             sed[order_num] = sed[order_num] / norm
             # -----------------------------------------------------------------
             # find far outliers to the SED for sigma-clipping
-            res = sp2 - sed[order_num]
-            res -= np.nanmedian(res)
-            res /= np.nanmedian(np.abs(res))
+            with warnings.catch_warnings(record=True) as _:
+                res = sp2 - sed[order_num]
+                res -= np.nanmedian(res)
+                res /= np.nanmedian(np.abs(res))
             # set all NaN pixels to large value
             nanmask = ~np.isfinite(res)
             res[nanmask] = 99
@@ -270,7 +280,8 @@ def calculate_telluric_absorption(p, loc):
             # apply sigma clip
             good &= np.abs(res) < nsigclip
             # apply median to sed
-            good &= sed[order_num] > 0.5 * np.nanmedian(sed[order_num])
+            with warnings.catch_warnings(record=True) as _:
+                good &= sed[order_num] > 0.5 * np.nanmedian(sed[order_num])
             # only fit where the transmission is greater than a certain value
             good &= tau1[order_num] > threshold_transmission_fit
             # -----------------------------------------------------------------
@@ -279,6 +290,7 @@ def calculate_telluric_absorption(p, loc):
             # sp3 is a median-filtered version of sp2 where pixels that have
             #     a transmission that is too low are clipped.
             sp3 = filters.median_filter(sp2 - sed[order_num], med_filt)
+            sp3 = sp3 + sed[order_num]
             # find all the NaNs and set to zero
             nanmask = ~np.isfinite(sp3)
             sp3[nanmask] = 0.0
@@ -304,9 +316,39 @@ def calculate_telluric_absorption(p, loc):
             # need to weight the spectrum accordingly
             spconv = np.convolve(sp3 * good, kernal_y, mode='same')
             # update the sed
-            sed_update = spconv / ww1
+            with warnings.catch_warnings(record=True) as _:
+                sed_update = spconv / ww1
             # set all small values to 1% to avoid small weighting errors
-            sed_update[ww1 < 0.01] = np.nan
+            sed_update[ww1 < small_weight] = np.nan
+
+            if wconv[order_num] == p['MKTELLU_FINER_CONV_WIDTH']:
+                rms_limit = 0.1
+            else:
+                rms_limit = 0.3
+
+            # iterate around and sigma clip
+            for iteration_sig_clip_good in range(1, 6):
+
+                with warnings.catch_warnings(record=True) as _:
+                    residual_SED = sp3 - sed_update
+                    residual_SED[~good] = np.nan
+
+                rms = np.abs(residual_SED)
+
+                with warnings.catch_warnings(record=True) as _:
+                    good[rms > (rms_limit / iteration_sig_clip_good)] = 0
+
+                # ---------------------------------------------------------
+                # construct a weighting matrix for the sed
+                ww1 = np.convolve(good, kernal_y, mode='same')
+                # need to weight the spectrum accordingly
+                spconv = np.convolve(sp3 * good, kernal_y, mode='same')
+                # update the sed
+                with warnings.catch_warnings(record=True) as _:
+                    sed_update = spconv / ww1
+                # set all small values to 1% to avoid small weighting errors
+                sed_update[ww1 < 0.01] = np.nan
+
             # -----------------------------------------------------------------
             # if we have lots of very strong absorption, we subtract the
             #    median value of pixels where the transmission is expected to
@@ -322,6 +364,24 @@ def calculate_telluric_absorption(p, loc):
             # -----------------------------------------------------------------
             # update the sed
             sed[order_num] = sed_update
+            # append sp3
+            sp3_arr[order_num] = np.array(sp3)
+            # -----------------------------------------------------------------
+            # debug plot
+            if p['DRS_PLOT'] and p['DRS_DEBUG'] and DEBUG_PLOT and not skip:
+                # plot only every 10 iterations
+                if iteration == 10:
+                    # plot the transmission map plot
+                    pargs = [order_num, wave, tau1, sp, sp3,
+                             sed, sed_update, keep]
+                    sPlt.mk_tellu_wave_flux_plot(*pargs)
+                    # get user input to continue or skip
+                    imsg = 'Press [Enter] for next or [s] for skip:\t'
+                    uinput = input(imsg)
+                    if 's' in uinput.lower():
+                        skip = True
+                    # close plot
+                    sPlt.plt.close()
         # ---------------------------------------------------------------------
         # update the iteration number
         iteration += 1
@@ -330,6 +390,24 @@ def calculate_telluric_absorption(p, loc):
         cond1 = dparam > dparam_threshold
         cond2 = iteration < maximum_iteration
         cond3 = not fail
+    # ---------------------------------------------------------------------
+    if p['DRS_PLOT'] and p['DRS_DEBUG'] and not DEBUG_PLOT:
+        # if plot orders is 'all' plot all
+        if plot_order_nums == 'all':
+            plot_order_nums = np.arange(norders).astype(int)
+            # start non-interactive plot
+            sPlt.plt.ioff()
+            off = True
+        else:
+            sPlt.plt.ion()
+            off = False
+        # loop around the orders to show
+        for order_num in plot_order_nums:
+            pargs = [order_num, wave, tau1, sp, sp3_arr[order_num], sed,
+                     sed[order_num], keep]
+            sPlt.mk_tellu_wave_flux_plot(*pargs)
+        if off:
+            sPlt.plt.ion()
 
     # return values via loc
     loc['PASSED'] = not fail
@@ -344,6 +422,119 @@ def calculate_telluric_absorption(p, loc):
     return loc
 
 
+# =============================================================================
+# Define telluric db functions
+# =============================================================================
+def update_process(p, title, objname, i1, t1, i2, t2):
+    msg1 = '{0}: Processing object = {1} ({2}/{3})'
+    msg2 = '\tObject {0} of {1}'
+    wmsgs = ['', '=' * 60, '', msg1.format(title, objname, i1 + 1, t1),
+             msg2.format(i2 + 1, t2), '', '=' * 60, '', ]
+    WLOG(p, 'info', wmsgs, wrap=False)
+
+
+def get_arguments(p, absfilename):
+    # get constants from p
+    path = p['ARG_FILE_DIR']
+    # get relative path
+    relpath = absfilename.split(path)[-1]
+    # get night name
+    night_name = os.path.dirname(relpath)
+    # get filename
+    filename = os.path.basename(relpath)
+    # run dict
+    return dict(night_name=night_name, files=[filename])
+
+
+
+def find_telluric_stars(p):
+
+    # get parameters from p
+    path = p['ARG_FILE_DIR']
+    filetype = p['FILETYPE']
+    allowedtypes = p['TELLU_DB_ALLOWED_OUTPUT']
+    ext_types = p['TELLU_DB_ALLOWED_EXT_TYPE']
+    # -------------------------------------------------------------------------
+    # get the list of whitelist files
+    tell_names = spirouTelluric.spirouTelluric.get_whitelist()
+    # -------------------------------------------------------------------------
+    # check file type is allowed
+    if filetype not in allowedtypes:
+        emsgs = ['Invalid file type = {0}'.format(filetype),
+                 '\t Must be one of the following']
+        for allowedtype in allowedtypes:
+            emsgs.append('\t\t - "{0}"'.format(allowedtype))
+    # -------------------------------------------------------------------------
+    # store index files
+    index_files = []
+    # walk through path and find index files
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
+                index_files.append(os.path.join(root, filename))
+    # -------------------------------------------------------------------------
+    # valid files dictionary (key = telluric object name)
+    valid_files = dict()
+    # loop around telluric names
+    for tell_name in tell_names:
+        # ---------------------------------------------------------------------
+        # log progress
+        wmsg = 'Searching for telluric star: "{0}"'
+        WLOG(p, '', wmsg.format(tell_name))
+
+        # storage for this objects files
+        valid_obj_files = []
+        # ---------------------------------------------------------------------
+        # loop through index files
+        for index_file in index_files:
+            # read index file
+            index = spirouImage.ReadFitsTable(p, index_file)
+            # get directory
+            dirname = os.path.dirname(index_file)
+            # -----------------------------------------------------------------
+            # get filename and object name
+            index_filenames = index['FILENAME']
+            index_objnames = index['OBJNAME']
+            index_output = index[p['KW_OUTPUT'][0]]
+            index_ext_type = index[p['KW_EXT_TYPE'][0]]
+            # -----------------------------------------------------------------
+            # mask by objname
+            mask1 = index_objnames == tell_name
+            # mask by KW_OUTPUT
+            mask2 = index_output == filetype
+            # mask by KW_EXT_TYPE
+            mask3 = np.zeros(len(index), dtype=bool)
+            for ext_type in ext_types:
+                mask3 |= (index_ext_type == ext_type)
+            # combine masks
+            mask = mask1 & mask2 & mask3
+            # -----------------------------------------------------------------
+            # append found files to this list
+            if np.sum(mask) > 0:
+                for filename in index_filenames[mask]:
+                    # construct absolute path
+                    absfilename = os.path.join(dirname, filename)
+                    # check that file exists
+                    if not os.path.exists(absfilename):
+                        continue
+                    # append to storage
+                    if filename not in valid_obj_files:
+                        valid_obj_files.append(absfilename)
+        # ---------------------------------------------------------------------
+        # log found
+        wmsg = '\tFound {0} objects'.format(len(valid_obj_files))
+        WLOG(p, '', wmsg)
+        # ---------------------------------------------------------------------
+        # append to full dictionary
+        if len(valid_obj_files) > 0:
+            valid_files[tell_name] = valid_obj_files
+    # return full list
+    return valid_files
+
+
+# =============================================================================
+# Define other functions
+# =============================================================================
 def calc_tapas_abso(p, loc, keep, tau_water, tau_others):
     """
     generates a Tapas spectrum from the saved temporary .npy
@@ -356,10 +547,10 @@ def calc_tapas_abso(p, loc, keep, tau_water, tau_others):
 
     """
     # get constants from p
-    tau_water_upper = p['TAPAS_TAU_WATER_UPPER_LIMIT']
-    tau_others_lower = p['TAPAS_TAU_OTHER_LOWER_LIMIT']
-    tau_others_upper = p['TAPAS_TAU_OTHER_UPPER_LIMIT']
-    tapas_small_number = p['TAPAS_SMALL_LIMIT']
+    tau_water_upper = p['MKTELLU_TAU_WATER_ULIMIT']
+    tau_others_lower = p['MKTELLU_TAU_OTHER_LLIMIT']
+    tau_others_upper = p['MKTELLU_TAU_OTHER_ULIMIT']
+    tapas_small_number = p['MKTELLU_SMALL_LIMIT']
 
     # get data from loc
     sp_water = np.array(loc['TAPAS_WATER'])
@@ -895,6 +1086,21 @@ def get_blacklist():
     blacklist = spirouConfig.GetTxt(blacklistfile, comments='#', delimiter=' ')
     # return control
     return blacklist
+
+
+def get_whitelist():
+    # get SpirouDRS data folder
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.DATA_CONSTANT_DIR()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # construct the path for the control file
+    blacklistfilename = spirouConfig.Constants.TELLU_DATABASE_WHITELIST_FILE()
+    blacklistfile = os.path.join(datadir, blacklistfilename)
+    # load control file
+    blacklist = spirouConfig.GetTxt(blacklistfile, comments='#', delimiter=' ')
+    # return control
+    return blacklist
+
 
 
 def lin_mini(vector, sample):
