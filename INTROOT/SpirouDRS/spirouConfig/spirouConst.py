@@ -166,6 +166,18 @@ def TELLU_DATABASE_BLACKLIST_FILE():
     return blacklistfile
 
 
+# noinspection PyPep8Naming
+def TELLU_DATABASE_WHITELIST_FILE():
+    """
+    Defines the telluric database blacklist filename
+
+    :return blacklistfile: string, the telluric blacklist file
+    """
+    whitelistfile = 'tellu_whitelist.txt'
+    return whitelistfile
+
+
+
 # =============================================================================
 # Define Directories
 # =============================================================================
