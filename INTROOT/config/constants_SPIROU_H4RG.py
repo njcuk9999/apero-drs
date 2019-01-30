@@ -1144,6 +1144,112 @@ tellu_fit_log_limit = -0.5
 
 
 # -----------------------------------------------------------------------------
+#  New make telluric parameter
+# -----------------------------------------------------------------------------
+# value below which the blaze in considered too low to be useful
+#     for all blaze profiles, we normalize to the 95th percentile.
+#     That's pretty much the peak value, but it is resistent to
+#     eventual outliers
+MKTELLU_CUT_BLAZE_NORM = 0.1
+MKTELLU_BLAZE_PERCENTILE = 95
+
+# define the default convolution width [in pixels]
+MKTELLU_DEFAULT_CONV_WIDTH = 900
+# define the finer convolution width [in pixels]
+MKTELLU_FINER_CONV_WIDTH = 100
+# define which orders are clean enough of tellurics to use the finer
+#     convolution width
+MKTELLU_CLEAN_ORDERS = [2, 3, 5, 6, 7, 8, 9, 14, 15, 19, 20, 28, 29, 30, 31, 32, 33, 34, 35, 43, 44]
+
+# median-filter the template. we know that stellar features
+#    are very broad. this avoids having spurious noise in our
+#    templates [pixel]
+MKTELLU_TEMPLATE_MED_FILTER = 15
+
+# Set an upper limit for the allowed line-of-sight optical depth of water
+MKTELLU_TAU_WATER_ULIMIT = 99
+
+# set a lower and upper limit for the allowed line-of-sight optical depth
+#    for other absorbers (upper limit equivalent to airmass limit)
+# line-of-sight optical depth for other absorbers cannot be less than one
+#      (that's zenith) keep the limit at 0.2 just so that the value gets
+#      propagated to header and leaves open the possibility that during
+#      the convergence of the algorithm, values go slightly below 1.0
+MKTELLU_TAU_OTHER_LLIMIT = 0.2
+# line-of-sight optical depth for other absorbers cannot be greater than 5
+# ... that would be an airmass of 5 and SPIRou cannot observe there
+MKTELLU_TAU_OTHER_ULIMIT = 5.0
+
+# bad values and small values are set to this value (as a lower limit to
+#   avoid dividing by small numbers or zero
+MKTELLU_SMALL_LIMIT = 1.0e-9
+
+# threshold in absorbance where we will stop iterating the absorption
+#     model fit
+MKTELLU_DPARAM_THRES = 0.001
+
+# max number of iterations, normally converges in about 12 iterations
+MKTELLU_MAX_ITER = 50
+
+# minimum transmission required for use of a given pixel in the TAPAS
+#    and SED fitting
+MKTELLU_THRES_TRANSFIT = 0.3
+
+# Defines the bad pixels if the spectrum is larger than this value.
+#    These values are likely an OH line or a cosmic ray
+MKTELLU_TRANS_FIT_UPPER_BAD = 1.1
+
+# Defines the minimum allowed value for the recovered water vapor optical
+#    depth (should not be able 1)
+MKTELLU_TRANS_MIN_WATERCOL = 0.2
+
+# Defines the maximum allowed value for the recovered water vapor optical
+#    depth
+MKTELLU_TRANS_MAX_WATERCOL = 99
+
+# Defines the minimum number of good points required to normalise the
+#    spectrum, if less than this we don't normalise the spectrum by its
+#    median
+MKTELLU_TRANS_MIN_NUM_GOOD = 100
+
+# Defines the percentile used to gauge which transmission points should
+#    be used to median (above this percentile is used to median)
+MKTELLU_TRANS_TAU_PERCENTILE = 95
+
+# sigma-clipping of the residuals of the difference between the
+# spectrum divided by the fitted TAPAS absorption and the
+# best guess of the SED
+MKTELLU_TRANS_SIGMA_CLIP = 20.0
+
+# median-filter the trans data measured in pixels
+MKTELLU_TRANS_TEMPLATE_MEDFILT = 31
+
+# Define the median sampling expressed in km/s / pix
+MKTELLU_MED_SAMPLING = 2.2
+
+# Define the threshold for "small" values that do not add to the weighting
+MKTELLU_SMALL_WEIGHTING_ERROR = 0.01
+
+# Define the allowed difference between recovered and input airmass
+QC_MKTELLU_AIRMASS_DIFF = 0.1
+
+# Define the orders to plot (not too many) - but can put 'all' to show all
+#    'all' are shown one-by-one and then closed (in non-interactive mode)
+MKTELLU_PLOT_ORDER_NUMS = [19, 26, 35]
+# MKTELLU_PLOT_ORDER_NUMS = 'all'
+
+
+# -----------------------------------------------------------------------------
+#  New make telluric db parameter
+# -----------------------------------------------------------------------------
+# Allowed data types (corresponding to header key defined by "KW_OUTPUT")
+TELLU_DB_ALLOWED_OUTPUT = ['EXT_E2DS_AB', 'EXT_E2DS_A', 'EXT_E2DS_B', 'EXT_E2DS_FF_AB', 'EXT_E2DS_FF_A', 'EXT_E2DS_FF_B']
+
+# Allowed data types (corresponding to header key defined by "KW_EXT_TYPE")
+TELLU_DB_ALLOWED_EXT_TYPE = ['OBJ_DARK', 'OBJ_FP']
+
+
+# -----------------------------------------------------------------------------
 #   polarimetry parameters
 # -----------------------------------------------------------------------------
 #  Define all possible stokes parameters                          - [pol_spirou]
