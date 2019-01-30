@@ -88,24 +88,24 @@ def main(night_name=None, files=None):
     #     for all blaze profiles, we normalize to the 95th percentile.
     #     That's pretty much the peak value, but it is resistent to
     #     eventual outliers
-    p['TELLU_CUT_BLAZE_NORM'] = 0.1
-    p['TELLU_BLAZE_PERCENTILE'] = 95
+    p['MKTELLU_CUT_BLAZE_NORM'] = 0.1
+    p['MKTELLU_BLAZE_PERCENTILE'] = 95
 
     # define the default convolution width [in pixels]
-    p['TELLU_DEFAULT_CONV_WIDTH'] = 900
+    p['MKTELLU_DEFAULT_CONV_WIDTH'] = 900
     # define the finer convolution width [in pixels]
-    p['TELLU_FINER_CONV_WIDTH'] = 50
+    p['MKTELLU_FINER_CONV_WIDTH'] = 100
     # define which orders are clean enough of tellurics to use the finer
     #     convolution width
-    p['TELLU_CLEAN_ORDERS'] = [2,3,5,6,7,8,9,15,19,20,29,30,31,32,33,34,35,43,44]
+    p['MKTELLU_CLEAN_ORDERS'] = [2,3,5,6,7,8,9,14,15,19,20,28,29,30,31,32,33,34,35,43,44]
 
     # median-filter the template. we know that stellar features
     #    are very broad. this avoids having spurious noise in our
     #    templates [pixel]
-    p['TELLU_TRANS_TEMPLATE_MED_FILTER'] = 15
+    p['MKTELLU_TEMPLATE_MED_FILTER'] = 15
 
     # Set an upper limit for the allowed line-of-sight optical depth of water
-    p['TAPAS_TAU_WATER_UPPER_LIMIT'] = 99
+    p['MKTELLU_TAU_WATER_ULIMIT'] = 99
 
     # set a lower and upper limit for the allowed line-of-sight optical depth
     #    for other absorbers (upper limit equivalent to airmass limit)
@@ -113,62 +113,67 @@ def main(night_name=None, files=None):
     #      (that's zenith) keep the limit at 0.2 just so that the value gets
     #      propagated to header and leaves open the possibility that during
     #      the convergence of the algorithm, values go slightly below 1.0
-    p['TAPAS_TAU_OTHER_LOWER_LIMIT'] = 0.2
+    p['MKTELLU_TAU_OTHER_LLIMIT'] = 0.2
     # line-of-sight optical depth for other absorbers cannot be greater than 5
     # ... that would be an airmass of 5 and SPIRou cannot observe there
-    p['TAPAS_TAU_OTHER_UPPER_LIMIT'] = 5.0
+    p['MKTELLU_TAU_OTHER_ULIMIT'] = 5.0
 
     # bad values and small values are set to this value (as a lower limit to
     #   avoid dividing by small numbers or zero
-    p['TAPAS_SMALL_LIMIT'] = 1.0e-9
+    p['MKTELLU_SMALL_LIMIT'] = 1.0e-9
 
     # threshold in absorbance where we will stop iterating the absorption
     #     model fit
-    p['TELLU_DPARAM_THRESHOLD'] = 0.001
+    p['MKTELLU_DPARAM_THRES'] = 0.001
 
     # max number of iterations, normally converges in about 12 iterations
-    p['TELLU_ABSO_MAX_ITER'] = 50
+    p['MKTELLU_MAX_ITER'] = 50
 
     # minimum transmission required for use of a given pixel in the TAPAS
     #    and SED fitting
-    p['TELLU_THRES_TRANS_FIT'] = 0.3
+    p['MKTELLU_THRES_TRANSFIT'] = 0.3
 
     # Defines the bad pixels if the spectrum is larger than this value.
     #    These values are likely an OH line or a cosmic ray
-    p['TELLU_TRANS_FIT_UPPER_BAD'] = 1.1
+    p['MKTELLU_TRANS_FIT_UPPER_BAD'] = 1.1
 
     # Defines the minimum allowed value for the recovered water vapor optical
     #    depth (should not be able 1)
-    p['TELLU_TRANS_MIN_WATERCOL'] = 0.2
+    p['MKTELLU_TRANS_MIN_WATERCOL'] = 0.2
 
     # Defines the maximum allowed value for the recovered water vapor optical
     #    depth
-    p['TELLU_TRANS_MAX_WATERCOL'] = 99
+    p['MKTELLU_TRANS_MAX_WATERCOL'] = 99
 
     # Defines the minimum number of good points required to normalise the
     #    spectrum, if less than this we don't normalise the spectrum by its
     #    median
-    p['TELLU_TRANS_MIN_NUM_GOOD'] = 100
+    p['MKTELLU_TRANS_MIN_NUM_GOOD'] = 100
 
     # Defines the percentile used to gauge which transmission points should
     #    be used to median (above this percentile is used to median)
-    p['TELLU_TRANS_TAU_PERCENTILE'] = 95
+    p['MKTELLU_TRANS_TAU_PERCENTILE'] = 95
 
     # sigma-clipping of the residuals of the difference between the
     # spectrum divided by the fitted TAPAS absorption and the
     # best guess of the SED
-    p['TELLU_TRANS_SIGMA_CLIP'] = 8.0
+    p['MKTELLU_TRANS_SIGMA_CLIP'] = 20.0
 
     # median-filter the trans data measured in pixels
-    p['TELLU_TRANS_TEMPLATE_MED_FILTER'] = 31
+    p['MKTELLU_TRANS_TEMPLATE_MEDFILT'] = 31
 
     # Define the median sampling expressed in km/s / pix
-    p['TELLU_MED_SAMPLING'] = 2.2
+    p['MKTELLU_MED_SAMPLING'] = 2.2
+
+    # Define the threshold for "small" values that do not add to the weighting
+    p['MKTELLU_SMALL_WEIGHTING_ERROR'] = 0.01
 
     # Define the allowed difference between recovered and input airmass
-    p['QC_TELLU_AIRMASS_DIFF'] = 0.1
+    p['QC_MKTELLU_AIRMASS_DIFF'] = 0.1
 
-
+    # Define the orders to plot (not too many)
+    p['MKTELLU_PLOT_ORDER_NUMS'] = [19, 26, 35]
+    # p['MKTELLU_PLOT_ORDER_NUMS'] = 'all'
 
     # ------------------------------------------------------------------
     # Load first file
@@ -181,13 +186,36 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Get the wave solution
     # ------------------------------------------------------------------
-    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
-                                       return_wavemap=True,
-                                       return_filename=True)
+    masterwavefile = spirouDB.GetDatabaseMasterWave(p)
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # read master wave map
+    wout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                       return_wavemap=True, quiet=True,
+                                       return_header=True, fiber=wave_fiber)
     _, loc['WAVE'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
     # get the wave keys
     loc = spirouImage.GetWaveKeys(p, loc, loc['DATAHDR'])
+
+    # ------------------------------------------------------------------
+    # Construct convolution kernels (used in GetMolecularTellLines)
+    # ------------------------------------------------------------------
+    loc = spirouTelluric.ConstructConvKernel1(p, loc)
+
+    # ------------------------------------------------------------------
+    # Get molecular telluric lines
+    # ------------------------------------------------------------------
+    loc = spirouTelluric.GetMolecularTellLines(p, loc)
+    # if TAPAS FNAME is not None we generated a new file so should add to tellDB
+    if loc['TAPAS_FNAME'] is not None:
+        # add to the telluric database
+        spirouDB.UpdateDatabaseTellConv(p, loc['TAPAS_FNAME'], loc['DATAHDR'])
+        # put file in telluDB
+        spirouDB.PutTelluFile(p, loc['TAPAS_ABSNAME'])
 
     # ----------------------------------------------------------------------
     # load the expected atmospheric transmission
@@ -203,17 +231,6 @@ def main(night_name=None, files=None):
     loc['TAPAS_OTHERS'] = np.prod(sp_tapas[2:, :], axis=0)
     loc.set_sources(['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHERS'],
                     main_name)
-
-    # ------------------------------------------------------------------
-    # Get molecular telluric lines
-    # ------------------------------------------------------------------
-    loc = spirouTelluric.GetMolecularTellLines(p, loc)
-    # if TAPAS FNAME is not None we generated a new file so should add to tellDB
-    if loc['TAPAS_FNAME'] is not None:
-        # add to the telluric database
-        spirouDB.UpdateDatabaseTellConv(p, loc['TAPAS_FNAME'], loc['DATAHDR'])
-        # put file in telluDB
-        spirouDB.PutTelluFile(p, loc['TAPAS_ABSNAME'])
 
     # ------------------------------------------------------------------
     # Get master wave solution map
@@ -260,14 +277,32 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # get image
         sp, shdr, scdr, _, _ = spirouImage.ReadImage(p, filename)
-        # get the blaze
-        p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, shdr)
+
+        # get blaze
+        p, blaze = spirouImage.ReadBlazeFile(p, shdr)
+
+        # get the blaze percentile
+        blaze_p = p['MKTELLU_BLAZE_PERCENTILE']
+        # loop through blaze orders, normalize blaze by its peak amplitude
+        for order_num in range(sp.shape[0]):
+            # normalize the spectrum
+            spo, bzo = sp[order_num], blaze[order_num]
+
+            sp[order_num] = spo / np.nanpercentile(spo, blaze_p)
+            # normalize the blaze
+            blaze[order_num] = bzo / np.nanpercentile(bzo, blaze_p)
+
+        # find where the blaze is bad
+        badblaze = blaze < p['MKTELLU_CUT_BLAZE_NORM']
+        # set bad blaze to NaN
+        blaze[badblaze] = np.nan
+
         # set to NaN values where spectrum is zero
         zeromask = sp == 0
         sp[zeromask] = np.nan
         # divide spectrum by blaze
         with warnings.catch_warnings(record=True) as _:
-            sp = sp / loc['NBLAZE']
+            sp = sp / blaze
         # add sp to loc
         loc['SP'] = sp
         loc.set_source('SP', main_name)
@@ -389,21 +424,21 @@ def main(night_name=None, files=None):
             passed = False
         # check that the airmass is not too different from input airmass
         airmass_diff = np.abs(loc['RECOV_AIRMASS'] - loc['AIRMASS'])
-        if airmass_diff > p['QC_TELLU_AIRMASS_DIFF']:
+        if airmass_diff > p['QC_MKTELLU_AIRMASS_DIFF']:
             fmsg = ('Recovered airmass to de-similar than input airmass.'
                     'Recovered: {0:.3f}. Input: {1:.3f}. QC limit = {2}')
             fargs = [loc['RECOV_AIRMASS'], loc['AIRMASS'],
-                     p['QC_TELLU_AIRMASS_DIFF']]
+                     p['QC_MKTELLU_AIRMASS_DIFF']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
         # check that the water vapor is within limits
-        water_cond1 = loc['RECOV_WATER'] < p['TELLU_TRANS_MIN_WATERCOL']
-        water_cond2 = loc['RECOV_WATER'] > p['TELLU_TRANS_MAX_WATERCOL']
+        water_cond1 = loc['RECOV_WATER'] < p['MKTELLU_TRANS_MIN_WATERCOL']
+        water_cond2 = loc['RECOV_WATER'] > p['MKTELLU_TRANS_MAX_WATERCOL']
         if water_cond1 or water_cond2:
             fmsg = ('Recovered water vapor optical depth not between {0} '
                     'and {1}')
-            fargs = [p['TELLU_TRANS_MIN_WATERCOL'],
-                     p['TELLU_TRANS_MAX_WATERCOL']]
+            fargs = [p['MKTELLU_TRANS_MIN_WATERCOL'],
+                     p['MKTELLU_TRANS_MAX_WATERCOL']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
         # finally log the failed messages and set QC = 1 if we pass the
@@ -485,7 +520,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll, has_plots=False)
+    spirouStartup.Exit(ll, has_plots=True)
 
 # =============================================================================
 # End of code
