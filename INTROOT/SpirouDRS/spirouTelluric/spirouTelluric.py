@@ -448,7 +448,6 @@ def get_arguments(p, absfilename):
 
 
 def find_telluric_stars(p):
-
     # get parameters from p
     path = p['ARG_FILE_DIR']
     filetype = p['FILETYPE']
@@ -456,7 +455,7 @@ def find_telluric_stars(p):
     ext_types = p['TELLU_DB_ALLOWED_EXT_TYPE']
     # -------------------------------------------------------------------------
     # get the list of whitelist files
-    tell_names = spirouTelluric.spirouTelluric.get_whitelist()
+    tell_names = get_whitelist()
     # -------------------------------------------------------------------------
     # check file type is allowed
     if filetype not in allowedtypes:
@@ -1102,7 +1101,6 @@ def get_whitelist():
     return blacklist
 
 
-
 def lin_mini(vector, sample):
     return spirouMath.linear_minimization(vector, sample)
 
@@ -1112,6 +1110,7 @@ def wave2wave(p, spectrum, wave1, wave2, reshape=False):
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
 
+    :param p: ParamDict, the parameter dictionary
     :param spectrum: numpy array (2D),  flux in the reference frame of the
                      file wave1
     :param wave1: numpy array (2D), initial wavelength grid
@@ -1128,7 +1127,7 @@ def wave2wave(p, spectrum, wave1, wave2, reshape=False):
             spectrum = spectrum.reshape(wave2.shape)
         except ValueError:
             emsg1 = ('Spectrum (shape = {0}) cannot be reshaped to'
-                    ' shape = {1}')
+                     ' shape = {1}')
             emsg2 = '\tfunction = {0}'.format(func_name)
             eargs = [spectrum.shape, wave2.shape]
             WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
