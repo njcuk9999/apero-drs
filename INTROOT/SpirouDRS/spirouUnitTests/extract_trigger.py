@@ -49,24 +49,24 @@ TEST_STORE = []
 RUNNUMBER = 0
 
 # switches
-RUN_BADPIX = True
-RUN_DARK = True
-RUN_LOC = True
+RUN_BADPIX = False
+RUN_DARK = False
+RUN_LOC = False
 RUN_SLIT = False
-RUN_SHAPE = True
-RUN_FLAT = True
-RUN_EXTRACT_HCFP = True
-RUN_HC_WAVE = True
+RUN_SHAPE = False
+RUN_FLAT = False
+RUN_EXTRACT_HCFP = False
+RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = True
 RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_ALL = True
 RUN_OBJ_MK_TELLU = True
-RUN_OBJ_FIT_TELLU = True
+RUN_OBJ_FIT_TELLU = False
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = False
+SKIP_DONE_EXTRACT = True
 SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
@@ -731,6 +731,9 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
             recipe1 = 'cal_HC_E2DS_EA_spirou'
         elif recipe == 'cal_WAVE_E2DS_spirou':
             recipe1 = 'cal_WAVE_E2DS_EA_spirou'
+
+        elif recipe == 'obj_mk_tellu_db':
+            lls = [manage_run(p, recipe, [], recipe, dict())]
         else:
             recipe1 = str(recipe)
         # manage the running of this recipe
@@ -1484,8 +1487,8 @@ def main(night_name=None):
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
     # 13. get cal hc wave solutions
     if RUN_OBJ_MK_TELLU:
-        lls = trigger_main(p, loc, recipe='obj_mk_tellu',
-                           fobjnames=TELL_WHITELIST)
+        lls = trigger_main(p, loc, recipe='obj_mk_tellu_db')
+
     # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
         lls = trigger_main(p, loc, recipe='obj_fit_tellu',
