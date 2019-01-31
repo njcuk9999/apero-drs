@@ -1,6 +1,6 @@
 from drsmodule import constants
 from drsmodule.config import drs_recipe
-from drsmodule.config import drs_text
+from drsmodule.locale import drs_text
 
 from . import file_definitions as sf
 
