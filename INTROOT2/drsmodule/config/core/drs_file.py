@@ -101,9 +101,9 @@ class DrsInputFile:
     def check_filename(self):
         # check that filename isn't None
         if self.filename is None:
-            emsg = ('{0} Filename is not set. Must set a filename with file.'
-                    'set_filename() first.')
-            self.__error__(emsg.format(self.__repr__()))
+            func = self.__repr__()
+            eargs = [func, func + '.set_filename()']
+            self.__error__(ErrorEntry('00-006-00008', args=eargs))
 
     def set_recipe(self, recipe):
         """
@@ -127,9 +127,10 @@ class DrsInputFile:
         # ---------------------------------------------------------------------
         # check that recipe isn't None
         if self.recipe is None:
-            emsg = 'No recipe set for {0} filename={1}. Run set_recipe() first.'
-            eargs = [self.__repr__(), self.filename]
-            self.__error__(emsg.format(*eargs))
+            func = self.__repr__()
+            eargs = [func, self.filename, func + '.set_filename()']
+            self.__error__(ErrorEntry('00-006-00009', args=eargs))
+
 
     def __str__(self):
         """
@@ -421,36 +422,6 @@ class DrsFitsFile(DrsInputFile):
         else:
             return [True, False], self, [None, errors]
 
-    def check_excluivity(self, drs_file, logic, quiet=False, debug=False):
-        emsg = ''
-        if drs_file is None:
-            emsg = 'File type not set'
-            cond = True
-        elif logic == 'exclusive':
-            cond = drs_file.name == self.name
-            if cond and debug:
-                emsg = 'File identified as "{0}" files match'
-                emsg = emsg.format(self.name, drs_file.name)
-            else:
-                emsg = ('File identified as "{0}" however first file '
-                        'identified as "{1}" - files must match')
-                emsg = emsg.format(self.name, drs_file.name)
-        elif logic == 'inclusive':
-            if debug:
-                emsg = 'Logic is inclusive'
-            cond = True
-        else:
-            cond = False
-            emsg = ('logic = "{0}" is not understood must be "exclusive" or'
-                    ' "inclusive".')
-            emsg = emsg.format(logic)
-
-        if (not cond) and (not quiet):
-            self.__error__(emsg)
-        elif not quiet:
-            self.__message__(emsg)
-        return cond, emsg
-
     # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
@@ -570,10 +541,9 @@ class DrsFitsFile(DrsInputFile):
     def check_read(self):
         # check that data/header/comments is not None
         if self.data is None:
-            emsg = (
-                '{0} data is not set. Must read fits file first using'
-                'read() first.')
-            self.__error__(emsg.format(self.__repr__()))
+            func = self.__repr__()
+            eargs = [func, func + '.read()']
+            self.__error__(ErrorEntry('00-006-00010', args=eargs))
 
     def read_multi(self):
         pass
@@ -591,20 +561,15 @@ class DrsFitsFile(DrsInputFile):
             try:
                 os.remove(self.filename)
             except Exception as e:
-                emsg1 = (' File {0} already exists and cannot be overwritten.'
-                         ''.format(self.basename))
-                emsg2 = '\tError {0}: {1}'.format(type(e), e)
-                emsg3 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2, emsg3])
+                eargs = [self.basename, type(e), e, func_name]
+                self.__error__(ErrorEntry('01-001-00003', args=eargs))
         # ---------------------------------------------------------------------
         # create the primary hdu
         try:
             hdu = fits.PrimaryHDU(self.data)
         except Exception as e:
-            emsg1 = 'Cannot open image with astropy.io.fits'
-            emsg2 = '\tError {0}: {1}'.format(type(e), e)
-            emsg3 = '\tfunction = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2, emsg3])
+            eargs = [type(e), e, func_name]
+            self.__error__(ErrorEntry('01-001-00004', args=eargs))
             hdu = None
         # force type
         if dtype is not None:
@@ -620,11 +585,8 @@ class DrsFitsFile(DrsInputFile):
             try:
                 hdu.writeto(self.filename, overwrite=True)
             except Exception as e:
-                emsg1 = ('Cannot write image to fits file {0}'
-                         ''.format(self.basename))
-                emsg2 = '    Error {0}: {1}'.format(type(e), e)
-                emsg3 = '    function = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2, emsg3])
+                eargs = [self.basename, type(e), e, func_name]
+                self.__error__(ErrorEntry('01-001-00005', args=eargs))
         # ---------------------------------------------------------------------
         # ignore truncated comment warning since spirou images have some poorly
         #   formatted header cards
@@ -719,14 +681,13 @@ class DrsFitsFile(DrsInputFile):
                     return None
                 # else generate an error
                 else:
-                    if drskey == drskey:
-                        emsg1 = 'Key "{0}" not found in header of file="{1}"'
+                    if key == drskey:
+                        eargs = [drskey, self.filename, func_name]
+                        emsg = ErrorEntry('09-000-00006', args=eargs)
                     else:
-                        emsg1 = ('Key "{0}" ("{2}") not found in header of '
-                                 'file="{1}"')
-                    emsg1 = emsg1.format(drskey, self.filename, key)
-                    emsg2 = '    function = {0}'.format(func_name)
-                    self.__error__([emsg1, emsg2])
+                        eargs = [drskey, self.filename, key, func_name]
+                        emsg = ErrorEntry('09-000-00006', args=eargs)
+                    self.__error__(emsg)
                     value = None
         # return value
         return value
