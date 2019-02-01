@@ -532,11 +532,8 @@ class DrsFitsFile(DrsInputFile):
         try:
             self.header = fits.getdata(self.filename, ext=ext)
         except Exception as e:
-            emsg1 = ('Could not open data for file "{0}" extention={1}'
-                     ''.format(self.basename, ext))
-            emsg2 = '\tError {0}: {1}'.format(type(e), e)
-            emsg3 = '\tfunction = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2, emsg3])
+            eargs = [self.basename, ext, type(e), e, func_name]
+            self.__error__(ErrorEntry('09-000-00010', args=eargs))
 
     def check_read(self):
         # check that data/header/comments is not None
@@ -592,6 +589,8 @@ class DrsFitsFile(DrsInputFile):
         #   formatted header cards
         w1 = []
         for warning in w:
+            # Note: cannot change language as we are looking for python error
+            #       this is in english and shouldn't be changed
             wmsg = 'Card is too long, comment will be truncated.'
             if wmsg != str(warning.message):
                 w1.append(warning)
@@ -1201,10 +1200,13 @@ def construct_header_error(herrors, params, drs_files, logic):
     # get error storage
     keys, rvalues, values = herrors
 
+    # get text for this language/instrument
+    text = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+
     if len(keys) == 0:
         return None
 
-    emsgs = ['Current file has:']
+    emsgs = [text['09-001-00009']]
     used = []
     # loop around the current values
     for it, key in enumerate(keys):
@@ -1214,7 +1216,7 @@ def construct_header_error(herrors, params, drs_files, logic):
             used.append((key, values[it]))
 
     # print the required values
-    emsgs.append('Recipe required values are:')
+    emsgs.append(text['09-001-00010'])
     used, used_it = [], []
     # log around the required values
     for it, drs_file in enumerate(drs_files):
@@ -1244,9 +1246,9 @@ def construct_header_error(herrors, params, drs_files, logic):
     # deal with exclusivity message
     emsg = ' or '.join(used_it)
     if logic == 'exclusive':
-        emsgs.append(emsg + ' exclusively')
+        emsgs.append(emsg + ' ' + text['09-001-00011'])
     elif logic == 'inclusive':
-        emsgs.append(emsg + ' inclusively')
+        emsgs.append(emsg + ' ' + text['09-001-00012'])
     else:
         emsgs.append(emsg)
     # return error strings
