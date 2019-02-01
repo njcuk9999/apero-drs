@@ -103,7 +103,7 @@ class DrsInputFile:
         if self.filename is None:
             func = self.__repr__()
             eargs = [func, func + '.set_filename()']
-            self.__error__(ErrorEntry('00-006-00008', args=eargs))
+            self.__error__(ErrorEntry('00-001-00002', args=eargs))
 
     def set_recipe(self, recipe):
         """
@@ -129,7 +129,7 @@ class DrsInputFile:
         if self.recipe is None:
             func = self.__repr__()
             eargs = [func, self.filename, func + '.set_filename()']
-            self.__error__(ErrorEntry('00-006-00009', args=eargs))
+            self.__error__(ErrorEntry('00-001-00003', args=eargs))
 
 
     def __str__(self):
@@ -543,7 +543,7 @@ class DrsFitsFile(DrsInputFile):
         if self.data is None:
             func = self.__repr__()
             eargs = [func, func + '.read()']
-            self.__error__(ErrorEntry('00-006-00010', args=eargs))
+            self.__error__(ErrorEntry('00-001-00004', args=eargs))
 
     def read_multi(self):
         pass
@@ -716,9 +716,7 @@ class DrsFitsFile(DrsInputFile):
         try:
             keys = list(keys)
         except TypeError:
-            emsg1 = '"keys" must be a valid python list'
-            emsg2 = '    function = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2])
+            self.__error__(ErrorEntry('00-001-00005', args=[func_name]))
         # if defaults is None --> list of Nones else make sure defaults
         #    is a list
         if defaults is None:
@@ -727,13 +725,9 @@ class DrsFitsFile(DrsInputFile):
             try:
                 defaults = list(defaults)
                 if len(defaults) != len(keys):
-                    emsg1 = '"defaults" must be same length as "keys"'
-                    emsg2 = '    function = {0}'.format(func_name)
-                    self.__error__([emsg1, emsg2])
+                    self.__error__(ErrorEntry('00-001-00006', args=[func_name]))
             except TypeError:
-                emsg1 = '"defaults" must be a valid python list'
-                emsg2 = '    function = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2])
+                self.__error__(ErrorEntry('00-001-00007', args=[func_name]))
         # loop around keys and look up each key
         values = []
         for k_it, key in enumerate(keys):
@@ -772,10 +766,8 @@ class DrsFitsFile(DrsInputFile):
                 # set the value
                 values[it] = dtype(self.header[keyname])
             except KeyError:
-                emsg1 = ('Cannot find key "{0}" with dim={1} in header for'
-                         ' file={2}').format(keyname, dim1, self.basename)
-                emsg2 = '    function = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2])
+                eargs = [keyname, dim1, self.basename, func_name]
+                self.__error__(ErrorEntry('09-000-00008', args=eargs))
                 values = None
         # return values
         return values
@@ -815,10 +807,8 @@ class DrsFitsFile(DrsInputFile):
                     # set the value
                     values[it][jt] = dtype(self.header[keyname])
                 except KeyError:
-                    emsg1 = ('Cannot find key "{0}" with dim1={1} dim2={2} in '
-                             '"hdict"').format(keyname, dim1, dim2)
-                    emsg2 = '    function = {0}'.format(func_name)
-                    self.__error__([emsg1, emsg2])
+                    eargs = [keyname, dim1, dim2, self.basename, func_name]
+                    self.__error__(ErrorEntry('09-000-00009', args=eargs))
         # return values
         return values
 
@@ -904,10 +894,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.add_header_key()'
         # deal with no keywordstore
         if (kwstore is None) and (key is None or comment is None):
-            emsg1 = ('Either "keywordstore" or ("key" and "comment") must '
-                     'be defined')
-            emsg2 = '    function = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2])
+            self.__error__(ErrorEntry('00-001-00008', args=[func_name]))
 
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
@@ -949,36 +936,23 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.add_header_keys()'
         # deal with no keywordstore
         if (kwstores is None) and (keys is None or comments is None):
-            emsg1 = ('Either "keywordstores" or ("keys" and "comments") must '
-                     'be defined')
-            emsg2 = '\tfunction = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2])
+            self.__error__(ErrorEntry('00-001-00009', args=[func_name]))
         # deal with kwstores set
         if kwstores is not None:
             # make sure kwstores is a list of list
             if not isinstance(kwstores, list):
-                emsg1 = 'Error "kwstores" must be a list'
-                emsg2 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2])
+                self.__error__(ErrorEntry('00-001-00010', args=[func_name]))
             # loop around entries
             for k_it, kwstore in enumerate(kwstores):
                 self.add_header_key(kwstore=kwstore, value=values[k_it])
         # else we assume keys and comments
         else:
             if not isinstance(keys, list):
-                emsg1 = ('Error "keys" must be a list (or "kwstores" must '
-                         'be defined)')
-                emsg2 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2])
+                self.__error__(ErrorEntry('00-001-00011', args=[func_name]))
             if not isinstance(comments, list):
-                emsg1 = ('Error "comments" must be a list (or "kwstores" must '
-                         'be defined)')
-                emsg2 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2])
+                self.__error__(ErrorEntry('00-001-00012', args=[func_name]))
             if len(keys) != len(comments):
-                emsg1 = 'Error "keys" must be same length as "comments"'
-                emsg2 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2])
+                self.__error__(ErrorEntry('00-001-00013', args=[func_name]))
             # loop around entries
             for k_it in range(len(keys)):
                 self.add_header_key(key=keys[k_it], value=values[k_it],
@@ -1015,10 +989,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.add_header_key_1d_list()'
         # deal with no keywordstore
         if (kwstore is None) and (key is None or comment is None):
-            emsg1 = ('Either "keywordstore" or ("key" and "comment") must '
-                     'be defined')
-            emsg2 = '    function = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2])
+            self.__error__(ErrorEntry('00-001-00014', args=[func_name]))
         # deal with no dim1name
         if dim1name is None:
             dim1name = 'dim1'
@@ -1084,10 +1055,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.add_header_key_1d_list()'
         # deal with no keywordstore
         if (kwstore is None) and (key is None or comment is None):
-            emsg1 = ('Either "keywordstore" or ("key" and "comment") must '
-                     'be defined')
-            emsg2 = '    function = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2])
+            self.__error__(ErrorEntry('00-001-00015', args=[func_name]))
         # deal with no dim names
         if dim1name is None:
             dim1name = 'dim1'
@@ -1144,16 +1112,8 @@ class DrsFitsFile(DrsInputFile):
         try:
             key, dvalue, comment = kwstore
         except Exception as _:
-            emsg1 = 'There was a problem with the "keywordstore"'
-            emsg2 = '   It must be a list/tuple with of the following format:'
-            emsg3 = '       [string, object, string]'
-            emsg4 = '     where the first is the HEADER name of the keyword'
-            emsg5 = '     where the second is the default value for the keyword'
-            emsg6 = '     where the third is the HEADER comment'
-            emsg7 = '   keywordstore currently is "{0}"'.format(kwstore)
-            emsg8 = '   function = {0}'.format(func_name)
-            emsgs = [emsg1, emsg2, emsg3, emsg4, emsg5, emsg6, emsg7, emsg8]
-            self.__error__(emsgs)
+            eargs = [kwstore, func_name]
+            self.__error__(ErrorEntry('00-001-00016', args=eargs))
             key, dvalue, comment = None, None, None
         # return values
         return key, dvalue, comment
