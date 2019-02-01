@@ -289,51 +289,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hc_ll_ref = []
     hc_xx_ref = []
     dif_n = []
+    peak_num_init = []
 
     # loop over orders
     for order_num in range(n_init, n_fin):
-        # get mask of HC line list for order
-        mask1 = loc['ORD_T'] == order_num
-        # get pixel values of found HC lines for the order
-        xgau = loc['XGAU_T'][mask1]
-        # get mask of central HC lines
-        mask2 = 1200 < xgau
-        mask2 &= xgau < 2800
-        # get dv values of central HC lines
-        dv = loc['DV_T'][mask1][mask2]
-        # find HC line with smallest dv value
-        best_line_ind = np.argmin(abs(dv))
-        # get best HC line x value
-        best_line_x = xgau[mask2][best_line_ind]
-        hc_xx_ref.append(best_line_x)
-        # calculate best HC line wavelength value
-        coeffs = loc['POLY_WAVE_SOL'][order_num][::-1]
-        best_line_ll = np.polyval(coeffs, best_line_x)
-        hc_ll_ref.append(best_line_ll)
+        # ----------------------------------------------------------------------
+        # number fp peaks differentially and identify gaps
+        # ----------------------------------------------------------------------
+
         # get mask of FP lines for order
         mask_fp = loc['ORDPEAK'] == order_num
         # get x values of FP lines
         x_fp = loc['XPEAK'][mask_fp]
-        # Find FP line immediately after the HC line
-        fp_ref_ind = np.argmin(abs(x_fp - best_line_x))
-        if x_fp[fp_ref_ind] < best_line_x:
-            fp_ref_ind += 1
-        # interpolate and save the FP ref line wavelength
-        # TODO THIS BREAKS IF ONE SURROUNDING FP PEAK IS MISSED!!!
-        fp_ll_ref.append(best_line_ll + (best_line_ll ** 2 / dopd0) *
-                         ((x_fp[fp_ref_ind] - best_line_x) /
-                          (x_fp[fp_ref_ind] - x_fp[fp_ref_ind - 1])))
-        # save the FP ref line pixel position
-        fp_xx_ref.append(x_fp[fp_ref_ind])
-        # save the FP ref line number
-        initial_peak = fp_ref_ind
-
-        # ----------------------------------------------------------------------
-        # number adjacent peaks differentially and assign wavelengths
-        # ----------------------------------------------------------------------
-
-        # differential numbering (assuming no gaps)
-        dif_num = np.arange(len(x_fp)) - initial_peak
+        # initial differential numbering (assuming no gaps)
+        peak_num_init = np.arange(len(x_fp))
         # find gaps in x
         # get median of x difference
         med_x_diff = np.median(x_fp[1:] - x_fp[:-1])
@@ -359,12 +328,99 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # estimate missed peaks
             x_jump = int(np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux))) - 1
             # add the jump
-            dif_num[x_gap_ind[0][i] + 1:] += x_jump
+            peak_num_init[x_gap_ind[0][i] + 1:] += x_jump
 
-        # check if reference peak has been shifted
-        if not dif_num[initial_peak] == 0:
-            # if it has move it back to zero
-            dif_num -= dif_num[initial_peak]
+        # ----------------------------------------------------------------------
+        # Find HC and FP reference peaks
+        # ----------------------------------------------------------------------
+
+        # get mask of HC line list for order
+        mask1 = loc['ORD_T'] == order_num
+        # get pixel values of found HC lines for the order
+        xgau = loc['XGAU_T'][mask1]
+        # get mask of central HC lines
+        mask2 = 1200 < xgau
+        mask2 &= xgau < 2800
+        # initialise x_fp_ref_diff to start the while loop
+        x_fp_ref_diff = 0.
+        counter = 0
+        while (x_fp_ref_diff < 0.75 * med_x_diff or x_fp_ref_diff > 1.25 * med_x_diff):
+            print(counter, x_fp_ref_diff)
+            print(mask2)
+            print(np.sum(mask2))
+            # get dv values of central HC lines
+            dv = loc['DV_T'][mask1][mask2]
+            # TODO check we have HC lines
+            # if len(dv) == 0:
+
+            # find HC line with smallest dv value
+            best_line_ind = np.argmin(abs(dv))
+            # get best HC line x value
+            best_line_x = xgau[mask2][best_line_ind]
+            # Find FP line immediately after the HC line
+            fp_ref_ind = np.argmin(abs(x_fp - best_line_x))
+            if x_fp[fp_ref_ind] < best_line_x:
+                fp_ref_ind += 1
+            # Check adjacent FP peaks are not missing
+            x_fp_ref_diff = x_fp[fp_ref_ind] - x_fp[fp_ref_ind - 1]
+            if (x_fp_ref_diff < 0.75 * med_x_diff or x_fp_ref_diff > 1.25 * med_x_diff):
+                # If they are mask best HC line and loop
+                mask2[best_line_ind] = False
+        # save x value of best hc line
+        hc_xx_ref.append(best_line_x)
+        # calculate best HC line wavelength value
+        coeffs = loc['POLY_WAVE_SOL'][order_num][::-1]
+        best_line_ll = np.polyval(coeffs, best_line_x)
+        hc_ll_ref.append(best_line_ll)
+        # interpolate and save the FP ref line wavelength
+        # TODO THIS BREAKS IF ONE SURROUNDING FP PEAK IS MISSED!!!
+        fp_ll_ref.append(best_line_ll + (best_line_ll ** 2 / dopd0) *
+                         ((x_fp[fp_ref_ind] - best_line_x) /
+                          (x_fp[fp_ref_ind] - x_fp[fp_ref_ind - 1])))
+        # save the FP ref line pixel position
+        fp_xx_ref.append(x_fp[fp_ref_ind])
+        # save the FP ref line number
+        initial_peak = peak_num_init[fp_ref_ind]
+        # number differentially from the initial peak
+        dif_num = peak_num_init - initial_peak
+
+        # # ----------------------------------------------------------------------
+        # # number adjacent peaks differentially and assign wavelengths
+        # # ----------------------------------------------------------------------
+        #
+        # # differential numbering (assuming no gaps)
+        # dif_num = np.arange(len(x_fp)) - initial_peak
+        # # find gaps in x
+        # # get median of x difference
+        # med_x_diff = np.median(x_fp[1:] - x_fp[:-1])
+        # # get array of x differences
+        # x_diff = x_fp[1:] - x_fp[:-1]
+        # # get indices where x_diff differs too much from median
+        # cond1 = x_diff < 0.75 * med_x_diff
+        # cond2 = x_diff > 1.25 * med_x_diff
+        # x_gap_ind = np.where(cond1 | cond2)
+        # # get the opposite mask (no-gap points)
+        # cond3 = x_diff > 0.75 * med_x_diff
+        # cond4 = x_diff < 1.25 * med_x_diff
+        # x_good_ind = np.where(cond3 & cond4)
+        # # fit x_fp v x_diff for good points
+        # cfit_xdiff = np.polyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
+        # # loop over gap points
+        # for i in range(np.shape(x_gap_ind)[1]):
+        #     # # find closest good x diff
+        #     # x_diff_aux_ind = np.argmin(abs(x_good_ind - x_gap_ind[0][i]))
+        #     # x_diff_aux = x_diff[x_good_ind[0][x_diff_aux_ind]]
+        #     # get estimated xdiff value from the fit
+        #     x_diff_aux = np.polyval(cfit_xdiff, x_fp[1:][x_gap_ind[0][i]])
+        #     # estimate missed peaks
+        #     x_jump = int(np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux))) - 1
+        #     # add the jump
+        #     dif_num[x_gap_ind[0][i] + 1:] += x_jump
+        #
+        # # check if reference peak has been shifted
+        # if not dif_num[initial_peak] == 0:
+        #     # if it has move it back to zero
+        #     dif_num -= dif_num[initial_peak]
 
         # get wavelength using differential numbering and reference peak
         fp_ll.append(1 / (1 / fp_ll_ref[order_num - n_init] - dif_num / dopd0))
