@@ -13,7 +13,9 @@ Created on 2018-06-08 at 16:00
 from __future__ import division
 import numpy as np
 import matplotlib.cm as cm
+import os
 
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -21,9 +23,10 @@ from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
 
+from SpirouDRS import spirouRV
+
 from astropy import constants as cc
 from astropy import units as uu
-
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
@@ -169,9 +172,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wave_fiber = p['FIBER']
     # get wave image
     # TODO: Needs changing as this is only testable on one machine
-    tmp_wave_file = '/data/CFHT/calibDB_cfht/2018-07-30_MASTER_wave_ea_AB.fits'
+    # tmp_wave_file = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr,
-                                       filename=tmp_wave_file,
+                                       #filename=tmp_wave_file,
                                        return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
@@ -294,8 +297,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get pixel values of found HC lines for the order
         xgau = loc['XGAU_T'][mask1]
         # get mask of central HC lines
-        mask2 = 1000 < xgau
-        mask2 &= xgau < 3000
+        mask2 = 1200 < xgau
+        mask2 &= xgau < 2800
         # get dv values of central HC lines
         dv = loc['DV_T'][mask1][mask2]
         # find HC line with smallest dv value
@@ -316,6 +319,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         if x_fp[fp_ref_ind] < best_line_x:
             fp_ref_ind += 1
         # interpolate and save the FP ref line wavelength
+        # TODO THIS BREAKS IF ONE SURROUNDING FP PEAK IS MISSED!!!
         fp_ll_ref.append(best_line_ll + (best_line_ll ** 2 / dopd0) *
                          ((x_fp[fp_ref_ind] - best_line_x) /
                           (x_fp[fp_ref_ind] - x_fp[fp_ref_ind - 1])))
@@ -377,7 +381,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
 
     # set plot order
-    plot_order = 0
+    plot_order = np.min((n_fin-1, 3))
 
     # create mask to select FP lines from plot_order only
     ind = np.where(loc['ORDPEAK'] == plot_order)
@@ -428,9 +432,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.ylabel('e-')
     plt.title('FP order ' + str(n_fin - 1))
     for i in range(len(fp_ll_red)):
-        plt.vlines(fp_ll_red[i], 0, 200000)
-    plt.vlines(hc_ll_red, 0, 200000, color='green')
-    plt.vlines(fp_ll_ref[n_fin - n_init - 1], 0, 200000, color='red')
+        plt.vlines(fp_ll_red[i], 0, np.percentile(fpdata[n_fin - 1], 95))
+    plt.vlines(hc_ll_red, 0, np.percentile(fpdata[n_fin - 1], 95),
+               color='green', label = 'HC Ref - '+str(hc_ll_red))
+    plt.vlines(fp_ll_ref[n_fin - n_init - 1], 0, np.percentile(fpdata[n_fin - 1], 95),
+               color='red', label = 'FP Ref - '+str(fp_ll_ref[n_fin - n_init - 1]))
+    plt.legend(loc = 'best')
 
     # ----------------------------------------------------------------------
     # Assign absolute FP numbers for rest of orders by wavelength matching
@@ -578,6 +585,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     if (len(d_all) - np.shape(sig_clip_d)[1]) > 0:
         plt.figure()
         plt.plot(one_m_d_all, d_all, 'o')
+        plt.xlabel('1/m')
+        plt.ylabel('d')
+        plt.title('First sigma-clip')
+
 
     # ----------------------------------------------------------------------
     # Fit (1/m) vs d
@@ -654,16 +665,21 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.legend(loc='best')
 
     # ----------------------------------------------------------------------
-    # Fit wavelength solution from FP peaks - TODO
+    # Fit wavelength solution from FP peaks
     # ----------------------------------------------------------------------
 
     # set up storage arrays
     xpix = np.arange(loc['NBPIX'])
     wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
-    poly_wave_sol_final = np.zeros_like(loc['WAVEPARAMS'])
+    poly_wave_sol_final = np.zeros_like(loc['WAVEPARAMS'][0:(n_fin-n_init)])
     wsumres = 0.0
     wsumres2 = 0.0
     total_lines = 0.0
+    fp_x_final_clip = []
+    fp_ll_final_clip = []
+    fp_ll_in_clip = []
+    res_clip = []
+    scale = []
 
     # loop over the orders
     for onum in range(n_fin - n_init):
@@ -697,12 +713,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             res = np.abs(fp_ll_final_ord - fp_ll_new_ord)
         # save wave map
         wave_map_final[onum] = np.polyval(poly_wave_sol_final[onum][::-1], xpix)
+        # save aux arrays
+        fp_x_final_clip.append(fp_x_ord)
+        fp_ll_final_clip.append(fp_ll_final_ord)
+        fp_ll_in_clip.append(fp_ll_new_ord)
+        res_clip.append(res*speed_of_light/fp_ll_final_ord)
         # save stats
         # get the derivative of the coefficients
         poly = np.poly1d(poly_wave_sol_final[onum][::-1])
-        dxdl = np.polyder(poly)(fp_x_ord)
+        dldx = np.polyder(poly)(fp_x_ord)
         # work out conversion factor
-        convert = speed_of_light / (dxdl * fp_ll_final_ord)
+        convert = speed_of_light * dldx / fp_ll_final_ord
+        scale.append(convert)
         # sum the residuals in km/s
         wsumres += np.sum(res * convert)
         # sum the weighted squared residuals in km/s
@@ -710,14 +732,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # total lines
         total_lines += len(fp_x_ord)
     # calculate the final var and mean
-    final_mean = wsumres
-    final_var = wsumres2 - (final_mean ** 2)
+    final_mean = wsumres / total_lines
+    final_var = wsumres2 / total_lines - (final_mean ** 2)
     # log the global stats
     wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
     wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
               total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
     wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
-             'value:{3:.2f}[m/s])'.format(*wargs2))
+             'value:{3:.4f}[m/s])'.format(*wargs2))
     WLOG(p, 'info', [wmsg1, wmsg2])
 
     # control plot - single order - TODO move to spirouPlot
@@ -736,7 +758,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # control plot - selection of orders - TODO move to spirouPlot
 
     n_plot_init = 0
-    n_plot_fin = 5
+    n_plot_fin = np.min((n_fin-1, 5))
 
     plt.figure()
     # define spectral order colours
@@ -777,17 +799,441 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
-    # ----------------------------------------------------------------------
-    # archive result in e2ds spectra -TODO
-    # ----------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # extrapolate Littrow solution
+    # ------------------------------------------------------------------
+
+    #saves for compatibility
+    loc['LL_OUT_2'] = wave_map_final
+    loc['LL_PARAM_2'] = poly_wave_sol_final
+    p['IC_HC_N_ORD_START_2'] = n_init
+    p['IC_HC_N_ORD_FINAL_2'] = n_fin
+    p['IC_LITTROW_ORDER_INIT_2'] = n_init
+    loc['X_MEAN_2'] = final_mean
+    loc['X_VAR_2'] = final_var
+
+
+    ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+    loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+
+    # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+
+    # ------------------------------------------------------------------
+    # Join 0-47 and 47-49 solutions
+    # ------------------------------------------------------------------
+    loc = spirouTHORCA.JoinOrders(p, loc)
+
+    # ------------------------------------------------------------------
+    # Plot single order, wavelength-calibrated, with found lines
+    # ------------------------------------------------------------------
+
+    if p['DRS_PLOT']:
+        sPlt.wave_ea_plot_single_order(p, loc)
 
     # ----------------------------------------------------------------------
-    # Quality control - TODO
+    # Do correlation on FP spectra
     # ----------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Compute photon noise uncertainty for FP
+    # ------------------------------------------------------------------
+    # set up the arguments for DeltaVrms2D
+    dargs = [loc['FPDATA'], loc['LL_FINAL']]
+    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                   threshold=p['IC_DRIFT_MAXFLUX'])
+    # run DeltaVrms2D
+    dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+    # save to loc
+    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
+    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+    # log the estimated RV uncertainty
+    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
+
+    # Use CCF Mask function with drift constants
+    p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+    p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+    p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+    p['CCF_STEP'] = p['DRIFT_CCF_STEP']
+    p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+    p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
+
+    # get the CCF mask from file (check location of mask)
+    loc = spirouRV.GetCCFMask(p, loc)
+
+    # TODO Check why Blaze makes bugs in correlbin
+    loc['BLAZE'] = np.ones((loc['NBO'],loc['NBPIX']))
+    # set sources
+    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    loc.set_source('blaze', __NAME__ + '/main()')
+
     # ----------------------------------------------------------------------
-    # Update the calibration data base - TODO
+    # Do correlation on FP
     # ----------------------------------------------------------------------
+    # calculate and fit the CCF
+    loc['E2DSFF'] = np.array(loc['FPDATA'])
+    loc.set_source('E2DSFF', __NAME__ + '/main()')
+    p['CCF_FIT_TYPE'] = 1
+    loc['BERV'] = 0.0
+    loc['BERV_MAX'] = 0.0
+    loc['BJD'] = 0.0
+
+    # run the RV coravelation function with these parameters
+    loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
+    loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
+    loc = spirouRV.Coravelation(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Update the Correlation stats with values using fiber C (FP) drift
+    # ----------------------------------------------------------------------
+    # get the maximum number of orders to use
+    nbmax = p['CCF_NUM_ORDERS_MAX']
+    # get the average ccf
+    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+    # get the fit for the normalized average ccf
+    ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
+                                       fit_type=1)
+    loc['CCF_RES'] = ccf_res
+    loc['CCF_FIT'] = ccf_fit
+    # get the max cpp
+    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    # get the RV value from the normalised average ccf fit center location
+    loc['RV'] = float(ccf_res[1])
+    # get the contrast (ccf fit amplitude)
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+    # get the FWHM value
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+    # set the source
+    keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
+            'CCF_RES', 'CCF_FIT']
+    loc.set_sources(keys, __NAME__ + '/main()')
+    # ----------------------------------------------------------------------
+    # log the stats
+    wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
+            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+    wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
+    WLOG(p, 'info', wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
+    # rv ccf plot
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # Plot rv vs ccf (and rv vs ccf_fit)
+        p['OBJNAME']='FP'
+        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+
+    #TODO : Add QC of the FP CCF
+
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # get parameters from p
+    p['QC_RMS_LITTROW_MAX'] = p['QC_HC_RMS_LITTROW_MAX']
+    p['QC_DEV_LITTROW_MAX'] = p['QC_HC_DEV_LITTROW_MAX']
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    # check for infinites and NaNs in mean residuals from fit
+    if ~np.isfinite(loc['X_MEAN_2']):
+        # add failed message to the fail message list
+        fmsg = 'NaN or Inf in X_MEAN_2'
+        fail_msg.append(fmsg)
+        passed = False
+
+    # iterate through Littrow test cut values
+    lit_it = 2
+    # checks every other value
+    for x_it in range(1, len(loc['X_CUT_POINTS_' + str(lit_it)]), 2):
+        # get x cut point
+        x_cut_point = loc['X_CUT_POINTS_' + str(lit_it)][x_it]
+        # get the sigma for this cut point
+        sig_littrow = loc['LITTROW_SIG_' + str(lit_it)][x_it]
+        # get the abs min and max dev littrow values
+        min_littrow = abs(loc['LITTROW_MINDEV_' + str(lit_it)][x_it])
+        max_littrow = abs(loc['LITTROW_MAXDEV_' + str(lit_it)][x_it])
+        # get the corresponding order
+        min_littrow_ord = loc['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
+        max_littrow_ord = loc['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
+        # check if sig littrow is above maximum
+        rms_littrow_max = p['QC_RMS_LITTROW_MAX']
+        dev_littrow_max = p['QC_DEV_LITTROW_MAX']
+        if sig_littrow > rms_littrow_max:
+            fmsg = ('Littrow test (x={0}) failed (sig littrow = '
+                    '{1:.2f} > {2:.2f})')
+            fargs = [x_cut_point, sig_littrow, rms_littrow_max]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+        # check if min/max littrow is out of bounds
+        if np.max([max_littrow, min_littrow]) > dev_littrow_max:
+            fmsg = ('Littrow test (x={0}) failed (min|max dev = '
+                    '{1:.2f}|{2:.2f} > {3:.2f} for order {4}|{5})')
+            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+                     min_littrow_ord, max_littrow_ord]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+
+            # if sig was out of bounds, recalculate
+            if sig_littrow > rms_littrow_max:
+                # conditions
+                check1 = min_littrow > dev_littrow_max
+                check2 = max_littrow > dev_littrow_max
+                # get the residuals
+                respix = loc['LITTROW_YY_' + str(lit_it)][x_it]
+                # check if both are out of bounds
+                if check1 and check2:
+                    # remove respective orders
+                    worst_order = (min_littrow_ord, max_littrow_ord)
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
+                # check if min is out of bounds
+                elif check1:
+                    # remove respective order
+                    worst_order = min_littrow_ord
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
+                # check if max is out of bounds
+                elif check2:
+                    # remove respective order
+                    worst_order = max_littrow_ord
+                    respix_2 = np.delete(respix, max_littrow_ord)
+                    redo_sigma = True
+                # else do not recalculate sigma
+                else:
+                    redo_sigma, respix_2, worst_order = False, None, None
+                    wmsg = 'No outlying orders, sig littrow not recalculated'
+                    fail_msg.append(wmsg.format())
+                # if outlying order, recalculate stats
+                if redo_sigma:
+                    mean = np.sum(respix_2) / len(respix_2)
+                    mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                    rms = np.sqrt(mean2 - mean ** 2)
+                    if rms > rms_littrow_max:
+                        fmsg = ('Littrow test (x={0}) failed (sig littrow = '
+                                '{1:.2f} > {2:.2f} removing order {3})')
+                        fargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                        fail_msg.append(fmsg.format(*fargs))
+                    else:
+                        wargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                        wmsg = ('Littrow test (x={0}) passed (sig littrow = '
+                                '{1:.2f} > {2:.2f} removing order {3})')
+                        fail_msg.append(wmsg.format(*wargs))
+
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info',
+             'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+
+    # ------------------------------------------------------------------
+    # archive result in e2ds spectra
+    # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile1 = os.path.basename(p['HCFILES'][0])
+    raw_infile2 = os.path.basename(p['FPFILE'])
+    tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
+    tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
+    # get wave filename
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_NEW(p)
+    wavefitsname = os.path.split(wavefits)[-1]
+    # log progress
+    wargs = [p['FIBER'], wavefits]
+    wmsg = 'Write wavelength solution for Fiber {0} in {1}'
+    WLOG(p, '', wmsg.format(*wargs))
+    # write solution to fitsfilename header
+    # copy original keys
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # add version number
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    # set the input files
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile1)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    # add quality control
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    # add wave solution date
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
+                               value=p['MAX_TIME_HUMAN'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
+                               value=p['MAX_TIME_UNIX'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
+                               value=loc['WAVEFILE'])
+    # add number of orders
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
+                               value=loc['LL_PARAM_FINAL'].shape[0])
+    # add degree of fit
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
+                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
+    # add wave solution
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
+                                     values=loc['LL_PARAM_FINAL'])
+
+    # add FP CCF drift
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
+                               value=loc['RV_CCF'][0])
+    # the rv step
+    rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
+    # add ccf stats
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'],
+                               value=loc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
+                               value=loc['CONTRAST'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'],
+                               value=loc['MAXCPP'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
+                               value=np.sum(loc['TOT_LINE']))
+
+    # write the wave "spectrum"
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
+    p = spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
+
+    # get filename for E2DS calibDB copy of FITSFILENAME
+    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)[0]
+    wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
+    wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
+    WLOG(p, '', wmsg.format(*wargs))
+
+    # make a copy of the E2DS file for the calibBD
+    p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # only copy over if QC passed
+    if p['QC']:
+        # update original E2DS hcfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
+        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
+        # update original E2DS fpfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0b)
+        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
+        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+
+    # ------------------------------------------------------------------
+    # Save to result table
+    # ------------------------------------------------------------------
+    # calculate stats for table
+    final_mean = 1000 * loc['X_MEAN_2']
+    final_var = 1000 * loc['X_VAR_2']
+    num_lines = int(total_lines)
+    err = 1000.0 * np.sqrt(loc['X_VAR_2'] / num_lines)
+    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
+    # construct filename
+    wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_NEW(p)
+    wavetblname = os.path.basename(wavetbl)
+    # construct and write table
+    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+                   'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
+                   'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
+    columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.4f}',
+                     '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
+                     '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
+    columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
+                    [p['FIBER']], [final_mean], [final_var],
+                    [num_lines], [err], [sig_littrow[0]],
+                    [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
+                    [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
+    # make table
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # merge table
+    wmsg = 'Global result summary saved in {0}'
+    WLOG(p, '', wmsg.format(wavetblname))
+    spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
+
+    # ----------------------------------------------------------------------
+    # Save resolution and line profiles to file
+    # ----------------------------------------------------------------------
+    raw_infile = os.path.basename(p['FITSFILENAME'])
+    # get wave filename
+    resfits, tag3 = spirouConfig.Constants.WAVE_RES_FILE_NEW(p)
+    resfitsname = os.path.basename(resfits)
+    WLOG(p, '', 'Saving wave resmap to {0}'.format(resfitsname))
+
+    # make a copy of the E2DS file for the calibBD
+    # set the version
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
+
+    # get res data in correct format
+    resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)
+    # save to file
+    p = spirouImage.WriteImageMulti(p, resfits, resdata, hdicts=hdicts)
+
+    # ------------------------------------------------------------------
+    # Save line list table file
+    # ------------------------------------------------------------------
+    # construct filename
+
+    wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_NEW(p)
+    wavelltblname = os.path.split(wavelltbl)[-1]
+    # construct and write table
+    columnnames = ['order', 'll', 'dv', 'w', 'x', 'll0', 'dvdx']
+    columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
+                     '{:12.4f}', '{:12.4f}', '{:8.4f}']
+
+
+    columnvalues = []
+    # construct column values (flatten over orders)
+    for it in range(len(fp_x_final_clip)):
+        for jt in range(len(fp_x_final_clip[it])):
+            row = [float(it),
+                   fp_ll_final_clip[it][jt],
+                   res_clip[it][jt],
+                   1,
+                   fp_x_final_clip[it][jt],
+                   fp_ll_in_clip[it][jt],
+                   scale[it][jt]]
+            columnvalues.append(row)
+
+    # log saving
+    wmsg = 'List of lines used saved in {0}'
+    WLOG(p, '', wmsg.format(wavelltblname))
+
+    # make table
+    columnvalues = np.array(columnvalues).T
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # write table
+    spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
+
+
+    # ------------------------------------------------------------------
+    # Move to calibDB and update calibDB
+    # ------------------------------------------------------------------
+    if p['QC']:
+        # set the wave key
+        keydb = 'WAVE_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouDB.PutCalibFile(p, wavefits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
+
+        # set the hcref key
+        keydb = 'HCREF_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouDB.PutCalibFile(p, e2dscopy_filename)
+        # update the master calib DB file with new key
+        e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
+        spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # ----------------------------------------------------------------------
     # End Message

@@ -1768,6 +1768,39 @@ def WAVE_FILE_EA_2(p):
     # return filename and tag
     return wavefile, tag
 
+#add fp filename if it exists
+# noinspection PyPep8Naming
+def WAVE_FILE_NEW(p):
+    func_name = 'WAVE_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_new_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    # check if FP
+    if 'FPFILE' in p:
+        #get filename
+        raw_infile2 = os.path.basename(p['FPFILE'])
+        # we shouldn't mix ed2s w e2dsff so can use same extension
+        wavefn2 = raw_infile2.replace(old_ext, '_'
+                                               '')
+        wavefilename = calibprefix + wavefn2 + wavefn
+    else:
+        wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
+
 
 # noinspection PyPep8Naming
 def WAVE_TBL_FILE(p):
@@ -1826,6 +1859,12 @@ def WAVE_TBL_FILE_EA(p):
     wavetblfile = os.path.join(reducedfolder, wavetblfb)
     return wavetblfile
 
+def WAVE_TBL_FILE_NEW(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavetblfb = 'cal_WAVE_NEW_result.tbl'
+    wavetblfile = os.path.join(reducedfolder, wavetblfb)
+    return wavetblfile
+
 
 # noinspection PyPep8Naming
 def WAVE_LINE_FILE_EA(p):
@@ -1835,6 +1874,13 @@ def WAVE_LINE_FILE_EA(p):
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
 
+# noinspection PyPep8Naming
+def WAVE_LINE_FILE_NEW(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavellext = '_hc_lines_new_{0}.tbl'.format(p['FIBER'])
+    wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
+    wavellfile = os.path.join(reducedfolder, wavellfn)
+    return wavellfile
 
 # noinspection PyPep8Naming
 def WAVE_RES_FILE_EA(p):
@@ -1858,6 +1904,26 @@ def WAVE_RES_FILE_EA(p):
     # return filename and tag
     return wavefile, tag
 
+def WAVE_RES_FILE_NEW(p):
+    func_name = 'WAVE_RES_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_waveres_new_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
 
 # noinspection PyPep8Naming
 def WAVE_E2DS_COPY(p):
