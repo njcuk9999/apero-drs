@@ -109,6 +109,14 @@ class Logger:
         :return None:
         """
         func_name = __NAME__ + '.Logger.__call__()'
+
+        # ---------------------------------------------------------------------
+        # TODO: Remove deprecation warning (once all code changed)
+        if type(p) is str:
+            emsg = ('Need to update WLOG function call. New format required:'
+                    '\n\n\tNew format: WLOG(p, level_key, message)'
+                    '\n\n\tOld format: WLOG(level_key, option, message)')
+            raise DeprecationWarning(emsg)
         # ---------------------------------------------------------------------
         # deal with no p and pid
         if p is None:
@@ -122,12 +130,6 @@ class Logger:
             p['PID'] = None
             wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
             warnings.warn(wmsg, Warning)
-        # TODO: Remove deprecation warning (once all code changed)
-        if type(p) is str:
-            emsg = ('Need to update WLOG function call. New format required:'
-                    '\n\n\tNew format: WLOG(p, level_key, message)'
-                    '\n\n\tOld format: WLOG(level_key, option, message)')
-            raise DeprecationWarning(emsg)
 
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
