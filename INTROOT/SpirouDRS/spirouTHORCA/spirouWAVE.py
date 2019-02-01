@@ -576,7 +576,7 @@ def fp_wavelength_sol_new(p, loc):
                     if p['DRS_DEBUG']:
                         wargs = [order_num, mpeak[cm_ind] - m_init]
                         wmsg = 'M difference for order {0}: {1}'
-                        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                        WLOG(p, '', wmsg.format(*wargs))
                     # recalculate observed effective cavity width
                     dopd_t = mpeak * floc['llpos']
                     # store new m and d
