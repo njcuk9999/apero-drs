@@ -28,9 +28,9 @@ PACKAGE = 'drsmodule'
 # file locations
 DEFAULT_PATH = './locale/databases/'
 INSTRUMENT_PATH = './locale/databases/'
+# must be csv files
 HELP_FILES = ['help.csv']
 ERROR_FILES = ['error.csv']
-FILE_FMT = 'csv'
 DEFAULT_LANGUAGE = 'ENG'
 # define escape characters
 ESCAPE_CHARS = {'\n': '\\n', '\t': '\\t'}
@@ -390,14 +390,22 @@ def _read_dict_files(dict_files, language):
         # check for cached file
         utime = os.path.getmtime(filename)
         newext = '_{0}.npy'.format(utime)
-        cachedfile = filename.replace('.' + FILE_FMT, newext)
+        cachedfile = filename.replace('.csv', newext)
         if os.path.exists(cachedfile):
             # get the data
             data = np.load(cachedfile)
             columns = data.dtype.names
         else:
-            # get the data
-            data = Table.read(filename, format=FILE_FMT)
+            # try to get the data
+            try:
+                data = Table.read(filename, format='ascii.csv',
+                                  fast_reader=False)
+            except Exception as e:
+                emsg1 = 'Error opening file "{0}"'.format(filename)
+                emsg2 = '\n\t Error {0}: {1}'.format(type(e), e)
+                raise TextError(emsg1 + emsg2)
+
+            # get the columns names
             columns = data.colnames
             # fill values to "N/A"
             data = data.filled()
