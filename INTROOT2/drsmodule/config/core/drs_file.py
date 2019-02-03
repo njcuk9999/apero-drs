@@ -451,19 +451,14 @@ class DrsFitsFile(DrsInputFile):
         try:
             hdu = fits.open(self.filename)
         except Exception as e:
-            emsg1 = ('File "{0}" cannot be opened by astropy.io.fits'
-                     ''.format(self.basename))
-            emsg2 = '\tError {0}: {1}'.format(type(e), e)
-            emsg3 = '\tfunction = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2, emsg3])
+            eargs = [self.basename, type(e), e, func_name]
+            self.__error__(ErrorEntry('01-001-00006', args=eargs))
             hdu = None
         # get the number of fits files in filename
         try:
             n_ext = len(hdu)
         except Exception as e:
-            wmsg1 = 'Proglem with one of the extensions'
-            wmsg2 = '\tError {0}, {1}'.format(type(e), e)
-            self.__warning__([wmsg1, wmsg2])
+            self.__warning__(ErrorEntry('10-001-00005', args=[type(e), e]))
             n_ext = None
         # deal with unknown number of extensions
         if n_ext is None:
@@ -479,21 +474,16 @@ class DrsFitsFile(DrsInputFile):
             try:
                 data = hdu[ext].data
             except Exception as e:
-                emsg1 = ('Could not open data for file "{0}" extension={1}'
-                         ''.format(self.basename, ext))
-                emsg2 = '\tError {0}: {1}'.format(type(e), e)
-                emsg3 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2, emsg3])
+                eargs = [self.basename, ext, type(e), e, func_name]
+                self.__error__(ErrorEntry('01-001-00007', args=eargs))
                 data = None
             # try to open the header
             try:
                 header = hdu[hdr_ext].header
             except Exception as e:
-                emsg1 = ('Could not open header for file "{0}" extension={1}'
-                         ''.format(self.basename, hdr_ext))
-                emsg2 = '\tError {0}: {1}'.format(type(e), e)
-                emsg3 = '\tfunction = {0}'.format(func_name)
-                self.__error__([emsg1, emsg2, emsg3])
+                eargs = [self.basename, ext, type(e), e, func_name]
+                self.__error__(ErrorEntry('01-001-00008', args=eargs))
+                data = None
                 header = None
         # close the HDU
         if hdu is not None:
@@ -510,20 +500,6 @@ class DrsFitsFile(DrsInputFile):
         # set the shape
         self.shape = self.data.shape
 
-    def read_header(self, ext=0):
-        func_name = __NAME__ + '.DrsFitsFile.read_header()'
-        # check that filename is set
-        self.check_filename()
-        # try to open header
-        try:
-            self.header = fits.getheader(self.filename, ext=ext)
-        except Exception as e:
-            emsg1 = ('Could not open header for file "{0}" extention={1}'
-                     ''.format(self.basename, ext))
-            emsg2 = '\tError {0}: {1}'.format(type(e), e)
-            emsg3 = '\tfunction = {0}'.format(func_name)
-            self.__error__([emsg1, emsg2, emsg3])
-
     def read_data(self, ext=0):
         func_name = __NAME__ + '.DrsFitsFile.read_data()'
         # check that filename is set
@@ -533,7 +509,18 @@ class DrsFitsFile(DrsInputFile):
             self.header = fits.getdata(self.filename, ext=ext)
         except Exception as e:
             eargs = [self.basename, ext, type(e), e, func_name]
-            self.__error__(ErrorEntry('09-000-00010', args=eargs))
+            self.__error__(ErrorEntry('01-001-00009', args=eargs))
+
+    def read_header(self, ext=0):
+        func_name = __NAME__ + '.DrsFitsFile.read_header()'
+        # check that filename is set
+        self.check_filename()
+        # try to open header
+        try:
+            self.header = fits.getheader(self.filename, ext=ext)
+        except Exception as e:
+            eargs = [self.basename, ext, type(e), e, func_name]
+            self.__error__(ErrorEntry('01-001-00010', args=eargs))
 
     def check_read(self):
         # check that data/header/comments is not None
