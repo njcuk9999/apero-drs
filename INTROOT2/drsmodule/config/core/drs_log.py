@@ -16,12 +16,12 @@ Version 0.0.1
 from __future__ import division
 import os
 import sys
-import warnings
 
 from drsmodule import constants
 from drsmodule.locale import drs_text
 from drsmodule.locale import drs_exceptions
 from drsmodule.config.math import time
+
 
 # =============================================================================
 # Define variables
@@ -235,10 +235,10 @@ class Logger:
         # get messages
         if type(message) is HelpEntry:
             raw_message1 = msg_obj.get(self.helptext, report=report,
-                                      reportlevel=key)
+                                       reportlevel=key)
         else:
             raw_message1 = msg_obj.get(self.errortext, report=report,
-                                      reportlevel=key)
+                                       reportlevel=key)
         # split by '\n'
         raw_messages1 = raw_message1.split('\n')
         # ---------------------------------------------------------------------
@@ -283,10 +283,10 @@ class Logger:
         # get messages
         if type(message) is HelpEntry:
             raw_message2 = msg_obj.get(self.d_helptext, report=report,
-                                      reportlevel=key)
+                                       reportlevel=key)
         else:
             raw_message2 = msg_obj.get(self.d_errortext, report=report,
-                                      reportlevel=key)
+                                       reportlevel=key)
         # split by '\n'
         raw_messages2 = raw_message2.split('\n')
         # ---------------------------------------------------------------------
@@ -359,7 +359,8 @@ class Logger:
             if debug:
                 debug_start(self, p, errorstring)
             else:
-                self.pconstant.EXIT(p)(errorstring)
+                # self.pconstant.EXIT(p)(errorstring)
+                self.pconstant.EXIT(p)()
 
     def update_param_dict(self, paramdict):
         # update the parameter dictionary
@@ -465,8 +466,7 @@ def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
     elif type(list):
         message = list(message)
     else:
-        message = [('Logging error: message="{0}" is not a valid string or '
-                    'list').format(message)]
+        message = [logobj.errortext('00-005-00005').format(message)]
         key = 'error'
     for mess in message:
         code = logobj.pconstant.LOG_TRIG_KEYS().get(key, ' ')
@@ -503,7 +503,10 @@ def debug_start(logobj, p, errorstring):
     # get raw input
     if sys.version_info.major > 2:
         # noinspection PyPep8
-        raw_input = lambda x: str(input(x))
+        def raw_input(x):
+            return str(input(x))
+    # get text
+    text = logobj.errortext
     # get colour
     clevels = logobj.pconstant.COLOUREDLEVELS()
     addcolour = p['DRS_COLOURED_LOG']
@@ -516,25 +519,11 @@ def debug_start(logobj, p, errorstring):
     # ask to run debugger
     # noinspection PyBroadException
     try:
-        print(cc + '\n\n\tError found and running in DEBUG mode\n' + nocol)
+        print(cc + text['00-005-00006'] + nocol)
         # noinspection PyUnboundLocalVariable
-        message = ('Enter (1) ipython debugger (2) python debugger or '
-                   'exit (any other key)?\n\t Note ipython debugger requires '
-                   'ipdb installed\n\tChoose "1", "2", or exit:')
-
-        # noinspection PyUnboundLocalVariable
-        uinput = raw_input(cc + '\t' + message + '\t' + nocol)
+        uinput = raw_input(cc + text['00-005-00007'] + '\t' + nocol)
         if '1' in uinput.upper():
-            print(cc + '\n\t ==== IPYTHON DEBUGGER ====\n'
-                       '\n\t - type "ipython()" to use %paste %cpaste'
-                       '\n\t - type "list" to list code'
-                       '\n\t - type "up" to go up a level'
-                       '\n\t - type "interact" to go to an interactive shell'
-                       '\n\t - type "print(variable)" to print variable'
-                       '\n\t - type "print(dir())" to list available variables'
-                       '\n\t - type "continue" to exit'
-                       '\n\t - type "help" to see all commands'
-                       '\n\n\t ==================\n\n' + nocol)
+            print(cc + text['00-005-00008'] + nocol)
 
             # noinspection PyBroadException
             try:
@@ -548,27 +537,23 @@ def debug_start(logobj, p, errorstring):
                 pdb.set_trace()
 
             print(cc + '\n\nCode Exited' + nocol)
-            logobj.pconstant.EXIT(p)(errorstring)
+            # logobj.pconstant.EXIT(p)(errorstring)
+            logobj.pconstant.EXIT(p)()
         if '2' in uinput.upper():
-            print(cc + '\n\t ==== DEBUGGER ====\n'
-                       '\n\t - type "list" to list code'
-                       '\n\t - type "up" to go up a level'
-                       '\n\t - type "interact" to go to an interactive shell'
-                       '\n\t - type "print(variable)" to print variable'
-                       '\n\t - type "print(dir())" to list available variables'
-                       '\n\t - type "continue" to exit'
-                       '\n\t - type "help" to see all commands'
-                       '\n\n\t ==================\n\n' + nocol)
+            print(cc + text['00-005-00009'] + nocol)
 
             import pdb
             pdb.set_trace()
 
-            print(cc + '\n\nCode Exited' + nocol)
-            logobj.pconstant.EXIT(p)(errorstring)
+            print(cc + text['00-005-00010'] + nocol)
+            # logobj.pconstant.EXIT(p)(errorstring)
+            logobj.pconstant.EXIT(p)()
         else:
-            logobj.pconstant.EXIT(p)(errorstring)
+            # logobj.pconstant.EXIT(p)(errorstring)
+            logobj.pconstant.EXIT(p)()
     except:
-        logobj.pconstant.EXIT(p)(errorstring)
+        # logobj.pconstant.EXIT(p)(errorstring)
+        logobj.pconstant.EXIT(p)()
 
 
 def warninglogger(p, w, funcname=None):
@@ -633,16 +618,12 @@ def get_logfilepath(logobj, p):
     print_warnings = []
     # if None use "TDATA"
     if dir_data_msg is None:
-        emsg1 = 'Cannot write to log file.'
-        emsg2 = '\t"{0}" missing from config'.format(msgkey)
-        print_warnings += [emsg1, emsg2]
+        print_warnings += logobj.errortext('10-005-00002').format(msgkey)
         warning = True
     # if it doesn't exist also set to TDATA
     elif not os.path.exists(dir_data_msg):
-        emsg1 = 'Cannot write to log file.'
-        emsg2 = ' "{0}" does not exist.'.format(msgkey)
-        emsg3 = '    "{0}" = {1}'.format(msgkey, p[msgkey])
-        print_warnings += [emsg1, emsg2, emsg3]
+        margs = [msgkey, p[msgkey]]
+        print_warnings += logobj.errortext('10-005-00003').format(*margs)
         warning = True
     else:
         warning = False
@@ -684,17 +665,15 @@ def correct_level(logobj, key, level):
     try:
         outlevel = logobj.pconstant.WRITE_LEVEL()[level]
     except KeyError:
-        emsg1 = '"level"={0} not in SpirouConfig.SpirouConst.WRITE_LEVEL()'
-        emsg2 = '   function = {0}'.format(func_name)
-        raise ConfigError(message=[emsg1.format(level), emsg2], level='error')
+        emsg = ErrorEntry('00-005-00011', args=[level, func_name])
+        raise ConfigError(errorobj=[emsg, logobj.errortext])
 
     # get numeric value for this level
     try:
         thislevel = logobj.pconstant.WRITE_LEVEL()[key]
     except KeyError:
-        emsg1 = '"key"={0} not in SpirouConfig.SpirouConst.WRITE_LEVEL()'
-        emsg2 = '   function = {0}'.format(func_name)
-        raise ConfigError(message=[emsg1.format(key), emsg2], level='error')
+        emsg = ErrorEntry('00-005-00012', args=[key, func_name])
+        raise ConfigError(errorobj=[emsg, logobj.errortext])
 
     # return whether we are printing or not
     return thislevel >= outlevel
@@ -792,9 +771,9 @@ def printcolour(logobj, p, key='all', func_name=None, colour=None):
     nocol = Color.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
-        emsg1 = 'key={0} not in spirouConfig.Constants.COLOUREDLEVELS()'
-        emsg2 = '    function = {0}'.format(func_name)
-        raise ConfigError(message=[emsg1.format(key), emsg2], level='error')
+        emsg = ErrorEntry('00-005-00012', args=[level, func_name])
+        raise ConfigError(errorobj=[emsg, logobj.errortext])
+
     # if this level is greater than or equal to out level then print to stdout
     if correct_level(logobj, key, level) and (key in clevels) and addcolour:
         colour1 = clevels[key]
@@ -911,9 +890,9 @@ def writelog(logobj, p, message, key, logfilepath):
             f.write(message + '\n')
             f.close()
         except Exception as e:
-            emsg1 = 'Cannot open {0}, error was: {1}'
-            emsg2 = '   function = {0}'.format(func_name)
-            raise ConfigError(message=[emsg1.format(logfilepath, e), emsg2])
+            eargs = [logfilepath, type(e), e, func_name]
+            emsg = ErrorEntry('01-001-00011', args=eargs)
+            raise ConfigError(errorobj=[emsg, logobj.errortext])
     else:
         # try to open the logfile
         try:
@@ -930,10 +909,9 @@ def writelog(logobj, p, message, key, logfilepath):
                 pass
         # If we cannot write to log file then print to stdout
         except Exception as e:
-            emsg1 = 'Cannot open {0}, error was: {1}'
-            emsg2 = '   function = {0}'.format(func_name)
-            raise ConfigError(message=[emsg1.format(logfilepath, e), emsg2])
-
+            eargs = [logfilepath, type(e), e, func_name]
+            emsg = ErrorEntry('01-001-00011', args=eargs)
+            raise ConfigError(errorobj=[emsg, logobj.errortext])
 
 
 def _clean_message(message):
