@@ -333,8 +333,8 @@ class _CheckBool(argparse.Action):
             WLOG(params, 'debug', dmsg, wrap=False)
             return False
         else:
-            emsg1 = 'Argument "{0}" must be a Boolean value (True/False)'
-            WLOG(params, 'error', emsg1.format(self.dest))
+            eargs = [self.dest, value]
+            WLOG(params, 'error', ErrorEntry('09-001-00013', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -362,14 +362,13 @@ class _CheckType(argparse.Action):
         # get parameters
         params = self.recipe.drs_params
         # get type error
-        emsg = 'Argument "{0}"="{1}" should be type "{2}"'
         eargs = [self.dest, value, self.type]
         try:
             return self.type(value)
         except ValueError as _:
-            WLOG(params, 'error', emsg.format(*eargs))
+            WLOG(params, 'error', ErrorEntry('09-001-00014', args=eargs))
         except TypeError as _:
-            WLOG(params, 'error', emsg.format(*eargs))
+            WLOG(params, 'error', ErrorEntry('09-001-00015', args=eargs))
 
     def _check_type(self, value):
         # get parameters
@@ -380,8 +379,8 @@ class _CheckType(argparse.Action):
         # check if passed as a list
         if (self.nargs == 1) and (type(value) is list):
             if len(value) == 0:
-                emsg = 'Argument "{0}" should not be an empty list.'
-                WLOG(params, 'error', emsg.format(self.dest))
+                emsg = ErrorEntry('09-001-00016', args=[self.dest])
+                WLOG(params, 'error', emsg)
             else:
                 return self._eval_type(value[0])
         # else if we have a list we should iterate
@@ -390,16 +389,13 @@ class _CheckType(argparse.Action):
             for it in self.nargs:
                 values.append(self._eval_type(values[it]))
             if len(values) < len(value):
-                wmsg = 'Argument too long (expected {0} got {1})'
-                wargs = [self.nargs, len(value)]
-                WLOG(params, 'warning', wmsg.format(*wargs))
+                eargs = [self.dest, self.nargs, len(value)]
+                WLOG(params, 'error', ErrorEntry('09-001-00017', args=eargs))
             return values
         # else
         else:
-            emsg = ('Argument "{0}"="{1}" list expected with {2} arguments '
-                    'got type {3}')
-            eargs = [self.dest, value, self.nargs, type(value)]
-            WLOG(params, 'error', emsg.format(eargs))
+            eargs = [self.dest, self.nargs, type(value), value]
+            WLOG(params, 'error', ErrorEntry('09-001-00018', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -432,10 +428,9 @@ class _CheckOptions(argparse.Action):
         if value in self.choices:
             return value
         else:
-            emsg1 = 'Argument "{0}" must be {1}'
-            eargs1 = [self.dest, ' or '.join(self.choices)]
-            emsg2 = '\tCurrent value = {0}'.format(value)
-            WLOG(params, 'error', [emsg1.format(*eargs1), emsg2])
+            eargs = [self.dest, ' or '.join(self.choices), value]
+            WLOG(params, 'error', ErrorEntry('09-001-00019', args=eargs))
+
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -553,6 +548,8 @@ class _ActivateDebug(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_debug(self, values, recipe=None):
+        # get params
+        params = self.recipe.drs_params
         # deal with using without call
         if self.recipe is None:
             self.recipe = recipe
@@ -565,16 +562,15 @@ class _ActivateDebug(argparse.Action):
                 values = values[0]
             # try to make an integer
             value = int(values)
-            # set DRS_DEBUG
+            # set DRS_DEBUG (must use the self version)
             self.recipe.drs_params['DRS_DEBUG'] = value
             # now update constants file
             # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
             return value
         except:
-            emsg = 'Argument "{0}": Debug mode = "{1}" not understood.'
             eargs = [self.dest, values]
-            WLOG(self.recipe.drs_params, 'error', emsg.format(*eargs))
+            WLOG(params, 'error', ErrorEntry('09-001-00020', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
