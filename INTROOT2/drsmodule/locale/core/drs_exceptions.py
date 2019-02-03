@@ -36,7 +36,8 @@ class TextError(TextException):
     Custom Text Warning for passing to the log
     """
 
-    def __init__(self, message=None, level=None, wlog=None, kwargs=None):
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
         """
         Constructor for ConfigError sets message to self.message and level to
         self.level
@@ -50,6 +51,12 @@ class TextError(TextException):
         :param level: string, level (for logging) must be key in TRIG key above
                       default = all, error, warning, info or graph
         """
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='TextError')
+            message = message.split('\n')
+            level = 'error'
         # deal with kwargs being None
         if kwargs is None:
             kwargs = dict()
@@ -69,11 +76,19 @@ class TextError(TextException):
         basiclogger(message=self.message, level=self.level,  name='Text',
                     force_exit=False, wlog=wlog, **kwargs)
 
+        super(ConfigException, self).__init__('Drs Text Error Logged.')
 
 class TextWarning:
     global USED_TEXT_WARNINGS
 
-    def __init__(self, message=None, level=None, wlog=None, kwargs=None):
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='TextWarning')
+            message = message.split('\n')
+            level = 'warning'
         # deal with kwargs being None
         if kwargs is None:
             kwargs = dict()
@@ -115,7 +130,8 @@ class DrsError(DrsException):
     Custom Config Error for passing to the log
     """
 
-    def __init__(self, message=None, level=None, wlog=None, kwargs=None):
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
         """
         Constructor for DRSError sets message to self.message and level to
         self.level
@@ -129,6 +145,12 @@ class DrsError(DrsException):
         :param level: string, level (for logging) must be key in TRIG key above
                       default = all, error, warning, info or graph
         """
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='DrsError')
+            message = message.split('\n')
+            level = 'error'
         # deal with kwargs being None
         if kwargs is None:
             kwargs = dict()
@@ -148,11 +170,21 @@ class DrsError(DrsException):
         basiclogger(message=self.message, level=self.level,  name='DRS',
                     force_exit=False, wlog=wlog, **kwargs)
 
+        super(ConfigException, self).__init__('Drs Error Logged.')
 
 class DrsWarning:
     global USED_DRS_WARNINGS
 
-    def __init__(self, message=None, level=None, wlog=None, kwargs=None):
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
+
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='DrsWarning')
+            message = message.split('\n')
+            level = 'warning'
+
         # deal with kwargs being None
         if kwargs is None:
             kwargs = dict()
@@ -194,7 +226,8 @@ class ConfigError(ConfigException):
     Custom Config Error for passing to the log
     """
 
-    def __init__(self, message=None, level=None, wlog=None, kwargs=None):
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
         """
         Constructor for ConfigError sets message to self.message and level to
         self.level
@@ -208,6 +241,13 @@ class ConfigError(ConfigException):
         :param level: string, level (for logging) must be key in TRIG key above
                       default = all, error, warning, info or graph
         """
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='ConfigError')
+            message = message.split('\n')
+            level = 'error'
+
         # deal with kwargs being None
         if kwargs is None:
             kwargs = dict()
@@ -227,11 +267,21 @@ class ConfigError(ConfigException):
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
 
+        super(ConfigException, self).__init__('Drs Config Error Logged.')
+
 
 class ConfigWarning:
     global USED_CONFIG_WARNINGS
 
-    def __init__(self, message=None, level=None, wlog=None, kwargs=None):
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
+
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='ConfigWarning')
+            message = message.split('\n')
+            level = 'warning'
         # deal with kwargs being None
         if kwargs is None:
             kwargs = dict()
