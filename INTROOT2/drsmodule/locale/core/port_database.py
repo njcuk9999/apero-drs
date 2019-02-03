@@ -9,6 +9,7 @@ Created on 2019-01-24 at 13:49
 
 @author: cook
 """
+from astropy.table import Table
 import importlib
 import os
 import shutil
@@ -33,6 +34,8 @@ DATABASE_NAMES = ['HELP', 'ERROR', 'HELP_SPIROU', 'ERROR_SPIROU', 'HELP_NIRPS',
 # define the csv output filenames
 OUTPUT_NAMES = ['help.csv', 'error.csv', 'help_spirou.csv', 'error_spirou.csv',
                 'help_nirps.csv', 'error_nirps.csv']
+# BADCODES
+
 # define the pandas module
 PANDAS_MODULE = 'pandas'
 # get the Drs Exceptions
@@ -70,6 +73,7 @@ def read_database(xls_file):
 
 
 def convert_csv(xls, sheet_names, out_names, out_dir):
+    outpaths = []
     # get sheets
     for it, sheet in enumerate(sheet_names):
         #
@@ -84,6 +88,31 @@ def convert_csv(xls, sheet_names, out_names, out_dir):
         outpath = os.path.join(out_dir, out_names[it])
         # save to csv
         pdsheet.to_csv(outpath, sep=',', quoting=2, index=False)
+        # append to outpaths
+        outpaths.append(outpath)
+    # return outpaths
+    return outpaths
+
+
+
+def validate_csv(files):
+
+
+    for filename in files:
+
+        # try to get the data
+        try:
+            data = Table.read(filename, format='ascii.csv', fast_reader=False)
+            del data
+            continue
+        except Exception as e:
+            wmsg = 'Error occured when trying to validate: {0}'
+            wmsg += '\n\t Error {0}: {1}'.format(type(e), e)
+            BLOG(wmsg.format(filename), level='warning', name='CSV')
+
+        # remove all bad characters
+
+
 
 
 # =============================================================================
@@ -123,7 +152,9 @@ if __name__ == "__main__":
     # read the database file
     database = read_database(dabspath)
     # convert to csv and save
-    convert_csv(database, DATABASE_NAMES, OUTPUT_NAMES, database_path)
+    opaths = convert_csv(database, DATABASE_NAMES, OUTPUT_NAMES, database_path)
+    # validate csv files
+    validate_csv(opaths)
 
 
 # =============================================================================
