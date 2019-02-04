@@ -42,7 +42,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
@@ -76,7 +76,7 @@ SKIP_DONE_FIT_TELLU = False
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 5
+MAX_PROCESSES = 3
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -695,7 +695,11 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     fullcontrol = loc['CONTROL']
     # loop through index files
     lls = []
+    skip = False
     for it, index_file in enumerate(index_files):
+        # if skip then continue
+        if skip:
+            continue
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
@@ -731,9 +735,10 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
             recipe1 = 'cal_HC_E2DS_EA_spirou'
         elif recipe == 'cal_WAVE_E2DS_spirou':
             recipe1 = 'cal_WAVE_E2DS_EA_spirou'
-
         elif recipe == 'obj_mk_tellu_db':
-            lls = [manage_run(p, recipe, [], recipe, dict())]
+            recipe1 = str(recipe)
+            night_name = None
+            skip = True
         else:
             recipe1 = str(recipe)
         # manage the running of this recipe
@@ -767,9 +772,6 @@ def trigger_runs(p, recipe, night_name, control, vindex):
     if recipe == 'cal_SHAPE_spirou':
         return cal_shape_spirou(p, night_name, vindex, groups)
 
-    if recipe == 'cal_SHAPE_spirou2':
-        return cal_shape_spirou2(p, night_name, vindex, groups)
-
     if recipe == 'cal_FF_RAW_spirou':
         return cal_ff_raw_spirou(p, night_name, vindex, groups)
 
@@ -784,6 +786,9 @@ def trigger_runs(p, recipe, night_name, control, vindex):
 
     if recipe == 'obj_mk_tellu':
         return obj_mk_tellu(p, night_name, vindex, groups)
+
+    if recipe == 'obj_mk_tellu_db':
+        return [[]]
 
     if recipe == 'obj_fit_tellu':
         return obj_fit_tellu(p, night_name, vindex, groups)
@@ -1488,6 +1493,7 @@ def main(night_name=None):
     # 13. get cal hc wave solutions
     if RUN_OBJ_MK_TELLU:
         lls = trigger_main(p, loc, recipe='obj_mk_tellu_db')
+        all_lls['obj_mk_tellu_db'] = lls
 
     # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
