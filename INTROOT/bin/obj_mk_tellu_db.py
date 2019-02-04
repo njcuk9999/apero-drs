@@ -76,12 +76,13 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
     wmsg = 'Found {0} Telluric stars ({1} observations total)'
     WLOG(p, 'info', wmsg.format(nfound, nstar))
 
-    # -------------------------------------------------------------------------
-    # Step 0: Reset telluric database
-    # -------------------------------------------------------------------------
-    reset = spirouTools.drs_reset.reset_confirmation(p, 'TelluDB')
-    if reset:
-        spirouTools.drs_reset.reset_telludb(p, False)
+    # # -------------------------------------------------------------------------
+    # # Step 0: Reset telluric database
+    # # -------------------------------------------------------------------------
+    # #reset = spirouTools.drs_reset.reset_confirmation(p, 'TelluDB')
+    # reset = True
+    # if reset:
+    #     spirouTools.drs_reset.reset_telludb(p, False)
 
     # -------------------------------------------------------------------------
     # Step 1: Run mk_tellu on all telluric stars
