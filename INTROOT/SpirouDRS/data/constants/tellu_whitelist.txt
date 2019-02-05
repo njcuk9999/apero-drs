@@ -38,6 +38,7 @@ chiCap
 HR8489
 59Peg
 
+# NIRPS extras?
 mu.For
 HR1075
 HR2160
