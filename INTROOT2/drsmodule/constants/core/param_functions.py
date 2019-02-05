@@ -39,6 +39,8 @@ USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
 # get the Drs Exceptions
+ArgumentError = drs_exceptions.ArgumentError
+ArgumentWarning = drs_exceptions.ArgumentWarning
 DRSError = drs_exceptions.DrsError
 DRSWarning = drs_exceptions.DrsWarning
 TextError = drs_exceptions.TextError
