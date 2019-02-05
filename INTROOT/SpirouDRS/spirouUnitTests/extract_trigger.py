@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = True
+TEST_RUN = False
 TEST_STORE = []
 
 # define run number
@@ -63,7 +63,7 @@ RUN_EXTRACT_TELLU = True
 RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_ALL = True
 RUN_OBJ_MK_TELLU = True
-RUN_OBJ_FIT_TELLU = False
+RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
@@ -77,7 +77,7 @@ SKIP_DONE_FIT_TELLU = False
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 3
+MAX_PROCESSES = 5
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
