@@ -76,7 +76,6 @@ class TextError(TextException):
         basiclogger(message=self.message, level=self.level,  name='Text',
                     force_exit=False, wlog=wlog, **kwargs)
 
-        super(ConfigException, self).__init__('Drs Text Error Logged.')
 
 class TextWarning:
     global USED_TEXT_WARNINGS
@@ -170,7 +169,6 @@ class DrsError(DrsException):
         basiclogger(message=self.message, level=self.level,  name='DRS',
                     force_exit=False, wlog=wlog, **kwargs)
 
-        super(ConfigException, self).__init__('Drs Error Logged.')
 
 class DrsWarning:
     global USED_DRS_WARNINGS
@@ -267,8 +265,6 @@ class ConfigError(ConfigException):
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
 
-        super(ConfigException, self).__init__('Drs Config Error Logged.')
-
 
 class ConfigWarning:
     global USED_CONFIG_WARNINGS
@@ -311,6 +307,102 @@ class ConfigWarning:
             # send to basic logger
             basiclogger(message=self.message, level=self.level,
                         name='Config', force_exit=False, wlog=wlog, **kwargs)
+
+
+class ArgumentException(Exception):
+    """Raised when config file is incorrect"""
+    pass
+
+
+class ArgumentError(ArgumentException):
+    """
+    Custom Config Error for passing to the log
+    """
+
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
+        """
+        Constructor for ConfigError sets message to self.message and level to
+        self.level
+
+        if key is not None defined self.message reads "key [key] must be
+        defined in config file (located at [config_file]
+
+        if config_file is None then deafult config file is used in its place
+
+        :param message: list or string, the message to print in the error
+        :param level: string, level (for logging) must be key in TRIG key above
+                      default = all, error, warning, info or graph
+        """
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='ArgumentError')
+            message = message.split('\n')
+            level = 'error'
+
+        # deal with kwargs being None
+        if kwargs is None:
+            kwargs = dict()
+        # deal with message
+        if message is None:
+            self.message = 'Unknown'
+        elif type(message) == str:
+            self.message = message
+        else:
+            self.message = list(message)
+        # set logging level
+        if level is None:
+            self.level = 'error'
+        else:
+            self.level = level
+        # send to basic logger
+        basiclogger(message=self.message, level=self.level, name='Config',
+                    force_exit=False, wlog=wlog, **kwargs)
+
+
+class ArgumentWarning:
+    global USED_CONFIG_WARNINGS
+
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None):
+
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True,
+                                      reportlevel='ArgumentWarning')
+            message = message.split('\n')
+            level = 'warning'
+        # deal with kwargs being None
+        if kwargs is None:
+            kwargs = dict()
+        # deal with message
+        if message is None:
+            self.message = 'Unknown'
+        elif type(message) == str:
+            self.message = [message]
+        else:
+            self.message = list(message)
+        # set logging level
+        if level is None:
+            self.level = 'warning'
+        else:
+            self.level = level
+        # deal with a list message (for printing)
+        amessage = ''
+        for it, mess in enumerate(self.message):
+            if it > 0:
+                amessage += '\n\t\t{0}'.format(mess)
+            else:
+                amessage += mess
+        if amessage in USED_CONFIG_WARNINGS:
+            pass
+        else:
+            USED_CONFIG_WARNINGS.append(amessage)
+            # send to basic logger
+            basiclogger(message=self.message, level=self.level,
+                        name='Config', force_exit=False, wlog=wlog, **kwargs)
+
 
 
 # =============================================================================
