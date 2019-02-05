@@ -384,12 +384,12 @@ def display_initial_parameterisation(p):
     wmsgs += ErrorEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
     wmsgs += ErrorEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**p))
     if not p['DRS_INTERACTIVE']:
-        wmsgs += ErrorEntry('40-001-00007', args=['DRS_INTERACTIVE'])
+        wmsgs += '\n' + ErrorEntry('40-001-00007', args=['DRS_INTERACTIVE'])
     else:
-        wmsgs += ErrorEntry('40-001-00008', args=['DRS_INTERACTIVE'])
+        wmsgs += '\n' + ErrorEntry('40-001-00008', args=['DRS_INTERACTIVE'])
     if p['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', p['DRS_DEBUG']]
-        wmsgs += ErrorEntry('40-001-00009', args=wargs)
+        wmsgs +=  '\n' + ErrorEntry('40-001-00009', args=wargs)
     # log to screen and file
     WLOG(p, 'info', ErrorEntry('40-001-00006'))
     WLOG(p, 'info', wmsgs, wrap=False)
