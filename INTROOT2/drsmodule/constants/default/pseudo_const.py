@@ -325,7 +325,7 @@ class PseudoConstants:
         if False just the message is printed
         """
         write_level = dict(error=True, warning=True, info=False, graph=False,
-                           all=False, debug=True)
+                           all=False, debug=False)
         return write_level
 
     def SPLASH(self):
