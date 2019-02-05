@@ -20,7 +20,8 @@ from .default import pseudo_const
 # define name of script
 __NAME__ = 'constants.__init__.py'
 # define all functions
-__all__ = ['load', 'ParamDict', 'ConfigError', 'ConfigWarning', 'gen_all']
+__all__ = ['load', 'ParamDict', 'ArgumentError', 'ConfigError',
+           'ConfigWarning', 'gen_all']
 # get non-instrument constants (highest level)
 TopConstants = param_functions.load_config()
 # get non-instrument psuedo constants (highest level)
@@ -46,6 +47,9 @@ get_filenames = param_functions.get_file_names
 
 # param dict
 ParamDict = param_functions.ParamDict
+
+# argument error
+ArgumentError = param_functions.ArgumentError
 
 # config error
 ConfigError = param_functions.ConfigError
