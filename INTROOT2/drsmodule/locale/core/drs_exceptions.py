@@ -53,8 +53,7 @@ class TextError(TextException):
         """
         # deal with errorobj
         if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True,
-                                      reportlevel='TextError')
+            message = errorobj[0].get(errorobj[1], report=True)
             message = message.split('\n')
             level = 'error'
         # deal with kwargs being None
@@ -75,6 +74,9 @@ class TextError(TextException):
         # send to basic logger
         basiclogger(message=self.message, level=self.level,  name='Text',
                     force_exit=False, wlog=wlog, **kwargs)
+
+    def __str__(self):
+        return _flatmessage(self.message)
 
 
 class TextWarning:
@@ -146,8 +148,7 @@ class DrsError(DrsException):
         """
         # deal with errorobj
         if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True,
-                                      reportlevel='DrsError')
+            message = errorobj[0].get(errorobj[1], report=True)
             message = message.split('\n')
             level = 'error'
         # deal with kwargs being None
@@ -168,6 +169,9 @@ class DrsError(DrsException):
         # send to basic logger
         basiclogger(message=self.message, level=self.level,  name='DRS',
                     force_exit=False, wlog=wlog, **kwargs)
+
+    def __str__(self):
+        return _flatmessage(self.message)
 
 
 class DrsWarning:
@@ -241,8 +245,7 @@ class ConfigError(ConfigException):
         """
         # deal with errorobj
         if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True,
-                                      reportlevel='ConfigError')
+            message = errorobj[0].get(errorobj[1], report=True)
             message = message.split('\n')
             level = 'error'
 
@@ -265,6 +268,9 @@ class ConfigError(ConfigException):
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
 
+    def __str__(self):
+        return _flatmessage(self.message)
+
 
 class ConfigWarning:
     global USED_CONFIG_WARNINGS
@@ -274,8 +280,7 @@ class ConfigWarning:
 
         # deal with errorobj
         if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True,
-                                      reportlevel='ConfigWarning')
+            message = errorobj[0].get(errorobj[1], report=True)
             message = message.split('\n')
             level = 'warning'
         # deal with kwargs being None
@@ -293,6 +298,7 @@ class ConfigWarning:
             self.level = 'warning'
         else:
             self.level = level
+
         # deal with a list message (for printing)
         amessage = ''
         for it, mess in enumerate(self.message):
@@ -336,8 +342,7 @@ class ArgumentError(ArgumentException):
         """
         # deal with errorobj
         if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True,
-                                      reportlevel='ArgumentError')
+            message = errorobj[0].get(errorobj[1], report=True)
             message = message.split('\n')
             level = 'error'
 
@@ -359,6 +364,9 @@ class ArgumentError(ArgumentException):
         # send to basic logger
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
+
+    def __str__(self):
+        return  _flatmessage(self.message)
 
 
 class ArgumentWarning:
@@ -460,7 +468,6 @@ def basiclogger(message=None, level=None, name=None, force_exit=True,
         key = '{0} -   |{1} Log| {2}'
     # deal with printing log messages
     if print_statement:
-        print()
         for mess in message:
             # get time
             atime = Time.now()
@@ -470,6 +477,25 @@ def basiclogger(message=None, level=None, name=None, force_exit=True,
     # deal with exiting
     if exit and force_exit:
         sys.exit()
+
+
+def _flatmessage(message):
+
+    # deal with message format (convert to ErrorEntry)
+    if message is None:
+        message = ['']
+    elif type(message) is str:
+        message = [message]
+    elif type(message) is not list:
+        message = ['']
+    outstring = ''
+    for mess in message:
+        mess = mess.replace('\t', ' ')
+        mess = mess.replace('\n', ' ')
+        while '  ' in mess:
+            mess = mess.replace('  ', ' ')
+        outstring += mess
+    return outstring
 
 
 # =============================================================================
