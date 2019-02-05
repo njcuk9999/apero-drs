@@ -182,10 +182,10 @@ class Entry:
 
     def __len__(self):
 
-        allnone = False
+        allnone = True
         for key in self.keys:
-            if key is None:
-                allnone &= True
+            if key is not None:
+                allnone &= False
         if allnone:
             return 0
         else:
@@ -263,7 +263,7 @@ class Entry:
         if reportlevel is None:
             reportlevel = self.short
         elif type(reportlevel) is str:
-            reportlevel = reportlevel.capitalize()
+            reportlevel = reportlevel[0].upper()
         else:
             reportlevel = self.short
 
@@ -377,7 +377,7 @@ class ErrorEntry(Entry):
     def __init__(self, key, args=None, kwargs=None):
         Entry.__init__(self, key, args, kwargs)
         self.name = 'ErrorEntry'
-        self.short = 'Error'
+        self.short = 'E'
 
     def __add__(self, other):
         if type(other) == str:
@@ -407,7 +407,7 @@ class ErrorEntry(Entry):
 class HelpEntry(Entry):
     def __init__(self, key, args=None, kwargs=None):
         Entry.__init__(self, key, args, kwargs)
-        self.name = 'HelpEntry'
+        self.name = 'H'
         self.short = ''
 
     def __add__(self, other):
