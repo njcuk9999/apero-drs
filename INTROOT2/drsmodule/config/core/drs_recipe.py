@@ -14,6 +14,7 @@ from astropy.table import Table
 import importlib
 import argparse
 import os
+import sys
 import glob
 from collections import OrderedDict
 
@@ -43,6 +44,7 @@ COLOR = constants.Colors()
 ParamDict = constants.ParamDict
 # get the config error
 ConfigError = constants.ConfigError
+ArgumentError = constants.ArgumentError
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText
@@ -275,7 +277,10 @@ class DrsRecipe(object):
         if name is None:
             name = 'Arg{0}'.format(len(self.args) + 1)
         # create argument
-        argument = DrsArgument(name, kind='arg', **kwargs)
+        try:
+            argument = DrsArgument(name, kind='arg', **kwargs)
+        except ArgumentError as e:
+            sys.exit(0)
         # make arg parser properties
         argument.make_properties()
         # recast name
@@ -294,7 +299,10 @@ class DrsRecipe(object):
         if name is None:
             name = 'Kwarg{0}'.format(len(self.args) + 1)
         # create keyword argument
-        keywordargument = DrsArgument(name, kind='kwarg', **kwargs)
+        try:
+            keywordargument = DrsArgument(name, kind='kwarg', **kwargs)
+        except ArgumentError as e:
+            sys.exit(0)
         # make arg parser properties
         keywordargument.make_properties()
         # recast name
@@ -581,49 +589,32 @@ class DrsRecipe(object):
         """
         # ---------------------------------------------------------------------
         # make debug functionality
-        dprops = drs_argument.make_debug(self.drs_params)
-        name = dprops['name']
-        debug = DrsArgument(name, kind='special', altnames=dprops['altnames'])
-        debug.assign_properties(dprops)
-        debug.skip = False
-        debug.helpstr = dprops['help']
-        self.specialargs[name] = debug
+        self._make_special(drs_argument.make_debug, skip=False)
         # ---------------------------------------------------------------------
         # make listing functionality
-        lprops = drs_argument.make_listing(self.drs_params)
-        name = lprops['name']
-        listing = DrsArgument(name, kind='special', altnames=lprops['altnames'])
-        listing.assign_properties(lprops)
-        listing.skip = True
-        listing.helpstr = lprops['help']
-        self.specialargs[name] = listing
+        self._make_special(drs_argument.make_listing, skip=True)
         # ---------------------------------------------------------------------
         # make listing all functionality
-        aprops = drs_argument.make_alllisting(self.drs_params)
-        name = aprops['name']
-        alllist = DrsArgument(name, kind='special', altnames=aprops['altnames'])
-        alllist.assign_properties(aprops)
-        alllist.skip = True
-        alllist.helpstr = aprops['help']
-        self.specialargs[name] = alllist
+        self._make_special(drs_argument.make_alllisting, skip=True)
         # ---------------------------------------------------------------------
         # make version functionality
-        vprops = drs_argument.make_version(self.drs_params)
-        name = vprops['name']
-        version = DrsArgument(name, kind='special', altnames=vprops['altnames'])
-        version.assign_properties(vprops)
-        version.skip = True
-        version.helpstr = vprops['help']
-        self.specialargs[name] = version
+        self._make_special(drs_argument.make_version, skip=True)
         # ---------------------------------------------------------------------
         # make info functionality
-        iprops = drs_argument.make_info(self.drs_params)
-        name = iprops['name']
-        info = DrsArgument(name, kind='special', altnames=iprops['altnames'])
-        info.assign_properties(iprops)
-        info.skip = True
-        info.helpstr = iprops['help']
-        self.specialargs[name] = info
+        self._make_special(drs_argument.make_info, skip=True)
+
+    def _make_special(self, function, skip=False):
+        # make debug functionality
+        props = function(self.drs_params)
+        name = props['name']
+        try:
+            spec = DrsArgument(name, kind='special', altnames=props['altnames'])
+        except ArgumentError:
+            sys.exit(0)
+        spec.assign_properties(props)
+        spec.skip = skip
+        spec.helpstr = props['help']
+        self.specialargs[name] = spec
 
     def _drs_usage(self):
         # reset required args
@@ -781,7 +772,7 @@ class DrsRecipe(object):
         # if debug mode print progress
         WLOG(params, 'debug', ErrorEntry('90-001-00002', args=[filename]),
              wrap=False)
-        # perform check
+        # perform location check
         out = _check_file_location(self, argname, directory, filename)
         valid, files, error = out
         if not valid:
@@ -789,6 +780,15 @@ class DrsRecipe(object):
                 return False, None, None, error
             else:
                 return False, None, None
+        # perform file/directory check
+        out = _check_if_directory(argname, files)
+        valid, files, error = out
+        if not valid:
+            if return_error:
+                return False, None, None, error
+            else:
+                return False, None, None
+
         # ---------------------------------------------------------------------
         # The next steps are different depending on the DRS file and
         # we may have multiple files
@@ -885,7 +885,7 @@ class DrsRecipe(object):
                 # add header errors (needed outside drs_file loop)
                 errors += _gen_header_errors(params, header_errors)
                 # add file error (needed only once per filename)
-                eargs = [os.path.basename(filename)]
+                eargs = [os.path.abspath(filename)]
                 errors += '\n' + self.errortext['09-001-00024'].format(*eargs)
                 break
 
@@ -1405,9 +1405,7 @@ def _check_file_location(recipe, argname, directory, filename):
         WLOG(params, 'debug', ErrorEntry('90-001-00007', args=dargs),
              wrap=False)
         output_files.append(raw_file)
-    # check if we are finished here
-    if len(output_files) > 0:
-        return True, output_files, []
+
     # -------------------------------------------------------------------------
     # Deal with cases where we didn't find file
     # -------------------------------------------------------------------------
@@ -1420,6 +1418,45 @@ def _check_file_location(recipe, argname, directory, filename):
         emsg += ErrorEntry('\t\t"{0}"'.format(fitsfile2))
     # return False, no files and error messages
     return False, None, emsg
+
+
+def _check_if_directory(argname, files):
+    """
+    Simple check to see if each file in files is a directory and then
+    checks if file in files is a file with os.path.isfile
+
+    :param argname:
+    :param files:
+    :return:
+    """
+    # empty error entry
+    emsgs = ErrorEntry(None)
+    # loop around files
+    it = 0
+    for filename in files:
+        # set eargs
+        eargs = [argname, filename]
+        # check if directory
+        if os.path.isdir(filename):
+            # Need to add as new line
+            if len(emsgs) > 0:
+                emsgs += '\n' + ErrorEntry('09-001-00026', args=eargs)
+            else:
+                emsgs += ErrorEntry('09-001-00026', args=eargs)
+            continue
+        # check if not file (or link to file)
+        if not os.path.isfile(filename) and not os.path.islink(filename):
+            # Need to add as new line
+            if len(emsgs) > 0:
+                emsgs += '\n' + ErrorEntry('09-001-00025', args=eargs)
+            else:
+                emsgs += ErrorEntry('09-001-00025', args=eargs)
+
+    # if we have emsgs then we need to get the errors
+    if len(emsgs) > 0:
+        return False, None, emsgs
+    else:
+        return True, files, []
 
 
 def _check_file_extension(recipe, argname, filename, ext=None):
