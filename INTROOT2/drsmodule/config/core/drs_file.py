@@ -131,7 +131,6 @@ class DrsInputFile:
             eargs = [func, self.filename, func + '.set_filename()']
             self.__error__(ErrorEntry('00-001-00003', args=eargs))
 
-
     def __str__(self):
         """
         Defines the str(DrsInputFile) return for DrsInputFile
@@ -1141,6 +1140,7 @@ def deal_with_bad_header(p, hdu, filename):
 
     :param p: ParamDict, the constants file
     :param hdu: astropy.io.fits HDU
+    :param filename: string - the filename for logging
 
     :return data:
     :return header:
