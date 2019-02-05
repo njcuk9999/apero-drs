@@ -410,21 +410,23 @@ def display_system_info(p, logonly=True, return_message=False):
     :return None:
     """
     # noinspection PyListCreation
-    messages = ErrorEntry('40-001-00010')
-    messages += ErrorEntry(p['DRS_HEADER'])
+    messages = ' ' + ErrorEntry('40-001-00010')
+    messages += '\n' + ErrorEntry(p['DRS_HEADER'])
     # add version /python dist keys
     messages = sort_version(messages)
     # add os keys
-    messages += ErrorEntry('40-001-00011', args=[sys.executable])
-    messages += ErrorEntry('40-001-00012', args=[sys.platform])
+    messages += '\n' + ErrorEntry('40-001-00011', args=[sys.executable])
+    messages += '\n' + ErrorEntry('40-001-00012', args=[sys.platform])
     # add arguments (from sys.argv)
     for it, arg in enumerate(sys.argv):
-        messages += ErrorEntry('\t Arg {0} = \'{1}\''.format(it + 1, arg))
+        arg_msg = '\t Arg {0} = \'{1}\''.format(it + 1, arg)
+        messages += '\n' + ErrorEntry(arg_msg)
     # add ending header
-    messages += ErrorEntry(p['DRS_HEADER'])
+    messages += '\n' + ErrorEntry(p['DRS_HEADER'])
     if return_message:
         return messages
     else:
+        WLOG(p, 'debug', messages, printonly=True)
         # return messages for logger
         WLOG(p, '', messages, logonly=logonly)
 
@@ -473,9 +475,10 @@ def display_run_time_arguments(recipe, fkwargs=None):
                 log_strings.append('\t--{0}[{1}]: {2}'.format(*largs))
     # -------------------------------------------------------------------------
     # log to screen and log file
-    WLOG(p, 'info', ErrorEntry('40-001-00017'))
-    WLOG(p, 'info', ErrorEntry(log_strings), wrap=False)
-    WLOG(p, '', ErrorEntry(p['DRS_HEADER']))
+    if len(log_strings) > 0:
+        WLOG(p, 'info', ErrorEntry('40-001-00017'))
+        WLOG(p, 'info', ErrorEntry(log_strings), wrap=False)
+        WLOG(p, '', ErrorEntry(p['DRS_HEADER']))
 
 
 # =============================================================================
@@ -653,7 +656,8 @@ def find_ipython():
 # Worker functions
 # =============================================================================
 def assign_pid():
-    return 'PID-{0:020d}'.format(int(time.time() * 1e7))
+    pid = 'PID-{0:020d}'.format(int(time.time() * 1e7))
+    return pid
 
 
 def find_recipe(name=None, instrument=None):
@@ -661,7 +665,6 @@ def find_recipe(name=None, instrument=None):
     # deal with no instrument
     if instrument is None:
         WLOG(None, 'error', ErrorEntry('00-001-00001', args=[func_name]))
-
     # deal with no name or no instrument
     if name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
@@ -898,26 +901,26 @@ def sort_version(messages=None):
     version = '{0}.{1}.{2}'.format(major, minor, micro)
 
     # add version info to messages
-    messages += ErrorEntry('40-001-00013', args=[version])
+    messages += '\n' + ErrorEntry('40-001-00013', args=[version])
 
     # add distribution if possible
     try:
         build = sys.version.split('|')[1].strip()
-        messages += ErrorEntry('40-001-00014', args=[build])
+        messages += '\n' + ErrorEntry('40-001-00014', args=[build])
     except IndexError:
         pass
 
     # add date information if possible
     try:
         date = sys.version.split('(')[1].split(')')[0].strip()
-        messages += ErrorEntry('40-001-00015', args=[date])
+        messages += '\n' + ErrorEntry('40-001-00015', args=[date])
     except IndexError:
         pass
 
     # add Other info information if possible
     try:
         other = sys.version.split('[')[1].split(']')[0].strip()
-        messages += ErrorEntry('40-001-00016', args=[other])
+        messages += '\n' + ErrorEntry('40-001-00016', args=[other])
     except IndexError:
             pass
 
