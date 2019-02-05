@@ -25,7 +25,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['CheckBlackList', 'ConstructConvKernel1', 'ConstructConvKernel2',
            'GetMolecularTellLines', 'GetNormalizedBlaze', 'GetBERV',
            'CalculateAbsorptionPCA', 'CalcReconAbso', 'CalcMolecularAbsorption',
-           'LinMini', 'Wave2Wave']
+           'LinMini', 'Wave2Wave', 'GetBlackList', 'GetWhiteList']
 
 
 # =============================================================================
@@ -47,6 +47,10 @@ GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
 GetNormalizedBlaze = spirouTelluric.get_normalized_blaze
 
 GetBERV = spirouTelluric.get_berv_value
+
+GetBlackList = spirouTelluric.get_blacklist
+
+GetWhiteList = spirouTelluric.get_whitelist
 
 CalculateAbsorptionPCA = spirouTelluric.calculate_absorption_pca
 
