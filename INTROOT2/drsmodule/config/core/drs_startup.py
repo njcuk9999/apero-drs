@@ -314,7 +314,7 @@ def display_title(p, title):
     # Log title
     wmsgs = []
     wmsgs.append(p['DRS_HEADER'])
-    wmsgs.append('{0}'.format(title))
+    wmsgs.append('\n{0}\n'.format(title))
     wmsgs.append(p['DRS_HEADER'])
     # print and log
     WLOG(p, '', wmsgs, wrap=False)
@@ -370,19 +370,19 @@ def display_initial_parameterisation(p):
     :return None:
     """
     # Add initial parameterisation
-    wmsgs = ErrorEntry('\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
-    wmsgs += ErrorEntry('\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
-    wmsgs += ErrorEntry('\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
-    wmsgs += ErrorEntry('\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
-    wmsgs += ErrorEntry('\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
-    wmsgs += ErrorEntry('\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    wmsgs = ErrorEntry('\n\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
     # add config sources
     for source in p['DRS_CONFIG']:
-        wmsgs += ErrorEntry('\tDRS_CONFIG={0}'.format(source))
+        wmsgs += ErrorEntry('\n\tDRS_CONFIG={0}'.format(source))
     # add others
-    wmsgs += ErrorEntry('\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
-    wmsgs += ErrorEntry('\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
-    wmsgs += ErrorEntry('\tDRS_PLOT={DRS_PLOT}'.format(**p))
+    wmsgs += ErrorEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
+    wmsgs += ErrorEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**p))
     if not p['DRS_INTERACTIVE']:
         wmsgs += ErrorEntry('40-001-00007', args=['DRS_INTERACTIVE'])
     else:
