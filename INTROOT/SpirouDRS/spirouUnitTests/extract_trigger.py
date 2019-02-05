@@ -21,6 +21,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTelluric
 from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 from SpirouDRS.spirouUnitTests import spirouUnitTests
 
@@ -94,10 +95,7 @@ DATECOL = 'MJDATE'
 # DATECOL = 'LAST_MODIFIED'
 
 # telluric object list
-TELL_WHITELIST = ['17Peg', '31Cas', '51Dra', '59Peg', '74PscB', 'betSer',
-                  'chiCap', 'gamSct', 'gamTri', 'HD130917', 'HD159170',
-                  'HR1314', 'HR6025', 'HR8489', 'HR875', 'iotCyg', 'omiCapA',
-                  'phiLeo', 'pi.02Ori', 'zetLep', 'zetVir']
+TELL_WHITELIST = spirouTelluric.GetWhiteList()
 
 DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-05-27', '2018-05-28', '2018-05-29', '2018-05-30', '2018-05-31',
