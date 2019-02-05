@@ -630,12 +630,13 @@ class _DisplayInfo(argparse.Action):
 
     def _display_info(self):
         # get params
-        params = self.recipe.drs_params
+        recipe = self.recipe
+        params = recipe.drs_params
+        etext = recipe.errortext
+        htext = recipe.helptext
         program = params['RECIPE']
-        # get text
-        text = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
         # get colours
-        if self.recipe.drs_params['DRS_COLOURED_LOG']:
+        if params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -643,20 +644,32 @@ class _DisplayInfo(argparse.Action):
             yellow, blue = COLOR.ENDC, COLOR.ENDC
         # print usage
         print(green + params['DRS_HEADER'] + end)
-        print(green + text['40-002-00006'].format(program + '.py') + end)
+        print(green + etext['40-002-00006'].format(program + '.py') + end)
         print(green + params['DRS_HEADER'] + end)
         # print version info message
         imsgs = _get_version_info(params, green, end)
         for imsg in imsgs:
             print(imsg)
-
         # noinspection PyProtectedMember
-        print(blue + text['40-002-00007'] + self.recipe._drs_usage() + end)
-        print(blue + self.recipe.description + end)
+        print()
+        print(blue + ' ' + etext['40-002-00007'] + recipe._drs_usage() + end)
+        # print description
+        print()
+        print(blue + params['DRS_HEADER'] + end)
+        print(blue + ' ' + htext['DESCRIPTION_TEXT'] + end)
+        print(blue + params['DRS_HEADER'] + end)
+        print()
+        print(blue + ' ' + recipe.description + end)
         # print examples
-        print(blue + self.recipe.epilog + end)
+        print()
+        print(blue + params['DRS_HEADER'] + end)
+        print(blue + ' ' + htext['EXAMPLES_TEXT'] + end)
+        print(blue + params['DRS_HEADER'] + end)
+        print()
+        print(blue + ' ' + recipe.epilog + end)
+        print(blue + params['DRS_HEADER'] + end)
         # print see help
-        print(green + text['40-002-00008'] + end)
+        print(green + etext['40-002-00008'] + end)
         print()
         # end header
         print(green + params['DRS_HEADER'] + end)
@@ -772,7 +785,7 @@ class DrsArgument(object):
         # get file logic
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
-            ee = ErrorEntry('00-006-00008', args=self.filelogic)
+            ee = ErrorEntry('00-006-00008', args=[self.filelogic])
             self.exception(None, errorobj=[ee, text])
         # deal with no default/default_ref for kwarg
         if kind == 'kwarg':
@@ -882,7 +895,15 @@ class DrsArgument(object):
                 self.props[prop] = props[prop]
 
     def exception(self, message=None, errorobj=None):
-        log_opt = 'DrsArgument[{0}] Error: '.format(self.name)
+
+        if self.kind == 'arg':
+            log_opt = 'A[{0}] '.format(self.name)
+        elif self.kind == 'kwarg':
+            log_opt = 'K[{0}] '.format(self.name)
+        elif self.kind == 'special':
+            log_opt = 'S[{0}] '.format(self.name)
+        else:
+            log_opt = 'X[{0}] '.format(self.name)
 
         if errorobj is not None:
             errorobj[0] = log_opt + errorobj[0]
