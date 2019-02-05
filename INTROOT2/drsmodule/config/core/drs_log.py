@@ -100,7 +100,7 @@ class Logger:
         self.pout['LOGGER_FULL'] = []
         self.pout.set_source('LOGGER_FULL', func_name)
 
-    def __call__(self, p=None, key='', message=None, printonly=False,
+    def __call__(self, params=None, key='', message=None, printonly=False,
                  logonly=False, wrap=True, option=None, colour=None):
         """
         Function-like cal to instance of logger (i.e. WLOG)
@@ -112,7 +112,7 @@ class Logger:
         printing to log file is controlled by "LOG_LEVEL" constant (config.py)
         based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
 
-        :param p: parameter dictionary, ParamDict containing constants
+        :param params: parameter dictionary, ParamDict containing constants
             Must contain at least:
 
         :param key: string, either "error" or "warning" or "info" or graph,
@@ -160,7 +160,7 @@ class Logger:
             key = 'error'
         # ---------------------------------------------------------------------
         # TODO: Remove deprecation warning (once all code changed)
-        if type(p) is str:
+        if type(params) is str:
             # Cannot add this to language pack - no p defined!
             emsg = ('Need to update WLOG function call. New format required:'
                     '\n\n\tNew format: WLOG(p, level_key, message)'
@@ -168,39 +168,39 @@ class Logger:
             raise DeprecationWarning(emsg)
         # ---------------------------------------------------------------------
         # deal with no p and pid
-        if p is None:
-            p = self.pin
-            p['PID'] = None
-            p.set_source('PID', func_name)
+        if params is None:
+            params = self.pin
+            params['PID'] = None
+            params.set_source('PID', func_name)
             # Cannot add this to language pack - no p defined!
-            wmsg = 'Undefined PID not recommended (p is None)'
+            wmsg = 'Undefined PID not recommended (params is None)'
             DrsWarning(wmsg, level='warning')
         # deal with no PID
-        if 'PID' not in p:
-            p['PID'] = None
+        if 'PID' not in params:
+            params['PID'] = None
             # Cannot add this to language pack - no p defined!
             wmsg = 'Undefined PID not recommended (PID is missing)'
             DrsWarning(wmsg, level='warning')
         # deal with no instrument
-        if 'INSTRUMENT' not in p:
-            p['INSTRUMENT'] = None
+        if 'INSTRUMENT' not in params:
+            params['INSTRUMENT'] = None
         # deal with no language
-        if 'LANGUAGE' not in p:
-            p['LANGUAGE'] = 'ENG'
+        if 'LANGUAGE' not in params:
+            params['LANGUAGE'] = 'ENG'
         # update pin and pconstant from p (selects instrument)
-        self.update_param_dict(p)
+        self.update_param_dict(params)
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
-        debug = p.get('DRS_DEBUG', 0)
+        debug = params.get('DRS_DEBUG', 0)
         if key == 'debug' and debug == 0:
             return
         # ---------------------------------------------------------------------
         # deal with option
         if option is not None:
             option = option
-        elif 'RECIPE' in p:
-            option = p['RECIPE']
+        elif 'RECIPE' in params:
+            option = params['RECIPE']
         else:
             option = ''
         # ---------------------------------------------------------------------
@@ -235,6 +235,9 @@ class Logger:
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         report = self.pconstant.REPORT_KEYS().get(key, False)
+        # special case of report
+        if debug >= 100:
+            report = True
         # get messages
         if type(message) is HelpEntry:
             raw_message1 = msg_obj.get(self.helptext, report=report,
@@ -267,7 +270,7 @@ class Logger:
                         self.logger_storage(key, human_time, new_message,
                                             printonly)
                         # print to stdout
-                        printlog(self, p, cmd, key, colour)
+                        printlog(self, params, cmd, key, colour)
                 else:
                     cmdargs = [human_time, code, option, mess]
                     cmd = LOGFMT.format(*cmdargs)
@@ -276,7 +279,7 @@ class Logger:
                     # add to logger storage
                     self.logger_storage(key, human_time, mess, printonly)
                     # print to stdout
-                    printlog(self, p, cmd, key, colour)
+                    printlog(self, params, cmd, key, colour)
         # ---------------------------------------------------------------------
         # get log parameters (in set language)
         # ---------------------------------------------------------------------
@@ -311,18 +314,18 @@ class Logger:
                 # append separate commands for log writing
                 cmds.append(cmd)
                 # get logfilepath
-                logfilepath, warning = get_logfilepath(self, p)
+                logfilepath, warning = get_logfilepath(self, params)
                 # write to log file
                 if len(warning) == 0:
                     for cmd in cmds:
-                        writelog(self, p, cmd, key, logfilepath)
+                        writelog(self, params, cmd, key, logfilepath)
                 # see if we have warning
-                if warning and ('DRS_LOG_WARNING_ACTIVE' in p):
-                    negate_warning = p['DRS_LOG_WARNING_ACTIVE']
+                if warning and ('DRS_LOG_WARNING_ACTIVE' in params):
+                    negate_warning = params['DRS_LOG_WARNING_ACTIVE']
                 elif warning:
                     negate_warning = False
-                    p['DRS_LOG_WARNING_ACTIVE'] = True
-                    p.set_source('DRS_LOG_WARNING_ACTIVE', func_name)
+                    params['DRS_LOG_WARNING_ACTIVE'] = True
+                    params.set_source('DRS_LOG_WARNING_ACTIVE', func_name)
                 else:
                     negate_warning = True
                 # if warning is True then we used TDATA and should report that
@@ -330,6 +333,7 @@ class Logger:
                     if not logonly:
                         for warn in warning:
                             errors.append([warn, 'warning', human_time, option])
+
         # ---------------------------------------------------------------------
         # deal with errors caused by logging (print)
         # --------------------------------------------------------------------
@@ -340,7 +344,7 @@ class Logger:
                 key = 'error'
             if error[0] not in used:
                 self.logger_storage(key, error[2], error[0])
-                printlogandcmd(self, p, *error, wrap=wrap, colour=colour)
+                printlogandcmd(self, params, *error, wrap=wrap, colour=colour)
                 used.append(error[0])
         # ---------------------------------------------------------------------
         # deal with exiting
@@ -360,10 +364,10 @@ class Logger:
                     errorstring += error[0] + '\n'
             # deal with debugging
             if debug:
-                debug_start(self, p, errorstring)
+                debug_start(self, params, errorstring)
             else:
                 # self.pconstant.EXIT(p)(errorstring)
-                self.pconstant.EXIT(p)()
+                self.pconstant.EXIT(params)()
 
     def update_param_dict(self, paramdict):
         # update the parameter dictionary
@@ -469,7 +473,7 @@ def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
     elif type(list):
         message = list(message)
     else:
-        message = [logobj.errortext('00-005-00005').format(message)]
+        message = [logobj.errortext['00-005-00005'].format(message)]
         key = 'error'
     for mess in message:
         code = logobj.pconstant.LOG_TRIG_KEYS().get(key, ' ')
@@ -621,12 +625,14 @@ def get_logfilepath(logobj, p):
     print_warnings = []
     # if None use "TDATA"
     if dir_data_msg is None:
-        print_warnings += logobj.errortext('10-005-00002').format(msgkey)
+        wmsg = logobj.errortext['10-005-00002'].format(msgkey)
+        print_warnings += wmsg.split('\n')
         warning = True
     # if it doesn't exist also set to TDATA
     elif not os.path.exists(dir_data_msg):
         margs = [msgkey, p[msgkey]]
-        print_warnings += logobj.errortext('10-005-00003').format(*margs)
+        wmsg = logobj.errortext['10-005-00003'].format(*margs)
+        print_warnings += wmsg.split('\n')
         warning = True
     else:
         warning = False
