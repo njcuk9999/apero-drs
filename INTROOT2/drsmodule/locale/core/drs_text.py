@@ -130,6 +130,7 @@ class Entry:
     def __init__(self, key, args=None, kwargs=None):
         self.name = 'Entry'
         self.short = ''
+        self.current = 0
         # make keys a list
         if type(key) is list:
             self.keys = key
@@ -154,13 +155,94 @@ class Entry:
     def __repr__(self):
         return self.__str__()
 
-    def __add__(self, self2):
-        keys = self.keys + self2.keys
-        args = self.args + self2.args
-        kwargs = self.kwargs
-        for kwarg2 in self2.kwargs:
-            kwargs[kwarg2] = self2.kwargs[kwarg2]
-        return Entry(keys, args, kwargs)
+    def __add__(self, other):
+
+        if type(other) == str:
+            message2 = ErrorEntry(other)
+            return self + message2
+        else:
+            keys = self.keys + other.keys
+            args = self.args + other.args
+            kwargs = self.kwargs
+            for kwarg2 in other.kwargs:
+                kwargs[kwarg2] = other.kwargs[kwarg2]
+            return Entry(keys, args, kwargs)
+
+    def __radd__(self, other):
+        if type(other) == str:
+            message2 = Entry(other)
+            return message2 + self
+        else:
+            keys = other.keys + self.keys
+            args = other.args + self.args
+            kwargs = other.kwargs
+            for kwarg2 in self.kwargs:
+                kwargs[kwarg2] = self.kwargs[kwarg2]
+            return Entry(keys, args, kwargs)
+
+    def __len__(self):
+
+        allnone = False
+        for key in self.keys:
+            if key is None:
+                allnone &= True
+        if allnone:
+            return 0
+        else:
+            return len(self.keys)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.current > (len(self.keys) - 1):
+            self.current = 0
+            raise StopIteration
+        else:
+            self.current += 1
+            key = self.keys[self.current - 1]
+            args = self.args[self.current - 1]
+            return Entry(key, args, self.kwargs)
+
+    def __eq__(self, other):
+        # if we aren't dealing with Entries then they are not equal
+        if not isinstance(other, type(self)):
+            return False
+        # if we are we have a few extra criteria
+        equal = True
+        # check keys, args and kwargs
+        equal &= self.keys == other.keys
+        equal &= self.args == other.args
+        equal &= self.kwargs == other.kwargs
+        # return whether equal
+        return equal
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __contains__(self, item):
+        # start thinking item is contained
+        contains = True
+        # copy keys, args, kwargs
+        keys = list(self.keys)
+        args = list(self.args)
+        kwargs = dict(self.kwargs)
+        # check keys, args, kwargs
+        # must remove entries to make sure we don't check same entry twice
+        for it, key in enumerate(item.keys):
+            contains &= (key in keys)
+            if key in keys:
+                keys.pop(it)
+        for it, arg in enumerate(item.args):
+            contains &= (arg in args)
+            if arg in args:
+                args.pop(it)
+        for kwarg in item.kwargs:
+            contains &= (kwarg in kwargs)
+            if kwarg in kwargs:
+                del kwargs[kwarg]
+        # return critera
+        return contains
 
     def get(self, tobj=None, report=False, reportlevel=None):
         """
@@ -191,22 +273,53 @@ class Entry:
             if (tobj is not None) and (key not in tobj.dict):
                 args = self._convert_args(it, tobj)
                 kwargs = self._convert_kwargs(tobj)
-                msg_value = key.format(*args, **kwargs)
+                # deal with msg_value being None
+                if key is None:
+                    msg_value = ''
+                else:
+                    # deal with args and kwargs not being defined
+                    try:
+                        msg_value = key.format(*args, **kwargs)
+                    except IndexError:
+                        msg_value = key
+                    except KeyError:
+                        msg_value = key
                 valuestr += '{1}'.format(reportlevel, msg_value)
+                # add separator between list entries
+                if key is None:
+                    pass
+                elif (len(self.keys) != 1) and (it != len(self.keys) - 1):
+                    valuestr += ' '
+
             elif tobj is not None:
                 args = self._convert_args(it, tobj)
                 kwargs = self._convert_kwargs(tobj)
-                msg_value = tobj[key].format(*args, **kwargs)
+                # deal with msg_value being None
+                if tobj[key] is None:
+                    msg_value = ''
+                else:
+                    # deal with args and kwargs not being defined
+                    try:
+                        msg_value = tobj[key].format(*args, **kwargs)
+                    except IndexError:
+                        msg_value = tobj[key]
+                    except KeyError:
+                        msg_value = tobj[key]
                 vargs = [reportlevel, key, msg_value]
                 if report:
                     valuestr += '{0}[{1}]: {2}'.format(*vargs)
                 else:
                     valuestr += '{2}'.format(*vargs)
+                # add separator between list entries
+                if tobj[key] is None:
+                    pass
+                elif (len(self.keys) != 1) and (it != len(self.keys) - 1):
+                    valuestr += ' '
             else:
-                valuestr += '{0}[{1}]'.format(reportlevel, key)
-            # add separator between list entries
-            if (len(self.keys) != 1) and (it != len(self.keys) - 1):
-                valuestr += '\n'
+                valuestr += '{0}[{1}]'.format(reportlevel, repr(key))
+                # add separator between list entries
+                if (len(self.keys) != 1) and (it != len(self.keys) - 1):
+                    valuestr += ' '
         # return string
         return valuestr
 
@@ -266,13 +379,29 @@ class ErrorEntry(Entry):
         self.name = 'ErrorEntry'
         self.short = 'Error'
 
-    def __add__(self, self2):
-        keys = self.keys + self2.keys
-        args = self.args + self2.args
-        kwargs = self.kwargs
-        for kwarg2 in self2.kwargs:
-            kwargs[kwarg2] = self2.kwargs[kwarg2]
-        return ErrorEntry(keys, args, kwargs)
+    def __add__(self, other):
+        if type(other) == str:
+            message2 = ErrorEntry(other)
+            return self + message2
+        else:
+            keys = self.keys + other.keys
+            args = self.args + other.args
+            kwargs = self.kwargs
+            for kwarg2 in other.kwargs:
+                kwargs[kwarg2] = other.kwargs[kwarg2]
+            return ErrorEntry(keys, args, kwargs)
+
+    def __radd__(self, other):
+        if type(other) == str:
+            message2 = ErrorEntry(other)
+            return message2 + self
+        else:
+            keys = other.keys + self.keys
+            args = other.args + self.args
+            kwargs = other.kwargs
+            for kwarg2 in self.kwargs:
+                kwargs[kwarg2] = self.kwargs[kwarg2]
+            return ErrorEntry(keys, args, kwargs)
 
 
 class HelpEntry(Entry):
@@ -281,15 +410,31 @@ class HelpEntry(Entry):
         self.name = 'HelpEntry'
         self.short = ''
 
-    def __add__(self, self2):
-        keys = self.keys + self2.keys
+    def __add__(self, other):
+        if type(other) == str:
+            message2 = HelpEntry(other)
+            return self + message2
+        else:
+            keys = self.keys + other.keys
 
-        # add args
-        args = self.args + self2.args
-        kwargs = self.kwargs
-        for kwarg2 in self2.kwargs:
-            kwargs[kwarg2] = self2.kwargs[kwarg2]
-        return HelpEntry(keys, args, kwargs)
+            # add args
+            args = self.args + other.args
+            kwargs = self.kwargs
+            for kwarg2 in other.kwargs:
+                kwargs[kwarg2] = other.kwargs[kwarg2]
+            return HelpEntry(keys, args, kwargs)
+
+    def __radd__(self, other):
+        if type(other) == str:
+            message2 = HelpEntry(other)
+            return message2 + self
+        else:
+            keys = other.keys + self.keys
+            args = other.args + self.args
+            kwargs = other.kwargs
+            for kwarg2 in self.kwargs:
+                kwargs[kwarg2] = self.kwargs[kwarg2]
+            return HelpEntry(keys, args, kwargs)
 
 
 # =============================================================================
