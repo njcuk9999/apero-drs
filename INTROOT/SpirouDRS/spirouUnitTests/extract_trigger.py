@@ -97,6 +97,7 @@ DATECOL = 'MJDATE'
 # telluric object list
 TELL_WHITELIST = spirouTelluric.GetWhiteList()
 
+# this is only used if DATES is not None
 DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-05-27', '2018-05-28', '2018-05-29', '2018-05-30', '2018-05-31',
          '2018-07-22', '2018-07-23', '2018-07-24', '2018-07-25', '2018-07-26',
