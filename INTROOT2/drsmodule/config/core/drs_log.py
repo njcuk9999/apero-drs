@@ -161,6 +161,7 @@ class Logger:
         # ---------------------------------------------------------------------
         # TODO: Remove deprecation warning (once all code changed)
         if type(p) is str:
+            # Cannot add this to language pack - no p defined!
             emsg = ('Need to update WLOG function call. New format required:'
                     '\n\n\tNew format: WLOG(p, level_key, message)'
                     '\n\n\tOld format: WLOG(level_key, option, message)')
@@ -171,12 +172,14 @@ class Logger:
             p = self.pin
             p['PID'] = None
             p.set_source('PID', func_name)
-            wmsg = 'Dev: Undefined PID not recommended (p is None)'
+            # Cannot add this to language pack - no p defined!
+            wmsg = 'Undefined PID not recommended (p is None)'
             DrsWarning(wmsg, level='warning')
         # deal with no PID
         if 'PID' not in p:
             p['PID'] = None
-            wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
+            # Cannot add this to language pack - no p defined!
+            wmsg = 'Undefined PID not recommended (PID is missing)'
             DrsWarning(wmsg, level='warning')
         # deal with no instrument
         if 'INSTRUMENT' not in p:
