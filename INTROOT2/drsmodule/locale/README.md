@@ -11,6 +11,8 @@
 
 ## databases
 
+- DO NOT edit the `.csv` files directly they will be overwritten by code (from the `language.xls` file) 
+
 - contains the language databases
     - `language.xls`
 
