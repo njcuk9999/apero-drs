@@ -19,6 +19,7 @@ from astropy.io import fits
 from collections import OrderedDict
 
 from drsmodule import constants
+from drsmodule.locale import drs_text
 from drsmodule.config import drs_log
 from . import drs_lock
 
@@ -38,6 +39,9 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+ErrorEntry = drs_text.ErrorEntry
+
 # -----------------------------------------------------------------------------
 
 
@@ -68,34 +72,28 @@ def make_table(p, columns, values, formats=None, units=None):
     # make empty table
     table = Table()
     # get variables
-    emsg = ('Column names (length = {0}) must be equal length of {1} '
-            ' (length = {2})')
     lcol = len(columns)
-    lval = len(values)
     # make sure we have as many columns as we do values
-    if lcol != lval:
-        WLOG(p, 'error', emsg.format(lcol, 'values', lval))
+    if lcol != len(values):
+        eargs = [lcol, len(values), func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00001', args=eargs))
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
-            emsg1 = emsg.format(lcol, 'formats', len(formats))
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2])
+            eargs = [lcol, len(formats), func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00002', args=eargs))
     else:
         formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
-            emsg1 = emsg.format(lcol, 'units', len(formats))
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2])
+            eargs = [lcol, len(units), func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00003', args=eargs))
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
-            emsg1 = 'All values must have same number of rows '
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2])
+            WLOG(p, 'error', ErrorEntry('01-002-00004', args=[func_name]))
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -107,10 +105,8 @@ def make_table(p, columns, values, formats=None, units=None):
             if test_format(formats[c_it]):
                 table[col].format = formats[c_it]
             else:
-                eargs1 = [formats[c_it], col]
-                emsg1 = 'Format "{0}" is invalid (Column = {1})'
-                emsg2 = '    function = {0}'.format(func_name)
-                WLOG(p, 'error', [emsg1.format(*eargs1), emsg2])
+                eargs = [formats[c_it], col, func_name]
+                WLOG(p, 'error', ErrorEntry('01-002-00005', args=eargs))
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -154,16 +150,14 @@ def write_table(p, table, filename, fmt='fits', header=None):
     ftable = list_of_formats()
     # check that format in format_table
     if fmt not in ftable['Format']:
-        emsg1 = 'fmt={0} not valid for astropy.table reading'.format(fmt)
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [fmt, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
-        if not ftable['read?'][pos]:
-            emsg1 = 'fmt={0} cannot be read by astropy.table'.format(fmt)
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2])
+        if not ftable['write?'][pos]:
+            eargs = [fmt, func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00007', args=eargs))
     # get and check for file lock file
     lock, lock_file = drs_lock.check_fits_lock_file(p, filename)
     # try to write table to file
@@ -176,10 +170,8 @@ def write_table(p, table, filename, fmt='fits', header=None):
         # close lock file
         drs_lock.close_fits_lock_file(p, lock, lock_file, filename)
         # log error
-        emsg1 = 'Cannot write table to file'
-        emsg2 = '    Error {0}: {1}'.format(type(e), e)
-        emsg3 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        eargs = [type(e), e, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00008', args=eargs))
 
     if (fmt == 'fits') and (header is not None):
         # reload fits data
@@ -199,10 +191,8 @@ def write_table(p, table, filename, fmt='fits', header=None):
             # close lock file
             drs_lock.close_fits_lock_file(p, lock, lock_file, filename)
             # log error
-            emsg1 = 'Cannot write header to file'
-            emsg2 = '    Error {0}: {1}'.format(type(e), e)
-            emsg3 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+            eargs = [type(e), e, func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00009', args=eargs))
 
 
 def merge_table(p, table, filename, fmt='fits'):
@@ -233,10 +223,8 @@ def merge_table(p, table, filename, fmt='fits'):
         try:
             new_table = vstack([old_table, table])
         except TableMergeError as e:
-            emsg1 = 'Cannot merge file={0}'.format(filename)
-            emsg2 = '    Error reads: {0}'.format(e)
-            emsg3 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+            eargs = [filename, type(e), e, func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00010', args=eargs))
             new_table = None
         # write new table
         write_table(p, new_table, filename, fmt)
@@ -271,18 +259,14 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
 
     # check that format in format_table
     if fmt not in ftable['Format']:
-        emsg1 = 'fmt={0} not valid for astropy.table reading'
-        emsg2 = '    file = {0}'.format(filename)
-        emsg3 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        eargs = [fmt, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
-            emsg1 = 'fmt={0} cannot be read by astropy.table'
-            emsg2 = '    file = {0}'.format(filename)
-            emsg3 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+            eargs = [fmt, func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00008', args=eargs))
 
     # check that filename exists
     if not os.path.exists(filename):
@@ -291,25 +275,22 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
         emsg3 = '    function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
+        eargs = [filename, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00011', args=eargs))
+
     # try to load file using astropy table
     try:
         table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
-        emsg1 = ' Error {0}: {1}'.format(type(e), e)
-        emsg2 = '    file = {0}'.format(filename)
-        emsg3 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        eargs = [type(e), e, filename, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00012', args=eargs))
         table = None
 
     # if we have colnames rename the columns
     if colnames is not None:
         if len(colnames) != len(table.colnames):
-            emsg1 = ('Number of columns ({0}) not equal to number of '
-                     'columns in table ({1})'
-                     ''.format(len(colnames), len(table.colnames)))
-            emsg2 = '    file = {0}'.format(filename)
-            emsg3 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+            eargs = [len(colnames), len(table.colnames), filename, func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00013', args=eargs))
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
@@ -349,19 +330,16 @@ def read_fits_table(p, filename, return_dict=False):
     func_name = __NAME__ + '.read_fits_table()'
     # check that filename exists
     if not os.path.exists(filename):
-        emsg1 = 'File {0} does not exist'
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [filename, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00014', args=eargs))
     # read data
     try:
         astropy_table = Table.read(filename)
     except OSError as e:
         astropy_table = deal_with_missing_end_card(p, filename, e, func_name)
     except Exception as e:
-        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
-        emsg2 = '\tError was: {0}'.format(e)
-        emsg3 = '\tfunction = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        eargs = [filename, type(e), e, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00015', args=eargs))
         astropy_table = None
     # return dict if return_dict is True
     if return_dict:
@@ -382,9 +360,10 @@ def write_fits_table(p, astropy_table, output_filename):
     dir_name = os.path.dirname(output_filename)
     # check directory exists
     if not os.path.exists(dir_name):
-        emsg1 = 'Errors directory {0} does not exist'.format(dir_name)
-        emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2])
+        eargs = [dir_name, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00016', args=eargs))
+
+
     # get and check for file lock file
     lock, lock_file = drs_lock.check_fits_lock_file(p, output_filename)
     # write data
@@ -397,10 +376,8 @@ def write_fits_table(p, astropy_table, output_filename):
         # close lock file
         drs_lock.close_fits_lock_file(p, lock, lock_file, output_filename)
         # log error
-        emsg1 = 'Error cannot write {0} as a fits table'.format(output_filename)
-        emsg2 = '\tError was: {0}'.format(e)
-        emsg3 = '\tfunction = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        eargs = [output_filename, type(e), e, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00017', args=eargs))
 
 
 # TODO: Find cause of this problem and fix properly
@@ -434,32 +411,21 @@ def deal_with_missing_end_card(p, filename, e, func_name):
         data = hdu[1].data
         ext = 1
     else:
-        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
-        emsg2 = '\tError was: {0}'.format(e)
-        emsg3 = '\tfunction = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        eargs = [filename, type(e), e, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00018', args=eargs))
         data = None
     # test that we have columns and names
     if not hasattr(data, 'columns'):
-        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
-        emsg2 = '\tError was: data cannot read "columns"'
-        emsg3 = '\tError was: {0}'.format(e)
-        emsg4 = '\tfunction = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
+        eargs = [filename, type(e), e, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00019', args=eargs))
         data = None
     if not hasattr(data.columns, 'names'):
-        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
-        emsg2 = '\tError was: data cannot read "columns.names"'
-        emsg3 = '\tError was: {0}'.format(e)
-        emsg4 = '\tfunction = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
+        eargs = [filename, type(e), e, func_name]
+        WLOG(p, 'error', ErrorEntry('01-002-00020', args=eargs))
         data = None
     # print warning
-    wmsg1 = 'Error found = {0}'.format(e)
-    wmsg2 = '\tCorrected by manually reading extension {0} as table'.format(ext)
-    wmsg3 = '\tSaving over file "{0}"'.format(filename)
-    wmsg4 = '\tfunction = {0}'.format(func_name)
-    WLOG(p, 'warning', [wmsg1, wmsg2, wmsg3, wmsg4])
+    wargs = [type(e), e, ext, filename, func_name]
+    WLOG(p, 'warning', ErrorEntry('10-001-00006', args=wargs))
     # convert data to astropy table
     astropy_table = Table()
     for col in data.columns.names:
@@ -483,17 +449,15 @@ def prep_merge(p, filename, table, preptable):
         pformat = preptable[col].dtype
         # check for column name
         if col not in table.colnames:
-            emsg1 = 'Column {0} not in file {1}'.format(col, filename)
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [emsg1, emsg2])
+            eargs = [col, filename, func_name]
+            WLOG(p, 'error', ErrorEntry('01-002-00021', args=eargs))
         # check format
         if table[col].dtype != pformat:
             try:
                 newtable[col] = np.array(table[col]).astype(pformat)
             except Exception as e:
-                emsg1 = 'Incompatible data types for column={0} for file {1}'
-                emsg2 = '    error reads: {0}'.format(e)
-                WLOG(p, 'error', [emsg1.format(col, filename), emsg2])
+                eargs = [col, filename, type(e), e, func_name]
+                WLOG(p, 'error', ErrorEntry('01-002-00022', args=eargs))
         else:
             newtable[col] = table[col]
     # return prepped table
@@ -558,6 +522,7 @@ def string_formats(ftable=None, mask=None):
     if mask is None:
         mask = np.ones(len(ftable), dtype=bool)
     # construct the top
+    # Cannot change language (as have no access to p)
     string = '\n\t Format \n\t ----------------------'
     # loop around the rows in Formats
     for row, fmt in enumerate(ftable['Format']):
