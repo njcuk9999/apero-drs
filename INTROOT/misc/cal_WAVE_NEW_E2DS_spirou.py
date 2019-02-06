@@ -606,7 +606,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.plot(one_m_d_all, d_all, 'o')
             plt.xlabel('1/m')
             plt.ylabel('d')
-            plt.title('First sigma-clip')
+            plt.title('Interpolated cavity width for HC lines (First sigma-clip)')
 
 
     # ----------------------------------------------------------------------
@@ -645,6 +645,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.xlabel('1/m')
         plt.ylabel('d')
         plt.legend(loc='best')
+        plt.title('Interpolated cavity width for HC lines')
 
     # ----------------------------------------------------------------------
     # Update FP peak wavelengths
@@ -800,19 +801,23 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
             plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][order_num]), color=col1_1,
                        linestyles=lty_1)
+            plt.xlabel('Wavelength (nm)')
+            plt.ylabel('Flux')
 
     # ----------------------------------------------------------------------
     # Do Littrow check
     # ----------------------------------------------------------------------
-
-    # calculate echelle orders
-    o_orders = np.arange(n_init, n_fin)
+    #reset orders to ignore 0 in Littrow
+    start = p['IC_LITTROW_ORDER_INIT_2']
+    end = p['IC_LITTROW_ORDER_FINAL_2']
+    # recalculate echelle orders for Littrow check
+    o_orders = np.arange(start, end)
     echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
     loc['ECHELLE_ORDERS'] = echelle_order
     loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
     # Do Littrow check
-    ckwargs = dict(ll=wave_map_final, iteration=2, log=True)
+    ckwargs = dict(ll=wave_map_final[start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
@@ -830,7 +835,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc['LL_PARAM_2'] = poly_wave_sol_final
     p['IC_HC_N_ORD_START_2'] = n_init
     p['IC_HC_N_ORD_FINAL_2'] = n_fin
-    p['IC_LITTROW_ORDER_INIT_2'] = n_init
+    # p['IC_LITTROW_ORDER_INIT_2'] = n_init
     loc['X_MEAN_2'] = final_mean
     loc['X_VAR_2'] = final_var
 
