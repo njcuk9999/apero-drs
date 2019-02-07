@@ -380,12 +380,12 @@ def main(night_name=None, files=None):
         passed, fail_msg = True, []
         # get SNR for each order from header
         nbo = loc['DATA'].shape[0]
-        snr_order = p['QC_TELLU_SNR_ORDER']
+        snr_order = p['QC_MK_TELLU_SNR_ORDER']
         snr = spirouImage.Read1Dkey(p, shdr, p['kw_E2DS_SNR'][0], nbo)
         # check that SNR is high enough
-        if snr[snr_order] < p['QC_TELLU_SNR_MIN']:
+        if snr[snr_order] < p['QC_MK_TELLU_SNR_MIN']:
             fmsg = 'low SNR in order {0}: ({1:.2f} < {2:.2f})'
-            fargs = [snr_order, snr[snr_order], p['QC_TELLU_SNR_MIN']]
+            fargs = [snr_order, snr[snr_order], p['QC_MK_TELLU_SNR_MIN']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
         # check that the RMS is not too low
