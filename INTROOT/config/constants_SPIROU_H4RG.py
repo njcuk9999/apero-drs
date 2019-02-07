@@ -1381,11 +1381,19 @@ qc_wave_idrift_rv_max = 150.0
 
 #   Define the order to use for SNR check when accepting tellu   -[obj_mk_tellu]
 #      files to the telluDB
-qc_tellu_snr_order = 33
+qc_mk_tellu_snr_order = 33
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER"         -[obj_mk_tellu]
 #      that will be accepted to the telluDB
-qc_tellu_snr_min = 100
+qc_mk_tellu_snr_min = 100
+
+#   Define the order to use for SNR check when accepting tellu   -[obj_mk_tellu]
+#      files to the telluDB
+qc_fit_tellu_snr_order = 33
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER"         -[obj_mk_tellu]
+#      that will be accepted to the telluDB
+qc_fit_tellu_snr_min = 10
 
 #  Define the maximum RMS around 1 for domain clean from         -[obj_mk_tellu]
 #     tellurics according to TAPAS
