@@ -11,6 +11,7 @@ Created on 2019-02-07 at 17:20
 """
 import numpy as np
 import os
+from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -36,7 +37,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 EXTS = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
-
+OUTPATH = '/spirou/cook/corrupt_files/rms_list.fits'
 
 # =============================================================================
 # Define functions
@@ -115,7 +116,11 @@ def find_hotpix_offset(p, filename, yhot, xhot):
     # get the med_size
     med_size = p['PP_CORRUPT_MED_SIZE']
     # get data
-    data, _, _, _, _ = spirouImage.ReadImage(p, filename, kind='None',                                       log=False)
+    try:
+        data, _, _, _, _ = spirouImage.ReadImage(p, filename, kind='None',
+                                                 log=False)
+    except SystemExit:
+        return np.nan
     # get median hot pixel box
     med_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1])
     # loop around x
@@ -126,7 +131,7 @@ def find_hotpix_offset(p, filename, yhot, xhot):
             posx = dx + med_size
             posy = dy + med_size
             # get the hot pixel values at position in median box
-            data_hot = data[yhot + dx, xhot + dy]
+            data_hot = np.array(data[yhot + dx, xhot + dy])
             # median the data_hot for this box position
             med_hotpix[posx, posy] = np.nanmedian(data_hot)
     # work out an rms
@@ -135,6 +140,15 @@ def find_hotpix_offset(p, filename, yhot, xhot):
     return rms
 
 
+def update_table(path, file_values, rms_values):
+    outtable = Table()
+    outtable['FILENAME'] = file_values
+    outtable['RMS'] = rms_values
+    outtable.write(path, format='fits', overwrite=True)
+    return outtable
+
+
+# main function
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Set up
@@ -158,17 +172,36 @@ if __name__ == "__main__":
     # get the file list
     filelist = get_all_fits_files(p, p['DRS_DATA_RAW'])
     # ----------------------------------------------------------------------
+    # load outfile/outtable
+    outtable = update_table(OUTPATH, [], [])
+
+    # ----------------------------------------------------------------------
     # store rms values
-    rms_array = []
+    rms_array = list(outtable['RMS'])
+    file_array = list(outtable['FILENAME'])
     # loop around files and save RMS value
     for it, filename in enumerate(filelist):
+        # skip if we already have entry
+        if filename in outtable['FILENAME']:
+            wmsg = 'Skipping file {0} of {1}'.format(it +1, len(filelist))
+            WLOG(p, '', wmsg)
+            continue
         # print progress
         wmsg = 'Analysising file {0} of {1}'.format(it + 1, len(filelist))
         WLOG(p, '', wmsg)
         # get the rms
-        rms = find_hotpix_offset(p, filename, yhot, xhot)
+        try:
+            rms = find_hotpix_offset(p, filename, yhot, xhot)
+        except Exception as e:
+            print('\tError caught')
+            print('\tError {0}: {1}'.format(type(e), e))
+            rms = np.nan
+
         # add to array
         rms_array.append(rms)
+        file_array.append(filename)
+        # write to output table
+        outtable = update_table(OUTPATH, file_array, rms_array)
 
     # make rms_array a numpy array
     rms_array = np.array(rms_array)
