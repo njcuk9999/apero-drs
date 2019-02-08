@@ -336,6 +336,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save cubes to file
     # ----------------------------------------------------------------------
+    # make big cube table
+    big_table = spirouTelluric.ConstructBigTable(p, loc)
     # construct file names
     outfile1, tag1 = spirouConfig.Constants.OBJTELLU_TEMPLATE_CUBE_FILE1(p, loc)
     outfile2, tag2 = spirouConfig.Constants.OBJTELLU_TEMPLATE_CUBE_FILE2(p, loc)
@@ -344,12 +346,10 @@ def main(night_name=None, files=None):
     # save big cube 1
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     big_cube_s = np.swapaxes(big_cube, 1, 2)
-    p = spirouImage.WriteImage(p, outfile1, big_cube_s, hdict)
+    p = spirouImage.WriteImageTable(p, outfile1, image=big_cube_s,
+                                    table=big_table, hdict=hdict)
     # log big cube 0
     wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
-
-    # make big cube table
-    big_table = spirouTelluric.ConstructBigTable(p, loc)
     # save big cube 0
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
