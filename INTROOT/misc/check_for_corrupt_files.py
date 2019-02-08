@@ -12,6 +12,7 @@ Created on 2019-02-07 at 17:20
 import numpy as np
 import os
 from astropy.table import Table
+import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -37,7 +38,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 EXTS = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
-OUTPATH = '/spirou/cook/corrupt_files/rms_list.fits'
+OUTPATH = '/spirou/cook/corrupt_files/corruption_list.fits'
 
 # =============================================================================
 # Define functions
@@ -77,7 +78,7 @@ def get_full_flat_hotpix(p):
     dark_size = p['NUMBER_DARK_AMP'] * pixels_per_amp
 
     # mask the full_badpix (do not include dark area or edges)
-    full_badpix[:, dark_size] = 0.0
+    full_badpix[:, dark_size:] = 0.0
     full_badpix[:med_size, :] = 0.0
     full_badpix[:, :med_size] = 0.0
     full_badpix[-med_size:, :] = 0.0
@@ -117,10 +118,16 @@ def find_hotpix_offset(p, filename, yhot, xhot):
     med_size = p['PP_CORRUPT_MED_SIZE']
     # get data
     try:
-        data, _, _, _, _ = spirouImage.ReadImage(p, filename, kind='None',
-                                                 log=False)
+        data, hdr, _, _, _ = spirouImage.ReadImage(p, filename, kind='None',
+                                                   log=False)
     except SystemExit:
         return np.nan
+
+    if p['KW_EXPTIME'][0] in hdr:
+        exptime = hdr[p['KW_EXPTIME'][0]]
+    else:
+        exptime = np.nan
+
     # get median hot pixel box
     med_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1])
     # loop around x
@@ -135,17 +142,39 @@ def find_hotpix_offset(p, filename, yhot, xhot):
             # median the data_hot for this box position
             med_hotpix[posx, posy] = np.nanmedian(data_hot)
     # work out an rms
-    rms = np.median(np.abs(med_hotpix - np.median(med_hotpix)))
+    res = med_hotpix - np.median(med_hotpix)
+
+    rms = np.median(np.abs(res))
+
+    snr_hotpix = res[med_size, med_size] / rms
+
     # return rms
-    return rms
+    return snr_hotpix, exptime
 
 
-def update_table(path, file_values, rms_values):
+def update_table(path, file_values, snr_values, exp_values):
     outtable = Table()
     outtable['FILENAME'] = file_values
-    outtable['RMS'] = rms_values
+    outtable['SNR_HOTPIX'] = snr_values
+    outtable['EXP_TIME'] = exp_values
     outtable.write(path, format='fits', overwrite=True)
     return outtable
+
+
+def plot(outtable):
+    plt.close()
+    fig, frame = plt.subplots(ncols=1, nrows=1)
+    x, y = outtable['EXP_TIME'], outtable['SNR_HOTPIX']
+    mask = np.isfinite(y) & np.isfinite(x)
+    frame.scatter(x[mask], y[mask])
+
+    ylim = [-np.nanpercentile(y[mask], 2),
+            np.nanpercentile(y[mask], 99) + np.nanpercentile(y[mask], 2)]
+
+    frame.set(xlabel='Exposure time', ylabel='SNR hot pix',
+              ylim=ylim)
+    plt.show()
+    plt.close()
 
 
 # main function
@@ -173,11 +202,12 @@ if __name__ == "__main__":
     filelist = get_all_fits_files(p, p['DRS_DATA_RAW'])
     # ----------------------------------------------------------------------
     # load outfile/outtable
-    outtable = update_table(OUTPATH, [], [])
+    outtable = update_table(OUTPATH, [], [], [])
 
     # ----------------------------------------------------------------------
     # store rms values
-    rms_array = list(outtable['RMS'])
+    snr_array = list(outtable['SNR_HOTPIX'])
+    exp_array = list(outtable['EXP_TIME'])
     file_array = list(outtable['FILENAME'])
     # loop around files and save RMS value
     for it, filename in enumerate(filelist):
@@ -187,24 +217,24 @@ if __name__ == "__main__":
             WLOG(p, '', wmsg)
             continue
         # print progress
-        wmsg = 'Analysising file {0} of {1}'.format(it + 1, len(filelist))
+        wmsg = 'Analysing file {0} of {1}'.format(it + 1, len(filelist))
         WLOG(p, '', wmsg)
-        # get the rms
+        # get the  snr of the hotpix
         try:
-            rms = find_hotpix_offset(p, filename, yhot, xhot)
+            snr_hot, exp_time = find_hotpix_offset(p, filename, yhot, xhot)
         except Exception as e:
             print('\tError caught')
             print('\tError {0}: {1}'.format(type(e), e))
-            rms = np.nan
+            snr_hot = np.nan
+            exp_time = np.nan
 
         # add to array
-        rms_array.append(rms)
+        snr_array.append(snr_hot)
         file_array.append(filename)
+        exp_array.append(exp_time)
         # write to output table
-        outtable = update_table(OUTPATH, file_array, rms_array)
+        outtable = update_table(OUTPATH, file_array, snr_array, exp_array)
 
-    # make rms_array a numpy array
-    rms_array = np.array(rms_array)
 
 
 
