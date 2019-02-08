@@ -165,7 +165,7 @@ def main(night_name=None, ufiles=None):
         corrupt_file, cvalue = cout
         # print out SNR hotpix value
         wmsg = 'Corruption check: SNR Hotpix value = {0:.5e}'
-
+        WLOG(p, '', wmsg.format(cvalue))
         #deal with printing corruption message
         if corrupt_file:
             # add failed message to fail message list
