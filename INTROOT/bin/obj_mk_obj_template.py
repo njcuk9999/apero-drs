@@ -95,9 +95,9 @@ def main(night_name=None, files=None):
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
 
     # sort files by name
-    sortmask = spirouImage.SortByName(tellu_db_files)
-    tellu_db_files = np.array(tellu_db_files)[sortmask]
-    tellu_db_names = np.array(tellu_db_names)[sortmask]
+    # sortmask = spirouImage.SortByName(tellu_db_files)
+    # tellu_db_files = np.array(tellu_db_files)[sortmask]
+    # tellu_db_names = np.array(tellu_db_names)[sortmask]
 
     # filter by object name (only keep OBJNAME objects) and only keep
     #   unique filenames
@@ -154,13 +154,33 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Loop through input files
     # ----------------------------------------------------------------------
-    base_filelist, berv_list, wave_list = [], [], []
+    # get choosen order
+    snr_order = p['QC_FIT_TELLU_SNR_ORDER']
+    # empty lists for storage
+    loc['BASE_ROWNUM'] = []
+    loc['BASE_FILELIST'] = []
+    loc['BASE_OBJNAME'] = []
+    loc['BASE_OBJECT'] = []
+    loc['BASE_BERVLIST'] = []
+    loc['BASE_WAVELIST'] = []
+    loc['BASE_SNRLIST_{0}'.format(snr_order)] = []
+    loc['BASE_DATELIST'] = []
+    loc['BASE_VERSION'] = []
+    loc['BASE_DARKFILE'] = []
+    loc['BASE_BADFILE1'] = []
+    loc['BASE_BADFILE2'] = []
+    loc['BASE_LOCOFILE'] = []
+    loc['BASE_BLAZFILE'] = []
+    loc['BASE_FLATFILE'] = []
+    loc['BASE_SHAPEFILE'] = []
+    loc['BASE_EXTRFILE'] = []
+
     # loop through files
     for it, filename in enumerate(tell_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
         # append basename to file list
-        base_filelist.append(basefilename)
+        loc['BASE_FILELIST'].append(basefilename)
         # ------------------------------------------------------------------
         # create image for storage
         image = np.repeat([np.nan], np.product(loc['DATA'].shape))
@@ -168,14 +188,61 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Load the data for this file
         tdata0, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
+        nbo, npix = tdata0.shape
         # Correct for the blaze
         tdata = tdata0 / loc['NBLAZE']
 
         # get berv and add to list
         if p['KW_BERV'][0] in thdr:
-            berv_list.append('{0}'.format(thdr[p['KW_BERV'][0]]))
+            loc['BASE_BERVLIST'].append('{0}'.format(thdr[p['KW_BERV'][0]]))
         else:
-            berv_list.append('UNKNOWN')
+            loc['BASE_BERVLIST'].append('UNKNOWN')
+
+        # ------------------------------------------------------------------
+        # Get parameters from header
+        snr = spirouImage.Read1Dkey(p, thdr, p['kw_E2DS_SNR'][0], nbo)
+        dateobs = spirouImage.ReadParam(p, thdr, p['KW_DATE_OBS'][0],
+                                       return_value=True)
+        utcobs = spirouImage.ReadParam(p, thdr, p['KW_UTC_OBS'][0],
+                                       return_value=True)
+        tobjname = spirouImage.ReadParam(p, thdr, p['KW_OBJNAME'][0],
+                                         return_value=True)
+        tobject = spirouImage.ReadParam(p, thdr, 'OBJECT',
+                                         return_value=True)
+        tversion = spirouImage.ReadParam(p, thdr, p['KW_version'][0],
+                                         return_value=True)
+        tdarkfile = spirouImage.ReadParam(p, thdr, p['KW_DARKFILE'][0],
+                                          return_value=True)
+        tbadfile1 = spirouImage.ReadParam(p, thdr, p['BADFILE1'][0],
+                                          return_value=True)
+        tbadfile2 = spirouImage.ReadParam(p, thdr, p['BADFILE2'][0],
+                                          return_value=True)
+        tlocofile = spirouImage.ReadParam(p, thdr, p['KW_LOCOFILE'][0],
+                                          return_value=True)
+        tblazfile = spirouImage.ReadParam(p, thdr, p['KW_BLAZFILE'][0],
+                                          return_value=True)
+        tflatfile = spirouImage.ReadParam(p, thdr, p['KW_FLATFILE'][0],
+                                          return_value=True)
+        tshapfile = spirouImage.ReadParam(p, thdr, p['KW_SHAPEFILE'][0],
+                                          return_value=True)
+        textrfile  = spirouImage.ReadParam(p, thdr, p['KW_EXTFILE'][0],
+                                           return_value=True)
+
+        # append to lists
+        loc['BASE_ROWNUM'].append(it)
+        loc['BASE_SNRLIST_{0}'.format(snr_order)].append(snr[snr_order])
+        loc['BASE_DATELIST'].append('{0}_{1}'.format(dateobs, utcobs))
+        loc['BASE_OBJNAME'].append(tobjname)
+        loc['BASE_OBJECT'].append(tobject)
+        loc['BASE_VERSION'].append(tversion)
+        loc['BASE_DARKFILE'].append(tdarkfile)
+        loc['BASE_BADFILE1'].append(tbadfile1)
+        loc['BASE_BADFILE2'].append(tbadfile2)
+        loc['BASE_LOCOFILE'].append(tlocofile)
+        loc['BASE_BLAZFILE'].append(tblazfile)
+        loc['BASE_FLATFILE'].append(tflatfile)
+        loc['BASE_SHAPEFILE'].append(tshapfile)
+        loc['BASE_EXTRFILE'].append(textrfile)
 
         # ------------------------------------------------------------------
         # Get the wave solution for this file
@@ -199,7 +266,7 @@ def main(night_name=None, files=None):
         loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
 
         # add wave to wave list
-        wave_list.append(loc['WAVEFILE'])
+        loc['BASE_WAVELIST'].append(loc['WAVEFILE'])
 
         # readd original calibDB to p
         p['CALIBDB'] = dict(calib_db)
@@ -252,13 +319,6 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                value=loc['MASTERWAVEFILE'])
-    # add file list to header
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJFILELIST'],
-                                     values=base_filelist, dim1name='row')
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJBERVLIST'],
-                                     values=berv_list, dim1name='row')
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJWAVELIST'],
-                                     values=wave_list, dim1name='row')
     # add wave solution coefficients
     hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
@@ -287,10 +347,14 @@ def main(night_name=None, files=None):
     p = spirouImage.WriteImage(p, outfile1, big_cube_s, hdict)
     # log big cube 0
     wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
+
+    # make big cube table
+    big_table = spirouTelluric.ConstructBigTable(p, loc)
     # save big cube 0
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
-    p = spirouImage.WriteImage(p, outfile2, big_cube_s0, hdict)
+    p = spirouImage.WriteImageTable(p, outfile2, image=big_cube_s0,
+                                    table=big_table, hdict=hdict)
 
     # # mega plot
     # nfiles = big_cube_s0.shape[1]
