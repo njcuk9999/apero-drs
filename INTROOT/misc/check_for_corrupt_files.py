@@ -78,11 +78,18 @@ def get_full_flat_hotpix(p):
     dark_size = p['NUMBER_DARK_AMP'] * pixels_per_amp
 
     # mask the full_badpix (do not include dark area or edges)
-    full_badpix[:, dark_size:] = 0.0
-    full_badpix[:med_size, :] = 0.0
-    full_badpix[:, :med_size] = 0.0
-    full_badpix[-med_size:, :] = 0.0
-    full_badpix[:, -med_size:] = 0.0
+    full_badpix[:, dark_size:] = np.nan
+    full_badpix[:med_size, :] = np.nan
+    full_badpix[:, :med_size] = np.nan
+    full_badpix[-med_size:, :] = np.nan
+    full_badpix[:, -med_size:] = np.nan
+
+    for ix in range(med_size,dark_size):
+        full_badpix[:,ix] -= np.nanmedian(full_badpix[:,ix])
+    for iy in range(dim1):
+        full_badpix[iy,:] -= np.nanmedian(full_badpix[iy,:])
+
+    full_badpix[~np.isfinite(full_badpix)] = 0.0
 
     # locate hot pixels in the full bad pix
     yhot, xhot = np.where(full_badpix > hot_thres)
@@ -152,7 +159,15 @@ def find_hotpix_offset(p, filename, yhot, xhot):
     return snr_hotpix, exptime
 
 
-def update_table(path, file_values, snr_values, exp_values):
+def update_table(path, outtable, file_values, snr_values, exp_values):
+
+    if os.path.exists(path) and (outtable is None):
+        oldtable = Table.read(path)
+        file_values = list(oldtable['FILENAME']) + file_values
+        snr_values = list(oldtable['SNR_HOTPIX']) + snr_values
+        exp_values = list(oldtable['EXP_TIME']) + exp_values
+
+    # make new table with updated values
     outtable = Table()
     outtable['FILENAME'] = file_values
     outtable['SNR_HOTPIX'] = snr_values
@@ -202,22 +217,32 @@ if __name__ == "__main__":
     filelist = get_all_fits_files(p, p['DRS_DATA_RAW'])
     # ----------------------------------------------------------------------
     # load outfile/outtable
-    outtable = update_table(OUTPATH, [], [], [])
+    outtable = update_table(OUTPATH, None, [], [], [])
 
     # ----------------------------------------------------------------------
     # store rms values
     snr_array = list(outtable['SNR_HOTPIX'])
     exp_array = list(outtable['EXP_TIME'])
     file_array = list(outtable['FILENAME'])
+
+    current_dir = ''
     # loop around files and save RMS value
     for it, filename in enumerate(filelist):
+
+        # print current dir when it changes
+        dirname = os.path.dirname(filename)
+        if current_dir != dirname:
+            current_dir = str(dirname)
+            wmsg = 'Current directory: {0}'.format(dirname)
+            WLOG(p, 'info', wmsg)
+
         # skip if we already have entry
         if filename in outtable['FILENAME']:
-            wmsg = 'Skipping file {0} of {1}'.format(it +1, len(filelist))
+            wmsg = '\tSkipping file {0} of {1}'.format(it +1, len(filelist))
             WLOG(p, '', wmsg)
             continue
         # print progress
-        wmsg = 'Analysing file {0} of {1}'.format(it + 1, len(filelist))
+        wmsg = '\tAnalysing file {0} of {1}'.format(it + 1, len(filelist))
         WLOG(p, '', wmsg)
         # get the  snr of the hotpix
         try:
@@ -233,10 +258,15 @@ if __name__ == "__main__":
         file_array.append(filename)
         exp_array.append(exp_time)
         # write to output table
-        outtable = update_table(OUTPATH, file_array, snr_array, exp_array)
+        outtable = update_table(OUTPATH, outtable, file_array, snr_array,
+                                exp_array)
 
 
+    threshold = 100
 
+    bad_files = np.array(snr_array) < threshold
+
+    outtable[bad_files].pprint(max_lines=999)
 
 
 # =============================================================================
