@@ -50,6 +50,8 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
+# get the config error
+ConfigError = spirouConfig.ConfigError
 # -----------------------------------------------------------------------------
 
 
@@ -3003,7 +3005,11 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
     """
     func_name = __NAME__ + '.get_param()'
     # get header keyword
-    key = p[keyword][0]
+    try:
+        key = p[keyword][0]
+    except Exception as e:
+        key = keyword
+
     # deal with no name
     if name is None:
         name = key
