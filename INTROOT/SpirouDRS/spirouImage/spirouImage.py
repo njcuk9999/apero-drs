@@ -969,10 +969,11 @@ def get_hot_pixels(p):
     full_badpix[:, -med_size:] = np.nan
 
     # median out full band structures
-    for ix in range(med_size,dark_size):
-        full_badpix[:,ix] -= np.nanmedian(full_badpix[:,ix])
-    for iy in range(dim1):
-        full_badpix[iy,:] -= np.nanmedian(full_badpix[iy,:])
+    with warnings.catch_warnings(record=True) as _:
+        for ix in range(med_size,dark_size):
+            full_badpix[:,ix] -= np.nanmedian(full_badpix[:,ix])
+        for iy in range(dim1):
+            full_badpix[iy,:] -= np.nanmedian(full_badpix[iy,:])
 
     full_badpix[~np.isfinite(full_badpix)] = 0.0
 
