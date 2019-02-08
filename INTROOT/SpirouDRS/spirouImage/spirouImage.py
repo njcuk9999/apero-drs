@@ -928,6 +928,96 @@ def median_one_over_f_noise2(p, image):
     return image
 
 
+def get_full_flat(p):
+    # get parameters from p
+    filename = p['BADPIX_FULL_FLAT']
+    # construct filepath
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.BADPIX_DIR()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    absfilename = os.path.join(datadir, filename)
+    # check that filepath exists
+    if not os.path.exists(absfilename):
+        emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
+        WLOG(p, 'error', emsg.format(filename, datadir))
+    # read image
+    mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
+    # return image
+    return mdata
+
+
+def get_hot_pixels(p):
+    # get full badpixel file
+    full_badpix = get_full_flat(p)
+    # get shape of full badpixel file
+    dim1, dim2 = full_badpix.shape
+
+    # get the med_size
+    med_size = p['PP_CORRUPT_MED_SIZE']
+    # get the hot pix threshold
+    hot_thres = p['PP_CORRUPT_HOT_THRES']
+
+    # get size of dark region
+    pixels_per_amp = dim2 // p['TOTAL_AMP_NUM']
+    dark_size = p['NUMBER_DARK_AMP'] * pixels_per_amp
+
+    # mask the full_badpix (do not include dark area or edges)
+    full_badpix[:, dark_size:] = np.nan
+    full_badpix[:med_size, :] = np.nan
+    full_badpix[:, :med_size] = np.nan
+    full_badpix[-med_size:, :] = np.nan
+    full_badpix[:, -med_size:] = np.nan
+
+    # median out full band structures
+    for ix in range(med_size,dark_size):
+        full_badpix[:,ix] -= np.nanmedian(full_badpix[:,ix])
+    for iy in range(dim1):
+        full_badpix[iy,:] -= np.nanmedian(full_badpix[iy,:])
+
+    full_badpix[~np.isfinite(full_badpix)] = 0.0
+
+    # locate hot pixels in the full bad pix
+    yhot, xhot = np.where(full_badpix > hot_thres)
+
+    # return the hot pixel indices
+    return [yhot, xhot]
+
+
+def test_for_corrupt_files(p, image, hotpix):
+    # get the med_size
+    med_size = p['PP_CORRUPT_MED_SIZE']
+    # get the x and y hot pixel values
+    yhot, xhot = hotpix
+
+    # get median hot pixel box
+    med_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1])
+
+    # loop around x
+    for dx in range(-med_size, med_size + 1):
+        # loop around y
+        for dy in range(-med_size, med_size + 1):
+            # define position in median box
+            posx = dx + med_size
+            posy = dy + med_size
+            # get the hot pixel values at position in median box
+            data_hot = np.array(image[yhot + dx, xhot + dy])
+            # median the data_hot for this box position
+            med_hotpix[posx, posy] = np.nanmedian(data_hot)
+
+    # normalise med_hotpix to it's own median
+    res = med_hotpix - np.nanmedian(med_hotpix)
+    # work out an rms
+    rms = np.nanmedian(np.abs(res))
+    # signal to noise = res / rms
+    snr_hotpix = res[med_size, med_size] / rms
+
+    # apply condition and return
+    if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
+        return True
+    else:
+        return False
+
+
 # =============================================================================
 # Define Image correction functions
 # =============================================================================
