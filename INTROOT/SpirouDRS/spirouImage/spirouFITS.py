@@ -507,6 +507,105 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     return p
 
 
+
+def write_image_table(p, filename, image=None, table=None, hdict=None,
+                      dtype=None):
+    func_name = __NAME__ + '.write_image_table()'
+
+    # -------------------------------------------------------------------------
+    # image
+    # -------------------------------------------------------------------------
+    if image is not None:
+        # create the primary hdu
+        try:
+            hdu_image = fits.PrimaryHDU(image)
+        except Exception as e:
+            emsg1 = 'Cannot open image with astropy.io.fits.PrimaryHDU'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+            hdu_image = None
+        # force type
+        if dtype is not None:
+            hdu_image.scale(type=dtype, **SCALEARGS)
+        # add header keys to the hdu header
+        if hdict is not None:
+            for key in list(hdict.keys()):
+                hdu_image.header[key] = hdict[key]
+    else:
+        hdu_image = None
+
+    # -------------------------------------------------------------------------
+    # table
+    # -------------------------------------------------------------------------
+    if table is not None:
+
+        try:
+            hdu_table = fits.BinTableHDU(table)
+        except Exception as e:
+            emsg1 = 'Cannot open table with astropy.io.fits.BinTableHDU'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+            hdu_table = None
+    else:
+        hdu_table = None
+
+    # -------------------------------------------------------------------------
+    # combining
+    # -------------------------------------------------------------------------
+    try:
+        # combined
+        hdu_list = []
+        if hdu_image is not None:
+            hdu_list.append(hdu_image)
+        if hdu_table is not None:
+            hdu_list.append(hdu_table)
+        # add to HDU List structure
+        hdulist = fits.HDUList(hdus=hdu_list)
+    except Exception as e:
+        emsg1 = 'Cannot open table with astropy.io.fits.BinTableHDU'
+        emsg2 = '    Error {0}: {1}'.format(type(e), e)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        hdulist = None
+
+    # -------------------------------------------------------------------------
+    # writing
+    # -------------------------------------------------------------------------
+    # get and check for file lock file
+    lock, lock_file = check_fits_lock_file(p, filename)
+    # write to file
+    with warnings.catch_warnings(record=True) as w:
+        try:
+            hdulist.writeto(filename, overwrite=True)
+            # close lock file
+            close_fits_lock_file(p, lock, lock_file, filename)
+        except Exception as e:
+            # close lock file
+            close_fits_lock_file(p, lock, lock_file, filename)
+            # log error
+            emsg1 = 'Cannot write HDU list to fits file {0}'.format(filename)
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+
+    # ignore truncated comment warning since spirou images have some poorly
+    #   formatted header cards
+    w1 = []
+    for warning in w:
+        wmsg = 'Card is too long, comment will be truncated.'
+        if wmsg != str(warning.message):
+            w1.append(warning)
+    # add warnings to the warning logger and log if we have them
+    spirouCore.spirouLog.warninglogger(p, w1)
+    # deal with output dictionary (of required keys)
+    p = write_output_dict(p, filename, hdict)
+    # return p
+    return p
+
+
+
 def write_output_dict(p, filename, hdict):
     # deal with output dictionary (of required keys)
     bfilename = os.path.basename(filename)
