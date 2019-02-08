@@ -165,8 +165,9 @@ def main(night_name=None, ufiles=None):
         # deal with printing corruption message
         if corrupt_file:
             # add failed message to fail message list
-            fmsg = 'File {0} was found to be corrupted. File will not be saved.'
-            fail_msg.append(fmsg.format(ufile))
+            fmsg1 = 'File was found to be corrupted. File will not be saved.'
+            fmsg2 = '\t file = {0}'.format(ufile)
+            fail_msg.append([fmsg1, fmsg2])
             passed = False
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
