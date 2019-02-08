@@ -326,7 +326,7 @@ KW_OBJDEC = ['OBJDEC', None, '']
 KW_OBJNAME = ['OBJNAME', None, '']
 
 # define the observation name from "go"
-KW_OBJECT = ['OBJEC', None, '']
+KW_OBJECT = ['OBJECT', None, '']
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = ['OBJEQUIN', None, '']
