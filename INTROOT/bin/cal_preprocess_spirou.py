@@ -161,8 +161,12 @@ def main(night_name=None, ufiles=None):
         # set passed variable and fail message list
         passed, fail_msg = True, []
         # get pass condition
-        corrupt_file = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
-        # deal with printing corruption message
+        cout = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
+        corrupt_file, cvalue = cout
+        # print out SNR hotpix value
+        wmsg = 'Corruption check: SNR Hotpix value = {0:.5e}'
+
+        #deal with printing corruption message
         if corrupt_file:
             # add failed message to fail message list
             fmsg = ('File was found to be corrupted. File will not be saved.'
