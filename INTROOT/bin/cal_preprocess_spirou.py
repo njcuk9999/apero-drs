@@ -160,16 +160,14 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
-
         # get pass condition
         corrupt_file = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
-
+        # deal with printing corruption message
         if corrupt_file:
             # add failed message to fail message list
-            fmsg = 'File {0} was found to be corrupted.'
+            fmsg = 'File {0} was found to be corrupted. File will not be saved.'
             fail_msg.append(fmsg.format(ufile))
             passed = False
-
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
