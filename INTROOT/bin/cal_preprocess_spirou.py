@@ -71,6 +71,11 @@ def main(night_name=None, ufiles=None):
                                     mainfitsdir='raw')
 
     # ----------------------------------------------------------------------
+    # Get hot pixels for corruption check
+    # ----------------------------------------------------------------------
+    hotpixels = spirouImage.PPGetHotPixels(p)
+
+    # ----------------------------------------------------------------------
     # Process files (including wildcards)
     # ----------------------------------------------------------------------
     # get raw folder (assume all files are in the root directory)
@@ -149,6 +154,31 @@ def main(night_name=None, ufiles=None):
         wmsg = 'Correcting for the 1/f noise'
         WLOG(p, '', wmsg)
         image = spirouImage.PPMedianOneOverfNoise2(p, image)
+
+        # ------------------------------------------------------------------
+        # Quality control to check for corrupt files
+        # ------------------------------------------------------------------
+        # set passed variable and fail message list
+        passed, fail_msg = True, []
+
+        # get pass condition
+        corrupt_file = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
+
+        if corrupt_file:
+            # add failed message to fail message list
+            fmsg = 'File {0} was found to be corrupted.'
+            fail_msg.append(fmsg.format(ufile))
+            passed = False
+
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            continue
 
         # ------------------------------------------------------------------
         # rotate image
