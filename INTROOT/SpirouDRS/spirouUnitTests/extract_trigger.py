@@ -106,8 +106,10 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-08-06', '2018-08-07', '2018-09-19', '2018-09-20', '2018-09-21',
          '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
          '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
-         '2018-10-26', '2018-10-27']
-DATES = None
+         '2018-10-26', '2018-10-27', '2018-12-16', '2018-12-17', '2018-12-18',
+         '2018-12-19', '2018-12-20', '2019-01-14', '2019-01-15', '2019-01-16',
+         '2019-01-17', '2019-01-18']
+# DATES = None
 
 
 # =============================================================================
@@ -1180,7 +1182,7 @@ def obj_fit_tellu(p, night_name, vindex, groups):
             objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
     # -------------------------------------------------------------------------
     # skip done
-    if SKIP_DONE_EXTRACT:
+    if SKIP_DONE_FIT_TELLU:
         filelist2, objnamelist2 = [], []
         for num in range(len(filelist)):
             filename2ab = filelist[num].replace('.fits', extension)
@@ -1231,7 +1233,7 @@ def obj_mk_tellu(p, night_name, vindex, groups):
             objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
     # -------------------------------------------------------------------------
     # skip done
-    if SKIP_DONE_EXTRACT:
+    if SKIP_DONE_MK_TELLU:
         filelist2, objnamelist2 = [], []
         for num in range(len(filelist)):
             filename2ab = filelist[num].replace('.fits', extension)
