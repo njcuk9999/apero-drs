@@ -168,6 +168,18 @@ dark_med_binnum = 32
 #       (in degrees counter-clockwise direction)
 raw_to_pp_rotation = -90
 
+# Defines the size around badpixels that is considered part of        - [cal_pp]
+#    the bad pixel
+PP_CORRUPT_MED_SIZE = 2
+
+# Defines the threshold (above the full engineering flat)             - [cal_pp]
+#     that selects bad (hot) pixels
+PP_CORRUPT_HOT_THRES = 2
+
+# Defines the snr hotpix threshold to define a corrupt file           - [cal_pp]
+PP_CORRUPT_SNR_HOTPIX = 10
+
+
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
 # -----------------------------------------------------------------------------
