@@ -207,7 +207,7 @@ def main(night_name=None, files=None):
                                        return_value=True)
         tobjname = spirouImage.ReadParam(p, thdr, p['KW_OBJNAME'],
                                          return_value=True)
-        tobject = spirouImage.ReadParam(p, thdr, ['OBJECT', None, ''],
+        tobject = spirouImage.ReadParam(p, thdr, p['KW_OBJECT'],
                                          return_value=True)
         tversion = spirouImage.ReadParam(p, thdr, p['KW_version'],
                                          return_value=True)

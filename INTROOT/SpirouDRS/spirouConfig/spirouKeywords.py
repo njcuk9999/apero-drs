@@ -147,6 +147,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_OBJBERVLIST',
             'KW_OBJDEC',
             'KW_OBJDECPM',
+            'KW_OBJECT',
             'KW_OBJEQUIN',
             'KW_OBJFILELIST',
             'KW_OBJNAME',
@@ -323,6 +324,9 @@ KW_OBJDEC = ['OBJDEC', None, '']
 
 # define the observation name
 KW_OBJNAME = ['OBJNAME', None, '']
+
+# define the observation name from "go"
+KW_OBJECT = ['OBJEC', None, '']
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = ['OBJEQUIN', None, '']
