@@ -213,9 +213,9 @@ def main(night_name=None, files=None):
                                          return_value=True)
         tdarkfile = spirouImage.ReadParam(p, thdr, 'KW_DARKFILE', dtype=str,
                                           return_value=True)
-        tbadfile1 = spirouImage.ReadParam(p, thdr, 'KW_BADFILE1', dtype=str,
+        tbadfile1 = spirouImage.ReadParam(p, thdr, 'KW_BADPFILE1', dtype=str,
                                           return_value=True)
-        tbadfile2 = spirouImage.ReadParam(p, thdr, 'KW_BADFILE2', dtype=str,
+        tbadfile2 = spirouImage.ReadParam(p, thdr, 'KW_BADPFILE2', dtype=str,
                                           return_value=True)
         tlocofile = spirouImage.ReadParam(p, thdr, 'KW_LOCOFILE', dtype=str,
                                           return_value=True)
