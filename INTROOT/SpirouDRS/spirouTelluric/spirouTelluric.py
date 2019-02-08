@@ -632,6 +632,31 @@ def construct_convolution_kernal1(p, loc):
     return loc
 
 
+def construct_big_table(p, loc):
+    # get choosen order
+    snr_order = p['QC_FIT_TELLU_SNR_ORDER']
+
+    colnames = ['RowNum', 'Filename', 'OBJNAME', 'OBJECT', 'BERV', 'WAVEFILE',
+                'SNR_{0}'.format(snr_order), 'DATE', 'VERSION', 'DARKFILE',
+                'BADFILE1', 'BADFILE2', 'LOCOFILE', 'BLAZEFILE', 'FLATFILE',
+                'SHAPEFILE', 'EXTRACT_FILE']
+
+    columns = ['BASE_ROWNUM', 'BASE_FILELIST', 'BASE_OBJNAME', 'BASE_OBJECT',
+               'BASE_BERVLIST', 'BASE_WAVELIST',
+               'BASE_SNRLIST_{0}'.format(snr_order), 'BASE_DATELIST',
+               'BASE_VERSION', 'BASE_DARKFILE', 'BASE_BADFILE1',
+               'BASE_BADFILE2', 'BASE_LOCOFILE', 'BASE_BLAZFILE',
+               'BASE_FLATFILE', 'BASE_SHAPEFILE', 'BASE_EXTRFILE']
+    # get values from loc
+    values = []
+    for col in columns:
+        values.append(loc[col])
+    # construct table
+    newtable = spirouImage.MakeTable(p, colnames, values)
+    # return table
+    return newtable
+
+
 def get_molecular_tell_lines(p, loc):
     func_name = __NAME__ + '.get_molecular_tell_lines()'
     # get x and y dimension

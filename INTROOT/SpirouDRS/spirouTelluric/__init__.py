@@ -42,6 +42,8 @@ ConstructConvKernel1 = spirouTelluric.construct_convolution_kernal1
 
 ConstructConvKernel2 = spirouTelluric.construct_convolution_kernal2
 
+ConstructBigTable = spirouTelluric.construct_big_table
+
 GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
 
 GetNormalizedBlaze = spirouTelluric.get_normalized_blaze
