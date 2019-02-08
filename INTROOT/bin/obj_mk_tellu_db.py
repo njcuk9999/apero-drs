@@ -91,7 +91,7 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
         # loop around object filenames
         for o_it, objfilename in enumerate(telluric_stars[tell_star]):
             # Log progress
-            pargs = [p, 'Make Tellurics II', tell_star, t_it, nfound,
+            pargs = [p, 'Make Tellurics I', tell_star, t_it, nfound,
                      o_it, len(telluric_stars[tell_star])]
             spirouTelluric.UpdateProcessDB(*pargs)
             # get arguments from filename
@@ -108,7 +108,7 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
         # loop around object filenames
         for o_it, objfilename in enumerate(telluric_stars[tell_star]):
             # Log progress
-            pargs = [p, 'Make Tellurics II', tell_star, t_it, nfound,
+            pargs = [p, 'Fit Tellurics', tell_star, t_it, nfound,
                      o_it, len(telluric_stars[tell_star])]
             spirouTelluric.UpdateProcessDB(*pargs)
             # get arguments from filename
