@@ -1014,9 +1014,9 @@ def test_for_corrupt_files(p, image, hotpix):
 
     # apply condition and return
     if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
-        return True
+        return True, snr_hotpix
     else:
-        return False
+        return False, snr_hotpix
 
 
 # =============================================================================
