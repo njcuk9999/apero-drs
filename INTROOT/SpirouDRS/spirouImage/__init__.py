@@ -197,6 +197,8 @@ WriteImage = spirouFITS.writeimage
 
 WriteImageMulti = spirouFITS.write_image_multi
 
+WriteImageTable = spirouFITS.write_image_table
+
 WriteTable = spirouTable.write_table
 
 WriteFitsTable = spirouTable.write_fits_table
