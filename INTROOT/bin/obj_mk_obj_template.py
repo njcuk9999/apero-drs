@@ -201,31 +201,31 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Get parameters from header
         snr = spirouImage.Read1Dkey(p, thdr, p['kw_E2DS_SNR'][0], nbo)
-        dateobs = spirouImage.ReadParam(p, thdr, 'KW_DATE_OBS',
+        dateobs = spirouImage.ReadParam(p, thdr, 'KW_DATE_OBS', dtype=str,
                                         return_value=True)
-        utcobs = spirouImage.ReadParam(p, thdr, 'KW_UTC_OBS',
+        utcobs = spirouImage.ReadParam(p, thdr, 'KW_UTC_OBS', dtype=str,
                                        return_value=True)
-        tobjname = spirouImage.ReadParam(p, thdr, 'KW_OBJNAME',
+        tobjname = spirouImage.ReadParam(p, thdr, 'KW_OBJNAME', dtype=str,
                                          return_value=True)
-        tobject = spirouImage.ReadParam(p, thdr, 'KW_OBJECT',
+        tobject = spirouImage.ReadParam(p, thdr, 'KW_OBJECT', dtype=str,
                                          return_value=True)
-        tversion = spirouImage.ReadParam(p, thdr, 'KW_version',
+        tversion = spirouImage.ReadParam(p, thdr, 'KW_version', dtype=str,
                                          return_value=True)
-        tdarkfile = spirouImage.ReadParam(p, thdr, 'KW_DARKFILE',
+        tdarkfile = spirouImage.ReadParam(p, thdr, 'KW_DARKFILE', dtype=str,
                                           return_value=True)
-        tbadfile1 = spirouImage.ReadParam(p, thdr, 'KW_BADFILE1',
+        tbadfile1 = spirouImage.ReadParam(p, thdr, 'KW_BADFILE1', dtype=str,
                                           return_value=True)
-        tbadfile2 = spirouImage.ReadParam(p, thdr, 'KW_BADFILE2',
+        tbadfile2 = spirouImage.ReadParam(p, thdr, 'KW_BADFILE2', dtype=str,
                                           return_value=True)
-        tlocofile = spirouImage.ReadParam(p, thdr, 'KW_LOCOFILE',
+        tlocofile = spirouImage.ReadParam(p, thdr, 'KW_LOCOFILE', dtype=str,
                                           return_value=True)
-        tblazfile = spirouImage.ReadParam(p, thdr, 'KW_BLAZFILE',
+        tblazfile = spirouImage.ReadParam(p, thdr, 'KW_BLAZFILE', dtype=str,
                                           return_value=True)
-        tflatfile = spirouImage.ReadParam(p, thdr, 'KW_FLATFILE',
+        tflatfile = spirouImage.ReadParam(p, thdr, 'KW_FLATFILE', dtype=str,
                                           return_value=True)
-        tshapfile = spirouImage.ReadParam(p, thdr, 'KW_SHAPEFILE',
+        tshapfile = spirouImage.ReadParam(p, thdr, 'KW_SHAPEFILE', dtype=str,
                                           return_value=True)
-        textrfile  = spirouImage.ReadParam(p, thdr, 'KW_EXTFILE',
+        textrfile  = spirouImage.ReadParam(p, thdr, 'KW_EXTFILE', dtype=str,
                                            return_value=True)
 
         # append to lists
