@@ -128,6 +128,11 @@ def LATEST_EDIT():
     return date
 
 
+def LANGUAGE():
+    language = 'ENG'
+    return language
+
+
 # =============================================================================
 # Define Constants
 # =============================================================================
@@ -351,6 +356,14 @@ tags = spirouConfigFile.get_tags(**ckwargs)
 # =============================================================================
 # Define General functions
 # =============================================================================
+def UPDATE_PP(params):
+    # get pp as a global
+    global pp
+    # set global pp value to local value
+    for key in params:
+        pp[key] = params[key]
+
+
 # noinspection PyPep8Naming
 def INTERACITVE_PLOTS_ENABLED():
     """
@@ -490,7 +503,7 @@ def PROGRAM(p=None):
     # get program name
     if p is not None:
         if 'RECIPE' in p:
-            program = p['RECIPE']
+            program = p['RECIPE'].split('.py')[0]
         else:
             program = os.path.basename(rparams[0]).split('.py')[0]
     else:
@@ -2878,7 +2891,7 @@ def EXIT():
     my_exit = LOG_EXIT_TYPE()
     if my_exit == 'sys':
         my_exit = sys.exit
-    elif EXIT == 'os':
+    elif my_exit == 'os':
         # noinspection PyProtectedMember
         my_exit = os._exit
     else:
@@ -2919,6 +2932,21 @@ def DEFAULT_LOG_OPT():
     program = path.replace('.py', '')
     # return program
     return program
+
+
+# noinspection PyPep8Naming
+def MAX_DISPLAY_LIMIT():
+    """
+    Maximum display limit for files/directory when argument error raise
+    :return:
+    """
+    max_display_limit = 15
+    return max_display_limit
+
+
+def HEADER():
+    header = ' ' + '*' * 65
+    return header
 
 
 # =============================================================================

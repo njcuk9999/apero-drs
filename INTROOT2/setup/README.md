@@ -1,0 +1,1 @@
+Setup script stuff will go here - should be both a GUI and command line interface to install
