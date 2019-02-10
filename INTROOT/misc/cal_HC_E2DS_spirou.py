@@ -119,9 +119,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Start plotting session
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # loop around fiber type
@@ -154,8 +154,8 @@ def main(night_name=None, files=None):
     # End plotting session
     # ----------------------------------------------------------------------
     # end interactive session
-    if p['DRS_PLOT']:
-        sPlt.end_interactive_session()
+    if p['DRS_PLOT'] > 0:
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # End Message
@@ -199,7 +199,7 @@ def part1(p, loc, mode='old'):
     ckwargs = dict(ll=loc['LL_OUT_1'], iteration=1, log=False)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=1)
 
@@ -212,9 +212,9 @@ def part1(p, loc, mode='old'):
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=1)
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=1)
 
     # ------------------------------------------------------------------
     # Second guess at solution for each order (using Littrow)
@@ -263,7 +263,7 @@ def part2(p, loc):
     # ------------------------------------------------------------------
     # Plot wave solution littrow check
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
     # ------------------------------------------------------------------
@@ -277,9 +277,9 @@ def part2(p, loc):
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
 
     # ------------------------------------------------------------------
     # Join 0-24 and 25-36 solutions
