@@ -112,6 +112,10 @@ def input_setup(name=None, instrument=None, fkwargs=None, quiet=False):
         display_system_info(recipe.drs_params)
         # print out of the parameters used
         display_run_time_arguments(recipe, fkwargs)
+
+    # -------------------------------------------------------------------------
+    # TODO: Need to make folders
+
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, recipe.drs_params
