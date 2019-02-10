@@ -313,13 +313,13 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ------------------------------------------------------------------
     # Plotting
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plots setup: start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot the shape process for one order
         sPlt.slit_shape_angle_plot(p, loc)
         # end interactive section
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
 
     # ------------------------------------------------------------------
     # Writing DXMAP to file

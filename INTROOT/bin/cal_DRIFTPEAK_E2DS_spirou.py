@@ -215,9 +215,9 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Reference plots
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive session if needed
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot FP spectral order
         sPlt.drift_plot_selected_wave_ref(p, loc)
 
@@ -344,7 +344,7 @@ def main(night_name=None, reffile=None):
             WLOG(p, 'info', wmsg.format(*wargs))
         # else we can't use this extract
         else:
-            if p['DRS_PLOT']:
+            if p['DRS_PLOT'] > 0:
                 # start interactive session if needed
                 sPlt.plt.ioff()
                 # plot comparison between spe and ref
@@ -373,11 +373,11 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Plot of mean drift
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive session if needed
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot delta time against median drift
-        sPlt.drift_peak_plot_dtime_against_drift(loc)
+        sPlt.drift_peak_plot_dtime_against_drift(p, loc)
 
     # ------------------------------------------------------------------
     # Save drift values to file
@@ -425,7 +425,7 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     if p['DRS_PLOT'] and p['DRIFT_PEAK_PLOT_LINE_LOG_AMP']:
         # start interactive session if needed
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot delta time against median drift
         sPlt.drift_peak_plot_llpeak_amps(p, loc)
 
