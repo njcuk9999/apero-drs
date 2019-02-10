@@ -374,7 +374,7 @@ def calculate_telluric_absorption(p, loc):
                     # plot the transmission map plot
                     pargs = [order_num, wave, tau1, sp, sp3,
                              sed, sed_update, keep]
-                    sPlt.mk_tellu_wave_flux_plot(*pargs)
+                    sPlt.mk_tellu_wave_flux_plot(p, *pargs)
                     # get user input to continue or skip
                     imsg = 'Press [Enter] for next or [s] for skip:\t'
                     uinput = input(imsg)
@@ -405,7 +405,7 @@ def calculate_telluric_absorption(p, loc):
         for order_num in plot_order_nums:
             pargs = [order_num, wave, tau1, sp, sp3_arr[order_num], sed,
                      sed[order_num], keep]
-            sPlt.mk_tellu_wave_flux_plot(*pargs)
+            sPlt.mk_tellu_wave_flux_plot(p, *pargs)
         if off:
             sPlt.plt.ion()
 
