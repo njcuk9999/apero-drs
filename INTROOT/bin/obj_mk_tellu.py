@@ -289,7 +289,7 @@ def main(night_name=None, files=None):
                 sPlt.plt.ioff()
                 # plot the transmission map plot
                 pargs = [order_num, mask1, sed, trans, sp, ww, outfilename]
-                sPlt.tellu_trans_map_plot(loc, *pargs)
+                sPlt.tellu_trans_map_plot(p, loc, *pargs)
                 # show and close
                 sPlt.plt.show()
                 sPlt.plt.close()
