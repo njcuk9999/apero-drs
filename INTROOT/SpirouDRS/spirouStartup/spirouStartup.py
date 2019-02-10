@@ -1958,7 +1958,7 @@ def display_initial_parameterisation(p):
     WLOG(p, '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
     WLOG(p, '', '(dir_tellu_db)      DRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
     WLOG(p, '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
-    # WLOG('', '', ('(print_log)         DRS_LOG={DRS_LOG}         '
+    # WLOG(p, '', ('(print_log)         DRS_LOG={DRS_LOG}         '
     #               '%(0: minimum stdin-out logs)').format(**p))
     WLOG(p, '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
                  '%(error/warning/info/all)').format(**p))
@@ -1966,8 +1966,6 @@ def display_initial_parameterisation(p):
                  '%(error/warning/info/all)').format(**p))
     WLOG(p, '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
                  '%(def/undef/trigger)').format(**p))
-    WLOG(p, '', ('(used_date)         DRS_USED_DATE={DRS_USED_DATE}'
-                 '').format(**p))
     if p['DRS_DATA_WORKING'] is None:
         WLOG(p, '', ('(working_dir)       DRS_DATA_WORKING is not set, '
                      'running on-line mode'))
