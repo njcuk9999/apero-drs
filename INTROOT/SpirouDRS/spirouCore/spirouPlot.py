@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 import time
 import matplotlib
+import os
 from astropy import constants as cc
 from astropy import units as uu
 
@@ -78,7 +79,7 @@ else:
 # =============================================================================
 # General plotting functions
 # =============================================================================
-def start_interactive_session(interactive=False):
+def start_interactive_session(p, interactive=False):
     """
     Start interactive plot session, if required and if
     spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
@@ -87,6 +88,9 @@ def start_interactive_session(interactive=False):
 
     :return None:
     """
+    if p['DRS_PLOT'] == 2:
+        return 0
+
     if interactive is True:
         # plt.ion()
         matplotlib.interactive(True)
@@ -98,7 +102,7 @@ def start_interactive_session(interactive=False):
         pass
 
 
-def end_interactive_session(interactive=False):
+def end_interactive_session(p, interactive=False):
     """
     End interactive plot session, if required and if
     spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
@@ -107,12 +111,31 @@ def end_interactive_session(interactive=False):
 
     :return None:
     """
+    if p['DRS_PLOT'] == 2:
+        return 0
+
     if not interactive and not INTERACTIVE_PLOTS:
         plt.show()
         plt.close()
 
 
-def end_plotting():
+def end_plotting(p, plot_name):
+
+    if p['DRS_PLOT'] == 2:
+        # get plotting figure names (as a list for multiple formats)
+        snames = define_save_name(p, plot_name)
+        # loop around formats
+        for sname in snames:
+            # log plot saving
+            wmsg = 'Saving plot to {0}'
+            WLOG(p, '', wmsg.format(sname))
+            # save figure
+            plt.savefig(sname)
+        # close figure cleanly
+        plt.close()
+        # do not contibue with interactive tests --> return here
+        return 0
+
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
@@ -141,6 +164,32 @@ def closeall():
     plt.close('all')
 
 
+
+def define_save_name(p, plotname):
+
+    # construct save path
+    path = os.path.join(p['DRS_DATA_PLOT'], p['ARG_NIGHT_NAME'])
+    # test that path exists
+    if not os.path.exists(path):
+        os.makedirs(path)
+    # construct filename
+
+    filename = p['ARG_FILE_NAMES'][0].split('.fits')[0]
+    recipename = p['LOG_OPT']
+    filetypes = spirouConfig.Constants.PLOT_EXTENSIONS()
+
+    # loop around file types
+    paths = []
+    for filetype in filetypes:
+        # construct paths
+        sargs = [filename, recipename, plotname, filetype]
+        sfilename = '{0}_{1}_{2}.{3}'
+        paths.append(os.path.join(path, sfilename.format(*sargs)))
+    # return paths
+    return paths
+
+
+
 # =============================================================================
 # dark plotting functions
 # =============================================================================
@@ -164,6 +213,7 @@ def darkplot_image_and_regions(pp, image):
 
     :return None:
     """
+    plot_name = 'darkplot_image_and_regions'
     # set up figure
     plt.figure()
     # clear the current figure
@@ -204,10 +254,10 @@ def darkplot_image_and_regions(pp, image):
 
     # TODO: needs axis labels and titles
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
-def darkplot_datacut(imagecut):
+def darkplot_datacut(p, imagecut):
     """
     Plot the data cut mask
 
@@ -215,6 +265,7 @@ def darkplot_datacut(imagecut):
 
     :return:
     """
+    plot_name = 'darkplot_datacut'
     # set up figure
     fig = plt.figure()
     # clear the current figure
@@ -233,7 +284,7 @@ def darkplot_datacut(imagecut):
 
     # TODO: needs axis labels and title
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def darkplot_histograms(pp):
@@ -255,6 +306,7 @@ def darkplot_histograms(pp):
 
     :return None:
     """
+    plot_name = 'darkplot_histograms'
     # set up figure
     plt.figure()
     # clear the current figure
@@ -286,7 +338,7 @@ def darkplot_histograms(pp):
 
     # TODO: Needs axis labels and title
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
 # =============================================================================
@@ -304,11 +356,10 @@ def locplot_order(frame, x, y, label):
     :return None:
     """
     frame.plot(x, y, label=label, linewidth=1.5, color='red')
-    # end plotting function properly
-    end_plotting()
 
 
-def locplot_y_miny_maxy(y, miny=None, maxy=None):
+
+def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
     """
     Plots the row number against central column pixel value, smoothed minimum
     central pixel value and smoothed maximum, central pixel value
@@ -319,6 +370,7 @@ def locplot_y_miny_maxy(y, miny=None, maxy=None):
 
     :return None:
     """
+    plot_name = 'locplot_y_miny_maxy'
     # set up figure
     plt.figure()
     # clear the current figure
@@ -338,7 +390,7 @@ def locplot_y_miny_maxy(y, miny=None, maxy=None):
     # set title
     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def locplot_im_sat_threshold(image, threshold):
@@ -386,6 +438,7 @@ def locplot_order_number_against_rms(pp, loc, rnum):
 
     :return None:
     """
+    plot_name = 'locplot_order_number_against_rms'
     # set up fig
     plt.figure()
     # clear the current figure
@@ -402,7 +455,7 @@ def locplot_order_number_against_rms(pp, loc, rnum):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
 def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
@@ -420,6 +473,7 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
 
     :return None:
     """
+    plot_name = 'debug_locplot_min_ycc_loc_threshold'
     # set up figure
     plt.figure()
     # clear the current figure
@@ -438,7 +492,7 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
 def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
@@ -463,6 +517,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
 
     :return None:
     """
+    plot_name = 'debug_locplot_finding_orders'
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
     WLOG(pp, '', '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
@@ -488,7 +543,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
 def debug_locplot_fit_residual(pp, loc, rnum, kind):
@@ -511,6 +566,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
 
     :return None:
     """
+    plot_name = 'debug_locplot_fit_residual'
     # get variables from loc dictionary
     x = loc['X']
     xo = loc['CTRO'][rnum]
@@ -534,7 +590,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
 # =============================================================================
@@ -564,6 +620,7 @@ def slit_sorder_plot(pp, loc, image):
 
     :return None:
     """
+    plot_name = 'slit_sorder_plot'
     # set up fig
     plt.figure()
     # clear the current figure
@@ -592,10 +649,10 @@ def slit_sorder_plot(pp, loc, image):
     # TODO: Need axis labels and title
 
     # end plotting function properly
-    end_plotting()
+    end_plotting(pp, plot_name)
 
 
-def slit_tilt_angle_and_fit_plot(loc):
+def slit_tilt_angle_and_fit_plot(p, loc):
     """
     Plot the slit tilt angle and its fit
 
@@ -608,6 +665,7 @@ def slit_tilt_angle_and_fit_plot(loc):
 
     :return None:
     """
+    plot_name = 'slit_tilt_angle_and_fit_plot'
     # set up fig
     plt.figure()
     # clear the current figure
@@ -624,11 +682,11 @@ def slit_tilt_angle_and_fit_plot(loc):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def slit_shape_angle_plot(p, loc, bnum=None, order=None):
-
+    plot_name = 'slit_shape_angle_plot'
     # get constants from p
     sorder = p['SHAPE_SELECTED_ORDER']
     nbanana = p['SHAPE_NUM_ITERATIONS']
@@ -716,11 +774,13 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
         pass
     else:
         # end plotting function properly
-        end_plotting()
+        end_plotting(p, plot_name)
 
 
 
 def slit_shape_dx_plot(p, dx, dx2, bnum):
+
+    plot_name = 'slit_shape_dx_plot'
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
 
@@ -788,10 +848,11 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     plt.suptitle('Iteration {0} / {1}'.format(bnum, nbanana))
     # ----------------------------------------------------------------------
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def slit_shape_offset_plot(p, loc, bnum=None, order=None):
+    plot_name = 'slit_shape_offset_plot'
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
     # get data from loc
@@ -829,7 +890,9 @@ def slit_shape_offset_plot(p, loc, bnum=None, order=None):
                                                    order_num)
     frame.set(xlabel='Pixel', ylabel='Err Pixel', title=title)
     frame.legend(loc=0)
-
+    # ----------------------------------------------------------------------
+    # end plotting function properly
+    end_plotting(p, plot_name)
 
 
 
@@ -861,6 +924,7 @@ def ff_sorder_fit_edges(p, loc, image):
     :return None:
     """
 
+    plot_name = 'ff_sorder_fit_edges'
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['FIBER']
@@ -898,7 +962,7 @@ def ff_sorder_fit_edges(p, loc, image):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ff_aorder_fit_edges(p, loc, image):
@@ -925,6 +989,7 @@ def ff_aorder_fit_edges(p, loc, image):
 
     :return None:
     """
+    plot_name = 'ff_aorder_fit_edges'
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['FIBER']
@@ -977,7 +1042,7 @@ def ff_aorder_fit_edges(p, loc, image):
     frame.legend(loc=0)
     # turn off interactive plotting
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ff_sorder_tiltadj_e2ds_blaze(p, loc):
@@ -998,7 +1063,7 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
 
     :return None:
     """
-
+    plot_name = 'ff_sorder_tiltadj_e2ds_blaze'
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['FIBER']
@@ -1024,7 +1089,7 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ff_sorder_flat(p, loc):
@@ -1043,6 +1108,7 @@ def ff_sorder_flat(p, loc):
 
     :return None:
     """
+    plot_name = 'ff_sorder_flat'
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['FIBER']
@@ -1066,10 +1132,11 @@ def ff_sorder_flat(p, loc):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ff_rms_plot(p, loc):
+    plot_name = 'ff_rms_plot'
     # get constants from p
     remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
     # set up fig
@@ -1089,7 +1156,7 @@ def ff_rms_plot(p, loc):
     wargs = [np.mean(loc['SNR']), np.mean(rmsc)]
     WLOG(p, '', wmsg.format(*wargs))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
@@ -1116,7 +1183,7 @@ def ext_sorder_fit(p, loc, image, cut=20000):
 
     :return None:
     """
-
+    plot_name = 'ext_sorder_fit'
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['FIBER']
@@ -1153,7 +1220,7 @@ def ext_sorder_fit(p, loc, image, cut=20000):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ext_aorder_fit(p, loc, image, cut=20000):
@@ -1178,6 +1245,8 @@ def ext_aorder_fit(p, loc, image, cut=20000):
 
     :return None:
     """
+    plot_name = 'ext_aorder_fit'
+    # get upper and lower bounds
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
@@ -1225,7 +1294,7 @@ def ext_aorder_fit(p, loc, image, cut=20000):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ext_spectral_order_plot(p, loc):
@@ -1245,6 +1314,7 @@ def ext_spectral_order_plot(p, loc):
 
     :return None:
     """
+    plot_name = 'ext_spectral_order_plot'
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['FIBER']
@@ -1267,10 +1337,11 @@ def ext_spectral_order_plot(p, loc):
     frame.set(xlabel=xlabel, ylabel='flux',
               title=title.format(selected_order, fiber))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def ext_1d_spectrum_plot(p, x, y):
+    plot_name = 'ext_1d_spectrum_plot'
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1285,7 +1356,7 @@ def ext_1d_spectrum_plot(p, x, y):
     # set labels
     frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
@@ -1313,6 +1384,7 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
 
     :return None:
     """
+    plot_name = 'drift_plot_selected_wave_ref'
     # get constants
     selected_order = p['IC_DRIFT_ORDER_PLOT']
     fiber = p['FIBER']
@@ -1338,10 +1410,10 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def drift_plot_photon_uncertainty(loc, x=None, y=None):
+def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     """
     Plot the photo noise uncertainty against spectral order number
 
@@ -1358,6 +1430,7 @@ def drift_plot_photon_uncertainty(loc, x=None, y=None):
 
     :return None:
     """
+    plot_name = 'drift_plot_photon_uncertainty'
     # get data from loc
     if x is None:
         x = np.arange(loc['NUMBER_ORDERS'])
@@ -1376,7 +1449,7 @@ def drift_plot_photon_uncertainty(loc, x=None, y=None):
     frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
               title=title)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def drift_plot_dtime_against_mdrift(p, loc, kind=None):
@@ -1412,6 +1485,7 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
 
     :return None:
     """
+    plot_name = 'drift_plot_dtime_against_mdrift'
     func_name = __NAME__ + '.drift_plot_dtime_against_mdrift()'
     # get data from loc
     deltatime = loc['DELTATIME']
@@ -1447,10 +1521,10 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
               ylabel='{0} drift [m/s]'.format(mstr),
               title=title.format(mstr))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def drift_peak_plot_dtime_against_drift(loc):
+def drift_peak_plot_dtime_against_drift(p, loc):
     """
     Plot mean drift against time from reference
 
@@ -1471,6 +1545,7 @@ def drift_peak_plot_dtime_against_drift(loc):
 
     :return None:
     """
+    plot_name = 'drift_peak_plot_dtime_against_drift'
     # get data from loc
     deltatime = loc['DELTATIME']
     meanvr = loc['MEANRV']
@@ -1503,7 +1578,7 @@ def drift_peak_plot_dtime_against_drift(loc):
     # add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
@@ -1530,7 +1605,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
 
     :return None:
     """
-
+    plot_name = 'drift_plot_correlation_comp'
     # get constants
     prcut = p['DRIFT_PEAK_PEARSONR_CUT']
     nbo = loc['NUMBER_ORDERS']
@@ -1645,7 +1720,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
 
     # -------------------------------------------------------------------------
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def create_separated_scaled_image(image, axis=0):
@@ -1712,6 +1787,7 @@ def drift_peak_plot_llpeak_amps(p, loc):
 
     :return None:
     """
+    plot_name = 'drift_peak_plot_llpeak_amps'
     # get selected peak from
     selected_order = p['DRIFT_PEAK_SELECTED_ORDER']
     # get data from loc
@@ -1737,7 +1813,7 @@ def drift_peak_plot_llpeak_amps(p, loc):
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title='$log_{10}$(Max Amplitudes)')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
@@ -1764,6 +1840,7 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
 
     :return None:
     """
+    plot_name = 'ccf_rv_ccf_plot'
     if 'dark' in PLOT_STYLE:
         black = 'w'
     else:
@@ -1788,7 +1865,7 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
     # set legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
     # pause
     if pause:
         time.sleep(1.0)
@@ -1797,13 +1874,13 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
 # =============================================================================
 # wave solution plotting function
 # =============================================================================
-def wave_littrow_extrap_plot(loc, iteration=0):
-
+def wave_littrow_extrap_plot(p, loc, iteration=0):
+    plot_name = 'wave_littrow_extrap_plot_{0}'.format(iteration)
+    # style
     if 'dark' in PLOT_STYLE:
         black = 'w'
     else:
         black = 'k'
-
     # get the dimensions of the data
     ydim, xdim = loc['HCDATA'].shape
     # define the x axis data
@@ -1831,10 +1908,11 @@ def wave_littrow_extrap_plot(loc, iteration=0):
     # set axis labels
     frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_littrow_check_plot(p, loc, iteration=0):
+    plot_name = 'wave_littrow_check_plot_{0}'.format(iteration)
     # get data from loc
     x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
     # set up colors
@@ -1863,10 +1941,11 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     # add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_plot_instrument_drift(p, x, spe, speref):
+    plot_name = 'wave_plot_instrument_drift'
     # get constants from parameter file
     selected_order = p['IC_WAVE_IDRIFT_PLOT_ORDER']
     fiber = p['FIBER']
@@ -1886,7 +1965,7 @@ def wave_plot_instrument_drift(p, x, spe, speref):
     frame.set(xlabel='Wavelength [Angstrom]', ylabel='e-',
               title=title.format(selected_order, fiber))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_plot_final_fp_order(p, loc, iteration=0):
@@ -1910,6 +1989,7 @@ def wave_plot_final_fp_order(p, loc, iteration=0):
 
     :return None:
     """
+    plot_name = 'wave_plot_final_fp_order_{0}'.format(iteration)
     # get constants
     selected_order = p['IC_FP_N_ORD_FINAL']
     fiber = p['FIBER']
@@ -1929,10 +2009,10 @@ def wave_plot_final_fp_order(p, loc, iteration=0):
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber, iteration))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def wave_local_width_offset_plot(loc):
+def wave_local_width_offset_plot(p, loc):
     """
     Plot the measured FP cavity width offset against line number
 
@@ -1945,6 +2025,7 @@ def wave_local_width_offset_plot(loc):
 
     :return None:
     """
+    plot_name = 'wave_local_width_offset_plot'
     # get data from loc
     fp_m = loc['FP_M']
     fp_dopd = loc['FP_DOPD_OFFSET']
@@ -1967,10 +2048,10 @@ def wave_local_width_offset_plot(loc):
     # Add legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def wave_fp_wavelength_residuals(loc):
+def wave_fp_wavelength_residuals(p, loc):
     """
     Plot the FP line wavelength residuals
 
@@ -1981,6 +2062,7 @@ def wave_fp_wavelength_residuals(loc):
 
     :return None:
     """
+    plot_name = 'wave_fp_wavelength_residuals'
     # get data from loc
     fp_ll = loc['FP_LL_POS']
     fp_ll_new = loc['FP_LL_POS_NEW']
@@ -1998,14 +2080,17 @@ def wave_fp_wavelength_residuals(loc):
               ylabel='New - Initial wavelength [nm]',
               title=title)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
 # wave solution plotting function (EA)
 # =============================================================================
-def wave_ea_plot_per_order_hcguess(loc, order_num):
-    plt.ioff()
+def wave_ea_plot_per_order_hcguess(p, loc, order_num):
+
+    plot_name = 'wave_ea_plot_per_order_hcguess_order_{0}'.format(order_num)
+    if p['DRS_PLOT'] < 2:
+        plt.ioff()
 
     if 'dark' in PLOT_STYLE:
         black = 'w'
@@ -2046,12 +2131,17 @@ def wave_ea_plot_per_order_hcguess(loc, order_num):
               ylabel='Normalized flux')
 
     # show, close and turn interactive on
-    plt.show()
-    plt.close()
+    if p['DRS_PLOT'] == 2:
+        end_plotting(p, plot_name)
+    else:
+        plt.show()
+        plt.close()
 
 
-def wave_ea_plot_allorder_hcguess(loc):
+def wave_ea_plot_allorder_hcguess(p, loc):
     #    plt.ioff()
+
+    plot_name = 'wave_ea_plot_allorder_hcguess'
 
     if 'dark' in PLOT_STYLE:
         black = 'white'
@@ -2119,10 +2209,11 @@ def wave_ea_plot_allorder_hcguess(loc):
               ylabel='Normalized flux')
 
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_ea_plot_wave_cat_all_and_brightest(p, wave_c, dv, bmask, iteration):
+    plot_name = 'wave_ea_plot_wave_cat_all_and_brightest_{0}'.format(iteration)
     # get constants from p
     n_iterations = p['HC_NITER_FIT_TRIPLET']
     # set up fig
@@ -2145,11 +2236,12 @@ def wave_ea_plot_wave_cat_all_and_brightest(p, wave_c, dv, bmask, iteration):
               xlabel='Wavelength [nm]',
               ylabel='dv [km/s]')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
                            xgau, ew, iteration):
+    plot_name = 'wave_ea_plot_tfit_grid_{0}'.format(iteration)
     # get constants from p
     n_iterations = p['HC_NITER_FIT_TRIPLET']
     # get all orders
@@ -2191,11 +2283,12 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
     # add title
     plt.suptitle('Iteration {0} of {1}'.format(iteration + 1, n_iterations))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_ea_plot_line_profiles(p, loc):
-
+    plot_name = 'wave_ea_plot_line_profiles'
+    # get style
     if 'dark' in PLOT_STYLE:
         black = 'w'
     else:
@@ -2273,11 +2366,11 @@ def wave_ea_plot_line_profiles(p, loc):
     plt.subplots_adjust(hspace=0, wspace=0)
     plt.suptitle('Line Profiles for resolution grid')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def wave_ea_plot_single_order(p, loc):
-
+    plot_name = 'wave_ea_plot_single_order'
     # set order to plot
     plot_order = p['IC_WAVE_EA_PLOT_ORDER']
     # get the correct order to plot for all_lines
@@ -2313,14 +2406,15 @@ def wave_ea_plot_single_order(p, loc):
     frame.legend(loc=0)
     frame.set(xlabel='Wavelength', ylabel='Flux')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
 # telluric plotting function
 # =============================================================================
-def mk_tellu_wave_flux_plot(order_num, wave, tau1, sp, sp3, sed, sed_update,
-                            keep):
+def mk_tellu_wave_flux_plot(p, order_num, wave, tau1, sp, sp3, sed,
+                            sed_update, keep):
+    plot_name = 'mk_tellu_wave_flux_plot_order_{0}'.format(order_num)
     # get order values
     good = keep[order_num]
     x = wave[order_num]
@@ -2362,10 +2456,11 @@ def mk_tellu_wave_flux_plot(order_num, wave, tau1, sp, sp3, sed, sed_update,
               xlabel='Wavelength [nm]', ylabel='Normalised flux',
               title='Order: {0}'.format(order_num))
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
+def tellu_trans_map_plot(p, loc, order_num, fmask, sed, trans, sp, ww, outfile):
+    plot_name = 'tellu_trans_map_plot_order_{0}'
     # get data from loc
     wave = loc['WAVE'][order_num, :]
     # set up fig
@@ -2392,10 +2487,11 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
     frame.set(title=title.format(order_num),
               xlabel='Wavelength [nm]', ylabel='Normalised flux')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def tellu_pca_comp_plot(p, loc):
+    plot_name = 'tellu_pca_comp_plot'
     # get constants from p
     npc = loc['NPC']
     # get data from loc
@@ -2428,10 +2524,11 @@ def tellu_pca_comp_plot(p, loc):
     frame.set(title=title, xlabel='Wavelength [nm]',
               ylabel='Principle component power')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def tellu_fit_tellu_spline_plot(p, loc):
+    plot_name = 'tellu_fit_tellu_spline_plot'
     # get constants from p
     selected_order = p['TELLU_PLOT_ORDER']
     # get data from loc
@@ -2466,10 +2563,11 @@ def tellu_fit_tellu_spline_plot(p, loc):
     frame.set(title=title.format(selected_order),
               xlabel='Wavelength [nm]', ylabel='Normalised flux')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def tellu_fit_debug_shift_plot(p, loc):
+    plot_name = 'tellu_fit_debug_shift_plot'
     # get constants from p
     s_order = p['TELLU_PLOT_ORDER']
 
@@ -2509,11 +2607,12 @@ def tellu_fit_debug_shift_plot(p, loc):
     frame.set(title=title.format(s_order), xlabel='Pixel number',
               ylabel='Normalised flux')
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 def tellu_fit_recon_abso_plot(p, loc):
-
+    plot_name = 'tellu_fit_recon_abso_plot'
+    # get style
     if 'dark' in PLOT_STYLE:
         black = 'w'
     else:
@@ -2551,13 +2650,15 @@ def tellu_fit_recon_abso_plot(p, loc):
               xlabel='Wavelength [nm]', ylabel='Normalised flux')
 
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
 # Polarimetry plotting functions
 # =============================================================================
-def polar_continuum_plot(loc, in_wavelengths=True):
+def polar_continuum_plot(p, loc, in_wavelengths=True):
+
+    plot_name = 'polar_continuum_plot'
     # get data from loc
     wl, pol = loc['FLAT_X'], 100.0 * loc['FLAT_POL']
     contpol = 100.0 * loc['CONT_POL']
@@ -2600,10 +2701,11 @@ def polar_continuum_plot(loc, in_wavelengths=True):
     frame.legend(loc=0)
     # ---------------------------------------------------------------------
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def polar_result_plot(loc, in_wavelengths=True):
+def polar_result_plot(p, loc, in_wavelengths=True):
+    plot_name = 'polar_result_plot'
     # get data from loc
     wl, pol = loc['FLAT_X'], 100.0 * loc['FLAT_POL']
     null1, null2 = 100.0 * loc['FLAT_NULL1'], 100.0 * loc['FLAT_NULL2']
@@ -2641,10 +2743,11 @@ def polar_result_plot(loc, in_wavelengths=True):
     frame.legend(loc=0)
     # ---------------------------------------------------------------------
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def polar_stokes_i_plot(loc, in_wavelengths=True):
+def polar_stokes_i_plot(p, loc, in_wavelengths=True):
+    plot_name = 'polar_stokes_i_plot'
     # get data from loc
     wl, stokes_i = loc['FLAT_X'], loc['FLAT_STOKESI']
     stokes_ierr = loc['FLAT_STOKESIERR']
@@ -2678,10 +2781,11 @@ def polar_stokes_i_plot(loc, in_wavelengths=True):
     # plot legend
     frame.legend(loc=0)
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
-def polar_lsd_plot(loc):
+def polar_lsd_plot(p, loc):
+    plot_name = 'polar_lsd_plot'
     # get data from loc
     vels = loc['LSD_VELOCITIES']
     zz = loc['LSD_STOKESI']
@@ -2730,7 +2834,7 @@ def polar_lsd_plot(loc):
     # ---------------------------------------------------------------------
     # turn off interactive plotting
     # end plotting function properly
-    end_plotting()
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
