@@ -2999,6 +2999,26 @@ def FONT_DICT():
     return font
 
 
+def PLOT_EXTENSIONS():
+    """
+    Extensions for plotting
+    :return:
+    """
+    extensions = ['jpg', 'pdf']
+    return extensions
+
+
+
+def PLOT_FIGSIZE():
+    """
+    The fig size (in inches) for all saved figures
+    :return:
+    """
+    figsize = (10, 8)
+    return figsize
+
+
+
 # =============================================================================
 # End of code
 # =============================================================================
