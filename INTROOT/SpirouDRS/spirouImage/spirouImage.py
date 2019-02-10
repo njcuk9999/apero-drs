@@ -2505,13 +2505,13 @@ def get_shape_map(p, loc):
 
         # ---------------------------------------------------------------------
         # dx plot
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # plots setup: start interactive plot
-            sPlt.start_interactive_session()
+            sPlt.start_interactive_session(p)
             # plot
             sPlt.slit_shape_dx_plot(p, dx, dx2, banana_num)
             # end interactive section
-            sPlt.end_interactive_session()
+            sPlt.end_interactive_session(p)
 
         # ---------------------------------------------------------------------
         # loop around orders
