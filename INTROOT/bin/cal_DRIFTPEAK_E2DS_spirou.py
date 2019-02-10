@@ -350,7 +350,6 @@ def main(night_name=None, reffile=None):
                 # plot comparison between spe and ref
                 sPlt.drift_plot_correlation_comp(p, loc, correlation_coeffs,
                                                  i_it)
-                # show and close plot
                 sPlt.plt.show()
                 sPlt.plt.close()
                 # turn interactive plotting back on
