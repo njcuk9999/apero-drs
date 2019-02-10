@@ -89,6 +89,8 @@ def start_interactive_session(p, interactive=False):
     :return None:
     """
     if p['DRS_PLOT'] == 2:
+        # make sure interactive plotting is off if we are saving figures
+        plt.ioff()
         return 0
 
     if interactive is True:
@@ -566,7 +568,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
 
     :return None:
     """
-    plot_name = 'debug_locplot_fit_residual'
+    plot_name = 'debug_locplot_fit_residual_rnun{0}'.format(rnum)
     # get variables from loc dictionary
     x = loc['X']
     xo = loc['CTRO'][rnum]
@@ -686,7 +688,7 @@ def slit_tilt_angle_and_fit_plot(p, loc):
 
 
 def slit_shape_angle_plot(p, loc, bnum=None, order=None):
-    plot_name = 'slit_shape_angle_plot'
+    plot_name = 'slit_shape_angle_plot_it{0}_order{1}'.format(bnum, order)
     # get constants from p
     sorder = p['SHAPE_SELECTED_ORDER']
     nbanana = p['SHAPE_NUM_ITERATIONS']
@@ -780,7 +782,7 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
 
 def slit_shape_dx_plot(p, dx, dx2, bnum):
 
-    plot_name = 'slit_shape_dx_plot'
+    plot_name = 'slit_shape_dx_plot_it{0}'.format(bnum)
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
 
@@ -852,7 +854,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
 
 
 def slit_shape_offset_plot(p, loc, bnum=None, order=None):
-    plot_name = 'slit_shape_offset_plot'
+    plot_name = 'slit_shape_offset_plot_it{0}_order{1}'.format(bnum, order)
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
     # get data from loc
@@ -893,7 +895,6 @@ def slit_shape_offset_plot(p, loc, bnum=None, order=None):
     # ----------------------------------------------------------------------
     # end plotting function properly
     end_plotting(p, plot_name)
-
 
 
 # =============================================================================
@@ -1605,7 +1606,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
 
     :return None:
     """
-    plot_name = 'drift_plot_correlation_comp'
+    plot_name = 'drift_plot_correlation_comp_{0}'.format(iteration)
     # get constants
     prcut = p['DRIFT_PEAK_PEARSONR_CUT']
     nbo = loc['NUMBER_ORDERS']
@@ -1840,7 +1841,7 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
 
     :return None:
     """
-    plot_name = 'ccf_rv_ccf_plot'
+    plot_name = 'ccf_rv_ccf_plot_order{0}'.format(order)
     if 'dark' in PLOT_STYLE:
         black = 'w'
     else:
@@ -2460,7 +2461,7 @@ def mk_tellu_wave_flux_plot(p, order_num, wave, tau1, sp, sp3, sed,
 
 
 def tellu_trans_map_plot(p, loc, order_num, fmask, sed, trans, sp, ww, outfile):
-    plot_name = 'tellu_trans_map_plot_order_{0}'
+    plot_name = 'tellu_trans_map_plot_order_{0}'.format(order_num)
     # get data from loc
     wave = loc['WAVE'][order_num, :]
     # set up fig
@@ -2854,6 +2855,7 @@ def remove_first_last_ticks(frame, axis='x'):
         frame.set_xticks(yticks)
         frame.set_xticklabels(yticklabels)
     return frame
+
 
 # =============================================================================
 # End of code
