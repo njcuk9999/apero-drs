@@ -3030,9 +3030,12 @@ def FONT_DICT():
 def PLOT_EXTENSIONS():
     """
     Extensions for plotting
+
+    Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz
+
     :return:
     """
-    extensions = ['jpg', 'pdf']
+    extensions = ['png', 'pdf']
     return extensions
 
 
