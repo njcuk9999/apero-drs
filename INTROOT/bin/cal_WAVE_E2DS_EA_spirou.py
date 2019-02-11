@@ -787,6 +787,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # only copy over if QC passed
     if p['QC']:
+
+        # TODO:  ===========================!
+        # TODO:     THIS SECTION IS WRONG   !
+        # TODO:          NEEDS FIXING       !
+        # TODO:             ASAP            !
+        # TODO:                             !
+        # TODO:  ===========================!
+
         # update original E2DS hcfile and add header keys (via hdict)
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
         raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
