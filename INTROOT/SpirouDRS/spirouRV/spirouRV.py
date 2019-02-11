@@ -1132,7 +1132,7 @@ def coravelation(p, loc, log=False):
     # graph set up
     if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # define a figure
         fig = sPlt.define_figure()
     else:
