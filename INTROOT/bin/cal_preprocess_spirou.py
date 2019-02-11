@@ -171,16 +171,16 @@ def main(night_name=None, ufiles=None):
         if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
             # add failed message to fail message list
             fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold).'
-                    'File will not be saved. File = {0}'.format(ufile))
+                    ' File will not be saved. File = {0}'.format(ufile))
             fail_msg.append(fmsg)
             passed = False
 
-        # if np.max(rms_list) > p['PP_CORRUPT_RMS_THRES']:
-        #     # add failed message to fail message list
-        #     fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold).'
-        #             'File will not be saved. File = {0}'.format(ufile))
-        #     fail_msg.append(fmsg)
-        #     passed = False
+        if np.max(rms_list) > p['PP_CORRUPT_RMS_THRES']:
+            # add failed message to fail message list
+            fmsg = ('File was found to be corrupted. (RMS < threshold).'
+                    'File will not be saved. File = {0}'.format(ufile))
+            fail_msg.append(fmsg)
+            passed = False
 
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
