@@ -71,6 +71,9 @@ DRS_DATA_MSG.value = '/drs/spirou/data/msg'
 DRS_DATA_WORKING = DRS_DATA_WORKING.copy(__NAME__)
 DRS_DATA_WORKING.value = '/drs/spirou/data/tmp'
 
+#   Define the plotting directory
+DRS_DATA_PLOT = DRS_DATA_PLOT.copy(__NAME__)
+DRS_DATA_PLOT = '/drs/spirou/data/plot'
 
 
 
