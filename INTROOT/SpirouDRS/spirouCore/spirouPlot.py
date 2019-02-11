@@ -2315,8 +2315,9 @@ def wave_ea_plot_line_profiles(p, loc):
     bin_order = int(np.ceil(nbo / resmap_size[0]))
     bin_x = int(np.ceil(nbpix / resmap_size[1]))
 
-    # set up fig
-    fig, frames = plt.subplots(nrows=resmap_size[0], ncols=resmap_size[1])
+    # set up fig (double the fig size)
+    fig, frames = plt.subplots(nrows=resmap_size[0], ncols=resmap_size[1],
+                               figsize=np.array(FIGSIZE)*2)
 
     order_range = np.arange(0, nbo, bin_order)
     x_range = np.arange(0, nbpix // bin_x)
