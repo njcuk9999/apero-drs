@@ -1011,15 +1011,15 @@ def test_for_corrupt_files(p, image, hotpix):
             med_hotpix[posx, posy] = np.nanmedian(data_hot)
 
     # get dark ribbon
-    dark_ribbon = image[:,0:dark_size]
+    dark_ribbon = image[:, 0:dark_size]
     # you should not have an excess in odd/even RMS of pixels
-    rms2 = np.nanmedian(np.abs(dark_ribbon[0:-1,:]-dark_ribbon[1:,:]))
-    rms3 = np.nanmedian(np.abs(dark_ribbon[:,0:-1]-dark_ribbon[:,1:]))
-    med0 = np.nanmedian(dark_ribbon,axis=0)
-    med1 = np.nanmedian(dark_ribbon,axis=1)
+    rms2 = np.nanmedian(np.abs(dark_ribbon[0:-1, :] - dark_ribbon[1:, :]))
+    rms3 = np.nanmedian(np.abs(dark_ribbon[:, 0:-1] - dark_ribbon[:, 1:]))
+    med0 = np.nanmedian(dark_ribbon, axis=0)
+    med1 = np.nanmedian(dark_ribbon, axis=1)
 
-    rms0 = np.nanmedian(np.abs(med0-np.nanmedian(med0)))
-    rms1 = np.nanmedian(np.abs(med1-np.nanmedian(med1)))
+    rms0 = np.nanmedian(np.abs(med0 - np.nanmedian(med0)))
+    rms1 = np.nanmedian(np.abs(med1 - np.nanmedian(med1)))
 
     precentile_cut = np.nanpercentile(image, 95)
     rms0 = rms0 / precentile_cut
