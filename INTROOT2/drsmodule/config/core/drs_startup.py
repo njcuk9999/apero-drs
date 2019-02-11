@@ -112,7 +112,7 @@ def input_setup(name=None, instrument=None, fkwargs=None, quiet=False):
         display_system_info(recipe.drs_params)
         # print out of the parameters used
         display_run_time_arguments(recipe, fkwargs)
-    # -------------------------------------------------------------------------
+                    # -------------------------------------------------------------------------
     # return arguments
     return recipe, recipe.drs_params
 
@@ -376,6 +376,7 @@ def display_initial_parameterisation(p):
     wmsgs += ErrorEntry('\n\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
     wmsgs += ErrorEntry('\n\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
     wmsgs += ErrorEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    wmsgs += ErrorEntry('\n\tDRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**p))
     # add config sources
     for source in p['DRS_CONFIG']:
         wmsgs += ErrorEntry('\n\tDRS_CONFIG={0}'.format(source))
