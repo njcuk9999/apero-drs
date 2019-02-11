@@ -987,6 +987,11 @@ def get_hot_pixels(p):
 def test_for_corrupt_files(p, image, hotpix):
     # get the med_size
     med_size = p['PP_CORRUPT_MED_SIZE']
+    # get shape of full badpixel file
+    dim1, dim2 = image.shape
+    # get size of dark region
+    pixels_per_amp = dim2 // p['TOTAL_AMP_NUM']
+    dark_size = p['NUMBER_DARK_AMP'] * pixels_per_amp
     # get the x and y hot pixel values
     yhot, xhot = hotpix
 
@@ -1004,6 +1009,21 @@ def test_for_corrupt_files(p, image, hotpix):
             data_hot = np.array(image[yhot + dx, xhot + dy])
             # median the data_hot for this box position
             med_hotpix[posx, posy] = np.nanmedian(data_hot)
+
+    # get dark ribbon
+    dark_ribbon = image[:,0:dark_size]
+    # you should not have an excess in odd/even RMS of pixels
+    rms2 = np.nanmedian(np.abs(dark_ribbon[0:-1,:]-dark_ribbon[1:,:]))
+    rms3 = np.nanmedian(np.abs(dark_ribbon[:,0:-1]-dark_ribbon[:,1:]))
+    med0 = np.nanmedian(dark_ribbon,axis=0)
+    med1 = np.nanmedian(dark_ribbon,axis=1)
+
+    rms0 = np.nanmedian(np.abs(med0-np.nanmedian(med0)))
+    rms1 = np.nanmedian(np.abs(med1-np.nanmedian(med1)))
+
+    rargs = [rms0, rms1, rms2, rms3]
+    print('rms0 = {0}, rms1 = {1}, rms2 = {2}, rms4 = {3}'.format(*rargs))
+
 
     # normalise med_hotpix to it's own median
     res = med_hotpix - np.nanmedian(med_hotpix)
