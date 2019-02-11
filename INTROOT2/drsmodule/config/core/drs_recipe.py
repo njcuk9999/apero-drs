@@ -133,9 +133,11 @@ class DrsRecipe(object):
         self.drs_params['RECIPE'] = self.name
         self.drs_params.set_source('RECIPE', func_name)
         # ---------------------------------------------------------------------
-        # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
+        # if DRS_INTERACTIVE is not True and DRS_PLOT is to the screen
+        #     then DRS_PLOT should be turned off too
         if not self.drs_params['DRS_INTERACTIVE']:
-            self.drs_params['DRS_PLOT'] = 0
+            if self.drs_params['DRS_PLOT'] == 1:
+                self.drs_params['DRS_PLOT'] = 0
         # ---------------------------------------------------------------------
         # set up array to store inputs/outputs
         self.drs_params['INPUTS'] = OrderedDict()
