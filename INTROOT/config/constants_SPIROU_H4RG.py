@@ -179,6 +179,8 @@ PP_CORRUPT_HOT_THRES = 2
 # Defines the snr hotpix threshold to define a corrupt file           - [cal_pp]
 PP_CORRUPT_SNR_HOTPIX = 10
 
+# Defines the RMS threshold to also catch corrupt files
+PP_CORRUPT_RMS_THRES = 0.15
 
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
