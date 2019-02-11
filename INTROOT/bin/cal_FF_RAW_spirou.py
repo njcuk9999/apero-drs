@@ -308,9 +308,9 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # Plots
         # ----------------------------------------------------------------------
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # start interactive session if needed
-            sPlt.start_interactive_session()
+            sPlt.start_interactive_session(p)
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)

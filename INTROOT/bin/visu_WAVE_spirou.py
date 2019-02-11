@@ -113,7 +113,7 @@ def main(night_name=None, files=None):
     col2 = [col[int(x)] for x in ll_ord_par]
 
     # start interactive plot
-    sPlt.start_interactive_session()
+    sPlt.start_interactive_session(p)
 
     plt.figure()
 

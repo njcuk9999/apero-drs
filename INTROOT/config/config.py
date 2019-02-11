@@ -4,11 +4,11 @@
 # -----------------------------------------------------------------------------
 # global settings
 # -----------------------------------------------------------------------------
-# Whether to plot (True or 1 to plot)
+# Plotting mode: 0 = off, 1 = on screen, 2 = save to plotting directory
 DRS_PLOT = 1
 
 # Whether to run in interactive mode - False or 0 to be in non-interactive mode
-#    (If 0 DRS_PLOT will be forced to 0)
+#    (If DRS_INTERACTIVE = 0 and DRS_PLOT = 1, DRS_PLOT forced to 0)
 #    Will stop any user input at the end of recipes if set to 0
 DRS_INTERACTIVE = 1
 
@@ -52,6 +52,9 @@ DRS_DATA_MSG = '/drs/spirou/data/msg'
 
 #   Define the working directory
 DRS_DATA_WORKING = '/drs/spirou/data/tmp'
+
+#   Define the plotting directory
+DRS_DATA_PLOT = '/drs/spirou/data/plot'
 
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)

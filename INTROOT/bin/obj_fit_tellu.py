@@ -128,9 +128,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Start plotting
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Load template (if available)
@@ -412,7 +412,7 @@ def main(night_name=None, files=None):
         #           AMPS_ABSOL_TOTAL
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # plot the recon abso plot
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
@@ -565,9 +565,9 @@ def main(night_name=None, files=None):
     # End plotting
     # ----------------------------------------------------------------------
     # debug plot
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # end interactive session
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # End Message

@@ -238,9 +238,9 @@ def main(night_name=None, files=None, fiber='AB'):
     # ------------------------------------------------------------------
     # Reference plots
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive session if needed
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot FP spectral order
         sPlt.drift_plot_selected_wave_ref(p, loc)
         # plot photon noise uncertainty
@@ -422,9 +422,9 @@ def main(night_name=None, files=None, fiber='AB'):
     # ------------------------------------------------------------------
     # Plot of mean drift
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive session if needed
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot delta time against median drift
         sPlt.drift_plot_dtime_against_mdrift(p, loc, kind='raw')
 
