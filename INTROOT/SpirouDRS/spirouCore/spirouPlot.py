@@ -648,8 +648,11 @@ def slit_sorder_plot(pp, loc, image):
     # plot selected order fit
     frame.plot(xfit, yfit1, color='red')
     frame.plot(xfit, yfit2, color='red')
+    # construct title
+    title = 'Order {0}'.format(order)
     # set axis limits to image
-    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title)
 
     # TODO: Need axis labels and title
 
@@ -850,7 +853,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # ----------------------------------------------------------------------
     # title
     # ----------------------------------------------------------------------
-    plt.suptitle('Iteration {0} / {1}'.format(bnum, nbanana))
+    plt.suptitle('Iteration {0} / {1}'.format(bnum + 1, nbanana))
     # ----------------------------------------------------------------------
     # end plotting function properly
     end_plotting(p, plot_name)
