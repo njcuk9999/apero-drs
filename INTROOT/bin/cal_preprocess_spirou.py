@@ -10,6 +10,7 @@ Created on 2018-04-13 at 17:20
 @author: melissa-hobson
 """
 from __future__ import division
+import numpy as np
 import os
 
 from SpirouDRS import spirouConfig
@@ -162,17 +163,25 @@ def main(night_name=None, ufiles=None):
         passed, fail_msg = True, []
         # get pass condition
         cout = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
-        corrupt_file, cvalue = cout
+        snr_hotpix, rms_list = cout
         # print out SNR hotpix value
         wmsg = 'Corruption check: SNR Hotpix value = {0:.5e}'
-        WLOG(p, '', wmsg.format(cvalue))
+        WLOG(p, '', wmsg.format(snr_hotpix))
         #deal with printing corruption message
-        if corrupt_file:
+        if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
             # add failed message to fail message list
-            fmsg = ('File was found to be corrupted. File will not be saved.'
-                    ' File = {0}'.format(ufile))
+            fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold).'
+                    'File will not be saved. File = {0}'.format(ufile))
             fail_msg.append(fmsg)
             passed = False
+
+        # if np.max(rms_list) > p['PP_CORRUPT_RMS_THRES']:
+        #     # add failed message to fail message list
+        #     fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold).'
+        #             'File will not be saved. File = {0}'.format(ufile))
+        #     fail_msg.append(fmsg)
+        #     passed = False
+
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
