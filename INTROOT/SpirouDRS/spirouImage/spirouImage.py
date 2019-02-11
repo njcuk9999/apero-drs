@@ -1021,9 +1021,14 @@ def test_for_corrupt_files(p, image, hotpix):
     rms0 = np.nanmedian(np.abs(med0-np.nanmedian(med0)))
     rms1 = np.nanmedian(np.abs(med1-np.nanmedian(med1)))
 
+    precentile_cut = np.nanpercentile(image, 95)
+    rms0 = rms0 / precentile_cut
+    rms1 = rms1 / precentile_cut
+    rms2 = rms2 / precentile_cut
+    rms3 = rms3 / precentile_cut
+
     rargs = [rms0, rms1, rms2, rms3]
     print('rms0 = {0}, rms1 = {1}, rms2 = {2}, rms4 = {3}'.format(*rargs))
-
 
     # normalise med_hotpix to it's own median
     res = med_hotpix - np.nanmedian(med_hotpix)
@@ -1032,11 +1037,8 @@ def test_for_corrupt_files(p, image, hotpix):
     # signal to noise = res / rms
     snr_hotpix = res[med_size, med_size] / rms
 
-    # apply condition and return
-    if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
-        return True, snr_hotpix
-    else:
-        return False, snr_hotpix
+    # return test values
+    return snr_hotpix, [rms0, rms1, rms2, rms3]
 
 
 # =============================================================================
