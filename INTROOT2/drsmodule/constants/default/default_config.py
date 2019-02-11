@@ -14,7 +14,7 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
            'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
            'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
-           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE']
+           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT']
 
 # set name
 __NAME__ = 'drsmodule.constants.default.default_config'
@@ -26,7 +26,7 @@ Const = constant_functions.Const
 # global settings
 # =============================================================================
 # Whether to plotting (True or 1 to plotting)
-DRS_PLOT = Const('DRS_PLOT', value=True, dtype=bool, source=__NAME__)
+DRS_PLOT = Const('DRS_PLOT', value=0, dtype=int, source=__NAME__)
 
 # Whether to run in interactive mode - False or 0 to be in non-interactive mode
 #    (If 0 DRS_PLOT will be forced to 0)
@@ -38,7 +38,7 @@ DRS_INTERACTIVE = Const('DRS_INTERACTIVE', value=False, dtype=bool,
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = Const('DRS_DEBUG', value='a', dtype=int, source=__NAME__)
+DRS_DEBUG = Const('DRS_DEBUG', value=0, dtype=int, source=__NAME__)
 
 # =============================================================================
 # path settings
@@ -63,6 +63,9 @@ DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__)
 
 #   Define the working directory
 DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__)
+
+#   Define the plotting directory
+DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__)
 
 
 # =============================================================================
