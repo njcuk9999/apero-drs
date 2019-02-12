@@ -170,15 +170,19 @@ def main(night_name=None, ufiles=None):
         #deal with printing corruption message
         if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
             # add failed message to fail message list
-            fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold).'
-                    ' File will not be saved. File = {0}'.format(ufile))
+            fargs = [snr_hotpix, p['PP_CORRUPT_SNR_HOTPIX'],ufile ]
+            fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold, '
+                    '{0:.4e} < {1:.4e}). File will not be saved. '
+                    'File = {2}'.format(*fargs))
             fail_msg.append(fmsg)
             passed = False
 
         if np.max(rms_list) > p['PP_CORRUPT_RMS_THRES']:
             # add failed message to fail message list
-            fmsg = ('File was found to be corrupted. (RMS < threshold).'
-                    'File will not be saved. File = {0}'.format(ufile))
+            fargs = [np.max(rms_list), p['PP_CORRUPT_RMS_THRES'], ufile]
+            fmsg = ('File was found to be corrupted. (RMS < threshold, '
+                    '{0:.4e} < {1:.4e}). File will not be saved. '
+                    'File = {0}'.format(*fargs))
             fail_msg.append(fmsg)
             passed = False
 
