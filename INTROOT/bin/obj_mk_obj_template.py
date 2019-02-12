@@ -165,7 +165,7 @@ def main(night_name=None, files=None):
                                        return_value=True)
         snr = spirouImage.Read1Dkey(p, header, p['kw_E2DS_SNR'][0], nbo)
         # append snr_all
-        snr_all = snr[snr_order]
+        snr_all.append(snr[snr_order])
 
     # work our bad snr (less than half the median SNR)
     snr_thres = np.nanmedian(snr_all) / 2.0
