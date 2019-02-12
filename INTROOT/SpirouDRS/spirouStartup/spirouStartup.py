@@ -219,9 +219,21 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # deal with run time arguments
     if customargs is None:
         cparams = run_time_args(cparams, mainfitsdir, require_night_name)
+        # to log only:
+        lmsg = 'args: {0}'.format(' '.join(sys.argv))
+        WLOG(cparams, '', lmsg, logonly=True)
+
     else:
         cparams = run_time_custom_args(cparams, customargs, mainfitsdir,
                                        require_night_name)
+        # to log only:
+        args = []
+        for customarg in customargs:
+            args.append('{0}={1}'.format(customarg, customargs[customarg]))
+        # to log only:
+        lmsg = 'args: {0}'.format(' '.join(args))
+        WLOG(cparams, '', lmsg, logonly=True)
+
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
