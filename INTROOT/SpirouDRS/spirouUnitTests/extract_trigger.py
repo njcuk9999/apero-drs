@@ -337,7 +337,7 @@ def printrun(arg):
     TEST_STORE.append(arg)
 
 
-def print_runs(p, combinations, recipe):
+def print_runs(p, combinations, recipe, logonly=False):
     global RUNNUMBER
     # loop around combinations
     for it, combination in enumerate(combinations):
@@ -345,7 +345,7 @@ def print_runs(p, combinations, recipe):
         clist = [recipe] + list(np.array(combination).astype(str))
         # log progress
         printrun(command.format(RUNNUMBER, clist))
-        print(command.format(RUNNUMBER, clist))
+        WLOG(p, '', command.format(RUNNUMBER, clist), logonly=logonly)
         # iterate run number
         RUNNUMBER += 1
 
@@ -744,10 +744,12 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
             recipe1 = str(recipe)
         # manage the running of this recipe
         if TEST_RUN:
-            print_runs(p, runs, recipe1)
+            print_runs(p, runs, recipe1, logonly=False)
         elif PARALLEL:
+            print_runs(p, runs, recipe1, logonly=True)
             lls = run_parallel(p, runs, recipe1, night_name)
         else:
+            print_runs(p, runs, recipe1, logonly=True)
             lls = manage_runs(p, lls, runs, recipe1, night_name)
     # return local spaces and errors
     return lls
