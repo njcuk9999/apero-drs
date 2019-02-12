@@ -247,7 +247,7 @@ def main(night_name=None, files=None):
                                            return_value=True)
         # append to lists
         loc['BASE_ROWNUM'].append(it)
-        loc['BASE_SNRLIST_{0}'.format(snr_order)].append(snr[snr_order])
+        loc['BASE_SNRLIST_{0}'.format(snr_order)].append(snr_all[it])
         loc['BASE_DATELIST'].append('{0}_{1}'.format(dateobs, utcobs))
         loc['BASE_OBJNAME'].append(tobjname)
         loc['BASE_OBJECT'].append(tobject)
