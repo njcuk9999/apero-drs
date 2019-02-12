@@ -1432,6 +1432,36 @@ def close_fits_lock_file(p, lock, lock_file, filename):
         WLOG(p, 'error', [emsg1, emsg2])
 
 
+def update_wave_sol(p, loc, filename):
+
+    # get original data and header
+    data, hdr, comments, _, _ = readimage(p, filename)
+
+    # get wave filename
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
+    wavefitsname = os.path.split(wavefits)[-1]
+
+    # copy original keys
+    hdict = copy_original_keys(hdr, comments)
+
+    hdict = add_new_key(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+
+    # add number of orders
+    hdict = add_new_key(p, hdict, p['KW_WAVE_ORD_N'],
+                               value=loc['LL_PARAM_FINAL'].shape[0])
+    # add degree of fit
+    hdict = add_new_key(p, hdict, p['KW_WAVE_LL_DEG'],
+                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
+    # add wave solution
+    hdict = add_key_2d_list(p, hdict, p['KW_WAVE_PARAM'],
+                            values=loc['LL_PARAM_FINAL'])
+    # update header with hdict
+    p = writeimage(p, filename, data, hdict)
+
+    # return p
+    return p
+
+
 # =============================================================================
 # Define header User functions
 # =============================================================================
@@ -1916,11 +1946,6 @@ def read_header(p=None, filepath=None, ext=0, return_comments=False):
     :return hdict: dictionary, the dictionary with key value pairs
     """
     func_name = __NAME__ + '.read_header()'
-    # if p is None
-    if p is None:
-        log_opt = ''
-    else:
-        log_opt = p['LOG_OPT']
     # if filepath is None raise error
     if filepath is None:
         emsg1 = 'Error "filepath" is required'

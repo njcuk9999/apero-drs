@@ -197,6 +197,9 @@ RotateImage = spirouImage.rotate
 
 SortByName = spirouFile.sort_by_name
 
+
+UpdateWaveSolution = spirouFITS.update_wave_sol
+
 WriteImage = spirouFITS.writeimage
 
 WriteImageMulti = spirouFITS.write_image_multi
