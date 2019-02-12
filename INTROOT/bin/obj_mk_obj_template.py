@@ -189,16 +189,18 @@ def main(night_name=None, files=None):
     for it, filename in enumerate(tell_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
-        # append basename to file list
-        loc['BASE_FILELIST'].append(basefilename)
         # ------------------------------------------------------------------
         # skip if in bad snr objects
         if it in bad_snr_objects:
-            wargs = [snr_all[it], snr_thres]
-            wmsg1 = 'Skipping file due to bad SNR ({0} < {1})'.format(*wargs)
+            wargs = [it + 1, len(tell_files), snr_all[it], snr_thres]
+            wmsg1 = ('Skipping file {0} of {1} due to bad SNR ({2:.3f} < '
+                     '{3:.3f})'.format(*wargs))
             wmsg2 = '\tFile = {0}'.format(basefilename)
             WLOG(p, 'warning', [wmsg1, wmsg2])
             continue
+        # ------------------------------------------------------------------
+        # append basename to file list
+        loc['BASE_FILELIST'].append(basefilename)
         # ------------------------------------------------------------------
         # create image for storage
         image = np.repeat([np.nan], np.product(loc['DATA'].shape))
@@ -312,6 +314,18 @@ def main(night_name=None, files=None):
         # add to cube storage
         big_cube[:, :, it] = image
         big_cube0[:, :, it] = tdata
+
+    # ----------------------------------------------------------------------
+    # log if we have no files
+    if len(loc['BASE_FILELIST']) == 0:
+        wmsg = 'No good files found for object ="{0}" skipping'
+        WLOG(p, 'warning', wmsg.format(loc['OBJNAME']))
+        # End Message
+        wmsg = 'Recipe {0} has been successfully completed'
+        WLOG(p, 'info', wmsg.format(p['PROGRAM']))
+        # return a copy of locally defined variables in the memory
+        return dict(locals())
+
     # ----------------------------------------------------------------------
     # make median image
     with warnings.catch_warnings(record=True) as _:
@@ -345,8 +359,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
     # ----------------------------------------------------------------------
-    objname = loc['OBJNAME']
-    spirouDB.UpdateDatabaseObjTemp(p, outfilename, objname, loc['DATAHDR'])
+    spirouDB.UpdateDatabaseObjTemp(p, outfilename, loc['OBJNAME'],
+                                   loc['DATAHDR'])
     # put file in telluDB
     spirouDB.PutTelluFile(p, outfile)
 
