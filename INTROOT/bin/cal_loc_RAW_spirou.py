@@ -224,7 +224,7 @@ def main(night_name=None, files=None):
         satseuil = p['IC_SATSEUIL'] * p['GAIN'] * p['NBFRAMES']
         # plot image above saturation threshold
         # fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
-        fig1, frame1 = sPlt.locplot_im_sat_threshold(data2, satseuil)
+        fig1, frame1 = sPlt.locplot_im_sat_threshold(p, data2, satseuil)
     else:
         fig1, frame1 = None, None
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
