@@ -161,7 +161,7 @@ def main(night_name=None, files=None):
     for it, filename in enumerate(tell_files):
         header = spirouImage.ReadHeader(p, filename)
         # get the SNR from header
-        nbo = spirouImage.ReadParam(p, header, 'TH_ORD_N', dtype=str,
+        nbo = spirouImage.ReadParam(p, header, 'KW_WAVE_ORD_N', dtype=str,
                                        return_value=True)
         snr = spirouImage.Read1Dkey(p, header, p['kw_E2DS_SNR'][0], nbo)
         # append snr_all
