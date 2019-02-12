@@ -31,8 +31,9 @@ for gui in gui_env:
         import matplotlib.pyplot as plt
         from matplotlib.patches import Rectangle
         from mpl_toolkits.axes_grid1 import make_axes_locatable
+
         break
-    except:
+    except Exception as e:
         continue
 if matplotlib.get_backend() == 'MacOSX':
     matplotlib_emsg = ['OSX Error: Matplotlib MacOSX backend not supported and '
@@ -78,7 +79,6 @@ else:
 FIGSIZE = spirouConfig.Constants.PLOT_FIGSIZE()
 
 
-
 # =============================================================================
 # General plotting functions
 # =============================================================================
@@ -87,6 +87,7 @@ def start_interactive_session(p, interactive=False):
     Start interactive plot session, if required and if
     spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
 
+    :param p: ParamDict, the constants parameter dictionary
     :param interactive: bool, if True start interactive session
 
     :return None:
@@ -112,6 +113,7 @@ def end_interactive_session(p, interactive=False):
     End interactive plot session, if required and if
     spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
 
+    :param p: ParamDict, the constants parameter dictionary
     :param interactive: bool, if True end interactive session
 
     :return None:
@@ -125,7 +127,13 @@ def end_interactive_session(p, interactive=False):
 
 
 def end_plotting(p, plot_name):
+    """
+    End plotting properly (depending on DRS_PLOT and interactive mode)
 
+    :param p: ParamDict, the constants parameter dictionary
+    :param plot_name:
+    :return:
+    """
     if p['DRS_PLOT'] == 2:
         # get plotting figure names (as a list for multiple formats)
         snames = define_save_name(p, plot_name)
@@ -169,9 +177,7 @@ def closeall():
     plt.close('all')
 
 
-
 def define_save_name(p, plotname):
-
     # construct save path
     path = os.path.join(p['DRS_DATA_PLOT'], p['ARG_NIGHT_NAME'])
     # test that path exists
@@ -207,10 +213,9 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
     :param nrows:
     :return:
     """
-
     fix = True
     while fix:
-        if ncols == 0 and nrows ==0:
+        if ncols == 0 and nrows == 0:
             try:
                 fig = plt.figure()
                 plt.clf()
@@ -221,10 +226,9 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     fix = False
                 else:
                     emsg1 = 'An matplotlib error occured'
-                    emsg2 = 'Error {0}: {1}'.format(type(e), e)
-                    WLOG(p, 'error', [emsg1, emsg2])
-                    fig = None
-
+                    emsg2 = '\tBackend = {0}'.format(plt.get_backend())
+                    emsg3 = '\tError {0}: {1}'.format(type(e), e)
+                    WLOG(p, 'error', [emsg1, emsg2, emsg3])
         else:
             try:
                 fig, frames = plt.subplots(ncols, nrows, figsize=figsize)
@@ -235,9 +239,9 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     fix = False
                 else:
                     emsg1 = 'An matplotlib error occured'
-                    emsg2 = 'Error {0}: {1}'.format(type(e), e)
-                    WLOG(p, 'error', [emsg1, emsg2])
-                    fig = None
+                    emsg2 = '\tBackend = {0}'.format(plt.get_backend())
+                    emsg3 = '\tError {0}: {1}'.format(type(e), e)
+                    WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
 
 # TODO: Need a better fix for this
@@ -312,6 +316,7 @@ def darkplot_datacut(p, imagecut):
     """
     Plot the data cut mask
 
+    :param p: ParamDict, the constants parameter dictionary
     :param imagecut: numpy array (2D), the data cut mask
 
     :return:
@@ -401,12 +406,12 @@ def locplot_order(frame, x, y, label):
     frame.plot(x, y, label=label, linewidth=1.5, color='red')
 
 
-
 def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
     """
     Plots the row number against central column pixel value, smoothed minimum
     central pixel value and smoothed maximum, central pixel value
 
+    :param p: ParamDict, the constants parameter dictionary
     :param y: numpy array, central column pixel value
     :param miny: numpy array, smoothed minimum central pixel value
     :param maxy: numpy array, smoothed maximum central pixel value
@@ -432,10 +437,11 @@ def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
     end_plotting(p, plot_name)
 
 
-def locplot_im_sat_threshold(image, threshold):
+def locplot_im_sat_threshold(p, image, threshold):
     """
     Plots the image (order_profile) below the saturation threshold
 
+    :param p: ParamDict, the constants parameter dictionary
     :param image: numpy array (2D), the image
     :param threshold: float, the saturation threshold
 
@@ -678,6 +684,7 @@ def slit_tilt_angle_and_fit_plot(p, loc):
     """
     Plot the slit tilt angle and its fit
 
+    :param p: ParamDict, the constants parameter dictionary
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 xfit_tilt: numpy array (1D), the order numbers
@@ -711,7 +718,6 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
     width = p['SHAPE_ABC_WIDTH']
 
     # get data from loc
-    nbo = loc['NUMBER_ORDERS'] // 2
     slope_deg_arr, slope_arr = loc['SLOPE_DEG'], loc['SLOPE']
     s_keep_arr, xsection_arr = loc['S_KEEP'], loc['XSECTION']
     ccor_arr, ddx_arr = loc['CCOR'], loc['DDX']
@@ -783,7 +789,6 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
             title = 'Iteration {0} - Order {1}'
             plt.suptitle(title.format(banana_num, order_num))
 
-
     # if mode is single end properly else if all turn back on interactive mode
     if special:
         pass
@@ -792,9 +797,7 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
         end_plotting(p, plot_name)
 
 
-
 def slit_shape_dx_plot(p, dx, dx2, bnum):
-
     plot_name = 'slit_shape_dx_plot_it{0}'.format(bnum)
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
@@ -810,7 +813,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # ----------------------------------------------------------------------
     # plot dx
     vmin = (-2 * sig_dx) + zeropoint
-    vmax = (2* sig_dx) + zeropoint
+    vmax = (2 * sig_dx) + zeropoint
     im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax)
 
     divider1 = make_axes_locatable(frame1)
@@ -825,7 +828,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # ----------------------------------------------------------------------
     # plot dx2
     vmin = (-2 * sig_dx) + zeropoint
-    vmax = (2* sig_dx) + zeropoint
+    vmax = (2 * sig_dx) + zeropoint
     im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax)
 
     divider2 = make_axes_locatable(frame2)
@@ -840,7 +843,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # ----------------------------------------------------------------------
     # plot diff
     vmin = (-0.5 * sig_dx) + zeropoint
-    vmax = (0.5* sig_dx) + zeropoint
+    vmax = (0.5 * sig_dx) + zeropoint
     im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax)
 
     divider3 = make_axes_locatable(frame3)
@@ -876,7 +879,7 @@ def slit_shape_offset_plot(p, loc, bnum=None, order=None):
 
     # get this iterations parameters
     corr_err_xpix = corr_err_xpix_arr[order_num]
-    xpeak2= xpeak2_arr[order_num]
+    xpeak2 = xpeak2_arr[order_num]
     err_pix = err_pix_arr[order_num]
     good = goodmask_arr[order_num]
     # set up fig
@@ -1383,6 +1386,7 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     """
     Plot the photo noise uncertainty against spectral order number
 
+    :param p: ParamDict, the constants parameter dictionary
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least: (if x and y are None)
                 number_orders: int, the number of orders in reference spectrum
@@ -1486,6 +1490,8 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     """
     Plot mean drift against time from reference
 
+    :param p: ParamDict, the constants parameter dictionary
+
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 deltatime: numpy array (1D), time difference between reference
@@ -1572,7 +1578,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     speref_image, speref_scale = create_separated_scaled_image(speref)
 
     # set up fig
-    fig = setup_figure(p, ncols=0, nrows=0)
+    setup_figure(p, ncols=0, nrows=0)
     # set up axis
     frame1 = plt.subplot2grid((2, 3), (0, 0))
     frame2 = plt.subplot2grid((2, 3), (1, 0))
@@ -1795,7 +1801,10 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
         black = 'k'
 
     # set up fig
-    fig, frame = setup_figure(p)
+    if fig is None:
+        fig, frame = setup_figure(p)
+    else:
+        frame = plt.subplot(111)
     # plot fits
     frame.plot(x, y, label='data', marker='x', linestyle='none', color=black)
     frame.plot(x, yfit, label='fit', color='r')
@@ -1944,6 +1953,7 @@ def wave_local_width_offset_plot(p, loc):
     """
     Plot the measured FP cavity width offset against line number
 
+    :param p: ParamDict, the constants parameter dictionary
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
             FP_M: numpy array, the fp line numbers
@@ -1979,6 +1989,7 @@ def wave_fp_wavelength_residuals(p, loc):
     """
     Plot the FP line wavelength residuals
 
+    :param p: ParamDict, the constants parameter dictionary
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 FP_LL_POS: numpy array, the FP line initial wavelengths
@@ -2007,7 +2018,6 @@ def wave_fp_wavelength_residuals(p, loc):
 # wave solution plotting function (EA)
 # =============================================================================
 def wave_ea_plot_per_order_hcguess(p, loc, order_num):
-
     plot_name = 'wave_ea_plot_per_order_hcguess_order_{0}'.format(order_num)
     if p['DRS_PLOT'] < 2:
         plt.ioff()
@@ -2288,7 +2298,9 @@ def wave_ea_plot_single_order(p, loc):
                label='HC spectrum - order ' + str(plot_order))
     # plot found lines
     # first line separate for labelling purposes
-    x0 = loc['ALL_LINES_1'][plot_order_line][0][0] + loc['ALL_LINES_1'][plot_order_line][0][3]
+    x0i = loc['ALL_LINES_1'][plot_order_line][0][0]
+    x0ii = loc['ALL_LINES_1'][plot_order_line][0][3]
+    x0 = x0i + x0ii
     ymax0 = loc['ALL_LINES_1'][plot_order_line][0][2]
     frame.vlines(x0, 0, ymax0, color='m', label='fitted lines')
     # plot lines to the top of the figure
@@ -2297,7 +2309,8 @@ def wave_ea_plot_single_order(p, loc):
     # rest of lines
     for i in range(1, len(loc['ALL_LINES_1'][plot_order_line])):
         # get x and y
-        x = loc['ALL_LINES_1'][plot_order_line][i][0] + loc['ALL_LINES_1'][plot_order_line][i][3]
+        x = loc['ALL_LINES_1'][plot_order_line][i][0] + \
+            loc['ALL_LINES_1'][plot_order_line][i][3]
         ymaxi = loc['ALL_LINES_1'][plot_order_line][i][2]
         # plot lines to their corresponding amplitude
         frame.vlines(x, 0, ymaxi, color='m')
@@ -2534,7 +2547,6 @@ def tellu_fit_recon_abso_plot(p, loc):
 # Polarimetry plotting functions
 # =============================================================================
 def polar_continuum_plot(p, loc, in_wavelengths=True):
-
     plot_name = 'polar_continuum_plot'
     # get data from loc
     wl, pol = loc['FLAT_X'], 100.0 * loc['FLAT_POL']
@@ -2543,7 +2555,7 @@ def polar_continuum_plot(p, loc, in_wavelengths=True):
     contybin = 100. * contybin
     stokes = loc['STOKES']
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
-    
+
     # ---------------------------------------------------------------------
     # set up fig
     fig, frame = setup_figure(p)
@@ -2722,7 +2734,6 @@ def remove_first_last_ticks(frame, axis='x'):
         frame.set_xticks(yticks)
         frame.set_xticklabels(yticklabels)
     return frame
-
 
 # =============================================================================
 # End of code
