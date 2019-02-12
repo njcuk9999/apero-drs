@@ -194,6 +194,56 @@ def define_save_name(p, plotname):
     return paths
 
 
+def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
+    """
+    Extra steps to setup figure. On some OS getting error
+
+    "TclError" when using TkAgg. A possible solution to this is to
+    try switching to Agg
+
+    :param p:
+    :param figsize:
+    :param ncols:
+    :param nrows:
+    :return:
+    """
+
+    fix = True
+    while fix:
+        if ncols == 0 and nrows ==0:
+            try:
+                fig = plt.figure()
+                plt.clf()
+                return fig
+            except Exception as e:
+                if fix:
+                    attempt_tcl_error_fix()
+                    fix = False
+                else:
+                    emsg1 = 'An matplotlib error occured'
+                    emsg2 = 'Error {0}: {1}'.format(type(e), e)
+                    WLOG(p, 'error', [emsg1, emsg2])
+                    fig = None
+
+        else:
+            try:
+                fig, frames = plt.subplots(ncols, nrows, figsize=figsize)
+                return fig, frames
+            except Exception as e:
+                if fix:
+                    attempt_tcl_error_fix()
+                    fix = False
+                else:
+                    emsg1 = 'An matplotlib error occured'
+                    emsg2 = 'Error {0}: {1}'.format(type(e), e)
+                    WLOG(p, 'error', [emsg1, emsg2])
+                    fig = None
+
+
+# TODO: Need a better fix for this
+def attempt_tcl_error_fix():
+    plt.switch_backend('agg')
+
 
 # =============================================================================
 # dark plotting functions
@@ -220,11 +270,7 @@ def darkplot_image_and_regions(pp, image):
     """
     plot_name = 'darkplot_image_and_regions'
     # set up figure
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(pp)
     # plot the image
     clim = (0., 10 * pp['MED_FULL'])
     im = frame.imshow(image, origin='lower', clim=clim, cmap='jet')
@@ -272,11 +318,7 @@ def darkplot_datacut(p, imagecut):
     """
     plot_name = 'darkplot_datacut'
     # set up figure
-    fig = plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # imagecut need to be integers
     imagecut = imagecut.astype(np.int)
     # plot the image cut
@@ -313,11 +355,7 @@ def darkplot_histograms(pp):
     """
     plot_name = 'darkplot_histograms'
     # set up figure
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(pp)
     # get variables from property dictionary
     histo_f, edge_f = pp['HISTO_FULL']
     histo_b, edge_b = pp['HISTO_BLUE']
@@ -377,11 +415,7 @@ def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
     """
     plot_name = 'locplot_y_miny_maxy'
     # set up figure
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # define row number
     rownumber = np.arange(len(y))
     # plot y against row number
@@ -408,11 +442,9 @@ def locplot_im_sat_threshold(image, threshold):
     :return None:
     """
     # set up fig
-    fig = plt.figure(figsize=FIGSIZE)
+    fig, frame = setup_figure(p)
     # clear the current figure
     plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
     # plot image
     frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='gist_gray')
     # set the limits
@@ -445,11 +477,7 @@ def locplot_order_number_against_rms(pp, loc, rnum):
     """
     plot_name = 'locplot_order_number_against_rms'
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(pp)
     # plot image
     frame.plot(np.arange(rnum), loc['RMS_CENTER'][0:rnum], label='center')
     frame.plot(np.arange(rnum), loc['RMS_FWHM'][0:rnum], label='fwhm')
@@ -480,11 +508,7 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
     """
     plot_name = 'debug_locplot_min_ycc_loc_threshold'
     # set up figure
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(pp)
     # define row number
     rownumber = np.arange(len(cvalues))
     # plot minimum
@@ -531,10 +555,8 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
                    cgx + wx / 2., cgx + wx / 2., cgx + wx / 2., ind2])
     yy = np.array([0., 0., max(ycc) / 2., max(ycc), max(ycc), max(ycc),
                    max(ycc) / 2., 0., 0.])
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    # setup figure
+    fig, frame = setup_figure(pp)
     # plot orders
     frame.plot(np.arange(ind1, ind2, 1.0), ycc)
     frame.plot(xx, yy)
@@ -577,11 +599,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     xo = loc['CTRO'][rnum]
     y = loc['RES']
     # new fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(pp)
     # plot residuals of data - fit
     frame.plot(x, y, marker='_')
     # set title and limits
@@ -627,11 +645,7 @@ def slit_sorder_plot(pp, loc, image):
     """
     plot_name = 'slit_sorder_plot'
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(pp)
     # get selected order
     order = pp['IC_SLIT_ORDER_PLOT']
     # work out offset for this order
@@ -675,11 +689,7 @@ def slit_tilt_angle_and_fit_plot(p, loc):
     """
     plot_name = 'slit_tilt_angle_and_fit_plot'
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot tilt
     frame.plot(loc['XFIT_TILT'], loc['TILT'], label='tilt')
     # plot tilt fit
@@ -745,12 +755,9 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
                 c_keep = c_keep_arr[banana_num][order_num]
 
             # set up fig
-            plt.figure(figsize=FIGSIZE)
-            # clear the current figure
-            plt.clf()
+            fig, frames = setup_figure(p, ncols=2, nrows=1)
             # set up axis
-            frame1 = plt.subplot(121)
-            frame2 = plt.subplot(122)
+            frame1, frame2 = frames
             # ----------------------------------------------------------------
             # frame 1
             # ----------------------------------------------------------------
@@ -797,13 +804,9 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # get the sig of dx
     sig_dx = np.nanmedian(np.abs(dx - zeropoint))
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
+    fig, frames = setup_figure(p, ncols=3, nrows=1)
     # set up axis
-    frame1 = plt.subplot(131)
-    frame2 = plt.subplot(132)
-    frame3 = plt.subplot(133)
+    frame1, frame2, frame3 = frames
     # ----------------------------------------------------------------------
     # plot dx
     vmin = (-2 * sig_dx) + zeropoint
@@ -877,11 +880,7 @@ def slit_shape_offset_plot(p, loc, bnum=None, order=None):
     err_pix = err_pix_arr[order_num]
     good = goodmask_arr[order_num]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # ----------------------------------------------------------------
     # plot
     # ----------------------------------------------------------------
@@ -938,11 +937,7 @@ def ff_sorder_fit_edges(p, loc, image):
 
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
@@ -1003,11 +998,7 @@ def ff_aorder_fit_edges(p, loc, image):
 
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
 
@@ -1077,11 +1068,7 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     e2ds = loc['E2DS'][selected_order]
     blaze = loc['BLAZE'][selected_order]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # get xrange
     x = np.arange(len(e2ds))
     # plot e2ds for selected order
@@ -1121,11 +1108,7 @@ def ff_sorder_flat(p, loc):
     fiber = p['FIBER']
     flat = loc['FLAT'][selected_order]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # get xrange
     x = np.arange(len(flat))
     # plot e2ds for selected order
@@ -1147,11 +1130,7 @@ def ff_rms_plot(p, loc):
     # get constants from p
     remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # define a mask to select certain orders
     mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
     # apply mask to RMS array
@@ -1196,11 +1175,7 @@ def ext_sorder_fit(p, loc, image, cut=20000):
     fiber = p['FIBER']
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot image
     frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
     # loop around the order numbers
@@ -1259,11 +1234,7 @@ def ext_aorder_fit(p, loc, image, cut=20000):
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['FIBER']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot image
     frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
     # loop around the order numbers
@@ -1331,11 +1302,7 @@ def ext_spectral_order_plot(p, loc):
     wave = loc['WAVE'][selected_order]
     xlabel = 'Wavelength [nm]'  # [$\AA$]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.plot(wave, extraction, color='red')
     # set title labels limits
@@ -1350,11 +1317,7 @@ def ext_spectral_order_plot(p, loc):
 def ext_1d_spectrum_plot(p, x, y):
     plot_name = 'ext_1d_spectrum_plot'
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.plot(x, y)
     # set title
@@ -1405,11 +1368,7 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     else:
         extraction = np.array(y)[selected_order]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.plot(wave, extraction)
     # set title labels limits
@@ -1444,11 +1403,7 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     if y is None:
         y = loc['DVRMSREF']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.plot(x, y)
     # set title labels limits
@@ -1514,11 +1469,7 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     else:
         mstr = 'Mean'
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.errorbar(deltatime, mdrift, yerr=merrdrift, linestyle='none',
                    marker='x')
@@ -1564,11 +1515,7 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     mask3 = meanvrright > -999
 
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot mask1
     frame.plot(deltatime[mask1], meanvr[mask1], linestyle='none',
                marker='o', label='All orders', color='b')
@@ -1625,9 +1572,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     speref_image, speref_scale = create_separated_scaled_image(speref)
 
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
+    fig = setup_figure(p, ncols=0, nrows=0)
     # set up axis
     frame1 = plt.subplot2grid((2, 3), (0, 0))
     frame2 = plt.subplot2grid((2, 3), (1, 0))
@@ -1807,11 +1752,7 @@ def drift_peak_plot_llpeak_amps(p, loc):
     mask1 = abs(dv) < 1000
     mask2 = abs(dv) < 100
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.plot(wave, extraction)
     frame.plot(llpeak[mask1], logamppeak[mask1], linestyle='none')
@@ -1853,12 +1794,8 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
     else:
         black = 'k'
 
-    if fig is None:
-        plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    # set up fig
+    fig, frame = setup_figure(p)
     # plot fits
     frame.plot(x, y, label='data', marker='x', linestyle='none', color=black)
     frame.plot(x, yfit, label='fit', color='r')
@@ -1897,11 +1834,7 @@ def wave_littrow_extrap_plot(p, loc, iteration=0):
     yfit_x_cut = loc['LITTROW_EXTRAP_{0}'.format(iteration)]
     yfit = loc['LITTROW_EXTRAP_SOL_{0}'.format(iteration)]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # colours
     colours = np.tile(['r', 'b', 'g', 'y', 'm', black, 'c'], ydim)
     # loop around the orders and plot each line
@@ -1927,11 +1860,7 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     # noinspection PyUnresolvedReferences
     colors = cm.rainbow(np.linspace(0, 1, len(x_cut_points)))
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # loop around the xcut points
     for it in range(len(x_cut_points)):
         # get x and y data
@@ -1957,11 +1886,7 @@ def wave_plot_instrument_drift(p, x, spe, speref):
     selected_order = p['IC_WAVE_IDRIFT_PLOT_ORDER']
     fiber = p['FIBER']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot
     frame.plot(x[selected_order], spe[selected_order], label='data')
     frame.plot(x[selected_order], speref[selected_order], label='reference')
@@ -2004,11 +1929,7 @@ def wave_plot_final_fp_order(p, loc, iteration=0):
     wave = loc['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
     fp_data = loc['FPDATA'][selected_order]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot
     frame.plot(wave, fp_data)
     # set title labels limits
@@ -2038,11 +1959,7 @@ def wave_local_width_offset_plot(p, loc):
     fp_dopd = loc['FP_DOPD_OFFSET']
     fp_dopd_coeff = loc['FP_DOPD_OFFSET_COEFF']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.scatter(fp_m, fp_dopd, label='Measured')
     frame.plot(np.sort(fp_m), np.polyval(fp_dopd_coeff[::-1], np.sort(fp_m)),
@@ -2074,11 +1991,7 @@ def wave_fp_wavelength_residuals(p, loc):
     fp_ll = loc['FP_LL_POS']
     fp_ll_new = loc['FP_LL_POS_NEW']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot fits
     frame.scatter(fp_ll, fp_ll - fp_ll_new)
     # set title labels limits
@@ -2119,11 +2032,7 @@ def wave_ea_plot_per_order_hcguess(p, loc, order_num):
     g2_ini = g2_ini[gg]
 
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot spectrum for order
     frame.plot(wave[order_num, :], hc_sp[order_num, :], color=black)
     # over plot all fits
@@ -2165,11 +2074,7 @@ def wave_ea_plot_allorder_hcguess(p, loc):
     nbo = loc['NBO']
 
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
 
     # define spectral order colours
     col1 = [black, 'grey']
@@ -2224,11 +2129,7 @@ def wave_ea_plot_wave_cat_all_and_brightest(p, wave_c, dv, bmask, iteration):
     # get constants from p
     n_iterations = p['HC_NITER_FIT_TRIPLET']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot all lines
     frame.scatter(wave_c[~bmask], dv[~bmask], color='g', s=5,
                   label='All lines')
@@ -2260,14 +2161,10 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
     # repeat colours to match all_orders
     colours = np.tile(colours, len(all_orders))
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
+    fig, frames = setup_figure(p, ncols=2, nrows=2)
     # set up axis
-    frame1 = plt.subplot(221)
-    frame2 = plt.subplot(222)
-    frame3 = plt.subplot(223)
-    frame4 = plt.subplot(224)
+    frame1, frame2 = frames[:2]
+    frame3, frame4 = frames[2:]
     # loop around orders
     for order_num in all_orders:
         # identify this orders good values
@@ -2316,8 +2213,8 @@ def wave_ea_plot_line_profiles(p, loc):
     bin_x = int(np.ceil(nbpix / resmap_size[1]))
 
     # set up fig (double the fig size)
-    fig, frames = plt.subplots(nrows=resmap_size[0], ncols=resmap_size[1],
-                               figsize=np.array(FIGSIZE)*2)
+    fig, frames = setup_figure(p, nrows=resmap_size[0], ncols=resmap_size[1],
+                               figsize=np.array(FIGSIZE) * 2)
 
     order_range = np.arange(0, nbo, bin_order)
     x_range = np.arange(0, nbpix // bin_x)
@@ -2385,11 +2282,7 @@ def wave_ea_plot_single_order(p, loc):
     #    (which is sized n_ord_final-n_ord_start)
     plot_order_line = plot_order - p['IC_HC_N_ORD_START_2']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot order and flux
     frame.plot(loc['LL_OUT_2'][plot_order], loc['HCDATA'][plot_order],
                label='HC spectrum - order ' + str(plot_order))
@@ -2438,11 +2331,7 @@ def mk_tellu_wave_flux_plot(p, order_num, wave, tau1, sp, sp3, sed,
         good = np.ones(len(x), dtype=bool)
 
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot data
     frame.plot(x, y1, color='c', label='tapas fit')
     frame.plot(x, y2, color='k', label='input spectrum')
@@ -2472,11 +2361,7 @@ def tellu_trans_map_plot(p, loc, order_num, fmask, sed, trans, sp, ww, outfile):
     # get data from loc
     wave = loc['WAVE'][order_num, :]
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot trans_map and spectra
     frame.plot(wave, sp[order_num, :], 'r.', label='Spectrum')
     frame.plot(wave[fmask], sp[order_num][fmask], 'b.', label='Spectrum (kept)')
@@ -2506,11 +2391,7 @@ def tellu_pca_comp_plot(p, loc):
     wave = loc['WAVE'].ravel()
     pc = loc['PC']
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot principle components
     for it in range(npc):
         # define the label for the component
@@ -2555,11 +2436,7 @@ def tellu_fit_tellu_spline_plot(p, loc):
     # recovered absorption
     srecov = ssp / stemp
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot spectra for selected order
     frame.plot(swave, ssp / np.nanmedian(ssp), label='Observed SP')
     frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
@@ -2597,11 +2474,7 @@ def tellu_fit_debug_shift_plot(p, loc):
     pc1_before_s = pc1_before[start:end]
     pc1_after_s = pc1_after[start:end]
     # setup fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot the data vs pixel number
     frame.plot(tdata_s, color='k', label='Spectrum')
     frame.plot(pc1_before_s, color='g', marker='x', label='PC (before)')
@@ -2638,11 +2511,7 @@ def tellu_fit_recon_abso_plot(p, loc):
     stemp2 = np.array(loc['TEMPLATE2'][start:end])
     srecon_abso = np.array(loc['RECON_ABSO'][start:end])
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # plot spectra for selected order
     frame.plot(swave, ssp / np.nanmedian(ssp), color=black, label='input SP')
     frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
@@ -2677,11 +2546,7 @@ def polar_continuum_plot(p, loc, in_wavelengths=True):
     
     # ---------------------------------------------------------------------
     # set up fig
-    plt.figure(figsize=FIGSIZE)
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
+    fig, frame = setup_figure(p)
     # ---------------------------------------------------------------------
     # set up labels
     if in_wavelengths:
@@ -2721,11 +2586,9 @@ def polar_result_plot(p, loc, in_wavelengths=True):
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
     # ---------------------------------------------------------------------
     # set up fig
-    plt.figure(figsize=FIGSIZE)
+    fig, frame = setup_figure(p)
     # clear the current figure
     plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
     # ---------------------------------------------------------------------
     # set up labels
     if in_wavelengths:
@@ -2763,11 +2626,9 @@ def polar_stokes_i_plot(p, loc, in_wavelengths=True):
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
     # ---------------------------------------------------------------------
     # set up fig
-    plt.figure(figsize=FIGSIZE)
+    fig, frame = setup_figure(p)
     # clear the current figure
     plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
     # ---------------------------------------------------------------------
     # set up labels
     if in_wavelengths:
@@ -2804,13 +2665,12 @@ def polar_lsd_plot(p, loc):
 
     # ---------------------------------------------------------------------
     # set up fig
-    plt.figure(figsize=FIGSIZE)
+    fig, frames = setup_figure(p, ncols=1, nrows=3)
     # clear the current figure
     plt.clf()
-    # set up axis
 
     # ---------------------------------------------------------------------
-    frame = plt.subplot(3, 1, 1)
+    frame = frames[0]
     plt.plot(vels, zz, '-')
     plt.plot(vels, zgauss, '-')
     title = 'LSD Analysis'
@@ -2821,7 +2681,7 @@ def polar_lsd_plot(p, loc):
     # ---------------------------------------------------------------------
 
     # ---------------------------------------------------------------------
-    frame = plt.subplot(3, 1, 2)
+    frame = frames[1]
     title = ''
     plt.plot(vels, z_p, '-')
     ylabel = 'Stokes {0} profile'.format(stokes)
@@ -2831,7 +2691,7 @@ def polar_lsd_plot(p, loc):
     # ---------------------------------------------------------------------
 
     # ---------------------------------------------------------------------
-    frame = plt.subplot(3, 1, 3)
+    frame = frames[2]
     plt.plot(vels, z_np, '-')
     xlabel = 'velocity (km/s)'
     ylabel = 'Null profile'
