@@ -84,6 +84,9 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
     # if reset:
     #     spirouTools.drs_reset.reset_telludb(p, False)
 
+    # keep track of errors
+    errors = []
+
     # -------------------------------------------------------------------------
     # Step 1: Run mk_tellu on all telluric stars
     # -------------------------------------------------------------------------
@@ -97,7 +100,10 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
             # get arguments from filename
             args = spirouTelluric.GetDBarguments(p, objfilename)
             # run obj_mk_tellu
-            obj_mk_tellu_new.main(**args)
+            try:
+                ll = obj_mk_tellu_new.main(**args)
+            except SystemExit as e:
+                errors.append([pargs[1], objfilename, e])
             # force close all plots
             sPlt.closeall()
 
@@ -114,7 +120,10 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
             # get arguments from filename
             args = spirouTelluric.GetDBarguments(p, objfilename)
             # run obj_mk_tellu
-            obj_fit_tellu.main(**args)
+            try:
+                obj_fit_tellu.main(**args)
+            except SystemExit as e:
+                errors.append([pargs[1], objfilename, e])
             # force close all plots
             sPlt.closeall()
 
@@ -132,7 +141,10 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
         # get arguments from filename
         args = spirouTelluric.GetDBarguments(p, objfilename)
         # run obj_mk_obj_template
-        obj_mk_obj_template.main(**args)
+        try:
+            obj_mk_obj_template.main(**args)
+        except SystemExit as e:
+            errors.append(['Telluric Template', tell_star, e])
         # force close all plots
         sPlt.closeall()
 
@@ -149,10 +161,25 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
             # get arguments from filename
             args = spirouTelluric.GetDBarguments(p, objfilename)
             # run obj_mk_tellu
-            obj_mk_tellu_new.main(**args)
+            try:
+                obj_mk_tellu_new.main(**args)
+            except SystemExit as e:
+                errors.append([pargs[1], objfilename, e])
             # force close all plots
             sPlt.closeall()
 
+    # ----------------------------------------------------------------------
+    # Print all errors
+    # ----------------------------------------------------------------------
+    emsgs = ['', '='*50, 'Errors were as follows: ']
+    # loop around errors
+    for error in errors:
+        emsgs.append('')
+        emsgs.append('{0}: Object = {1}'.format(error[0], error[1]))
+        emsgs.append('\t{0}'.format(error[2]))
+        emsgs.append('')
+
+    WLOG(p, 'error', emsgs)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
