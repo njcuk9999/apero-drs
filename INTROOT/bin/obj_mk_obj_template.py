@@ -152,28 +152,38 @@ def main(night_name=None, files=None):
     loc.set_sources(keys, main_name)
 
     # ----------------------------------------------------------------------
+    # Compile a median SNR for rejection of bad files
+    # ----------------------------------------------------------------------
+    snr_all = []
+    # choose snr to check
+    snr_order = p['QC_FIT_TELLU_SNR_ORDER']
+    # loop through files
+    for it, filename in enumerate(tell_files):
+        header = spirouImage.ReadHeader(p, filename)
+        # get the SNR from header
+        nbo = spirouImage.ReadParam(p, header, 'TH_ORD_N', dtype=str,
+                                       return_value=True)
+        snr = spirouImage.Read1Dkey(p, header, p['kw_E2DS_SNR'][0], nbo)
+        # append snr_all
+        snr_all = snr[snr_order]
+
+    # work our bad snr (less than half the median SNR)
+    snr_thres = np.nanmedian(snr_all) / 2.0
+    bad_snr_objects = np.where(snr_all < snr_thres)[0]
+
+    # ----------------------------------------------------------------------
     # Loop through input files
     # ----------------------------------------------------------------------
-    # get choosen order
-    snr_order = p['QC_FIT_TELLU_SNR_ORDER']
     # empty lists for storage
-    loc['BASE_ROWNUM'] = []
-    loc['BASE_FILELIST'] = []
-    loc['BASE_OBJNAME'] = []
-    loc['BASE_OBJECT'] = []
-    loc['BASE_BERVLIST'] = []
-    loc['BASE_WAVELIST'] = []
+    loc['BASE_ROWNUM'], loc['BASE_FILELIST'] = [], []
+    loc['BASE_OBJNAME'], loc['BASE_OBJECT'] = [], []
+    loc['BASE_BERVLIST'], loc['BASE_WAVELIST'] = [], []
     loc['BASE_SNRLIST_{0}'.format(snr_order)] = []
-    loc['BASE_DATELIST'] = []
-    loc['BASE_VERSION'] = []
-    loc['BASE_DARKFILE'] = []
-    loc['BASE_BADFILE1'] = []
-    loc['BASE_BADFILE2'] = []
-    loc['BASE_LOCOFILE'] = []
-    loc['BASE_BLAZFILE'] = []
-    loc['BASE_FLATFILE'] = []
-    loc['BASE_SHAPEFILE'] = []
-    loc['BASE_EXTRFILE'] = []
+    loc['BASE_DATELIST'], loc['BASE_VERSION'] = [], []
+    loc['BASE_DARKFILE'], loc['BASE_BADFILE1'] = [], []
+    loc['BASE_BADFILE2'], loc['BASE_LOCOFILE'] = [], []
+    loc['BASE_BLAZFILE'], loc['BASE_FLATFILE'] = [], []
+    loc['BASE_SHAPEFILE'], loc['BASE_EXTRFILE'] = [], []
 
     # loop through files
     for it, filename in enumerate(tell_files):
@@ -181,6 +191,14 @@ def main(night_name=None, files=None):
         basefilename = os.path.basename(filename)
         # append basename to file list
         loc['BASE_FILELIST'].append(basefilename)
+        # ------------------------------------------------------------------
+        # skip if in bad snr objects
+        if it in bad_snr_objects:
+            wargs = [snr_all[it], snr_thres]
+            wmsg1 = 'Skipping file due to bad SNR ({0} < {1})'.format(*wargs)
+            wmsg2 = '\tFile = {0}'.format(basefilename)
+            WLOG(p, 'warning', [wmsg1, wmsg2])
+            continue
         # ------------------------------------------------------------------
         # create image for storage
         image = np.repeat([np.nan], np.product(loc['DATA'].shape))
@@ -200,7 +218,7 @@ def main(night_name=None, files=None):
 
         # ------------------------------------------------------------------
         # Get parameters from header
-        snr = spirouImage.Read1Dkey(p, thdr, p['kw_E2DS_SNR'][0], nbo)
+        snr = snr_all[it]
         dateobs = spirouImage.ReadParam(p, thdr, 'KW_DATE_OBS', dtype=str,
                                         return_value=True)
         utcobs = spirouImage.ReadParam(p, thdr, 'KW_UTC_OBS', dtype=str,
@@ -227,7 +245,6 @@ def main(night_name=None, files=None):
                                           return_value=True)
         textrfile  = spirouImage.ReadParam(p, thdr, 'KW_EXTFILE', dtype=str,
                                            return_value=True)
-
         # append to lists
         loc['BASE_ROWNUM'].append(it)
         loc['BASE_SNRLIST_{0}'.format(snr_order)].append(snr[snr_order])
