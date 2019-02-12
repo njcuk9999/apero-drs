@@ -1027,9 +1027,6 @@ def test_for_corrupt_files(p, image, hotpix):
     rms2 = rms2 / precentile_cut
     rms3 = rms3 / precentile_cut
 
-    rargs = [rms0, rms1, rms2, rms3]
-    print('rms0 = {0}, rms1 = {1}, rms2 = {2}, rms4 = {3}'.format(*rargs))
-
     # normalise med_hotpix to it's own median
     res = med_hotpix - np.nanmedian(med_hotpix)
     # work out an rms
