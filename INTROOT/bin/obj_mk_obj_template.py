@@ -124,7 +124,7 @@ def main(night_name=None, files=None):
     else:
         # log how many found
         wmsg = 'N={0} "TELL_OBJ" files found for object ="{1}"'
-        WLOG(p, '', wmsg.format(len(tell_files), loc['OBJNAME']))
+        WLOG(p, 'info', wmsg.format(len(tell_files), loc['OBJNAME']))
 
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
