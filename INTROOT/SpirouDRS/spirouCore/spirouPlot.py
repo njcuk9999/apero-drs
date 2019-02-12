@@ -231,7 +231,8 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
         else:
             try:
-                fig, frames = plt.subplots(ncols, nrows, figsize=figsize)
+                fig, frames = plt.subplots(ncols=ncols, nrows=nrows,
+                                           figsize=figsize)
                 return fig, frames
             except Exception as e:
                 if fix:
@@ -2173,8 +2174,8 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
     # set up fig
     fig, frames = setup_figure(p, ncols=2, nrows=2)
     # set up axis
-    frame1, frame2 = frames[:2]
-    frame3, frame4 = frames[2:]
+    frame1, frame2 = frames[0]
+    frame3, frame4 = frames[1]
     # loop around orders
     for order_num in all_orders:
         # identify this orders good values
