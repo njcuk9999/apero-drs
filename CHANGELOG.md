@@ -5877,7 +5877,7 @@
 
 
 ================================================================================
-* Wed Jan 30 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.020
+* Wed Jan 30 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.021
 
 ================================================================================
 	- spirouTelluric.py - continue to write/upgrade new mk_tellu functions and functions for mk_tellu_db (rev.d82ed3d1)
@@ -5889,3 +5889,690 @@
 	- obj_mk_tellu_new.py - move constants to constants file (rev.36bd4823)
 	- obj_mk_tellu_new.py - update code with Etienne's changes (rev.a915f5c4)
 	- obj_mk_tellu_db.py - new wrapper script for mk_tellu + fit_tellu on tellurics -- creates the telluric database (rev.28f58782)
+
+
+
+================================================================================
+* Fri Sep 14 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.022
+
+================================================================================
+	- input update: spirouStartup.__init__.py aliases / imports to spirouStartup2 (temporary) (rev.2b0a31d7)
+	- input update: recipes.py - holder for recipe definitions (rev.eff7f0de)
+	- input update: spirouRecipe.py - holder for new recipe classes (rev.9fc3df0c)
+	- input update: spirouStartup2.py - holder for new spirouStartup (rev.0f76d5c1)
+	- input update: test_recipe.py - test recipe to test new input functions (rev.5ac23025)
+
+
+
+================================================================================
+* Mon Sep 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.023
+
+================================================================================
+	- test_recipe: todo's added (rev.db6b4c50)
+
+
+
+================================================================================
+* Tue Sep 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.024
+
+================================================================================
+	- test_recipe.py - continue work on getting new input method to work (rev.1b14bb82)
+	- spirouStartup2.py - continue work on getting new input method to work (rev.6565c08f)
+	- spirouRecipe.py - continue work on getting new input method to work (rev.e13c00e8)
+	- recipes.py - add test recipe to test new definition method (rev.31c8d34e)
+	- spirouConst.py: fix pep8 issue - brackets not needed (rev.d94c4147)
+
+
+
+================================================================================
+* Sat Oct 06 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.025
+
+================================================================================
+	- input_file.txt - update list of inputs (Issue #475) (rev.7d128651)
+
+
+
+================================================================================
+* Wed Oct 31 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.026
+
+================================================================================
+	- recipe.py - add new comment (rev.344e055f)
+
+
+
+================================================================================
+* Thu Nov 01 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.027
+
+================================================================================
+	- spirouStartup2.py - continue work on input code (rev.300cffd5)
+	- spirouRecipe.py - continue work on input code (rev.1760f449)
+	- spirouFiles.py - define file types using new classes (rev.71b24452)
+	- recipe.py - update recipe definitions based on changes (rev.c3a54c1a)
+
+
+
+================================================================================
+* Fri Nov 02 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.028
+
+================================================================================
+	- spirouRecipes.py - add todo (rev.9eb4acfe)
+	- spirouStartup2.py - pushed renaming of recipes --> recipes_spirou into code (rev.791e65a1)
+	- recipes_spirou.py - renamed from recipes.py (rev.4c7c42d0)
+	- files_spirou.py - renamed from spirouFiles.py (rev.a5baf0a7)
+	- spirouRecipe.py - add doc strings for new classes (DrsArgument/DrsRecipe/DrsInputFile/DrsFitsFile) (rev.b83ac3b5)
+	- test_receip.py - update with new name for "ufiles"-->"filelist" (rev.874e1f9d)
+	- spirouStartup2.py - continue work on input code - update with changes to spirouRecipe.py (rev.ea087a87)
+	- spirouRecipe.py - define how DrsArgument, DrsRecipe and DrsInput (+DrsFitsFile) interact - continued testing of input redo (rev.80fac467)
+	- spirouFiles.py - define all raw/pp/out files as instances of DrsFitsFile (rev.4329be95)
+	- recipes.py - continue to test new inputs with test_recipe definition (rev.0ec7a5ec)
+
+
+
+================================================================================
+* Sun Nov 04 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.4.029
+
+================================================================================
+	- spirouRecipe.py - move DrsInputs from here to spirouFile.py (rev.0ba855fe)
+	- spirouFile.py - move DrsInputs from spirouRecipes to here (rev.d9b64fc8)
+	- files_spirou.py - update links to DrsInput: spirouRecipe --> spirouFile (rev.f5bcd1be)
+
+
+
+================================================================================
+* Mon Nov 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.030
+
+================================================================================
+	- test_recipe.py - tested cal_FF_RAW_spirou.py inputs (rev.f5f08d0e)
+	- spirouStartup2.py - modified code to line up with continued work on spirouRecipe (rev.55cffad5)
+	- spirouRecipe.py - continued to develop new recipe class (rev.7d0f889e)
+	- spirouFile.py - filled out some attributes/methods (rev.acb0448f)
+	- recipe_spirou.py - added more definitions and started to fill out drs recipes (badpix --> extract) (rev.e374e384)
+	- files_spirou.py - updated call to spirouFile.DrsInput --> spirouFile.DrsInputFile (rev.75474e5a)
+
+
+
+================================================================================
+* Tue Nov 06 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.031
+
+================================================================================
+	- test_recipe.py - tested cal_badpix_spirou.py (rev.b166a655)
+	- spirouStartup2.py - continue work on inputs update (rev.865c8b8d)
+	- spirouRecipe.py - continue work on inputs update (rev.f5733bbe)
+	- spirouFile.py - allow filename to be set in construction (via kwargs) (rev.089d89b2)
+	- recipes_spirou.py - add and reformat options to set/take defaults (rev.6f545f46)
+	- spirouConst.py - add a variable that can globally update pp (for use when we don't have p) (rev.94a3124b)
+
+
+
+================================================================================
+* Wed Nov 07 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.032
+
+================================================================================
+	- spirouFile.py - continue to fill out drs file fits methods (rev.9f9812d9)
+
+
+
+================================================================================
+* Fri Nov 09 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.033
+
+================================================================================
+	- continued work on input redo (rev.dbd27ff3)
+
+
+
+================================================================================
+* Wed Nov 14 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.4.034
+
+================================================================================
+	- test_recipe.py - change permissions for file (rev.e6b0e61f)
+
+
+
+================================================================================
+* Mon Dec 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.035
+
+================================================================================
+	- spirouStartup2.py - upgrade WLOG (requires drs_params to track pid) (rev.6205431c)
+	- spirouRecipe.py - upgrade WLOG (requires drs_params to track pid) (rev.92f0007d)
+	- spirouFile.py - upgrade WLOG function (requires drs_params to track pid) (rev.7753211d)
+	- recipes_spirou.py - fix pep8 in helpstr (rev.8ee02be1)
+
+
+
+================================================================================
+* Tue Dec 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.036
+
+================================================================================
+	- cal_validate_spirou.py - correct cal_validate for new wlog (rev.796ed8d5)
+
+
+
+================================================================================
+* Thu Dec 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.037
+
+================================================================================
+	- spirouRecipe.py - update to check code (put into DrsRecipe class as methods) (rev.b72afd7c)
+	- spirouRecipe.py - update to check code (put into DrsRecipe class as methods) (rev.58ad7139)
+
+
+
+================================================================================
+* Fri Dec 14 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.038
+
+================================================================================
+	- spirouRecipe.py and spirouStartup2.py - continued update to input redo (rev.ff7bc6a5)
+	- extract_trigger.py - fix incompatible version of cal_shape in reprocessing code (rev.63355b10)
+
+
+
+================================================================================
+* Sat Dec 15 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.039
+
+================================================================================
+	- spirouFile.py - continued work on input redo (rev.9977ecdb)
+	- spirouRecipe.py - continued work on input redo (rev.b92dbc98)
+
+
+
+================================================================================
+* Mon Dec 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.040
+
+================================================================================
+	- spirouRecipe.py - continued work on input redo (rev.31bde9c9)
+	- spirouStartup2.py - continued work on input redo (rev.cdb97a96)
+	- spirouRecipe.py - continued work on input redo (rev.caf6eed0)
+	- spirouFile.py - continued work on input redo (rev.95445f3e)
+	- test_recipe.py - continued update for input_redo (rev.1cde31f9)
+	- spirouRecipe.py - continued update for input_redo (rev.5bb64505)
+	- spirouFile.py - continued update for input_redo (rev.c8f04154)
+
+
+
+================================================================================
+* Tue Dec 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.041
+
+================================================================================
+	- test_recipe.py - continued update of input redo (rev.c9955ad2)
+	- spirouStartup2.py - continued update of input redo (rev.b11a4897)
+	- spirouStartup.py - update from spirouStartup2.py (rev.abdd0224)
+	- spirouRecipe.py - continued update of input redo (rev.0c15ba7b)
+	- spirouFile.py - continued update of input redo (rev.80c0198b)
+
+
+
+================================================================================
+* Wed Dec 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.042
+
+================================================================================
+	- spirouRecipe.py - continue input redo upgrade (rev.91d4d565)
+	- spirouFile.py - add some extra empty attributes to DrsInputFile and DrsFitsFile (rev.eb8986cd)
+	- spirouLog.py - alias for embeded ipython (in ipdb type "ipython()") (rev.c3dcd509)
+	- recipes_spirou.py - update values during input_redo upgrade (rev.1f360422)
+	- test_processing.py - script to test input_redo with processing (rev.40396dba)
+
+
+
+================================================================================
+* Fri Dec 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.043
+
+================================================================================
+	- test_processing.py - continued work on input_redo (rev.39352e5a)
+	- spirouRecipe.py - continued work on input_redo (rev.86ffc793)
+	- recipes_spirou.py - continued work on input_redo (rev.fa04e3f5)
+
+
+
+================================================================================
+* Tue Jan 08 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.044
+
+================================================================================
+	- spirouConst.py, spirouRecipe, spirouStartup2.py - move around the header --> into spirouConst.py (rev.e1484718)
+	- spirouStartup2.py - add a check for special keys and do not display normal "splash" if found. (rev.96a1f93c)
+	- spirouRecipe.py - update listing, add version/ epilog and other small fixes to input redo (rev.ccdb4455)
+	- recipe_spirou.py - continued work on recipe definitions (including references to recipe_descriptions) (rev.f082a240)
+	- recipe_descriptions.py - storage for longer text (allowing possibility of language support later) (rev.0f4e2956)
+	- spirouConst.py - added constant to define the maximum display limit for files/directorys (when showing an argument error) (rev.5965c872)
+
+
+
+================================================================================
+* Wed Jan 09 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.045
+
+================================================================================
+	- test_recipe.py - test on cal_HC_E2DS_spirou.py (rev.d591a03f)
+	- spirouStartup2.py - modified which argument display on setup (now only those that were entered at run time) (rev.a94817ef)
+	- spirouRecipe.py - redone error reporting on header check (rev.ff59d702)
+	- spirouFile.py - continued upgrade of input redo (rev.2dd622a2)
+	- recipes_spirou.py - added cal_hc definition (rev.2c6a3786)
+	- recipe_descriptions.py - added cal_hc text (rev.d8593b00)
+	- files_spirou.py - updated names to better represent files (i.e. added fiber name) (rev.9587df1f)
+	- spirouRecipe.py - make some methods/function private (protected) using the "_" character as a prefix (rev.90e54a96)
+	- recipe_spirou.py - add more argument defintions (blazefile/flatfile/wavefile), add cal_hc test (rev.80656ee8)
+	- recipe_descriptions - fix imports and define language in constants file (rev.3e425ad8)
+	- spirouConst.py - add language constant (Not used yet) (rev.75e06155)
+	- spirouStartup2.py - modify special_keys_present function to look at altnames as well as names (i.e. DrsArgument.names instead of DrsArgument.name) (rev.0f3632f6)
+	- spirouRecipe.py - modify and add special actions (now: --help, --listing, --listall, --version, --info) (rev.25e99124)
+	- recipe_spirou.py - convert remaining descriptions/help to recipe_descriptions calls (rev.2afa3003)
+	- recipe_descriptions.py - continue to fill out recipe descriptions/examples/help (rev.38e52a4c)
+
+
+
+================================================================================
+* Fri Jan 11 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.046
+
+================================================================================
+	- recipe_spirou.py - change nomenclature require kwarg arguments have '-' optional have '--' (rev.6a637e7c)
+	- test_recipe.py - change comment to make clearer (rev.5e5df0ed)
+	- spirouStartup2.py - remove '-' in specials to allow them to work (rev.b2d77201)
+	- spirouRecipe.py - modify _parse_args to take into that we don't wont the '-' (rev.844db5a7)
+	- recipes_spirou.py - testing file list as keyword arguments (rev.0b969c17)
+	- spirouStartup2.py - changed order of functions, modified display order, added functionality to deal with debug mode and other special keys (rev.b30581c0)
+	- spirouRecipe.py - continued upgrade (changes to parser handling of special arguments, check files + added debug as special argument) (rev.3eefcff4)
+	- spirouFile.py - small formatting changes in continued input redo (rev.3079218a)
+	- recipe_spirou.py - remove references to debug (now a special command added to all recipes) (rev.a04b54bc)
+	- recipe_descriptions.py - remove unused help (rev.8736b1f1)
+	- files_spirou.py - modify names to better suit input redo (rev.bf493227)
+
+
+
+================================================================================
+* Tue Jan 15 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.047
+
+================================================================================
+	- drs_dependencies.py - remove looking in the /misc/ folder for dependecies/code stats (rev.a09b0775)
+	- test_recipe.py - test self (rev.945e55d2)
+	- test_processing.py - upgrade to allow execution of recipes (in single and in parallel) (rev.2541093b)
+	- spirouStartup2.py - allow overwriting of drs_params when they are obtained via kwargs (get_params) (rev.c63aaa70)
+	- spirouRecipe.py - continued upgrade of input_redo (rev.d2507112)
+	- recipe_spirou.py - continued upgrade of input_redo (rev.12b806d2)
+
+
+
+================================================================================
+* Wed Jan 16 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.048
+
+================================================================================
+	- test_processing.py - for now comment out main call (while testing) (rev.74557987)
+	- spirouRecipe.py - reformat help printing, add required option to optional arguments (for when we do not have positional arguments) and rework the generation of runs from files (especially when we only have optional arguments) (rev.362f4b5f)
+	- recipe_spirou.py - add required keyword (for testing) (rev.642db992)
+	- wavecomp.py - code to compare wavelength solutions (misc) (rev.07e8c980)
+
+
+
+================================================================================
+* Thu Jan 17 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.049
+
+================================================================================
+	- added additional file to INTROOT 2 (remanage) (rev.5cfcf287)
+	- test_processing.py - remove need for replacing '.py' (rev.03381aa4)
+	- recipes_spirou.py - added instrument name (will be needed in the future) (rev.33a4612d)
+	- First draft of INTROOT remanage (rev.fcf45699)
+	- test_processing.py - modify code to return errors and timings (via multiprocessing.Manager) (rev.61d7c188)
+	- spirouRecipe.py - modified the generate_runs_from_filelist function to fix when there is no directory from pos args (rev.ddfca73b)
+	- spirouFile.py - added read_header/read_data functions and optimized (with todo comment) the read function (rev.e8951db0)
+	- wavecompy.py - added some comments (rev.08eec453)
+
+
+
+================================================================================
+* Fri Jan 18 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.050
+
+================================================================================
+	- move constants functions from package --> core (remove package module) (rev.a606489c)
+	- add init file for drsmodule (to be named something else eventually) (rev.edea2e91)
+	- add configuration.instruments.spirou files (rev.1a4f78a1)
+	- remove the core.general package (rev.4967e1b2)
+	- add init and README.md to constants module (rev.121428b2)
+	- add a defaults folder (this has definitions of constants as well as default values) - sets up the classes for instruments to overwrite (rev.7ebaff0b)
+	- remove the const package (now "constants") (rev.9461e6b7)
+	- add a time module to the configurations.math module (rev.e8dd0fbf)
+	- add a init file to configuration.instruments (rev.50f218a7)
+	- add spirou config files to configuration.instruments (rev.eecd5d60)
+	- add logging to configuration.core (rev.75421b2d)
+	- add default user config files (will be commented out in future) (rev.50fd0090)
+	- spirouRecipe.py - add "instrument" to attributes of spirouRecipe.py (rev.85fca8df)
+	- files_spirou.py - modify name and description docstring (rev.0c5f7104)
+	- spirouConst.py - fix a bug in exit definition (rev.b6301126)
+
+
+
+================================================================================
+* Sat Jan 19 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.051
+
+================================================================================
+	- add minor changes to drs_recipe.py and drs_startup.py (rev.e176d6f9)
+	- add a test recipe to recipes.test (rev.e90921ca)
+	- added a plot module (rev.70fbd9a7)
+	- continued upgrade of constants.default packages (rev.0f6f012f)
+	- added locale package (rev.350d93cb)
+	- continued update of instruments.spirou defintions (rev.61648eae)
+	- adding drs_recipe + drs_file  to configuration.core modules (rev.325d683f)
+
+
+
+================================================================================
+* Mon Jan 21 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.052
+
+================================================================================
+	- add source config file to error messages (rev.d5c69694)
+	- fixed printing of config errors in constants file (rev.726b72bf)
+	- added a test recipe for spirou and nirps (rev.85ac3b87)
+	- added lock and table to drsmodule.io package (rev.bcc6d43e)
+	- added "getmodnames" to drsmodule.constants.__init__ file (rev.6eee426b)
+	- continued upgrade to drsmodule.constants.default (rev.8c367c6b)
+	- continued upgrade to drsmodule.constants.core (rev.451bb678)
+	- added __init__ file to drsmodule.configuration (rev.ccf965db)
+	- continued upgrade to drsmodule.configuration.instruments.spirou (rev.4db609d2)
+	- added a drsmodule.configuration.core.default folder (for default file/recipe descriptions) (rev.4c73e844)
+	- continued upgrade to drsmodule.configuration.core (rev.b3f2aa1a)
+	- default file definitions and recipe defintions (rev.8738adb3)
+	- add test default config for NIRPS (rev.2ba6a20e)
+	- add test user config for NIRPS (rev.ad9690e2)
+
+
+
+================================================================================
+* Tue Jan 22 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.053
+
+================================================================================
+	- added error.csv and "language.xls" - use language.xls to edit strings for each language (given a specific key) (rev.85d4786a)
+	- default_config.py - updated options (now with ENG and FR allowed - ENG as default) (rev.8a7b2d8e)
+	- updated help.csv (rev.be8bf5d0)
+	- removed recipe_descriptions.py from config.locale.core (rev.6f51ef49)
+	- drs_text.py - (formally text.py) - continued work on upgrade (rev.75ccf94c)
+	- recipe_definitions.py - use HelpText to define strings (language support) (rev.afbd7bd3)
+	- drs_recipe.py - COLOURED_LOG --> DRS_COLOURED_LOG (rev.48d544db)
+	- drs_log.py - update WLOG to deal with ErrorEntry objects as WLOG messages (rev.765c4792)
+	- use HelpText to define strings (language support) (rev.0c9b5067)
+	- update user_config.ini file (rev.e36a5401)
+	- update user_config.ini file (rev.087a331f)
+	- add default help file (rev.453a377a)
+	- change from ./configuration --> ./config (rev.3e440d27)
+	- change from ./configuration --> ./config (rev.930fc62f)
+	- added alias to new function "get_file_names" (rev.92f9b287)
+	- adjusted path name ./configuration --> ./config (rev.75e59b4b)
+	- started adding language support (rev.fb1ebd3e)
+	- renamed drsmodule.configuration to drsmodule.config (rev.16c04265)
+
+
+
+================================================================================
+* Wed Jan 23 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.054
+
+================================================================================
+	- moved locale module to drsmodule root (rev.f19ce12e)
+	- locale.databases - continued to add to databases (rev.7c38fed6)
+	- locale.databases - continued to add to databases (rev.8455f896)
+	- .gitignore - added ignoring of .npy files and .~lock files (rev.6eb39cbd)
+	- constants.default.pseudo_const.py - added REPORT_KEYS method (rev.dba80713)
+	- constants.core.param_functions.py - started added language / basic log functionality (rev.151c627c)
+	- constants.core.constants_functions.py - added tracking of warnings (so they only print once) (rev.d05d7f47)
+	- config.math.time.py - added get_hhmmss_now function (for log) (rev.401baf9a)
+	- removed locale folder from config folder to separate sub-module directory (rev.e61148a2)
+	- instruments.spirou.recipe_definitions.py - language implementation (rev.040afbe4)
+	- instruments.nirps.recipe_definitions.py - language implementation (rev.048f4315)
+	- instruments.nirps.pseudo_const.py - format change (rev.490419ee)
+	- drs_startup.py - language implementation (rev.044cf22d)
+	- drs_recipe.py - language implementation (rev.7e31512c)
+	- drs_log.py - language implementation (rev.748baba8)
+
+
+
+================================================================================
+* Thu Jan 24 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.055
+
+================================================================================
+	- add READMEs to explain empty directories (rev.5ec89c61)
+	- add instrument language packs and backup folder for language database (rev.32e3bf40)
+	- drsmodule.locale - construct a readme (rev.78bb165d)
+	- drsmodule.locale.__init__.py - add drs_exceptions to internal imported modules (rev.b48da1cc)
+	- drsmodule.locale.databases - update language databases (rev.38e3acfc)
+	- drmodule.locale.core - move exceptions and make sure all are using basiclogger (rev.35ee058b)
+	- drsmodule.constants - update readme (rev.68022e5a)
+	- constants.default - make Const and Keywords have a source argument (rev.645735a6)
+	- constants.core - change how exceptions work and where they are sourced from (rev.34c3a6d4)
+	- config.instruments.spirou - make copy have a source argument (rev.a0cd24ec)
+	- config.instruments.nirps - make copy have a source argument (rev.bc34245e)
+	- drs_setup.py - change how the exceptions work and where they are sourced from + continue to replace hard-coded text to text from database (rev.6fe070bf)
+	- drs_recipe.py - carryon replacing text hard-coded to text in database (rev.070b2227)
+	- drs_log.py - change how the exceptions work and where they are sourced from (rev.ae1cb733)
+
+
+
+================================================================================
+* Fri Jan 25 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.056
+
+================================================================================
+	- drs_startup.py - tweak the system information display section (rev.c23e087a)
+	- drs_log.py - separate print and log (and use default language for log) (rev.a8097994)
+	- backup language database (rev.aa4afc1e)
+	- drs_text.py - fill language database empty with 'N/A' (rev.ca8a1a3a)
+	- update language databases (rev.37699d7d)
+
+
+
+================================================================================
+* Sat Jan 26 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.057
+
+================================================================================
+	- modify test recipes with upgrades (rev.8ec9abd0)
+	- drsmodule.plotting - moved from drsmodule.plot (rev.b1423ef7)
+	- drsmodule.locale - continue upgrade (rev.0266c24e)
+	- drsmodule.constants.io - continue upgrade (rev.07553f1c)
+	- drsmodule.constants.default - continue upgrade (rev.973ae969)
+	- drsmodule.constants.core - continue upgrade (rev.f081ad66)
+	- drsmodule.config.instruments - continue upgrade (rev.953ab831)
+	- drsmodule.config.core - continue upgrade (rev.e53ddab4)
+	- update DRS_VERSION / DRS_DATE / DRS_RELEASE (rev.2372d3d1)
+	- update user_config.ini (rev.160b5031)
+	- update user_config.ini (rev.26c623ff)
+
+
+
+================================================================================
+* Mon Jan 28 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.058
+
+================================================================================
+	- upgrade of language database (rev.fa782712)
+	- drs_lock.py - continued upgrade of error entry (rev.c7e7d73f)
+	- drs_recipe.py - continued upgrade of error entry (rev.67d6bcdf)
+	- drs_log.py - continued upgrade of error entry (rev.5d057a13)
+	- drs_file.py - continued upgrade of error entry (rev.82c9f9fd)
+	- drs_log.py - fix bug in log and how exceptions are handled (rev.78e24f8f)
+
+
+
+================================================================================
+* Wed Jan 30 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.059
+
+================================================================================
+	- obj_mk_tellu_new.py - update code with Etienne's changes (rev.a915f5c4)
+
+
+
+================================================================================
+* Thu Jan 31 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.060
+
+================================================================================
+	- update langauge databases (rev.ae728cef)
+	- drs_file.py - continue to take out error messages (rev.2fb93ed7)
+	- recipe_definitions.py - update location of locale module (rev.ee3f31fa)
+	- extract_trigger.py - add obj_mk_tellu_db to triggered files (rev.1606a887)
+	- unit test runs - add obj_mk_tellu_db to runs (rev.1c3042ef)
+	- spirouTelluric.py - fix bugs after moving functions here (rev.f550fe3c)
+	- code to check the calibdb entries vs files (rev.43d89e34)
+	- add obj_mk_tellu_db to list of available unit tests (rev.76ea9e69)
+
+
+
+================================================================================
+* Fri Feb 01 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.061
+
+================================================================================
+	- update language database (rev.fa862edf)
+	- drs_file.py - continue taking out error messages (rev.0af7c60d)
+	- add wiki plots (rev.7d835ac5)
+	- spirouWAVE.py - fix a deprecated WLOG message (found by Melissa) (rev.3e3f27f5)
+	- spirouLog.py - must catch WLOG error before trying to do anything with p (rev.3c8195f4)
+	- update langauge databases (rev.275caec3)
+	- drs_file.py - continued error movement to database (rev.cfdf3c21)
+
+
+
+================================================================================
+* Sun Feb 03 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.062
+
+================================================================================
+	- port_database.py - just try to open csv files as they are done in the drs -- hits problems here and not later. (rev.0bca614c)
+	- drs_text.py - edit the way csv databases are loaded (to avoid encoding errors) (rev.7c615bbb)
+	- drs_exceptions.py - add errorobj as possible input to exceptions (and exctract message/level accordingly) (rev.ef5e73d8)
+	- update language database (rev.a0792061)
+	- drs_recipe.py - continue moving errors to database (rev.44aefd55)
+	- drs_log.py - continue moving errors to database (rev.c0142aa0)
+	- drs_file.py - continue moving errors to database (rev.26579be9)
+
+
+
+================================================================================
+* Mon Feb 04 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.063
+
+================================================================================
+	- obj_mk_tellu_db.py - do not reset tellu db in code (do it manually before) (rev.a399ae51)
+	- update extract_trigger.py for obj_mk_tellu_db.py (rev.1b841532)
+
+
+
+================================================================================
+* Tue Feb 05 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.064
+
+================================================================================
+	- drs_startup.py - tweak display settings for interactive + debug mode in drs setup text (rev.b39b2b79)
+	- update language database (rev.a3718432)
+	- drs_text.py - tweak short codes and how length works with Entry(None) (rev.716adbc5)
+	- drs_exceptions.py - tweak how exception work (and add string representation) (rev.b0714b4e)
+	- update language database (rev.31914af3)
+	- pseudo_const.py - do not automatically write debug message language codes (only when debug >= 100) (rev.744115cc)
+	- drs_startup.py - continue editing how errors work (rev.76a79fe4)
+	- drs_recipe.py - continue update to errors (rev.f7d3dcf3)
+	- drs_log.py - do not use 'p' use params, update reporting (report all if debug >= 100) (rev.61a46992)
+	- drs_file.py - add extra param (pep8) (rev.d0e807fa)
+	- drs_argument.py - redo DrsArgument.exception and update _display_info (rev.8f359c9d)
+	- update extract_trigger settings (rev.ecdf66fb)
+	- update telluric white/black lists (rev.0ee9deee)
+	- extract_trigger.py - add a comment (rev.0407e262)
+	- check_calibdb_2.py - check calibdb and sort and make "pernight" and "pertc" calibdb entries (rev.4cd14320)
+	- spirouTelluric.__init__.py - Add aliases to blacklist and whitelist functions (rev.b72a0555)
+	- extract_trigger.py - get whitelist from file (rev.fed03813)
+	- drs_text.py - expand functionality of Entry classes (__add__, __radd__, __len__, __iter__, __next__, __eq__, __ne__, __contains__) and how .get() works (rev.d48042c9)
+	- drs_exception.py - add ArgumentException/Error/Warning (rev.a2500052)
+	- update language database (rev.afe7795a)
+	- param_functions.py - get ArgumentError/Warning (rev.a3b7fdbc)
+	- drs_startup.py - deal with changes to ErrorEntry (no "\n" automatically added now) (rev.c508a300)
+	- drs_recipe.py - move argument classes/functions to separate script + continue string moving to language database (rev.4370a5b4)
+	- drs_loy.py - add comment that some strings cannot be moved to language database (rev.3d4cae0e)
+	- drs_argument.py - move argument classes/function to separate script (rev.d46bf1b9)
+
+
+
+================================================================================
+* Wed Feb 06 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.065
+
+================================================================================
+	- add a note to locale README.md (rev.ef2382f3)
+	- update language database (rev.6b4ca4eb)
+	- drs_table.py - remove text to language database (rev.6cf1d294)
+	- check_objname.py - pep9 remove blank lines (rev.991a2eff)
+	- check_objname.py - check objnames and dprtype for preprocessed files in a given directory (rev.5274e889)
+
+
+
+================================================================================
+* Thu Feb 07 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.066
+
+================================================================================
+	- update the leapseconds (rev.cf112d94)
+	- check_for_corrupt_files.py - worker code to check corrupt files functionality (before implementing into preprocessing) (rev.7a90d0fa)
+	- update to only do mk_tellu and fit_tellu (rev.f694983b)
+	- add  / get functions for recon file (rev.02d7e6dc)
+	- constants_SPIROU_H4RG.py - qc snr for mk_tellu and fit_tellu (rev.4784756d)
+	- obj_mk_tellu_*.py - distinguish between SNR cut in fit_tellu and mk_tellu (rev.8a126a5d)
+	- obj_fit_tellu.py - add qc of SNR > 100 for order 33 (rev.73616172)
+
+
+
+================================================================================
+* Fri Feb 08 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.067
+
+================================================================================
+	- cal_preprocess_spirou.py - print out the corruption check value (rev.b2815339)
+	- cal_preprocess_spirou.py - print out the corruption check value (rev.64c27725)
+	- cal_preprocess_spirou.py - better message for corrupt file (rev.cf34eed2)
+	- cal_preprocess_spirou.py - better message for corrupt file (rev.b29be8c3)
+	- spirouImage.py - catch warning "RuntimeWarning: All-NaN slice encountered r = func(a, **kwargs)" (rev.f40d210c)
+	- cal_preprocess_spirou.py - pep8 tidy up of QC (rev.f9712c6b)
+	- spirouImage.py - add get_full_flat, get_hot_pixels, test_for_corrupt_files functions (for checking corruption in preprocessing) (rev.379965fd)
+	- constants_SPIROU_H4RG.py - add corrupt file constants (rev.cab77758)
+	- cal_preprocess_spirou.py - add QC for corrupt files (rev.47cf0fc0)
+	- extract_trigger.py - update conditions for mk_tellu and fit_tellu (rev.ddc9c17c)
+	- extract_trigger.py - update conditions for mk_tellu and fit_tellu (rev.14ae05eb)
+	- obj_mk_obj_template.py - make sure BigCube table in both BigCube and BigCube0 (rev.32a320fd)
+	- obj_mk_obj_tempalte.py - fit BADFILE --> BADPFILE keyword (rev.032fbd99)
+	- spirouKeywords.py - update KW_OBJECT (was a typo) (rev.7e9d03ec)
+	- obj_mk_obj_template.py - add the data type to ReadParams (otherwise tries to make them floats) (rev.78b3eec2)
+	- spirouImage.py - deal with keylook up and report better error (via keylookup) (rev.fa45fbf7)
+	- obj_mk_obj_template.py - fix another typo since last update (rev.8cffb4d2)
+	- spirouKeywords.py - add keyword KW_OBJECT (rev.9975a69d)
+	- obj_mk_obj_template.py - fix type in previous changes (rev.b95ab156)
+	- check_for_corrupt_files.py - add an extra fix from Etienne (rev.5fed5537)
+	- obj_mk_tellu_db.py - fix typo in printout text (rev.511cc553)
+	- obj_mk_obj_template.py - correct mistake in calling ReadParams (from most recent edit) (rev.6c3f8da6)
+	- spirouTelluric.py - add a function to construct the big cube table (added as a second import to BigCube) (rev.cc4853da)
+	- spirouFITS.py - add a write_image_table function to write a image and a table to single fits file (rev.35a75c3d)
+	- check_for_corrupt_files.py - adjust with Etiennes changes (rev.a7f28900)
+	- obj_mk_obj_template.py - add fits table to big table with rows of file parameters (used in the big cube) (rev.15d6066c)
+	- check_for_corrupt_files.py - fix bugs in the test (rev.61bd8aee)
+
+
+
+================================================================================
+* Sun Feb 10 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.068
+
+================================================================================
+	- spirouPlot.py - make sure plots are unique (rev.93c76653)
+	- cal_DRIFTPEAK_E2DS_spirou.py - modifications to plotting changes (rev.34f80d06)
+	- drs_reset.py - add option to reset plot folder (rev.783ee9f9)
+	- spirouStartup.py - deal with getting / setting / displaying plot level (rev.e7a88346)
+	- spirouPlot.py - add all functionality to support plotting to file (rev.32882709)
+	- spirouConst.py - add plot extensions and plot figsize to constants (for saving plots to file) (rev.dfbfc1d0)
+	- spirou modules - make all plot calls compatible with saving to file (rev.3e91d6dd)
+	- misc - make all plot calls compatible with saving to file (rev.f7219742)
+	- config.py - make DRS_PLOT an int and change description of DRS_INTERACTIVE (rev.abc6b885)
+	- bin folder - modify all calls to plot to allow saving to file (all calls require "p" as an argument) (rev.381ec23b)
+	- DRS startup - need to make data/msg etc folders if they don't exist (rev.42e741a5)
+
+
+
+================================================================================
+* Mon Feb 11 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.069
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py - Big Bug FIX ASAP (rev.119da91c)
+	- spirouPlot.py - update wave_ea_plot_line_profiles fig size (rev.77f12b98)
+	- spirouImage.py - pep8 correction to corruption test (rev.25bcc9fc)
+	- constants_SPIROU_H4RG.py - add second criteria for corrupt files (rev.47bf14e1)
+	- cal_preprocess_spirou.py - update corruption tests (rev.54c60beb)
+	- spirouImage.py - adjust rms values (scaled by percentile) (rev.25c438b7)
+	- cal_preprocess_spirou.py - move qc cuts to main code (from function) (rev.cdf10d85)
+	- spirouImage.py - update corruption test (rev.b52d2b6d)
+	- spirouPlot.py - update some plot parameters (rev.691a3816)
+	- spirouPlot.py - enforce a default fig size on all plots + only save in png and pdf (rev.a337b9a0)
+
+
+
+================================================================================
+* Tue Feb 12 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.070
+
+================================================================================
+	- spirouFITS.py - add UpdateWaveSolution (update_wave_sol) function to update correctly the HC and FP files (rev.8bbe960e)
+	- obj_mk_obj_template.py - add criteria to check median SNR and remove any below half the median SNR (in specific order) (rev.82fcbb24)
+	- cal_WAVE_E2DS_EA_spirou.py - BUG FIX - hc and fp files have wrong headers when updating wave solution (rev.ed799395)
