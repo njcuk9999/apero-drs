@@ -1502,6 +1502,7 @@ def main(night_name=None):
     if RUN_OBJ_FIT_TELLU:
         lls = trigger_main(p, loc, recipe='obj_fit_tellu',
                            fobjnames=['Gl699', 'Gl15A'])
+        all_lls['obj_fit_tellu (OBJ)'] = lls
 
     # if test run print report
     if TEST_RUN:
