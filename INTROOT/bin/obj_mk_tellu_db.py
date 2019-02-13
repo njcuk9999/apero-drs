@@ -171,7 +171,7 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
     # ----------------------------------------------------------------------
     # Print all errors
     # ----------------------------------------------------------------------
-        if len(errors) > 0:
+    if len(errors) > 0:
         emsgs = ['', '='*50, 'Errors were as follows: ']
         # loop around errors
         for error in errors:
