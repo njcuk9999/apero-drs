@@ -171,15 +171,15 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
     # ----------------------------------------------------------------------
     # Print all errors
     # ----------------------------------------------------------------------
-    emsgs = ['', '='*50, 'Errors were as follows: ']
-    # loop around errors
-    for error in errors:
-        emsgs.append('')
-        emsgs.append('{0}: Object = {1}'.format(error[0], error[1]))
-        emsgs.append('\t{0}'.format(error[2]))
-        emsgs.append('')
-
-    WLOG(p, 'error', emsgs)
+        if len(errors) > 0:
+        emsgs = ['', '='*50, 'Errors were as follows: ']
+        # loop around errors
+        for error in errors:
+            emsgs.append('')
+            emsgs.append('{0}: Object = {1}'.format(error[0], error[1]))
+            emsgs.append('\t{0}'.format(error[2]))
+            emsgs.append('')
+        WLOG(p, 'error', emsgs)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
