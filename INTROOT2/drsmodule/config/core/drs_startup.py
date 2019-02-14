@@ -669,7 +669,8 @@ def find_recipe(name=None, instrument=None):
     func_name = __NAME__ + '.find_recipe()'
     # deal with no instrument
     if instrument is None:
-        WLOG(None, 'error', ErrorEntry('00-001-00001', args=[func_name]))
+        empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
+        return empty
     # deal with no name or no instrument
     if name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
