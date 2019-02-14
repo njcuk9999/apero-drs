@@ -297,7 +297,7 @@ def _read_lines(filename, comments='#', delimiter=' '):
     return np.array(raw)
 
 
-def _test_dtype(name, invalue, dtype, quiet=False):
+def _test_dtype(name, invalue, dtype, source, quiet=False):
 
     # if we don't have a value (i.e. it is None) don't test
     if invalue is None:
@@ -309,8 +309,10 @@ def _test_dtype(name, invalue, dtype, quiet=False):
             eargs = [name, type(invalue), invalue]
             emsg1 = 'Parameter "{0}" must be a string.'
             emsg2 = '\tType: "{1}"\tValue: "{2}"'.format(*eargs)
+            emsg3 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
-                raise ConfigError([emsg1.format(*eargs), emsg2], level='error')
+                raise ConfigError([emsg1.format(*eargs), emsg2, emsg3],
+                                  level='error')
         if not os.path.exists(invalue):
             emsg = 'Key {0}: Path does not exist "{1}"'
             eargs = [name, invalue]
@@ -321,9 +323,10 @@ def _test_dtype(name, invalue, dtype, quiet=False):
 
     # deal with casting a string into a list
     if (dtype is list) and (type(invalue) is str):
-        emsg = 'Parameter "{0}" should be a list not a string.'
+        emsg1 = 'Parameter "{0}" should be a list not a string.'
+        emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError(emsg.format(name), level='error')
+            raise ConfigError([emsg1.format(name), emsg2], level='error')
     # now try to cast value
     try:
         outvalue = dtype(invalue)
@@ -332,8 +335,10 @@ def _test_dtype(name, invalue, dtype, quiet=False):
         emsg1 = ('Parameter "{0}" dtype is incorrect. '
                  'Expected "{1}" value="{2}"')
         emsg2 = '\tError was "{0}": "{1}"'.format(type(e), e)
+        emsg3 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg1.format(*eargs), emsg2], level='error')
+            raise ConfigError([emsg1.format(*eargs), emsg2, emsg3],
+                              level='error')
         outvalue = invalue
     # return out value
     return outvalue
@@ -386,14 +391,14 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                                   level='error')
     # ---------------------------------------------------------------------
     # Check if dtype is correct
-    true_value = _test_dtype(name, value, dtype, quiet=quiet)
+    true_value = _test_dtype(name, value, dtype, source, quiet=quiet)
     # ---------------------------------------------------------------------
     # check dtypei if list
     if dtype == list:
         if dtypei is not None:
             newvalues = []
             for value in true_value:
-                newvalues.append(_test_dtype(name, value, dtypei))
+                newvalues.append(_test_dtype(name, value, dtypei, source))
             true_value = newvalues
     # ---------------------------------------------------------------------
     # check options if not a list
