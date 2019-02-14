@@ -12,6 +12,8 @@ import numpy as np
 import os
 import tkinter as tk
 from tkinter import font
+from tkinter import ttk
+import re
 
 from drsmodule import constants
 from drsmodule.config import drs_log
@@ -45,6 +47,114 @@ SMALL = 10
 DEBUG = True
 
 # -----------------------------------------------------------------------------
+# =============================================================================
+# Define classes
+# =============================================================================
+class WrappingLabel(tk.Label):
+    """
+    a type of Label that automatically adjusts the wrap to the size
+
+    From here:
+    https://www.reddit.com/r/learnpython/comments/6dndqz/
+         how_would_you_make_text_that_automatically_wraps/
+    """
+    def __init__(self, master=None, **kwargs):
+        tk.Label.__init__(self, master, **kwargs)
+        self.bind('<Configure>',
+                  lambda e: self.config(wraplength=self.winfo_width()))
+
+
+class AutocompleteEntry(tk.Entry):
+    """
+    a autocomplete entry form which uses a list
+
+    From here:
+    http://code.activestate.com/recipes/
+        578253-an-entry-with-autocompletion-for-the-tkinter-gui/
+    """
+    def __init__(self, lista, *args, **kwargs):
+
+        tk.Entry.__init__(self, *args, **kwargs)
+        self.lista = lista
+        self.lb = None
+        self.var = self["textvariable"]
+        if self.var == '':
+            self.var = self["textvariable"] = tk.StringVar()
+
+        self.var.trace('w', self.changed)
+        self.bind("<Right>", self.selection)
+        self.bind("<Up>", self.up)
+        self.bind("<Down>", self.down)
+
+        self.lb_up = False
+
+    def changed(self, name, index, mode):
+
+        if self.var.get() == '':
+            self.lb.destroy()
+            self.lb_up = False
+        else:
+            words = self.comparison()
+            if words:
+                if not self.lb_up:
+                    self.lb = tk.Listbox()
+                    self.lb.bind("<Double-Button-1>", self.selection)
+                    self.lb.bind("<Right>", self.selection)
+                    self.lb.place(x=self.winfo_x(),
+                                  y=self.winfo_y() + self.winfo_height())
+                    self.lb_up = True
+
+                self.lb.delete(0, tk.END)
+                for w in words:
+                    self.lb.insert(tk.END, w)
+            else:
+                if self.lb_up:
+                    self.lb.destroy()
+                    self.lb_up = False
+
+    def selection(self, event):
+
+        if self.lb_up:
+            self.var.set(self.lb.get(tk.ACTIVE))
+            self.lb.destroy()
+            self.lb_up = False
+            self.icursor(tk.END)
+
+    def up(self, event):
+
+        if self.lb_up:
+            if self.lb.curselection() == ():
+                index = '0'
+            else:
+                index = self.lb.curselection()[0]
+            if index != '0':
+                self.lb.selection_clear(first=index)
+                index = str(int(index) - 1)
+                self.lb.selection_set(first=index)
+                self.lb.activate(index)
+
+    def down(self, event):
+
+        if self.lb_up:
+            if self.lb.curselection() == ():
+                index = '0'
+            else:
+                index = self.lb.curselection()[0]
+            if index != tk.END:
+                self.lb.selection_clear(first=index)
+                index = str(int(index) + 1)
+                self.lb.selection_set(first=index)
+                self.lb.activate(index)
+
+    def comparison(self):
+        pattern = re.compile('.*' + self.var.get() + '.*')
+        return [w for w in self.lista if re.match(pattern, w)]
+
+    def destroy_tab(self, event=None):
+        if self.lb is not None:
+            self.lb.destroy()
+            self.lb_up = False
+
 
 # =============================================================================
 # Define classes
@@ -93,9 +203,15 @@ class Search:
         self.frame.grid_columnconfigure(1, weight=1)
 
     def search_entry(self, frame):
+        # get all keys
+        lista = list(self.dataobj.dict.keys())
         # add the search box
-        self.entry = tk.Entry(frame, width=48, background='white',
-                              font="-size {0}".format(LARGE))
+        self.entry = AutocompleteEntry(lista=lista, master=frame, width=32,
+                                       background='white',
+                                       font="-size {0}".format(LARGE))
+
+        self.entry.bind('<Return>', self.execute_search)
+
         self.entry.grid(row=0, padx=10, sticky=tk.E)
         # add the search button
         self.button = tk.Button(frame, text='Search',
@@ -103,7 +219,10 @@ class Search:
                                 font="-size {0}".format(LARGE))
         self.button.grid(row=0, column=1, padx=10, sticky=tk.W)
 
-    def execute_search(self):
+    def execute_search(self, event=None):
+        # destroy autocomplete box
+        self.entry.destroy_tab()
+        # if in debug mode print search
         if DEBUG:
             print('Searched for')
             print(self.entry.get())
@@ -197,41 +316,87 @@ class SearchTitle:
 class Results1:
     def __init__(self, frame):
         self.table = None
-        self.frame = tk.Frame(frame, borderwidth=1, relief="sunken",
+
+        self.frame = tk.Frame(frame, borderwidth=1, relief=tk.SUNKEN,
                               bg='black')
+
         self.result_entry(self.frame)
         # add frame
-        self.frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        self.frame.pack_propagate(0)
+        self.frame.pack(expand=tk.YES, fill=tk.BOTH, padx=10, pady=10)
 
 
     def result_entry(self, frame):
         labels = ['Entry Sheet:', 'Error text:', 'Arguments:', 'Comment']
         values = ['', '', '', '']
         self.table = None
-        self.table = Table(frame)
+        self.table = Table(frame, scroll=False)
         self.table.populate_table(labels, values)
+
 
 
 class Results2:
     def __init__(self, frame):
+        self.table = None
+
         self.frame = tk.Frame(frame, borderwidth=1, relief=tk.SUNKEN,
                               bg='black')
+
         self.result_entry(self.frame)
         # add frame
-        self.frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        self.frame.pack_propagate(0)
+        self.frame.pack(expand=tk.YES, fill=tk.BOTH, padx=10, pady=10)
+
 
     def result_entry(self, frame):
         labels = ['1 Filename:', '1 Line number:']
         values = ['', '']
 
-        self.table = Table(frame)
+        self.table = Table(frame, scroll=True)
         self.table.populate_table(labels, values)
 
 
 class Table:
-    def __init__(self, frame):
-        self.frame = frame
+    def __init__(self, frame, scroll):
+
+        if scroll:
+            self.canvas = tk.Canvas(frame, bg='black')
+            self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
+            self.frame = tk.Frame(self.canvas)
+            self.canvas_frame = self.canvas.create_window((4, 4),
+                                                          window=self.frame)
+            scrollbar = tk.Scrollbar(self.canvas, command=self.canvas.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.canvas.configure(yscrollcommand=scrollbar.set)
+            self.canvas.bind('<Configure>', self.frame_width)
+        else:
+            self.frame = tk.Frame(frame, bg='black')
+            self.frame.pack(side=tk.TOP, expand=tk.YES, fill=tk.BOTH)
+
         self.values = []
+
+    def on_frame_configure(self, event=None):
+        # update scrollregion after starting 'mainloop'
+        # when all widgets are in canvas
+        self.canvas.configure(scrollregion=self.canvas.bbox('all'))
+
+    def on_mouse_scroll(self, event=None):
+        if event.delta:
+            self.canvas.yview_scroll(-1*(event.delta/120), 'units')
+        else:
+            if event.num == 5:
+                move = 1
+            else:
+                move = -1
+            self.canvas.yview_scroll(move, 'units')
+
+    def frame_width(self, event=None):
+        if event is None:
+            canvas_width = self.canvas.winfo_width()
+        else:
+            canvas_width = event.width
+        self.canvas.itemconfig(self.canvas_frame, width=canvas_width)
+
 
     def populate_table(self, labels, values):
         for it in range(len(labels)):
@@ -258,25 +423,13 @@ class Table:
             fm1.pack(expand=tk.YES, side=tk.TOP, fill=tk.X)
             fm2.pack(expand=tk.YES, side=tk.TOP, fill=tk.X)
 
-            fm.pack(expand=tk.YES, fill=tk.X, side=tk.TOP, padx=2)
+            fm.pack(fill=tk.X, side=tk.TOP, padx=2)
 
     def unpopulated_table(self):
         for widget in self.frame.winfo_children():
             widget.destroy()
 
 
-class WrappingLabel(tk.Label):
-    """
-    a type of Label that automatically adjusts the wrap to the size
-
-    From here:
-    https://www.reddit.com/r/learnpython/comments/6dndqz/
-         how_would_you_make_text_that_automatically_wraps/
-    """
-    def __init__(self, master=None, **kwargs):
-        tk.Label.__init__(self, master, **kwargs)
-        self.bind('<Configure>',
-                  lambda e: self.config(wraplength=self.winfo_width()))
 
 
 class App(tk.Tk):
@@ -289,18 +442,25 @@ class App(tk.Tk):
         self.fontfamily = font.Font(font='TkTextFont').actual()['family']
 
         # set minimum size
-        self.minsize(512, 256)
+        self.minsize(512, 360)
         # set title
         self.title("Error locator")
 
-        self.height = 512
-        self.width = 512
+        self.update_idletasks()
+        self.height = self.winfo_height()
+        self.width = self.winfo_width()
+
+        self.table_width = (self.width / 2) - 20
+
+        print('dims = {0} x {1}'.format(self.width, self.height))
 
         # add full frames
         self.main_top = tk.Frame(self, borderwidth=1, relief=tk.GROOVE)
         self.main_middle = tk.Frame(self)
-        self.main_bottom1 = tk.Frame(self, width=128)
-        self.main_bottom2 = tk.Frame(self, width=128)
+        self.main_bottom1 = tk.Frame(self, width=self.table_width)
+        self.main_bottom2 = tk.Frame(self, width=self.table_width)
+
+        print(self.table_width)
 
         self.main_top.grid(column=0, row=0, columnspan=2,
                            sticky=(tk.E, tk.W, tk.N, tk.S))
@@ -308,6 +468,12 @@ class App(tk.Tk):
                               sticky=(tk.E, tk.W, tk.N, tk.S))
         self.main_bottom1.grid(column=0, row=2, sticky=(tk.W, tk.S, tk.N, tk.E))
         self.main_bottom2.grid(column=1, row=2, sticky=(tk.W, tk.S, tk.N, tk.E))
+
+        # self.main_top.pack()
+        # self.main_middle.pack()
+        #
+        # self.main_bottom1.pack(side=tk.LEFT, fill=tk.Y)
+        # self.main_bottom2.pack(side=tk.RIGHT, fill=tk.Y)
 
         # get app elements
         self.navbar = Navbar(self)
@@ -325,6 +491,11 @@ class App(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
+        # bindings
+        self.bind_all('<Configure>', self.r2.table.on_frame_configure)
+        self.bind_all('<Button-4>', self.r2.table.on_mouse_scroll)
+        self.bind_all('<Button-5>', self.r2.table.on_mouse_scroll)
+
 
 # =============================================================================
 # Worker functions
@@ -337,7 +508,7 @@ def main(instrument=None):
     WLOG(params, '', 'Running Error finding application')
     # Main code here
     app = App(datastore)
-    app.geometry("512x256")
+    app.geometry("1024x512")
     app.mainloop()
     # end
     WLOG(params, '', 'Program has completed successfully')
