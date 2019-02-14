@@ -89,7 +89,7 @@ class Text:
         dict_files = _get_dict_files(self.instrument, filelist)
         # read dict files
         out = _read_dict_files(dict_files, self.language)
-        values, sources, kinds, comments = out
+        values, sources, args, kinds, comments = out
         # append to Parameter dictionary
         for key in list(values.keys()):
             # clean values (escape characters)
@@ -101,7 +101,7 @@ class Text:
             self.sources[key] = sources[key]
             # other values
             self.kind[key] = kinds[key]
-            self.comment = comments[key]
+            self.comment[key] = comments[key]
 
 
 class ErrorText(Text):
@@ -526,6 +526,7 @@ def _read_dict_files(dict_files, language):
 
     # storage for outputs
     value_dict = OrderedDict()
+    arg_dict = OrderedDict()
     source_dict = OrderedDict()
     kind_dict = OrderedDict()
     comment_dict = OrderedDict()
@@ -575,11 +576,12 @@ def _read_dict_files(dict_files, language):
             source = filename + '[{0}]'.format(col)
             # append to dictionaries
             value_dict[key] = value
+            arg_dict[key] = args
             source_dict[key] = source
             kind_dict[key] = kind
             comment_dict[key] = comment
     # return dictionaries
-    return value_dict, source_dict, kind_dict, comment_dict
+    return value_dict, source_dict, arg_dict, kind_dict, comment_dict
 
 
 # =============================================================================
