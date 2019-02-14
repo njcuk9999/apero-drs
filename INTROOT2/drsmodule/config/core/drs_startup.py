@@ -49,6 +49,7 @@ WLOG = drs_log.wlog
 COLOR = constants.Colors
 # get param dict
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # get the Drs Exceptions
 DrsError = drs_exceptions.DrsError
 DrsWarning = drs_exceptions.DrsWarning
@@ -71,7 +72,26 @@ CORE_PATH = './config/core/default/'
 # =============================================================================
 # Define functions
 # =============================================================================
-def input_setup(name=None, instrument=None, fkwargs=None, quiet=False):
+def input_setup(name='None', instrument='None', fkwargs=None, quiet=False):
+    """
+    Recipe setup script for recipe "name" and "instrument"
+
+    :param name: string, the name of the recipe, if 'None', assumes there is no
+                   recipe set
+    :param instrument: string, the instrument name, if 'None' assumes there is
+                       no instrument set
+    :param fkwargs: dictionary or None, argument keywords
+    :param quiet: bool, if True does not print out setup text
+
+    :type name: str
+    :type instrument: str
+    :type fkwargs: dict
+    :type quiet: bool
+
+    :returns: returns the recipe instance (DrsRecipe) and parameter
+              dictionary for constants (ParamDict)
+    :rtype: tuple[DrsRecipe, ParamDict]
+    """
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -121,13 +141,23 @@ def input_setup(name=None, instrument=None, fkwargs=None, quiet=False):
     return recipe, recipe.drs_params
 
 
-def get_params(**kwargs):
+def get_params(recipe='None', instrument='None', **kwargs):
     """
-    Wrapper for input_setup
+    Get parameter dictionary without a recipe definition
 
-    :return p: parameter dictionary
+    :param recipe: string, the recipe name, if 'None', assumes there is no
+                   recipe set
+    :param instrument: string, the instrument name, if 'None' assumes there is
+                       no instrument set
+    :param kwargs: keyword arguments to push into parameter dictionary
+
+    :type recipe: str
+    :type instrument: str
+
+    :return: parameter dictionary of constants (ParamDict)
+    :rtype: ParamDict
     """
-    _, params = input_setup(None, quiet=True)
+    _, params = input_setup(recipe, instrument, quiet=True)
     # overwrite parameters with kwargs
     for kwarg in kwargs:
         params[kwarg] = kwargs[kwarg]
@@ -136,6 +166,24 @@ def get_params(**kwargs):
 
 
 def main_end_script(p, outputs='reduced'):
+    """
+    Function to deal with the end of a recipe.main script
+        1. indexes outputs
+        2. Logs end messages
+        3. Clears logs and warnings
+
+    :param p: ParamDict, the parameter dictionary containing constants
+    :param outputs: string, the type of outputs i.e:
+        - 'raw'
+        - 'tmp'
+        - 'reduced'
+
+    :type p: ParamDict
+    :type outputs: str
+
+    :return: the updated parameter dictionary
+    :rtype: ParamDict
+    """
     # func_name = __NAME__ + '.main_end_script()'
     # -------------------------------------------------------------------------
     if outputs == 'pp':
@@ -326,6 +374,20 @@ def display_title(p, title):
 
 
 def display_ee(p):
+    """
+    Display the logo text
+
+    :param p: ParamDict, the parameter dictionary containing constants
+
+    :type p: ParamDict
+
+    - p must contain at least:
+
+        - INSTRUMENT: string, the instrument name
+        - DRS_HEADER: string, the header characters
+
+    :return:
+    """
     # get colours
     colors = COLOR()
     # get pconstant
@@ -342,36 +404,57 @@ def display_initial_parameterisation(p):
     Display initial parameterisation for this execution
 
     :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                DRS_DATA_RAW: string, the directory that the raw data should
-                              be saved to/read from
-                DRS_DATA_REDUC: string, the directory that the reduced data
-                                should be saved to/read from
-                DRS_CALIB_DB: string, the directory that the calibration
-                              files should be saved to/read from
-                DRS_DATA_MSG: string, the directory that the log messages
-                              should be saved to
-                PRINT_LEVEL: string, Level at which to print, values can be:
-                                  'all' - to print all events
-                                  'info' - to print info/warning/error events
-                                  'warning' - to print warning/error events
-                                  'error' - to print only error events
-                LOG_LEVEL: string, Level at which to log, values can be:
-                                  'all' - to print all events
-                                  'info' - to print info/warning/error events
-                                  'warning' - to print warning/error events
-                                  'error' - to print only error events
-                DRS_PLOT: bool, Whether to plotting (True to plotting)
-                DRS_USED_DATE: string, the DRS USED DATE (not really used)
-                DRS_DATA_WORKING: (optional) string, the temporary working
-                                  directory
-                DRS_INTERACTIVE: bool, True if running in interactive mode.
-                DRS_DEBUG: int, Whether to run in debug mode
-                                0: no debug
-                                1: basic debugging on errors
-                                2: recipes specific (plots and some code runs)
 
-    :return None:
+    :type p: ParamDict
+
+    - p must contain at least:
+
+      - DRS_DATA_RAW: string, the directory that the raw data should
+        be saved to/read from
+
+      - DRS_DATA_REDUC: string, the directory that the reduced data
+        should be saved to/read from
+
+      - DRS_CALIB_DB: string, the directory that the calibration
+        files should be saved to/read from
+
+      - DRS_DATA_MSG: string, the directory that the log messages
+        should be saved to
+
+      - PRINT_LEVEL: string, Level at which to print, values can be:
+
+          * 'all' - to print all events
+          * 'info' - to print info/warning/error events
+          * 'warning' - to print warning/error events
+          * 'error' - to print only error events
+
+      - LOG_LEVEL: string, Level at which to log, values can be:
+
+          * 'all' - to print all events
+          * 'info' - to print info/warning/error events
+          * 'warning' - to print warning/error events
+          * 'error' - to print only error events
+
+      - DRS_PLOT: int, plotting mode
+
+          0. no plotting
+          1. basic plotting to screen (interactive)
+          2. plotting saved to file (DRS_DATA_PLOT)
+
+      - DRS_USED_DATE: string, the DRS USED DATE (not really used)
+
+      - DRS_DATA_WORKING: (optional) string, the temporary working
+        directory
+
+      - DRS_INTERACTIVE: bool, True if running in interactive mode.
+
+      - DRS_DEBUG: int, Whether to run in debug mode
+
+           0. no debug
+           1. basic debugging on errors
+           2. recipes specific (plots and some code runs)
+
+    :return: None
     """
     # Add initial parameterisation
     wmsgs = ErrorEntry('\n\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
@@ -634,7 +717,8 @@ def find_interactive():
 
     Note cannot distinguish between ipython from shell (so assumed interactive)
 
-    :return cond: bool, True if interactive
+    :return: True if interactive
+    :rtype: bool
     """
     cond1 = sys.flags.interactive
     cond2 = hasattr(sys, 'ps1')
@@ -647,7 +731,8 @@ def find_ipython():
     """
     Find whether user is using ipython or python
 
-    :return using_ipython: bool, True if using ipython, false otherwise
+    :return: True if using ipython, false otherwise
+    :rtype: bool
     """
     try:
         # noinspection PyStatementEffect
@@ -661,18 +746,35 @@ def find_ipython():
 # Worker functions
 # =============================================================================
 def assign_pid():
+    """
+    Assign a process id based on the time now
+
+    :return: the process id
+    :rtype: str
+    """
     pid = 'PID-{0:020d}'.format(int(time.time() * 1e7))
     return pid
 
 
-def find_recipe(name=None, instrument=None):
+def find_recipe(name='None', instrument='None'):
+    """
+    Finds a given recipe in the instruments definitions
+
+    :param name: string, the recipe name
+    :param instrument: string, the instrument name
+
+    :type name: str
+    :type instrument: str
+
+    :return: if found the DrsRecipe, else raises SystemExit
+    """
     func_name = __NAME__ + '.find_recipe()'
     # deal with no instrument
-    if instrument is None:
+    if instrument == 'None' or instrument is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
         return empty
     # deal with no name or no instrument
-    if name is None:
+    if name == 'None' or name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty
     # else we have a name and an instrument
