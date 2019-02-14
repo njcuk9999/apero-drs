@@ -8,13 +8,39 @@ Created on 2019-02-13 11:47
 @author: ncook
 Version 0.0.1
 """
+import numpy as np
+import os
 import tkinter as tk
-from tkinter.ttk import Progressbar
+from tkinter import font
+
+from drsmodule import constants
+from drsmodule.config import drs_log
+from drsmodule.config import drs_startup
+from drsmodule.locale import drs_text
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WORKSPACE = './'
+__NAME__ = 'find_error.py'
+__INSTRUMENT__ = None
+# Get constants
+Constants = constants.load(__INSTRUMENT__)
+# Get version and author
+__version__ = Constants['DRS_VERSION']
+__author__ = Constants['AUTHORS']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
+# Get Logging function
+WLOG = drs_log.wlog
+
+# -----------------------------------------------------------------------------
+LINE_FILENAME = 'list_database.npy'
+
+
+LARGE = 16
+NORMAL = 12
+SMALL = 10
 
 DEBUG = True
 
@@ -48,14 +74,16 @@ class Navbar:
     def open(self):
         pass
 
+
 class Search:
-    def __init__(self, parent, titlebar, rbox1, rbox2):
+    def __init__(self, parent, appobj):
         self.frame = tk.Frame(parent)
         self.entry = None
         self.button = None
-        self.titlebar = titlebar
-        self.rbox1 = rbox1
-        self.rbox2 = rbox2
+        self.titlebar = appobj.s1
+        self.rbox1 = appobj.r1
+        self.rbox2 = appobj.r2
+        self.dataobj = appobj.datastore
 
         self.search_entry(self.frame)
         # add frame
@@ -64,42 +92,77 @@ class Search:
         self.frame.grid_columnconfigure(0, weight=1)
         self.frame.grid_columnconfigure(1, weight=1)
 
-
     def search_entry(self, frame):
-
         # add the search box
-        self.entry = tk.Entry(frame, width=64, background='white')
+        self.entry = tk.Entry(frame, width=48, background='white',
+                              font="-size {0}".format(LARGE))
         self.entry.grid(row=0, padx=10, sticky=tk.E)
-        if DEBUG:
-            print('Making search entry')
         # add the search button
         self.button = tk.Button(frame, text='Search',
-                                command=self.execute_search)
+                                command=self.execute_search,
+                                font="-size {0}".format(LARGE))
         self.button.grid(row=0, column=1, padx=10, sticky=tk.W)
-        if DEBUG:
-            print('Making search search button')
 
     def execute_search(self):
         if DEBUG:
             print('Searched for')
             print(self.entry.get())
-
+        # get search text
         search_text = self.entry.get()
-
         # set searching text
         self.titlebar.title0.set('Please wait. Searching for: ')
         self.titlebar.title1.set(search_text)
-
-
         # search for entries
-        r1, r2 = search_for_entry(search_text)
-
+        found, r1, r2 = self.search_for_entry(search_text)
         # update tables
         self.update_tables(r1, r2)
+        # set complete text
+        if found:
+            self.titlebar.title0.set('Complete. Error text searched for: ')
+            self.titlebar.title1.set(search_text)
+        else:
+            self.titlebar.title0.set('Cannot find Error: ')
+            self.titlebar.title1.set(search_text)
 
-        # set complet text
-        self.titlebar.title0.set('Complete. Error text searched for: ')
-        self.titlebar.title1.set(search_text)
+    def search_for_entry(self, value):
+        # set up dictionaries
+        r1 = dict()
+        r2 = dict()
+        # ---------------------------------------------------------------------
+        # set up label1
+        r1['labels'] = ['Entry Sheet:', 'Error text:', 'Arguments:', 'Comment']
+        # ---------------------------------------------------------------------
+        found = False
+        # get values 1 from dataobj.dict
+        if value in self.dataobj.dict.keys():
+            r1['values'] = [self.dataobj.source[value],
+                            self.dataobj.dict[value],
+                            self.dataobj.args[value],
+                            self.dataobj.comments[value]]
+            found = True
+        else:
+            r1['values'] = [''] * len(r1['labels'])
+        # ---------------------------------------------------------------------
+        # get values 2 from lines/ files
+        if value in self.dataobj.lines.keys():
+
+            files = self.dataobj.files[value]
+            lines = self.dataobj.lines[value]
+            labels, values = [], []
+            # loop around files
+            for it, filename in enumerate(files):
+                labels += ['{0} Filename'.format(it + 1),
+                           '{0} Line number'.format(it + 1)]
+                values += [files[it], lines[it]]
+            # set to r2
+            r2['labels'] = labels
+            r2['values'] = values
+        else:
+            r2['labels'] = ['Filename:', 'Line number:']
+            r2['values'] = ['', '']
+        # ---------------------------------------------------------------------
+        # return r1 and r2
+        return found, r1, r2
 
     def update_tables(self, r1, r2):
 
@@ -134,7 +197,8 @@ class SearchTitle:
 class Results1:
     def __init__(self, frame):
         self.table = None
-        self.frame = tk.Frame(frame, borderwidth=1, relief="sunken")
+        self.frame = tk.Frame(frame, borderwidth=1, relief="sunken",
+                              bg='black')
         self.result_entry(self.frame)
         # add frame
         self.frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -142,7 +206,7 @@ class Results1:
 
     def result_entry(self, frame):
         labels = ['Entry Sheet:', 'Error text:', 'Arguments:', 'Comment']
-        values = ['', 'Test1', '', 'Test2']
+        values = ['', '', '', '']
         self.table = None
         self.table = Table(frame)
         self.table.populate_table(labels, values)
@@ -150,15 +214,15 @@ class Results1:
 
 class Results2:
     def __init__(self, frame):
-        self.frame = tk.Frame(frame, borderwidth=1, relief=tk.SUNKEN)
+        self.frame = tk.Frame(frame, borderwidth=1, relief=tk.SUNKEN,
+                              bg='black')
         self.result_entry(self.frame)
         # add frame
         self.frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
     def result_entry(self, frame):
-        labels = ['Filename:', 'Line number:']
-        values = ['', 'Really longgggggggggggggggggggg longgggggggggger '
-                      '\nentryyyyyyyyyy']
+        labels = ['1 Filename:', '1 Line number:']
+        values = ['', '']
 
         self.table = Table(frame)
         self.table.populate_table(labels, values)
@@ -171,17 +235,25 @@ class Table:
 
     def populate_table(self, labels, values):
         for it in range(len(labels)):
-            fm = tk.Frame(self.frame)
+            fm = tk.Frame(self.frame, bg='black')
 
             text = tk.StringVar()
             text.set(values[it])
             self.values.append(text)
 
-            fm1, fm2 = tk.Frame(fm), tk.Frame(fm)
-            l_a = tk.Label(fm1, text=labels[it])
-            l_b = tk.Label(fm2, textvariable=text)
+            fm1 = tk.Frame(fm, bg='black')
+            fm2 = tk.Frame(fm, bg='white')
+
+            l_a = WrappingLabel(fm1, text=labels[it])
+            l_b = WrappingLabel(fm2, textvariable=text)
+
+            l_a.config(bg='black', fg='white',
+                       font="-size {0}".format(NORMAL))
+            l_b.config(bg='white', fg='black',
+                       font="-size {0}".format(SMALL))
+
             l_a.pack(side=tk.LEFT, fill=tk.X)
-            l_b.pack(side=tk.RIGHT, fill=tk.X)
+            l_b.pack(side=tk.LEFT, fill=tk.X)
 
             fm1.pack(expand=tk.YES, side=tk.TOP, fill=tk.X)
             fm2.pack(expand=tk.YES, side=tk.TOP, fill=tk.X)
@@ -193,10 +265,28 @@ class Table:
             widget.destroy()
 
 
+class WrappingLabel(tk.Label):
+    """
+    a type of Label that automatically adjusts the wrap to the size
+
+    From here:
+    https://www.reddit.com/r/learnpython/comments/6dndqz/
+         how_would_you_make_text_that_automatically_wraps/
+    """
+    def __init__(self, master=None, **kwargs):
+        tk.Label.__init__(self, master, **kwargs)
+        self.bind('<Configure>',
+                  lambda e: self.config(wraplength=self.winfo_width()))
+
+
 class App(tk.Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, datastore, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        # save datastore
+        self.datastore = datastore
+
+        self.fontfamily = font.Font(font='TkTextFont').actual()['family']
 
         # set minimum size
         self.minsize(512, 256)
@@ -209,8 +299,8 @@ class App(tk.Tk):
         # add full frames
         self.main_top = tk.Frame(self, borderwidth=1, relief=tk.GROOVE)
         self.main_middle = tk.Frame(self)
-        self.main_bottom1 = tk.Frame(self)
-        self.main_bottom2 = tk.Frame(self)
+        self.main_bottom1 = tk.Frame(self, width=128)
+        self.main_bottom2 = tk.Frame(self, width=128)
 
         self.main_top.grid(column=0, row=0, columnspan=2,
                            sticky=(tk.E, tk.W, tk.N, tk.S))
@@ -224,7 +314,7 @@ class App(tk.Tk):
         self.r1 = Results1(self.main_bottom1)
         self.r2 = Results2(self.main_bottom2)
         self.s1 = SearchTitle(self.main_middle)
-        self.search = Search(self.main_top, self.s1, self.r1, self.r2)
+        self.search = Search(self.main_top, self)
         # add menu master
         self.config(menu=self.navbar.menubar)
 
@@ -236,29 +326,147 @@ class App(tk.Tk):
         self.grid_columnconfigure(1, weight=1)
 
 
-def main():
+# =============================================================================
+# Worker functions
+# =============================================================================
+def main(instrument=None):
+    # get datastore
+    datastore = load_data(instrument=instrument)
+    # log running of app
+    params = datastore.drs_params
+    WLOG(params, '', 'Running Error finding application')
     # Main code here
-    app = App()
+    app = App(datastore)
     app.geometry("512x256")
     app.mainloop()
-    return app
+    # end
+    WLOG(params, '', 'Program has completed successfully')
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
 
 
-def search_for_entry(values):
-    labels1 = ['Entry Sheet:', 'Error text:', 'Arguments:', 'Comment']
-    labels2 = ['Filename:', 'Line number:']
+class load_data:
+    def __init__(self, instrument=None):
+        # set instrument
+        self.instrument = instrument
+        # get parameters from drsmodule
+        _, params = drs_startup.input_setup(None, instrument, quiet=True)
+        self.drs_params = params
+        # get database
+        dout = self.load_databases()
+        self.dict, self.source, self.args, self.kinds, self.comments = dout
+        # find line numbers for all entries
+        self.lines, self.files  = self.load_lines()
+
+    def load_databases(self):
+        # get filelist (from drs_text)
+        filelist = drs_text.ERROR_FILES + drs_text.HELP_FILES
+        # get dictionary files (full path)
+        dict_files = drs_text._get_dict_files(self.instrument, filelist)
+        # get value_dict, source_dict, arg_dict, kind_dict, comment_dict
+        out = drs_text._read_dict_files(dict_files, self.drs_params['LANGUAGE'])
+        # return databases
+        return out
 
 
-    r1 = dict()
-    r2 = dict()
+    def load_lines(self):
+        # get the line file path
+        linefile = get_line_file()
+        # log progress
+        wmsg = 'Generating line list'
+        WLOG(self.drs_params, 'info', wmsg)
+        # get package (from drs_text)
+        package = drs_text.PACKAGE
+        # get level above package
+        modpath = drs_text._get_relative_folder(package, '..')
+        # get python scripts in modpath
+        pyfiles = find_all_py_files(modpath)
+        # open and combine in to single list of lines
+        pargs = open_all_py_files(pyfiles)
+        # -----------------------------------------------------------------
+        # now search through pentry for each database entry
+        lines = dict()
+        files = dict()
+        # loop through keys
+        for it, key in enumerate(self.dict.keys()):
+            # search for entry
+            found, pnum, pfile = search_for_database_entry(key, *pargs)
+            # if found add to storage
+            if found:
+                if key in lines:
+                    lines[key] += pnum
+                    files[key] += pfile
+                else:
+                    lines[key] = pnum
+                    files[key] = pfile
+        # return storage dictionaries
+        return lines, files
 
-    r1['labels'] = labels1
-    r1['values'] = [values] * len(labels1)
-    r2['labels'] = labels2
-    r2['values'] = [values] * len(labels2)
+
+def get_line_file():
+    # get package and relative path to database (basaed on drs_text values)
+    package = drs_text.PACKAGE
+    relpath = drs_text.DEFAULT_PATH
+    # get absolute path
+    path = drs_text._get_relative_folder(package, relpath)
+    # construct line file
+    linefile = os.path.join(path, LINE_FILENAME)
+    # return list file
+    return linefile
 
 
-    return r1, r2
+def find_all_py_files(path):
+    # empty storage
+    pyfiles = []
+    # walk through path to file python files
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename.endswith('.py'):
+                pyfiles.append(os.path.join(root, filename))
+    # return python files
+    return pyfiles
+
+
+def open_all_py_files(files):
+    # get package and relative path to database (basaed on drs_text values)
+    package = drs_text.PACKAGE
+    path = drs_text._get_relative_folder(package, '..')
+    # set up storage
+    all_entries = []
+    all_line_numbers  = []
+    all_filenames = []
+    # loop around files
+    for filename in files:
+        f = open(filename, 'r')
+        flines = f.readlines()
+        f.close()
+        # add entries
+        all_entries += flines
+        # add line numbers
+        all_line_numbers += list(np.arange(len(flines)))
+        # get relative filepath (for printing)
+        common = os.path.commonpath([filename, path]) + os.sep
+        outfile = filename.split(common)[-1]
+        all_filenames += [outfile] * len(flines)
+
+    # return all entries/numbers and filenames
+    return all_entries, all_line_numbers, all_filenames
+
+
+def search_for_database_entry(key, entries, line_nums, files):
+
+    found_files, found_nums = [], []
+    found = False
+    # loop around entires and search for keys
+    for it, entry in enumerate(entries):
+        # if key in entry then we have found this entry (but need to check
+        #    for multiple entries)
+        if key in entry:
+            found_files.append(files[it])
+            found_nums.append(line_nums[it])
+            found = True
+    # return found params
+    return found, found_nums, found_files
 
 
 # =============================================================================
@@ -267,6 +475,7 @@ def search_for_entry(values):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
+    # run app
     ll = main()
 
 
