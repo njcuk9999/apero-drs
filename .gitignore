@@ -173,3 +173,5 @@ fabric.properties
 
 # Ignore config.py
 #/INTROOT/misc/
+*.npy
+*.~lock*

@@ -318,6 +318,57 @@ def get_database_tell_obj(p, required=True):
     return rdata
 
 
+def get_database_tell_recon(p, required=True):
+    func_name = __NAME__ + '.get_database_tell_map()'
+    # define key
+    key = 'TELL_RECON'
+    # get the telluric database (all lines)
+    t_database = spirouDB.get_database(p, dbkind='Telluric')
+    # check for key in database
+    if not required and key not in t_database:
+        return [], [], [], []
+    if key not in t_database:
+        # generate error message
+        emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2])
+        return 0
+
+    # filter database by key
+    values = t_database[key]
+
+    # extract parameters from database values
+    filenames, humantimes, unixtimes, objnames = [], [], [], []
+    bervs, airmasses, watercols = [], [], []
+    for value in values:
+        # get this iterations value from value
+        _, filename, humant, unixt, objname, berv, airmass, watercol = value
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2])
+        # add to array
+        filenames = np.append(filenames, absfilename)
+        humantimes = np.append(humantimes, humant)
+        unixtimes = np.append(unixtimes, float(unixt))
+        objnames = np.append(objnames, objname)
+        bervs = np.append(bervs, berv)
+        airmasses = np.append(airmasses, float(airmass))
+        watercols = np.append(watercols, float(watercol))
+
+    # sort by unixtime
+    sort = np.argsort(unixtimes)
+
+    # return sorted filenames, objnames, bervs, airmasses and watercols
+    rdata = [filenames[sort], objnames[sort], bervs[sort]]
+    rdata += [airmasses[sort], watercols[sort]]
+    return rdata
+
+
+
 def get_database_master_wave(p, required=True):
     func_name = __NAME__ + '.get_database_master_wave()'
     # define key
@@ -482,6 +533,26 @@ def update_database_tell_obj(p, filename, objname, berv, airmass, watercol,
     lines = [line]
     # update database
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
+
+
+def update_database_tell_recon(p, filename, objname, berv, airmass, watercol,
+                             hdr=None):
+    # define key
+    key = 'TELL_RECON'
+    # get h_time and u_time
+    h_time, u_time = spirouDB.get_times_from_header(p, hdr)
+    # set up line
+    args = [key, filename, h_time, u_time, objname, berv, airmass, watercol]
+    line = '\n{0} {1} {2} {3} {4} {5:.3f} {6:.3f} {7:.3f}'.format(*args)
+    # push into list
+    keys = [key]
+    lines = [line]
+    # update database
+    spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
+
+
+
+
 
 # =============================================================================
 # End of code

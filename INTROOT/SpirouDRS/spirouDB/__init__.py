@@ -25,10 +25,14 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['CopyCDBfiles', 'GetAcqTime', 'GetCalibDatabase', 'GetCalibFile',
-           'PutCalibFile', 'UpdateCalibMaster', 'UpdateDatabaseObjTemp',
-           'GetDatabaseTellMole', 'GetDatabaseTellConv',
-           'GetDatabaseSky', 'GetDatabaseTellMap', 'PutTelluFile']
+__all__ = ['CopyCDBfiles','GetCalibDatabase','GetCalibFile','PutCalibFile',
+           'UpdateCalibMaster','GetAcqTime','GetTimes','GetDatabaseTellMole',
+           'GetDatabaseTellConv','GetDatabaseSky','GetDatabaseTellMap',
+           'GetDatabaseObjTemp','GetDatabaseTellObj','GetDatabaseTellRecon',
+           'GetDatabaseMasterWave','PutTelluFile','UpdateDatabaseTellMol',
+           'UpdateDatabaseTellConv','UpdateDatabaseSky',
+           'UpdateDatabaseTellMap','UpdateDatabaseObjTemp',
+           'UpdateDatabaseTellObj', 'UpdateDatabaseTellRecon']
 
 # =============================================================================
 # Function aliases
@@ -59,6 +63,8 @@ GetDatabaseObjTemp = spirouTDB.get_database_obj_template
 
 GetDatabaseTellObj = spirouTDB.get_database_tell_obj
 
+GetDatabaseTellRecon = spirouTDB.get_database_tell_recon
+
 GetDatabaseMasterWave = spirouTDB.get_database_master_wave
 
 PutTelluFile = spirouTDB.put_file
@@ -73,7 +79,10 @@ UpdateDatabaseTellMap = spirouTDB.update_database_tell_map
 
 UpdateDatabaseObjTemp = spirouTDB.update_database_obj_temp
 
-UpdateDatavaseTellObj = spirouTDB.update_database_tell_obj
+UpdateDatabaseTellObj = spirouTDB.update_database_tell_obj
+
+UpdateDatabaseTellRecon = spirouTDB.update_database_tell_recon
+
 
 # =============================================================================
 # End of code

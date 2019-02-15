@@ -97,13 +97,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                     mainfitsdir='reduced',
                                     mainfitsfile='hcfiles')
 
-    # make sure we only have one HCFILE more than one is not currently
-    # supported
-    # TODO: Fix problem with updating output and then remove this
-    if len(p['HCFILES']) > 1:
-        emsg = 'Currently we do not support multiple HCFILES'
-        WLOG(p, 'error', emsg)
-
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
@@ -238,9 +231,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Start plotting session
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
@@ -255,15 +248,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # generate resolution map
     loc = spirouWAVE.generate_resolution_map(p, loc)
     # map line profile map
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         sPlt.wave_ea_plot_line_profiles(p, loc)
 
     # ----------------------------------------------------------------------
     # End plotting session
     # ----------------------------------------------------------------------
     # end interactive session
-    if p['DRS_PLOT']:
-        sPlt.end_interactive_session()
+    if p['DRS_PLOT'] > 0:
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -390,7 +383,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=1)
 
@@ -403,9 +396,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=1)
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=1)
 
     # ------------------------------------------------------------------
     # Incorporate FP into solution
@@ -431,13 +424,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # FP solution plots
         # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # Plot the FP extracted spectrum against wavelength solution
             sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
             # Plot the measured FP cavity width offset against line number
-            sPlt.wave_local_width_offset_plot(loc)
+            sPlt.wave_local_width_offset_plot(p, loc)
             # Plot the FP line wavelength residuals
-            sPlt.wave_fp_wavelength_residuals(loc)
+            sPlt.wave_fp_wavelength_residuals(p, loc)
 
     # ------------------------------------------------------------------
     # Create new wavelength solution
@@ -477,7 +470,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
@@ -490,9 +483,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
 
     # ------------------------------------------------------------------
     # Join 0-47 and 47-49 solutions
@@ -503,7 +496,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------
 
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         sPlt.wave_ea_plot_single_order(p, loc)
 
     # ----------------------------------------------------------------------
@@ -594,7 +587,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # rv ccf plot
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
         p['OBJNAME']='FP'
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
@@ -711,11 +704,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
-    # get raw input file name
-    raw_infile1 = os.path.basename(p['HCFILES'][0])
+    # get raw input file name(s)
+    raw_infiles1 = []
+    for hcfile in p['HCFILES']:
+        raw_infiles1.append(os.path.basename(hcfile))
     raw_infile2 = os.path.basename(p['FPFILE'])
-    tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
-    tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
     wavefitsname = os.path.split(wavefits)[-1]
@@ -730,7 +723,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # set the input files
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile1)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['kw_HCFILE'],
+                                     values=raw_infiles1)
     hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
     # add quality control
@@ -787,14 +781,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # only copy over if QC passed
     if p['QC']:
-        # update original E2DS hcfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
-        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
-        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
-        # update original E2DS fpfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0b)
+        # loop around hc files and update header with
+        for hcfile in p['HCFILES']:
+            raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], hcfile)
+            p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath1)
+        # update fp file
         raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
-        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+        p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath2)
 
     # ------------------------------------------------------------------
     # Save to result table

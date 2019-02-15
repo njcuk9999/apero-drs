@@ -149,6 +149,10 @@ PPMedianOneOverfNoise = spirouImage.median_one_over_f_noise
 
 PPMedianOneOverfNoise2 = spirouImage.median_one_over_f_noise2
 
+PPGetHotPixels = spirouImage.get_hot_pixels
+
+PPTestForCorruptFile = spirouImage.test_for_corrupt_files
+
 PrintTable = spirouTable.print_full_table
 
 ReadParam = spirouImage.get_param
@@ -193,9 +197,14 @@ RotateImage = spirouImage.rotate
 
 SortByName = spirouFile.sort_by_name
 
+
+UpdateWaveSolution = spirouFITS.update_wave_sol
+
 WriteImage = spirouFITS.writeimage
 
 WriteImageMulti = spirouFITS.write_image_multi
+
+WriteImageTable = spirouFITS.write_image_table
 
 WriteTable = spirouTable.write_table
 

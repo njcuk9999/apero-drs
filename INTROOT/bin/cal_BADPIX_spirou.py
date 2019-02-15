@@ -128,13 +128,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot the data cut
-        sPlt.darkplot_datacut(bad_pixel_map)
+        sPlt.darkplot_datacut(p, bad_pixel_map)
         # end interactive session
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Resize image
