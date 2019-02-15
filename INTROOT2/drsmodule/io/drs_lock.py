@@ -7,6 +7,9 @@
 
 Created on 2019-01-21 at 09:37
 
+import rules:
+    Cannot import drs_table
+
 @author: cook
 """
 from __future__ import division
@@ -23,7 +26,7 @@ from drsmodule.locale import drs_text
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'drs_startup.py'
+__NAME__ = 'drs_lock.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -32,6 +35,8 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# get the parameter dictionary
+ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = config.wlog
 # Get the text types
@@ -44,6 +49,22 @@ HelpText = drs_text.HelpText
 # Define functions
 # =============================================================================
 def check_fits_lock_file(p, filename):
+    """
+    Check whether lock file exists - wait if it does - else create a lock
+    file and return the lock file and lock filename
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param filename: string, the filename to lock the file for (this will
+                     be used to create the lock file)
+
+    :type p: ParamDict
+    :type filename: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: tuple containing the lock file and lock filename
+    :rtype: tuple[_io.TextIOWrapper, str]
+    """
     # create lock file (to make sure database is only open once at a time)
     # construct lock file name
     max_wait_time = p['DB_MAX_WAIT']
@@ -71,12 +92,30 @@ def check_fits_lock_file(p, filename):
 
 
 def open_fits_lock_file(p, lock_file, filename):
+    """
+    Opens the lock file (or waits if file is already being opened)
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param lock_file: str, the lock file name
+    :param filename: string, the filename to lock the file for (this will
+                     be used to create the lock file)
+
+    :type p: ParamDict
+    :type lock_file: str
+    :type filename: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: the lock_file
+    :rtype: _io.TextIOWrapper
+    """
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     open_file = True
     lock = None
     while open_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+        # noinspection PyBroadException
         try:
             lock = open(lock_file, 'w')
             open_file = False
@@ -92,11 +131,30 @@ def open_fits_lock_file(p, lock_file, filename):
 
 
 def close_fits_lock_file(p, lock, lock_file, filename):
+    """
+    Opens the lock file (or waits if file is already being opened)
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param lock: file, the object file
+    :param lock_file: str, the lock file name
+    :param filename: string, the filename to lock the file for (this will
+                     be used to create the lock file)
+
+    :type p: ParamDict
+    :type lock: _io.TextIOWrapper
+    :type lock_file: str
+    :type filename: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: None
+    """
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     close_file = True
     while close_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+        # noinspection PyBroadException
         try:
             lock.close()
             if os.path.exists(lock_file):
@@ -110,8 +168,6 @@ def close_fits_lock_file(p, lock, lock_file, filename):
     if wait_time > p['FITSOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
         WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
-
-
 
 
 # =============================================================================
