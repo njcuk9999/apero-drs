@@ -72,7 +72,7 @@ CORE_PATH = './config/core/default/'
 # =============================================================================
 # Define functions
 # =============================================================================
-def input_setup(name='None', instrument='None', fkwargs=None, quiet=False):
+def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     """
     Recipe setup script for recipe "name" and "instrument"
 
@@ -88,6 +88,8 @@ def input_setup(name='None', instrument='None', fkwargs=None, quiet=False):
     :type fkwargs: dict
     :type quiet: bool
 
+    :exception SystemExit: on caught errors
+
     :returns: returns the recipe instance (DrsRecipe) and parameter
               dictionary for constants (ParamDict)
     :rtype: tuple[DrsRecipe, ParamDict]
@@ -96,22 +98,22 @@ def input_setup(name='None', instrument='None', fkwargs=None, quiet=False):
     if fkwargs is None:
         fkwargs = dict()
     # set up process id
-    pid = assign_pid()
+    pid = _assign_pid()
     # Clean WLOG
     WLOG.clean_log(pid)
     # find recipe
-    recipe = find_recipe(name, instrument)
+    recipe = _find_recipe(name, instrument)
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid)
     # need to set debug mode now
-    recipe = set_debug_from_input(recipe, fkwargs)
+    recipe = _set_debug_from_input(recipe, fkwargs)
     # do not need to display if we have special keywords
-    quiet = special_keys_present(recipe, quiet, fkwargs)
+    quiet = _special_keys_present(recipe, quiet, fkwargs)
     # -------------------------------------------------------------------------
     # display
     if not quiet:
         # display title
-        display_drs_title(recipe.drs_params)
+        _display_drs_title(recipe.drs_params)
     # -------------------------------------------------------------------------
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(fkwargs)
@@ -125,13 +127,13 @@ def input_setup(name='None', instrument='None', fkwargs=None, quiet=False):
     if not quiet:
         # display initial parameterisation
         if recipe.drs_params['DRS_DEBUG'] == 42:
-            display_ee(recipe.drs_params)
+            _display_ee(recipe.drs_params)
         # display initial parameterisation
-        display_initial_parameterisation(recipe.drs_params)
+        _display_initial_parameterisation(recipe.drs_params)
         # display system info (log only)
-        display_system_info(recipe.drs_params)
+        _display_system_info(recipe.drs_params)
         # print out of the parameters used
-        display_run_time_arguments(recipe, fkwargs)
+        _display_run_time_arguments(recipe, fkwargs)
 
     # -------------------------------------------------------------------------
     # TODO: Need to make folders
@@ -154,10 +156,12 @@ def get_params(recipe='None', instrument='None', **kwargs):
     :type recipe: str
     :type instrument: str
 
+    :exception SystemExit: on caught errors
+
     :return: parameter dictionary of constants (ParamDict)
     :rtype: ParamDict
     """
-    _, params = input_setup(recipe, instrument, quiet=True)
+    _, params = setup(recipe, instrument, quiet=True)
     # overwrite parameters with kwargs
     for kwarg in kwargs:
         params[kwarg] = kwargs[kwarg]
@@ -181,6 +185,8 @@ def main_end_script(p, outputs='reduced'):
     :type p: ParamDict
     :type outputs: str
 
+    :exception SystemExit: on caught errors
+
     :return: the updated parameter dictionary
     :rtype: ParamDict
     """
@@ -188,11 +194,11 @@ def main_end_script(p, outputs='reduced'):
     # -------------------------------------------------------------------------
     if outputs == 'pp':
         # index outputs to pp dir
-        index_pp(p)
+        _index_pp(p)
     # -------------------------------------------------------------------------
     elif outputs == 'reduced':
         # index outputs to reduced dir
-        index_outputs(p)
+        _index_outputs(p)
     # -------------------------------------------------------------------------
     # log end message
     WLOG(p, 'info', ErrorEntry('40-003-00001', args=[p['RECIPE']]))
@@ -221,7 +227,12 @@ def exit_script(ll, has_plots=True):
                       (i.e. asks the user to close or closest automatically),
                       if False no plotting windows are assumed to be open
 
-    :return None:
+    :exception SystemExit: on caught errors
+
+    :type ll: dict
+    :type has_plots: bool
+
+    :returns: None
     """
     # -------------------------------------------------------------------------
     # get parameter dictionary of constants (or create it)
@@ -239,9 +250,9 @@ def exit_script(ll, has_plots=True):
     # if DRS_INTERACTIVE is False just return 0
     if not params['DRS_INTERACTIVE']:
         # print('Interactive mode off')
-        return 0
+        return
     # find whether user is in ipython or python
-    if find_ipython():
+    if _find_ipython():
         kind = 'ipython'
     else:
         kind = 'python'
@@ -274,7 +285,7 @@ def exit_script(ll, has_plots=True):
                 embed()
             except Exception:
                 pass
-        if not find_interactive():
+        if not _find_interactive():
             WLOG(params, '', ErrorEntry('40-003-00004', args=['python']),
                  printonly=True)
             # add some imports to locals
@@ -283,11 +294,11 @@ def exit_script(ll, has_plots=True):
             # run code
             code.interact(local=ll)
     # if "No" and not interactive quit python/ipython
-    elif not find_interactive():
+    elif not _find_interactive():
         # noinspection PyProtectedMember
         os._exit(0)
     # if interactive ask about closing plots
-    if find_interactive() and has_plots:
+    if _find_interactive() and has_plots:
         # deal with closing plots
         WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
         WLOG(params, 'info', ErrorEntry('40-003-00003'), printonly=True)
@@ -309,7 +320,7 @@ def exit_script(ll, has_plots=True):
 # =============================================================================
 # Define display functions
 # =============================================================================
-def special_keys_present(recipe, quiet, fkwargs):
+def _special_keys_present(recipe, quiet, fkwargs):
     """
     Decides whether displaying is necessary based on whether we have special
     keys in fkwargs or sys.argv (input from command line)
@@ -318,27 +329,34 @@ def special_keys_present(recipe, quiet, fkwargs):
     :param fkwargs: dictionary, the input keywords from python call to recipe
     :param quiet: bool, the current status of quiet flag (True or False)
 
-    :return quiet: bool, the updated status of quiet flag
+    :type recipe: DrsRecipe
+    :type fkwargs: dict
+    :type quiet: bool
+
+    :returns: bool, the updated status of quiet flag
+    :rtype: bool
     """
     # get the special keys
-    skeys = get_recipe_keys(recipe.specialargs, add=['--help', '-h'])
+    skeys = _get_recipe_keys(recipe.specialargs, add=['--help', '-h'])
     # see if we have a key
     if len(skeys) > 0:
         for skey in skeys:
-            found_key = search_for_key(skey, fkwargs)
+            found_key = _search_for_key(skey, fkwargs)
             if found_key:
                 quiet = True
     # return the updated quiet flag
     return quiet
 
 
-def display_drs_title(p):
+def _display_drs_title(p):
     """
     Display title for this execution
 
     :param p: dictionary, parameter dictionary
 
-    :return None:
+    :type p: ParamDict
+
+    :returns: None
     """
     # get colours
     colors = COLOR()
@@ -351,42 +369,40 @@ def display_drs_title(p):
     title = title.format(**p)
 
     # Log title
-    display_title(p, title)
+    _display_title(p, title)
 
 
-def display_title(p, title):
+def _display_title(p, title):
     """
     Display any title between HEADER bars via the WLOG command
 
     :param p: dictionary, parameter dictionary
     :param title: string, title string
 
-    :return None:
+    :type p: ParamDict
+    :type title: str
+
+    :returns: None
     """
     # Log title
-    wmsgs = []
-    wmsgs.append(p['DRS_HEADER'])
-    wmsgs.append('\n{0}\n'.format(title))
-    wmsgs.append(p['DRS_HEADER'])
+    wmsgs = [p['DRS_HEADER'], '\n{0}\n'.format(title), p['DRS_HEADER']]
     # print and log
     WLOG(p, '', wmsgs, wrap=False)
 
 
-
-def display_ee(p):
+def _display_ee(p):
     """
     Display the logo text
 
     :param p: ParamDict, the parameter dictionary containing constants
 
-    :type p: ParamDict
-
-    - p must contain at least:
-
+    p must contain at least:
         - INSTRUMENT: string, the instrument name
         - DRS_HEADER: string, the header characters
 
-    :return:
+    :type p: ParamDict
+
+    :returns: None
     """
     # get colours
     colors = COLOR()
@@ -399,7 +415,7 @@ def display_ee(p):
     WLOG(p, '', p['DRS_HEADER'])
 
 
-def display_initial_parameterisation(p):
+def _display_initial_parameterisation(p):
     """
     Display initial parameterisation for this execution
 
@@ -407,8 +423,7 @@ def display_initial_parameterisation(p):
 
     :type p: ParamDict
 
-    - p must contain at least:
-
+    p must contain at least:
       - DRS_DATA_RAW: string, the directory that the raw data should
         be saved to/read from
 
@@ -437,9 +452,9 @@ def display_initial_parameterisation(p):
 
       - DRS_PLOT: int, plotting mode
 
-          0. no plotting
-          1. basic plotting to screen (interactive)
-          2. plotting saved to file (DRS_DATA_PLOT)
+          * 0: no plotting
+          * 1: basic plotting to screen (interactive)
+          * 2: plotting saved to file (DRS_DATA_PLOT)
 
       - DRS_USED_DATE: string, the DRS USED DATE (not really used)
 
@@ -450,9 +465,9 @@ def display_initial_parameterisation(p):
 
       - DRS_DEBUG: int, Whether to run in debug mode
 
-           0. no debug
-           1. basic debugging on errors
-           2. recipes specific (plots and some code runs)
+           * 0: no debug
+           * 1: basic debugging on errors
+           * 2: recipes specific (plots and some code runs)
 
     :return: None
     """
@@ -477,14 +492,14 @@ def display_initial_parameterisation(p):
         wmsgs += '\n' + ErrorEntry('40-001-00008', args=['DRS_INTERACTIVE'])
     if p['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', p['DRS_DEBUG']]
-        wmsgs +=  '\n' + ErrorEntry('40-001-00009', args=wargs)
+        wmsgs += '\n' + ErrorEntry('40-001-00009', args=wargs)
     # log to screen and file
     WLOG(p, 'info', ErrorEntry('40-001-00006'))
     WLOG(p, 'info', wmsgs, wrap=False)
     WLOG(p, '', p['DRS_HEADER'])
 
 
-def display_system_info(p, logonly=True, return_message=False):
+def _display_system_info(p, logonly=True, return_message=False):
     """
     Display system information via the WLOG command
 
@@ -495,13 +510,17 @@ def display_system_info(p, logonly=True, return_message=False):
     :param return_message: bool, if True returns the message to the call, if
                            False logs the message using WLOG
 
-    :return None:
+    :type p: ParamDict
+    :type logonly: bool
+    :type return_message: bool
+
+    :returns: None
     """
     # noinspection PyListCreation
     messages = ' ' + ErrorEntry('40-001-00010')
     messages += '\n' + ErrorEntry(p['DRS_HEADER'])
     # add version /python dist keys
-    messages = sort_version(messages)
+    messages = _sort_version(messages)
     # add os keys
     messages += '\n' + ErrorEntry('40-001-00011', args=[sys.executable])
     messages += '\n' + ErrorEntry('40-001-00012', args=[sys.platform])
@@ -519,7 +538,7 @@ def display_system_info(p, logonly=True, return_message=False):
         WLOG(p, '', messages, logonly=logonly)
 
 
-def display_run_time_arguments(recipe, fkwargs=None):
+def _display_run_time_arguments(recipe, fkwargs=None):
     """
     Display for arguments used (got from p['INPUT'])
 
@@ -527,15 +546,19 @@ def display_run_time_arguments(recipe, fkwargs=None):
     :param fkwargs: dictionary or None, key/value pairs from run time call
                     if None does not use
 
-    :return None:
+    :type recipe: DrsRecipe
+    :type fkwargs: dict
+
+    :returns: None
+
     """
     log_strings = []
     # get parameters
     p = recipe.drs_params
     # get special keys
-    skeys = get_recipe_keys(recipe.specialargs, remove_prefix='-',
-                            add=['--help', '-h'])
-    pkeys = keys_present(recipe, fkwargs, remove_prefix='-')
+    skeys = _get_recipe_keys(recipe.specialargs, remove_prefix='-',
+                             add=['--help', '-h'])
+    pkeys = _keys_present(recipe, fkwargs, remove_prefix='-')
     # loop around inputs
     for argname in p['INPUT']:
         # if we have a special input ignore
@@ -555,7 +578,7 @@ def display_run_time_arguments(recipe, fkwargs=None):
         # else we have a list
         else:
             # get value
-            indexvalues = get_arg_strval(value)
+            indexvalues = _get_arg_strval(value)
             # loop around index values
             for index, indexvalue in enumerate(indexvalues):
                 # add to log strings
@@ -572,7 +595,16 @@ def display_run_time_arguments(recipe, fkwargs=None):
 # =============================================================================
 # Indexing functions
 # =============================================================================
-def index_pp(p):
+def _index_pp(p):
+    """
+    Index the pre-processed files (into p["TMP"] directory)
+
+    :param p: ParamDict, the constants parameter dictionary
+
+    :type p: ParamDict
+
+    :returns: None
+    """
     # get pconstant from p
     pconstant = constants.pload(p['INSTRUMENT'])
     # get index filename
@@ -586,18 +618,29 @@ def index_pp(p):
     # check that outputs is not empty
     if len(outputs) == 0:
         WLOG(p, '', ErrorEntry('40-004-00001'))
-        return 0
+        return
     # get the index columns
     icolumns = pconstant.RAW_OUTPUT_COLUMNS(p)
     # ------------------------------------------------------------------------
     # index files
-    istore = indexing(p, outputs, icolumns, abspath)
+    istore = _indexing(p, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    sort_and_save_outputs(p, istore, abspath)
+    _save_index_file(p, istore, abspath)
 
 
-def index_outputs(p):
+def _index_outputs(p):
+    """
+    Index the reduced files (into p["REDUCED_DIR"] directory)
+
+    :param p: ParamDict, the constants parameter dictionary
+
+    :type p: ParamDict
+
+    :exception SystemExit: on caught errors
+
+    :returns: None
+    """
     # get pconstant from p
     pconstant = constants.pload(p['INSTRUMENT'])
     # get index filename
@@ -611,18 +654,40 @@ def index_outputs(p):
     # check that outputs is not empty
     if len(outputs) == 0:
         WLOG(p, '', ErrorEntry('40-004-00001'))
-        return 0
+        return
     # get the index columns
     icolumns = pconstant.REDUC_OUTPUT_COLUMNS(p)
     # ------------------------------------------------------------------------
     # index files
-    istore = indexing(p, outputs, icolumns, abspath)
+    istore = _indexing(p, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    sort_and_save_outputs(p, istore, abspath)
+    _save_index_file(p, istore, abspath)
 
 
-def indexing(p, outputs, icolumns, abspath):
+def _indexing(p, outputs, icolumns, abspath):
+    """
+    Adds the "outputs" to index file at "abspath"
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param outputs: dictionary of dictionaries, the primary key it the
+                    filename of each output, the inner dictionary contains
+                    the columns to add to the index
+    :param icolumns: list of strings, the output columns (should all be in
+                     each output dictionary from outputs[{filename}]
+    :param abspath: string, the absolute path to the index file
+
+    :type p: ParamDict
+    :type outputs: dict[dict]
+    :type icolumns: list[str]
+    :type abspath: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: An ordered dict with the index columns of all outputs (new from
+              "outputs" and old from "abspath")
+    :rtype: OrderedDict
+    """
     # ------------------------------------------------------------------------
     # log indexing
     WLOG(p, '', ErrorEntry('40-004-00002', args=abspath))
@@ -685,7 +750,22 @@ def indexing(p, outputs, icolumns, abspath):
     return istore
 
 
-def sort_and_save_outputs(p, istore, abspath):
+def _save_index_file(p, istore, abspath):
+    """
+    Saves the index file (from input "istore") at location "abspath"
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param istore: An ordered dict with the index columns of all outputs
+                   (new from "outputs" and old from "abspath")
+                   - generated by _indexing() function
+    :param abspath: string, the absolute path to save the index file to
+
+    :type p: ParamDict
+    :type istore: OrderedDict
+    :type abspath: str
+
+    :returns: None
+    """
     # ------------------------------------------------------------------------
     # sort the istore by column name and add to table
     sortmask = np.argsort(istore['FILENAME'])
@@ -702,7 +782,7 @@ def sort_and_save_outputs(p, istore, abspath):
 # =============================================================================
 # Exit functions
 # =============================================================================
-def find_interactive():
+def _find_interactive():
     """
     Find whether user is using an interactive session
 
@@ -727,7 +807,7 @@ def find_interactive():
 
 
 # noinspection PyUnresolvedReferences
-def find_ipython():
+def _find_ipython():
     """
     Find whether user is using ipython or python
 
@@ -745,7 +825,7 @@ def find_ipython():
 # =============================================================================
 # Worker functions
 # =============================================================================
-def assign_pid():
+def _assign_pid():
     """
     Assign a process id based on the time now
 
@@ -756,7 +836,7 @@ def assign_pid():
     return pid
 
 
-def find_recipe(name='None', instrument='None'):
+def _find_recipe(name='None', instrument='None'):
     """
     Finds a given recipe in the instruments definitions
 
@@ -766,9 +846,11 @@ def find_recipe(name='None', instrument='None'):
     :type name: str
     :type instrument: str
 
-    :return: if found the DrsRecipe, else raises SystemExit
+    :exception SystemExit: on caught errors
+
+    :returns: if found the DrsRecipe, else raises SystemExit
+    :rtype: DrsRecipe
     """
-    func_name = __NAME__ + '.find_recipe()'
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
@@ -799,7 +881,7 @@ def find_recipe(name='None', instrument='None'):
     return found_recipe
 
 
-def get_arg_strval(value):
+def _get_arg_strval(value):
     """
     Get the string value representation of "value" (specifically for a listof
     DrsFitsFiles)
@@ -830,7 +912,7 @@ def get_arg_strval(value):
         return out
 
 
-def get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
+def _get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
     """
     Obtain the recipe keys from reipce "args"
 
@@ -877,7 +959,7 @@ def get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
     return keys
 
 
-def keys_present(recipe, fkwargs=None, remove_prefix=None):
+def _keys_present(recipe, fkwargs=None, remove_prefix=None):
     """
     Returns a list of keys present in argument parsing (i.e. from sys.argv/or
     "fkwargs" - that is from call to function)
@@ -894,10 +976,10 @@ def keys_present(recipe, fkwargs=None, remove_prefix=None):
     if fkwargs is None:
         fkwargs = dict()
     # get they keys to check for
-    arg_keys = get_recipe_keys(recipe.args)
-    kwarg_keys = get_recipe_keys(recipe.kwargs, remove_prefix='-')
-    skeys = get_recipe_keys(recipe.specialargs, add=['--help', '-h'],
-                            allow_skips=False, remove_prefix='-')
+    arg_keys = _get_recipe_keys(recipe.args)
+    kwarg_keys = _get_recipe_keys(recipe.kwargs, remove_prefix='-')
+    skeys = _get_recipe_keys(recipe.specialargs, add=['--help', '-h'],
+                             allow_skips=False, remove_prefix='-')
 
     # need all positional keys
     keys = arg_keys
@@ -905,7 +987,7 @@ def keys_present(recipe, fkwargs=None, remove_prefix=None):
     search_keys = kwarg_keys + skeys
     if len(search_keys) > 0:
         for search_key in search_keys:
-            if search_for_key(search_key, fkwargs):
+            if _search_for_key(search_key, fkwargs):
                 keys.append(search_key)
     # deal with removing prefixes
     if remove_prefix is not None:
@@ -922,7 +1004,7 @@ def keys_present(recipe, fkwargs=None, remove_prefix=None):
     return keys
 
 
-def search_for_key(key, fkwargs=None):
+def _search_for_key(key, fkwargs=None):
     """
     Search for a key in sys.argv (list of strings) and fkwargs (dictionary)
     in order to quickly tell if key was present when parsing arguments
@@ -949,7 +1031,7 @@ def search_for_key(key, fkwargs=None):
         return False
 
 
-def set_debug_from_input(recipe, fkwargs):
+def _set_debug_from_input(recipe, fkwargs):
 
     debug_key = '--debug'
     # assume debug is not there
@@ -976,7 +1058,9 @@ def set_debug_from_input(recipe, fkwargs):
     if debug_mode is not None:
         try:
             debug_mode = int(debug_mode)
-        except:
+        except ValueError:
+            debug_mode = 1
+        except TypeError:
             debug_mode = 1
     # set DRS_DEBUG
     if debug_mode is not None:
@@ -988,7 +1072,7 @@ def set_debug_from_input(recipe, fkwargs):
     return recipe
 
 
-def sort_version(messages=None):
+def _sort_version(messages=None):
     """
     Obtain and sort version info
 
@@ -1035,15 +1119,6 @@ def sort_version(messages=None):
     # return updated messages
     return messages
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
