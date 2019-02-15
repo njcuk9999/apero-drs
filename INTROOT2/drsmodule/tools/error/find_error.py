@@ -187,7 +187,11 @@ class Navbar:
         self.menubar.add_cascade(label='Help', menu=self.helpmenu)
 
     def about(self):
+        """
+        Make the about message box
 
+        :return:
+        """
         title = 'About {0}'.format(PROGRAM_NAME)
 
         message = ('Search for an error code or a help code. \nDisplay '
