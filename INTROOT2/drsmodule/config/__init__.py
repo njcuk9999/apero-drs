@@ -20,6 +20,17 @@ __all__ = []
 # =============================================================================
 # Define functions
 # =============================================================================
+# Setup function
+setup = drs_startup.setup
+
+# Ending main function
+end_main = drs_startup.main_end_script
+
+# Exit function
+end = drs_startup.exit_script
+
+# The logging script
+wlog = drs_log.wlog
 
 
 # =============================================================================
