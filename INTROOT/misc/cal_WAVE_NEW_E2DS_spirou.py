@@ -204,9 +204,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Start plotting session
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
@@ -221,15 +221,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # generate resolution map
     loc = spirouWAVE.generate_resolution_map(p, loc)
     # map line profile map
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         sPlt.wave_ea_plot_line_profiles(p, loc)
 
     # ----------------------------------------------------------------------
     # End plotting session
     # ----------------------------------------------------------------------
     # end interactive session
-    if p['DRS_PLOT']:
-        sPlt.end_interactive_session()
+    if p['DRS_PLOT'] > 0:
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -773,7 +773,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 

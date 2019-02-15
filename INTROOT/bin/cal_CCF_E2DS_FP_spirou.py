@@ -242,14 +242,14 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Reference plots
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive session if needed
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot FP spectral order
         sPlt.drift_plot_selected_wave_ref(p, loc, x=loc['WAVE_LL'],
                                           y=loc['E2DS'])
         # plot photon noise uncertainty
-        sPlt.drift_plot_photon_uncertainty(loc)
+        sPlt.drift_plot_photon_uncertainty(p, loc)
 
     # ----------------------------------------------------------------------
     # Get template RV (from ccf_mask)
@@ -308,7 +308,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # rv ccf plot
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
@@ -456,7 +456,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # rv ccf plot
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
         sPlt.ccf_rv_ccf_plot(cp, cloc['RV_CCF'], normalized_ccf, ccf_fit)
 

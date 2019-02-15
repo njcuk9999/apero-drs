@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.017'
+__version__ = '0.4.072'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2019-01-28'
+__date__ = '2019-02-15'
 
 
 # =============================================================================
@@ -169,6 +169,18 @@ def TELLU_DATABASE_BLACKLIST_FILE():
     """
     blacklistfile = 'tellu_blacklist.txt'
     return blacklistfile
+
+
+# noinspection PyPep8Naming
+def TELLU_DATABASE_WHITELIST_FILE():
+    """
+    Defines the telluric database blacklist filename
+
+    :return blacklistfile: string, the telluric blacklist file
+    """
+    whitelistfile = 'tellu_whitelist.txt'
+    return whitelistfile
+
 
 
 # =============================================================================
@@ -3013,6 +3025,29 @@ def FONT_DICT():
     if PLOT_FONT_SIZE() != 'None':
         font['size'] = PLOT_FONT_SIZE()
     return font
+
+
+def PLOT_EXTENSIONS():
+    """
+    Extensions for plotting
+
+    Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz
+
+    :return:
+    """
+    extensions = ['png', 'pdf']
+    return extensions
+
+
+
+def PLOT_FIGSIZE():
+    """
+    The fig size (in inches) for all saved figures
+    :return:
+    """
+    figsize = (10, 8)
+    return figsize
+
 
 
 # =============================================================================

@@ -121,17 +121,17 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot continuum plots
-        sPlt.polar_continuum_plot(loc)
+        sPlt.polar_continuum_plot(p, loc)
         # plot polarimetry results
-        sPlt.polar_result_plot(loc)
+        sPlt.polar_result_plot(p, loc)
         # plot total flux (Stokes I)
-        sPlt.polar_stokes_i_plot(loc)
+        sPlt.polar_stokes_i_plot(p, loc)
         # end interactive session
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
     
     # ------------------------------------------------------------------
     # Store polarimetry in file(s)
@@ -181,9 +181,9 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         loc = spirouPOLAR.LSDAnalysis(p, loc)
 
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # plot LSD analysis
-            sPlt.polar_lsd_plot(loc)
+            sPlt.polar_lsd_plot(p, loc)
 
         #  save LSD analysis data to file
         p, lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
