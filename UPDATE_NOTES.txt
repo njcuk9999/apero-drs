@@ -1,50 +1,36 @@
-Update Note Summary - Version 0.4.009 (Since 0.3.050)
+Update Note Summary - Version 0.4.072 (Since 0.4.009)
+
+Not Done:
+
+- No integration of Melissa's new wave code
 
 Done:
 
+- changes to the telluric recipes
 
-- updates to cal_WAVE (NEW and E2DS_EA) skipping order 0 to improve number of
-  files that pass Littrow test (UNTESTED on full set of data but definitely
-  passing more frequently)
+    obj_mk_tellu_new  - this is the new way to make individual aborption maps from the telluric hot stars
+    obj_mk_tellu_db - this is a wrapper for the whole telluric process i.e.:
+        obj_mk_tellu_new [on all e2dsff files in telluric white list]
+        obj_fit_tellu [on all e2dsff files in telluric white list]
+        obj_mk_obj_template [on all objects in telluric white list]
+        obj_mk_tellu_new [on all e2dsff files in telluric white list]
 
-- re-working of cal_SHAPE
-    - new code for cal_SHAPE that now requires the following input:
-           cal_SHAPE_spirou.py HC_FILE FP_FILE1 FP_FILE2 ...
+- changes to pre-processing - corrupt files should now not be saved
 
-- Francois/Melissa changes to cal_wave/cal_CCF_E2DS_FP_spirou
+    Note: as with all other QC the trigger will have to deal with missing files
+    Note: log warning messages are given in the standard QC fashion
 
-- parallisation updates:
-    - major redo of WLOG to handle multiple instances of the DRS running at once
-    - updated the calibDB and telluDB reading/writing to handle multiple
-      reads at once
-    - updated the fits file and fits table file reading to handle multiple reads
-      at once
-    - updated unit_test and extract_trigger to be parallisable
+- added option to plot to file (requested by Claire for meta data)
 
-- obj_mk_obj_template.py now lists wave solution in header (as well as BERV
-    and filename)
+    Note: one MUST update any config file with the plot option:
+        0 = No plots
+        1 = plot to screen
+        2 = plot to file
+    Note: one MUST update any config file to set a "plot path":
+        DRS_DATA_PLOT = '/home/data/plots/'
+    Note: if these two steps are not done the drs will crash
 
-- fixed bug in spirouBERV - should not be calculated for non-science OBJECTS
-
-- fixed format of LSD table in pol table - now is a fits table
-        Note to open fits tables in IDL see here:
-        https://idlastro.gsfc.nasa.gov/ftp/pro/fits_table/aaareadme.txt
-
-        lookup:
-            ftab_print, 'file.fits'
-        read:
-            tab = readfits('file.fits', hdr, /EXTEN)
-            col1 = tbget(hdr, tab, 'COLUMN1')
-
-- extract_trigger.py written to reprocess data based on night/recipes required
-      (currently located in SpirouDRS/spirouUnitTests/)
-
-- pep8 clean up of all codes + some clean-up of which log messages are "info"
-   as opposed to "general"
-
-- many smaller bug fixes (see CHANGELOG.md)
-
-
+- an INTROOT2 folder will be created - please ignore this for now
 
 
 
