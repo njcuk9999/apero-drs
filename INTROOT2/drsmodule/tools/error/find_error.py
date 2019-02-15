@@ -17,8 +17,7 @@ import webbrowser
 import re
 
 from drsmodule import constants
-from drsmodule.config import drs_log
-from drsmodule.config import drs_startup
+from drsmodule import config
 from drsmodule.locale import drs_text
 
 # =============================================================================
@@ -34,7 +33,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = drs_log.wlog
+WLOG = config.wlog
 
 # -----------------------------------------------------------------------------
 # define the program name
@@ -775,7 +774,7 @@ class LoadData:
         """
         self.instrument = instrument
         # get parameters from drsmodule
-        _, params = drs_startup.input_setup('None', instrument, quiet=True)
+        _, params = config.setup('None', instrument, quiet=True)
         self.drs_params = params
         # get database
         dout = self.load_databases()
