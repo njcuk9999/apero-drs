@@ -14,7 +14,8 @@ import os
 import time
 
 from drsmodule import constants
-from drsmodule.config import drs_log
+from drsmodule import config
+
 from drsmodule.locale import drs_text
 
 
@@ -32,7 +33,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = drs_log.wlog
+WLOG = config.wlog
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText

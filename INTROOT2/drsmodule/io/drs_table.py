@@ -19,8 +19,9 @@ from astropy.io import fits
 from collections import OrderedDict
 
 from drsmodule import constants
+from drsmodule import config
 from drsmodule.locale import drs_text
-from drsmodule.config import drs_log
+
 from . import drs_lock
 
 
@@ -38,7 +39,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = drs_log.wlog
+WLOG = config.wlog
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 
@@ -362,7 +363,6 @@ def write_fits_table(p, astropy_table, output_filename):
     if not os.path.exists(dir_name):
         eargs = [dir_name, func_name]
         WLOG(p, 'error', ErrorEntry('01-002-00016', args=eargs))
-
 
     # get and check for file lock file
     lock, lock_file = drs_lock.check_fits_lock_file(p, output_filename)
