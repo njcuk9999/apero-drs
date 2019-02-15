@@ -444,9 +444,9 @@ def _get_dict_files(instrument, filelist):
     # setup storage for return file list
     return_files = []
     # get instrument path
-    ifolder = _get_relative_folder(PACKAGE, INSTRUMENT_PATH)
+    ifolder = get_relative_folder(PACKAGE, INSTRUMENT_PATH)
     # get default file
-    dfolder = _get_relative_folder(PACKAGE, DEFAULT_PATH)
+    dfolder = get_relative_folder(PACKAGE, DEFAULT_PATH)
     dfiles = []
     for file_d in filelist:
         abspath_d = os.path.join(dfolder, file_d)
@@ -485,7 +485,7 @@ def _get_dict_files(instrument, filelist):
     return return_files
 
 
-def _get_relative_folder(package, folder):
+def get_relative_folder(package, folder):
     """
     Get the absolute path of folder defined at relative path
     folder from package
