@@ -122,8 +122,8 @@ def validate_csv(files):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # get abspath from relative path
-    database_path = drs_text._get_relative_folder(PACKAGE, DATABASE_PATH)
-    backup_path = drs_text._get_relative_folder(PACKAGE, BACKUP_PATH)
+    database_path = drs_text.get_relative_folder(PACKAGE, DATABASE_PATH)
+    backup_path = drs_text.get_relative_folder(PACKAGE, BACKUP_PATH)
     # ----------------------------------------------------------------------
     # get database abspath
     dabspath = os.path.join(database_path, DATABASE_FILE)
