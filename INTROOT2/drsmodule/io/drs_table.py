@@ -10,7 +10,6 @@ Created on 2019-01-21 at 09:33
 @author: cook
 """
 from __future__ import division
-from typing import Union
 import numpy as np
 import os
 from astropy.table import Table, vstack
