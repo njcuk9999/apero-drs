@@ -10,6 +10,7 @@ Created on 2019-01-21 at 09:33
 @author: cook
 """
 from __future__ import division
+from typing import Union
 import numpy as np
 import os
 from astropy.table import Table, vstack
@@ -29,7 +30,7 @@ from . import drs_lock
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'table.py'
+__NAME__ = 'drs_table.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -38,6 +39,8 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# get the parameter dictionary
+ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = config.wlog
 # Get the text types
@@ -65,8 +68,17 @@ def make_table(p, columns, values, formats=None, units=None):
     :param units: list of strings, the units for each column, must have
                   same length as number of columns
 
-    :return table: astropy.table.Table instance, the astropy table containing
+    :type p: ParamDict
+    :type columns: list[str]
+    :type values: list[list]
+    :type formats: list[str]
+    :type units: list[str]
+
+    :exception SystemExit: on caught errors
+
+    :returns: astropy.table.Table instance, the astropy table containing
                    all columns and data
+    :rtype: astropy.table.Table
     """
 
     func_name = __NAME__ + '.make_table()'
@@ -131,7 +143,13 @@ def write_table(p, table, filename, fmt='fits', header=None):
                        i.e. header[key] = [value, comment]
                    which will be put into the header
 
-    :return None:
+    :type p: ParamDict
+    :type table: astropy.table.Table
+    :type filename: str
+    :type fmt: str
+    :type header: dict
+
+    :return: None
 
     Note to open fits tables in IDL see here:
         https://idlastro.gsfc.nasa.gov/ftp/pro/fits_table/aaareadme.txt
@@ -209,7 +227,14 @@ def merge_table(p, table, filename, fmt='fits'):
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
 
-    :return None:
+    :type p: ParamDict
+    :type table: astropy.table.Table
+    :type filename: str
+    :type fmt: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: None
 
     astropy.table writeable formats are as follows:
     """
@@ -249,7 +274,15 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
     :param kwargs: keys to pass to the reader
                    (Table.read(filename, format=fmt**kwargs))
 
-    :return None:
+    :type p: ParamDict
+    :type filename: str
+    :type fmt: str
+    :type colnames: list[str]
+
+    :exception SystemExit: on caught errors
+
+    :returns: astropy.table.Table read from filename
+    :rtype: astropy.table.Table
 
     astropy.table readable formats are as follows:
 
@@ -271,11 +304,6 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
 
     # check that filename exists
     if not os.path.exists(filename):
-        emsg1 = 'File {0} does not exist'
-        emsg2 = '    file = {0}'.format(filename)
-        emsg3 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1, emsg2, emsg3])
-
         eargs = [filename, func_name]
         WLOG(p, 'error', ErrorEntry('01-002-00011', args=eargs))
 
@@ -302,6 +330,19 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
 
 
 def print_full_table(p, table):
+    """
+    print and log table (all lines) in standard drs manner
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param table: astropy.table.Table
+
+    :type p: ParamDict
+    :type table: astropy.table.Table
+
+    :exception SystemExit: on caught errors
+
+    :return: None
+    """
     tablestrings = table.pformat(max_lines=len(table)*10,
                                  max_width=9999)
     WLOG(p, '', '=' * len(tablestrings[0]), wrap=False)
@@ -313,6 +354,18 @@ def print_full_table(p, table):
 # Define usable table functions
 # =============================================================================
 def make_fits_table(dictionary=None):
+    """
+    Make fits table from a dictionary
+
+    :param dictionary: dict, the dictionary to make the astropy table from
+
+    :type dictionary: dict
+
+    :exception SystemExit: on caught errors
+
+    :returns: astropy.table.Table representation of the dictionary
+    :rtype: astropy.table.Table
+    """
     # if dictionary is None return empty astropy table
     if dictionary is None:
         return Table()
@@ -328,6 +381,24 @@ def make_fits_table(dictionary=None):
 
 
 def read_fits_table(p, filename, return_dict=False):
+    """
+    Read a fits table and return an astropy.table or a dictionary (depending
+    on value of "return_dict"
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param filename: str, the filename to open
+    :param return_dict: bool, whether to return a dictionary (True) or an
+                        astropy.table.Table (False) default is False
+
+    :type p: ParamDict
+    :type filename: str
+    :type return_dict: bool
+
+    :exception SystemExit: on caught errors
+
+    :returns: either an Astropy Table or OrderedDict
+    :rtype: astropy.table.Table | dict
+    """
     func_name = __NAME__ + '.read_fits_table()'
     # check that filename exists
     if not os.path.exists(filename):
@@ -356,6 +427,21 @@ def read_fits_table(p, filename, return_dict=False):
 
 
 def write_fits_table(p, astropy_table, output_filename):
+    """
+    Write "astropy_table" fits table to "output_filename"
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param astropy_table: astropy.table.Table, the input table to save
+    :param output_filename: str, the output filename to save to
+
+    :type p: ParamDict
+    :type astropy_table: astropy.table.Table
+    :type output_filename: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: None
+    """
     func_name = __NAME__ + '.write_fits_table()'
     # get directory name
     dir_name = os.path.dirname(output_filename)
@@ -395,12 +481,21 @@ def deal_with_missing_end_card(p, filename, e, func_name):
     Solution is to read with fits (astropy.io.fits)
     --> also saves over old index file so this problem doesn't persist
 
-    :param p: parameter dictionary
+    :param p: ParamDict, the constant parameter dictionary
     :param filename: string, the full path and filename to open the file
     :param e: exception return, the error to print
     :param func_name: string, the function this was called for
                       (for error reporting)
-    :return astropy_table: astropy.table.Table containing the fits file
+
+    :type p: ParamDict
+    :type filename: str
+    :type e: Exception
+    :type func_name: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: astropy.table.Table containing the fits file
+    :rtype: astropy.table.Table
     """
     hdu = fits.open(filename, ignore_missing_end=True)
     ext = None
@@ -440,6 +535,26 @@ def deal_with_missing_end_card(p, filename, e, func_name):
 # Define worker functions
 # =============================================================================
 def prep_merge(p, filename, table, preptable):
+    """
+    Prepare the merging of two files by checking that all columns and
+    data types are correct
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param filename: str, the filename of the table to merge
+    :param table: astropy.table.Table, the parent table to merge to
+    :param preptable: astropy.table.Table, the child table to merge into
+                      "table" (parent)
+
+    :type p: ParamDict
+    :type filename: str
+    :type table: astropy.table.Table
+    :type preptable: astropy.table.Table
+
+    :exception SystemExit: on caught errors
+
+    :returns: the updated "preptable" ready for merging
+    :rtype: astropy.table.Table
+    """
     func_name = __NAME__ + '.prep_merge()'
     # set up new table to store prepped data
     newtable = Table()
@@ -467,9 +582,13 @@ def prep_merge(p, filename, table, preptable):
 def test_format(fmt):
     """
     Test the format string with a floating point number
+
     :param fmt: string, the format string i.e. "7.4f"
 
-    :return passed: bool, if valid returns True else returns False
+    :type fmt: str
+
+    :returns: bool, if valid returns True else returns False
+    :rtype: bool
     """
     try:
         if fmt.startswith('{') and fmt.endswith('}'):
@@ -489,8 +608,9 @@ def list_of_formats():
     """
     Get the list of astropy formats and return it
 
-    :return ftable: astropy.table.Table instance containing the formats allow
-                    for reading and writing astropy tables
+    :returns: astropy.table.Table instance containing the formats allow
+              for reading and writing astropy tables
+    :rtype: astropy.table.Table
     """
     ftable = get_formats(Table)
 
@@ -512,8 +632,12 @@ def string_formats(ftable=None, mask=None):
     :param mask: None or numpy array (1D), if not None defines which rows of
                  ftable to add to string
 
-    :return string: string containing a print version of ftable (with mask
-                    applied if mask is not None)
+    :type ftable: astropy.table.Table | None
+    :type mask: np.ndarray
+
+    :return: string containing a print version of ftable (with mask
+             applied if mask is not None)
+    :rtype: str
     """
     # deal with no format table
     if ftable is None:
@@ -548,7 +672,7 @@ def update_docs():
     writemask = ftable['write?']
     write_table.__doc__ += string_formats(ftable, mask=writemask)
     # update doc for merge_table
-    merge_table.__doc__ += string_formats(ftable, mask=None)
+    merge_table.__doc__ += string_formats(ftable)
     # update doc for read_table
     readmask = ftable['read?']
     read_table.__doc__ += string_formats(ftable, mask=readmask)
