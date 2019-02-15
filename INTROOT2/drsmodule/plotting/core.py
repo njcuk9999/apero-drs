@@ -14,7 +14,7 @@ import matplotlib
 
 # TODO: Is there a better fix for this?
 # fix for MacOSX plots freezing
-gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
+gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
 for gui in gui_env:
     # noinspection PyBroadException
     try:
