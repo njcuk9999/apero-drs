@@ -403,7 +403,6 @@ def debug_start(errorstring):
     try:
         print(cc + '\n\n\tError found and running in DEBUG mode\n' + nocol)
         # noinspection PyUnboundLocalVariable
-
         message = ('Enter (1) ipython debugger (2) python debugger or '
                    'exit (any other key)?\n\t Note ipython debugger requires '
                    'ipdb installed\n\tChoose "1", "2", or exit:')
@@ -412,6 +411,7 @@ def debug_start(errorstring):
         uinput = raw_input(cc + '\t' + message + '\t' + nocol)
         if '1' in uinput.upper():
             print(cc + '\n\t ==== IPYTHON DEBUGGER ====\n'
+                       '\n\t - type "ipython()" to use %paste %cpaste'
                        '\n\t - type "list" to list code'
                        '\n\t - type "up" to go up a level'
                        '\n\t - type "interact" to go to an interactive shell'
@@ -424,7 +424,8 @@ def debug_start(errorstring):
             # noinspection PyBroadException
             try:
                 from IPython import embed
-                embed()
+                # noinspection PyUnboundLocalVariable
+                ipython = embed
                 import ipdb
                 ipdb.set_trace()
             except:

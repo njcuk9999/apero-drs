@@ -25,12 +25,16 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['CheckBlackList', 'ConstructConvKernel1', 'ConstructConvKernel2',
            'GetMolecularTellLines', 'GetNormalizedBlaze', 'GetBERV',
            'CalculateAbsorptionPCA', 'CalcReconAbso', 'CalcMolecularAbsorption',
-           'LinMini', 'Wave2Wave']
+           'LinMini', 'Wave2Wave', 'GetBlackList', 'GetWhiteList']
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+
+ApplyTemplate = spirouTelluric.apply_template
+
+CalcTelluAbsorption = spirouTelluric.calculate_telluric_absorption
 
 CheckBlackList = spirouTelluric.check_blacklist
 
@@ -38,11 +42,17 @@ ConstructConvKernel1 = spirouTelluric.construct_convolution_kernal1
 
 ConstructConvKernel2 = spirouTelluric.construct_convolution_kernal2
 
+ConstructBigTable = spirouTelluric.construct_big_table
+
 GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
 
 GetNormalizedBlaze = spirouTelluric.get_normalized_blaze
 
 GetBERV = spirouTelluric.get_berv_value
+
+GetBlackList = spirouTelluric.get_blacklist
+
+GetWhiteList = spirouTelluric.get_whitelist
 
 CalculateAbsorptionPCA = spirouTelluric.calculate_absorption_pca
 
@@ -55,6 +65,12 @@ BervCorrectTemplate = spirouTelluric.berv_correct_template
 LinMini = spirouTelluric.lin_mini
 
 Wave2Wave = spirouTelluric.wave2wave
+
+FindTelluricStars = spirouTelluric.find_telluric_stars
+
+UpdateProcessDB = spirouTelluric.update_process
+
+GetDBarguments = spirouTelluric.get_arguments
 
 # =============================================================================
 # Start of code

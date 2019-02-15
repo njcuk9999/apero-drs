@@ -128,9 +128,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Start plotting
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Load template (if available)
@@ -412,7 +412,7 @@ def main(night_name=None, files=None):
         #           AMPS_ABSOL_TOTAL
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # plot the recon abso plot
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
@@ -428,6 +428,36 @@ def main(night_name=None, files=None):
         #           TAPAS_{molecule}
         loc = spirouTelluric.CalcMolecularAbsorption(p, loc)
 
+        # ----------------------------------------------------------------------
+        # Quality control
+        # ----------------------------------------------------------------------
+        # set passed variable and fail message list
+        passed, fail_msg = True, []
+        # get SNR for each order from header
+        nbo = loc['DATA'].shape[0]
+        snr_order = p['QC_FIT_TELLU_SNR_ORDER']
+        snr = spirouImage.Read1Dkey(p, thdr, p['kw_E2DS_SNR'][0], nbo)
+        # check that SNR is high enough
+        if snr[snr_order] < p['QC_FIT_TELLU_SNR_MIN']:
+            fmsg = 'low SNR in order {0}: ({1:.2f} < {2:.2f})'
+            fargs = [snr_order, snr[snr_order], p['QC_FIT_TELLU_SNR_MIN']]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(p, 'info',
+                 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+            continue
+
         # ------------------------------------------------------------------
         # Get components amplitudes for header
         # ------------------------------------------------------------------
@@ -438,7 +468,8 @@ def main(night_name=None, files=None):
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+                                   value=p['BLAZFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
@@ -515,20 +546,28 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Update the Telluric database
         # ------------------------------------------------------------------
-        # add to telluric database
-        oparams = dict(objname=loc['OBJNAME'], berv=loc['BERV'],
-                       airmass=loc['AIRMASS'], watercol=loc['WATERCOL'])
-        spirouDB.UpdateDatavaseTellObj(p, outfilename1, **oparams)
-        # copy file to database
-        spirouDB.PutTelluFile(p, outfile1)
+        if p['QC']:
+            # add TELLU_OBJ to telluric database
+            oparams = dict(objname=loc['OBJNAME'], berv=loc['BERV'],
+                           airmass=loc['AIRMASS'], watercol=loc['WATERCOL'])
+            spirouDB.UpdateDatabaseTellObj(p, outfilename1, **oparams)
+            # copy file to database
+            spirouDB.PutTelluFile(p, outfile1)
+            # add TELLU_RECON to telluric database
+            # add TELLU_OBJ to telluric database
+            oparams = dict(objname=loc['OBJNAME'], berv=loc['BERV'],
+                           airmass=loc['AIRMASS'], watercol=loc['WATERCOL'])
+            spirouDB.UpdateDatabaseTellRecon(p, outfilename2, **oparams)
+            # copy file to database
+            spirouDB.PutTelluFile(p, outfile2)
 
     # ----------------------------------------------------------------------
     # End plotting
     # ----------------------------------------------------------------------
     # debug plot
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # end interactive session
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # End Message

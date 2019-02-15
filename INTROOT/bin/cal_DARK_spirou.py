@@ -167,15 +167,15 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot the image with blue and red regions
         sPlt.darkplot_image_and_regions(p, data)
         # plot histograms
         sPlt.darkplot_histograms(p)
         # end interactive session
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Quality control
