@@ -157,9 +157,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Start plotting session
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # loop around fiber type
@@ -207,13 +207,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # FP solution plots
         # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # Plot the FP extracted spectrum against wavelength solution
             sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
             # Plot the measured FP cavity width offset against line number
-            sPlt.wave_local_width_offset_plot(loc)
+            sPlt.wave_local_width_offset_plot(p,loc)
             # Plot the FP line wavelength residuals
-            sPlt.wave_fp_wavelength_residuals(loc)
+            sPlt.wave_fp_wavelength_residuals(p, loc)
 
         # ------------------------------------------------------------------
         # Part 2 of cal_HC
@@ -235,7 +235,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # End plotting session
     # ----------------------------------------------------------------------
     # end interactive session
-    sPlt.end_interactive_session()
+    sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # End Message
@@ -268,7 +268,7 @@ def part2test(p, loc):
     # ------------------------------------------------------------------
     # Plot wave solution littrow check
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
     # ------------------------------------------------------------------
@@ -282,9 +282,9 @@ def part2test(p, loc):
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
 
     # ------------------------------------------------------------------
     # Join 0-24 and 25-36 solutions

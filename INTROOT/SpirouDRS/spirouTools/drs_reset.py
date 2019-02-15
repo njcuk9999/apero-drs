@@ -209,6 +209,15 @@ def reset_log(p):
     remove_all(p, log_dir)
 
 
+def reset_plot(p):
+    # log progress
+    WLOG(p, '', 'Resetting log directory')
+    # remove files from reduced folder
+    log_dir = p['DRS_DATA_PLOT']
+    # loop around files and folders in reduced dir
+    remove_all(p, log_dir)
+
+
 def remove_all(p, path, log=True):
 
     # Check that directory exists
@@ -301,6 +310,10 @@ def main(return_locals=False, warn=True, log=True, called=False):
         reset4 = reset_confirmation(p, 'Log', called=called)
     if reset4:
         reset_log(p)
+    if warn:
+        reset5 = reset_confirmation(p, 'Plot', called=called)
+    if reset5:
+        reset_plot(p)
     else:
         WLOG(p, '', 'Not resetting Log files.')
     # ----------------------------------------------------------------------
