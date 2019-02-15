@@ -12,7 +12,8 @@ import numpy as np
 import os
 import tkinter as tk
 from tkinter import font
-from tkinter import ttk
+from tkinter import messagebox
+import webbrowser
 import re
 
 from drsmodule import constants
@@ -38,7 +39,8 @@ WLOG = drs_log.wlog
 
 # -----------------------------------------------------------------------------
 LINE_FILENAME = 'list_database.npy'
-
+PROGRAM_NAME = 'Error locator'
+INSTRUMENTS = ['None', 'SPIROU', 'NIRPS']
 
 LARGE = 16
 NORMAL = 12
@@ -160,7 +162,17 @@ class AutocompleteEntry(tk.Entry):
 # Define classes
 # =============================================================================
 class Navbar:
+    """
+    Navigation bar class
+    """
     def __init__(self, master):
+        """
+        Navigation bar constructor
+
+        :param master: tk.TK parent
+
+        :type master: tk.TK
+        """
         self.master = master
         self.menubar = tk.Menu(master)
         # add file menu
@@ -174,15 +186,26 @@ class Navbar:
         self.helpmenu.add_command(label='About', command=self.about)
         self.menubar.add_cascade(label='Help', menu=self.helpmenu)
 
-
     def about(self):
-        pass
+
+        title = 'About {0}'.format(PROGRAM_NAME)
+
+        message = ('Search for an error code or a help code. \nDisplay '
+                   'information about this code including location, '
+                   'arguments, comments, and python script location.')
+
+        messagebox.showinfo(title, message)
 
     def quit(self):
         self.master.destroy()
 
     def open(self):
-        pass
+
+        # get path
+        dfolder = drs_text._get_relative_folder(drs_text.PACKAGE,
+                                                drs_text.DEFAULT_PATH)
+        # open path
+        webbrowser.open_new_tab(dfolder)
 
 
 class Search:
@@ -201,6 +224,8 @@ class Search:
         # set up the grid weights (to make it expand to full size)
         self.frame.grid_columnconfigure(0, weight=1)
         self.frame.grid_columnconfigure(1, weight=1)
+        self.frame.grid_columnconfigure(2, weight=0)
+        self.frame.grid_columnconfigure(3, weight=0)
 
     def search_entry(self, frame):
         # get all keys
@@ -218,6 +243,20 @@ class Search:
                                 command=self.execute_search,
                                 font="-size {0}".format(LARGE))
         self.button.grid(row=0, column=1, padx=10, sticky=tk.W)
+
+
+        self.ilabel = tk.Label(frame, text='Instrument: ')
+        self.ilabel.grid(row=0, column=2, padx=10, sticky=tk.E)
+
+        # Create a Tkinter variable
+        self.tkvar = tk.StringVar(frame)
+
+        # Dictionary with options
+        choices = set(INSTRUMENTS)
+        self.tkvar.set(INSTRUMENTS[0])  # set the default option
+
+        popupMenu = tk.OptionMenu(frame, self.tkvar, *choices)
+        popupMenu.grid(row=0, column=3, sticky=tk.E)
 
     def execute_search(self, event=None):
         # destroy autocomplete box
@@ -334,7 +373,6 @@ class Results1:
         self.table.populate_table(labels, values)
 
 
-
 class Results2:
     def __init__(self, frame):
         self.table = None
@@ -430,8 +468,6 @@ class Table:
             widget.destroy()
 
 
-
-
 class App(tk.Tk):
 
     def __init__(self, datastore, *args, **kwargs):
@@ -444,7 +480,7 @@ class App(tk.Tk):
         # set minimum size
         self.minsize(512, 360)
         # set title
-        self.title("Error locator")
+        self.title(PROGRAM_NAME)
 
         self.update_idletasks()
         self.height = self.winfo_height()
@@ -491,11 +527,16 @@ class App(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
+        # trace function to change dropdown
+        self.search.tkvar.trace('w', self.change_dropdown)
+
         # bindings
         self.bind_all('<Configure>', self.r2.table.on_frame_configure)
         self.bind_all('<Button-4>', self.r2.table.on_mouse_scroll)
         self.bind_all('<Button-5>', self.r2.table.on_mouse_scroll)
 
+    def change_dropdown(self, *args):
+        self.instrument = self.search.tkvar.get()
 
 # =============================================================================
 # Worker functions
