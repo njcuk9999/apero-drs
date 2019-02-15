@@ -6576,3 +6576,33 @@
 	- spirouFITS.py - add UpdateWaveSolution (update_wave_sol) function to update correctly the HC and FP files (rev.8bbe960e)
 	- obj_mk_obj_template.py - add criteria to check median SNR and remove any below half the median SNR (in specific order) (rev.82fcbb24)
 	- cal_WAVE_E2DS_EA_spirou.py - BUG FIX - hc and fp files have wrong headers when updating wave solution (rev.ed799395)
+
+
+
+================================================================================
+* Tue Feb 12 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.071
+
+================================================================================
+	- extract_trigger.py - make sure obj_fit_tellu errors are stored (rev.5ed03775)
+	- obj_mk_tellu_db.py - keep track of errors and exceptions - only print at end (rev.c2c48b49)
+	- obj_mk_obj_template.py - fix bug when filtering by snr (all columns of fits table must be same length) (rev.cbca77bf)
+	- spirouPlot.py - fix bug with HC plot (from added save of plotting) (rev.ab6b441c)
+	- cal_preprocess_spirou.py - remove rms printout and add values to QC errors (rev.c487d26f)
+	- spirouPlot.py - deal with TclError (with new call for setup_figure) (rev.b8bdf43a)
+	- cal_loc_RAW_spirou.py - add p to call to plotting function (rev.e3bc8f29)
+	- spirouPlot.py - modify figure setup to try to catch TclError's and deal with them (rev.8a9f1c04)
+	- extract_trigger.py - modify printing to logfile (print input args) (rev.242eebd8)
+	- obj_mk_obj_template.py - change number of tell files to info (rev.a712a1fe)
+	- obj_mk_obj_template.py - fix typo in new snr constraint (rev.74490cf9)
+	- obj_mk_obj_template.py - fix typo in new snr constraint (rev.735787fe)
+	- obj_mk_obj_template.py - fix typo in new snr constraint (rev.685ec40c)
+	- obj_mk_obj_template.py - fix typo in new snr constraint (rev.02348eed)
+
+
+
+================================================================================
+* Wed Feb 13 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.072
+
+================================================================================
+	- obj_mk_tellu_db.py - need to only print errors if we have errors (rev.d32c97ac)
+	- obj_mk_tellu_db.py - need to only print errors if we have errors (rev.3660e5f3)
