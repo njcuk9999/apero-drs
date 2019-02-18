@@ -113,9 +113,11 @@ def run_begin(recipe, quiet=False):
         # display system info (log only)
         display_system_info(cparams)
 
-    # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
+    # if DRS_INTERACTIVE is not True and DRS_PLOT is to the screen
+    #     then DRS_PLOT should be turned off too
     if not cparams['DRS_INTERACTIVE']:
-        cparams['DRS_PLOT'] = 0
+        if cparams['DRS_PLOT'] == 1:
+            cparams['DRS_PLOT'] = 0
 
     # set up array to store inputs/outputs
     cparams['INPUTS'] = OrderedDict()
@@ -217,9 +219,21 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # deal with run time arguments
     if customargs is None:
         cparams = run_time_args(cparams, mainfitsdir, require_night_name)
+        # to log only:
+        lmsg = 'args: {0}'.format(' '.join(sys.argv))
+        WLOG(cparams, '', lmsg, logonly=True)
+
     else:
         cparams = run_time_custom_args(cparams, customargs, mainfitsdir,
                                        require_night_name)
+        # to log only:
+        args = []
+        for customarg in customargs:
+            args.append('{0}={1}'.format(customarg, customargs[customarg]))
+        # to log only:
+        lmsg = 'args: {0}'.format(' '.join(args))
+        WLOG(cparams, '', lmsg, logonly=True)
+
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
@@ -268,6 +282,8 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
         os.makedirs(cparams['DRS_DATA_WORKING'])
     if not os.path.isdir(cparams['TMP_DIR']):
         os.makedirs(cparams['TMP_DIR'])
+    if not os.path.isdir(cparams['DRS_DATA_PLOT']):
+        os.makedirs(cparams['DRS_DATA_PLOT'])
     # -------------------------------------------------------------------------
     # return parameter dictionary
     return cparams
@@ -725,7 +741,7 @@ def exit_script(ll, has_plots=True):
         # noinspection PyProtectedMember
         os._exit(0)
     # if interactive ask about closing plots
-    if find_interactive() and has_plots:
+    if find_interactive() and has_plots and p['DRS_PLOT'] == 1:
         # deal with closing plots
         wmsg = 'Close plots? [Y]es or [N]o?'
         WLOG(p, '', HEADER, printonly=True)
@@ -1958,6 +1974,7 @@ def display_initial_parameterisation(p):
     WLOG(p, '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
     WLOG(p, '', '(dir_tellu_db)      DRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
     WLOG(p, '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    WLOG(p, '', '(drs_data_plot)     DRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**p))
     # WLOG('', '', ('(print_log)         DRS_LOG={DRS_LOG}         '
     #               '%(0: minimum stdin-out logs)').format(**p))
     WLOG(p, '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
@@ -1966,8 +1983,6 @@ def display_initial_parameterisation(p):
                  '%(error/warning/info/all)').format(**p))
     WLOG(p, '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
                  '%(def/undef/trigger)').format(**p))
-    WLOG(p, '', ('(used_date)         DRS_USED_DATE={DRS_USED_DATE}'
-                 '').format(**p))
     if p['DRS_DATA_WORKING'] is None:
         WLOG(p, '', ('(working_dir)       DRS_DATA_WORKING is not set, '
                      'running on-line mode'))

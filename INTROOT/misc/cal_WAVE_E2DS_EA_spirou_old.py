@@ -1084,7 +1084,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
@@ -1160,13 +1160,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # FP solution plots
         # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             # Plot the FP extracted spectrum against wavelength solution
             sPlt.wave_plot_final_fp_order(p, loc, iteration=2)
             # Plot the measured FP cavity width offset against line number
-            sPlt.wave_local_width_offset_plot(loc)
+            sPlt.wave_local_width_offset_plot(p, loc)
             # Plot the FP line wavelength residuals
-            sPlt.wave_fp_wavelength_residuals(loc)
+            sPlt.wave_fp_wavelength_residuals(p, loc)
 
     # ------------------------------------------------------------------
     # Create new wavelength solution
@@ -1228,7 +1228,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 

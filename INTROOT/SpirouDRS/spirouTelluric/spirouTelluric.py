@@ -12,6 +12,8 @@ from __future__ import division
 import numpy as np
 import os
 from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
+from scipy.ndimage import filters
+from scipy.optimize import curve_fit
 import warnings
 
 from SpirouDRS import spirouConfig
@@ -35,13 +37,564 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # Get sigma FWHM
 SIG_FWHM = spirouCore.spirouMath.fwhm()
+# whether to plot debug plot per order
+DEBUG_PLOT = False
 
 
 # =============================================================================
-# Define functions
+# Define new mk_tellu functions
 # =============================================================================
+def apply_template(p, loc):
+    func_name = __NAME__ + '.apply_template()'
+    # get constants from p
+    default_conv_width = p['MKTELLU_DEFAULT_CONV_WIDTH']
+    finer_conv_width = p['MKTELLU_FINER_CONV_WIDTH']
+    clean_orders = np.array(p['MKTELLU_CLEAN_ORDERS'])
+    med_filt = p['MKTELLU_TEMPLATE_MED_FILTER']
+    # get data from loc
+    template = loc['TEMPLATE']
+    wave = loc['WAVE']
+    # get dimensions of data
+    norders, npix = loc['SP'].shape
+    # set the default convolution width for each order
+    wconv = np.repeat(default_conv_width, norders).astype(float)
+
+    # need to deal with when we don't have a template
+    if not loc['FLAG_TEMPLATE']:
+        # if we don't have a template, we assume that its 1 all over
+        template = np.ones_like(loc['SP'])
+        # check the clean orders are valid
+        for clean_order in clean_orders:
+            if (clean_order < 0) or (clean_order > norders):
+                emsg1 = ('One of the orders in "TELLU_CLEAN_ORDESR" is out of '
+                         'bounds')
+                emsg2 = '\tOrders must be between 0 and {0}'.format(norders)
+                WLOG(p, 'error', [emsg1, emsg2])
+        # if we don't have a template, then we use a small kernel on
+        # relatively "clean" orders
+        wconv[clean_orders] = finer_conv_width
+    # else we have a template so apply it
+    else:
+        # wavelength offset from BERV
+        dvshift = spirouMath.relativistic_waveshift(loc['BERV'], units='km/s')
+        # median-filter the template. we know that stellar features
+        #    are very broad. this avoids having spurious noise in our templates
+        # loop around each order
+        for order_num in range(norders):
+            # only keep non NaNs
+            keep = np.isfinite(template[order_num])
+            # apply median filter
+            mfargs = [template[order_num, keep], med_filt]
+            template[order_num, keep] = filters.median_filter(*mfargs)
+
+        # loop around each order again
+        for order_num in range(norders):
+            # only keep non NaNs
+            keep = np.isfinite(template[order_num])
+            # if less than 50% of the order is considered valid, then set
+            #     template value to 1 this only apply to the really contaminated
+            #     orders
+            if np.sum(keep) > npix // 2:
+                # get the wave and template masked arrays
+                keepwave = wave[order_num, keep]
+                keeptmp = template[order_num, keep]
+                # spline the good values
+                spline = IUVSpline(keepwave * dvshift, keeptmp, k=1, ext=3)
+                # interpolate good values onto full array
+                template[order_num] = spline(wave[order_num])
+            else:
+                template[order_num] = np.repeat(1.0, npix)
+        # divide observed spectrum by template. This gets us close to the
+        #    actual sky transmission. We will iterate on the exact shape of the
+        #    SED by finding offsets of sp relative to 1 (after correcting form
+        #    the TAPAS).
+        loc['SP'] = loc['SP'] / template
+    # add template and wconv to loc
+    loc['TEMPLATE'] = template
+    loc['WCONV'] = wconv
+    # set the source
+    loc.set_sources(['SP', 'TEMPLATE', 'WCONV'], func_name)
+    # return loc
+    return loc
+
+
+def calculate_telluric_absorption(p, loc):
+    func_name = __NAME__ + 'calculate_telluric_absorption()'
+    # get parameters from p
+    dparam_threshold = p['MKTELLU_DPARAM_THRES']
+    maximum_iteration = p['MKTELLU_MAX_ITER']
+    threshold_transmission_fit = p['MKTELLU_THRES_TRANSFIT']
+    transfit_upper_bad = p['MKTELLU_TRANS_FIT_UPPER_BAD']
+    min_watercol = p['MKTELLU_TRANS_MIN_WATERCOL']
+    max_watercol = p['MKTELLU_TRANS_MAX_WATERCOL']
+    min_number_good_points = p['MKTELLU_TRANS_MIN_NUM_GOOD']
+    btrans_percentile = p['MKTELLU_TRANS_TAU_PERCENTILE']
+    nsigclip = p['MKTELLU_TRANS_SIGMA_CLIP']
+    med_filt = p['MKTELLU_TRANS_TEMPLATE_MEDFILT']
+    small_weight = p['MKTELLU_SMALL_WEIGHTING_ERROR']
+    tellu_med_sampling = p['MKTELLU_MED_SAMPLING']
+    plot_order_nums = p['MKTELLU_PLOT_ORDER_NUMS']
+
+    # get data from loc
+    airmass = loc['AIRMASS']
+    wave = loc['WAVE']
+    sp = np.array(loc['SP'])
+    wconv = loc['WCONV']
+    # get dimensions of data
+    norders, npix = loc['SP'].shape
+
+    # define function for curve_fit
+    def tapas_fit(keep, tau_water, tau_others):
+        return calc_tapas_abso(p, loc, keep, tau_water, tau_others)
+
+    # starting point for the optical depth of water and other gasses
+    guess = [airmass, airmass]
+
+    # first estimate of the absorption spectrum
+    tau1 = tapas_fit(np.isfinite(wave), guess[0], guess[1])
+    tau1 = tau1.reshape(sp.shape)
+
+    # first guess at the SED estimate for the hot start (we guess with a
+    #   spectrum full of ones
+    sed = np.ones_like(wave)
+
+    # flag to see if we converged (starts off very large)
+    # this is the quadratic sum of the change in airmass and water column
+    # when the change in the sum of these two values is very small between
+    # two steps, we assume that the code has converges
+    dparam = np.inf
+
+    # count the number of iterations
+    iteration = 0
+
+    # if the code goes out-of-bound, then we'll get out of the loop with this
+    #    keyword
+    fail = False
+    skip = False
+
+    # conditions to carry on looping
+    cond1 = dparam > dparam_threshold
+    cond2 = iteration < maximum_iteration
+    cond3 = not fail
+
+    # set up empty arrays
+    sp3_arr = np.zeros((norders, npix), dtype=float)
+    sed_update_arr = np.zeros(npix, dtype=float)
+    keep = np.zeros(npix, dtype=bool)
+
+    # loop around until one condition not met
+    while cond1 and cond2 and cond3:
+        # ---------------------------------------------------------------------
+        # previous guess
+        prev_guess = np.array(guess)
+        # ---------------------------------------------------------------------
+        # we have an estimate of the absorption spectrum
+        fit_sp = sp / sed
+        # ---------------------------------------------------------------------
+        # some masking of NaN regions
+        nanmask = ~np.isfinite(fit_sp)
+        fit_sp[nanmask] = 0
+        # ---------------------------------------------------------------------
+        # vector used to mask invalid regions
+        keep = fit_sp != 0
+        # only fit where the transmission is greater than a certain value
+        keep &= tau1 > threshold_transmission_fit
+        # considered bad if the spectrum is larger than '. This is
+        #     likely an OH line or a cosmic ray
+        keep &= fit_sp < transfit_upper_bad
+        # ---------------------------------------------------------------------
+        # fit telluric absorption of the spectrum
+        with warnings.catch_warnings(record=True) as _:
+            popt, pcov = curve_fit(tapas_fit, keep, fit_sp.ravel(), p0=guess)
+        # update our guess
+        guess = np.array(popt)
+        # ---------------------------------------------------------------------
+        # if our tau_water guess is bad fail
+        if (guess[0] < min_watercol) or (guess[0] > max_watercol):
+            wmsg = ('Recovered water vapor optical depth not between {0:.2f} '
+                    'and {1:.2f}')
+            WLOG(p, 'warning', wmsg.format(min_watercol, max_watercol))
+            fail = True
+            break
+        # ---------------------------------------------------------------------
+        # we will use a stricter condition later, but for all steps
+        #    we expect an agreement within an airmass difference of 1
+        if np.abs(guess[1] - airmass) > 1:
+            wmsg = ('Recovered optical depth of others too diffferent from '
+                    'airmass (airmass={0:.3f} recovered depth={1:.3f})')
+            WLOG(p, 'warning', wmsg.format(airmass, guess[1]))
+            fail = True
+            break
+        # ---------------------------------------------------------------------
+        # calculate how much the optical depth params change
+        dparam = np.sqrt(np.sum((guess - prev_guess) ** 2))
+        # ---------------------------------------------------------------------
+        # print progress
+        wmsg = ('Iteration {0}/{1} H20 depth: {2:.4f} Other gases depth: '
+                '{3:.4f} Airmass: {4:.4f}')
+        wmsg2 = '\tConvergence parameter: {0:.4f}'.format(dparam)
+        wargs = [iteration, maximum_iteration, guess[0], guess[1], airmass]
+        WLOG(p, '', [wmsg.format(*wargs), wmsg2])
+        # ---------------------------------------------------------------------
+        # get current best-fit spectrum
+        tau1 = tapas_fit(np.isfinite(wave), guess[0], guess[1])
+        tau1 = tau1.reshape(sp.shape)
+        # ---------------------------------------------------------------------
+        # for each order, we fit the SED after correcting for absorption
+        for order_num in range(norders):
+            # -----------------------------------------------------------------
+            # get the per-order spectrum divided by best guess
+            sp2 = sp[order_num] / tau1[order_num]
+            # -----------------------------------------------------------------
+            # find this orders good pixels
+            good = keep[order_num]
+            # -----------------------------------------------------------------
+            # if we have enough valid points, we normalize the domain by its
+            #    median
+            if np.sum(good) > min_number_good_points:
+                limit = np.percentile(tau1[order_num][good], btrans_percentile)
+                best_trans = tau1[order_num] > limit
+                norm = np.nanmedian(sp2[best_trans])
+            else:
+                norm = np.ones_like(sp2)
+            # -----------------------------------------------------------------
+            # normalise this orders spectrum
+            sp[order_num] = sp[order_num] / norm
+            # normalise sp2 and the sed
+            sp2 = sp2 / norm
+            sed[order_num] = sed[order_num] / norm
+            # -----------------------------------------------------------------
+            # find far outliers to the SED for sigma-clipping
+            with warnings.catch_warnings(record=True) as _:
+                res = sp2 - sed[order_num]
+                res -= np.nanmedian(res)
+                res /= np.nanmedian(np.abs(res))
+            # set all NaN pixels to large value
+            nanmask = ~np.isfinite(res)
+            res[nanmask] = 99
+            # -----------------------------------------------------------------
+            # apply sigma clip
+            good &= np.abs(res) < nsigclip
+            # apply median to sed
+            with warnings.catch_warnings(record=True) as _:
+                good &= sed[order_num] > 0.5 * np.nanmedian(sed[order_num])
+            # only fit where the transmission is greater than a certain value
+            good &= tau1[order_num] > threshold_transmission_fit
+            # -----------------------------------------------------------------
+            # set non-good (bad) pixels to NaN
+            sp2[~good] = np.nan
+            # sp3 is a median-filtered version of sp2 where pixels that have
+            #     a transmission that is too low are clipped.
+            sp3 = filters.median_filter(sp2 - sed[order_num], med_filt)
+            sp3 = sp3 + sed[order_num]
+            # find all the NaNs and set to zero
+            nanmask = ~np.isfinite(sp3)
+            sp3[nanmask] = 0.0
+            # also set zero pixels in sp3 to be non-good pixels in "good"
+            good[sp3 == 0.0] = False
+            # -----------------------------------------------------------------
+            # we smooth sp3 with a kernel. This kernel has to be small
+            #    enough to preserve stellar features and large enough to
+            #    subtract noise this is why we have an order-dependent width.
+            #    the stellar lines are expected to be larger than 200km/s,
+            #    so a kernel much smaller than this value does not make sense
+            ew = wconv[order_num] / tellu_med_sampling / spirouMath.fwhm()
+            # get the kernal x values
+            wconv_ord = int(wconv[order_num])
+            kernal_x = np.arange(-2 * wconv_ord, 2 * wconv_ord)
+            # get the gaussian kernal
+            kernal_y = np.exp(-0.5*(kernal_x / ew) **2 )
+            # normalise kernal so it is max at unity
+            kernal_y = kernal_y / np.sum(kernal_y)
+            # -----------------------------------------------------------------
+            # construct a weighting matrix for the sed
+            ww1 = np.convolve(good, kernal_y, mode='same')
+            # need to weight the spectrum accordingly
+            spconv = np.convolve(sp3 * good, kernal_y, mode='same')
+            # update the sed
+            with warnings.catch_warnings(record=True) as _:
+                sed_update = spconv / ww1
+            # set all small values to 1% to avoid small weighting errors
+            sed_update[ww1 < small_weight] = np.nan
+
+            if wconv[order_num] == p['MKTELLU_FINER_CONV_WIDTH']:
+                rms_limit = 0.1
+            else:
+                rms_limit = 0.3
+
+            # iterate around and sigma clip
+            for iteration_sig_clip_good in range(1, 6):
+
+                with warnings.catch_warnings(record=True) as _:
+                    residual_SED = sp3 - sed_update
+                    residual_SED[~good] = np.nan
+
+                rms = np.abs(residual_SED)
+
+                with warnings.catch_warnings(record=True) as _:
+                    good[rms > (rms_limit / iteration_sig_clip_good)] = 0
+
+                # ---------------------------------------------------------
+                # construct a weighting matrix for the sed
+                ww1 = np.convolve(good, kernal_y, mode='same')
+                # need to weight the spectrum accordingly
+                spconv = np.convolve(sp3 * good, kernal_y, mode='same')
+                # update the sed
+                with warnings.catch_warnings(record=True) as _:
+                    sed_update = spconv / ww1
+                # set all small values to 1% to avoid small weighting errors
+                sed_update[ww1 < 0.01] = np.nan
+
+            # -----------------------------------------------------------------
+            # if we have lots of very strong absorption, we subtract the
+            #    median value of pixels where the transmission is expected to
+            #    be smaller than 1%. This improves things in the stronger
+            #    absorptions
+            pedestal = tau1[order_num] < 0.01
+            # check if we have enough strong absorption
+            if np.sum(pedestal) > 100:
+                zero_point = np.nanmedian(sp[order_num, pedestal])
+                # if zero_point is finite subtract it off the spectrum
+                if np.isfinite(zero_point):
+                    sp[order_num] -= zero_point
+            # -----------------------------------------------------------------
+            # update the sed
+            sed[order_num] = sed_update
+            # append sp3
+            sp3_arr[order_num] = np.array(sp3)
+            # -----------------------------------------------------------------
+            # debug plot
+            if p['DRS_PLOT'] and p['DRS_DEBUG'] and DEBUG_PLOT and not skip:
+                # plot only every 10 iterations
+                if iteration == 10:
+                    # plot the transmission map plot
+                    pargs = [order_num, wave, tau1, sp, sp3,
+                             sed, sed_update, keep]
+                    sPlt.mk_tellu_wave_flux_plot(p, *pargs)
+                    # get user input to continue or skip
+                    imsg = 'Press [Enter] for next or [s] for skip:\t'
+                    uinput = input(imsg)
+                    if 's' in uinput.lower():
+                        skip = True
+                    # close plot
+                    sPlt.plt.close()
+        # ---------------------------------------------------------------------
+        # update the iteration number
+        iteration += 1
+        # ---------------------------------------------------------------------
+        # update while parameters
+        cond1 = dparam > dparam_threshold
+        cond2 = iteration < maximum_iteration
+        cond3 = not fail
+    # ---------------------------------------------------------------------
+    if p['DRS_PLOT'] and p['DRS_DEBUG'] and not DEBUG_PLOT:
+        # if plot orders is 'all' plot all
+        if plot_order_nums == 'all':
+            plot_order_nums = np.arange(norders).astype(int)
+            # start non-interactive plot
+            sPlt.plt.ioff()
+            off = True
+        else:
+            sPlt.plt.ion()
+            off = False
+        # loop around the orders to show
+        for order_num in plot_order_nums:
+            pargs = [order_num, wave, tau1, sp, sp3_arr[order_num], sed,
+                     sed[order_num], keep]
+            sPlt.mk_tellu_wave_flux_plot(p, *pargs)
+        if off:
+            sPlt.plt.ion()
+
+    # return values via loc
+    loc['PASSED'] = not fail
+    loc['RECOV_AIRMASS'] = guess[1]
+    loc['RECOV_WATER'] = guess[0]
+    loc['SP_OUT'] = sp
+    loc['SED_OUT'] = sed
+    # update source
+    sources = ['PASSED', 'RECOV_AIRMASS', 'RECOV_WATER', 'SP_OUT', 'SED_OUT']
+    loc.set_sources(sources, func_name)
+    # return loc
+    return loc
+
+
+# =============================================================================
+# Define telluric db functions
+# =============================================================================
+def update_process(p, title, objname, i1, t1, i2, t2):
+    msg1 = '{0}: Processing object = {1} ({2}/{3})'
+    msg2 = '\tObject {0} of {1}'
+    wmsgs = ['', '=' * 60, '', msg1.format(title, objname, i1 + 1, t1),
+             msg2.format(i2 + 1, t2), '', '=' * 60, '', ]
+    WLOG(p, 'info', wmsgs, wrap=False)
+
+
+def get_arguments(p, absfilename):
+    # get constants from p
+    path = p['ARG_FILE_DIR']
+    # get relative path
+    relpath = absfilename.split(path)[-1]
+    # get night name
+    night_name = os.path.dirname(relpath)
+    # get filename
+    filename = os.path.basename(relpath)
+    # run dict
+    return dict(night_name=night_name, files=[filename])
+
+
+
+def find_telluric_stars(p):
+    # get parameters from p
+    path = p['ARG_FILE_DIR']
+    filetype = p['FILETYPE']
+    allowedtypes = p['TELLU_DB_ALLOWED_OUTPUT']
+    ext_types = p['TELLU_DB_ALLOWED_EXT_TYPE']
+    # -------------------------------------------------------------------------
+    # get the list of whitelist files
+    tell_names = get_whitelist()
+    # -------------------------------------------------------------------------
+    # check file type is allowed
+    if filetype not in allowedtypes:
+        emsgs = ['Invalid file type = {0}'.format(filetype),
+                 '\t Must be one of the following']
+        for allowedtype in allowedtypes:
+            emsgs.append('\t\t - "{0}"'.format(allowedtype))
+    # -------------------------------------------------------------------------
+    # store index files
+    index_files = []
+    # walk through path and find index files
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
+                index_files.append(os.path.join(root, filename))
+    # -------------------------------------------------------------------------
+    # valid files dictionary (key = telluric object name)
+    valid_files = dict()
+    # loop around telluric names
+    for tell_name in tell_names:
+        # ---------------------------------------------------------------------
+        # log progress
+        wmsg = 'Searching for telluric star: "{0}"'
+        WLOG(p, '', wmsg.format(tell_name))
+
+        # storage for this objects files
+        valid_obj_files = []
+        # ---------------------------------------------------------------------
+        # loop through index files
+        for index_file in index_files:
+            # read index file
+            index = spirouImage.ReadFitsTable(p, index_file)
+            # get directory
+            dirname = os.path.dirname(index_file)
+            # -----------------------------------------------------------------
+            # get filename and object name
+            index_filenames = index['FILENAME']
+            index_objnames = index['OBJNAME']
+            index_output = index[p['KW_OUTPUT'][0]]
+            index_ext_type = index[p['KW_EXT_TYPE'][0]]
+            # -----------------------------------------------------------------
+            # mask by objname
+            mask1 = index_objnames == tell_name
+            # mask by KW_OUTPUT
+            mask2 = index_output == filetype
+            # mask by KW_EXT_TYPE
+            mask3 = np.zeros(len(index), dtype=bool)
+            for ext_type in ext_types:
+                mask3 |= (index_ext_type == ext_type)
+            # combine masks
+            mask = mask1 & mask2 & mask3
+            # -----------------------------------------------------------------
+            # append found files to this list
+            if np.sum(mask) > 0:
+                for filename in index_filenames[mask]:
+                    # construct absolute path
+                    absfilename = os.path.join(dirname, filename)
+                    # check that file exists
+                    if not os.path.exists(absfilename):
+                        continue
+                    # append to storage
+                    if filename not in valid_obj_files:
+                        valid_obj_files.append(absfilename)
+        # ---------------------------------------------------------------------
+        # log found
+        wmsg = '\tFound {0} objects'.format(len(valid_obj_files))
+        WLOG(p, '', wmsg)
+        # ---------------------------------------------------------------------
+        # append to full dictionary
+        if len(valid_obj_files) > 0:
+            valid_files[tell_name] = valid_obj_files
+    # return full list
+    return valid_files
+
+
+# =============================================================================
+# Define other functions
+# =============================================================================
+def calc_tapas_abso(p, loc, keep, tau_water, tau_others):
+    """
+    generates a Tapas spectrum from the saved temporary .npy
+    structure and scales with the given optical depth for
+    water and all other absorbers
+
+    as an input, we give a "keep" vector, values set to keep=0
+    will be set to zero and not taken into account in the fitting
+    algorithm
+
+    """
+    # get constants from p
+    tau_water_upper = p['MKTELLU_TAU_WATER_ULIMIT']
+    tau_others_lower = p['MKTELLU_TAU_OTHER_LLIMIT']
+    tau_others_upper = p['MKTELLU_TAU_OTHER_ULIMIT']
+    tapas_small_number = p['MKTELLU_SMALL_LIMIT']
+
+    # get data from loc
+    sp_water = np.array(loc['TAPAS_WATER'])
+    sp_others = np.array(loc['TAPAS_OTHERS'])
+
+    # line-of-sight optical depth for water cannot be negative
+    if tau_water < 0:
+        tau_water = 0
+    # line-of-sight optical depth for water cannot be too big -
+    #    set uppder threshold
+    if tau_water > tau_water_upper:
+        tau_water = tau_water_upper
+    # line-of-sight optical depth for other absorbers cannot be less than
+    #     one (that's zenith) keep the limit at 0.2 just so that the value
+    #     gets propagated to header and leaves open the possibility that
+    #     during the convergence of the algorithm, values go slightly
+    #     below 1.0
+    if tau_others < tau_others_lower:
+        tau_others = tau_others_lower
+    # line-of-sight optical depth for other absorbers cannot be greater than 5
+    #     that would be an airmass of 5 and SPIRou cannot observe there
+    if tau_others > tau_others_upper:
+        tau_others = tau_others_upper
+
+    # we will set to a fractional exponent, we cannot have values below zero
+    #    for water
+    water_zero = sp_water < 0
+    sp_water[water_zero] = 0
+    # for others
+    others_zero = sp_others < 0
+    sp_others[others_zero] = 0
+
+    # calculate the tapas spectrum from absorbers
+    sp = (sp_water ** tau_water) * (sp_others ** tau_others)
+
+    # values not to be kept are set to a very low value
+    sp[~keep.ravel()] = tapas_small_number
+
+    # to avoid divisons by 0, we set values that are very low to 1e-9
+    sp[sp < tapas_small_number] = tapas_small_number
+
+    # return the tapas spectrum
+    return sp
+
+
 def get_normalized_blaze(p, loc, hdr):
     func_name = __NAME__ + '.get_normalized_blaze()'
     # Get the blaze
@@ -77,6 +630,31 @@ def construct_convolution_kernal1(p, loc):
     loc.set_source('KER', func_name)
     # return loc
     return loc
+
+
+def construct_big_table(p, loc):
+    # get choosen order
+    snr_order = p['QC_FIT_TELLU_SNR_ORDER']
+
+    colnames = ['RowNum', 'Filename', 'OBJNAME', 'OBJECT', 'BERV', 'WAVEFILE',
+                'SNR_{0}'.format(snr_order), 'DATE', 'VERSION', 'DARKFILE',
+                'BADFILE1', 'BADFILE2', 'LOCOFILE', 'BLAZEFILE', 'FLATFILE',
+                'SHAPEFILE', 'EXTRACT_FILE']
+
+    columns = ['BASE_ROWNUM', 'BASE_FILELIST', 'BASE_OBJNAME', 'BASE_OBJECT',
+               'BASE_BERVLIST', 'BASE_WAVELIST',
+               'BASE_SNRLIST_{0}'.format(snr_order), 'BASE_DATELIST',
+               'BASE_VERSION', 'BASE_DARKFILE', 'BASE_BADFILE1',
+               'BASE_BADFILE2', 'BASE_LOCOFILE', 'BASE_BLAZFILE',
+               'BASE_FLATFILE', 'BASE_SHAPEFILE', 'BASE_EXTRFILE']
+    # get values from loc
+    values = []
+    for col in columns:
+        values.append(loc[col])
+    # construct table
+    newtable = spirouImage.MakeTable(p, colnames, values)
+    # return table
+    return newtable
 
 
 def get_molecular_tell_lines(p, loc):
@@ -534,6 +1112,20 @@ def get_blacklist():
     return blacklist
 
 
+def get_whitelist():
+    # get SpirouDRS data folder
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.DATA_CONSTANT_DIR()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # construct the path for the control file
+    blacklistfilename = spirouConfig.Constants.TELLU_DATABASE_WHITELIST_FILE()
+    blacklistfile = os.path.join(datadir, blacklistfilename)
+    # load control file
+    blacklist = spirouConfig.GetTxt(blacklistfile, comments='#', delimiter=' ')
+    # return control
+    return blacklist
+
+
 def lin_mini(vector, sample):
     return spirouMath.linear_minimization(vector, sample)
 
@@ -543,6 +1135,7 @@ def wave2wave(p, spectrum, wave1, wave2, reshape=False):
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
 
+    :param p: ParamDict, the parameter dictionary
     :param spectrum: numpy array (2D),  flux in the reference frame of the
                      file wave1
     :param wave1: numpy array (2D), initial wavelength grid
@@ -559,7 +1152,7 @@ def wave2wave(p, spectrum, wave1, wave2, reshape=False):
             spectrum = spectrum.reshape(wave2.shape)
         except ValueError:
             emsg1 = ('Spectrum (shape = {0}) cannot be reshaped to'
-                    ' shape = {1}')
+                     ' shape = {1}')
             emsg2 = '\tfunction = {0}'.format(func_name)
             eargs = [spectrum.shape, wave2.shape]
             WLOG(p, 'error', [emsg1.format(*eargs), emsg2])

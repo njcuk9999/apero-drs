@@ -10,6 +10,7 @@ Created on 2018-04-13 at 17:20
 @author: melissa-hobson
 """
 from __future__ import division
+import numpy as np
 import os
 
 from SpirouDRS import spirouConfig
@@ -69,6 +70,11 @@ def main(night_name=None, ufiles=None):
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsdir='raw')
+
+    # ----------------------------------------------------------------------
+    # Get hot pixels for corruption check
+    # ----------------------------------------------------------------------
+    hotpixels = spirouImage.PPGetHotPixels(p)
 
     # ----------------------------------------------------------------------
     # Process files (including wildcards)
@@ -149,6 +155,46 @@ def main(night_name=None, ufiles=None):
         wmsg = 'Correcting for the 1/f noise'
         WLOG(p, '', wmsg)
         image = spirouImage.PPMedianOneOverfNoise2(p, image)
+
+        # ------------------------------------------------------------------
+        # Quality control to check for corrupt files
+        # ------------------------------------------------------------------
+        # set passed variable and fail message list
+        passed, fail_msg = True, []
+        # get pass condition
+        cout = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
+        snr_hotpix, rms_list = cout
+        # print out SNR hotpix value
+        wmsg = 'Corruption check: SNR Hotpix value = {0:.5e}'
+        WLOG(p, '', wmsg.format(snr_hotpix))
+        #deal with printing corruption message
+        if snr_hotpix < p['PP_CORRUPT_SNR_HOTPIX']:
+            # add failed message to fail message list
+            fargs = [snr_hotpix, p['PP_CORRUPT_SNR_HOTPIX'],ufile ]
+            fmsg = ('File was found to be corrupted. (SNR_HOTPIX < threshold, '
+                    '{0:.4e} < {1:.4e}). File will not be saved. '
+                    'File = {2}'.format(*fargs))
+            fail_msg.append(fmsg)
+            passed = False
+
+        if np.max(rms_list) > p['PP_CORRUPT_RMS_THRES']:
+            # add failed message to fail message list
+            fargs = [np.max(rms_list), p['PP_CORRUPT_RMS_THRES'], ufile]
+            fmsg = ('File was found to be corrupted. (RMS < threshold, '
+                    '{0:.4e} < {1:.4e}). File will not be saved. '
+                    'File = {0}'.format(*fargs))
+            fail_msg.append(fmsg)
+            passed = False
+
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            continue
 
         # ------------------------------------------------------------------
         # rotate image
