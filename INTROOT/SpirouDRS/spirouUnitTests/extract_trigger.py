@@ -21,6 +21,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTelluric
 from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 from SpirouDRS.spirouUnitTests import spirouUnitTests
 
@@ -49,24 +50,24 @@ TEST_STORE = []
 RUNNUMBER = 0
 
 # switches
-RUN_BADPIX = True
-RUN_DARK = True
-RUN_LOC = True
+RUN_BADPIX = False
+RUN_DARK = False
+RUN_LOC = False
 RUN_SLIT = False
-RUN_SHAPE = True
-RUN_FLAT = True
-RUN_EXTRACT_HCFP = True
-RUN_HC_WAVE = True
+RUN_SHAPE = False
+RUN_FLAT = False
+RUN_EXTRACT_HCFP = False
+RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_EXTRACT_TELLU = True
-RUN_EXTRACT_OBJ = True
-RUN_EXTRACT_ALL = True
+RUN_EXTRACT_TELLU = False
+RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_ALL = False
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = False
+SKIP_DONE_EXTRACT = True
 SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
@@ -94,11 +95,9 @@ DATECOL = 'MJDATE'
 # DATECOL = 'LAST_MODIFIED'
 
 # telluric object list
-TELL_WHITELIST = ['17Peg', '31Cas', '51Dra', '59Peg', '74PscB', 'betSer',
-                  'chiCap', 'gamSct', 'gamTri', 'HD130917', 'HD159170',
-                  'HR1314', 'HR6025', 'HR8489', 'HR875', 'iotCyg', 'omiCapA',
-                  'phiLeo', 'pi.02Ori', 'zetLep', 'zetVir']
+TELL_WHITELIST = spirouTelluric.GetWhiteList()
 
+# this is only used if DATES is not None
 DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-05-27', '2018-05-28', '2018-05-29', '2018-05-30', '2018-05-31',
          '2018-07-22', '2018-07-23', '2018-07-24', '2018-07-25', '2018-07-26',
@@ -107,8 +106,10 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-08-06', '2018-08-07', '2018-09-19', '2018-09-20', '2018-09-21',
          '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
          '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
-         '2018-10-26', '2018-10-27']
-DATES = None
+         '2018-10-26', '2018-10-27', '2018-12-16', '2018-12-17', '2018-12-18',
+         '2018-12-19', '2018-12-20', '2019-01-14', '2019-01-15', '2019-01-16',
+         '2019-01-17', '2019-01-18']
+# DATES = None
 
 
 # =============================================================================
@@ -336,7 +337,7 @@ def printrun(arg):
     TEST_STORE.append(arg)
 
 
-def print_runs(p, combinations, recipe):
+def print_runs(p, combinations, recipe, logonly=False):
     global RUNNUMBER
     # loop around combinations
     for it, combination in enumerate(combinations):
@@ -344,7 +345,7 @@ def print_runs(p, combinations, recipe):
         clist = [recipe] + list(np.array(combination).astype(str))
         # log progress
         printrun(command.format(RUNNUMBER, clist))
-        print(command.format(RUNNUMBER, clist))
+        WLOG(p, '', command.format(RUNNUMBER, clist), logonly=logonly)
         # iterate run number
         RUNNUMBER += 1
 
@@ -695,7 +696,11 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     fullcontrol = loc['CONTROL']
     # loop through index files
     lls = []
+    skip = False
     for it, index_file in enumerate(index_files):
+        # if skip then continue
+        if skip:
+            continue
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
@@ -731,14 +736,20 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
             recipe1 = 'cal_HC_E2DS_EA_spirou'
         elif recipe == 'cal_WAVE_E2DS_spirou':
             recipe1 = 'cal_WAVE_E2DS_EA_spirou'
+        elif recipe == 'obj_mk_tellu_db':
+            recipe1 = str(recipe)
+            night_name = None
+            skip = True
         else:
             recipe1 = str(recipe)
         # manage the running of this recipe
         if TEST_RUN:
-            print_runs(p, runs, recipe1)
+            print_runs(p, runs, recipe1, logonly=False)
         elif PARALLEL:
+            print_runs(p, runs, recipe1, logonly=True)
             lls = run_parallel(p, runs, recipe1, night_name)
         else:
+            print_runs(p, runs, recipe1, logonly=True)
             lls = manage_runs(p, lls, runs, recipe1, night_name)
     # return local spaces and errors
     return lls
@@ -764,9 +775,6 @@ def trigger_runs(p, recipe, night_name, control, vindex):
     if recipe == 'cal_SHAPE_spirou':
         return cal_shape_spirou(p, night_name, vindex, groups)
 
-    if recipe == 'cal_SHAPE_spirou2':
-        return cal_shape_spirou2(p, night_name, vindex, groups)
-
     if recipe == 'cal_FF_RAW_spirou':
         return cal_ff_raw_spirou(p, night_name, vindex, groups)
 
@@ -781,6 +789,9 @@ def trigger_runs(p, recipe, night_name, control, vindex):
 
     if recipe == 'obj_mk_tellu':
         return obj_mk_tellu(p, night_name, vindex, groups)
+
+    if recipe == 'obj_mk_tellu_db':
+        return [[]]
 
     if recipe == 'obj_fit_tellu':
         return obj_fit_tellu(p, night_name, vindex, groups)
@@ -1173,7 +1184,7 @@ def obj_fit_tellu(p, night_name, vindex, groups):
             objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
     # -------------------------------------------------------------------------
     # skip done
-    if SKIP_DONE_EXTRACT:
+    if SKIP_DONE_FIT_TELLU:
         filelist2, objnamelist2 = [], []
         for num in range(len(filelist)):
             filename2ab = filelist[num].replace('.fits', extension)
@@ -1224,7 +1235,7 @@ def obj_mk_tellu(p, night_name, vindex, groups):
             objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
     # -------------------------------------------------------------------------
     # skip done
-    if SKIP_DONE_EXTRACT:
+    if SKIP_DONE_MK_TELLU:
         filelist2, objnamelist2 = [], []
         for num in range(len(filelist)):
             filename2ab = filelist[num].replace('.fits', extension)
@@ -1484,12 +1495,15 @@ def main(night_name=None):
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
     # 13. get cal hc wave solutions
     if RUN_OBJ_MK_TELLU:
-        lls = trigger_main(p, loc, recipe='obj_mk_tellu',
-                           fobjnames=TELL_WHITELIST)
+        lls = trigger_main(p, loc, recipe='obj_mk_tellu_db')
+        all_lls['obj_mk_tellu_db'] = lls
+
     # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
         lls = trigger_main(p, loc, recipe='obj_fit_tellu',
                            fobjnames=['Gl699', 'Gl15A'])
+        all_lls['obj_fit_tellu (OBJ)'] = lls
+
     # if test run print report
     if TEST_RUN:
         print('\n\n')

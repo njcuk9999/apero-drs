@@ -187,8 +187,8 @@ def main(night_name=None, files=None):
     # storage dictionary for localization parameters
     loc = ParamDict()
     # Plots setup: start interactive plot
-    if p['DRS_PLOT']:
-        sPlt.start_interactive_session()
+    if p['DRS_PLOT'] > 0:
+        sPlt.start_interactive_session(p)
     # ----------------------------------------------------------------------
     # Measurement and correction of background on the central column
     # ----------------------------------------------------------------------
@@ -219,12 +219,12 @@ def main(night_name=None, files=None):
     # Search for order center and profile on specific columns
     # ----------------------------------------------------------------------
     # Plot the image (ready for fit points to be overplotted later)
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # get saturation threshold
         satseuil = p['IC_SATSEUIL'] * p['GAIN'] * p['NBFRAMES']
         # plot image above saturation threshold
         # fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
-        fig1, frame1 = sPlt.locplot_im_sat_threshold(data2, satseuil)
+        fig1, frame1 = sPlt.locplot_im_sat_threshold(p, data2, satseuil)
     else:
         fig1, frame1 = None, None
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -321,7 +321,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Plot of RMS for positions and widths
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         sPlt.locplot_order_number_against_rms(p, loc, rorder_num)
 
     # ----------------------------------------------------------------------

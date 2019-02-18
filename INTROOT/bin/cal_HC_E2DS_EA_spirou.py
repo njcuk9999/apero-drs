@@ -170,9 +170,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Start plotting session
     # ----------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
@@ -187,15 +187,15 @@ def main(night_name=None, files=None):
     # generate resolution map
     loc = spirouWAVE.generate_resolution_map(p, loc)
     # map line profile map
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         sPlt.wave_ea_plot_line_profiles(p, loc)
 
     # ----------------------------------------------------------------------
     # End plotting session
     # ----------------------------------------------------------------------
     # end interactive session
-    if p['DRS_PLOT']:
-        sPlt.end_interactive_session()
+    if p['DRS_PLOT'] > 0:
+        sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
     # Quality control

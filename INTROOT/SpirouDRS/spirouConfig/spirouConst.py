@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.017'
+__version__ = '0.4.072'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2019-01-28'
+__date__ = '2019-02-15'
 
 
 # =============================================================================
@@ -128,6 +128,11 @@ def LATEST_EDIT():
     return date
 
 
+def LANGUAGE():
+    language = 'ENG'
+    return language
+
+
 # =============================================================================
 # Define Constants
 # =============================================================================
@@ -164,6 +169,18 @@ def TELLU_DATABASE_BLACKLIST_FILE():
     """
     blacklistfile = 'tellu_blacklist.txt'
     return blacklistfile
+
+
+# noinspection PyPep8Naming
+def TELLU_DATABASE_WHITELIST_FILE():
+    """
+    Defines the telluric database blacklist filename
+
+    :return blacklistfile: string, the telluric blacklist file
+    """
+    whitelistfile = 'tellu_whitelist.txt'
+    return whitelistfile
+
 
 
 # =============================================================================
@@ -339,6 +356,14 @@ tags = spirouConfigFile.get_tags(**ckwargs)
 # =============================================================================
 # Define General functions
 # =============================================================================
+def UPDATE_PP(params):
+    # get pp as a global
+    global pp
+    # set global pp value to local value
+    for key in params:
+        pp[key] = params[key]
+
+
 # noinspection PyPep8Naming
 def INTERACITVE_PLOTS_ENABLED():
     """
@@ -478,7 +503,7 @@ def PROGRAM(p=None):
     # get program name
     if p is not None:
         if 'RECIPE' in p:
-            program = p['RECIPE']
+            program = p['RECIPE'].split('.py')[0]
         else:
             program = os.path.basename(rparams[0]).split('.py')[0]
     else:
@@ -2932,7 +2957,7 @@ def EXIT():
     my_exit = LOG_EXIT_TYPE()
     if my_exit == 'sys':
         my_exit = sys.exit
-    elif EXIT == 'os':
+    elif my_exit == 'os':
         # noinspection PyProtectedMember
         my_exit = os._exit
     else:
@@ -2973,6 +2998,21 @@ def DEFAULT_LOG_OPT():
     program = path.replace('.py', '')
     # return program
     return program
+
+
+# noinspection PyPep8Naming
+def MAX_DISPLAY_LIMIT():
+    """
+    Maximum display limit for files/directory when argument error raise
+    :return:
+    """
+    max_display_limit = 15
+    return max_display_limit
+
+
+def HEADER():
+    header = ' ' + '*' * 65
+    return header
 
 
 # =============================================================================
@@ -3051,6 +3091,29 @@ def FONT_DICT():
     if PLOT_FONT_SIZE() != 'None':
         font['size'] = PLOT_FONT_SIZE()
     return font
+
+
+def PLOT_EXTENSIONS():
+    """
+    Extensions for plotting
+
+    Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz
+
+    :return:
+    """
+    extensions = ['png', 'pdf']
+    return extensions
+
+
+
+def PLOT_FIGSIZE():
+    """
+    The fig size (in inches) for all saved figures
+    :return:
+    """
+    figsize = (10, 8)
+    return figsize
+
 
 
 # =============================================================================

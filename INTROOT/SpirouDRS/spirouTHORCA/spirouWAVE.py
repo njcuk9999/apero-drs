@@ -115,7 +115,7 @@ def calculate_instrument_drift(p, loc):
     waveref = waveref[:n_order_final]
     # ---------------------------------------------------------------------
     # plot comparison between spe and speref
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         sPlt.wave_plot_instrument_drift(p, waveref, spe, speref)
     # ---------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -815,7 +815,7 @@ def find_hc_gauss_peaks(p, loc):
         # debug plot
         if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
             if p['HC_EA_PLOT_PER_ORDER']:
-                sPlt.wave_ea_plot_per_order_hcguess(loc, order_num)
+                sPlt.wave_ea_plot_per_order_hcguess(p, loc, order_num)
     # ------------------------------------------------------------------
     # write to table
     columnnames, columnvalues, columnfmts = litems, [], []
@@ -830,8 +830,8 @@ def find_hc_gauss_peaks(p, loc):
     spirouImage.WriteTable(p, ini_table, ini_table_name, fmt='ascii.rst')
 
     # plot all orders w/fitted gaussians
-    if p['DRS_PLOT']:
-        sPlt.wave_ea_plot_allorder_hcguess(loc)
+    if p['DRS_PLOT'] > 0:
+        sPlt.wave_ea_plot_allorder_hcguess(p, loc)
 
     # return loc
     return loc
@@ -1848,7 +1848,7 @@ def fit_gaussian_triplets(p, loc):
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             pargs = [wave_catalog, dv, brightest_lines, sol_iteration]
             sPlt.wave_ea_plot_wave_cat_all_and_brightest(p, *pargs)
 
@@ -2029,7 +2029,7 @@ def fit_gaussian_triplets(p, loc):
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] > 0:
             pargs = [orders, wave_catalog, recon0, gauss_rms_dev, xgau, ew,
                      sol_iteration]
             sPlt.wave_ea_plot_tfit_grid(p, *pargs)

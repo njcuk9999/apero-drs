@@ -183,15 +183,15 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Plotting
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] > 0:
         # plots setup: start interactive plot
-        sPlt.start_interactive_session()
+        sPlt.start_interactive_session(p)
         # plot image with selected order shown
         sPlt.slit_sorder_plot(p, loc, data2)
         # plot slit tilt angle and fit
-        sPlt.slit_tilt_angle_and_fit_plot(loc)
+        sPlt.slit_tilt_angle_and_fit_plot(p, loc)
         # end interactive section
-        sPlt.end_interactive_session()
+        sPlt.end_interactive_session(p)
 
     # ------------------------------------------------------------------
     # Replace tilt by the global fit
