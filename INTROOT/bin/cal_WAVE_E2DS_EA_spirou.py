@@ -205,9 +205,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wave_fiber = p['FIBER']
     # get wave image
     # wavefile = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
+    wavefile = '/data/CFHT/reduced/AT5/AT5-12/files_neil/2018-08-04_2295395a_pp_2295398c_pp_wave_ea_C.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
-                                       return_filename=True, fiber=wave_fiber)
-                                       #, filename=wavefile)
+                                       return_filename=True, fiber=wave_fiber, filename=wavefile)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
