@@ -866,7 +866,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     if p['DRS_PLOT']:
         # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
 
     # ------------------------------------------------------------------
     # Join 0-47 and 47-49 solutions

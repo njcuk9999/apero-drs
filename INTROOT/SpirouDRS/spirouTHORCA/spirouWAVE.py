@@ -2242,3 +2242,180 @@ def fit_gaussian_triplets(p, loc):
 
     # return loc
     return loc
+
+def fit_fp_linmin(p, loc):
+    """
+    Fits the fp peaks with sigma clipping and linear minimization
+
+    We attempt to fit a 5th order polynomial of the xpix vs lambda for all orders.
+    The coefficient of the fit must be continuous from one order to the next
+
+    we perform the fit twice, once to get a coarse solution, once to refine
+    as we will trim some variables, we define them on each loop
+    not 100% elegant, but who cares, it takes 5µs ...
+
+    :param p:
+    :param loc:
+    :return:
+    """
+
+    # get constants from p
+    nmax_bright = p['HC_NMAX_BRIGHT']
+    n_iterations = p['HC_NITER_FIT_TRIPLET']
+    cat_guess_dist = p['HC_MAX_DV_CAT_GUESS']
+    triplet_deg = p['HC_TFIT_DEG']
+    cut_fit_threshold = p['HC_TFIT_CUT_THRES']
+    minimum_number_of_lines = p['HC_TFIT_MIN_NUM_LINES']
+    minimum_total_number_of_lines = p['HC_TFIT_MIN_TOT_LINES']
+    order_fit_continuity = p['HC_TFIT_ORDER_FIT_CONTINUITY']
+    sigma_clip_num = p['HC_TFIT_SIGCLIP_NUM']
+    sigma_clip_threshold = p['HC_TFIT_SIGCLIP_THRES']
+
+    # get data from loc
+    fp_ll = loc['FP_LL_NEW']
+    fp_xx = loc['FP_XX_NEW']
+    fp_ord = loc['FP_ORD_NEW']
+
+    # get dimensions
+    nbo, nbpix = loc['NBO'], loc['NBPIX']
+
+    # ------------------------------------------------------------------
+    # Linear model slice generation
+    # ------------------------------------------------------------------
+    # storage for the linear model slice
+    lin_mod_slice = np.zeros((len(fp_xx), np.sum(order_fit_continuity)))
+
+    # construct the unit vectors for wavelength model
+    # loop around order fit continuity values
+    ii = 0
+    for expo_xpix in range(len(order_fit_continuity)):
+        # loop around orders
+        for expo_order in range(order_fit_continuity[expo_xpix]):
+            part1 = fp_ord ** expo_order
+            part2 = np.array(fp_xx) ** expo_xpix
+            lin_mod_slice[:, ii] = part1 * part2
+            # iterate
+            ii += 1
+
+    # ------------------------------------------------------------------
+    # Sigma clipping
+    # ------------------------------------------------------------------
+
+    # storage for arrays
+    recon0 = np.zeros_like(fp_ll)
+    amps0 = np.zeros(np.sum(order_fit_continuity))
+
+    # Loop sigma_clip_num times for sigma clipping and numerical
+    #    convergence. In most cases ~10 iterations would be fine but this
+    #    is fast
+    for sigma_it in range(sigma_clip_num):
+        # calculate the linear minimization
+        largs = [fp_ll - recon0, lin_mod_slice]
+        amps, recon = spirouMath.linear_minimization(*largs)
+        # add the amps and recon to new storage
+        amps0 = amps0 + amps
+        recon0 = recon0 + recon
+        # loop around the amplitudes and normalise
+        for a_it in range(len(amps0)):
+            # work out the residuals
+            res = (fp_ll - recon0)
+            # work out the sum of residuals
+            sum_r = np.sum(res * lin_mod_slice[:, a_it])
+            sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
+            # normalise by sum squared
+            ampsx = sum_r / sum_l2
+            # add this contribution on
+            amps0[a_it] += ampsx
+            recon0 += (ampsx * lin_mod_slice[:, a_it])
+        # recalculate dv [in km/s]
+        dv = ((fp_ll / recon0) - 1) * speed_of_light
+        # calculate the standard deviation
+        sig = np.std(dv)
+        absdev = np.abs(dv / sig)
+
+        # initialize lists for saving
+        recon0_aux = []
+        lin_mod_slice_aux = []
+        fp_ll_aux = []
+        fp_xx_aux = []
+        fp_ord_aux = []
+        dv_aux = []
+
+        # Sigma clip worst line per order
+        for ord in set(fp_ord):
+            # mask for order
+            order_mask = fp_ord == ord
+            # get abs dev for order
+            absdev_ord = absdev[order_mask]
+            # check if above threshold
+            if np.max(absdev_ord) > sigma_clip_threshold:
+                # create mask for worst line
+                sig_mask = absdev_ord < np.max(absdev_ord)
+                # apply mask
+                recon0_aux.append(recon0[order_mask][sig_mask])
+                lin_mod_slice_aux.append(lin_mod_slice[order_mask][sig_mask])
+                fp_ll_aux.append(fp_ll[order_mask][sig_mask])
+                fp_xx_aux.append(fp_xx[order_mask][sig_mask])
+                fp_ord_aux.append(fp_ord[order_mask][sig_mask])
+                dv_aux.append(dv[order_mask][sig_mask])
+            # if all below threshold keep all
+            else:
+                recon0_aux.append(recon0[order_mask])
+                lin_mod_slice_aux.append(lin_mod_slice[order_mask])
+                fp_ll_aux.append(fp_ll[order_mask])
+                fp_xx_aux.append(fp_xx[order_mask])
+                fp_ord_aux.append(fp_ord[order_mask])
+                dv_aux.append(dv[order_mask])
+        # save aux lists to initial arrays
+        fp_ord = np.concatenate(fp_ord_aux)
+        recon0 = np.concatenate(recon0_aux)
+        lin_mod_slice = np.concatenate(lin_mod_slice_aux)
+        fp_ll = np.concatenate(fp_ll_aux)
+        fp_xx = np.concatenate(fp_xx_aux)
+        dv = np.concatenate(dv_aux)
+
+        # Log stats
+        sig1 = sig * 1000 / np.sqrt(len(fp_ll))
+        wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
+        wargs = [sigma_it, sig, sig1, len(fp_ll)]
+        WLOG(p, '', wmsg.format(*wargs))
+
+        # ------------------------------------------------------------------
+        # Construct wave map
+        # ------------------------------------------------------------------
+        xpix = np.arange(nbpix)
+        wave_map2 = np.zeros((nbo, nbpix))
+        poly_wave_sol = np.zeros_like(loc['WAVEPARAMS'])
+
+        # loop around the orders
+        for order_num in range(nbo):
+            ii = 0
+            for expo_xpix in range(len(order_fit_continuity)):
+                for expo_order in range(order_fit_continuity[expo_xpix]):
+                    # calculate new coefficient
+                    new_coeff = (order_num ** expo_order) * amps0[ii]
+                    # add to poly wave solution
+                    poly_wave_sol[order_num, expo_xpix] += new_coeff
+                    # iterate
+                    ii += 1
+            # add to wave_map2
+            wcoeffs = poly_wave_sol[order_num, :][::-1]
+            wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
+
+    # save parameters to loc
+
+    loc['SIG'] = sig
+    loc['SIG1'] = sig * 1000 / np.sqrt(len(fp_ll))
+    loc['POLY_WAVE_SOL_FP'] = poly_wave_sol
+    loc['WAVE_MAP_FP'] = wave_map2
+
+    loc['FP_LL_NEW_T'] = fp_ll
+    loc['FP_XX_NEW_T'] = fp_xx
+    loc['FP_ORD_NEW_T'] = fp_ord
+    loc['DV_T'] = dv
+
+    loc['LIN_MOD_SLICE'] = lin_mod_slice
+    loc['RECON0'] = recon0
+
+    # return loc
+    return loc
