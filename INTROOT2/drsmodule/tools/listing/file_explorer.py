@@ -50,6 +50,65 @@ MINLENGTH = 50
 # =============================================================================
 # Define new widgets
 # =============================================================================
+class DropDown(tk.OptionMenu):
+    """
+    Classic drop down entry
+
+    Example use:
+        # create the dropdown and grid
+        dd = DropDown(root, ['one', 'two', 'three'])
+        dd.grid()
+
+        # define a callback function that retrieves the currently selected option
+        def callback():
+            print(dd.get())
+
+        # add the callback function to the dropdown
+        dd.add_callback(callback)
+    """
+    def __init__(self, parent, options: list, initial_value: str=None):
+        """
+        Constructor for drop down entry
+
+        :param parent: the tk parent frame
+        :param options: a list containing the drop down options
+        :param initial_value: the initial value of the dropdown
+        """
+        self.var = tk.StringVar(parent)
+        self.var.set(initial_value if initial_value else options[0])
+
+        self.option_menu = tk.OptionMenu.__init__(self, parent, self.var, *options)
+
+        self.callback = None
+
+    def add_callback(self, callback: callable):
+        """
+        Add a callback on change
+
+        :param callback: callable function
+        :return:
+        """
+        def internal_callback(*args):
+            callback()
+
+        self.var.trace("w", internal_callback)
+
+    def get(self):
+        """
+        Retrieve the value of the dropdown
+
+        :return:
+        """
+        return self.var.get()
+
+    def set(self, value: str):
+        """
+        Set the value of the dropdown
+
+        :param value: a string representing the
+        :return:
+        """
+        self.var.set(value)
 
 
 # =============================================================================
@@ -116,26 +175,83 @@ class LocationSection:
 
 class FilterSection:
     def __init__(self, parent, master):
-        self.frame = tk.Frame(parent, bg='red')
+        self.master = master
+        self.frame = tk.Frame(parent, bg='red', relief=tk.SUNKEN)
         self.label = tk.Label(self.frame, text='Filters: ', anchor=tk.W)
         self.label.pack(side=tk.TOP, anchor=tk.W)
-
-        # add frame
-        self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
-                        side=tk.BOTTOM)
+        # pack frame
+        self.frame.pack(padx=10, pady=10, fill=tk.Y, side=tk.LEFT)
+        # fill buttons
+        self.add_filters()
 
     def add_filters(self):
+        # set up filter frame
+        self.filter_frame = tk.Frame(self.frame)
+        self.filter_frame.propagate(False)
+        self.filter_frame.pack(padx=10, pady=10, fill=tk.Y, expand=tk.YES,
+                               side=tk.LEFT)
+        # get data and mask
+        cols = self.master.datastore.cols
+        sets = self.master.datastore.entries
+        # grid depends on number of columns
+        # rowlabels, collabels, rowbox, colbox = self.get_grid_positions()
 
+        # define dropdownbox storage
+        self.boxes = dict()
+        # loop around columns and add to filter grid
+        for it, col in enumerate(cols):
+            # set up choices and string variable
+            choices = ['None'] + list(sets[col])
+            label = tk.Label(self.filter_frame, text=col)
+            dbox = DropDown(self.filter_frame, options=choices)
+            # label.grid(row=rowlabels[it], column=collabels[it])
+            # dbox.grid(row=rowbox[it], column=colbox[it])
+            label.grid(row=it * 2, column=0)
+            dbox.grid(row=(it * 2) + 1, column=0)
+            dbox.add_callback(self.on_drop)
+            self.boxes[col] = dbox
+
+    def on_drop(self):
+        # get data and mask
+        cols = self.master.datastore.cols
+        for col in cols:
+            value = self.boxes[col].get()
+            if value is None or value == 'None':
+                self.master.datastore.options[col] = None
+            else:
+                self.master.datastore.options[col] = value
+        # update mask
+        self.master.datastore.apply_filters()
+        # unpopulate table
+        self.master.table_element.unpopulate_table()
+        self.master.table_element.populate_table()
+
+
+    def get_grid_positions(self):
+        FILTER_COLS = 6
+        n_tot =len(self.master.datastore.cols)
+        n_rows = int(np.ceil(n_tot / FILTER_COLS))
+        # set up
+        rowlabels = np.repeat(np.arange(0, n_rows), FILTER_COLS)
+        collabels = np.tile(np.arange(0, FILTER_COLS * 2, 2), n_rows)
+        rowboxs = np.repeat(np.arange(0, n_rows), FILTER_COLS)
+        colboxs = np.tile(np.arange(1, FILTER_COLS * 2, 2), n_rows)
+
+        # for it in range(n_tot):
+        #      print(it, rowlabels[it], collabels[it], rowboxs[it], colboxs[it])
+
+        # return
+        return rowlabels, collabels, rowboxs, colboxs
 
 class TableSection:
     def __init__(self, parent, master):
         self.master = master
         parent.update_idletasks()
         self.width = parent.winfo_width()
-        self.frame = tk.Frame(parent, bg='green', width=self.width-20)
+        self.frame = tk.Frame(parent, bg='green')
         # pack frame
         self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
-                        side=tk.BOTTOM)
+                        side=tk.LEFT)
 
         self.label = tk.Label(self.frame, text='Table: ', anchor=tk.W)
         self.label.pack(side=tk.TOP, anchor=tk.W)
@@ -181,10 +297,10 @@ class TableSection:
 
     def populate_table(self):
 
-        self.tableframe = tk.Frame(self.frame, width=self.width, bg='red')
+        self.tableframe = tk.Frame(self.frame, bg='red')
         self.tableframe.propagate(False)
         self.tableframe.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
-                             side=tk.BOTTOM)
+                             side=tk.TOP)
         # get data and mask
         data = self.master.datastore.data
         cols = self.master.datastore.cols
@@ -200,7 +316,7 @@ class TableSection:
         # mask data
         masked_data = np.array(data)[mask]
         # make table
-        self.tree = ttk.Treeview(self.tableframe, height=20)
+        self.tree = ttk.Treeview(self.tableframe, height=len(data))
 
         ysb = ttk.Scrollbar(self.tableframe, orient='vertical',
                             command=self.tree.yview)
@@ -225,9 +341,7 @@ class TableSection:
 
         ysb.pack(expand=tk.YES, fill=tk.Y, side=tk.RIGHT)
         xsb.pack(expand=tk.YES, fill=tk.X, side=tk.BOTTOM)
-        self.tree.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
-
-
+        self.tree.pack(fill=tk.BOTH)
 
     def unpopulate_table(self):
         """
@@ -275,9 +389,10 @@ class App(tk.Tk):
         self.main_middle = tk.Frame(self)
         self.main_bottom = tk.Frame(self)
         # set the location of main frames
-        self.main_top.grid(column=0, row=0, sticky=(tk.E, tk.W, tk.N, tk.S))
+        self.main_top.grid(column=0, row=0, columnspan=2,
+                           sticky=(tk.E, tk.W, tk.N, tk.S))
         self.main_middle.grid(column=0, row=1, sticky=(tk.E, tk.W, tk.N, tk.S))
-        self.main_bottom.grid(column=0, row=2, sticky=(tk.E, tk.W, tk.N, tk.S))
+        self.main_bottom.grid(column=1, row=1, sticky=(tk.E, tk.W, tk.N, tk.S))
 
         # get app elements
         self.navbar = Navbar(self)
@@ -289,8 +404,9 @@ class App(tk.Tk):
         # set up the grid weights (to make it expand to full size)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=0)
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        #self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
         # bindings
         # self.bind_all('<Configure>', self.table_element.on_frame_configure)
         # self.bind_all('<Button-4>', self.table_element.on_mouse_scroll)
@@ -350,6 +466,7 @@ class LoadData:
         self.cols = []
         self.entries = OrderedDict()
         self.lengths = OrderedDict()
+        self.options = OrderedDict()
         # update data now
         self.update_data()
 
@@ -403,24 +520,42 @@ class LoadData:
             storage['SOURCE'] += [outdir] * len(data)
         # store storage as pandas dataframe
         self.data = pd.DataFrame(data=storage)
+
+        self.clean_data = OrderedDict()
+
         self.mask = np.ones(len(self.data), dtype=bool)
         # get column names
         self.cols = list(self.data.columns)
         # get unique column entries
         for col in self.cols:
+            # set the entries
             self.entries[col] = set(self.data[col])
+            # set the lengths
             lengths = list(map(lambda x: len(str(x)), self.data[col]))
             self.lengths[col] = np.max([np.max(lengths), len(col)])
+            # set the options
+            self.options[col] = None
+            # get clean data
+            self.clean_data[col] = list(map(self.clean, self.data[col]))
 
-    def apply_filters(self, kwargs):
+    def clean(self, value):
+        return str(value).upper().strip()
+
+    def apply_filters(self):
+        kwargs = self.options
+
         # filter
         self.mask = np.ones(len(self.data), dtype=bool)
         for kwarg in kwargs:
             if kwargs[kwarg] is not None:
+                print('Apply filter: {0} == "{1}"'.format(kwarg, kwargs[kwarg]))
+                # get mask
                 mask_k = np.zeros(len(self.data), dtype=bool)
                 for element in kwargs[kwarg]:
-                    mask_k |= self.data[kwarg] == element
-                    self.mask &= mask_k
+                    mask_k |= (self.clean_data[kwarg] == self.clean(element))
+                self.mask &= mask_k
+
+                print('Found {0} entries'.format(np.sum(mask_k)))
 
 
 # =============================================================================
