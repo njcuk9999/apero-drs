@@ -15,6 +15,7 @@ from astropy.table import Table
 from collections import OrderedDict
 import pandas as pd
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 
 from drsmodule import constants
@@ -42,6 +43,8 @@ PROGRAM_NAME = 'DRS File Explorer'
 DEFAULT_PATH = 'DRS_DATA_WORKING'
 # Define allowed instruments
 INSTRUMENTS = ['SPIROU', 'NIRPS']
+# define min column length
+MINLENGTH = 50
 
 
 # =============================================================================
@@ -105,7 +108,7 @@ class LocationSection:
     def __init__(self, parent, master):
         self.frame = tk.Frame(parent)
         self.label = tk.Label(self.frame, text='Location: ', anchor=tk.W)
-        self.label.pack()
+        self.label.pack(side=tk.LEFT)
 
         # add frame
         self.frame.pack(padx=10, pady=10)
@@ -117,7 +120,7 @@ class FilterSection:
     def __init__(self, parent, master):
         self.frame = tk.Frame(parent)
         self.label = tk.Label(self.frame, text='Filters: ', anchor=tk.W)
-        self.label.pack()
+        self.label.pack(side=tk.LEFT)
 
         # add frame
         self.frame.pack(padx=10, pady=10)
@@ -127,31 +130,14 @@ class FilterSection:
 class TableSection:
     def __init__(self, parent, master):
         self.master = master
-        self.frame0 = tk.Frame(parent)
-        self.label = tk.Label(self.frame0, text='Table: ', anchor=tk.W)
-        self.label.pack(padx=10, pady=10)
-
-        # self.canvas = tk.Canvas(self.frame0, bg='black')
-        # self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
-        # self.frame = tk.Frame(self.canvas)
-        # self.canvas_frame = self.canvas.create_window((4, 4),
-        #                                               window=self.frame)
-        # scrollbar = tk.Scrollbar(self.canvas, command=self.canvas.yview)
-        # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        # self.canvas.configure(yscrollcommand=scrollbar.set)
-        # self.canvas.bind('<Configure>', self.frame_width)
-
-        self.frame = tk.Frame(self.frame0)
-
+        self.frame = tk.Frame(parent)
+        self.label = tk.Label(self.frame, text='Table: ', anchor=tk.W)
+        self.label.pack(padx=10, pady=10, side=tk.LEFT)
         # fill table
         self.populate_table()
-        # add frame
-        self.frame.pack(padx=10, pady=10)
-        self.frame0.pack()
-        # set up the grid weights (to make it expand to full size)
-        self.frame.grid_columnconfigure(0, weight=1)
-
-
+        # pack frame
+        self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
+                        side=tk.BOTTOM)
 
     def on_frame_configure(self, event=None):
         """
@@ -195,31 +181,28 @@ class TableSection:
         data = self.master.datastore.data
         cols = self.master.datastore.cols
         mask = self.master.datastore.mask
+        lens = self.master.datastore.lengths
         # mask data
         masked_data = np.array(data)[mask]
-        # title bar
-        self.populate_row(rownumber=0, values=cols, bg='red')
-        # data
-        for row_it in range(1, len(masked_data)):
+        # make table
+        self.tree = ttk.Treeview(self.frame, height=20)
+        # set up columns
+        self.tree['columns'] = cols
+        for c_it, col in enumerate(cols):
+            col_id = '#{0}'.format(c_it)
+            self.tree.heading(col_id, text=col)
+            self.tree.column(col_id, width=lens[col])
 
-            if row_it % 2 == 0:
-                colour = 'blue'
-            else:
-                colour = 'white'
-            row_values = masked_data[row_it]
+        # insert data
+        for row in range(len(masked_data)):
 
-            self.populate_row(rownumber=row_it, values=row_values,
-                              bg=colour)
+            print(tuple(masked_data[row][1:]))
 
+            self.tree.insert("", row, text=masked_data[row][0],
+                             values=tuple(masked_data[row][1:]))
 
-    def populate_row(self, rownumber, values, **kwargs):
+        self.tree.pack(side=tk.BOTTOM, fill=tk.X)
 
-
-        for it, value in enumerate(values):
-            str_var = tk.StringVar()
-            str_var.set(str(value))
-            label = tk.Label(self.frame, textvariable=str_var, **kwargs)
-            label.grid(row=rownumber, column=it, padx=2, pady=2)
 
     def unpopulate_table(self):
         """
@@ -340,6 +323,7 @@ class LoadData:
         self.mask = None
         self.cols = []
         self.entries = OrderedDict()
+        self.lengths = OrderedDict()
         # update data now
         self.update_data()
 
@@ -379,9 +363,9 @@ class LoadData:
             # loop around columns and add to storage
             for col in data.colnames:
                 if col not in storage:
-                    storage[col] = list(data[col])
+                    storage[col] = list(np.array(data[col], dtype=str))
                 else:
-                    storage[col] += list(data[col])
+                    storage[col] += list(np.array(data[col], dtype=str))
             # full path
             abspath = os.path.dirname(filename)
             # get common source
@@ -399,6 +383,8 @@ class LoadData:
         # get unique column entries
         for col in self.cols:
             self.entries[col] = set(self.data[col])
+            lengths = list(map(lambda x: len(str(x)), self.data[col]))
+            self.lengths[col] = np.max([np.max(lengths), len(col)])
 
     def apply_filters(self, kwargs):
         # filter
