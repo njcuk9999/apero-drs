@@ -6606,3 +6606,22 @@
 ================================================================================
 	- obj_mk_tellu_db.py - need to only print errors if we have errors (rev.d32c97ac)
 	- obj_mk_tellu_db.py - need to only print errors if we have errors (rev.3660e5f3)
+
+
+
+================================================================================
+* Tue Feb 19 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.073
+
+================================================================================
+	- cal_validate_spirou.py - fix bug it version checking (found by Melissa) (rev.ca1317e4)
+	- cal_validate_spirou.py - fix bug it version checking (found by Melissa) (rev.7d7e7303)
+	- spirouWAVE.py - add some more comments for resolution map (rev.9584f094)
+
+
+
+================================================================================
+* Tue Feb 19 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.074
+
+================================================================================
+	- spirouTelluric.py - remove hard coded number of orders (rev.a02420a2)
+	- obj_mk_tellu_new.py - comment out unused lines (rev.303cf104)
