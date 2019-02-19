@@ -166,8 +166,8 @@ def main(night_name=None, files=None):
     # construct extension
     tellu_ext = '{0}_{1}.fits'
     # get current telluric maps from telluDB
-    tellu_db_data = spirouDB.GetDatabaseTellMap(p, required=False)
-    tellu_db_files = tellu_db_data[0]
+    # tellu_db_data = spirouDB.GetDatabaseTellMap(p, required=False)
+    # tellu_db_files = tellu_db_data[0]
     # storage for valid output files
     loc['OUTPUTFILES'] = []
     # loop around the files
