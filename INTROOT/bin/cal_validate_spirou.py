@@ -491,7 +491,6 @@ def convert_version_to_list(v):
         emsgs = ('\tCannot split version parts (expected X.Y.Z or X.Y or X)'
                  '\n\tGot "{0}"'.format(v))
         return [-1, -1, -1], emsgs
-
     try:
         if len(vlist) == 3:
             vlist = [int(vlist[0]), int(vlist[1]), int(vlist[2])]
