@@ -149,9 +149,9 @@ class Navbar:
         :return:
         """
         # write about message
-        message = ('Search for an error code or a help code. \nDisplay '
-                   'information about this code including location, '
-                   'arguments, comments, and python script location.')
+        message = ('File Explorer for the DRS. \n'
+                   'Choose the Location to explore (TMP or REDUCED) \n'
+                   'Choose filters to filter the files by.')
         # make message box
         messagebox.showinfo(self.title, message)
 
