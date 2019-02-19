@@ -15,7 +15,7 @@ from .core import drs_log
 from .core import drs_recipe
 from .core import drs_startup
 
-__all__ = []
+__all__ = ['setup', 'end_main', 'end', 'wlog']
 
 # =============================================================================
 # Define functions
