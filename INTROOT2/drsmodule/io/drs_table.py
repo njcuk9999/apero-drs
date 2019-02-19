@@ -7,6 +7,9 @@
 
 Created on 2019-01-21 at 09:33
 
+import rules:
+    Cannot import whole of drsmodule.config (drs_setup uses drs_table)
+
 @author: cook
 """
 from __future__ import division
@@ -19,8 +22,8 @@ from astropy.io import fits
 from collections import OrderedDict
 
 from drsmodule import constants
-from drsmodule import config
 from drsmodule.locale import drs_text
+from drsmodule.config import drs_log
 
 from . import drs_lock
 
@@ -41,7 +44,7 @@ __release__ = Constants['DRS_RELEASE']
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = config.wlog
+WLOG = drs_log.wlog
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 
