@@ -1285,7 +1285,13 @@ def generate_resolution_map(p, loc):
         order_params = []
         # loop around the x position
         for xpos in range(0, nbpix // bin_x):
+            # we verify that the line is well modelled by a gaussian
+            # fit. If the RMS to the fit is small enough, we include
+            # the line in the profile measurement
             mask = gauss_rms_dev < 0.05
+            # the line must fall in the right part of the array
+            # in both X and cross-dispersed directions. The
+            # resolution is expected to change slightly
             mask &= (orders // bin_order) == (order_num // bin_order)
             mask &= (xgau // bin_x) == xpos
             mask &= np.isfinite(wave_catalog)
@@ -1305,6 +1311,10 @@ def generate_resolution_map(p, loc):
             base[2 * wsize - 2: 2 * wsize + 1] = True
 
             # loop around all good lines
+            # we express everything in velocity space rather than
+            # pixels. This allows us to merge all lines in a single
+            # profile and removes differences in pixel sampling and
+            # resolution.
             for it in range(int(np.sum(mask))):
                 # get limits
                 border = int(b_orders[it])
@@ -1315,12 +1325,13 @@ def generate_resolution_map(p, loc):
                 # subtract median base and normalise line
                 line -= np.median(line[base])
                 line /= np.sum(line)
-                # calculate velocity
+                # calculate velocity... express things in velocity
                 ratio = wave_map2[border, start:end] / b_wave_catalog[it]
                 dv = -speed_of_light * (ratio - 1)
                 # store line and dv
                 all_lines[it, :] = line
                 all_dvs[it, :] = dv
+
             # flatten all lines and dvs
             all_dvs = all_dvs.ravel()
             all_lines = all_lines.ravel()
@@ -1333,6 +1344,8 @@ def generate_resolution_map(p, loc):
             init_guess = [0.3, 0.0, 1.0, 0.0, 0.0]
             # loop around until criteria met
             n_it = 0
+
+            # fit the merged line profile and do some sigma-clipping
             while maxdev > max_dev_threshold:
                 # fit with a guassian with a slope
                 fargs = dict(x=all_dvs[keep], y=all_lines[keep],
@@ -1364,7 +1377,7 @@ def generate_resolution_map(p, loc):
                      resolution,
                      resolution1]
             WLOG(p, '', wmsg.format(*wargs))
-        # store criteria
+        # store criteria. All lines are kept for reference
         map_dvs.append(order_dvs)
         map_lines.append(order_lines)
         map_params.append(order_params)
