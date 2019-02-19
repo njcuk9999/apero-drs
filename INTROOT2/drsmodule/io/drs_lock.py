@@ -9,6 +9,7 @@ Created on 2019-01-21 at 09:37
 
 import rules:
     Cannot import drs_table
+    Cannot import whole of drsmodule.config (drs_setup uses drs_table)
 
 @author: cook
 """
@@ -17,9 +18,8 @@ import os
 import time
 
 from drsmodule import constants
-from drsmodule import config
-
 from drsmodule.locale import drs_text
+from drsmodule.config import drs_log
 
 
 # =============================================================================
@@ -38,7 +38,7 @@ __release__ = Constants['DRS_RELEASE']
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = config.wlog
+WLOG = drs_log.wlog
 # Get the text types
 ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText
