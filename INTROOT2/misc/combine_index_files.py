@@ -53,6 +53,7 @@ def get_index_files(path):
     # return index files
     return index_files
 
+
 def combine_files(files):
 
     # define storage
