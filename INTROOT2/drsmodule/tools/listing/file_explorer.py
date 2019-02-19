@@ -106,38 +106,41 @@ class Navbar:
 class LocationSection:
 
     def __init__(self, parent, master):
-        self.frame = tk.Frame(parent)
+        self.frame = tk.Frame(parent, bg='blue')
         self.label = tk.Label(self.frame, text='Location: ', anchor=tk.W)
-        self.label.pack(side=tk.LEFT)
-
+        self.label.pack(side=tk.TOP, anchor=tk.W)
         # add frame
-        self.frame.pack(padx=10, pady=10)
-        # set up the grid weights (to make it expand to full size)
-        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
+                        side=tk.BOTTOM)
 
 
 class FilterSection:
     def __init__(self, parent, master):
-        self.frame = tk.Frame(parent)
+        self.frame = tk.Frame(parent, bg='red')
         self.label = tk.Label(self.frame, text='Filters: ', anchor=tk.W)
-        self.label.pack(side=tk.LEFT)
+        self.label.pack(side=tk.TOP, anchor=tk.W)
 
         # add frame
-        self.frame.pack(padx=10, pady=10)
-        # set up the grid weights (to make it expand to full size)
-        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
+                        side=tk.BOTTOM)
+
+    def add_filters(self):
+
 
 class TableSection:
     def __init__(self, parent, master):
         self.master = master
-        self.frame = tk.Frame(parent)
-        self.label = tk.Label(self.frame, text='Table: ', anchor=tk.W)
-        self.label.pack(padx=10, pady=10, side=tk.LEFT)
-        # fill table
-        self.populate_table()
+        parent.update_idletasks()
+        self.width = parent.winfo_width()
+        self.frame = tk.Frame(parent, bg='green', width=self.width-20)
         # pack frame
         self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
                         side=tk.BOTTOM)
+
+        self.label = tk.Label(self.frame, text='Table: ', anchor=tk.W)
+        self.label.pack(side=tk.TOP, anchor=tk.W)
+        # fill table
+        self.populate_table()
 
     def on_frame_configure(self, event=None):
         """
@@ -177,31 +180,53 @@ class TableSection:
         self.canvas.itemconfig(self.canvas_frame, width=canvas_width)
 
     def populate_table(self):
+
+        self.tableframe = tk.Frame(self.frame, width=self.width, bg='red')
+        self.tableframe.propagate(False)
+        self.tableframe.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
+                             side=tk.BOTTOM)
         # get data and mask
         data = self.master.datastore.data
         cols = self.master.datastore.cols
         mask = self.master.datastore.mask
         lens = self.master.datastore.lengths
+
+        # figure out table size
+        framewidth = self.width
+        tablewidth = np.sum(list(lens.values()))
+        scalefactor = framewidth/tablewidth
+        print(framewidth, tablewidth, scalefactor)
+
         # mask data
         masked_data = np.array(data)[mask]
         # make table
-        self.tree = ttk.Treeview(self.frame, height=20)
+        self.tree = ttk.Treeview(self.tableframe, height=20)
+
+        ysb = ttk.Scrollbar(self.tableframe, orient='vertical',
+                            command=self.tree.yview)
+        xsb = ttk.Scrollbar(self.tableframe, orient='horizontal',
+                            command=self.tree.xview)
+
+        self.tree.configure(yscrollcommand=lambda f, l: ysb.set,
+                            xscrollcommand=lambda f, l: xsb.set)
+
         # set up columns
         self.tree['columns'] = cols
         for c_it, col in enumerate(cols):
             col_id = '#{0}'.format(c_it)
             self.tree.heading(col_id, text=col)
-            self.tree.column(col_id, width=lens[col])
+            colwidth = int(np.ceil(lens[col] * scalefactor)) * 10
+            self.tree.column(col_id, minwidth=colwidth, stretch=True)
 
         # insert data
         for row in range(len(masked_data)):
-
-            print(tuple(masked_data[row][1:]))
-
             self.tree.insert("", row, text=masked_data[row][0],
                              values=tuple(masked_data[row][1:]))
 
-        self.tree.pack(side=tk.BOTTOM, fill=tk.X)
+        ysb.pack(expand=tk.YES, fill=tk.Y, side=tk.RIGHT)
+        xsb.pack(expand=tk.YES, fill=tk.X, side=tk.BOTTOM)
+        self.tree.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+
 
 
     def unpopulate_table(self):
@@ -265,6 +290,7 @@ class App(tk.Tk):
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=0)
         self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         # bindings
         # self.bind_all('<Configure>', self.table_element.on_frame_configure)
         # self.bind_all('<Button-4>', self.table_element.on_mouse_scroll)
