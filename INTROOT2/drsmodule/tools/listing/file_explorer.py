@@ -1,0 +1,425 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+# CODE NAME HERE
+
+# CODE DESCRIPTION HERE
+
+Created on 2019-02-18 at 10:59
+
+@author: cook
+"""
+import numpy as np
+import os
+from astropy.table import Table
+from collections import OrderedDict
+import pandas as pd
+import tkinter as tk
+from tkinter import messagebox
+
+from drsmodule import constants
+from drsmodule import config
+from drsmodule.locale import drs_text
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'file_explorer.py'
+__INSTRUMENT__ = None
+# Get constants
+Constants = constants.load(__INSTRUMENT__)
+# Get version and author
+__version__ = Constants['DRS_VERSION']
+__author__ = Constants['AUTHORS']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
+# Get Logging function
+WLOG = config.wlog
+# -----------------------------------------------------------------------------
+# define the program name
+PROGRAM_NAME = 'DRS File Explorer'
+# define the default path
+DEFAULT_PATH = 'DRS_DATA_WORKING'
+# Define allowed instruments
+INSTRUMENTS = ['SPIROU', 'NIRPS']
+
+
+# =============================================================================
+# Define new widgets
+# =============================================================================
+
+
+# =============================================================================
+# Define classes
+# =============================================================================
+class Navbar:
+    """
+    Navigation bar widget
+    """
+
+    def __init__(self, master):
+        """
+        Navigation bar constructor
+
+        :param master: tk.TK parent app/frame
+
+        :type master: tk.TK
+        """
+        self.master = master
+        self.menubar = tk.Menu(master)
+        # set title
+        self.title = 'About {0}'.format(PROGRAM_NAME)
+
+        # add file menu
+        self.filemenu = tk.Menu(self.menubar, tearoff=0)
+        self.filemenu.add_command(label='Quit', command=self.quit)
+        self.menubar.add_cascade(label='File', menu=self.filemenu)
+        # add help menu
+        self.helpmenu = tk.Menu(self.menubar, tearoff=0)
+        self.helpmenu.add_command(label='About', command=self.about)
+        self.menubar.add_cascade(label='Help', menu=self.helpmenu)
+
+    def about(self):
+        """
+        Make the about message box
+
+        :return:
+        """
+        # write about message
+        message = ('Search for an error code or a help code. \nDisplay '
+                   'information about this code including location, '
+                   'arguments, comments, and python script location.')
+        # make message box
+        messagebox.showinfo(self.title, message)
+
+    def quit(self):
+        """
+        Quits the app
+        :return:
+        """
+        self.master.destroy()
+
+
+class LocationSection:
+
+    def __init__(self, parent, master):
+        self.frame = tk.Frame(parent)
+        self.label = tk.Label(self.frame, text='Location: ', anchor=tk.W)
+        self.label.pack()
+
+        # add frame
+        self.frame.pack(padx=10, pady=10)
+        # set up the grid weights (to make it expand to full size)
+        self.frame.grid_columnconfigure(0, weight=1)
+
+
+class FilterSection:
+    def __init__(self, parent, master):
+        self.frame = tk.Frame(parent)
+        self.label = tk.Label(self.frame, text='Filters: ', anchor=tk.W)
+        self.label.pack()
+
+        # add frame
+        self.frame.pack(padx=10, pady=10)
+        # set up the grid weights (to make it expand to full size)
+        self.frame.grid_columnconfigure(0, weight=1)
+
+class TableSection:
+    def __init__(self, parent, master):
+        self.master = master
+        self.frame0 = tk.Frame(parent)
+        self.label = tk.Label(self.frame0, text='Table: ', anchor=tk.W)
+        self.label.pack(padx=10, pady=10)
+
+        # self.canvas = tk.Canvas(self.frame0, bg='black')
+        # self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
+        # self.frame = tk.Frame(self.canvas)
+        # self.canvas_frame = self.canvas.create_window((4, 4),
+        #                                               window=self.frame)
+        # scrollbar = tk.Scrollbar(self.canvas, command=self.canvas.yview)
+        # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        # self.canvas.configure(yscrollcommand=scrollbar.set)
+        # self.canvas.bind('<Configure>', self.frame_width)
+
+        self.frame = tk.Frame(self.frame0)
+
+        # fill table
+        self.populate_table()
+        # add frame
+        self.frame.pack(padx=10, pady=10)
+        self.frame0.pack()
+        # set up the grid weights (to make it expand to full size)
+        self.frame.grid_columnconfigure(0, weight=1)
+
+
+
+    def on_frame_configure(self, event=None):
+        """
+        Event: Define the scroll region when <Configure> is used.
+        :param event: tk.Event
+        :return: None
+        """
+        # update scrollregion after starting 'mainloop'
+        # when all widgets are in canvas
+        self.canvas.configure(scrollregion=self.canvas.bbox('all'))
+
+    def on_mouse_scroll(self, event=None):
+        """
+        Event: Define the mouse scroll event and how to scroll
+        :param event: tk.Event
+        :return: None
+        """
+        if event.delta:
+            self.canvas.yview_scroll(-1 * (event.delta / 120), 'units')
+        else:
+            if event.num == 5:
+                move = 1
+            else:
+                move = -1
+            self.canvas.yview_scroll(move, 'units')
+
+    def frame_width(self, event=None):
+        """
+        Event: Deal with the canvas width
+        :param event: tk.Event
+        :return: None
+        """
+        if event is None:
+            canvas_width = self.canvas.winfo_width()
+        else:
+            canvas_width = event.width
+        self.canvas.itemconfig(self.canvas_frame, width=canvas_width)
+
+    def populate_table(self):
+        # get data and mask
+        data = self.master.datastore.data
+        cols = self.master.datastore.cols
+        mask = self.master.datastore.mask
+        # mask data
+        masked_data = np.array(data)[mask]
+        # title bar
+        self.populate_row(rownumber=0, values=cols, bg='red')
+        # data
+        for row_it in range(1, len(masked_data)):
+
+            if row_it % 2 == 0:
+                colour = 'blue'
+            else:
+                colour = 'white'
+            row_values = masked_data[row_it]
+
+            self.populate_row(rownumber=row_it, values=row_values,
+                              bg=colour)
+
+
+    def populate_row(self, rownumber, values, **kwargs):
+
+
+        for it, value in enumerate(values):
+            str_var = tk.StringVar()
+            str_var.set(str(value))
+            label = tk.Label(self.frame, textvariable=str_var, **kwargs)
+            label.grid(row=rownumber, column=it, padx=2, pady=2)
+
+    def unpopulate_table(self):
+        """
+        Unpopulate the table (with widget.destroy())
+
+        :return: None
+        """
+        for widget in self.frame.winfo_children():
+            widget.destroy()
+
+
+class App(tk.Tk):
+    """
+    Main Application for file explorer
+    """
+
+    def __init__(self, datastore, *args, **kwargs):
+        """
+        Main application constructor
+
+        :param datastore: LoadData instance, storage of the indexed database
+                          and python code line references
+        :param args: arguments to pass to tk.Tk.__init__
+        :param kwargs: keyword arguments to pass to tk.Tk.__init__
+
+        :type datastore: LoadData
+
+        :returns None:
+        """
+        # run the super
+        tk.Tk.__init__(self, *args, **kwargs)
+        # save datastore
+        self.datastore = datastore
+        # set minimum size
+        self.minsize(512, 360)
+        # set application title
+        self.title(PROGRAM_NAME)
+        # update the height and width(s) - need to update idle tasks to make
+        #   sure we have correct height/width
+        self.update_idletasks()
+        self.height = self.winfo_height()
+        self.width = self.winfo_width()
+        # add full frames
+        self.main_top = tk.Frame(self)
+        self.main_middle = tk.Frame(self)
+        self.main_bottom = tk.Frame(self)
+        # set the location of main frames
+        self.main_top.grid(column=0, row=0, sticky=(tk.E, tk.W, tk.N, tk.S))
+        self.main_middle.grid(column=0, row=1, sticky=(tk.E, tk.W, tk.N, tk.S))
+        self.main_bottom.grid(column=0, row=2, sticky=(tk.E, tk.W, tk.N, tk.S))
+
+        # get app elements
+        self.navbar = Navbar(self)
+        self.loc_element = LocationSection(self.main_top, self)
+        self.filter_element = FilterSection(self.main_middle, self)
+        self.table_element = TableSection(self.main_bottom, self)
+        # add menu master
+        self.config(menu=self.navbar.menubar)
+        # set up the grid weights (to make it expand to full size)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=1)
+        # bindings
+        # self.bind_all('<Configure>', self.table_element.on_frame_configure)
+        # self.bind_all('<Button-4>', self.table_element.on_mouse_scroll)
+        # self.bind_all('<Button-5>', self.table_element.on_mouse_scroll)
+
+
+# =============================================================================
+# Worker functions
+# =============================================================================
+def main(instrument=None):
+    """
+    Main function - takes the instrument name, index the databases and python
+    script (in real time due to any changes in code) and then runs the
+    application to find errors
+
+    :param instrument: string, the instrument name
+    :type: str
+    :return: returns the local namespace as a dictionary
+    :rtype: dict
+    """
+    # get parameters from drsmodule
+    _, params = config.setup('None', instrument, quiet=True)
+    # define allowed instruments
+    if instrument not in INSTRUMENTS:
+        emsgs = ['Instrument = "{0}" not valid.'.format(instrument),
+                 '\nAllowed instruments: ']
+        for instrument_option in INSTRUMENTS:
+            emsgs.append('\n\t{0}'.format(instrument_option))
+        WLOG(params, 'error', emsgs)
+    # Log that we are running indexing
+    WLOG(params, '', 'Indexing files at {0}'.format(params[DEFAULT_PATH]))
+    # load data
+    datastore = LoadData(instrument)
+    # Log that we are running indexing
+    WLOG(datastore.params, '', 'Running file explorer application')
+    # Main code here
+    app = App(datastore=datastore)
+    app.geometry("1024x512")
+    app.mainloop()
+    # end with a log message
+    WLOG(datastore.params, '', 'Program has completed successfully')
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
+
+
+class LoadData:
+    def __init__(self, instrument):
+        self.instrument = instrument
+        # define empty storage
+        self.params = None
+        self.pconstant = None
+        self.path = None
+        self.index_filename = None
+        self.index_files = []
+        self.data = None
+        self.mask = None
+        self.cols = []
+        self.entries = OrderedDict()
+        # update data now
+        self.update_data()
+
+    def update_data(self):
+
+        # get parameters from drsmodule
+        _, params = config.setup('None', self.instrument, quiet=True)
+        self.pconstant = constants.pload(self.instrument)
+        # set path from parameters
+        self.path = params['DRS_DATA_WORKING']
+        self.index_filename = self.pconstant.INDEX_OUTPUT_FILENAME()
+        # get index files
+        self.get_index_files()
+        # combine table
+        self.combine_files()
+
+    def get_index_files(self):
+        # walk through all sub-directories
+        for root, dirs, files in os.walk(self.path):
+            # loop around files in current sub-directory
+            for filename in files:
+                # only save index files
+                if filename == self.index_filename:
+                    # append to storage
+                    self.index_files.append(os.path.join(root, filename))
+
+    def combine_files(self):
+        # define storage
+        storage = OrderedDict()
+        storage['SOURCE'] = []
+        # print that we are indexing
+        print('Reading all index files (N={0})'.format(len(self.index_files)))
+        # loop around file names
+        for it, filename in enumerate(self.index_files):
+            # get data from table
+            data = Table.read(filename)
+            # loop around columns and add to storage
+            for col in data.colnames:
+                if col not in storage:
+                    storage[col] = list(data[col])
+                else:
+                    storage[col] += list(data[col])
+            # full path
+            abspath = os.path.dirname(filename)
+            # get common source
+            common = os.path.commonpath([abspath, self.path]) + os.sep
+            outdir = filename.split(common)[-1]
+            # remove the index filename
+            outdir = outdir.split(self.index_filename)[0]
+            # append source to file
+            storage['SOURCE'] += [outdir] * len(data)
+        # store storage as pandas dataframe
+        self.data = pd.DataFrame(data=storage)
+        self.mask = np.ones(len(self.data), dtype=bool)
+        # get column names
+        self.cols = list(self.data.columns)
+        # get unique column entries
+        for col in self.cols:
+            self.entries[col] = set(self.data[col])
+
+    def apply_filters(self, kwargs):
+        # filter
+        self.mask = np.ones(len(self.data), dtype=bool)
+        for kwarg in kwargs:
+            if kwargs[kwarg] is not None:
+                mask_k = np.zeros(len(self.data), dtype=bool)
+                for element in kwargs[kwarg]:
+                    mask_k |= self.data[kwarg] == element
+                    self.mask &= mask_k
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------
+    # run app
+    ll = main('SPIROU')
+
+# =============================================================================
+# End of code
+# =============================================================================
