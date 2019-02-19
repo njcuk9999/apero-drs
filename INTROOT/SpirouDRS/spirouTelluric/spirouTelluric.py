@@ -732,7 +732,7 @@ def get_molecular_tell_lines(p, loc):
             wmsg = '\tMean Trans level: {0:.3f}'.format(np.mean(trans))
             WLOG(p, '', wmsg)
             # convolve all tapas absorption to the SPIRou approximate resolution
-            for iord in range(49):
+            for iord in range(ydim):
                 # get the order position
                 start = iord * xdim
                 end = (iord * xdim) + xdim
