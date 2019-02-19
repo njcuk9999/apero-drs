@@ -451,9 +451,20 @@ def module_test(module, reqversion):
 
 def version_test(modname, current, required):
 
-    # convert to lists
-    lcurrent = convert_version_to_list(current)
-    lrequired = convert_version_to_list(required)
+    # get current version
+    lcurrent, emsgs = convert_version_to_list(current)
+    # write error
+    if emsgs is not None:
+        print('Error trying to get current version for {0}'.format(modname))
+        print(emsgs)
+        return False
+    # get required version
+    lrequired, emsgs = convert_version_to_list(required)
+    # write error
+    if emsgs is not None:
+        print('Error trying to get required version for {0}'.format(modname))
+        print(emsgs)
+        return False
     # test version
     if lcurrent[0] > lrequired[0]:
         passed = True
@@ -473,18 +484,31 @@ def version_test(modname, current, required):
 
 
 def convert_version_to_list(v):
-
     # noinspection PyBroadException
     try:
         vlist = v.split('.')
     except:
-        return [-1, -1, -1]
+        emsgs = ('\tCannot split version parts (expected X.Y.Z or X.Y or X)'
+                 '\n\tGot "{0}"'.format(v))
+        return [-1, -1, -1], emsgs
 
-    if len(vlist) == 3:
-        vlist = [int(vlist[0]), int(vlist[1]), int(vlist[2])]
-        return vlist
-    else:
-        return [-1, -1, -1]
+    try:
+        if len(vlist) == 3:
+            vlist = [int(vlist[0]), int(vlist[1]), int(vlist[2])]
+            return vlist, None
+        elif len(vlist) == 2:
+            vlist = [int(vlist[0]), int(vlist[1]), 0]
+            return vlist, None
+        elif len(vlist) == 1:
+            vlist = [int(vlist[0]), 0, 0]
+            return vlist, None
+        else:
+            emsgs = ('\tCannot read version parts (expected X.Y.Z or X.Y or X)'
+                     '\n\tGot "{0}"'.format(v))
+            return [-1, -1, -1], emsgs
+    except Exception as e:
+        emsgs = ('\n\tError {0}: {1}'.format(type(e), e))
+        return [-1, -1, -1], emsgs
 
 
 # =============================================================================
