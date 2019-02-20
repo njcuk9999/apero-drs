@@ -17,6 +17,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+import tkinter.font as tkFont
 
 from drsmodule import constants
 from drsmodule import config
@@ -44,8 +45,8 @@ ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 # Define allowed instruments
 INSTRUMENTS = ['SPIROU', 'NIRPS']
 # define min column length
-MINLENGTH = 50
-MAXLENGTH = 200
+MIN_TABLE_COL_WIDTH = 25
+
 
 # =============================================================================
 # Define new widgets
@@ -167,28 +168,57 @@ class LocationSection:
 
     def __init__(self, parent, master):
         self.master = master
-        self.frame = tk.Frame(parent)
-        self.label = tk.Label(self.frame, text='Location: ', anchor=tk.W)
-        self.label.pack(side=tk.LEFT, anchor=tk.W)
+        # set up frames
+        self.frame1 = tk.Frame(parent)
+        self.frame2 = tk.Frame(parent)
 
+        # ---------------------------------------------------------------------
+        # add instrument element
+        self.label1 = tk.Label(self.frame1, text='Instrument: ', anchor=tk.W)
+        self.label1.pack(side=tk.LEFT, anchor=tk.W)
+        # define choices
+        choices = INSTRUMENTS
+        self.box1 = ttk.Combobox(self.frame1, values=choices, state="readonly",
+                                width=20)
+        self.box1.current(0)
+        self.box1.bind('<<ComboboxSelected>>', self.on_drop_instrument)
+        self.box1.pack(side=tk.LEFT, anchor=tk.W)
+        # ---------------------------------------------------------------------
+        # add location element
+        self.label2 = tk.Label(self.frame2, text='Location: ', anchor=tk.W)
+        self.label2.pack(side=tk.LEFT, anchor=tk.W)
         # define choices
         choices = []
         for path in ALLOWED_PATHS:
             choices.append(self.master.datastore.params[path])
-
-        self.box = ttk.Combobox(self.frame, values=choices, state="readonly",
+        self.box2 = ttk.Combobox(self.frame2, values=choices, state="readonly",
                                 width=75)
-        self.box.current(0)
-        self.box.bind('<<ComboboxSelected>>', self.on_drop)
-        self.box.pack(side=tk.LEFT, anchor=tk.W)
+        self.box2.current(0)
+        self.box2.bind('<<ComboboxSelected>>', self.on_drop_location)
+        self.box2.pack(side=tk.LEFT, anchor=tk.W)
+        # add frames
+        self.frame1.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
+                        side=tk.TOP)
+        self.frame2.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
+                        side=tk.TOP)
 
-        # add frame
-        self.frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
-                        side=tk.BOTTOM)
-
-    def on_drop(self, *args):
+    def on_drop_instrument(self, *args):
         # get the value
-        value = self.box.get()
+        value = self.box1.get()
+        # update the data
+        self.master.instrument = value
+        self.master.set_title()
+        self.master.datastore.instrument = value
+        self.master.datastore.update_data()
+        # unpopulate table
+        self.master.table_element.unpopulate_table()
+        self.master.table_element.populate_table()
+        self.master.filter_element.remove_filters()
+        self.master.filter_element.add_filters()
+
+    def on_drop_location(self, *args):
+        # get the value
+        value = self.box2.get()
         # update the data
         self.master.datastore.update_data(path=value)
         # unpopulate table
@@ -201,7 +231,7 @@ class LocationSection:
 class FilterSection:
     def __init__(self, parent, master):
         self.master = master
-        self.frame = tk.Frame(parent, relief=tk.SUNKEN)
+        self.frame = tk.Frame(parent)
         self.label = tk.Label(self.frame, text='Filters: ', anchor=tk.W)
         self.label.pack(side=tk.TOP, anchor=tk.W)
         # pack frame
@@ -258,8 +288,8 @@ class FilterSection:
             dbox = ttk.Combobox(self.filter_frame, values=choices,
                                 state="readonly")
             dbox.current(0)
-            label.grid(row=it * 2, column=0)
-            dbox.grid(row=(it * 2) + 1, column=0)
+            label.grid(row=it, column=0, sticky=tk.W)
+            dbox.grid(row=it, column=1)
             dbox.bind('<<ComboboxSelected>>', self.on_drop)
             self.boxes[col] = dbox
 
@@ -283,6 +313,7 @@ class FilterSection:
                 self.master.datastore.options[col] = [value]
         # update mask
         self.master.datastore.apply_filters()
+        self.master.datastore.calculate_lengths()
         # unpopulate table
         self.master.table_element.unpopulate_table()
         self.master.table_element.populate_table()
@@ -362,50 +393,42 @@ class TableSection:
         self.tableframe.propagate(False)
         self.tableframe.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
                              side=tk.TOP)
-        # get data and mask
+        # get data, cols and mask
         data = self.master.datastore.data
         cols = self.master.datastore.cols
         mask = self.master.datastore.mask
-        lens = self.master.datastore.lengths
-
-        # figure out table size
-        framewidth = self.width
-        tablewidth = np.sum(list(lens.values()))
-        scalefactor = framewidth/tablewidth
-        # print(framewidth, tablewidth, scalefactor)
-
+        # ---------------------------------------------------------------------
+        # work out the column widths
+        max_column_widths = self.get_widths()
+        # ---------------------------------------------------------------------
         # mask data
         masked_data = np.array(data)[mask]
-
-        # make a style
+        # make a style for the table
         style = ttk.Style()
         style.configure('file_explorer.Treeview',
                         borderwidth=2,
                         relief=tk.SUNKEN)
-
+        # ---------------------------------------------------------------------
         # make table
         self.tree = ttk.Treeview(self.tableframe, height=len(data),
                                  style=('file_explorer.Treeview'))
-
+        # ---------------------------------------------------------------------
+        # add scroll bar
         ysb = ttk.Scrollbar(self.tableframe, orient='vertical',
                             command=self.tree.yview)
         xsb = ttk.Scrollbar(self.tableframe, orient='horizontal',
                             command=self.tree.xview)
-
         self.tree.configure(yscrollcommand=lambda f, l: ysb.set,
                             xscrollcommand=lambda f, l: xsb.set)
-
+        # ---------------------------------------------------------------------
         # set up columns
         self.tree['columns'] = cols
         for c_it, col in enumerate(cols):
             col_id = '#{0}'.format(c_it)
             self.tree.heading(col_id, text=col)
-            colwidth = int(np.ceil(lens[col] * scalefactor)) * 10
-            if colwidth > MAXLENGTH:
-                colwidth = MAXLENGTH
-            self.tree.column(col_id, minwidth=MINLENGTH, width=colwidth,
-                             stretch=tk.YES)
-
+            self.tree.column(col_id, stretch=tk.YES,
+                             width=max_column_widths[c_it])
+        # ---------------------------------------------------------------------
         # insert data
         for row in range(len(masked_data)):
 
@@ -418,13 +441,38 @@ class TableSection:
             self.tree.insert("", row, text=masked_data[row][0],
                              values=tuple(masked_data[row][1:]),
                              tags=tags)
-
+        # ---------------------------------------------------------------------
+        # style for tagged elements
         self.tree.tag_configure('oddrow', background='#E8E8E8')
         self.tree.tag_configure('evenrow', background='#99CCFF')
-
+        # ---------------------------------------------------------------------
+        # pack into frame
         ysb.pack(expand=tk.YES, fill=tk.Y, side=tk.RIGHT)
         xsb.pack(expand=tk.YES, fill=tk.X, side=tk.BOTTOM)
         self.tree.pack(fill=tk.BOTH)
+
+    def get_widths(self):
+        cols = self.master.datastore.cols
+        lens = self.master.datastore.lengths
+        # define font
+        self.myFont = tkFont.Font(self.frame, font='TkDefaultFont')
+        # loop around columns and work out width
+        max_column_widths = [0] * len(cols)
+
+        for it, col in enumerate(cols):
+            test_string = '_'*lens[col]
+            new_length1 = self.myFont.measure(str(test_string))
+            new_length2 = self.myFont.measure(str(col))
+            new_length3 = MIN_TABLE_COL_WIDTH
+
+            largs = [col, new_length1, new_length2, new_length3]
+            print('Lengths[{0}]: {1}, {2}, {3}'.format(*largs))
+
+            new_length = np.max([new_length1, new_length2, new_length3])
+            if new_length > max_column_widths[it]:
+                max_column_widths[it] = int(new_length * 1.10)
+        return max_column_widths
+
 
     def unpopulate_table(self):
         """
@@ -458,10 +506,11 @@ class App(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         # save datastore
         self.datastore = datastore
+        self.instrument = self.datastore.instrument
         # set minimum size
-        self.minsize(512, 360)
+        self.minsize(1024, 768)
         # set application title
-        self.title(PROGRAM_NAME)
+        self.set_title()
         # update the height and width(s) - need to update idle tasks to make
         #   sure we have correct height/width
         self.update_idletasks()
@@ -469,7 +518,7 @@ class App(tk.Tk):
         self.width = self.winfo_width()
         # add full frames
         self.main_top = tk.Frame(self)
-        self.main_middle = tk.Frame(self)
+        self.main_middle = tk.Frame(self, relief=tk.RAISED)
         self.main_bottom = tk.Frame(self)
         # set the location of main frames
         self.main_top.grid(column=0, row=0, columnspan=2,
@@ -486,7 +535,7 @@ class App(tk.Tk):
         self.config(menu=self.navbar.menubar)
         # set up the grid weights (to make it expand to full size)
         self.grid_rowconfigure(0, weight=0)
-        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(1, weight=1)
         #self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
@@ -494,6 +543,9 @@ class App(tk.Tk):
         # self.bind_all('<Configure>', self.table_element.on_frame_configure)
         # self.bind_all('<Button-4>', self.table_element.on_mouse_scroll)
         # self.bind_all('<Button-5>', self.table_element.on_mouse_scroll)
+
+    def set_title(self):
+        self.title('{0} ({1})'.format(PROGRAM_NAME, self.instrument))
 
 
 # =============================================================================
@@ -527,7 +579,7 @@ def main(instrument=None):
     WLOG(datastore.params, '', 'Running file explorer application')
     # Main code here
     app = App(datastore=datastore)
-    app.geometry("1024x512")
+    app.geometry("1024x768")
     app.mainloop()
     # end with a log message
     WLOG(datastore.params, '', 'Program has completed successfully')
@@ -571,8 +623,10 @@ class LoadData:
         self.params = params
         self.pconstant = constants.pload(self.instrument)
         # set path from parameters
-        if path is None:
+        if (path is None) and (self.path is None):
             self.path = self.params[ALLOWED_PATHS[0]]
+        elif (path is None) and (self.path is not None):
+            pass
         else:
             self.path = path
         self.index_filename = self.pconstant.INDEX_OUTPUT_FILENAME()
@@ -628,14 +682,26 @@ class LoadData:
         for col in self.cols:
             # set the entries
             self.entries[col] = set(self.data[col])
-            # set the lengths
-            lengths = list(map(lambda x: len(str(x)), self.data[col]))
-            self.lengths[col] = np.max([np.max(lengths), len(col)])
             # set the options
             self.options[col] = None
             # get clean data
             clean_list = list(map(self.clean, self.data[col]))
             self.clean_data[col] = np.array(clean_list)
+        # calculate lengths
+        self.calculate_lengths()
+
+    def calculate_lengths(self):
+        # mask data with current mask
+        print('Number Masked = {0}'.format(np.sum(self.mask)))
+        masked_data = self.data[self.mask]
+        # loop through columns and update self.lengths
+        for col in self.cols:
+            # set the lengths
+            lengths = list(map(lambda x: len(str(x)), masked_data[col]))
+            self.lengths[col] = np.max([np.max(lengths), len(col)])
+
+            print('Lengths[{0}] = {1}'.format(col, self.lengths[col]))
+
 
     def clean(self, value):
         return str(value).upper().strip()
