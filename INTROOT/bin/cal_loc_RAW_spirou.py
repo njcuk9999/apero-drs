@@ -218,16 +218,6 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Search for order center and profile on specific columns
     # ----------------------------------------------------------------------
-    # Plot the image (ready for fit points to be overplotted later)
-    if p['DRS_PLOT'] > 0:
-        # get saturation threshold
-        satseuil = p['IC_SATSEUIL'] * p['GAIN'] * p['NBFRAMES']
-        # plot image above saturation threshold
-        # fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
-        fig1, frame1 = sPlt.locplot_im_sat_threshold(p, data2, satseuil)
-    else:
-        fig1, frame1 = None, None
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # get fit polynomial orders for position and width
     fitpos, fitwid = p['IC_LOCDFITC'], p['IC_LOCDFITW']
     # Create arrays to store position and width of order for each order
@@ -252,6 +242,9 @@ def main(night_name=None, files=None):
     # set source for all locs
     loc.set_all_sources(__NAME__ + '/main()')
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # storage for plotting
+    loc['XPLOT'], loc['YPLOT'] = [], []
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # loop around each order
     rorder_num = 0
     for order_num in range(number_of_orders):
@@ -265,13 +258,11 @@ def main(night_name=None, files=None):
         if len(loc['X']) > (fitpos + 1):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # initial fit params
-            iofargs = [p, loc, mask, order_num, rorder_num]
+            iofargs = [p, loc, mask, rorder_num]
             # initial fit for center positions for this order
-            cf_data = spirouLOCOR.InitialOrderFit(*iofargs, kind='center',
-                                                  fig=fig1, frame=frame1)
+            loc, cf_data = spirouLOCOR.InitialOrderFit(*iofargs, kind='center')
             # initial fit for widths for this order
-            wf_data = spirouLOCOR.InitialOrderFit(*iofargs, kind='fwhm',
-                                                  fig=fig1, frame=frame1)
+            loc, wf_data = spirouLOCOR.InitialOrderFit(*iofargs, kind='fwhm')
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # Log order number and fit at central pixel and width and rms
             wargs = [rorder_num, cf_data['cfitval'], wf_data['cfitval'],
@@ -306,6 +297,14 @@ def main(night_name=None, files=None):
         # else log that the order is unusable
         else:
             WLOG(p, '', 'Order found too much incomplete, discarded')
+    # ----------------------------------------------------------------------
+    # Plot the image (ready for fit points to be overplotted later)
+    if p['DRS_PLOT'] > 0:
+        # get saturation threshold
+        satseuil = p['IC_SATSEUIL'] * p['GAIN'] * p['NBFRAMES']
+        # plot image above saturation threshold
+        sPlt.locplot_im_sat_threshold(p, loc, data2, satseuil)
+    # ----------------------------------------------------------------------
 
     # Log that order geometry has been measured
     WLOG(p, 'info', ('On fiber {0} {1} orders geometry have been '
@@ -488,7 +487,8 @@ def main(night_name=None, files=None):
         # save this image to file
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+                                   value=p['DARKFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
                                    value=p['BADPFILE1'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
