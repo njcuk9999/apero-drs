@@ -1892,6 +1892,11 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     title = 'Wavelength Solution Littrow Check {0} fiber {1}'.format(*targs)
     frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
               title=title)
+    # set frame limits
+    ylim_low = np.min((-p['QC_HC_DEV_LITTROW_MAX'], np.min(yy)))
+    ylim_up = np.max((p['QC_HC_DEV_LITTROW_MAX'], np.max(yy)))
+    ylim = (ylim_low, ylim_up)
+    frame.set(ylim=ylim)
     # add legend
     frame.legend(loc=0)
     # end plotting function properly
