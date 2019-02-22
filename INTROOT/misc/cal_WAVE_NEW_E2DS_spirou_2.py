@@ -257,6 +257,43 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
+    # ----------------------------------------------------------------------
+    # log the global stats
+    # ----------------------------------------------------------------------
+
+    # calculate catalog-fit residuals in km/s
+
+    res_hc =[]
+    sumres_hc = 0.0
+    sumres2_hc = 0.0
+
+    for order in range(loc['NBO']):
+        # get HC line wavelengths for the order
+        order_mask = loc['ORD_T'] == order
+        hc_x_ord = loc['XGAU_T'][order_mask]
+        hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][order][::-1],hc_x_ord)
+        hc_ll_cat = loc['WAVE_CATALOG'][order_mask]
+        hc_ll_diff = hc_ll_ord - hc_ll_cat
+        res_hc.append(hc_ll_diff*speed_of_light/hc_ll_cat)
+        sumres_hc += np.sum(res_hc[order])
+        sumres2_hc += np.sum(res_hc[order] ** 2)
+
+    total_lines_hc = len(np.concatenate(res_hc))
+    final_mean_hc = sumres_hc/total_lines_hc
+    final_var_hc = (sumres2_hc/total_lines_hc) - (final_mean_hc ** 2)
+    wmsg1 = 'On fiber {0} HC fit line statistic:'.format(p['FIBER'])
+    wargs2 = [final_mean_hc * 1000.0, np.sqrt(final_var_hc) * 1000.0,
+              total_lines_hc, 1000.0 * np.sqrt(final_var_hc / total_lines_hc)]
+    wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} HC lines (error on mean '
+             'value:{3:.4f}[m/s])'.format(*wargs2))
+    WLOG(p, 'info', [wmsg1, wmsg2])
+
+    # rest = (np.concatenate(fp_ll_final_clip)-np.concatenate(fp_ll_in_clip))\
+    #        *speed_of_light/np.concatenate(fp_ll_in_clip)
+    # print(1000 * np.sqrt((np.sum(rest ** 2) / total_lines -
+    #                       np.sum(rest / total_lines) ** 2) / total_lines))
+
+
     # TODO FP part starts from here
 
     # ----------------------------------------------------------------------
@@ -521,22 +558,25 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     one_m_d = np.asarray(one_m_d)[one_m_sort]
     d = np.asarray(d)[one_m_sort]
 
-    # initial polynomial fit
-    fit_1m_d_init = np.polyfit(one_m_d, d, 9)
-    # get residuals
-    res = d - np.polyval(fit_1m_d_init, one_m_d)
-    # mask points at +/- 1 sigma
-    sig_clip = abs(res) < np.std(res)
-    one_m_d = one_m_d[sig_clip]
-    d = d[sig_clip]
+    # # initial polynomial fit
+    # fit_1m_d_init = np.polyfit(one_m_d, d, 9)
+    # # get residuals
+    # res = d - np.polyval(fit_1m_d_init, one_m_d)
+    # # mask points at +/- 1 sigma
+    # sig_clip = abs(res) < np.std(res)
+    # one_m_d = one_m_d[sig_clip]
+    # d = d[sig_clip]
 
     # second polynomial fit
     fit_1m_d = np.polyfit(one_m_d, d, 9)
     fit_1m_d_func = np.poly1d(fit_1m_d)
+    res_d_final = d - fit_1m_d_func(one_m_d)
+
 
     if p['DRS_PLOT']:
         # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
         plt.figure()
+        plt.subplot(211)
         # plot values
         plt.plot(one_m_d, d, 'o')
         # plot initial cavity width value
@@ -549,6 +589,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.ylabel('d')
         plt.legend(loc='best')
         plt.title('Interpolated cavity width for HC lines')
+        # plot residuals
+        plt.subplot(212)
+        plt.plot(one_m_d, res_d_final, '.')
+        plt.xlabel('1/m')
+        plt.ylabel('residuals [nm]')
+
 
     # # Test fit v wavelength - why?
     # ff = np.polyfit(hc_ll_test, d, 9)
@@ -606,138 +652,158 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.ylabel(ylabel)
         plt.legend(loc='best')
 
-    # # ----------------------------------------------------------------------
-    # # Fit wavelength solution from FP peaks
-    # # ----------------------------------------------------------------------
-    #
-    # # set up storage arrays
-    # xpix = np.arange(loc['NBPIX'])
-    # wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
-    # poly_wave_sol_final = np.zeros_like(loc['WAVEPARAMS'][0:(n_fin-n_init)])
-    # wsumres = 0.0
-    # wsumres2 = 0.0
-    # total_lines = 0.0
-    # fp_x_final_clip = []
-    # fp_ll_final_clip = []
-    # fp_ll_in_clip = []
-    # res_clip = []
-    # scale = []
-    #
-    # # loop over the orders
-    # for onum in range(n_fin - n_init):
-    #     # order mask
-    #     ord_mask = np.where(np.concatenate(fp_order).ravel() == onum + n_init)
-    #     # get FP line pixel positions for the order
-    #     fp_x_ord = fp_xx[onum]
-    #     # get new FP line wavelengths for the order
-    #     fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
-    #     # fit polinomial
-    #     pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT']]
-    #     poly_wave_sol_final[onum] = np.polyfit(*pargs)[::-1]
-    #     # get final wavelengths
-    #     fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
-    #     # get residuals
-    #     res = np.abs(fp_ll_final_ord - fp_ll_new_ord)
-    #     # if residuals are large, iterative improvement
-    #     while np.max(res) > p['IC_MAX_LLFIT_RMS']:
-    #         # create sigma mask
-    #         sig_mask = res < np.max(res)
-    #         # mask input arrays
-    #         fp_x_ord = fp_x_ord[sig_mask]
-    #         fp_ll_new_ord = fp_ll_new_ord[sig_mask]
-    #         # refit polinomial
-    #         pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT']]
-    #         poly_wave_sol_final[onum] = np.polyfit(*pargs)[::-1]
-    #         # get new final wavelengths
-    #         fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1],
-    #                                      fp_x_ord)
-    #         # get new residuals
-    #         res = np.abs(fp_ll_final_ord - fp_ll_new_ord)
-    #     # save wave map
-    #     wave_map_final[onum] = np.polyval(poly_wave_sol_final[onum][::-1], xpix)
-    #     # save aux arrays
-    #     fp_x_final_clip.append(fp_x_ord)
-    #     fp_ll_final_clip.append(fp_ll_final_ord)
-    #     fp_ll_in_clip.append(fp_ll_new_ord)
-    #     res_clip.append(res*speed_of_light/fp_ll_final_ord)
-    #     # save stats
-    #     # get the derivative of the coefficients
-    #     poly = np.poly1d(poly_wave_sol_final[onum][::-1])
-    #     dldx = np.polyder(poly)(fp_x_ord)
-    #     # work out conversion factor
-    #     convert = speed_of_light * dldx / fp_ll_final_ord
-    #     scale.append(convert)
-    #     # sum the residuals in km/s
-    #     wsumres += np.sum(res * convert)
-    #     # sum the weighted squared residuals in km/s
-    #     wsumres2 += np.sum((res * convert) ** 2)
-    #     # total lines
-    #     total_lines += len(fp_x_ord)
-    # # calculate the final var and mean
-    # final_mean = wsumres / total_lines
-    # final_var = wsumres2 / total_lines - (final_mean ** 2)
-    # # log the global stats
-    # wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
-    # wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
-    #           total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
-    # wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
-    #          'value:{3:.4f}[m/s])'.format(*wargs2))
-    # WLOG(p, 'info', [wmsg1, wmsg2])
-    #
-    # if p['DRS_PLOT']:
-    #     # control plot - single order - TODO move to spirouPlot
-    #     plot_order = p['IC_WAVE_EA_PLOT_ORDER']
-    #     plt.figure()
-    #     # get mask for HC lines
-    #     hc_mask = loc['ORD_T'] == plot_order
-    #     # get hc lines
-    #     hc_ll = loc['WAVE_CATALOG'][hc_mask]
-    #     # plot hc data
-    #     plt.plot(wave_map_final[plot_order - n_init], loc['HCDATA'][plot_order])
-    #     plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][plot_order]))
-    #     plt.xlabel('Wavelength')
-    #     plt.ylabel('Flux')
-    #
-    # if p['DRS_PLOT']:
-    #     # control plot - selection of orders - TODO move to spirouPlot
-    #     n_plot_init = 0
-    #     n_plot_fin = np.min((n_fin-1, 5))
-    #
-    #     plt.figure()
-    #     # define spectral order colours
-    #     col1 = ['black', 'grey']
-    #     lty = ['--', ':']
-    #     #    col2 = ['green', 'purple']
-    #     # loop through the orders
-    #     for order_num in range(n_plot_init, n_plot_fin):
-    #         # set up mask for the order
-    #         gg = loc['ORD_T'] == order_num
-    #         # keep only lines for the order
-    #         hc_ll = loc['WAVE_CATALOG'][gg]
-    #         # get colours from order parity
-    #         col1_1 = col1[np.mod(order_num, 2)]
-    #         lty_1 = lty[np.mod(order_num, 2)]
-    #         #        col2_1 = col2[np.mod(order_num, 2)]
-    #         # plot hc data
-    #         plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
-    #         plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][order_num]), color=col1_1,
-    #                    linestyles=lty_1)
-    #         plt.xlabel('Wavelength (nm)')
-    #         plt.ylabel('Flux')
-    #
-    # safetytest = np.copy(wave_map_final)
-
-    # TODO test linmin fitting
-
     # ----------------------------------------------------------------------
-    # Fit wavelength solution to FP peaks with linear minimization
+    # Fit wavelength solution from FP peaks
     # ----------------------------------------------------------------------
-    loc = spirouWAVE.fit_fp_linmin(p, loc)
-    wave_map_final = loc['WAVE_MAP_FP']
-    loc['LL_OUT_2'] = wave_map_final
-    loc['LL_FINAL'] = loc['WAVE_MAP_FP']
-    loc['LL_PARAM_FINAL'] = loc['POLY_WAVE_SOL_FP']
 
+    # set up storage arrays
+    xpix = np.arange(loc['NBPIX'])
+    wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
+    poly_wave_sol_final = np.zeros_like(loc['WAVEPARAMS'][0:(n_fin-n_init)])
+    wsumres = 0.0
+    wsumres2 = 0.0
+    total_lines = 0.0
+    sweight = 0.0
+    fp_x_final_clip = []
+    fp_ll_final_clip = []
+    fp_ll_in_clip = []
+    res_clip = []
+    wei_clip = []
+    scale = []
+    # weights - dummy array
+    wei = np.ones_like(fp_ll_new)
+
+    # loop over the orders
+    for onum in range(n_fin - n_init):
+        # order mask
+        ord_mask = np.where(np.concatenate(fp_order).ravel() == onum + n_init)
+        # get FP line pixel positions for the order
+        fp_x_ord = fp_xx[onum]
+        # get new FP line wavelengths for the order
+        fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
+        # get weights for the order
+        wei_ord = np.asarray(wei)[ord_mask]
+        # fit polynomial
+        # pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
+        poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
+                                               p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+        # get final wavelengths
+        fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
+        # get residuals
+        res = np.abs(fp_ll_final_ord - fp_ll_new_ord)
+        # if residuals are large, iterative improvement
+        while np.max(res) > p['IC_MAX_LLFIT_RMS']:
+            # create sigma mask
+            sig_mask = res < np.max(res)
+            # mask input arrays
+            fp_x_ord = fp_x_ord[sig_mask]
+            fp_ll_new_ord = fp_ll_new_ord[sig_mask]
+            wei_ord = wei_ord[sig_mask]
+            # refit polynomial
+            #pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
+            poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
+                                                   p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+            # get new final wavelengths
+            fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1],
+                                         fp_x_ord)
+            # get new residuals
+            res = np.abs(fp_ll_final_ord - fp_ll_new_ord)
+        # save wave map
+        wave_map_final[onum] = np.polyval(poly_wave_sol_final[onum][::-1], xpix)
+        # save aux arrays
+        fp_x_final_clip.append(fp_x_ord)
+        fp_ll_final_clip.append(fp_ll_final_ord)
+        fp_ll_in_clip.append(fp_ll_new_ord)
+        # residuals in km/s
+        # recalculate the residuals (not absolute value!!)
+        res = fp_ll_final_ord - fp_ll_new_ord
+        res_clip.append(res*speed_of_light/fp_ll_new_ord)
+        wei_clip.append(wei_ord)
+        # save stats
+        # get the derivative of the coefficients
+        poly = np.poly1d(poly_wave_sol_final[onum][::-1])
+        dldx = np.polyder(poly)(fp_x_ord)
+        # work out conversion factor
+        convert = speed_of_light * dldx / fp_ll_final_ord
+        scale.append(convert)
+        # sum the weights (recursively)
+        sweight += np.sum(wei_clip[onum])
+        # sum the weighted residuals in km/s
+        wsumres += np.sum(res_clip[onum] * wei_clip[onum])
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.sum(wei_clip[onum] * res_clip[onum] ** 2)
+
+    # calculate the final var and mean
+    total_lines = len(np.concatenate(fp_ll_in_clip))
+    final_mean = wsumres / sweight
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the global stats
+    wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+    wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
+    wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+             'value:{3:.4f}[m/s])'.format(*wargs2))
+    WLOG(p, 'info', [wmsg1, wmsg2])
+
+    # rest = (np.concatenate(fp_ll_final_clip)-np.concatenate(fp_ll_in_clip))\
+    #        *speed_of_light/np.concatenate(fp_ll_in_clip)
+    # print(1000 * np.sqrt((np.sum(rest ** 2) / total_lines -
+    #                       np.sum(rest / total_lines) ** 2) / total_lines))
+
+    if p['DRS_PLOT']:
+        # control plot - single order - TODO move to spirouPlot
+        plot_order = p['IC_WAVE_EA_PLOT_ORDER']
+        plt.figure()
+        # get mask for HC lines
+        hc_mask = loc['ORD_T'] == plot_order
+        # get hc lines
+        hc_ll = loc['WAVE_CATALOG'][hc_mask]
+        # plot hc data
+        plt.plot(wave_map_final[plot_order - n_init], loc['HCDATA'][plot_order])
+        plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][plot_order]))
+        plt.xlabel('Wavelength')
+        plt.ylabel('Flux')
+
+    if p['DRS_PLOT']:
+        # control plot - selection of orders - TODO move to spirouPlot
+        n_plot_init = 0
+        n_plot_fin = np.min((n_fin-1, 5))
+
+        plt.figure()
+        # define spectral order colours
+        col1 = ['black', 'grey']
+        lty = ['--', ':']
+        #    col2 = ['green', 'purple']
+        # loop through the orders
+        for order_num in range(n_plot_init, n_plot_fin):
+            # set up mask for the order
+            gg = loc['ORD_T'] == order_num
+            # keep only lines for the order
+            hc_ll = loc['WAVE_CATALOG'][gg]
+            # get colours from order parity
+            col1_1 = col1[np.mod(order_num, 2)]
+            lty_1 = lty[np.mod(order_num, 2)]
+            #        col2_1 = col2[np.mod(order_num, 2)]
+            # plot hc data
+            plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
+            plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][order_num]), color=col1_1,
+                       linestyles=lty_1)
+            plt.xlabel('Wavelength (nm)')
+            plt.ylabel('Flux')
+
+    safetytest = np.copy(wave_map_final)
+
+    # # TODO test linmin fitting
+    #
+    # # ----------------------------------------------------------------------
+    # # Fit wavelength solution to FP peaks with linear minimization
+    # # ----------------------------------------------------------------------
+    # loc = spirouWAVE.fit_fp_linmin(p, loc)
+    # wave_map_final = loc['WAVE_MAP_FP']
+    # loc['LL_OUT_2'] = wave_map_final
+    # loc['LL_FINAL'] = loc['WAVE_MAP_FP']
+    # loc['LL_PARAM_FINAL'] = loc['POLY_WAVE_SOL_FP']
+    #
     # ----------------------------------------------------------------------
     # Do Littrow check
     # ----------------------------------------------------------------------
@@ -760,35 +826,35 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
 
-    # # ------------------------------------------------------------------
-    # # extrapolate Littrow solution
-    # # ------------------------------------------------------------------
-    #
-    # #saves for compatibility
-    # loc['LL_OUT_2'] = wave_map_final
-    # loc['LL_PARAM_2'] = poly_wave_sol_final
-    # p['IC_HC_N_ORD_START_2'] = n_init
-    # p['IC_HC_N_ORD_FINAL_2'] = n_fin
-    # # p['IC_LITTROW_ORDER_INIT_2'] = n_init
-    # loc['X_MEAN_2'] = final_mean
-    # loc['X_VAR_2'] = final_var
-    #
-    #
-    # ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
-    # loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
-    #
-    # # ------------------------------------------------------------------
-    # # Plot littrow solution
-    # # ------------------------------------------------------------------
-    # if p['DRS_PLOT']:
-    #     # plot littrow x pixels against fitted wavelength solution
-    #     sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
-    #
-    # # ------------------------------------------------------------------
-    # # Join 0-47 and 47-49 solutions
-    # # ------------------------------------------------------------------
-    # loc = spirouTHORCA.JoinOrders(p, loc)
-    #
+    # ------------------------------------------------------------------
+    # extrapolate Littrow solution
+    # ------------------------------------------------------------------
+
+    #saves for compatibility
+    loc['LL_OUT_2'] = wave_map_final
+    loc['LL_PARAM_2'] = poly_wave_sol_final
+    p['IC_HC_N_ORD_START_2'] = n_init
+    p['IC_HC_N_ORD_FINAL_2'] = n_fin
+    # p['IC_LITTROW_ORDER_INIT_2'] = n_init
+    loc['X_MEAN_2'] = final_mean
+    loc['X_VAR_2'] = final_var
+
+
+    ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+    loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+
+    # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
+
+    # ------------------------------------------------------------------
+    # Join 0-47 and 47-49 solutions
+    # ------------------------------------------------------------------
+    loc = spirouTHORCA.JoinOrders(p, loc)
+
     # ------------------------------------------------------------------
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------

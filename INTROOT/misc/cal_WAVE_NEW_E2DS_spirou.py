@@ -648,10 +648,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # second polynomial fit
     fit_1m_d = np.polyfit(one_m_d, d, 10)
     fit_1m_d_func = np.poly1d(fit_1m_d)
+    res_d_final = d - fit_1m_d_func(one_m_d)
 
     if p['DRS_PLOT']:
-        # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
+        # plot 1/m vs d and the fitted polynomial, and the residuals - TODO move to spirouPLOT
         plt.figure()
+        plt.subplot(211)
         # plot values
         plt.plot(one_m_d, d, 'o')
         # plot initial cavity width value
@@ -664,6 +666,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.ylabel('d')
         plt.legend(loc='best')
         plt.title('Interpolated cavity width for HC lines')
+        # plot residuals
+        plt.subplot(212)
+        plt.plot(one_m_d, res_d_final, '.')
+        plt.xlabel('1/m')
+        plt.ylabel('residuals [nm]')
 
     # ----------------------------------------------------------------------
     # Update FP peak wavelengths
@@ -714,11 +721,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wsumres = 0.0
     wsumres2 = 0.0
     total_lines = 0.0
+    sweight = 0.0
     fp_x_final_clip = []
     fp_ll_final_clip = []
     fp_ll_in_clip = []
     res_clip = []
+    wei_clip = []
     scale = []
+    # weights - dummy array
+    wei = np.ones_like(fp_ll_new)
 
     # loop over the orders
     for onum in range(n_fin - n_init):
@@ -728,9 +739,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         fp_x_ord = fp_xx[onum]
         # get new FP line wavelengths for the order
         fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
-        # fit polinomial
-        pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT']]
-        poly_wave_sol_final[onum] = np.polyfit(*pargs)[::-1]
+        # get weights for the order
+        wei_ord = np.asarray(wei)[ord_mask]
+        # fit polynomial
+        poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
+                                               p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
         # get final wavelengths
         fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
         # get residuals
@@ -742,9 +755,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # mask input arrays
             fp_x_ord = fp_x_ord[sig_mask]
             fp_ll_new_ord = fp_ll_new_ord[sig_mask]
-            # refit polinomial
-            pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT']]
-            poly_wave_sol_final[onum] = np.polyfit(*pargs)[::-1]
+            wei_ord = wei_ord[sig_mask]
+            # refit polynomial
+            #pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
+            poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
+                                                   p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
             # get new final wavelengths
             fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1],
                                          fp_x_ord)
@@ -756,7 +771,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         fp_x_final_clip.append(fp_x_ord)
         fp_ll_final_clip.append(fp_ll_final_ord)
         fp_ll_in_clip.append(fp_ll_new_ord)
-        res_clip.append(res*speed_of_light/fp_ll_final_ord)
+        # residuals in km/s
+        # recalculate the residuals (not absolute value!!)
+        res = fp_ll_final_ord - fp_ll_new_ord
+        res_clip.append(res * speed_of_light / fp_ll_new_ord)
+        wei_clip.append(wei_ord)
         # save stats
         # get the derivative of the coefficients
         poly = np.poly1d(poly_wave_sol_final[onum][::-1])
@@ -764,13 +783,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # work out conversion factor
         convert = speed_of_light * dldx / fp_ll_final_ord
         scale.append(convert)
-        # sum the residuals in km/s
-        wsumres += np.sum(res * convert)
+        # sum the weights (recursively)
+        sweight += np.sum(wei_clip[onum])
+        # sum the weighted residuals in km/s
+        wsumres += np.sum(res_clip[onum] * wei_clip[onum])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum((res * convert) ** 2)
-        # total lines
-        total_lines += len(fp_x_ord)
+        wsumres2 += np.sum(wei_clip[onum] * res_clip[onum] ** 2)
+
     # calculate the final var and mean
+    total_lines = len(np.concatenate(fp_ll_in_clip))
     final_mean = wsumres / total_lines
     final_var = wsumres2 / total_lines - (final_mean ** 2)
     # log the global stats
@@ -780,6 +801,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
              'value:{3:.4f}[m/s])'.format(*wargs2))
     WLOG(p, 'info', [wmsg1, wmsg2])
+
+    # rest = (np.concatenate(fp_ll_final_clip)-np.concatenate(fp_ll_in_clip))\
+    #        *speed_of_light/np.concatenate(fp_ll_in_clip)
+    # print(1000 * np.sqrt((np.sum(rest ** 2) / total_lines -
+    #                       np.sum(rest / total_lines) ** 2) / total_lines))
 
     if p['DRS_PLOT']:
         # control plot - single order - TODO move to spirouPlot
