@@ -6625,3 +6625,21 @@
 ================================================================================
 	- spirouTelluric.py - remove hard coded number of orders (rev.a02420a2)
 	- obj_mk_tellu_new.py - comment out unused lines (rev.303cf104)
+
+
+
+================================================================================
+* Thu Feb 21 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.075
+
+================================================================================
+	- spirouTelluric.py - need to stop if not index files found. (rev.001427b9)
+
+
+
+================================================================================
+* Fri Feb 22 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.076
+
+================================================================================
+	- spirouLOCOR.py - fix problem with locplot_im_sat_threshold plot (rev.453cba5a)
+	- spirouPlot.py - fix problem with locplot_im_sat_threshold plot (rev.c19a3234)
+	- cal_loc_RAW_spirou.py - fix problem with locplot_im_sat_threshold plot (rev.95c074af)
