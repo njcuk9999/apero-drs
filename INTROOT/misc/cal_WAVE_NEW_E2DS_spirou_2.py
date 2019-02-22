@@ -499,7 +499,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         fp_x_ord = fp_xx[ord_num]
         # get FP line numbers for the order
         m_ord = m[ind_ord]
-        # HC mask - keep best lines with small dv only
+        # HC mask - keep best lines with small dv at above 30% blaze only
         cond1 = abs(loc['DV_T']) < 0.25
         cond2 = loc['ORD_T'] == ord_num + n_init
         hc_mask = np.where(cond1 & cond2)
@@ -508,16 +508,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get 30% blaze mask
         mb = np.where(loc['BLAZE'][ord_num] > 0.3 * np.max(loc['BLAZE'][ord_num]))
         # keep only x values at above 30% blaze
-        hc_x_ord = hc_x_ord[np.logical_and(np.max(mb) > hc_x_ord, np.min(mb) < hc_x_ord)]
+        blaze_mask = np.logical_and(np.max(mb) > hc_x_ord, np.min(mb) < hc_x_ord)
+        hc_x_ord = hc_x_ord[blaze_mask]
         # get HC line wavelengths for the order
         hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][ord_num + n_init][::-1],
                                hc_x_ord)
-        # find corresponding catalogue line
-        # TODO  edit to use wave_catalog
-        hc_ll_ord_cat = np.zeros_like(hc_ll_ord)
-        for j in range(len(hc_ll_ord)):
-            ind = np.argmin(abs(hc_ll_ord[j]-loc['LL_LINE']))
-            hc_ll_ord_cat[j] = loc['LL_LINE'][ind]
+        # get corresponding catalogue lines from loc
+        hc_ll_ord_cat = loc['WAVE_CATALOG'][hc_mask][blaze_mask]
         # fit x vs m for FP lines
         coeff_xm = np.polyfit(fp_x_ord, m_ord, deg=5)
         # get fractional m for HC lines from fit
@@ -965,12 +962,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['QC_DEV_LITTROW_MAX'] = p['QC_HC_DEV_LITTROW_MAX']
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    # # check for infinites and NaNs in mean residuals from fit
-    # if ~np.isfinite(loc['X_MEAN_2']):
-    #     # add failed message to the fail message list
-    #     fmsg = 'NaN or Inf in X_MEAN_2'
-    #     fail_msg.append(fmsg)
-    #     passed = False
+    # check for infinites and NaNs in mean residuals from fit
+    if ~np.isfinite(loc['X_MEAN_2']):
+        # add failed message to the fail message list
+        fmsg = 'NaN or Inf in X_MEAN_2'
+        fail_msg.append(fmsg)
+        passed = False
 
     # iterate through Littrow test cut values
     lit_it = 2
