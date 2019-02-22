@@ -321,7 +321,7 @@ def find_order_centers(pp, image, loc, order_num):
     return loc
 
 
-def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
+def initial_order_fit(pp, loc, mask, onum, kind):
     """
     Performs a crude initial fit for this order, uses the ctro positions or
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
@@ -347,8 +347,6 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
                  widths
     :param onum: int, order iteration number (running number over all
                  iterations)
-    :param rnum: int, order number (running number of successful order
-                 iterations only)
     :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
                  the central positions, if 'fwhm' this fit is for the width of
                  the orders
@@ -400,10 +398,10 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     else:
         max_ptp_frac = np.max(abs_res/y) * 100
     # -------------------------------------------------------------------------
-    # plot order on image plot (if drs_plot is true)
-    if pp['DRS_PLOT'] and kind == 'center':
-        if fig is not None and frame is not None:
-            sPlt.locplot_order(frame, x, y, rnum)
+    # save info for plotting
+    if kind == 'center':
+        loc['XPLOT'].append(x)
+        loc['YPLOT'].append(y)
     # -------------------------------------------------------------------------
     # Work out the fit value at ic_cent_col (for logging)
     cfitval = np.polyval(acoeffs[::-1], pp['IC_CENT_COL'])
@@ -411,7 +409,7 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     # return fit data
     fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,
                    max_ptp=max_ptp, max_ptp_frac=max_ptp_frac, cfitval=cfitval)
-    return fitdata
+    return loc, fitdata
 
 
 def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):

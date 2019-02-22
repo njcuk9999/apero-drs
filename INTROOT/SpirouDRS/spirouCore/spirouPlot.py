@@ -404,7 +404,7 @@ def locplot_order(frame, x, y, label):
 
     :return None:
     """
-    frame.plot(x, y, label=label, linewidth=1.5, color='red')
+
 
 
 def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
@@ -438,7 +438,7 @@ def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
     end_plotting(p, plot_name)
 
 
-def locplot_im_sat_threshold(p, image, threshold):
+def locplot_im_sat_threshold(p, loc, image, threshold):
     """
     Plots the image (order_profile) below the saturation threshold
 
@@ -448,19 +448,27 @@ def locplot_im_sat_threshold(p, image, threshold):
 
     :return None:
     """
+    plot_name = 'locplot_im_sat_threshold'
+    # get x and y data from loc
+    xarr, yarr = loc['XPLOT'], loc['YPLOT']
+
     # set up fig
     fig, frame = setup_figure(p)
-    # clear the current figure
-    plt.clf()
     # plot image
     frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='gist_gray')
     # set the limits
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
 
-    # TODO: Need axis labels and title
+    # loop around xarr and yarr and plot
+    for order_num in range(len(xarr)):
+        # x and y
+        x, y = xarr[order_num], yarr[order_num]
+        # plot
+        frame.plot(x, y, label=order_num, linewidth=1.5, color='red')
 
-    # return fig and frame
-    return fig, frame
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
 
 
 def locplot_order_number_against_rms(pp, loc, rnum):
