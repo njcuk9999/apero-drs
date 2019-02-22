@@ -471,6 +471,15 @@ def find_telluric_stars(p):
         for filename in files:
             if filename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
                 index_files.append(os.path.join(root, filename))
+
+    # log number of index files found
+    if len(index_files) > 0:
+        wmsg = 'Found {0} index files'
+        WLOG(p, '', wmsg.format(len(index_files)))
+    else:
+        emsg = ('No index files found. Please run a off_listing script to '
+                'continue')
+        WLOG(p, 'error', emsg)
     # -------------------------------------------------------------------------
     # valid files dictionary (key = telluric object name)
     valid_files = dict()
