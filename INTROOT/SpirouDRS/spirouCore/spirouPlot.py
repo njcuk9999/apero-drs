@@ -562,6 +562,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     :return None:
     """
     plot_name = 'debug_locplot_finding_orders'
+    plt.ioff()
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
     WLOG(pp, '', '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
@@ -575,7 +576,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     # plot orders
     frame.plot(np.arange(ind1, ind2, 1.0), ycc)
     frame.plot(xx, yy)
-    frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)))
+    frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)+0.01*np.max(ycc)))
 
     # TODO: Need axis labels and title
 
@@ -584,6 +585,9 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
         pass
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
+    plt.show()
+    plt.close()
+    plt.ion()
     # end plotting function properly
     end_plotting(pp, plot_name)
 
