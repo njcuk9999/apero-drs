@@ -71,8 +71,8 @@ interactive = dict(name='--interactive', dtype='bool',
                    helpstr=Help['INTERACTIVE_HELP'],
                    default_ref='DRS_INTERACTIVE')
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype='bool', helpstr=Help['PLOT_HELP'],
-            default_ref='DRS_PLOT')
+plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
+            default_ref='DRS_PLOT', minimum=0, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=Help['RESIZE_HELP'])
