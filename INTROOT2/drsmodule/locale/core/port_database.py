@@ -54,6 +54,9 @@ BLOG = drs_exceptions.basiclogger
 # =============================================================================
 def read_database(xls_file):
 
+    # report progress
+    emsg = 'Loading database from file="{0}"'.format(xls_file)
+    BLOG(emsg, level='', name='Database')
     # import pandas here
     try:
         pd = importlib.import_module(PANDAS_MODULE)
@@ -76,8 +79,9 @@ def convert_csv(xls, sheet_names, out_names, out_dir):
     outpaths = []
     # get sheets
     for it, sheet in enumerate(sheet_names):
-        #
-        BLOG('Writing sheet "{0}"'.format(sheet), level='', name='Database')
+        # print progress
+        wmsg = 'Writing sheet "{0}"'.format(sheet)
+        BLOG(wmsg, level='', name='Database')
         # skip other sheets
         if sheet not in xls.sheet_names:
             emsg1 = 'Cannot find sheet {0} in database'
@@ -88,11 +92,13 @@ def convert_csv(xls, sheet_names, out_names, out_dir):
         outpath = os.path.join(out_dir, out_names[it])
         # save to csv
         pdsheet.to_csv(outpath, sep=',', quoting=2, index=False)
+        # write path to log
+        wmsg = '\t Out file = {0}'.format(outpath)
+        BLOG(wmsg, level='', name='Database')
         # append to outpaths
         outpaths.append(outpath)
     # return outpaths
     return outpaths
-
 
 
 def validate_csv(files):
@@ -136,6 +142,8 @@ if __name__ == "__main__":
         BLOG(emsg.format(*eargs), level='error', name='Database')
     # ----------------------------------------------------------------------
     # create a backup of the database
+    wmsg = 'Backing up database to {0}'.format(babspath)
+    BLOG(wmsg, level='', name='Database')
     shutil.copy(dabspath, babspath)
     # ----------------------------------------------------------------------
     #  first get contents of database directory
@@ -147,6 +155,8 @@ if __name__ == "__main__":
         if os.path.isdir(abspath):
             continue
         if filename != DATABASE_FILE:
+            emsg = 'Removing file {0}'.format(filename)
+            BLOG(emsg, level='', name='Database')
             os.remove(abspath)
     # ----------------------------------------------------------------------
     # read the database file
