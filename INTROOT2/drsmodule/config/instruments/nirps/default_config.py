@@ -45,32 +45,35 @@ DRS_DEBUG.value = False
 # -----------------------------------------------------------------------------
 #   Define the root installation directory (INTROOT)
 DRS_ROOT = DRS_ROOT.copy(__NAME__)
-DRS_ROOT.value = '/drs/spirou/INTROOT/'
+DRS_ROOT.value = '/drs/nirps/INTROOT/'
 
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = DRS_DATA_RAW.copy(__NAME__)
-DRS_DATA_RAW.value = '/drs/spirou/data/raw/'
+DRS_DATA_RAW.value = '/drs/nirps/data/raw/'
 
 #   Define the directory that the reduced data should be saved to/read from
 DRS_DATA_REDUC = DRS_DATA_REDUC.copy(__NAME__)
-DRS_DATA_REDUC.value = '/drs/spirou/data/reduced'
+DRS_DATA_REDUC.value = '/drs/nirps/data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = DRS_CALIB_DB.copy(__NAME__)
-DRS_CALIB_DB.value = '/drs/spirou/data/calibDB'
+DRS_CALIB_DB.value = '/drs/nirps/data/calibDB'
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_TELLU_DB = DRS_TELLU_DB.copy(__NAME__)
-DRS_TELLU_DB.value = '/drs/spirou/data/telluDB'
+DRS_TELLU_DB.value = '/drs/nirps/data/telluDB'
 
 #   Define the directory that the log messages are stored in
 DRS_DATA_MSG = DRS_DATA_MSG.copy(__NAME__)
-DRS_DATA_MSG.value = '/drs/spirou/data/msg'
+DRS_DATA_MSG.value = '/drs/nirps/data/msg'
 
 #   Define the working directory
 DRS_DATA_WORKING = DRS_DATA_WORKING.copy(__NAME__)
-DRS_DATA_WORKING.value = '/drs/spirou/data/tmp'
+DRS_DATA_WORKING.value = '/drs/nirps/data/tmp'
 
+#   Define the plotting directory
+DRS_DATA_PLOT = DRS_DATA_PLOT.copy(__NAME__)
+DRS_DATA_PLOT.value = '/drs/nirps/data/plot'
 
 
 

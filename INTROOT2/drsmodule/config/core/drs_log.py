@@ -55,7 +55,7 @@ DEFAULT_LANGUAGE = drs_text.DEFAULT_LANGUAGE
 # Get the Color dict
 Color = constants.Colors
 # define log format
-LOGFMT = '{0} - {1} |{2}|{3}'
+LOGFMT = Constants['DRS_LOG_FORMAT']
 
 
 # =============================================================================
@@ -609,14 +609,13 @@ def warninglogger(p, w, funcname=None):
 
 def get_logfilepath(logobj, p):
     """
-    Construct the log file path and filename (normally from "DRS_DATA_MSG" but
-    if this is not defined/not found then defaults to "TDATA"/msg or generates
-    an ConfigError exception.
+    Construct the log file path and filename (normally from "DRS_DATA_MSG"
+    generates an ConfigError exception.
 
-    "DRS_DATA_MSG" and "TDATA" are defined in "config.py"
+    "DRS_DATA_MSG" is defined in "config.py"
 
     :return lpath: string, the path and filename for the log file to be used
-    :return warning: bool, if True then "TDATA" was used instead of "DRS_DATA
+    :return warning: bool, if True print warnings about log file path
     """
     msgkey = 'DRS_DATA_MSG'
     # -------------------------------------------------------------------------

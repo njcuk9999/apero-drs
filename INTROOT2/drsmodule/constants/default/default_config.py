@@ -97,7 +97,6 @@ DRS_DATE = Const('DATE', value='2019-01-18', dtype=str, source=__NAME__)
 LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
                  source=__NAME__)
 
-
 # =============================================================================
 # Instrument Constants
 # =============================================================================
@@ -117,11 +116,37 @@ DRS_PACKAGE = Const('DRS_PACKAGE', value='drsmodule', dtype=str,
 DRS_USERENV = Const('DRS_USERENV', value='DRS_UCONFIG', dtype=str,
                     source=__NAME__)
 
+# =============================================================================
+# DRS INTERNAL PATHS
+# =============================================================================
 #   User-config default location (if environmental variable not set)
 #   this is relative to the package level
 DRS_USER_DEFAULT = Const('DRS_USER_DEFAULT', value='../config/', dtype=str,
                          source=__NAME__)
 
+#   where to store internal data
+DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./data/', dtype=str)
+
+#   where instrument configuration files are stored
+DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
+                                  value='./config/instruments/',
+                                  source=__NAME__)
+
+#   where the core configuration files are stored
+DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
+                            value='./config/core/default',
+                            source=__NAME__)
+
+# =============================================================================
+# DRS INDEXING SETTINGS
+# =============================================================================
+# Define the name of the index file (in each working/reduced directory)
+DRS_INDEX_FILE = Const('DRS_INDEX_FILE', dtype=str, value='index.fits',
+                       source=__NAME__)
+
+# Define the filename column of the index file
+DRS_INDEX_FILENAME = Const('DRS_INDEX_FILENAME', dtype=str, value='FILENAME',
+                           source=__NAME__)
 
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
@@ -132,7 +157,7 @@ DRS_USER_DEFAULT = Const('DRS_USER_DEFAULT', value='../config/', dtype=str,
 #       'warning' - to print warning/error events
 #       'error' - to print only error events
 DRS_PRINT_LEVEL = Const('DRS_PRINT_LEVEL', value='all', dtype=str,
-                    options=['all', 'info', 'warning', 'error'],
+                        options=['all', 'info', 'warning', 'error'],
                         source=__NAME__)
 
 #   Level at which to log in log file, values can be:
@@ -170,6 +195,10 @@ DRS_LOG_CAUGHT_WARNINGS = Const('DRS_LOG_CAUGHT_WARNINGS',
 DRS_LOG_EXIT_TYPE = Const('DRS_LOG_EXIT_TYPE', value='sys', dtype=str,
                           options=['os', 'sys'], source=__NAME__)
 
+# Defines the DRS log format
+DRS_LOG_FORMAT = Const('DRS_LOG_FORMAT', value='{0} - {1} |{2}|{3}',
+                       dtype=str, source=__NAME__)
+
 # =============================================================================
 # PLOT SETTINGS
 # =============================================================================
@@ -191,8 +220,6 @@ DRS_PLOT_FONT_SIZE = Const('DRS_PLOT_FONT_SIZE', value=-1, dtype=int,
 #     (i.e. seaborn or dark_background) "None" for not set
 DRS_PLOT_STYLE = Const('DRS_PLOT_STYLE', value='None', dtype=str,
                        source=__NAME__)
-
-
 
 # =============================================================================
 #  End of configuration file

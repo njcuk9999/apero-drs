@@ -50,8 +50,8 @@ ErrorEntry = drs_text.ErrorEntry
 ErrorText = drs_text.ErrorText
 HelpText = drs_text.HelpText
 # define name of index file
-INDEX_FILE = 'index.fits'
-INDEX_FILE_NAME_COL = 'FILENAME'
+INDEX_FILE = Constants['DRS_INDEX_FILE']
+INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
 DRSArgumentParser = drs_argument.DRSArgumentParser
@@ -801,18 +801,18 @@ class DrsRecipe(object):
         # storage of errors (if we have no files)
         errors = ErrorEntry(None)
         # loop around filename
-        for filename in files:
+        for filename_it in files:
             # start of with the file not being valid
             valid = False
             # storage of errors (reset)
             errors = ErrorEntry(None)
             header_errors = dict()
             # add to checked files
-            checked_files.append(filename)
+            checked_files.append(filename_it)
             # loop around file types
             for drs_file in drs_files:
                 # if in debug mode print progres
-                dargs = [drs_file.name, os.path.basename(filename)]
+                dargs = [drs_file.name, os.path.basename(filename_it)]
                 WLOG(params, 'debug', ErrorEntry('90-001-00008', args=dargs),
                      wrap=False)
                 # -------------------------------------------------------------
@@ -821,7 +821,7 @@ class DrsRecipe(object):
                 # get extension
                 ext = drs_file.ext
                 # check the extension
-                exargs = [self, argname, filename]
+                exargs = [self, argname, filename_it]
                 valid1, error1 = _check_file_extension(*exargs, ext=ext)
 
                 # -------------------------------------------------------------
@@ -829,9 +829,9 @@ class DrsRecipe(object):
                 # -------------------------------------------------------------
                 # this step is just for 'fits' files, if not fits
                 #    files we can return here
-                if ('.fits' in filename) and valid1:
-                    out = _check_file_header(self, argname, drs_file, filename,
-                                             directory)
+                if ('.fits' in filename_it) and valid1:
+                    out = _check_file_header(self, argname, drs_file,
+                                             filename_it, directory)
                     valid2, filetype, error2 = out
                     valid2a, valid2b = valid2
                     error2a, error2b = error2
@@ -871,11 +871,11 @@ class DrsRecipe(object):
 
                 # check validity and append if valid
                 if valid:
-                    dargs = [argname, os.path.basename(filename), filetype]
+                    dargs = [argname, os.path.basename(filename_it), filetype]
                     wmsg = ErrorEntry('90-001-00016', args=dargs)
                     WLOG(params, 'debug', wmsg, wrap=False)
                     # append to out files/types
-                    out_files.append(filename)
+                    out_files.append(filename_it)
                     out_types.append(filetype)
                     # break out the inner loop if valid (we don't need to
                     #    check other drs_files)
@@ -887,7 +887,7 @@ class DrsRecipe(object):
                 # add header errors (needed outside drs_file loop)
                 errors += _gen_header_errors(params, header_errors)
                 # add file error (needed only once per filename)
-                eargs = [os.path.abspath(filename)]
+                eargs = [os.path.abspath(filename_it)]
                 errors += '\n' + self.errortext['09-001-00024'].format(*eargs)
                 break
 
@@ -896,8 +896,8 @@ class DrsRecipe(object):
 
         if len(allfiles) > 1:
             errors += ['', 'All files checked:']
-            for filename in allfiles:
-                errors += ['\t\t{0}'.format(filename)]
+            for filename_it in allfiles:
+                errors += ['\t\t{0}'.format(filename_it)]
 
         # ---------------------------------------------------------------------
         # clean up errors (do not repeat same lines)
