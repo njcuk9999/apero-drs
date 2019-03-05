@@ -34,10 +34,10 @@ from . import drs_file
 # Name of program
 __NAME__ = 'drs_startup.py'
 __INSTRUMENT__ = None
-# Define package name
-PACKAGE = 'drsmodule'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
+# Define package name
+PACKAGE = Constants['DRS_PACKAGE']
 # Get version and author
 __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
@@ -63,10 +63,8 @@ ErrorText = drs_text.ErrorText
 HelpEntry = drs_text.HelpEntry
 HelpText = drs_text.HelpText
 # recipe control path
-INSTRUMENT_PATH = './config/instruments/'
-CORE_PATH = './config/core/default/'
-
-# # # RECIPES = recipes_spirou.recipes
+INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
+CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
 
 
 # =============================================================================
@@ -861,9 +859,9 @@ def _find_recipe(name='None', instrument='None'):
         return empty
     # else we have a name and an instrument
     margs = [instrument, ['recipe_definitions.py'], INSTRUMENT_PATH, CORE_PATH]
-    modules = constants.getmodnames(*margs)
+    modules = constants.getmodnames(*margs, path=False)
     # load module
-    mod = importlib.import_module(modules[0])
+    mod = constants.import_module(modules[0], full=True)
     # get a list of all recipes from modules
     all_recipes = mod.recipes
     # try to locate this recipe
@@ -1032,7 +1030,16 @@ def _search_for_key(key, fkwargs=None):
 
 
 def _set_debug_from_input(recipe, fkwargs):
+    """
 
+    :param recipe: DrsRecipe instance
+    :param fkwargs: dictionary: keys to check from function call
+    :type recipe: DrsRecipe
+    :type fkwargs: dict
+
+    :returns: the DrsRecipe with updated parameter dictionary
+    :rtype: DrsRecipe
+    """
     debug_key = '--debug'
     # assume debug is not there
     debug_mode = None
@@ -1047,7 +1054,11 @@ def _set_debug_from_input(recipe, fkwargs):
                 pos = it
                 debug_mode = None
     # deal with position
-    if pos is not None:
+    if pos is None:
+        pass
+    elif (pos + 1) == len(sys.argv):
+        debug_mode = 0
+    elif pos is not None:
         debug_mode = sys.argv[pos + 1]
 
     # check fkwargs

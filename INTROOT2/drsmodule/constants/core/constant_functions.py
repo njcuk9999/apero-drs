@@ -62,11 +62,15 @@ class Const:
             value = self.value
         else:
             value = test_value
+        # deal with no source
+        if source is None:
+            source = self.source
         # get true value (and test test_value)
-        true_value = _validate_value(self.name, self.dtype, value,
-                                     self.dtypei, self.options,
-                                     self.maximum, self.minimum,
-                                     quiet=quiet, source=source)
+        vargs = [self.name, self.dtype, value, self.dtypei, self.options,
+                 self.maximum, self.minimum,]
+        vkwargs = dict(quiet=quiet, source=source)
+
+        true_value, self.source = _validate_value(*vargs, **vkwargs)
         # deal with storing
         if test_value is None:
             self.true_value = true_value
@@ -116,11 +120,14 @@ class Keyword(Const):
             value = self.value
         else:
             value = test_value
+        # deal with no source
+        if source is None:
+            source = self.source
         # get true value (and test test_value)
-        true_value = _validate_value(self.name, self.dtype, value,
-                                     self.dtypei, self.options,
-                                     self.maximum, self.minimum,
-                                     quiet=quiet, source=source)
+        vargs = [self.name, self.dtype, value, self.dtypei, self.options,
+                 self.maximum, self.minimum,]
+        vkwargs = dict(quiet=quiet, source=source)
+        true_value, self.source = _validate_value(*vargs, **vkwargs)
         # deal with no comment
         if self.comment is None:
             self.comment = ''
@@ -153,9 +160,8 @@ class Keyword(Const):
 # =============================================================================
 # Define functions
 # =============================================================================
-def generate_consts(module):
-    # import module
-    mod = importlib.import_module(module)
+def generate_consts(modulepath):
+    mod = import_module(modulepath)
     # get keys and values
     keys, values = list(mod.__dict__.keys()), list(mod.__dict__.values())
     # storage for all values
@@ -175,6 +181,34 @@ def generate_consts(module):
         new_values.append(value)
     # return
     return new_keys, new_values
+
+
+def import_module(modulepath, full=False):
+    # get current directory
+    current = os.getcwd()
+    # deal with getting module
+    if full:
+        modname = modulepath
+    else:
+        # get module name and directory
+        modname = os.path.basename(modulepath).replace('.py', '')
+        moddir = os.path.dirname(modulepath)
+        # change to modulepath directory
+        os.chdir(moddir)
+    # import module
+    try:
+        mod = importlib.import_module(modname)
+        # return to current directory
+        os.chdir(current)
+        # return
+        return mod
+    except Exception as e:
+        # return to current directory
+        os.chdir(current)
+        # report error
+        emsg1 = 'Cannot import module {0} from {1}'.format(modname, moddir)
+        emsg2 = '\tError {0}: {1}'.format(type(e), e)
+        raise ConfigError([emsg1, emsg2])
 
 
 def get_constants_from_file(filename):
@@ -432,7 +466,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                 if not quiet:
                     raise ConfigError([emsg1, emsg2, emsg3], level='error')
     # return true value
-    return true_value
+    return true_value, source
 
 
 def _validate_text_file(filename, comments='#'):

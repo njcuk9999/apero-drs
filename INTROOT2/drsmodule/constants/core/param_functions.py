@@ -18,7 +18,6 @@ import pkg_resources
 import importlib
 from collections import OrderedDict
 
-from drsmodule.locale import drs_text
 from drsmodule.locale import drs_exceptions
 from . import constant_functions
 
@@ -584,10 +583,8 @@ def load_config(instrument=None):
 def load_pconfig(instrument=None):
     # get instrument sub-package constants files
     modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
-    # get PseudoConstants class from modules
-
-    mod = importlib.import_module(modules[0])
-
+    # import module
+    mod = constant_functions.import_module(modules[0])
     # check that we have class and import it
     if hasattr(mod, PSEUDO_CONST_CLASS):
         PsConst = getattr(mod, PSEUDO_CONST_CLASS)
@@ -596,7 +593,6 @@ def load_pconfig(instrument=None):
         emsg = 'Module "{0}" is required to have class "{1}"'
         ConfigError(emsg.format(modules[0], PSEUDO_CONST_CLASS))
         sys.exit(1)
-
     # return instance of PseudoClass
     return PsConst(instrument=instrument)
 
@@ -668,7 +664,7 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
 
 
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
-                     default_path=None):
+                     default_path=None, path=True):
     func_name = __NAME__ + '._get_module_names()'
 
     # deal with no module list
@@ -721,6 +717,7 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
             raise ConfigError(emsgs, level='error')
         # append mods
         mods.append(mod)
+        paths.append(fpath)
     # make sure we found something
     if len(mods) == 0:
         emsgs = ['DevError: No config dirs found',
@@ -731,8 +728,12 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
                  ''.format(','.join(mods)),
                  '\tfunction = {0}'.format(func_name)]
         raise ConfigError(emsgs, level='error')
+
     # return modules
-    return mods
+    if path:
+        return paths
+    else:
+        return mods
 
 
 def print_error(error):

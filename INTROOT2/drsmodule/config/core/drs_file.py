@@ -348,6 +348,7 @@ class DrsFitsFile(DrsInputFile):
 
         :return:
         """
+        func_name = __NAME__ + 'DrsFitsFile.check_file_header()'
         # -----------------------------------------------------------------
         # check file has been read
         self.read()
@@ -366,8 +367,14 @@ class DrsFitsFile(DrsInputFile):
             #    keywordstore) or whether we have to use the key as is
             if drskey in params:
                 key = params[drskey][0]
+                source = params.sources[drskey]
             else:
                 key = drskey
+                source = func_name
+            # deal with empty key
+            if (key is None) or key == '':
+                eargs = [key, drskey, source]
+                WLOG(params, 'error', ErrorEntry('00-006-00011', args=eargs))
             # check if key is in header
             if key not in self.header:
                 eargs = [argname, key]

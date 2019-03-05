@@ -42,6 +42,9 @@ pload = param_functions.load_pconfig
 # get module names
 getmodnames = param_functions.get_module_names
 
+# import modules
+import_module = constant_functions.import_module
+
 # get file names
 get_filenames = param_functions.get_file_names
 
