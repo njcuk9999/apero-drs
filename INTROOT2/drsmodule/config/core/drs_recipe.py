@@ -895,9 +895,9 @@ class DrsRecipe(object):
         allfiles = allfilelist + checked_files
 
         if len(allfiles) > 1:
-            errors += ['', 'All files checked:']
+            errors += ErrorEntry('40-001-00019')
             for filename_it in allfiles:
-                errors += ['\t\t{0}'.format(filename_it)]
+                errors += ErrorEntry('\n\t\t{0}'.format(filename_it))
 
         # ---------------------------------------------------------------------
         # clean up errors (do not repeat same lines)
