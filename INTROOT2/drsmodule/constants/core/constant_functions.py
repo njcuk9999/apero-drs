@@ -11,6 +11,7 @@ Created on 2019-01-17 at 14:09
 """
 import numpy as np
 import os
+import sys
 import importlib
 import string
 import warnings
@@ -189,6 +190,7 @@ def import_module(modulepath, full=False):
     # deal with getting module
     if full:
         modname = modulepath
+        moddir = ''
     else:
         # get module name and directory
         modname = os.path.basename(modulepath).replace('.py', '')
@@ -197,6 +199,10 @@ def import_module(modulepath, full=False):
         os.chdir(moddir)
     # import module
     try:
+        # must clear it out if it already exists
+        if modname in sys.modules:
+            del sys.modules[modname]
+        # try to import the module
         mod = importlib.import_module(modname)
         # return to current directory
         os.chdir(current)
