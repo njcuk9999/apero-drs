@@ -34,9 +34,10 @@ WLOG = config.wlog
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(directory=None, filelist=None, **kwargs):
+def main(directory=None, filelist1=None, filelist2=None, **kwargs):
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
+    fkwargs = dict(directory=directory, filelist1=filelist1,
+                   filelist2=filelist2, **kwargs)
     # deal with command line inputs / function call inputs
     recipe, p = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # display everything that comes from "INPUT"
