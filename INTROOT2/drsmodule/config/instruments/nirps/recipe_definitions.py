@@ -46,9 +46,8 @@ interactive = dict(name='--interactive', dtype='bool',
                    helpstr=Help['INTERACTIVE_HELP'],
                    default_ref='DRS_INTERACTIVE')
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype='bool', helpstr=Help['PLOT_HELP'],
-            default_ref='DRS_PLOT')
-
+plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
+            default_ref='DRS_PLOT', minimum=0, maximum=2)
 
 
 # =============================================================================
@@ -135,12 +134,9 @@ test.extension = 'fits'
 test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
 test.arg(pos=0, **directory)
-test.kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
-           files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
-           helpstr=Help['TEST_FILELIST1_HELP'], required=True)
-test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
-           files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
-           required=True)
+test.arg(name='filelist', dtype='files', default=[], nargs='+',
+         files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
+         helpstr=Help['TEST_FILELIST1_HELP'], required=True)
 test.kwarg(**plot)
 test.kwarg(**interactive)
 test.kwarg(**add_cal)
