@@ -571,7 +571,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
         # value is either a list or a single value
         if type(value) not in [list, np.ndarray]:
             # generate this arguments log string
-            log_string = '\t--{0}: {1}'.format(argname, str(value))
+            log_string = '\n\t--{0}: {1}'.format(argname, str(value))
             log_strings.append(log_string)
         # else we have a list
         else:
@@ -581,7 +581,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
             for index, indexvalue in enumerate(indexvalues):
                 # add to log strings
                 largs = [argname, index, indexvalue]
-                log_strings.append('\t--{0}[{1}]: {2}'.format(*largs))
+                log_strings.append('\n\t--{0}[{1}]: {2}'.format(*largs))
     # -------------------------------------------------------------------------
     # log to screen and log file
     if len(log_strings) > 0:
@@ -1020,7 +1020,7 @@ def _search_for_key(key, fkwargs=None):
     # search in sys.argv list of strings
     cond2 = False
     for argv in sys.argv:
-        if key == argv.split('=')[0]:
+        if key == argv.split('=')[0].replace('-', ''):
             cond2 = True
     # return True if found and False otherwise
     if cond1 | cond2:
