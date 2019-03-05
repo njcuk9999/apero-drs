@@ -53,9 +53,11 @@ STRTYPE[str] = 'str'
 STRTYPE[complex] = 'complex'
 STRTYPE[list] = 'list'
 STRTYPE[np.ndarray] = 'np.ndarray'
-
-INDEX_FILE = 'index.fits'
-INDEX_FILE_NAME_COL = 'FILENAME'
+# define types that we can do min and max on
+NUMBER_TYPES = [int, float]
+# define name of index file
+INDEX_FILE = Constants['DRS_INDEX_FILE']
+INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 
 
 # =============================================================================
@@ -402,6 +404,82 @@ class _CheckType(argparse.Action):
             eargs = [self.dest, self.nargs, type(value), value]
             WLOG(params, 'error', ErrorEntry('09-001-00018', args=eargs))
 
+    def _check_limits(self, values):
+        func_name = __NAME__ + '_CheckType._check_limits()'
+        # get parameters
+        params = self.recipe.drs_params
+        # get the argument name
+        argname = self.dest
+        # ---------------------------------------------------------------------
+        # find argument
+        if argname in self.recipe.args:
+            arg = self.recipe.args[argname]
+        elif argname in self.recipe.kwargs:
+            arg = self.recipe.kwargs[argname]
+        elif argname in self.recipe.special_args:
+            arg = self.recipe.special_args[argname]
+        else:
+            eargs = [argname, func_name]
+            WLOG(params, 'error', ErrorEntry('00-006-00011', args=eargs))
+            arg = None
+        # ---------------------------------------------------------------------
+        # skip this step if minimum/maximum are both None
+        if arg.minimum is None and arg.maximum is None:
+            return values
+        if arg.dtype not in NUMBER_TYPES:
+            return values
+        # ---------------------------------------------------------------------
+        # make sure we have a list
+        if type(values) not in [list, np.ndarray]:
+            is_list = False
+            values = [values]
+        else:
+            is_list = True
+        # ---------------------------------------------------------------------
+        # get the minimum and maximum values
+        minimum, maximum = arg.minimum, arg.maximum
+        # make sure we can push values to required dtype (unless None)
+        if minimum is not None:
+            try:
+                minimum = arg.dtype(minimum)
+            except ValueError as e:
+                eargs = [argname, 'minimum', minimum, type(e), e]
+                WLOG(params, 'error', ErrorEntry('00-006-00012', args=eargs))
+        if maximum is not None:
+            try:
+                maximum = arg.dtype(maximum)
+            except ValueError as e:
+                eargs = [argname, 'maximum', maximum, type(e), e]
+                WLOG(params, 'error', ErrorEntry('00-006-00012', args=eargs))
+        # ---------------------------------------------------------------------
+        # loop round files and check values
+        for value in values:
+            # deal with case where minimum and maximum should be checked
+            if minimum is not None and maximum is not None:
+                if (value < minimum) or (value > maximum):
+                    eargs = [argname, value, minimum, maximum]
+                    emsg = ErrorEntry('09-001-00029', args=eargs)
+                    WLOG(params, 'error', emsg)
+            # deal with case where just minimum is checked
+            elif minimum is not None:
+                if value < minimum:
+                    eargs = [argname, value, minimum]
+                    emsg = ErrorEntry('09-001-00027', args=eargs)
+                    WLOG(params, 'error', emsg)
+            # deal with case where just maximum is checked
+            elif maximum is not None:
+                if value > maximum:
+                    eargs = [argname, value, maximum]
+                    emsg = ErrorEntry('09-001-00028', args=eargs)
+                    WLOG(params, 'error', emsg)
+        # ---------------------------------------------------------------------
+        # return (based on whether it is a list or not)
+        if is_list:
+            return values
+        else:
+            return values[0]
+
+
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
@@ -416,6 +494,8 @@ class _CheckType(argparse.Action):
             value = list(map(self._check_type, values))
         else:
             value = self._check_type(values)
+        # check the limits are correct
+        value = self._check_limits(value)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
@@ -782,6 +862,9 @@ class DrsArgument(object):
         self.files = kwargs.get('files', [])
         # get limit
         self.limit = kwargs.get('limit', None)
+        # get limits
+        self.minimum = kwargs.get('minimum', None)
+        self.maximum = kwargs.get('maximum', None)
         # get file logic
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
