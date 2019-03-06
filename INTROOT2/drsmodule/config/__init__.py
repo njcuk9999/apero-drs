@@ -26,6 +26,8 @@ setup = drs_startup.setup
 # Ending main function
 end_main = drs_startup.main_end_script
 
+get_locals = drs_startup.get_local_variables
+
 # Exit function
 end = drs_startup.exit_script
 
