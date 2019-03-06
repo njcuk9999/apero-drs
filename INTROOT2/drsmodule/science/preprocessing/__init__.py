@@ -1,22 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-03-05 13:16
-
-@author: cook
+Created on 2019-03-05 16:35
+@author: ncook
+Version 0.0.1
 """
-from . import recipe_definitions
-from . import file_definitions
+
+__all__ = []
 
 # =============================================================================
 # Define functions
 # =============================================================================
 
-# Nothing to see here.
 
 # =============================================================================
 # End of code
