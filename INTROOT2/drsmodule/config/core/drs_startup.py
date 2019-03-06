@@ -45,6 +45,7 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+TLOG = drs_log.Printer
 # get print colours
 COLOR = constants.Colors
 # get param dict
@@ -113,6 +114,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         # display title
         _display_drs_title(recipe.drs_params)
     # -------------------------------------------------------------------------
+    # display loading message
+    TLOG(recipe.drs_params, '', 'Loading Arguments. Please wait...')
+    # -------------------------------------------------------------------------
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(fkwargs)
     # -------------------------------------------------------------------------
@@ -120,6 +124,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     recipe.option_manager()
     # update default params
     # WLOG.update_param_dict(recipe.drs_params)
+    # -------------------------------------------------------------------------
+    # clear loading message
+    TLOG(recipe.drs_params, '', '')
     # -------------------------------------------------------------------------
     # display
     if not quiet:
@@ -133,6 +140,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs)
 
+    # -------------------------------------------------------------------------
+    # update params in log
+    WLOG.pin = recipe.drs_params
     # -------------------------------------------------------------------------
     # TODO: Need to make folders
 
@@ -167,7 +177,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
     return params
 
 
-def main_end_script(p, outputs='reduced'):
+def main_end_script(p, success, outputs='reduced'):
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -175,12 +185,15 @@ def main_end_script(p, outputs='reduced'):
         3. Clears logs and warnings
 
     :param p: ParamDict, the parameter dictionary containing constants
+    :param success: bool, if True program has successfully completed else
+                    it has not
     :param outputs: string, the type of outputs i.e:
         - 'raw'
         - 'tmp'
         - 'reduced'
 
     :type p: ParamDict
+    :type success: bool
     :type outputs: str
 
     :exception SystemExit: on caught errors
@@ -199,7 +212,10 @@ def main_end_script(p, outputs='reduced'):
         _index_outputs(p)
     # -------------------------------------------------------------------------
     # log end message
-    WLOG(p, 'info', ErrorEntry('40-003-00001', args=[p['RECIPE']]))
+    if success:
+        WLOG(p, 'info', ErrorEntry('40-003-00001', args=[p['RECIPE']]))
+    else:
+        WLOG(p, 'warning', ErrorEntry('40-003-00005', args=[p['RECIPE']]))
     # -------------------------------------------------------------------------
     # add the logger messsages to p
     p = WLOG.output_param_dict(p)
@@ -212,6 +228,28 @@ def main_end_script(p, outputs='reduced'):
     # -------------------------------------------------------------------------
     # return p
     return p
+
+
+def get_local_variables(*args):
+    """
+    Takes the args (which should be dictionaries) and push them into
+    one (output) dictionary
+
+    :returns: dict, the output dictionary
+    :rtype: dict
+    """
+    # set up dictionary storage
+    output_dict = dict()
+    # loop around all input arguments
+    for arg in args:
+        # only add to dictionary if type is dict
+        if type(arg) is dict:
+            # loop around each key
+            for key in list(arg.keys()):
+                # add to output dictionary
+                output_dict[key] = arg[key]
+    # return output dictionary
+    return output_dict
 
 
 # noinspection PyProtectedMember
@@ -558,7 +596,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
                              add=['--help', '-h'])
     pkeys = _keys_present(recipe, fkwargs, remove_prefix='-')
     # loop around inputs
-    for argname in p['INPUT']:
+    for argname in p['INPUTS']:
         # if we have a special input ignore
         if argname in skeys:
             continue
@@ -566,7 +604,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
         if argname not in pkeys:
             continue
         # get value of argument
-        value = p['INPUT'][argname]
+        value = p['INPUTS'][argname]
 
         # value is either a list or a single value
         if type(value) not in [list, np.ndarray]:
