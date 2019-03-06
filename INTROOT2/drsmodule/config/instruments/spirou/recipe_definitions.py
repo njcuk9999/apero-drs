@@ -217,7 +217,7 @@ cal_pp.extension = 'fits'
 cal_pp.description = Help['PREPROCESS_DESC']
 cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
 cal_pp.arg(pos=0, **directory)
-cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
+cal_pp.arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
            helpstr=Help['PREPROCESS_UFILES_HELP'])
 cal_pp.kwarg(**plot)
 cal_pp.kwarg(**interactive)
