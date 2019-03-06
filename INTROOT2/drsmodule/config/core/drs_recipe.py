@@ -105,7 +105,7 @@ class DrsRecipe(object):
         self.drs_pconstant = None
         self.errortext = None
         self.helptext = None
-        self.input_params = OrderedDict()
+        self.input_params = ParamDict()
         self.required_args = []
         self.optional_args = []
         self.special_args = []
@@ -140,8 +140,8 @@ class DrsRecipe(object):
                 self.drs_params['DRS_PLOT'] = 0
         # ---------------------------------------------------------------------
         # set up array to store inputs/outputs
-        self.drs_params['INPUTS'] = OrderedDict()
-        self.drs_params['OUTPUTS'] = OrderedDict()
+        self.drs_params['INPUTS'] = ParamDict()
+        self.drs_params['OUTPUTS'] = ParamDict()
         self.drs_params.set_sources(['INPUTS', 'OUTPUTS'], func_name)
 
     def recipe_setup(self, fkwargs):
@@ -254,8 +254,8 @@ class DrsRecipe(object):
                 input_parameters[kwarg.default_ref] = value
         # ---------------------------------------------------------------------
         # add to DRS parameters
-        self.drs_params['INPUT'] = input_parameters
-        self.drs_params.set_source('INPUT', func_name)
+        self.drs_params['INPUTS'] = input_parameters
+        self.drs_params.set_source('INPUTS', func_name)
         # push values of keys matched in input_parameters into drs_parameters
         for key in input_parameters.keys():
             if key in self.drs_params:
@@ -895,7 +895,7 @@ class DrsRecipe(object):
         allfiles = allfilelist + checked_files
 
         if len(allfiles) > 1:
-            errors += ErrorEntry('40-001-00019')
+            errors += self.errortext['40-001-00019']
             for filename_it in allfiles:
                 errors += ErrorEntry('\n\t\t{0}'.format(filename_it))
 
