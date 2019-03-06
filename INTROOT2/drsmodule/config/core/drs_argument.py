@@ -72,14 +72,17 @@ class DRSArgumentParser(argparse.ArgumentParser):
         self.helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
         self.args = None
         self.argv = None
+        self.source = None
         self.namespace = None
         argparse.ArgumentParser.__init__(self, **kwargs)
 
     def parse_args(self, args=None, namespace=None):
         if args is None:
             self.args = sys.argv[1:]
+            self.source = 'sys.argv'
         else:
             self.args = args
+            self.source = self.recipe.name + '.main()'
         # overritten functionality
         args, argv = self.parse_known_args(args, namespace)
         if argv:
@@ -128,7 +131,6 @@ class DRSArgumentParser(argparse.ArgumentParser):
                          self.recipe._drs_usage())
         # return messages
         return return_string
-
 
     def format_help(self):
 
@@ -259,14 +261,18 @@ class _CheckDirectory(argparse.Action):
 
 class _CheckFiles(argparse.Action):
     def __init__(self, *args, **kwargs):
-        self.recipe = None
-        self.namespace = None
+        self.recipe = kwargs.get('recipe', None)
+        self.namespace = kwargs.get('namespace', None)
+        self.directory = kwargs.get('directory', None)
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_files(self, value, current_typelist=None, current_filelist=None):
         # check if "directory" is in namespace
-        directory = getattr(self.namespace, 'directory', '')
+        if self.directory is not None:
+            directory = self.directory
+        else:
+            directory = getattr(self.namespace, 'directory', '')
         # get the argument name
         argname = self.dest
         # get the params from recipe

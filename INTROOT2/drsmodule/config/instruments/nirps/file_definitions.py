@@ -39,22 +39,29 @@ drs_finput = drs_file.DrsFitsFile
 # =============================================================================
 # Raw Files
 # =============================================================================
+# Must add to list of raw files!!
+raw_files = []
+# =============================================================================
 # generic raw file
 raw_file = drs_finput('DRS_RAW', ext='.fits')
 # -----------------------------------------------------------------------------
 # raw dark files
 raw_dark_dark = drs_finput('DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                            ext='d.fits')
+raw_files.append(raw_dark_dark)
 # -----------------------------------------------------------------------------
 # raw flat files
 raw_dark_flat = drs_finput('DARK_FLAT', KW_CCAS='pos_pk', KW_CREF='pos_wl',
                            ext='f.fits')
+raw_files.append(raw_dark_flat)
 raw_flat_dark = drs_finput('FLAT_DARK', KW_CCAS='pos_wl', KW_CREF='pos_pk',
                            ext='f.fits')
+raw_files.append(raw_flat_dark)
 raw_flat_flat = drs_finput('FLAT_FLAT', KW_CCAS='pos_wl', KW_CREF='pos_wl',
                            ext='f.fits')
 raw_flat_fp = drs_finput('FLAT_FP', KW_CCAS='pos_wl', KW_CREF='pos_fp',
                          ext='f.fits')
+
 # -----------------------------------------------------------------------------
 # raw align files
 raw_dark_fp = drs_finput('DARK_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
@@ -97,6 +104,8 @@ raw_hc1_dark = drs_finput('HCONE_DARK', KW_CCAS='pos_hc1', KW_CREF='pos_pk',
                           ext='c.fits')
 raw_hc2_dark = drs_finput('HCTWO_DARK', KW_CCAS='pos_hc2', KW_CREF='pos_pk',
                           ext='c.fits')
+
+
 # =============================================================================
 # Preprocessed Files
 # =============================================================================
@@ -135,6 +144,10 @@ pp_hc1_hc1 = drs_finput('HCONE_HCONE', KW_DPRTYPE='HCONE_HCONE', ext='pp.fits')
 pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', KW_DPRTYPE='HCTWO_HCTWO', ext='pp.fits')
 pp_hc1_dark = drs_finput('HCONE_DARK', KW_DPRTYPE='HCONE_DARK', ext='pp.fits')
 pp_hc2_dark = drs_finput('HCTWO_DARK', KW_DPRTYPE='HCTWO_DARK', ext='pp.fits')
+
+
+
+
 
 # =============================================================================
 # Reduced Files
