@@ -14,8 +14,10 @@ Import rules: Only from spirouConfig and spirouCore
 Version 0.0.1
 """
 from __future__ import division
+import numpy as np
 import os
 import sys
+from time import sleep
 
 from drsmodule import constants
 from drsmodule.locale import drs_text
@@ -27,7 +29,7 @@ from drsmodule.config.math import time
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'log.py'
+__NAME__ = 'drs_log.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -67,7 +69,7 @@ class Logger:
         Construct logger (storage param dict here)
         :param paramdict:
         """
-        func_name = __NAME__ + 'Logger.__init__()'
+        func_name = __NAME__ + '.Logger.__init__()'
         # ---------------------------------------------------------------------
         # save the parameter dictionary for access to constants
         if paramdict is not None:
@@ -91,17 +93,10 @@ class Logger:
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
-        # get log storage keys
-        storekey = self.pconstant.LOG_STORAGE_KEYS()
-        # add log stats to pout
-        for key in storekey:
-            self.pout[storekey[key]] = []
-            self.pout.set_source(storekey[key], func_name)
-        self.pout['LOGGER_FULL'] = []
-        self.pout.set_source('LOGGER_FULL', func_name)
 
     def __call__(self, params=None, key='', message=None, printonly=False,
-                 logonly=False, wrap=True, option=None, colour=None):
+                 logonly=False, wrap=True, option=None, colour=None,
+                 raise_exception=True):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -129,6 +124,7 @@ class Logger:
                        currently supported colours are:
                        "red", "green", "blue", "yellow", "cyan", "magenta",
                        "black", "white"
+        :param raise_exception: bool, If True exits if level is EXIT_LEVELS()
 
         output to stdout/log is as follows:
 
@@ -267,7 +263,7 @@ class Logger:
                         # append separate commands for log writing
                         cmds.append(cmd)
                         # add to logger storage
-                        self.logger_storage(key, human_time, new_message,
+                        self.logger_storage(params, key, human_time, new_message,
                                             printonly)
                         # print to stdout
                         printlog(self, params, cmd, key, colour)
@@ -277,7 +273,7 @@ class Logger:
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
-                    self.logger_storage(key, human_time, mess, printonly)
+                    self.logger_storage(params, key, human_time, mess, printonly)
                     # print to stdout
                     printlog(self, params, cmd, key, colour)
         # ---------------------------------------------------------------------
@@ -343,7 +339,7 @@ class Logger:
             if error[1] == 'error':
                 key = 'error'
             if error[0] not in used:
-                self.logger_storage(key, error[2], error[0])
+                self.logger_storage(params, key, error[2], error[0])
                 printlogandcmd(self, params, *error, wrap=wrap, colour=colour)
                 used.append(error[0])
         # ---------------------------------------------------------------------
@@ -364,8 +360,8 @@ class Logger:
                     errorstring += error[0] + '\n'
             # deal with debugging
             if debug:
-                debug_start(self, params, errorstring)
-            else:
+                debug_start(self, params, raise_exception)
+            elif raise_exception:
                 # self.pconstant.EXIT(p)(errorstring)
                 self.pconstant.EXIT(params)()
 
@@ -392,31 +388,48 @@ class Logger:
             self.helptext = HelpText(self.instrument, self.language)
 
     def output_param_dict(self, paramdict):
-        for key in self.pout:
+        # get the process id from paramdict
+        pid = paramdict['PID']
+        # deal with no pid being set
+        if pid not in self.pout:
+            # get log storage keys
+            storekey = self.pconstant.LOG_STORAGE_KEYS()
+            for key in storekey:
+                paramdict[key] = []
+            return paramdict
+        # loop around the keys in pout
+        for key in self.pout[pid]:
             # get value
-            value = self.pout[key]
+            value = self.pout[pid][key]
             # set value from pout (make sure it is copied)
             paramdict[key] = type(value)(value)
             # set source from pout
-            paramdict.set_source(key, self.pout.sources.get(key, None))
+            paramdict.set_source(key, self.pout[pid].sources.get(key, None))
         # return paramdict
         return paramdict
 
-    def logger_storage(self, key, ttime, mess, printonly=False):
+    def logger_storage(self, params, key, ttime, mess, printonly=False):
+        func_name = __NAME__ + '.Logger.logger_storage()'
         if printonly:
             return 0
+        # get pid
+        pid =  params['PID']
+        # make sub dictionary
+        if pid not in self.pout:
+            self.pout[pid] = ParamDict()
+            self.pout.set_source(pid, func_name)
         # get log storage keys
         storekey = self.pconstant.LOG_STORAGE_KEYS()
         # find if key is defined in storage
         if key in storekey:
             # if key is in LOG just append message to list
-            if storekey[key] in self.pout:
-                self.pout[storekey[key]].append([ttime, mess])
+            if storekey[key] in self.pout[pid]:
+                self.pout[pid][storekey[key]].append([ttime, mess])
             # if key isn't in LOG make new list (for future append)
             else:
-                self.pout[storekey[key]] = [[ttime, mess]]
+                self.pout[pid][storekey[key]] = [[ttime, mess]]
         # add to full log
-        self.pout['LOGGER_FULL'].append([[ttime, mess]])
+        self.pout[pid]['LOGGER_FULL'].append([[ttime, mess]])
 
     def clean_log(self, processid):
         func_name = __NAME__ + 'Logger.clean_log()'
@@ -429,6 +442,22 @@ class Logger:
         for key in storekey:
             self.pout[processid][storekey[key]] = []
         self.pout[processid]['LOGGER_FULL'] = []
+
+
+class Printer():
+    """Print things to stdout on one line dynamically"""
+    def __init__(self, params, level, message):
+
+        if type(message) not in [list, np.ndarray]:
+            message = [message]
+            sleeptimer = 0
+        else:
+            sleeptimer = 1
+
+        for mess in message:
+            sys.stdout.write("\r\x1b[K" + mess.__str__())
+            sys.stdout.flush()
+            sleep(sleeptimer)
 
 
 # =============================================================================
@@ -491,7 +520,7 @@ def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
             printlog(logobj, p, cmd, key, colour)
 
 
-def debug_start(logobj, p, errorstring):
+def debug_start(logobj, p, raise_exception):
     """
     Initiate debugger (for DEBUG mode) - will start when an error is raised
     if 'DRS_DEBUG' is set to True or 1 (in config.py)
@@ -545,22 +574,22 @@ def debug_start(logobj, p, errorstring):
 
             print(cc + '\n\nCode Exited' + nocol)
             # logobj.pconstant.EXIT(p)(errorstring)
-            logobj.pconstant.EXIT(p)()
-        if '2' in uinput.upper():
+            if raise_exception:
+                logobj.pconstant.EXIT(p)()
+        elif '2' in uinput.upper():
             print(cc + text['00-005-00009'] + nocol)
 
             import pdb
             pdb.set_trace()
 
             print(cc + text['00-005-00010'] + nocol)
-            # logobj.pconstant.EXIT(p)(errorstring)
-            logobj.pconstant.EXIT(p)()
-        else:
-            # logobj.pconstant.EXIT(p)(errorstring)
+            if raise_exception:
+                logobj.pconstant.EXIT(p)()
+        elif raise_exception:
             logobj.pconstant.EXIT(p)()
     except:
-        # logobj.pconstant.EXIT(p)(errorstring)
-        logobj.pconstant.EXIT(p)()
+        if raise_exception:
+            logobj.pconstant.EXIT(p)()
 
 
 def warninglogger(p, w, funcname=None):
