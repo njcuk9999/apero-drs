@@ -1,13 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
 
 # CODE DESCRIPTION HERE
 
-Created on 2018-09-14 at 13:57
-
-@author: cook
+Created on 2019-03-05 16:38
+@author: ncook
+Version 0.0.1
 """
 from __future__ import division
 import traceback
@@ -19,8 +18,8 @@ from drsmodule import locale
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'test_recipe.py'
-__INSTRUMENT__ = 'NIRPS'
+__NAME__ = 'blank.py'
+__INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
@@ -32,7 +31,6 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = config.wlog
 # Get the text types
 ErrorEntry = locale.drs_text.ErrorEntry
-# -----------------------------------------------------------------------------
 
 
 # =============================================================================
@@ -42,18 +40,17 @@ def _main(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    # display everything that comes from "INPUT"
-    for i in range(10):
-        WLOG(params, '', 'Line {0} of code'.format(i+1))
+
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
     return dict(locals())
 
 
-def main(directory=None, filelist=None, **kwargs):
+def main(directory=None, files=None, **kwargs):
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
+    fkwargs = dict(directory=directory, files=files, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
