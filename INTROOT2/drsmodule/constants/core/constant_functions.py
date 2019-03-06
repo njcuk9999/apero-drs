@@ -185,34 +185,28 @@ def generate_consts(modulepath):
 
 
 def import_module(modulepath, full=False):
-    # get current directory
-    current = os.getcwd()
     # deal with getting module
     if full:
-        modname = modulepath
+        modfile = modulepath
         moddir = ''
     else:
         # get module name and directory
-        modname = os.path.basename(modulepath).replace('.py', '')
+        modfile = os.path.basename(modulepath).replace('.py', '')
         moddir = os.path.dirname(modulepath)
-        # change to modulepath directory
-        os.chdir(moddir)
     # import module
     try:
-        # must clear it out if it already exists
-        if modname in sys.modules:
-            del sys.modules[modname]
-        # try to import the module
-        mod = importlib.import_module(modname)
-        # return to current directory
-        os.chdir(current)
+        if modfile in sys.modules:
+            del sys.modules[modfile]
+        if not full:
+            sys.path.insert(0, moddir)
+        mod = importlib.import_module(modfile)
+        if not full:
+            sys.path.remove(moddir)
         # return
         return mod
     except Exception as e:
-        # return to current directory
-        os.chdir(current)
         # report error
-        emsg1 = 'Cannot import module {0} from {1}'.format(modname, moddir)
+        emsg1 = 'Cannot import module {0} from {1}'.format(modfile, moddir)
         emsg2 = '\tError {0}: {1}'.format(type(e), e)
         raise ConfigError([emsg1, emsg2])
 

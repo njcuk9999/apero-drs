@@ -995,6 +995,9 @@ def _save_config_params(params,):
 
 
 def _check_mod_source(source):
+    # deal with source being None
+    if source is None:
+        return None
     # get package path
     package_path = _get_relative_folder(PACKAGE, '')
     # if package path not in source then skip
