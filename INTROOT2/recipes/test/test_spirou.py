@@ -10,9 +10,11 @@ Created on 2018-09-14 at 13:57
 @author: cook
 """
 from __future__ import division
+import traceback
 
 from drsmodule import constants
 from drsmodule import config
+from drsmodule import locale
 
 # =============================================================================
 # Define variables
@@ -28,27 +30,56 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
+# Get the text types
+ErrorEntry = locale.drs_text.ErrorEntry
 # -----------------------------------------------------------------------------
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def _main(recipe, params):
+    # ----------------------------------------------------------------------
+    # Main Code
+    # ----------------------------------------------------------------------
+    # display everything that comes from "INPUT"
+    for i in range(10):
+        WLOG(params, '', 'Line {0} of code'.format(i+1))
+    int('s')
+    # ----------------------------------------------------------------------
+    # End of main code
+    # ----------------------------------------------------------------------
+    return dict(locals())
+
+
 def main(directory=None, filelist1=None, filelist2=None, **kwargs):
     # assign function calls (must add positional)
     fkwargs = dict(directory=directory, filelist1=filelist1,
                    filelist2=filelist2, **kwargs)
+    # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, p = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
-    # display everything that comes from "INPUT"
-    for i in range(10):
-        WLOG(p, '', 'Line {0} of code'.format(i+1))
+    recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    # ----------------------------------------------------------------------
+    # run main bulk of code (catching all errors)
+    try:
+        llmain = _main(recipe, params)
+        success = True
+    except Exception as e:
+        string_trackback = traceback.format_exc()
+        success = False
+        emsg = ErrorEntry('01-010-00001', args=[type(e)])
+        emsg += '\n\n' + ErrorEntry(string_trackback)
+        WLOG(params, 'error', emsg, raise_exception=False)
+        llmain = dict()
+    except SystemExit as e:
+        success = False
+        llmain = dict()
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = config.end_main(p, outputs='None')
+    params = config.end_main(params, success, outputs='None')
     # return a copy of locally defined variables in the memory
-    return dict(locals())
+    return config.get_locals(dict(locals()), llmain)
 
 
 # =============================================================================
