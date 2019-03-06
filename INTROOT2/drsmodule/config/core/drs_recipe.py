@@ -158,6 +158,7 @@ class DrsRecipe(object):
                          arguments/keywords (without -/--) and values are the
                          values to be used for this recipe
         """
+        func_name = __NAME__ + '.DrsRecipe.recipe_setup()'
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
@@ -191,10 +192,15 @@ class DrsRecipe(object):
             parser.add_argument(*rname, **rkwargs)
         # get params
         params = vars(parser.parse_args(args=self.str_arg_list))
+        source = str(parser.source)
+        strsource = '{0} [{1}]'.format(func_name, source)
         # delete parser - no longer needed
         del parser
         # update params
-        self.input_params = params
+        self.input_params = ParamDict()
+        for key in list(params.keys()):
+            self.input_params[key] = params[key]
+            self.input_params.set_source(key, strsource)
 
     def option_manager(self):
         """
@@ -252,6 +258,9 @@ class DrsRecipe(object):
             input_parameters[kwarg.name] = value
             if param_key is not None:
                 input_parameters[kwarg.default_ref] = value
+                # set the source
+                psource = '{0} [{1}]'.format(func_name, kwarg.name)
+                input_parameters.set_source(kwarg.default_ref, psource)
         # ---------------------------------------------------------------------
         # add to DRS parameters
         self.drs_params['INPUTS'] = input_parameters
@@ -260,11 +269,13 @@ class DrsRecipe(object):
         for key in input_parameters.keys():
             if key in self.drs_params:
                 self.drs_params[key] = input_parameters[key]
-                self.drs_params.set_source(key, func_name)
+                self.drs_params.set_source(key, input_parameters.sources[key])
         # ---------------------------------------------------------------------
         # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
         if not self.drs_params['DRS_INTERACTIVE']:
-            self.drs_params['DRS_PLOT'] = False
+            self.drs_params['DRS_PLOT'] = 0
+            psource = '{0} [{1}]'.format(func_name, 'DRS_INTERACTIVE=False')
+            self.drs_params.set_source('DRS_PLOT', psource)
 
     def arg(self, name=None, **kwargs):
         """

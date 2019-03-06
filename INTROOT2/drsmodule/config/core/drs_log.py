@@ -388,6 +388,7 @@ class Logger:
             self.helptext = HelpText(self.instrument, self.language)
 
     def output_param_dict(self, paramdict):
+        func_name = __NAME__ + '.Logger.output_param_dict()'
         # get the process id from paramdict
         pid = paramdict['PID']
         # deal with no pid being set
@@ -396,6 +397,9 @@ class Logger:
             storekey = self.pconstant.LOG_STORAGE_KEYS()
             for key in storekey:
                 paramdict[key] = []
+                # set the source
+                paramdict.set_source(key, func_name)
+            # return the parameter dictionary
             return paramdict
         # loop around the keys in pout
         for key in self.pout[pid]:
@@ -404,7 +408,8 @@ class Logger:
             # set value from pout (make sure it is copied)
             paramdict[key] = type(value)(value)
             # set source from pout
-            paramdict.set_source(key, self.pout[pid].sources.get(key, None))
+            psource = self.pout[pid].sources.get(key, func_name)
+            paramdict.set_source(key, psource)
         # return paramdict
         return paramdict
 
@@ -428,11 +433,13 @@ class Logger:
             # if key isn't in LOG make new list (for future append)
             else:
                 self.pout[pid][storekey[key]] = [[ttime, mess]]
+            # set the source
+            self.pout[pid].set_source(storekey[key], func_name)
         # add to full log
         self.pout[pid]['LOGGER_FULL'].append([[ttime, mess]])
 
     def clean_log(self, processid):
-        func_name = __NAME__ + 'Logger.clean_log()'
+        func_name = __NAME__ + '.Logger.clean_log()'
         # get log storage keys
         storekey = self.pconstant.LOG_STORAGE_KEYS()
         # clean out for this ID
@@ -441,8 +448,12 @@ class Logger:
         # populate log keys
         for key in storekey:
             self.pout[processid][storekey[key]] = []
+            # set the source
+            self.pout[processid].set_source(storekey[key], func_name)
+        # set the full logger key
         self.pout[processid]['LOGGER_FULL'] = []
-
+        # set the source
+        self.pout[processid].set_source('LOGGER_FULL', func_name)
 
 class Printer():
     """Print things to stdout on one line dynamically"""

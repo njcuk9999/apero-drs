@@ -26,7 +26,7 @@ from . import constant_functions
 # Define variables
 # =============================================================================
 # Define script name
-__NAME__ = 'config.py'
+__NAME__ = 'param_functions.py'
 # Define package name
 PACKAGE = 'drsmodule'
 # Define relative path to 'const' sub-package

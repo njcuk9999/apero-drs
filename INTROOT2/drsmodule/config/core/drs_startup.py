@@ -595,6 +595,9 @@ def _display_run_time_arguments(recipe, fkwargs=None):
     skeys = _get_recipe_keys(recipe.specialargs, remove_prefix='-',
                              add=['--help', '-h'])
     pkeys = _keys_present(recipe, fkwargs, remove_prefix='-')
+    # make keys upper case
+    skeys = list(map(lambda x: x.upper(), skeys))
+    pkeys = list(map(lambda x: x.upper(), pkeys))
     # loop around inputs
     for argname in p['INPUTS']:
         # if we have a special input ignore
@@ -605,7 +608,6 @@ def _display_run_time_arguments(recipe, fkwargs=None):
             continue
         # get value of argument
         value = p['INPUTS'][argname]
-
         # value is either a list or a single value
         if type(value) not in [list, np.ndarray]:
             # generate this arguments log string
