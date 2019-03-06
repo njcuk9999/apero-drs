@@ -224,6 +224,8 @@ class _CheckDirectory(argparse.Action):
         # get the params from recipe
         params = self.recipe.drs_params
         # debug checking output
+        if params['DRS_DEBUG'] > 0:
+            print('')
         WLOG(params, 'debug', ErrorEntry('90-001-00018', args=[argname]))
         # noinspection PyProtectedMember
         out = self.recipe._valid_directory(argname, value, return_error=True)
