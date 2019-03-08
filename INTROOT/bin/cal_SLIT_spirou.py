@@ -201,6 +201,60 @@ def main(night_name=None, files=None):
     loc.set_source('TILT', oldsource + '+{0}/main()'.format(__NAME__))
 
     # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # check that tilt rms is below required
+    if loc['RMS_TILT'] > p['QC_SLIT_RMS']:
+        # add failed message to fail message list
+        fmsg = 'abnormal RMS of SLIT angle ({0:.2f} > {1:.2f} deg)'
+        fail_msg.append(fmsg.format(loc['RMS_TILT'], p['QC_SLIT_RMS']))
+        passed = False
+    # add to qc header lists
+    qc_values.append(loc['RMS_TILT'])
+    qc_names.append('RMS_TILT')
+    qc_logic.append('RMS_TILT > {0:.2f}'.format(p['QC_SLIT_RMS']))
+    # ----------------------------------------------------------------------
+    # check that tilt is less than max tilt required
+    max_tilt = np.max(loc['TILT'])
+    if max_tilt > p['QC_SLIT_MAX']:
+        # add failed message to fail message list
+        fmsg = 'abnormal SLIT angle ({0:.2f} > {1:.2f} deg)'
+        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MAX']))
+        passed = False
+    # add to qc header lists
+    qc_values.append(max_tilt)
+    qc_names.append('max_tilt')
+    qc_logic.append('max_tilt > {0:.2f}'.format(p['QC_SLIT_MAX']))
+    # ----------------------------------------------------------------------
+    # check that tilt is greater than min tilt required
+    min_tilt = np.min(loc['TILT'])
+    if min_tilt < p['QC_SLIT_MIN']:
+        # add failed message to fail message list
+        fmsg = 'abnormal SLIT angle ({0:.2f} < {1:.2f} deg)'
+        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MIN']))
+        passed = False
+    # add to qc header lists
+    qc_values.append(min_tilt)
+    qc_names.append('min_tilt')
+    qc_logic.append('min_tilt > {0:.2f}'.format(p['QC_SLIT_MIN']))
+    # ----------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
     # Save and record of tilt table
     # ----------------------------------------------------------------------
     # copy the tilt along the orders
@@ -218,54 +272,25 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+                               value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
+                               value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
+                               value=p['BADPFILE2'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=raw_tilt_file)
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
     # add tilt parameters as 1d list
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_TILT'], values=loc['TILT'])
     # write tilt file to file
     p = spirouImage.WriteImage(p, tiltfits, tiltima, hdict)
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    # set passed variable and fail message list
-    passed, fail_msg = True, []
-    # check that tilt rms is below required
-    if loc['RMS_TILT'] > p['QC_SLIT_RMS']:
-        # add failed message to fail message list
-        fmsg = 'abnormal RMS of SLIT angle ({0:.2f} > {1:.2f} deg)'
-        fail_msg.append(fmsg.format(loc['RMS_TILT'], p['QC_SLIT_RMS']))
-        passed = False
-    # check that tilt is less than max tilt required
-    max_tilt = np.max(loc['TILT'])
-    if max_tilt > p['QC_SLIT_MAX']:
-        # add failed message to fail message list
-        fmsg = 'abnormal SLIT angle ({0:.2f} > {1:.2f} deg)'
-        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MAX']))
-        passed = False
-    # check that tilt is greater than min tilt required
-    min_tilt = np.min(loc['TILT'])
-    if min_tilt < p['QC_SLIT_MIN']:
-        # add failed message to fail message list
-        fmsg = 'abnormal SLIT angle ({0:.2f} < {1:.2f} deg)'
-        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MIN']))
-        passed = False
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/main()')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG(p, 'warning', wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Update the calibration data base

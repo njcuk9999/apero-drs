@@ -433,6 +433,8 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic = [], [], []
+        # ----------------------------------------------------------------------
         # get SNR for each order from header
         nbo = loc['DATA'].shape[0]
         snr_order = p['QC_FIT_TELLU_SNR_ORDER']
@@ -443,6 +445,13 @@ def main(night_name=None, files=None):
             fargs = [snr_order, snr[snr_order], p['QC_FIT_TELLU_SNR_MIN']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+        # add to qc header lists
+        qc_values.append(snr[snr_order])
+        qc_name_str = 'SNR[{0}]'.format(snr_order)
+        qc_names.append(qc_name_str)
+        qc_logic.append('{0} < {1:.2f}'.format(qc_name_str,
+                                               p['QC_FIT_TELLU_SNR_ORDER']))
+        # ----------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
@@ -473,6 +482,14 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'],
+                                   value=qc_names)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'],
+                                   value=qc_values)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                   value=qc_logic)
         # set tellu keys
         npc = loc['NPC']
         hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_NPC'], value=npc)

@@ -257,28 +257,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         sPlt.end_interactive_session(p)
 
     # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    passed, fail_msg = True, []
-    # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
-    if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
-        fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
-        fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
-        passed = False
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/main()')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG(p, 'warning', wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/main()')
-
-    # ----------------------------------------------------------------------
     # Set up all_lines storage
     # ----------------------------------------------------------------------
 
@@ -600,13 +578,29 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['QC_DEV_LITTROW_MAX'] = p['QC_HC_DEV_LITTROW_MAX']
     # set passed variable and fail message list
     passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # ----------------------------------------------------------------------
+    # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
+    if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
+        fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
+        fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
+        passed = False
+    # add to qc header lists
+    qc_values.append(loc['SIG1'])
+    qc_names.append('SIG1')
+    qc_logic.append('SIG1 > {0:.2f}'.format(p['QC_HC_WAVE_SIGMA_MAX']))
+    # ----------------------------------------------------------------------
     # check for infinites and NaNs in mean residuals from fit
     if ~np.isfinite(loc['X_MEAN_2']):
         # add failed message to the fail message list
         fmsg = 'NaN or Inf in X_MEAN_2'
         fail_msg.append(fmsg)
         passed = False
-
+    # add to qc header lists
+    qc_values.append(loc['X_MEAN_2'])
+    qc_names.append('X_MEAN_2')
+    qc_logic.append('X_MEAN_2 not finite')
+    # ----------------------------------------------------------------------
     # iterate through Littrow test cut values
     lit_it = 2
     # checks every other value
@@ -630,6 +624,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             fargs = [x_cut_point, sig_littrow, rms_littrow_max]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            # add to qc header lists
+            qc_values.append(sig_littrow)
+            qc_names.append('sig_littrow')
+            qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
+
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
@@ -638,6 +637,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            # add to qc header lists
+            qc_values.append(np.max([max_littrow, min_littrow]))
+            qc_names.append('max or min littrow')
+            qc_logic.append('max or min littrow > {0:.2f}'
+                            ''.format(dev_littrow_max))
 
             # if sig was out of bounds, recalculate
             if sig_littrow > rms_littrow_max:
@@ -669,6 +673,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     redo_sigma, respix_2, worst_order = False, None, None
                     wmsg = 'No outlying orders, sig littrow not recalculated'
                     fail_msg.append(wmsg.format())
+
                 # if outlying order, recalculate stats
                 if redo_sigma:
                     mean = np.sum(respix_2) / len(respix_2)
@@ -725,8 +730,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=raw_infiles1)
     hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
-    # add quality control
+    # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
     # add wave solution date
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                value=p['MAX_TIME_HUMAN'])
@@ -843,9 +851,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Save line list table file
     # ------------------------------------------------------------------
     # construct filename
-
     # TODO proper column values
-
     wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
     wavelltblname = os.path.split(wavelltbl)[-1]
     # construct and write table
@@ -886,7 +892,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         spirouDB.PutCalibFile(p, wavefits)
         # update the master calib DB file with new key
         spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
-
         # set the hcref key
         keydb = 'HCREF_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder

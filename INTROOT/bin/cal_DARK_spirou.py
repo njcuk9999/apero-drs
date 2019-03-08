@@ -182,20 +182,30 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # ----------------------------------------------------------------------
     # check that med < qc_max_darklevel
     if p['MED_FULL'] > p['QC_MAX_DARKLEVEL']:
         # add failed message to fail message list
         fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
         fail_msg.append(fmsg.format(p['MED_FULL'], p['QC_MAX_DARKLEVEL']))
         passed = False
-
+    # add to qc header lists
+    qc_values.append(p['MED_FULL'])
+    qc_names.append('MED_FULL')
+    qc_logic.append('MED_FULL > {0:.2f}'.format(p['QC_MAX_DARKLEVEL']))
+    # ----------------------------------------------------------------------
     # check that fraction of dead pixels < qc_max_dead
     if p['DADEADALL'] > p['QC_MAX_DEAD']:
         # add failed message to fail message list
         fmsg = 'Unexpected Fraction of dead pixels ({0:5.2f} > {1:5.2f} %)'
         fail_msg.append(fmsg.format(p['DADEADALL'], p['QC_MAX_DEAD']))
         passed = False
-
+    # add to qc header lists
+    qc_values.append(p['DADEADALL'])
+    qc_names.append('DADEADALL')
+    qc_logic.append('DADEADALL > {0:.2f}'.format(p['QC_MAX_DEAD']))
+    # ----------------------------------------------------------------------
     # checl that the precentage of dark pixels < qc_max_dark
     if baddark > p['QC_MAX_DARK']:
         fmsg = ('Unexpected Fraction of dark pixels > {0:.2f} ADU/s '
@@ -203,7 +213,11 @@ def main(night_name=None, files=None):
         fail_msg.append(fmsg.format(p['DARK_CUTLIMIT'], baddark,
                                     p['QC_MAX_DARK']))
         passed = False
-
+    # add to qc header lists
+    qc_values.append(baddark)
+    qc_names.append('baddark')
+    qc_logic.append('baddark > {0:.2f}'.format(p['QC_MAX_DARK']))
+    # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -243,6 +257,12 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_MED'], value=p['MED_RED'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
+
     # Set to zero dark value > dark_cutlimit
     cutmask = data0 > p['DARK_CUTLIMIT']
     data0c = np.where(cutmask, np.zeros_like(data0), data0)

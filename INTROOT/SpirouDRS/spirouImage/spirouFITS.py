@@ -48,6 +48,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
+QC_HEADER_KEYS = spirouConfig.Constants.QC_HEADER_KEYS()
 # object name bad characters
 BADCHARS = [' '] + list(string.punctuation)
 
@@ -1435,7 +1436,7 @@ def update_wave_sol(p, loc, filename):
 
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
-    wavefitsname = os.path.split(wavefits)[-1]
+    wavefitsname = os.path.basename(wavefits)
 
     # copy original keys
     hdict = copy_original_keys(hdr, comments)
@@ -1603,6 +1604,11 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
         # skip if key added temporarily in code (denoted by @@@)
         elif '@@@' in key:
             continue
+        # skip QC keys
+        elif key == 'QC':
+            continue
+        elif is_qc_key(key):
+            continue
         # else add key to hdict
         else:
             # if key in "comments" add it as a tuple else comment_ is blank
@@ -1612,6 +1618,14 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
                 hdict[key] = (header[key], '')
     # return the hdict ready to write to fits file
     return hdict
+
+
+def is_qc_key(key):
+    cond = False
+    for qc_key in QC_HEADER_KEYS:
+        if key.startswith(qc_key):
+            cond = True
+    return cond
 
 
 def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
