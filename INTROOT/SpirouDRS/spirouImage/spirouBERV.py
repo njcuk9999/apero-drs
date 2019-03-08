@@ -86,6 +86,7 @@ def earth_velocity_correction(p, loc, method='old'):
     secondpart = float(utc[2]) / 3600.
     exptimehours = (p['EXPTIME'] / 3600.) / 2.
     obs_hour = hourpart + minpart + secondpart + exptimehours
+
     # get the RA in hours
     objra = p['OBJRA'].split(':')
     ra_hour = float(objra[0])
@@ -120,6 +121,9 @@ def earth_velocity_correction(p, loc, method='old'):
     # finally save berv, bjd, bervmax to p
     loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
     loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+    # store the obs_hour
+    loc['BERVHOUR'] = obs_hour
+    loc.set_source('BERVHOUR', func_name)
 
     # return p
     return loc
