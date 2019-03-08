@@ -388,6 +388,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # define new keys to add
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
                                    value=p['DARKFILE'])

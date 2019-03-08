@@ -253,6 +253,7 @@ def main(night_name=None, flatfile=None):
     hdict = OrderedDict()
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
     if loc['SHAPE'] is not None:
         hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],

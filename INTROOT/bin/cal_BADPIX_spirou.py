@@ -191,6 +191,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
                                value=raw_badp_file1)
