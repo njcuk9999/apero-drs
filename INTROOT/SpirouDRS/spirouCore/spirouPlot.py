@@ -393,6 +393,7 @@ def darkplot_histograms(pp):
 # =============================================================================
 # localization plotting functions
 # =============================================================================
+# TODO: Why is this still here?
 def locplot_order(frame, x, y, label):
     """
     Simple plot function (added to a larger plot)
@@ -404,7 +405,7 @@ def locplot_order(frame, x, y, label):
 
     :return None:
     """
-
+    pass
 
 
 def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
@@ -443,6 +444,7 @@ def locplot_im_sat_threshold(p, loc, image, threshold):
     Plots the image (order_profile) below the saturation threshold
 
     :param p: ParamDict, the constants parameter dictionary
+    :param loc: ParamDict, the data parameter dictionary
     :param image: numpy array (2D), the image
     :param threshold: float, the saturation threshold
 
@@ -468,7 +470,6 @@ def locplot_im_sat_threshold(p, loc, image, threshold):
 
     # end plotting function properly
     end_plotting(p, plot_name)
-
 
 
 def locplot_order_number_against_rms(pp, loc, rnum):
@@ -1884,6 +1885,7 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     # set up fig
     fig, frame = setup_figure(p)
     # loop around the xcut points
+    yy = None
     for it in range(len(x_cut_points)):
         # get x and y data
         xx = loc['LITTROW_XX_{0}'.format(iteration)][it]
@@ -1897,10 +1899,10 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
               title=title)
     # set frame limits
-    ylim_low = np.min((-p['QC_HC_DEV_LITTROW_MAX'], np.min(yy)))
-    ylim_up = np.max((p['QC_HC_DEV_LITTROW_MAX'], np.max(yy)))
-    ylim = (ylim_low, ylim_up)
-    frame.set(ylim=ylim)
+    if yy is not None:
+        ylim_low = np.min((-p['QC_HC_DEV_LITTROW_MAX'], np.min(yy)))
+        ylim_up = np.max((p['QC_HC_DEV_LITTROW_MAX'], np.max(yy)))
+        frame.set(ylim=(ylim_low, ylim_up))
     # add legend
     frame.legend(loc=0)
     # end plotting function properly
