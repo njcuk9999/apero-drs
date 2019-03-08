@@ -724,6 +724,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['kw_HCFILE'],

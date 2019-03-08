@@ -877,6 +877,7 @@ def polar_products_header(p, loc, polardict, qcparams):
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # add in file
     rawfile = os.path.basename(p['FITSFILENAME'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_INFILE'], value=rawfile)

@@ -360,6 +360,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.CopyOriginalKeys(fphdr, fpcdr)
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
