@@ -562,6 +562,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     :return None:
     """
     plot_name = 'debug_locplot_finding_orders'
+    plt.ioff()
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
     WLOG(pp, '', '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
@@ -575,7 +576,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     # plot orders
     frame.plot(np.arange(ind1, ind2, 1.0), ycc)
     frame.plot(xx, yy)
-    frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)))
+    frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)+0.01*np.max(ycc)))
 
     # TODO: Need axis labels and title
 
@@ -584,6 +585,9 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
         pass
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
+    plt.show()
+    plt.close()
+    plt.ion()
     # end plotting function properly
     end_plotting(pp, plot_name)
 
@@ -1892,6 +1896,11 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     title = 'Wavelength Solution Littrow Check {0} fiber {1}'.format(*targs)
     frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
               title=title)
+    # set frame limits
+    ylim_low = np.min((-p['QC_HC_DEV_LITTROW_MAX'], np.min(yy)))
+    ylim_up = np.max((p['QC_HC_DEV_LITTROW_MAX'], np.max(yy)))
+    ylim = (ylim_low, ylim_up)
+    frame.set(ylim=ylim)
     # add legend
     frame.legend(loc=0)
     # end plotting function properly
