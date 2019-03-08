@@ -1429,6 +1429,34 @@ def close_fits_lock_file(p, lock, lock_file, filename):
         WLOG(p, 'error', [emsg1, emsg2])
 
 
+def update_wave_sol_hc(p, loc, filename):
+
+    # get original data and header
+    data, hdr, comments, _, _ = readimage(p, filename)
+
+    # get wave filename
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefitsname = os.path.basename(wavefits)
+
+    # add keys from original header file
+    hdict = copy_original_keys(loc['HCHDR'], loc['HCCDR'])
+    # add wave file name
+    hdict = add_new_key(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    # add wave solution date
+    hdict = add_new_key(p, hdict, p['KW_WAVE_TIME1'], value=p['MAX_TIME_HUMAN'])
+    hdict = add_new_key(p, hdict, p['KW_WAVE_TIME2'], value=p['MAX_TIME_UNIX'])
+    # add wave solution coefficients
+    hdict = add_key_2d_list(p, hdict, p['KW_WAVE_PARAM'],
+                            values=loc['POLY_WAVE_SOL'])
+    # Save E2DS file
+    hdict = add_new_key(p, hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = add_new_key(p, hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+    p = writeimage(p, filename, data, hdict)
+
+    # return p
+    return p
+
+
 def update_wave_sol(p, loc, filename):
 
     # get original data and header
