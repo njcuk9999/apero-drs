@@ -529,7 +529,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouRV.GetCCFMask(p, loc)
 
     # TODO Check why Blaze makes bugs in correlbin
-    loc['BLAZE'] = np.ones((loc['NBO'],loc['NBPIX']))
+    loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
     # set sources
     # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
     loc.set_source('blaze', __NAME__ + '/main()')
@@ -587,10 +587,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
-        p['OBJNAME']='FP'
+        p['OBJNAME'] = 'FP'
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
-    #TODO : Add QC of the FP CCF
+    # TODO : Add QC of the FP CCF
 
     # ----------------------------------------------------------------------
     # Quality control
