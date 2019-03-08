@@ -73,11 +73,17 @@ def main():
     wave2, waveheader2 = fits.getdata(datadir +
                                       '2018-09-25/2018-09-25_2305960a_pp_2305967c_pp_wave_new_C.fits',
                                       header=True)
+    # wave3, waveheader3 = fits.getdata(datadir +
+    #                                   '2018-09-24/2018-09-24_2305552a_pp_2305570c_pp_wave_new_AB.fits',
+    #                                   header=True)
+    # wave4, waveheader4 = fits.getdata(datadir +
+    #                                   '2018-09-25/2018-09-25_2305960a_pp_2305967c_pp_wave_new_AB.fits',
+    #                                   header=True)
     wave3, waveheader3 = fits.getdata(datadir +
-                                      '2018-09-24/2018-09-24_2305552a_pp_2305570c_pp_wave_new_AB.fits',
+                                      'comp_Et/comp_Et_2329931a_pp_2329986c_pp_wave_new_AB.fits',
                                       header=True)
     wave4, waveheader4 = fits.getdata(datadir +
-                                      '2018-09-25/2018-09-25_2305960a_pp_2305967c_pp_wave_new_AB.fits',
+                                      'comp_Et/comp_Et_2329713a_pp_2329824c_pp_wave_new_AB.fits',
                                       header=True)
 
     wavediffC = wave1 - wave2
@@ -85,6 +91,16 @@ def main():
 
     rvdiffC = speed_of_light*wavediffC/wave1
     rvdiffAB = speed_of_light*wavediffAB/wave3
+
+    print('rms C = ', np.nanmedian(np.abs(rvdiffC - np.nanmedian(rvdiffC))), 'm/s')
+    print('rms AB = ', np.nanmedian(np.abs(rvdiffAB - np.nanmedian(rvdiffAB))), 'm/s')
+
+    g = (wave1 > 1500) & (wave1 < 1800)
+
+    print('rms C 1.5-1.8= ', np.nanmedian(np.abs(rvdiffC[g] - np.nanmedian(rvdiffC[g]))), 'm/s')
+    print('rms AB 1.5-1.8 = ', np.nanmedian(np.abs(rvdiffAB[g] - np.nanmedian(rvdiffAB[g]))), 'm/s')
+
+
 
     plt.figure()
     for ord in range(len(wave1)):

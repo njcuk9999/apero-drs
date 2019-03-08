@@ -2084,8 +2084,8 @@ def fit_gaussian_triplets(p, loc):
             wcoeffs = np.polyfit(xgau[order_mask], wave_catalog[order_mask], loc['WAVEPARAMS'].shape[1]-1)[::-1]
             poly_wave_sol3[order_num, :] = wcoeffs
             wave_map3[order_num, :] = np.polyval(wcoeffs[::-1], xpix)
-            poly_wave_solc[order_num, :] = np.polynomial.chebyshev.chebfit(xgau[order_mask], wave_catalog[order_mask],4)
-            wave_mapc[order_num, :] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']),poly_wave_solc[order_num, :])
+            # poly_wave_solc[order_num, :] = np.polynomial.chebyshev.chebfit(xgau[order_mask], wave_catalog[order_mask],p['IC_LL_DEGR_FIT'])
+            # wave_mapc[order_num, :] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']),poly_wave_solc[order_num, :])
         # save parameters to loc
         loc['WAVE_CATALOG'] = wave_catalog
         loc['AMP_CATALOG'] = amp_catalog
@@ -2204,11 +2204,11 @@ def fit_gaussian_triplets(p, loc):
     #loc['POLY_WAVE_SOL4'][-1] = poly_wave_sol[-1]
     #loc['WAVE_MAP4'][-1] = wave_map3[-1]
 
-    loc['POLY_WAVE_SOL4'][-2] = np.polynomial.chebyshev.chebfit(np.arange(loc['NBPIX']), loc['WAVE_MAP2'][-2], 4)
-    loc['WAVE_MAP4'][-2] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']), loc['POLY_WAVE_SOL4'][-2])
-
-    loc['POLY_WAVE_SOL4'][-1] = np.polynomial.chebyshev.chebfit(np.arange(loc['NBPIX']), loc['WAVE_MAP2'][-1], 4)
-    loc['WAVE_MAP4'][-1] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']), loc['POLY_WAVE_SOL4'][-1])
+    # loc['POLY_WAVE_SOL4'][-2] = np.polynomial.chebyshev.chebfit(np.arange(loc['NBPIX']), loc['WAVE_MAP2'][-2], p['IC_LL_DEGR_FIT'])
+    # loc['WAVE_MAP4'][-2] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']), loc['POLY_WAVE_SOL4'][-2])
+    #
+    # loc['POLY_WAVE_SOL4'][-1] = np.polynomial.chebyshev.chebfit(np.arange(loc['NBPIX']), loc['WAVE_MAP2'][-1], p['IC_LL_DEGR_FIT'])
+    # loc['WAVE_MAP4'][-1] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']), loc['POLY_WAVE_SOL4'][-1])
 
     loc['POLY_WAVE_SOL5'] = poly_wave_sol
     loc['WAVE_MAP5'] = wave_map2
