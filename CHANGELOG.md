@@ -6643,3 +6643,100 @@
 	- spirouLOCOR.py - fix problem with locplot_im_sat_threshold plot (rev.453cba5a)
 	- spirouPlot.py - fix problem with locplot_im_sat_threshold plot (rev.c19a3234)
 	- cal_loc_RAW_spirou.py - fix problem with locplot_im_sat_threshold plot (rev.95c074af)
+
+
+
+================================================================================
+* Fri Feb 01 2019 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.4.077
+
+================================================================================
+	- cal_WAVE_NEW_E2DS attempt to fix issues with FP line adjacent to reference peak being missing (rev.18f961ac)
+
+
+
+================================================================================
+* Mon Feb 04 2019 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.4.078
+
+================================================================================
+	- cal_WAVE_NEW update: no longer breaks if FP peak(s) next to reference line are missing (rev.0b7b871a)
+
+
+
+================================================================================
+* Wed Feb 06 2019 melissa-hobson <melihobson@gmail.com> - 0.4.079
+
+================================================================================
+	- cal_WAVE_NEW corrected Littrow extrapolation for reddest orders (rev.4daacbf8)
+
+
+
+================================================================================
+* Mon Feb 18 2019 melissa-hobson <melihobson@gmail.com> - 0.4.080
+
+================================================================================
+	- testing linear minimization FP wave sol fitting (rev.02ccd126)
+	- Tests: (rev.305f5953)
+
+
+
+================================================================================
+* Fri Feb 22 2019 melissa-hobson <melihobson@gmail.com> - 0.4.081
+
+================================================================================
+	- Littrow check plot: ylimits added based on QCs and results (rev.8a956cbf)
+	- cal_WAVE_NEW gets HC catalog lines correctly (rev.4c973507)
+	- Correct error estimation for cal_WAVE_NEW (rev.7224eee4)
+
+
+
+================================================================================
+* Fri Feb 22 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.082
+
+================================================================================
+	- spirouPlot.py - fix problem with locplot_im_sat_threshold plot (rev.c19a3234)
+
+
+
+================================================================================
+* Thu Feb 28 2019 melissa-hobson <melihobson@gmail.com> - 0.4.083
+
+================================================================================
+	- sPlt.debug_locplot_finding_orders pauses correctly after each plot; plot limit modified to improve visualization (rev.8e5a38f1)
+	- spirouBACK.measure_background_and_get_central_pixels: removed duplicate call to locplot_y_miny_maxy (rev.dfa22338)
+
+
+
+================================================================================
+* Tue Mar 05 2019 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.4.084
+
+================================================================================
+	- Delete wave_comp_night.py (rev.38956fb4)
+	- Update cal_WAVE_E2DS_EA_spirou.py (rev.107a8ecd)
+
+
+
+================================================================================
+* Thu Mar 07 2019 Chris Usher <usher@cfht.hawaii.edu> - 0.4.085
+
+================================================================================
+	- Fixed lock timer bug and added barycorr retry. (rev.ab1a1c52)
+
+
+
+================================================================================
+* Fri Mar 08 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.086
+
+================================================================================
+	- spirouBERV.py - add BERVHOUR to loc (for saving to header) (rev.b4c5b61a)
+	- cal_WAVE_E2DS_EA_spirou.py - add some more TODO's for sections that need work (rev.5399c3ec)
+	- cal_HC - allow multiple files (need to update all files + add files to header) (rev.731fea36)
+	- add WMEANREF for AB and C to header (rev.a666d9cc)
+	- Add PID to output header files (so one can find the log file for each) (rev.0a020843)
+	- add Quality control header keys QC, QCV# (value), QCN# (name), QCL# (name) - and make sure these are not copied over from inputs + some pep8 fixes (rev.d790e772)
+	- spirouWAVE.py - clean up the code (pep8) (rev.dac36aa7)
+	- spirouFITS.py - clean up the code (pep8) (rev.c442a186)
+	- spirouBERV.py - clean up the code (pep8) (rev.f96688ba)
+	- spirouPlot.py - clean up the code (pep8) (rev.e46aadd7)
+	- spirouConst.py - clean up the code (pep8) (rev.0ad1cace)
+	- cal_WAVE_NEW_E2DS_spirou.py - clean up the code (pep8) (rev.f581044f)
+	- cal_WAVE_E2DS_EA_spirou.py - clean up the code (pep8) (rev.1871d48a)
