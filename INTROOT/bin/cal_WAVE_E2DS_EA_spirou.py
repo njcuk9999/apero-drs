@@ -604,6 +604,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # iterate through Littrow test cut values
     lit_it = 2
     # checks every other value
+    # TODO: This QC check (or set of QC checks needs re-writing it is
+    # TODO:    nearly impossible to understand
     for x_it in range(1, len(loc['X_CUT_POINTS_' + str(lit_it)]), 2):
         # get x cut point
         x_cut_point = loc['X_CUT_POINTS_' + str(lit_it)][x_it]
@@ -643,6 +645,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             qc_logic.append('max or min littrow > {0:.2f}'
                             ''.format(dev_littrow_max))
 
+            # TODO: Should this be the QC header values?
+            # TODO:   it does not change the outcome of QC (i.e. passed=False)
+            # TODO:   So what is the point?
             # if sig was out of bounds, recalculate
             if sig_littrow > rms_littrow_max:
                 # conditions
