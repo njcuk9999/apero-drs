@@ -383,8 +383,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # run DeltaVrms2D
     dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
     # save to loc
-    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
-    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+    cloc['DVRMSREF'], cloc['WMEANREF'] = dvrmsref, wmeanref
+    cloc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
     WLOG(p, 'info', wmsg.format(cp['FIBER'], wmeanref))
@@ -528,6 +528,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
                                value=loc['CCF_RES'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_WMREF1'],
+                               value=loc['WMEANREF'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'],
@@ -554,6 +556,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'],
                                value=cloc['CCF_RES'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=cloc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_WMREF2'],
+                               value=cloc['WMEANREF'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
                                value=cloc['CONTRAST'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'],
