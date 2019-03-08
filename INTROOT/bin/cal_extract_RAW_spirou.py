@@ -512,12 +512,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                    value=loc['BCHOUR'])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'],
-                                   value=qc_names)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'],
-                                   value=qc_values)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                   value=qc_logic)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                         values=qc_names)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                         values=qc_values)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                         values=qc_logic)
         # copy extraction method and function to header
         #     (for reproducibility)
         hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_EXTM'],

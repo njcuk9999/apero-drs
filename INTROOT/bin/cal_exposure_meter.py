@@ -259,10 +259,12 @@ def main(night_name=None, flatfile=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
                                    value=p['SHAPFILE'])
     else:
-        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+                                   value=p['TILTFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+                               value=loc['WAVEFILE'])
     # add name of the TAPAS y data
     hdict = spirouImage.AddKey(p, hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used
@@ -275,9 +277,12 @@ def main(night_name=None, flatfile=None):
                                value=p['EM_MAX_LAMBDA'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                     values=qc_names)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                     values=qc_values)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
     # add the transmission cut
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])

@@ -884,12 +884,12 @@ def polar_products_header(p, loc, polardict, qcparams):
 
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'],
-                               value=qcparams[0])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'],
-                               value=qcparams[1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'],
-                               value=qcparams[2])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                     values=qcparams[1])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                     values=qcparams[0])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qcparams[2])
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(p, hdict, p['kw_POL_STOKES'],
                                value=loc['STOKES'])
