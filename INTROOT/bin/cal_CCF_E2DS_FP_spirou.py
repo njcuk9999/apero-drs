@@ -461,6 +461,30 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         sPlt.ccf_rv_ccf_plot(cp, cloc['RV_CCF'], normalized_ccf, ccf_fit)
 
     # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # TODO: Needs doing
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+
+    # ----------------------------------------------------------------------
     # archive ccf to fits file
     # ----------------------------------------------------------------------
     raw_infile = os.path.basename(p['E2DSFILE'])
@@ -485,6 +509,11 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_infile)
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                value=loc['WAVEFILE'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
     # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys

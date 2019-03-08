@@ -310,6 +310,30 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
     # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # TODO: Needs doing
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+
+    # ----------------------------------------------------------------------
     # archive ccf to table
     # ----------------------------------------------------------------------
     # construct filename
@@ -355,15 +379,23 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # set the input files
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_infile)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+                               value=loc['WAVEFILE'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
     # add CCF keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'], value=loc['RV_CCF'][0])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
+                               value=loc['RV_CCF'][0])
     # the rv step
     rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'], value=loc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
+                               value=loc['CCF_RES'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RVC'], value=loc['RV'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
@@ -375,7 +407,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'], value=loc['BERV_MAX'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
+                               value=loc['BERV_MAX'])
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, corfile, data, hdict)
 

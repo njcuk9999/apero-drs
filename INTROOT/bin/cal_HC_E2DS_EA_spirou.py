@@ -72,13 +72,6 @@ def main(night_name=None, files=None):
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
 
-    # make sure we only have one HCFILE more than one is not currently
-    # supported
-    # TODO: Fix problem with updating output and then remove this
-    if len(p['ARG_FILE_NAMES']) > 1:
-        emsg = 'Currently we do not support multiple HCFILES'
-        WLOG(p, 'error', emsg)
-
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -201,11 +194,18 @@ def main(night_name=None, files=None):
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+
     # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
     if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
         fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
         fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
         passed = False
+    # add to qc header lists
+    qc_values.append(loc['SIG1'])
+    qc_names.append('SIG1')
+    qc_logic.append('SIG1 > {0:.2f}'.format(p['QC_HC_WAVE_SIGMA_MAX']))
+    # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -243,13 +243,18 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
     # add quality control
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_NAME'], value=qc_names)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_VAL'], value=qc_values)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC_LOGIC'], value=qc_logic)
     # add wave solution date
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                value=p['MAX_TIME_HUMAN'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
+                               value=loc['WAVEFILE'])
+
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['POLY_WAVE_SOL'].shape[0])

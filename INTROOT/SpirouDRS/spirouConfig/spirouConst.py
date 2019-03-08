@@ -463,6 +463,19 @@ def FORBIDDEN_COPY_KEYS():
 
 
 # noinspection PyPep8Naming
+def QC_HEADER_KEYS():
+    """
+    Define the QC keys prefixes that should not be copied (i.e. they are
+    just for the input file not the output file)
+
+    :return keys:
+    """
+    qc_keys = ['QCV', 'QCN', 'QCL']
+    # return keys
+    return qc_keys
+
+
+# noinspection PyPep8Naming
 def LOG_OPT(p):
     """
     Defines the program to use as the "option" in logging
