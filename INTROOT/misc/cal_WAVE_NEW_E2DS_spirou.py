@@ -27,6 +27,7 @@ from SpirouDRS import spirouRV
 
 from astropy import constants as cc
 from astropy import units as uu
+
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
@@ -449,13 +450,17 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.xlabel('nm')
         plt.ylabel('e-')
         plt.title('FP order ' + str(n_fin - 1))
+
+        max_y_val = np.percentile(fpdata[n_fin - 1], 95)
+        label1 = 'HC Ref - {0}'.format(hc_ll_red)
+        label2 = 'FP Ref - {0}'.format(fp_ll_ref[n_fin - n_init - 1])
+
         for i in range(len(fp_ll_red)):
-            plt.vlines(fp_ll_red[i], 0, np.percentile(fpdata[n_fin - 1], 95))
-        plt.vlines(hc_ll_red, 0, np.percentile(fpdata[n_fin - 1], 95),
-                   color='green', label = 'HC Ref - '+str(hc_ll_red))
-        plt.vlines(fp_ll_ref[n_fin - n_init - 1], 0, np.percentile(fpdata[n_fin - 1], 95),
-                   color='red', label = 'FP Ref - '+str(fp_ll_ref[n_fin - n_init - 1]))
-        plt.legend(loc = 'best')
+            plt.vlines(fp_ll_red[i], 0, max_y_val)
+        plt.vlines(hc_ll_red, 0, max_y_val, color='green', label=label1)
+        plt.vlines(fp_ll_ref[n_fin - n_init - 1], 0, max_y_val, color='red',
+                   label=label2)
+        plt.legend(loc=0)
 
     # ----------------------------------------------------------------------
     # Assign absolute FP numbers for rest of orders by wavelength matching
@@ -585,7 +590,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     hc_ll_test.append(hc_ll_ord[j])
                     # test for FP gap
                     med_x_diff = np.median(fp_x_ord[1:] - fp_x_ord[:-1])
-                    if (t2 < 0.75 * med_x_diff or t2 > 1.25 * med_x_diff):
+                    if (t2 < 0.75 * med_x_diff) or (t2 > 1.25 * med_x_diff):
                         d_test.append(0.5 * t1 * (t2 / t3))
                         one_m_d_test.append(1. / m_ord[k])
 
@@ -626,7 +631,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.title('Interpolated cavity width for HC lines')
             plt.plot(one_m_d_test, d_test, '*')
 
-
     # ----------------------------------------------------------------------
     # Fit (1/m) vs d
     # ----------------------------------------------------------------------
@@ -651,7 +655,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     res_d_final = d - fit_1m_d_func(one_m_d)
 
     if p['DRS_PLOT']:
-        # plot 1/m vs d and the fitted polynomial, and the residuals - TODO move to spirouPLOT
+        # plot 1/m vs d and the fitted polynomial, and the residuals -
+        # TODO move to spirouPLOT
         plt.figure()
         plt.subplot(211)
         # plot values
@@ -706,7 +711,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord, '.',
                      label='order ' + str(ind_ord), color=col[ind_ord])
         plt.xlabel('FP peak position [pix]')
-        ylabel = 'FP old-new wavelength difference [nm] (shifted +0.001 per order)'
+        ylabel = ('FP old-new wavelength difference [nm] '
+                  '(shifted +0.001 per order)')
         plt.ylabel(ylabel)
         plt.legend(loc='best')
 
@@ -742,8 +748,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get weights for the order
         wei_ord = np.asarray(wei)[ord_mask]
         # fit polynomial
-        poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
-                                               p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+        pout = np.polyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
+                          w=wei_ord)
+        poly_wave_sol_final[onum] = pout[::-1]
         # get final wavelengths
         fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
         # get residuals
@@ -758,8 +765,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             wei_ord = wei_ord[sig_mask]
             # refit polynomial
             #pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
-            poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
-                                                   p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+            pout = np.polyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
+                              w=wei_ord)
+            poly_wave_sol_final[onum] = pout[::-1]
             # get new final wavelengths
             fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1],
                                          fp_x_ord)
@@ -842,7 +850,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             lty_1 = lty[np.mod(order_num, 2)]
             #        col2_1 = col2[np.mod(order_num, 2)]
             # plot hc data
-            plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
+            plt.plot(wave_map_final[order_num - n_init],
+                     loc['HCDATA'][order_num])
             plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][order_num]), color=col1_1,
                        linestyles=lty_1)
             plt.xlabel('Wavelength (nm)')
@@ -999,7 +1008,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['OBJNAME']='FP'
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
-    #TODO : Add QC of the FP CCF
+    # TODO : Add QC of the FP CCF
 
     # ----------------------------------------------------------------------
     # Quality control
