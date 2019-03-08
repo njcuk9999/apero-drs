@@ -49,61 +49,102 @@ raw_file = drs_finput('DRS_RAW', ext='.fits')
 raw_dark_dark = drs_finput('DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                            ext='d.fits')
 raw_files.append(raw_dark_dark)
+
 # -----------------------------------------------------------------------------
 # raw flat files
 raw_dark_flat = drs_finput('DARK_FLAT', KW_CCAS='pos_pk', KW_CREF='pos_wl',
                            ext='f.fits')
 raw_files.append(raw_dark_flat)
+
 raw_flat_dark = drs_finput('FLAT_DARK', KW_CCAS='pos_wl', KW_CREF='pos_pk',
                            ext='f.fits')
 raw_files.append(raw_flat_dark)
+
 raw_flat_flat = drs_finput('FLAT_FLAT', KW_CCAS='pos_wl', KW_CREF='pos_wl',
                            ext='f.fits')
+raw_files.append(raw_flat_flat)
+
 raw_flat_fp = drs_finput('FLAT_FP', KW_CCAS='pos_wl', KW_CREF='pos_fp',
                          ext='f.fits')
+raw_files.append(raw_flat_fp)
 
 # -----------------------------------------------------------------------------
 # raw align files
 raw_dark_fp = drs_finput('DARK_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
                          ext='a.fits')
+raw_files.append(raw_dark_fp)
+
 raw_fp_dark = drs_finput('FP_DARK', KW_CCAS='pos_fp', KW_CREF='pos_pk',
                          ext='a.fits')
+raw_files.append(raw_fp_dark)
+
 raw_fp_flat = drs_finput('FP_FLAT', KW_CCAS='pos_fp', KW_CREF='pos_wl',
                          ext='a.fits')
+raw_files.append(raw_fp_flat)
+
 raw_fp_fp = drs_finput('FP_FP', KW_CCAS='pos_fp', KW_CREF='pos_fp',
                        ext='a.fits')
+raw_files.append(raw_fp_fp)
+
 # -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                           ext='o.fits')
+raw_files.append(raw_obj_dark)
+
 raw_obj_fp = drs_finput('OBJ_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
                         ext='o.fits')
+raw_files.append(raw_obj_fp)
+
 raw_obj_hc1 = drs_finput('OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                          ext='o.fits')
+raw_files.append(raw_obj_hc1)
+
 raw_obj_hc2 = drs_finput('OBJ_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                          ext='o.fits')
+raw_files.append(raw_obj_hc2)
+
 # -----------------------------------------------------------------------------
 # raw comparison files
 raw_dark_hc1 = drs_finput('DARK_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                           ext='c.fits')
+raw_files.append(raw_dark_hc1)
+
 raw_dark_hc2 = drs_finput('DARK_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                           ext='c.fits')
+raw_files.append(raw_dark_hc2)
+
 raw_fp_hc1 = drs_finput('FP_HCONE', KW_CCAS='pos_fp', KW_CREF='pos_hc1',
                         ext='c.fits')
+raw_files.append(raw_fp_hc1)
+
 raw_fp_hc2 = drs_finput('FP_HCTWO', KW_CCAS='pos_fp', KW_CREF='pos_hc2',
                         ext='c.fits')
+raw_files.append(raw_fp_hc2)
+
 raw_hc1_fp = drs_finput('HCONE_FP', KW_CCAS='pos_hc1', KW_CREF='pos_fp',
                         ext='c.fits')
+raw_files.append(raw_hc1_fp)
+
 raw_hc2_fp = drs_finput('HCTWO_FP', KW_CCAS='pos_hc2', KW_CREF='pos_fp',
                         ext='c.fits')
+raw_files.append(raw_hc2_fp)
+
 raw_hc1_hc1 = drs_finput('HCONE_HCONE', KW_CCAS='pos_hc1', KW_CREF='pos_hc1',
                          ext='c.fits')
+raw_files.append(raw_hc1_hc1)
+
 raw_hc2_hc2 = drs_finput('HCTWO_HCTWO', KW_CCAS='pos_hc2', KW_CREF='pos_hc2',
                          ext='c.fits')
+raw_files.append(raw_hc2_hc2)
+
 raw_hc1_dark = drs_finput('HCONE_DARK', KW_CCAS='pos_hc1', KW_CREF='pos_pk',
                           ext='c.fits')
+raw_files.append(raw_hc1_dark)
+
 raw_hc2_dark = drs_finput('HCTWO_DARK', KW_CCAS='pos_hc2', KW_CREF='pos_pk',
                           ext='c.fits')
+raw_files.append(raw_hc2_dark)
 
 
 # =============================================================================
