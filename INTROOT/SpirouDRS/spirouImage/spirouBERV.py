@@ -11,6 +11,8 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 import os
+import dbm
+import time
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
@@ -191,6 +193,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
             emsg2 = '\ti.e. ">>> pip install barycorrpy'
             WLOG(p, 'error', [emsg1, emsg2])
             barycorrpy = None
+            iers = None
 
         # set up the barycorr arguments
         bkwargs = dict(ra=ra * 15., dec=dec, epoch=equinox, pmra=pmra,
@@ -200,7 +203,21 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
 
         # get the julien UTC date for observation and obs + 1 year
         jdutc = list(t1.jd + np.arange(0., 365., 1.5))
-        bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+
+        def berv_calculation():
+            try:
+                return barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+            except dbm.error:
+                WLOG(p, 'warning', 'DBM locked in astropy. Waiting...')
+            except iers.IERSRangeError:
+                WLOG(p, 'warning', 'Failed to download IERS. Waiting...')
+
+        max_wait_time = p['DB_MAX_WAIT']
+        bresults1 = try_until_valid_or_timeout(berv_calculation, max_wait_time)
+        if bresults1 is None:
+            WLOG(p, 'error', 'Required data can not be accessed for barycorrpy'
+                             ' (wait time exceeded).')
+
         bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
 
         berv2 = bresults1[0][0] / 1000.0
@@ -211,6 +228,18 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
 
         # return results
         return berv2, bjd2, bervmax2
+
+
+def try_until_valid_or_timeout(operation, max_wait_time):
+    wait_time = 0
+    results = None
+    while results is None and wait_time < max_wait_time:
+        results = operation()
+        if results:
+            return results
+        else:
+            time.sleep(1)
+            wait_time += 1
 
 
 # =============================================================================
