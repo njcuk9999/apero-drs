@@ -55,7 +55,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_BBFLAT',
             'KW_BERV',
             'KW_BERV_MAX',
-            'KW_B_OBS_HOUR'
+            'KW_B_OBS_HOUR',
             'KW_BHOT',
             'KW_BJD',
             'KW_BLAZFILE',
