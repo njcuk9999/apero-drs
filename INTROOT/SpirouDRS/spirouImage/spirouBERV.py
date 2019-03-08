@@ -139,7 +139,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         try:
             # noinspection PyUnresolvedReferences
             from SpirouDRS.fortran import newbervmain
-        except:
+        except Exception as e:
             emsg1 = ('For method="old" must compile fortran routine '
                      '"newbervmain" in the SpirouDRS/fortran directory:')
             emsg2 = '\t>>> f2py -c -m newbervmain --noopt --quiet newbervmain.f'
@@ -188,7 +188,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
             # set table
             iers.IERS.iers_table = iers.IERS_A.open(path_a)
             import barycorrpy
-        except:
+        except Exception as _:
             emsg1 = 'For method="new" must have barcorrpy installed '
             emsg2 = '\ti.e. ">>> pip install barycorrpy'
             WLOG(p, 'error', [emsg1, emsg2])
@@ -215,8 +215,9 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         max_wait_time = p['DB_MAX_WAIT']
         bresults1 = try_until_valid_or_timeout(berv_calculation, max_wait_time)
         if bresults1 is None:
-            WLOG(p, 'error', 'Required data can not be accessed for barycorrpy'
-                             ' (wait time exceeded).')
+            emsg = ('Required data can not be accessed for barycorrpy '
+                    '(wait time exceeded).')
+            WLOG(p, 'error', emsg)
 
         bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
 
