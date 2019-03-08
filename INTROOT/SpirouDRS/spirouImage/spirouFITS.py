@@ -150,8 +150,6 @@ def readdata(p, filename, log=True, return_header=True, return_shape=True):
             :return shape: tuple, data.shape
             :return empty: None, blank entry
     """
-    # set up frequently used variables
-    log_opt = p['LOG_OPT']
     # log that we are reading the image
     if log:
         WLOG(p, '', 'Reading File: {0} '.format(filename))
@@ -507,7 +505,6 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     return p
 
 
-
 def write_image_table(p, filename, image=None, table=None, hdict=None,
                       dtype=None):
     func_name = __NAME__ + '.write_image_table()'
@@ -603,7 +600,6 @@ def write_image_table(p, filename, image=None, table=None, hdict=None,
     p = write_output_dict(p, filename, hdict)
     # return p
     return p
-
 
 
 def write_output_dict(p, filename, hdict):
@@ -1368,7 +1364,7 @@ def check_fits_lock_file(p, filename):
         WLOG(p, 'warning', '{0} locked. Waiting...'.format(filename))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
-    while os.path.exists(lock_file) and wait_time < max_wait_time:
+    while os.path.exists(lock_file) and (wait_time < max_wait_time):
         time.sleep(1)
         wait_time += 1
     if wait_time > max_wait_time:
@@ -1448,10 +1444,10 @@ def update_wave_sol(p, loc, filename):
 
     # add number of orders
     hdict = add_new_key(p, hdict, p['KW_WAVE_ORD_N'],
-                               value=loc['LL_PARAM_FINAL'].shape[0])
+                        value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
     hdict = add_new_key(p, hdict, p['KW_WAVE_LL_DEG'],
-                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
+                        value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
     hdict = add_key_2d_list(p, hdict, p['KW_WAVE_PARAM'],
                             values=loc['LL_PARAM_FINAL'])
@@ -1622,6 +1618,7 @@ def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     """
     Copy keys from a filename to hdict
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary or None, header dictionary to write to fits file
                   if None hdict is created
     :param filename: string, location and filename of the FITS rec to open
@@ -1664,6 +1661,7 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
             [key, value, comment]    where key and comment are strings
     if hdict is None creates a new dictionary
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary or None, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
@@ -1702,6 +1700,7 @@ def add_new_keys(p, hdict=None, keywordstores=None, values=None):
     objects. Each keywordstore is in form:
             [key, value, comment]    where key and comment are strings
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary or None, storage for adding to FITS rec if None
                   creates a new dictionary to store keys in
     :param keywordstores: list of lists, list of "keyword list" lists
@@ -1742,6 +1741,7 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     Add a new 1d list to key using the keywordstorage[0] as prefix in form
     keyword = kewordstoreage + row number
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
@@ -1790,6 +1790,7 @@ def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
 
     where number = (row number * number of columns) + column number
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
@@ -1842,6 +1843,7 @@ def extract_key_word_store(p, keywordstore=None, func_name=None):
 
     [name, value, comment]     with types [string, object, string]
 
+    :param p: ParamDict - the constant parameter dictionary
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
     :param func_name: string or None, if not None defined where the
@@ -2071,6 +2073,7 @@ def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0):
         If there is one extension it is used
         If there are two extensions the second is used
 
+    :param p: ParamDict - the constant parameter dictionary
     :param filename: string, the filename to open with astropy.io.fits
     :param getheader: bool, if True loads the filename header
     :param getshape: bool, if True returns the shape
@@ -2180,6 +2183,7 @@ def deal_with_bad_header(p, hdu):
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdu: astropy.io.fits HDU
 
     :return data:
@@ -2198,7 +2202,7 @@ def deal_with_bad_header(p, hdu):
         try:
             datastore.append(hdu[it].data)
             headerstore.append(hdu[it].header)
-        except:
+        except Exception as _:
             cond = False
         # iterate
         it += 1
@@ -2227,6 +2231,7 @@ def read_raw_header(p, filename, headerext=0):
     """
     Reads the header of a fits file using astropy.io.fits
 
+    :param p: ParamDict - the constant parameter dictionary
     :param filename: string, the filename to open with astropy.io.fits
     :param headerext: int, the extension to read the header from
 
