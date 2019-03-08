@@ -172,10 +172,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wave_fiber = p['FIBER']
     # get wave image
     # TODO: Needs changing as this is only testable on one machine
-    # tmp_wave_file = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
+    tmp_wave_file = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
     # tmp_wave_file = '/data/CFHT/calibDB_1/2018-09-25_2305967c_pp_wave_ea_C.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr,
-                                       #filename=tmp_wave_file,
+                                       filename=tmp_wave_file,
                                        return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
@@ -185,7 +185,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Check that wave parameters are consistent with "ic_ll_degr_fit"
     # ----------------------------------------------------------------------
+
     loc = spirouImage.CheckWaveSolConsistency(p, loc)
+
+    p['IC_LL_DEGR_FIT'] = 4
+    p['IC_LITTROW_ORDER_FIT_DEG'] = 4
+
 
     # ----------------------------------------------------------------------
     # Read UNe solution
@@ -311,7 +316,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     n_fin = 47  # p['IC_FP_N_ORD_FINAL'] # note: no lines in 48 from calHC
     size = p['IC_FP_SIZE']
     threshold = p['IC_FP_THRESHOLD']
-    dopd0 = 2.450101e7  # 2.4508e7   # p['IC_FP_DOPD0']
+    dopd0 = 2.44962434814043e7    #2.450101e7  # 2.4508e7   # p['IC_FP_DOPD0']
     fit_deg = p['IC_FP_FIT_DEGREE']
     # get parameters from loc
     fpdata = loc['FPDATA']
@@ -489,6 +494,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     d_test = []
     one_m_d_test = []
 
+    plt.figure()
     # loop over orders
     for ord_num in range(n_fin - n_init):
         # create order mask
@@ -515,8 +521,28 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                hc_x_ord)
         # get corresponding catalogue lines from loc
         hc_ll_ord_cat = loc['WAVE_CATALOG'][hc_mask][blaze_mask]
-        # fit x vs m for FP lines
-        coeff_xm = np.polyfit(fp_x_ord, m_ord, deg=5)
+
+        # fit x vs m for FP lines w/sigma-clipping
+        sigclip = 7
+        # initialise the while loop
+        sigmax = sigclip + 1
+        # initialise mask
+        mask = np.ones_like(fp_x_ord, dtype = 'Bool')
+        while sigmax>sigclip:
+            # fit on masked values
+            coeff_xm = np.polyfit(fp_x_ord[mask], m_ord[mask], deg=4)
+            # get residuals (not masked or dimension break)
+            res = m_ord - np.polyval(coeff_xm, fp_x_ord)
+            # normalise
+            res = np.abs(res/np.nanmedian(np.abs(res[mask])))
+            # get the max residual in sigmas
+            sigmax = np.max(res[mask])
+            # mask all outliers
+            if sigmax > sigclip:
+                mask[res>=sigclip] = False
+        plt.plot(fp_x_ord, m_ord -np.polyval(coeff_xm, fp_x_ord),'.')
+
+
         # get fractional m for HC lines from fit
         m_hc = np.polyval(coeff_xm, hc_x_ord)
         # get cavity width for HC lines from FP equation
@@ -593,17 +619,50 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.ylabel('residuals [nm]')
 
 
-    # # Test fit v wavelength - why?
-    # ff = np.polyfit(hc_ll_test, d, 9)
-    # fitval = np.polyval(ff, hc_ll_test)
-    #
-    # plt.figure()
-    # plt.plot(hc_ll_test,d)
-    # plt.plot(hc_ll_test, fitval)
-    #
-    # plt.figure()
-    # plt.plot(hc_ll_test, d - fitval,'.')
-    # print(np.std(fitval))
+    # fit d v wavelength w/sigma-clipping
+    # fit x vs m for FP lines w/sigma-clipping
+    sigclip = 7
+    # initialise the while loop
+    sigmax = sigclip + 1
+    # initialise mask
+    mask = np.ones_like(hc_ll_test, dtype='Bool')
+    while sigmax > sigclip:
+        # fit on masked values
+        ff = np.polyfit(hc_ll_test[mask], d[mask], deg=9)
+        # get residuals (not masked or dimension break)
+        res = d - np.polyval(ff, hc_ll_test)
+        # normalise
+        res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+        # get the max residual in sigmas
+        sigmax = np.max(res[mask])
+        # mask all outliers
+        if sigmax > sigclip:
+            mask[res >= sigclip] = False
+
+    fitval = np.polyval(ff, hc_ll_test)
+
+    if p['DRS_PLOT']:
+        # plot wavelength vs d and the fitted polynomial - TODO move to spirouPLOT
+        plt.figure()
+        plt.subplot(211)
+        # plot values
+        plt.plot(hc_ll_test, d, '.')
+        # plot initial cavity width value
+        plt.hlines(dopd0 / 2., min(hc_ll_test), max(hc_ll_test), label='original d')
+        # plot reference peak of reddest order
+        plt.plot(fp_ll[-1][-1], dopd0 / 2., 'D')
+        # plot fit
+        plt.plot(hc_ll_test, fitval, label='polynomial fit')
+        plt.xlabel('wavelength')
+        plt.ylabel('d')
+        plt.legend(loc='best')
+        plt.title('Interpolated cavity width for HC lines')
+        # plot residuals
+        plt.subplot(212)
+        plt.plot(hc_ll_test, d-fitval, '.')
+        plt.xlabel('wavelength')
+        plt.ylabel('residuals [nm]')
+
 
 
     # ----------------------------------------------------------------------
@@ -617,6 +676,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     for i in range(len(m)):
         # calculate wavelength from fit to 1/m vs d
         fp_ll_new.append(2 * fit_1m_d_func(1. / m[i]) / m[i])
+
+    # from the d v wavelength fit
+    fp_ll_new_2 = np.ones_like(m)
+    for ite in range(6):
+        recon_d = np.polyval(ff, fp_ll_new_2)
+        fp_ll_new_2 = recon_d/m*2.
 
     # save to loc (flattened)
     loc['FP_LL_NEW'] = np.array(fp_ll_new)
@@ -653,10 +718,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Fit wavelength solution from FP peaks
     # ----------------------------------------------------------------------
 
+    #reset deg to match Etienne
+    p['IC_LL_DEGR_FIT'] = 4
+
     # set up storage arrays
     xpix = np.arange(loc['NBPIX'])
     wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
-    poly_wave_sol_final = np.zeros_like(loc['WAVEPARAMS'][0:(n_fin-n_init)])
+    poly_wave_sol_final = np.zeros((n_fin-n_init, p['IC_LL_DEGR_FIT']+1))
     wsumres = 0.0
     wsumres2 = 0.0
     total_lines = 0.0
@@ -683,7 +751,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # fit polynomial
         # pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
         poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
-                                               p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+                               p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
         # get final wavelengths
         fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
         # get residuals
