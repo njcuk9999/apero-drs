@@ -829,7 +829,7 @@ def read_waveparams(p, hdr):
     dim2key = p['KW_WAVE_LL_DEG'][0]
     # get dim1 value
     if dim1key in hdr:
-        dim1 = hdr[dim1key]
+        dim1 = int(hdr[dim1key])
     else:
         emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim1)'
         emsg2 = '   function = {0}'.format(func_name)
@@ -837,7 +837,7 @@ def read_waveparams(p, hdr):
         dim1 = None
     # get dim2 value
     if dim2key in hdr:
-        dim2 = hdr[dim2key] + 1
+        dim2 = int(hdr[dim2key]) + 1
     else:
         emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim2)'
         emsg2 = '   function = {0}'.format(func_name)
@@ -864,7 +864,7 @@ def get_wave_solution_old(p, image=None, hdr=None):
         # get the wave parmaeters from the header
         wave_params = read_waveparams(p, hdr)
         # get the dimensions
-        dim1 = hdr[dim1key]
+        dim1 = int(hdr[dim1key])
         # check that dim1 is the correct number of orders
         if dim1 != image.shape[0]:
             emsg1 = ('Number of orders in HEADER ({0}={1}) not compatible with '
@@ -892,7 +892,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
     dim1key = p['KW_WAVE_ORD_N'][0]
     # dim2key = p['KW_WAVE_LL_DEG'][0]
     # get keys from header
-    dim1 = hdr[dim1key]
+    dim1 = int(hdr[dim1key])
     # raise error is image and nbpix is None
     if image is None and (nbo is None or nbx is None):
         emsg = ('Need to define an "image" or ("nbo" and "nbx") in order to '
@@ -983,14 +983,14 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # see if we can obtain nb_xpix from hdr
     if (image is None) and hdr is not None:
         if (nbo is None) and 'NAXIS2' in hdr:
-            nbo = hdr['NAXIS2']
+            nbo = int(hdr['NAXIS2'])
         else:
             emsg1 = ('Cannot identify number of orders (no image defined, and'
                      'NAXIS2 not in header)')
             emsg2 = '\tfunction = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2])
         if (nbx is None) and 'NAXIS1' in hdr:
-            nbx = hdr['NAXIS1']
+            nbx = int(hdr['NAXIS1'])
         else:
             emsg1 = ('Cannot identify number of x-pixels (no image defined, and'
                      'NAXIS1 not in header)')
