@@ -6740,3 +6740,47 @@
 	- spirouConst.py - clean up the code (pep8) (rev.0ad1cace)
 	- cal_WAVE_NEW_E2DS_spirou.py - clean up the code (pep8) (rev.f581044f)
 	- cal_WAVE_E2DS_EA_spirou.py - clean up the code (pep8) (rev.1871d48a)
+
+
+
+================================================================================
+* Fri Mar 08 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.087
+
+================================================================================
+	- change AddKey --> AddKey1DList for QC names/values/logic (rev.2779756d)
+	- cal_preprocess_spirou.py - correct qc missing from param dict (rev.f6350eae)
+	- spirouKeywords.py - fix missed comma in list (rev.1e560b5d)
+	- spirouBERV.py - add BERVHOUR to loc (for saving to header) (rev.5889e099)
+
+
+
+================================================================================
+* Sat Mar 09 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.088
+
+================================================================================
+	- spirouLSD.py - fix str to float bug (rev.47c737e1)
+	- test.run - update (rev.e6a5ff61)
+	- spirouPOLAR.py - fix string - float bug (rev.25c93982)
+	- spirouTelluric.py -fix berv from string (rev.8cc9bd56)
+	- spirouRV - must have finite BERV value -- but should this be set to zero? (rev.5b198830)
+	- spirouFITS.py - undo hdr type fix (rev.c7d80525)
+	- update test.run (rev.a0c6b145)
+	- spirouBERV.py - correct strings coming from header (BERV, BJD, BERV_MAX) (rev.c82c63fc)
+	- update test.run (rev.f7fe23fe)
+	- update test.run (rev.64e18fef)
+	- spirouLOCOR.py - fix bug with strings not being ints (rev.41d35468)
+	- spirouFITS.py - fix problem with changing output type (should not change) (rev.c77c8d52)
+	- cal_HC_E2DS_EA_spirou.py - fix typo in updatewavesolution (rev.2d3d9ddb)
+	- spirouWAVE.py - fix typo in new masknaems ordermask-->omask (rev.0aff80d2)
+	- spirouFITS.py - fix values now as strings --> cast to ints/floats (rev.e28efc01)
+	- fix problem with mjd being a string (rev.c3423e5c)
+	- fix problem with mjd being a string (rev.f75eed46)
+	- spirouFITS.py - allow NaNs into header by converting to string (rev.72b933e4)
+	- spirouFITS.py - allow NaNs into header by converting to string (rev.8dca2b0f)
+	- spirouFITS.py - allow NaNs into header by converting to string (rev.bbb01dc1)
+	- spirouFITS.py - allow NaNs into header by converting to string (rev.6cba9ab1)
+	- spirouFITS.py - allow NaNs into header by converting to string (rev.d59e064f)
+	- spirouBERV.py - fix bug when we don't need a BERV still need BERVHOUR in loc (rev.86857d11)
+	- cal_extract_RAW_spirou.py - fix typo BCHOUR --> BERVHOUR (rev.a874dd5d)
+	- cal_loc_RAW_spirou.py - fix mistake in assigned QCV value (rev.b9995e6e)
+	- cal_loc_RAW_spirou.py - fix mistake in assigned QCV value (rev.e647b41e)
