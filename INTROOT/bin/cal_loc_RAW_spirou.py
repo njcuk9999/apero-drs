@@ -348,9 +348,9 @@ def main(night_name=None, files=None):
                                     p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
         passed = False
     # add to qc header lists
-    qc_values.append(loc['MAX_RMPTS_WID'])
-    qc_names.append('MAX_RMPTS_WID')
-    qc_logic.append('MAX_RMPTS_WID > {0:.2f}'
+    qc_values.append(np.sum(loc['MAX_RMPTS_WID']))
+    qc_names.append('sum(MAX_RMPTS_WID)')
+    qc_logic.append('sum(MAX_RMPTS_WID) > {0:.2f}'
                     ''.format(p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
     # ----------------------------------------------------------------------
     # check that the rms in center fit is lower than qc threshold
