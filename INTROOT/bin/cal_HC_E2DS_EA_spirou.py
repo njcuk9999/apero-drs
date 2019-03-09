@@ -72,13 +72,6 @@ def main(night_name=None, files=None):
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
 
-    # make sure we only have one HCFILE more than one is not currently
-    # supported
-    # TODO: Fix problem with updating output and then remove this
-    if len(p['ARG_FILE_NAMES']) > 1:
-        emsg = 'Currently we do not support multiple HCFILES'
-        WLOG(p, 'error', emsg)
-
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -201,11 +194,18 @@ def main(night_name=None, files=None):
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+
     # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
     if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
         fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
         fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
         passed = False
+    # add to qc header lists
+    qc_values.append(loc['SIG1'])
+    qc_names.append('SIG1')
+    qc_logic.append('SIG1 > {0:.2f}'.format(p['QC_HC_WAVE_SIGMA_MAX']))
+    # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -222,7 +222,10 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save wave map to file
     # ----------------------------------------------------------------------
-    raw_infile = os.path.basename(p['FITSFILENAME'])
+    # get base input filenames
+    bfilenames = []
+    for raw_file in p['ARG_FILE_NAMES']:
+        bfilenames.append(os.path.basename(raw_file))
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.basename(wavefits)
@@ -237,19 +240,29 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     # set the input files
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
-    # add quality control
+    hdict = spirouImage.AddKey1DList(p, hdict, p['kw_HCFILE'],
+                                     values=bfilenames)
+    # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                     values=qc_names)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                     values=qc_values)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
     # add wave solution date
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                value=p['MAX_TIME_HUMAN'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
+                               value=loc['WAVEFILE'])
+
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['POLY_WAVE_SOL'].shape[0])
@@ -313,32 +326,16 @@ def main(night_name=None, files=None):
         spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # ----------------------------------------------------------------------
-    # Update header of current file
+    # Update header of current files
     # ----------------------------------------------------------------------
     # only copy over if QC passed
     if p['QC']:
-        fitsfilename = p['FITSFILENAME']
-        tag4 = loc['HCHDR'][p['KW_OUTPUT'][0]]
-
-        # update it's own header
-        wmsg = 'Saving new wave parameters to own header'
-        WLOG(p, '', wmsg)
-        # add keys from original header file
-        hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
-        # add wave file name
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
-        # add wave solution date
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
-                                   value=p['MAX_TIME_HUMAN'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
-                                   value=p['MAX_TIME_UNIX'])
-        # add wave solution coefficients
-        hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
-                                         values=loc['POLY_WAVE_SOL'])
-        # Save E2DS file
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
-        p = spirouImage.WriteImage(p, fitsfilename, loc['HCDATA'], hdict)
+        rdir = os.path.dirname(wavefits)
+        # loop around hc files and update header with
+        for rawhcfile in p['ARG_FILE_NAMES']:
+            hcfile = os.path.join(rdir, rawhcfile)
+            raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], hcfile)
+            p = spirouImage.UpdateWaveSolutionHC(p, loc, raw_infilepath1)
 
     # ----------------------------------------------------------------------
     # End Message

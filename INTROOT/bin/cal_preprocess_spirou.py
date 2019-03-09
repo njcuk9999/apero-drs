@@ -161,6 +161,8 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic = [], [], []
+        # ----------------------------------------------------------------------
         # get pass condition
         cout = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
         snr_hotpix, rms_list = cout
@@ -176,24 +178,39 @@ def main(night_name=None, ufiles=None):
                     'File = {2}'.format(*fargs))
             fail_msg.append(fmsg)
             passed = False
-
+        # add to qc header lists
+        qc_values.append(snr_hotpix)
+        qc_names.append('snr_hotpix')
+        qc_logic.append('snr_hotpix < {0:.5e}'
+                        ''.format(p['PP_CORRUPT_SNR_HOTPIX']))
+        # ----------------------------------------------------------------------
         if np.max(rms_list) > p['PP_CORRUPT_RMS_THRES']:
             # add failed message to fail message list
             fargs = [np.max(rms_list), p['PP_CORRUPT_RMS_THRES'], ufile]
             fmsg = ('File was found to be corrupted. (RMS < threshold, '
-                    '{0:.4e} < {1:.4e}). File will not be saved. '
+                    '{0:.4e} > {1:.4e}). File will not be saved. '
                     'File = {0}'.format(*fargs))
             fail_msg.append(fmsg)
             passed = False
-
+        # add to qc header lists
+        qc_values.append(np.max(rms_list))
+        qc_names.append('max(rms_list)')
+        qc_logic.append('max(rms_list) > {0:.4e}'
+                        ''.format(p['PP_CORRUPT_RMS_THRES']))
+        # ----------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
             WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
                 wmsg = 'QUALITY CONTROL FAILED: {0}'
                 WLOG(p, 'warning', wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+            WLOG(p, 'warning', '\tFile not written')
             continue
 
         # ------------------------------------------------------------------
@@ -216,6 +233,15 @@ def main(night_name=None, ufiles=None):
 
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_PPVERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                         values=qc_names)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                         values=qc_values)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                         values=qc_logic)
 
         # set the DRS type (for file indexing)
         p['DRS_TYPE'] = 'RAW'
