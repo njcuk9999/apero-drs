@@ -336,9 +336,9 @@ def main(night_name=None, files=None):
                                     p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
         passed = False
     # add to qc header lists
-    qc_values.append(loc['MAX_RMPTS_POS'])
-    qc_names.append('MAX_RMPTS_POS')
-    qc_logic.append('MAX_RMPTS_POS > {0:.2f}'
+    qc_values.append(np.sum(loc['MAX_RMPTS_POS']))
+    qc_names.append('sum(MAX_RMPTS_POS)')
+    qc_logic.append('sum(MAX_RMPTS_POS) > {0:.2f}'
                     ''.format(p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
     # ----------------------------------------------------------------------
     # check that max number of points rejected in width fit is below threshold
