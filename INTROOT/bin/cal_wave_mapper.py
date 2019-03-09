@@ -260,24 +260,51 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         loc['SPE'] = loc['SPE'] * image2
         loc['SPE0'] = loc['SPE0'] * image2
 
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # TODO: Needs doing
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+
     # ------------------------------------------------------------------
     # Construct parameters for header
     # ------------------------------------------------------------------
     hdict = OrderedDict()
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
     if loc['SHAPE'] is not None:
         hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
                                    value=p['SHAPFILE'])
     else:
-        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+                                   value=p['TILTFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+                               value=loc['WAVEFILE'])
     # add input filelist
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'], dim1name='file',
-                                     values=loc['E2DSFILENAMES'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'],
+                                     dim1name='file', values=loc['E2DSFILENAMES'])
     # add name of the localisation fits file used
     hfile = os.path.basename(loc['LOCO_CTR_FILE'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_LOCFILE'], value=hfile)
@@ -286,6 +313,14 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
                                value=p['EM_MIN_LAMBDA'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_MAXWAVE'],
                                value=p['EM_MAX_LAMBDA'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                     values=qc_names)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                     values=qc_values)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
     # add the transmission cut
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])
