@@ -132,10 +132,10 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header
-    loc['NUMBER_ORDERS'] = spirouImage.ReadKey(p, hdict, loco_nbo)
+    loc['NUMBER_ORDERS'] = int(spirouImage.ReadKey(p, hdict, loco_nbo))
     # Get the number of fit coefficients from header
-    loc['NBCOEFF_CTR'] = spirouImage.ReadKey(p, hdict, loco_deg_c) + 1
-    loc['NBCOEFF_WID'] = spirouImage.ReadKey(p, hdict, loco_deg_w) + 1
+    loc['NBCOEFF_CTR'] = int(spirouImage.ReadKey(p, hdict, loco_deg_c)) + 1
+    loc['NBCOEFF_WID'] = int(spirouImage.ReadKey(p, hdict, loco_deg_w)) + 1
     # Read the coefficients from header
     #     for center fits
     loc['ACC'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,

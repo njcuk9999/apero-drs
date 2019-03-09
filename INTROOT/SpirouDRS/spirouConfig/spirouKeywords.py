@@ -48,6 +48,7 @@ p = spirouConfig.check_params(p)
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['KW_ACQTIME',
             'KW_ACQTIME_FMT',
+            'KW_ACQTIME_DTYPE',
             'KW_AIRMASS',
             'KW_BADPFILE1',
             'KW_BADPFILE2',
@@ -55,6 +56,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_BBFLAT',
             'KW_BERV',
             'KW_BERV_MAX',
+            'KW_B_OBS_HOUR',
             'KW_BHOT',
             'KW_BJD',
             'KW_BLAZFILE',
@@ -85,6 +87,8 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_CCF_MAXCPP1',
             'KW_CCF_RV1',
             'KW_CCF_RVC',
+            'KW_CCF_WMREF1',
+            'KW_CCF_WMREF2',
             'KW_CDELT1',
             'KW_CDEN',
             'KW_CMMTSEQ',
@@ -105,6 +109,10 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_DPRTYPE',
             'KW_DRIFT_RV',
             'KW_DRS_QC',
+            'KW_DRS_QC',
+            'KW_DRS_QC_VAL',
+            'KW_DRS_QC_NAME',
+            'KW_DRS_QC_LOGIC',
             'KW_E2DS_EXTM',
             'KW_E2DS_FUNC',
             'KW_E2DS_SNR',
@@ -156,6 +164,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_OBJWAVELIST',
             'KW_OBSTYPE',
             'KW_OUTPUT',
+            'KW_PID',
             'KW_POL_BERV1',
             'KW_POL_BERV2',
             'KW_POL_BERV3',
@@ -309,6 +318,7 @@ KW_ACQTIME = ['MJDATE', None, '']
 #          "unix": seconds since 1970-01-01 00:00:00
 #          "jyear": year as a decimal number
 KW_ACQTIME_FMT = ['mjd', None, '']
+KW_ACQTIME_DTYPE = ['dtype', float, '']
 
 # define the observation date HEADER key
 KW_DATE_OBS = ['DATE-OBS', None, '']
@@ -382,6 +392,8 @@ KW_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
 
 KW_ppversion = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
                 'DRS Pre-Processing version']
+
+KW_PID = ['DRSPID', '', 'The process ID that outputted this file.']
 
 # root keys (for use below and in finding keys later)
 KW_root_drs_loc = ['LO', None, '']
@@ -553,7 +565,7 @@ KW_CCF_LINES = ['CCFLINE1', 0, 'nbr of lines used']
 KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
 KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
 KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
-
+KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
 KW_CCF_CTYPE1 = ['CTYPE2', '', 'FP Pixel coordinate system']
 KW_CCF_CRVAL1 = ['CRVAL2', 0, 'FP CCF Value of ref pixel']
 KW_CCF_CDELT1 = ['CDELT2', 0, 'FP CCF steps [km/s]']
@@ -563,6 +575,8 @@ KW_CCF_CONTRAST1 = ['CCFCONT2', 0, 'FP Contrast of  CCF (%)']
 KW_CCF_MAXCPP1 = ['CCFMACP2', 0, 'FP max count/pixel of CCF (e-)']
 KW_CCF_MASK1 = ['CCFMASK2', 0, 'FP Mask filename']
 KW_CCF_LINES1 = ['CCFLINE2', 0, 'FP nbr of lines used']
+KW_CCF_WMREF1 = ['CCFWMR1', 0, 'CCF est RV uncertainty on spectrum AB']
+KW_CCF_WMREF2 = ['CCFWMR2', 0, 'CCF est RV uncertainty on spectrum C']
 
 KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
 KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
@@ -694,8 +708,12 @@ KW_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 # -----------------------------------------------------------------------------
 # Define qc variables
 # -----------------------------------------------------------------------------
+# Note must update spirouConfig.spirouConst.QC_HEADER_KEYS if these are
+#   changed
 KW_DRS_QC = ['QC', 'PASSED', 'QCcontr']
-
+KW_DRS_QC_VAL = ['QCV', '', 'Qualtity control value']
+KW_DRS_QC_NAME = ['QCN', '', 'Quality control variable name']
+KW_DRS_QC_LOGIC = ['QCL', '', 'Quality control logic']
 
 # -----------------------------------------------------------------------------
 # Define output

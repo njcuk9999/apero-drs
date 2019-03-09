@@ -393,6 +393,7 @@ def darkplot_histograms(pp):
 # =============================================================================
 # localization plotting functions
 # =============================================================================
+# TODO: Why is this still here?
 def locplot_order(frame, x, y, label):
     """
     Simple plot function (added to a larger plot)
@@ -404,7 +405,7 @@ def locplot_order(frame, x, y, label):
 
     :return None:
     """
-
+    pass
 
 
 def locplot_y_miny_maxy(p, y, miny=None, maxy=None):
@@ -443,6 +444,7 @@ def locplot_im_sat_threshold(p, loc, image, threshold):
     Plots the image (order_profile) below the saturation threshold
 
     :param p: ParamDict, the constants parameter dictionary
+    :param loc: ParamDict, the data parameter dictionary
     :param image: numpy array (2D), the image
     :param threshold: float, the saturation threshold
 
@@ -468,7 +470,6 @@ def locplot_im_sat_threshold(p, loc, image, threshold):
 
     # end plotting function properly
     end_plotting(p, plot_name)
-
 
 
 def locplot_order_number_against_rms(pp, loc, rnum):
@@ -562,6 +563,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     :return None:
     """
     plot_name = 'debug_locplot_finding_orders'
+    plt.ioff()
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
     WLOG(pp, '', '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
@@ -575,7 +577,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     # plot orders
     frame.plot(np.arange(ind1, ind2, 1.0), ycc)
     frame.plot(xx, yy)
-    frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)))
+    frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)+0.01*np.max(ycc)))
 
     # TODO: Need axis labels and title
 
@@ -584,6 +586,9 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
         pass
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
+    plt.show()
+    plt.close()
+    plt.ion()
     # end plotting function properly
     end_plotting(pp, plot_name)
 
@@ -1880,6 +1885,7 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     # set up fig
     fig, frame = setup_figure(p)
     # loop around the xcut points
+    yy = None
     for it in range(len(x_cut_points)):
         # get x and y data
         xx = loc['LITTROW_XX_{0}'.format(iteration)][it]
@@ -1892,6 +1898,11 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     title = 'Wavelength Solution Littrow Check {0} fiber {1}'.format(*targs)
     frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
               title=title)
+    # set frame limits
+    if yy is not None:
+        ylim_low = np.min((-p['QC_HC_DEV_LITTROW_MAX'], np.min(yy)))
+        ylim_up = np.max((p['QC_HC_DEV_LITTROW_MAX'], np.max(yy)))
+        frame.set(ylim=(ylim_low, ylim_up))
     # add legend
     frame.legend(loc=0)
     # end plotting function properly

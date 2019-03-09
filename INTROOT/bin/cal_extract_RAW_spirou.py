@@ -419,6 +419,42 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
 
+        # ----------------------------------------------------------------------
+        # Quality control
+        # ----------------------------------------------------------------------
+        passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic = [], [], []
+
+        # saturation check: check that the max_signal is lower than
+        # qc_max_signal
+        max_qcflux = p['QC_MAX_SIGNAL'] * p['NBFRAMES']
+        if max_signal > max_qcflux:
+            fmsg = 'Too much flux in the image ({0:.2f} > {1:.2f})'
+            fail_msg.append(fmsg.format(max_signal, max_qcflux))
+            passed = False
+            # Question: Why is this test ignored?
+            # For some reason this test is ignored in old code
+            passed = True
+            WLOG(p, 'info', fail_msg[-1])
+
+        # add to qc header lists
+        qc_values.append(max_signal)
+        qc_names.append('max_signal')
+        qc_logic.append('QC_MAX_SIGNAL > {0:.3f}'.format(max_qcflux))
+
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+
         # ------------------------------------------------------------------
         # Store extraction in file(s)
         # ------------------------------------------------------------------
@@ -439,6 +475,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
 
         # set the input files
         hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
@@ -471,6 +508,16 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_B_OBS_HOUR'],
+                                   value=loc['BERVHOUR'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                         values=qc_names)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                         values=qc_values)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                         values=qc_logic)
         # copy extraction method and function to header
         #     (for reproducibility)
         hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_EXTM'],
@@ -563,33 +610,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename))
             # Write to file
             p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    passed, fail_msg = True, []
-    # saturation check: check that the max_signal is lower than qc_max_signal
-    if max_signal > (p['QC_MAX_SIGNAL'] * p['NBFRAMES']):
-        fmsg = 'Too much flux in the image (max authorized={0})'
-        fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['NBFRAMES']))
-        passed = False
-        # Question: Why is this test ignored?
-        # For some reason this test is ignored in old code
-        passed = True
-        WLOG(p, 'info', fail_msg[-1])
-
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/main()')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG(p, 'warning', wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # End Message

@@ -15,8 +15,8 @@ Import rules: Only from spirouConfigFile
 from __future__ import division
 import sys
 import os
-import time
 from . import spirouConfigFile
+
 
 # =============================================================================
 # Define variables
@@ -24,14 +24,15 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.076'
+__version__ = '0.4.088'
 # Define Authors
 # noinspection PyPep8
-__author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
+__author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
+              'I. Boisse, E. Martioli')
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2019-02-22'
+__date__ = '2019-03-09'
 
 
 # =============================================================================
@@ -128,6 +129,7 @@ def LATEST_EDIT():
     return date
 
 
+# noinspection PyPep8Naming
 def LANGUAGE():
     language = 'ENG'
     return language
@@ -180,7 +182,6 @@ def TELLU_DATABASE_WHITELIST_FILE():
     """
     whitelistfile = 'tellu_whitelist.txt'
     return whitelistfile
-
 
 
 # =============================================================================
@@ -301,6 +302,7 @@ def WAVELENGTH_CATS_DIR():
     return wavelength_cats_dir
 
 
+# noinspection PyPep8Naming
 def CAVITY_LENGTH_FILE():
     """
     Define the cavity length file (located in the WAVELENGTH_CATS_DIR()
@@ -356,6 +358,7 @@ tags = spirouConfigFile.get_tags(**ckwargs)
 # =============================================================================
 # Define General functions
 # =============================================================================
+# noinspection PyPep8Naming
 def UPDATE_PP(params):
     # get pp as a global
     global pp
@@ -457,6 +460,19 @@ def FORBIDDEN_COPY_KEYS():
                       'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
     # return keys
     return forbidden_keys
+
+
+# noinspection PyPep8Naming
+def QC_HEADER_KEYS():
+    """
+    Define the QC keys prefixes that should not be copied (i.e. they are
+    just for the input file not the output file)
+
+    :return keys:
+    """
+    qc_keys = ['QCV', 'QCN', 'QCL']
+    # return keys
+    return qc_keys
 
 
 # noinspection PyPep8Naming
@@ -1761,7 +1777,7 @@ def WAVE_FILE_EA(p):
     return wavefile, tag
 
 
-#add fp filename if it exists
+# add fp filename if it exists
 # noinspection PyPep8Naming
 def WAVE_FILE_EA_2(p):
     func_name = 'WAVE_FILE_EA'
@@ -1779,7 +1795,40 @@ def WAVE_FILE_EA_2(p):
     wavefn = filename.replace(old_ext, waveext)
     # check if FP
     if 'FPFILE' in p:
-        #get filename
+        # get filename
+        raw_infile2 = os.path.basename(p['FPFILE'])
+        # we shouldn't mix ed2s w e2dsff so can use same extension
+        wavefn2 = raw_infile2.replace(old_ext, '_'
+                                               '')
+        wavefilename = calibprefix + wavefn2 + wavefn
+    else:
+        wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
+
+# add fp filename if it exists
+# noinspection PyPep8Naming
+def WAVE_FILE_NEW(p):
+    func_name = 'WAVE_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_new_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    # check if FP
+    if 'FPFILE' in p:
+        # get filename
         raw_infile2 = os.path.basename(p['FPFILE'])
         # we shouldn't mix ed2s w e2dsff so can use same extension
         wavefn2 = raw_infile2.replace(old_ext, '_'
@@ -1853,9 +1902,26 @@ def WAVE_TBL_FILE_EA(p):
 
 
 # noinspection PyPep8Naming
+def WAVE_TBL_FILE_NEW(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavetblfb = 'cal_WAVE_NEW_result.tbl'
+    wavetblfile = os.path.join(reducedfolder, wavetblfb)
+    return wavetblfile
+
+
+# noinspection PyPep8Naming
 def WAVE_LINE_FILE_EA(p):
     reducedfolder = p['REDUCED_DIR']
     wavellext = '_hc_lines_ea_{0}.tbl'.format(p['FIBER'])
+    wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
+    wavellfile = os.path.join(reducedfolder, wavellfn)
+    return wavellfile
+
+
+# noinspection PyPep8Naming
+def WAVE_LINE_FILE_NEW(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavellext = '_hc_lines_new_{0}.tbl'.format(p['FIBER'])
     wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
@@ -1874,6 +1940,29 @@ def WAVE_RES_FILE_EA(p):
     else:
         old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
     waveext = '_waveres_ea_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
+
+# noinspection PyPep8Naming
+def WAVE_RES_FILE_NEW(p):
+    func_name = 'WAVE_RES_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_waveres_new_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
@@ -2447,9 +2536,11 @@ def DATE_FMT_HEADER():
     return date_fmt_header
 
 
+# noinspection PyPep8Naming
 def ASTROPY_DATE_FMT_CALIBDB():
     date_fmt = 'iso'
     return date_fmt
+
 
 # noinspection PyPep8Naming
 def DATE_FMT_CALIBDB():
@@ -2589,8 +2680,6 @@ def LOG_FILE_NAME(p, dir_data_msg=None):
                                "None" then "utime" is used or if "utime" not
                                defined uses the time now
     :param dir_data_msg: string or None, if defined the p
-    :param utime: float or None, the unix time to use to set the date, if
-                  undefined uses time.time() (time now) - in GMT
 
     :return lpath: string, the full path and file name for the log file
     """
@@ -2779,7 +2868,9 @@ def COLOUREDLEVELS(p=None):
                    debug=colors.debug)      # green
     return clevels
 
+
 # defines the colours
+# noinspection PyPep8Naming
 class Colors:
     BLACK1 = '\033[90;1m'
     RED1 = '\033[1;91;1m'
@@ -2809,6 +2900,15 @@ class Colors:
         self.endc = self.ENDC
         self.bold = self.BOLD
         self.underline = self.UNDERLINE
+
+        self.header = self.MAGENTA1
+        self.okblue = self.BLUE1
+        self.okgreen = self.GREEN1
+        self.ok = self.MAGENTA2
+        self.warning = self.YELLOW1
+        self.fail = self.RED1
+        self.debug = self.BLACK1
+
         self.update_theme()
 
     def update_theme(self, theme=None):
@@ -2944,6 +3044,7 @@ def MAX_DISPLAY_LIMIT():
     return max_display_limit
 
 
+# noinspection PyPep8Naming
 def HEADER():
     header = ' ' + '*' * 65
     return header
@@ -3027,6 +3128,7 @@ def FONT_DICT():
     return font
 
 
+# noinspection PyPep8Naming
 def PLOT_EXTENSIONS():
     """
     Extensions for plotting
@@ -3039,7 +3141,7 @@ def PLOT_EXTENSIONS():
     return extensions
 
 
-
+# noinspection PyPep8Naming
 def PLOT_FIGSIZE():
     """
     The fig size (in inches) for all saved figures
@@ -3047,7 +3149,6 @@ def PLOT_FIGSIZE():
     """
     figsize = (10, 8)
     return figsize
-
 
 
 # =============================================================================
