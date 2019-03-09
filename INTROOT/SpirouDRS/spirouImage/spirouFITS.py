@@ -329,6 +329,8 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
     # add header keys to the hdu header
     if hdict is not None:
         for key in list(hdict.keys()):
+            if hdict[key] == np.nan:
+                hdict[key] = 'NaN'
             hdu.header[key] = hdict[key]
     # get and check for file lock file
     lock, lock_file = check_fits_lock_file(p, filename)
