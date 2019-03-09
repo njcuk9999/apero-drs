@@ -112,7 +112,7 @@ def load_lsd_spectral_lines(p, loc):
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
 
     # get object temperature from header
-    obj_temperature = loc['HDR']['OBJTEMP']
+    obj_temperature = float(loc['HDR']['OBJTEMP'])
     wmsg = 'Temperature of the object observed: {0} K'
     WLOG(p, '', wmsg.format(obj_temperature))
 

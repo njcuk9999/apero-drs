@@ -1,36 +1,35 @@
-Update Note Summary - Version 0.4.072 (Since 0.4.009)
+Update Note Summary - Version 0.4.086 (Since 0.4.072)
 
-Not Done:
+Changes:
 
-- No integration of Melissa's new wave code
+- Fixes to mk_tellu
 
-Done:
+- Added error handling to mk_tellu_db
 
-- changes to the telluric recipes
+- Fixed Bug in cal_validate
 
-    obj_mk_tellu_new  - this is the new way to make individual aborption maps from the telluric hot stars
-    obj_mk_tellu_db - this is a wrapper for the whole telluric process i.e.:
-        obj_mk_tellu_new [on all e2dsff files in telluric white list]
-        obj_fit_tellu [on all e2dsff files in telluric white list]
-        obj_mk_obj_template [on all objects in telluric white list]
-        obj_mk_tellu_new [on all e2dsff files in telluric white list]
+- Fixed localisation plot bug (locplot_im_sat_threshold)
 
-- changes to pre-processing - corrupt files should now not be saved
+- Fixed bug in sPlt.debug_locplot
 
-    Note: as with all other QC the trigger will have to deal with missing files
-    Note: log warning messages are given in the standard QC fashion
+- Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2
 
-- added option to plot to file (requested by Claire for meta data)
+- Fixed fits lock timer
 
-    Note: one MUST update any config file with the plot option:
-        0 = No plots
-        1 = plot to screen
-        2 = plot to file
-    Note: one MUST update any config file to set a "plot path":
-        DRS_DATA_PLOT = '/home/data/plots/'
-    Note: if these two steps are not done the drs will crash
+- Added a wait timer for barrycorrpy
 
-- an INTROOT2 folder will be created - please ignore this for now
+- Added BERVHOUR header key
+
+- Added WMEANREF (for AB and C) to header (CCFWMR1 and CCFWMR2 respectively)
+
+- Added PID header key
+
+- Added quality control header keys to all recipes
+    - QCV#   (The current value that is checked)
+    - QCN#   (The variable name)
+    - QCL#   (The logic used for QC check)
+
+- some pep8 clean up
 
 
 

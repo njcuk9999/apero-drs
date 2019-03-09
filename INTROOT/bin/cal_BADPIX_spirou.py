@@ -155,6 +155,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
     # TODO: Needs doing
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -168,6 +169,10 @@ def main(night_name=None, flatfile=None, darkfile=None):
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
@@ -186,9 +191,12 @@ def main(night_name=None, flatfile=None, darkfile=None):
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=raw_badp_file1)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=raw_badp_file2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
+                               value=raw_badp_file1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
+                               value=raw_badp_file2)
     hdict = spirouImage.AddKey(p, hdict, p['KW_BHOT'], value=bstats1[0])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BBFLAT'], value=bstats1[1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BNDARK'], value=bstats1[2])
@@ -196,7 +204,14 @@ def main(night_name=None, flatfile=None, darkfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_BBAD'], value=bstats1[4])
     hdict = spirouImage.AddKey(p, hdict, p['kw_BNILUM'], value=bstats2)
     hdict = spirouImage.AddKey(p, hdict, p['kw_BTOT'], value=btotal)
-
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                     values=qc_names)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                     values=qc_values)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)
     p, spirouImage.WriteImage(p, badpixelfits, badpixelmap, hdict)

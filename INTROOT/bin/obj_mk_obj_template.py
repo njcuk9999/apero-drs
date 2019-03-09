@@ -162,7 +162,7 @@ def main(night_name=None, files=None):
         header = spirouImage.ReadHeader(p, filename)
         # get the SNR from header
         nbo = spirouImage.ReadParam(p, header, 'KW_WAVE_ORD_N', dtype=int,
-                                       return_value=True)
+                                    return_value=True)
         snr = spirouImage.Read1Dkey(p, header, p['kw_E2DS_SNR'][0], nbo)
         # append snr_all
         snr_all.append(snr[snr_order])
@@ -228,7 +228,7 @@ def main(night_name=None, files=None):
         tobjname = spirouImage.ReadParam(p, thdr, 'KW_OBJNAME', dtype=str,
                                          return_value=True)
         tobject = spirouImage.ReadParam(p, thdr, 'KW_OBJECT', dtype=str,
-                                         return_value=True)
+                                        return_value=True)
         tversion = spirouImage.ReadParam(p, thdr, 'KW_version', dtype=str,
                                          return_value=True)
         tdarkfile = spirouImage.ReadParam(p, thdr, 'KW_DARKFILE', dtype=str,
@@ -245,8 +245,8 @@ def main(night_name=None, files=None):
                                           return_value=True)
         tshapfile = spirouImage.ReadParam(p, thdr, 'KW_SHAPEFILE', dtype=str,
                                           return_value=True)
-        textrfile  = spirouImage.ReadParam(p, thdr, 'KW_EXTFILE', dtype=str,
-                                           return_value=True)
+        textrfile = spirouImage.ReadParam(p, thdr, 'KW_EXTFILE', dtype=str,
+                                          return_value=True)
         # append to lists
         loc['BASE_ROWNUM'].append(it)
         loc['BASE_SNRLIST_{0}'.format(snr_order)].append(snr_all[it])
@@ -332,6 +332,30 @@ def main(night_name=None, files=None):
         big_cube_med = np.nanmedian(big_cube, axis=2)
 
     # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic = [], [], []
+    # TODO: Needs doing
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+
+    # ----------------------------------------------------------------------
     # Write Cube median (the template) to file
     # ----------------------------------------------------------------------
     # get raw file name
@@ -344,12 +368,21 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
     hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                value=loc['MASTERWAVEFILE'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
+                                     values=qc_names)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
+                                     values=qc_values)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
     # add wave solution coefficients
     hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
