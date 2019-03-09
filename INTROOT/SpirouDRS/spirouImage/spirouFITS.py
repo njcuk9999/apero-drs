@@ -329,9 +329,7 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
     # add header keys to the hdu header
     if hdict is not None:
         for key in list(hdict.keys()):
-            if hdict[key] == np.nan:
-                hdict[key] = 'NaN'
-            hdu.header[key] = hdict[key]
+            hdu.header[key] = str(hdict[key])
     # get and check for file lock file
     lock, lock_file = check_fits_lock_file(p, filename)
     # write to file
@@ -479,9 +477,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         for it in range(len(hdu)):
             if hdicts[it] is not None:
                 for key in list(hdicts[it].keys()):
-                    if hdicts[it][key] == np.nan:
-                        hdicts[it][key] = 'NaN'
-                    hdu[it].header[key] = hdicts[it][key]
+                    hdu[it].header[key] = str(hdicts[it][key])
 
     # close hdu we are finished
     if hdu is not None:
