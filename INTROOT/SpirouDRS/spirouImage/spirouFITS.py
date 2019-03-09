@@ -479,6 +479,8 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         for it in range(len(hdu)):
             if hdicts[it] is not None:
                 for key in list(hdicts[it].keys()):
+                    if hdicts[it][key] == np.nan:
+                        hdicts[it][key] = 'NaN'
                     hdu[it].header[key] = hdicts[it][key]
 
     # close hdu we are finished
