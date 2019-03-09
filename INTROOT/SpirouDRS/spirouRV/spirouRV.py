@@ -1089,6 +1089,11 @@ def coravelation(p, loc, log=False):
     # get the Barycentric Earth Velocity calculation
     berv = loc['BERV']
     berv_max = loc['BERV_MAX']
+
+    # TODO: Is this okay to do this?
+    if ~np.isfinite(berv):
+        berv = 0.0
+        berv_max = 0.0
     # -------------------------------------------------------------------------
     # log that we are computing ccf
     if log:
