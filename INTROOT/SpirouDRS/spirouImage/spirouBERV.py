@@ -41,9 +41,9 @@ WLOG = spirouCore.wlog
 def get_earth_velocity_correction(p, loc, hdr):
     func_name = __NAME__ + '.get_earth_velocity_correction()'
     if p['KW_BERV'][0] in hdr:
-        loc['BERV'] = hdr[p['KW_BERV'][0]]
-        loc['BJD'] = hdr[p['KW_BJD'][0]]
-        loc['BERV_MAX'] = hdr[p['KW_BERV_MAX'][0]]
+        loc['BERV'] = float(hdr[p['KW_BERV'][0]])
+        loc['BJD'] = float(hdr[p['KW_BJD'][0]])
+        loc['BERV_MAX'] = float(hdr[p['KW_BERV_MAX'][0]])
         return p, loc
 
     # Get the OBSTYPE for file (from hdr)
