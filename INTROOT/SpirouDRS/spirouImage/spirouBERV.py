@@ -39,6 +39,7 @@ WLOG = spirouCore.wlog
 # Addition non-extraction function
 # =============================================================================
 def get_earth_velocity_correction(p, loc, hdr):
+    func_name = __NAME__ + '.get_earth_velocity_correction()'
     if p['KW_BERV'][0] in hdr:
         loc['BERV'] = hdr[p['KW_BERV'][0]]
         loc['BJD'] = hdr[p['KW_BJD'][0]]
@@ -65,8 +66,11 @@ def get_earth_velocity_correction(p, loc, hdr):
         # ----------------------------------------------------------------------
         loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
-        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0, 0.0
-        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = np.nan, np.nan, np.nan
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+        # store the obs_hour
+        loc['BERVHOUR'] = np.nan
+        loc.set_source('BERVHOUR', func_name)
 
     # return loc
     return p, loc
