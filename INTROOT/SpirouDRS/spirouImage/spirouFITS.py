@@ -1451,8 +1451,6 @@ def update_wave_sol_hc(p, loc, filename):
     hdict = add_key_2d_list(p, hdict, p['KW_WAVE_PARAM'],
                             values=loc['POLY_WAVE_SOL'])
     # Save E2DS file
-    hdict = add_new_key(p, hdict, p['KW_OUTPUT'], value=tag1)
-    hdict = add_new_key(p, hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
     p = writeimage(p, filename, data, hdict)
 
     # return p
