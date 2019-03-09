@@ -1528,7 +1528,7 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
         value = d.get(key, default)
     else:
         try:
-            value = d[key]
+            value = eval(d[key])
         except KeyError:
             if not required:
                 return None
@@ -1536,6 +1536,8 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
                 emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG(p, 'error', [emsg1, emsg2])
+        except Exception as e:
+            value = d[key]
 
     return value
 
