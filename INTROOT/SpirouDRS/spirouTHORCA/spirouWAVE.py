@@ -2001,7 +2001,7 @@ def fit_gaussian_triplets(p, loc):
                 else:
                     recon0_aux.append(recon0[omask])
                     lin_mod_slice_aux.append(lin_mod_slice[omask])
-                    wave_catalog_aux.append(wave_catalog[mask])
+                    wave_catalog_aux.append(wave_catalog[omask])
                     amp_catalog_aux.append(amp_catalog[omask])
                     xgau_aux.append(xgau[omask])
                     orders_aux.append(orders[omask])
