@@ -972,8 +972,8 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     """
     func_name = __NAME__ + '.get_wave_solution()'
     # get constants from p
-    dim1key = int(p['KW_WAVE_ORD_N'][0])
-    dim2key = int(p['KW_WAVE_LL_DEG'][0])
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
     namekey = p['KW_WAVEFILE'][0]
     # check for header keys in header
     if hdr is None:
