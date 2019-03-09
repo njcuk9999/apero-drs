@@ -509,7 +509,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_B_OBS_HOUR'],
-                                   value=loc['BCHOUR'])
+                                   value=loc['BERVHOUR'])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
