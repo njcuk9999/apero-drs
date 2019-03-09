@@ -850,9 +850,9 @@ def get_berv_value(p, hdr, filename=None):
         dv, bjd, bvmax = 0.0, -9999, 0.0
     else:
         # Get the Barycentric correction from header
-        dv = hdr[p['KW_BERV'][0]]
-        bjd = hdr[p['KW_BJD'][0]]
-        bvmax = hdr[p['KW_BERV_MAX'][0]]
+        dv = float(hdr[p['KW_BERV'][0]])
+        bjd = float(hdr[p['KW_BJD'][0]])
+        bvmax = float(hdr[p['KW_BERV_MAX'][0]])
     # return dv, bjd, dvmax
     return dv, bjd, bvmax
 
