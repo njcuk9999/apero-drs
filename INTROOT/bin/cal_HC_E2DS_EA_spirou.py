@@ -335,7 +335,7 @@ def main(night_name=None, files=None):
         for rawhcfile in p['ARG_FILE_NAMES']:
             hcfile = os.path.join(rdir, rawhcfile)
             raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], hcfile)
-            p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath1)
+            p = spirouImage.UpdateWaveSolutionHC(p, loc, raw_infilepath1)
 
     # ----------------------------------------------------------------------
     # End Message
