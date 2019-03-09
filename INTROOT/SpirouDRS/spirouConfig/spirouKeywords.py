@@ -48,6 +48,7 @@ p = spirouConfig.check_params(p)
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['KW_ACQTIME',
             'KW_ACQTIME_FMT',
+            'KW_ACQTIME_DTYPE',
             'KW_AIRMASS',
             'KW_BADPFILE1',
             'KW_BADPFILE2',
@@ -317,6 +318,7 @@ KW_ACQTIME = ['MJDATE', None, '']
 #          "unix": seconds since 1970-01-01 00:00:00
 #          "jyear": year as a decimal number
 KW_ACQTIME_FMT = ['mjd', None, '']
+KW_ACQTIME_DTYPE = [float, None, '']
 
 # define the observation date HEADER key
 KW_DATE_OBS = ['DATE-OBS', None, '']

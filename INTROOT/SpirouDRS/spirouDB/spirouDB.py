@@ -207,8 +207,9 @@ def get_times_from_header(p, header=None, filename=None):
         # get header keys
         raw_time = header[p['KW_ACQTIME'][0]]
         raw_fmt = p['KW_ACQTIME_FMT'][0]
+        raw_type = p['KW_ACQTIME_DTYPE'][0]
         # get astropy time
-        a_time = Time(raw_time, format=raw_fmt)
+        a_time = Time(raw_type(raw_time), format=raw_fmt)
         # get human time and unix time
         human_time = a_time.iso
         unix_time = float(a_time.unix)
