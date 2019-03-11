@@ -2284,6 +2284,16 @@ def INDEX_OUTPUT_FILENAME():
 
 
 # noinspection PyPep8Naming
+def INDEX_LOCK_FILENAME(p):
+    if 'DRS_DATA_MSG' not in p:
+        p['DRS_DATA_MSG'] = './'
+    if not os.path.exists(p['DRS_DATA_MSG']):
+        p['DRS_DATA_MSG'] = './'
+    opath = os.path.join(p['DRS_DATA_MSG'], p['PID'] + '.fits')
+    return opath
+
+
+# noinspection PyPep8Naming
 def OUTPUT_FILE_HEADER_KEYS(p):
     """
     Output file header keys.
