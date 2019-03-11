@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
@@ -59,15 +59,15 @@ RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_EXTRACT_TELLU = False
-RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_ALL = False
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = True
+SKIP_DONE_EXTRACT = False
 SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
@@ -109,7 +109,7 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-10-26', '2018-10-27', '2018-12-16', '2018-12-17', '2018-12-18',
          '2018-12-19', '2018-12-20', '2019-01-14', '2019-01-15', '2019-01-16',
          '2019-01-17', '2019-01-18']
-# DATES = None
+DATES = None
 
 
 # =============================================================================
@@ -699,14 +699,14 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     skip = False
     for it, index_file in enumerate(index_files):
         # if skip then continue
-        if skip:
-            continue
+        # if skip:
+        #     continue
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
-        if DATES is not None:
-            if night_name.replace('/', '') not in DATES:
-                continue
+        # if DATES is not None:
+        #     if night_name.replace('/', '') not in DATES:
+        #         continue
 
         # log progress
         wmsgs = [spirouStartup.spirouStartup.HEADER]
@@ -1036,6 +1036,7 @@ def cal_extract_raw_spirou(p, night_name, vindex, groups):
     # skip done
     if SKIP_DONE_EXTRACT:
         filelist2 = []
+        skipped_number = 0
         for num in range(len(filelist)):
             filename2ab = filelist[num].replace('.fits', '_e2ds_AB.fits')
             filename2a = filelist[num].replace('.fits', '_e2ds_A.fits')
@@ -1053,6 +1054,9 @@ def cal_extract_raw_spirou(p, night_name, vindex, groups):
             # append file if not in existence
             if cond1 or cond2 or cond3 or cond4:
                 filelist2.append(filelist[num])
+            else:
+                skipped_number += 1
+        WLOG(p, '', 'Skipped {0} files'.format(skipped_number))
     else:
         filelist2 = list(filelist)
     # -------------------------------------------------------------------------
