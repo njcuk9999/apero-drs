@@ -6809,3 +6809,5 @@
 	- spirouConst.py - change the qc_keys to look for (rev.d93a8bda)
 	- add qc_pass parameter (flag for each qc parameter) (rev.2b58ebef)
 	- spirouConst.py - add version to the index files (rev.1aa7f1d5)
+	- drs_reset.py - set DEBUG = False in reset, add the removal of all sub-directories in drs folders (rev.af356c7e)
+	- spirouStartup.py - fix bug that we only need lock file is outputs is not None (rev.d18f1f5f)
