@@ -218,6 +218,8 @@ def main(night_name=None, ufiles=None):
             p.set_source('QC', __NAME__ + '/main()')
             WLOG(p, 'warning', '\tFile not written')
             continue
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
         # ------------------------------------------------------------------
         # rotate image
@@ -244,12 +246,8 @@ def main(night_name=None, ufiles=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
                                          values=qc_names)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                         values=qc_values)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                         values=qc_logic)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
-                                         values=qc_logic)
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
+
         # set the DRS type (for file indexing)
         p['DRS_TYPE'] = 'RAW'
         p.set_source('DRS_TYPE', __NAME__ + '.main()')

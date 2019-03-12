@@ -157,7 +157,7 @@ def main(night_name=None, files=None):
     qc_names.append('None')
     qc_logic.append('None')
     qc_pass.append(1)
-    qc_params = [qc_values, qc_names, qc_logic, qc_pass]
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ------------------------------------------------------------------
     # Store polarimetry in file(s)
