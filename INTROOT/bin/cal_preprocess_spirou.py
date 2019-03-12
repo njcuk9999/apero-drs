@@ -161,7 +161,7 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
-        qc_values, qc_names, qc_logic = [], [], []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
         # ----------------------------------------------------------------------
         # get pass condition
         cout = spirouImage.PPTestForCorruptFile(p, image, hotpixels)
@@ -178,6 +178,9 @@ def main(night_name=None, ufiles=None):
                     'File = {2}'.format(*fargs))
             fail_msg.append(fmsg)
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # add to qc header lists
         qc_values.append(snr_hotpix)
         qc_names.append('snr_hotpix')
@@ -192,6 +195,9 @@ def main(night_name=None, ufiles=None):
                     'File = {0}'.format(*fargs))
             fail_msg.append(fmsg)
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # add to qc header lists
         qc_values.append(np.max(rms_list))
         qc_names.append('max(rms_list)')
@@ -242,7 +248,8 @@ def main(night_name=None, ufiles=None):
                                          values=qc_values)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
                                          values=qc_logic)
-
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
+                                         values=qc_logic)
         # set the DRS type (for file indexing)
         p['DRS_TYPE'] = 'RAW'
         p.set_source('DRS_TYPE', __NAME__ + '.main()')

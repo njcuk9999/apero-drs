@@ -423,7 +423,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Quality control
         # ----------------------------------------------------------------------
         passed, fail_msg = True, []
-        qc_values, qc_names, qc_logic = [], [], []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
 
         # saturation check: check that the max_signal is lower than
         # qc_max_signal
@@ -436,6 +436,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # For some reason this test is ignored in old code
             passed = True
             WLOG(p, 'info', fail_msg[-1])
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
 
         # add to qc header lists
         qc_values.append(max_signal)
@@ -517,6 +520,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                          values=qc_values)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                         values=qc_logic)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                          values=qc_logic)
         # copy extraction method and function to header
         #     (for reproducibility)

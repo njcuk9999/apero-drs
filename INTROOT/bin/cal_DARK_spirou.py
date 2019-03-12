@@ -182,7 +182,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # ----------------------------------------------------------------------
     # check that med < qc_max_darklevel
     if p['MED_FULL'] > p['QC_MAX_DARKLEVEL']:
@@ -190,6 +190,9 @@ def main(night_name=None, files=None):
         fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
         fail_msg.append(fmsg.format(p['MED_FULL'], p['QC_MAX_DARKLEVEL']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(p['MED_FULL'])
     qc_names.append('MED_FULL')
@@ -201,6 +204,9 @@ def main(night_name=None, files=None):
         fmsg = 'Unexpected Fraction of dead pixels ({0:5.2f} > {1:5.2f} %)'
         fail_msg.append(fmsg.format(p['DADEADALL'], p['QC_MAX_DEAD']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(p['DADEADALL'])
     qc_names.append('DADEADALL')
@@ -213,6 +219,9 @@ def main(night_name=None, files=None):
         fail_msg.append(fmsg.format(p['DARK_CUTLIMIT'], baddark,
                                     p['QC_MAX_DARK']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(baddark)
     qc_names.append('baddark')
@@ -265,6 +274,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
 
     # Set to zero dark value > dark_cutlimit

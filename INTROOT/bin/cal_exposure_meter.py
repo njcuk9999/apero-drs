@@ -228,7 +228,7 @@ def main(night_name=None, flatfile=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # TODO: Needs doing
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -246,6 +246,7 @@ def main(night_name=None, flatfile=None):
     qc_values.append('None')
     qc_names.append('None')
     qc_logic.append('None')
+    qc_pass.append(1)
 
     # ------------------------------------------------------------------
     # Construct parameters for header
@@ -282,6 +283,8 @@ def main(night_name=None, flatfile=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # add the transmission cut
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_TRASCUT'],

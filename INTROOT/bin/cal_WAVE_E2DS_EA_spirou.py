@@ -578,13 +578,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['QC_DEV_LITTROW_MAX'] = p['QC_HC_DEV_LITTROW_MAX']
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # ----------------------------------------------------------------------
     # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
     if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
         fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
         fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['SIG1'])
     qc_names.append('SIG1')
@@ -596,6 +599,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         fmsg = 'NaN or Inf in X_MEAN_2'
         fail_msg.append(fmsg)
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['X_MEAN_2'])
     qc_names.append('X_MEAN_2')
@@ -644,6 +650,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             qc_names.append('max or min littrow')
             qc_logic.append('max or min littrow > {0:.2f}'
                             ''.format(dev_littrow_max))
+            qc_pass.append(0)
 
             # TODO: Should this be the QC header values?
             # TODO:   it does not change the outcome of QC (i.e. passed=False)
@@ -694,7 +701,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                         wmsg = ('Littrow test (x={0}) passed (sig littrow = '
                                 '{1:.2f} > {2:.2f} removing order {3})')
                         fail_msg.append(wmsg.format(*wargs))
-
+        else:
+            qc_pass.append(1)
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -743,6 +751,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # add wave solution date
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],

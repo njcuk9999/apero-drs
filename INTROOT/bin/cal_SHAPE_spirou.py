@@ -327,7 +327,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # TODO: Decide on some quality control criteria?
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -344,6 +344,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     qc_values.append('None')
     qc_names.append('None')
     qc_logic.append('None')
+    qc_pass.append(1)
 
     # ------------------------------------------------------------------
     # Writing DXMAP to file
@@ -377,6 +378,8 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # write tilt file to file
     p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
