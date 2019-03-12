@@ -6784,3 +6784,27 @@
 	- cal_extract_RAW_spirou.py - fix typo BCHOUR --> BERVHOUR (rev.a874dd5d)
 	- cal_loc_RAW_spirou.py - fix mistake in assigned QCV value (rev.b9995e6e)
 	- cal_loc_RAW_spirou.py - fix mistake in assigned QCV value (rev.e647b41e)
+
+
+
+================================================================================
+* Mon Mar 11 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.089
+
+================================================================================
+	- extract_trigger.py - update the settings ready for re-runs of extractions (rev.28834c48)
+	- spirouStartup.py - fix where we lock the index file (rev.0a006234)
+	- spirouConst.py - add an INDEX_LOCK_FILENAME to lock the indexing in parallel processes (rev.eac02bc2)
+	- tellu_file_number_test.py - code to test the number of telluric files at difference stages of the DRS (rev.1a8a0367)
+
+
+
+================================================================================
+* Tue Mar 12 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.090
+
+================================================================================
+	- update extraction trigger (rev.763ea897)
+	- spirouPOLAR.py - add qc_pass (rev.56cca973)
+	- spirouFITS.py - add a test for formatting defined in the keyword (for 1d and 2d lists only) (rev.6e56e7eb)
+	- spirouKeywords.py - add KW_DRS_QC_PASS + change position of number in QCV, QCN, QCL (rev.f45436bc)
+	- spirouConst.py - change the qc_keys to look for (rev.d93a8bda)
+	- add qc_pass parameter (flag for each qc parameter) (rev.2b58ebef)
