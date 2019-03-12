@@ -636,7 +636,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             qc_values.append(sig_littrow)
             qc_names.append('sig_littrow')
             qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
-
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
