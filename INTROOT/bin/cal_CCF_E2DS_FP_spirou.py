@@ -486,6 +486,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     qc_names.append('None')
     qc_logic.append('None')
     qc_pass.append(1)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # archive ccf to fits file
@@ -515,14 +517,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=loc['WAVEFILE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qc_names)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qc_values)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qc_logic)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
-                                     values=qc_logic)
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys

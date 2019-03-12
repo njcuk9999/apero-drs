@@ -469,6 +469,8 @@ def main(night_name=None, files=None):
             p['QC'] = 0
             p.set_source('QC', __NAME__ + '/main()')
             continue
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
         # ------------------------------------------------------------------
         # Get components amplitudes for header
@@ -488,14 +490,7 @@ def main(night_name=None, files=None):
                                    value=loc['WAVEFILE'])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                         values=qc_names)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                         values=qc_values)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                         values=qc_logic)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
-                                         values=qc_logic)
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
         # set tellu keys
         npc = loc['NPC']
         hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_NPC'], value=npc)

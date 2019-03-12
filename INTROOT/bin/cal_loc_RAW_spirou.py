@@ -413,6 +413,8 @@ def main(night_name=None, files=None):
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # Save and record of image of localization with order center and keywords
@@ -465,14 +467,7 @@ def main(night_name=None, files=None):
                                      values=loc['ASS'][0:rorder_num])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qc_names)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qc_values)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qc_logic)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
-                                     values=qc_logic)
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])
     p = spirouImage.WriteImage(p, locofits, center_fits, hdict)

@@ -857,7 +857,7 @@ def polarimetry_ratio_method(p, loc):
     return loc
 
 
-def polar_products_header(p, loc, polardict, qcparams):
+def polar_products_header(p, loc, polardict, qc_params):
     """
         Function to construct header keywords to be saved in the polar products
         
@@ -884,14 +884,7 @@ def polar_products_header(p, loc, polardict, qcparams):
 
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qcparams[1])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qcparams[0])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qcparams[2])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
-                                     values=qcparams[3])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(p, hdict, p['kw_POL_STOKES'],
                                value=loc['STOKES'])
