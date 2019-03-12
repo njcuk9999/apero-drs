@@ -172,10 +172,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wave_fiber = p['FIBER']
     # get wave image
     # TODO: Needs changing as this is only testable on one machine
-    tmp_wave_file = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
+    #tmp_wave_file = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
     # tmp_wave_file = '/data/CFHT/calibDB_1/2018-09-25_2305967c_pp_wave_ea_C.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr,
-                                       filename=tmp_wave_file,
+                                       #filename=tmp_wave_file,
                                        return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
@@ -572,72 +572,93 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wmsg = 'Mode number span: {0} - {1}'
     WLOG(p, '', wmsg.format(*wargs))
 
-     # ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Fit (1/m) vs d
     # ----------------------------------------------------------------------
 
-    # define sorted arrays
-    one_m_sort = np.asarray(one_m_d).argsort()
-    one_m_d = np.asarray(one_m_d)[one_m_sort]
-    d = np.asarray(d)[one_m_sort]
+    # decide if refit or read fit from file
+    update_cavity = False
 
-    # # initial polynomial fit
-    # fit_1m_d_init = np.polyfit(one_m_d, d, 9)
-    # # get residuals
-    # res = d - np.polyval(fit_1m_d_init, one_m_d)
-    # # mask points at +/- 1 sigma
-    # sig_clip = abs(res) < np.std(res)
-    # one_m_d = one_m_d[sig_clip]
-    # d = d[sig_clip]
+    if update_cavity:
+        # define sorted arrays
+        one_m_sort = np.asarray(one_m_d).argsort()
+        one_m_d = np.asarray(one_m_d)[one_m_sort]
+        d = np.asarray(d)[one_m_sort]
 
-    # second polynomial fit
-    fit_1m_d = np.polyfit(one_m_d, d, 9)
-    fit_1m_d_func = np.poly1d(fit_1m_d)
-    res_d_final = d - fit_1m_d_func(one_m_d)
+        # # initial polynomial fit
+        # fit_1m_d_init = np.polyfit(one_m_d, d, 9)
+        # # get residuals
+        # res = d - np.polyval(fit_1m_d_init, one_m_d)
+        # # mask points at +/- 1 sigma
+        # sig_clip = abs(res) < np.std(res)
+        # one_m_d = one_m_d[sig_clip]
+        # d = d[sig_clip]
 
-
-    if p['DRS_PLOT']:
-        # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
-        plt.figure()
-        plt.subplot(211)
-        # plot values
-        plt.plot(one_m_d, d, 'o')
-        # plot initial cavity width value
-        plt.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
-        # plot reference peak of reddest order
-        plt.plot(1. / m_init, dopd0 / 2., 'D')
-        # plot fit
-        plt.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
-        plt.xlabel('1/m')
-        plt.ylabel('d')
-        plt.legend(loc='best')
-        plt.title('Interpolated cavity width for HC lines')
-        # plot residuals
-        plt.subplot(212)
-        plt.plot(one_m_d, res_d_final, '.')
-        plt.xlabel('1/m')
-        plt.ylabel('residuals [nm]')
+        # second polynomial fit
+        fit_1m_d = np.polyfit(one_m_d, d, 9)
+        fit_1m_d_func = np.poly1d(fit_1m_d)
+        res_d_final = d - fit_1m_d_func(one_m_d)
 
 
-    # fit d v wavelength w/sigma-clipping
-    # fit x vs m for FP lines w/sigma-clipping
-    sigclip = 7
-    # initialise the while loop
-    sigmax = sigclip + 1
-    # initialise mask
-    mask = np.ones_like(hc_ll_test, dtype='Bool')
-    while sigmax > sigclip:
-        # fit on masked values
-        ff = np.polyfit(hc_ll_test[mask], d[mask], deg=9)
-        # get residuals (not masked or dimension break)
-        res = d - np.polyval(ff, hc_ll_test)
-        # normalise
-        res = np.abs(res / np.nanmedian(np.abs(res[mask])))
-        # get the max residual in sigmas
-        sigmax = np.max(res[mask])
-        # mask all outliers
-        if sigmax > sigclip:
-            mask[res >= sigclip] = False
+        if p['DRS_PLOT']:
+            # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
+            plt.figure()
+            plt.subplot(211)
+            # plot values
+            plt.plot(one_m_d, d, 'o')
+            # plot initial cavity width value
+            plt.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
+            # plot reference peak of reddest order
+            plt.plot(1. / m_init, dopd0 / 2., 'D')
+            # plot fit
+            plt.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
+            plt.xlabel('1/m')
+            plt.ylabel('d')
+            plt.legend(loc='best')
+            plt.title('Interpolated cavity width for HC lines')
+            # plot residuals
+            plt.subplot(212)
+            plt.plot(one_m_d, res_d_final, '.')
+            plt.xlabel('1/m')
+            plt.ylabel('residuals [nm]')
+
+
+        # fit d v wavelength w/sigma-clipping
+        # fit x vs m for FP lines w/sigma-clipping
+        sigclip = 7
+        # initialise the while loop
+        sigmax = sigclip + 1
+        # initialise mask
+        mask = np.ones_like(hc_ll_test, dtype='Bool')
+        while sigmax > sigclip:
+            # fit on masked values
+            ff = np.polyfit(hc_ll_test[mask], d[mask], deg=9)
+            # get residuals (not masked or dimension break)
+            res = d - np.polyval(ff, hc_ll_test)
+            # normalise
+            res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+            # get the max residual in sigmas
+            sigmax = np.max(res[mask])
+            # mask all outliers
+            if sigmax > sigclip:
+                mask[res >= sigclip] = False
+
+
+
+        # write polyfits to files
+        # TODO proper paths
+        np.savetxt('cavity_length_m_fit.dat', fit_1m_d)
+        np.savetxt('cavity_length_ll_fit.dat', ff)
+    else:
+        # read fit coefficients from files
+        # TODO proper paths
+        fit_1m_d = np.genfromtxt('cavity_length_m_fit.dat')
+        ff = np.genfromtxt('cavity_length_ll_fit.dat')
+        fit_1m_d_func = np.poly1d(fit_1m_d)
+        # get achromatic cavity change - ie shift
+        residual = d - np.polyval(ff, hc_ll_test)
+        # update coeffs with mean shift
+        ff[-1] += np.nanmedian(residual)
 
     fitval = np.polyval(ff, hc_ll_test)
 
@@ -662,7 +683,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.plot(hc_ll_test, d-fitval, '.')
         plt.xlabel('wavelength')
         plt.ylabel('residuals [nm]')
-
 
 
     # ----------------------------------------------------------------------
