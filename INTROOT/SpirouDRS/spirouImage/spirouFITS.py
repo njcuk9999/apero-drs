@@ -1889,6 +1889,39 @@ def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
     return hdict
 
 
+def add_qc_keys(p, hdict, qcparams):
+    func_name = __NAME__ + '.add_qc_keys()'
+    # get parameters
+    qc_kws = ['KW_DRS_QC_NAME', 'KW_DRS_QC_VAL', 'KW_DRS_QC_LOGIC',
+              'KW_DRS_QC_PASS']
+    # deal with no hdict
+    if hdict is None:
+        hdict = OrderedDict()
+    # check lengths are the same
+    lengths = []
+    for qcparam in qcparams:
+        lengths.append(len(qcparam))
+    for length in lengths:
+        if lengths[0] != length:
+            emsg1 = 'Dev Error: All QC parameters must be the same length'
+            emsg2 = '\tLengths = {0}'.format(', '.join(lengths))
+            emsg3 = '\tfunction = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+    # loop around values and add to hdict
+    for it in range(lengths[0]):
+        # loop around qc parameters
+        for jt, keystr in enumerate(qc_kws):
+            keyws = p[keystr]
+            # extract keyword, value and comment and put it into hdict
+            key, dvalue, comment = extract_key_word_store(p, keyws, func_name)
+            value = qcparams[jt][it]
+            # add to the hdict dictionary in form (value, comment)
+            hdict[key.format(it + 1)] = (value, comment)
+    # return hdict
+    return hdict
+
+
+
 def extract_key_word_store(p, keywordstore=None, func_name=None):
     """
     Deal with extraction of key, value and comment from keywordstore

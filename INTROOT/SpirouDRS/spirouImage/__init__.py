@@ -26,9 +26,9 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
-           'CheckWaveSolConsistency', 'ConvertToE', 'ConvertToADU',
-           'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
+__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'AddQCKeys', 'CheckFile',
+           'CheckFiles', 'CheckWaveSolConsistency', 'ConvertToE',
+           'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
            'CorrectForBadPix', 'E2DStoS1D', 'FitTilt', 'FlipImage',
            'FiberParams', 'GetSimilarDriftFiles', 'GetSigdet',
            'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
@@ -52,6 +52,8 @@ AddKey = spirouFITS.add_new_key
 AddKey1DList = spirouFITS.add_key_1d_list
 
 AddKey2DList = spirouFITS.add_key_2d_list
+
+AddQCKeys = spirouFITS.add_qc_keys
 
 CheckFile = spirouFile.check_file_id
 
