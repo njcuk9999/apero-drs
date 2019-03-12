@@ -470,7 +470,7 @@ def QC_HEADER_KEYS():
 
     :return keys:
     """
-    qc_keys = ['QCV', 'QCN', 'QCL']
+    qc_keys = ['QCC']
     # return keys
     return qc_keys
 
