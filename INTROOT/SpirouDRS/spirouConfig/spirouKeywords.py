@@ -113,6 +113,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_DRS_QC_VAL',
             'KW_DRS_QC_NAME',
             'KW_DRS_QC_LOGIC',
+            'KW_DRS_QC_PASS',
             'KW_E2DS_EXTM',
             'KW_E2DS_FUNC',
             'KW_E2DS_SNR',
@@ -710,10 +711,11 @@ KW_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 # -----------------------------------------------------------------------------
 # Note must update spirouConfig.spirouConst.QC_HEADER_KEYS if these are
 #   changed
-KW_DRS_QC = ['QC', 'PASSED', 'QCcontr']
-KW_DRS_QC_VAL = ['QCV', '', 'Qualtity control value']
-KW_DRS_QC_NAME = ['QCN', '', 'Quality control variable name']
-KW_DRS_QC_LOGIC = ['QCL', '', 'Quality control logic']
+KW_DRS_QC = ['QC', 0, 'All quality control passed']
+KW_DRS_QC_VAL = ['QCC{0:03d}V', '', 'Qualtity control value']
+KW_DRS_QC_NAME = ['QCC{0:03d}N', '', 'Quality control variable name']
+KW_DRS_QC_LOGIC = ['QCC{0:03d}L', '', 'Quality control logic']
+KW_DRS_QC_PASS = ['QCC{0:03d}P', 0, 'Quality control passed']
 
 # -----------------------------------------------------------------------------
 # Define output
