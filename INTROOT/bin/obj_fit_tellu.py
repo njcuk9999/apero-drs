@@ -433,7 +433,7 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
-        qc_values, qc_names, qc_logic = [], [], []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
         # ----------------------------------------------------------------------
         # get SNR for each order from header
         nbo = loc['DATA'].shape[0]
@@ -445,6 +445,9 @@ def main(night_name=None, files=None):
             fargs = [snr_order, snr[snr_order], p['QC_FIT_TELLU_SNR_MIN']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # add to qc header lists
         qc_values.append(snr[snr_order])
         qc_name_str = 'SNR[{0}]'.format(snr_order)
@@ -490,6 +493,8 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                          values=qc_values)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                         values=qc_logic)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                          values=qc_logic)
         # set tellu keys
         npc = loc['NPC']

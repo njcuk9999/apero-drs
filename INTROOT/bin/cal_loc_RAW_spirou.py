@@ -327,7 +327,7 @@ def main(night_name=None, files=None):
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # ----------------------------------------------------------------------
     # check that max number of points rejected in center fit is below threshold
     if np.sum(loc['MAX_RMPTS_POS']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
@@ -335,6 +335,9 @@ def main(night_name=None, files=None):
         fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_POS']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(np.sum(loc['MAX_RMPTS_POS']))
     qc_names.append('sum(MAX_RMPTS_POS)')
@@ -347,6 +350,9 @@ def main(night_name=None, files=None):
         fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_WID']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(np.sum(loc['MAX_RMPTS_WID']))
     qc_names.append('sum(MAX_RMPTS_WID)')
@@ -358,6 +364,9 @@ def main(night_name=None, files=None):
         fmsg = 'too high rms on center fitting ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(mean_rms_center, p['QC_LOC_RMSMAX_CENTER']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(mean_rms_center)
     qc_names.append('mean_rms_center')
@@ -369,6 +378,9 @@ def main(night_name=None, files=None):
         fmsg = 'too high rms on profile fwhm fitting ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(mean_rms_fwhm, p['QC_LOC_RMSMAX_CENTER']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(mean_rms_fwhm)
     qc_names.append('mean_rms_fwhm')
@@ -381,6 +393,9 @@ def main(night_name=None, files=None):
                 'expected {1:.2f})')
         fail_msg.append(fmsg.format(rorder_num, p['QC_LOC_NBO']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(rorder_num)
     qc_names.append('rorder_num')
@@ -455,6 +470,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])

@@ -465,7 +465,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # TODO: Needs doing
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -473,16 +473,19 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
+        qc_pass.append(1)
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+        qc_pass.append(0)
     # add to qc header lists
     qc_values.append('None')
     qc_names.append('None')
     qc_logic.append('None')
+    qc_pass.append(1)
 
     # ----------------------------------------------------------------------
     # archive ccf to fits file
@@ -517,6 +520,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)

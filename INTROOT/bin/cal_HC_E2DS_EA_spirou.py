@@ -194,13 +194,16 @@ def main(night_name=None, files=None):
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
 
     # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
     if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
         fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
         fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['SIG1'])
     qc_names.append('SIG1')
@@ -253,6 +256,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # add wave solution date
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],

@@ -316,7 +316,7 @@ def main(night_name=None, files=None):
         # ---------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
-        qc_values, qc_names, qc_logic = [], [], []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
         # ----------------------------------------------------------------------
         # get SNR for each order from header
         nbo = loc['DATA'].shape[0]
@@ -334,6 +334,9 @@ def main(night_name=None, files=None):
             qc_names.append(qc_name_str)
             qc_logic.append('{0} < {1:.2f}'.format(qc_name_str,
                                                    p['QC_MK_TELLU_SNR_ORDER']))
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # ----------------------------------------------------------------------
         # check that the RMS is not too low
         if exp_clean_rms[snr_order] > p['QC_TELLU_CLEAN_RMS_MAX']:
@@ -349,7 +352,9 @@ def main(night_name=None, files=None):
             qc_names.append(qc_name_str)
             qc_logic.append('{0} > {1:.2f}'.format(qc_name_str,
                                                    p['QC_TELLU_CLEAN_RMS_MAX']))
-
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # ----------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
@@ -389,6 +394,8 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                          values=qc_values)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                         values=qc_logic)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                          values=qc_logic)
         # add wave solution date
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],

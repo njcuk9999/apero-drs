@@ -205,13 +205,16 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # check that tilt rms is below required
     if loc['RMS_TILT'] > p['QC_SLIT_RMS']:
         # add failed message to fail message list
         fmsg = 'abnormal RMS of SLIT angle ({0:.2f} > {1:.2f} deg)'
         fail_msg.append(fmsg.format(loc['RMS_TILT'], p['QC_SLIT_RMS']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['RMS_TILT'])
     qc_names.append('RMS_TILT')
@@ -224,6 +227,9 @@ def main(night_name=None, files=None):
         fmsg = 'abnormal SLIT angle ({0:.2f} > {1:.2f} deg)'
         fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MAX']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(max_tilt)
     qc_names.append('max_tilt')
@@ -236,6 +242,9 @@ def main(night_name=None, files=None):
         fmsg = 'abnormal SLIT angle ({0:.2f} < {1:.2f} deg)'
         fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MIN']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(min_tilt)
     qc_names.append('min_tilt')
@@ -289,6 +298,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
                                      values=qc_values)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
+                                     values=qc_logic)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_PASS'],
                                      values=qc_logic)
     # add tilt parameters as 1d list
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_TILT'], values=loc['TILT'])
