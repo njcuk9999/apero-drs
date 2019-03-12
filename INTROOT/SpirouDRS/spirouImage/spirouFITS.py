@@ -1731,6 +1731,7 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
     # set the value to default value if value is None
     if value is None:
         value = dvalue
+
     # add to the hdict dictionary in form (value, comment)
     hdict[key] = (value, comment)
     # return hdict
@@ -1815,7 +1816,7 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     dim1 = len(values)
     for i_it in range(dim1):
         # construct the key name
-        keyname = '{0}{1}'.format(key, i_it)
+        keyname = test_for_formatting(key, i_it)
         # get the value
         value = values[i_it]
         # construct the comment name
@@ -1824,6 +1825,14 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
         hdict[keyname] = (value, comm)
     # return the header dictionary
     return hdict
+
+
+def test_for_formatting(key, number):
+    test_str = key.format(number)
+    if test_str == key:
+        return '{0}{1}'.format(key, number)
+    else:
+        return test_str
 
 
 def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
@@ -1868,7 +1877,7 @@ def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
     for i_it in range(dim1):
         for j_it in range(dim2):
             # construct the key name
-            keyname = '{0}{1}'.format(key, i_it * dim2 + j_it)
+            keyname = test_for_formatting(key, i_it * dim2 + j_it)
             # get the value
             value = values[i_it, j_it]
             # construct the comment name
