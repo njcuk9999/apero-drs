@@ -1901,10 +1901,12 @@ def add_qc_keys(p, hdict, qcparams):
     lengths = []
     for qcparam in qcparams:
         lengths.append(len(qcparam))
+    strlengths = map(lambda x: str(x), lengths)
+    # loop around lengths and test that they are the same
     for length in lengths:
         if lengths[0] != length:
             emsg1 = 'Dev Error: All QC parameters must be the same length'
-            emsg2 = '\tLengths = {0}'.format(', '.join(lengths))
+            emsg2 = '\tLengths = {0}'.format(', '.join(strlengths))
             emsg3 = '\tfunction = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # loop around values and add to hdict
