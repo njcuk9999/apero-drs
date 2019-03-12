@@ -6808,3 +6808,4 @@
 	- spirouKeywords.py - add KW_DRS_QC_PASS + change position of number in QCV, QCN, QCL (rev.f45436bc)
 	- spirouConst.py - change the qc_keys to look for (rev.d93a8bda)
 	- add qc_pass parameter (flag for each qc parameter) (rev.2b58ebef)
+	- spirouConst.py - add version to the index files (rev.1aa7f1d5)
