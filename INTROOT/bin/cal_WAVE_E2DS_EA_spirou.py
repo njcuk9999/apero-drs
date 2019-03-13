@@ -632,13 +632,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             fargs = [x_cut_point, sig_littrow, rms_littrow_max]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(sig_littrow)
-            qc_names.append('sig_littrow')
-            qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(sig_littrow)
+        qc_names.append('sig_littrow')
+        qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
+        # ----------------------------------------------------------------------
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
@@ -647,11 +648,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(np.max([max_littrow, min_littrow]))
-            qc_names.append('max or min littrow')
-            qc_logic.append('max or min littrow > {0:.2f}'
-                            ''.format(dev_littrow_max))
             qc_pass.append(0)
 
             # TODO: Should this be the QC header values?
@@ -705,6 +701,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                         fail_msg.append(wmsg.format(*wargs))
         else:
             qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(np.max([max_littrow, min_littrow]))
+        qc_names.append('max or min littrow')
+        qc_logic.append('max or min littrow > {0:.2f}'
+                        ''.format(dev_littrow_max))
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
