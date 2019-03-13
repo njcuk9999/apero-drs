@@ -216,8 +216,10 @@ def reset_log(p):
     WLOG(p, '', 'Resetting log directory')
     # remove files from reduced folder
     log_dir = p['DRS_DATA_MSG']
+    # get current log file (must be skipped)
+    current_logfile = spirouConfig.Constants.LOG_FILE_NAME(p, p['DRS_DATA_MSG'])
     # loop around files and folders in reduced dir
-    remove_all(p, log_dir)
+    remove_all(p, log_dir, skipfiles=[current_logfile])
 
 
 def reset_plot(p):
@@ -229,7 +231,10 @@ def reset_plot(p):
     remove_all(p, log_dir)
 
 
-def remove_all(p, path, log=True):
+def remove_all(p, path, log=True, skipfiles=None):
+
+    if skipfiles is None:
+        skipfiles = []
 
     # Check that directory exists
     if not os.path.exists(path):
@@ -262,15 +267,22 @@ def remove_all(p, path, log=True):
 
     # loop around all files (adding all files from sub directories
     for filename in allfiles:
-        remove_files(p, filename, log)
+        remove_files(p, filename, log, skipfiles)
     # remove dirs
-    remove_subdirs(p, path, log)
+    remove_subdirs(p, path, log, skipfiles)
 
 
-def remove_subdirs(p, path, log=True):
+def remove_subdirs(p, path, log=True, skipfiles=None):
+
+    if skipfiles is None:
+        skipfiles = []
+
     subdirs = glob.glob(os.path.join(path, '*'))
 
     for subdir in subdirs:
+        if subdir in skipfiles:
+            continue
+
         if os.path.islink(subdir):
             WLOG(p, '', '\tSkipping link: {0}'.format(subdir))
             continue
@@ -290,7 +302,7 @@ def remove_subdirs(p, path, log=True):
             shutil.rmtree(subdir)
 
 
-def remove_files(p, path, log=True):
+def remove_files(p, path, log=True, skipfiles=None):
     """
     Remove a file or add files to list_of_files
     :param path: string, the path to remove (file or directory)
@@ -300,6 +312,13 @@ def remove_files(p, path, log=True):
     :return list_of_files: returns the list of files removes (if it was a
             directory this adds the files to the list)
     """
+
+    if skipfiles is None:
+        skipfiles = []
+
+    if path in skipfiles:
+        return
+
     # log removal
     if log:
         WLOG(p, '', '\tRemoving file: {0}'.format(path))

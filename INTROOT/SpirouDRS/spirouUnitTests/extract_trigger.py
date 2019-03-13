@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
