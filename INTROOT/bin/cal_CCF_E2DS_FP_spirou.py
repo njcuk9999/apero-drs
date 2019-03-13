@@ -473,14 +473,12 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
-        qc_pass.append(1)
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
-        qc_pass.append(0)
     # add to qc header lists
     qc_values.append('None')
     qc_names.append('None')
