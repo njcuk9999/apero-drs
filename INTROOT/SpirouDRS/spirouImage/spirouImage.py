@@ -1211,7 +1211,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     # load the correct dark image
     # -------------------------------------------------------------------------
     # if we are allowed to use sky darks choose between them
-    if p['USE_SKYDARK_CORRECTION'] and skydarkfile is not None:
+    if p['USE_SKYDARK_CORRECTION'] and (skydarkfile is not None):
         darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, skydarkfile)
         # Read dark file
         WLOG(p, '', 'Doing Dark Correction using SKY: ' + darkfile)
