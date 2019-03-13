@@ -324,15 +324,15 @@ def main(night_name=None, files=None):
             fargs = [snr_order, snr[snr_order], p['QC_MK_TELLU_SNR_MIN']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(snr[snr_order])
-            qc_name_str = 'SNR[{0}]'.format(snr_order)
-            qc_names.append(qc_name_str)
-            qc_logic.append('{0} < {1:.2f}'.format(qc_name_str,
-                                                   p['QC_MK_TELLU_SNR_ORDER']))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(snr[snr_order])
+        qc_name_str = 'SNR[{0}]'.format(snr_order)
+        qc_names.append(qc_name_str)
+        qc_logic.append('{0} < {1:.2f}'.format(qc_name_str,
+                                               p['QC_MK_TELLU_SNR_ORDER']))
         # ----------------------------------------------------------------------
         # check that the file passed the CalcTelluAbsorption sigma clip loop
         if not loc['PASSED']:
@@ -340,13 +340,13 @@ def main(night_name=None, files=None):
             fargs = [basefilename, 'spirouTelluric.CalcTelluAbsorption()']
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(basefilename)
-            qc_names.append('FILE')
-            qc_logic.append('FILE did not converge')
             qc_pass.append(0)
         else:
             qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(basefilename)
+        qc_names.append('FILE')
+        qc_logic.append('FILE did not converge')
         # ----------------------------------------------------------------------
         # check that the airmass is not too different from input airmass
         airmass_diff = np.abs(loc['RECOV_AIRMASS'] - loc['AIRMASS'])
@@ -357,14 +357,14 @@ def main(night_name=None, files=None):
                      p['QC_MKTELLU_AIRMASS_DIFF']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(airmass_diff)
-            qc_names.append('airmass_diff')
-            qc_logic.append('airmass_diff > {0:.2f}'
-                            ''.format(p['QC_MKTELLU_AIRMASS_DIFF']))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(airmass_diff)
+        qc_names.append('airmass_diff')
+        qc_logic.append('airmass_diff > {0:.2f}'
+                        ''.format(p['QC_MKTELLU_AIRMASS_DIFF']))
         # ----------------------------------------------------------------------
         # check that the water vapor is within limits
         water_cond1 = loc['RECOV_WATER'] < p['MKTELLU_TRANS_MIN_WATERCOL']
@@ -376,14 +376,15 @@ def main(night_name=None, files=None):
                      p['MKTELLU_TRANS_MAX_WATERCOL']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(loc['RECOV_WATER'])
-            qc_names.append('RECOV_WATER')
-            qc_logic.append('RECOV_WATER not between {0:.3f} and {1:.3f}'
-                            ''.format(*fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(loc['RECOV_WATER'])
+        qc_names.append('RECOV_WATER')
+        qc_logic.append('RECOV_WATER not between {0:.3f} and {1:.3f}'
+                        ''.format(*fargs))
+        # ----------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
