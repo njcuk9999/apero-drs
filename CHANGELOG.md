@@ -6811,3 +6811,24 @@
 	- spirouConst.py - add version to the index files (rev.1aa7f1d5)
 	- drs_reset.py - set DEBUG = False in reset, add the removal of all sub-directories in drs folders (rev.af356c7e)
 	- spirouStartup.py - fix bug that we only need lock file is outputs is not None (rev.d18f1f5f)
+	- cal_WAVE_E2DS_EA_spirou.py - fix bug with new qc_pass criteria (rev.521f5cd2)
+	- unit_test.py - update logging (log all) (rev.6ae3a4a4)
+	- spirouFITS.py - add function "add_qc_keys" to take the keys and push them into hdict correctly (rev.a258d4e8)
+	- spirouConst.py - change PPVERSION to VERSION for reduced index.fits (rev.d89fba5f)
+	- update QC parameters (to store in order) (rev.37297739)
+
+
+
+================================================================================
+* Wed Mar 13 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.091
+
+================================================================================
+	- cal_DARK_spirou.py and spirouImage.py - tweak changes to all SKYDARK files to be used (rev.1fe57a62)
+	- extract_trigger.py - readd the "skip" criteria (rev.ff472dc8)
+	- drs_reset.py - skip the log file for this instance of drs_reset (otherwise can get stuck) (rev.832ad004)
+	- drs_reset.py - fix removal of files when in dir (if still present) (rev.2a805a48)
+	- cal_CCF_E2DS_FP_spirou.py - correct bad qc parameters (rev.e29e0443)
+	- obj_mk_tellu_new.py - fix typo in qc parameters (rev.55ffa7a1)
+	- obj_mk_tellu_new.py - fix typo in qc parameters (rev.47af75b4)
+	- drs_reset.py - fix typo in reset1 (rev.edac07fe)
+	- cal_WAVE_E2DS_EA_spirou.py - fix bug with new qc_pass criteria (rev.34426d43)
