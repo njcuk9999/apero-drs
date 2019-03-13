@@ -350,11 +350,11 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # check that the airmass is not too different from input airmass
         airmass_diff = np.abs(loc['RECOV_AIRMASS'] - loc['AIRMASS'])
+        fargs = [loc['RECOV_AIRMASS'], loc['AIRMASS'],
+                 p['QC_MKTELLU_AIRMASS_DIFF']]
         if airmass_diff > p['QC_MKTELLU_AIRMASS_DIFF']:
             fmsg = ('Recovered airmass to de-similar than input airmass.'
                     'Recovered: {0:.3f}. Input: {1:.3f}. QC limit = {2}')
-            fargs = [loc['RECOV_AIRMASS'], loc['AIRMASS'],
-                     p['QC_MKTELLU_AIRMASS_DIFF']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
             qc_pass.append(0)
@@ -369,11 +369,11 @@ def main(night_name=None, files=None):
         # check that the water vapor is within limits
         water_cond1 = loc['RECOV_WATER'] < p['MKTELLU_TRANS_MIN_WATERCOL']
         water_cond2 = loc['RECOV_WATER'] > p['MKTELLU_TRANS_MAX_WATERCOL']
+        fargs = [p['MKTELLU_TRANS_MIN_WATERCOL'],
+                 p['MKTELLU_TRANS_MAX_WATERCOL']]
         if water_cond1 or water_cond2:
             fmsg = ('Recovered water vapor optical depth not between {0:.3f} '
                     'and {1:.3f}')
-            fargs = [p['MKTELLU_TRANS_MIN_WATERCOL'],
-                     p['MKTELLU_TRANS_MAX_WATERCOL']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
             qc_pass.append(0)
