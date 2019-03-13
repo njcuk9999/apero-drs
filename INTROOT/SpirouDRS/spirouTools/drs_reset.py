@@ -274,6 +274,13 @@ def remove_subdirs(p, path, log=True):
         if os.path.islink(subdir):
             WLOG(p, '', '\tSkipping link: {0}'.format(subdir))
             continue
+        if os.path.isfile(subdir):
+            WLOG(p, '', '\tRemoving file: {0}'.format(subdir))
+            # remove
+            if DEBUG:
+                print('\tRemoved {0}'.format(subdir))
+            else:
+                os.remove(subdir)
         if log:
             WLOG(p, '', '\tRemoving dir: {0}'.format(subdir))
         # remove
