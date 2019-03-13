@@ -306,8 +306,11 @@ def main(night_name=None, files=None):
         # set dark key
         if p['DPRTYPE'] == 'DARK_DARK':
             keydb = 'DARK'
-        else:
+        elif p['USE_SKYDARK_CORRECTION']:
             keydb = 'SKYDARK'
+        else:
+            emsg = 'Error: Currently {0} only supports DARK_DARK and OBJ_DARK'
+            WLOG(p, 'error', emsg.format(__NAME__))
         # copy dark fits file to the calibDB folder
         spirouDB.PutCalibFile(p, darkfits)
         # update the master calib DB file with new key
