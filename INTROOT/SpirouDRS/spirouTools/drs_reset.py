@@ -321,9 +321,11 @@ def main(return_locals=False, warn=True, log=True, called=False):
     reset4, reset5, reset6 = True, True, True
 
     if warn:
-        rest1 = reset_confirmation(p, 'Tmp', called=called)
+        reset1 = reset_confirmation(p, 'Tmp', called=called)
     if reset1:
         reset_tmp_folders(p, log)
+    else:
+        WLOG(p, '', 'Not resetting tmp folders.')
     if warn:
         reset2 = reset_confirmation(p, 'Reduced', called=called)
     if reset2:
