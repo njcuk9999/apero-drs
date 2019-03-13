@@ -699,8 +699,8 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     skip = False
     for it, index_file in enumerate(index_files):
         # if skip then continue
-        # if skip:
-        #     continue
+        if skip:
+            continue
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
