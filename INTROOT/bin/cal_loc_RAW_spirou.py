@@ -487,6 +487,9 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
+    # add outputs
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_NBO'],

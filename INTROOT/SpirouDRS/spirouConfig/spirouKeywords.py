@@ -134,7 +134,13 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_EXT_TYPE',
             'KW_FLAT_RMS',
             'KW_GAIN',
-            'KW_INFILE',
+            'KW_INFILE1',
+            'KW_INFILE2',
+            'KW_INFILE3',
+            'KW_INCCFMASK',
+            'KW_INRV',
+            'KW_INWIDTH',
+            'KW_INSTEP',
             'KW_LOCO_BCKGRD',
             'KW_LOCO_CTR_COEFF',
             'KW_LOCO_DEG_C',
@@ -718,15 +724,13 @@ KW_DRS_QC_LOGIC = ['QCC{0:03d}L', '', 'Quality control logic']
 KW_DRS_QC_PASS = ['QCC{0:03d}P', 0, 'Quality control passed']
 
 # -----------------------------------------------------------------------------
-# Define output
+# Define inputs
 # -----------------------------------------------------------------------------
-KW_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
-KW_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
-
-KW_INFILE = ['IFILE{0:03d}', '', 'Input file used to create output']
-KW_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
-KW_WAVESOURCE = ['WAVELOC', '', 'Where the wave solution was read from']
-
+# file inputs
+KW_INFILE1 = ['INF1{0:03d}', '', 'Input file used to create output']
+KW_INFILE2 = ['INF1{0:03d}', '', 'Input file used to create output (2nd)']
+KW_INFILE3 = ['INF1{0:03d}', '', 'Input file used to create output (3rd)']
+# calibration inputs
 KW_CDBDARK = ['CDBDARK', '', 'The calibration DARK file used']
 KW_CDBBAD = ['CDBBAD', '', 'The calibration BADPIX file used']
 KW_CDBORDP = ['CDBORDP', '' , 'The calibration ORDER_PROFILE file used']
@@ -736,10 +740,27 @@ KW_CDBSHAPE = ['CDBSHAPE', '', 'The calibration SHAPE file used']
 KW_CDBFLAT = ['CDBFLAT', '', 'The calibration FLAT file used']
 KW_CDBBLAZE = ['CDBBLAZE', '', 'The calibration BLAZE file used']
 KW_CDBWAVE = ['CDBWAVE', '', 'The calibration WAVE file used']
+# telluric inputs
 KW_TDBMAP = ['TDBMAP', '', 'The telluric TELL_MAP file used']
 KW_TDBOBJ = ['TDBOBJ', '', 'The telluric TELL_OBJ file used']
 KW_TDBTEMP = ['TDBTEMP', '', 'The telluric OBJ_TEMP file used']
 KW_TDBRECON = ['TDBRECON', '', 'The telluric TELL_RECON file used']
+# extra drift inputs
+KW_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
+# extra wave inputs
+KW_WAVESOURCE = ['WAVELOC', '', 'Where the wave solution was read from']
+# extra ccf inputs
+KW_INCCFMASK = ['INMASK', '', 'Input Mask used in CCF process']
+KW_INRV = ['INRV', '', 'Input RV used in CCF process']
+KW_INWIDTH = ['INWIDTH', '', 'Input width used in CCF process']
+KW_INSTEP = ['INSTEP', '', 'Input step used in CCF process']
+
+# -----------------------------------------------------------------------------
+# Define outputs
+# -----------------------------------------------------------------------------
+KW_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
+KW_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
+
 
 # =============================================================================
 # Define functions (Do not change)

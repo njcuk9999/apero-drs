@@ -269,6 +269,8 @@ def main(night_name=None, flatfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
                                value=loc['WSOURCE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['FLATFILE'])
     # add name of the TAPAS y data
     hdict = spirouImage.AddKey(p, hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used

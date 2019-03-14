@@ -505,6 +505,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                    value=loc['WAVEFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
                                    value=loc['WSOURCE'])
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
         # construct loco filename
         locofile, _ = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.basename(locofile)

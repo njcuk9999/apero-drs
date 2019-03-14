@@ -261,7 +261,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
                                value=loc['WSOURCE'])
-
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['POLY_WAVE_SOL'].shape[0])
