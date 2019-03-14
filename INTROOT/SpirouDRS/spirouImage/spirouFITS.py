@@ -680,10 +680,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     # get the tilt keys
     tilt = read_key_1d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'])
     # get the tilt file
-    if p['KW_TILTFILE'][0] in hdict:
-        p['TILTFILE'] = hdict[p['KW_TILTFILE'][0]]
-    else:
-        p['TILTFILE'] = 'UNKNOWN'
+    p['TILTFILE'] = os.path.basename(read_file)
     p.set_source('TILTFILE', func_name)
 
     # return the first set of keys
@@ -742,10 +739,7 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
     shapemap[~np.isfinite(shapemap)] = 0.0
 
     # get the shape file
-    if p['KW_SHAPEFILE'][0] in hdict:
-        p['SHAPFILE'] = hdict[p['KW_SHAPEFILE'][0]]
-    else:
-        p['SHAPFILE'] = 'UNKNOWN'
+    p['SHAPFILE'] = os.path.basename(read_file)
     p.set_source('SHAPFILE', func_name)
 
     # return the shape map image
@@ -974,7 +968,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
     dim2key = p['KW_WAVE_LL_DEG'][0]
-    namekey = p['KW_WAVEFILE'][0]
+    namekey = p['KW_CDBWAVE'][0]
     # check for header keys in header
     if hdr is None:
         header_cond = False
@@ -1048,6 +1042,9 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         returns.append(filename)
     if return_header:
         returns.append(hdict)
+    # append where wave solution was obtained
+    returns.append(obtain)
+    # return returns
     return returns
 
 
@@ -1225,10 +1222,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
     # get flat file name
-    if p['KW_FLATFILE'][0] in hdict:
-        p['FLATFILE'] = hdict[p['KW_FLATFILE'][0]]
-    else:
-        p['FLATFILE'] = 'UNKNOWN'
+    p['FLATFILE'] = os.path.basename(read_file)
     p.set_source('FLATFILE', func_name)
     # return the wave file
     if return_header:
@@ -1282,10 +1276,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
     # get blaze file name
-    if p['KW_BLAZFILE'][0] in hdict:
-        p['BLAZFILE'] = hdict[p['KW_BLAZFILE'][0]]
-    else:
-        p['BLAZFILE'] = 'UNKNOWN'
+    p['BLAZFILE'] = os.path.basename(read_file)
     p.set_source('BLAZFILE', func_name)
     # return the wave file
     return p, blaze
@@ -1443,7 +1434,7 @@ def update_wave_sol_hc(p, loc, filename):
     # add keys from original header file
     hdict = copy_original_keys(loc['HCHDR'], loc['HCCDR'])
     # add wave file name
-    hdict = add_new_key(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
     # add wave solution date
     hdict = add_new_key(p, hdict, p['KW_WAVE_TIME1'], value=p['MAX_TIME_HUMAN'])
     hdict = add_new_key(p, hdict, p['KW_WAVE_TIME2'], value=p['MAX_TIME_UNIX'])
@@ -1469,7 +1460,7 @@ def update_wave_sol(p, loc, filename):
     # copy original keys
     hdict = copy_original_keys(hdr, comments)
 
-    hdict = add_new_key(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
 
     # add number of orders
     hdict = add_new_key(p, hdict, p['KW_WAVE_ORD_N'],

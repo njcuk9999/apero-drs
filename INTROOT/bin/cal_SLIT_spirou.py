@@ -285,14 +285,11 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                               value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                               value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=raw_tilt_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                               value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
     # add qc parameters
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])

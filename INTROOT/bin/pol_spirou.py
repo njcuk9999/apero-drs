@@ -99,9 +99,9 @@ def main(night_name=None, files=None):
         wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=loc['HDR'], return_wavemap=True,
-                                       fiber=wave_fiber)
-    _, loc['WAVE'] = wout
-    loc.set_source('WAVE', wsource)
+                                       return_filename=True, fiber=wave_fiber)
+    _, loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE', 'WSOURCE'], wsource)
 
     # ----------------------------------------------------------------------
     # Polarimetry computation

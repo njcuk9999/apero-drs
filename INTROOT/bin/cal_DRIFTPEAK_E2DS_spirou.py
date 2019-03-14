@@ -157,8 +157,8 @@ def main(night_name=None, reffile=None):
     source = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    _, loc['WAVE'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE', 'WAVEFILE'], source)
+    _, loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE', 'WSOURCE'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -423,10 +423,11 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'], value=p['FLATFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_REFFILE'], value=raw_infile)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
-                               value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)

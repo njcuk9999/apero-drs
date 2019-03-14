@@ -109,7 +109,7 @@ def main(night_name=None, files=None):
     # used for plotting only
     wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
                                        return_wavemap=True, fiber=wave_fiber)
-    _, loc['WAVE'] = wout
+    _, loc['WAVE'], _ = wout
     loc.set_source('WAVE', main_name)
 
     # ----------------------------------------------------------------------
@@ -270,7 +270,7 @@ def main(night_name=None, files=None):
     mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
                                        return_wavemap=True, quiet=True,
                                        fiber=wave_fiber)
-    _, loc['MASTERWAVE'] = mout
+    _, loc['MASTERWAVE'], _ = mout
     loc.set_source('MASTERWAVE', main_name)
 
     # ----------------------------------------------------------------------
@@ -319,8 +319,8 @@ def main(night_name=None, files=None):
                                            return_wavemap=True,
                                            return_filename=True,
                                            fiber=wave_fiber)
-        _, loc['WAVE_IT'], loc['WAVEFILE'] = wout
-        loc.set_sources(['WAVE_IT', 'WAVEFILE'], main_name)
+        _, loc['WAVE_IT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+        loc.set_sources(['WAVE_IT', 'WAVEFILE', 'WSOURCE'], main_name)
         # load wave keys
         loc = spirouImage.GetWaveKeys(p, loc, thdr)
 
@@ -483,11 +483,12 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                                   value=loc['WSOURCE'])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
         hdict = spirouImage.AddQCKeys(p, hdict, qc_params)

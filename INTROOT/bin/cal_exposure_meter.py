@@ -157,8 +157,8 @@ def main(night_name=None, flatfile=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVEPARAMS', 'WAVE', 'WAVEFILE'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVEPARAMS', 'WAVE', 'WAVEFILE', 'WSOURCE'], wsource)
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -259,15 +259,16 @@ def main(night_name=None, flatfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
     if loc['SHAPE'] is not None:
-        hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                    value=p['SHAPFILE'])
     else:
-        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                    value=p['TILTFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
-                               value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add name of the TAPAS y data
     hdict = spirouImage.AddKey(p, hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used
@@ -291,10 +292,14 @@ def main(night_name=None, flatfile=None):
     # add bad pixel map (if required)
     if p['EM_COMBINED_BADPIX']:
         # get bad pix mask (True where bad)
-        badpixmask, bhdr = spirouImage.GetBadPixMap(p, hdr)
+        badpixmask, bhdr, badfile = spirouImage.GetBadPixMap(p, hdr)
         goodpixels = badpixmask == 0
         # apply mask (multiply)
         loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels.astype(bool)
+    else:
+        badfile = 'None'
+    # add to hdict
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=badfile)
 
     # convert waveimage mask into float array
     loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'].astype('float')

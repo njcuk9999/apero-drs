@@ -282,10 +282,11 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     else:
         wave_fiber = p['FIBER']
     # read master wave map
-    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+    wout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    loc['MASTERWAVEP'], loc['MASTERWAVE'], loc['MASTERWAVEHDR'] = mout
+    loc['MASTERWAVEP'], loc['MASTERWAVE'] = wout[:2]
+    loc['MASTERWAVEHDR'], loc['WSOURCE'] = wout[2:]
     # set sources
     wsource = ['MASTERWAVEP', 'MASTERWAVE', 'MASTERWAVEHDR']
     loc.set_sources(wsource, 'spirouImage.GetWaveSolution()')
@@ -365,14 +366,9 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_HCFILE'], value=p['HCFILE'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'],
-                                     values=p['FPFILES'], dim1name='fpfile')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
     # add qc parameters
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])

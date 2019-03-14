@@ -1246,12 +1246,8 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
         darkimage, dhdr, corrected_image = None, None, None
     # -------------------------------------------------------------------------
-
-    # get the dark filename (from header)
-    if p['KW_DARKFILE'][0] in dhdr:
-        p['DARKFILE'] = dhdr[p['KW_DARKFILE'][0]]
-    else:
-        p['DARKFILE'] = 'UNKNOWN'
+    # get the first dark filename (from header)
+    p['DARKFILE'] = os.path.basename(darkfile)
     p.set_source('DARKFILE', func_name)
 
     # finally return datac
@@ -1306,7 +1302,7 @@ def get_badpixel_map(p, header=None):
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
         WLOG(p, '', 'Doing Bad Pixel Correction using ' + badpixfile)
         badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(p, badpixfile)
-        return badpixmask, bhdr
+        return badpixmask, bhdr, badpixfile
     else:
         # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
@@ -1320,7 +1316,6 @@ def get_badpixel_map(p, header=None):
         emsg1 = 'No valid BADPIX in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
-        return 0
 
 
 def correct_for_badpix(p, image, header):
@@ -1347,19 +1342,14 @@ def correct_for_badpix(p, image, header):
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
     # get badpixmask
-    badpixmask, bhdr = get_badpixel_map(p, header)
+    badpixmask, bhdr, badfile = get_badpixel_map(p, header)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
     # correct image (set bad pixels to zero)
     corrected_image = np.where(mask, np.zeros_like(image), image)
     # get badpixel file
-    if p['KW_BADPFILE1'][0] in bhdr:
-        p['BADPFILE1'] = bhdr[p['KW_BADPFILE1'][0]]
-        p['BADPFILE2'] = bhdr[p['KW_BADPFILE2'][0]]
-    else:
-        p['BADPFILE1'] = 'UNKNOWN'
-        p['BADPFILE2'] = 'UNKNOWN'
-    p.set_sources(['BADPFILE1', 'BADPFILE2'], func_name)
+    p['BADPFILE'] = os.path.basename(badfile)
+    p.set_source('BADPFILE', func_name)
     # finally return corrected_image
     return p, corrected_image
 
@@ -3223,7 +3213,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
 def get_wave_keys(p, loc, hdr):
     func_name = __NAME__ + '.get_wave_keys()'
     # check for header key
-    if p['KW_WAVEFILE'][0] in hdr:
+    if p['KW_CDBWAVE'][0] in hdr:
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
@@ -3232,7 +3222,7 @@ def get_wave_keys(p, loc, hdr):
     else:
         # log warning
         wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
-        WLOG(p, 'warning', wmsg.format(p['KW_WAVEFILE'][0]))
+        WLOG(p, 'warning', wmsg.format(p['KW_CDBWAVE'][0]))
         # get parameters from the calibDB
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
         fmt = spirouConfig.Constants.DATE_FMT_HEADER()
