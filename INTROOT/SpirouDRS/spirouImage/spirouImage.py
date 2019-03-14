@@ -987,6 +987,9 @@ def get_hot_pixels(p):
 def test_for_corrupt_files(p, image, hotpix):
     # get the med_size
     med_size = p['PP_CORRUPT_MED_SIZE']
+    # get hte percentile values
+    rms_percentile = p['PP_RMS_PERCENTILE']
+    percent_thres = p['PP_LOWEST_RMS_PERCENTILE']
     # get shape of full badpixel file
     dim1, dim2 = image.shape
     # get size of dark region
@@ -1021,11 +1024,17 @@ def test_for_corrupt_files(p, image, hotpix):
     rms0 = np.nanmedian(np.abs(med0 - np.nanmedian(med0)))
     rms1 = np.nanmedian(np.abs(med1 - np.nanmedian(med1)))
 
-    precentile_cut = np.nanpercentile(image, 95)
-    rms0 = rms0 / precentile_cut
-    rms1 = rms1 / precentile_cut
-    rms2 = rms2 / precentile_cut
-    rms3 = rms3 / precentile_cut
+    # get the 'rms_percentile' percentile value
+    percentile_cut = np.nanpercentile(image, rms_percentile)
+    # make sure the percentile does not fall below a lower level
+    if percentile_cut < percent_thres:
+        percentile_cut = percent_thres
+
+    # normalise the rms by the percentile cut
+    rms0 = rms0 / percentile_cut
+    rms1 = rms1 / percentile_cut
+    rms2 = rms2 / percentile_cut
+    rms3 = rms3 / percentile_cut
 
     # normalise med_hotpix to it's own median
     res = med_hotpix - np.nanmedian(med_hotpix)
