@@ -182,6 +182,15 @@ PP_CORRUPT_SNR_HOTPIX = 10
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = 0.15
 
+# Define the percentile value for the rms normalisation (0-100)
+PP_RMS_PERCENTILE = 95
+
+# Define the lowest rms value of the rms percentile allowed
+#    if the value of the pp_rms_percentile-th is lower than this this
+#    value is used
+PP_LOWEST_RMS_PERCENTILE = 10
+
+
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
 # -----------------------------------------------------------------------------
