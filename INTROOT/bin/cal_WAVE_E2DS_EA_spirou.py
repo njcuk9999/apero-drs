@@ -199,8 +199,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
@@ -744,11 +744,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['kw_HCFILE'],
-                                     values=raw_infiles1)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
@@ -758,8 +757,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
-                               value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
@@ -857,7 +854,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
 
     # get res data in correct format
     resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)

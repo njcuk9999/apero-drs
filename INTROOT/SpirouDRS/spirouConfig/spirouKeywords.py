@@ -47,48 +47,54 @@ p = spirouConfig.check_params(p)
 # ---------------------------------------------------------------
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['KW_ACQTIME',
-            'KW_ACQTIME_FMT',
             'KW_ACQTIME_DTYPE',
+            'KW_ACQTIME_FMT',
             'KW_AIRMASS',
-            'KW_BADPFILE1',
-            'KW_BADPFILE2',
             'KW_BBAD',
             'KW_BBFLAT',
             'KW_BERV',
             'KW_BERV_MAX',
-            'KW_B_OBS_HOUR',
             'KW_BHOT',
             'KW_BJD',
-            'KW_BLAZFILE',
             'KW_BNDARK',
             'KW_BNFLAT',
             'KW_BNILUM',
             'KW_BTOT',
             'KW_BUNIT',
+            'KW_B_OBS_HOUR',
             'KW_CCAS',
             'KW_CCD_CONAD',
             'KW_CCD_SIGDET',
             'KW_CCF_CDELT',
-            'KW_CCF_CONTRAST',
-            'KW_CCF_CRVAL',
-            'KW_CCF_CTYPE',
-            'KW_CCF_FWHM',
-            'KW_CCF_LINES',
-            'KW_CCF_MASK',
-            'KW_CCF_MAXCPP',
-            'KW_CCF_RV',
             'KW_CCF_CDELT1',
+            'KW_CCF_CONTRAST',
             'KW_CCF_CONTRAST1',
+            'KW_CCF_CRVAL',
             'KW_CCF_CRVAL1',
+            'KW_CCF_CTYPE',
             'KW_CCF_CTYPE1',
+            'KW_CCF_FWHM',
             'KW_CCF_FWHM1',
+            'KW_CCF_LINES',
             'KW_CCF_LINES1',
+            'KW_CCF_MASK',
             'KW_CCF_MASK1',
+            'KW_CCF_MAXCPP',
             'KW_CCF_MAXCPP1',
+            'KW_CCF_RV',
             'KW_CCF_RV1',
             'KW_CCF_RVC',
             'KW_CCF_WMREF1',
             'KW_CCF_WMREF2',
+            'KW_CDBBAD',
+            'KW_CDBBLAZE',
+            'KW_CDBDARK',
+            'KW_CDBFLAT',
+            'KW_CDBLOCO',
+            'KW_CDBORDP',
+            'KW_CDBSHAPE',
+            'KW_CDBTILT',
+            'KW_CDBWAVE',
             'KW_CDELT1',
             'KW_CDEN',
             'KW_CMMTSEQ',
@@ -97,7 +103,6 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_CRPIX1',
             'KW_CRVAL1',
             'KW_CTYPE1',
-            'KW_DARKFILE',
             'KW_DARK_B_DEAD',
             'KW_DARK_B_MED',
             'KW_DARK_CUT',
@@ -109,11 +114,10 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_DPRTYPE',
             'KW_DRIFT_RV',
             'KW_DRS_QC',
-            'KW_DRS_QC',
-            'KW_DRS_QC_VAL',
-            'KW_DRS_QC_NAME',
             'KW_DRS_QC_LOGIC',
+            'KW_DRS_QC_NAME',
             'KW_DRS_QC_PASS',
+            'KW_DRS_QC_VAL',
             'KW_E2DS_EXTM',
             'KW_E2DS_FUNC',
             'KW_E2DS_SNR',
@@ -126,17 +130,11 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_EM_TRASCUT',
             'KW_EM_WAVE',
             'KW_EXPTIME',
-            'KW_EXTFILE',
             'KW_EXTRA_SN',
             'KW_EXT_TYPE',
-            'KW_FLATFILE',
             'KW_FLAT_RMS',
-            'KW_FPFILE',
             'KW_GAIN',
-            'KW_HCFILE',
             'KW_INFILE',
-            'KW_INFILELIST',
-            'KW_LOCOFILE',
             'KW_LOCO_BCKGRD',
             'KW_LOCO_CTR_COEFF',
             'KW_LOCO_DEG_C',
@@ -221,22 +219,23 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_RDNOISE',
             'KW_REFFILE',
             'KW_REF_RV',
-            'KW_SHAPEFILE',
+            'KW_TDBMAP',
+            'KW_TDBOBJ',
+            'KW_TDBRECON',
+            'KW_TDBTEMP',
             'KW_TELLU_ABSO',
             'KW_TELLU_ADD_DPC',
+            'KW_TELLU_AIRMASS',
             'KW_TELLU_AMP_PC',
             'KW_TELLU_DV_TELL1',
             'KW_TELLU_DV_TELL2',
             'KW_TELLU_FIT_DPC',
             'KW_TELLU_NPC',
-            'KW_TELLU_AIRMASS',
             'KW_TELLU_WATER',
             'KW_TH_NAXIS1',
             'KW_TH_NAXIS2',
             'KW_TILT',
-            'KW_TILTFILE',
             'KW_UTC_OBS',
-            'KW_WAVEFILE',
             'KW_WAVE_CODE',
             'KW_WAVE_INIT',
             'KW_WAVE_LL_DEG',
@@ -244,6 +243,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_WAVE_PARAM',
             'KW_WAVE_TIME1',
             'KW_WAVE_TIME2',
+            'KW_WAVESOURCE',
             'KW_ppversion',
             'KW_root_drs_flat',
             'KW_root_drs_hc',
@@ -720,25 +720,26 @@ KW_DRS_QC_PASS = ['QCC{0:03d}P', 0, 'Quality control passed']
 # -----------------------------------------------------------------------------
 # Define output
 # -----------------------------------------------------------------------------
-KW_DARKFILE = ['DARKFILE', '', 'DARK_DARK file used for correction']
-KW_BADPFILE1 = ['BADFILE1', '', 'FLAT_FLAT file used for BADPIX corr']
-KW_BADPFILE2 = ['BADFILE2', '', 'DARK_DARK file used for BADPIX corr']
-KW_LOCOFILE = ['LOCOFILE', '', 'DARK_FLAT/FLAT_DARK file used for localisation']
-KW_TILTFILE = ['TILTFILE', '', 'FP_FP file used for TILT']
-KW_SHAPEFILE = ['SHAPFILE', '', 'FP_FP file used for SHAPE']
-KW_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
-KW_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
-KW_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
-KW_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
-KW_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used in header keys']
-KW_INFILE = ['INFILE', '', 'Input file userd to create output']
-KW_INFILELIST = ['FILE', '', 'Input file list']
-KW_HCFILE = ['HCFILE', '', 'HC file used to create output']
-KW_FPFILE = ['FPFILE', '', 'FP file used to create output']
-
 KW_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
 KW_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
 
+KW_INFILE = ['IFILE{0:03d}', '', 'Input file used to create output']
+KW_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
+KW_WAVESOURCE = ['WAVELOC', '', 'Where the wave solution was read from']
+
+KW_CDBDARK = ['CDBDARK', '', 'The calibration DARK file used']
+KW_CDBBAD = ['CDBBAD', '', 'The calibration BADPIX file used']
+KW_CDBORDP = ['CDBORDP', '' , 'The calibration ORDER_PROFILE file used']
+KW_CDBLOCO = ['CDBLOCO', '', 'The calibration LOC file used']
+KW_CDBTILT = ['CDBTILT', '', 'The calibration TILT file used']
+KW_CDBSHAPE = ['CDBSHAPE', '', 'The calibration SHAPE file used']
+KW_CDBFLAT = ['CDBFLAT', '', 'The calibration FLAT file used']
+KW_CDBBLAZE = ['CDBBLAZE', '', 'The calibration BLAZE file used']
+KW_CDBWAVE = ['CDBWAVE', '', 'The calibration WAVE file used']
+KW_TDBMAP = ['TDBMAP', '', 'The telluric TELL_MAP file used']
+KW_TDBOBJ = ['TDBOBJ', '', 'The telluric TELL_OBJ file used']
+KW_TDBTEMP = ['TDBTEMP', '', 'The telluric OBJ_TEMP file used']
+KW_TDBRECON = ['TDBRECON', '', 'The telluric TELL_RECON file used']
 
 # =============================================================================
 # Define functions (Do not change)

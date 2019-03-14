@@ -165,9 +165,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
     # write to file
     p = spirouImage.WriteImage(p, rawfits, order_profile, hdict)
 
@@ -432,10 +431,9 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=raw_loco_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=raw_loco_file)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_BCKGRD'],
@@ -487,9 +485,8 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_NBO'],
@@ -537,12 +534,10 @@ def main(night_name=None, files=None):
         # save this image to file
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
         p = spirouImage.WriteImage(p, locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------

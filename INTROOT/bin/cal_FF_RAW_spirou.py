@@ -395,18 +395,16 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
         if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=raw_flat_file)
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
@@ -438,8 +436,6 @@ def main(night_name=None, files=None):
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG(p, '', wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'],
-                                   value=raw_flat_file)
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])

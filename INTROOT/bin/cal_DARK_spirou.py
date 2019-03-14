@@ -257,12 +257,13 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=rawdarkfile)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_DEAD'], value=p['DADEAD_FULL'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_DEAD'],
+                               value=p['DADEAD_FULL'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_MED'], value=p['MED_FULL'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_DEAD'],
                                value=p['DADEAD_BLUE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_MED'], value=p['MED_BLUE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_MED'],
+                               value=p['MED_BLUE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_DEAD'],
                                value=p['DADEAD_RED'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_MED'], value=p['MED_RED'])
@@ -291,7 +292,6 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=rawdarkfile)
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file

@@ -147,8 +147,8 @@ def main(night_name=None, files=None):
     mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
                                        return_wavemap=True, quiet=True,
                                        fiber=wave_fiber)
-    loc['MASTERWAVEPARAMS'], loc['MASTERWAVE'] = mout
-    keys = ['MASTERWAVEPARAMS', 'MASTERWAVE', 'MASTERWAVEFILE']
+    loc['MASTERWAVEPARAMS'], loc['MASTERWAVE'], loc['WSOURCE'] = mout
+    keys = ['MASTERWAVEPARAMS', 'MASTERWAVE', 'MASTERWAVEFILE', 'WSOURCE']
     loc.set_sources(keys, main_name)
 
     # ----------------------------------------------------------------------
@@ -180,10 +180,9 @@ def main(night_name=None, files=None):
     loc['BASE_BERVLIST'], loc['BASE_WAVELIST'] = [], []
     loc['BASE_SNRLIST_{0}'.format(snr_order)] = []
     loc['BASE_DATELIST'], loc['BASE_VERSION'] = [], []
-    loc['BASE_DARKFILE'], loc['BASE_BADFILE1'] = [], []
-    loc['BASE_BADFILE2'], loc['BASE_LOCOFILE'] = [], []
-    loc['BASE_BLAZFILE'], loc['BASE_FLATFILE'] = [], []
-    loc['BASE_SHAPEFILE'], loc['BASE_EXTRFILE'] = [], []
+    loc['BASE_DARKFILE'], loc['BASE_BADFILE'] = [], []
+    loc['BASE_LOCOFILE'], loc['BASE_BLAZFILE'] = [], []
+    loc['BASE_FLATFILE'], loc['BASE_SHAPEFILE'] = [], []
 
     # loop through files
     for it, filename in enumerate(tell_files):
@@ -231,21 +230,17 @@ def main(night_name=None, files=None):
                                         return_value=True)
         tversion = spirouImage.ReadParam(p, thdr, 'KW_version', dtype=str,
                                          return_value=True)
-        tdarkfile = spirouImage.ReadParam(p, thdr, 'KW_DARKFILE', dtype=str,
+        tdarkfile = spirouImage.ReadParam(p, thdr, 'KW_CDBDARK', dtype=str,
                                           return_value=True)
-        tbadfile1 = spirouImage.ReadParam(p, thdr, 'KW_BADPFILE1', dtype=str,
+        tbadfile = spirouImage.ReadParam(p, thdr, 'KW_CDBBAD', dtype=str,
                                           return_value=True)
-        tbadfile2 = spirouImage.ReadParam(p, thdr, 'KW_BADPFILE2', dtype=str,
+        tlocofile = spirouImage.ReadParam(p, thdr, 'KW_CDBLOCO', dtype=str,
                                           return_value=True)
-        tlocofile = spirouImage.ReadParam(p, thdr, 'KW_LOCOFILE', dtype=str,
+        tblazfile = spirouImage.ReadParam(p, thdr, 'KW_CDBBLAZE', dtype=str,
                                           return_value=True)
-        tblazfile = spirouImage.ReadParam(p, thdr, 'KW_BLAZFILE', dtype=str,
+        tflatfile = spirouImage.ReadParam(p, thdr, 'KW_CDBFLAT', dtype=str,
                                           return_value=True)
-        tflatfile = spirouImage.ReadParam(p, thdr, 'KW_FLATFILE', dtype=str,
-                                          return_value=True)
-        tshapfile = spirouImage.ReadParam(p, thdr, 'KW_SHAPEFILE', dtype=str,
-                                          return_value=True)
-        textrfile = spirouImage.ReadParam(p, thdr, 'KW_EXTFILE', dtype=str,
+        tshapfile = spirouImage.ReadParam(p, thdr, 'KW_CDBSHAPE', dtype=str,
                                           return_value=True)
         # append to lists
         loc['BASE_ROWNUM'].append(it)
@@ -255,13 +250,11 @@ def main(night_name=None, files=None):
         loc['BASE_OBJECT'].append(tobject)
         loc['BASE_VERSION'].append(tversion)
         loc['BASE_DARKFILE'].append(tdarkfile)
-        loc['BASE_BADFILE1'].append(tbadfile1)
-        loc['BASE_BADFILE2'].append(tbadfile2)
+        loc['BASE_BADFILE'].append(tbadfile)
         loc['BASE_LOCOFILE'].append(tlocofile)
         loc['BASE_BLAZFILE'].append(tblazfile)
         loc['BASE_FLATFILE'].append(tflatfile)
         loc['BASE_SHAPEFILE'].append(tshapfile)
-        loc['BASE_EXTRFILE'].append(textrfile)
 
         # ------------------------------------------------------------------
         # Get the wave solution for this file
@@ -281,7 +274,7 @@ def main(night_name=None, files=None):
                                            return_wavemap=True,
                                            fiber=wave_fiber,
                                            return_filename=True)
-        _, loc['WAVE'], loc['WAVEFILE'] = wout
+        _, loc['WAVE'], loc['WAVEFILE'], _ = wout
         loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
 
         # add wave to wave list
@@ -374,10 +367,11 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                value=loc['MASTERWAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)

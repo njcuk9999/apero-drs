@@ -238,8 +238,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                            return_filename=True,
                                            return_header=True, fiber=wave_fiber)
-        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WAVEHDR'] = wout
-        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR'], wsource)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout[:3]
+        loc['WAVEHDR'], loc['WSOURCE'] = wout[3:]
+        source_names = ['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR']
+        loc.set_sources(source_names, wsource)
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
@@ -483,28 +485,26 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
 
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
         if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'],
                                    value=p['FLATFILE'])
         if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                        value=p['SHAPFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_EXTFILE'],
-                                   value=raw_ext_file)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                                   value=loc['WSOURCE'])
         # construct loco filename
         locofile, _ = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.basename(locofile)
