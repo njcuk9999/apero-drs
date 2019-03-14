@@ -1801,6 +1801,8 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     # set the value to default value if value is None
     if values is None:
         values = [dvalue]
+    if type(values) is str:
+        values = [values]
     # convert to a numpy array
     values = np.array(values)
     # loop around the 2D array

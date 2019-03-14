@@ -694,7 +694,7 @@ def get_molecular_tell_lines(p, loc):
     mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    masterwavep, masterwave, masterwaveheader = mout
+    masterwavep, masterwave, masterwaveheader, mwsource = mout
 
     # get the convolve file names
     convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')

@@ -155,10 +155,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     loc.set_sources(added, func_name)
 
     # get filename
-    if p['KW_LOCOFILE'][0] in hdict:
-        p['LOCOFILE'] = hdict[p['KW_LOCOFILE'][0]]
-    else:
-        p['LOCOFILE'] = 'UNKNOWN'
+    p['LOCOFILE'] = os.path.basename(loco_file)
     p.set_source('LOCOFILE', func_name)
 
     # return the loc param dict

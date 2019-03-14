@@ -242,6 +242,10 @@ def main(night_name=None, ufiles=None):
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_PPVERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+        # set the inputs
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=[ufile])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],

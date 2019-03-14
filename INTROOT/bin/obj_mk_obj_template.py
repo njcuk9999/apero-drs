@@ -372,6 +372,8 @@ def main(night_name=None, files=None):
                                value=loc['MASTERWAVEFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
                                value=loc['WSOURCE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)

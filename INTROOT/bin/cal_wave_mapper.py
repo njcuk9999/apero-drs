@@ -306,8 +306,8 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
                                value=loc['WSOURCE'])
-    # add input filelist
-
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['FLATFILE'])
     # add name of the localisation fits file used
     hfile = os.path.basename(loc['LOCO_CTR_FILE'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_LOCFILE'], value=hfile)

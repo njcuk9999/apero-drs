@@ -406,6 +406,10 @@ def main(night_name=None, files=None):
                                        value=p['TILTFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=raw_flat_file)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
+        # add some properties back
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
         # add qc parameters
