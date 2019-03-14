@@ -245,7 +245,7 @@ def main(night_name=None, ufiles=None):
         # set the inputs
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                          dim1name='file',
-                                         values=[ufile])
+                                         values=[os.path.basename(ufile)])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
