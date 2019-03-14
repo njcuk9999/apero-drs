@@ -1,4 +1,4 @@
-Update Note Summary - Version 0.4.086 (Since 0.4.072)
+Update Note Summary - Version 0.4.092 (Since 0.4.072)
 
 Changes:
 
@@ -12,6 +12,12 @@ Changes:
 
 - Fixed bug in sPlt.debug_locplot
 
+- Fixed bug in indexing (parallisation problem)
+
+- Fixed bug in pre-processing
+
+- Added back SKYDARK (not tested yet)
+
 - Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2
 
 - Fixed fits lock timer
@@ -23,6 +29,10 @@ Changes:
 - Added WMEANREF (for AB and C) to header (CCFWMR1 and CCFWMR2 respectively)
 
 - Added PID header key
+
+- Added new keys for calibdb inputs used for outputs
+
+- Added new key for input files (removed old ones)
 
 - Added quality control header keys to all recipes
     - QCV#   (The current value that is checked)

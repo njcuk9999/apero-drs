@@ -6832,3 +6832,13 @@
 	- obj_mk_tellu_new.py - fix typo in qc parameters (rev.47af75b4)
 	- drs_reset.py - fix typo in reset1 (rev.edac07fe)
 	- cal_WAVE_E2DS_EA_spirou.py - fix bug with new qc_pass criteria (rev.34426d43)
+
+
+
+================================================================================
+* Thu Mar 14 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.092
+
+================================================================================
+	- make sure all input files are added to header in form: INF#### where the first digit shows the file-set and the other three the position i.e. for recipe.py night_name file1 file2 file3 file4   where inputs expected are 1 flat and multiple darks header would add INF1001 INF2001 INF2002 INF2003 (rev.d3f996dc)
+	- add header keys for calibration files used to create outputs (CDBDARK, CDBWAVE) etc, also add a source for the wave solution (WAVELOC) (rev.9fba0e20)
+	- spirouImage.py - correct the rms percentile to allow more darks to pass the rms test (rev.0381146a)
