@@ -1595,7 +1595,7 @@ def CCF_FP_TABLE_FILE1(p):
 
 
 # noinspection PyPep8Naming
-def CCF_FP_TABLE_FILE1(p):
+def CCF_FP_TABLE_FILE2(p):
     """
     Defines the CCF table file location and name
 
