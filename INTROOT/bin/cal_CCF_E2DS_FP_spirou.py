@@ -557,7 +557,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
                                value=loc['CCF_RES'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_WMREF1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_WMREF'],
                                value=loc['WMEANREF'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
