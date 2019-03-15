@@ -1568,9 +1568,8 @@ def CCF_FP_FITS_FILE2(p):
     return corfile, tag
 
 
-
 # noinspection PyPep8Naming
-def CCF_FP_TABLE_FILE(p):
+def CCF_FP_TABLE_FILE1(p):
     """
     Defines the CCF table file location and name
 
@@ -1584,7 +1583,29 @@ def CCF_FP_TABLE_FILE(p):
     """
     # func_name = 'CCF_FP_TABLE_FILE'
     # start with the CCF fits file name
-    corfile = CCF_FP_FITS_FILE(p)[0]
+    corfile = CCF_FP_FITS_FILE1(p)[0]
+    # we want to save the file as a tbl file not a fits file
+    ccf_table_file = corfile.replace('.fits', '.tbl')
+    # return the new ccf table file location and name
+    return ccf_table_file
+
+
+# noinspection PyPep8Naming
+def CCF_FP_TABLE_FILE1(p):
+    """
+    Defines the CCF table file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return ccf_table_file:
+    """
+    # func_name = 'CCF_FP_TABLE_FILE'
+    # start with the CCF fits file name
+    corfile = CCF_FP_FITS_FILE2(p)[0]
     # we want to save the file as a tbl file not a fits file
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
