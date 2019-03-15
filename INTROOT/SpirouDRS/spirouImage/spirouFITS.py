@@ -1519,7 +1519,7 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
         value = d.get(key, default)
     else:
         try:
-            value = eval(d[key])
+            value = d[key]
         except KeyError:
             if not required:
                 return None
