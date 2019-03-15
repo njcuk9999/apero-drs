@@ -316,7 +316,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # archive ccf to table
     # ----------------------------------------------------------------------
     # construct filename
-    res_table_file = spirouConfig.Constants.CCF_FP_TABLE_FILE(p)
+    res_table_file = spirouConfig.Constants.CCF_FP_TABLE_FILE1(p)
     # log progress
     WLOG(p, '', 'Archiving CCF on file {0}'.format(res_table_file))
     # define column names
@@ -461,6 +461,29 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
         sPlt.ccf_rv_ccf_plot(cp, cloc['RV_CCF'], normalized_ccf, ccf_fit)
+
+    # ----------------------------------------------------------------------
+    # archive ccf to table
+    # ----------------------------------------------------------------------
+    # construct filename
+    res_table_file = spirouConfig.Constants.CCF_FP_TABLE_FILE2(p)
+    # log progress
+    WLOG(p, '', 'Archiving CCF on file {0}'.format(res_table_file))
+    # define column names
+    columns = ['order', 'maxcpp', 'nlines', 'contrast', 'RV', 'sig']
+    # define values for each column
+    values = [cloc['ORDERS'],
+              cloc['CCF_MAX'] / cloc['PIX_PASSED_ALL'],
+              cloc['TOT_LINE'],
+              np.abs(100 * cloc['CCF_ALL_RESULTS'][:, 0]),
+              cloc['CCF_ALL_RESULTS'][:, 1],
+              cloc['CCF_ALL_RESULTS'][:, 2]]
+    # define the format for each column
+    formats = ['2.0f', '5.0f', '4.0f', '4.1f', '9.4f', '7.4f']
+    # construct astropy table from column names, values and formats
+    table = spirouImage.MakeTable(p, columns, values, formats)
+    # save table to file
+    spirouImage.WriteTable(p, table, res_table_file, fmt='ascii')
 
     # ----------------------------------------------------------------------
     # Quality control
