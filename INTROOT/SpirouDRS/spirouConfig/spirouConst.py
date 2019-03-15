@@ -1503,7 +1503,7 @@ def CCF_FITS_FILE(p):
 
 
 # noinspection PyPep8Naming
-def CCF_FP_FITS_FILE(p):
+def CCF_FP_FITS_FILE1(p):
     """
     Defines the CCF fits file location and name
 
@@ -1532,6 +1532,41 @@ def CCF_FP_FITS_FILE(p):
     corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf file location and name
     return corfile, tag
+
+
+# noinspection PyPep8Naming
+def CCF_FP_FITS_FILE2(p):
+    """
+    Defines the CCF fits file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return corfile: string, the CCF table file location and name
+    """
+    func_name = 'CCF_FP_FITS_FILE'
+    # define filename
+    reducedfolder = p['REDUCED_DIR']
+    # get new extension using ccf_mask without the extention
+    newext = '_ccf_fp_' + p['CCF_MASK'].replace('.mas', '')
+    # set the new filename as the reference file without the _e2ds
+    if '_e2dsff' in p['E2DSFILE']:
+        corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+        key = func_name + '_FF'
+        tag = tags[key]
+    else:
+        tag = tags[func_name]
+        corfilename = p['E2DSFILE'].replace('_e2ds', newext)
+
+    corfilename = corfilename.replace('AB', 'C')
+
+    corfile = os.path.join(reducedfolder, corfilename)
+    # return the new ccf file location and name
+    return corfile, tag
+
 
 
 # noinspection PyPep8Naming
