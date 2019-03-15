@@ -477,8 +477,8 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # get raw file name
         raw_in_file = os.path.basename(p['FITSFILENAME'])
-        # start header storage
-        hdict = OrderedDict()
+        # copy original keys
+        hdict = spirouImage.CopyOriginalKeys(thdr, tcdr)
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
@@ -523,8 +523,6 @@ def main(night_name=None, files=None):
         sp_out = sp_out.reshape(loc['DATA'].shape)
         # multiply by blaze
         sp_out = sp_out * loc['NBLAZE']
-        # copy original keys
-        hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         # log progress
         wmsg = 'Saving {0} to file'.format(outfilename1)
