@@ -16,6 +16,10 @@ Changes:
 
 - Fixed bug in pre-processing
 
+- Fixed bug in keylookup (BIGBUG introducted recently)
+
+- Fixed miscommunication in CCF --> now produce both AB and C files
+
 - Added back SKYDARK (not tested yet)
 
 - Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2

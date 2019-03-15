@@ -6842,3 +6842,46 @@
 	- make sure all input files are added to header in form: INF#### where the first digit shows the file-set and the other three the position i.e. for recipe.py night_name file1 file2 file3 file4   where inputs expected are 1 flat and multiple darks header would add INF1001 INF2001 INF2002 INF2003 (rev.d3f996dc)
 	- add header keys for calibration files used to create outputs (CDBDARK, CDBWAVE) etc, also add a source for the wave solution (WAVELOC) (rev.9fba0e20)
 	- spirouImage.py - correct the rms percentile to allow more darks to pass the rms test (rev.0381146a)
+
+
+
+================================================================================
+* Thu Mar 14 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.093
+
+================================================================================
+	- cal_preprocess_spirou.py - fix filename (should only be filename not path) (rev.620efd9d)
+	- cal_CCF_E2DS_FP_spirou.py - plot duplicate plot correctly (rev.63c92fed)
+	- cal_CCF_E2DS_FP_spirou.py - correct typo in WMREF (rev.e0e763a7)
+	- cal_CCF_E2DS_FP_spirou.py - correct typo in WSOURCE (was WAVESOURCE) (rev.909dc99f)
+	- spirouConst.py - correct typo (rev.fcefe5c6)
+
+
+================================================================================
+* Fri Mar 15 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.094
+
+================================================================================
+	- spirouConst.py - remove DRS_EOUT from forbidden keys (it should follow extracted file) (rev.ba801cd7)
+	- calc_berv.py - make sure CopyOriginalKeys comes first before other calls to hdict (rev.0625e99b)
+	- spirouFITS.py - change QC_HEADER_KEYS to FORBIDDEN_HEADER_PREFIXES (rev.8085cbf8)
+	- spirouKeywords.py - change some keyword to make them unique (thus can remove them) (rev.59f3109d)
+	- spirouConst.py - add more forbidden keys, change qc_keys to any prefix that shouldn't be copied (rev.fb0d10f5)
+	- obj_fit_tellu.py - CopyOriginalKeys should be called before other hdict commands (rev.a768c9cd)
+	- update unit test scripts (rev.bf1de7ab)
+	- spirouRV.py - fix problem with getting C file from header (rev.17480abb)
+	- spirouConst.py - add CCF_FP_TABLE1 and 2 (rev.6d270c7f)
+	- recipe_control.txt - do not allow OBJ_DARK files - only OBJ_FP (rev.4ca8cb1a)
+	- cal_CCF_E2DS_FP_spirou.py - add a C table as well as a fits table (rev.6e0579d8)
+	- extract_trigger.py - update settings (rev.82798761)
+	- spirouKeywords.py - remove unused keywords (rev.9cc7ca2f)
+	- spirouConst.py - add AB and C files for CCF_FP (rev.60c313f4)
+	- tellu_file_number_test.py - change path (for new test) (rev.621de6f5)
+	- cal_CCF_E2DS_FP_spirou.py - separate AB and C files for output (rev.813625d0)
+	- spirouTelluric.py - fix list of col names for bigcube (only one bad file now) (rev.96e549c9)
+	- extract_trigger - update trigger (rev.117673b1)
+	- spirouLOCOR.py - fix localisation error - should be a median not an average (option was there but not used) (rev.7464c1e4)
+	- spirouFITS.py - remove a HUGE BUG - eval('2018-08-05') --> 2005 (as date is interpreted as a subtraction)!!!!! (rev.e533163b)
+	- tellu_file_number_test.py - add raw files and disk vs index.fits (rev.bce0e178)
+	- log_analyser.py - code to look for errors in set of log files (rev.821b1ebe)
+	- cal_DRIFT_E2DS_spirou.py - fix typo in get wave sol return (rev.fa6c4785)
+	- cal_SHAPE_spirou.py - fix typo in cdbbad value name (rev.9bc7859d)
+	- cal_SHAPE_spirou.py - fix typo in cdbbad value name (rev.222e87b7)
