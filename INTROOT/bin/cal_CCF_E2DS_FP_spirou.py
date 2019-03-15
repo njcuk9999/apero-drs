@@ -162,9 +162,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                        return_filename=True, fiber=wave_fiber)
     param_ll, wave_ll, wavefile, wsource = wout
     # save to storage
-    loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'], loc['WAVESOURCE'] = wout
+    loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'], loc['WSOURCE'] = wout
     source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
-    loc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE', 'WAVESOURCE'], source)
+    loc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE', 'WSOURCE'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
