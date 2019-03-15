@@ -129,9 +129,9 @@ def main(night_name=None, reffile=None):
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, fiber=wave_fiber,
                                        return_wavemap=True,
                                        return_filename=True)
-    _, loc['WAVE'], loc['WSOURCE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    _, loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
     source = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
-    loc.set_sources(['WAVE', 'WSOURCE', 'WAVEFILE', 'WSOURCE'], source)
+    loc.set_sources(['WAVE', 'WAVEFILE', 'WSOURCE'], source)
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
