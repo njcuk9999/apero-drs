@@ -310,7 +310,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
-        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit,
+                             kind=p['OBJNAME'])
 
     # ----------------------------------------------------------------------
     # archive ccf to table
@@ -460,7 +461,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     if p['DRS_PLOT'] > 0:
         # Plot rv vs ccf (and rv vs ccf_fit)
-        sPlt.ccf_rv_ccf_plot(cp, cloc['RV_CCF'], normalized_ccf, ccf_fit)
+        sPlt.ccf_rv_ccf_plot(cp, cloc['RV_CCF'], normalized_ccf, ccf_fit,
+                             kind='FP')
 
     # ----------------------------------------------------------------------
     # archive ccf to table

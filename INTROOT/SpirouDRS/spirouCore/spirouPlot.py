@@ -1787,7 +1787,8 @@ def drift_peak_plot_llpeak_amps(p, loc):
 # =============================================================================
 # CCF plotting function
 # =============================================================================
-def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
+def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True,
+                    kind=''):
     """
     Plot the CCF plot. RV against CCF and RV against CCF fit, for a specific
     order number "order"
@@ -1808,7 +1809,7 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
 
     :return None:
     """
-    plot_name = 'ccf_rv_ccf_plot_order{0}'.format(order)
+    plot_name = 'ccf_rv_ccf_plot_order{0}_{1}'.format(order, kind)
     if 'dark' in PLOT_STYLE:
         black = 'w'
     else:
@@ -1823,8 +1824,8 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
     frame.plot(x, y, label='data', marker='x', linestyle='none', color=black)
     frame.plot(x, yfit, label='fit', color='r')
     # set title labels limits
-    targs = [p['OBJNAME'], p['TARGET_RV'], p['CCF_MASK']]
-    title = 'CCF plot ({0}) \n Target RV={1} km/s Mask={2}'.format(*targs)
+    targs = ['({0})'.format(kind), p['TARGET_RV'], p['CCF_MASK']]
+    title = 'CCF plot {0}\n Target RV={1} km/s Mask={2}'.format(*targs)
 
     if order is not None:
         title += ' Order {0}'.format(order)
