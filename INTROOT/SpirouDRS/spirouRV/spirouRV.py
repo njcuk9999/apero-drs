@@ -1725,7 +1725,7 @@ def get_fiberc_e2ds_name(p, hdr):
     # TODO: What about when we have multiple input files
     if outputkey.startswith('TELLU_CORRECTED') or outputkey.startswith('POL_'):
         # get the infile name
-        infile_keyword = p['KW_INFILE'][0].format(0)
+        infile_keyword = p['KW_INFILE1'][0].format(0)
         if infile_keyword not in hdr:
             emsg = 'Header key = "{0}" missing from file={1}'
             eargs = [infile_keyword, ab_file]
