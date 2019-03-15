@@ -693,7 +693,7 @@ KW_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 # -----------------------------------------------------------------------------
 # Note must update spirouConfig.spirouConst.QC_HEADER_KEYS if these are
 #   changed
-KW_DRS_QC = ['QC', 0, 'All quality control passed']
+KW_DRS_QC = ['QCC', 0, 'All quality control passed']
 KW_DRS_QC_VAL = ['QCC{0:03d}V', '', 'Qualtity control value']
 KW_DRS_QC_NAME = ['QCC{0:03d}N', '', 'Quality control variable name']
 KW_DRS_QC_LOGIC = ['QCC{0:03d}L', '', 'Quality control logic']
@@ -726,10 +726,10 @@ KW_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
 # extra wave inputs
 KW_WAVESOURCE = ['WAVELOC', '', 'Where the wave solution was read from']
 # extra ccf inputs
-KW_INCCFMASK = ['INMASK', '', 'Input Mask used in CCF process']
-KW_INRV = ['INRV', '', 'Input RV used in CCF process']
-KW_INWIDTH = ['INWIDTH', '', 'Input width used in CCF process']
-KW_INSTEP = ['INSTEP', '', 'Input step used in CCF process']
+KW_INCCFMASK = ['INP1MASK', '', 'Input Mask used in CCF process']
+KW_INRV = ['INP1RV', '', 'Input RV used in CCF process']
+KW_INWIDTH = ['INP1WID', '', 'Input width used in CCF process']
+KW_INSTEP = ['INP1STEP', '', 'Input step used in CCF process']
 
 # -----------------------------------------------------------------------------
 # Define outputs
