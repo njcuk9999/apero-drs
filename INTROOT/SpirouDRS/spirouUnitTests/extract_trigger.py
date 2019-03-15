@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
@@ -59,7 +59,7 @@ RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_EXTRACT_TELLU = False
+RUN_EXTRACT_TELLU = True
 RUN_EXTRACT_OBJ = False
 RUN_EXTRACT_ALL = False
 RUN_OBJ_MK_TELLU = False
