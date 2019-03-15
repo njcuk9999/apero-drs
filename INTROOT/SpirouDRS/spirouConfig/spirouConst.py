@@ -460,7 +460,7 @@ def FORBIDDEN_COPY_KEYS():
                       'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
     # DRS OUTPUT KEYS
     forbidden_keys += ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
-                       'DRSOUTID', 'DRS_EOUT']
+                       'DRSOUTID']
 
     # return keys
     return forbidden_keys
