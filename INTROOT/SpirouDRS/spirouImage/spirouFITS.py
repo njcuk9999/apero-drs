@@ -48,7 +48,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
-QC_HEADER_KEYS = spirouConfig.Constants.QC_HEADER_KEYS()
+FORBIDDEN_HEADER_PREFIXES = spirouConfig.Constants.FORBIDDEN_HEADER_PREFIXES()
 # object name bad characters
 BADCHARS = [' '] + list(string.punctuation)
 
@@ -1588,7 +1588,7 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     return values
 
 
-def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
+def copy_original_keys(header, comments, forbid_keys=True):
     """
     Copies keys from hdr dictionary to hdict, if forbid_keys is True some
     keys will not be copies (defined in python code)
@@ -1615,8 +1615,7 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
                    key/value pairs from the header (that are NOT in
                    spirouConfig.spirouConst.FORBIDDEN_COPY_KEY)
     """
-    if hdict is None:
-        hdict = OrderedDict()
+    hdict = OrderedDict()
 
     for key in list(header.keys()):
         # skip if key is forbidden keys
@@ -1628,7 +1627,7 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
         # skip QC keys
         elif key == 'QC':
             continue
-        elif is_qc_key(key):
+        elif is_forbidden_prefix(key):
             continue
         # else add key to hdict
         else:
@@ -1641,10 +1640,10 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     return hdict
 
 
-def is_qc_key(key):
+def is_forbidden_prefix(key):
     cond = False
-    for qc_key in QC_HEADER_KEYS:
-        if key.startswith(qc_key):
+    for prefix in FORBIDDEN_HEADER_PREFIXES:
+        if key.startswith(prefix):
             cond = True
     return cond
 
