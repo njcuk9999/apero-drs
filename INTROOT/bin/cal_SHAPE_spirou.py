@@ -194,8 +194,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ----------------------------------------------------------------------
     # p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
     # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
-    p['BADPFILE1'] = 'None'
-    p['BADPFILE2'] = 'None'
+    p['BADPFILE'] = 'None'
 
     # ----------------------------------------------------------------------
     # Background computation for HC file
@@ -367,7 +366,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
