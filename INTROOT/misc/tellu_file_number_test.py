@@ -18,6 +18,7 @@ import glob
 # =============================================================================
 # Define variables
 # =============================================================================
+WORKSPACE_RAW = '/spirou/cfht_nights/common/raw/'
 WORKSPACE0 = '/spirou/cfht_nights/common/tmp/'
 WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_2/'
 WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_2/'
@@ -30,7 +31,9 @@ BIGCUBE_FILE = 'BigCube_*'
 INDEX_FILENAME = 'index.fits'
 DRS_OUTS = ['OBJ_FP', 'OBJ_DARK']
 DRS_IDS = ['EXT_E2DS_AB']
-
+RAW_SUFFIX = 'o.fits'
+PP_SUFFIX = 'o_pp.fits'
+E2DS_SUFFIX = 'o_pp_e2ds_AB.fits'
 
 # =============================================================================
 # Define functions
@@ -52,11 +55,11 @@ def load_db(filename, key):
 def get_index_files(path):
     index_files = []
     index_tables = []
+    print('Loading index files...')
     for root, dirs, files in os.walk(path):
         for filename in files:
             if filename == INDEX_FILENAME:
                 absfilename = os.path.join(root, filename)
-                print('Loading index = {0}'.format(absfilename))
                 index_files.append(absfilename)
                 index_tables.append(Table.read(absfilename))
     return index_files, index_tables
@@ -64,6 +67,45 @@ def get_index_files(path):
 
 def stripstr(x):
     return x.strip()
+
+
+def get_raw_files(suffix=''):
+    print('Searching all raw files headers, please wait...')
+
+    out_files, out_objs = [], []
+    allfiles = glob.glob(os.path.join(WORKSPACE_RAW, '*', '*' + suffix))
+    for it in range(len(allfiles)):
+        header = fits.getheader(allfiles[it])
+        objname_hdr = str(header['OBJNAME'])
+        out_files.append(allfiles[it])
+        out_objs.append(objname_hdr.strip())
+    return np.array(out_files), np.array(out_objs)
+
+
+def get_pp_files(suffix=''):
+    print('Searching all pp files headers, please wait...')
+
+    out_files, out_objs = [], []
+    allfiles = glob.glob(os.path.join(WORKSPACE0, '*', '*' + suffix))
+    for it in range(len(allfiles)):
+        header = fits.getheader(allfiles[it])
+        objname_hdr = str(header['OBJNAME'])
+        out_files.append(allfiles[it])
+        out_objs.append(objname_hdr.strip())
+    return np.array(out_files), np.array(out_objs)
+
+
+def get_e2ds_files(suffix=''):
+    print('Searching all e2ds files headers, please wait...')
+
+    out_files, out_objs = [], []
+    allfiles = glob.glob(os.path.join(WORKSPACE1, '*', '*' + suffix))
+    for it in range(len(allfiles)):
+        header = fits.getheader(allfiles[it])
+        objname_hdr = str(header['OBJNAME'])
+        out_files.append(allfiles[it])
+        out_objs.append(objname_hdr.strip())
+    return np.array(out_files), np.array(out_objs)
 
 
 def find_pp_files(object_name, index_files, index_tables):
@@ -156,6 +198,11 @@ if __name__ == '__main__':
     # load up the master tellu file
     mastertellu = load_db(MASTERTELLU_FILE, 'TELL_MAP')
 
+    # load up raw file objnames
+    all_raw_filenames, all_raw_objnames = get_raw_files(suffix=RAW_SUFFIX)
+    all_pp_filenames, all_pp_objnames = get_pp_files(suffix=PP_SUFFIX)
+    all_e2ds_filenames, all_e2ds_objnames = get_e2ds_files(suffix=E2DS_SUFFIX)
+
     # load up all index files
     ifiles1, itables1 = get_index_files(WORKSPACE0)
     ifiles2, itables2 = get_index_files(WORKSPACE1)
@@ -165,7 +212,7 @@ if __name__ == '__main__':
     filestorage1, filestorage2, filestorage3 = dict(), dict(), dict()
     filestorage_nfi, filestorage_nfd = dict(), dict()
     filestorage_fi, filestorage_fd = dict(), dict()
-    totals = dict(PP=0, E2DS=0, TELLUDB=0, BIGCUBE=0)
+    totals = dict(RAW=0, PPD=0, PPI=0, E2DSD=0, E2DSI=0, TELLUDB=0, BIGCUBE=0)
     # loop around big cubes
     for objname in wlist:
 
@@ -189,6 +236,16 @@ if __name__ == '__main__':
         else:
             bigtable = Table()
 
+        # find all raw files
+        rawmask = all_raw_objnames == objname.strip()
+        raw_files = all_raw_filenames[rawmask]
+
+        ppmask = all_pp_objnames == objname.strip()
+        pp_disk_files = all_pp_filenames[ppmask]
+
+        e2dsmask = all_e2ds_objnames == objname.strip()
+        e2ds_disk_files = all_e2ds_filenames[e2dsmask]
+
         # find all pp files
         pp_files = find_pp_files(objname, ifiles1, itables1)
 
@@ -202,19 +259,22 @@ if __name__ == '__main__':
         # find all objects in master tellu that match
         matching_filenames = find_matching(objname, mastertellu)
         # add to totals
-        totals['PP'] += len(pp_files)
+        totals['RAW'] += len(raw_files)
+        totals['PPD'] += len(pp_disk_files)
+        totals['PPI'] += len(pp_files)
         totals['BIGCUBE'] += len(bigtable)
         totals['TELLUDB'] += len(matching_filenames)
-        totals['E2DS'] += len(e2ds_files)
+        totals['E2DSI'] += len(e2ds_files)
+        totals['E2DSD'] += len(e2ds_disk_files)
         # store in file and print
-        pargs = [objname, len(pp_files), len(e2ds_files),
+        pargs = [objname, len(raw_files), len(pp_disk_files), len(pp_files),
+                 len(e2ds_disk_files), len(e2ds_files),
                  len(matching_filenames), len(bigtable)]
-        print('{0:15s}: in PP={1:3d} in E2DS={2:3d} in telluDB={3:3d} '
-              'in BigCube={4:3d}'.format(*pargs))
+        print('{0:15s}: raw={1:3d} PPD={2:3d} PPI={3:3d} E2DSD={4:3d} '
+              'E2DSI={5:3d} telluDB={6:3d} BigCube={7:3d}'.format(*pargs))
         storage[objname] = pargs[1:]
         filestorage1[objname] = pp_files
         filestorage2[objname] = e2ds_files
-
         filestorage_nfi[objname] = e2ds_nfi
         filestorage_fi[objname] = e2ds_fi
         filestorage_nfd[objname] = e2ds_nfd
@@ -224,6 +284,11 @@ if __name__ == '__main__':
             filestorage3[objname] = list(bigtable['Filename'])
         else:
             filestorage3[objname] = []
+
+    totals['tt'] = 'totals'
+    print('{tt:15s}: raw={RAW:3d} PPD={PPD:3d} PPI={PPI:3d} E2DSD={E2DSD:3d} '
+          'E2DSI={E2DSI:3d} telluDB={TELLUDB:3d} BigCube={BIGCUBE:3d}'
+          ''.format(**totals))
 
 # =============================================================================
 # End of code
