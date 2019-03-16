@@ -367,7 +367,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                value=loc['MASTERWAVEFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],

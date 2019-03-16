@@ -479,7 +479,7 @@ def FORBIDDEN_HEADER_PREFIXES():
 
     :return keys:
     """
-    prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1', 'CDB', 'TDB']
+    prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
     # return keys
     return prefixes
 
