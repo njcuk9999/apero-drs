@@ -458,10 +458,15 @@ def FORBIDDEN_COPY_KEYS():
                       'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                       'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
                       'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
-    # DRS OUTPUT KEYS
-    forbidden_keys += ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
-                       'DRSOUTID']
+    # return keys
+    return forbidden_keys
 
+
+# noinspection PyPep8Naming
+def FORBIDDEN_COPY_DRS_KEYS():
+    # DRS OUTPUT KEYS
+    forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
+                      'DRSOUTID']
     # return keys
     return forbidden_keys
 

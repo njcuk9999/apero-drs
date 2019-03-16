@@ -48,6 +48,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
+FORBIDDEN_DRS_KEY = spirouConfig.Constants.FORBIDDEN_COPY_DRS_KEYS()
 FORBIDDEN_HEADER_PREFIXES = spirouConfig.Constants.FORBIDDEN_HEADER_PREFIXES()
 # object name bad characters
 BADCHARS = [' '] + list(string.punctuation)
@@ -1619,15 +1620,18 @@ def copy_original_keys(header, comments, forbid_keys=True, allkeys=False):
 
     for key in list(header.keys()):
         # skip if key is forbidden keys
-        if forbid_keys and (key in FORBIDDEN_COPY_KEY) and not allkeys:
+        if forbid_keys and (key in FORBIDDEN_COPY_KEY):
+            continue
+        # skip if key is drs forbidden key (unless allkeys)
+        elif (key in FORBIDDEN_DRS_KEY) and (not allkeys):
             continue
         # skip if key added temporarily in code (denoted by @@@)
         elif '@@@' in key:
             continue
-        # skip QC keys
-        elif key == 'QC' and not allkeys:
+        # skip QC keys  (unless allkeys)
+        elif (key == 'QC') and not allkeys:
             continue
-        elif is_forbidden_prefix(key) and not allkeys:
+        elif is_forbidden_prefix(key) and (not allkeys):
             continue
         # else add key to hdict
         else:
