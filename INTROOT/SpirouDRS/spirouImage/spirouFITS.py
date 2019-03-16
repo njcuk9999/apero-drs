@@ -1432,7 +1432,7 @@ def update_wave_sol_hc(p, loc, filename):
     wavefitsname = os.path.basename(wavefits)
 
     # add keys from original header file
-    hdict = copy_original_keys(loc['HCHDR'], loc['HCCDR'])
+    hdict = copy_original_keys(loc['HCHDR'], loc['HCCDR'], allkeys=True)
     # add wave file name
     hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
     # add wave solution date
@@ -1458,7 +1458,7 @@ def update_wave_sol(p, loc, filename):
     wavefitsname = os.path.basename(wavefits)
 
     # copy original keys
-    hdict = copy_original_keys(hdr, comments)
+    hdict = copy_original_keys(hdr, comments, allkeys=True)
 
     hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
 
@@ -1588,7 +1588,7 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     return values
 
 
-def copy_original_keys(header, comments, forbid_keys=True):
+def copy_original_keys(header, comments, forbid_keys=True, allkeys=False):
     """
     Copies keys from hdr dictionary to hdict, if forbid_keys is True some
     keys will not be copies (defined in python code)
@@ -1619,15 +1619,15 @@ def copy_original_keys(header, comments, forbid_keys=True):
 
     for key in list(header.keys()):
         # skip if key is forbidden keys
-        if forbid_keys and (key in FORBIDDEN_COPY_KEY):
+        if forbid_keys and (key in FORBIDDEN_COPY_KEY) and not allkeys:
             continue
         # skip if key added temporarily in code (denoted by @@@)
         elif '@@@' in key:
             continue
         # skip QC keys
-        elif key == 'QC':
+        elif key == 'QC' and not allkeys:
             continue
-        elif is_forbidden_prefix(key):
+        elif is_forbidden_prefix(key) and not allkeys:
             continue
         # else add key to hdict
         else:
