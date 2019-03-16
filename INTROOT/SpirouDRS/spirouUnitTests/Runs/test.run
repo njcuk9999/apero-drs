@@ -1,3 +1,6 @@
+# Run Wave solution analysis
+run007a = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
+run007b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_C.fits']
 run008a = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
 run008b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_C.fits', '2295680c_pp_e2ds_C.fits']
 
