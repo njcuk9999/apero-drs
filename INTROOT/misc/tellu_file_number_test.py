@@ -20,8 +20,8 @@ import glob
 # =============================================================================
 WORKSPACE_RAW = '/spirou/cfht_nights/common/raw/'
 WORKSPACE0 = '/spirou/cfht_nights/common/tmp/'
-WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_3/'
-WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_2/'
+WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_1/'
+WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_1/'
 WORKSPACE3 = '/spirou/drs/spirou_py3/INTROOT/SpirouDRS/data/constants/'
 
 WHITELIST_FILE = os.path.join(WORKSPACE3, 'tellu_whitelist.txt')

@@ -647,15 +647,14 @@ def construct_big_table(p, loc):
 
     colnames = ['RowNum', 'Filename', 'OBJNAME', 'OBJECT', 'BERV', 'WAVEFILE',
                 'SNR_{0}'.format(snr_order), 'DATE', 'VERSION', 'DARKFILE',
-                'BADFILE', 'LOCOFILE', 'BLAZEFILE', 'FLATFILE',
-                'SHAPEFILE', 'EXTRACT_FILE']
+                'BADFILE', 'LOCOFILE', 'BLAZEFILE', 'FLATFILE', 'SHAPEFILE']
 
     columns = ['BASE_ROWNUM', 'BASE_FILELIST', 'BASE_OBJNAME', 'BASE_OBJECT',
                'BASE_BERVLIST', 'BASE_WAVELIST',
                'BASE_SNRLIST_{0}'.format(snr_order), 'BASE_DATELIST',
                'BASE_VERSION', 'BASE_DARKFILE', 'BASE_BADFILE',
                'BASE_LOCOFILE', 'BASE_BLAZFILE',
-               'BASE_FLATFILE', 'BASE_SHAPEFILE', 'BASE_EXTRFILE']
+               'BASE_FLATFILE', 'BASE_SHAPEFILE']
     # get values from loc
     values = []
     for col in columns:
