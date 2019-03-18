@@ -259,6 +259,9 @@ def main(night_name=None, ufiles=None):
         # write to file
         p = spirouImage.WriteImage(p, outfits, image, hdict)
 
+        # index this file
+        p = spirouStartup.End(p, outputs='pp', end=False)
+
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------
@@ -267,7 +270,7 @@ def main(night_name=None, ufiles=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p, outputs='pp')
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
