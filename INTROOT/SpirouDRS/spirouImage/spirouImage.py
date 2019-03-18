@@ -63,6 +63,7 @@ def resize(p, image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
     """
     Resize an image based on a pixel values
 
+    :param p: parameter dictionary of constants
     :param image: numpy array (2D), the image
     :param x: None or numpy array (1D), the list of x pixels
     :param y: None or numpy array (1D), the list of y pixels
@@ -160,6 +161,7 @@ def flip_image(p, image, fliprows=True, flipcols=True):
     """
     Flips the image in the x and/or the y direction
 
+    :param p: ParamDict, the constants parameter dictionary
     :param image: numpy array (2D), the image
     :param fliprows: bool, if True reverses row order (axis = 0)
     :param flipcols: bool, if True reverses column order (axis = 1)
@@ -211,7 +213,7 @@ def convert_to_e(image, p, gain=None, exptime=None):
             gain, exptime = float(gain), float(exptime)
             newimage = image * gain * exptime
         except ValueError:
-            emsg1 = ('"gain" and "exptime" must be floats')
+            emsg1 = '"gain" and "exptime" must be floats'
             emsg2 = '    function = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2])
             newimage = None
@@ -467,7 +469,7 @@ def get_all_similar_files(p, hdr):
             # TODO: Do we want bad unix_times to just warn or to crash code
             try:
                 unix_time = spirouMath.stringtime2unixtime(stringtime)
-            except spirouMath.MathException as e:
+            except spirouMath.MathException as _:
                 emsg1 = 'Time="{0}" not valid for file = {1}'
                 emsg2 = '\tFrom header: {0}="{1}" {2}="{3}"'
                 eargs1 = [stringtime, itable['FILENAME'][row]]
@@ -970,10 +972,10 @@ def get_hot_pixels(p):
 
     # median out full band structures
     with warnings.catch_warnings(record=True) as _:
-        for ix in range(med_size,dark_size):
-            full_badpix[:,ix] -= np.nanmedian(full_badpix[:,ix])
+        for ix in range(med_size, dark_size):
+            full_badpix[:, ix] -= np.nanmedian(full_badpix[:, ix])
         for iy in range(dim1):
-            full_badpix[iy,:] -= np.nanmedian(full_badpix[iy,:])
+            full_badpix[iy, :] -= np.nanmedian(full_badpix[iy, :])
 
     full_badpix[~np.isfinite(full_badpix)] = 0.0
 
@@ -1176,6 +1178,10 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     :return darkimage: numpy array (2D), the dark
     """
     func_name = __NAME__ + '.correct_for_dark()'
+    # get constants from p
+    use_sky = p['USE_SKYDARK_CORRECTION']
+    skydark_only = p['USE_SKYDARK_ONLY']
+    # check number of frames
     if nfiles is None:
         nfiles = p['NBFRAMES']
 
@@ -1199,29 +1205,39 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
+        darktime = float(cdb['DARK'][-1])
     else:
         darkfile = None
+        darktime = None
     # try to read 'SKYDARK' from cdb
     if 'SKYDARK' in cdb:
         skydarkfile = os.path.join(p['DRS_CALIB_DB'], cdb['SKYDARK'][1])
+        skytime = float(cdb['SKYDARK'][-1])
     else:
         skydarkfile = None
+        skytime = None
 
     # -------------------------------------------------------------------------
     # load the correct dark image
     # -------------------------------------------------------------------------
-    # if we are allowed to use sky darks choose between them
-    if p['USE_SKYDARK_CORRECTION'] and (skydarkfile is not None):
-        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, skydarkfile)
-        # Read dark file
-        WLOG(p, '', 'Doing Dark Correction using SKY: ' + skydarkfile)
-        corrected_image = image - (darkimage * nfiles)
-    # else if we don't have a dark
-    elif darkfile is not None:
-        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, darkfile)
-        # Read dark file
-        WLOG(p, '', 'Doing Dark Correction using DARK: ' + darkfile)
-        corrected_image = image - (darkimage * nfiles)
+    # setup logic used in multiple
+    cond1 = skydarkfile is not None
+    cond2 = darkfile is not None
+    # if we have both darkfile and skydarkfile use the closest
+    if use_sky and cond1 and cond2 and (not skydark_only):
+        # find closest to obs time
+        pos = np.argmin(abs(np.array([skytime, darktime]) - acqtime))
+        if pos == 0:
+            use_file, use_type = str(skydarkfile), 'SKY'
+        else:
+            use_file, use_type = str(darkfile),  'DARK'
+    # else if we only have sky
+    elif use_sky and cond1:
+        use_file, use_type = str(skydarkfile), 'SKY'
+    # else if only have a dark
+    elif cond2:
+        use_file, use_type = str(darkfile), 'DARK'
+    # else we don't have either --> error
     else:
         # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
@@ -1232,15 +1248,26 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         else:
             extstr = ''
         # log error
-        emsg1 = 'No valid DARK/SKYDARK in calibDB {0} ' + extstr
+        if use_sky and (not skydark_only):
+            emsg1 = 'No valid DARK/SKYDARK in calibDB {0} ' + extstr
+        elif use_sky and skydark_only:
+            emsg1 = 'No valid SKYDARK in calibDB {0} ' + extstr
+        else:
+            emsg1 = 'No valid DARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
-        darkimage, dhdr, corrected_image = None, None, None
+        use_file, use_type = None, None
     # -------------------------------------------------------------------------
-
+    # do dark using correct file
+    darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, use_file)
+    # Read dark file
+    wmsg = [use_type, use_file]
+    WLOG(p, '', 'Doing Dark Correction using {0}: {1}'.format(*wmsg))
+    corrected_image = image - (darkimage * nfiles)
+    # -------------------------------------------------------------------------
     # get the dark filename (from header)
     if p['KW_DARKFILE'][0] in dhdr:
-        p['DARKFILE'] = dhdr[p['KW_DARKFILE'][0]]
+        p['DARKFILE'] = os.path.basename(use_file)
     else:
         p['DARKFILE'] = 'UNKNOWN'
     p.set_source('DARKFILE', func_name)
@@ -2179,7 +2206,7 @@ def get_shape_map(p, loc):
     # get the dimensions
     dim0, dim1 = loc['HCDATA'].shape
     master_dxmap = np.zeros_like(hcdata1)
-    #storage for mapping orders
+    # storage for mapping orders
     map_orders = np.zeros_like(hcdata1) - 1
     order_overlap = np.zeros_like(hcdata1)
     slope_all_ord = np.zeros((nbo, dim1))
@@ -2967,7 +2994,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         # get the max median asbolute deviation
         maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
         # iterate the good mask
-        good &= np.abs(dev/absdev)  < maxdev_threshold
+        good &= np.abs(dev / absdev) < maxdev_threshold
     # -------------------------------------------------------------------------
     # then we perform a thresholding with a 5th order polynomial
     maxabsdev = np.inf
@@ -3003,7 +3030,8 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
     wmsg1 = '\t\tstddev pixel error relative to fit: {0:.5f} pix'.format(*wargs)
     wmsg2 = '\t\tabsdev pixel error relative to fit: {1:.5f} pix'.format(*wargs)
-    wmsg3 = '\t\tmedian pixel error relative to zero: {2:.5f} pix'.format(*wargs)
+    wmsg3 = ('\t\tmedian pixel error relative to zero: {2:.5f} '
+             'pix'.format(*wargs))
     wmsg4 = '\t\tstddev applied correction: {3:.5f} pix'.format(*wargs)
     wmsg5 = '\t\tmed applied correction: {4:.5f} pix'.format(*wargs)
     wmsg6 = '\t\tNth FP peak at center of order: {5:.5f}'.format(*wargs)
