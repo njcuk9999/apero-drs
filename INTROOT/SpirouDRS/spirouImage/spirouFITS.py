@@ -1381,7 +1381,7 @@ def open_fits_lock_file(p, lock_file, filename):
     wait_time = 0
     open_file = True
     lock = None
-    while open_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+    while open_file and (wait_time < p['FITSOPEN_MAX_WAIT']):
         try:
             lock = open(lock_file, 'w')
             open_file = False
@@ -1390,7 +1390,7 @@ def open_fits_lock_file(p, lock_file, filename):
                 WLOG(p, 'warning', 'Waiting to open fits lock')
             time.sleep(1)
             wait_time += 1
-    if wait_time > p['FITSOPEN_MAX_WAIT']:
+    if wait_time >= p['FITSOPEN_MAX_WAIT']:
         emsg1 = ('File Error: {0}. Cannot close lock file and max '
                  'wait time exceeded.'.format(filename))
         emsg2 = ('\tPlease make sure fits file is not being used and '
@@ -1404,9 +1404,10 @@ def close_fits_lock_file(p, lock, lock_file, filename):
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     close_file = True
-    while close_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+    while close_file and (wait_time < p['FITSOPEN_MAX_WAIT']):
         try:
-            lock.close()
+            if os.path.exists(lock_file):
+                lock.close()
             if os.path.exists(lock_file):
                 os.remove(lock_file)
             close_file = False
@@ -1415,7 +1416,7 @@ def close_fits_lock_file(p, lock, lock_file, filename):
                 WLOG(p, 'warning', 'Waiting to close fits lock')
             time.sleep(1)
             wait_time += 1
-    if wait_time > p['FITSOPEN_MAX_WAIT']:
+    if wait_time >= p['FITSOPEN_MAX_WAIT']:
         emsg1 = ('File Error: {0}. Cannot close lock file and max '
                  'wait time exceeded.'.format(filename))
         emsg2 = ('\tPlease make sure fits file is not being used and '
