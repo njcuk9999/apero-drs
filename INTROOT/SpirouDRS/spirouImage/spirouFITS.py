@@ -1387,7 +1387,8 @@ def open_fits_lock_file(p, lock_file, filename):
             open_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to open fits lock')
+                wmsg = 'Waiting to open fits lock file: {0}'
+                WLOG(p, 'warning', wmsg.format(lock_file))
             time.sleep(1)
             wait_time += 1
     if wait_time >= p['FITSOPEN_MAX_WAIT']:
@@ -1413,7 +1414,8 @@ def close_fits_lock_file(p, lock, lock_file, filename):
             close_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to close fits lock')
+                wmsg = 'Waiting to close fits lock file: {0}'
+                WLOG(p, 'warning', wmsg.format(lock_file))
             time.sleep(1)
             wait_time += 1
     if wait_time >= p['FITSOPEN_MAX_WAIT']:
