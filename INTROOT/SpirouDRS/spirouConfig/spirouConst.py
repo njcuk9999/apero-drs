@@ -2350,11 +2350,22 @@ def INDEX_OUTPUT_FILENAME():
 
 # noinspection PyPep8Naming
 def INDEX_LOCK_FILENAME(p):
+    # get the message directory
     if 'DRS_DATA_MSG' not in p:
         p['DRS_DATA_MSG'] = './'
     if not os.path.exists(p['DRS_DATA_MSG']):
         p['DRS_DATA_MSG'] = './'
-    opath = os.path.join(p['DRS_DATA_MSG'], p['PID'] + '.fits')
+    # get the night name directory
+    if 'ARG_NIGHT_NAME' not in p:
+        night_name = 'UNKNOWN'
+    else:
+        night_name = p['ARG_NIGHT_NAME']
+    # get the index file
+    index_file = INDEX_OUTPUT_FILENAME()
+    # construct the index lock file name
+    oargs = [night_name, index_file]
+    opath = os.path.join(p['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
+    # return the index lock file name
     return opath
 
 
