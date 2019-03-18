@@ -2359,7 +2359,8 @@ def INDEX_LOCK_FILENAME(p):
     if 'ARG_NIGHT_NAME' not in p:
         night_name = 'UNKNOWN'
     else:
-        night_name = p['ARG_NIGHT_NAME']
+        night_name = p['ARG_NIGHT_NAME'].replace(os.sep, '_')
+        night_name = night_name.replace(' ', '_')
     # get the index file
     index_file = INDEX_OUTPUT_FILENAME()
     # construct the index lock file name
