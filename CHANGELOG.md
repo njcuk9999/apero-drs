@@ -6885,3 +6885,26 @@
 	- cal_DRIFT_E2DS_spirou.py - fix typo in get wave sol return (rev.fa6c4785)
 	- cal_SHAPE_spirou.py - fix typo in cdbbad value name (rev.9bc7859d)
 	- cal_SHAPE_spirou.py - fix typo in cdbbad value name (rev.222e87b7)
+	- fix the references to old values of fp_rv (rev.6dbbbfa6)
+
+
+
+================================================================================
+* Sat Mar 16 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.095
+
+================================================================================
+	- obj_mk_obj_template.py - copy all cdb from other outputs (rev.2c483b8f)
+	- spirouFITS.py - separate forbidden keys into absolutely don't copy and drs don't copy (that will be copied for updating current files) (rev.84be29d0)
+	- spirouFITS.py - separate forbidden keys into absolutely don't copy and drs don't copy (that will be copied for updating current files) (rev.de935715)
+	- spirouFITS.py - need to copy all keys when updating wave solutions (rev.df0b6c6e)
+	- spirouTelluric.py - remove extract_file (rev.e59e0afd)
+
+
+
+================================================================================
+* Mon Mar 18 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.096
+
+================================================================================
+	- tellu_file_number_test.py - update the paths (rev.3982f42a)
+	- spirouConst.py - fix bug with INDEX_LOCK_FILENAME - must not use PID (must be unique to night name not individual process otherwise does not lock out other pids) (rev.d6e13fb9)
+	- update extract_trigger.py (rev.f26f399c)
