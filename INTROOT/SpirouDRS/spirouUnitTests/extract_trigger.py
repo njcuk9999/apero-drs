@@ -61,6 +61,7 @@ RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = True
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
@@ -1497,6 +1498,11 @@ def main(night_name=None):
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['OBJ_FP', 'OBJ_DARK'])
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
+    # 12. extract objects
+    if RUN_EXTRACT_DARK:
+        lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                           fdprtypes=['DARK_DARK'])
+        all_lls['cal_extract_RAW_spirou (DARK)'] = lls
     # 13. get cal hc wave solutions
     if RUN_OBJ_MK_TELLU:
         lls = trigger_main(p, loc, recipe='obj_mk_tellu_db')
