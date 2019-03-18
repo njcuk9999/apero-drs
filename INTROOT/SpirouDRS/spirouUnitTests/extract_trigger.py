@@ -61,7 +61,7 @@ RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = False
-RUN_EXTRACT_ALL = False
+RUN_EXTRACT_ALL = True
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
@@ -74,10 +74,10 @@ SKIP_DONE_MK_TELLU = False
 SKIP_DONE_FIT_TELLU = False
 
 # turn on parallelisation
-PARALLEL = True
+PARALLEL = False
 
 # Max Processes
-MAX_PROCESSES = 7
+MAX_PROCESSES = 1
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
