@@ -1,4 +1,8 @@
-Update Note Summary - Version 0.4.092 (Since 0.4.072)
+Update Note Summary - Version 0.4.091 (Since 0.4.072)
+
+Not fixed:
+- all issues with DRS_PLOT = 2   - mode not currently supported for stable run
+- Known issues here: https://github.com/njcuk9999/spirou_py3/wiki/known-issues
 
 Changes:
 
@@ -6,7 +10,19 @@ Changes:
 
 - Added error handling to mk_tellu_db
 
-- Fixed Bug in cal_validate
+- Fixed Bug in cal_validate (w.r.t. required modules with X.Y.Z instead of X.Y)
+
+- Fixed bug with indexing while running in parallel
+
+- option to use sky darks re-added
+    - set "use_skydark_correction" to True to use
+    - by default with use the closest DARK/SKYDARK if True
+    - to only use SKYDARK set "use_skydark_only" to False
+    - to only use DARK set "use_skydark_correction" to False
+
+- Fixed mis-communication for outputs of CCF_FP
+    - Now have a CCF_FP_AB and CCF_FP_C output (both tablular and fits)
+    - Only allowed OBJ_FP files
 
 - Fixed localisation plot bug (locplot_im_sat_threshold)
 
@@ -22,7 +38,7 @@ Changes:
 
 - Added back SKYDARK (not tested yet)
 
-- Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2
+- Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2 (Melissa)
 
 - Fixed fits lock timer
 
@@ -39,9 +55,11 @@ Changes:
 - Added new key for input files (removed old ones)
 
 - Added quality control header keys to all recipes
-    - QCV#   (The current value that is checked)
-    - QCN#   (The variable name)
-    - QCL#   (The logic used for QC check)
+    - QCC       (The overall QC value for all QV)
+    - QCC###V   (The current value that is checked)
+    - QCC###N   (The variable name)
+    - QCC###L   (The logic used for QC check)
+    - QCC###P   (The value of this QC)
 
 - some pep8 clean up
 
