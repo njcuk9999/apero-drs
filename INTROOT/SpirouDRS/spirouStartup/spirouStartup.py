@@ -523,7 +523,7 @@ def load_calibdb(p, calibdb=True, header=None):
     return p
 
 
-def main_end_script(p, outputs='reduced'):
+def main_end_script(p, outputs='reduced', end=True):
     # func_name = __NAME__ + '.main_end_script()'
 
     # construct a lock file name
@@ -552,12 +552,13 @@ def main_end_script(p, outputs='reduced'):
             raise e
 
     # log end message
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
-    # add the logger messsages to p
-    p = WLOG.output_param_dict(p)
-    # finally clear out the log in WLOG
-    WLOG.clean_log(p['PID'])
+    if end:
+        wmsg = 'Recipe {0} has been successfully completed'
+        WLOG(p, 'info', wmsg.format(p['PROGRAM']))
+        # add the logger messsages to p
+        p = WLOG.output_param_dict(p)
+        # finally clear out the log in WLOG
+        WLOG.clean_log(p['PID'])
     # return p
     return p
 
