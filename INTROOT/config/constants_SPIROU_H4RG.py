@@ -1432,7 +1432,7 @@ qc_tellu_clean_rms_max = 0.01
 # -----------------------------------------------------------------------------
 #   the maximum wait time for calibration database file to be            - [all]
 #       in use (locked) after which an error is raised (in seconds)
-db_max_wait = 3600
+db_max_wait = 600
 
 # file max wait
 fitsopen_max_wait = 3600
