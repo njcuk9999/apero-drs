@@ -82,6 +82,9 @@ fiber_types = ['AB', 'A', 'B', 'C']
 #    Define whether to use SKYDARK for dark corrections                  - [all]
 use_skydark_correction = False
 
+#    If use_skydark_correction is True define whether we use
+#       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
+use_skydark_only = False
 
 # -----------------------------------------------------------------------------
 #   fiber variables
