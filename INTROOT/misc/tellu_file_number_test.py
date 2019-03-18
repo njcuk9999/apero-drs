@@ -20,8 +20,8 @@ import glob
 # =============================================================================
 WORKSPACE_RAW = '/spirou/cfht_nights/common/raw/'
 WORKSPACE0 = '/spirou/cfht_nights/common/tmp/'
-WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_1/'
-WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_1/'
+WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_2/'
+WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_2/'
 WORKSPACE3 = '/spirou/drs/spirou_py3/INTROOT/SpirouDRS/data/constants/'
 
 WHITELIST_FILE = os.path.join(WORKSPACE3, 'tellu_whitelist.txt')
@@ -209,9 +209,9 @@ if __name__ == '__main__':
 
     # storage for numbers
     storage = dict()
-    filestorage1, filestorage2, filestorage3 = dict(), dict(), dict()
-    filestorage_nfi, filestorage_nfd = dict(), dict()
-    filestorage_fi, filestorage_fd = dict(), dict()
+
+    not_found_disk, found_disk, not_found_index, found_index = [], [], [], []
+
     totals = dict(RAW=0, PPD=0, PPI=0, E2DSD=0, E2DSI=0, TELLUDB=0, BIGCUBE=0)
     # loop around big cubes
     for objname in wlist:
@@ -220,7 +220,10 @@ if __name__ == '__main__':
         bigcube_filename = 'BigCube_{0}.fits'.format(objname)
 
         # find in list
-        pos = (bigcube_filename == np.array(basefilenames))
+        if len(basefilenames) == 0:
+            pos = [0]
+        else:
+            pos = (bigcube_filename == np.array(basefilenames))
 
         if np.sum(pos) > 0:
             # read header
@@ -273,17 +276,11 @@ if __name__ == '__main__':
         print('{0:15s}: raw={1:3d} PPD={2:3d} PPI={3:3d} E2DSD={4:3d} '
               'E2DSI={5:3d} telluDB={6:3d} BigCube={7:3d}'.format(*pargs))
         storage[objname] = pargs[1:]
-        filestorage1[objname] = pp_files
-        filestorage2[objname] = e2ds_files
-        filestorage_nfi[objname] = e2ds_nfi
-        filestorage_fi[objname] = e2ds_fi
-        filestorage_nfd[objname] = e2ds_nfd
-        filestorage_fd[objname] = e2ds_fd
 
-        if len(bigtable) > 0:
-            filestorage3[objname] = list(bigtable['Filename'])
-        else:
-            filestorage3[objname] = []
+        not_found_disk += e2ds_nfd
+        not_found_index += e2ds_nfi
+        found_disk += e2ds_fd
+        found_index += e2ds_fi
 
     totals['tt'] = 'totals'
     print('{tt:15s}: raw={RAW:3d} PPD={PPD:3d} PPI={PPI:3d} E2DSD={E2DSD:3d} '
