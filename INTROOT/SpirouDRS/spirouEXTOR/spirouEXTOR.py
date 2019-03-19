@@ -324,7 +324,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         WLOG(p, 'error', emsgs)
 
 
-def debananafication(image, dx):
+def debananafication(p, image=None, dx=None, pos_ab=None, pos_c=None):
     """
     Uses a shape map (dx) to straighten (de-banana) an image
 
@@ -333,6 +333,12 @@ def debananafication(image, dx):
 
     :return image1: numpy array (2D), the straightened image
     """
+    # deal with None
+    if image is None:
+        WLOG(p, 'error', 'Dev Error: Must define an image')
+    if dx is None:
+        WLOG(p, 'error', 'Dev Error: Must define a shape image (dx)')
+
     # getting the size of the image and creating the image after correction of
     # distortion
     image1 = np.array(image)
@@ -349,6 +355,12 @@ def debananafication(image, dx):
         # only pixels where dx is finite are considered
         nanmask = np.isfinite(dx[it, :])
         image1[it, nanmask] = spline(xpix[nanmask] + dx[it, nanmask])
+
+    if (pos_ab is not None) and (pos_c is not None):
+
+        # TODO: Etienne's code here
+        pass
+
     # return the straightened image
     return image1
 
@@ -1724,7 +1736,6 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
     spelong *= gain
 
     return spe, spelong, cpt
-
 
 
 # =============================================================================
