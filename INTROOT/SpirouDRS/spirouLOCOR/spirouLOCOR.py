@@ -762,6 +762,59 @@ def image_localization_superposition(image, coeffs):
     return newimage
 
 
+# TODO: Fudge function to get AB and C before main code
+def extract_5_fiber_get(p, hdr):
+    """
+    Fudge function to get AB and C fiber coefficients before they are
+    normally accessed
+
+    :param p:
+    :param hdr:
+    :return:
+    """
+    loc_fibers = dict()
+    # loop around fiber types
+    for fiber in p['FIB_TYPE']:
+        p_tmp, loc_tmp = ParamDict(p), ParamDict()
+        # set fiber
+        p_tmp['FIBER'] = fiber
+        p_tmp.set_source('FIBER', __NAME__ + '/main()()')
+        # --------------------------------------------------------------
+        # Get localisation coefficients
+        # --------------------------------------------------------------
+        # get this fibers parameters
+        p_tmp = spirouImage.FiberParams(p_tmp, p_tmp['FIBER'], merge=True)
+        # get localisation fit coefficients
+        p_tmp, loc_tmp = get_loc_coefficients(p_tmp, hdr)
+        # --------------------------------------------------------------
+        # Average AB into one fiber for AB, A and B
+        # --------------------------------------------------------------
+        # if we have an AB fiber merge fit coefficients by taking the
+        # average
+        # of the coefficients
+        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
+        # if fiber is AB take the average of the orders
+        if fiber == 'AB':
+            # merge
+            loc_tmp['ACC'] = merge_coefficients(loc_tmp, loc_tmp['ACC'], step=2)
+            loc_tmp['ASS'] = merge_coefficients(loc_tmp, loc_tmp['ASS'], step=2)
+            # set the number of order to half of the original
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # if fiber is B take the even orders
+        elif fiber == 'B':
+            loc_tmp['ACC'] = loc_tmp['ACC'][:-1:2]
+            loc_tmp['ASS'] = loc_tmp['ASS'][:-1:2]
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # if fiber is A take the even orders
+        elif fiber == 'A':
+            loc_tmp['ACC'] = loc_tmp['ACC'][1::2]
+            loc_tmp['ASS'] = loc_tmp['ASS'][:-1:2]
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+
+        loc_fibers[fiber] = dict(loc_tmp)
+    return loc_fibers
+
+
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',
 #                                   min_width=None):
 #     """
