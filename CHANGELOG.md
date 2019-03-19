@@ -6908,3 +6908,26 @@
 	- tellu_file_number_test.py - update the paths (rev.3982f42a)
 	- spirouConst.py - fix bug with INDEX_LOCK_FILENAME - must not use PID (must be unique to night name not individual process otherwise does not lock out other pids) (rev.d6e13fb9)
 	- update extract_trigger.py (rev.f26f399c)
+	- spirouFITS.py - fix bug with index lock file (when path does not exist) (rev.ee68d005)
+	- spirouFITS.py - add lock file descriptions for print message (rev.dc458462)
+	- spirouStartup.py - allow main_end script to be used not at the end (rev.d132fa34)
+	- spirouFITS.py - modify open/close lock file functions (rev.e9fb369c)
+	- constants_SPIROU_H4RG.py - reduced max db wait time to 10 minutes (rev.3515ae02)
+	- cal_preprocess_spirou.py - index files separately (rev.28a827e1)
+	- update extract_trigger to be able to extract darks (rev.f222d270)
+	- update notes (rev.4610f30f)
+	- spirouImage.py - re-add skydark in (rev.e5b06274)
+	- constants_SPIROU_H4RG.py - add option to switch between SKYDARK only and "DARK or SKYDARK" (depending which is closest) (rev.6638b8a9)
+	- spirouImage.py - correct bug in sky dark (rev.53d4eac3)
+	- update extract_trigger.py (rev.0b4bfaa2)
+
+
+
+================================================================================
+* Tue Mar 19 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.097
+
+================================================================================
+	- spirouKeywords.py - remove the "1" suffix (no longer needed) (rev.2d4f930d)
+	- spirouEXTOR.py - set up two new extract functions to test adding of fractional contributions of pixels (rev.d2f21687)
+	- update test.run (rev.7abbaf91)
+	- update test.run (rev.6229328d)
