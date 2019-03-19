@@ -332,7 +332,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # if fiber is A take the even orders
         elif fiber == 'A':
             loc['ACC'] = loc['ACC'][1::2]
-            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['ASS'] = loc['ASS'][1::2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
 
         # ------------------------------------------------------------------
