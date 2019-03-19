@@ -199,8 +199,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
@@ -578,13 +578,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['QC_DEV_LITTROW_MAX'] = p['QC_HC_DEV_LITTROW_MAX']
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # ----------------------------------------------------------------------
     # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
     if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
         fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
         fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['SIG1'])
     qc_names.append('SIG1')
@@ -596,6 +599,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         fmsg = 'NaN or Inf in X_MEAN_2'
         fail_msg.append(fmsg)
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['X_MEAN_2'])
     qc_names.append('X_MEAN_2')
@@ -626,11 +632,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             fargs = [x_cut_point, sig_littrow, rms_littrow_max]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(sig_littrow)
-            qc_names.append('sig_littrow')
-            qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
-
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(sig_littrow)
+        qc_names.append('sig_littrow')
+        qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
+        # ----------------------------------------------------------------------
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
@@ -639,11 +648,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
-            # add to qc header lists
-            qc_values.append(np.max([max_littrow, min_littrow]))
-            qc_names.append('max or min littrow')
-            qc_logic.append('max or min littrow > {0:.2f}'
-                            ''.format(dev_littrow_max))
+            qc_pass.append(0)
 
             # TODO: Should this be the QC header values?
             # TODO:   it does not change the outcome of QC (i.e. passed=False)
@@ -694,7 +699,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                         wmsg = ('Littrow test (x={0}) passed (sig littrow = '
                                 '{1:.2f} > {2:.2f} removing order {3})')
                         fail_msg.append(wmsg.format(*wargs))
-
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(np.max([max_littrow, min_littrow]))
+        qc_names.append('max or min littrow')
+        qc_logic.append('max or min littrow > {0:.2f}'
+                        ''.format(dev_littrow_max))
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -708,6 +719,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ------------------------------------------------------------------
     # archive result in e2ds spectra
@@ -731,27 +744,23 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['kw_HCFILE'],
-                                     values=raw_infiles1)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                     dim1name='fpfile', values=p['FPFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
+                                     dim1name='hcfile', values=p['HCFILES'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qc_names)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qc_values)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qc_logic)
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # add wave solution date
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                value=p['MAX_TIME_HUMAN'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
-                               value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
@@ -763,22 +772,22 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=loc['LL_PARAM_FINAL'])
 
     # add FP CCF drift
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
                                value=loc['RV_CCF'][0])
     # the rv step
     rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
                                value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'],
                                value=loc['MAXCPP'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=p['CCF_MASK'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
                                value=np.sum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
@@ -849,7 +858,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
 
     # get res data in correct format
     resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)

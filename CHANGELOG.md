@@ -6784,3 +6784,150 @@
 	- cal_extract_RAW_spirou.py - fix typo BCHOUR --> BERVHOUR (rev.a874dd5d)
 	- cal_loc_RAW_spirou.py - fix mistake in assigned QCV value (rev.b9995e6e)
 	- cal_loc_RAW_spirou.py - fix mistake in assigned QCV value (rev.e647b41e)
+
+
+
+================================================================================
+* Mon Mar 11 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.089
+
+================================================================================
+	- extract_trigger.py - update the settings ready for re-runs of extractions (rev.28834c48)
+	- spirouStartup.py - fix where we lock the index file (rev.0a006234)
+	- spirouConst.py - add an INDEX_LOCK_FILENAME to lock the indexing in parallel processes (rev.eac02bc2)
+	- tellu_file_number_test.py - code to test the number of telluric files at difference stages of the DRS (rev.1a8a0367)
+
+
+
+================================================================================
+* Tue Mar 12 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.090
+
+================================================================================
+	- update extraction trigger (rev.763ea897)
+	- spirouPOLAR.py - add qc_pass (rev.56cca973)
+	- spirouFITS.py - add a test for formatting defined in the keyword (for 1d and 2d lists only) (rev.6e56e7eb)
+	- spirouKeywords.py - add KW_DRS_QC_PASS + change position of number in QCV, QCN, QCL (rev.f45436bc)
+	- spirouConst.py - change the qc_keys to look for (rev.d93a8bda)
+	- add qc_pass parameter (flag for each qc parameter) (rev.2b58ebef)
+	- spirouConst.py - add version to the index files (rev.1aa7f1d5)
+	- drs_reset.py - set DEBUG = False in reset, add the removal of all sub-directories in drs folders (rev.af356c7e)
+	- spirouStartup.py - fix bug that we only need lock file is outputs is not None (rev.d18f1f5f)
+	- cal_WAVE_E2DS_EA_spirou.py - fix bug with new qc_pass criteria (rev.521f5cd2)
+	- unit_test.py - update logging (log all) (rev.6ae3a4a4)
+	- spirouFITS.py - add function "add_qc_keys" to take the keys and push them into hdict correctly (rev.a258d4e8)
+	- spirouConst.py - change PPVERSION to VERSION for reduced index.fits (rev.d89fba5f)
+	- update QC parameters (to store in order) (rev.37297739)
+
+
+
+================================================================================
+* Wed Mar 13 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.091
+
+================================================================================
+	- cal_DARK_spirou.py and spirouImage.py - tweak changes to all SKYDARK files to be used (rev.1fe57a62)
+	- extract_trigger.py - readd the "skip" criteria (rev.ff472dc8)
+	- drs_reset.py - skip the log file for this instance of drs_reset (otherwise can get stuck) (rev.832ad004)
+	- drs_reset.py - fix removal of files when in dir (if still present) (rev.2a805a48)
+	- cal_CCF_E2DS_FP_spirou.py - correct bad qc parameters (rev.e29e0443)
+	- obj_mk_tellu_new.py - fix typo in qc parameters (rev.55ffa7a1)
+	- obj_mk_tellu_new.py - fix typo in qc parameters (rev.47af75b4)
+	- drs_reset.py - fix typo in reset1 (rev.edac07fe)
+	- cal_WAVE_E2DS_EA_spirou.py - fix bug with new qc_pass criteria (rev.34426d43)
+
+
+
+================================================================================
+* Thu Mar 14 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.092
+
+================================================================================
+	- make sure all input files are added to header in form: INF#### where the first digit shows the file-set and the other three the position i.e. for recipe.py night_name file1 file2 file3 file4   where inputs expected are 1 flat and multiple darks header would add INF1001 INF2001 INF2002 INF2003 (rev.d3f996dc)
+	- add header keys for calibration files used to create outputs (CDBDARK, CDBWAVE) etc, also add a source for the wave solution (WAVELOC) (rev.9fba0e20)
+	- spirouImage.py - correct the rms percentile to allow more darks to pass the rms test (rev.0381146a)
+
+
+
+================================================================================
+* Thu Mar 14 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.093
+
+================================================================================
+	- cal_preprocess_spirou.py - fix filename (should only be filename not path) (rev.620efd9d)
+	- cal_CCF_E2DS_FP_spirou.py - plot duplicate plot correctly (rev.63c92fed)
+	- cal_CCF_E2DS_FP_spirou.py - correct typo in WMREF (rev.e0e763a7)
+	- cal_CCF_E2DS_FP_spirou.py - correct typo in WSOURCE (was WAVESOURCE) (rev.909dc99f)
+	- spirouConst.py - correct typo (rev.fcefe5c6)
+
+
+================================================================================
+* Fri Mar 15 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.094
+
+================================================================================
+	- spirouConst.py - remove DRS_EOUT from forbidden keys (it should follow extracted file) (rev.ba801cd7)
+	- calc_berv.py - make sure CopyOriginalKeys comes first before other calls to hdict (rev.0625e99b)
+	- spirouFITS.py - change QC_HEADER_KEYS to FORBIDDEN_HEADER_PREFIXES (rev.8085cbf8)
+	- spirouKeywords.py - change some keyword to make them unique (thus can remove them) (rev.59f3109d)
+	- spirouConst.py - add more forbidden keys, change qc_keys to any prefix that shouldn't be copied (rev.fb0d10f5)
+	- obj_fit_tellu.py - CopyOriginalKeys should be called before other hdict commands (rev.a768c9cd)
+	- update unit test scripts (rev.bf1de7ab)
+	- spirouRV.py - fix problem with getting C file from header (rev.17480abb)
+	- spirouConst.py - add CCF_FP_TABLE1 and 2 (rev.6d270c7f)
+	- recipe_control.txt - do not allow OBJ_DARK files - only OBJ_FP (rev.4ca8cb1a)
+	- cal_CCF_E2DS_FP_spirou.py - add a C table as well as a fits table (rev.6e0579d8)
+	- extract_trigger.py - update settings (rev.82798761)
+	- spirouKeywords.py - remove unused keywords (rev.9cc7ca2f)
+	- spirouConst.py - add AB and C files for CCF_FP (rev.60c313f4)
+	- tellu_file_number_test.py - change path (for new test) (rev.621de6f5)
+	- cal_CCF_E2DS_FP_spirou.py - separate AB and C files for output (rev.813625d0)
+	- spirouTelluric.py - fix list of col names for bigcube (only one bad file now) (rev.96e549c9)
+	- extract_trigger - update trigger (rev.117673b1)
+	- spirouLOCOR.py - fix localisation error - should be a median not an average (option was there but not used) (rev.7464c1e4)
+	- spirouFITS.py - remove a HUGE BUG - eval('2018-08-05') --> 2005 (as date is interpreted as a subtraction)!!!!! (rev.e533163b)
+	- tellu_file_number_test.py - add raw files and disk vs index.fits (rev.bce0e178)
+	- log_analyser.py - code to look for errors in set of log files (rev.821b1ebe)
+	- cal_DRIFT_E2DS_spirou.py - fix typo in get wave sol return (rev.fa6c4785)
+	- cal_SHAPE_spirou.py - fix typo in cdbbad value name (rev.9bc7859d)
+	- cal_SHAPE_spirou.py - fix typo in cdbbad value name (rev.222e87b7)
+	- fix the references to old values of fp_rv (rev.6dbbbfa6)
+
+
+
+================================================================================
+* Sat Mar 16 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.095
+
+================================================================================
+	- obj_mk_obj_template.py - copy all cdb from other outputs (rev.2c483b8f)
+	- spirouFITS.py - separate forbidden keys into absolutely don't copy and drs don't copy (that will be copied for updating current files) (rev.84be29d0)
+	- spirouFITS.py - separate forbidden keys into absolutely don't copy and drs don't copy (that will be copied for updating current files) (rev.de935715)
+	- spirouFITS.py - need to copy all keys when updating wave solutions (rev.df0b6c6e)
+	- spirouTelluric.py - remove extract_file (rev.e59e0afd)
+
+
+
+================================================================================
+* Mon Mar 18 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.096
+
+================================================================================
+	- tellu_file_number_test.py - update the paths (rev.3982f42a)
+	- spirouConst.py - fix bug with INDEX_LOCK_FILENAME - must not use PID (must be unique to night name not individual process otherwise does not lock out other pids) (rev.d6e13fb9)
+	- update extract_trigger.py (rev.f26f399c)
+	- spirouFITS.py - fix bug with index lock file (when path does not exist) (rev.ee68d005)
+	- spirouFITS.py - add lock file descriptions for print message (rev.dc458462)
+	- spirouStartup.py - allow main_end script to be used not at the end (rev.d132fa34)
+	- spirouFITS.py - modify open/close lock file functions (rev.e9fb369c)
+	- constants_SPIROU_H4RG.py - reduced max db wait time to 10 minutes (rev.3515ae02)
+	- cal_preprocess_spirou.py - index files separately (rev.28a827e1)
+	- update extract_trigger to be able to extract darks (rev.f222d270)
+	- update notes (rev.4610f30f)
+	- spirouImage.py - re-add skydark in (rev.e5b06274)
+	- constants_SPIROU_H4RG.py - add option to switch between SKYDARK only and "DARK or SKYDARK" (depending which is closest) (rev.6638b8a9)
+	- spirouImage.py - correct bug in sky dark (rev.53d4eac3)
+	- update extract_trigger.py (rev.0b4bfaa2)
+
+
+
+================================================================================
+* Tue Mar 19 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.097
+
+================================================================================
+	- spirouKeywords.py - remove the "1" suffix (no longer needed) (rev.2d4f930d)
+	- spirouEXTOR.py - set up two new extract functions to test adding of fractional contributions of pixels (rev.d2f21687)
+	- update test.run (rev.7abbaf91)
+	- update test.run (rev.6229328d)

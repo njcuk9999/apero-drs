@@ -329,7 +329,7 @@ def main(night_name=None, files=None):
         # Quality control
         # ------------------------------------------------------------------
         passed, fail_msg = True, []
-        qc_values, qc_names, qc_logic = [], [], []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
 
         # saturation check: check that the max_signal is lower than
         # qc_max_signal
@@ -351,6 +351,9 @@ def main(night_name=None, files=None):
             fmsg = 'abnormal RMS of FF ({0:.3f} > {1:.3f})'
             fail_msg.append(fmsg.format(max_rms, p['QC_FF_RMS']))
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
         # add to qc header lists
         qc_values.append(max_rms)
         qc_names.append('max_rms')
@@ -369,6 +372,8 @@ def main(night_name=None, files=None):
                 WLOG(p, 'warning', wmsg.format(farg))
             p['QC'] = 0
             p.set_source('QC', __NAME__ + '/main()')
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
         # ----------------------------------------------------------------------
         # Store Blaze in file
@@ -390,29 +395,26 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
         if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=raw_flat_file)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
+        # add some properties back
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                         values=qc_names)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                         values=qc_values)
-        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                         values=qc_logic)
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
         # copy extraction method and function to header
         #     (for reproducibility)
         hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_EXTM'],
@@ -438,8 +440,6 @@ def main(night_name=None, files=None):
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG(p, '', wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'],
-                                   value=raw_flat_file)
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])

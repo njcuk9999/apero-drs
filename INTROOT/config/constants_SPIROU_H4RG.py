@@ -82,6 +82,9 @@ fiber_types = ['AB', 'A', 'B', 'C']
 #    Define whether to use SKYDARK for dark corrections                  - [all]
 use_skydark_correction = False
 
+#    If use_skydark_correction is True define whether we use
+#       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
+use_skydark_only = False
 
 # -----------------------------------------------------------------------------
 #   fiber variables
@@ -181,6 +184,15 @@ PP_CORRUPT_SNR_HOTPIX = 10
 
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = 0.15
+
+# Define the percentile value for the rms normalisation (0-100)
+PP_RMS_PERCENTILE = 95
+
+# Define the lowest rms value of the rms percentile allowed
+#    if the value of the pp_rms_percentile-th is lower than this this
+#    value is used
+PP_LOWEST_RMS_PERCENTILE = 10
+
 
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
@@ -526,6 +538,13 @@ ic_extnbsig = 1  # 2.5
 #
 #                 4b - shape map + weight extraction (cosmic correction)
 #                          (function = spirouEXTOR.extract_shape_weight_cosm)
+#
+#                 5a - shape map + weight extraction + fractional pix
+#                          (function = spirouEXTOR.extract_shape_weight2)
+#
+#                 5b - shape map + weight extraction (cosmic correction)
+#                      + fractional pix
+#                          (function = spirouEXTOR.extract_shape_weight_cosm2)
 ic_extract_type = '4b'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
 ic_ff_extract_type = '4a'
@@ -1420,7 +1439,7 @@ qc_tellu_clean_rms_max = 0.01
 # -----------------------------------------------------------------------------
 #   the maximum wait time for calibration database file to be            - [all]
 #       in use (locked) after which an error is raised (in seconds)
-db_max_wait = 3600
+db_max_wait = 600
 
 # file max wait
 fitsopen_max_wait = 3600
