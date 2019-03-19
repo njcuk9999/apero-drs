@@ -1,3 +1,10 @@
+run004b = ['cal_SHAPE_spirou', 'TEST1/20180805', '2295680c_pp.fits', '2295525a_pp.fits']
+run005 = ['cal_FF_RAW_spirou', 'TEST1/20180805', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
+
+# Extract the HC's/FP's
+run006a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run006b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
+
 # Run Wave solution analysis
 run007a = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
 run007b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_C.fits']
