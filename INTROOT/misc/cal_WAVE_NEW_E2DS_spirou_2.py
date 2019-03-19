@@ -178,8 +178,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                        #filename=tmp_wave_file,
                                        return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
@@ -1082,10 +1082,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile1)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add quality control
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add wave solution date
@@ -1094,8 +1094,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
-                               value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
@@ -1107,22 +1105,22 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=loc['LL_PARAM_FINAL'])
 
     # add FP CCF drift
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
                                value=loc['RV_CCF'][0])
     # the rv step
     rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
                                value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'],
                                value=loc['MAXCPP'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=p['CCF_MASK'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
                                value=np.sum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
@@ -1193,8 +1191,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # # make a copy of the E2DS file for the calibBD
     # # set the version
     # hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-    # hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
     #
     # # get res data in correct format
     # resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)

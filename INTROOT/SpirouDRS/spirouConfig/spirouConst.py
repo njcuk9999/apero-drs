@@ -24,7 +24,7 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.088'
+__version__ = '0.4.097'
 # Define Authors
 # noinspection PyPep8
 __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
@@ -32,7 +32,7 @@ __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2019-03-09'
+__date__ = '2019-03-19'
 
 
 # =============================================================================
@@ -463,16 +463,25 @@ def FORBIDDEN_COPY_KEYS():
 
 
 # noinspection PyPep8Naming
-def QC_HEADER_KEYS():
+def FORBIDDEN_COPY_DRS_KEYS():
+    # DRS OUTPUT KEYS
+    forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
+                      'DRSOUTID']
+    # return keys
+    return forbidden_keys
+
+
+# noinspection PyPep8Naming
+def FORBIDDEN_HEADER_PREFIXES():
     """
     Define the QC keys prefixes that should not be copied (i.e. they are
     just for the input file not the output file)
 
     :return keys:
     """
-    qc_keys = ['QCV', 'QCN', 'QCL']
+    prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
     # return keys
-    return qc_keys
+    return prefixes
 
 
 # noinspection PyPep8Naming
@@ -1503,7 +1512,7 @@ def CCF_FITS_FILE(p):
 
 
 # noinspection PyPep8Naming
-def CCF_FP_FITS_FILE(p):
+def CCF_FP_FITS_FILE1(p):
     """
     Defines the CCF fits file location and name
 
@@ -1535,7 +1544,41 @@ def CCF_FP_FITS_FILE(p):
 
 
 # noinspection PyPep8Naming
-def CCF_FP_TABLE_FILE(p):
+def CCF_FP_FITS_FILE2(p):
+    """
+    Defines the CCF fits file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return corfile: string, the CCF table file location and name
+    """
+    func_name = 'CCF_FP_FITS_FILE'
+    # define filename
+    reducedfolder = p['REDUCED_DIR']
+    # get new extension using ccf_mask without the extention
+    newext = '_ccf_fp_' + p['CCF_MASK'].replace('.mas', '')
+    # set the new filename as the reference file without the _e2ds
+    if '_e2dsff' in p['E2DSFILE']:
+        corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+        key = func_name + '_FF'
+        tag = tags[key]
+    else:
+        tag = tags[func_name]
+        corfilename = p['E2DSFILE'].replace('_e2ds', newext)
+
+    corfilename = corfilename.replace('AB', 'C')
+
+    corfile = os.path.join(reducedfolder, corfilename)
+    # return the new ccf file location and name
+    return corfile, tag
+
+
+# noinspection PyPep8Naming
+def CCF_FP_TABLE_FILE1(p):
     """
     Defines the CCF table file location and name
 
@@ -1549,7 +1592,29 @@ def CCF_FP_TABLE_FILE(p):
     """
     # func_name = 'CCF_FP_TABLE_FILE'
     # start with the CCF fits file name
-    corfile = CCF_FP_FITS_FILE(p)[0]
+    corfile = CCF_FP_FITS_FILE1(p)[0]
+    # we want to save the file as a tbl file not a fits file
+    ccf_table_file = corfile.replace('.fits', '.tbl')
+    # return the new ccf table file location and name
+    return ccf_table_file
+
+
+# noinspection PyPep8Naming
+def CCF_FP_TABLE_FILE2(p):
+    """
+    Defines the CCF table file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return ccf_table_file:
+    """
+    # func_name = 'CCF_FP_TABLE_FILE'
+    # start with the CCF fits file name
+    corfile = CCF_FP_FITS_FILE2(p)[0]
     # we want to save the file as a tbl file not a fits file
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
@@ -2284,6 +2349,28 @@ def INDEX_OUTPUT_FILENAME():
 
 
 # noinspection PyPep8Naming
+def INDEX_LOCK_FILENAME(p):
+    # get the message directory
+    if 'DRS_DATA_MSG' not in p:
+        p['DRS_DATA_MSG'] = './'
+    if not os.path.exists(p['DRS_DATA_MSG']):
+        p['DRS_DATA_MSG'] = './'
+    # get the night name directory
+    if 'ARG_NIGHT_NAME' not in p:
+        night_name = 'UNKNOWN'
+    else:
+        night_name = p['ARG_NIGHT_NAME'].replace(os.sep, '_')
+        night_name = night_name.replace(' ', '_')
+    # get the index file
+    index_file = INDEX_OUTPUT_FILENAME()
+    # construct the index lock file name
+    oargs = [night_name, index_file]
+    opath = os.path.join(p['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
+    # return the index lock file name
+    return opath
+
+
+# noinspection PyPep8Naming
 def OUTPUT_FILE_HEADER_KEYS(p):
     """
     Output file header keys.
@@ -2307,7 +2394,9 @@ def OUTPUT_FILE_HEADER_KEYS(p):
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0],
                    p['KW_CMPLTEXP'][0],
-                   p['KW_NEXP'][0]]
+                   p['KW_NEXP'][0],
+                   p['KW_VERSION'][0],
+                   p['KW_PPVERSION'][0]]
     # return output_keys
     return output_keys
 
@@ -2327,7 +2416,8 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0],
                    p['KW_CMPLTEXP'][0],
-                   p['KW_NEXP'][0]]
+                   p['KW_NEXP'][0],
+                   p['KW_PPVERSION'][0]]
     # check in master list
     masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
     for key in output_keys:
@@ -2348,7 +2438,8 @@ def REDUC_OUTPUT_COLUMNS(p):
                    p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
-                   p['KW_EXT_TYPE'][0]]
+                   p['KW_EXT_TYPE'][0],
+                   p['KW_VERSION'][0]]
     # check in master list
     masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
     for key in output_keys:
@@ -2369,7 +2460,8 @@ def GEN_OUTPUT_COLUMNS(p):
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
                    p['KW_OUTPUT'][0],
-                   p['KW_EXT_TYPE'][0]]
+                   p['KW_EXT_TYPE'][0],
+                   p['KW_VERSION'][0]]
     return output_keys
 
 

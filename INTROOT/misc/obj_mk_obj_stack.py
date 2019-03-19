@@ -130,8 +130,8 @@ def main(night_name=None, files=None):
     mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
                                        return_wavemap=True, quiet=True,
                                        fiber=wave_fiber)
-    loc['MASTERWAVEPARAMS'], loc['MASTERWAVE'] = mout
-    keys = ['MASTERWAVEPARAMS', 'MASTERWAVE', 'MASTERWAVEFILE']
+    loc['MASTERWAVEPARAMS'], loc['MASTERWAVE'], loc['WSOURCE'] = mout
+    keys = ['MASTERWAVEPARAMS', 'MASTERWAVE', 'MASTERWAVEFILE', 'WSOURCE']
     loc.set_sources(keys, main_name)
 
     # ----------------------------------------------------------------------
@@ -171,12 +171,14 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                value=loc['MASTERWAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add file list to header
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJFILELIST'],
                                      values=base_filelist)

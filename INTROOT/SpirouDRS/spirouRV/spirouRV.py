@@ -1722,15 +1722,17 @@ def get_fiberc_e2ds_name(p, hdr):
     # -------------------------------------------------------------------------
     # deal with TELLU_CORRECTED and POL_ FILES
     # TODO: Do not hard code TELLU_CORRECTED and POL_
+    # TODO: What about when we have multiple input files
     if outputkey.startswith('TELLU_CORRECTED') or outputkey.startswith('POL_'):
         # get the infile name
-        if p['KW_INFILE'][0] not in hdr:
+        infile_keyword = p['KW_INFILE1'][0].format(0)
+        if infile_keyword not in hdr:
             emsg = 'Header key = "{0}" missing from file={1}'
-            eargs = [p['KW_INFILE'][0]]
+            eargs = [infile_keyword, ab_file]
             WLOG(p, 'error', emsg.format(*eargs))
             return None
         # get the ab file name
-        ab_file = hdr[p['KW_INFILE'][0]]
+        ab_file = hdr[infile_keyword]
         # deal with fiber manually
         if outputkey.endswith('_AB'):
             # locate and return C file

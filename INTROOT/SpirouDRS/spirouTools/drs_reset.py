@@ -36,6 +36,8 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 printc = spirouCore.PrintColour
+# debug mode
+DEBUG = False
 
 
 # =============================================================================
@@ -95,6 +97,15 @@ def custom_confirmation(p, messages, inputmessage, response='Y'):
         return True
     else:
         return False
+
+
+def reset_tmp_folders(p, log=True):
+    # log progress
+    WLOG(p, '', 'Resetting reduced directory')
+    # remove files from reduced folder
+    tmp_dir = p['DRS_DATA_WORKING']
+    # loop around files and folders in calib_dir
+    remove_all(p, tmp_dir, log)
 
 
 def reset_reduced_folders(p, log=True):
@@ -205,8 +216,10 @@ def reset_log(p):
     WLOG(p, '', 'Resetting log directory')
     # remove files from reduced folder
     log_dir = p['DRS_DATA_MSG']
+    # get current log file (must be skipped)
+    current_logfile = spirouConfig.Constants.LOG_FILE_NAME(p, p['DRS_DATA_MSG'])
     # loop around files and folders in reduced dir
-    remove_all(p, log_dir)
+    remove_all(p, log_dir, skipfiles=[current_logfile])
 
 
 def reset_plot(p):
@@ -218,7 +231,10 @@ def reset_plot(p):
     remove_all(p, log_dir)
 
 
-def remove_all(p, path, log=True):
+def remove_all(p, path, log=True, skipfiles=None):
+
+    if skipfiles is None:
+        skipfiles = []
 
     # Check that directory exists
     if not os.path.exists(path):
@@ -243,15 +259,50 @@ def remove_all(p, path, log=True):
             WLOG(p, 'error', emsg.format(path))
 
     # loop around files and folders in calib_dir
-    files = glob.glob(path + '/*')
+
+    allfiles = []
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            allfiles.append(os.path.join(root, filename))
+
     # loop around all files (adding all files from sub directories
-    while len(files) > 0:
-        f = files[0]
-        files = remove(p, f, files, log)
-        files.remove(f)
+    for filename in allfiles:
+        remove_files(p, filename, log, skipfiles)
+    # remove dirs
+    remove_subdirs(p, path, log, skipfiles)
 
 
-def remove(p, path, list_of_files, log=True):
+def remove_subdirs(p, path, log=True, skipfiles=None):
+
+    if skipfiles is None:
+        skipfiles = []
+
+    subdirs = glob.glob(os.path.join(path, '*'))
+
+    for subdir in subdirs:
+        if subdir in skipfiles:
+            continue
+
+        if os.path.islink(subdir):
+            WLOG(p, '', '\tSkipping link: {0}'.format(subdir))
+            continue
+        if os.path.isfile(subdir):
+            WLOG(p, '', '\tRemoving file: {0}'.format(subdir))
+            # remove
+            if DEBUG:
+                print('\tRemoved {0}'.format(subdir))
+            else:
+                os.remove(subdir)
+        if log:
+            WLOG(p, '', '\tRemoving dir: {0}'.format(subdir))
+        # remove
+        if DEBUG:
+            print('\tRemoved {0}'.format(subdir))
+        else:
+            shutil.rmtree(subdir)
+
+
+def remove_files(p, path, log=True, skipfiles=None):
     """
     Remove a file or add files to list_of_files
     :param path: string, the path to remove (file or directory)
@@ -261,18 +312,21 @@ def remove(p, path, list_of_files, log=True):
     :return list_of_files: returns the list of files removes (if it was a
             directory this adds the files to the list)
     """
-    # check if directory
-    if os.path.isdir(path):
-        # if directory add contents to list of files
-        list_of_files += glob.glob(path + '/*')
+
+    if skipfiles is None:
+        skipfiles = []
+
+    if path in skipfiles:
+        return
+
+    # log removal
+    if log:
+        WLOG(p, '', '\tRemoving file: {0}'.format(path))
+    # remove
+    if DEBUG:
+        print('\tRemoved {0}'.format(path))
     else:
-        # log removal
-        if log:
-            WLOG(p, '', '\tRemoving file: {0}'.format(path))
-        # remove
         os.remove(path)
-    # return list of files
-    return list_of_files
 
 
 def main(return_locals=False, warn=True, log=True, called=False):
@@ -284,35 +338,45 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # set log_opt
     p['LOG_OPT'] = __NAME__.split('.py')[0]
     p.set_source('LOG_OPT', __NAME__ + '.main()')
+    # set DB_MAX_WAIT
+    p['DB_MAX_WAIT'] = 3600
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset1, reset2, reset3, reset4 = True, True, True, True
+    reset1, reset2, reset3 = True, True, True
+    reset4, reset5, reset6 = True, True, True
+
     if warn:
-        reset1 = reset_confirmation(p, 'Reduced', called=called)
+        reset1 = reset_confirmation(p, 'Tmp', called=called)
     if reset1:
+        reset_tmp_folders(p, log)
+    else:
+        WLOG(p, '', 'Not resetting tmp folders.')
+    if warn:
+        reset2 = reset_confirmation(p, 'Reduced', called=called)
+    if reset2:
         reset_reduced_folders(p, log)
     else:
         WLOG(p, '', 'Not resetting reduced folders.')
     if warn:
-        reset2 = reset_confirmation(p, 'CalibDB', called=called)
-    if reset2:
+        reset3 = reset_confirmation(p, 'CalibDB', called=called)
+    if reset3:
         reset_calibdb(p, log)
     else:
         WLOG(p, '', 'Not resetting CalibDB files.')
     if warn:
-        reset3 = reset_confirmation(p, 'TelluDB', called=called)
-    if reset3:
+        reset4 = reset_confirmation(p, 'TelluDB', called=called)
+    if reset4:
         reset_telludb(p, log)
     else:
         WLOG(p, '', 'Not resetting TelluDB files.')
     if warn:
-        reset4 = reset_confirmation(p, 'Log', called=called)
-    if reset4:
+        reset5 = reset_confirmation(p, 'Log', called=called)
+    if reset5:
         reset_log(p)
     if warn:
-        reset5 = reset_confirmation(p, 'Plot', called=called)
-    if reset5:
+        reset6 = reset_confirmation(p, 'Plot', called=called)
+    if reset6:
         reset_plot(p)
     else:
         WLOG(p, '', 'Not resetting Log files.')

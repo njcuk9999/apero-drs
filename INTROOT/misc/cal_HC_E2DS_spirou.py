@@ -359,9 +359,7 @@ def part2(p, loc):
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
 
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
-
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'], value=p['FLATFILE'])
     # add quality control
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
