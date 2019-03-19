@@ -523,22 +523,42 @@ def load_calibdb(p, calibdb=True, header=None):
     return p
 
 
-def main_end_script(p, outputs='reduced'):
+def main_end_script(p, outputs='reduced', end=True):
     # func_name = __NAME__ + '.main_end_script()'
 
-    if outputs == 'pp':
-        # index outputs to pp dir
-        index_pp(p)
-    elif outputs == 'reduced':
-        # index outputs to reduced dir
-        index_outputs(p)
+    # construct a lock file name
+    opath = spirouConfig.Constants.INDEX_LOCK_FILENAME(p)
+
+    if outputs is not None:
+        # get and check for file lock file
+        lock, lock_file = spirouImage.CheckFitsLockFile(p, opath)
+
+        # Must now deal with errors and make sure we close the lock file
+        try:
+            if outputs == 'pp':
+                # index outputs to pp dir
+                index_pp(p)
+            elif outputs == 'reduced':
+                # index outputs to reduced dir
+                index_outputs(p)
+            # close lock file
+            spirouImage.CloseFitsLockFile(p, lock, lock_file, opath)
+        # Must close lock file
+        except SystemExit as e:
+            spirouImage.CloseFitsLockFile(p, lock, lock_file, opath)
+            raise e
+        except Exception as e:
+            spirouImage.CloseFitsLockFile(p, lock, lock_file, opath)
+            raise e
+
     # log end message
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
-    # add the logger messsages to p
-    p = WLOG.output_param_dict(p)
-    # finally clear out the log in WLOG
-    WLOG.clean_log(p['PID'])
+    if end:
+        wmsg = 'Recipe {0} has been successfully completed'
+        WLOG(p, 'info', wmsg.format(p['PROGRAM']))
+        # add the logger messsages to p
+        p = WLOG.output_param_dict(p)
+        # finally clear out the log in WLOG
+        WLOG.clean_log(p['PID'])
     # return p
     return p
 

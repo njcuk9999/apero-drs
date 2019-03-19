@@ -205,13 +205,16 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # check that tilt rms is below required
     if loc['RMS_TILT'] > p['QC_SLIT_RMS']:
         # add failed message to fail message list
         fmsg = 'abnormal RMS of SLIT angle ({0:.2f} > {1:.2f} deg)'
         fail_msg.append(fmsg.format(loc['RMS_TILT'], p['QC_SLIT_RMS']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['RMS_TILT'])
     qc_names.append('RMS_TILT')
@@ -224,6 +227,9 @@ def main(night_name=None, files=None):
         fmsg = 'abnormal SLIT angle ({0:.2f} > {1:.2f} deg)'
         fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MAX']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(max_tilt)
     qc_names.append('max_tilt')
@@ -236,6 +242,9 @@ def main(night_name=None, files=None):
         fmsg = 'abnormal SLIT angle ({0:.2f} < {1:.2f} deg)'
         fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MIN']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(min_tilt)
     qc_names.append('min_tilt')
@@ -253,6 +262,8 @@ def main(night_name=None, files=None):
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # Save and record of tilt table
@@ -274,22 +285,17 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                               value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                               value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=raw_tilt_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                               value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
+    # add qc parameters
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qc_names)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qc_values)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qc_logic)
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # add tilt parameters as 1d list
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_TILT'], values=loc['TILT'])
     # write tilt file to file

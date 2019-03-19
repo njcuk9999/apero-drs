@@ -127,10 +127,11 @@ def main(night_name=None, reffile=None):
         wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, fiber=wave_fiber,
-                                       return_wavemap=True)
-    _, loc['WAVE'] = wout
-    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.GetWaveSolution')
-
+                                       return_wavemap=True,
+                                       return_filename=True)
+    _, loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    source = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    loc.set_sources(['WAVE', 'WAVEFILE', 'WSOURCE'], source)
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
@@ -351,7 +352,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # TODO: Needs doing
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -369,6 +370,9 @@ def main(night_name=None, reffile=None):
     qc_values.append('None')
     qc_names.append('None')
     qc_logic.append('None')
+    qc_pass.append(1)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ------------------------------------------------------------------
     # Save drift values to file
@@ -388,16 +392,15 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'], value=p['FLATFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_REFFILE'], value=raw_infile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
+
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qc_names)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qc_values)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qc_logic)
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # save drift values
     p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 

@@ -182,7 +182,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    qc_values, qc_names, qc_logic = [], [], []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # ----------------------------------------------------------------------
     # check that med < qc_max_darklevel
     if p['MED_FULL'] > p['QC_MAX_DARKLEVEL']:
@@ -190,6 +190,9 @@ def main(night_name=None, files=None):
         fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
         fail_msg.append(fmsg.format(p['MED_FULL'], p['QC_MAX_DARKLEVEL']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(p['MED_FULL'])
     qc_names.append('MED_FULL')
@@ -201,6 +204,9 @@ def main(night_name=None, files=None):
         fmsg = 'Unexpected Fraction of dead pixels ({0:5.2f} > {1:5.2f} %)'
         fail_msg.append(fmsg.format(p['DADEADALL'], p['QC_MAX_DEAD']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(p['DADEADALL'])
     qc_names.append('DADEADALL')
@@ -213,6 +219,9 @@ def main(night_name=None, files=None):
         fail_msg.append(fmsg.format(p['DARK_CUTLIMIT'], baddark,
                                     p['QC_MAX_DARK']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
     # add to qc header lists
     qc_values.append(baddark)
     qc_names.append('baddark')
@@ -230,7 +239,8 @@ def main(night_name=None, files=None):
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
-
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # ----------------------------------------------------------------------
     # Save dark to file
     # ----------------------------------------------------------------------
@@ -247,12 +257,15 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=rawdarkfile)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_DEAD'], value=p['DADEAD_FULL'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_DEAD'],
+                               value=p['DADEAD_FULL'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_MED'], value=p['MED_FULL'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_DEAD'],
                                value=p['DADEAD_BLUE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_MED'], value=p['MED_BLUE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_MED'],
+                               value=p['MED_BLUE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_DEAD'],
                                value=p['DADEAD_RED'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_MED'], value=p['MED_RED'])
@@ -260,12 +273,7 @@ def main(night_name=None, files=None):
                                value=p['DARK_CUTLIMIT'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_NAME'],
-                                     values=qc_names)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_VAL'],
-                                     values=qc_values)
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_DRS_QC_LOGIC'],
-                                     values=qc_logic)
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
 
     # Set to zero dark value > dark_cutlimit
     cutmask = data0 > p['DARK_CUTLIMIT']
@@ -285,8 +293,12 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=rawdarkfile)
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
+
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file
@@ -301,8 +313,11 @@ def main(night_name=None, files=None):
         # set dark key
         if p['DPRTYPE'] == 'DARK_DARK':
             keydb = 'DARK'
-        else:
+        elif p['USE_SKYDARK_CORRECTION']:
             keydb = 'SKYDARK'
+        else:
+            emsg = 'Error: Currently {0} only supports DARK_DARK and OBJ_DARK'
+            WLOG(p, 'error', emsg.format(__NAME__))
         # copy dark fits file to the calibDB folder
         spirouDB.PutCalibFile(p, darkfits)
         # update the master calib DB file with new key

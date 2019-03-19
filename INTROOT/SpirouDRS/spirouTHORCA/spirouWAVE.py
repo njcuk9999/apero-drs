@@ -109,7 +109,7 @@ def calculate_instrument_drift(p, loc):
     speref = spirouImage.ReadHcrefFile(p, loc['HCHDR'])
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True)
-    _, waveref = wout
+    _, waveref, wsource = wout
 
     # cut down data to correct orders
     speref = speref[:n_order_final]
