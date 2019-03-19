@@ -360,10 +360,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             loc['ACC'] = loc['ACC'][:-1:2]
             loc['ASS'] = loc['ASS'][:-1:2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is A take the even orders
+        # if fiber is A take the odd orders
         elif fiber == 'A':
             loc['ACC'] = loc['ACC'][1::2]
-            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['ASS'] = loc['ASS'][1::2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
 
         # ------------------------------------------------------------------
