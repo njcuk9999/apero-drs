@@ -34,17 +34,20 @@ def WLOG(p, level, message):
         print('{0} | {1}'.format(level, message))
 
 
-def get_coefficients(hdr, kind='ab'):
+def get_coefficients(hdr, kind='a'):
     number_orders = int(hdr['LONBO'])
-    number_coeffs_width = int(hdr['LODEGCTR'])
-    number_coeffs_pos = int(hdr['LODEGFWH'])
+    number_coeffs_width = int(hdr['LODEGCTR']) + 1
+    number_coeffs_pos = int(hdr['LODEGFWH']) + 1
 
     width_coeff = read2dkey(hdr, 'LOFW', number_orders, number_coeffs_width)
     pos_coeffs = read2dkey(hdr, 'LOCTR', number_orders, number_coeffs_pos)
 
-    if kind == 'ab':
-        width_coeff = merge_coefficients(number_orders, width_coeff, step=2)
-        pos_coeffs = merge_coefficients(number_orders, pos_coeffs, step=2)
+    if kind == 'b':
+        pos_coeffs = pos_coeffs[:-1:2]
+        width_coeff = width_coeff[:-1:2]
+    elif kind == 'a':
+        pos_coeffs = pos_coeffs[1::2]
+        width_coeff = width_coeff[1::2]
 
     return pos_coeffs, width_coeff
 
@@ -72,19 +75,6 @@ def read2dkey(hdict, key, dim1, dim2):
     return values
 
 
-def merge_coefficients(nbo, coeffs, step):
-    # copy coeffs
-    newcoeffs = coeffs.copy()
-    # get sum of 0 to step pixels
-    cosum = np.array(coeffs[0:nbo:step, :])
-    for i_it in range(1, step):
-        cosum = cosum + coeffs[i_it:nbo:step, :]
-    # overwrite values into coeffs array
-    newcoeffs[0:int(nbo/step), :] = (1/step)*cosum
-    # return merged coeffients
-    return newcoeffs
-
-
 def format_data(data):
     # flip data
     data = data[::-1, ::-1]
@@ -97,7 +87,7 @@ def format_data(data):
     return data
 
 
-def debananafication(p, image=None, dx=None, pos_ab=None,
+def debananafication(p, image=None, dx=None, pos_a=None, pos_b=None,
                      pos_c=None):
     """
     Uses a shape map (dx) to straighten (de-banana) an image
@@ -130,7 +120,7 @@ def debananafication(p, image=None, dx=None, pos_ab=None,
         nanmask = np.isfinite(dx[it, :])
         image1[it, nanmask] = spline(xpix[nanmask] + dx[it, nanmask])
 
-    if pos_ab is not None and pos_c is not None:
+    if pos_a is not None and pos_b is None and pos_c is not None:
         # TODO: Etienne's code here
         pass
 
@@ -168,16 +158,19 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------
     # coeffs_ab
     WLOG(p, '', 'Getting Coefficients')
-    pos_ab, wid_ab = get_coefficients(header_ab, kind='ab')
+    pos_a, wid_a = get_coefficients(header_ab, kind='a')
+    pos_b, wid_b = get_coefficients(header_ab, kind='b')
     pos_c, wid_c = get_coefficients(header_c, kind='c')
+    # ------------------------------------------------------------------
+    image, dx = flat_data, shapemap
     # ------------------------------------------------------------------
     # straighten image
     WLOG(p, '', 'debananafication on flat')
     sflat = debananafication(p, image=flat_data, dx=shapemap,
-                             pos_ab=pos_ab, pos_c=pos_c)
+                             pos_a=pos_a, pos_b=pos_b, pos_c=pos_c)
     WLOG(p, '', 'debananafication on fp')
     sfp = debananafication(p, image=fp_data, dx=shapemap,
-                           pos_ab=pos_ab, pos_c=pos_c)
+                           pos_a=pos_a, pos_b=pos_b, pos_c=pos_c)
     # ------------------------------------------------------------------
     # write to file
     WLOG(p, '', 'Writing to file')
