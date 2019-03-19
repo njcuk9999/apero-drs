@@ -8,27 +8,65 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
+from __future__ import division
+import traceback
+
+from drsmodule import constants
+from drsmodule import config
+from drsmodule import locale
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WORKSPACE = './'
+__NAME__ = 'identification.py'
+__INSTRUMENT__ = 'SPIROU'
+# Get constants
+Constants = constants.load(__INSTRUMENT__)
+# Get version and author
+__version__ = Constants['DRS_VERSION']
+__author__ = Constants['AUTHORS']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
+# Get Logging function
+WLOG = config.wlog
+# Get the text types
+ErrorEntry = locale.drs_text.ErrorEntry
 
-
-# -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def drs_file_id(params, given_drs_file):
     """
-    Given a drs_file
+    Given a generic drs file
 
 
     :param params:
     :param given_drs_file:
     :return:
     """
+    func_name = __NAME__ + '.drs_file_id()'
+    # check we have entries
+    if len(given_drs_file.fileset) == 0:
+        eargs = [given_drs_file.name, func_name]
+        WLOG(params, 'error', ErrorEntry('01-010-00001', args=eargs))
+
+    # get the associated files with this generic drs file
+    fileset = list(given_drs_file.fileset)
+
+    # set found to False
+    found = False
+    kind = None
+    # loop around files
+    for drs_file in fileset:
+        # check this file
+        cond, _ = drs_file.check_another_file(given_drs_file)
+        # if True we have found our file
+        if cond:
+            found = True
+            kind = drs_file.copy(given_drs_file)
+            break
+
 
 
     # TODO: Need code here
