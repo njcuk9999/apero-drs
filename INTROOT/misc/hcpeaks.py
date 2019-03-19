@@ -317,7 +317,7 @@ order_fit_continuity = [12, 9, 6, 2, 2]
 # =============================================================================
 
 # polynomial xpix/wavelength for all orders
-poly_wave_sol = spirouImage.GetWaveSolution(p, wave_hdr)
+poly_wave_sol, _ = spirouImage.GetWaveSolution(p, wave_hdr)
 
 wave = np.zeros([49, 4088])
 xpix = np.array(range(4088))

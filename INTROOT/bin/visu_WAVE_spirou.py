@@ -75,8 +75,8 @@ def main(night_name=None, files=None):
     else:
         wave_fiber = p['FIBER']
     # get wave image
-    _, wave = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                          fiber=wave_fiber)
+    _, wave, _ = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+                                             fiber=wave_fiber)
     blaze = spirouImage.ReadBlazeFile(p)
 
     # ----------------------------------------------------------------------
