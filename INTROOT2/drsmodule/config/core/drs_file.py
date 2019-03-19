@@ -78,6 +78,7 @@ class DrsInputFile:
         self.header = None
         self.comments = None
         self.index = None
+        self.fileset = []
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
 
@@ -177,8 +178,75 @@ class DrsInputFile:
         # print and log via wlogger
         WLOG(params, kind, messages)
 
+    def addset(self, drsfile):
+        """
+        For generic Input files only
+        Add to a list of associated drs files
+
+        :param drsfile:
+        :return:
+        """
+        self.fileset.append(drsfile)
+
     # -------------------------------------------------------------------------
     # file checking
+    # -------------------------------------------------------------------------
+    def check_another_file(self, input_file):
+        """
+        Checks that another file is consistent with this file type
+
+        :param input_file: DrsInputFile
+        :returns: True or False and the reason why (if False)
+        """
+        # 1. check extension
+        cond1, msg1 = self.has_correct_extension(input_file.ext)
+        if not cond1:
+            return False, msg1
+        # 2. check file header keys exist
+        cond2, msg2 = self.header_keys_exist(None)
+        if not cond2:
+            return False, msg2
+        # 3. check file header keys are correct
+        cond3, msg3 = self.has_correct_header_keys(None)
+        if not cond2:
+            return False, msg3
+        # if 1, 2 and 3 pass return True
+        return True, None
+
+
+    def check_file(self):
+        """
+        Checks that this file is correct
+
+        :returns: True or False and the reason why (if False)
+        """
+        # 1. check extension
+        cond1, msg1 = self.has_correct_extension()
+        if not cond1:
+            return False, msg1
+        # 2. check file header keys exist
+        cond2, msg2 = self.header_keys_exist()
+        if not cond2:
+            return False, msg2
+        # 3. check file header keys are correct
+        cond3, msg3 = self.has_correct_header_keys()
+        if not cond2:
+            return False, msg3
+        # if 1, 2 and 3 pass return True
+        return True, None
+
+    def has_correct_extension(self, ext=None):
+        return True, None
+
+    def header_keys_exist(self, header=None):
+        return True, None
+
+    def has_correct_header_keys(self, header=None):
+        return True, None
+
+
+    # -------------------------------------------------------------------------
+    # file checking (old)
     # -------------------------------------------------------------------------
     def check_file_exists(self, quiet=False):
         cond = os.path.exists(self.filename)
@@ -336,7 +404,64 @@ class DrsFitsFile(DrsInputFile):
         return self.string_output()
 
     # -------------------------------------------------------------------------
-    # fits file checking
+    # file checking (NEW)
+    # -------------------------------------------------------------------------
+    def check_another_file(self, input_file):
+        """
+        Checks that another file is consistent with this file type
+
+        :param input_file: DrsInputFile
+        :returns: True or False and the reason why (if False)
+        """
+        # 1. check extension
+        cond1, msg1 = self.has_correct_extension(input_file.ext)
+        if not cond1:
+            return False, msg1
+        # 2. check file header keys exist
+        cond2, msg2 = self.header_keys_exist(input_file.header)
+        if not cond2:
+            return False, msg2
+        # 3. check file header keys are correct
+        cond3, msg3 = self.has_correct_header_keys(input_file.header)
+        if not cond2:
+            return False, msg3
+        # if 1, 2 and 3 pass return True
+        return True, None
+
+    def check_file(self):
+        """
+        Checks that this file is correct
+
+        :returns: True or False and the reason why (if False)
+        """
+        # 1. check extension
+        cond1, msg1 = self.has_correct_extension()
+        if not cond1:
+            return False, msg1
+        # 2. check file header keys exist
+        cond2, msg2 = self.header_keys_exist()
+        if not cond2:
+            return False, msg2
+        # 3. check file header keys are correct
+        cond3, msg3 = self.has_correct_header_keys()
+        if not cond2:
+            return False, msg3
+        # if 1, 2 and 3 pass return True
+        return True, None
+
+    def has_correct_extension(self, ext=None):
+        return True, None
+
+    def header_keys_exist(self, header=None):
+        return True, None
+
+    def has_correct_header_keys(self, header=None):
+        return True, None
+
+
+
+    # -------------------------------------------------------------------------
+    # fits file checking (OLD)
     # -------------------------------------------------------------------------
     def check_file_header(self, quiet=False, argname=None):
         """
