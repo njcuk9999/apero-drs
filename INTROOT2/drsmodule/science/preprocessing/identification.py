@@ -20,7 +20,16 @@ WORKSPACE = './'
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_file_id(params, drsfile):
+def drs_file_id(params, given_drs_file):
+    """
+    Given a drs_file
+
+
+    :param params:
+    :param given_drs_file:
+    :return:
+    """
+
 
     # TODO: Need code here
     pass

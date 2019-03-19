@@ -48,7 +48,28 @@ def _main(recipe, params):
     return dict(locals())
 
 
+# All recipe code goes in _main
+#    Only change the following from here:
+#     1) function calls  (i.e. main(arg1, arg2, **kwargs)
+#     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
+#     3) config_main  outputs value   (i.e. None, pp, reduced)
+# Everything else is controlled from recipe_definition
 def main(directory=None, files=None, **kwargs):
+    """
+    Main function for cal_preprocess_spirou.py
+
+    :param directory: string, the night name sub-directory
+    :param files: list of strings or string, the list of files to process
+    :param kwargs: any additional keywords
+
+    :type directory: str
+    :type files: list[str]
+
+    :keyword debug: int, debug level (0 for None)
+
+    :returns: dictionary of the local space
+    :rtype: dict
+    """
     # assign function calls (must add positional)
     fkwargs = dict(directory=directory, files=files, **kwargs)
     # ----------------------------------------------------------------------
