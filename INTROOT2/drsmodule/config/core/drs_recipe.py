@@ -826,30 +826,34 @@ class DrsRecipe(object):
                 dargs = [drs_file.name, os.path.basename(filename_it)]
                 WLOG(params, 'debug', ErrorEntry('90-001-00008', args=dargs),
                      wrap=False)
+
+                # -------------------------------------------------------------
+                # make instance of the DrsFile
+                # noinspection PyProtectedMember
+                inputdir = self._get_input_dir()
+                # create an instance of this drs_file with the filename set
+                file_in = drs_file.new(filename=filename_it, recipe=self)
+                file_in.read()
+                # set the directory
+                fdir = drs_argument.get_uncommon_path(directory, inputdir)
+                file_in.directory = fdir
+
                 # -------------------------------------------------------------
                 # Step 2: Check extension
                 # -------------------------------------------------------------
-                # get extension
-                ext = drs_file.ext
                 # check the extension
-                exargs = [self, argname, filename_it]
-                valid1, error1 = _check_file_extension(*exargs, ext=ext)
+                valid1, error1 = file_in.has_correct_extension(argname=argname)
 
                 # -------------------------------------------------------------
-                # Step 3: Check file header is valid
+                # Step 3: Check file header has required keys
                 # -------------------------------------------------------------
-                # this step is just for 'fits' files, if not fits
-                #    files we can return here
-                if ('.fits' in filename_it) and valid1:
-                    out = _check_file_header(self, argname, drs_file,
-                                             filename_it, directory)
-                    valid2, filetype, error2 = out
-                    valid2a, valid2b = valid2
-                    error2a, error2b = error2
-                else:
-                    valid2a, valid2b = True, True
-                    error2a, error2b = [], dict()
-                    filetype = None
+                valid2a, error2a = file_in.hkeys_exist(argname=argname)
+
+                # -------------------------------------------------------------
+                # Step 4: Check file header has correct required keys
+                # -------------------------------------------------------------
+                valid2b, error2b = file_in.has_correct_hkeys(argname=argname)
+
                 # -------------------------------------------------------------
                 # Step 4: Check exclusivity
                 # -------------------------------------------------------------
@@ -882,18 +886,17 @@ class DrsRecipe(object):
 
                 # check validity and append if valid
                 if valid:
-                    dargs = [argname, os.path.basename(filename_it), filetype]
+                    dargs = [argname, os.path.basename(filename_it), file_in]
                     wmsg = ErrorEntry('90-001-00016', args=dargs)
                     WLOG(params, 'debug', wmsg, wrap=False)
                     # append to out files/types
                     out_files.append(filename_it)
-                    out_types.append(filetype)
+                    out_types.append(file_in)
                     # break out the inner loop if valid (we don't need to
                     #    check other drs_files)
                     break
-            # if this file is not valid we should break here
 
-            # WLOG(params, 'error', 'Neil Stop')
+            # if this file is not valid we should break here
             if not valid:
                 # add header errors (needed outside drs_file loop)
                 errors += _gen_header_errors(params, header_errors)
@@ -1471,52 +1474,52 @@ def _check_if_directory(argname, files):
     else:
         return True, files, []
 
-
-def _check_file_extension(recipe, argname, filename, ext=None):
-    """
-    If '.fits' file checks the file extension is valid.
-
-    :param argname: string, the argument name (for error reporting)
-    :param filename: list of strings, the files to check
-    :param ext: string or None, the extension to check, if None skips
-
-    :return cond: bool, True if extension valid
-    :return errors: list of strings, the errors that occurred if cond=False
-    """
-    # get drs parameters
-    params = recipe.drs_params
-    # deal with no extension (ext = None)
-    if ext is None:
-        return True, []
-    # ---------------------------------------------------------------------
-    # Check extension
-    valid = filename.endswith(ext)
-    # if valid return True and no error
-    if valid:
-        dargs = [argname, os.path.basename(filename)]
-        WLOG(params, 'debug', ErrorEntry('90-001-00009', args=dargs),
-             wrap=False)
-        return True, None
-    # if False generate error and return it
-    else:
-        emsg = ErrorEntry('09-001-00006', args=[argname, ext])
-        return False, emsg
-
-
-def _check_file_header(recipe, argname, drs_file, filename, directory):
-    # get the input directory
-    # noinspection PyProtectedMember
-    inputdir = recipe._get_input_dir()
-    # create an instance of this drs_file with the filename set
-    file_instance = drs_file.new(filename=filename, recipe=recipe)
-    file_instance.read()
-    # set the directory
-    fdir = drs_argument.get_uncommon_path(directory, inputdir)
-    file_instance.directory = fdir
-    # -----------------------------------------------------------------
-    # use file_instances check file header method
-    return file_instance.check_file_header(argname=argname)
-
+#
+# def _check_file_extension(recipe, argname, file_instance):
+#     """
+#     If '.fits' file checks the file extension is valid.
+#
+#     :param argname: string, the argument name (for error reporting)
+#     :param filename: list of strings, the files to check
+#     :param ext: string or None, the extension to check, if None skips
+#
+#     :return cond: bool, True if extension valid
+#     :return errors: list of strings, the errors that occurred if cond=False
+#     """
+#     # extension
+#     ext = file_instance.ext
+#     # filename
+#     filename = file_instance
+#     # get drs parameters
+#     params = recipe.drs_params
+#     # check
+#     valid, msg = file_instance.has_correct_extension(filename=filename)
+#     # if valid return True and no error
+#     if valid:
+#         dargs = [argname, os.path.basename(filename)]
+#         WLOG(params, 'debug', ErrorEntry('90-001-00009', args=dargs),
+#              wrap=False)
+#         return True, None
+#     # if False generate error and return it
+#     else:
+#         emsg = ErrorEntry('09-001-00006', args=[argname, ext])
+#         return False, emsg
+#
+#
+# def _check_file_header(recipe, argname, drs_file, filename, directory):
+#     # get the input directory
+#     # noinspection PyProtectedMember
+#     inputdir = recipe._get_input_dir()
+#     # create an instance of this drs_file with the filename set
+#     file_instance = drs_file.new(filename=filename, recipe=recipe)
+#     file_instance.read()
+#     # set the directory
+#     fdir = drs_argument.get_uncommon_path(directory, inputdir)
+#     file_instance.directory = fdir
+#     # -----------------------------------------------------------------
+#     # use file_instances check file header method
+#     return file_instance.check_file_header(argname=argname)
+#
 
 def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
                             alltypelist=None):
