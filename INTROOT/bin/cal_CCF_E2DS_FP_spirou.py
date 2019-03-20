@@ -584,7 +584,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, corfile, data_ab, hdict)
 
-
     # ----------------------------------------------------------------------
     # archive ccf C to fits file
     # ----------------------------------------------------------------------
