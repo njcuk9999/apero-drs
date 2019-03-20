@@ -69,15 +69,15 @@ class DrsInputFile:
         # allow instance to be associated with a recipe
         self.recipe = kwargs.get('recipe', None)
         # set empty file attributes
-        self.filename = None
-        self.path = None
-        self.basename = None
-        self.inputdir = None
-        self.directory = None
-        self.data = None
-        self.header = None
-        self.comments = None
-        self.index = None
+        self.filename = kwargs.get('filename', None)
+        self.path = kwargs.get('path', None)
+        self.basename = kwargs.get('basename', None)
+        self.inputdir = kwargs.get('inputdir', None)
+        self.directory = kwargs.get('directory', None)
+        self.data = kwargs.get('data', None)
+        self.header = kwargs.get('header', None)
+        self.comments = kwargs.get('comments', None)
+        self.index = kwargs.get('index', None)
         self.fileset = []
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
@@ -188,6 +188,26 @@ class DrsInputFile:
         """
         self.fileset.append(drsfile)
 
+    def copy(self, drsfile):
+        # check recipe has been set
+        drsfile.check_recipe()
+        # check file has been read
+        drsfile.read()
+        # set empty file attributes
+        kwargs = dict()
+        kwargs['name'] = self.name
+        kwargs['recipe'] = self.recipe
+        kwargs['filename'] = drsfile.filename
+        kwargs['path'] = drsfile.path
+        kwargs['basename'] = drsfile.basename
+        kwargs['inputdir'] = drsfile.inputdir
+        kwargs['directory'] = drsfile.directory
+        kwargs['data'] = drsfile.data
+        kwargs['header'] = drsfile.header
+        kwargs['comments'] = drsfile.comments
+        # return new instance of DrsFitsFile
+        return DrsInputFile(**kwargs)
+
     # -------------------------------------------------------------------------
     # file checking
     # -------------------------------------------------------------------------
@@ -212,7 +232,6 @@ class DrsInputFile:
             return False, msg3
         # if 1, 2 and 3 pass return True
         return True, None
-
 
     def check_file(self):
         """
@@ -243,7 +262,6 @@ class DrsInputFile:
 
     def has_correct_header_keys(self, header=None):
         return True, None
-
 
     # -------------------------------------------------------------------------
     # file checking (old)
@@ -318,17 +336,18 @@ class DrsFitsFile(DrsInputFile):
         # get tag
         self.outtag = kwargs.get('KW_OUTPUT', 'UNKNOWN')
         # add header
-        self.required_header_keys = dict()
-        self.get_header_keys(kwargs)
+        self.required_header_keys = kwargs.get('rkeys', dict())
+        if len(self.required_header_keys) == 0:
+            self.get_header_keys(kwargs)
         # set empty fits file storage
-        self.data = None
-        self.header = None
-        self.comments = None
-        self.index = None
+        self.data = kwargs.get('data', None)
+        self.header = kwargs.get('header', None)
+        self.comments = kwargs.get('comments', None)
+        self.index = kwargs.get('index', None)
         # set additional attributes
-        self.shape = None
-        self.hdict = OrderedDict()
-        self.output_dict = OrderedDict()
+        self.shape = kwargs.get('shape', None)
+        self.hdict = kwargs.get('hdict', OrderedDict())
+        self.output_dict = kwargs.get('output_dict', OrderedDict())
 
     def get_header_keys(self, kwargs):
         # add values to the header
@@ -403,31 +422,34 @@ class DrsFitsFile(DrsInputFile):
         """
         return self.string_output()
 
-    # -------------------------------------------------------------------------
-    # file checking (NEW)
-    # -------------------------------------------------------------------------
-    def check_another_file(self, input_file):
-        """
-        Checks that another file is consistent with this file type
+    def copy(self, drsfile):
+        # check recipe has been set
+        self.check_recipe()
+        # check file has been read
+        drsfile.read()
+        # set empty file attributes
+        kwargs = dict()
+        kwargs['name'] = self.name
+        kwargs['recipe'] = self.recipe
+        kwargs['fiber'] = self.fiber
+        kwargs['rkeys'] = self.required_header_keys
+        kwargs['filename'] = drsfile.filename
+        kwargs['path'] = drsfile.path
+        kwargs['basename'] = drsfile.basename
+        kwargs['inputdir'] = drsfile.inputdir
+        kwargs['directory'] = drsfile.directory
+        kwargs['data'] = drsfile.data
+        kwargs['header'] = drsfile.header
+        kwargs['comments'] = drsfile.comments
+        kwargs['shape'] = drsfile.shape
+        kwargs['hdict'] = drsfile.hdict
+        kwargs['output_dict'] = drsfile.output_dict
+        # return new instance of DrsFitsFile
+        return DrsFitsFile(**kwargs)
 
-        :param input_file: DrsInputFile
-        :returns: True or False and the reason why (if False)
-        """
-        # 1. check extension
-        cond1, msg1 = self.has_correct_extension(input_file.ext)
-        if not cond1:
-            return False, msg1
-        # 2. check file header keys exist
-        cond2, msg2 = self.header_keys_exist(input_file.header)
-        if not cond2:
-            return False, msg2
-        # 3. check file header keys are correct
-        cond3, msg3 = self.has_correct_header_keys(input_file.header)
-        if not cond2:
-            return False, msg3
-        # if 1, 2 and 3 pass return True
-        return True, None
-
+    # -------------------------------------------------------------------------
+    # file checking
+    # -------------------------------------------------------------------------
     def check_file(self):
         """
         Checks that this file is correct
@@ -439,26 +461,157 @@ class DrsFitsFile(DrsInputFile):
         if not cond1:
             return False, msg1
         # 2. check file header keys exist
-        cond2, msg2 = self.header_keys_exist()
+        cond2, msg2 = self.hkeys_exist()
         if not cond2:
             return False, msg2
         # 3. check file header keys are correct
-        cond3, msg3 = self.has_correct_header_keys()
-        if not cond2:
+        cond3, msg3 = self.has_correct_hkeys()
+        if not cond3:
             return False, msg3
         # if 1, 2 and 3 pass return True
         return True, None
 
-    def has_correct_extension(self, ext=None):
+    def has_correct_extension(self, filename=None, ext=None, argname=None):
+        # deal with no input extension
+        if ext is None:
+            ext = self.ext
+        # deal with no input filename
+        if filename is None:
+            filename = self.filename
+            basename = self.basename
+        else:
+            basename = os.path.basename(filename)
+        # -----------------------------------------------------------------
+        # deal with no argument name
+        if argname is None:
+            argname = ErrorEntry('40-001-00018')
+        # -----------------------------------------------------------------
+        # check recipe has been set
+        self.check_recipe()
+        # get recipe and parameters
+        params = self.recipe.drs_params
+        # -----------------------------------------------------------------
+        # check extension
+        if ext is None:
+            msg = ErrorEntry('09-000-00003', args=[basename])
+            cond = True
+        elif filename.endswith(ext):
+            msg = ErrorEntry('09-000-00004', args=[basename, ext])
+            cond = True
+        else:
+            msg = ErrorEntry('09-000-00005', args=[basename, ext])
+            cond = False
+        # if valid return True and no error
+        if cond:
+            dargs = [argname, os.path.basename(filename)]
+            WLOG(params, 'debug', ErrorEntry('90-001-00009', args=dargs),
+                 wrap=False)
+            return True, msg
+        # if False generate error and return it
+        else:
+            emsg = ErrorEntry('09-001-00006', args=[argname, ext])
+            return False, emsg
+
+    def hkeys_exist(self, header=None, filename=None, argname=None):
+        func_name = __NAME__ + 'DrsFitsFile.header_keys_exist()'
+
+        # deal with no input header
+        if header is None:
+            # check file has been read
+            self.read()
+            # get header
+            header = self.header
+        # deal with no input filename
+        if filename is None:
+            basename = self.basename
+        else:
+            basename = os.path.basename(filename)
+        # -----------------------------------------------------------------
+        # check recipe has been set
+        self.check_recipe()
+        # get recipe and parameters
+        params = self.recipe.drs_params
+        rkeys = self.required_header_keys
+        # -----------------------------------------------------------------
+        # deal with no argument name
+        if argname is None:
+            argname = ErrorEntry('40-001-00018')
+        # -----------------------------------------------------------------
+        # Check that required keys are in header
+        for drskey in rkeys:
+            # check whether header key is in param dict (i.e. from a
+            #    keywordstore) or whether we have to use the key as is
+            if drskey in params:
+                key = params[drskey][0]
+                source = params.sources[drskey]
+            else:
+                key = drskey
+                source = func_name
+            # deal with empty key
+            if (key is None) or key == '':
+                eargs = [key, drskey, source]
+                WLOG(params, 'error', ErrorEntry('00-006-00011', args=eargs))
+            # check if key is in header
+            if key not in header:
+                eargs = [argname, key]
+                emsg = ErrorEntry('09-001-00007', args=eargs)
+                return False, emsg
+            else:
+                dargs = [argname, key, basename]
+                WLOG(params, 'debug', ErrorEntry('90-001-00010', args=dargs),
+                     wrap=False)
+
         return True, None
 
-    def header_keys_exist(self, header=None):
-        return True, None
+    def has_correct_hkeys(self, header=None, argname=None):
+        func_name = __NAME__ + 'DrsFitsFile.has_correct_header_keys()'
+        # deal with no input header
+        if header is None:
+            # check file has been read
+            self.read()
+            # get header
+            header = self.header
+        # -----------------------------------------------------------------
+        # check recipe has been set
+        self.check_recipe()
+        # get recipe and parameters
+        params = self.recipe.drs_params
+        rkeys = self.required_header_keys
+        # -----------------------------------------------------------------
+        # deal with no argument name
+        if argname is None:
+            argname = ErrorEntry('40-001-00018')
+        # -----------------------------------------------------------------
+        # search for correct value for each header key
+        found = True
+        # storage
+        errors = dict()
+        # -----------------------------------------------------------------
+        # loop around required keys
+        for drskey in rkeys:
+            # check whether header key is in param dict (i.e. from a
+            #    keywordstore) or whether we have to use the key as is
+            if drskey in params:
+                key = params[drskey][0]
+            else:
+                key = drskey
+            # get value and required value
+            value = header[key].strip()
+            rvalue = rkeys[drskey].strip()
+            # check if key is valid
+            if rvalue != value:
+                dargs = [argname, key, rvalue]
+                WLOG(params, 'debug', ErrorEntry('90-001-00011', args=dargs),
+                     wrap=False)
+                found = False
+            else:
+                dargs = [argname, key, rvalue]
+                WLOG(params, 'debug', ErrorEntry('90-001-00012', args=dargs),
+                     wrap=False)
+            # store info
+            errors[key] = (found, argname, rvalue, value)
 
-    def has_correct_header_keys(self, header=None):
-        return True, None
-
-
+        return found, errors
 
     # -------------------------------------------------------------------------
     # fits file checking (OLD)
