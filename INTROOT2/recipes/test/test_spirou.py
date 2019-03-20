@@ -45,7 +45,6 @@ def _main(recipe, params):
     # display everything that comes from "INPUT"
     for i in range(10):
         WLOG(params, '', 'Line {0} of code'.format(i+1))
-    int('s')
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
