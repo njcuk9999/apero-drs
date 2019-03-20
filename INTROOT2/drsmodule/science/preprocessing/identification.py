@@ -59,15 +59,15 @@ def drs_file_id(params, given_drs_file):
     kind = None
     # loop around files
     for drs_file in fileset:
-        # check this file
-        cond, _ = drs_file.check_another_file(given_drs_file)
+        # copy info from given_drs_file into drs_file
+        file_in = drs_file.copy(given_drs_file)
+        # check this file is valid
+        cond, _ = file_in.check_file()
         # if True we have found our file
         if cond:
             found = True
-            kind = drs_file.copy(given_drs_file)
+            kind = file_in
             break
-
-
 
     # TODO: Need code here
     pass
