@@ -93,6 +93,12 @@ class Logger:
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
+        # get log storage keys
+        storekey = self.pconstant.LOG_STORAGE_KEYS()
+        # add log stats to pout
+        for key in storekey:
+            self.pout[storekey[key]] = []
+        self.pout['LOGGER_FULL'] = []
 
     def __call__(self, params=None, key='', message=None, printonly=False,
                  logonly=False, wrap=True, option=None, colour=None,
@@ -436,7 +442,10 @@ class Logger:
             # set the source
             self.pout[pid].set_source(storekey[key], func_name)
         # add to full log
-        self.pout[pid]['LOGGER_FULL'].append([[ttime, mess]])
+        if 'LOGGER_FULL' in self.pout[pid]:
+            self.pout[pid]['LOGGER_FULL'].append([[ttime, mess]])
+        else:
+            self.pout[pid]['LOGGER_FULL'] = [[ttime, mess]]
 
     def clean_log(self, processid):
         func_name = __NAME__ + '.Logger.clean_log()'
@@ -626,9 +635,14 @@ def warninglogger(p, w, funcname=None):
     :return:
     """
     errortext = ErrorText(p['INSTRUMENT'], p['LANGUAGE'])
+
+    # get pconstant
+    pconstant = constants.pload(p['INSTRUMENT'])
+    log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
+
     # deal with warnings
     displayed_warnings = []
-    if p['LOG_CAUGHT_WARNINGS'] and (len(w) > 0):
+    if log_warnings and (len(w) > 0):
         for wi in w:
             # if we have a function name then use it else just report the
             #    line number (not recommended)

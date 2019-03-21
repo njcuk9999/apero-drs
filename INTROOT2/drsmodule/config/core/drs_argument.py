@@ -237,7 +237,7 @@ class _CheckDirectory(argparse.Action):
         else:
             # get input dir
             # noinspection PyProtectedMember
-            input_dir = self.recipe._get_input_dir()
+            input_dir = self.recipe.get_input_dir()
             # get listing message
             lmsgs = _print_list_msg(self.parser, self.recipe, input_dir,
                                     dircond=True, return_string=True)
@@ -554,7 +554,7 @@ class _MakeListing(argparse.Action):
     def _display_listing(self, namespace):
         # get input dir
         # noinspection PyProtectedMember
-        input_dir = self.recipe._get_input_dir()
+        input_dir = self.recipe.get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', None)
         # deal with non set directory
@@ -599,7 +599,7 @@ class _MakeAllListing(argparse.Action):
     def _display_listing(self, namespace):
         # get input dir
         # noinspection PyProtectedMember
-        input_dir = self.recipe._get_input_dir()
+        input_dir = self.recipe.get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', None)
         # deal with non set directory

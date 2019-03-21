@@ -359,7 +359,7 @@ class DrsRecipe(object):
         """
         func_name = __NAME__ + '.DrsRecipe.generate_runs_from_filelist()'
         # get input directory
-        input_dir = self._get_input_dir()
+        input_dir = self.get_input_dir()
         # get directories and filter out unusable file (due to wrong location)
         filelist = _dir_file_filter(input_dir, __files__)
         # from the unique directory list search for index files (should be one
@@ -499,6 +499,38 @@ class DrsRecipe(object):
 
         # run main
         return self.module.main(**kwargs)
+
+    def get_input_dir(self):
+        """
+        Get the input directory for this recipe based on what was set in
+        initialisation (construction)
+
+        if RAW uses DRS_DATA_RAW from drs_params
+        if TMP uses DRS_DATA_WORKING from drs_params
+        if REDUCED uses DRS_DATA_REDUC from drs_params
+
+        :return input_dir: string, the input directory
+        """
+        # check if "input_dir" is in namespace
+        input_dir_pick = self.inputdir.upper()
+        # return input_dir
+        return self.get_dir(input_dir_pick, kind='input')
+
+    def get_output_dir(self):
+        """
+        Get the input directory for this recipe based on what was set in
+        initialisation (construction)
+
+        if RAW uses DRS_DATA_RAW from drs_params
+        if TMP uses DRS_DATA_WORKING from drs_params
+        if REDUCED uses DRS_DATA_REDUC from drs_params
+
+        :return input_dir: string, the input directory
+        """
+        # check if "input_dir" is in namespace
+        output_dir_pick = self.outputdir.upper()
+        # return input_dir
+        return self.get_dir(output_dir_pick, kind='output')
 
     # =========================================================================
     # Private Methods (Not to be used externally to spirouRecipe.py)
@@ -701,7 +733,7 @@ class DrsRecipe(object):
                 return False, directory
         # ---------------------------------------------------------------------
         # step 2: check if directory is in input directory
-        input_dir = self._get_input_dir()
+        input_dir = self.get_input_dir()
         test_path = os.path.join(input_dir, directory)
         if os.path.exists(test_path):
             dmsg = ErrorEntry('90-001-00017', args=[argname, directory])
@@ -830,7 +862,7 @@ class DrsRecipe(object):
                 # -------------------------------------------------------------
                 # make instance of the DrsFile
                 # noinspection PyProtectedMember
-                inputdir = self._get_input_dir()
+                inputdir = self.get_input_dir()
                 # create an instance of this drs_file with the filename set
                 file_in = drs_file.new(filename=filename_it, recipe=self)
                 file_in.read()
@@ -1144,35 +1176,22 @@ class DrsRecipe(object):
         else:
             self.kwargs[argname] = arg
 
-    def _get_input_dir(self):
-        """
-        Get the input directory for this recipe based on what was set in
-        initialisation (construction)
-
-        if RAW uses DRS_DATA_RAW from drs_params
-        if TMP uses DRS_DATA_WORKING from drs_params
-        if REDUCED uses DRS_DATA_REDUC from drs_params
-
-        :return input_dir: string, the input directory
-        """
-        # check if "input_dir" is in namespace
-        input_dir_pick = self.inputdir.upper()
+    def get_dir(self, dir_string, kind='input'):
         # get parameters from recipe call
         params = self.drs_params
         # get the input directory from recipe.inputdir keyword
-        if input_dir_pick == 'RAW':
-            input_dir = self.drs_params['DRS_DATA_RAW']
-        elif input_dir_pick == 'TMP':
-            input_dir = self.drs_params['DRS_DATA_WORKING']
-        elif input_dir_pick == 'REDUCED':
-            input_dir = self.drs_params['DRS_DATA_REDUC']
+        if dir_string == 'RAW':
+            dirpath = self.drs_params['DRS_DATA_RAW']
+        elif dir_string == 'TMP':
+            dirpath = self.drs_params['DRS_DATA_WORKING']
+        elif dir_string == 'REDUCED':
+            dirpath = self.drs_params['DRS_DATA_REDUC']
         # if not found produce error
         else:
-            emsg = ErrorEntry('00-007-00002', args=[input_dir_pick])
+            emsg = ErrorEntry('00-007-00002', args=[kind, dir_string])
             WLOG(params, 'error', emsg)
-            input_dir = None
-        # return input_dir
-        return input_dir
+            dirpath = None
+        return dirpath
 
     def _get_files_valid_for_arg(self, arg, index, directory, dfilelist):
         """
@@ -1201,7 +1220,7 @@ class DrsRecipe(object):
         ifile = os.path.join(directory, INDEX_FILE)
         icol = INDEX_FILE_NAME_COL
         # get input directory
-        input_dir = self._get_input_dir()
+        input_dir = self.get_input_dir()
         # get path of directory
         path = os.path.join(input_dir, directory)
         # get params from recipe
@@ -1345,7 +1364,7 @@ def _check_file_location(recipe, argname, directory, filename):
         input_dir = str(directory)
     else:
         # noinspection PyProtectedMember
-        input_dir = recipe._get_input_dir()
+        input_dir = recipe.get_input_dir()
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
