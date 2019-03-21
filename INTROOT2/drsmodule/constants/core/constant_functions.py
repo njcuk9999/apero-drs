@@ -66,6 +66,10 @@ class Const:
         # deal with no source
         if source is None:
             source = self.source
+        # skip validation if value is None
+        if value is None:
+            self.true_value = None
+            return True
         # get true value (and test test_value)
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
                  self.maximum, self.minimum,]
