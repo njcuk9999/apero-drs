@@ -10,7 +10,10 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_OBJRA', 'KW_OBJDEC',
            'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_OBSTYPE', 'KW_CCAS',
            'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
            'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION', 'KW_PPVERSION',
-           'KW_DPRTYPE']
+           'KW_DPRTYPE', 'KW_PID', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+           'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
+           'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_UTC_OBS', 'KW_OUTPUT',
+           'KW_EXT_TYPE']
 # set name
 __NAME__ = 'drsmodule.constants.default.default_keywords'
 # Constants definition
@@ -35,6 +38,11 @@ KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, comment='',
 KW_ACQTIME_FMT = Const('KW_ACQTIME_FMT', value='mjd', dtype=str,
                        options=['mjd', 'iso', 'unix', 'jyear'],
                        source=__NAME__)
+
+# define the observation date HEADER key
+KW_DATE_OBS = Keyword('KW_DATE_OBS', key='', dtype=float, source=__NAME__)
+# define the observation time HEADER key
+KW_UTC_OBS = Keyword('KW_UTC_OBS', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
@@ -100,5 +108,35 @@ KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__)
 KW_VERSION = Keyword('KW_VERSION', key='', dtype=str, source=__NAME__)
 KW_PPVERSION = Keyword('KW_PPVERSION', key='', dtype=str, source=__NAME__)
 
+# DRS process ID
+KW_PID = Keyword('KW_PID', key='', dtype=str, source=__NAME__)
+
 # Define the key to get the data fits file type
 KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
+
+
+# -----------------------------------------------------------------------------
+# Define DRS input keywords
+# -----------------------------------------------------------------------------
+# input files
+KW_INFILE1 = Keyword('KW_INFILE1', key='', dtype=str, source=__NAME__)
+KW_INFILE2 = Keyword('KW_INFILE2', key='', dtype=str, source=__NAME__)
+KW_INFILE3 = Keyword('KW_INFILE3', key='', dtype=str, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define DRS outputs keywords
+# -----------------------------------------------------------------------------
+# the output key for drs outputs
+KW_OUTPUT = Keyword('KW_OUTPUT', key='', dtype=str, source=__NAME__)
+# the extraction type of an output (KW_DPRTYPE)
+KW_EXT_TYPE = Keyword('KW_EXT_TYPE', key='', dtype=str, source=__NAME__)
+
+
+# -----------------------------------------------------------------------------
+# Define qc variables
+# -----------------------------------------------------------------------------
+KW_DRS_QC = Keyword('KW_DRS_QC', key='', dtype=str, source=__NAME__)
+KW_DRS_QC_VAL = Keyword('KW_DRS_QC_VAL', key='', dtype=str, source=__NAME__)
+KW_DRS_QC_NAME = Keyword('KW_DRS_QC_NAME', key='', dtype=str, source=__NAME__)
+KW_DRS_QC_LOGIC = Keyword('KW_DRS_QC_LOGIC', key='', dtype=str, source=__NAME__)
+KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
