@@ -11,18 +11,19 @@ Created on 2019-01-19 at 13:37
 """
 from __future__ import division
 import numpy as np
+import traceback
 import sys
 import os
 import time
 import code
 from collections import OrderedDict
-import importlib
 
 from drsmodule import constants
 from drsmodule import plotting
 from drsmodule.locale import drs_text
 from drsmodule.locale import drs_exceptions
 from drsmodule.io import drs_table
+from drsmodule.io import drs_files
 from . import drs_log
 from . import drs_recipe
 from . import drs_file
@@ -93,6 +94,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
               dictionary for constants (ParamDict)
     :rtype: tuple[DrsRecipe, ParamDict]
     """
+    func_name = __NAME__ + '.setup()'
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -144,11 +146,23 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     # update params in log
     WLOG.pin = recipe.drs_params
     # -------------------------------------------------------------------------
-    # TODO: Need to make folders
+    # deal with setting night name, inputdir and outputdir
+    params = recipe.drs_params
+    params['INPATH'] = recipe.get_input_dir()
+    params['OUTPATH'] = recipe.get_output_dir()
+    if 'DIRECTORY' in params['INPUTS']:
+        gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
+        params['NIGHTNAME'] = drs_files.get_uncommon_path(*gargs)
+    else:
+        params['NIGHTNAME'] = ''
 
+    params.set_sources(['INPATH', 'OUTPATH', 'NIGHTNAME'], func_name)
+    # -------------------------------------------------------------------------
+    _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
+    _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
     # -------------------------------------------------------------------------
     # return arguments
-    return recipe, recipe.drs_params
+    return recipe, params
 
 
 def get_params(recipe='None', instrument='None', **kwargs):
@@ -1169,6 +1183,20 @@ def _sort_version(messages=None):
 
     # return updated messages
     return messages
+
+
+def _make_dirs(params, path):
+    # first check if path already exists
+    if os.path.exists(path):
+        return
+    # if path doesn't exist try to make it
+    try:
+        os.makedirs(path)
+    except Exception as e:
+        string_trackback = traceback.format_exc()
+        emsg = ErrorEntry('01-000-00001', args=[path, type(e)])
+        emsg += '\n\n' + ErrorEntry(string_trackback)
+        WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
 
 
 # =============================================================================

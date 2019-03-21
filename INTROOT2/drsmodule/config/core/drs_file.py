@@ -78,7 +78,7 @@ class DrsInputFile:
         self.header = kwargs.get('header', None)
         self.comments = kwargs.get('comments', None)
         self.index = kwargs.get('index', None)
-        self.fileset = []
+        self.fileset = kwargs.get('fileset', [])
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
 
@@ -121,6 +121,16 @@ class DrsInputFile:
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
         kwargs['ext'] = kwargs.get('ext', self.ext)
+        kwargs['recipe'] = kwargs.get('recipe', self.recipe)
+        kwargs['filename'] = kwargs.get('filename', self.filename)
+        kwargs['path'] = kwargs.get('path', self.path)
+        kwargs['basename'] = kwargs.get('basename', self.basename)
+        kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
+        kwargs['directory'] = kwargs.get('directory', self.directory)
+        kwargs['data'] = kwargs.get('data', self.data)
+        kwargs['header'] = kwargs.get('header', self.header)
+        kwargs['comments'] = kwargs.get('comments', self.comments)
+        kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         # return new instance
         return DrsInputFile(name, **kwargs)
 
@@ -188,25 +198,27 @@ class DrsInputFile:
         """
         self.fileset.append(drsfile)
 
-    def copy(self, drsfile):
+    def copy(self, drsfile, **kwargs):
         # check recipe has been set
-        drsfile.check_recipe()
+        if 'recipe' not in kwargs:
+            self.check_recipe()
         # check file has been read
         drsfile.read()
         # set empty file attributes
-        kwargs = dict()
-        kwargs['name'] = self.name
-        kwargs['recipe'] = self.recipe
-        kwargs['filename'] = drsfile.filename
-        kwargs['path'] = drsfile.path
-        kwargs['basename'] = drsfile.basename
-        kwargs['inputdir'] = drsfile.inputdir
-        kwargs['directory'] = drsfile.directory
-        kwargs['data'] = drsfile.data
-        kwargs['header'] = drsfile.header
-        kwargs['comments'] = drsfile.comments
+        nkwargs = dict()
+        nkwargs['name'] = kwargs.get('name', self.name)
+        nkwargs['recipe'] = kwargs.get('recipe', self.recipe)
+        nkwargs['filename'] = kwargs.get('filename', drsfile.filename)
+        nkwargs['path'] = kwargs.get('path', drsfile.path)
+        nkwargs['basename'] = kwargs.get('basename', drsfile.basename)
+        nkwargs['inputdir'] = kwargs.get('inputdir', drsfile.inputdir)
+        nkwargs['directory'] = kwargs.get('directory', drsfile.directory)
+        nkwargs['data'] = kwargs.get('data', drsfile.data)
+        nkwargs['header'] = kwargs.get('header', drsfile.header)
+        nkwargs['comments'] = kwargs.get('comments', drsfile.comments)
+        nkwargs['fileset'] = kwargs.get('fileset', self.fileset)
         # return new instance of DrsFitsFile
-        return DrsInputFile(**kwargs)
+        return DrsInputFile(**nkwargs)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -331,9 +343,11 @@ class DrsFitsFile(DrsInputFile):
         DrsInputFile.__init__(self, name, **kwargs)
         # if ext in kwargs then we have a file extension to check
         self.ext = kwargs.get('ext', '.fits')
+        self.inext = kwargs.get('inext', '.fits')
         # get fiber type (if set)
         self.fiber = kwargs.get('fiber', None)
         # get tag
+        self.outfunc = kwargs.get('outfunc', None)
         self.outtag = kwargs.get('KW_OUTPUT', 'UNKNOWN')
         # add header
         self.required_header_keys = kwargs.get('rkeys', dict())
@@ -380,9 +394,21 @@ class DrsFitsFile(DrsInputFile):
         """
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
+        kwargs['ext'] = kwargs.get('ext', self.ext)
+        kwargs['recipe'] = kwargs.get('recipe', self.recipe)
+        kwargs['filename'] = kwargs.get('filename', self.filename)
+        kwargs['path'] = kwargs.get('path', self.path)
+        kwargs['basename'] = kwargs.get('basename', self.basename)
+        kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
+        kwargs['directory'] = kwargs.get('directory', self.directory)
+        kwargs['data'] = kwargs.get('data', self.data)
+        kwargs['header'] = kwargs.get('header', self.header)
+        kwargs['comments'] = kwargs.get('comments', self.comments)
+        kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         kwargs['check_ext'] = kwargs.get('check_ext', self.ext)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['outtag'] = kwargs.get('KW_OUTPUT', self.outtag)
+        kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         for key in self.required_header_keys:
             kwargs[key] = self.required_header_keys[key]
         self.get_header_keys(kwargs)
@@ -422,30 +448,33 @@ class DrsFitsFile(DrsInputFile):
         """
         return self.string_output()
 
-    def copy(self, drsfile):
+    def copy(self, drsfile, **kwargs):
         # check recipe has been set
-        self.check_recipe()
+        if 'recipe' not in kwargs:
+            self.check_recipe()
         # check file has been read
         drsfile.read()
         # set empty file attributes
-        kwargs = dict()
-        kwargs['name'] = self.name
-        kwargs['recipe'] = self.recipe
-        kwargs['fiber'] = self.fiber
-        kwargs['rkeys'] = self.required_header_keys
-        kwargs['filename'] = drsfile.filename
-        kwargs['path'] = drsfile.path
-        kwargs['basename'] = drsfile.basename
-        kwargs['inputdir'] = drsfile.inputdir
-        kwargs['directory'] = drsfile.directory
-        kwargs['data'] = drsfile.data
-        kwargs['header'] = drsfile.header
-        kwargs['comments'] = drsfile.comments
-        kwargs['shape'] = drsfile.shape
-        kwargs['hdict'] = drsfile.hdict
-        kwargs['output_dict'] = drsfile.output_dict
+        nkwargs = dict()
+        nkwargs['name'] = kwargs.get('name', self.name)
+        nkwargs['recipe'] = kwargs.get('recipe', self.recipe)
+        nkwargs['fiber'] = kwargs.get('fiber', self.fiber)
+        nkwargs['rkeys'] = kwargs.get('rkeys', self.required_header_keys)
+        nkwargs['filename'] = kwargs.get('filename', drsfile.filename)
+        nkwargs['path'] = kwargs.get('path', drsfile.path)
+        nkwargs['basename'] = kwargs.get('basename', drsfile.basename)
+        nkwargs['inputdir'] = kwargs.get('inputdir', drsfile.inputdir)
+        nkwargs['directory'] = kwargs.get('directory', drsfile.directory)
+        nkwargs['data'] = kwargs.get('data', drsfile.data)
+        nkwargs['header'] = kwargs.get('header', drsfile.header)
+        nkwargs['comments'] = kwargs.get('comments', drsfile.comments)
+        nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
+        nkwargs['hdict'] = kwargs.get('hdict', drsfile.hdict)
+        nkwargs['output_dict'] = kwargs.get('output_dict', drsfile.output_dict)
+        nkwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         # return new instance of DrsFitsFile
-        return DrsFitsFile(**kwargs)
+        return DrsFitsFile(**nkwargs)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -782,7 +811,8 @@ class DrsFitsFile(DrsInputFile):
         self.comments = OrderedDict(zip(header.keys(), header.comments))
 
         # set the shape
-        self.shape = self.data.shape
+        if self.data is not None:
+            self.shape = self.data.shape
 
     def read_data(self, ext=0):
         func_name = __NAME__ + '.DrsFitsFile.read_data()'
@@ -897,6 +927,18 @@ class DrsFitsFile(DrsInputFile):
                 self.output_dict[key] = str(self.hdict[key][0])
             else:
                 self.output_dict[key] = '--'
+
+    def construct_filename(self, params, **kwargs):
+        # set outfile from self
+        kwargs['outfile'] = self
+        # if we have a function use it
+        if self.outfunc is not None:
+            abspath = self.outfunc(params, **kwargs)
+            self.filename = abspath
+            self.basename = os.path.basename(abspath)
+        # else raise an error
+        else:
+            WLOG(params, 'error', ErrorEntry('00-008-00004'))
 
     # -------------------------------------------------------------------------
     # fits file header methods
@@ -1082,7 +1124,7 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
-    def copy_original_keys(self, drs_file, forbid_keys=True, root=None):
+    def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None):
         """
         Copies keys from hdr dictionary to DrsFile.hdict,
         if forbid_keys is True some keys will not be copied
@@ -1105,13 +1147,19 @@ class DrsFitsFile(DrsInputFile):
 
         :return None:
         """
-        # check that data/header is read
-        drs_file.check_read()
+
         # get pconstant
         pconstant = self.recipe.drs_pconstant
         # get drs_file header/comments
-        fileheader = drs_file.header
-        filecomments = drs_file.comments
+        if drs_file is None:
+            self.check_read()
+            fileheader = self.header
+            filecomments = self.comments
+        else:
+            # check that data/header is read
+            drs_file.check_read()
+            fileheader = drs_file.header
+            filecomments = drs_file.comments
         # loop around keys in header
         for key in list(fileheader.keys()):
             if root is not None:
@@ -1124,7 +1172,7 @@ class DrsFitsFile(DrsInputFile):
                         self.hdict[key] = (fileheader[key], '')
 
             # skip if key is forbidden keys
-            if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEY):
+            if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEYS()):
                 continue
             # skip if key added temporarily in code (denoted by @@@)
             elif '@@@' in key:
@@ -1138,7 +1186,7 @@ class DrsFitsFile(DrsInputFile):
                     self.hdict[key] = (fileheader[key], '')
         return True
 
-    def add_header_key(self, kwstore=None, value=None, key=None,
+    def add_hkey(self, kwstore=None, value=None, key=None,
                        comment=None):
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
@@ -1165,7 +1213,12 @@ class DrsFitsFile(DrsInputFile):
         # deal with no keywordstore
         if (kwstore is None) and (key is None or comment is None):
             self.__error__(ErrorEntry('00-001-00008', args=[func_name]))
-
+        # check for kwstore in params
+        self.check_recipe()
+        params = self.recipe.drs_params
+        # check for kwstore in params
+        if kwstore in params:
+            kwstore = params[kwstore]
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
             key, dvalue, comment = self.get_keywordstore(kwstore, func_name)
@@ -1178,8 +1231,8 @@ class DrsFitsFile(DrsInputFile):
         # add to the hdict dictionary in form (value, comment)
         self.hdict[key] = (value, comment)
 
-    def add_header_keys(self, kwstores=None, values=None, keys=None,
-                        comments=None):
+    def add_hkeys(self, kwstores=None, values=None, keys=None,
+                  comments=None):
         """
         Add a set of new key to DrsFile.hdict from keywordstores. If kwstores
         is None and keys and comments are defined these are used instead.
@@ -1214,7 +1267,7 @@ class DrsFitsFile(DrsInputFile):
                 self.__error__(ErrorEntry('00-001-00010', args=[func_name]))
             # loop around entries
             for k_it, kwstore in enumerate(kwstores):
-                self.add_header_key(kwstore=kwstore, value=values[k_it])
+                self.add_hkey(kwstore=kwstore, value=values[k_it])
         # else we assume keys and comments
         else:
             if not isinstance(keys, list):
@@ -1225,11 +1278,11 @@ class DrsFitsFile(DrsInputFile):
                 self.__error__(ErrorEntry('00-001-00013', args=[func_name]))
             # loop around entries
             for k_it in range(len(keys)):
-                self.add_header_key(key=keys[k_it], value=values[k_it],
-                                    comment=comments[k_it])
+                self.add_hkey(key=keys[k_it], value=values[k_it],
+                              comment=comments[k_it])
 
-    def add_header_key_1d_list(self, kwstore=None, values=None, key=None,
-                               comment=None, dim1name=None):
+    def add_hkey_1d(self, kwstore=None, values=None, key=None,
+                    comment=None, dim1name=None):
         """
         Add a new 1d list to key using the "kwstore"[0] or "key" as prefix
         in form:
@@ -1263,6 +1316,12 @@ class DrsFitsFile(DrsInputFile):
         # deal with no dim1name
         if dim1name is None:
             dim1name = 'dim1'
+        # check for kwstore in params
+        self.check_recipe()
+        params = self.recipe.drs_params
+        # check for kwstore in params
+        if kwstore in params:
+            kwstore = params[kwstore]
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
             key, dvalue, comment = self.get_keywordstore(kwstore, func_name)
@@ -1278,7 +1337,7 @@ class DrsFitsFile(DrsInputFile):
         # loop around the 1D array
         for it in range(dim1):
             # construct the key name
-            keyname = '{0}{1}'.format(key, it)
+            keyname = test_for_formatting(key, it)
             # get the value
             value = values[it]
             # construct the comment name
@@ -1286,8 +1345,8 @@ class DrsFitsFile(DrsInputFile):
             # add to header dictionary
             self.hdict[keyname] = (value, comm)
 
-    def add_header_keys_2d_list(self, kwstore=None, values=None, key=None,
-                                comment=None, dim1name=None, dim2name=None):
+    def add_hkeys_2d(self, kwstore=None, values=None, key=None,
+                     comment=None, dim1name=None, dim2name=None):
         """
         Add a new 2d list to key using the "kwstore"[0] or "key" as prefix
         in form:
@@ -1331,6 +1390,12 @@ class DrsFitsFile(DrsInputFile):
             dim1name = 'dim1'
         if dim2name is None:
             dim2name = 'dim2'
+        # check for kwstore in params
+        self.check_recipe()
+        params = self.recipe.drs_params
+        # check for kwstore in params
+        if kwstore in params:
+            kwstore = params[kwstore]
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
             key, dvalue, comment = self.get_keywordstore(kwstore, func_name)
@@ -1347,7 +1412,7 @@ class DrsFitsFile(DrsInputFile):
         for it in range(dim1):
             for jt in range(dim2):
                 # construct the key name
-                keyname = '{0}{1}'.format(key, it * dim2 + jt)
+                keyname = test_for_formatting(key, it * dim2 + jt)
                 # get the value
                 value = values[it, jt]
                 # construct the comment name
@@ -1355,6 +1420,35 @@ class DrsFitsFile(DrsInputFile):
                 comm = '{0} {1}={2} {3}={4}'.format(*cargs)
                 # add to header dictionary
                 self.hdict[keyname] = (value, comm)
+
+    def add_qckeys(self, qcparams):
+        func_name = __NAME__ + '.add_qc_keys()'
+        # get parameters
+        qc_kws = ['KW_DRS_QC_NAME', 'KW_DRS_QC_VAL', 'KW_DRS_QC_LOGIC',
+                  'KW_DRS_QC_PASS']
+        # check for kwstore in params
+        self.check_recipe()
+        params = self.recipe.drs_params
+        # check lengths are the same
+        lengths = []
+        for qcparam in qcparams:
+            lengths.append(len(qcparam))
+        strlengths = map(lambda x: str(x), lengths)
+        # loop around lengths and test that they are the same
+        for length in lengths:
+            if lengths[0] != length:
+                eargs = [', '.join(strlengths), func_name]
+                WLOG(params, 'error', ErrorEntry('00-011-00001', args=eargs))
+        # loop around values and add to hdict
+        for it in range(lengths[0]):
+            # loop around qc parameters
+            for jt, keystr in enumerate(qc_kws):
+                keyws = params[keystr]
+                # extract keyword, value and comment and put it into hdict
+                key, dvalue, comment = self.get_keywordstore(keyws, func_name)
+                value = qcparams[jt][it]
+                # add to the hdict dictionary in form (value, comment)
+                self.hdict[key.format(it + 1)] = (value, comment)
 
     def get_keywordstore(self, kwstore=None, func_name=None):
         """
@@ -1525,6 +1619,14 @@ def construct_header_error(herrors, params, drs_files, logic):
         emsgs.append(emsg)
     # return error strings
     return emsgs
+
+
+def test_for_formatting(key, number):
+    test_str = key.format(number)
+    if test_str == key:
+        return '{0}{1}'.format(key, number)
+    else:
+        return test_str
 
 
 # =============================================================================
