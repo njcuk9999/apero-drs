@@ -10,10 +10,15 @@ Version 0.0.1
 """
 from __future__ import division
 import traceback
+import numpy as np
+import os
 
 from drsmodule import constants
 from drsmodule import config
 from drsmodule import locale
+from drsmodule.science import preprocessing
+from drsmodule.io import drs_image
+from drsmodule.config.instruments.spirou import file_definitions
 
 # =============================================================================
 # Define variables
@@ -31,6 +36,8 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = config.wlog
 # Get the text types
 ErrorEntry = locale.drs_text.ErrorEntry
+# Define the PP fileset for spirou
+PP_FILE = file_definitions.pp_file
 
 
 # =============================================================================
@@ -40,8 +47,159 @@ def _main(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    for i in range(10):
-        WLOG(params, '', 'Line {0} of code'.format(i+1))
+    # Get hot pixels for corruption check
+    hotpixels = preprocessing.get_hot_pixels(params)
+
+    # ----------------------------------------------------------------------
+    # Loop around input files
+    # ----------------------------------------------------------------------
+    # Number of files
+    num_files = len(params['INPUTS']['FILES'][1])
+    # loop around number of files
+    for it in range(num_files):
+        # print progres
+        if it != 0:
+            WLOG(params, '', params['DRS_HEADER'])
+        eargs = [it + 1, num_files]
+        WLOG(params, '', ErrorEntry('40-010-00010', args=eargs))
+        WLOG(params, '', params['DRS_HEADER'])
+
+        # ge this iterations file
+        file_instance = params['INPUTS']['FILES'][1][it]
+
+        # ------------------------------------------------------------------
+        # identification of file drs type
+        # ------------------------------------------------------------------
+        # identify this iterations file type
+        cond, infile = preprocessing.drs_infile_id(params, file_instance)
+        # ------------------------------------------------------------------
+        # if it wasn't found skip this file, if it was print a message
+        if cond:
+            eargs = [infile.name]
+            WLOG(params, 'info', ErrorEntry('40-010-00001', args=eargs))
+        else:
+            eargs = [infile.filename]
+            WLOG(params, 'info', ErrorEntry('40-010-00002', args=eargs))
+        # get data from file instance
+        image = np.array(infile.data)
+
+        # ------------------------------------------------------------------
+        # correct image
+        # ------------------------------------------------------------------
+        # correct for the top and bottom reference pixels
+        WLOG(params, '', ErrorEntry('40-010-00003'))
+        image = preprocessing.correct_top_bottom(params, image)
+
+        # correct by a median filter from the dark amplifiers
+        WLOG(params, '', ErrorEntry('40-010-00004'))
+        image = preprocessing.median_filter_dark_amps(params, image)
+
+        # correct for the 1/f noise
+        WLOG(params, '', ErrorEntry('40-010-00005'))
+        image = preprocessing.median_one_over_f_noise(params, image)
+
+        # ------------------------------------------------------------------
+        # Quality control to check for corrupt files
+        # ------------------------------------------------------------------
+        # set passed variable and fail message list
+        passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+        # ----------------------------------------------------------------------
+        # get pass condition
+        cout = preprocessing.test_for_corrupt_files(params, image, hotpixels)
+        snr_hotpix, rms_list = cout[0], cout[1:]
+        # ----------------------------------------------------------------------
+        # print out SNR hotpix value
+        WLOG(params, '', ErrorEntry('40-010-00006', args=[snr_hotpix]))
+        # get snr_threshold
+        snr_threshold = params['PP_CORRUPT_SNR_HOTPIX']
+        #deal with printing corruption message
+        if snr_hotpix < snr_threshold:
+            # add failed message to fail message list
+            fargs = [snr_hotpix, snr_threshold, infile.filename]
+            fail_msg.append(ErrorEntry('40-010-00007', args=fargs))
+            passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(snr_hotpix)
+        qc_names.append('snr_hotpix')
+        qc_logic.append('snr_hotpix < {0:.5e}'.format(snr_threshold))
+        # ----------------------------------------------------------------------
+        # get rms threshold
+        rms_threshold = params['PP_CORRUPT_RMS_THRES']
+        # check
+        if np.max(rms_list) > rms_threshold:
+            # add failed message to fail message list
+            fargs = [np.max(rms_list), rms_threshold, infile.filename]
+            fail_msg.append(ErrorEntry('40-010-00008', args=fargs))
+            passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(np.max(rms_list))
+        qc_names.append('max(rms_list)')
+        qc_logic.append('max(rms_list) > {0:.4e}'.format(rms_threshold))
+        # ----------------------------------------------------------------------
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(params, 'info', ErrorEntry('40-005-00001'))
+            params['QC'] = 1
+            params.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                WLOG(params, 'warning', ErrorEntry('40-005-00001') + farg)
+            params['QC'] = 0
+            params.set_source('QC', __NAME__ + '/main()')
+            continue
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
+        # ------------------------------------------------------------------
+        # rotate image
+        # ------------------------------------------------------------------
+        # rotation to match HARPS orientation (expected by DRS)
+        image = drs_image.rotate_image(image, params['RAW_TO_PP_ROTATION'])
+
+        # ------------------------------------------------------------------
+        # Save rotated image
+        # ------------------------------------------------------------------
+        # get the output drs file
+        found, outfile = preprocessing.drs_outfile_id(params, recipe, PP_FILE)
+        # construct out filename
+        outfile.construct_filename(params, infile=infile)
+        # if we didn't find the output file we should log this error
+        if not found:
+            eargs = [outfile.name]
+            WLOG(params, 'error', ErrorEntry('00-010-00003', args=eargs))
+        # ------------------------------------------------------------------
+        # define header keys for output file
+        # ------------------------------------------------------------------
+        # copy keys from input file
+        outfile.copy_original_keys(infile)
+        # add version
+        outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+        # add process id
+        outfile.add_hkey('KW_PID', value=params['PID'])
+        # add input filename
+        outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename])
+        # add qc parameters
+        outfile.add_qckeys(qc_params)
+        # ------------------------------------------------------------------
+        # copy data
+        # ------------------------------------------------------------------
+        outfile.data = image
+        # ------------------------------------------------------------------
+        # log that we are saving rotated image
+        wargs = [outfile.filename]
+        WLOG(params, '', ErrorEntry('40-010-00009', args=wargs))
+        # ------------------------------------------------------------------
+        # write image to file
+        outfile.write()
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
@@ -77,19 +235,26 @@ def main(directory=None, files=None, **kwargs):
     recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    try:
+    if params['DRS_DEBUG'] > 0:
         llmain = _main(recipe, params)
+        llmain['e'], llmain['tb'] = None, None
         success = True
-    except Exception as e:
-        string_trackback = traceback.format_exc()
-        success = False
-        emsg = ErrorEntry('01-010-00001', args=[type(e)])
-        emsg += '\n\n' + ErrorEntry(string_trackback)
-        WLOG(params, 'error', emsg, raise_exception=False)
-        llmain = dict()
-    except SystemExit as e:
-        success = False
-        llmain = dict()
+    else:
+        try:
+            llmain = _main(recipe, params)
+            llmain['e'], llmain['tb'] = None, None
+            success = True
+        except Exception as e:
+            string_trackback = traceback.format_exc()
+            success = False
+            emsg = ErrorEntry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + ErrorEntry(string_trackback)
+            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+            llmain = dict(e=e, tb=string_trackback)
+        except SystemExit as e:
+            string_trackback = traceback.format_exc()
+            success = False
+            llmain = dict(e=e, tb=string_trackback)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
