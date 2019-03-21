@@ -266,6 +266,20 @@ class PseudoConstants:
                         graph='LOGGER_ALL', debug='LOGGER_DEBUG')
         return storekey
 
+    # noinspection PyPep8Naming
+    def LOG_CAUGHT_WARNINGS(self):
+        """
+        Defines a master switch, whether to report warnings that are caught in
+
+        >> with warnings.catch_warnings(record=True) as w:
+        >>     code_that_may_gen_warnings
+
+        :return warn: bool, if True reports warnings, if False does not
+        """
+        # Define whether we warn
+        warn = True
+        return warn
+
     def LOG_TRIG_KEYS(self):
         """
         The log trigger key characters to use in log. Keys must be the same as
