@@ -30,6 +30,13 @@ KW_ACQTIME.set(key='MJDATE')
 KW_ACQTIME_FMT = KW_ACQTIME_FMT.copy(__NAME__)
 KW_ACQTIME_FMT.value = 'mjd'
 
+# define the observation date HEADER key
+KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
+KW_DATE_OBS.set(key='DATE-OBS')
+# define the observation time HEADER key
+KW_UTC_OBS = KW_UTC_OBS.copy('__NAME__')
+KW_UTC_OBS.set(key='UTC-OBS')
+
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
@@ -115,6 +122,10 @@ KW_VERSION.set(key='VERSION', comment='DRS version')
 KW_PPVERSION = KW_PPVERSION.copy(__NAME__)
 KW_PPVERSION.set(key='PVERSION', comment='DRS Pre-Processing version')
 
+# DRS process ID
+KW_PID = KW_PID.copy(__NAME__)
+KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.')
+
 # root keys (for use below and in finding keys later)
 root_loc = 'LO'
 root_flat = 'FF'
@@ -124,5 +135,36 @@ root_hc = 'LMP'
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
 KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
 
+# -----------------------------------------------------------------------------
+# Define DRS input keywords
+# -----------------------------------------------------------------------------
+# input files
+KW_INFILE1 = KW_INFILE1.copy(__NAME__)
+KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE2 = KW_INFILE2.copy(__NAME__)
+KW_INFILE2.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE3 = KW_INFILE3.copy(__NAME__)
+KW_INFILE3.set(key='INF1{0:03d}', comment='Input file used to create output')
+
+# -----------------------------------------------------------------------------
+# Define DRS outputs keywords
+# -----------------------------------------------------------------------------
+KW_OUTPUT = KW_OUTPUT.copy(__NAME__)
+KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
+KW_EXT_TYPE = KW_EXT_TYPE.copy(__NAME__)
+KW_EXT_TYPE.set(key='DRS_EOU', comment='DRS Extraction input DPRTYPE')
 
 
+# -----------------------------------------------------------------------------
+# Define qc variables
+# -----------------------------------------------------------------------------
+KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
+KW_DRS_QC.set(key='QCC', comment='All quality control passed')
+KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
+KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='All quality control passed')
+KW_DRS_QC_NAME = KW_DRS_QC_NAME.copy(__NAME__)
+KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='All quality control passed')
+KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
+KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='All quality control passed')
+KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
+KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='All quality control passed')

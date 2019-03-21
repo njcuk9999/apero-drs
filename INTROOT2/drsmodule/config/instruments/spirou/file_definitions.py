@@ -15,7 +15,7 @@ Created on 2018-10-31 at 18:06
 """
 from drsmodule import constants
 from drsmodule.config import drs_file
-
+from . import output_filenames as out
 
 # =============================================================================
 # Define variables
@@ -48,103 +48,103 @@ raw_file = drs_finput('DRS_RAW', ext='.fits')
 # raw dark files
 raw_dark_dark = drs_finput('DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                            ext='d.fits')
-raw_files.append(raw_dark_dark)
+raw_file.addset(raw_dark_dark)
 
 # -----------------------------------------------------------------------------
 # raw flat files
 raw_dark_flat = drs_finput('DARK_FLAT', KW_CCAS='pos_pk', KW_CREF='pos_wl',
                            ext='f.fits')
-raw_files.append(raw_dark_flat)
+raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('FLAT_DARK', KW_CCAS='pos_wl', KW_CREF='pos_pk',
                            ext='f.fits')
-raw_files.append(raw_flat_dark)
+raw_file.addset(raw_flat_dark)
 
 raw_flat_flat = drs_finput('FLAT_FLAT', KW_CCAS='pos_wl', KW_CREF='pos_wl',
                            ext='f.fits')
-raw_files.append(raw_flat_flat)
+raw_file.addset(raw_flat_flat)
 
 raw_flat_fp = drs_finput('FLAT_FP', KW_CCAS='pos_wl', KW_CREF='pos_fp',
                          ext='f.fits')
-raw_files.append(raw_flat_fp)
+raw_file.addset(raw_flat_fp)
 
 # -----------------------------------------------------------------------------
 # raw align files
 raw_dark_fp = drs_finput('DARK_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
                          ext='a.fits')
-raw_files.append(raw_dark_fp)
+raw_file.addset(raw_dark_fp)
 
 raw_fp_dark = drs_finput('FP_DARK', KW_CCAS='pos_fp', KW_CREF='pos_pk',
                          ext='a.fits')
-raw_files.append(raw_fp_dark)
+raw_file.addset(raw_fp_dark)
 
 raw_fp_flat = drs_finput('FP_FLAT', KW_CCAS='pos_fp', KW_CREF='pos_wl',
                          ext='a.fits')
-raw_files.append(raw_fp_flat)
+raw_file.addset(raw_fp_flat)
 
 raw_fp_fp = drs_finput('FP_FP', KW_CCAS='pos_fp', KW_CREF='pos_fp',
                        ext='a.fits')
-raw_files.append(raw_fp_fp)
+raw_file.addset(raw_fp_fp)
 
 # -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                           ext='o.fits')
-raw_files.append(raw_obj_dark)
+raw_file.addset(raw_obj_dark)
 
 raw_obj_fp = drs_finput('OBJ_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
                         ext='o.fits')
-raw_files.append(raw_obj_fp)
+raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                          ext='o.fits')
-raw_files.append(raw_obj_hc1)
+raw_file.addset(raw_obj_hc1)
 
 raw_obj_hc2 = drs_finput('OBJ_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                          ext='o.fits')
-raw_files.append(raw_obj_hc2)
+raw_file.addset(raw_obj_hc2)
 
 # -----------------------------------------------------------------------------
 # raw comparison files
 raw_dark_hc1 = drs_finput('DARK_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                           ext='c.fits')
-raw_files.append(raw_dark_hc1)
+raw_file.addset(raw_dark_hc1)
 
 raw_dark_hc2 = drs_finput('DARK_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                           ext='c.fits')
-raw_files.append(raw_dark_hc2)
+raw_file.addset(raw_dark_hc2)
 
 raw_fp_hc1 = drs_finput('FP_HCONE', KW_CCAS='pos_fp', KW_CREF='pos_hc1',
                         ext='c.fits')
-raw_files.append(raw_fp_hc1)
+raw_file.addset(raw_fp_hc1)
 
 raw_fp_hc2 = drs_finput('FP_HCTWO', KW_CCAS='pos_fp', KW_CREF='pos_hc2',
                         ext='c.fits')
-raw_files.append(raw_fp_hc2)
+raw_file.addset(raw_fp_hc2)
 
 raw_hc1_fp = drs_finput('HCONE_FP', KW_CCAS='pos_hc1', KW_CREF='pos_fp',
                         ext='c.fits')
-raw_files.append(raw_hc1_fp)
+raw_file.addset(raw_hc1_fp)
 
 raw_hc2_fp = drs_finput('HCTWO_FP', KW_CCAS='pos_hc2', KW_CREF='pos_fp',
                         ext='c.fits')
-raw_files.append(raw_hc2_fp)
+raw_file.addset(raw_hc2_fp)
 
 raw_hc1_hc1 = drs_finput('HCONE_HCONE', KW_CCAS='pos_hc1', KW_CREF='pos_hc1',
                          ext='c.fits')
-raw_files.append(raw_hc1_hc1)
+raw_file.addset(raw_hc1_hc1)
 
 raw_hc2_hc2 = drs_finput('HCTWO_HCTWO', KW_CCAS='pos_hc2', KW_CREF='pos_hc2',
                          ext='c.fits')
-raw_files.append(raw_hc2_hc2)
+raw_file.addset(raw_hc2_hc2)
 
 raw_hc1_dark = drs_finput('HCONE_DARK', KW_CCAS='pos_hc1', KW_CREF='pos_pk',
                           ext='c.fits')
-raw_files.append(raw_hc1_dark)
+raw_file.addset(raw_hc1_dark)
 
 raw_hc2_dark = drs_finput('HCTWO_DARK', KW_CCAS='pos_hc2', KW_CREF='pos_pk',
                           ext='c.fits')
-raw_files.append(raw_hc2_dark)
+raw_file.addset(raw_hc2_dark)
 
 
 # =============================================================================
@@ -154,40 +154,86 @@ raw_files.append(raw_hc2_dark)
 pp_file = drs_finput('DRS_PP', ext='pp.fits')
 # -----------------------------------------------------------------------------
 # dark
-pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK', ext='pp.fits')
+pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK', ext='_pp.fits',
+                          inext='.fits', outfunc=out.pp_file)
+pp_file.addset(pp_dark_dark)
 # -----------------------------------------------------------------------------
 # flat
-pp_flat_dark = drs_finput('FLAT_DARK', KW_DPRTYPE='FLAT_DARK', ext='pp.fits')
-pp_dark_flat = drs_finput('DARK_FLAT', KW_DPRTYPE='DARK_FLAT', ext='pp.fits')
-pp_flat_flat = drs_finput('FLAT_FLAT', KW_DPRTYPE='FLAT_FLAT', ext='pp.fits')
-pp_flat_fp = drs_finput('FLAT_FP', KW_DPRTYPE='FLAT_FP', ext='pp.fits')
+pp_flat_dark = drs_finput('FLAT_DARK', KW_DPRTYPE='FLAT_DARK', ext='_pp.fits',
+                          inext='.fits', outfunc=out.pp_file)
+pp_file.addset(pp_flat_dark)
+
+pp_dark_flat = drs_finput('DARK_FLAT', KW_DPRTYPE='DARK_FLAT', ext='_pp.fits',
+                          inext='.fits', outfunc=out.pp_file)
+pp_file.addset(pp_dark_flat)
+
+pp_flat_flat = drs_finput('FLAT_FLAT', KW_DPRTYPE='FLAT_FLAT', ext='_pp.fits',
+                          inext='.fits', outfunc=out.pp_file)
+pp_file.addset(pp_flat_flat)
+
+pp_flat_fp = drs_finput('FLAT_FP', KW_DPRTYPE='FLAT_FP', ext='_pp.fits',
+                          inext='.fits', outfunc=out.pp_file)
+pp_file.addset(pp_flat_fp)
 # -----------------------------------------------------------------------------
 # align
-pp_dark_fp = drs_finput('DARK_FP', KW_DPRTYPE='DARK_FP', ext='pp.fits')
-pp_fp_dark = drs_finput('FP_DARK', KW_DPRTYPE='FP_DARK', ext='pp.fits')
-pp_fp_flat = drs_finput('FP_FLAT', KW_DPRTYPE='FP_FLAT', ext='pp.fits')
-pp_fp_fp = drs_finput('FP_FP', KW_DPRTYPE='FP_FP', ext='pp.fits')
+pp_dark_fp = drs_finput('DARK_FP', KW_DPRTYPE='DARK_FP', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_dark_fp)
+pp_fp_dark = drs_finput('FP_DARK', KW_DPRTYPE='FP_DARK', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_fp_dark)
+pp_fp_flat = drs_finput('FP_FLAT', KW_DPRTYPE='FP_FLAT', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_fp_flat)
+pp_fp_fp = drs_finput('FP_FP', KW_DPRTYPE='FP_FP', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_fp_fp)
 # -----------------------------------------------------------------------------
 #  object
-pp_obj_dark = drs_finput('OBJ_DARK', KW_DPRTYPE='OBJ_DARK', ext='pp.fits')
-pp_obj_fp = drs_finput('OBJ_FP', KW_DPRTYPE='OBJ_FP', ext='pp.fits')
-pp_obj_hc1 = drs_finput('OBJ_HC1', KW_DPRTYPE='OBJ_HCONE', ext='pp.fits')
-pp_obj_hc2 = drs_finput('OBJ_HC2', KW_DPRTYPE='OBJ_HCTWO', ext='pp.fits')
+pp_obj_dark = drs_finput('OBJ_DARK', KW_DPRTYPE='OBJ_DARK', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_obj_dark)
+pp_obj_fp = drs_finput('OBJ_FP', KW_DPRTYPE='OBJ_FP', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_obj_fp)
+pp_obj_hc1 = drs_finput('OBJ_HC1', KW_DPRTYPE='OBJ_HCONE', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_obj_hc1)
+pp_obj_hc2 = drs_finput('OBJ_HC2', KW_DPRTYPE='OBJ_HCTWO', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_obj_hc2)
 # -----------------------------------------------------------------------------
 #  comparison
-pp_dark_hc1 = drs_finput('DARK_HCONE', KW_DPRTYPE='DARK_HCONE', ext='pp.fits')
-pp_dark_hc2 = drs_finput('DARK_HCTW0', KW_DPRTYPE='DARK_HCTW0', ext='pp.fits')
-pp_fp_hc1 = drs_finput('FP_HCONE', KW_DPRTYPE='FP_HCONE', ext='pp.fits')
-pp_fp_hc2 = drs_finput('FP_HCTWO', KW_DPRTYPE='FP_HCTWO', ext='pp.fits')
-pp_hc1_fp = drs_finput('HCONE_FP', KW_DPRTYPE='HCONE_FP', ext='pp.fits')
-pp_hc2_fp = drs_finput('HCTWO_FP', KW_DPRTYPE='HCTWO_FP', ext='pp.fits')
-pp_hc1_hc1 = drs_finput('HCONE_HCONE', KW_DPRTYPE='HCONE_HCONE', ext='pp.fits')
-pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', KW_DPRTYPE='HCTWO_HCTWO', ext='pp.fits')
-pp_hc1_dark = drs_finput('HCONE_DARK', KW_DPRTYPE='HCONE_DARK', ext='pp.fits')
-pp_hc2_dark = drs_finput('HCTWO_DARK', KW_DPRTYPE='HCTWO_DARK', ext='pp.fits')
-
-
-
+pp_dark_hc1 = drs_finput('DARK_HCONE', KW_DPRTYPE='DARK_HCONE', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_dark_hc1)
+pp_dark_hc2 = drs_finput('DARK_HCTW0', KW_DPRTYPE='DARK_HCTW0', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_dark_hc2)
+pp_fp_hc1 = drs_finput('FP_HCONE', KW_DPRTYPE='FP_HCONE', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_fp_hc1)
+pp_fp_hc2 = drs_finput('FP_HCTWO', KW_DPRTYPE='FP_HCTWO', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_fp_hc2)
+pp_hc1_fp = drs_finput('HCONE_FP', KW_DPRTYPE='HCONE_FP', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_hc1_fp)
+pp_hc2_fp = drs_finput('HCTWO_FP', KW_DPRTYPE='HCTWO_FP', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_hc2_fp)
+pp_hc1_hc1 = drs_finput('HCONE_HCONE', KW_DPRTYPE='HCONE_HCONE', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_hc1_hc1)
+pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', KW_DPRTYPE='HCTWO_HCTWO', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_hc2_hc2)
+pp_hc1_dark = drs_finput('HCONE_DARK', KW_DPRTYPE='HCONE_DARK', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_hc1_dark)
+pp_hc2_dark = drs_finput('HCTWO_DARK', KW_DPRTYPE='HCTWO_DARK', ext='_pp.fits',
+                          inext='.fits')
+pp_file.addset(pp_hc2_dark)
 
 
 # =============================================================================
