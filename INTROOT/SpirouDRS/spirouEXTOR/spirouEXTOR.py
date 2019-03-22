@@ -361,7 +361,10 @@ def debananafication(p, image=None, badpix=None, dx=None, kind='full',
     # distortion
     image0 = np.array(image)
     image1 = np.array(image)
-    nbo, nbc = pos_a.shape
+    if dyfix:
+        nbo, nbc = pos_a.shape
+    else:
+        nbo, nbc = 0, 0
     dim1, dim2 = image.shape
     # x indices in the initial image
     xpix = np.arange(dim2)
