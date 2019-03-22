@@ -225,13 +225,15 @@ class _CheckDirectory(argparse.Action):
         argname = self.dest
         # get the params from recipe
         params = self.recipe.drs_params
+        errortext = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
         # debug checking output
         if params['DRS_DEBUG'] > 0:
             print('')
         WLOG(params, 'debug', ErrorEntry('90-001-00018', args=[argname]))
         # noinspection PyProtectedMember
-        out = self.recipe._valid_directory(argname, value, return_error=True)
+        out = self.recipe.valid_directory(argname, value, return_error=True)
         cond, directory, emsgs = out
+        # if we have found directory return directory
         if cond:
             return directory
         else:
@@ -241,8 +243,14 @@ class _CheckDirectory(argparse.Action):
             # get listing message
             lmsgs = _print_list_msg(self.parser, self.recipe, input_dir,
                                     dircond=True, return_string=True)
+            # combine emsgs and lmsgs
+            wmsgs = []
+            for it in range(len(emsgs.keys)):
+                wmsgs += [errortext[emsgs.keys[it]].format(*emsgs.args[it])]
+            for lmsg in lmsgs:
+                wmsgs += ['\n' + lmsg]
             # log messages
-            WLOG(params, 'error', emsgs + lmsgs)
+            WLOG(params, 'error', wmsgs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters

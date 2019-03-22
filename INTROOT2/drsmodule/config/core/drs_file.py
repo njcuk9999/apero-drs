@@ -900,6 +900,8 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
+        # add output to outfiles
+        params['OUTFILES'][self.basename] = self.output_dict
 
     def write_multi(self):
         pass

@@ -23,7 +23,8 @@ from drsmodule import plotting
 from drsmodule.locale import drs_text
 from drsmodule.locale import drs_exceptions
 from drsmodule.io import drs_table
-from drsmodule.io import drs_files
+from drsmodule.io import drs_path
+from drsmodule.io import drs_lock
 from . import drs_log
 from . import drs_recipe
 from . import drs_file
@@ -152,11 +153,13 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     params['OUTPATH'] = recipe.get_output_dir()
     if 'DIRECTORY' in params['INPUTS']:
         gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
-        params['NIGHTNAME'] = drs_files.get_uncommon_path(*gargs)
+        params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
     else:
         params['NIGHTNAME'] = ''
-
     params.set_sources(['INPATH', 'OUTPATH', 'NIGHTNAME'], func_name)
+    # set outfiles storage
+    params['OUTFILES'] = OrderedDict()
+    params.set_source('OUTFILES', func_name)
     # -------------------------------------------------------------------------
     _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
     _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
@@ -191,7 +194,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
     return params
 
 
-def main_end_script(p, success, outputs='reduced'):
+def main_end_script(params, success, outputs='reduced', end=True):
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -216,32 +219,52 @@ def main_end_script(p, success, outputs='reduced'):
     :rtype: ParamDict
     """
     # func_name = __NAME__ + '.main_end_script()'
-    # -------------------------------------------------------------------------
-    if outputs == 'pp':
-        # index outputs to pp dir
-        _index_pp(p)
-    # -------------------------------------------------------------------------
-    elif outputs == 'reduced':
-        # index outputs to reduced dir
-        _index_outputs(p)
+
+    pconstant = constants.pload(params['INSTRUMENT'])
+    # construct a lock file name
+    opath = pconstant.INDEX_LOCK_FILENAME(params)
+    # index if we have outputs
+    if outputs is not None:
+        # get and check for file lock file
+        lock, lock_file = drs_lock.check_fits_lock_file(params, opath)
+        # Must now deal with errors and make sure we close the lock file
+        try:
+            if outputs == 'pp':
+                # index outputs to pp dir
+                _index_pp(params)
+            elif outputs == 'reduced':
+                # index outputs to reduced dir
+                _index_outputs(params)
+            # close lock file
+            drs_lock.close_fits_lock_file(params, lock, lock_file, opath)
+        # Must close lock file
+        except SystemExit as e:
+            drs_lock.close_fits_lock_file(params, lock, lock_file, opath)
+            raise e
+        except Exception as e:
+            drs_lock.close_fits_lock_file(params, lock, lock_file, opath)
+            raise e
     # -------------------------------------------------------------------------
     # log end message
-    if success:
-        WLOG(p, 'info', ErrorEntry('40-003-00001', args=[p['RECIPE']]))
-    else:
-        WLOG(p, 'warning', ErrorEntry('40-003-00005', args=[p['RECIPE']]))
-    # -------------------------------------------------------------------------
-    # add the logger messsages to p
-    p = WLOG.output_param_dict(p)
-    # -------------------------------------------------------------------------
-    # finally clear out the log in WLOG
-    WLOG.clean_log(p['PID'])
-    # -------------------------------------------------------------------------
-    # deal with clearing warnings
-    drs_exceptions.clear_warnings()
+    if end:
+        if success:
+            iargs = [params['RECIPE']]
+            WLOG(params, 'info', ErrorEntry('40-003-00001', args=iargs))
+        else:
+            wargs = [params['RECIPE']]
+            WLOG(params, 'warning', ErrorEntry('40-003-00005', args=wargs))
+        # ---------------------------------------------------------------------
+        # add the logger messages to p
+        params = WLOG.output_param_dict(params)
+        # ---------------------------------------------------------------------
+        # finally clear out the log in WLOG
+        WLOG.clean_log(params['PID'])
+        # ---------------------------------------------------------------------
+        # deal with clearing warnings
+        drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
     # return p
-    return p
+    return params
 
 
 def get_local_variables(*args):
@@ -647,41 +670,41 @@ def _display_run_time_arguments(recipe, fkwargs=None):
 # =============================================================================
 # Indexing functions
 # =============================================================================
-def _index_pp(p):
+def _index_pp(params):
     """
     Index the pre-processed files (into p["TMP"] directory)
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
 
-    :type p: ParamDict
+    :type params: ParamDict
 
     :returns: None
     """
     # get pconstant from p
-    pconstant = constants.pload(p['INSTRUMENT'])
+    pconstant = constants.pload(params['INSTRUMENT'])
     # get index filename
     filename = pconstant.INDEX_OUTPUT_FILENAME()
     # get night name
-    path = p['TMP_DIR']
+    path = os.path.join(params['OUTPATH'], params['NIGHTNAME'])
     # get absolute path
     abspath = os.path.join(path, filename)
     # get the outputs
-    outputs = p['OUTPUTS']
+    outputs = params['OUTFILES']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(p, '', ErrorEntry('40-004-00001'))
+        WLOG(params, '', ErrorEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.RAW_OUTPUT_COLUMNS(p)
+    icolumns = pconstant.RAW_OUTPUT_COLUMNS(params)
     # ------------------------------------------------------------------------
     # index files
-    istore = _indexing(p, outputs, icolumns, abspath)
+    istore = _indexing(params, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    _save_index_file(p, istore, abspath)
+    _save_index_file(params, istore, abspath)
 
 
-def _index_outputs(p):
+def _index_outputs(params):
     """
     Index the reduced files (into p["REDUCED_DIR"] directory)
 
@@ -694,30 +717,30 @@ def _index_outputs(p):
     :returns: None
     """
     # get pconstant from p
-    pconstant = constants.pload(p['INSTRUMENT'])
+    pconstant = constants.pload(params['INSTRUMENT'])
     # get index filename
     filename = pconstant.INDEX_OUTPUT_FILENAME()
     # get night name
-    path = p['REDUCED_DIR']
+    path = os.path.join(params['OUTPATH'], params['NIGHTNAME'])
     # get absolute path
     abspath = os.path.join(path, filename)
     # get the outputs
-    outputs = p['OUTPUTS']
+    outputs = params['OUTFILES']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(p, '', ErrorEntry('40-004-00001'))
+        WLOG(params, '', ErrorEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.REDUC_OUTPUT_COLUMNS(p)
+    icolumns = pconstant.REDUC_OUTPUT_COLUMNS(params)
     # ------------------------------------------------------------------------
     # index files
-    istore = _indexing(p, outputs, icolumns, abspath)
+    istore = _indexing(params, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    _save_index_file(p, istore, abspath)
+    _save_index_file(params, istore, abspath)
 
 
-def _indexing(p, outputs, icolumns, abspath):
+def _indexing(params, outputs, icolumns, abspath):
     """
     Adds the "outputs" to index file at "abspath"
 
@@ -742,7 +765,7 @@ def _indexing(p, outputs, icolumns, abspath):
     """
     # ------------------------------------------------------------------------
     # log indexing
-    WLOG(p, '', ErrorEntry('40-004-00002', args=abspath))
+    WLOG(params, '', ErrorEntry('40-004-00002', args=[abspath]))
     # construct a dictionary from outputs and icolumns
     istore = OrderedDict()
     # get output path
@@ -775,13 +798,13 @@ def _indexing(p, outputs, icolumns, abspath):
     # deal with file existing (add existing rows)
     if os.path.exists(abspath):
         # get the current index fits file
-        idict = drs_table.read_fits_table(p, abspath, return_dict=True)
+        idict = drs_table.read_fits_table(params, abspath, return_dict=True)
         # check that all keys are in idict
         for key in icolumns:
             if key not in list(idict.keys()):
                 wargs = [key, 'off_listing recipe']
                 wmsg = ErrorEntry('10-004-00001', args=wargs)
-                WLOG(p, 'warning', wmsg)
+                WLOG(params, 'warning', wmsg)
         # loop around rows in idict
         for row in range(len(idict['FILENAME'])):
             # skip if we already have this file
