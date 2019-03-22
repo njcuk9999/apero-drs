@@ -16,7 +16,7 @@ from scipy import ndimage
 from drsmodule import constants
 from drsmodule import config
 from drsmodule import locale
-from drsmodule.io import drs_files
+from drsmodule.io import drs_path
 from drsmodule.io import drs_fits
 
 # =============================================================================
@@ -108,7 +108,7 @@ def get_full_flat(params):
     # get the engineering data path from parameters
     relfolder = params['DATA_ENGINEERING']
     # construct the data directory
-    datadir = drs_files.get_relative_folder(params, package, relfolder)
+    datadir = drs_path.get_relative_folder(params, package, relfolder)
     # construct the absolute file path
     absfilename = os.path.join(datadir, filename)
     # check that filepath exists
