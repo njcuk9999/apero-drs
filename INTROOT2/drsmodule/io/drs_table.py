@@ -421,7 +421,7 @@ def read_fits_table(p, filename, return_dict=False):
         astropy_dict = OrderedDict()
         # copy the columns (numpy arrays) as the values to column name keys
         for col in astropy_table.colnames:
-            astropy_dict[col] = np.array(astropy_table[col])
+            astropy_dict[col] = np.array(astropy_table[col], dtype=str)
         # return dict
         return astropy_dict
     # return the astropy table
