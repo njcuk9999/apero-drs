@@ -55,6 +55,10 @@ def _main(recipe, params):
     # ----------------------------------------------------------------------
     # Number of files
     num_files = len(params['INPUTS']['FILES'][1])
+    # storage for output files
+    params['OUTPUT_NAMES'] = []
+    params.set_source('OUTPUT_NAMES', __NAME__ + '._main()')
+
     # loop around number of files
     for it in range(num_files):
         # print progres
@@ -199,6 +203,12 @@ def _main(recipe, params):
         # ------------------------------------------------------------------
         # write image to file
         outfile.write()
+        # index this file
+        params = config.end_main(params, success=True, outputs='pp', end=False)
+        # ------------------------------------------------------------------
+        # append to output storage in p
+        # ------------------------------------------------------------------
+        params['OUTPUT_NAMES'].append(outfile.filename)
 
     # ----------------------------------------------------------------------
     # End of main code
