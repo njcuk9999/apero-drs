@@ -14,7 +14,8 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
            'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
            'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
-           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT']
+           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
+           'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT']
 
 # set name
 __NAME__ = 'drsmodule.constants.default.default_config'
@@ -147,6 +148,19 @@ DRS_INDEX_FILE = Const('DRS_INDEX_FILE', dtype=str, value='index.fits',
 # Define the filename column of the index file
 DRS_INDEX_FILENAME = Const('DRS_INDEX_FILENAME', dtype=str, value='FILENAME',
                            source=__NAME__)
+
+
+# =============================================================================
+# DATABASE SETTINGS
+# =============================================================================
+#   the maximum wait time for calibration database file to be in use (locked)
+#       after which an error is raised (in seconds)
+DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,
+                    source=__NAME__)
+
+# file max wait
+FITSOPEN_MAX_WAIT = Const('FITSOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
+                          source=__NAME__)
 
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
