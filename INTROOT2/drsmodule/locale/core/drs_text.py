@@ -131,6 +131,9 @@ class Entry:
         self.name = 'Entry'
         self.short = ''
         self.current = 0
+        # make args a list if it is a string
+        if type(args) is str:
+            args = [args]
         # make keys a list
         if type(key) is list:
             self.keys = key
