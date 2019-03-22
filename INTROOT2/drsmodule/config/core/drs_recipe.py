@@ -709,7 +709,7 @@ class DrsRecipe(object):
         usage = '{0}.py {1} [{2}]'.format(*uargs)
         return usage
 
-    def _valid_directory(self, argname, directory, return_error=False):
+    def valid_directory(self, argname, directory, return_error=False):
         # get drs parameters
         params = self.drs_params
         # ---------------------------------------------------------------------
@@ -718,7 +718,7 @@ class DrsRecipe(object):
             eargs = [argname, directory, type(directory)]
             emsg = ErrorEntry('09-001-00003', args=eargs)
             if return_error:
-                return False, [emsg]
+                return False, emsg
             else:
                 return False
         # ---------------------------------------------------------------------
@@ -728,7 +728,7 @@ class DrsRecipe(object):
             dmsg += ErrorEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
-                return True, directory, []
+                return True, directory, None
             else:
                 return False, directory
         # ---------------------------------------------------------------------
@@ -740,15 +740,15 @@ class DrsRecipe(object):
             dmsg += ErrorEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
-                return True, test_path, []
+                return True, test_path, None
             else:
                 return True, test_path
         # ---------------------------------------------------------------------
         # else deal with errors
-        eargs = [directory, test_path]
+        eargs = [argname, directory, test_path]
         emsg = ErrorEntry('09-001-00004', args=eargs)
 
-        return False, None, [emsg]
+        return False, None, emsg
 
     def _valid_files(self, argname, files, directory=None, return_error=False,
                      alltypelist=None, allfilelist=None):
