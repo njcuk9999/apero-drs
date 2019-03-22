@@ -43,6 +43,8 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+# debug (skip ic_ff_extract_type = ic_extract_type)
+DEBUG = True
 
 
 # =============================================================================
@@ -215,13 +217,42 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
     # ----------------------------------------------------------------------
-    # Fiber loop
+    # Get all fiber data (for all fibers)
     # ----------------------------------------------------------------------
     # TODO: This is temp solution for options 5a and 5b
-    if p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
-        loc_fibers = spirouLOCOR.spirouLOCOR.extract_5_fiber_get(p, hdr)
+    loc_fibers = spirouLOCOR.GetFiberData(p, hdr)
+
+    # ------------------------------------------------------------------
+    # Deal with debananafication
+    # ------------------------------------------------------------------
+    # if mode 4a or 4b we need to straighten in x only
+    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        # log progress
+        WLOG(p, '', 'Debananafying (straightening) image')
+        # get the shape map
+        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+        # debananafy data
+        bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
+        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # if mode 5a or 5b we need to straighten in x and y using the
+    #     polynomial fits for location
+    elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+        # log progress
+        WLOG(p, '', 'Debananafying (straightening) image')
+        # get the shape map
+        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+        # get the bad pixel map
+        p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True,
+                                                 quiet=True)
+        # debananafy data
+        bkwargs = dict(image=np.array(data1), kind='full', badpix=badpix,
+                       dx=shapemap, pos_a=loc_fibers['A']['ACC'],
+                       pos_b=loc_fibers['B']['ACC'],
+                       pos_c=loc_fibers['C']['ACC'])
+        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # in any other mode we do not straighten
     else:
-        loc_fibers = dict()
+        data2 = np.array(data1)
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -242,16 +273,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wave_fiber = 'AB'
         else:
             wave_fiber = fiber
-
         # get wave image
-        wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                           return_filename=True,
-                                           return_header=True, fiber=wave_fiber)
+        wkwargs = dict(hdr=hdr, return_wavemap=True, return_filename=True,
+                       return_header=True, fiber=wave_fiber)
+        wout = spirouImage.GetWaveSolution(p, **wkwargs)
         loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout[:3]
         loc['WAVEHDR'], loc['WSOURCE'] = wout[3:]
         source_names = ['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR']
         loc.set_sources(source_names, wsource)
-
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
         loc.set_source('WAVE_ACQTIMES', __NAME__ + '.main()')
@@ -270,7 +299,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
         # get all values in flat that are zero to 1
         loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
-
         # get flat extraction mode
         if p['KW_E2DS_EXTM'][0] in flathdr:
             flat_ext_mode = flathdr[p['KW_E2DS_EXTM'][0]]
@@ -282,10 +310,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # get extraction method and function
         extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
-        # compare flat extraction mode to extraction mode
-        spirouEXTOR.CompareExtMethod(p, flat_ext_mode, extmethod,
-                                     'FLAT', 'EXTRACTION')
-
+        if not DEBUG:
+            # compare flat extraction mode to extraction mode
+            spirouEXTOR.CompareExtMethod(p, flat_ext_mode, extmethod,
+                                         'FLAT', 'EXTRACTION')
         # ------------------------------------------------------------------
         # Read Blaze file
         # ------------------------------------------------------------------
@@ -294,77 +322,19 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('BLAZE', blazesource)
 
         # ------------------------------------------------------------------
-        # Get localisation coefficients
+        # Get fiber specific parameters from loc_fibers
         # ------------------------------------------------------------------
         # get this fibers parameters
         p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
-        # get localisation fit coefficients
-        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
-        # ------------------------------------------------------------------
-        # Read image order profile
-        # ------------------------------------------------------------------
-        order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p, hdr)
-
-        # ------------------------------------------------------------------
-        # Deal with debananafication
-        # ------------------------------------------------------------------
-        # if mode 4a or 4b we need to straighten in x only
-        if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
-            # log progress
-            WLOG(p, '', 'Debananafying (straightening) image')
-            # get the shape map
-            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-            # debananafy data
-            bkwargs = dict(image=np.array(data1),
-                           dx=shapemap)
-            data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
-            # debananfy order profile
-            bkwargs = dict(image=order_profile, dx=shapemap)
-            order_profile = spirouEXTOR.DeBananafication(p, **bkwargs)
-        # if mode 5a or 5b we need to straighten in x and y using the
-        #     polynomial fits for location
-        elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
-            # log progress
-            WLOG(p, '', 'Debananafying (straightening) image')
-            # get the shape map
-            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-            # debananafy data
-            bkwargs = dict(image=np.array(data1),
-                           dx=shapemap, pos_ab=loc_fibers['AB']['ACC'],
-                           pos_c=loc_fibers['C']['ACC'])
-            data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
-            # debananfy order profile
-            bkwargs = dict(image=order_profile, dx=shapemap,
-                           pos_ab=loc_fibers['AB']['ACC'],
-                           pos_c=loc_fibers['C']['ACC'])
-            order_profile = spirouEXTOR.DeBananafication(p, **bkwargs)
-        # in any other mode we do not straighten
-        else:
-            data2 = np.array(data1)
-
-        # ------------------------------------------------------------------
-        # Average AB into one fiber for AB, A and B
-        # ------------------------------------------------------------------
-        # if we have an AB fiber merge fit coefficients by taking the average
-        # of the coefficients
-        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        # if fiber is AB take the average of the orders
-        if fiber == 'AB':
-            # merge
-            loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
-            loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
-            # set the number of order to half of the original
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is B take the even orders
-        elif fiber == 'B':
-            loc['ACC'] = loc['ACC'][:-1:2]
-            loc['ASS'] = loc['ASS'][:-1:2]
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is A take the odd orders
-        elif fiber == 'A':
-            loc['ACC'] = loc['ACC'][1::2]
-            loc['ASS'] = loc['ASS'][1::2]
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        # get localisation parameters
+        for key in loc_fibers[fiber]:
+            loc[key] = loc_fibers[fiber][key]
+            loc.set_source(key, loc_fibers[fiber].sources[key])
+        # get locofile source
+        p['LOCOFILE'] = loc['LOCOFILE']
+        p.set_source('LOCOFILE', loc.sources['LOCOFILE'])
+        # get the order_profile
+        order_profile = loc_fibers[fiber]['ORDER_PROFILE']
 
         # ------------------------------------------------------------------
         # Set up Extract storage
@@ -399,7 +369,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # deal with different return
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b', '5a', '5b']:
                 e2ds, e2dsll, cpt = eout
             else:
                 e2ds, cpt = eout
@@ -426,7 +396,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             loc['E2DSFF'][order_num] = e2ds / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
             # save the longfile
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b', '5a', '5b']:
                 loc['E2DSLL'].append(e2dsll)
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
@@ -445,12 +415,15 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)
-                sPlt.ext_aorder_fit(p, loc, data2, max_signal / 10.)
+                sPlt.ext_aorder_fit(p, loc, data1, max_signal / 10.)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
+                sPlt.ext_sorder_fit(p, loc, data1, max_signal / 10.)
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
+
+            if p['IC_EXTRACT_TYPE'] in ['4a', '4b', '5a', '5b']:
+                sPlt.ext_debanana_plot(p, loc, data2, max_signal / 10.)
 
         # ----------------------------------------------------------------------
         # Quality control
@@ -595,7 +568,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
-        if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b', '5a', '5b']:
             llstack = np.vstack(loc['E2DSLL'])
             p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 
