@@ -18,7 +18,7 @@ from drsmodule import locale
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'io,drs_files.py'
+__NAME__ = 'io.drs_path.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
