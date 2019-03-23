@@ -24,6 +24,12 @@ DATA_ENGINEERING = DATA_ENGINEERING.copy(__NAME__)
 DATA_ENGINEERING.value = './data/spirou/engineering/'
 
 # =============================================================================
+# COMMON IMAGE SETTINGS
+# =============================================================================
+COMBINE_IMAGES = COMBINE_IMAGES.copy(__NAME__)
+COMBINE_IMAGES.value = True
+
+# =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
 # Defines the size around badpixels that is considered part of the bad pixel
@@ -80,3 +86,4 @@ PP_CORRUPT_RMS_THRES.value = 0.15
 #         (in degrees counter-clockwise direction)
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = -90
+
