@@ -289,6 +289,15 @@ def get_local_variables(*args):
     return output_dict
 
 
+
+def file_processing_update(params, it, num_files):
+    if it != 0:
+        WLOG(params, '', params['DRS_HEADER'])
+    eargs = [it + 1, num_files]
+    WLOG(params, '', ErrorEntry('40-001-00020', args=eargs))
+    WLOG(params, '', params['DRS_HEADER'])
+
+
 # noinspection PyProtectedMember
 def exit_script(ll, has_plots=True):
     """
