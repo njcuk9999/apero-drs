@@ -23,9 +23,13 @@ __all__ = ['setup', 'end_main', 'end', 'wlog']
 # Setup function
 setup = drs_startup.setup
 
+# file processing message
+file_processing_update = drs_startup.file_processing_update
+
 # Ending main function
 end_main = drs_startup.main_end_script
 
+# get the local variables
 get_locals = drs_startup.get_local_variables
 
 # Exit function
