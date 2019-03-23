@@ -46,7 +46,7 @@ backsub = dict(name='--backsub', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr=Help['COMBINE_HELP'])
+               helpstr=Help['COMBINE_HELP'], default_ref='COMBINE_IMAGES')
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=Help['DODARK_HELP'])
