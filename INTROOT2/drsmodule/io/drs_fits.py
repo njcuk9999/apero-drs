@@ -171,8 +171,28 @@ def _read_fitstable(params, filename, getdata, gethdr, ext):
 # =============================================================================
 # Define write functions
 # =============================================================================
+# TODO: write function (if needed)
 def write(params, filename, header=None, comments=None):
     return 0
+
+
+# =============================================================================
+# Define other functions
+# =============================================================================
+# TODO: write function
+def combine(params, infiles, math='average'):
+
+    # make sure infiles is a list
+    if type(infiles) is not list:
+        WLOG(params, 'error', ErrorEntry(''))
+
+    # check that all infiles are the same DrsFileType
+
+    # make new infile using math
+    # question: how do we deal with multiple headers?
+
+    # return combined infile (as a single entry list)
+    return infiles
 
 
 # =============================================================================
