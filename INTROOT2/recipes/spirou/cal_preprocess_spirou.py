@@ -53,6 +53,8 @@ def _main(recipe, params):
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
+    # get files
+    infiles = params['INPUTS']['FILES'][1]
     # Number of files
     num_files = len(params['INPUTS']['FILES'][1])
     # storage for output files
@@ -61,15 +63,10 @@ def _main(recipe, params):
 
     # loop around number of files
     for it in range(num_files):
-        # print progres
-        if it != 0:
-            WLOG(params, '', params['DRS_HEADER'])
-        eargs = [it + 1, num_files]
-        WLOG(params, '', ErrorEntry('40-010-00010', args=eargs))
-        WLOG(params, '', params['DRS_HEADER'])
-
+        # print file iteration progress
+        config.file_processing_update(params, it, num_files)
         # ge this iterations file
-        file_instance = params['INPUTS']['FILES'][1][it]
+        file_instance = infiles[it]
 
         # ------------------------------------------------------------------
         # identification of file drs type
