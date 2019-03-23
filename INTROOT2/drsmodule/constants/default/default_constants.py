@@ -9,7 +9,8 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM', 'DATA_ENGINEERING',
            'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
            'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
-           'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM']
+           'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+           'COMBINE_IMAGES']
 # set name
 __NAME__ = 'drsmodule.constants.default.default_constants'
 
@@ -24,6 +25,12 @@ Const = constant_functions.Const
 DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
                          source=__NAME__)
 
+
+# =============================================================================
+# COMMON IMAGE SETTINGS
+# =============================================================================
+COMBINE_IMAGES = Const('COMBINE_IMAGES', dtype=bool, value=True,
+                       source=__NAME__)
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
