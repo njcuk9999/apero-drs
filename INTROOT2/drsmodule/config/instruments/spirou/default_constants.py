@@ -26,8 +26,20 @@ DATA_ENGINEERING.value = './data/spirou/engineering/'
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Defines whether to by default combine images that are inputted at the same
+#   time
 COMBINE_IMAGES = COMBINE_IMAGES.copy(__NAME__)
 COMBINE_IMAGES.value = True
+
+# Defines the resized image
+IMAGE_X_LOW = IMAGE_X_LOW.copy(__NAME__)
+IMAGE_X_LOW.value = 4
+IMAGE_X_HIGH = IMAGE_X_HIGH.copy(__NAME__)
+IMAGE_X_HIGH.value = 4092
+IMAGE_Y_LOW = IMAGE_Y_LOW.copy(__NAME__)
+IMAGE_Y_LOW.value = 250
+IMAGE_Y_HIGH = IMAGE_Y_HIGH.copy(__NAME__)
+IMAGE_Y_HIGH.value = 3350
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -87,3 +99,29 @@ PP_CORRUPT_RMS_THRES.value = 0.15
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = -90
 
+# =============================================================================
+# CALIBRATION: DARK SETTINGS
+# =============================================================================
+#   Min dark exposure time
+QC_DARK_TIME = QC_DARK_TIME.copy(__NAME__)
+QC_DARK_TIME.value = 1.0
+
+# Defines the blue resized image
+IMAGE_X_BLUE_LOW = IMAGE_X_BLUE_LOW.copy(__NAME__)
+IMAGE_X_BLUE_LOW.value = 4
+IMAGE_X_BLUE_HIGH = IMAGE_X_BLUE_HIGH.copy(__NAME__)
+IMAGE_X_BLUE_HIGH.value = 4092
+IMAGE_Y_BLUE_LOW = IMAGE_Y_BLUE_LOW.copy(__NAME__)
+IMAGE_Y_BLUE_LOW.value = 250
+IMAGE_Y_BLUE_HIGH = IMAGE_Y_BLUE_HIGH.copy(__NAME__)
+IMAGE_Y_BLUE_HIGH.value = 3350
+
+# Defines the red resized image
+IMAGE_X_RED_LOW = IMAGE_X_RED_LOW.copy(__NAME__)
+IMAGE_X_RED_LOW.value = 4
+IMAGE_X_RED_HIGH = IMAGE_X_RED_HIGH.copy(__NAME__)
+IMAGE_X_RED_HIGH.value = 4092
+IMAGE_Y_RED_LOW = IMAGE_Y_RED_LOW.copy(__NAME__)
+IMAGE_Y_RED_LOW.value = 250
+IMAGE_Y_RED_HIGH = IMAGE_Y_RED_HIGH.copy(__NAME__)
+IMAGE_Y_RED_HIGH.value = 3350

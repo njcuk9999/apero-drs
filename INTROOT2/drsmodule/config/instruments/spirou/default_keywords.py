@@ -37,33 +37,6 @@ KW_DATE_OBS.set(key='DATE-OBS')
 KW_UTC_OBS = KW_UTC_OBS.copy('__NAME__')
 KW_UTC_OBS.set(key='UTC-OBS')
 
-# -----------------------------------------------------------------------------
-# Required header keys (related to science object)
-# -----------------------------------------------------------------------------
-# define the observation ra HEADER key
-KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA')
-
-# define the observation dec HEADER key
-KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC')
-
-# define the observation name
-KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='OBJNAME')
-
-# define the observation equinox HEADER key
-KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
-KW_OBJEQUIN.set(key='OBJEQUIN')
-
-# define the observation proper motion in ra HEADER key
-KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
-KW_OBJRAPM.set(key='OBJRAPM')
-
-# define the observation proper motion in dec HEADER key
-KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
-KW_OBJDECPM.set(key='OBJDECPM')
-
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
 KW_RDNOISE.set(key='RDNOISE')
@@ -96,9 +69,6 @@ KW_CDEN.set(key='SBCDEN_P')
 KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
 KW_CMMTSEQ.set(key='CMMTSEQ')
 
-# define the airmass HEADER key
-KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
-KW_AIRMASS.set(key='AIRMASS')
 
 # define the MJ end date HEADER key
 KW_MJDEND = KW_MJDEND.copy(__NAME__)
@@ -111,6 +81,37 @@ KW_CMPLTEXP.set(key='CMPLTEXP')
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
 KW_NEXP.set(key='NEXP')
+
+# -----------------------------------------------------------------------------
+# Required header keys (related to science object)
+# -----------------------------------------------------------------------------
+# define the observation ra HEADER key
+KW_OBJRA = KW_OBJRA.copy(__NAME__)
+KW_OBJRA.set(key='OBJRA')
+
+# define the observation dec HEADER key
+KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
+KW_OBJDEC.set(key='OBJDEC')
+
+# define the observation name
+KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
+KW_OBJNAME.set(key='OBJNAME')
+
+# define the observation equinox HEADER key
+KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
+KW_OBJEQUIN.set(key='OBJEQUIN')
+
+# define the observation proper motion in ra HEADER key
+KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
+KW_OBJRAPM.set(key='OBJRAPM')
+
+# define the observation proper motion in dec HEADER key
+KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
+KW_OBJDECPM.set(key='OBJDECPM')
+
+# define the airmass HEADER key
+KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
+KW_AIRMASS.set(key='AIRMASS')
 
 # -----------------------------------------------------------------------------
 # Define general keywords

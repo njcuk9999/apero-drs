@@ -10,13 +10,17 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
            'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
            'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
-           'COMBINE_IMAGES']
+           'COMBINE_IMAGES', 'QC_DARK_TIME', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+           'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+           'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
+           'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
+           'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
+           'IMAGE_Y_RED_HIGH']
 # set name
 __NAME__ = 'drsmodule.constants.default.default_constants'
 
 # Constants class
 Const = constant_functions.Const
-
 
 # =============================================================================
 # DRS DATA SETTINGS
@@ -25,12 +29,23 @@ Const = constant_functions.Const
 DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
                          source=__NAME__)
 
-
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Defines whether to by default combine images that are inputted at the same
+#   time
 COMBINE_IMAGES = Const('COMBINE_IMAGES', dtype=bool, value=True,
                        source=__NAME__)
+
+# Defines the resized image
+IMAGE_X_LOW = Const('IMAGE_X_LOW', value=None, dtype=int, minimum=0,
+                    source=__NAME__)
+IMAGE_X_HIGH = Const('IMAGE_X_HIGH', value=None, dtype=int, minimum=0,
+                     source=__NAME__)
+IMAGE_Y_LOW = Const('IMAGE_Y_LOW', value=None, dtype=int, minimum=0,
+                    source=__NAME__)
+IMAGE_Y_HIGH = Const('IMAGE_Y_HIGH', value=None, dtype=int, minimum=0,
+                     source=__NAME__)
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -88,3 +103,30 @@ PP_CORRUPT_RMS_THRES = Const('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
 #         (in degrees counter-clockwise direction)
 RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', value=None, dtype=int,
                            minimum=0.0, maximum=360.0, source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: DARK SETTINGS
+# =============================================================================
+#   Min dark exposure time
+QC_DARK_TIME = Const('QC_DARK_TIME', value=None, dtype=float, minimum=0.0,
+                     source=__NAME__)
+
+# Defines the resized blue image
+IMAGE_X_BLUE_LOW = Const('IMAGE_X_BLUE_LOW', value=None, dtype=int, minimum=0,
+                         source=__NAME__)
+IMAGE_X_BLUE_HIGH = Const('IMAGE_X_BLUE_HIGH', value=None, dtype=int, minimum=0,
+                          source=__NAME__)
+IMAGE_Y_BLUE_LOW = Const('IMAGE_Y_BLUE_LOW', value=None, dtype=int, minimum=0,
+                         source=__NAME__)
+IMAGE_Y_BLUE_HIGH = Const('IMAGE_Y_BLUE_HIGH', value=None, dtype=int, minimum=0,
+                          source=__NAME__)
+
+# Defines the resized red image
+IMAGE_X_RED_LOW = Const('IMAGE_X_RED_LOW', value=None, dtype=int, minimum=0,
+                         source=__NAME__)
+IMAGE_X_RED_HIGH = Const('IMAGE_X_RED_HIGH', value=None, dtype=int, minimum=0,
+                          source=__NAME__)
+IMAGE_Y_RED_LOW = Const('IMAGE_Y_RED_LOW', value=None, dtype=int, minimum=0,
+                         source=__NAME__)
+IMAGE_Y_RED_HIGH = Const('IMAGE_Y_RED_HIGH', value=None, dtype=int, minimum=0,
+                          source=__NAME__)
