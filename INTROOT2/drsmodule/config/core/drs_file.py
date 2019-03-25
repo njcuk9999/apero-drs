@@ -942,11 +942,80 @@ class DrsFitsFile(DrsInputFile):
         else:
             WLOG(params, 'error', ErrorEntry('00-008-00004'))
 
+    def combine(self, infiles, math='sum', same_type=True):
+        func_name = __NAME__ + '.DrsFitsFile.combine()'
+        available_math = ['sum', 'add', '+', 'average', 'mean', 'subtract',
+                          '-', 'divide', '/', 'multiply', 'times', '*']
+        # --------------------------------------------------------------------
+        # check that recipe is set
+        self.check_recipe()
+        params = self.recipe.drs_params
+        # check that data is read
+        self.check_read()
+        # set new data to this files data
+        data = self.data
+        # --------------------------------------------------------------------
+        # combine data
+        for infile in infiles:
+            # check data is read for infile
+            infile.check_read()
+            # check that infile matches in name to self
+            if (self.name != infile.name) and same_type:
+                eargs = [func_name]
+                WLOG(params, 'error', ErrorEntry('00-001-00021', args=eargs))
+            # if we want to sum the data
+            if math in ['sum', 'add', '+', 'average', 'mean']:
+                data += infile.data
+            # else if we want to subtract the data
+            elif math in ['subtract', '-']:
+                data -= infile.data
+            # else if we want to divide the data
+            elif math in ['divide', '/']:
+                data /= infile.data
+            # else if we want to multiple the data
+            elif math in ['multiply', 'times', '*']:
+                data *= infile.data
+            # else we have an error in math
+            else:
+                eargs = [math, available_math, func_name]
+                WLOG(params, 'error', ErrorEntry('', args=eargs))
+        # --------------------------------------------------------------------
+        # if average/mean then divide by the number of files
+        if math in ['average', 'mean']:
+            data = data / (len(infiles) + 1)
+        # --------------------------------------------------------------------
+        # construct keys for new DrsFitsFile
+        # set empty file attributes
+        nkwargs = dict()
+        nkwargs['name'] = self.name
+        nkwargs['recipe'] = self.recipe
+        nkwargs['fiber'] = self.fiber
+        nkwargs['rkeys'] = self.required_header_keys
+        nkwargs['filename'] = self.filename
+        nkwargs['path'] = self.path
+        nkwargs['basename'] = self.basename
+        nkwargs['inputdir'] = self.inputdir
+        nkwargs['directory'] = self.directory
+        nkwargs['data'] = data
+        nkwargs['header'] = self.header
+        nkwargs['comments'] = self.comments
+        nkwargs['shape'] = data.shape
+        nkwargs['hdict'] = self.hdict
+        nkwargs['output_dict'] = self.output_dict
+        nkwargs['fileset'] = self.fileset
+        nkwargs['outfunc'] = self.outfunc
+        # return new instance of DrsFitsFile
+        return DrsFitsFile(**nkwargs)
+
     # -------------------------------------------------------------------------
     # fits file header methods
     # -------------------------------------------------------------------------
+    def get_key(self, key, has_default=False, default=None,
+                        required=True, dtype=float):
+        return self.read_header_key(key, has_default, default, required, dtype)
+
     def read_header_key(self, key, has_default=False, default=None,
-                        required=True):
+                        required=True, dtype=float):
         """
         Looks for a key in DrsFile.header, if has_default is
         True sets value of key to 'default' if not found else if "required"
@@ -1003,6 +1072,15 @@ class DrsFitsFile(DrsInputFile):
                         emsg = ErrorEntry('09-000-00006', args=eargs)
                     self.__error__(emsg)
                     value = None
+
+        # try to convert to dtype else just return as string
+        try:
+            value = dtype(value)
+        except ValueError:
+            value = str(value)
+        except TypeError:
+            value = str(value)
+
         # return value
         return value
 
@@ -1440,7 +1518,7 @@ class DrsFitsFile(DrsInputFile):
         for length in lengths:
             if lengths[0] != length:
                 eargs = [', '.join(strlengths), func_name]
-                WLOG(params, 'error', ErrorEntry('00-011-00001', args=eargs))
+                WLOG(params, 'error', ErrorEntry('00-001-00019', args=eargs))
         # loop around values and add to hdict
         for it in range(lengths[0]):
             # loop around qc parameters
