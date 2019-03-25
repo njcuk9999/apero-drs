@@ -10,11 +10,8 @@ Created on 2019-03-25 at 12:29
 @author: cook
 """
 from __future__ import division
-import traceback
-import os
-from astropy.io import fits
-from astropy.table import Table
 import numpy as np
+import warnings
 
 from drsmodule import constants
 from drsmodule.config import drs_log
@@ -24,7 +21,7 @@ from drsmodule.config import drs_file
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'io.drs_path.py'
+__NAME__ = 'science.calib.dark.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -109,6 +106,39 @@ def measure_dark(params, image, entry_key):
     WLOG(params, 'info', ErrorEntry('40-011-00002', args=wargs))
     # return the parameter dictionary with new values
     return np.array(histo), float(med), float(dadead)
+
+
+def measure_dark_badpix(params, image, nanmask):
+    """
+    Measure the bad pixels (non-dark pixels and NaN pixels)
+
+    :param params: parameter dictionary, ParamDict containing constants
+    :param image: numpy array (2D), the image
+    :param nanmask: numpy array (2D), the make of non-finite values
+    :return:
+    """
+    # get number of bad dark pixels (as a fraction of total pixels)
+    with warnings.catch_warnings(record=True) as w:
+        baddark = 100.0 * np.sum(image > params['DARK_CUTLIMIT'])
+        baddark /= np.product(image.shape)
+    # log the fraction of bad dark pixels
+    wargs = [params['DARK_CUTLIMIT'], baddark]
+    WLOG(params, 'info', ErrorEntry('', args=wargs))
+
+    # define mask for values above cut limit or NaN
+    with warnings.catch_warnings(record=True) as w:
+        datacutmask = ~((image > params['DARK_CUTLIMIT']) | (~nanmask))
+
+    drs_log.warninglogger(params, w)
+    # get number of pixels above cut limit or NaN
+    n_bad_pix = np.product(image.shape) - np.sum(datacutmask)
+    # work out fraction of dead pixels + dark > cut, as percentage
+    dadeadall = n_bad_pix * 100 / np.product(image.shape)
+    # log fraction of dead pixels + dark > cut
+    wargs = [params['DARK_CUTLIMIT'], dadeadall]
+    WLOG(params, 'info', ErrorEntry('40-011-00007', args=wargs))
+    # return dadeadall
+    return baddark, dadeadall
 
 
 # =============================================================================
