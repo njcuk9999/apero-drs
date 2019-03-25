@@ -17,6 +17,7 @@ from drsmodule import constants
 from drsmodule import config
 from drsmodule import locale
 from drsmodule.io import drs_fits
+from drsmodule.science.calib import dark
 
 # =============================================================================
 # Define variables
@@ -43,11 +44,12 @@ def _main(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
+    mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # combine input images if required
     if params['COMBINE_IMAGES']:
-        infiles = drs_fits.combine(params, infiles, math='average')
+        infiles = [drs_fits.combine(params, infiles, math='average')]
     # get the number of infiles
     num_files = len(infiles)
 
@@ -58,29 +60,67 @@ def _main(recipe, params):
         # print file iteration progress
         config.file_processing_update(params, it, num_files)
         # ge this iterations file
-        file_instance = infiles[it]
+        infile = infiles[it]
         # get data from file instance
-        image = np.array(file_instance.data)
+        image = np.array(infile.data)
 
         # ------------------------------------------------------------------
         # Get basic image properties
         # ------------------------------------------------------------------
-        # TODO: fill in section
+        # get image readout noise
+        params['SIGDET'] = infile.get_key('KW_RDNOISE')
+        # get expsoure time
+        params['EXPTIME'] = infile.get_key('KW_EXPTIME')
+        # get gain
+        params['GAIN'] = infile.get_key('KW_GAIN')
+        # set sources
+        params.set_sources(['SIGDET', 'EXPTIME', 'GAIN'], mainname)
 
         # ------------------------------------------------------------------
         # Dark exposure time check
         # ------------------------------------------------------------------
-        # TODO: fill in section
+        # log the Dark exposure time
+        WLOG(params, 'info', 'Dark Time = {0:.3f} s'.format(params['EXPTIME']))
+        # Quality control: make sure the exposure time is longer than qc_dark_time
+        if params['EXPTIME'] < params['QC_DARK_TIME']:
+            emsg = 'Dark exposure time too short (< {0:.1f} s)'
+            WLOG(params, 'error', emsg.format(params['QC_DARK_TIME']))
 
         # ------------------------------------------------------------------
         # Resize and rotate image
         # ------------------------------------------------------------------
-        # TODO: fill in section
+        # convert NaNs to zeros
+        nanmask = ~np.isfinite(image)
+        image0 = np.where(nanmask, np.zeros_like(image), image)
+
+        # resize blue image
+        bkwargs = dict(xlow=params['IMAGE_X_BLUE_LOW'],
+                       xhigh=params['IMAGE_X_BLUE_HIGH'],
+                       ylow=params['IMAGE_Y_BLUE_LOW'],
+                       yhigh=params['IMAGE_Y_BLUE_HIGH'])
+        imageblue = drs_fits.resize(params, image0, **bkwargs)
+
+        # resize red image
+        bkwargs = dict(xlow=params['IMAGE_X_RED_LOW'],
+                       xhigh=params['IMAGE_X_RED_HIGH'],
+                       ylow=params['IMAGE_Y_RED_LOW'],
+                       yhigh=params['IMAGE_Y_RED_HIGH'])
+        imagered = drs_fits.resize(params, image0, **bkwargs)
 
         # ------------------------------------------------------------------
         # Dark Measurement
         # ------------------------------------------------------------------
-        # TODO: fill in section
+        # Log that we are doing dark measurement
+        WLOG(params, '', ErrorEntry('40-011-00001'))
+        # measure dark for whole frame
+        out1 = dark.measure_dark(params, image, '40-011-00003')
+        hist_full, med_full, dadead_full = out1
+        # measure dark for blue part
+        out2 = dark.measure_dark(params, imageblue, '40-011-00004')
+        hist_blue, med_blue, dadead_blue = out2
+        # measure dark for rede part
+        out3 = dark.measure_dark(params, imagered, '40-011-00005')
+        hist_red, med_red, dadead_red = out3
 
         # ------------------------------------------------------------------
         # Identification of bad pixels
