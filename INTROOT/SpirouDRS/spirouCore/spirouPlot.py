@@ -1222,6 +1222,46 @@ def ext_sorder_fit(p, loc, image, cut=20000):
     end_plotting(p, plot_name)
 
 
+def ext_debanana_plot(p, loc, image, cut=20000):
+    plot_name = 'ext_debanana_plot'
+    # get constants
+    selected_order = p['IC_EXT_ORDER_PLOT']
+    fiber = p['FIBER']
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
+    dim1, dim2 = image.shape
+    # set up fig
+    fig, frame = setup_figure(p)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
+    # loop around the order numbers
+    acc = loc['ACC'][selected_order]
+    # work out offsets for this order
+    offsetarraylow = np.zeros(len(acc))
+    offsetarrayhigh = np.zeros(len(acc))
+    offsetarraylow[0] = range2
+    offsetarrayhigh[0] = range1
+    # get fit and edge fits
+    xfit = np.arange(dim2)
+    yfit = np.repeat(np.polyval(acc[::-1], dim2 // 2), dim2)
+    yfitlow = np.repeat(np.polyval((acc + offsetarraylow)[::-1], dim2 // 2),
+                        dim2)
+    yfithigh = np.repeat(np.polyval((acc - offsetarrayhigh)[::-1], dim2 // 2),
+                         dim2)
+    # plot fits
+    frame.plot(xfit, yfit, color='red', label='fit')
+    frame.plot(xfit, yfitlow, color='blue', label='Fit edge',
+               linestyle='--')
+    frame.plot(xfit, yfithigh, color='blue', linestyle='--')
+    # set title labels limits
+    title = 'Image debananafied fit for order {0} fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
 def ext_aorder_fit(p, loc, image, cut=20000):
     """
     Plots all orders and highlights selected order (defined in
