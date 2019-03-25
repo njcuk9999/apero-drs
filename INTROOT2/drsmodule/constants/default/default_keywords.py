@@ -44,27 +44,6 @@ KW_DATE_OBS = Keyword('KW_DATE_OBS', key='', dtype=float, source=__NAME__)
 # define the observation time HEADER key
 KW_UTC_OBS = Keyword('KW_UTC_OBS', key='', dtype=float, source=__NAME__)
 
-# -----------------------------------------------------------------------------
-# Required header keys (related to science object)
-# -----------------------------------------------------------------------------
-# define the observation ra HEADER key
-KW_OBJRA = Keyword('KW_OBJRA', key='', dtype=float, source=__NAME__)
-
-# define the observation dec HEADER key
-KW_OBJDEC = Keyword('KW_OBJDE', key='', dtype=float, source=__NAME__)
-
-# define the observation name
-KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__)
-
-# define the observation equinox HEADER key
-KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='', dtype=float, source=__NAME__)
-
-# define the observation proper motion in ra HEADER key
-KW_OBJRAPM = Keyword('KW_OBJRAPM', key='', dtype=float, source=__NAME__)
-
-# define the observation proper motion in dec HEADER key
-KW_OBJDECPM = Keyword('KW_OBJDECPM', key='', dtype=float, source=__NAME__)
-
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = Keyword('KW_RDNOISE', key='', dtype=float, source=__NAME__)
 
@@ -89,9 +68,6 @@ KW_CDEN = Keyword('KW_CDEN', key='', dtype=str, source=__NAME__)
 # define polarisation HEADER key
 KW_CMMTSEQ = Keyword('KW_CMMTSEQ', key='', dtype=str, source=__NAME__)
 
-# define the airmass HEADER key
-KW_AIRMASS = Keyword('KW_AIRMASS', key='', dtype=float, source=__NAME__)
-
 # define the MJ end date HEADER key
 KW_MJDEND = Keyword('KW_MJEND', key='', dtype=float, source=__NAME__)
 
@@ -100,6 +76,31 @@ KW_CMPLTEXP = Keyword('KW_CMPLTEXP', key='', dtype=int, source=__NAME__)
 
 # define the total number of exposures HEADER key
 KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Required header keys (related to science object)
+# -----------------------------------------------------------------------------
+# define the observation ra HEADER key
+KW_OBJRA = Keyword('KW_OBJRA', key='', dtype=float, source=__NAME__)
+
+# define the observation dec HEADER key
+KW_OBJDEC = Keyword('KW_OBJDE', key='', dtype=float, source=__NAME__)
+
+# define the observation name
+KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__)
+
+# define the observation equinox HEADER key
+KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='', dtype=float, source=__NAME__)
+
+# define the observation proper motion in ra HEADER key
+KW_OBJRAPM = Keyword('KW_OBJRAPM', key='', dtype=float, source=__NAME__)
+
+# define the observation proper motion in dec HEADER key
+KW_OBJDECPM = Keyword('KW_OBJDECPM', key='', dtype=float, source=__NAME__)
+
+# define the airmass HEADER key
+KW_AIRMASS = Keyword('KW_AIRMASS', key='', dtype=float, source=__NAME__)
+
 
 # -----------------------------------------------------------------------------
 # Define general keywords
