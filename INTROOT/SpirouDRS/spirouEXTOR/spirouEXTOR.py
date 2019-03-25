@@ -403,8 +403,8 @@ def debananafication(p, image=None, badpix=None, dx=None, kind='full',
             y0[iord + 2, :] = np.polyval(pos_c[order_num, :][::-1], xpix)
         # loop around each x pixel (columns)
         for ix in range(dim2):
-            # dy for all orders and all fibers, modulo 1 pixel position
-            dy = y0[:, ix] - np.round(y0[:, dim2 // 2], 0)
+            # dy for all orders and all fibers
+            dy = y0[:, ix] - y0[:, dim2 // 2]
             # fitting the dy to the position of the order
             yfit = np.polyfit(y0[:, ix], dy, 3)
             ypix = np.arange(dim1)
