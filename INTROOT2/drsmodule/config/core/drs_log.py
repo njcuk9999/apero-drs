@@ -467,6 +467,8 @@ class Logger:
 class Printer():
     """Print things to stdout on one line dynamically"""
     def __init__(self, params, level, message):
+        self.params = params
+        self.level = level
 
         if type(message) not in [list, np.ndarray]:
             message = [message]
@@ -488,8 +490,15 @@ wlog = Logger()
 
 
 # =============================================================================
-# Define functions
+# Define function
 # =============================================================================
+def find_param(params, key, function):
+    if key not in params:
+        eargs = [key, function]
+        wlog(params, 'error', ErrorEntry('00-003-00001', args=eargs))
+    return params[key]
+
+
 def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
     """
     Prints log to standard output/screen (for internal use only when
