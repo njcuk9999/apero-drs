@@ -106,6 +106,14 @@ RAW_TO_PP_ROTATION.value = -90
 QC_DARK_TIME = QC_DARK_TIME.copy(__NAME__)
 QC_DARK_TIME.value = 1.0
 
+#   Max dark median level [ADU/s]
+QC_MAX_DARKLEVEL = QC_MAX_DARKLEVEL.copy(__NAME__)
+QC_MAX_DARKLEVEL.value = 0.07
+
+#   Max fraction of dead pixels
+QC_MAX_DEAD = QC_MAX_DEAD.copy(__NAME__)
+QC_MAX_DEAD.value = 1.0
+
 # Defines the blue resized image
 IMAGE_X_BLUE_LOW = IMAGE_X_BLUE_LOW.copy(__NAME__)
 IMAGE_X_BLUE_LOW.value = 4
@@ -125,3 +133,9 @@ IMAGE_Y_RED_LOW = IMAGE_Y_RED_LOW.copy(__NAME__)
 IMAGE_Y_RED_LOW.value = 250
 IMAGE_Y_RED_HIGH = IMAGE_Y_RED_HIGH.copy(__NAME__)
 IMAGE_Y_RED_HIGH.value = 3350
+
+#   Define a bad pixel cut limit (in ADU/s)
+DARK_CUTLIMIT = DARK_CUTLIMIT.copy(__NAME__)
+DARK_CUTLIMIT.value = 5.0
+
+

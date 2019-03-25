@@ -15,6 +15,7 @@ from drsmodule import constants
 from drsmodule import config
 from drsmodule import locale
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -56,6 +57,77 @@ def pp_file(params, **kwargs):
     abspath = os.path.join(outpath, outdirectory, outfilename)
     # return absolute path
     return abspath
+
+
+def dark_file(params, **kwargs):
+    func_name = __NAME__ + '.dark_file()'
+    # get parameters from keyword arguments
+    infile = kwargs.get('infile', None)
+    outfile = kwargs.get('outfile', None)
+    # deal with kwargs that are required
+    if infile is None:
+        WLOG(params, 'error', ErrorEntry('00-001-00017', args=[func_name]))
+    if outfile is None:
+        WLOG(params, 'error', ErrorEntry('00-001-00018', args=[func_name]))
+    # construct out filename
+    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
+    # add calibration prefix
+    outfilename = _calibration_prefix(params) + outfilename
+    # get output path from params
+    outpath = params['OUTPATH']
+    # get output night name from params
+    outdirectory = params['NIGHTNAME']
+    # construct absolute path
+    abspath = os.path.join(outpath, outdirectory, outfilename)
+    # return absolute path
+    return abspath
+
+
+def sky_file(params, **kwargs):
+    func_name = __NAME__ + '.dark_file()'
+    # get parameters from keyword arguments
+    infile = kwargs.get('infile', None)
+    outfile = kwargs.get('outfile', None)
+    # deal with kwargs that are required
+    if infile is None:
+        WLOG(params, 'error', ErrorEntry('00-001-00017', args=[func_name]))
+    if outfile is None:
+        WLOG(params, 'error', ErrorEntry('00-001-00018', args=[func_name]))
+    # construct out filename
+    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
+    # add calibration prefix
+    outfilename = _calibration_prefix(params) + outfilename
+    # get output path from params
+    outpath = params['OUTPATH']
+    # get output night name from params
+    outdirectory = params['NIGHTNAME']
+    # construct absolute path
+    abspath = os.path.join(outpath, outdirectory, outfilename)
+    # return absolute path
+    return abspath
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def _calibration_prefix(params):
+    """
+    Define the calibration database file prefix (using arg_night_name)
+
+    :param params: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                NIGHTNAME: string, the folder within data raw directory
+                           containing files (also reduced directory) i.e.
+                           /data/raw/20170710 would be "20170710"
+    :return calib_prefix: string the calibration database prefix to add to all
+                          calibration database files
+    """
+    nightname = params['NIGHTNAME']
+    # remove separators
+    calib_prefix = nightname.replace(os.sep, '_')
+    # return calib_prefix
+    return calib_prefix + '_'
+
 
 
 # =============================================================================
