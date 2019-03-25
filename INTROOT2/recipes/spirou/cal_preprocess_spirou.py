@@ -103,8 +103,7 @@ def _main(recipe, params):
         # Quality control to check for corrupt files
         # ------------------------------------------------------------------
         # set passed variable and fail message list
-        passed, fail_msg = True, []
-        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
         # ----------------------------------------------------------------------
         # get pass condition
         cout = preprocessing.test_for_corrupt_files(params, image, hotpixels)
@@ -146,7 +145,7 @@ def _main(recipe, params):
         # ----------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
-        if passed:
+        if np.sum(qc_pass) == len(qc_pass):
             WLOG(params, 'info', ErrorEntry('40-005-00001'))
             params['QC'] = 1
             params.set_source('QC', __NAME__ + '/main()')
@@ -178,7 +177,6 @@ def _main(recipe, params):
             WLOG(params, 'error', ErrorEntry('00-010-00003', args=eargs))
         # ------------------------------------------------------------------
         # define header keys for output file
-        # ------------------------------------------------------------------
         # copy keys from input file
         outfile.copy_original_keys(infile)
         # add version
@@ -191,7 +189,6 @@ def _main(recipe, params):
         outfile.add_qckeys(qc_params)
         # ------------------------------------------------------------------
         # copy data
-        # ------------------------------------------------------------------
         outfile.data = image
         # ------------------------------------------------------------------
         # log that we are saving rotated image
