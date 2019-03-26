@@ -13,7 +13,8 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_DPRTYPE', 'KW_PID', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_UTC_OBS', 'KW_OUTPUT',
-           'KW_EXT_TYPE']
+           'KW_EXT_TYPE', 'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
+           'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT']
 # set name
 __NAME__ = 'drsmodule.constants.default.default_keywords'
 # Constants definition
@@ -39,7 +40,7 @@ KW_ACQTIME_FMT = Const('KW_ACQTIME_FMT', value='mjd', dtype=str,
                        options=['mjd', 'iso', 'unix', 'jyear'],
                        source=__NAME__)
 # This is the dtype of the acqtime (i.e. str or float)
-KW_ACQTIME_DTYPE = Const('KW_ACQTIME_FMT', value=float, dtype=type,
+KW_ACQTIME_DTYPE = Const('KW_ACQTIME_FMT', value=float, dtype=None,
                          options=[float, str], source=__NAME__)
 
 # define the observation date HEADER key
@@ -118,7 +119,6 @@ KW_PID = Keyword('KW_PID', key='', dtype=str, source=__NAME__)
 # Define the key to get the data fits file type
 KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
 
-
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
@@ -144,3 +144,27 @@ KW_DRS_QC_VAL = Keyword('KW_DRS_QC_VAL', key='', dtype=str, source=__NAME__)
 KW_DRS_QC_NAME = Keyword('KW_DRS_QC_NAME', key='', dtype=str, source=__NAME__)
 KW_DRS_QC_LOGIC = Keyword('KW_DRS_QC_LOGIC', key='', dtype=str, source=__NAME__)
 KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define cal_dark variables
+# -----------------------------------------------------------------------------
+# The fraction of dead pixels in the dark (in %)
+KW_DARK_DEAD = Keyword('DADEAD', key=0, dtype=float, source=__NAME__)
+
+# The median dark level in ADU/s
+KW_DARK_MED = Keyword('KW_DARK_MED', key=0, dtype=float, source=__NAME__)
+
+# The fraction of dead pixels in the blue part of the dark (in %)
+KW_DARK_B_DEAD = Keyword('KW_DARK_B_DEAD', key=0, dtype=float, source=__NAME__)
+
+# The median dark level in the blue part of the dark in ADU/s
+KW_DARK_B_MED = Keyword('KW_DARK_B_MED', key=0, dtype=float, source=__NAME__)
+
+# The fraction of dead pixels in the red part of the dark (in %)
+KW_DARK_R_DEAD = Keyword('KW_DARK_R_DEAD', key=0, dtype=float, source=__NAME__)
+
+# The median dark level in the red part of the dark in ADU/s
+KW_DARK_R_MED = Keyword('KW_DARK_R_MED', key=0, dtype=float, source=__NAME__)
+
+# The threshold of the dark level to retain in ADU
+KW_DARK_CUT = Keyword('KW_DARK_CUT', key=0, dtype=float, source=__NAME__)

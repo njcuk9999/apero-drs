@@ -172,3 +172,34 @@ KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
 KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='All quality control passed')
 KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
 KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='All quality control passed')
+
+# -----------------------------------------------------------------------------
+# Define cal_dark variables
+# -----------------------------------------------------------------------------
+# The fraction of dead pixels in the dark (in %)
+KW_DARK_DEAD = KW_DARK_DEAD.copy(__NAME__)
+KW_DARK_DEAD.set(key='DADEAD', comment='Fraction dead pixels [%]')
+
+# The median dark level in ADU/s
+KW_DARK_MED = KW_DARK_MED.copy(__NAME__)
+KW_DARK_MED.set(key='DAMED', comment='median dark level [ADU/s]')
+
+# The fraction of dead pixels in the blue part of the dark (in %)
+KW_DARK_B_DEAD = KW_DARK_B_DEAD.copy(__NAME__)
+KW_DARK_B_DEAD.set(key='DABDEAD', comment='Fraction dead pixels blue part [%]')
+
+# The median dark level in the blue part of the dark in ADU/s
+KW_DARK_B_MED = KW_DARK_B_MED.copy(__NAME__)
+KW_DARK_B_MED.set(key='DABMED', comment='median dark level blue part [ADU/s]')
+
+# The fraction of dead pixels in the red part of the dark (in %)
+KW_DARK_R_DEAD = KW_DARK_R_DEAD.copy(__NAME__)
+KW_DARK_R_DEAD.set(key='DARDEAD', comment='Fraction dead pixels red part [%]')
+
+# The median dark level in the red part of the dark in ADU/s
+KW_DARK_R_MED = KW_DARK_R_MED.copy(__NAME__)
+KW_DARK_R_MED.set(key='DARMED', comment='median dark level red part [ADU/s]')
+
+# The threshold of the dark level to retain in ADU
+KW_DARK_CUT = KW_DARK_CUT.copy(__NAME__)
+KW_DARK_CUT.set(key='DACUT', comment='Threshold of dark level retain [ADU/s]')
