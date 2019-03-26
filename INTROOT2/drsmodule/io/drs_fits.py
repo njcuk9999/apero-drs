@@ -220,7 +220,9 @@ def combine(params, infiles, math='average', same_type=True):
     if type(infiles) is not list:
         WLOG(params, 'error', ErrorEntry('00-001-00020', args=[func_name]))
     # if we have only one file (or none) skip combine
-    if len(infiles) < 2:
+    if len(infiles) == 1:
+        return infiles[0]
+    elif len(infiles) == 0:
         return infiles
     # check that all infiles are the same DrsFileType
     if same_type:
