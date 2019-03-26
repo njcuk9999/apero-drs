@@ -168,6 +168,51 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     return recipe, params
 
 
+def run(func, recipe, params):
+    """
+    Runs the function "func" that must have arguments "recipe" and "params"
+    and nothing else.
+
+    i.e. func(recipe, params)
+    or   __main__(recipe, params)
+
+    :param func: function, with arguments "recipe" and "params"
+    :param recipe: DrsRecipe, the drs recipe to use with "func"
+    :param params: Paramdict, the constant parameter dictionary
+
+    :type func: function
+    :type recipe: DrsRecipe
+    :type params: ParamDict
+
+    :returns: the local variables (in a dictionary) and whether drs was
+              successful. If DEBUG0000 in keywords
+    :rtype: tuple[dict, bool]
+    """
+    # run main bulk of code (catching all errors)
+    if params['DRS_DEBUG'] > 0:
+        llmain = func(recipe, params)
+        llmain['e'], llmain['tb'] = None, None
+        success = True
+    else:
+        try:
+            llmain = func(recipe, params)
+            llmain['e'], llmain['tb'] = None, None
+            success = True
+        except Exception as e:
+            string_trackback = traceback.format_exc()
+            success = False
+            emsg = ErrorEntry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + ErrorEntry(string_trackback)
+            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+            llmain = dict(e=e, tb=string_trackback)
+        except SystemExit as e:
+            string_trackback = traceback.format_exc()
+            success = False
+            llmain = dict(e=e, tb=string_trackback)
+    # return llmain and success
+    return llmain, success
+
+
 def get_params(recipe='None', instrument='None', **kwargs):
     """
     Get parameter dictionary without a recipe definition
