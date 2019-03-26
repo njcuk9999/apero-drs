@@ -10,17 +10,16 @@ Created on 2019-03-23 at 13:01
 @author: cook
 """
 from __future__ import division
-import traceback
 import numpy as np
-import warnings
 
 from drsmodule import constants
 from drsmodule import config
 from drsmodule import locale
-from drsmodule.config.database import database
+from drsmodule.config.core import drs_database
+from drsmodule.config.instruments.spirou import file_definitions
 from drsmodule.io import drs_fits
 from drsmodule.science.calib import dark
-from drsmodule.config.instruments.spirou import file_definitions
+
 
 # =============================================================================
 # Define variables
@@ -38,6 +37,7 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = config.wlog
 # Get the text types
 ErrorEntry = locale.drs_text.ErrorEntry
+ErrorText = locale.drs_text.ErrorText
 # Define the DARK file
 DARK_FILE = file_definitions.out_dark
 SKY_FILE = file_definitions.out_sky
@@ -45,7 +45,55 @@ SKY_FILE = file_definitions.out_sky
 # =============================================================================
 # Define functions
 # =============================================================================
-def _main(recipe, params):
+# All recipe code goes in _main
+#    Only change the following from here:
+#     1) function calls  (i.e. main(arg1, arg2, **kwargs)
+#     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
+#     3) config_main  outputs value   (i.e. None, pp, reduced)
+# Everything else is controlled from recipe_definition
+def main(directory=None, files=None, **kwargs):
+    """
+    Main function for cal_dark_spirou.py
+
+    :param directory: string, the night name sub-directory
+    :param files: list of strings or string, the list of files to process
+    :param kwargs: any additional keywords
+
+    :type directory: str
+    :type files: list[str]
+
+    :keyword debug: int, debug level (0 for None)
+
+    :returns: dictionary of the local space
+    :rtype: dict
+    """
+    # assign function calls (must add positional)
+    fkwargs = dict(directory=directory, files=files, **kwargs)
+    # ----------------------------------------------------------------------
+    # deal with command line inputs / function call inputs
+    recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    # solid debug mode option
+    if kwargs.get('DEBUG0000', False):
+        return recipe, params
+    # ----------------------------------------------------------------------
+    # run main bulk of code (catching all errors)
+    llmain, success = config.run(__main__, recipe, params)
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    params = config.end_main(params, success)
+    # return a copy of locally defined variables in the memory
+    return config.get_locals(dict(locals()), llmain)
+
+
+def __main__(recipe, params):
+    """
+    Main code: should only call recipe and params (defined from main)
+
+    :param recipe:
+    :param params:
+    :return:
+    """
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
@@ -87,9 +135,10 @@ def _main(recipe, params):
         # Dark exposure time check
         # ------------------------------------------------------------------
         # log the Dark exposure time
-        WLOG(params, 'info', 'Dark Time = {0:.3f} s'.format(params['EXPTIME']))
-        # Quality control: make sure the exposure time is longer than qc_dark_time
-        if params['EXPTIME'] < params['QC_DARK_TIME']:
+        WLOG(params, 'info', 'Dark Time = {0:.3f} s'.format(exptime))
+        # Quality control: make sure the exposure time is longer than
+        #                  qc_dark_time
+        if exptime < params['QC_DARK_TIME']:
             emsg = 'Dark exposure time too short (< {0:.1f} s)'
             WLOG(params, 'error', emsg.format(params['QC_DARK_TIME']))
         # ------------------------------------------------------------------
@@ -141,17 +190,18 @@ def _main(recipe, params):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        textdict = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
         # ------------------------------------------------------------------
         # check that med < qc_max_darklevel
-        if params['MED_FULL'] > params['QC_MAX_DARKLEVEL']:
+        if med_full > params['QC_MAX_DARKLEVEL']:
             # add failed message to fail message list
-            fargs = [params['MED_FULL'], params['QC_MAX_DARKLEVEL']]
-            fail_msg.append(ErrorEntry('40-011-00008', args=fargs))
+            fargs = [med_full, params['QC_MAX_DARKLEVEL']]
+            fail_msg.append(textdict['40-011-00008'].format(*fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(params['MED_FULL'])
+        qc_values.append(med_full)
         qc_names.append('MED_FULL')
         qc_logic.append('MED_FULL > {0:.2f}'.format(params['QC_MAX_DARKLEVEL']))
         # ------------------------------------------------------------------
@@ -159,7 +209,7 @@ def _main(recipe, params):
         if dadeadall > params['QC_MAX_DEAD']:
             # add failed message to fail message list
             fargs = [dadeadall, params['QC_MAX_DEAD']]
-            fail_msg.append(ErrorEntry('40-011-00009', args=fargs))
+            fail_msg.append(textdict['40-011-00009'].format(*fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -171,7 +221,7 @@ def _main(recipe, params):
         # checl that the precentage of dark pixels < qc_max_dark
         if baddark > params['QC_MAX_DARK']:
             fargs = [params['DARK_CUTLIMIT'], baddark, params['QC_MAX_DARK']]
-            fail_msg.append(ErrorEntry('40-011-00010', args=fargs))
+            fail_msg.append(textdict['40-011-00010'].format(*fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -188,7 +238,7 @@ def _main(recipe, params):
             params.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', ErrorEntry('40-005-00001') + farg)
+                WLOG(params, 'warning', ErrorEntry('40-005-00002') + farg)
             params['QC'] = 0
             params.set_source('QC', __NAME__ + '/main()')
             continue
@@ -202,6 +252,8 @@ def _main(recipe, params):
             outfile = DARK_FILE.copy()
         elif dprtype == 'SKY_DARK':
             outfile = SKY_FILE.copy()
+        else:
+            outfile = None
         # construct the filename from file instance
         outfile.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -244,69 +296,12 @@ def _main(recipe, params):
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
         if params['QC']:
-            database.add_file(params, outfile)
+            drs_database.add_file(params, outfile)
 
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
     return dict(locals())
-
-
-# All recipe code goes in _main
-#    Only change the following from here:
-#     1) function calls  (i.e. main(arg1, arg2, **kwargs)
-#     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
-#     3) config_main  outputs value   (i.e. None, pp, reduced)
-# Everything else is controlled from recipe_definition
-def main(directory=None, files=None, **kwargs):
-    """
-    Main function for cal_dark_spirou.py
-
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
-
-    :type directory: str
-    :type files: list[str]
-
-    :keyword debug: int, debug level (0 for None)
-
-    :returns: dictionary of the local space
-    :rtype: dict
-    """
-    # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, files=files, **kwargs)
-    # ----------------------------------------------------------------------
-    # deal with command line inputs / function call inputs
-    recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
-    # ----------------------------------------------------------------------
-    # run main bulk of code (catching all errors)
-    if params['DRS_DEBUG'] > 0:
-        llmain = _main(recipe, params)
-        llmain['e'], llmain['tb'] = None, None
-        success = True
-    else:
-        try:
-            llmain = _main(recipe, params)
-            llmain['e'], llmain['tb'] = None, None
-            success = True
-        except Exception as e:
-            string_trackback = traceback.format_exc()
-            success = False
-            emsg = ErrorEntry('01-010-00001', args=[type(e)])
-            emsg += '\n\n' + ErrorEntry(string_trackback)
-            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
-            llmain = dict(e=e, tb=string_trackback)
-        except SystemExit as e:
-            string_trackback = traceback.format_exc()
-            success = False
-            llmain = dict(e=e, tb=string_trackback)
-    # ----------------------------------------------------------------------
-    # End Message
-    # ----------------------------------------------------------------------
-    params = config.end_main(params, success)
-    # return a copy of locally defined variables in the memory
-    return config.get_locals(dict(locals()), llmain)
 
 
 # =============================================================================

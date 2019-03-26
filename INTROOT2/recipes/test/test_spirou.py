@@ -31,7 +31,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+Entry = locale.drs_text.Entry
 # -----------------------------------------------------------------------------
 
 
@@ -66,8 +66,8 @@ def main(directory=None, filelist1=None, filelist2=None, **kwargs):
     except Exception as e:
         string_trackback = traceback.format_exc()
         success = False
-        emsg = ErrorEntry('01-010-00001', args=[type(e)])
-        emsg += '\n\n' + ErrorEntry(string_trackback)
+        emsg = Entry('01-010-00001', args=[type(e)])
+        emsg += '\n\n' + Entry(string_trackback)
         WLOG(params, 'error', emsg, raise_exception=False)
         llmain = dict()
     except SystemExit as e:
