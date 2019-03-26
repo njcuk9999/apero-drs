@@ -76,7 +76,7 @@ def update_calibdb(params, dbname, dbkey, outfile):
     func_name = __NAME__ + '.update_calibdb()'
     # ----------------------------------------------------------------------
     # get the hdict
-    hdict = _get_hdict(params, dbname, outfile)
+    hdict, header = _get_hdict(params, dbname, outfile)
     # ----------------------------------------------------------------------
     # get time from header
     header_time = _get_time(params, dbname, hdict)
@@ -104,10 +104,10 @@ def update_telludb(params, dbname, dbkey, outfile):
     func_name = __NAME__ + '.update_calibdb()'
     # ----------------------------------------------------------------------
     # get the hdict
-    hdict = _get_hdict(params, dbname, outfile)
+    hdict, header = _get_hdict(params, dbname, outfile)
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, dbname, hdict)
+    header_time = _get_time(params, dbname, hdict, header)
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey)
@@ -132,7 +132,7 @@ def _get_dbkey(params, outfile):
     func_name = __NAME__ + '._get_dbkey()'
     # get database key (if it exists)
     if hasattr(outfile, 'dbkey'):
-        dbkey = outfile.key.upper()
+        dbkey = outfile.dbkey.upper()
     else:
         eargs = [outfile.name, func_name]
         WLOG(params, 'error', TextEntry('00-008-00007', args=eargs))
@@ -142,10 +142,11 @@ def _get_dbkey(params, outfile):
 
 def _get_dbname(params, outfile):
     func_name = __NAME__ + '._get_dbname()'
+    dbnames = ['telluric', 'calibration']
     if hasattr(outfile, 'dbname'):
         dbname = outfile.dbname.capitalize()
     else:
-        eargs = [outfile.name, func_name]
+        eargs = [outfile.name, ', '.join(dbnames), func_name]
         WLOG(params, 'error', TextEntry('00-008-00005', args=eargs))
         dbname = None
     return dbname
@@ -156,13 +157,15 @@ def _get_hdict(params, dbname, outfile):
     # get hdict
     if hasattr(outfile, 'hdict'):
         hdict = outfile.hdict
+        header = None
     elif hasattr(outfile, 'header'):
-        hdict = outfile.header
+        hdict = None
+        header = outfile.header
     else:
         eargs = [dbname, outfile.name, func_name]
         WLOG(params, 'error', TextEntry('00-001-00027', args=eargs))
-        hdict = None
-    return hdict
+        hdict, header = None, None
+    return hdict, header
 
 
 def _get_outpath(params, dbname, outfile):
@@ -184,9 +187,9 @@ def _get_database_file(params, dbname, outfile):
     func_name = __NAME__ + '._get_database_file()'
     # test database name
     if dbname.lower() == 'telluric':
-        outpath = params['DRS_TELLU_DB']
+        outpath = params['TELLU_DB_NAME']
     elif dbname.lower() == 'calibration':
-        outpath = params['DRS_CALIB_DB']
+        outpath = params['CALIB_DB_NAME']
     else:
         eargs = [outfile.name, outfile.dbname, 'calibration, telluric',
                  func_name]
@@ -213,7 +216,7 @@ def _copy_db_file(params, dbname, inpath, outpath):
         WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
 
 
-def _get_time(params, dbname, hdict, kind=None):
+def _get_time(params, dbname, hdict=None, header=None, kind=None):
     func_name = __NAME__ + '._get_time()'
     # ----------------------------------------------------------------------
     # get keywords from params
@@ -221,12 +224,25 @@ def _get_time(params, dbname, hdict, kind=None):
     timefmt = drs_log.find_param(params, 'KW_ACQTIME_FMT', func_name)
     timetype = drs_log.find_param(params, 'KW_ACQTIME_DTYPE', func_name)
     # ----------------------------------------------------------------------
-    # get raw time
-    if timekey in hdict:
-        # get the raw time from the header
-        raw_time = hdict[timekey]
+    # get raw time from hdict / header
+    if hdict is not None:
+        if timekey in hdict:
+            # get the raw time from the header
+            raw_time = hdict[timekey][0]
+        else:
+            eargs = [dbname, 'hdict', timekey, func_name]
+            WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
+            raw_time = None
+    elif header is not None:
+        if timekey in header:
+            # get the raw time from the header
+            raw_time = header[timekey]
+        else:
+            eargs = [dbname, 'header', timekey, func_name]
+            WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
+            raw_time = None
     else:
-        eargs = [dbname, timekey, func_name]
+        eargs = [dbname, 'hdict or header', timekey, func_name]
         WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
         raw_time = None
     # ----------------------------------------------------------------------
@@ -275,7 +291,7 @@ def _write_line_to_database(params, key, dbname, outfile, line):
         # must close lock file
         drs_lock.close_fits_lock_file(params, lock, lock_file, abspath)
         # error message
-        eargs = [dbname, key, type(e), e, func_name]
+        eargs = [dbname, key, type(e), e, abspath, func_name]
         WLOG(params, 'error', TextEntry('01-001-00018', args=eargs))
     # must close lock file
     drs_lock.close_fits_lock_file(params, lock, lock_file, abspath)
