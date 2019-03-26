@@ -117,7 +117,7 @@ class DrsInputFile:
         """
         self.recipe = recipe
 
-    def new(self, **kwargs):
+    def newcopy(self, **kwargs):
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
         kwargs['ext'] = kwargs.get('ext', self.ext)
@@ -198,7 +198,7 @@ class DrsInputFile:
         """
         self.fileset.append(drsfile)
 
-    def copy(self, drsfile, **kwargs):
+    def copyother(self, drsfile, **kwargs):
         # check recipe has been set
         if 'recipe' not in kwargs:
             self.check_recipe()
@@ -349,6 +349,8 @@ class DrsFitsFile(DrsInputFile):
         # get tag
         self.outfunc = kwargs.get('outfunc', None)
         self.outtag = kwargs.get('KW_OUTPUT', 'UNKNOWN')
+        self.dbname = kwargs.get('dbname', None)
+        self.dbkey = kwargs.get('dbkey', None)
         # add header
         self.required_header_keys = kwargs.get('rkeys', dict())
         if len(self.required_header_keys) == 0:
@@ -369,7 +371,7 @@ class DrsFitsFile(DrsInputFile):
             if 'KW_' in kwarg.upper():
                 self.required_header_keys[kwarg] = kwargs[kwarg]
 
-    def new(self, **kwargs):
+    def newcopy(self, **kwargs):
         """
         Make a new copy of this class (using all default parameters
         set when constructed
@@ -409,6 +411,8 @@ class DrsFitsFile(DrsInputFile):
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['outtag'] = kwargs.get('KW_OUTPUT', self.outtag)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
+        kwargs['dbname'] = kwargs.get('dbname', self.dbname)
+        kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
         for key in self.required_header_keys:
             kwargs[key] = self.required_header_keys[key]
         self.get_header_keys(kwargs)
@@ -473,6 +477,8 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['output_dict'] = kwargs.get('output_dict', drsfile.output_dict)
         nkwargs['fileset'] = kwargs.get('fileset', self.fileset)
         nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
+        nkwargs['dbname'] = kwargs.get('dbname', self.dbname)
+        nkwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
 
@@ -1266,8 +1272,7 @@ class DrsFitsFile(DrsInputFile):
                     self.hdict[key] = (fileheader[key], '')
         return True
 
-    def add_hkey(self, kwstore=None, value=None, key=None,
-                       comment=None):
+    def add_hkey(self, key=None, keyword=None, value=None, comment=None):
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
         and key and comment are defined these are used instead.
@@ -1290,26 +1295,30 @@ class DrsFitsFile(DrsInputFile):
         :return:
         """
         func_name = __NAME__ + '.DrsFitsFile.add_header_key()'
-        # deal with no keywordstore
-        if (kwstore is None) and (key is None or comment is None):
-            self.__error__(TextEntry('00-001-00008', args=[func_name]))
         # check for kwstore in params
         self.check_recipe()
         params = self.recipe.drs_params
-        # check for kwstore in params
-        if kwstore in params:
-            kwstore = params[kwstore]
+        # if key is set use it (it should be from parameter dictionary
+        if key is not None:
+            if key in params:
+                kwstore = params[key]
+            else:
+                eargs = [key, func_name]
+                self.__error__(TextEntry('00-001-00008', args=eargs))
+                kwstore = None
+        else:
+            kwstore = [keyword, value, comment]
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
-            key, dvalue, comment = self.get_keywordstore(kwstore, func_name)
+            okey, dvalue, comment = self.get_keywordstore(kwstore, func_name)
         else:
-            key, dvalue, comment = key, None, comment
+            okey, dvalue, comment = key, None, comment
 
         # set the value to default value if value is None
         if value is None:
             value = dvalue
         # add to the hdict dictionary in form (value, comment)
-        self.hdict[key] = (value, comment)
+        self.hdict[okey] = (value, comment)
 
     def add_hkeys(self, kwstores=None, values=None, keys=None,
                   comments=None):
@@ -1572,7 +1581,7 @@ def add_required_keywords(drs_filelist, keys):
     # loop around the DrsFitsFiles in "drs_filelist"
     for drs_file in drs_filelist:
         # create a copy of the DrsFitsfile
-        drs_file1 = drs_file.new()
+        drs_file1 = drs_file.newcopy()
         # storage for addition to drs_file1 name
         nameadd = []
         # loop around the key, value pairs
