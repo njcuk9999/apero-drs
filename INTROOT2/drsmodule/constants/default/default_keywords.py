@@ -5,11 +5,11 @@ from drsmodule.constants.core import constant_functions
 # Define variables
 # -----------------------------------------------------------------------------
 # all definition
-__all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_OBJRA', 'KW_OBJDEC',
-           'KW_OBJNAME', 'KW_OBJEQUIN', 'KW_OBJRAPM', 'KW_OBJDECPM',
-           'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_OBSTYPE', 'KW_CCAS',
-           'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
-           'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION', 'KW_PPVERSION',
+__all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
+           'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN', 'KW_OBJRAPM',
+           'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_OBSTYPE',
+           'KW_CCAS', 'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS',
+           'KW_MJDEND', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION', 'KW_PPVERSION',
            'KW_DPRTYPE', 'KW_PID', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_UTC_OBS', 'KW_OUTPUT',
@@ -38,6 +38,9 @@ KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, comment='',
 KW_ACQTIME_FMT = Const('KW_ACQTIME_FMT', value='mjd', dtype=str,
                        options=['mjd', 'iso', 'unix', 'jyear'],
                        source=__NAME__)
+# This is the dtype of the acqtime (i.e. str or float)
+KW_ACQTIME_DTYPE = Const('KW_ACQTIME_FMT', value=float, dtype=type,
+                         options=[float, str], source=__NAME__)
 
 # define the observation date HEADER key
 KW_DATE_OBS = Keyword('KW_DATE_OBS', key='', dtype=float, source=__NAME__)

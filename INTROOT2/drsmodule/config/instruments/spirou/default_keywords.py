@@ -29,6 +29,9 @@ KW_ACQTIME.set(key='MJDATE')
 # Dev Note: This is a "Const" not a "Keyword"
 KW_ACQTIME_FMT = KW_ACQTIME_FMT.copy(__NAME__)
 KW_ACQTIME_FMT.value = 'mjd'
+# This is the dtype of the acqtime (i.e. str or float)
+KW_ACQTIME_DTYPE = KW_ACQTIME_DTYPE.copy(__NAME__)
+KW_ACQTIME_DTYPE.value = float
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)

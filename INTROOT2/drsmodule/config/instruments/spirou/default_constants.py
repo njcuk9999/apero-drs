@@ -110,6 +110,10 @@ QC_DARK_TIME.value = 1.0
 QC_MAX_DARKLEVEL = QC_MAX_DARKLEVEL.copy(__NAME__)
 QC_MAX_DARKLEVEL.value = 0.07
 
+#   Max fraction of dark pixels (percent)
+QC_MAX_DARK = QC_MAX_DARK.copy(__NAME__)
+QC_MAX_DARK.value = 1.0
+
 #   Max fraction of dead pixels
 QC_MAX_DEAD = QC_MAX_DEAD.copy(__NAME__)
 QC_MAX_DEAD.value = 1.0
@@ -138,4 +142,19 @@ IMAGE_Y_RED_HIGH.value = 3350
 DARK_CUTLIMIT = DARK_CUTLIMIT.copy(__NAME__)
 DARK_CUTLIMIT.value = 5.0
 
+#   Defines the lower and upper percentiles when measuring the dark
+DARK_QMIN = DARK_QMIN.copy(__NAME__)
+DARK_QMIN.value = 5
+DARK_QMAX = DARK_QMAX.copy(__NAME__)
+DARK_QMAX.value = 95
+
+#   The number of bins in dark histogram
+HISTO_BINS = HISTO_BINS.copy(__NAME__)
+HISTO_BINS.value = 200
+
+#   The range of the histogram in ADU/s
+HISTO_RANGE_LOW = HISTO_RANGE_LOW.copy(__NAME__)
+HISTO_RANGE_LOW.value = -0.2
+HISTO_RANGE_HIGH = HISTO_RANGE_HIGH.copy(__NAME__)
+HISTO_RANGE_HIGH.value = 0.8
 

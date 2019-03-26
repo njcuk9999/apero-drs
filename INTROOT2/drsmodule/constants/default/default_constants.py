@@ -16,7 +16,8 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
            'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
-           'QC_MAX_DEAD']
+           'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX', 'HISTO_BINS',
+           'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH', 'QC_MAX_DARK']
 # set name
 __NAME__ = 'drsmodule.constants.default.default_constants'
 
@@ -116,6 +117,9 @@ QC_DARK_TIME = Const('QC_DARK_TIME', value=None, dtype=float, minimum=0.0,
 QC_MAX_DARKLEVEL = Const('QC_MAX_DARKLEVEL', value=None, dtype=float,
                          source=__NAME__)
 
+#   Max fraction of dark pixels (percent)
+QC_MAX_DARK = Const('QC_MAX_DARK', value=None, dtype=float, source=__NAME__)
+
 #   Max fraction of dead pixels
 QC_MAX_DEAD = Const('QC_MAX_DEAD', value=None, dtype=float, source=__NAME__)
 
@@ -141,3 +145,19 @@ IMAGE_Y_RED_HIGH = Const('IMAGE_Y_RED_HIGH', value=None, dtype=int, minimum=0,
 
 #   Define a bad pixel cut limit (in ADU/s)
 DARK_CUTLIMIT = Const('DARK_CUTLIMIT', value=None, dtype=float, source=__NAME__)
+
+#   Defines the lower and upper percentiles when measuring the dark
+DARK_QMIN = Const('DARK_QMIN', value=None, dtype=int, source=__NAME__,
+                  minimum=0, maximum=100)
+DARK_QMAX = Const('DARK_QMAX', value=None, dtype=int, source=__NAME__,
+                  minimum=0, maximum=100)
+
+#   The number of bins in dark histogram
+HISTO_BINS = Const('HISTO_BINS', value=None, dtype=int, source=__NAME__,
+                   minimum=1)
+
+#   The range of the histogram in ADU/s
+HISTO_RANGE_LOW = Const('HISTO_RANGE_LOW', value=None, dtype=int,
+                        source=__NAME__)
+HISTO_RANGE_HIGH = Const('HISTO_RANGE_LOW', value=None, dtype=int,
+                        source=__NAME__)

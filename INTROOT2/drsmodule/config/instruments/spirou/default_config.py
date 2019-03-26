@@ -76,4 +76,22 @@ DRS_DATA_PLOT = DRS_DATA_PLOT.copy(__NAME__)
 DRS_DATA_PLOT.value = '/drs/spirou/data/plot'
 
 
+# =============================================================================
+# DATABASE SETTINGS
+# =============================================================================
+#   the maximum wait time for calibration database file to be in use (locked)
+#       after which an error is raised (in seconds)
+DB_MAX_WAIT = DB_MAX_WAIT.copy(__NAME__)
+DB_MAX_WAIT.value = 600
 
+# file max wait
+FITSOPEN_MAX_WAIT = FITSOPEN_MAX_WAIT.copy(__NAME__)
+FITSOPEN_MAX_WAIT.value = 600
+
+# the telluric database name
+TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
+TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
+
+# the calibration database name
+CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
+CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'

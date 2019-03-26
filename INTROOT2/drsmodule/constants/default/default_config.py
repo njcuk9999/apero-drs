@@ -15,7 +15,7 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
            'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
-           'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT']
+           'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME']
 
 # set name
 __NAME__ = 'drsmodule.constants.default.default_config'
@@ -89,7 +89,7 @@ AUTHORS = Const('AUTHOR',
 
 # Release version
 DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
-                source=__NAME__)
+                    source=__NAME__)
 
 # Date
 DRS_DATE = Const('DATE', value='2019-01-18', dtype=str, source=__NAME__)
@@ -162,6 +162,14 @@ DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,
 FITSOPEN_MAX_WAIT = Const('FITSOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
                           source=__NAME__)
 
+# the telluric database name
+TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
+                      value='master_tellu.txt')
+
+# the calibration database name
+CALIB_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
+                      value='master_calib.txt')
+
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
 # =============================================================================
@@ -180,7 +188,8 @@ DRS_PRINT_LEVEL = Const('DRS_PRINT_LEVEL', value='all', dtype=str,
 #       'warning' - to print warning/error events
 #       'error' - to print only error events
 DRS_LOG_LEVEL = Const('DRS_LOG_LEVEL', value='all', dtype=str,
-                  options=['all', 'info', 'warning', 'error'], source=__NAME__)
+                      options=['all', 'info', 'warning', 'error'],
+                      source=__NAME__)
 
 #   Coloured logging to standard output (console)
 DRS_COLOURED_LOG = Const('DRS_COLOURED_LOG', value=True, dtype=bool,
