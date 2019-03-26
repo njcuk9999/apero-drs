@@ -104,10 +104,10 @@ class Text:
             self.comment[key] = comments[key]
 
 
-class ErrorText(Text):
+class TextDict(Text):
     def __init__(self, instrument, language):
         Text.__init__(self, instrument, language)
-        self.name = 'ErrorText'
+        self.name = 'TextDict'
         self.load_func = '_load_dict_error()'
         self._load_dict_error()
 
@@ -115,10 +115,10 @@ class ErrorText(Text):
         self._load_dict(ERROR_FILES)
 
 
-class HelpText(Text):
+class HelpDict(Text):
     def __init__(self, instrument, language):
         Text.__init__(self, instrument, language)
-        self.name = 'HelpText'
+        self.name = 'HelpDict'
         self.load_func = '_load_dict_help()'
         self._load_dict_help()
 
@@ -161,7 +161,7 @@ class Entry:
     def __add__(self, other):
 
         if type(other) == str:
-            message2 = ErrorEntry(other)
+            message2 = TextEntry(other)
             return self + message2
         else:
             keys = self.keys + other.keys
@@ -249,10 +249,10 @@ class Entry:
 
     def get(self, tobj=None, report=False, reportlevel=None):
         """
-        Use a Text, ErrorText or HelpText instance (the translation matrix
+        Use a Text, TextDict or HelpDict instance (the translation matrix
         object) to turn Entry into a valid python string
 
-        :param tobj: Text, ErrorText or HelpText instance, the translation
+        :param tobj: Text, TextDict or HelpDict instance, the translation
                      matrix object
         :param report: bool, if True adds a "name" for the Entry and the
                        key-code used to identify it (i.e. Error[00-000-00000])
@@ -331,14 +331,14 @@ class Entry:
 
     def _convert_args(self, it, tobj):
         """
-        Convert args that are Entry, ErrorEntry and HelpEntry to strings
+        Convert args that are Entry, TextEntry and HelpEntry to strings
         based on tobj
 
         :param it: int, the iteration of args to convert
-        :param tobj: Text, ErrorText or HelpText instance, the translation
+        :param tobj: Text, TextDict or HelpDict instance, the translation
                      matrix object
 
-        :return args: list, the list of args (where Entry, ErrorEntry and
+        :return args: list, the list of args (where Entry, TextEntry and
                       HelpEntry values are now strings)
         """
         # get raw arguments for this iteration
@@ -348,7 +348,7 @@ class Entry:
         # loop around raw_args and look for entries - we need to translate them
         # now
         for raw_arg in raw_args:
-            if type(raw_arg) in [Entry, ErrorEntry, HelpEntry]:
+            if type(raw_arg) in [Entry, TextEntry, HelpEntry]:
                 args.append(raw_arg.get(tobj, report=False))
             else:
                 args.append(raw_arg)
@@ -357,18 +357,18 @@ class Entry:
 
     def _convert_kwargs(self, tobj):
         """
-        Convert kwargs that are Entry, ErrorEntry and HelpEntry to strings
+        Convert kwargs that are Entry, TextEntry and HelpEntry to strings
         based on tobj
 
-        :param tobj: Text, ErrorText or HelpText instance, the translation
+        :param tobj: Text, TextDict or HelpDict instance, the translation
                      matrix object
         :return kwargs: dictionary, the dictionary of kwargs (where Entry,
-                        ErrorEntry and HelpEntry values are now strings)
+                        TextEntry and HelpEntry values are now strings)
         """
         # loop around kwargs
         kwargs = dict()
         for kwarg in self.kwargs:
-            if type(self.kwargs[kwarg]) in [Entry, ErrorEntry, HelpEntry]:
+            if type(self.kwargs[kwarg]) in [Entry, TextEntry, HelpEntry]:
                 kwargs[kwarg] = self.kwargs[kwarg].get(tobj, report=False)
             else:
                 kwargs[kwarg] = self.kwargs[kwarg]
@@ -376,15 +376,15 @@ class Entry:
         return kwargs
 
 
-class ErrorEntry(Entry):
+class TextEntry(Entry):
     def __init__(self, key, args=None, kwargs=None):
         Entry.__init__(self, key, args, kwargs)
-        self.name = 'ErrorEntry'
+        self.name = 'TextEntry'
         self.short = 'E'
 
     def __add__(self, other):
         if type(other) == str:
-            message2 = ErrorEntry(other)
+            message2 = TextEntry(other)
             return self + message2
         else:
             keys = self.keys + other.keys
@@ -392,11 +392,11 @@ class ErrorEntry(Entry):
             kwargs = self.kwargs
             for kwarg2 in other.kwargs:
                 kwargs[kwarg2] = other.kwargs[kwarg2]
-            return ErrorEntry(keys, args, kwargs)
+            return TextEntry(keys, args, kwargs)
 
     def __radd__(self, other):
         if type(other) == str:
-            message2 = ErrorEntry(other)
+            message2 = TextEntry(other)
             return message2 + self
         else:
             keys = other.keys + self.keys
@@ -404,7 +404,7 @@ class ErrorEntry(Entry):
             kwargs = other.kwargs
             for kwarg2 in self.kwargs:
                 kwargs[kwarg2] = self.kwargs[kwarg2]
-            return ErrorEntry(keys, args, kwargs)
+            return TextEntry(keys, args, kwargs)
 
 
 class HelpEntry(Entry):

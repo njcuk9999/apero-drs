@@ -42,9 +42,9 @@ ParamDict = constants.ParamDict
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-ErrorEntry = drs_text.ErrorEntry
-ErrorText = drs_text.ErrorText
-HelpText = drs_text.HelpText
+TextEntry = drs_text.TextEntry
+TextDict = drs_text.TextDict
+HelpText = drs_text.HelpDict
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -68,7 +68,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
     def __init__(self, recipe, **kwargs):
         self.recipe = recipe
         params = self.recipe.drs_params
-        self.errortext = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+        self.textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         self.helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
         self.args = None
         self.argv = None
@@ -86,7 +86,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # overritten functionality
         args, argv = self.parse_known_args(args, namespace)
         if argv:
-            msg = self.errortext['09-001-00002']
+            msg = self.textdict['09-001-00002']
             self.error(msg.format(' '.join(argv)))
         return args
 
@@ -99,7 +99,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         params = self.recipe.drs_params
         # log message
         emsg_args = [message, program]
-        emsg_obj = ErrorEntry('09-001-00001', args=emsg_args)
+        emsg_obj = TextEntry('09-001-00001', args=emsg_args)
         WLOG(params, 'error', emsg_obj)
 
     def _print_message(self, message, file=None):
@@ -116,7 +116,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # Manually print error message (with help)
         print()
         print(green + params['DRS_HEADER'] + end)
-        helptitletext = self.errortext['40-002-00001'].format(program)
+        helptitletext = self.textdict['40-002-00001'].format(program)
         print(green + ' ' + helptitletext + end)
         print(green + params['DRS_HEADER'] + end)
         imsgs = _get_version_info(self.recipe.drs_params, green, end)
@@ -149,20 +149,20 @@ class DRSArgumentParser(argparse.ArgumentParser):
             hmsgs += [self.recipe.drs_params['DRS_HEADER']]
 
         # deal with required arguments
-        hmsgs += ['', self.errortext['40-002-00002'], '']
+        hmsgs += ['', self.textdict['40-002-00002'], '']
         for arg in self.recipe.required_args:
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with optional arguments
-        hmsgs += ['', '', self.errortext['40-002-00003'], '']
+        hmsgs += ['', '', self.textdict['40-002-00003'], '']
         for arg in self.recipe.optional_args:
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with special arguments
-        hmsgs += ['', '', self.errortext['40-002-00004'], '']
+        hmsgs += ['', '', self.textdict['40-002-00004'], '']
         for arg in self.recipe.special_args:
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
 
         # add help
-        helpstr = self.errortext['40-002-00005']
+        helpstr = self.textdict['40-002-00005']
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
 
         # add epilog
@@ -225,11 +225,11 @@ class _CheckDirectory(argparse.Action):
         argname = self.dest
         # get the params from recipe
         params = self.recipe.drs_params
-        errortext = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # debug checking output
         if params['DRS_DEBUG'] > 0:
             print('')
-        WLOG(params, 'debug', ErrorEntry('90-001-00018', args=[argname]))
+        WLOG(params, 'debug', TextEntry('90-001-00018', args=[argname]))
         # noinspection PyProtectedMember
         out = self.recipe.valid_directory(argname, value, return_error=True)
         cond, directory, emsgs = out
@@ -246,7 +246,7 @@ class _CheckDirectory(argparse.Action):
             # combine emsgs and lmsgs
             wmsgs = []
             for it in range(len(emsgs.keys)):
-                wmsgs += [errortext[emsgs.keys[it]].format(*emsgs.args[it])]
+                wmsgs += [textdict[emsgs.keys[it]].format(*emsgs.args[it])]
             for lmsg in lmsgs:
                 wmsgs += ['\n' + lmsg]
             # log messages
@@ -286,7 +286,7 @@ class _CheckFiles(argparse.Action):
         # get the params from recipe
         params = self.recipe.drs_params
         # debug checking output
-        WLOG(params, 'debug', ErrorEntry('90-001-00019', args=[argname]))
+        WLOG(params, 'debug', TextEntry('90-001-00019', args=[argname]))
         # check if files are valid
         # noinspection PyProtectedMember
         out = self.recipe._valid_files(argname, value, directory,
@@ -338,26 +338,26 @@ class _CheckBool(argparse.Action):
         # get the argument name
         argname = self.dest
         # debug progress
-        WLOG(params, 'debug', ErrorEntry('90-001-00020', args=[argname]),
+        WLOG(params, 'debug', TextEntry('90-001-00020', args=[argname]),
              wrap=False)
         # conditions
         if str(value).lower() in ['yes', 'true', 't', 'y', '1']:
             # debug print
             dargs = [argname, value, 'True']
-            dmsg = ErrorEntry('90-001-00021', args=dargs)
-            dmsg += ErrorEntry('')
+            dmsg = TextEntry('90-001-00021', args=dargs)
+            dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             return True
         elif str(value).lower() in ['no', 'false', 'f', 'n', '0']:
             # debug print
             dargs = [argname, value, 'False']
-            dmsg = ErrorEntry('90-001-00021', args=dargs)
-            dmsg += ErrorEntry('')
+            dmsg = TextEntry('90-001-00021', args=dargs)
+            dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             return False
         else:
             eargs = [self.dest, value]
-            WLOG(params, 'error', ErrorEntry('09-001-00013', args=eargs))
+            WLOG(params, 'error', TextEntry('09-001-00013', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -389,9 +389,9 @@ class _CheckType(argparse.Action):
         try:
             return self.type(value)
         except ValueError as _:
-            WLOG(params, 'error', ErrorEntry('09-001-00014', args=eargs))
+            WLOG(params, 'error', TextEntry('09-001-00014', args=eargs))
         except TypeError as _:
-            WLOG(params, 'error', ErrorEntry('09-001-00015', args=eargs))
+            WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
 
     def _check_type(self, value):
         # get parameters
@@ -402,7 +402,7 @@ class _CheckType(argparse.Action):
         # check if passed as a list
         if (self.nargs == 1) and (type(value) is list):
             if len(value) == 0:
-                emsg = ErrorEntry('09-001-00016', args=[self.dest])
+                emsg = TextEntry('09-001-00016', args=[self.dest])
                 WLOG(params, 'error', emsg)
             else:
                 return self._eval_type(value[0])
@@ -413,12 +413,12 @@ class _CheckType(argparse.Action):
                 values.append(self._eval_type(values[it]))
             if len(values) < len(value):
                 eargs = [self.dest, self.nargs, len(value)]
-                WLOG(params, 'error', ErrorEntry('09-001-00017', args=eargs))
+                WLOG(params, 'error', TextEntry('09-001-00017', args=eargs))
             return values
         # else
         else:
             eargs = [self.dest, self.nargs, type(value), value]
-            WLOG(params, 'error', ErrorEntry('09-001-00018', args=eargs))
+            WLOG(params, 'error', TextEntry('09-001-00018', args=eargs))
 
     def _check_limits(self, values):
         func_name = __NAME__ + '_CheckType._check_limits()'
@@ -436,7 +436,7 @@ class _CheckType(argparse.Action):
             arg = self.recipe.special_args[argname]
         else:
             eargs = [argname, func_name]
-            WLOG(params, 'error', ErrorEntry('00-006-00011', args=eargs))
+            WLOG(params, 'error', TextEntry('00-006-00011', args=eargs))
             arg = None
         # ---------------------------------------------------------------------
         # skip this step if minimum/maximum are both None
@@ -460,13 +460,13 @@ class _CheckType(argparse.Action):
                 minimum = arg.dtype(minimum)
             except ValueError as e:
                 eargs = [argname, 'minimum', minimum, type(e), e]
-                WLOG(params, 'error', ErrorEntry('00-006-00012', args=eargs))
+                WLOG(params, 'error', TextEntry('00-006-00012', args=eargs))
         if maximum is not None:
             try:
                 maximum = arg.dtype(maximum)
             except ValueError as e:
                 eargs = [argname, 'maximum', maximum, type(e), e]
-                WLOG(params, 'error', ErrorEntry('00-006-00012', args=eargs))
+                WLOG(params, 'error', TextEntry('00-006-00012', args=eargs))
         # ---------------------------------------------------------------------
         # loop round files and check values
         for value in values:
@@ -474,19 +474,19 @@ class _CheckType(argparse.Action):
             if minimum is not None and maximum is not None:
                 if (value < minimum) or (value > maximum):
                     eargs = [argname, value, minimum, maximum]
-                    emsg = ErrorEntry('09-001-00029', args=eargs)
+                    emsg = TextEntry('09-001-00029', args=eargs)
                     WLOG(params, 'error', emsg)
             # deal with case where just minimum is checked
             elif minimum is not None:
                 if value < minimum:
                     eargs = [argname, value, minimum]
-                    emsg = ErrorEntry('09-001-00027', args=eargs)
+                    emsg = TextEntry('09-001-00027', args=eargs)
                     WLOG(params, 'error', emsg)
             # deal with case where just maximum is checked
             elif maximum is not None:
                 if value > maximum:
                     eargs = [argname, value, maximum]
-                    emsg = ErrorEntry('09-001-00028', args=eargs)
+                    emsg = TextEntry('09-001-00028', args=eargs)
                     WLOG(params, 'error', emsg)
         # ---------------------------------------------------------------------
         # return (based on whether it is a list or not)
@@ -530,7 +530,7 @@ class _CheckOptions(argparse.Action):
             return value
         else:
             eargs = [self.dest, ' or '.join(self.choices), value]
-            WLOG(params, 'error', ErrorEntry('09-001-00019', args=eargs))
+            WLOG(params, 'error', TextEntry('09-001-00019', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -670,7 +670,7 @@ class _ActivateDebug(argparse.Action):
             return value
         except:
             eargs = [self.dest, values]
-            WLOG(params, 'error', ErrorEntry('09-001-00020', args=eargs))
+            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
@@ -728,7 +728,7 @@ class _DisplayInfo(argparse.Action):
         # get params
         recipe = self.recipe
         params = recipe.drs_params
-        etext = recipe.errortext
+        etext = recipe.textdict
         htext = recipe.helptext
         program = params['RECIPE']
         # get colours
@@ -844,7 +844,7 @@ class DrsArgument(object):
 
         # ----------------------------------------------
         # Get text for default language/instrument
-        text = ErrorText(None, None)
+        text = TextDict(None, None)
 
         # ----------------------------------------------
         # assign values from construction
@@ -884,12 +884,12 @@ class DrsArgument(object):
         # get file logic
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
-            ee = ErrorEntry('00-006-00008', args=[self.filelogic])
+            ee = TextEntry('00-006-00008', args=[self.filelogic])
             self.exception(None, errorobj=[ee, text])
         # deal with no default/default_ref for kwarg
         if kind == 'kwarg':
             if ('default' not in kwargs) and ('default_ref' not in kwargs):
-                ee = ErrorEntry('00-006-00009', args=self.filelogic)
+                ee = TextEntry('00-006-00009', args=self.filelogic)
                 self.exception(None, errorobj=[ee, text])
         # get default
         self.default = kwargs.get('default', None)
@@ -917,7 +917,7 @@ class DrsArgument(object):
         :return None:
         """
         # Get text for default language/instrument
-        text = ErrorText(None, None)
+        text = TextDict(None, None)
         # deal with no dtype
         if self.dtype is None:
             self.dtype = str
@@ -925,7 +925,7 @@ class DrsArgument(object):
         if self.dtype not in self.allowed_dtypes:
             a_dtypes_str = ['"{0}"'.format(i) for i in self.allowed_dtypes]
             eargs = [' or '.join(a_dtypes_str), self.dtype]
-            ee = ErrorEntry('00-006-00010', args=eargs)
+            ee = TextEntry('00-006-00010', args=eargs)
             self.exception(None, errorobj=[ee, text])
         # deal with dtype
         if self.dtype == 'files':
@@ -1044,7 +1044,7 @@ def _get_version_info(p, green='', end=''):
         version = __version__
 
     # get text strings
-    text = ErrorText(p['INSTRUMENT'], p['LANGUAGE'])
+    text = TextDict(p['INSTRUMENT'], p['LANGUAGE'])
     namestr = text['40-001-00001']
     versionstr = text['40-001-00002']
     authorstr = text['40-001-00003']
@@ -1149,7 +1149,7 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
 
     params = recipe.drs_params
     # get text
-    text = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
     # get limit
     mlimit = params['DRS_MAX_IO_DISPLAY_LIMIT']
@@ -1328,7 +1328,7 @@ def make_listing(p):
     :return props: dictionary for argparser
     """
     limit = p['DRS_MAX_IO_DISPLAY_LIMIT']
-    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--listing'
     props['altnames'] = ['--list']
@@ -1339,7 +1339,7 @@ def make_listing(p):
 
 
 def make_alllisting(p):
-    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--listingall'
     props['altnames'] = ['--listall']
@@ -1355,7 +1355,7 @@ def make_debug(p):
     be done as soon as possible)
     :return:
     """
-    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--debug'
     props['altnames'] = ['--d', '--verbose']
@@ -1370,7 +1370,7 @@ def make_version(p):
     Make a custom special argument that lists the version number
     :return props: dictionary for argparser
     """
-    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--version'
     props['altnames'] = []
@@ -1385,7 +1385,7 @@ def make_info(p):
     Make a custom special argument that lists a short version of the help
     :return props: dictionary for argparser
     """
-    htext = drs_text.HelpText(p['INSTRUMENT'], p['LANGUAGE'])
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--info'
     props['altnames'] = ['--usage']

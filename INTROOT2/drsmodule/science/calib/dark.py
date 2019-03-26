@@ -36,8 +36,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
-ErrorText = locale.drs_text.ErrorText
+TextEntry = locale.drs_text.TextEntry
+TextDict = locale.drs_text.TextDict
 
 
 # =============================================================================
@@ -70,16 +70,16 @@ def measure_dark(params, image, entry_key):
               bin_edges : numpy array (1D) of floats, the bin edges
     """
     func_name = __NAME__ + '.measure_dark()'
-    # get the errortext
-    errortext = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
-    image_name = errortext[entry_key]
+    # get the textdict
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    image_name = textdict[entry_key]
     # make sure image is a numpy array
     # noinspection PyBroadException
     try:
         image = np.array(image)
     except Exception as e:
         eargs = [type(e), e, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00026', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00026', args=eargs))
     # check that params contains required parameters
     dark_qmin = drs_log.find_param(params, 'DARK_QMIN', func_name)
     dark_qmax = drs_log.find_param(params, 'DARK_QMAX', func_name)
@@ -103,7 +103,7 @@ def measure_dark(params, image, entry_key):
     dadead = imax * 100 / np.product(image.shape)
     # log the dark statistics
     wargs = [image_name, dadead, med, dark_qmin, dark_qmax, qmin, qmax]
-    WLOG(params, 'info', ErrorEntry('40-011-00002', args=wargs))
+    WLOG(params, 'info', TextEntry('40-011-00002', args=wargs))
     # return the parameter dictionary with new values
     return np.array(histo), float(med), float(dadead)
 
@@ -123,7 +123,7 @@ def measure_dark_badpix(params, image, nanmask):
         baddark /= np.product(image.shape)
     # log the fraction of bad dark pixels
     wargs = [params['DARK_CUTLIMIT'], baddark]
-    WLOG(params, 'info', ErrorEntry('', args=wargs))
+    WLOG(params, 'info', TextEntry('', args=wargs))
 
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
@@ -136,7 +136,7 @@ def measure_dark_badpix(params, image, nanmask):
     dadeadall = n_bad_pix * 100 / np.product(image.shape)
     # log fraction of dead pixels + dark > cut
     wargs = [params['DARK_CUTLIMIT'], dadeadall]
-    WLOG(params, 'info', ErrorEntry('40-011-00007', args=wargs))
+    WLOG(params, 'info', TextEntry('40-011-00007', args=wargs))
     # return dadeadall
     return baddark, dadeadall
 

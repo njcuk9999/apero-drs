@@ -35,7 +35,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 # Define the PP fileset for spirou
 PP_FILE = file_definitions.pp_file
 
@@ -118,10 +118,10 @@ def __main__(recipe, params):
         # if it wasn't found skip this file, if it was print a message
         if cond:
             eargs = [infile.name]
-            WLOG(params, 'info', ErrorEntry('40-010-00001', args=eargs))
+            WLOG(params, 'info', TextEntry('40-010-00001', args=eargs))
         else:
             eargs = [infile.filename]
-            WLOG(params, 'info', ErrorEntry('40-010-00002', args=eargs))
+            WLOG(params, 'info', TextEntry('40-010-00002', args=eargs))
         # get data from file instance
         image = np.array(infile.data)
 
@@ -129,15 +129,15 @@ def __main__(recipe, params):
         # correct image
         # ------------------------------------------------------------------
         # correct for the top and bottom reference pixels
-        WLOG(params, '', ErrorEntry('40-010-00003'))
+        WLOG(params, '', TextEntry('40-010-00003'))
         image = preprocessing.correct_top_bottom(params, image)
 
         # correct by a median filter from the dark amplifiers
-        WLOG(params, '', ErrorEntry('40-010-00004'))
+        WLOG(params, '', TextEntry('40-010-00004'))
         image = preprocessing.median_filter_dark_amps(params, image)
 
         # correct for the 1/f noise
-        WLOG(params, '', ErrorEntry('40-010-00005'))
+        WLOG(params, '', TextEntry('40-010-00005'))
         image = preprocessing.median_one_over_f_noise(params, image)
 
         # ------------------------------------------------------------------
@@ -151,14 +151,14 @@ def __main__(recipe, params):
         snr_hotpix, rms_list = cout[0], cout[1:]
         # ----------------------------------------------------------------------
         # print out SNR hotpix value
-        WLOG(params, '', ErrorEntry('40-010-00006', args=[snr_hotpix]))
+        WLOG(params, '', TextEntry('40-010-00006', args=[snr_hotpix]))
         # get snr_threshold
         snr_threshold = params['PP_CORRUPT_SNR_HOTPIX']
         #deal with printing corruption message
         if snr_hotpix < snr_threshold:
             # add failed message to fail message list
             fargs = [snr_hotpix, snr_threshold, infile.filename]
-            fail_msg.append(ErrorEntry('40-010-00007', args=fargs))
+            fail_msg.append(TextEntry('40-010-00007', args=fargs))
             passed = False
             qc_pass.append(0)
         else:
@@ -174,7 +174,7 @@ def __main__(recipe, params):
         if np.max(rms_list) > rms_threshold:
             # add failed message to fail message list
             fargs = [np.max(rms_list), rms_threshold, infile.filename]
-            fail_msg.append(ErrorEntry('40-010-00008', args=fargs))
+            fail_msg.append(TextEntry('40-010-00008', args=fargs))
             passed = False
             qc_pass.append(0)
         else:
@@ -187,12 +187,12 @@ def __main__(recipe, params):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', ErrorEntry('40-005-00001'))
+            WLOG(params, 'info', TextEntry('40-005-00001'))
             params['QC'] = 1
             params.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', ErrorEntry('40-005-00001') + farg)
+                WLOG(params, 'warning', TextEntry('40-005-00001') + farg)
             params['QC'] = 0
             params.set_source('QC', __NAME__ + '/main()')
             continue
@@ -215,7 +215,7 @@ def __main__(recipe, params):
         # if we didn't find the output file we should log this error
         if not found:
             eargs = [outfile.name]
-            WLOG(params, 'error', ErrorEntry('00-010-00003', args=eargs))
+            WLOG(params, 'error', TextEntry('00-010-00003', args=eargs))
         # ------------------------------------------------------------------
         # define header keys for output file
         # copy keys from input file
@@ -228,13 +228,15 @@ def __main__(recipe, params):
         outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename])
         # add qc parameters
         outfile.add_qckeys(qc_params)
+        # add dprtype
+        outfile.add_hkey('KW_DPRTYPE', value=outfile.name)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [outfile.filename]
-        WLOG(params, '', ErrorEntry('40-010-00009', args=wargs))
+        WLOG(params, '', TextEntry('40-010-00009', args=wargs))
         # ------------------------------------------------------------------
         # write image to file
         outfile.write()

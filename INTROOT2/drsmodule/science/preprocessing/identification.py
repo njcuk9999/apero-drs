@@ -34,7 +34,7 @@ ParamDict = constants.ParamDict
 DrsFitsFile = config.drs_file.DrsFitsFile
 DrsRecipe = config.drs_recipe.DrsRecipe
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================
@@ -61,7 +61,7 @@ def drs_infile_id(params, given_drs_file):
     # check we have entries
     if len(given_drs_file.fileset) == 0:
         eargs = [given_drs_file.name, func_name]
-        WLOG(params, 'error', ErrorEntry('00-010-00001', args=eargs))
+        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
     # get the associated files with this generic drs file
     fileset = list(given_drs_file.fileset)
     # set found to False
@@ -105,7 +105,7 @@ def drs_outfile_id(params, recipe, given_drs_file):
     # check we have entries
     if len(given_drs_file.fileset) == 0:
         eargs = [given_drs_file.name, func_name]
-        WLOG(params, 'error', ErrorEntry('00-010-00001', args=eargs))
+        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
     # get the associated files with this generic drs file
     fileset = list(given_drs_file.fileset)
     # set found to False

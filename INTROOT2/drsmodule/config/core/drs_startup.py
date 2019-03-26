@@ -61,10 +61,10 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
-ErrorEntry = drs_text.ErrorEntry
-ErrorText = drs_text.ErrorText
+TextEntry = drs_text.TextEntry
+TextDict = drs_text.TextDict
 HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpText
+HelpText = drs_text.HelpDict
 # recipe control path
 INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
@@ -201,8 +201,8 @@ def run(func, recipe, params):
         except Exception as e:
             string_trackback = traceback.format_exc()
             success = False
-            emsg = ErrorEntry('01-010-00001', args=[type(e)])
-            emsg += '\n\n' + ErrorEntry(string_trackback)
+            emsg = TextEntry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
             llmain = dict(e=e, tb=string_trackback)
         except SystemExit as e:
@@ -294,10 +294,10 @@ def main_end_script(params, success, outputs='reduced', end=True):
     if end:
         if success:
             iargs = [params['RECIPE']]
-            WLOG(params, 'info', ErrorEntry('40-003-00001', args=iargs))
+            WLOG(params, 'info', TextEntry('40-003-00001', args=iargs))
         else:
             wargs = [params['RECIPE']]
-            WLOG(params, 'warning', ErrorEntry('40-003-00005', args=wargs))
+            WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs))
         # ---------------------------------------------------------------------
         # add the logger messages to p
         params = WLOG.output_param_dict(params)
@@ -339,7 +339,7 @@ def file_processing_update(params, it, num_files):
     if it != 0:
         WLOG(params, '', params['DRS_HEADER'])
     eargs = [it + 1, num_files]
-    WLOG(params, '', ErrorEntry('40-001-00020', args=eargs))
+    WLOG(params, '', TextEntry('40-001-00020', args=eargs))
     WLOG(params, '', params['DRS_HEADER'])
 
 
@@ -384,9 +384,9 @@ def exit_script(ll, has_plots=True):
     else:
         kind = 'python'
     # log message
-    WLOG(params, '', ErrorEntry(''), printonly=True)
-    WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
-    WLOG(params, 'info', ErrorEntry('40-003-00002', args=[kind]),
+    WLOG(params, '', TextEntry(''), printonly=True)
+    WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
+    WLOG(params, 'info', TextEntry('40-003-00002', args=[kind]),
          printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
@@ -398,10 +398,10 @@ def exit_script(ll, has_plots=True):
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
-        WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
+        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
         # if user in ipython we need to try opening ipython
         if kind == 'ipython':
-            WLOG(params, '', ErrorEntry('40-003-00004', args=['ipython']),
+            WLOG(params, '', TextEntry('40-003-00004', args=['ipython']),
                  printonly=True)
             # noinspection PyBroadException
             try:
@@ -413,7 +413,7 @@ def exit_script(ll, has_plots=True):
             except Exception:
                 pass
         if not _find_interactive():
-            WLOG(params, '', ErrorEntry('40-003-00004', args=['python']),
+            WLOG(params, '', TextEntry('40-003-00004', args=['python']),
                  printonly=True)
             # add some imports to locals
             ll['np'], ll['plt'], ll['WLOG'] = np, plotting.core.plt, WLOG
@@ -427,8 +427,8 @@ def exit_script(ll, has_plots=True):
     # if interactive ask about closing plots
     if _find_interactive() and has_plots:
         # deal with closing plots
-        WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
-        WLOG(params, 'info', ErrorEntry('40-003-00003'), printonly=True)
+        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
+        WLOG(params, 'info', TextEntry('40-003-00003'), printonly=True)
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
             # note python 3 wont find this!
@@ -437,7 +437,7 @@ def exit_script(ll, has_plots=True):
         else:
             uinput = input('[Y]es or [N]o:\t')
         # print end banner
-        WLOG(params, '', ErrorEntry(params['DRS_HEADER']), printonly=True)
+        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
         # if yes close all plots
         if 'Y' in uinput.upper():
             # close any open plots properly
@@ -599,29 +599,29 @@ def _display_initial_parameterisation(p):
     :return: None
     """
     # Add initial parameterisation
-    wmsgs = ErrorEntry('\n\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**p))
+    wmsgs = TextEntry('\n\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_DATA_WORKING={DRS_DATA_WORKING}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**p))
     # add config sources
     for source in p['DRS_CONFIG']:
-        wmsgs += ErrorEntry('\n\tDRS_CONFIG={0}'.format(source))
+        wmsgs += TextEntry('\n\tDRS_CONFIG={0}'.format(source))
     # add others
-    wmsgs += ErrorEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
-    wmsgs += ErrorEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
-    wmsgs += ErrorEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**p))
+    wmsgs += TextEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
+    wmsgs += TextEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
+    wmsgs += TextEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**p))
     if not p['DRS_INTERACTIVE']:
-        wmsgs += '\n' + ErrorEntry('40-001-00007', args=['DRS_INTERACTIVE'])
+        wmsgs += '\n' + TextEntry('40-001-00007', args=['DRS_INTERACTIVE'])
     else:
-        wmsgs += '\n' + ErrorEntry('40-001-00008', args=['DRS_INTERACTIVE'])
+        wmsgs += '\n' + TextEntry('40-001-00008', args=['DRS_INTERACTIVE'])
     if p['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', p['DRS_DEBUG']]
-        wmsgs += '\n' + ErrorEntry('40-001-00009', args=wargs)
+        wmsgs += '\n' + TextEntry('40-001-00009', args=wargs)
     # log to screen and file
-    WLOG(p, 'info', ErrorEntry('40-001-00006'))
+    WLOG(p, 'info', TextEntry('40-001-00006'))
     WLOG(p, 'info', wmsgs, wrap=False)
     WLOG(p, '', p['DRS_HEADER'])
 
@@ -644,19 +644,19 @@ def _display_system_info(p, logonly=True, return_message=False):
     :returns: None
     """
     # noinspection PyListCreation
-    messages = ' ' + ErrorEntry('40-001-00010')
-    messages += '\n' + ErrorEntry(p['DRS_HEADER'])
+    messages = ' ' + TextEntry('40-001-00010')
+    messages += '\n' + TextEntry(p['DRS_HEADER'])
     # add version /python dist keys
     messages = _sort_version(messages)
     # add os keys
-    messages += '\n' + ErrorEntry('40-001-00011', args=[sys.executable])
-    messages += '\n' + ErrorEntry('40-001-00012', args=[sys.platform])
+    messages += '\n' + TextEntry('40-001-00011', args=[sys.executable])
+    messages += '\n' + TextEntry('40-001-00012', args=[sys.platform])
     # add arguments (from sys.argv)
     for it, arg in enumerate(sys.argv):
         arg_msg = '\t Arg {0} = \'{1}\''.format(it + 1, arg)
-        messages += '\n' + ErrorEntry(arg_msg)
+        messages += '\n' + TextEntry(arg_msg)
     # add ending header
-    messages += '\n' + ErrorEntry(p['DRS_HEADER'])
+    messages += '\n' + TextEntry(p['DRS_HEADER'])
     if return_message:
         return messages
     else:
@@ -716,9 +716,9 @@ def _display_run_time_arguments(recipe, fkwargs=None):
     # -------------------------------------------------------------------------
     # log to screen and log file
     if len(log_strings) > 0:
-        WLOG(p, 'info', ErrorEntry('40-001-00017'))
-        WLOG(p, 'info', ErrorEntry(log_strings), wrap=False)
-        WLOG(p, '', ErrorEntry(p['DRS_HEADER']))
+        WLOG(p, 'info', TextEntry('40-001-00017'))
+        WLOG(p, 'info', TextEntry(log_strings), wrap=False)
+        WLOG(p, '', TextEntry(p['DRS_HEADER']))
 
 
 # =============================================================================
@@ -746,7 +746,7 @@ def _index_pp(params):
     outputs = params['OUTFILES']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(params, '', ErrorEntry('40-004-00001'))
+        WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
     icolumns = pconstant.RAW_OUTPUT_COLUMNS(params)
@@ -782,7 +782,7 @@ def _index_outputs(params):
     outputs = params['OUTFILES']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(params, '', ErrorEntry('40-004-00001'))
+        WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
     icolumns = pconstant.REDUC_OUTPUT_COLUMNS(params)
@@ -819,7 +819,7 @@ def _indexing(params, outputs, icolumns, abspath):
     """
     # ------------------------------------------------------------------------
     # log indexing
-    WLOG(params, '', ErrorEntry('40-004-00002', args=[abspath]))
+    WLOG(params, '', TextEntry('40-004-00002', args=[abspath]))
     # construct a dictionary from outputs and icolumns
     istore = OrderedDict()
     # get output path
@@ -857,7 +857,7 @@ def _indexing(params, outputs, icolumns, abspath):
         for key in icolumns:
             if key not in list(idict.keys()):
                 wargs = [key, 'off_listing recipe']
-                wmsg = ErrorEntry('10-004-00001', args=wargs)
+                wmsg = TextEntry('10-004-00001', args=wargs)
                 WLOG(params, 'warning', wmsg)
         # loop around rows in idict
         for row in range(len(idict['FILENAME'])):
@@ -1005,7 +1005,7 @@ def _find_recipe(name='None', instrument='None'):
         elif recipe.name.strip('.py') == name:
             found_recipe = recipe
     if found_recipe is None:
-        WLOG(None, 'error', ErrorEntry('00-007-00001', args=name))
+        WLOG(None, 'error', TextEntry('00-007-00001', args=name))
     # return
     return found_recipe
 
@@ -1235,26 +1235,26 @@ def _sort_version(messages=None):
     version = '{0}.{1}.{2}'.format(major, minor, micro)
 
     # add version info to messages
-    messages += '\n' + ErrorEntry('40-001-00013', args=[version])
+    messages += '\n' + TextEntry('40-001-00013', args=[version])
 
     # add distribution if possible
     try:
         build = sys.version.split('|')[1].strip()
-        messages += '\n' + ErrorEntry('40-001-00014', args=[build])
+        messages += '\n' + TextEntry('40-001-00014', args=[build])
     except IndexError:
         pass
 
     # add date information if possible
     try:
         date = sys.version.split('(')[1].split(')')[0].strip()
-        messages += '\n' + ErrorEntry('40-001-00015', args=[date])
+        messages += '\n' + TextEntry('40-001-00015', args=[date])
     except IndexError:
         pass
 
     # add Other info information if possible
     try:
         other = sys.version.split('[')[1].split(']')[0].strip()
-        messages += '\n' + ErrorEntry('40-001-00016', args=[other])
+        messages += '\n' + TextEntry('40-001-00016', args=[other])
     except IndexError:
             pass
 
@@ -1271,8 +1271,8 @@ def _make_dirs(params, path):
         os.makedirs(path)
     except Exception as e:
         string_trackback = traceback.format_exc()
-        emsg = ErrorEntry('01-000-00001', args=[path, type(e)])
-        emsg += '\n\n' + ErrorEntry(string_trackback)
+        emsg = TextEntry('01-000-00001', args=[path, type(e)])
+        emsg += '\n\n' + TextEntry(string_trackback)
         WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
 
 

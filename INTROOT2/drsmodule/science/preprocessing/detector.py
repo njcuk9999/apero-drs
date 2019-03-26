@@ -36,7 +36,7 @@ WLOG = config.wlog
 # get param dict
 ParamDict = constants.ParamDict
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================
@@ -114,7 +114,7 @@ def get_full_flat(params):
     # check that filepath exists
     if not os.path.exists(absfilename):
         eargs = [filename, datadir]
-        WLOG(params, 'error', ErrorEntry('00-010-00002', args=eargs))
+        WLOG(params, 'error', TextEntry('00-010-00002', args=eargs))
     # read the image
     mdata = drs_fits.read(params, absfilename)
     # return the image

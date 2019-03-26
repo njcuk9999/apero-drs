@@ -48,10 +48,10 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
-ErrorEntry = drs_text.ErrorEntry
-ErrorText = drs_text.ErrorText
+TextEntry = drs_text.TextEntry
+TextDict = drs_text.TextDict
 HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpText
+HelpText = drs_text.HelpDict
 # get the default language
 DEFAULT_LANGUAGE = drs_text.DEFAULT_LANGUAGE
 # Get the Color dict
@@ -86,9 +86,9 @@ class Logger:
             self.instrument = None
         # load additional resources based on instrument/language
         self.pconstant = constants.pload(self.instrument)
-        self.errortext = ErrorText(self.instrument, self.language)
+        self.textdict = TextDict(self.instrument, self.language)
         self.helptext = HelpText(self.instrument, self.language)
-        self.d_errortext = ErrorText(self.instrument, DEFAULT_LANGUAGE)
+        self.d_textdict = TextDict(self.instrument, DEFAULT_LANGUAGE)
         self.d_helptext = HelpText(self.instrument, DEFAULT_LANGUAGE)
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
@@ -144,21 +144,21 @@ class Logger:
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
         # ---------------------------------------------------------------------
-        # deal with message format (convert to ErrorEntry)
+        # deal with message format (convert to TextEntry)
         if message is None:
-            msg_obj = ErrorEntry('Unknown')
+            msg_obj = TextEntry('Unknown')
         elif type(message) is str:
-            msg_obj = ErrorEntry(message)
+            msg_obj = TextEntry(message)
         elif type(message) is list:
-            msg_obj = ErrorEntry(message[0])
+            msg_obj = TextEntry(message[0])
             for msg in message[1:]:
-                msg_obj += ErrorEntry(msg)
-        elif type(message) is ErrorEntry:
+                msg_obj += TextEntry(msg)
+        elif type(message) is TextEntry:
             msg_obj = message
         elif type(message) is HelpEntry:
-            msg_obj = message.convert(ErrorEntry)
+            msg_obj = message.convert(TextEntry)
         else:
-            msg_obj = ErrorEntry('00-005-00001', args=[message])
+            msg_obj = TextEntry('00-005-00001', args=[message])
             key = 'error'
         # ---------------------------------------------------------------------
         # TODO: Remove deprecation warning (once all code changed)
@@ -215,19 +215,19 @@ class Logger:
         # check that key is valid
         if key not in self.pconstant.LOG_TRIG_KEYS():
             eargs = [key, 'LOG_TRIG_KEYS()']
-            msg_obj += ErrorEntry('00-005-00002', args=eargs)
+            msg_obj += TextEntry('00-005-00002', args=eargs)
             key = 'error'
         if key not in self.pconstant.WRITE_LEVEL():
             eargs = [key, 'WRITE_LEVEL()']
-            msg_obj += ErrorEntry('00-005-00003', args=eargs)
+            msg_obj += TextEntry('00-005-00003', args=eargs)
             key = 'error'
         if key not in self.pconstant.COLOUREDLEVELS():
             eargs = [key, 'COLOUREDLEVELS()']
-            msg_obj += ErrorEntry('00-005-00004', args=eargs)
+            msg_obj += TextEntry('00-005-00004', args=eargs)
             key = 'error'
         if key not in self.pconstant.REPORT_KEYS():
             eargs = [key, 'REPORT_KEYS()']
-            msg_obj += ErrorEntry('00-005-00005', args=eargs)
+            msg_obj += TextEntry('00-005-00005', args=eargs)
             key = 'error'
         # loop around message (now all are lists)
         errors = []
@@ -245,7 +245,7 @@ class Logger:
             raw_message1 = msg_obj.get(self.helptext, report=report,
                                        reportlevel=key)
         else:
-            raw_message1 = msg_obj.get(self.errortext, report=report,
+            raw_message1 = msg_obj.get(self.textdict, report=report,
                                        reportlevel=key)
         # split by '\n'
         raw_messages1 = raw_message1.split('\n')
@@ -293,7 +293,7 @@ class Logger:
             raw_message2 = msg_obj.get(self.d_helptext, report=report,
                                        reportlevel=key)
         else:
-            raw_message2 = msg_obj.get(self.d_errortext, report=report,
+            raw_message2 = msg_obj.get(self.d_textdict, report=report,
                                        reportlevel=key)
         # split by '\n'
         raw_messages2 = raw_message2.split('\n')
@@ -390,7 +390,7 @@ class Logger:
             # update pconstant
             self.pconstant = constants.pload(self.instrument)
             # updatetext
-            self.errortext = ErrorText(self.instrument, self.language)
+            self.textdict = TextDict(self.instrument, self.language)
             self.helptext = HelpText(self.instrument, self.language)
 
     def output_param_dict(self, paramdict):
@@ -495,7 +495,7 @@ wlog = Logger()
 def find_param(params, key, function):
     if key not in params:
         eargs = [key, function]
-        wlog(params, 'error', ErrorEntry('00-003-00001', args=eargs))
+        wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
     return params[key]
 
 
@@ -531,7 +531,7 @@ def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
     elif type(list):
         message = list(message)
     else:
-        message = [logobj.errortext['00-005-00005'].format(message)]
+        message = [logobj.textdict['00-005-00005'].format(message)]
         key = 'error'
     for mess in message:
         code = logobj.pconstant.LOG_TRIG_KEYS().get(key, ' ')
@@ -571,7 +571,7 @@ def debug_start(logobj, p, raise_exception):
         def raw_input(x):
             return str(input(x))
     # get text
-    text = logobj.errortext
+    text = logobj.textdict
     # get colour
     clevels = logobj.pconstant.COLOUREDLEVELS()
     addcolour = p['DRS_COLOURED_LOG']
@@ -643,7 +643,7 @@ def warninglogger(p, w, funcname=None):
                      function/module warning was generated in)
     :return:
     """
-    errortext = ErrorText(p['INSTRUMENT'], p['LANGUAGE'])
+    textdict = TextDict(p['INSTRUMENT'], p['LANGUAGE'])
 
     # get pconstant
     pconstant = constants.pload(p['INSTRUMENT'])
@@ -661,12 +661,12 @@ def warninglogger(p, w, funcname=None):
                 wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
             # log message
             key = '10-005-00001'
-            wmsg = errortext[key].format(*wargs)
+            wmsg = textdict[key].format(*wargs)
             # if we have already display this warning don't again
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog(p, 'warning', ErrorEntry(key, args=wargs))
+                wlog(p, 'warning', TextEntry(key, args=wargs))
                 displayed_warnings.append(wmsg)
 
 
@@ -687,13 +687,13 @@ def get_logfilepath(logobj, p):
     print_warnings = []
     # if None use "TDATA"
     if dir_data_msg is None:
-        wmsg = logobj.errortext['10-005-00002'].format(msgkey)
+        wmsg = logobj.textdict['10-005-00002'].format(msgkey)
         print_warnings += wmsg.split('\n')
         warning = True
     # if it doesn't exist also set to TDATA
     elif not os.path.exists(dir_data_msg):
         margs = [msgkey, p[msgkey]]
-        wmsg = logobj.errortext['10-005-00003'].format(*margs)
+        wmsg = logobj.textdict['10-005-00003'].format(*margs)
         print_warnings += wmsg.split('\n')
         warning = True
     else:
@@ -736,15 +736,15 @@ def correct_level(logobj, key, level):
     try:
         outlevel = logobj.pconstant.WRITE_LEVEL()[level]
     except KeyError:
-        emsg = ErrorEntry('00-005-00011', args=[level, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.errortext])
+        emsg = TextEntry('00-005-00011', args=[level, func_name])
+        raise ConfigError(errorobj=[emsg, logobj.textdict])
 
     # get numeric value for this level
     try:
         thislevel = logobj.pconstant.WRITE_LEVEL()[key]
     except KeyError:
-        emsg = ErrorEntry('00-005-00012', args=[key, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.errortext])
+        emsg = TextEntry('00-005-00012', args=[key, func_name])
+        raise ConfigError(errorobj=[emsg, logobj.textdict])
 
     # return whether we are printing or not
     return thislevel >= outlevel
@@ -842,8 +842,8 @@ def printcolour(logobj, p, key='all', func_name=None, colour=None):
     nocol = Color.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
-        emsg = ErrorEntry('00-005-00012', args=[level, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.errortext])
+        emsg = TextEntry('00-005-00012', args=[level, func_name])
+        raise ConfigError(errorobj=[emsg, logobj.textdict])
 
     # if this level is greater than or equal to out level then print to stdout
     if correct_level(logobj, key, level) and (key in clevels) and addcolour:
@@ -962,8 +962,8 @@ def writelog(logobj, p, message, key, logfilepath):
             f.close()
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
-            emsg = ErrorEntry('01-001-00011', args=eargs)
-            raise ConfigError(errorobj=[emsg, logobj.errortext])
+            emsg = TextEntry('01-001-00011', args=eargs)
+            raise ConfigError(errorobj=[emsg, logobj.textdict])
     else:
         # try to open the logfile
         try:
@@ -981,8 +981,8 @@ def writelog(logobj, p, message, key, logfilepath):
         # If we cannot write to log file then print to stdout
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
-            emsg = ErrorEntry('01-001-00011', args=eargs)
-            raise ConfigError(errorobj=[emsg, logobj.errortext])
+            emsg = TextEntry('01-001-00011', args=eargs)
+            raise ConfigError(errorobj=[emsg, logobj.textdict])
 
 
 def _clean_message(message):

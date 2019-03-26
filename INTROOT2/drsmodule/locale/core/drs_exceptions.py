@@ -448,7 +448,7 @@ def basiclogger(message=None, level=None, name=None, force_exit=True,
     # deal with no level
     if level is None:
         level = 'error'
-    # deal with message format (convert to ErrorEntry)
+    # deal with message format (convert to TextEntry)
     if message is None:
         message = ['Unknown']
     elif type(message) is str:
@@ -481,7 +481,7 @@ def basiclogger(message=None, level=None, name=None, force_exit=True,
 
 def _flatmessage(message):
 
-    # deal with message format (convert to ErrorEntry)
+    # deal with message format (convert to TextEntry)
     if message is None:
         message = ['']
     elif type(message) is str:

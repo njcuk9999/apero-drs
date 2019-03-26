@@ -14,7 +14,7 @@ __INSTRUMENT__ = 'NIRPS'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
-Help = drs_text.HelpText(__INSTRUMENT__, Constants['LANGUAGE'])
+Help = drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
 __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
