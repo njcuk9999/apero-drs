@@ -241,7 +241,6 @@ def __main__(recipe, params):
                 WLOG(params, 'warning', TextEntry('40-005-00002') + farg)
             params['QC'] = 0
             params.set_source('QC', __NAME__ + '/main()')
-            continue
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # ------------------------------------------------------------------
@@ -249,9 +248,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # define outfile
         if dprtype == 'DARK_DARK':
-            outfile = DARK_FILE.copy()
+            outfile = DARK_FILE.newcopy(recipe=recipe)
         elif dprtype == 'SKY_DARK':
-            outfile = SKY_FILE.copy()
+            outfile = SKY_FILE.newcopy(recipe=recipe)
         else:
             outfile = None
         # construct the filename from file instance
@@ -265,7 +264,7 @@ def __main__(recipe, params):
         # add process id
         outfile.add_hkey('KW_PID', value=params['PID'])
         # add output tag
-        outfile.add_key('KW_OUTPUT', value=outfile.name)
+        outfile.add_hkey('KW_OUTPUT', value=outfile.name)
         # add input files
         outfile.add_hkey_1d('KW_INFILE1', values=rawfiles)
         # add qc parameters

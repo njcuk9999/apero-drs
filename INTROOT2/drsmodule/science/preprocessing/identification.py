@@ -70,7 +70,8 @@ def drs_infile_id(params, given_drs_file):
     # loop around files
     for drs_file in fileset:
         # copy info from given_drs_file into drs_file
-        file_in = drs_file.copy(given_drs_file, recipe=given_drs_file.recipe)
+        file_in = drs_file.copyother(given_drs_file,
+                                     recipe=given_drs_file.recipe)
         # check this file is valid
         cond, _ = file_in.check_file()
         # if True we have found our file
