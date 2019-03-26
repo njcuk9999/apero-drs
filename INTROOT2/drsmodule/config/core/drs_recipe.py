@@ -864,7 +864,7 @@ class DrsRecipe(object):
                 # noinspection PyProtectedMember
                 inputdir = self.get_input_dir()
                 # create an instance of this drs_file with the filename set
-                file_in = drs_file.new(filename=filename_it, recipe=self)
+                file_in = drs_file.newcopy(filename=filename_it, recipe=self)
                 file_in.read()
                 # set the directory
                 fdir = drs_argument.get_uncommon_path(directory, inputdir)
@@ -1282,7 +1282,7 @@ class DrsRecipe(object):
                 else:
                     used_filenames.append(valid_file)
                 # make new drs_file instances
-                tmp_file = drs_file.new()
+                tmp_file = drs_file.newcopy()
                 # get path of file
                 tmp_path = os.path.join(path, directory, valid_file)
                 # set filename
@@ -1530,7 +1530,7 @@ def _check_if_directory(argname, files):
 #     # noinspection PyProtectedMember
 #     inputdir = recipe._get_input_dir()
 #     # create an instance of this drs_file with the filename set
-#     file_instance = drs_file.new(filename=filename, recipe=recipe)
+#     file_instance = drs_file.newcopy(filename=filename, recipe=recipe)
 #     file_instance.read()
 #     # set the directory
 #     fdir = drs_argument.get_uncommon_path(directory, inputdir)
