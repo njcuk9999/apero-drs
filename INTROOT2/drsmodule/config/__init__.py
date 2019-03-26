@@ -23,6 +23,9 @@ __all__ = ['setup', 'end_main', 'end', 'wlog']
 # Setup function
 setup = drs_startup.setup
 
+# Run __main__ function
+run = drs_startup.run
+
 # file processing message
 file_processing_update = drs_startup.file_processing_update
 
