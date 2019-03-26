@@ -34,7 +34,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================
@@ -135,7 +135,7 @@ def _get_dbkey(params, outfile):
         dbkey = outfile.key.upper()
     else:
         eargs = [outfile.name, func_name]
-        WLOG(params, 'error', ErrorEntry('00-008-00007', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00007', args=eargs))
         dbkey = ''
     return dbkey
 
@@ -146,7 +146,7 @@ def _get_dbname(params, outfile):
         dbname = outfile.dbname.capitalize()
     else:
         eargs = [outfile.name, func_name]
-        WLOG(params, 'error', ErrorEntry('00-008-00005', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00005', args=eargs))
         dbname = None
     return dbname
 
@@ -160,7 +160,7 @@ def _get_hdict(params, dbname, outfile):
         hdict = outfile.header
     else:
         eargs = [dbname, outfile.name, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00027', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00027', args=eargs))
         hdict = None
     return hdict
 
@@ -175,7 +175,7 @@ def _get_outpath(params, dbname, outfile):
     else:
         eargs = [outfile.name, outfile.dbname, 'calibration, telluric',
                  func_name]
-        WLOG(params, 'error', ErrorEntry('00-008-00006', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00006', args=eargs))
         outpath = ''
     return outpath
 
@@ -190,7 +190,7 @@ def _get_database_file(params, dbname, outfile):
     else:
         eargs = [outfile.name, outfile.dbname, 'calibration, telluric',
                  func_name]
-        WLOG(params, 'error', ErrorEntry('00-008-00006', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00006', args=eargs))
         outpath = ''
     return outpath
 
@@ -207,10 +207,10 @@ def _copy_db_file(params, dbname, inpath, outpath):
         WLOG(params, 'error', [emsg1, emsg2])
 
         eargs = [dbname, inpath, outpath, type(e), e, func_name]
-        WLOG(params, 'error', ErrorEntry('', args=eargs))
+        WLOG(params, 'error', TextEntry('', args=eargs))
     except OSError as e:
         wargs = [dbname, outpath, type(e), e, func_name]
-        WLOG(params, 'warning', ErrorEntry('10-001-00007', args=wargs))
+        WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
 
 
 def _get_time(params, dbname, hdict, kind=None):
@@ -227,7 +227,7 @@ def _get_time(params, dbname, hdict, kind=None):
         raw_time = hdict[timekey]
     else:
         eargs = [dbname, timekey, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00028', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
         raw_time = None
     # ----------------------------------------------------------------------
     # convert raw time to astropy time
@@ -235,7 +235,7 @@ def _get_time(params, dbname, hdict, kind=None):
         a_time = Time(timetype(raw_time), format=timefmt)
     except Exception as e:
         eargs = [dbname, raw_time, timefmt, timetype, type(e), e, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00029', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
         a_time = None
     # ----------------------------------------------------------------------
     # if kind is None return the astropy object
@@ -250,7 +250,7 @@ def _get_time(params, dbname, hdict, kind=None):
     else:
         kinds = ['None', 'human', 'unix', 'mjd']
         eargs = [dbname, ', '.join(kinds), kind, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00030', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
 
 
 def _write_line_to_database(params, key, dbname, outfile, line):
@@ -270,13 +270,13 @@ def _write_line_to_database(params, key, dbname, outfile, line):
         f.close()
         # print progress
         wargs = [dbname, key]
-        WLOG(params, 'info', ErrorEntry('40-006-00001', args=wargs))
+        WLOG(params, 'info', TextEntry('40-006-00001', args=wargs))
     except Exception as e:
         # must close lock file
         drs_lock.close_fits_lock_file(params, lock, lock_file, abspath)
         # error message
         eargs = [dbname, key, type(e), e, func_name]
-        WLOG(params, 'error', ErrorEntry('01-001-00018', args=eargs))
+        WLOG(params, 'error', TextEntry('01-001-00018', args=eargs))
     # must close lock file
     drs_lock.close_fits_lock_file(params, lock, lock_file, abspath)
 

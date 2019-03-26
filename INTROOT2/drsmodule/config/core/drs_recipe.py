@@ -46,9 +46,9 @@ ParamDict = constants.ParamDict
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-ErrorEntry = drs_text.ErrorEntry
-ErrorText = drs_text.ErrorText
-HelpText = drs_text.HelpText
+TextEntry = drs_text.TextEntry
+TextDict = drs_text.TextDict
+HelpText = drs_text.HelpDict
 # define name of index file
 INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
@@ -103,7 +103,7 @@ class DrsRecipe(object):
         # get drs parameters
         self.drs_params = ParamDict()
         self.drs_pconstant = None
-        self.errortext = None
+        self.textdict = None
         self.helptext = None
         self.input_params = ParamDict()
         self.required_args = []
@@ -119,7 +119,7 @@ class DrsRecipe(object):
         # Get config parameters from primary file
         self.drs_params = constants.load(self.instrument)
         self.drs_pconstant = constants.pload(self.instrument)
-        self.errortext = ErrorText(self.instrument, self.drs_params['LANGUAGE'])
+        self.textdict = TextDict(self.instrument, self.drs_params['LANGUAGE'])
         self.helptext = HelpText(self.instrument, self.drs_params['LANGUAGE'])
         # ---------------------------------------------------------------------
         # assign parameters from kwargs
@@ -223,7 +223,7 @@ class DrsRecipe(object):
             # check that kwarg is in input_parameters
             if kwarg.name not in input_parameters:
                 eargs = [kwarg.name, self.name]
-                emsg = self.errortext['00-006-00001'].format(*eargs)
+                emsg = self.textdict['00-006-00001'].format(*eargs)
                 kwarg.exception(emsg)
             # check that kwarg is None (should be None if we need to change it)
             if input_parameters[kwarg.name] is not None:
@@ -240,14 +240,14 @@ class DrsRecipe(object):
             # else check that we have default_ref
             elif kwarg.default_ref is None:
                 eargs = [kwarg.name, self.name]
-                emsg = self.errortext['00-006-00002'].format(*eargs)
+                emsg = self.textdict['00-006-00002'].format(*eargs)
                 kwarg.exception(emsg)
                 value, param_key = None, None
             # else check that default_ref is in drs_params (i.e. defined in a
             #   constant file)
             elif kwarg.default_ref not in params:
                 eargs = [kwarg.default_ref, kwarg.name, self.name]
-                emsg = self.errortext['00-006-00003'].format(*eargs)
+                emsg = self.textdict['00-006-00003'].format(*eargs)
                 kwarg.exception(emsg)
                 value, param_key = None, None
             # else we have all we need to reset the value
@@ -462,7 +462,7 @@ class DrsRecipe(object):
 
         # else we have to match directories to directories - crash for now
         else:
-            emsg = ErrorEntry('00-006-00005', args=[func_name])
+            emsg = TextEntry('00-006-00005', args=[func_name])
             WLOG(self.drs_params, 'error', emsg)
 
         # ---------------------------------------------------------------------
@@ -494,7 +494,7 @@ class DrsRecipe(object):
         if self.module is None:
             self.module = self._import_module()
         if self.module is None:
-            emsg = ErrorEntry('00-000-00001', args=[self.name])
+            emsg = TextEntry('00-000-00001', args=[self.name])
             WLOG(self.drs_params, 'error', emsg)
 
         # run main
@@ -716,7 +716,7 @@ class DrsRecipe(object):
         # Make sure directory is a string
         if type(directory) not in [str, np.str_]:
             eargs = [argname, directory, type(directory)]
-            emsg = ErrorEntry('09-001-00003', args=eargs)
+            emsg = TextEntry('09-001-00003', args=eargs)
             if return_error:
                 return False, emsg
             else:
@@ -724,8 +724,8 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # step 1: check if directory is full absolute path
         if os.path.exists(directory):
-            dmsg = ErrorEntry('90-001-00001', args=[argname, directory])
-            dmsg += ErrorEntry('')
+            dmsg = TextEntry('90-001-00001', args=[argname, directory])
+            dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
                 return True, directory, None
@@ -736,8 +736,8 @@ class DrsRecipe(object):
         input_dir = self.get_input_dir()
         test_path = os.path.join(input_dir, directory)
         if os.path.exists(test_path):
-            dmsg = ErrorEntry('90-001-00017', args=[argname, directory])
-            dmsg += ErrorEntry('')
+            dmsg = TextEntry('90-001-00017', args=[argname, directory])
+            dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
                 return True, test_path, None
@@ -746,7 +746,7 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # else deal with errors
         eargs = [argname, directory, test_path]
-        emsg = ErrorEntry('09-001-00004', args=eargs)
+        emsg = TextEntry('09-001-00004', args=eargs)
 
         return False, None, emsg
 
@@ -815,7 +815,7 @@ class DrsRecipe(object):
         # Step 1: Check file location is valid
         # ---------------------------------------------------------------------
         # if debug mode print progress
-        WLOG(params, 'debug', ErrorEntry('90-001-00002', args=[filename]),
+        WLOG(params, 'debug', TextEntry('90-001-00002', args=[filename]),
              wrap=False)
         # perform location check
         out = _check_file_location(self, argname, directory, filename)
@@ -842,13 +842,13 @@ class DrsRecipe(object):
         # storage of checked files
         checked_files = []
         # storage of errors (if we have no files)
-        errors = ErrorEntry(None)
+        errors = TextEntry(None)
         # loop around filename
         for filename_it in files:
             # start of with the file not being valid
             valid = False
             # storage of errors (reset)
-            errors = ErrorEntry(None)
+            errors = TextEntry(None)
             header_errors = dict()
             # add to checked files
             checked_files.append(filename_it)
@@ -856,7 +856,7 @@ class DrsRecipe(object):
             for drs_file in drs_files:
                 # if in debug mode print progres
                 dargs = [drs_file.name, os.path.basename(filename_it)]
-                WLOG(params, 'debug', ErrorEntry('90-001-00008', args=dargs),
+                WLOG(params, 'debug', TextEntry('90-001-00008', args=dargs),
                      wrap=False)
 
                 # -------------------------------------------------------------
@@ -919,7 +919,7 @@ class DrsRecipe(object):
                 # check validity and append if valid
                 if valid:
                     dargs = [argname, os.path.basename(filename_it), file_in]
-                    wmsg = ErrorEntry('90-001-00016', args=dargs)
+                    wmsg = TextEntry('90-001-00016', args=dargs)
                     WLOG(params, 'debug', wmsg, wrap=False)
                     # append to out files/types
                     out_files.append(filename_it)
@@ -934,20 +934,20 @@ class DrsRecipe(object):
                 errors += _gen_header_errors(params, header_errors)
                 # add file error (needed only once per filename)
                 eargs = [os.path.abspath(filename_it)]
-                errors += '\n' + self.errortext['09-001-00024'].format(*eargs)
+                errors += '\n' + self.textdict['09-001-00024'].format(*eargs)
                 break
 
         # must append all files checked
         allfiles = allfilelist + checked_files
 
         if len(allfiles) > 1:
-            errors += self.errortext['40-001-00019']
+            errors += self.textdict['40-001-00019']
             for filename_it in allfiles:
-                errors += ErrorEntry('\n\t\t{0}'.format(filename_it))
+                errors += TextEntry('\n\t\t{0}'.format(filename_it))
 
         # ---------------------------------------------------------------------
         # clean up errors (do not repeat same lines)
-        cleaned_errors = ErrorEntry(None)
+        cleaned_errors = TextEntry(None)
         for error in errors:
             if error not in cleaned_errors:
                 cleaned_errors += error
@@ -958,7 +958,7 @@ class DrsRecipe(object):
             return False, None, None, cleaned_errors
         # b. if we did but expect an error returned return True with an error
         elif return_error:
-            return True, out_files, out_types, ErrorEntry(None)
+            return True, out_files, out_types, TextEntry(None)
         # c. if we did and don't expect an error return True without an error
         else:
             return True, out_files, out_types
@@ -985,7 +985,7 @@ class DrsRecipe(object):
             args = self.kwargs
             cmdfmt = '--{0} {1} '
         else:
-            emsg = ErrorEntry('00-006-00006', args=[argkind, func_name])
+            emsg = TextEntry('00-006-00006', args=[argkind, func_name])
             WLOG(self.drs_params, 'error', emsg)
             args, cmdfmt = None, ''
         # ---------------------------------------------------------------------
@@ -1122,7 +1122,7 @@ class DrsRecipe(object):
             arg.value = value
         elif kind == 'arg':
             eargs = [arg_string, argname, func_name]
-            emsg = ErrorEntry('00-006-00007', args=eargs)
+            emsg = TextEntry('00-006-00007', args=eargs)
             WLOG(self.drs_params, 'error', emsg)
         # update self
         if kind == 'arg':
@@ -1188,7 +1188,7 @@ class DrsRecipe(object):
             dirpath = self.drs_params['DRS_DATA_REDUC']
         # if not found produce error
         else:
-            emsg = ErrorEntry('00-007-00002', args=[kind, dir_string])
+            emsg = TextEntry('00-007-00002', args=[kind, dir_string])
             WLOG(params, 'error', emsg)
             dirpath = None
         return dirpath
@@ -1231,12 +1231,12 @@ class DrsRecipe(object):
         mask = np.in1d(ifilelist, dfilelist)
         # deal with no entries
         if np.sum(mask) == 0:
-            WLOG(params, 'debug', ErrorEntry('90-001-00022', args=[ifile]),
+            WLOG(params, 'debug', TextEntry('90-001-00022', args=[ifile]),
                  wrap=False)
             return []
         else:
             wargs = [np.sum(mask), ifile]
-            WLOG(params, 'debug', ErrorEntry('90-001-00023', args=wargs),
+            WLOG(params, 'debug', TextEntry('90-001-00023', args=wargs),
                  wrap=False)
 
         # apply mask to index data
@@ -1296,7 +1296,7 @@ class DrsRecipe(object):
             valid_files += valid_entries
 
             wargs = [len(valid_files), drs_file.name]
-            WLOG(params, 'debug', ErrorEntry('90-001-00024', args=wargs),
+            WLOG(params, 'debug', TextEntry('90-001-00024', args=wargs),
                  wrap=False)
 
         # return valid files
@@ -1373,12 +1373,12 @@ def _check_file_location(recipe, argname, directory, filename):
     # debug output
     if len(raw_files) == 0:
         dargs = [argname, filename]
-        WLOG(params, 'debug', ErrorEntry('90-001-00003', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
              wrap=False)
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
         dargs = [argname, raw_file]
-        WLOG(params, 'debug', ErrorEntry('90-001-00004', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00004', args=dargs),
              wrap=False)
         output_files.append(raw_file)
     # check if we are finished here
@@ -1392,12 +1392,12 @@ def _check_file_location(recipe, argname, directory, filename):
     # debug output
     if len(raw_files) == 0:
         dargs = [argname, filename]
-        WLOG(params, 'debug', ErrorEntry('90-001-00003', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
              wrap=False)
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
         dargs = [argname, raw_file]
-        WLOG(params, 'debug', ErrorEntry('90-001-00005', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00005', args=dargs),
              wrap=False)
         output_files.append(raw_file)
     # check if we are finished here
@@ -1412,12 +1412,12 @@ def _check_file_location(recipe, argname, directory, filename):
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, filename + '.fits']
-        WLOG(params, 'debug', ErrorEntry('90-001-00003', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
              wrap=False)
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
         dargs = [argname, raw_file]
-        WLOG(params, 'debug', ErrorEntry('90-001-00006', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00006', args=dargs),
              wrap=False)
         output_files.append(raw_file)
     # check if we are finished here
@@ -1432,12 +1432,12 @@ def _check_file_location(recipe, argname, directory, filename):
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, os.path.join(input_dir, filename + '.fits')]
-        WLOG(params, 'debug', ErrorEntry('90-001-00003', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
              wrap=False)
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
         dargs = [argname, raw_file]
-        WLOG(params, 'debug', ErrorEntry('90-001-00007', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00007', args=dargs),
              wrap=False)
         output_files.append(raw_file)
 
@@ -1445,12 +1445,12 @@ def _check_file_location(recipe, argname, directory, filename):
     # Deal with cases where we didn't find file
     # -------------------------------------------------------------------------
     eargs = [argname, filename, os.path.join(input_dir, filename)]
-    emsg = ErrorEntry('09-001-00005', args=eargs)
+    emsg = TextEntry('09-001-00005', args=eargs)
     if not filename.endswith('.fits'):
         fitsfile1 = filename + '.fits'
         fitsfile2 = os.path.join(input_dir, fitsfile1)
-        emsg += ErrorEntry('\t\t"{0}"'.format(fitsfile1))
-        emsg += ErrorEntry('\t\t"{0}"'.format(fitsfile2))
+        emsg += TextEntry('\t\t"{0}"'.format(fitsfile1))
+        emsg += TextEntry('\t\t"{0}"'.format(fitsfile2))
     # return False, no files and error messages
     return False, None, emsg
 
@@ -1465,7 +1465,7 @@ def _check_if_directory(argname, files):
     :return:
     """
     # empty error entry
-    emsgs = ErrorEntry(None)
+    emsgs = TextEntry(None)
     # loop around files
     it = 0
     for filename in files:
@@ -1475,17 +1475,17 @@ def _check_if_directory(argname, files):
         if os.path.isdir(filename):
             # Need to add as new line
             if len(emsgs) > 0:
-                emsgs += '\n' + ErrorEntry('09-001-00026', args=eargs)
+                emsgs += '\n' + TextEntry('09-001-00026', args=eargs)
             else:
-                emsgs += ErrorEntry('09-001-00026', args=eargs)
+                emsgs += TextEntry('09-001-00026', args=eargs)
             continue
         # check if not file (or link to file)
         if not os.path.isfile(filename) and not os.path.islink(filename):
             # Need to add as new line
             if len(emsgs) > 0:
-                emsgs += '\n' + ErrorEntry('09-001-00025', args=eargs)
+                emsgs += '\n' + TextEntry('09-001-00025', args=eargs)
             else:
-                emsgs += ErrorEntry('09-001-00025', args=eargs)
+                emsgs += TextEntry('09-001-00025', args=eargs)
 
     # if we have emsgs then we need to get the errors
     if len(emsgs) > 0:
@@ -1516,12 +1516,12 @@ def _check_if_directory(argname, files):
 #     # if valid return True and no error
 #     if valid:
 #         dargs = [argname, os.path.basename(filename)]
-#         WLOG(params, 'debug', ErrorEntry('90-001-00009', args=dargs),
+#         WLOG(params, 'debug', TextEntry('90-001-00009', args=dargs),
 #              wrap=False)
 #         return True, None
 #     # if False generate error and return it
 #     else:
-#         emsg = ErrorEntry('09-001-00006', args=[argname, ext])
+#         emsg = TextEntry('09-001-00006', args=[argname, ext])
 #         return False, emsg
 #
 #
@@ -1553,7 +1553,7 @@ def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
     # if we have no files yet we don't need to check exclusivity
     if len(alltypelist) == 0:
         dargs = [argname, drs_file.name]
-        WLOG(params, 'debug', ErrorEntry('90-001-00013', args=dargs),
+        WLOG(params, 'debug', TextEntry('90-001-00013', args=dargs),
              wrap=False)
         return True, None
     # if argument logic is set to "exclusive" we need to check that the
@@ -1564,23 +1564,23 @@ def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
         # if condition not met return False and error
         if not cond:
             eargs = [argname, drs_file.name, alltypelist[-1].name]
-            emsg = ErrorEntry('09-001-00008', args=eargs)
+            emsg = TextEntry('09-001-00008', args=eargs)
             return False, emsg
         # if condition is met return True and empty error
         else:
             dargs = [argname, drs_file.name]
-            WLOG(params, 'debug', ErrorEntry('90-001-00014', args=dargs),
+            WLOG(params, 'debug', TextEntry('90-001-00014', args=dargs),
                  wrap=False)
             return True, None
     # if logic is 'inclusive' we just need to return True
     elif logic == 'inclusive':
-        WLOG(params, 'debug', ErrorEntry('90-001-00015', args=[argname]),
+        WLOG(params, 'debug', TextEntry('90-001-00015', args=[argname]),
              wrap=False)
         return True, None
     # else logic is wrong - raise error
     else:
         eargs = [argname, recipe.name]
-        WLOG(params, 'error', ErrorEntry('00-006-00004', args=eargs),
+        WLOG(params, 'error', TextEntry('00-006-00004', args=eargs),
              wrap=False)
 
 
@@ -1647,11 +1647,11 @@ def _get_index_files(recipe, inputdir, outudirlist):
         abspath = os.path.join(inputdir, directory, INDEX_FILE)
         # test whether it exists
         if os.path.exists(abspath):
-            WLOG(params, 'debug', ErrorEntry('90-001-00025', args=[abspath]),
+            WLOG(params, 'debug', TextEntry('90-001-00025', args=[abspath]),
                  wrap=False)
             index_list.append(abspath)
         else:
-            WLOG(params, 'debug', ErrorEntry('90-001-00026', args=[abspath]),
+            WLOG(params, 'debug', TextEntry('90-001-00026', args=[abspath]),
                  wrap=False)
             index_list.append(None)
     # return index_list
@@ -1670,7 +1670,7 @@ def _get_index_data(p, index_file, directory):
     # deal with no directory
     if index_file is None:
         wargs = [directory, 'off_listing']
-        WLOG(p, 'warning', ErrorEntry('10-004-00002', args=wargs))
+        WLOG(p, 'warning', TextEntry('10-004-00002', args=wargs))
         return None
 
     # load index file
@@ -1678,7 +1678,7 @@ def _get_index_data(p, index_file, directory):
         indexdata = Table.read(index_file)
     except Exception as e:
         eargs = [[directory], type(e), e]
-        WLOG(p, 'error', ErrorEntry('00-009-00001', args=eargs))
+        WLOG(p, 'error', TextEntry('00-009-00001', args=eargs))
         indexdata = None
     # return index data
     return indexdata
@@ -1722,7 +1722,7 @@ def _filter_index(p, index, filters=None):
         if key in index.colnames:
             # debug message
             dargs = [key, ' or '.join(values)]
-            WLOG(p, 'debug', ErrorEntry('90-001-00027', args=dargs))
+            WLOG(p, 'debug', TextEntry('90-001-00027', args=dargs))
             # loop around allowed values for filter
             for value in values:
                 mask_set |= (index[key] == value)
@@ -1737,9 +1737,9 @@ def _filter_index(p, index, filters=None):
 # =============================================================================
 def _gen_header_errors(params, header_errors):
     # set up message storage
-    emsgs = ErrorEntry(None)
+    emsgs = TextEntry(None)
     # get text
-    text = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up initial argname
     argname = ''
 
@@ -1768,9 +1768,9 @@ def _gen_header_errors(params, header_errors):
             if not entry[0]:
                 emsgs += '\n' + text['09-001-00022'].format(*eargs)
     if len(emsgs) > 0:
-        emsg0 = ErrorEntry('09-001-00023', args=[argname])
+        emsg0 = TextEntry('09-001-00023', args=[argname])
     else:
-        emsg0 = ErrorEntry(None)
+        emsg0 = TextEntry(None)
 
     return emsg0 + emsgs
 
@@ -1943,13 +1943,13 @@ def _get_file_groups(recipe, arg):
                     gdate = dates[dirmask & typemask][expmask]
                 # deal with only allowing 1 file per set (dtype=file)
                 if nargs == 1:
-                    WLOG(params, 'debug', ErrorEntry('90-001-00028'))
+                    WLOG(params, 'debug', TextEntry('90-001-00028'))
                     files = np.array([files[-1]])
                     gdate = np.array([gdate[-1]])
                 # add to groups (only if we have more than one file)
                 if len(files) > 0:
                     dgs = [len(files), '{0},{1},{2}'.format(gdir, gdtype, gexp)]
-                    WLOG(params, 'debug', ErrorEntry('90-001-00029', args=dgs))
+                    WLOG(params, 'debug', TextEntry('90-001-00029', args=dgs))
                     group_files.append(files)
                     group_dir.append(gdir)
                     group_dtype.append(gdtype)
@@ -2040,7 +2040,7 @@ def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
             # deal with no matching directories
             if np.sum(dirmask) == 0:
                 dargs = [dir_jt, other_dirs_arr]
-                WLOG(params, 'debug', ErrorEntry('90-001-00030', args=dargs),
+                WLOG(params, 'debug', TextEntry('90-001-00030', args=dargs),
                      wrap=False)
                 new_files[args[it]].append(None)
                 new_dirs[args[it]].append(None)

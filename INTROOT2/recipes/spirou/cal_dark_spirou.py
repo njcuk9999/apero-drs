@@ -36,8 +36,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
-ErrorText = locale.drs_text.ErrorText
+TextEntry = locale.drs_text.TextEntry
+TextDict = locale.drs_text.TextDict
 # Define the DARK file
 DARK_FILE = file_definitions.out_dark
 SKY_FILE = file_definitions.out_sky
@@ -163,7 +163,7 @@ def __main__(recipe, params):
         # Dark Measurement
         # ------------------------------------------------------------------
         # Log that we are doing dark measurement
-        WLOG(params, '', ErrorEntry('40-011-00001'))
+        WLOG(params, '', TextEntry('40-011-00001'))
         # measure dark for whole frame
         out1 = dark.measure_dark(params, image, '40-011-00003')
         hist_full, med_full, dadead_full = out1
@@ -190,7 +190,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        textdict = ErrorText(params['INSTRUMENT'], params['LANGUAGE'])
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # ------------------------------------------------------------------
         # check that med < qc_max_darklevel
         if med_full > params['QC_MAX_DARKLEVEL']:
@@ -233,12 +233,12 @@ def __main__(recipe, params):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', ErrorEntry('40-005-00001'))
+            WLOG(params, 'info', TextEntry('40-005-00001'))
             params['QC'] = 1
             params.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', ErrorEntry('40-005-00002') + farg)
+                WLOG(params, 'warning', TextEntry('40-005-00002') + farg)
             params['QC'] = 0
             params.set_source('QC', __NAME__ + '/main()')
             continue
@@ -288,7 +288,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [outfile.filename]
-        WLOG(params, '', ErrorEntry('40-010-00009', args=wargs))
+        WLOG(params, '', TextEntry('40-010-00009', args=wargs))
         # ------------------------------------------------------------------
         # write image to file
         outfile.write()

@@ -32,7 +32,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 # -----------------------------------------------------------------------------
 
 
@@ -56,7 +56,7 @@ def get_relative_folder(params, package, folder):
         init = pkg_resources.resource_filename(package, '__init__.py')
     except ImportError:
         eargs = [package, func_name]
-        WLOG(params, 'error', ErrorEntry('00-008-00001', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00001', args=eargs))
         init = None
     # Get the config_folder from relative path
     current = os.getcwd()
@@ -72,7 +72,7 @@ def get_relative_folder(params, package, folder):
     if not os.path.exists(data_folder):
         eargs = [os.path.basename(data_folder), os.path.dirname(data_folder),
                  func_name]
-        WLOG(params, 'error', ErrorEntry('00-008-00002', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00002', args=eargs))
     # return the absolute data_folder path
     return data_folder
 

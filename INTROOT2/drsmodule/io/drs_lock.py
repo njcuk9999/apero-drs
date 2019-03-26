@@ -40,9 +40,9 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-ErrorEntry = drs_text.ErrorEntry
-ErrorText = drs_text.ErrorText
-HelpText = drs_text.HelpText
+TextEntry = drs_text.TextEntry
+TextDict = drs_text.TextDict
+HelpText = drs_text.HelpDict
 
 
 # =============================================================================
@@ -75,7 +75,7 @@ def check_fits_lock_file(p, filename):
         lock_file = filename + '.lock'
     # check if lock file already exists
     if os.path.exists(lock_file):
-        WLOG(p, 'warning', ErrorEntry('10-001-00002', args=[filename]))
+        WLOG(p, 'warning', TextEntry('10-001-00002', args=[filename]))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     while os.path.exists(lock_file) or wait_time > max_wait_time:
@@ -83,7 +83,7 @@ def check_fits_lock_file(p, filename):
         wait_time += 1
     if wait_time > max_wait_time:
         eargs = [filename, lock_file]
-        WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
+        WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     lock = open_fits_lock_file(p, lock_file, filename)
@@ -121,12 +121,12 @@ def open_fits_lock_file(p, lock_file, filename):
             open_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', ErrorEntry('10-001-00003'))
+                WLOG(p, 'warning', TextEntry('10-001-00003'))
             time.sleep(1)
             wait_time += 1
     if wait_time > p['FITSOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
-        WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
+        WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
     return lock
 
 
@@ -162,12 +162,12 @@ def close_fits_lock_file(p, lock, lock_file, filename):
             close_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', ErrorEntry('10-001-00004'))
+                WLOG(p, 'warning', TextEntry('10-001-00004'))
             time.sleep(1)
             wait_time += 1
     if wait_time > p['FITSOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
-        WLOG(p, 'error', ErrorEntry('01-001-00002', args=eargs))
+        WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
 
 
 # =============================================================================

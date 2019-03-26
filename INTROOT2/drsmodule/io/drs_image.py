@@ -37,7 +37,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================

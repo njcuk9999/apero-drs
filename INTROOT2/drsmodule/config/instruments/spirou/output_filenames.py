@@ -31,7 +31,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================
@@ -44,9 +44,9 @@ def pp_file(params, **kwargs):
     outfile = kwargs.get('outfile', None)
     # deal with kwargs that are required
     if infile is None:
-        WLOG(params, 'error', ErrorEntry('00-001-00017', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
     if outfile is None:
-        WLOG(params, 'error', ErrorEntry('00-001-00018', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
     # construct out filename
     outfilename = infile.basename.replace(outfile.inext, outfile.ext)
     # get output path from params
@@ -66,9 +66,9 @@ def dark_file(params, **kwargs):
     outfile = kwargs.get('outfile', None)
     # deal with kwargs that are required
     if infile is None:
-        WLOG(params, 'error', ErrorEntry('00-001-00017', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
     if outfile is None:
-        WLOG(params, 'error', ErrorEntry('00-001-00018', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
     # construct out filename
     outfilename = infile.basename.replace(outfile.inext, outfile.ext)
     # add calibration prefix
@@ -90,9 +90,9 @@ def sky_file(params, **kwargs):
     outfile = kwargs.get('outfile', None)
     # deal with kwargs that are required
     if infile is None:
-        WLOG(params, 'error', ErrorEntry('00-001-00017', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
     if outfile is None:
-        WLOG(params, 'error', ErrorEntry('00-001-00018', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
     # construct out filename
     outfilename = infile.basename.replace(outfile.inext, outfile.ext)
     # add calibration prefix

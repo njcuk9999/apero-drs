@@ -39,7 +39,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-ErrorEntry = locale.drs_text.ErrorEntry
+TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================
@@ -79,10 +79,10 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
             eargs = [dirname, os.path.basename(filename), func_name]
-            WLOG(params, 'error', ErrorEntry('01-001-00013', args=eargs))
+            WLOG(params, 'error', TextEntry('01-001-00013', args=eargs))
         else:
             eargs = [os.path.basename(filename), dirname, func_name]
-            WLOG(params, 'error', ErrorEntry('01-001-00012', args=eargs))
+            WLOG(params, 'error', TextEntry('01-001-00012', args=eargs))
     # -------------------------------------------------------------------------
     # deal with obtaining data
     if fmt == 'fits-image':
@@ -92,7 +92,7 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
-        WLOG(params, 'error', ErrorEntry('', args=eargs))
+        WLOG(params, 'error', TextEntry('', args=eargs))
         data, header = None, None
     # -------------------------------------------------------------------------
     # deal with return
@@ -114,8 +114,8 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext):
             data = fits.getdata(filename, ext=ext)
         except Exception as e:
             string_trackback = traceback.format_exc()
-            emsg = ErrorEntry('01-001-00014', args=[filename, ext, type(e)])
-            emsg += '\n\n' + ErrorEntry(string_trackback)
+            emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg)
             data = None
     else:
@@ -127,8 +127,8 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext):
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
             string_trackback = traceback.format_exc()
-            emsg = ErrorEntry('01-001-00015', args=[filename, ext, type(e)])
-            emsg += '\n\n' + ErrorEntry(string_trackback)
+            emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg)
             header = None
     else:
@@ -146,8 +146,8 @@ def _read_fitstable(params, filename, getdata, gethdr, ext):
             data = Table.read(filename, fornat='fits')
         except Exception as e:
             string_trackback = traceback.format_exc()
-            emsg = ErrorEntry('01-001-00016', args=[filename, ext, type(e)])
-            emsg += '\n\n' + ErrorEntry(string_trackback)
+            emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg)
             data = None
     else:
@@ -159,8 +159,8 @@ def _read_fitstable(params, filename, getdata, gethdr, ext):
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
             string_trackback = traceback.format_exc()
-            emsg = ErrorEntry('01-001-00017', args=[filename, ext, type(e)])
-            emsg += '\n\n' + ErrorEntry(string_trackback)
+            emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg)
             header = None
     else:
@@ -218,7 +218,7 @@ def combine(params, infiles, math='average', same_type=True):
         return infiles
     # make sure infiles is a list
     if type(infiles) is not list:
-        WLOG(params, 'error', ErrorEntry('00-001-00020', args=[func_name]))
+        WLOG(params, 'error', TextEntry('00-001-00020', args=[func_name]))
     # if we have only one file (or none) skip combine
     if len(infiles) == 1:
         return infiles[0]
@@ -229,7 +229,7 @@ def combine(params, infiles, math='average', same_type=True):
         for it, infile in enumerate(infiles):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
-                WLOG(params, 'error', ErrorEntry('00-001-00021', args=eargs))
+                WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
     # make new infile using math
     outfile = infiles[0].combine(infiles[1:], math, same_type)
     # return combined infile
@@ -280,7 +280,7 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
             eargs = ['xlow', 'xhigh', xlow, func_name]
-            WLOG(params, 'error', ErrorEntry('00-001-00023', args=eargs))
+            WLOG(params, 'error', TextEntry('00-001-00023', args=eargs))
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -288,7 +288,7 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
             eargs = ['ylow', 'yhigh', xlow, func_name]
-            WLOG(params, 'error', ErrorEntry('00-001-00023', args=eargs))
+            WLOG(params, 'error', TextEntry('00-001-00023', args=eargs))
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -296,12 +296,12 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
         newimage = np.take(np.take(image, x, axis=1), y, axis=0)
     except Exception as e:
         eargs = [xlow, xhigh, ylow, yhigh, type(e), e, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00024', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00024', args=eargs))
         newimage = None
     # return error if we removed all pixels
     if newimage.shape[0] == 0 or newimage.shape[1] == 0:
         eargs = [xlow, xhigh, ylow, yhigh, func_name]
-        WLOG(params, 'error', ErrorEntry('00-001-00025', args=eargs))
+        WLOG(params, 'error', TextEntry('00-001-00025', args=eargs))
         newimage = None
 
     # return new image
