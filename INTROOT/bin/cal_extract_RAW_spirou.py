@@ -44,7 +44,7 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # debug (skip ic_ff_extract_type = ic_extract_type)
-DEBUG = True
+DEBUG = False
 
 
 # =============================================================================
