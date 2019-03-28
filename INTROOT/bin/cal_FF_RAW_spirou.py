@@ -120,21 +120,21 @@ def main(night_name=None, files=None):
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = spirouImage.ResizeImage(p, data0, **bkwargs)
+    data1 = spirouImage.ResizeImage(p, data0, **bkwargs)
     # log change in data size
     WLOG(p, '', ('Image format changed to '
-                 '{0}x{1}').format(*data2.shape[::-1]))
+                 '{0}x{1}').format(*data1.shape[::-1]))
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    p, data1 = spirouImage.CorrectForBadPix(p, data1, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data2 == 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
+    n_bad_pix = np.sum(data1 == 0)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(data1.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
     WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
@@ -143,7 +143,7 @@ def main(night_name=None, files=None):
     # Get the miny, maxy and max_signal for the central column
     # ----------------------------------------------------------------------
     # get the central column
-    y = data2[p['IC_CENT_COL'], :]
+    y = data1[p['IC_CENT_COL'], :]
     # get the min max and max signal using box smoothed approach
     miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
@@ -157,14 +157,14 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bdata = spirouBACK.MeasureBackgroundFF(p, data2)
+        bdata = spirouBACK.MeasureBackgroundFF(p, data1)
         background, gridx, gridy, minlevel = bdata
     else:
-        background = np.zeros_like(data2)
+        background = np.zeros_like(data1)
 
     # data2=data2-background
     # correct data2 with background (where positive)
-    data2 = np.where(data2 > 0, data2 - background, 0)
+    data1 = np.where(data1 > 0, data1 - background, 0)
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -177,6 +177,44 @@ def main(night_name=None, files=None):
     else:
         loc['TILT'] = None
     loc.set_source('TILT', __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
+    # Get all fiber data (for all fibers)
+    # ----------------------------------------------------------------------
+    # TODO: This is temp solution for options 5a and 5b
+    loc_fibers = spirouLOCOR.GetFiberData(p, hdr)
+
+    # ------------------------------------------------------------------
+    # Deal with debananafication
+    # ------------------------------------------------------------------
+    # if mode 4a or 4b we need to straighten in x only
+    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        # log progress
+        WLOG(p, '', 'Debananafying (straightening) image')
+        # get the shape map
+        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+        # debananafy data
+        bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
+        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # if mode 5a or 5b we need to straighten in x and y using the
+    #     polynomial fits for location
+    elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+        # log progress
+        WLOG(p, '', 'Debananafying (straightening) image')
+        # get the shape map
+        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+        # get the bad pixel map
+        p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True,
+                                                 quiet=True)
+        # debananafy data
+        bkwargs = dict(image=np.array(data1), kind='full', badpix=badpix,
+                       dx=shapemap, pos_a=loc_fibers['A']['ACC'],
+                       pos_b=loc_fibers['B']['ACC'],
+                       pos_c=loc_fibers['C']['ACC'])
+        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # in any other mode we do not straighten
+    else:
+        data2 = np.array(data1)
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -194,39 +232,19 @@ def main(night_name=None, files=None):
             p.set_source(param, __NAME__ + '.main()')
 
         # ------------------------------------------------------------------
-        # Get localisation coefficients
+        # Get fiber specific parameters from loc_fibers
         # ------------------------------------------------------------------
         # get this fibers parameters
-        p = spirouImage.FiberParams(p, fiber, merge=True)
-        # get localisation fit coefficients
-        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
-        # ------------------------------------------------------------------
-        # Read image order profile
-        # ------------------------------------------------------------------
-        order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p, hdr)
-        # ------------------------------------------------------------------
-        # Average AB into one fiber
-        # ------------------------------------------------------------------
-        # if we have an AB fiber merge fit coefficients by taking the average
-        # of the coefficients
-        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        # if fiber is AB take the average of the orders
-        if fiber == 'AB':
-            # merge
-            loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
-            loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
-            # set the number of order to half of the original
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is B take the even orders
-        elif fiber == 'B':
-            loc['ACC'] = loc['ACC'][:-1:2]
-            loc['ASS'] = loc['ASS'][:-1:2]
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is A take the even orders
-        elif fiber == 'A':
-            loc['ACC'] = loc['ACC'][1::2]
-            loc['ASS'] = loc['ASS'][:-1:2]
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
+        # get localisation parameters
+        for key in loc_fibers[fiber]:
+            loc[key] = loc_fibers[fiber][key]
+            loc.set_source(key, loc_fibers[fiber].sources[key])
+        # get locofile source
+        p['LOCOFILE'] = loc['LOCOFILE']
+        p.set_source('LOCOFILE', loc.sources['LOCOFILE'])
+        # get the order_profile
+        order_profile = loc_fibers[fiber]['ORDER_PROFILE']
 
         # ------------------------------------------------------------------
         # Set up Extract storage
