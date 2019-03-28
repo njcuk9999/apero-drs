@@ -1285,7 +1285,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         return p, corrected_image
 
 
-def get_badpixel_map(p, header=None):
+def get_badpixel_map(p, header=None, quiet=False):
     """
     Get the bad pixel map from the calibDB
 
@@ -1328,7 +1328,8 @@ def get_badpixel_map(p, header=None):
     # try to read 'BADPIX' from cdb
     if 'BADPIX' in cdb:
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
-        WLOG(p, '', 'Doing Bad Pixel Correction using ' + badpixfile)
+        if not quiet:
+            WLOG(p, '', 'Doing Bad Pixel Correction using ' + badpixfile)
         badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(p, badpixfile)
         return badpixmask, bhdr, badpixfile
     else:
@@ -1346,7 +1347,7 @@ def get_badpixel_map(p, header=None):
         WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
 
 
-def correct_for_badpix(p, image, header):
+def correct_for_badpix(p, image, header, return_map=False, quiet=True):
     """
     Corrects "image" for "BADPIX" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
@@ -1364,22 +1365,29 @@ def correct_for_badpix(p, image, header):
     :param image: numpy array (2D), the image
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
+    :param return_map: bool, if True returns bad pixel map else returns
+                       corrected image
 
-    :return corrected_image: numpy array (2D), the corrected image where all
-                             bad pixels are set to zeros
+    :returns: numpy array (2D), the corrected image where all bad pixels are
+              set to zeros or the bad pixel map (if return_map = True)
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
     # get badpixmask
-    badpixmask, bhdr, badfile = get_badpixel_map(p, header)
+    badpixmask, bhdr, badfile = get_badpixel_map(p, header, quiet=quiet)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
-    # correct image (set bad pixels to zero)
-    corrected_image = np.where(mask, np.zeros_like(image), image)
+
     # get badpixel file
     p['BADPFILE'] = os.path.basename(badfile)
     p.set_source('BADPFILE', func_name)
-    # finally return corrected_image
-    return p, corrected_image
+
+    if return_map:
+        return p, mask
+    else:
+        # correct image (set bad pixels to zero)
+        corrected_image = np.where(mask, np.zeros_like(image), image)
+        # finally return corrected_image
+        return p, corrected_image
 
 
 def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):

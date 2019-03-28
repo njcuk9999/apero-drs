@@ -545,9 +545,9 @@ ic_extnbsig = 1  # 2.5
 #                 5b - shape map + weight extraction (cosmic correction)
 #                      + fractional pix
 #                          (function = spirouEXTOR.extract_shape_weight_cosm2)
-ic_extract_type = '4b'  # '3d'
+ic_extract_type = '5b'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
-ic_ff_extract_type = '4a'
+ic_ff_extract_type = '5a'
 
 #   Set the number of pixels to set as                   - [cal_extract, cal_FF]
 #       the border (needed to allow for tilt to not go off edge of image)
