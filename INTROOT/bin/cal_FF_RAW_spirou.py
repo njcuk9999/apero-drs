@@ -46,6 +46,7 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # define ll extract types
 EXTRACT_LL_TYPES = ['3c', '3d', '4a', '4b', '5a', '5b']
+EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 
 # =============================================================================
 # Define functions
@@ -171,7 +172,7 @@ def main(night_name=None, files=None):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts
-    if p['IC_EXTRACT_TYPE'] not in ['4a', '4b', '5a', '5b', '6a', '6b']:
+    if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
         p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     else:
         loc['TILT'] = None
@@ -407,7 +408,7 @@ def main(night_name=None, files=None):
                                    value=p['BADPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
-        if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],

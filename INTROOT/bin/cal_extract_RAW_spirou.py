@@ -47,6 +47,7 @@ sPlt = spirouCore.sPlt
 DEBUG = False
 # define ll extract types
 EXTRACT_LL_TYPES = ['3c', '3d', '4a', '4b', '5a', '5b']
+EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 
 # =============================================================================
 # Define functions
@@ -204,7 +205,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts (if the mode requires it)
-    if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+    if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
         p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
         loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
     else:
@@ -423,7 +424,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
 
-            if p['IC_EXTRACT_TYPE'] in ['4a', '4b', '5a', '5b']:
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
                 sPlt.ext_debanana_plot(p, loc, data2, max_signal / 10.)
 
         # ----------------------------------------------------------------------
@@ -496,14 +497,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                    value=p['BADPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
-        if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=p['BLAZFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'],
                                    value=p['FLATFILE'])
-        if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                        value=p['SHAPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
