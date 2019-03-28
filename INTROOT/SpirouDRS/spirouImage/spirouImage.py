@@ -2675,8 +2675,8 @@ def get_shape_map(p, loc):
     master_dxmap[nanmask] = 0.0
 
     # apply very last update of the debananafication
-    hcdata2 = spirouEXTOR.DeBananafication(hcdata1, dx=master_dxmap)
-    fpdata2 = spirouEXTOR.DeBananafication(fpdata1, dx=master_dxmap)
+    hcdata2 = spirouEXTOR.DeBananafication(p, hcdata1, dx=master_dxmap)
+    fpdata2 = spirouEXTOR.DeBananafication(p, fpdata1, dx=master_dxmap)
 
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
