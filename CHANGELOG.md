@@ -6931,3 +6931,59 @@
 	- spirouEXTOR.py - set up two new extract functions to test adding of fractional contributions of pixels (rev.d2f21687)
 	- update test.run (rev.7abbaf91)
 	- update test.run (rev.6229328d)
+
+
+
+================================================================================
+* Tue Mar 19 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.098
+
+================================================================================
+	- cal_extract_RAW_spirou.py - fix problem with width getting for fiber A (rev.e4d3c17c)
+	- extract_test_5a_5b.py - want a and b and c separately (rev.f8009c5d)
+	- cal_extract_RAW_spirou.py - fix bug in width getting (rev.c7164ce8)
+	- spirouLOCOR.py - add function required to get AB + C fiber coefficients when needed (rev.c55d47a7)
+	- spirouEXTOR.py - add changes required for extract mode 5a/5b (rev.b01c9f4e)
+	- test of extract mode 5a/5b (rev.9c624d41)
+	- cal_extract_RAW_spirou.py - add code required for mode 5a/5b (rev.a88a4006)
+
+
+
+================================================================================
+* Wed Mar 20 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.099
+
+================================================================================
+	- tellu_file_number_test.py - distinguish between TELL_OBJ and TELL_MAP in counting from telluDB (rev.dfbf14f0)
+
+
+
+================================================================================
+* Fri Mar 22 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.100
+
+================================================================================
+	- spirouLOCOR.py - add get_fiber_data function and get_straightened_orderprofile function (rev.a286e062)
+	- spirouEXTOR.py - fix bug in modes which don't use pos_a (rev.20e0b56b)
+	- spirouImage (spirouFile/spirouFITS/spirouImage) - add changes for new extraction mode (rev.14178fad)
+	- spirouEXTOR.py - add etienne's changes to debananafication (rev.496f043d)
+	- spirouPlot.py - add ext_debanana_plot to show straightened image (rev.d2caf1e4)
+	- spirouConfig.py - fix ParamDict copy function (rev.3671881b)
+	- constants_SPIROU_H4RG.py - change mode to '5b' and '5a' (rev.32ece65b)
+	- cal_extract_RAW_spirou.py - add changes to all modes '5a' and '5b' to work (rev.68b3b23d)
+	- qc_examples.py - add code to document qc parameters for each output in reduced (rev.18736be1)
+
+
+
+================================================================================
+* Mon Mar 25 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.101
+
+================================================================================
+	- spirouPlot.py - add the debanana plot in (rev.83c3d1a7)
+	- misc/new_plot_test.py - test of plotting fixes (rev.01162668)
+	- spirouEXTOR.py - do not round in dy statement (rev.235773e2)
+
+
+
+================================================================================
+* Thu Mar 28 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.102
+
+================================================================================
+	- cal_extract_RAW_spirou.py - turn off ic_extract debug (rev.a83e1626)
