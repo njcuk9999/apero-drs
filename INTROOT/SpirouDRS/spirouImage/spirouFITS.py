@@ -1284,7 +1284,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None,
-                                     required=True):
+                                     required=True, return_filename=False):
     """
     Read the order profile superposition image from either "filename" (if not
     None) or get filename from the calibration database using "p"
@@ -1308,6 +1308,8 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
                      "p" the order profile is read straight from "filename"
     :param required: bool, if True code generates log exit else raises a
                      ConfigError (to be caught)
+
+    :param return_filename: bool, if True returns
 
     :return orderp: numpy array (2D), the order profile image read from file
     """
@@ -1335,6 +1337,9 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
         read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # if return_filename only return filename
+    if return_filename:
+        return read_file
     # log order profile file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG(p, '', wmsg)
