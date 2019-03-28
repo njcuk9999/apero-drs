@@ -44,7 +44,8 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-
+# define ll extract types
+EXTRACT_LL_TYPES = ['3c', '3d', '4a', '4b', '5a', '5b']
 
 # =============================================================================
 # Define functions
@@ -170,7 +171,7 @@ def main(night_name=None, files=None):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts
-    if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+    if p['IC_EXTRACT_TYPE'] not in ['4a', '4b', '5a', '5b', '6a', '6b']:
         p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     else:
         loc['TILT'] = None
@@ -232,6 +233,7 @@ def main(night_name=None, files=None):
         # Create array to store extraction (for each order and each pixel
         # along order)
         loc['E2DS'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['E2DSLL'] = []
         # Create array to store the blaze (for each order and at each pixel
         # along order)
         loc['BLAZE'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
@@ -262,7 +264,7 @@ def main(night_name=None, files=None):
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # deal with different return
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 e2ds, e2dsll, cpt = eout
             else:
                 e2ds, cpt = eout
@@ -296,6 +298,9 @@ def main(night_name=None, files=None):
             loc['RMS'][order_num] = rms
             loc['BLAZE'][order_num] = blaze
             loc['FLAT'][order_num] = flat
+            # save the longfile
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
+                loc['E2DSLL'].append(e2dsll)
             # set sources
             source = __NAME__ + '/main()()'
             loc.set_sources(['e2ds', 'SNR', 'RMS', 'blaze', 'flat'], source)
@@ -380,6 +385,7 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # get raw flat filename
         raw_flat_file = os.path.basename(p['FITSFILENAME'])
+        e2dsllfits, tag4 = spirouConfig.Constants.EXTRACT_E2DSLL_FILE(p)
         # get extraction method and function
         efout = spirouEXTOR.GetExtMethod(p, p['IC_FF_EXTRACT_TYPE'])
         extmethod, extfunc = efout
@@ -445,6 +451,14 @@ def main(night_name=None, files=None):
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)
         p = spirouImage.WriteImage(p, flatfits, loc['FLAT'], hdict)
+
+        # Save E2DSLL file
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
+            llstack = np.vstack(loc['E2DSLL'])
+            p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 
         # ------------------------------------------------------------------
         # Update the calibration database

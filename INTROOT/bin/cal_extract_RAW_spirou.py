@@ -45,7 +45,8 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # debug (skip ic_ff_extract_type = ic_extract_type)
 DEBUG = False
-
+# define ll extract types
+EXTRACT_LL_TYPES = ['3c', '3d', '4a', '4b', '5a', '5b']
 
 # =============================================================================
 # Define functions
@@ -369,7 +370,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # deal with different return
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b', '5a', '5b']:
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 e2ds, e2dsll, cpt = eout
             else:
                 e2ds, cpt = eout
@@ -396,7 +397,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             loc['E2DSFF'][order_num] = e2ds / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
             # save the longfile
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b', '5a', '5b']:
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 loc['E2DSLL'].append(e2dsll)
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
@@ -568,7 +569,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
-        if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b', '5a', '5b']:
+        if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
             llstack = np.vstack(loc['E2DSLL'])
             p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 

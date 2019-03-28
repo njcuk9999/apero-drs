@@ -308,7 +308,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
     # else error
     # -------------------------------------------------------------------------
     else:
-        emsgs = ['mode = {0} is not valid',
+        emsgs = ['mode = {0} is not valid'.format(mode),
                  '   Mode must be either:',
                  '     0 - Simple extraction',
                  '     1 - weighted extraction',
