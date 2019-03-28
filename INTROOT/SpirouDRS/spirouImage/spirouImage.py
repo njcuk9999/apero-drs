@@ -1928,7 +1928,7 @@ def get_shape_map_old(p, loc):
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
         if np.sum(master_dxmap != 0) != 0:
-            data2 = spirouEXTOR.DeBananafication(data1, master_dxmap)
+            data2 = spirouEXTOR.DeBananafication(p, data1, dx=master_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -2259,8 +2259,8 @@ def get_shape_map(p, loc):
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
         if np.sum(master_dxmap != 0) != 0:
-            hcdata2 = spirouEXTOR.DeBananafication(hcdata1, master_dxmap)
-            fpdata2 = spirouEXTOR.DeBananafication(fpdata1, master_dxmap)
+            hcdata2 = spirouEXTOR.DeBananafication(p, hcdata1, dx=master_dxmap)
+            fpdata2 = spirouEXTOR.DeBananafication(p, fpdata1, dx=master_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -2675,8 +2675,8 @@ def get_shape_map(p, loc):
     master_dxmap[nanmask] = 0.0
 
     # apply very last update of the debananafication
-    hcdata2 = spirouEXTOR.DeBananafication(hcdata1, master_dxmap)
-    fpdata2 = spirouEXTOR.DeBananafication(fpdata1, master_dxmap)
+    hcdata2 = spirouEXTOR.DeBananafication(hcdata1, dx=master_dxmap)
+    fpdata2 = spirouEXTOR.DeBananafication(fpdata1, dx=master_dxmap)
 
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
