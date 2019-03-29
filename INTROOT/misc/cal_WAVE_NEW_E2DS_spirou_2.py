@@ -419,17 +419,55 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Assign absolute FP numbers for rest of orders by wavelength matching
     # ----------------------------------------------------------------------
+
+    # define no-overlap-matching function (sorry Neil)
+    def no_overlap_match_calc(fp_ll_ord, fp_ll_ord_prev,
+                              fp_ll_diff, fp_ll_diff_prev, m_ord_prev):
+        # print warning re no overlap
+        wmsg = 'no overlap for order ' + str(i) + ', estimating gap size'
+        WLOG(p, 'warning', wmsg.format())
+        # mask to keep only difference between no-gap lines for both ord
+        mask_ll_diff = fp_ll_diff > 0.75 * np.median(fp_ll_diff)
+        mask_ll_diff &= fp_ll_diff < 1.25 * np.median(fp_ll_diff)
+        mask_ll_diff_prev = fp_ll_diff_prev > 0.75 * np.median(
+            fp_ll_diff_prev)
+        mask_ll_diff_prev &= fp_ll_diff_prev < 1.25 * np.median(
+            fp_ll_diff_prev)
+        # get last diff for current order, first for prev
+        ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
+        ll_diff_init = fp_ll_diff_prev[mask_ll_diff_prev][0]
+        # estimate lines missed using both ll_diff
+        ll_miss = fp_ll_ord_prev[0] - fp_ll_ord[-1]
+        m_end_1 = int(np.round(ll_miss / ll_diff_fin))
+        m_end_2 = int(np.round(ll_miss / ll_diff_init))
+        # check they are the same, print warning if not
+        if not m_end_1 == m_end_2:
+            wmsg = ('Missing line estimate miss-match: {0} v {1} '
+                    'from {2:.5f} v {3:.5f}')
+            wargs = [m_end_1, m_end_2, ll_diff_fin, ll_diff_init]
+            WLOG(p, 'warning', wmsg.format(*wargs))
+        # calculate m_end
+        m_end = int(m_ord_prev[0]) + m_end_1
+        # define array of absolute peak numbers
+        m_ord = m_end + dif_n[i][-1] - dif_n[i]
+        # return m_ord
+        return m_ord
+
     # loop over orders from reddest-1 to bluest
     for i in range(n_fin - n_init - 2, -1, -1):
         # define auxiliary arrays with ll for order and previous order
         fp_ll_ord = fp_ll[i]
         fp_ll_ord_prev = fp_ll[i + 1]
+        # define median ll diff for both orders
+        fp_ll_diff = np.median(fp_ll_ord[1:] - fp_ll_ord[:-1])
+        fp_ll_diff_prev = np.median(fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1])
         # check if overlap
         if fp_ll_ord[-1] >= fp_ll_ord_prev[0]:
             # get overlapping peaks for both
-            mask_ord_over = fp_ll_ord >= fp_ll_ord_prev[0]
+            # allow 0.25*lldiff offsets
+            mask_ord_over = fp_ll_ord >= fp_ll_ord_prev[0] - 0.25*fp_ll_diff_prev
             fp_ll_ord_over = fp_ll_ord[mask_ord_over]
-            mask_prev_over = fp_ll_ord_prev <= fp_ll_ord[-1]
+            mask_prev_over = fp_ll_ord_prev <= fp_ll_ord[-1] + 0.25*fp_ll_diff
             fp_ll_prev_over = fp_ll_ord_prev[mask_prev_over]
             # loop to find closest match
             mindiff = []
@@ -438,60 +476,58 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 diff = np.abs(fp_ll_prev_over-fp_ll_ord_over[j])
                 mindiff.append(np.min(diff))
                 argmindiff.append(np.argmin(diff))
-            # set the match m as the one for the smallest diff
-            m_match = argmindiff[np.argmin(mindiff)]
-            # get line number for peak with smallest diff
-            m_end = m_ord_prev[mask_prev_over][m_match]
-            # get dif n for peak with smallest diff
-            dif_n_match = dif_n[i][mask_ord_over][np.argmin(mindiff)]
-            # define array of absolute peak numbers
-            m_ord = m_end + dif_n_match - dif_n[i]
-            # # find closest peak to last of this order in previous order
-            # m_match = (np.abs(fp_ll_ord_prev - fp_ll_ord[-1])).argmin()
-            # # get order number for last peak (take int so it's not an array)
-            # m_end = int(m_ord_prev[m_match])
-            # # define array of absolute peak numbers
-            # m_ord = m_end + dif_n[i][-1] - dif_n[i]
-            # insert absolute order numbers at the start of m
-            m = np.concatenate((m_ord, m))
-            # redefine order number vector for previous order
-            m_ord_prev = m_ord
+            # check that smallest diff is in fact a line match
+            if np.min(mindiff) < 0.25*fp_ll_diff:
+                # set the match m as the one for the smallest diff
+                m_match = argmindiff[np.argmin(mindiff)]
+                # get line number for peak with smallest diff
+                m_end = m_ord_prev[mask_prev_over][m_match]
+                # get dif n for peak with smallest diff
+                dif_n_match = dif_n[i][mask_ord_over][np.argmin(mindiff)]
+                # define array of absolute peak numbers
+                m_ord = m_end + dif_n_match - dif_n[i]
+            # if not treat as no overlap
+            else:
+                m_ord = no_overlap_match_calc(fp_ll_ord, fp_ll_ord_prev,
+                                              fp_ll_diff, fp_ll_diff_prev, m_ord_prev)
         # if no overlap
         else:
-            wmsg = 'no overlap for order ' + str(i) + ', estimating gap size'
-            WLOG(p, 'warning', wmsg.format())
-
-            # get fp wavelength diff for consecutive lines in orders
-            fp_ll_diff = fp_ll_ord[1:] - fp_ll_ord[:-1]
-            fp_ll_diff_prev = fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1]
-            # mask to keep only difference between no-gap lines for both ord
-            mask_ll_diff = fp_ll_diff > 0.75 * np.median(fp_ll_diff)
-            mask_ll_diff &= fp_ll_diff < 1.25 * np.median(fp_ll_diff)
-            mask_ll_diff_prev = fp_ll_diff_prev > 0.75 * np.median(
-                fp_ll_diff_prev)
-            mask_ll_diff_prev &= fp_ll_diff_prev < 1.25 * np.median(
-                fp_ll_diff_prev)
-            # get last diff for current order, first for prev
-            ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
-            ll_diff_init = fp_ll_diff_prev[mask_ll_diff_prev][0]
-            # estimate lines missed using both ll_diff
-            ll_miss = fp_ll_ord_prev[0] - fp_ll_ord[-1]
-            m_end_1 = int(np.round(ll_miss / ll_diff_fin))
-            m_end_2 = int(np.round(ll_miss / ll_diff_init))
-            # check they are the same, print warning if not
-            if not m_end_1 == m_end_2:
-                wmsg = ('Missing line estimate miss-match: {0} v {1} '
-                        'from {2:.5f} v {3:.5f}')
-                wargs = [m_end_1, m_end_2, ll_diff_fin, ll_diff_init]
-                WLOG(p, 'warning', wmsg.format(*wargs))
-            # calculate m_end
-            m_end = int(m_ord_prev[0]) + m_end_1
-            # define array of absolute peak numbers
-            m_ord = m_end + dif_n[i][-1] - dif_n[i]
-            # insert absolute order numbers at the start of m
-            m = np.concatenate((m_ord, m))
-            # redefine order number vector for previous order
-            m_ord_prev = m_ord
+            m_ord = no_overlap_match_calc(fp_ll_ord, fp_ll_ord_prev,
+                                          fp_ll_diff, fp_ll_diff_prev, m_ord_prev)
+            # wmsg = 'no overlap for order ' + str(i) + ', estimating gap size'
+            # WLOG(p, 'warning', wmsg.format())
+            #
+            # # get fp wavelength diff for consecutive lines in orders
+            # fp_ll_diff = fp_ll_ord[1:] - fp_ll_ord[:-1]
+            # fp_ll_diff_prev = fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1]
+            # # mask to keep only difference between no-gap lines for both ord
+            # mask_ll_diff = fp_ll_diff > 0.75 * np.median(fp_ll_diff)
+            # mask_ll_diff &= fp_ll_diff < 1.25 * np.median(fp_ll_diff)
+            # mask_ll_diff_prev = fp_ll_diff_prev > 0.75 * np.median(
+            #     fp_ll_diff_prev)
+            # mask_ll_diff_prev &= fp_ll_diff_prev < 1.25 * np.median(
+            #     fp_ll_diff_prev)
+            # # get last diff for current order, first for prev
+            # ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
+            # ll_diff_init = fp_ll_diff_prev[mask_ll_diff_prev][0]
+            # # estimate lines missed using both ll_diff
+            # ll_miss = fp_ll_ord_prev[0] - fp_ll_ord[-1]
+            # m_end_1 = int(np.round(ll_miss / ll_diff_fin))
+            # m_end_2 = int(np.round(ll_miss / ll_diff_init))
+            # # check they are the same, print warning if not
+            # if not m_end_1 == m_end_2:
+            #     wmsg = ('Missing line estimate miss-match: {0} v {1} '
+            #             'from {2:.5f} v {3:.5f}')
+            #     wargs = [m_end_1, m_end_2, ll_diff_fin, ll_diff_init]
+            #     WLOG(p, 'warning', wmsg.format(*wargs))
+            # # calculate m_end
+            # m_end = int(m_ord_prev[0]) + m_end_1
+            # # define array of absolute peak numbers
+            # m_ord = m_end + dif_n[i][-1] - dif_n[i]
+        # insert absolute order numbers at the start of m
+        m = np.concatenate((m_ord, m))
+        # redefine order number vector for previous order
+        m_ord_prev = m_ord
 
 
 
