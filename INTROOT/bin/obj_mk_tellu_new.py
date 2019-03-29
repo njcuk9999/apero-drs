@@ -102,7 +102,7 @@ def main(night_name=None, files=None):
     wout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    _, loc['WAVE'], loc['WAVEFILE'] = wout
+    _, loc['WAVE'], loc['WAVEFILE'], _ = wout
     loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
     # get the wave keys
     loc = spirouImage.GetWaveKeys(p, loc, loc['DATAHDR'])
@@ -156,7 +156,7 @@ def main(night_name=None, files=None):
     mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    masterwavep, masterwave, masterwaveheader = mout
+    masterwavep, masterwave, masterwaveheader, mwsource = mout
     # get wave acqtimes
     master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
 
@@ -312,6 +312,8 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+        # ----------------------------------------------------------------------
         # get SNR for each order from header
         nbo = loc['DATA'].shape[0]
         snr_order = p['QC_MK_TELLU_SNR_ORDER']
@@ -322,31 +324,67 @@ def main(night_name=None, files=None):
             fargs = [snr_order, snr[snr_order], p['QC_MK_TELLU_SNR_MIN']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(snr[snr_order])
+        qc_name_str = 'SNR[{0}]'.format(snr_order)
+        qc_names.append(qc_name_str)
+        qc_logic.append('{0} < {1:.2f}'.format(qc_name_str,
+                                               p['QC_MK_TELLU_SNR_ORDER']))
+        # ----------------------------------------------------------------------
         # check that the file passed the CalcTelluAbsorption sigma clip loop
         if not loc['PASSED']:
             fmsg = 'File {0} did not converge on a solution in function: {1}'
             fargs = [basefilename, 'spirouTelluric.CalcTelluAbsorption()']
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(basefilename)
+        qc_names.append('FILE')
+        qc_logic.append('FILE did not converge')
+        # ----------------------------------------------------------------------
         # check that the airmass is not too different from input airmass
         airmass_diff = np.abs(loc['RECOV_AIRMASS'] - loc['AIRMASS'])
+        fargs = [loc['RECOV_AIRMASS'], loc['AIRMASS'],
+                 p['QC_MKTELLU_AIRMASS_DIFF']]
         if airmass_diff > p['QC_MKTELLU_AIRMASS_DIFF']:
             fmsg = ('Recovered airmass to de-similar than input airmass.'
                     'Recovered: {0:.3f}. Input: {1:.3f}. QC limit = {2}')
-            fargs = [loc['RECOV_AIRMASS'], loc['AIRMASS'],
-                     p['QC_MKTELLU_AIRMASS_DIFF']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(airmass_diff)
+        qc_names.append('airmass_diff')
+        qc_logic.append('airmass_diff > {0:.2f}'
+                        ''.format(p['QC_MKTELLU_AIRMASS_DIFF']))
+        # ----------------------------------------------------------------------
         # check that the water vapor is within limits
         water_cond1 = loc['RECOV_WATER'] < p['MKTELLU_TRANS_MIN_WATERCOL']
         water_cond2 = loc['RECOV_WATER'] > p['MKTELLU_TRANS_MAX_WATERCOL']
+        fargs = [p['MKTELLU_TRANS_MIN_WATERCOL'],
+                 p['MKTELLU_TRANS_MAX_WATERCOL']]
         if water_cond1 or water_cond2:
-            fmsg = ('Recovered water vapor optical depth not between {0} '
-                    'and {1}')
-            fargs = [p['MKTELLU_TRANS_MIN_WATERCOL'],
-                     p['MKTELLU_TRANS_MAX_WATERCOL']]
+            fmsg = ('Recovered water vapor optical depth not between {0:.3f} '
+                    'and {1:.3f}')
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(loc['RECOV_WATER'])
+        qc_names.append('RECOV_WATER')
+        qc_logic.append('RECOV_WATER not between {0:.3f} and {1:.3f}'
+                        ''.format(*fargs))
+        # ----------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
@@ -361,6 +399,8 @@ def main(night_name=None, files=None):
             p['QC'] = 0
             p.set_source('QC', __NAME__ + '/main()')
             continue
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
         # ------------------------------------------------------------------
         # Save transmission map to file
@@ -371,13 +411,20 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=os.path.basename(masterwavefile))
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'], value=mwsource)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
         # add wave solution date
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                    value=master_acqtimes[0])

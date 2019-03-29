@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # get blaze
     blaze = spirouImage.ReadBlazeFile(p)
     # get wave image
-    _, wave = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True)
+    _, wave, _ = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True)
 
     # get files
     files = os.listdir('.')

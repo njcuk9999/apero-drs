@@ -186,8 +186,8 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                            return_filename=True,
                                            fiber=wave_fiber)
-        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
-        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
 
         # add wave to all waves
         loc['ALLWAVE'][fiber] = loc['WAVE']
@@ -260,24 +260,54 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         loc['SPE'] = loc['SPE'] * image2
         loc['SPE0'] = loc['SPE0'] * image2
 
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # TODO: Needs doing
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
     # ------------------------------------------------------------------
     # Construct parameters for header
     # ------------------------------------------------------------------
     hdict = OrderedDict()
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
     if loc['SHAPE'] is not None:
-        hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                    value=p['SHAPFILE'])
     else:
-        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
-    # add input filelist
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'], dim1name='file',
-                                     values=loc['E2DSFILENAMES'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
+                                   value=p['TILTFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['FLATFILE'])
     # add name of the localisation fits file used
     hfile = os.path.basename(loc['LOCO_CTR_FILE'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_LOCFILE'], value=hfile)
@@ -286,6 +316,9 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
                                value=p['EM_MIN_LAMBDA'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_MAXWAVE'],
                                value=p['EM_MAX_LAMBDA'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # add the transmission cut
     hdict = spirouImage.AddKey(p, hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])
@@ -296,11 +329,16 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # add bad pixel map (if required)
     if p['EM_COMBINED_BADPIX']:
         # get bad pix mask (True where bad)
-        badpixmask, bhdr = spirouImage.GetBadPixMap(p, hdr)
+        badpixmask, bhdr, badfile = spirouImage.GetBadPixMap(p, hdr)
+        goodpixels = badpixmask == 0
         goodpixels = badpixmask == 0
         # apply mask (multiply)
         loc['SPE'] = loc['SPE'] * goodpixels.astype(float)
         loc['SPE0'] = loc['SPE0'] * goodpixels.astype(float)
+    else:
+        badfile = 'None'
+    # add to hdict
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=badfile)
 
     # check EM_OUTPUT_TYPE and deal with set to "all"
     if p['EM_OUTPUT_TYPE'] not in ["drs", "raw", "preprocess", "all"]:

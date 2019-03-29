@@ -167,8 +167,7 @@ def main(night_name=None, e2dsfiles=None):
         # ----------------------------------------------------------------------
         outfilename = str(e2dsfile)
         # add keys
-        hdict = OrderedDict()
-        hdict = spirouImage.CopyOriginalKeys(hdr, cdr, hdict=hdict)
+        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
 
         # add berv values
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])

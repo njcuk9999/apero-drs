@@ -95,7 +95,7 @@ def main(night_name=None, files=None):
     wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
                                        return_wavemap=True,
                                        return_filename=True)
-    _, loc['WAVE'], loc['WAVEFILE'] = wout
+    _, loc['WAVE'], loc['WAVEFILE'], _ = wout
     loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
     # get the wave keys
     loc = spirouImage.GetWaveKeys(p, loc, loc['DATAHDR'])
@@ -140,7 +140,7 @@ def main(night_name=None, files=None):
     mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    masterwavep, masterwave, masterwaveheader = mout
+    masterwavep, masterwave, masterwaveheader, mwsource = mout
     # get wave acqtimes
     master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
 
@@ -176,7 +176,7 @@ def main(night_name=None, files=None):
         wout = spirouImage.GetWaveSolution(p, image=sp, hdr=shdr,
                                            return_wavemap=True,
                                            return_filename=True)
-        _, loc['WAVE_IT'], loc['WAVEFILE_IT'] = wout
+        _, loc['WAVE_IT'], loc['WAVEFILE_IT'], _ = wout
         loc.set_sources(['WAVE_IT', 'WAVEFILE_IT'], main_name)
 
         # ------------------------------------------------------------------
@@ -311,6 +311,67 @@ def main(night_name=None, files=None):
             wargs = [order_num, ec_rms]
             WLOG(p, '', wmsg.format(*wargs))
 
+        # ---------------------------------------------------------------------
+        # Quality control
+        # ---------------------------------------------------------------------
+        # set passed variable and fail message list
+        passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+        # ----------------------------------------------------------------------
+        # get SNR for each order from header
+        nbo = loc['DATA'].shape[0]
+        snr_order = p['QC_MK_TELLU_SNR_ORDER']
+        snr = spirouImage.Read1Dkey(p, shdr, p['kw_E2DS_SNR'][0], nbo)
+        # check that SNR is high enough
+        if snr[snr_order] < p['QC_MK_TELLU_SNR_MIN']:
+            fmsg = 'low SNR in order {0}: ({1:.2f} < {2:.2f})'
+            fargs = [snr_order, snr[snr_order], p['QC_MK_TELLU_SNR_MIN']]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+            # add to qc header lists
+            qc_values.append(snr[snr_order])
+            qc_name_str = 'SNR[{0}]'.format(snr_order)
+            qc_names.append(qc_name_str)
+            qc_logic.append('{0} < {1:.2f}'.format(qc_name_str,
+                                                   p['QC_MK_TELLU_SNR_ORDER']))
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # ----------------------------------------------------------------------
+        # check that the RMS is not too low
+        if exp_clean_rms[snr_order] > p['QC_TELLU_CLEAN_RMS_MAX']:
+            fmsg = ('Expected clean RMS is too high in order {0} '
+                    '({1:.3f} > {2:.3f})')
+            fargs = [snr_order, exp_clean_rms[snr_order],
+                     p['QC_TELLU_CLEAN_RMS_MAX']]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+            # add to qc header lists
+            qc_values.append(exp_clean_rms[snr_order])
+            qc_name_str = 'exp_clean_rms[{0}]'.format(snr_order)
+            qc_names.append(qc_name_str)
+            qc_logic.append('{0} > {1:.2f}'.format(qc_name_str,
+                                                   p['QC_TELLU_CLEAN_RMS_MAX']))
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # ----------------------------------------------------------------------
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(p, 'info',
+                 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
@@ -320,13 +381,21 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
+                                   value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=os.path.basename(masterwavefile))
-
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                                   value=mwsource)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
         # add wave solution date
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                    value=master_acqtimes[0])
@@ -372,43 +441,6 @@ def main(night_name=None, files=None):
                 loc['WATERCOL'] = loc[molkey]
                 # set source
                 loc.set_source('WATERCOL', main_name)
-
-        # ----------------------------------------------------------------------
-        # Quality control
-        # ----------------------------------------------------------------------
-        # set passed variable and fail message list
-        passed, fail_msg = True, []
-        # get SNR for each order from header
-        nbo = loc['DATA'].shape[0]
-        snr_order = p['QC_MK_TELLU_SNR_ORDER']
-        snr = spirouImage.Read1Dkey(p, shdr, p['kw_E2DS_SNR'][0], nbo)
-        # check that SNR is high enough
-        if snr[snr_order] < p['QC_MK_TELLU_SNR_MIN']:
-            fmsg = 'low SNR in order {0}: ({1:.2f} < {2:.2f})'
-            fargs = [snr_order, snr[snr_order], p['QC_MK_TELLU_SNR_MIN']]
-            fail_msg.append(fmsg.format(*fargs))
-            passed = False
-        # check that the RMS is not too low
-        if exp_clean_rms[snr_order] > p['QC_TELLU_CLEAN_RMS_MAX']:
-            fmsg = ('Expected clean RMS is too high in order {0} '
-                    '({1:.3f} > {2:.3f})')
-            fargs = [snr_order, exp_clean_rms[snr_order],
-                     p['QC_TELLU_CLEAN_RMS_MAX']]
-            fail_msg.append(fmsg.format(*fargs))
-            passed = False
-        # finally log the failed messages and set QC = 1 if we pass the
-        # quality control QC = 0 if we fail quality control
-        if passed:
-            WLOG(p, 'info',
-                 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-            p['QC'] = 1
-            p.set_source('QC', __NAME__ + '/main()')
-        else:
-            for farg in fail_msg:
-                wmsg = 'QUALITY CONTROL FAILED: {0}'
-                WLOG(p, 'warning', wmsg.format(farg))
-            p['QC'] = 0
-            p.set_source('QC', __NAME__ + '/main()')
 
         # ------------------------------------------------------------------
         # Add transmission map to telluDB
@@ -457,9 +489,9 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
+                                   value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
 
         # write to file

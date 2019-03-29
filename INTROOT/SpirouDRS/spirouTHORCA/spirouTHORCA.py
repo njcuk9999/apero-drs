@@ -174,7 +174,7 @@ def first_guess_at_wave_solution(p, loc, mode='0'):
     # get wave solution
     wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True,
                                        return_filename=True)
-    param_ll_init, ll_init, wave_file = wout
+    param_ll_init, ll_init, wave_file, wsource = wout
 
     # log wave file name
     wmsg = 'Reading initial wavelength solution in {0}'
