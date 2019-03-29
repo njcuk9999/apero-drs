@@ -11,6 +11,8 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 import os
+import dbm
+import time
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
@@ -37,10 +39,11 @@ WLOG = spirouCore.wlog
 # Addition non-extraction function
 # =============================================================================
 def get_earth_velocity_correction(p, loc, hdr):
+    func_name = __NAME__ + '.get_earth_velocity_correction()'
     if p['KW_BERV'][0] in hdr:
-        loc['BERV'] = hdr[p['KW_BERV'][0]]
-        loc['BJD'] = hdr[p['KW_BJD'][0]]
-        loc['BERV_MAX'] = hdr[p['KW_BERV_MAX'][0]]
+        loc['BERV'] = float(hdr[p['KW_BERV'][0]])
+        loc['BJD'] = float(hdr[p['KW_BJD'][0]])
+        loc['BERV_MAX'] = float(hdr[p['KW_BERV_MAX'][0]])
         return p, loc
 
     # Get the OBSTYPE for file (from hdr)
@@ -63,8 +66,11 @@ def get_earth_velocity_correction(p, loc, hdr):
         # ----------------------------------------------------------------------
         loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
-        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0, 0.0
-        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = np.nan, np.nan, np.nan
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+        # store the obs_hour
+        loc['BERVHOUR'] = np.nan
+        loc.set_source('BERVHOUR', func_name)
 
     # return loc
     return p, loc
@@ -84,6 +90,7 @@ def earth_velocity_correction(p, loc, method='old'):
     secondpart = float(utc[2]) / 3600.
     exptimehours = (p['EXPTIME'] / 3600.) / 2.
     obs_hour = hourpart + minpart + secondpart + exptimehours
+
     # get the RA in hours
     objra = p['OBJRA'].split(':')
     ra_hour = float(objra[0])
@@ -118,6 +125,9 @@ def earth_velocity_correction(p, loc, method='old'):
     # finally save berv, bjd, bervmax to p
     loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
     loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+    # store the obs_hour
+    loc['BERVHOUR'] = obs_hour
+    loc.set_source('BERVHOUR', func_name)
 
     # return p
     return loc
@@ -137,7 +147,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         try:
             # noinspection PyUnresolvedReferences
             from SpirouDRS.fortran import newbervmain
-        except:
+        except Exception as e:
             emsg1 = ('For method="old" must compile fortran routine '
                      '"newbervmain" in the SpirouDRS/fortran directory:')
             emsg2 = '\t>>> f2py -c -m newbervmain --noopt --quiet newbervmain.f'
@@ -186,11 +196,12 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
             # set table
             iers.IERS.iers_table = iers.IERS_A.open(path_a)
             import barycorrpy
-        except:
+        except Exception as _:
             emsg1 = 'For method="new" must have barcorrpy installed '
             emsg2 = '\ti.e. ">>> pip install barycorrpy'
             WLOG(p, 'error', [emsg1, emsg2])
             barycorrpy = None
+            iers = None
 
         # set up the barycorr arguments
         bkwargs = dict(ra=ra * 15., dec=dec, epoch=equinox, pmra=pmra,
@@ -200,7 +211,22 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
 
         # get the julien UTC date for observation and obs + 1 year
         jdutc = list(t1.jd + np.arange(0., 365., 1.5))
-        bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+
+        def berv_calculation():
+            try:
+                return barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+            except dbm.error:
+                WLOG(p, 'warning', 'DBM locked in astropy. Waiting...')
+            except iers.IERSRangeError:
+                WLOG(p, 'warning', 'Failed to download IERS. Waiting...')
+
+        max_wait_time = p['DB_MAX_WAIT']
+        bresults1 = try_until_valid_or_timeout(berv_calculation, max_wait_time)
+        if bresults1 is None:
+            emsg = ('Required data can not be accessed for barycorrpy '
+                    '(wait time exceeded).')
+            WLOG(p, 'error', emsg)
+
         bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
 
         berv2 = bresults1[0][0] / 1000.0
@@ -211,6 +237,18 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
 
         # return results
         return berv2, bjd2, bervmax2
+
+
+def try_until_valid_or_timeout(operation, max_wait_time):
+    wait_time = 0
+    results = None
+    while results is None and wait_time < max_wait_time:
+        results = operation()
+        if results:
+            return results
+        else:
+            time.sleep(1)
+            wait_time += 1
 
 
 # =============================================================================

@@ -238,8 +238,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                            return_filename=True,
                                            return_header=True, fiber=wave_fiber)
-        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WAVEHDR'] = wout
-        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR'], wsource)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout[:3]
+        loc['WAVEHDR'], loc['WSOURCE'] = wout[3:]
+        source_names = ['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR']
+        loc.set_sources(source_names, wsource)
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
@@ -330,7 +332,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # if fiber is A take the even orders
         elif fiber == 'A':
             loc['ACC'] = loc['ACC'][1::2]
-            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['ASS'] = loc['ASS'][1::2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
 
         # ------------------------------------------------------------------
@@ -419,6 +421,47 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
 
+        # ----------------------------------------------------------------------
+        # Quality control
+        # ----------------------------------------------------------------------
+        passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+
+        # saturation check: check that the max_signal is lower than
+        # qc_max_signal
+        max_qcflux = p['QC_MAX_SIGNAL'] * p['NBFRAMES']
+        if max_signal > max_qcflux:
+            fmsg = 'Too much flux in the image ({0:.2f} > {1:.2f})'
+            fail_msg.append(fmsg.format(max_signal, max_qcflux))
+            passed = False
+            # Question: Why is this test ignored?
+            # For some reason this test is ignored in old code
+            passed = True
+            WLOG(p, 'info', fail_msg[-1])
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+
+        # add to qc header lists
+        qc_values.append(max_signal)
+        qc_names.append('max_signal')
+        qc_logic.append('QC_MAX_SIGNAL > {0:.3f}'.format(max_qcflux))
+
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
         # ------------------------------------------------------------------
         # Store extraction in file(s)
         # ------------------------------------------------------------------
@@ -439,30 +482,32 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
 
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
         if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'],
                                    value=p['FLATFILE'])
         if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                        value=p['SHAPFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_EXTFILE'],
-                                   value=raw_ext_file)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                                   value=loc['WSOURCE'])
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
         # construct loco filename
         locofile, _ = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.basename(locofile)
@@ -471,6 +516,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_B_OBS_HOUR'],
+                                   value=loc['BERVHOUR'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
         # copy extraction method and function to header
         #     (for reproducibility)
         hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_EXTM'],
@@ -563,33 +613,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename))
             # Write to file
             p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    passed, fail_msg = True, []
-    # saturation check: check that the max_signal is lower than qc_max_signal
-    if max_signal > (p['QC_MAX_SIGNAL'] * p['NBFRAMES']):
-        fmsg = 'Too much flux in the image (max authorized={0})'
-        fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['NBFRAMES']))
-        passed = False
-        # Question: Why is this test ignored?
-        # For some reason this test is ignored in old code
-        passed = True
-        WLOG(p, 'info', fail_msg[-1])
-
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/main()')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG(p, 'warning', wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # End Message

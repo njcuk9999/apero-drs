@@ -15,8 +15,8 @@ Import rules: Only from spirouConfigFile
 from __future__ import division
 import sys
 import os
-import time
 from . import spirouConfigFile
+
 
 # =============================================================================
 # Define variables
@@ -24,14 +24,15 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.076'
+__version__ = '0.4.097'
 # Define Authors
 # noinspection PyPep8
-__author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
+__author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
+              'I. Boisse, E. Martioli')
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2019-02-22'
+__date__ = '2019-03-19'
 
 
 # =============================================================================
@@ -128,6 +129,7 @@ def LATEST_EDIT():
     return date
 
 
+# noinspection PyPep8Naming
 def LANGUAGE():
     language = 'ENG'
     return language
@@ -180,7 +182,6 @@ def TELLU_DATABASE_WHITELIST_FILE():
     """
     whitelistfile = 'tellu_whitelist.txt'
     return whitelistfile
-
 
 
 # =============================================================================
@@ -301,6 +302,7 @@ def WAVELENGTH_CATS_DIR():
     return wavelength_cats_dir
 
 
+# noinspection PyPep8Naming
 def CAVITY_LENGTH_FILE():
     """
     Define the cavity length file (located in the WAVELENGTH_CATS_DIR()
@@ -356,6 +358,7 @@ tags = spirouConfigFile.get_tags(**ckwargs)
 # =============================================================================
 # Define General functions
 # =============================================================================
+# noinspection PyPep8Naming
 def UPDATE_PP(params):
     # get pp as a global
     global pp
@@ -457,6 +460,28 @@ def FORBIDDEN_COPY_KEYS():
                       'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
     # return keys
     return forbidden_keys
+
+
+# noinspection PyPep8Naming
+def FORBIDDEN_COPY_DRS_KEYS():
+    # DRS OUTPUT KEYS
+    forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
+                      'DRSOUTID']
+    # return keys
+    return forbidden_keys
+
+
+# noinspection PyPep8Naming
+def FORBIDDEN_HEADER_PREFIXES():
+    """
+    Define the QC keys prefixes that should not be copied (i.e. they are
+    just for the input file not the output file)
+
+    :return keys:
+    """
+    prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
+    # return keys
+    return prefixes
 
 
 # noinspection PyPep8Naming
@@ -1487,7 +1512,7 @@ def CCF_FITS_FILE(p):
 
 
 # noinspection PyPep8Naming
-def CCF_FP_FITS_FILE(p):
+def CCF_FP_FITS_FILE1(p):
     """
     Defines the CCF fits file location and name
 
@@ -1519,7 +1544,41 @@ def CCF_FP_FITS_FILE(p):
 
 
 # noinspection PyPep8Naming
-def CCF_FP_TABLE_FILE(p):
+def CCF_FP_FITS_FILE2(p):
+    """
+    Defines the CCF fits file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return corfile: string, the CCF table file location and name
+    """
+    func_name = 'CCF_FP_FITS_FILE'
+    # define filename
+    reducedfolder = p['REDUCED_DIR']
+    # get new extension using ccf_mask without the extention
+    newext = '_ccf_fp_' + p['CCF_MASK'].replace('.mas', '')
+    # set the new filename as the reference file without the _e2ds
+    if '_e2dsff' in p['E2DSFILE']:
+        corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+        key = func_name + '_FF'
+        tag = tags[key]
+    else:
+        tag = tags[func_name]
+        corfilename = p['E2DSFILE'].replace('_e2ds', newext)
+
+    corfilename = corfilename.replace('AB', 'C')
+
+    corfile = os.path.join(reducedfolder, corfilename)
+    # return the new ccf file location and name
+    return corfile, tag
+
+
+# noinspection PyPep8Naming
+def CCF_FP_TABLE_FILE1(p):
     """
     Defines the CCF table file location and name
 
@@ -1533,7 +1592,29 @@ def CCF_FP_TABLE_FILE(p):
     """
     # func_name = 'CCF_FP_TABLE_FILE'
     # start with the CCF fits file name
-    corfile = CCF_FP_FITS_FILE(p)[0]
+    corfile = CCF_FP_FITS_FILE1(p)[0]
+    # we want to save the file as a tbl file not a fits file
+    ccf_table_file = corfile.replace('.fits', '.tbl')
+    # return the new ccf table file location and name
+    return ccf_table_file
+
+
+# noinspection PyPep8Naming
+def CCF_FP_TABLE_FILE2(p):
+    """
+    Defines the CCF table file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return ccf_table_file:
+    """
+    # func_name = 'CCF_FP_TABLE_FILE'
+    # start with the CCF fits file name
+    corfile = CCF_FP_FITS_FILE2(p)[0]
     # we want to save the file as a tbl file not a fits file
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
@@ -1761,7 +1842,7 @@ def WAVE_FILE_EA(p):
     return wavefile, tag
 
 
-#add fp filename if it exists
+# add fp filename if it exists
 # noinspection PyPep8Naming
 def WAVE_FILE_EA_2(p):
     func_name = 'WAVE_FILE_EA'
@@ -1779,7 +1860,7 @@ def WAVE_FILE_EA_2(p):
     wavefn = filename.replace(old_ext, waveext)
     # check if FP
     if 'FPFILE' in p:
-        #get filename
+        # get filename
         raw_infile2 = os.path.basename(p['FPFILE'])
         # we shouldn't mix ed2s w e2dsff so can use same extension
         wavefn2 = raw_infile2.replace(old_ext, '_'
@@ -1793,7 +1874,8 @@ def WAVE_FILE_EA_2(p):
     # return filename and tag
     return wavefile, tag
 
-#add fp filename if it exists
+
+# add fp filename if it exists
 # noinspection PyPep8Naming
 def WAVE_FILE_NEW(p):
     func_name = 'WAVE_FILE_EA'
@@ -1811,7 +1893,7 @@ def WAVE_FILE_NEW(p):
     wavefn = filename.replace(old_ext, waveext)
     # check if FP
     if 'FPFILE' in p:
-        #get filename
+        # get filename
         raw_infile2 = os.path.basename(p['FPFILE'])
         # we shouldn't mix ed2s w e2dsff so can use same extension
         wavefn2 = raw_infile2.replace(old_ext, '_'
@@ -1824,7 +1906,6 @@ def WAVE_FILE_NEW(p):
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
     return wavefile, tag
-
 
 
 # noinspection PyPep8Naming
@@ -1884,6 +1965,8 @@ def WAVE_TBL_FILE_EA(p):
     wavetblfile = os.path.join(reducedfolder, wavetblfb)
     return wavetblfile
 
+
+# noinspection PyPep8Naming
 def WAVE_TBL_FILE_NEW(p):
     reducedfolder = p['REDUCED_DIR']
     wavetblfb = 'cal_WAVE_NEW_result.tbl'
@@ -1899,6 +1982,7 @@ def WAVE_LINE_FILE_EA(p):
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
 
+
 # noinspection PyPep8Naming
 def WAVE_LINE_FILE_NEW(p):
     reducedfolder = p['REDUCED_DIR']
@@ -1906,6 +1990,7 @@ def WAVE_LINE_FILE_NEW(p):
     wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
+
 
 # noinspection PyPep8Naming
 def WAVE_RES_FILE_EA(p):
@@ -1929,6 +2014,8 @@ def WAVE_RES_FILE_EA(p):
     # return filename and tag
     return wavefile, tag
 
+
+# noinspection PyPep8Naming
 def WAVE_RES_FILE_NEW(p):
     func_name = 'WAVE_RES_FILE_EA'
     # set reduced folder name
@@ -1949,6 +2036,7 @@ def WAVE_RES_FILE_NEW(p):
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
     return wavefile, tag
+
 
 # noinspection PyPep8Naming
 def WAVE_E2DS_COPY(p):
@@ -2261,6 +2349,28 @@ def INDEX_OUTPUT_FILENAME():
 
 
 # noinspection PyPep8Naming
+def INDEX_LOCK_FILENAME(p):
+    # get the message directory
+    if 'DRS_DATA_MSG' not in p:
+        p['DRS_DATA_MSG'] = './'
+    if not os.path.exists(p['DRS_DATA_MSG']):
+        p['DRS_DATA_MSG'] = './'
+    # get the night name directory
+    if 'ARG_NIGHT_NAME' not in p:
+        night_name = 'UNKNOWN'
+    else:
+        night_name = p['ARG_NIGHT_NAME'].replace(os.sep, '_')
+        night_name = night_name.replace(' ', '_')
+    # get the index file
+    index_file = INDEX_OUTPUT_FILENAME()
+    # construct the index lock file name
+    oargs = [night_name, index_file]
+    opath = os.path.join(p['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
+    # return the index lock file name
+    return opath
+
+
+# noinspection PyPep8Naming
 def OUTPUT_FILE_HEADER_KEYS(p):
     """
     Output file header keys.
@@ -2284,7 +2394,9 @@ def OUTPUT_FILE_HEADER_KEYS(p):
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0],
                    p['KW_CMPLTEXP'][0],
-                   p['KW_NEXP'][0]]
+                   p['KW_NEXP'][0],
+                   p['KW_VERSION'][0],
+                   p['KW_PPVERSION'][0]]
     # return output_keys
     return output_keys
 
@@ -2304,7 +2416,8 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0],
                    p['KW_CMPLTEXP'][0],
-                   p['KW_NEXP'][0]]
+                   p['KW_NEXP'][0],
+                   p['KW_PPVERSION'][0]]
     # check in master list
     masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
     for key in output_keys:
@@ -2325,7 +2438,8 @@ def REDUC_OUTPUT_COLUMNS(p):
                    p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
-                   p['KW_EXT_TYPE'][0]]
+                   p['KW_EXT_TYPE'][0],
+                   p['KW_VERSION'][0]]
     # check in master list
     masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
     for key in output_keys:
@@ -2346,7 +2460,8 @@ def GEN_OUTPUT_COLUMNS(p):
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
                    p['KW_OUTPUT'][0],
-                   p['KW_EXT_TYPE'][0]]
+                   p['KW_EXT_TYPE'][0],
+                   p['KW_VERSION'][0]]
     return output_keys
 
 
@@ -2513,9 +2628,11 @@ def DATE_FMT_HEADER():
     return date_fmt_header
 
 
+# noinspection PyPep8Naming
 def ASTROPY_DATE_FMT_CALIBDB():
     date_fmt = 'iso'
     return date_fmt
+
 
 # noinspection PyPep8Naming
 def DATE_FMT_CALIBDB():
@@ -2655,8 +2772,6 @@ def LOG_FILE_NAME(p, dir_data_msg=None):
                                "None" then "utime" is used or if "utime" not
                                defined uses the time now
     :param dir_data_msg: string or None, if defined the p
-    :param utime: float or None, the unix time to use to set the date, if
-                  undefined uses time.time() (time now) - in GMT
 
     :return lpath: string, the full path and file name for the log file
     """
@@ -2845,7 +2960,9 @@ def COLOUREDLEVELS(p=None):
                    debug=colors.debug)      # green
     return clevels
 
+
 # defines the colours
+# noinspection PyPep8Naming
 class Colors:
     BLACK1 = '\033[90;1m'
     RED1 = '\033[1;91;1m'
@@ -2875,6 +2992,15 @@ class Colors:
         self.endc = self.ENDC
         self.bold = self.BOLD
         self.underline = self.UNDERLINE
+
+        self.header = self.MAGENTA1
+        self.okblue = self.BLUE1
+        self.okgreen = self.GREEN1
+        self.ok = self.MAGENTA2
+        self.warning = self.YELLOW1
+        self.fail = self.RED1
+        self.debug = self.BLACK1
+
         self.update_theme()
 
     def update_theme(self, theme=None):
@@ -3010,6 +3136,7 @@ def MAX_DISPLAY_LIMIT():
     return max_display_limit
 
 
+# noinspection PyPep8Naming
 def HEADER():
     header = ' ' + '*' * 65
     return header
@@ -3093,6 +3220,7 @@ def FONT_DICT():
     return font
 
 
+# noinspection PyPep8Naming
 def PLOT_EXTENSIONS():
     """
     Extensions for plotting
@@ -3105,7 +3233,7 @@ def PLOT_EXTENSIONS():
     return extensions
 
 
-
+# noinspection PyPep8Naming
 def PLOT_FIGSIZE():
     """
     The fig size (in inches) for all saved figures
@@ -3113,7 +3241,6 @@ def PLOT_FIGSIZE():
     """
     figsize = (10, 8)
     return figsize
-
 
 
 # =============================================================================

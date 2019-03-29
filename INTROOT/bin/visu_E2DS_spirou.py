@@ -78,8 +78,8 @@ def main(night_name=None, reffile=None):
     else:
         wave_fiber = p['FIBER']
     # get wave image
-    _, wave = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                          fiber=wave_fiber)
+    _, wave, _ = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+                                             fiber=wave_fiber)
 
     # ----------------------------------------------------------------------
     # Get basic image properties

@@ -48,6 +48,8 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
+FORBIDDEN_DRS_KEY = spirouConfig.Constants.FORBIDDEN_COPY_DRS_KEYS()
+FORBIDDEN_HEADER_PREFIXES = spirouConfig.Constants.FORBIDDEN_HEADER_PREFIXES()
 # object name bad characters
 BADCHARS = [' '] + list(string.punctuation)
 
@@ -150,8 +152,6 @@ def readdata(p, filename, log=True, return_header=True, return_shape=True):
             :return shape: tuple, data.shape
             :return empty: None, blank entry
     """
-    # set up frequently used variables
-    log_opt = p['LOG_OPT']
     # log that we are reading the image
     if log:
         WLOG(p, '', 'Reading File: {0} '.format(filename))
@@ -330,7 +330,7 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
     # add header keys to the hdu header
     if hdict is not None:
         for key in list(hdict.keys()):
-            hdu.header[key] = hdict[key]
+            hdu.header[key] = (str(hdict[key][0]), str(hdict[key][1]))
     # get and check for file lock file
     lock, lock_file = check_fits_lock_file(p, filename)
     # write to file
@@ -478,7 +478,9 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         for it in range(len(hdu)):
             if hdicts[it] is not None:
                 for key in list(hdicts[it].keys()):
-                    hdu[it].header[key] = hdicts[it][key]
+                    hentry = (str(hdicts[it][key][0]),
+                              str(hdicts[it][key][1]))
+                    hdu[it].header[key] = hentry
 
     # close hdu we are finished
     if hdu is not None:
@@ -505,7 +507,6 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     p = write_output_dict(p, filename, hdicts[0])
     # return p
     return p
-
 
 
 def write_image_table(p, filename, image=None, table=None, hdict=None,
@@ -605,7 +606,6 @@ def write_image_table(p, filename, image=None, table=None, hdict=None,
     return p
 
 
-
 def write_output_dict(p, filename, hdict):
     # deal with output dictionary (of required keys)
     bfilename = os.path.basename(filename)
@@ -681,10 +681,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     # get the tilt keys
     tilt = read_key_1d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'])
     # get the tilt file
-    if p['KW_TILTFILE'][0] in hdict:
-        p['TILTFILE'] = hdict[p['KW_TILTFILE'][0]]
-    else:
-        p['TILTFILE'] = 'UNKNOWN'
+    p['TILTFILE'] = os.path.basename(read_file)
     p.set_source('TILTFILE', func_name)
 
     # return the first set of keys
@@ -743,10 +740,7 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
     shapemap[~np.isfinite(shapemap)] = 0.0
 
     # get the shape file
-    if p['KW_SHAPEFILE'][0] in hdict:
-        p['SHAPFILE'] = hdict[p['KW_SHAPEFILE'][0]]
-    else:
-        p['SHAPFILE'] = 'UNKNOWN'
+    p['SHAPFILE'] = os.path.basename(read_file)
     p.set_source('SHAPFILE', func_name)
 
     # return the shape map image
@@ -830,7 +824,7 @@ def read_waveparams(p, hdr):
     dim2key = p['KW_WAVE_LL_DEG'][0]
     # get dim1 value
     if dim1key in hdr:
-        dim1 = hdr[dim1key]
+        dim1 = int(hdr[dim1key])
     else:
         emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim1)'
         emsg2 = '   function = {0}'.format(func_name)
@@ -838,7 +832,7 @@ def read_waveparams(p, hdr):
         dim1 = None
     # get dim2 value
     if dim2key in hdr:
-        dim2 = hdr[dim2key] + 1
+        dim2 = int(hdr[dim2key]) + 1
     else:
         emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim2)'
         emsg2 = '   function = {0}'.format(func_name)
@@ -865,7 +859,7 @@ def get_wave_solution_old(p, image=None, hdr=None):
         # get the wave parmaeters from the header
         wave_params = read_waveparams(p, hdr)
         # get the dimensions
-        dim1 = hdr[dim1key]
+        dim1 = int(hdr[dim1key])
         # check that dim1 is the correct number of orders
         if dim1 != image.shape[0]:
             emsg1 = ('Number of orders in HEADER ({0}={1}) not compatible with '
@@ -893,7 +887,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
     dim1key = p['KW_WAVE_ORD_N'][0]
     # dim2key = p['KW_WAVE_LL_DEG'][0]
     # get keys from header
-    dim1 = hdr[dim1key]
+    dim1 = int(hdr[dim1key])
     # raise error is image and nbpix is None
     if image is None and (nbo is None or nbx is None):
         emsg = ('Need to define an "image" or ("nbo" and "nbx") in order to '
@@ -975,7 +969,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
     dim2key = p['KW_WAVE_LL_DEG'][0]
-    namekey = p['KW_WAVEFILE'][0]
+    namekey = p['KW_CDBWAVE'][0]
     # check for header keys in header
     if hdr is None:
         header_cond = False
@@ -984,14 +978,14 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # see if we can obtain nb_xpix from hdr
     if (image is None) and hdr is not None:
         if (nbo is None) and 'NAXIS2' in hdr:
-            nbo = hdr['NAXIS2']
+            nbo = int(hdr['NAXIS2'])
         else:
             emsg1 = ('Cannot identify number of orders (no image defined, and'
                      'NAXIS2 not in header)')
             emsg2 = '\tfunction = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2])
         if (nbx is None) and 'NAXIS1' in hdr:
-            nbx = hdr['NAXIS1']
+            nbx = int(hdr['NAXIS1'])
         else:
             emsg1 = ('Cannot identify number of x-pixels (no image defined, and'
                      'NAXIS1 not in header)')
@@ -1049,6 +1043,9 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         returns.append(filename)
     if return_header:
         returns.append(hdict)
+    # append where wave solution was obtained
+    returns.append(obtain)
+    # return returns
     return returns
 
 
@@ -1226,10 +1223,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
     # get flat file name
-    if p['KW_FLATFILE'][0] in hdict:
-        p['FLATFILE'] = hdict[p['KW_FLATFILE'][0]]
-    else:
-        p['FLATFILE'] = 'UNKNOWN'
+    p['FLATFILE'] = os.path.basename(read_file)
     p.set_source('FLATFILE', func_name)
     # return the wave file
     if return_header:
@@ -1283,10 +1277,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
     # get blaze file name
-    if p['KW_BLAZFILE'][0] in hdict:
-        p['BLAZFILE'] = hdict[p['KW_BLAZFILE'][0]]
-    else:
-        p['BLAZFILE'] = 'UNKNOWN'
+    p['BLAZFILE'] = os.path.basename(read_file)
     p.set_source('BLAZFILE', func_name)
     # return the wave file
     return p, blaze
@@ -1368,7 +1359,7 @@ def check_fits_lock_file(p, filename):
         WLOG(p, 'warning', '{0} locked. Waiting...'.format(filename))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
-    while os.path.exists(lock_file) or wait_time > max_wait_time:
+    while os.path.exists(lock_file) and (wait_time < max_wait_time):
         time.sleep(1)
         wait_time += 1
     if wait_time > max_wait_time:
@@ -1385,21 +1376,29 @@ def check_fits_lock_file(p, filename):
 
 
 def open_fits_lock_file(p, lock_file, filename):
+
+    # need to make sure lock_file directory is valid
+    lock_dir = os.path.dirname(lock_file)
+    if not os.path.exists(lock_dir):
+        emsg = 'Lock file directory does not exist ({0})'
+        WLOG(p, 'error', emsg.format(lock_dir))
+
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     open_file = True
     lock = None
-    while open_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+    while open_file and (wait_time < p['FITSOPEN_MAX_WAIT']):
         try:
             lock = open(lock_file, 'w')
             open_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to open fits lock')
+                wmsg = 'Waiting to open fits lock file: {0}'
+                WLOG(p, 'warning', wmsg.format(lock_file))
             time.sleep(1)
             wait_time += 1
-    if wait_time > p['FITSOPEN_MAX_WAIT']:
+    if wait_time >= p['FITSOPEN_MAX_WAIT']:
         emsg1 = ('File Error: {0}. Cannot close lock file and max '
                  'wait time exceeded.'.format(filename))
         emsg2 = ('\tPlease make sure fits file is not being used and '
@@ -1413,23 +1412,51 @@ def close_fits_lock_file(p, lock, lock_file, filename):
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     close_file = True
-    while close_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+    while close_file and (wait_time < p['FITSOPEN_MAX_WAIT']):
         try:
-            lock.close()
+            if os.path.exists(lock_file):
+                lock.close()
             if os.path.exists(lock_file):
                 os.remove(lock_file)
             close_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to close fits lock')
+                wmsg = 'Waiting to close fits lock file: {0}'
+                WLOG(p, 'warning', wmsg.format(lock_file))
             time.sleep(1)
             wait_time += 1
-    if wait_time > p['FITSOPEN_MAX_WAIT']:
+    if wait_time >= p['FITSOPEN_MAX_WAIT']:
         emsg1 = ('File Error: {0}. Cannot close lock file and max '
                  'wait time exceeded.'.format(filename))
         emsg2 = ('\tPlease make sure fits file is not being used and '
                  'manually delete {0}').format(lock_file)
         WLOG(p, 'error', [emsg1, emsg2])
+
+
+def update_wave_sol_hc(p, loc, filename):
+
+    # get original data and header
+    data, hdr, comments, _, _ = readimage(p, filename)
+
+    # get wave filename
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefitsname = os.path.basename(wavefits)
+
+    # add keys from original header file
+    hdict = copy_original_keys(loc['HCHDR'], loc['HCCDR'], allkeys=True)
+    # add wave file name
+    hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
+    # add wave solution date
+    hdict = add_new_key(p, hdict, p['KW_WAVE_TIME1'], value=p['MAX_TIME_HUMAN'])
+    hdict = add_new_key(p, hdict, p['KW_WAVE_TIME2'], value=p['MAX_TIME_UNIX'])
+    # add wave solution coefficients
+    hdict = add_key_2d_list(p, hdict, p['KW_WAVE_PARAM'],
+                            values=loc['POLY_WAVE_SOL'])
+    # Save E2DS file
+    p = writeimage(p, filename, data, hdict)
+
+    # return p
+    return p
 
 
 def update_wave_sol(p, loc, filename):
@@ -1439,19 +1466,19 @@ def update_wave_sol(p, loc, filename):
 
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
-    wavefitsname = os.path.split(wavefits)[-1]
+    wavefitsname = os.path.basename(wavefits)
 
     # copy original keys
-    hdict = copy_original_keys(hdr, comments)
+    hdict = copy_original_keys(hdr, comments, allkeys=True)
 
-    hdict = add_new_key(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
 
     # add number of orders
     hdict = add_new_key(p, hdict, p['KW_WAVE_ORD_N'],
-                               value=loc['LL_PARAM_FINAL'].shape[0])
+                        value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
     hdict = add_new_key(p, hdict, p['KW_WAVE_LL_DEG'],
-                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
+                        value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
     hdict = add_key_2d_list(p, hdict, p['KW_WAVE_PARAM'],
                             values=loc['LL_PARAM_FINAL'])
@@ -1511,6 +1538,8 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
                 emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG(p, 'error', [emsg1, emsg2])
+        except Exception as e:
+            value = d[key]
 
     return value
 
@@ -1570,7 +1599,7 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     return values
 
 
-def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
+def copy_original_keys(header, comments, forbid_keys=True, allkeys=False):
     """
     Copies keys from hdr dictionary to hdict, if forbid_keys is True some
     keys will not be copies (defined in python code)
@@ -1597,15 +1626,22 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
                    key/value pairs from the header (that are NOT in
                    spirouConfig.spirouConst.FORBIDDEN_COPY_KEY)
     """
-    if hdict is None:
-        hdict = OrderedDict()
+    hdict = OrderedDict()
 
     for key in list(header.keys()):
         # skip if key is forbidden keys
         if forbid_keys and (key in FORBIDDEN_COPY_KEY):
             continue
+        # skip if key is drs forbidden key (unless allkeys)
+        elif (key in FORBIDDEN_DRS_KEY) and (not allkeys):
+            continue
         # skip if key added temporarily in code (denoted by @@@)
         elif '@@@' in key:
+            continue
+        # skip QC keys  (unless allkeys)
+        elif (key == 'QC') and not allkeys:
+            continue
+        elif is_forbidden_prefix(key) and (not allkeys):
             continue
         # else add key to hdict
         else:
@@ -1618,10 +1654,19 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     return hdict
 
 
+def is_forbidden_prefix(key):
+    cond = False
+    for prefix in FORBIDDEN_HEADER_PREFIXES:
+        if key.startswith(prefix):
+            cond = True
+    return cond
+
+
 def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     """
     Copy keys from a filename to hdict
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary or None, header dictionary to write to fits file
                   if None hdict is created
     :param filename: string, location and filename of the FITS rec to open
@@ -1664,6 +1709,7 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
             [key, value, comment]    where key and comment are strings
     if hdict is None creates a new dictionary
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary or None, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
@@ -1689,6 +1735,7 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
     # set the value to default value if value is None
     if value is None:
         value = dvalue
+
     # add to the hdict dictionary in form (value, comment)
     hdict[key] = (value, comment)
     # return hdict
@@ -1702,6 +1749,7 @@ def add_new_keys(p, hdict=None, keywordstores=None, values=None):
     objects. Each keywordstore is in form:
             [key, value, comment]    where key and comment are strings
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary or None, storage for adding to FITS rec if None
                   creates a new dictionary to store keys in
     :param keywordstores: list of lists, list of "keyword list" lists
@@ -1742,6 +1790,7 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     Add a new 1d list to key using the keywordstorage[0] as prefix in form
     keyword = kewordstoreage + row number
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
@@ -1765,13 +1814,15 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     # set the value to default value if value is None
     if values is None:
         values = [dvalue]
+    if type(values) is str:
+        values = [values]
     # convert to a numpy array
     values = np.array(values)
     # loop around the 2D array
     dim1 = len(values)
     for i_it in range(dim1):
         # construct the key name
-        keyname = '{0}{1}'.format(key, i_it)
+        keyname = test_for_formatting(key, i_it)
         # get the value
         value = values[i_it]
         # construct the comment name
@@ -1782,6 +1833,14 @@ def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     return hdict
 
 
+def test_for_formatting(key, number):
+    test_str = key.format(number)
+    if test_str == key:
+        return '{0}{1}'.format(key, number)
+    else:
+        return test_str
+
+
 def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
                     dim2name='coeff'):
     """
@@ -1790,6 +1849,7 @@ def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
 
     where number = (row number * number of columns) + column number
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
@@ -1823,7 +1883,7 @@ def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
     for i_it in range(dim1):
         for j_it in range(dim2):
             # construct the key name
-            keyname = '{0}{1}'.format(key, i_it * dim2 + j_it)
+            keyname = test_for_formatting(key, i_it * dim2 + j_it)
             # get the value
             value = values[i_it, j_it]
             # construct the comment name
@@ -1835,6 +1895,41 @@ def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
     return hdict
 
 
+def add_qc_keys(p, hdict, qcparams):
+    func_name = __NAME__ + '.add_qc_keys()'
+    # get parameters
+    qc_kws = ['KW_DRS_QC_NAME', 'KW_DRS_QC_VAL', 'KW_DRS_QC_LOGIC',
+              'KW_DRS_QC_PASS']
+    # deal with no hdict
+    if hdict is None:
+        hdict = OrderedDict()
+    # check lengths are the same
+    lengths = []
+    for qcparam in qcparams:
+        lengths.append(len(qcparam))
+    strlengths = map(lambda x: str(x), lengths)
+    # loop around lengths and test that they are the same
+    for length in lengths:
+        if lengths[0] != length:
+            emsg1 = 'Dev Error: All QC parameters must be the same length'
+            emsg2 = '\tLengths = {0}'.format(', '.join(strlengths))
+            emsg3 = '\tfunction = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
+    # loop around values and add to hdict
+    for it in range(lengths[0]):
+        # loop around qc parameters
+        for jt, keystr in enumerate(qc_kws):
+            keyws = p[keystr]
+            # extract keyword, value and comment and put it into hdict
+            key, dvalue, comment = extract_key_word_store(p, keyws, func_name)
+            value = qcparams[jt][it]
+            # add to the hdict dictionary in form (value, comment)
+            hdict[key.format(it + 1)] = (value, comment)
+    # return hdict
+    return hdict
+
+
+
 def extract_key_word_store(p, keywordstore=None, func_name=None):
     """
     Deal with extraction of key, value and comment from keywordstore
@@ -1842,6 +1937,7 @@ def extract_key_word_store(p, keywordstore=None, func_name=None):
 
     [name, value, comment]     with types [string, object, string]
 
+    :param p: ParamDict - the constant parameter dictionary
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
     :param func_name: string or None, if not None defined where the
@@ -2071,6 +2167,7 @@ def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0):
         If there is one extension it is used
         If there are two extensions the second is used
 
+    :param p: ParamDict - the constant parameter dictionary
     :param filename: string, the filename to open with astropy.io.fits
     :param getheader: bool, if True loads the filename header
     :param getshape: bool, if True returns the shape
@@ -2180,6 +2277,7 @@ def deal_with_bad_header(p, hdu):
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
 
+    :param p: ParamDict - the constant parameter dictionary
     :param hdu: astropy.io.fits HDU
 
     :return data:
@@ -2198,7 +2296,7 @@ def deal_with_bad_header(p, hdu):
         try:
             datastore.append(hdu[it].data)
             headerstore.append(hdu[it].header)
-        except:
+        except Exception as _:
             cond = False
         # iterate
         it += 1
@@ -2227,6 +2325,7 @@ def read_raw_header(p, filename, headerext=0):
     """
     Reads the header of a fits file using astropy.io.fits
 
+    :param p: ParamDict - the constant parameter dictionary
     :param filename: string, the filename to open with astropy.io.fits
     :param headerext: int, the extension to read the header from
 

@@ -165,9 +165,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
     # write to file
     p = spirouImage.WriteImage(p, rawfits, order_profile, hdict)
 
@@ -327,34 +326,80 @@ def main(night_name=None, files=None):
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # ----------------------------------------------------------------------
     # check that max number of points rejected in center fit is below threshold
     if np.sum(loc['MAX_RMPTS_POS']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
         fmsg = 'abnormal points rejection during ctr fit ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_POS']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(np.sum(loc['MAX_RMPTS_POS']))
+    qc_names.append('sum(MAX_RMPTS_POS)')
+    qc_logic.append('sum(MAX_RMPTS_POS) > {0:.2f}'
+                    ''.format(p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
+    # ----------------------------------------------------------------------
     # check that max number of points rejected in width fit is below threshold
     if np.sum(loc['MAX_RMPTS_WID']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
         fmsg = 'abnormal points rejection during width fit ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_WID']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(np.sum(loc['MAX_RMPTS_WID']))
+    qc_names.append('sum(MAX_RMPTS_WID)')
+    qc_logic.append('sum(MAX_RMPTS_WID) > {0:.2f}'
+                    ''.format(p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
+    # ----------------------------------------------------------------------
     # check that the rms in center fit is lower than qc threshold
     if mean_rms_center > p['QC_LOC_RMSMAX_CENTER']:
         fmsg = 'too high rms on center fitting ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(mean_rms_center, p['QC_LOC_RMSMAX_CENTER']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(mean_rms_center)
+    qc_names.append('mean_rms_center')
+    qc_logic.append('mean_rms_center > {0:.2f}'
+                    ''.format(p['QC_LOC_RMSMAX_CENTER']))
+    # ----------------------------------------------------------------------
     # check that the rms in center fit is lower than qc threshold
-    if mean_rms_center > p['QC_LOC_RMSMAX_FWHM']:
+    if mean_rms_fwhm > p['QC_LOC_RMSMAX_FWHM']:
         fmsg = 'too high rms on profile fwhm fitting ({0:.2f} > {1:.2f})'
-        fail_msg.append(fmsg.format(mean_rms_center, p['QC_LOC_RMSMAX_CENTER']))
+        fail_msg.append(fmsg.format(mean_rms_fwhm, p['QC_LOC_RMSMAX_CENTER']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(mean_rms_fwhm)
+    qc_names.append('mean_rms_fwhm')
+    qc_logic.append('mean_rms_fwhm > {0:.2f}'
+                    ''.format(p['QC_LOC_RMSMAX_CENTER']))
+    # ----------------------------------------------------------------------
     # check for abnormal number of identified orders
     if rorder_num != p['QC_LOC_NBO']:
         fmsg = ('abnormal number of identified orders (found {0:.2f} '
                 'expected {1:.2f})')
         fail_msg.append(fmsg.format(rorder_num, p['QC_LOC_NBO']))
         passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(rorder_num)
+    qc_names.append('rorder_num')
+    qc_logic.append('rorder_num != {0:.2f}'.format(p['QC_LOC_NBO']))
+    # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -367,6 +412,8 @@ def main(night_name=None, files=None):
             WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # Save and record of image of localization with order center and keywords
@@ -382,11 +429,11 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=raw_loco_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=raw_loco_file)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_BCKGRD'],
@@ -416,8 +463,9 @@ def main(night_name=None, files=None):
     # write 2D list of width fit coefficients
     hdict = spirouImage.AddKey2DList(p, hdict, p['KW_LOCO_FWHM_COEFF'],
                                      values=loc['ASS'][0:rorder_num])
-    # add quality control
+    # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])
     p = spirouImage.WriteImage(p, locofits, center_fits, hdict)
@@ -437,9 +485,11 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
+    # add outputs
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_NBO'],
@@ -487,12 +537,10 @@ def main(night_name=None, files=None):
         # save this image to file
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
         p = spirouImage.WriteImage(p, locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------
