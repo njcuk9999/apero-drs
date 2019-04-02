@@ -382,8 +382,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
                                        return_filename=True)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # control plotting

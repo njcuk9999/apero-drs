@@ -325,6 +325,56 @@ def main(night_name=None, files=None):
             # plot the RMS for all but skipped orders
             # sPlt.ff_rms_plot(p, loc)
 
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        passed, fail_msg = True, []
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+
+        # saturation check: check that the max_signal is lower than
+        # qc_max_signal
+        # if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
+        #     fmsg = 'Too much flux in the image (max authorized={0})'
+        #     fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
+        #     passed = False
+        #     # For some reason this test is ignored in old code
+        #     passed = True
+        #     WLOG(p, 'info', fail_msg[-1])
+
+        # get mask for removing certain orders in the RMS calculation
+        remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
+        mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
+        # apply mask and calculate the maximum RMS
+        max_rms = np.max(loc['RMS'][~mask])
+        # apply the quality control based on the new RMS
+        if max_rms > p['QC_FF_RMS']:
+            fmsg = 'abnormal RMS of FF ({0:.3f} > {1:.3f})'
+            fail_msg.append(fmsg.format(max_rms, p['QC_FF_RMS']))
+            passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(max_rms)
+        qc_names.append('max_rms')
+        qc_logic.append('max_rms > {0:.3f}'.format(p['QC_FF_RMS']))
+
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            wmsg = 'QUALITY CONTROL SUCCESSFUL - Well Done -'
+            WLOG(p, 'info', wmsg)
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG(p, 'warning', wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
         # ----------------------------------------------------------------------
         # Store Blaze in file
         # ----------------------------------------------------------------------
@@ -343,22 +393,28 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # define new keys to add
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
-                                   value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
-                                   value=p['BADPFILE2'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BADPFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
         if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
-            hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=raw_flat_file)
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                         dim1name='file',
+                                         values=p['ARG_FILE_NAMES'])
+        # add some properties back
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
+        # add qc parameters
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+        hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
         # copy extraction method and function to header
         #     (for reproducibility)
         hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_EXTM'],
@@ -384,52 +440,11 @@ def main(night_name=None, files=None):
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG(p, '', wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'],
-                                   value=raw_flat_file)
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)
         p = spirouImage.WriteImage(p, flatfits, loc['FLAT'], hdict)
-
-        # ------------------------------------------------------------------
-        # Quality control
-        # ------------------------------------------------------------------
-        passed, fail_msg = True, []
-        # saturation check: check that the max_signal is lower than
-        # qc_max_signal
-        # if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
-        #     fmsg = 'Too much flux in the image (max authorized={0})'
-        #     fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
-        #     passed = False
-        #     # For some reason this test is ignored in old code
-        #     passed = True
-        #     WLOG(p, 'info', fail_msg[-1])
-
-        # get mask for removing certain orders in the RMS calculation
-        remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
-        mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
-        # apply mask and calculate the maximum RMS
-        max_rms = np.max(loc['RMS'][~mask])
-        # apply the quality control based on the new RMS
-        if max_rms > p['QC_FF_RMS']:
-            fmsg = 'abnormal RMS of FF ({0:.3f} > {1:.3f})'
-            fail_msg.append(fmsg.format(max_rms, p['QC_FF_RMS']))
-            passed = False
-
-        # finally log the failed messages and set QC = 1 if we pass the
-        # quality control QC = 0 if we fail quality control
-        if passed:
-            wmsg = 'QUALITY CONTROL SUCCESSFUL - Well Done -'
-            WLOG(p, 'info', wmsg)
-            p['QC'] = 1
-            p.set_source('QC', __NAME__ + '/main()')
-        else:
-            for farg in fail_msg:
-                wmsg = 'QUALITY CONTROL FAILED: {0}'
-                WLOG(p, 'warning', wmsg.format(farg))
-            p['QC'] = 0
-            p.set_source('QC', __NAME__ + '/main()')
 
         # ------------------------------------------------------------------
         # Update the calibration database

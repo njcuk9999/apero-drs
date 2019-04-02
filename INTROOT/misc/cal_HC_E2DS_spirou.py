@@ -109,7 +109,7 @@ def main(night_name=None, files=None):
     # Obtain the flat
     # ----------------------------------------------------------------------
     # get the flat
-    # p, loc = spirouFLAT.GetFlat(p, loc, hchdr)
+    p, loc = spirouFLAT.GetFlat(p, loc, hchdr)
     # correct the data with the flat
     # TODO: Should this be used?
     # log
@@ -376,6 +376,7 @@ def part2(p, loc):
     # hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
 
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'], value=p['FLATFILE'])
     # add quality control
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders

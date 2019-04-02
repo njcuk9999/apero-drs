@@ -1,36 +1,67 @@
-Update Note Summary - Version 0.4.072 (Since 0.4.009)
+Update Note Summary - Version 0.4.091 (Since 0.4.072)
 
-Not Done:
+Not fixed:
+- all issues with DRS_PLOT = 2   - mode not currently supported for stable run
+- Known issues here: https://github.com/njcuk9999/spirou_py3/wiki/known-issues
 
-- No integration of Melissa's new wave code
+Changes:
 
-Done:
+- Fixes to mk_tellu
 
-- changes to the telluric recipes
+- Added error handling to mk_tellu_db
 
-    obj_mk_tellu_new  - this is the new way to make individual aborption maps from the telluric hot stars
-    obj_mk_tellu_db - this is a wrapper for the whole telluric process i.e.:
-        obj_mk_tellu_new [on all e2dsff files in telluric white list]
-        obj_fit_tellu [on all e2dsff files in telluric white list]
-        obj_mk_obj_template [on all objects in telluric white list]
-        obj_mk_tellu_new [on all e2dsff files in telluric white list]
+- Fixed Bug in cal_validate (w.r.t. required modules with X.Y.Z instead of X.Y)
 
-- changes to pre-processing - corrupt files should now not be saved
+- Fixed bug with indexing while running in parallel
 
-    Note: as with all other QC the trigger will have to deal with missing files
-    Note: log warning messages are given in the standard QC fashion
+- option to use sky darks re-added
+    - set "use_skydark_correction" to True to use
+    - by default with use the closest DARK/SKYDARK if True
+    - to only use SKYDARK set "use_skydark_only" to False
+    - to only use DARK set "use_skydark_correction" to False
 
-- added option to plot to file (requested by Claire for meta data)
+- Fixed mis-communication for outputs of CCF_FP
+    - Now have a CCF_FP_AB and CCF_FP_C output (both tablular and fits)
+    - Only allowed OBJ_FP files
 
-    Note: one MUST update any config file with the plot option:
-        0 = No plots
-        1 = plot to screen
-        2 = plot to file
-    Note: one MUST update any config file to set a "plot path":
-        DRS_DATA_PLOT = '/home/data/plots/'
-    Note: if these two steps are not done the drs will crash
+- Fixed localisation plot bug (locplot_im_sat_threshold)
 
-- an INTROOT2 folder will be created - please ignore this for now
+- Fixed bug in sPlt.debug_locplot
+
+- Fixed bug in indexing (parallisation problem)
+
+- Fixed bug in pre-processing
+
+- Fixed bug in keylookup (BIGBUG introducted recently)
+
+- Fixed miscommunication in CCF --> now produce both AB and C files
+
+- Added back SKYDARK (not tested yet)
+
+- Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2 (Melissa)
+
+- Fixed fits lock timer
+
+- Added a wait timer for barrycorrpy
+
+- Added BERVHOUR header key
+
+- Added WMEANREF (for AB and C) to header (CCFWMR1 and CCFWMR2 respectively)
+
+- Added PID header key
+
+- Added new keys for calibdb inputs used for outputs
+
+- Added new key for input files (removed old ones)
+
+- Added quality control header keys to all recipes
+    - QCC       (The overall QC value for all QV)
+    - QCC###V   (The current value that is checked)
+    - QCC###N   (The variable name)
+    - QCC###L   (The logic used for QC check)
+    - QCC###P   (The value of this QC)
+
+- some pep8 clean up
 
 
 
