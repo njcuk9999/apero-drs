@@ -67,12 +67,15 @@ def main():
     # read data - TODO generalize
 
     datadir = '/data/CFHT/reduced/TEST/TESTWAVE/'
-    wave1, waveheader2 = fits.getdata(datadir +
+    wave1, waveheader1 = fits.getdata(datadir +
                                       '2018-09-24/2018-09-24_2305552a_pp_2305570c_pp_wave_new_C.fits',
                                       header=True)
     wave2, waveheader2 = fits.getdata(datadir +
                                       '2018-09-25/2018-09-25_2305960a_pp_2305967c_pp_wave_new_C.fits',
                                       header=True)
+    wave1, waveheader1 = fits.getdata('/home/data/CFHT/reduced/19AQ02-Feb24/19AQ02-Feb24_2375831a_pp_2375835c_pp_wave_new_AB.fits', header=True)
+    wave2, waveheader2 = fits.getdata('/home/data/CFHT/reduced/19AQ02-Feb25/19AQ02-Feb25_2376092a_pp_2376096c_pp_wave_new_AB.fits', header=True)
+
     # wave3, waveheader3 = fits.getdata(datadir +
     #                                   '2018-09-24/2018-09-24_2305552a_pp_2305570c_pp_wave_new_AB.fits',
     #                                   header=True)
@@ -85,6 +88,17 @@ def main():
     wave4, waveheader4 = fits.getdata(datadir +
                                       'comp_Et/comp_Et_2329713a_pp_2329824c_pp_wave_new_AB.fits',
                                       header=True)
+
+    # read a blaze - TODO read correct one, but they're all similar
+
+    blaze = fits.getdata(datadir +'comp_Et/2018-10-26_20181026-004433_flat_flat_002f_pp_blaze_AB.fits')
+    for iord in range(49):
+        blaze[iord, :] /= np.nanpercentile(blaze[iord, :], 90)
+
+    wave1[blaze < 0.5] = np.nan
+    wave2[blaze < 0.5] = np.nan
+    wave3[blaze < 0.5] = np.nan
+    wave4[blaze < 0.5] = np.nan
 
     wavediffC = wave1 - wave2
     wavediffAB = wave3 - wave4
