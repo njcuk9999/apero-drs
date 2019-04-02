@@ -561,7 +561,7 @@ KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
 KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
 KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
 KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
-KW_CCF_WMREF = ['CCFWMR', 0, 'CCF est RV uncertainty on spectrum']
+KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum']
 
 KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
 KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
@@ -589,6 +589,33 @@ KW_TH_NAXIS1 = ['NAXIS1', None, '']
 
 # the y-axis dimension size for the TH line list file                  [WAVE_AB]
 KW_TH_NAXIS2 = ['NAXIS2', None, '']
+
+# drift of the FP file used for the wavelength solution
+KW_WFP_DRIFT = ['WFPDRIFT', None, 'Wavelength sol absolute CCF FP Drift [km/s]']
+
+# FWHM of the wave FP file CCF
+KW_WFP_FWHM = ['WFPFWHM', None, 'FWHM of wave sol FP CCF [km/s]']
+
+# Contrast of the wave FP file CCF
+KW_WFP_CONTRAST = ['WFPCONT', None, 'wave sol FP Contrast of CCF (%)']
+
+# Max count/pixel of the wave FP file CCF
+KW_WFP_MAXCPP = ['WFPMACPP', None, 'wave sol FP max count/pixel of CCF (e-)']
+
+# Mask for the wave FP file CCF
+KW_WFP_MASK = ['WFPMASK', None, 'wave sol FP Mask filename']
+
+# Number of lines for the wave FP file CCF
+KW_WFP_LINES = ['WFPLINE', None, 'wave sol FP nbr of lines used']
+
+# Target RV for the wave FP file CCF
+KW_WFP_TARG_RV = ['WFPTRV', None, 'wave sol FP target RV [km/s]']
+
+# Width for the wave FP file CCF
+KW_WFP_WIDTH = ['WFPWIDTH', None, 'wave sol FP CCF width [km/s]']
+
+# Step for the wave FP file CCF
+KW_WFP_STEP = ['WFPSTEP', None, 'wave sol FP CCF step [km/s]']
 
 # -----------------------------------------------------------------------------
 # Define telluric variables
