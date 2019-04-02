@@ -647,15 +647,14 @@ def construct_big_table(p, loc):
 
     colnames = ['RowNum', 'Filename', 'OBJNAME', 'OBJECT', 'BERV', 'WAVEFILE',
                 'SNR_{0}'.format(snr_order), 'DATE', 'VERSION', 'DARKFILE',
-                'BADFILE1', 'BADFILE2', 'LOCOFILE', 'BLAZEFILE', 'FLATFILE',
-                'SHAPEFILE', 'EXTRACT_FILE']
+                'BADFILE', 'LOCOFILE', 'BLAZEFILE', 'FLATFILE', 'SHAPEFILE']
 
     columns = ['BASE_ROWNUM', 'BASE_FILELIST', 'BASE_OBJNAME', 'BASE_OBJECT',
                'BASE_BERVLIST', 'BASE_WAVELIST',
                'BASE_SNRLIST_{0}'.format(snr_order), 'BASE_DATELIST',
-               'BASE_VERSION', 'BASE_DARKFILE', 'BASE_BADFILE1',
-               'BASE_BADFILE2', 'BASE_LOCOFILE', 'BASE_BLAZFILE',
-               'BASE_FLATFILE', 'BASE_SHAPEFILE', 'BASE_EXTRFILE']
+               'BASE_VERSION', 'BASE_DARKFILE', 'BASE_BADFILE',
+               'BASE_LOCOFILE', 'BASE_BLAZFILE',
+               'BASE_FLATFILE', 'BASE_SHAPEFILE']
     # get values from loc
     values = []
     for col in columns:
@@ -694,7 +693,7 @@ def get_molecular_tell_lines(p, loc):
     mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    masterwavep, masterwave, masterwaveheader = mout
+    masterwavep, masterwave, masterwaveheader, mwsource = mout
 
     # get the convolve file names
     convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
@@ -850,9 +849,9 @@ def get_berv_value(p, hdr, filename=None):
         dv, bjd, bvmax = 0.0, -9999, 0.0
     else:
         # Get the Barycentric correction from header
-        dv = hdr[p['KW_BERV'][0]]
-        bjd = hdr[p['KW_BJD'][0]]
-        bvmax = hdr[p['KW_BERV_MAX'][0]]
+        dv = float(hdr[p['KW_BERV'][0]])
+        bjd = float(hdr[p['KW_BJD'][0]])
+        bvmax = float(hdr[p['KW_BERV_MAX'][0]])
     # return dv, bjd, dvmax
     return dv, bjd, bvmax
 

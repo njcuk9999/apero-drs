@@ -99,9 +99,9 @@ def main(night_name=None, files=None):
         wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=loc['HDR'], return_wavemap=True,
-                                       fiber=wave_fiber)
-    _, loc['WAVE'] = wout
-    loc.set_source('WAVE', wsource)
+                                       return_filename=True, fiber=wave_fiber)
+    _, loc['WAVE'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE', 'WSOURCE'], wsource)
 
     # ----------------------------------------------------------------------
     # Polarimetry computation
@@ -132,7 +132,33 @@ def main(night_name=None, files=None):
         sPlt.polar_stokes_i_plot(p, loc)
         # end interactive session
         sPlt.end_interactive_session(p)
-    
+
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # TODO: Needs doing
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
     # ------------------------------------------------------------------
     # Store polarimetry in file(s)
     # ------------------------------------------------------------------
@@ -153,7 +179,7 @@ def main(night_name=None, files=None):
     WLOG(p, '', wmsg.format(*wargs))
 
     # construct header keywords for output products
-    hdict, loc = spirouPOLAR.PolarHeader(p, loc, polardict)
+    hdict, loc = spirouPOLAR.PolarHeader(p, loc, polardict, qc_params)
 
     # save POL data to file
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)

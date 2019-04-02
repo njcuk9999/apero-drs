@@ -94,7 +94,7 @@ def main(runname=None, quiet=False):
 
     # reset the DRS
     if not quiet:
-        spirouTools.DRS_Reset(log=False, called=True)
+        spirouTools.DRS_Reset(log=True, called=True)
 
     # ----------------------------------------------------------------------
     # Get runs

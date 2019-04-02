@@ -142,11 +142,11 @@ def main(night_name=None, reffile=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    param_ll, wave_ll, wavefile = wout
+    param_ll, wave_ll, wavefile, wsource = wout
     # save to storage
-    loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'] = wout
+    loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'], loc['WSOURCE'] = wout
     source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
-    loc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE'], source)
+    loc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE', 'WSOURCE'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -450,7 +450,7 @@ def main(night_name=None, reffile=None):
     # hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # # set the input files
-    # hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'], value=p['FLATFILE'])
     # hdict = spirouImage.AddKey(p, hdict, p['KW_REFFILE'], value=raw_infile)
     # # save drift values
     # p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)

@@ -132,10 +132,10 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header
-    loc['NUMBER_ORDERS'] = spirouImage.ReadKey(p, hdict, loco_nbo)
+    loc['NUMBER_ORDERS'] = int(spirouImage.ReadKey(p, hdict, loco_nbo))
     # Get the number of fit coefficients from header
-    loc['NBCOEFF_CTR'] = spirouImage.ReadKey(p, hdict, loco_deg_c) + 1
-    loc['NBCOEFF_WID'] = spirouImage.ReadKey(p, hdict, loco_deg_w) + 1
+    loc['NBCOEFF_CTR'] = int(spirouImage.ReadKey(p, hdict, loco_deg_c)) + 1
+    loc['NBCOEFF_WID'] = int(spirouImage.ReadKey(p, hdict, loco_deg_w)) + 1
     # Read the coefficients from header
     #     for center fits
     loc['ACC'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
@@ -155,10 +155,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     loc.set_sources(added, func_name)
 
     # get filename
-    if p['KW_LOCOFILE'][0] in hdict:
-        p['LOCOFILE'] = hdict[p['KW_LOCOFILE'][0]]
-    else:
-        p['LOCOFILE'] = 'UNKNOWN'
+    p['LOCOFILE'] = os.path.basename(loco_file)
     p.set_source('LOCOFILE', func_name)
 
     # return the loc param dict
@@ -670,48 +667,7 @@ def calculate_location_fits(coeffs, dim):
 
 
 # TODO: after H2RG tests over can remove method (keep "new" method)
-def smoothed_boxmean_image(image, size, weighted=True, mode='convolve',
-                           method='new'):
-    """
-    Produce a (box) smoothed image, smoothed by the mean of a box of
-        size=2*"size" pixels.
-
-        if mode='convolve' (default) then this is done
-        by convolving a top-hat function with the image (FAST)
-        - note produces small inconsistencies due to FT of top-hat function
-
-        if mode='manual' then this is done by working out the mean in each
-        box manually (SLOW)
-
-    :param image: numpy array (2D), the image
-    :param size: int, the number of pixels to mask before and after pixel
-                 (for every row)
-                 i.e. box runs from  "pixel-size" to "pixel+size" unless
-                 near an edge
-    :param weighted: bool, if True pixel values less than zero are weighted to
-                     a value of 1e-6 and values above 0 are weighted to a value
-                     of 1
-    :param mode: string, if 'convolve' convoles with a top-hat function of the
-                         size "box" for each column (FAST) - note produces small
-                         inconsistencies due to FT of top-hat function
-
-                         if 'manual' calculates every box individually (SLOW)
-    :param method: string, if 'new' uses a median, if 'old' uses average
-
-    :return newimage: numpy array (2D), the smoothed image
-    """
-    if mode == 'convolve':
-        return smoothed_boxmean_image2(image, size, weighted=weighted)
-    if mode == 'manual':
-        return smoothed_boxmean_image1(image, size, weighted=weighted,
-                                       method=method)
-    else:
-        emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
-        raise KeyError(emsg.format(mode))
-
-
-# TODO: after H2RG tests over can remove method (keep "new" method)
-def smoothed_boxmean_image1(image, size, weighted=True, method='new'):
+def smoothed_boxmean_image(image, size, weighted=True, method='new'):
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
         size=2*"size" pixels, edges are dealt with by expanding the size of the
@@ -764,50 +720,6 @@ def smoothed_boxmean_image1(image, size, weighted=True, method='new'):
         else:
             newimage[:, it] = np.median(part, axis=1)
     # return the new smoothed image
-    return newimage
-
-
-def smoothed_boxmean_image2(image, size, weighted=True):
-    """
-    Produce a (box) smoothed image, smoothed by the mean of a box of
-        size=2*"size" pixels, edges are dealt with by expanding the size of the
-        box from or to the edge - essentially expanding/shrinking the box as
-        it leaves/approaches the edges. Performed along the columns.
-        pixel values less than 0 are given a weight of 1e-6, pixel values
-        above 0 are given a weight of 1
-
-    :param image: numpy array (2D), the image
-    :param size: int, the number of pixels to mask before and after pixel
-                 (for every row)
-                 i.e. box runs from  "pixel-size" to "pixel+size" unless
-                 near an edge
-    :param weighted: bool, if True pixel values less than zero are weighted to
-                     a value of 1e-6 and values above 0 are weighted to a value
-                     of 1
-
-    :return newimage: numpy array (2D), the smoothed image
-
-    For 10 loops, best of 3: 94.7 ms per loop
-    """
-    # define a box to smooth by
-    box = np.ones(size)
-    # defined the weights for each pixel
-    if weighted:
-        weights = np.where(image > 0, 1.0, 1.e-6)
-    else:
-        weights = np.ones_like(image)
-    # new weighted image
-    weightedimage = image * weights
-
-    # need to work on each row separately
-    newimage = np.zeros_like(image)
-    for row in range(image.shape[0]):
-        # work out the weighted image
-        s_weighted_image = np.convolve(weightedimage[row], box, mode='same')
-        s_weights = np.convolve(weights[row], box, mode='same')
-        # apply the weighted mean for this column
-        newimage[row] = s_weighted_image/s_weights
-    # return new image
     return newimage
 
 

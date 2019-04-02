@@ -27,6 +27,7 @@ from SpirouDRS import spirouRV
 
 from astropy import constants as cc
 from astropy import units as uu
+
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
@@ -177,8 +178,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                        #filename=tmp_wave_file,
                                        return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
@@ -449,13 +450,17 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.xlabel('nm')
         plt.ylabel('e-')
         plt.title('FP order ' + str(n_fin - 1))
+
+        max_y_val = np.percentile(fpdata[n_fin - 1], 95)
+        label1 = 'HC Ref - {0}'.format(hc_ll_red)
+        label2 = 'FP Ref - {0}'.format(fp_ll_ref[n_fin - n_init - 1])
+
         for i in range(len(fp_ll_red)):
-            plt.vlines(fp_ll_red[i], 0, np.percentile(fpdata[n_fin - 1], 95))
-        plt.vlines(hc_ll_red, 0, np.percentile(fpdata[n_fin - 1], 95),
-                   color='green', label = 'HC Ref - '+str(hc_ll_red))
-        plt.vlines(fp_ll_ref[n_fin - n_init - 1], 0, np.percentile(fpdata[n_fin - 1], 95),
-                   color='red', label = 'FP Ref - '+str(fp_ll_ref[n_fin - n_init - 1]))
-        plt.legend(loc = 'best')
+            plt.vlines(fp_ll_red[i], 0, max_y_val)
+        plt.vlines(hc_ll_red, 0, max_y_val, color='green', label=label1)
+        plt.vlines(fp_ll_ref[n_fin - n_init - 1], 0, max_y_val, color='red',
+                   label=label2)
+        plt.legend(loc=0)
 
     # ----------------------------------------------------------------------
     # Assign absolute FP numbers for rest of orders by wavelength matching
@@ -585,7 +590,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     hc_ll_test.append(hc_ll_ord[j])
                     # test for FP gap
                     med_x_diff = np.median(fp_x_ord[1:] - fp_x_ord[:-1])
-                    if (t2 < 0.75 * med_x_diff or t2 > 1.25 * med_x_diff):
+                    if (t2 < 0.75 * med_x_diff) or (t2 > 1.25 * med_x_diff):
                         d_test.append(0.5 * t1 * (t2 / t3))
                         one_m_d_test.append(1. / m_ord[k])
 
@@ -626,7 +631,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.title('Interpolated cavity width for HC lines')
             plt.plot(one_m_d_test, d_test, '*')
 
-
     # ----------------------------------------------------------------------
     # Fit (1/m) vs d
     # ----------------------------------------------------------------------
@@ -651,7 +655,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     res_d_final = d - fit_1m_d_func(one_m_d)
 
     if p['DRS_PLOT']:
-        # plot 1/m vs d and the fitted polynomial, and the residuals - TODO move to spirouPLOT
+        # plot 1/m vs d and the fitted polynomial, and the residuals -
+        # TODO move to spirouPLOT
         plt.figure()
         plt.subplot(211)
         # plot values
@@ -706,7 +711,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord, '.',
                      label='order ' + str(ind_ord), color=col[ind_ord])
         plt.xlabel('FP peak position [pix]')
-        ylabel = 'FP old-new wavelength difference [nm] (shifted +0.001 per order)'
+        ylabel = ('FP old-new wavelength difference [nm] '
+                  '(shifted +0.001 per order)')
         plt.ylabel(ylabel)
         plt.legend(loc='best')
 
@@ -742,8 +748,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get weights for the order
         wei_ord = np.asarray(wei)[ord_mask]
         # fit polynomial
-        poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
-                                               p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+        pout = np.polyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
+                          w=wei_ord)
+        poly_wave_sol_final[onum] = pout[::-1]
         # get final wavelengths
         fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
         # get residuals
@@ -758,8 +765,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             wei_ord = wei_ord[sig_mask]
             # refit polynomial
             #pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
-            poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
-                                                   p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
+            pout = np.polyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
+                              w=wei_ord)
+            poly_wave_sol_final[onum] = pout[::-1]
             # get new final wavelengths
             fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1],
                                          fp_x_ord)
@@ -842,7 +850,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             lty_1 = lty[np.mod(order_num, 2)]
             #        col2_1 = col2[np.mod(order_num, 2)]
             # plot hc data
-            plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
+            plt.plot(wave_map_final[order_num - n_init],
+                     loc['HCDATA'][order_num])
             plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][order_num]), color=col1_1,
                        linestyles=lty_1)
             plt.xlabel('Wavelength (nm)')
@@ -999,7 +1008,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['OBJNAME']='FP'
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
-    #TODO : Add QC of the FP CCF
+    # TODO : Add QC of the FP CCF
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -1129,10 +1138,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # set the input files
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile1)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
     # add quality control
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add wave solution date
@@ -1141,8 +1150,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
-                               value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
@@ -1154,22 +1161,22 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=loc['LL_PARAM_FINAL'])
 
     # add FP CCF drift
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
                                value=loc['RV_CCF'][0])
     # the rv step
     rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
                                value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'],
                                value=loc['MAXCPP'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=p['CCF_MASK'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
                                value=np.sum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
@@ -1241,7 +1248,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
 
     # get res data in correct format
     resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)

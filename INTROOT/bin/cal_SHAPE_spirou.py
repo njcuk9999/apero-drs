@@ -194,8 +194,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ----------------------------------------------------------------------
     # p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
     # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
-    p['BADPFILE1'] = 'None'
-    p['BADPFILE2'] = 'None'
+    p['BADPFILE'] = 'None'
 
     # ----------------------------------------------------------------------
     # Background computation for HC file
@@ -282,10 +281,11 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     else:
         wave_fiber = p['FIBER']
     # read master wave map
-    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+    wout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                        return_wavemap=True, quiet=True,
                                        return_header=True, fiber=wave_fiber)
-    loc['MASTERWAVEP'], loc['MASTERWAVE'], loc['MASTERWAVEHDR'] = mout
+    loc['MASTERWAVEP'], loc['MASTERWAVE'] = wout[:2]
+    loc['MASTERWAVEHDR'], loc['WSOURCE'] = wout[2:]
     # set sources
     wsource = ['MASTERWAVEP', 'MASTERWAVE', 'MASTERWAVEHDR']
     loc.set_sources(wsource, 'spirouImage.GetWaveSolution()')
@@ -321,6 +321,33 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         # end interactive section
         sPlt.end_interactive_session(p)
 
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # TODO: Decide on some quality control criteria?
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG(p, 'warning', wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
     # ------------------------------------------------------------------
     # Writing DXMAP to file
     # ------------------------------------------------------------------
@@ -336,15 +363,18 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.CopyOriginalKeys(fphdr, fpcdr)
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_HCFILE'], value=p['HCFILE'])
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'],
-                                     values=p['FPFILES'], dim1name='fpfile')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                     dim1name='hcfile', values=p['HCFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
+                                     dim1name='fpfile', values=p['FPFILES'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write tilt file to file
     p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
 
@@ -377,25 +407,6 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag5)
         p = spirouImage.WriteImage(p, overlap_file, loc['ORDER_OVERLAP'],
                                    hdict)
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    # TODO: Decide on some quality control criteria?
-    # set passed variable and fail message list
-    passed, fail_msg = True, []
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/main()')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG(p, 'warning', wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB

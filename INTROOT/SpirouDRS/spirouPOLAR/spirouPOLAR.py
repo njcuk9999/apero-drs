@@ -857,7 +857,7 @@ def polarimetry_ratio_method(p, loc):
     return loc
 
 
-def polar_products_header(p, loc, polardict):
+def polar_products_header(p, loc, polardict, qc_params):
     """
         Function to construct header keywords to be saved in the polar products
         
@@ -877,9 +877,16 @@ def polar_products_header(p, loc, polardict):
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # add in file
-    rawfile = os.path.basename(p['FITSFILENAME'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_INFILE'], value=rawfile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                               value=loc['WSOURCE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
+                                     values=p['ARG_FILE_NAMES'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(p, hdict, p['kw_POL_STOKES'],
                                value=loc['STOKES'])
@@ -905,18 +912,18 @@ def polar_products_header(p, loc, polardict):
         # Add only times from fiber A
         if fiber == 'A':
             # calcualte total exposure time
-            tot_exptime += hdr[p['KW_EXPTIME'][0]]
+            tot_exptime += float(hdr[p['KW_EXPTIME'][0]])
             # get values for BJDCEN calculation
             if expnum == 1:
-                mjd_first = hdr[p['KW_ACQTIME'][0]]
-                bjd_first = hdr[p['KW_BJD'][0]]
-                berv_first = hdr[p['KW_BERV'][0]]
+                mjd_first = float(hdr[p['KW_ACQTIME'][0]])
+                bjd_first = float(hdr[p['KW_BJD'][0]])
+                berv_first = float(hdr[p['KW_BERV'][0]])
             elif expnum == loc['NEXPOSURES']:
-                mjd_last = hdr[p['KW_ACQTIME'][0]]
-                bjd_last = hdr[p['KW_BJD'][0]]
-                berv_last = hdr[p['KW_BERV'][0]]
-                exptime_last = hdr[p['KW_EXPTIME'][0]]
-            meanbjd += hdr[p['KW_BJD'][0]]
+                mjd_last = float(hdr[p['KW_ACQTIME'][0]])
+                bjd_last = float(hdr[p['KW_BJD'][0]])
+                berv_last = float(hdr[p['KW_BERV'][0]])
+                exptime_last = float(hdr[p['KW_EXPTIME'][0]])
+            meanbjd += float(hdr[p['KW_BJD'][0]])
             # add exposure file name
             fileexp = p['kw_POL_FILENAM{0}'.format(expnum)]
             hdict = spirouImage.AddKey(p, hdict, fileexp, value=hdr['FILENAME'])
@@ -941,7 +948,7 @@ def polar_products_header(p, loc, polardict):
             hdict = spirouImage.AddKey(p, hdict, bervexp,
                                        value=hdr[p['KW_BERV'][0]])
             # append BERVMAX value of each exposure
-            bervmaxs.append(hdr[p['KW_BERV_MAX'][0]])
+            bervmaxs.append(float(hdr[p['KW_BERV_MAX'][0]]))
 
     # add total exposure time parameter keyword to header
     hdict = spirouImage.AddKey(p, hdict, p['KW_POL_EXPTIME'], value=tot_exptime)

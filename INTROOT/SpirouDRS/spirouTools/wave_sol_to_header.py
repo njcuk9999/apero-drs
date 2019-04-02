@@ -122,8 +122,10 @@ def main(night_name=None):
         wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                            return_filename=True,
                                            return_header=True, fiber=wave_fiber)
-        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WAVEHDR'] = wout
-        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR'], wsource)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout[:3]
+        loc['WAVEHDR'], loc['WSOURCE'] = wout[3:]
+        source_names = ['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR', 'WSOURCE']
+        loc.set_sources(source_names, wsource)
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
@@ -146,10 +148,12 @@ def main(night_name=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
-
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
+                                   value=loc['WSOURCE'])
         # add wave solution date
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                    value=loc['WAVE_ACQTIMES'][0])
