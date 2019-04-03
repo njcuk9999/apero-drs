@@ -1,10 +1,14 @@
-Update Note Summary - Version 0.4.091 (Since 0.4.072)
+Update Note Summary - Version 0.4.102 (Since 0.4.072)
 
 Not fixed:
 - all issues with DRS_PLOT = 2   - mode not currently supported for stable run
 - Known issues here: https://github.com/njcuk9999/spirou_py3/wiki/known-issues
 
 Changes:
+
+- Fix to extraction mode (currently not default)
+    - use mode 6a and 6b to use new extraction mode
+    - also updated when and where 'debananafication' happens
 
 - Fixes to mk_tellu
 

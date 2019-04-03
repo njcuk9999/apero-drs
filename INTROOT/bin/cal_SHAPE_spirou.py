@@ -188,7 +188,6 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     WLOG(p, '', ('FP Image format changed to '
                             '{0}x{1}').format(*fpdata2.shape))
 
-
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------

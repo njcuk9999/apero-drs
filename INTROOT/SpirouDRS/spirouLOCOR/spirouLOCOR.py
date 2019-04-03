@@ -16,7 +16,7 @@ from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-
+from SpirouDRS import spirouEXTOR
 
 # =============================================================================
 # Define variables
@@ -760,6 +760,140 @@ def image_localization_superposition(image, coeffs):
     newimage[fityarray, fitxarray] = 0
     # return newimage
     return newimage
+
+
+def get_fiber_data(p, hdr):
+    """
+    Fudge function to get AB and C fiber coefficients before they are
+    normally accessed
+
+    :param p:
+    :param hdr:
+    :return:
+    """
+    loc_fibers = dict()
+    # loop around fiber types
+    for fiber in ['AB', 'A', 'B', 'C']:
+        p_tmp, loc_tmp = p.copy(), ParamDict()
+        # set fiber
+        p_tmp['FIBER'] = fiber
+        p_tmp.set_source('FIBER', __NAME__ + '/main()()')
+        # --------------------------------------------------------------
+        # Get localisation coefficients
+        # --------------------------------------------------------------
+        # get this fibers parameters
+        p_tmp = spirouImage.FiberParams(p_tmp, p_tmp['FIBER'], merge=True)
+        # get localisation fit coefficients
+        p_tmp, loc_tmp = get_loc_coefficients(p_tmp, hdr)
+        loc_tmp['LOCOFILE'] = p_tmp['LOCOFILE']
+        loc_tmp.set_source('LOCOFILE', p_tmp.sources['LOCOFILE'])
+        # --------------------------------------------------------------
+        # Average AB into one fiber for AB, A and B
+        # --------------------------------------------------------------
+        # if we have an AB fiber merge fit coefficients by taking the
+        # average
+        # of the coefficients
+        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
+        # if fiber is AB take the average of the orders
+        if fiber == 'AB':
+            # merge
+            loc_tmp['ACC'] = merge_coefficients(loc_tmp, loc_tmp['ACC'], step=2)
+            loc_tmp['ASS'] = merge_coefficients(loc_tmp, loc_tmp['ASS'], step=2)
+            # set the number of order to half of the original
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # if fiber is B take the even orders
+        elif fiber == 'B':
+            loc_tmp['ACC'] = loc_tmp['ACC'][:-1:2]
+            loc_tmp['ASS'] = loc_tmp['ASS'][:-1:2]
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # if fiber is A take the even orders
+        elif fiber == 'A':
+            loc_tmp['ACC'] = loc_tmp['ACC'][1::2]
+            loc_tmp['ASS'] = loc_tmp['ASS'][1::2]
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # ------------------------------------------------------------------
+        # append to storage dictionary
+        # ------------------------------------------------------------------
+        loc_fibers[fiber] = loc_tmp.copy()
+
+    # ------------------------------------------------------------------
+    # Deal with order profile
+    # ------------------------------------------------------------------
+    # loop around fiber types
+    for fiber in ['AB', 'A', 'B', 'C']:
+        p_tmp, loc_tmp = p.copy(), ParamDict()
+        # set fiber
+        p_tmp['FIBER'] = fiber
+        p_tmp.set_source('FIBER', __NAME__ + '/main()()')
+        # --------------------------------------------------------------
+        # Get localisation coefficients
+        # --------------------------------------------------------------
+        # get this fibers parameters
+        p_tmp = spirouImage.FiberParams(p_tmp, p_tmp['FIBER'], merge=True)
+        # ------------------------------------------------------------------
+        # Read image order profile
+        # ------------------------------------------------------------------
+        order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p_tmp, hdr)
+
+        # see if we have a straightened order_profile
+        orderp_s, orderp_f = get_straightened_orderprofile(p_tmp, hdr)
+
+        # Deal with debananafication of order profile
+        if p['IC_EXTRACT_TYPE'] in ['4a', '4b'] and (orderp_s is not None):
+            order_profile = np.array(orderp_s)
+        elif p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+            # log progress
+            wmsg = 'Debananafying (straightening) order profile {0}'
+            WLOG(p, '', wmsg.format(fiber))
+            # get the shape map
+            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+            # debananfy order profile
+            bkwargs = dict(image=order_profile, dx=shapemap, kind='orderp')
+            order_profile = spirouEXTOR.DeBananafication(p, **bkwargs)
+            # save to disk
+            np.save(orderp_f, order_profile)
+        # if mode 5a or 5b we need to straighten in x and y using the
+        #     polynomial fits for location
+        elif p['IC_EXTRACT_TYPE'] in ['5a', '5b'] and (orderp_s is not None):
+            order_profile = np.array(orderp_s)
+        elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+            # log progress
+            wmsg = 'Debananafying (straightening) order profile {0}'
+            WLOG(p, '', wmsg.format(fiber))
+            # get the shape map
+            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+            # debananfy order profile
+            bkwargs = dict(image=order_profile, dx=shapemap, kind='orderp',
+                           pos_a=loc_fibers['A']['ACC'],
+                           pos_b=loc_fibers['B']['ACC'],
+                           pos_c=loc_fibers['C']['ACC'])
+            order_profile = spirouEXTOR.DeBananafication(p, **bkwargs)
+            # save to disk
+            np.save(orderp_f, order_profile)
+        # ------------------------------------------------------------------
+        # add order_profile to loc_tmp
+        # ------------------------------------------------------------------
+        loc_fibers[fiber]['ORDER_PROFILE'] = order_profile
+    # return loc_fibers
+    return loc_fibers
+
+
+def get_straightened_orderprofile(p, hdr):
+    # get order profile fits filename
+    order_file = spirouImage.ReadOrderProfile(p, hdr, return_filename=True)
+    # convert to npy filename
+    out_ext = '_ext{0}.npy'.format(p['IC_EXTRACT_TYPE'])
+    order_file = order_file.replace('.fits', out_ext)
+    # load numpy binary data if available
+    if os.path.exists(order_file):
+        try:
+            data = np.load(order_file)
+        except Exception as _:
+            data = None
+    else:
+        data = None
+    # return data nd order file name
+    return data, order_file
 
 
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',
