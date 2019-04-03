@@ -633,7 +633,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # -------------------------------------------------------------------------
     # add keys of the wave solution FP CCF
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'], value = cloc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'], value = os.path.basename(cloc['WAVEFILE']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'], value = whdr[p['KW_WFP_DRIFT'][0]])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value = whdr[p['KW_WFP_FWHM'][0]])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'], value = whdr[p['KW_WFP_CONTRAST'][0]])
