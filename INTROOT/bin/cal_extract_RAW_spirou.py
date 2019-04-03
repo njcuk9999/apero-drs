@@ -541,6 +541,29 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add wave solution degree of fit
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                    value=loc['WAVEPARAMS'].shape[1] - 1)
+        # -------------------------------------------------------------------------
+        # add keys of the wave solution FP CCF
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'],
+                                   value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_DRIFT'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_FWHM'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_CONTRAST'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_MAXCPP'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_MASK'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_LINES'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_TARG_RV'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_WIDTH'][0]])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
+                                   value=loc['WAVEHDR'][p['KW_WFP_STEP'][0]])
+
         # write 1D list of the SNR
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_E2DS_SNR'],
                                          values=loc['SNR'])
