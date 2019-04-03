@@ -1768,7 +1768,7 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
                 spe[ic] = np.nansum(weights * sx * fx)
                 # normalise spe
                 spe[ic] = spe[ic] / np.nansum(weights * fx ** 2)
-                spelong[:, ic] = spelong[:, ic] / (weights * fx ** 2)
+                spelong[:, ic] = spelong[:, ic] / np.nansum(weights * fx ** 2)
 
     # multiple spe by gain to convert to e-
     spe *= gain
@@ -1854,7 +1854,7 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
                 spe[ic] = np.nansum(weights * sx * fx)
                 # normalise spe
                 spe[ic] = spe[ic] / np.nansum(weights * fx ** 2)
-                spelong[:, ic] = spelong[:, ic] / (weights * fx ** 2)
+                spelong[:, ic] = spelong[:, ic] / np.nansum(weights * fx ** 2)
 
                 # Cosmic rays correction
                 spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
