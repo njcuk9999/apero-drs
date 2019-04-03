@@ -1397,11 +1397,17 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=loc['LL_PARAM_FINAL'])
 
     # add FP CCF drift
+    # target RV and width
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                               value=p['TARGET_RV'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                               value=p['CCF_WIDTH'])
     # the rv step
     # rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
     # hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
                                value=p['CCF_STEP'])
+
     # add ccf stats
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
                                value=loc['CCF_RES'][1])
