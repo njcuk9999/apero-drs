@@ -11,7 +11,9 @@ Created on 2017-11-07 at 13:46
 from __future__ import division
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
+from scipy import signal
 from collections import OrderedDict
+import warnings
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
@@ -306,7 +308,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
     # else error
     # -------------------------------------------------------------------------
     else:
-        emsgs = ['mode = {0} is not valid',
+        emsgs = ['mode = {0} is not valid'.format(mode),
                  '   Mode must be either:',
                  '     0 - Simple extraction',
                  '     1 - weighted extraction',
@@ -324,33 +326,179 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         WLOG(p, 'error', emsgs)
 
 
-def debananafication(image, dx):
+def debananafication(p, image=None, badpix=None, dx=None, kind='full',
+                     pos_a=None, pos_b=None, pos_c=None):
     """
     Uses a shape map (dx) to straighten (de-banana) an image
 
     :param image: numpy array (2D), the original image
+    :param badpix: numpy array (2D), the bad pixel map
     :param dx: numpy array (2D), the shape image (dx offsets)
+    :param kind: str, either 'full' or 'orderp'
+    :param pos_a: numpy array (2D), the coefficients for every order for
+                  fiber A, if given with pos_b and pos_c straightens in y
+                  as well as x
+    :param pos_b: numpy array (2D), the coefficients for every order for
+                  fiber B, if given with pos_a and pos_c straightens in y
+                  as well as x
+    :param pos_c: numpy array (2D), the coefficients for every order for
+                  fiber C, if given with pos_a and pos_b straightens in y
+                  as well as x
 
     :return image1: numpy array (2D), the straightened image
     """
+    # deal with positional Nones
+    dyfix = (pos_a is not None) and (pos_b is not None) and (pos_c is not None)
+    # deal with None
+    if image is None:
+        WLOG(p, 'error', 'Dev Error: Must define an image')
+    if dx is None:
+        WLOG(p, 'error', 'Dev Error: Must define a shape image (dx)')
+    if (kind == 'full') and (badpix is None) and dyfix:
+        WLOG(p, 'error', 'Dev Error: Must define badpix image for mode "full"')
+    # ----------------------------------------------------------------------
     # getting the size of the image and creating the image after correction of
     # distortion
+    image0 = np.array(image)
     image1 = np.array(image)
-    sz = np.shape(dx)
-
+    if dyfix:
+        nbo, nbc = pos_a.shape
+    else:
+        nbo, nbc = 0, 0
+    dim1, dim2 = image.shape
     # x indices in the initial image
-    xpix = np.array(range(sz[1]))
-
+    xpix = np.arange(dim2)
+    # ----------------------------------------------------------------------
+    # Cleans an image by finding pixels that are high-sigma
+    #     (positive or negative) outliers compared to their immediate
+    #     neighbours.
+    if dyfix and (kind.lower() == 'full'):
+        image0 = clean_hotpix(image0, badpix)
+    # ----------------------------------------------------------------------
     # we shift all lines by the appropiate, pixel-dependent, dx
-    for it in range(sz[0]):
-        not0 = image[it, :] != 0
+    for it in range(dim1):
+        not0 = image0[it, :] != 0
         # do spline fit
-        spline = IUVSpline(xpix[not0], image[it, not0], ext=1)
+        spline = IUVSpline(xpix[not0], image0[it, not0], ext=1)
         # only pixels where dx is finite are considered
         nanmask = np.isfinite(dx[it, :])
         image1[it, nanmask] = spline(xpix[nanmask] + dx[it, nanmask])
+    # ----------------------------------------------------------------------
+    if dyfix:
+        # looping through x pixels
+        # We take each column and determine where abc fibers fall relative
+        # to the central pixel in x (normally, that's 4088/2) along the y axis.
+        # This difference in position gives a dy that need to be applied to
+        # straighten the orders
+
+        # Once we have determined this for all abc fibers and all orders, we
+        # fit a Nth order polynomial to the dy versus y relation along the
+        # column, and apply a spline to straighten the order.
+        y0 = np.zeros((nbo * 3, dim2))
+        # loop around orders and get polynomial values for fibers A, B and C
+        for order_num in range(nbo):
+            iord = order_num * 3
+            y0[iord, :] = np.polyval(pos_a[order_num, :][::-1], xpix)
+            y0[iord + 1, :] = np.polyval(pos_b[order_num, :][::-1], xpix)
+            y0[iord + 2, :] = np.polyval(pos_c[order_num, :][::-1], xpix)
+        # loop around each x pixel (columns)
+        for ix in range(dim2):
+            # dy for all orders and all fibers
+            dy = y0[:, ix] - y0[:, dim2 // 2]
+            # fitting the dy to the position of the order
+            yfit = np.polyfit(y0[:, ix], dy, 3)
+            ypix = np.arange(dim1)
+            # spline for all pixels to the new position
+            # we add 1000 to be sure that we never have a pixel below zero
+            # pixels outside the range will be set to 0, which we can set to
+            # NaN. As far as I know, there is no way to have NaNs in the
+            # out-of-range pixels directly with the spline
+            spline = IUVSpline(ypix, image1[:, ix] + 1000, ext=1, k=5)
+            tmp = spline(ypix + np.polyval(yfit, ypix))
+            tmp[tmp == 0] = np.nan
+            tmp -= 1000
+            # put in a new image
+            image1[:, ix] = tmp
     # return the straightened image
     return image1
+
+
+def clean_hotpix(image, badpix):
+    # Cleans an image by finding pixels that are high-sigma (positive or negative)
+    # outliers compared to their immediate neighbours. Bad pixels are
+    # interpolated with a 2D surface fit by using valid pixels within the
+    # 3x3 pixel box centered on the bad pix.
+    #
+    # Pixels in big clusters of bad pix (more than 3 bad neighbours)
+    # are left as is
+    image_rms_measurement = np.array(image)
+
+    # First we construct a 'flattenned' image
+    # We perform a low-pass filter along the x axis
+    # filtering the image so that only pixel-to-pixel structures
+    # remain. This is use to find big outliers in RMS.
+    # First we apply a median filtering, which removes big outlies
+    # and then we smooth the image to avoid big regions fillted with zeros.
+    # Regions filled with zeros in the low-pass image happen when the local
+    # median is equal to the pixel value in the input image.
+    #
+    # We apply a 5-pix median boxcar in X and a 5-pix boxcar smoothing
+    # in x. This blurs along the dispersion over a scale of ~7 pixels.
+    box = np.ones([1, 5])
+    box /= np.sum(box)
+    low_pass = signal.medfilt(image_rms_measurement, [1, 5])
+    low_pass = signal.convolve2d(low_pass, box, mode='same')
+
+    # residual image showing pixel-to-pixel noise
+    # the image is now centered on zero, so we can
+    # determine the RMS around a given pixel
+    image_rms_measurement -= low_pass
+
+    # smooth the abs(image) with a 3x3 kernel
+    rms = signal.medfilt(np.abs(image_rms_measurement), [3, 3])
+    # the RMS cannot be arbitraly small, so  we set
+    # a lower limit to the local RMS at 0.5x the median
+    # rms
+    rms[rms < (0.5 * np.nanmedian(rms))] = 0.5 * np.nanmedian(rms)
+
+    # determining a proxy of N sigma
+    nsig = image_rms_measurement / rms
+    bad = np.array((np.abs(nsig) > 10), dtype=bool)
+
+    # known bad pixels are also considered bad even if they are
+    # within the +-N sigma rejection
+    badpix = badpix | bad
+    # find the pixel locations where we have bad pixels
+    x, y = np.where(badpix)
+    # centering on zero
+    yy, xx = np.indices([3, 3]) - 1
+    # copy the original iamge
+    image1 = np.array(image)
+    # correcting bad pixels with a 2D fit to valid neighbours
+    for i in range(len(x)):
+        keep = ~badpix[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
+        if np.sum(keep) < 6:
+            continue
+        box = image[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
+        # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
+        # corresponds to the bad pixel, then the first coefficient
+        # of the fit (its zero point) corresponds to the value that
+        # must be given to the pixel
+        coeff = fit2dpoly(xx[keep], yy[keep], box[keep])
+        image1[x[i], y[i]] = coeff[0]
+
+    return image1
+
+
+def fit2dpoly(x, y, z):
+    # fit a 2nd order polynomial in 2d over x/y/z pixel points
+    ones = np.ones_like(x)
+    a = np.array([ones, x, y, x**2, y**2, x*y]).T
+    b = z.flatten()
+    # perform a least squares fit on a and b
+    coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
+    # return the coefficients
+    return coeff
 
 
 # =============================================================================
@@ -517,6 +665,15 @@ def get_extraction_method(p, mode):
 
     elif mode == '4b':
         return 'SHAPEWEIGHT', 'extract_shape_weight_cosm'
+
+    # -------------------------------------------------------------------------
+    # shape extraction (i.e. straightened)
+    # -------------------------------------------------------------------------
+    elif mode == '5a':
+        return 'SHAPEWEIGHT2', 'extract_shape_weight2'
+
+    elif mode == '5b':
+        return 'SHAPEWEIGHT2', 'extract_shape_weight_cosm2'
 
     # -------------------------------------------------------------------------
     # else error
@@ -1573,53 +1730,45 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
     # create array of pixel values
     ics = np.arange(dim2)
     # get positions across the orders for each pixel value along the order
-    jcs = np.polyval(pos[::-1], ics)
+    # jcs = np.polyval(pos[::-1], ics)
+    jcs = np.repeat(np.polyval(pos[::-1], dim2 // 2), dim2)
     # get the lower bound of the order for each pixel value along the order
     lim1s = jcs - r1
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
+    # TODO: Note we still miss the top and bottom
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
-    # account for the missing fractional pixels (due to integer rounding)
-    lower, upper = j1s + 0.5 - lim1s, lim2s - j2s + 0.5
     # create a slice image
     spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
-    for ic in ics:
-        if mask[ic]:
-            # get the image slice
-            sx = simage[j1s[ic]:j2s[ic] + 1, ic]
-            # get hte order profile slice
-            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
-            # Renormalise the rotated order profile
-            if np.sum(fx) > 0:
-                fx = fx / np.sum(fx)
-            else:
-                fx = np.ones(fx.shape, dtype=float)
-            # weight values less than 0 to 1e-9
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # weights are then modified by the gain and sigdet added
-            #    in quadrature
-            weights = raw_weights / ((sx * gain) + sigdet ** 2)
-            # set the value of this pixel to the weighted sum
-            spelong[:, ic] = (weights * sx * fx)
-            spe[ic] = np.sum(weights * sx * fx)
-            # spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
-
-            # TODO: Add this bit?
-            # add the bits missing due to rounding
-            spe[ic] += lower[ic] * simage[j1s[ic], ic] * weights[0]
-            spe[ic] += upper[ic] * simage[j2s[ic], ic] * weights[-1]
-
-            # TODO: How do we do this to spelong?
-
-            # normalise spe
-            spe[ic] = spe[ic] / np.sum(weights * fx ** 2)
-            spelong[:, ic] = spelong[:, ic] / (weights * fx ** 2)
+    with warnings.catch_warnings(record=True) as _:
+        for ic in ics:
+            if mask[ic]:
+                # get the image slice
+                sx = simage[j1s[ic]:j2s[ic] + 1, ic]
+                # get hte order profile slice
+                fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+                # Renormalise the rotated order profile
+                if np.nansum(fx) > 0:
+                    fx = fx / np.nansum(fx)
+                else:
+                    fx = np.ones(fx.shape, dtype=float)
+                # weight values less than 0 to 1e-9
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                # weights are then modified by the gain and sigdet added
+                #    in quadrature
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # set the value of this pixel to the weighted sum
+                spelong[:, ic] = (weights * sx * fx)
+                spe[ic] = np.nansum(weights * sx * fx)
+                # normalise spe
+                spe[ic] = spe[ic] / np.nansum(weights * fx ** 2)
+                spelong[:, ic] = spelong[:, ic] / np.nansum(weights * fx ** 2)
 
     # multiple spe by gain to convert to e-
     spe *= gain
@@ -1665,66 +1814,56 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
     # create array of pixel values
     ics = np.arange(dim2)
     # get positions across the orders for each pixel value along the order
-    jcs = np.polyval(pos[::-1], ics)
+    # jcs = np.polyval(pos[::-1], ics)
+    jcs = np.repeat(np.polyval(pos[::-1], dim2 // 2), dim2)
     # get the lower bound of the order for each pixel value along the order
     lim1s = jcs - r1
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
+    # TODO: Note we still miss the top and bottom
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
-    # account for the missing fractional pixels (due to integer rounding)
-    lower, upper = j1s + 0.5 - lim1s, lim2s - j2s + 0.5
     # create a slice image
     spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
     # loop around each pixel along the order
-    for ic in ics:
-        if mask[ic]:
-            # get the image slice
-            sx = simage[j1s[ic]:j2s[ic] + 1, ic]
-            # get hte order profile slice
-            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
-            # Renormalise the rotated order profile
-            if np.sum(fx) > 0:
-                fx = fx / np.sum(fx)
-            else:
-                fx = np.ones(fx.shape, dtype=float)
-            # weight values less than 0 to 1e-9
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # weights are then modified by the gain and sigdet added
-            #    in quadrature
-            weights = raw_weights / ((sx * gain) + sigdet ** 2)
+    with warnings.catch_warnings(record=True) as _:
+        for ic in ics:
+            if mask[ic]:
+                # get the image slice
+                sx = simage[j1s[ic]:j2s[ic] + 1, ic]
+                # get hte order profile slice
+                fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+                # Renormalise the rotated order profile
+                if np.nansum(fx) > 0:
+                    fx = fx / np.nansum(fx)
+                else:
+                    fx = np.ones(fx.shape, dtype=float)
+                # weight values less than 0 to 1e-9
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                # weights are then modified by the gain and sigdet added
+                #    in quadrature
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # set the value of this pixel to the weighted sum
+                spelong[:, ic] = (weights * sx * fx)
+                spe[ic] = np.nansum(weights * sx * fx)
+                # normalise spe
+                spe[ic] = spe[ic] / np.nansum(weights * fx ** 2)
+                spelong[:, ic] = spelong[:, ic] / np.nansum(weights * fx ** 2)
 
-            # set the value of this pixel to the weighted sum
-            spelong[:, ic] = (weights * sx * fx)
-            spe[ic] = np.sum(weights * sx * fx)
-            # spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
-
-            # TODO: Add this bit?
-            # add the bits missing due to rounding
-            spe[ic] += lower[ic] * simage[j1s[ic], ic] * weights[0]
-            spe[ic] += upper[ic] * simage[j2s[ic], ic] * weights[-1]
-
-            # TODO: How do we do this to spelong?
-
-            # normalise spe
-            spe[ic] = spe[ic] / np.sum(weights * fx ** 2)
-            spelong[:, ic] = spelong[:, ic] / (weights * fx ** 2)
-
-            # Cosmic rays correction
-            spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
-                                         cosmic_sigcut, cosmic_threshold)
+                # Cosmic rays correction
+                spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
+                                             cosmic_sigcut, cosmic_threshold)
     # multiple spe by gain to convert to e-
     spe *= gain
     spelong *= gain
 
     return spe, spelong, cpt
-
 
 
 # =============================================================================

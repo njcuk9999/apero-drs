@@ -37,6 +37,8 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+# define ll extract types
+EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 
 
 # =============================================================================
@@ -123,7 +125,7 @@ def main(night_name=None, flatfile=None):
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
 
-    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+    if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
         # log progress
         WLOG(p, '', 'Debananafying (straightening) image')
         # get the shape map

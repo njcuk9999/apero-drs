@@ -10,6 +10,7 @@ Created on 2017-10-11 at 13:09
 Import rules: Only from spirouConfig
 """
 from __future__ import division
+import numpy as np
 import os
 from collections import OrderedDict
 
@@ -566,7 +567,14 @@ class ParamDict(CaseInsensitiveDict):
         # loop around keys and add to new copy
         for k_it, key in enumerate(keys):
             value = values[k_it]
-            pp[key] = type(value)(value)
+            if value is None:
+                pp[key] = None
+            elif type(value) is np.ndarray:
+                pp[key] = np.array(value)
+            elif type(value) is ParamDict:
+                pp[key] = value.copy()
+            else:
+                pp[key] = type(value)(value)
             pp.set_source(key, self.sources[key])
         # return new param dict filled
         return pp
