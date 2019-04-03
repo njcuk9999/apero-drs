@@ -559,7 +559,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     d_test = []
     one_m_d_test = []
 
-    plt.figure()
+    # save mask for m(x) fits
+    xm_mask = []
     # loop over orders
     for ord_num in range(n_fin - n_init):
         # create order mask
@@ -609,11 +610,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         coeff_xm_all.append(coeff_xm)
         # save dispersion
         xm_disp.append(np.std(m_ord[mask] -np.polyval(coeff_xm, fp_x_ord[mask])))
-        # plot residuals
-        if p['DRS_PLOT']:
-            plt.plot(fp_x_ord[mask], m_ord[mask] -np.polyval(coeff_xm, fp_x_ord[mask])+0.01*ord_num, '.')
-            plt.xlabel('FP pixel position')
-            plt.ylabel('m(x) residuals (shifted +0.01*Order)')
+        # save mask
+        xm_mask.append(mask)
 
         # get fractional m for HC lines from fit
         m_hc = np.polyval(coeff_xm, hc_x_ord)
@@ -627,7 +625,27 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         hc_xx_test.append(hc_x_ord)
         hc_ord_test.append((ord_num + n_init)*np.ones_like(hc_x_ord))
 
+    # plots
     if p['DRS_PLOT']:
+        # residuals plot
+        plt.figure()
+        # loop over orders
+        for ord_num in range(n_fin - n_init):
+            # create order mask
+            ind_ord = np.where(np.concatenate(fp_order).ravel() == ord_num + n_init)
+            # get FP line pixel positions for the order
+            fp_x_ord = fp_xx[ord_num]
+            # get FP line numbers for the order
+            m_ord = m[ind_ord]
+            # get m(x) mask for the order
+            mask = xm_mask[ord_num]
+            # get coefficients for the order
+            coeff_xm = coeff_xm_all[ord_num]
+            # plot residuals
+            plt.plot(fp_x_ord[mask], m_ord[mask] - np.polyval(coeff_xm, fp_x_ord[mask]) + 0.01 * ord_num, '.')
+        plt.xlabel('FP pixel position')
+        plt.ylabel('m(x) residuals (shifted +0.01*Order)')
+
         #m(x) dispersion plot
         plt.figure()
         plt.plot(np.arange(n_fin-n_init), xm_disp,'.')
