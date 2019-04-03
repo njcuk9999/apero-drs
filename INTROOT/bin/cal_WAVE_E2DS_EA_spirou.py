@@ -202,8 +202,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
                                        #filename = wavefile,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
