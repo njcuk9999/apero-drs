@@ -549,6 +549,18 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # -------------------------------------------------------------------------
+    # add keys of the wave solution FP CCF
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'], value = cloc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'], value = whdr(p['KW_WFP_DRIFT'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value = whdr(p['KW_WFP_FWHM'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'], value = whdr(p['KW_WFP_CONTRAST'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'], value = whdr(p['KW_WFP_MAXCPP'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value = whdr(p['KW_WFP_MASK'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'], value = whdr(p['KW_WFP_LINES'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'], value = whdr(p['KW_WFP_TARG_RV'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'], value = whdr(p['KW_WFP_WIDTH'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'], value = whdr(p['KW_WFP_STEP'][0]))
+    # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
@@ -619,6 +631,18 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
+    # -------------------------------------------------------------------------
+    # add keys of the wave solution FP CCF
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'], value = cloc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'], value = whdr(p['KW_WFP_DRIFT'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value = whdr(p['KW_WFP_FWHM'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'], value = whdr(p['KW_WFP_CONTRAST'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'], value = whdr(p['KW_WFP_MAXCPP'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value = whdr(p['KW_WFP_MASK'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'], value = whdr(p['KW_WFP_LINES'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'], value = whdr(p['KW_WFP_TARG_RV'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'], value = whdr(p['KW_WFP_WIDTH'][0]))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'], value = whdr(p['KW_WFP_STEP'][0]))
     # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys

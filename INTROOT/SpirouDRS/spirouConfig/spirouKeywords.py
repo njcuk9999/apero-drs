@@ -237,6 +237,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_WFP_TARG_RV',
             'KW_WFP_WIDTH',
             'KW_WFP_STEP',
+            'KW_WFP_FILE',
             'KW_TILT',
             'KW_UTC_OBS',
             'KW_WAVESOURCE',
@@ -574,6 +575,9 @@ KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum']
 
 KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
 KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
+
+# Wavelength solution for fiber C  that is is source of the WFP keys
+KW_WFP_FILE = ['WFP_FILE', None, 'WFP source file']
 
 # -----------------------------------------------------------------------------
 # Define wave variables
