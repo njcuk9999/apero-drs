@@ -452,7 +452,7 @@ class DrsFitsFile(DrsInputFile):
         """
         return self.string_output()
 
-    def copy(self, drsfile, **kwargs):
+    def copyother(self, drsfile, **kwargs):
         # check recipe has been set
         if 'recipe' not in kwargs:
             self.check_recipe()
