@@ -161,8 +161,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     params['OUTFILES'] = OrderedDict()
     params.set_source('OUTFILES', func_name)
     # -------------------------------------------------------------------------
-    _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
-    _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
+    if params['INPATH'] is not None and params['NIGHTNAME'] is not None:
+        _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
+    if params['OUTPATH'] is not None and params['NIGHTNAME'] is not None:
+        _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
