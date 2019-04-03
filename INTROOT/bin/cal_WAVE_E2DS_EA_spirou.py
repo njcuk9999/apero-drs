@@ -197,13 +197,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         wave_fiber = p['FIBER']
     # get wave image
-    # wavefile = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
-    #wavefile = '/data/CFHT/reduced/AT5/AT5-12/files_neil/2018-08-04_2295395a_pp_2295398c_pp_wave_ea_C.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
-                                       #filename = wavefile,
                                        return_filename=True, fiber=wave_fiber)
-    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'], loc['WSOURCE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS', 'WSOURCE'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
@@ -258,28 +255,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # end interactive session
     if p['DRS_PLOT'] > 0:
         sPlt.end_interactive_session(p)
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    passed, fail_msg = True, []
-    # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
-    if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
-        fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
-        fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
-        passed = False
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/main()')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG(p, 'warning', wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Set up all_lines storage
