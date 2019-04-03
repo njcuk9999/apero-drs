@@ -94,7 +94,9 @@ class PseudoConstants:
                        p['KW_OUTPUT'][0],
                        p['KW_EXT_TYPE'][0],
                        p['KW_CMPLTEXP'][0],
-                       p['KW_NEXP'][0]]
+                       p['KW_NEXP'][0],
+                       p['KW_VERSION'][0],
+                       p['KW_PPVERSION'][0]]
         # return output_keys
         return output_keys
 
@@ -113,7 +115,8 @@ class PseudoConstants:
                        p['KW_CREF'][0],
                        p['KW_CDEN'][0],
                        p['KW_CMPLTEXP'][0],
-                       p['KW_NEXP'][0]]
+                       p['KW_NEXP'][0],
+                       p['KW_PPVERSION'][0]]
         # check in master list
         masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
         for key in output_keys:
@@ -133,7 +136,8 @@ class PseudoConstants:
                        p['KW_ACQTIME'][0],
                        p['KW_OBJNAME'][0],
                        p['KW_OUTPUT'][0],
-                       p['KW_EXT_TYPE'][0]]
+                       p['KW_EXT_TYPE'][0],
+                       p['KW_VERSION'][0]]
         # check in master list
         masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
         for key in output_keys:
@@ -153,7 +157,8 @@ class PseudoConstants:
                        p['KW_OBSTYPE'][0],
                        p['KW_EXPTIME'][0],
                        p['KW_OUTPUT'][0],
-                       p['KW_EXT_TYPE'][0]]
+                       p['KW_EXT_TYPE'][0],
+                       p['KW_VERSION'][0]]
         return output_keys
 
     # =========================================================================
