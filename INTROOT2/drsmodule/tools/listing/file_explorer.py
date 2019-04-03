@@ -55,6 +55,8 @@ ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 INSTRUMENTS = ['SPIROU', 'NIRPS']
 # define min column length
 MIN_TABLE_COL_WIDTH = 25
+# TODO: This needs moving to some setup file to work per installation
+DS9PATH = '~/bin/ds9/ds9'
 
 
 # =============================================================================
@@ -574,7 +576,8 @@ class TableSection:
         # update status
         self.master.status_bar.status.set('Opening DS9...')
         # construct command
-        command = 'ds9 {0} &'.format(abspath)
+        ds9path = DS9PATH
+        command = '{0} {1} &'.format(ds9path, abspath)
         try:
             os.system(command)
         except Exception as e:
@@ -864,6 +867,21 @@ class LoadData:
             outdir = outdir.split(self.index_filename)[0]
             # append source to file
             storage['SOURCE'] += [outdir] * len(data)
+
+        # deal with column names being different lengths
+        current_length = 0
+        for col in storage.keys():
+            if current_length == 0:
+                current_length = len(storage[col])
+            if len(storage[col]) != current_length:
+                print('Index columns have wrong lengths')
+                self.data = None
+                self.clean_data = OrderedDict()
+                self.mask = None
+                self.cols = []
+                self.success = False
+                return 0
+
         # store storage as pandas dataframe
         self.data = pd.DataFrame(data=storage)
 
