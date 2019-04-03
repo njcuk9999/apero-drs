@@ -797,22 +797,27 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=loc['LL_PARAM_FINAL'])
 
     # add FP CCF drift
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
-                               value=loc['RV_CCF'][0])
+    # target RV and width
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                               value=p['TARGET_RV'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                               value=p['CCF_WIDTH'])
     # the rv step
-    rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
+    # rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
+                               value=p['CCF_STEP'])
+
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
                                value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
                                value=loc['MAXCPP'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
                                value=np.sum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
