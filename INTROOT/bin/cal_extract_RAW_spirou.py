@@ -294,6 +294,30 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('WAVE_CODE', __NAME__ + '.main()')
 
         # ----------------------------------------------------------------------
+        # Get WFP keys
+        # ----------------------------------------------------------------------
+        # Read the WFP keys - if they don't exist set to None and deal
+        #    with later
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_DRIFT',
+                                  name='WFP_DRIFT', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_FWHM',
+                                  name='WFP_FWHM', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_CONTRAST',
+                                  name='WFP_CONTRAST', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_MAXCPP',
+                                  name='WFP_MAXCPP', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_MASK',
+                                  name='WFP_MASK', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_LINES',
+                                  name='WFP_LINES', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_TARG_RV',
+                                  name='WFP_TARG_RV', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_WIDTH',
+                                  name='WFP_WIDTH', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_STEP',
+                                  name='WFP_STEP', required=False)
+
+        # ----------------------------------------------------------------------
         # Read Flat file
         # ----------------------------------------------------------------------
         fout = spirouImage.ReadFlatFile(p, hdr, return_header=True)
@@ -552,23 +576,23 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'],
                                    value=loc['WAVEFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_DRIFT'][0]])
+                                   value=p['WFP_DRIFT'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_FWHM'][0]])
+                                   value=p['WFP_FWHM'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_CONTRAST'][0]])
+                                   value=p['WFP_CONTRAST'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_MAXCPP'][0]])
+                                   value=p['WFP_MAXCPP'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_MASK'][0]])
+                                   value=p['WFP_MASK'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_LINES'][0]])
+                                   value=p['WFP_LINES'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_TARG_RV'][0]])
+                                   value=p['WFP_TARG_RV'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_WIDTH'][0]])
+                                   value=p['WFP_WIDTH'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
-                                   value=loc['WAVEHDR'][p['KW_WFP_STEP'][0]])
+                                   value=p['WFP_STEP'])
 
         # write 1D list of the SNR
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_E2DS_SNR'],
