@@ -2572,33 +2572,44 @@ def tellu_fit_recon_abso_plot(p, loc):
         black = 'w'
     else:
         black = 'k'
+
+    nbo = loc['WAVE_IT'].shape[0]
+
     # get constants from p
     selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
-    # get data dimensions
-    ydim, xdim = loc['DATA'].shape
-    # get selected order wave lengths
-    swave = loc['WAVE_IT'][selected_order, :]
-    # get the data from loc for selected order
-    start, end = selected_order * xdim, selected_order * xdim + xdim
-    ssp = np.array(loc['SP'][selected_order, :])
-    ssp2 = np.array(loc['SP2'][start:end])
-    stemp2 = np.array(loc['TEMPLATE2'][start:end])
-    srecon_abso = np.array(loc['RECON_ABSO'][start:end])
-    # set up fig
-    fig, frame = setup_figure(p)
-    # plot spectra for selected order
-    frame.plot(swave, ssp / np.nanmedian(ssp), color=black, label='input SP')
-    frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
-               label='Cleaned SP')
-    frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
-               label='Template')
-    frame.plot(swave, srecon_abso, color='r', label='recon abso')
-    # add legend
-    frame.legend(loc=0)
-    # add labels
-    title = 'Reconstructed Absorption (Order = {0})'
-    frame.set(title=title.format(selected_order),
-              xlabel='Wavelength [nm]', ylabel='Normalised flux')
+
+    if selected_order == 'all':
+        sorders = list(range(0, nbo))
+    else:
+        sorders = [selected_order]
+
+    for selected_order in sorders:
+        # get data dimensions
+        ydim, xdim = loc['DATA'].shape
+        # get selected order wave lengths
+        swave = loc['WAVE_IT'][selected_order, :]
+        # get the data from loc for selected order
+        start, end = selected_order * xdim, selected_order * xdim + xdim
+        ssp = np.array(loc['SP'][selected_order, :])
+        ssp2 = np.array(loc['SP2'][start:end])
+        stemp2 = np.array(loc['TEMPLATE2'][start:end])
+        srecon_abso = np.array(loc['RECON_ABSO'][start:end])
+        # set up fig
+        fig, frame = setup_figure(p)
+        # plot spectra for selected order
+        frame.plot(swave, ssp / np.nanmedian(ssp), color=black,
+                   label='input SP')
+        frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
+                   label='Cleaned SP')
+        frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
+                   label='Template')
+        frame.plot(swave, srecon_abso, color='r', label='recon abso')
+        # add legend
+        frame.legend(loc=0)
+        # add labels
+        title = 'Reconstructed Absorption (Order = {0})'
+        frame.set(title=title.format(selected_order),
+                  xlabel='Wavelength [nm]', ylabel='Normalised flux')
 
     # end plotting function properly
     end_plotting(p, plot_name)
