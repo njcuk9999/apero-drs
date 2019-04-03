@@ -1590,7 +1590,7 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                 # check wavelength difference below limit
                 if abs(newll[it] - llpos_all[it]) < fp_cut:
                     # put FP line data into an array
-                    newdll = newll[it] - llpos_all[it]
+                    # newdll = newll[it] - llpos_all[it]
                     fp_line = np.array([newll[it], 0.0, 0.0, 0.0,
                                         0.0, xxpos_all[it], 0.0, ampl_all[it]])
                     fp_line = fp_line.reshape((1, 8))
