@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+cal_CCF_E2DS_FP_MH_spirou wrapper (with different runs)
+"""
 from collections import OrderedDict
 from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouStartup
 
 import cal_CCF_E2DS_FP_MH_spirou
 
