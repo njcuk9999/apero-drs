@@ -156,7 +156,7 @@ KW_INFILE3.set(key='INF1{0:03d}', comment='Input file used to create output')
 KW_OUTPUT = KW_OUTPUT.copy(__NAME__)
 KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
 KW_EXT_TYPE = KW_EXT_TYPE.copy(__NAME__)
-KW_EXT_TYPE.set(key='DRS_EOU', comment='DRS Extraction input DPRTYPE')
+KW_EXT_TYPE.set(key='DRS_EOUT', comment='DRS Extraction input DPRTYPE')
 
 
 # -----------------------------------------------------------------------------
