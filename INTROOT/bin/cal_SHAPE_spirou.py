@@ -388,7 +388,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
         output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
         input_hc_file, tag3 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
-        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
+        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_OUT_HC_FILE(p)
         overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
