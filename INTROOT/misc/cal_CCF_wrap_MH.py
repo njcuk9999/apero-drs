@@ -89,7 +89,7 @@ def main():
         errors[it] = None
 
         # get p, loc, cp, cloc
-        p, loc = ll_it['p'], ll_it['cloc']
+        p, loc = ll_it['p'], ll_it['loc']
         cp, cloc = ll_it['cp'], ll_it['cloc']
 
         # get loc keys
