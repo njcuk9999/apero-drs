@@ -133,13 +133,14 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data2, badpixmap]
+        bargs = [p, data2, hdr, cdr, badpixmap]
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data2)
     # apply background correction to data (and set to zero where negative)
     # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    data1 = np.where(data2 > 0, data2 - background, 0)
+    # data2 = np.where(data2 > 0, data2 - background, 0)
+    data2 = data2 - background
 
     # save data to loc
     loc = ParamDict()
