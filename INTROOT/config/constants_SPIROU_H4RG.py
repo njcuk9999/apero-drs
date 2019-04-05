@@ -1172,7 +1172,7 @@ tellu_lambda_max = 2100.0
 tellu_fit_vsini = 15.0
 tellu_fit_niter = 4
 tellu_fit_vsini2 = 30.0
-tellu_fit_recon_plt_order = 33
+tellu_fit_recon_plt_order = 'all'    # 33
 tellu_fit_log_limit = -0.5
 
 
