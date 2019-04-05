@@ -137,9 +137,10 @@ def main(night_name=None, files=None):
     else:
         background = np.zeros_like(data2)
 
-    # data2=data2-background
     # correct data2 with background (where positive)
-    data2 = np.where(data2 > 0, data2 - background, 0)
+    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
+    # data2 = np.where(data2 > 0, data2 - background, 0)
+    data2 = data2 - background
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
