@@ -1338,7 +1338,10 @@ def generate_resolution_map(p, loc):
             all_dvs = all_dvs.ravel()
             all_lines = all_lines.ravel()
             # define storage for keep mask
-            keep = np.ones(len(all_dvs), dtype=bool)
+            # keep = np.ones(len(all_dvs), dtype=bool)
+            # TODO New hack: Do not keep as hardcoded
+            keep = np.abs(all_lines) < 5
+
             # set an initial maximum deviation
             maxdev = np.inf
             # set up the fix parameters and initial guess parameters
@@ -1347,12 +1350,25 @@ def generate_resolution_map(p, loc):
             # loop around until criteria met
             n_it = 0
 
+            # import matplotlib.pyplot as plt
+            # plt.ioff()
+            # plt.figure()
+            # plt.scatter(all_dvs[keep], all_lines[keep], label=str(n_it))
+            # plt.legend(loc=0)
+            # plt.show()
+            # plt.close()
+
             # fit the merged line profile and do some sigma-clipping
             while maxdev > max_dev_threshold:
                 # fit with a guassian with a slope
                 fargs = dict(x=all_dvs[keep], y=all_lines[keep],
                              guess=init_guess)
-                popt, pcov = spirouMath.fit_gaussian_with_slope(**fargs)
+
+                try:
+                    popt, pcov = spirouMath.fit_gaussian_with_slope(**fargs)
+                except Exception as e:
+                    emsg = 'Resolution map curve fit error {0}: {1}'
+                    WLOG(p, 'error', emsg.format(type(e), e))
                 # calculate residuals for full line list
                 res = all_lines - spirouMath.gauss_fit_s(all_dvs, *popt)
                 # calculate RMS of residuals
@@ -1363,6 +1379,7 @@ def generate_resolution_map(p, loc):
                 keep[np.abs(rms) > max_dev_threshold] = False
 
                 n_it += 1
+
             # calculate resolution
             resolution = popt[2] * spirouMath.fwhm()
             # store order criteria
