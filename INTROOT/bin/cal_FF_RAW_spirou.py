@@ -128,6 +128,7 @@ def main(night_name=None, files=None):
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
     p, data1 = spirouImage.CorrectForBadPix(p, data1, hdr)
+    p, badpixmap = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -157,13 +158,12 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bdata = spirouBACK.MeasureBackgroundFF(p, data1)
-        background, gridx, gridy, minlevel = bdata
+        bargs = [p, data1, badpixmap]
+        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data1)
-
-    # data2=data2-background
-    # correct data2 with background (where positive)
+    # apply background correction to data (and set to zero where negative)
+    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
     data1 = np.where(data1 > 0, data1 - background, 0)
 
     # ----------------------------------------------------------------------
