@@ -680,7 +680,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
 
     # decide if refit or read fit from file
-    update_cavity = False
+    update_cavity = not os.path.exists('cavity_length_m_fit.dat')
 
     if update_cavity:
         # define sorted arrays
@@ -1453,14 +1453,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # only copy over if QC passed
     if p['QC']:
-        # update original E2DS hcfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
-        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
-        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
-        # update original E2DS fpfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0b)
+        # loop around hc files and update header with
+        for hcfile in p['HCFILES']:
+            raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], hcfile)
+            p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath1)
+        # update fp file
         raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
-        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+        p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath2)
 
     # # ------------------------------------------------------------------
     # # Save to result table
