@@ -16,6 +16,7 @@ from scipy import signal
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -41,7 +42,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_background_flatfield(p, image, badpixmask):
+def measure_background_flatfield(p, image, header, comments, badpixmask):
     """
     Measures the background of a flat field image - currently does not work
     as need an interpolation function (see code)
@@ -134,6 +135,27 @@ def measure_background_flatfield(p, image, badpixmask):
     points = np.array([gridx1c.ravel(), gridy1c.ravel()]).T
     background = griddata(points, minlevel2.ravel(), (gridx2, gridy2),
                           method='cubic')
+
+    # ----------------------------------------------------------------------
+    # Produce DEBUG plot
+    # ----------------------------------------------------------------------
+    data1 = np.where(image > 0, image - background, 0)
+    # construct debug background file name
+    debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
+    # construct images
+    dimages = [data1, background, image1, image_med]
+    # construct hdicts
+    hdict = spirouImage.CopyOriginalKeys(header, comments)
+    drsname = ['DRSNAME', None, 'Extension description']
+    hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
+    hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Background')
+    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Original')
+    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Median')
+    dheaders = [hdict1, hdict2, hdict3, hdict4]
+    # write debug to file
+    spirouImage.WriteImageMulti(p, debug_background, dimages, hdicts=dheaders)
+    # ----------------------------------------------------------------------
+
 
     # return background, xc, yc and minlevel
     return background, gridx1c, gridy1c, minlevel2

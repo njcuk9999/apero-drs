@@ -1102,6 +1102,37 @@ def FF_FLAT_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
+def BACKGROUND_CORRECT_FILE(p, fiber=None):
+    """
+    Defines the flat field file name and location to save flat field file to
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+
+    :return flatfits: string, the flat field filename and location
+    """
+    func_name = 'EXTRACT_E2DS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    e2ds_ext = '_background_{0}.fits'.format(fiber)
+    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+    e2dsfits = os.path.join(reducedfolder, 'DEBUG_' + e2dsfitsname)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return e2dsfits, tag
+
+
+# noinspection PyPep8Naming
 def EXTRACT_E2DS_FILE(p, fiber=None):
     """
     Defines the extraction E2DS file name and location
