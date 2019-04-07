@@ -154,7 +154,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Background computation
     # ----------------------------------------------------------------------
-    p['IC_BKGR_PERCENT'] = 3.0
+    p['ic_bkgr_percent'] = 3.0
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
