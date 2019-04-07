@@ -80,9 +80,6 @@ def main(night_name=None, files=None):
     p['FIB_TYPE'] = p['FIBER_TYPES']
     p.set_source('FIB_TYPE', __NAME__ + '__main__()')
 
-    # TODO: temp set of extract type
-    p['IC_FF_EXTRACT_TYPE'] = '3c'
-
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -185,6 +182,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Get all fiber data (for all fibers)
     # ----------------------------------------------------------------------
+    # TODO: temp set of extract type
+    p['IC_FF_EXTRACT_TYPE'] = '3c'
+
     # TODO: This is temp solution for options 5a and 5b
     loc_fibers = spirouLOCOR.GetFiberData(p, hdr)
 
@@ -220,6 +220,8 @@ def main(night_name=None, files=None):
     # else:
     #     data2 = np.array(data1)
     data2 = np.array(data1)
+    # TODO: temp set of extract type
+    p['IC_FF_EXTRACT_TYPE'] = '5a'
 
     # ----------------------------------------------------------------------
     # Fiber loop
