@@ -992,8 +992,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
                 fx = np.ones(fx.shape, dtype=float)
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
