@@ -80,6 +80,9 @@ def main(night_name=None, files=None):
     p['FIB_TYPE'] = p['FIBER_TYPES']
     p.set_source('FIB_TYPE', __NAME__ + '__main__()')
 
+    # TODO: temp set of extract type
+    p['IC_FF_EXTRACT_TYPE'] = '3c'
+
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -173,7 +176,7 @@ def main(night_name=None, files=None):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts
-    if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
+    if p['IC_FF_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
         p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     else:
         loc['TILT'] = None
@@ -188,34 +191,35 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Deal with debananafication
     # ------------------------------------------------------------------
-    # if mode 4a or 4b we need to straighten in x only
-    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
-        # log progress
-        WLOG(p, '', 'Debananafying (straightening) image')
-        # get the shape map
-        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-        # debananafy data
-        bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
-        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
-    # if mode 5a or 5b we need to straighten in x and y using the
-    #     polynomial fits for location
-    elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
-        # log progress
-        WLOG(p, '', 'Debananafying (straightening) image')
-        # get the shape map
-        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-        # get the bad pixel map
-        p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True,
-                                                 quiet=True)
-        # debananafy data
-        bkwargs = dict(image=np.array(data1), kind='full', badpix=badpix,
-                       dx=shapemap, pos_a=loc_fibers['A']['ACC'],
-                       pos_b=loc_fibers['B']['ACC'],
-                       pos_c=loc_fibers['C']['ACC'])
-        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
-    # in any other mode we do not straighten
-    else:
-        data2 = np.array(data1)
+    # # if mode 4a or 4b we need to straighten in x only
+    # if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+    #     # log progress
+    #     WLOG(p, '', 'Debananafying (straightening) image')
+    #     # get the shape map
+    #     p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+    #     # debananafy data
+    #     bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
+    #     data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # # if mode 5a or 5b we need to straighten in x and y using the
+    # #     polynomial fits for location
+    # elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+    #     # log progress
+    #     WLOG(p, '', 'Debananafying (straightening) image')
+    #     # get the shape map
+    #     p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+    #     # get the bad pixel map
+    #     p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True,
+    #                                              quiet=True)
+    #     # debananafy data
+    #     bkwargs = dict(image=np.array(data1), kind='full', badpix=badpix,
+    #                    dx=shapemap, pos_a=loc_fibers['A']['ACC'],
+    #                    pos_b=loc_fibers['B']['ACC'],
+    #                    pos_c=loc_fibers['C']['ACC'])
+    #     data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # # in any other mode we do not straighten
+    # else:
+    #     data2 = np.array(data1)
+    data2 = np.array(data1)
 
     # ----------------------------------------------------------------------
     # Fiber loop
