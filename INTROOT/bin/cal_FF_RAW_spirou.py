@@ -154,13 +154,13 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Background computation
     # ----------------------------------------------------------------------
-    p['ic_bkgr_percent'] = 3.0
+    # p['ic_bkgr_percent'] = 3.0
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
         bargs = [p, data1, hdr, cdr, badpixmap]
-        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF_OLD(*bargs)
+        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data1)
     # apply background correction to data (and set to zero where negative)
