@@ -203,7 +203,7 @@ def measure_background_flatfield_old(p, image, header, comments, badpixmask):
             xci, yci = xc[i_it], yc[j_it]
             # get the pixels for this box
             subframe = image[xci - size:xci + size,
-                       yci - size:yci + size].ravel()
+                             yci - size:yci + size].ravel()
             # get the (2*size)th minimum pixel
             mask = subframe > 0
             maskedsubframe = subframe[mask]
@@ -215,7 +215,7 @@ def measure_background_flatfield_old(p, image, header, comments, badpixmask):
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
     gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size,
-                     size:image.shape[1]:2 * size]
+                              size:image.shape[1]:2 * size]
     gridx2, gridy2 = np.indices(image.shape)
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
@@ -232,8 +232,7 @@ def measure_background_flatfield_old(p, image, header, comments, badpixmask):
     minlevel2[-1, 0] = minlevel[-1, 0]
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
-    gridx1c = np.zeros((gridx1.shape[0] + 2, gridx1.shape[1] + 2),
-                       dtype=float)
+    gridx1c = np.zeros((gridx1.shape[0] + 2, gridx1.shape[1] + 2), dtype=float)
     gridx1c[1:-1, 1:-1] = gridx1
     gridx1c[0, :] = 0
     gridx1c[-1, :] = np.shape(image)[0]
@@ -241,8 +240,7 @@ def measure_background_flatfield_old(p, image, header, comments, badpixmask):
     gridx1c[:, -1] = gridx1c[:, -2]
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
-    gridy1c = np.zeros((gridy1.shape[0] + 2, gridy1.shape[1] + 2),
-                       dtype=float)
+    gridy1c = np.zeros((gridy1.shape[0] + 2, gridy1.shape[1] + 2), dtype=float)
     gridy1c[1:-1, 1:-1] = gridy1
     gridy1c[:, 0] = 0
     gridy1c[:, -1] = np.shape(image)[1]
