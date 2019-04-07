@@ -161,6 +161,103 @@ def measure_background_flatfield(p, image, header, comments, badpixmask):
     return background, gridx1c, gridy1c, minlevel2
 
 
+def measure_background_flatfield_old(p, image, header, comments, badpixmask):
+
+    """
+    Measures the background of a flat field image - currently does not work
+    as need an interpolation function (see code)
+
+    :param p: parameter dictionary, ParamDict containing constants
+
+            Must contain at least:
+                IC_BKGR_WINDOW: int, Half-size of window for background
+                                measurements
+                GAIN: float, the gain of the image (from HEADER)
+                SIGDET: float, the read noise of the image (from HEADER)
+                log_opt: string, log option, normally the program name
+
+    :param image: numpy array (2D), the image to measure the background of
+
+    :return background: numpy array (2D), the background image (currently all
+                        zeros) as background not implemented
+    :return xc: numpy array (1D), the box centers (x positions) used to create
+                the background image
+    :return yc: numpy array (1D), the box centers (y positions) used to create
+                the background image
+    :return minlevel: numpy array (2D), the 2 * size -th minimum pixel value
+                      of each box for each pixel in the image
+    """
+    # func_name = __NAME__ + '.measure_background_flatfield()'
+
+    # get constants
+    size = p['IC_BKGR_WINDOW']
+    percent = p['IC_BKGR_PERCENT']
+    # create the box centers
+    xc = np.arange(size, image.shape[0], 2 * size)
+    yc = np.arange(size, image.shape[1], 2 * size)
+    # min level box
+    minlevel = np.zeros((len(xc), len(yc)))
+    # loop around all boxes with centers xc and yc
+    for i_it in range(len(xc)):
+        for j_it in range(len(yc)):
+            xci, yci = xc[i_it], yc[j_it]
+            # get the pixels for this box
+            subframe = image[xci - size:xci + size,
+                       yci - size:yci + size].ravel()
+            # get the (2*size)th minimum pixel
+            mask = subframe > 0
+            maskedsubframe = subframe[mask]
+            if len(maskedsubframe) > 0:
+                minlevel[i_it, j_it] = np.max(
+                    [np.percentile(maskedsubframe, percent), 0])
+            else:
+                minlevel[i_it, j_it] = 0
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size,
+                     size:image.shape[1]:2 * size]
+    gridx2, gridy2 = np.indices(image.shape)
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    minlevel2 = np.zeros((minlevel.shape[0] + 2, minlevel.shape[1] + 2),
+                         dtype=float)
+    minlevel2[1:-1, 1:-1] = minlevel
+    minlevel2[0, 1:-1] = minlevel[0]
+    minlevel2[-1, 1:-1] = minlevel[-1]
+    minlevel2[1:-1, 0] = minlevel[:, 0]
+    minlevel2[1:-1, -1] = minlevel[:, -1]
+    minlevel2[0, 0] = minlevel[0, 0]
+    minlevel2[-1, -1] = minlevel[-1, -1]
+    minlevel2[0, -1] = minlevel[0, -1]
+    minlevel2[-1, 0] = minlevel[-1, 0]
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    gridx1c = np.zeros((gridx1.shape[0] + 2, gridx1.shape[1] + 2),
+                       dtype=float)
+    gridx1c[1:-1, 1:-1] = gridx1
+    gridx1c[0, :] = 0
+    gridx1c[-1, :] = np.shape(image)[0]
+    gridx1c[:, 0] = gridx1c[:, 1]
+    gridx1c[:, -1] = gridx1c[:, -2]
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    gridy1c = np.zeros((gridy1.shape[0] + 2, gridy1.shape[1] + 2),
+                       dtype=float)
+    gridy1c[1:-1, 1:-1] = gridy1
+    gridy1c[:, 0] = 0
+    gridy1c[:, -1] = np.shape(image)[1]
+    gridy1c[0, :] = gridy1c[1, :]
+    gridy1c[-1, :] = gridy1c[-2, :]
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    points = np.array([gridx1c.ravel(), gridy1c.ravel()]).T
+    background = griddata(points, minlevel2.ravel(), (gridx2, gridy2),
+                          method='linear')
+
+    # return background, xc, yc and minlevel
+    return background, gridx1c, gridy1c, minlevel2
+
+
 def measure_background_and_get_central_pixels(p, loc, image):
     """
     Takes the image and measure the background
