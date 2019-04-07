@@ -340,10 +340,10 @@ def main(night_name=None, files=None):
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)
-                sPlt.ff_aorder_fit_edges(p, loc, data2)
+                sPlt.ff_aorder_fit_edges(p, loc, data1)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                sPlt.ff_sorder_fit_edges(p, loc, data2)
+                sPlt.ff_sorder_fit_edges(p, loc, data1)
             # plot tilt adjusted e2ds and blaze for selected order
             sPlt.ff_sorder_tiltadj_e2ds_blaze(p, loc)
             # plot flat for selected order
@@ -351,6 +351,8 @@ def main(night_name=None, files=None):
             # plot the RMS for all but skipped orders
             # sPlt.ff_rms_plot(p, loc)
 
+            if p['IC_FF_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
+                sPlt.ff_debanana_plot(p, loc, data2)
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
