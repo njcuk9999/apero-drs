@@ -897,8 +897,8 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
             # get the weights
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 0.000001)
+            # raw_weights = np.ones_like(sx)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.sum(weights ** 2)
@@ -1090,8 +1090,8 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
                 fx = np.ones(fx.shape, dtype=float)
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added in
             #    quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1315,8 +1315,8 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
             fx = fx / np.sum(fx)
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #     in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1408,8 +1408,8 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # get the weights
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.sum(weights ** 2)
@@ -1517,8 +1517,8 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
             # weight values less than 0 to 0.000001
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.sum(weights ** 2)
@@ -1603,8 +1603,8 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
             # weight values less than 0 to 1e-9
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1686,8 +1686,8 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
             # weight values less than 0 to 1e-9
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1780,8 +1780,8 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
                 # weight values less than 0 to 1e-9
                 # TODO: Could be this line!!!! Etienne --> values less than
                 #       zero are weighted down
-                # raw_weights = np.where(sx > 0, 1, 1e-9)
-                raw_weights = np.ones_like(sx)
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                # raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
                 weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1869,8 +1869,8 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
                 # weight values less than 0 to 1e-9
                 # TODO: Could be this line!!!! Etienne --> values less than
                 #       zero are weighted down
-                # raw_weights = np.where(sx > 0, 1, 1e-9)
-                raw_weights = np.ones_like(sx)
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                # raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
                 weights = raw_weights / ((sx * gain) + sigdet ** 2)
