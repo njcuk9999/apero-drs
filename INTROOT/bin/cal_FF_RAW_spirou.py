@@ -128,13 +128,12 @@ def main(night_name=None, files=None):
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
     p, data1 = spirouImage.CorrectForBadPix(p, data1, hdr)
-    p, badpixmap = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data1 == 0)
+    n_bad_pix = np.sum(~np.isfinite(data1))
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data1.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
@@ -148,7 +147,8 @@ def main(night_name=None, files=None):
     # get the min max and max signal using box smoothed approach
     miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
-    wmsg = 'Maximum average flux/pixel in the spectrum: {0:.1f} [ADU]'
+    wmsg = ('Maximum average flux (95th percentile) /pixel in the spectrum: '
+            '{0:.1f} [ADU]')
     WLOG(p, 'info', wmsg.format(max_signal / p['NBFRAMES']))
 
     # ----------------------------------------------------------------------
@@ -159,14 +159,14 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data1, hdr, cdr, badpixmap]
+        bargs = [p, data1, hdr, cdr]
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data1)
     # apply background correction to data (and set to zero where negative)
     # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    data1 = np.where(data1 > 0, data1 - background, 0)
-    # data1 = data1 - background
+    # data1 = np.where(data1 > 0, data1 - background, 0)
+    data1 = data1 - background
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -297,18 +297,20 @@ def main(night_name=None, files=None):
             blaze_win1 = int(data2.shape[1] / 2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[1] / 2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
-            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
+            flux = np.nansum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise ** 2)
             # remove edge of orders at low S/N
-            e2ds = np.where(e2ds < flux / p['IC_FRACMINBLAZE'], 0., e2ds)
+            with warnings.catch_warnings(record=True) as _:
+                blazemask = e2ds < (flux / p['IC_FRACMINBLAZE'])
+                e2ds = np.where(blazemask, np.nan, e2ds)
             #            e2ds = np.where(e2ds < p['IC_MINBLAZE'], 0., e2ds)
             # calcualte the blaze function
             blaze = spirouFLAT.MeasureBlazeForOrder(p, e2ds)
             # calculate the flat
-            flat = np.where(blaze > 1, e2ds / blaze, 1)
+            flat = e2ds / blaze
             # calculate the rms
-            rms = np.std(flat)
+            rms = np.nanstd(flat)
             # log the SNR RMS
             wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}  - FF rms={3:.2f} %'
             wargs = [fiber, order_num, snr, rms * 100.0]
@@ -373,7 +375,7 @@ def main(night_name=None, files=None):
         remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
         mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
         # apply mask and calculate the maximum RMS
-        max_rms = np.max(loc['RMS'][~mask])
+        max_rms = np.nanmax(loc['RMS'][~mask])
         # apply the quality control based on the new RMS
         if max_rms > p['QC_FF_RMS']:
             fmsg = 'abnormal RMS of FF ({0:.3f} > {1:.3f})'
