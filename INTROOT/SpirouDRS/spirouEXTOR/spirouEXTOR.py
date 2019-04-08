@@ -895,10 +895,7 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
             # Renormalise the order_profile
             fx = fx / np.nansum(fx)
             # get the weights
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 0.000001)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 0.000001)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.nansum(weights ** 2)
@@ -990,10 +987,7 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
                 fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            #raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1088,10 +1082,7 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
                 fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in
             #    quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1313,10 +1304,7 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
             fx = fx / np.nansum(fx)
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added
             #     in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1406,10 +1394,7 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # Renormalise the order_profile
             fx = fx / np.nansum(fx)
             # get the weights
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.nan(weights ** 2)
@@ -1515,10 +1500,7 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
             spe[ic] = np.nansum(sx)
             # get the weights
             # weight values less than 0 to 0.000001
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
+            raw_weights = np.where(sx > 0, 1, 1e-9)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.nansum(weights ** 2)
@@ -1600,14 +1582,29 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
                 fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
-            # weight values less than 0 to 1e-9
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
-            weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            # TODO: URGENT: Must figure out what is going on here
+            # TODO:         case 0, 1 and 2 lead to "bands" of
+            # TODO:         flux (check the e2dsll files)
+            case = 3
+            if case == 0:
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            elif case == 1:
+                # the weights should never be smaller than sigdet^2
+                sigdets = np.repeat([sigdet ** 2], len(sx))
+                noises = (sx * gain) + sigdet ** 2
+                # find the weight for each pixel in sx
+                raw_weights = np.max([noises, sigdets], axis=0)
+                # weights is the inverse
+                weights = 1.0 / raw_weights
+            elif case == 2:
+                raw_weights = np.ones_like(sx)
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            else:
+                weights = np.ones_like(sx)
+                weights[~np.isfinite(sx)] = np.nan
             # set the value of this pixel to the weighted sum
             spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
             spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
@@ -1683,14 +1680,29 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
                 fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
-            # weight values less than 0 to 1e-9
-            # TODO: Could be this line!!!! Etienne --> values less than
-            #       zero are weighted down
-            # raw_weights = np.where(sx > 0, 1, 1e-9)
-            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
-            weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            # TODO: URGENT: Must figure out what is going on here
+            # TODO:         case 0, 1 and 2 lead to "bands" of
+            # TODO:         flux (check the e2dsll files)
+            case = 3
+            if case == 0:
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            elif case == 1:
+                # the weights should never be smaller than sigdet^2
+                sigdets = np.repeat([sigdet ** 2], len(sx))
+                noises = (sx * gain) + sigdet ** 2
+                # find the weight for each pixel in sx
+                raw_weights = np.max([noises, sigdets], axis=0)
+                # weights is the inverse
+                weights = 1.0 / raw_weights
+            elif case == 2:
+                raw_weights = np.ones_like(sx)
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            else:
+                weights = np.ones_like(sx)
+                weights[~np.isfinite(sx)] = np.nan
             # set the value of this pixel to the weighted sum
             spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
             spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
@@ -1777,14 +1789,30 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
                     fx = fx / np.nansum(fx)
                 else:
                     fx = np.ones(fx.shape, dtype=float)
-                # weight values less than 0 to 1e-9
-                # TODO: Could be this line!!!! Etienne --> values less than
-                #       zero are weighted down
-                #raw_weights = np.where(sx > 0, 1, 1e-9)
-                raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
-                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # TODO: URGENT: Must figure out what is going on here
+                # TODO:         case 0, 1 and 2 lead to "bands" of
+                # TODO:         flux (check the e2dsll files)
+                case = 3
+                if case == 0:
+                    raw_weights = np.where(sx > 0, 1, 1e-9)
+                    weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                elif case == 1:
+                    # the weights should never be smaller than sigdet^2
+                    sigdets = np.repeat([sigdet ** 2], len(sx))
+                    noises = (sx * gain) + sigdet ** 2
+                    # find the weight for each pixel in sx
+                    raw_weights = np.max([noises, sigdets], axis=0)
+                    # weights is the inverse
+                    weights = 1.0 / raw_weights
+                elif case == 2:
+                    raw_weights = np.ones_like(sx)
+                    weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                else:
+                    weights = np.ones_like(sx)
+                    weights[~np.isfinite(sx)] = np.nan
+
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = (weights * sx * fx)
                 spe[ic] = np.nansum(weights * sx * fx)
@@ -1866,14 +1894,31 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
                     fx = fx / np.nansum(fx)
                 else:
                     fx = np.ones(fx.shape, dtype=float)
-                # weight values less than 0 to 1e-9
-                # TODO: Could be this line!!!! Etienne --> values less than
-                #       zero are weighted down
-                #raw_weights = np.where(sx > 0, 1, 1e-9)
-                raw_weights = np.ones_like(sx)
+
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
-                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # TODO: URGENT: Must figure out what is going on here
+                # TODO:         case 0, 1 and 2 lead to "bands" of
+                # TODO:         flux (check the e2dsll files)
+                case = 3
+                if case == 0:
+                    raw_weights = np.where(sx > 0, 1, 1e-9)
+                    weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                elif case == 1:
+                    # the weights should never be smaller than sigdet^2
+                    sigdets = np.repeat([sigdet ** 2], len(sx))
+                    noises = (sx * gain) + sigdet ** 2
+                    # find the weight for each pixel in sx
+                    raw_weights = np.max([noises, sigdets], axis=0)
+                    # weights is the inverse
+                    weights = 1.0 / raw_weights
+                elif case == 2:
+                    raw_weights = np.ones_like(sx)
+                    weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                else:
+                    weights = np.ones_like(sx)
+                    weights[~np.isfinite(sx)] = np.nan
+
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = (weights * sx * fx)
                 spe[ic] = np.nansum(weights * sx * fx)
