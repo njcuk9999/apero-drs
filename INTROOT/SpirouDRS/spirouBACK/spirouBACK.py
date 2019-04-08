@@ -42,7 +42,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_background_flatfield(p, image, header, comments, badpixmask):
+def measure_background_flatfield(p, image, header, comments):
     """
     Measures the background of a flat field image - currently does not work
     as need an interpolation function (see code)
@@ -70,7 +70,6 @@ def measure_background_flatfield(p, image, header, comments, badpixmask):
     # func_name = __NAME__ + '.measure_background_flatfield()'
 
     image1 = np.array(image)
-    image1[badpixmask] = np.nan
     image_med = signal.medfilt(image1, [3, 3])
 
     # get constants
@@ -139,7 +138,7 @@ def measure_background_flatfield(p, image, header, comments, badpixmask):
     # ----------------------------------------------------------------------
     # Produce DEBUG plot
     # ----------------------------------------------------------------------
-    data1 = np.where(image > 0, image - background, 0)
+    data1 = image - background
     # construct debug background file name
     debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
     # construct images
@@ -353,12 +352,9 @@ def measure_min_max(pp, y):
     miny, maxy = measure_box_min_max(y, pp['IC_LOCNBPIX'])
     # record the maximum signal in the central column
     # QUESTION: Why the third biggest?
-    max_signal = np.sort(y)[-3]
+    max_signal = np.nanpercentile(y, 95)
     # get the difference between max and min pixel values
-    with warnings.catch_warnings(record=True) as w:
-        diff_maxmin = maxy - miny
-    # log any catch warnings
-    spirouCore.WarnLog(pp, w, funcname)
+    diff_maxmin = maxy - miny
     # return values
     return miny, maxy, max_signal, diff_maxmin
 
@@ -390,8 +386,8 @@ def measure_box_min_max(y, size):
     # loop around each pixel from "size" to length - "size" (non-edge pixels)
     # and get the minimum and maximum of each box
     for it in range(size, ny - size):
-        min_image[it] = np.min(y[it - size:it + size])
-        max_image[it] = np.max(y[it - size:it + size])
+        min_image[it] = np.nanmin(y[it - size:it + size])
+        max_image[it] = np.nanmax(y[it - size:it + size])
 
     # deal with leading edge --> set to value at size
     min_image[0:size] = min_image[size]
