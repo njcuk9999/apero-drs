@@ -1130,10 +1130,10 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     x = np.arange(len(e2ds))
     # plot e2ds for selected order
     #    frame.plot(x, e2ds, label='E2DS')
-    frame.plot(x[e2ds > 0], e2ds[e2ds > 0], label='E2DS')
+    frame.plot(x, e2ds, label='E2DS', marker='.', markersize=2)
     # plot blaze function
     #    frame.plot(x, blaze, label='Blaze')
-    frame.plot(x[blaze > 1], blaze[blaze > 1], label='Blaze')
+    frame.plot(x, blaze, label='Blaze')
     # set title labels limits
     title = 'E2DS + BLAZE spectral order {0} fiber {1}'
     frame.set(title=title.format(selected_order, fiber))
