@@ -1603,8 +1603,8 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
             # weight values less than 0 to 1e-9
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1686,8 +1686,8 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
             # weight values less than 0 to 1e-9
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1780,8 +1780,8 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
                 # weight values less than 0 to 1e-9
                 # TODO: Could be this line!!!! Etienne --> values less than
                 #       zero are weighted down
-                raw_weights = np.where(sx > 0, 1, 1e-9)
-                # raw_weights = np.ones_like(sx)
+                # raw_weights = np.where(sx > 0, 1, 1e-9)
+                raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
                 weights = raw_weights / ((sx * gain) + sigdet ** 2)
@@ -1869,8 +1869,8 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
                 # weight values less than 0 to 1e-9
                 # TODO: Could be this line!!!! Etienne --> values less than
                 #       zero are weighted down
-                raw_weights = np.where(sx > 0, 1, 1e-9)
-                # raw_weights = np.ones_like(sx)
+                # raw_weights = np.where(sx > 0, 1, 1e-9)
+                raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
                 weights = raw_weights / ((sx * gain) + sigdet ** 2)
