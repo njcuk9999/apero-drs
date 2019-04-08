@@ -1385,7 +1385,8 @@ def correct_for_badpix(p, image, header, return_map=False, quiet=True):
         return p, mask
     else:
         # correct image (set bad pixels to zero)
-        corrected_image = np.where(mask, np.zeros_like(image), image)
+        corrected_image = np.array(image)
+        corrected_image[mask] = np.nan
         # finally return corrected_image
         return p, corrected_image
 
