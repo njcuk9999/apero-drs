@@ -377,12 +377,12 @@ def debananafication(p, image=None, badpix=None, dx=None, kind='full',
     # ----------------------------------------------------------------------
     # we shift all lines by the appropiate, pixel-dependent, dx
     for it in range(dim1):
-        not0 = image0[it, :] != 0
+        nanmask1 = np.isfinite(image0[it, :])
         # do spline fit
-        spline = IUVSpline(xpix[not0], image0[it, not0], ext=1)
+        spline = IUVSpline(xpix[nanmask1], image0[it, nanmask1], ext=1)
         # only pixels where dx is finite are considered
-        nanmask = np.isfinite(dx[it, :])
-        image1[it, nanmask] = spline(xpix[nanmask] + dx[it, nanmask])
+        nanmask2 = np.isfinite(dx[it, :])
+        image1[it, nanmask2] = spline(xpix[nanmask2] + dx[it, nanmask2])
     # ----------------------------------------------------------------------
     if dyfix:
         # looping through x pixels
@@ -445,7 +445,7 @@ def clean_hotpix(image, badpix):
     # We apply a 5-pix median boxcar in X and a 5-pix boxcar smoothing
     # in x. This blurs along the dispersion over a scale of ~7 pixels.
     box = np.ones([1, 5])
-    box /= np.sum(box)
+    box /= np.nansum(box)
     low_pass = signal.medfilt(image_rms_measurement, [1, 5])
     low_pass = signal.convolve2d(low_pass, box, mode='same')
 
@@ -456,14 +456,14 @@ def clean_hotpix(image, badpix):
 
     # smooth the abs(image) with a 3x3 kernel
     rms = signal.medfilt(np.abs(image_rms_measurement), [3, 3])
-    # the RMS cannot be arbitraly small, so  we set
+    # the RMS cannot be arbitrarily small, so  we set
     # a lower limit to the local RMS at 0.5x the median
     # rms
-    rms[rms < (0.5 * np.nanmedian(rms))] = 0.5 * np.nanmedian(rms)
-
-    # determining a proxy of N sigma
-    nsig = image_rms_measurement / rms
-    bad = np.array((np.abs(nsig) > 10), dtype=bool)
+    with warnings.catch_warnings(record=True) as _:
+        rms[rms < (0.5 * np.nanmedian(rms))] = 0.5 * np.nanmedian(rms)
+        # determining a proxy of N sigma
+        nsig = image_rms_measurement / rms
+        bad = np.array((np.abs(nsig) > 10), dtype=bool)
 
     # known bad pixels are also considered bad even if they are
     # within the +-N sigma rejection
@@ -477,7 +477,7 @@ def clean_hotpix(image, badpix):
     # correcting bad pixels with a 2D fit to valid neighbours
     for i in range(len(x)):
         keep = ~badpix[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
-        if np.sum(keep) < 6:
+        if np.nansum(keep) < 6:
             continue
         box = image[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
         # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
@@ -759,7 +759,7 @@ def extract_const_range(image, pos, nbsig, gain):
     for ic in ics:
         if mask[ic]:
             # add the main order pixels
-            spe[ic] = np.sum(image[j1s[ic] + 1: j2s[ic], ic])
+            spe[ic] = np.nansum(image[j1s[ic] + 1: j2s[ic], ic])
             # add the bits missing due to rounding
             spe[ic] += lower[ic] * image[j1s[ic], ic]
             spe[ic] += upper[ic] * image[j2s[ic], ic]
@@ -829,13 +829,13 @@ def extract_tilt(image, pos, tilt, r1, r2, gain, tiltborder=2):
             ww = wwa[(ww0i, ww1i)]
             # multiple the image by the rotation matrix
             sx = image[j1s[ic] + 1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
-            spe[ic] = np.sum(sx)
+            spe[ic] = np.nansum(sx)
             # add the main order pixels
             # add the bits missing due to rounding
             sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0]
-            spe[ic] += lower[ic] * np.sum(sxl)
+            spe[ic] += lower[ic] * np.nansum(sxl)
             sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1]
-            spe[ic] += upper[ic] * np.sum(sxu)
+            spe[ic] += upper[ic] * np.nansum(sxu)
     # convert to e-
     spe *= gain
     # return spe and nbcos
@@ -893,17 +893,17 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
             # Get the extraction of the order_profile
             fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
             # Renormalise the order_profile
-            fx = fx / np.sum(fx)
+            fx = fx / np.nansum(fx)
             # get the weights
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 0.000001)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 0.000001)
+            raw_weights = np.ones_like(sx)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
-            norm = np.sum(weights ** 2)
+            norm = np.nansum(weights ** 2)
             # add the main extraction to array
-            spe[ic] = np.sum(sx * weights[1:-1])
+            spe[ic] = np.nansum(sx * weights[1:-1])
             # add the bits missing due to rounding
             spe[ic] += lower[ic] * image[j1s[ic], ic] * weights[0]
             spe[ic] += upper[ic] * image[j2s[ic], ic] * weights[-1]
@@ -968,7 +968,7 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # set up long spe
-    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
@@ -986,22 +986,22 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            if np.sum(fx) > 0:
-                fx = fx / np.sum(fx)
+            if np.nansum(fx) > 0:
+                fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            #raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            sum_a = np.sum(weights * sx * fx, axis=1)
-            sum_b = np.sum(weights * fx ** 2, axis=1)
+            sum_a = np.nansum(weights * sx * fx, axis=1)
+            sum_b = np.nansum(weights * fx ** 2, axis=1)
             spelong[:, ic] = sum_a / sum_b
-            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
     spelong *= gain
@@ -1072,7 +1072,7 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # count of the detected cosmic rays
     cpt = 0
-    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
     for ic in ics[tiltborder:-tiltborder]:
         if mask[ic]:
@@ -1084,22 +1084,22 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            if np.sum(fx) > 0:
-                fx = fx / np.sum(fx)
+            if np.nansum(fx) > 0:
+                fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added in
             #    quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            sum_a = np.sum(weights * sx * fx, axis=1)
-            sum_b = np.sum(weights * fx ** 2, axis=1)
+            sum_a = np.nansum(weights * sx * fx, axis=1)
+            sum_b = np.nansum(weights * fx ** 2, axis=1)
             spelong[:, ic] = sum_a / sum_b
-            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
             # Cosmic rays correction
             spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
                                          cosmic_sigcut, cosmic_threshold)
@@ -1140,15 +1140,15 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     #       critical pixel values > sigcut * extraction
     #    or
     #       the loop exceeds "cosmic_threshold"
-    cond1 = np.max(crit) > np.max((sigcut * spe[ic], 1000.))
+    cond1 = np.nanmax(crit) > np.nanmax((sigcut * spe[ic], 1000.))
     cond2 = nbloop < cosmic_threshold
     while cond1 and cond2:
         # define the cosmic ray mask (True where not cosmic ray)
-        cosmask = ~(crit > np.max(crit) - 0.1)
+        cosmask = ~(crit > np.nanmax(crit) - 0.1)
         # set the pixels where there is a cosmic ray to zero
         part1 = weights * cosmask * sx * fx
         part2 = weights * cosmask * fx ** 2
-        spe[ic] = np.sum(part1) / np.sum(part2)
+        spe[ic] = np.nansum(part1) / np.nansum(part2)
         # recalculate the critical parameter
         crit = (sx * cosmask - spe[ic] * fx * cosmask)
         # increase the number of found cosmic rays by 1
@@ -1156,7 +1156,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
         # increase the loop counter
         nbloop += 1
         # recalculate conditions
-        cond1 = np.max(crit) > np.max((sigcut * spe[ic], 1000.))
+        cond1 = np.nanmax(crit) > np.nanmax((sigcut * spe[ic], 1000.))
         cond2 = nbloop < cosmic_threshold
 
     # finally return spe and cpt
@@ -1312,16 +1312,16 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            fx = fx / np.sum(fx)
+            fx = fx / np.nansum(fx)
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             # weights are then modified by the gain and sigdet added
             #     in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
@@ -1404,24 +1404,24 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # Get the extraction of the order_profile
             fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic] + 1]
             # Renormalise the order_profile
-            fx = fx / np.sum(fx)
+            fx = fx / np.nansum(fx)
             # get the weights
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
-            norm = np.sum(weights ** 2)
+            norm = np.nan(weights ** 2)
             # add the main extraction to array
-            mainvalues = np.sum(sx * weights[1:-1], 1)
+            mainvalues = np.nansum(sx * weights[1:-1], 1)
             # add the bits missing due to rounding
             sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0] * weights[0]
-            lowervalue = lower[ic] * np.sum(sxl)
+            lowervalue = lower[ic] * np.nansum(sxl)
             sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1] * weights[-1]
-            uppervalue = upper[ic] * np.sum(sxu)
+            uppervalue = upper[ic] * np.nansum(sxu)
             # add lower and upper constants to array and sum over all
-            spe[ic] = np.sum(mainvalues + lowervalue + uppervalue)
+            spe[ic] = np.nansum(mainvalues + lowervalue + uppervalue)
             # divide by the normalisation
             spe[ic] /= norm
     # convert to e-
@@ -1510,28 +1510,28 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
             else:
                 fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
                 # Renormalise the order_profile
-                fx = fx / np.sum(fx)
+                fx = fx / np.nansum(fx)
             # add the main order pixels
-            spe[ic] = np.sum(sx)
+            spe[ic] = np.nansum(sx)
             # get the weights
             # weight values less than 0 to 0.000001
             # TODO: Could be this line!!!! Etienne --> values less than
             #       zero are weighted down
-            raw_weights = np.where(sx > 0, 1, 1e-9)
-            # raw_weights = np.ones_like(sx)
+            # raw_weights = np.where(sx > 0, 1, 1e-9)
+            raw_weights = np.ones_like(sx)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
-            norm = np.sum(weights ** 2)
+            norm = np.nansum(weights ** 2)
             # add the main extraction to array
-            s_sx = np.sum(sx)
+            s_sx = np.nansum(sx)
             spe[ic] = s_sx * weights[1:-1] * ww[1:-1]
             # add the bits missing due to rounding
             sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
             sxl *= ww[0] * weights[1:-1]
-            spe[ic] += lower[ic] * np.sum(sxl)
+            spe[ic] += lower[ic] * np.nansum(sxl)
             sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
             sxu *= ww[-1] * weights[1:-1]
-            spe[ic] += upper[ic] * np.sum(sxu)
+            spe[ic] += upper[ic] * np.nansum(sxu)
             # divide by the normalisation
             spe[ic] /= norm
     # convert to e-
@@ -1587,7 +1587,7 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
     for ic in ics:
         if mask[ic]:
@@ -1596,8 +1596,8 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
             # get hte order profile slice
             fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
             # Renormalise the rotated order profile
-            if np.sum(fx) > 0:
-                fx = fx / np.sum(fx)
+            if np.nansum(fx) > 0:
+                fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
             # weight values less than 0 to 1e-9
@@ -1610,7 +1610,7 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
             spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
-            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
             # spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
@@ -1668,7 +1668,7 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
     # loop around each pixel along the order
@@ -1679,8 +1679,8 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
             # get hte order profile slice
             fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
             # Renormalise the rotated order profile
-            if np.sum(fx) > 0:
-                fx = fx / np.sum(fx)
+            if np.nansum(fx) > 0:
+                fx = fx / np.nansum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
             # weight values less than 0 to 1e-9
@@ -1692,7 +1692,7 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            spe[ic] = np.nansum(weights * sx * fx) / np.nansum(weights * fx ** 2)
             spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
             # Cosmic rays correction
             spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
@@ -1763,7 +1763,7 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
     with warnings.catch_warnings(record=True) as _:
         for ic in ics:
@@ -1780,7 +1780,7 @@ def extract_shape_weight2(simage, pos, r1, r2, orderp, gain, sigdet):
                 # weight values less than 0 to 1e-9
                 # TODO: Could be this line!!!! Etienne --> values less than
                 #       zero are weighted down
-                # raw_weights = np.where(sx > 0, 1, 1e-9)
+                #raw_weights = np.where(sx > 0, 1, 1e-9)
                 raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
@@ -1850,7 +1850,7 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
     # loop around each pixel along the order
@@ -1869,7 +1869,7 @@ def extract_shape_weight_cosm2(simage, pos, r1, r2, orderp, gain, sigdet,
                 # weight values less than 0 to 1e-9
                 # TODO: Could be this line!!!! Etienne --> values less than
                 #       zero are weighted down
-                # raw_weights = np.where(sx > 0, 1, 1e-9)
+                #raw_weights = np.where(sx > 0, 1, 1e-9)
                 raw_weights = np.ones_like(sx)
                 # weights are then modified by the gain and sigdet added
                 #    in quadrature
@@ -2079,7 +2079,7 @@ def extract_const_range_fortran(flatimage, pos, sig, dim, nbsig, gain):
         if (j1 > 0) and (j2 < nx):
             # for j in range(j1+1, j2):
             #     spe[ic-1] += flatimage[j+nx*(ic-1)]
-            spe[ic - 1] = np.sum(
+            spe[ic - 1] = np.nansum(
                 flatimage[j1 + 1 + nx * (ic - 1):j2 + nx * (ic - 1)])
             spe[ic - 1] += (j1 + 0.5 - lim1) * flatimage[j1 + nx * (ic - 1)]
             spe[ic - 1] += (lim2 - j2 + 0.5) * flatimage[j2 + nx * (ic - 1)]
@@ -2140,7 +2140,7 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
     for ic in ics:
         if mask[ic]:
             # add the main order pixels
-            spe[ic] = np.sum(image[ic, j1s[ic] + 1: j2s[ic]])
+            spe[ic] = np.nansum(image[ic, j1s[ic] + 1: j2s[ic]])
             # add the bits missing due to rounding
             spe[ic] += lower[ic] * image[ic, j1s[ic]]
             spe[ic] += upper[ic] * image[ic, j2s[ic]]
