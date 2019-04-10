@@ -11,6 +11,7 @@ Created on 2017-10-25 at 11:31
 from __future__ import division
 import numpy as np
 import os
+import warnings
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -288,10 +289,10 @@ def find_order_centers(pp, image, loc, order_num):
         # this column
         ovalues = image[rowtop:rowbottom, col]
         # only use if max - min above threshold = 100 * sigdet
-        if np.max(ovalues) - np.min(ovalues) > (nm_threshold * sigdet):
+        if np.nanmax(ovalues) - np.nanmin(ovalues) > (nm_threshold * sigdet):
             # as we are not normalised threshold needs multiplying by
             # the maximum value
-            threshold = np.max(ovalues) * locthreshold
+            threshold = np.nanmax(ovalues) * locthreshold
             # find the row center position and the width of the order
             # for this column
             lkwargs = dict(values=ovalues, threshold=threshold,
@@ -711,14 +712,21 @@ def smoothed_boxmean_image(image, size, weighted=True, method='new'):
             part = np.zeros_like(image)
         # get the weights (pixels below 0 are set to 1e-6, pixels above to 1)
         if weighted:
-            weights = np.where(part > 0, 1, 1.e-6)
+            with warnings.catch_warnings(record=True) as _:
+                weights = np.where(part > 0, 1, 1.e-6)
         else:
             weights = np.ones(len(part))
         # apply the weighted mean for this column
         if method == 'old':
-            newimage[:, it] = np.average(part, axis=1, weights=weights)
+            nanmask = np.isfinite(part)
+            if np.sum(nanmask) == 0:
+                newimage[:, it] = np.nan
+            else:
+                newimage[:, it] = np.average(part[nanmask], axis=1,
+                                             weights=weights[nanmask])
         else:
-            newimage[:, it] = np.median(part, axis=1)
+            with warnings.catch_warnings(record=True) as _:
+                newimage[:, it] = np.nanmedian(part, axis=1)
     # return the new smoothed image
     return newimage
 
