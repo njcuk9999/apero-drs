@@ -123,7 +123,6 @@ def main(night_name=None, files=None):
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
     p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
-    p, badpixmap = spirouImage.CorrectForBadPix(p, data2, hdr, return_map=True)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -132,7 +131,7 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data2, hdr, cdr, badpixmap]
+        bargs = [p, data2, hdr, cdr]
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data2)
@@ -146,7 +145,7 @@ def main(night_name=None, files=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data2 <= 0)
+    n_bad_pix = np.sum(~np.isfinite(data2))
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
