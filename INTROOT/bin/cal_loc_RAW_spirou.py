@@ -127,7 +127,6 @@ def main(night_name=None, files=None):
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
     p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
-    p, badpixmap = spirouImage.CorrectForBadPix(p, data2, hdr, return_map=True)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -136,19 +135,18 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data2, hdr, cdr, badpixmap]
+        bargs = [p, data2, hdr, cdr]
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data2)
     # apply background correction to data (and set to zero where negative)
-    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    background = np.zeros_like(data2)
-    data2 = np.where(data2 > 0, data2 - background, 0)
-    # data2 = data2 - background
+    data2 = data2 - background
 
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
+    # log that we are doing background measurement
+    WLOG(p, '', 'Creating Order Profile')
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'])
     # data 2 is now set to the order profile
     data2o = data2.copy()
@@ -281,6 +279,7 @@ def main(night_name=None, files=None):
             loc['MAX_PTP_CENTER'][rorder_num] = cf_data['max_ptp']
             loc['MAX_PTP_FRACCENTER'][rorder_num] = cf_data['max_ptp_frac']
             loc['MAX_RMPTS_POS'][rorder_num] = cf_data['max_rmpts']
+
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # sigma fit params
             sigfargs = [p, loc, wf_data, mask, order_num, rorder_num]
