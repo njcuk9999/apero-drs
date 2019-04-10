@@ -278,7 +278,7 @@ def darkplot_image_and_regions(pp, image):
     fig, frame = setup_figure(pp)
     # plot the image
     clim = (0., 10 * pp['MED_FULL'])
-    im = frame.imshow(image, origin='lower', clim=clim, cmap='jet')
+    im = frame.imshow(image, origin='lower', clim=clim, cmap='viridis')
     # plot the colorbar
     cbar = plt.colorbar(im, ax=frame)
     cbar.set_label('ADU/s')
@@ -328,7 +328,7 @@ def darkplot_datacut(p, imagecut):
     # imagecut need to be integers
     imagecut = imagecut.astype(np.int)
     # plot the image cut
-    im = frame.imshow(imagecut, origin='lower', cmap='gray')
+    im = frame.imshow(imagecut, origin='lower', cmap='viridis')
     # plot the colorbar
     fig.colorbar(im, ax=frame)
     # make sure image is bounded by shape
@@ -457,7 +457,7 @@ def locplot_im_sat_threshold(p, loc, image, threshold):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='gist_gray')
+    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='viridis')
     # set the limits
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
 
@@ -674,7 +674,8 @@ def slit_sorder_plot(pp, loc, image):
     offsetarray = np.zeros(len(loc['ASS'][order]))
     offsetarray[0] = offset
     # plot image
-    frame.imshow(image, origin='lower', clim=(0., np.mean(image)))
+    frame.imshow(image, origin='lower', clim=(0., np.mean(image)),
+                 cmap='viridis')
     # calculate selected order fit
     xfit = np.arange(image.shape[1])
     yfit1 = np.polyval((loc['ACC'][order] + offsetarray)[::-1], xfit)
@@ -790,7 +791,7 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
             # ----------------------------------------------------------------
             # frame 2
             # ----------------------------------------------------------------
-            frame2.imshow(ccor, aspect=0.2)
+            frame2.imshow(ccor, aspect=0.2, cmap='viridis')
             frame2.plot(dx - np.min(ddx), dypix, color='r', marker='o',
                         ls='None')
             frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
@@ -828,7 +829,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # plot dx
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax)
+    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis')
 
     divider1 = make_axes_locatable(frame1)
     cax1 = divider1.append_axes("top", size="10%", pad=0.05)
@@ -843,7 +844,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # plot dx2
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax)
+    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis')
 
     divider2 = make_axes_locatable(frame2)
     cax2 = divider2.append_axes("top", size="10%", pad=0.05)
@@ -858,7 +859,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # plot diff
     vmin = (-0.5 * sig_dx) + zeropoint
     vmax = (0.5 * sig_dx) + zeropoint
-    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax)
+    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis')
 
     divider3 = make_axes_locatable(frame3)
     cax3 = divider3.append_axes("top", size="10%", pad=0.05)
@@ -956,7 +957,7 @@ def ff_sorder_fit_edges(p, loc, image):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='viridis')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -994,7 +995,7 @@ def ff_debanana_plot(p, loc, image):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='viridis')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -1057,7 +1058,7 @@ def ff_aorder_fit_edges(p, loc, image):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='viridis')
 
     # loop around the order numbers
     for order_num in range(len(loc['ACC']) // p['NBFIB']):
@@ -1234,7 +1235,7 @@ def ext_sorder_fit(p, loc, image, cut=20000):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='viridis')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -1272,7 +1273,7 @@ def ext_debanana_plot(p, loc, image, cut=20000):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='viridis')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -1333,7 +1334,7 @@ def ext_aorder_fit(p, loc, image, cut=20000):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='viridis')
     # loop around the order numbers
     for order_num in range(len(loc['ACC']) // p['NBFIB']):
         acc = loc['ACC'][order_num]
@@ -1745,7 +1746,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
         ytext.append('Order {0} = FAILED'.format(bad_order))
     # -------------------------------------------------------------------------
     # plot the reference frame
-    frame1.imshow(speref_image)
+    frame1.imshow(speref_image, cmap='viridis')
     frame1.set(title='Reference frame')
     # turn off axis labels
     frame1.set_yticks(yticks)
@@ -1753,7 +1754,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     frame1.set_xticklabels([])
     # -------------------------------------------------------------------------
     # plot the science frame
-    frame2.imshow(spe_image)
+    frame2.imshow(spe_image, cmap='viridis')
     frame2.set(title='Iteration frame')
     # turn off axis labels
     frame2.set_yticks(yticks)
