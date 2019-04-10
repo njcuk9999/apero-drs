@@ -138,10 +138,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # read first file (fpfitsfilename)
     fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
 
+    # TODO: ------------------------------------------------------------
+    # TODO remove to test NaNs
+    # TODO: ------------------------------------------------------------
+    # hcmask = np.isfinite(hcdata)
+    # fpmask = np.isfinite(fpdata)
+    # hcdata[~hcmask] = 0.0
+    # fpdata[~fpmask] = 0.0
+    # TODO: ------------------------------------------------------------
+
     # add data and hdr to loc
     loc = ParamDict()
     loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
     loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+
     # set the source
     sources = ['HCDATA', 'HCHDR', 'HCCDR']
     loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
@@ -534,16 +544,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+    normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
