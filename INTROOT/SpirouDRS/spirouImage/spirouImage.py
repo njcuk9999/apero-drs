@@ -1701,9 +1701,10 @@ def get_tilt(pp, lloc, image):
         # extract this AB order
         lloc = spirouEXTOR.ExtractABOrderOffset(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
+        nanmask = np.isfinite(lloc['CENT1']) & np.isfinite(lloc['CENT2'])
         # interpolate the pixels on to the extracted centers
-        cent1i = np.interp(os_pixels, pixels, lloc['CENT1'])
-        cent2i = np.interp(os_pixels, pixels, lloc['CENT2'])
+        cent1i = np.interp(os_pixels, pixels[nanmask], lloc['CENT1'][nanmask])
+        cent2i = np.interp(os_pixels, pixels[nanmask], lloc['CENT2'][nanmask])
         # --------------------------------------------------------------------
         # get the correlations between cent2i and cent1i
         cori = np.correlate(cent2i, cent1i, mode='same')
