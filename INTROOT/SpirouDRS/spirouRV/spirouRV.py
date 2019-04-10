@@ -79,12 +79,12 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     # get the mask value
     maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
     # get the total
-    tot = np.sum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
+    tot = np.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
     # convert to dvrms2
     with warnings.catch_warnings(record=True) as _:
         dvrms2 = (CONSTANT_C ** 2) / abs(tot)
     # weighted mean of dvrms2 values
-    weightedmean = 1. / np.sqrt(np.sum(1.0 / dvrms2))
+    weightedmean = 1. / np.sqrt(np.nansum(1.0 / dvrms2))
     # return dv rms and weighted mean
     return dvrms2, weightedmean
 
@@ -291,6 +291,7 @@ def create_drift_file(p, loc):
         # get the pixels for this order
         tmp = np.array(speref[order_num, :])
         # For numerical sanity all values less than zero set to zero
+        tmp[~np.isfinite(tmp)] = 0
         tmp[tmp < 0] = 0
         # set border pixels to zero to avoid fit starting off the edge of image
         tmp[0: border + 1] = 0
@@ -1677,6 +1678,10 @@ def fit_ccf(p, rv, ccf, fit_type):
     # uniform weights
     w = np.ones(len(ccf))
     # get gaussian fit
+
+    nanmask = np.isfinite(y)
+    y[~nanmask] = 0.0
+
     result, fit = spirouMath.fitgaussian(x, y, weights=w, guess=a)
 
     ccf_fit = (fit + 1 - fit_type) * max_ccf
