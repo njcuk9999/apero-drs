@@ -163,13 +163,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
     p, data1 = spirouImage.CorrectForBadPix(p, data1, hdr)
-    p, badpixmap = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data1 == 0)
+    n_bad_pix = np.sum(~np.isfinite(data1))
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data1.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
@@ -193,13 +192,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data1, hdr, cdr, badpixmap]
+        bargs = [p, data1, hdr, cdr]
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data1)
     # apply background correction to data (and set to zero where negative)
-    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    # data1 = np.where(data1 > 0, data1 - background, 0)
     data1 = data1 - background
 
     # ----------------------------------------------------------------------
@@ -326,8 +323,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         fout = spirouImage.ReadFlatFile(p, hdr, return_header=True)
         p, loc['FLAT'], flathdr = fout
         loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
-        # get all values in flat that are zero to 1
-        loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
         # get flat extraction mode
         if p['KW_E2DS_EXTM'][0] in flathdr:
             flat_ext_mode = flathdr[p['KW_E2DS_EXTM'][0]]
@@ -412,7 +407,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             blaze_win1 = int(data2.shape[0] / 2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0] / 2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
-            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
+            flux = np.nansum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise ** 2)
             # log the SNR RMS
@@ -420,7 +415,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wargs = [p['FIBER'], order_num, snr, cpt]
             WLOG(p, '', wmsg.format(*wargs))
             # add calculations to storage
-            e2ds = np.where(loc['BLAZE'][order_num] > 1, e2ds, 0.)
             loc['E2DS'][order_num] = e2ds
             loc['E2DSFF'][order_num] = e2ds / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
