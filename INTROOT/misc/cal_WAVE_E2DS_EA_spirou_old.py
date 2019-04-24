@@ -20,6 +20,8 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS import spirouDB
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -606,7 +608,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             WLOG(p, '', wmsg.format(*wargs))
 
         # 3rd degree polynomial fit to the center of bins vs median dv per bin
-        fit = np.polyfit(xbins + 50, meddv, 3)
+        fit = nanpolyfit(xbins + 50, meddv, 3)
         # evaluate fit on all lines to get a predicted velocity offset
         dv_pred = np.polyval(fit, wave_catalog)
 
@@ -652,7 +654,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # we perform a sigma clipping of lines with a 2nd order polynomial
             # of the dV vs pixel position, this is only used for sigma-clipping
             while nsigmax > 3:
-                fit = np.polyfit(xgau[gg], dv[gg], 2)
+                fit = nanpolyfit(xgau[gg], dv[gg], 2)
 
                 # plt.plot(xgau[gg],dv[gg]-np.polyval(fit,xgau[gg]),'r.')
                 # plt.show()
@@ -688,7 +690,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 plt.ylabel('pixel position')
 
             # the pix VS wavelength is fitted with a 4th order polynomial
-            fit_per_order[iord, :] = np.polyfit(xgau[gg], wave_catalog[gg],
+            fit_per_order[iord, :] = nanpolyfit(xgau[gg], wave_catalog[gg],
                                                 fit_degree)
 
     if doplot_sanity:
@@ -744,7 +746,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # sigma clipping on linear fit to remove few large outliers
             # avoids biassing high-order polynomials by these outliers
             while nsigmax > 3:
-                fit = np.polyfit(nth_order[keep], tmp[keep], 1)
+                fit = nanpolyfit(nth_order[keep], tmp[keep], 1)
                 err = tmp - np.polyval(fit, nth_order)
 
                 idmax = np.argmax(np.abs(err * keep / np.std(err[keep])))
@@ -767,7 +769,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # using higher-order polynomial
             fit, err = None, None
             while nsigmax > 3:
-                fit = np.polyfit(nth_order[keep], tmp[keep],
+                fit = nanpolyfit(nth_order[keep], tmp[keep],
                                  order_fit_continuity[nth_poly_order])
                 err = tmp - np.polyval(fit, nth_order)
 

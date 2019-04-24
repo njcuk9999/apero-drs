@@ -14,6 +14,8 @@ import numpy as np
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -68,7 +70,7 @@ def measure_blaze_for_order(p, y):
     xc = x[mask]
 
     # do poly fit
-    coeffs = np.polyfit(xc, yc, deg=fitdegree)
+    coeffs = nanpolyfit(xc, yc, deg=fitdegree)
     # get the fit values for these coefficients
     fity = np.polyval(coeffs, x)
     # calculate the blaze as the fit values for all good pixels and 1 elsewise

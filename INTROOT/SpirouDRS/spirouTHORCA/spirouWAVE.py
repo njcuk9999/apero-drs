@@ -25,6 +25,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouRV
 from SpirouDRS.spirouCore import spirouMath
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 
 from . import spirouTHORCA
 
@@ -340,7 +341,7 @@ def fp_wavelength_sol(p, loc, mode='new'):
     # fit a polynomial to line number v measured difference in cavity
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
-        coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
+        coeffs = nanpolyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
     spirouCore.WarnLog(p, w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
@@ -611,7 +612,7 @@ def fp_wavelength_sol_new(p, loc):
     # fit a polynomial to line number v measured difference in cavity
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
-        coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
+        coeffs = nanpolyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
     spirouCore.WarnLog(p, w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
@@ -1032,7 +1033,7 @@ def find_hc_gauss_peaks(p, loc):
 #                 yy = wave_catalog[pos_it]
 #                 # fit this position's lines and take it as the best-guess
 #                 #    solution
-#                 coeffs = np.polyfit(xx, yy, triplet_deg)
+#                 coeffs = nanpolyfit(xx, yy, triplet_deg)
 #                 # extrapolate out over all lines
 #                 fit_all = np.polyval(coeffs, xgau[good_all])
 #                 # work out the error in velocity
@@ -1846,7 +1847,7 @@ def fit_gaussian_triplets(p, loc):
                 yy = wave_catalog[pos_it]
                 # fit this position's lines and take it as the best-guess
                 #    solution
-                coeffs = np.polyfit(xx, yy, triplet_deg)
+                coeffs = nanpolyfit(xx, yy, triplet_deg)
                 # extrapolate out over all lines
                 fit_all = np.polyval(coeffs, xgau[good_all])
                 # work out the error in velocity
@@ -2108,7 +2109,7 @@ def fit_gaussian_triplets(p, loc):
 
             ppx = xgau[order_mask]
             ppy = wave_catalog[order_mask]
-            wcoeffs = np.polyfit(ppx, ppy, loc['WAVEPARAMS'].shape[1]-1)[::-1]
+            wcoeffs = nanpolyfit(ppx, ppy, loc['WAVEPARAMS'].shape[1]-1)[::-1]
             poly_wave_sol3[order_num, :] = wcoeffs
             wave_map3[order_num, :] = np.polyval(wcoeffs[::-1], xpix)
 

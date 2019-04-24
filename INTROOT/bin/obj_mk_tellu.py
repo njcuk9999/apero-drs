@@ -43,6 +43,8 @@ from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTelluric
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -576,7 +578,7 @@ def main(night_name=None, files=None):
                 part2 = np.sum(abso_med2[goodpix] ** 2)
                 cc[jt] = part1 / part2
             # fit the ratio across the points
-            cfit = np.polyfit(dvpixels, cc, fitdeg)
+            cfit = nanpolyfit(dvpixels, cc, fitdeg)
             # work out the dv pix
             dvpix = -0.5 * (cfit[1] / cfit[0])
             # log stats

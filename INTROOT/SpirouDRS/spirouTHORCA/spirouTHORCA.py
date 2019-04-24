@@ -19,6 +19,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS.spirouCore import spirouMath
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 
 
 # =============================================================================
@@ -616,8 +617,8 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         frac_ll_point = ll_point/ll_start_point
         # fit the inverse order numbers against the fractional
         #    wavelength contrib.
-        coeffs = np.polyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
-        coeffs0 = np.polyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        coeffs = nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        coeffs0 = nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
         # calculate the fit values
         cfit = np.polyval(coeffs[::-1], inv_orderpos)
         # calculate the residuals
@@ -630,7 +631,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         frac_ll_point_s = frac_ll_point[sigmaclip]
         # refit the inverse order numbers against the fractional
         #    wavelength contrib. after sigma clip
-        coeffs = np.polyfit(inv_orderpos_s, frac_ll_point_s, fit_degree)[::-1]
+        coeffs = nanpolyfit(inv_orderpos_s, frac_ll_point_s, fit_degree)[::-1]
         # calculate the fit values (for all values - including sigma clipped)
         cfit = np.polyval(coeffs[::-1], inv_orderpos)
         # calculate residuals (in km/s) between fit and original values
@@ -751,7 +752,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
 
     for order_num in range(ydim):
         # fit the littrow extrapolation
-        param = np.polyfit(x_cut_points, littrow_extrap[order_num],
+        param = nanpolyfit(x_cut_points, littrow_extrap[order_num],
                            fit_degree)[::-1]
         # add to storage
         littrow_extrap_param[order_num] = param
@@ -1423,7 +1424,7 @@ def fit_emi_line(p, sll, sxpos, sdata, weight, mode=0):
             weights = np.sqrt(weight*sdata**2)
             # fit the lsdata with a weighted polyfit
             with warnings.catch_warnings(record=True) as w:
-                coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
+                coeffs = nanpolyfit(slln, lsdata, fitdegree, w=weights)[::-1]
             spirouCore.WarnLog(p, w, funcname=func_name)
 
     # perform a gaussian fit
@@ -1722,7 +1723,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         while improve:
             # fit wavelength to pixel solution (with polynomial)
             ww = np.sqrt(weight)
-            coeffs = np.polyfit(lines, x_fit, fit_degree, w=ww)[::-1]
+            coeffs = nanpolyfit(lines, x_fit, fit_degree, w=ww)[::-1]
             # calculate the fit
             cfit = np.polyval(coeffs[::-1], lines)
             # calculate the variance
@@ -1854,7 +1855,7 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
         # set weights
         weight = np.ones(num_lines, dtype=float)
         # get fit coefficients
-        coeffs = np.polyfit(cfit, lines, fit_degree, w=weight)[::-1]
+        coeffs = nanpolyfit(cfit, lines, fit_degree, w=weight)[::-1]
         # get the y values for the coefficients
         icfit = np.polyval(coeffs[::-1], cfit)
         # work out the residuals

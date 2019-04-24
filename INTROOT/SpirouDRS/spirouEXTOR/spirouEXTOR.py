@@ -17,6 +17,8 @@ import warnings
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
 from SpirouDRS.spirouCore.spirouMath import IUVSpline
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -406,7 +408,7 @@ def debananafication(p, image=None, badpix=None, dx=None, kind='full',
             # dy for all orders and all fibers
             dy = y0[:, ix] - y0[:, dim2 // 2]
             # fitting the dy to the position of the order
-            yfit = np.polyfit(y0[:, ix], dy, 3)
+            yfit = nanpolyfit(y0[:, ix], dy, 3)
             ypix = np.arange(dim1)
             # spline for all pixels to the new position
             # we add 1000 to be sure that we never have a pixel below zero

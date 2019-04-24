@@ -22,7 +22,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
-
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 from SpirouDRS import spirouRV
 
 from astropy import constants as cc
@@ -368,7 +368,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         cond4 = x_diff < 1.25 * med_x_diff
         x_good_ind = np.where(cond3 & cond4)
         # fit x_fp v x_diff for good points
-        cfit_xdiff = np.polyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
+        cfit_xdiff = nanpolyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
         # loop over gap points
         for i in range(np.shape(x_gap_ind)[1]):
             # # find closest good x diff
@@ -596,7 +596,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         mask = np.ones_like(fp_x_ord, dtype = 'Bool')
         while sigmax>sigclip:
             # fit on masked values
-            coeff_xm = np.polyfit(fp_x_ord[mask], m_ord[mask], deg=p['IC_LL_DEGR_FIT'])
+            coeff_xm = nanpolyfit(fp_x_ord[mask], m_ord[mask], deg=p['IC_LL_DEGR_FIT'])
             # get residuals (not masked or dimension break)
             res = m_ord - np.polyval(coeff_xm, fp_x_ord)
             # normalise
@@ -689,7 +689,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         d = np.asarray(d)[one_m_sort]
 
         # # initial polynomial fit
-        # fit_1m_d_init = np.polyfit(one_m_d, d, 9)
+        # fit_1m_d_init = nanpolyfit(one_m_d, d, 9)
         # # get residuals
         # res = d - np.polyval(fit_1m_d_init, one_m_d)
         # # mask points at +/- 1 sigma
@@ -698,7 +698,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # d = d[sig_clip]
 
         # second polynomial fit
-        fit_1m_d = np.polyfit(one_m_d, d, 9)
+        fit_1m_d = nanpolyfit(one_m_d, d, 9)
         fit_1m_d_func = np.poly1d(fit_1m_d)
         res_d_final = d - fit_1m_d_func(one_m_d)
 
@@ -734,7 +734,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         mask = np.ones_like(hc_ll_test, dtype='Bool')
         while sigmax > sigclip:
             # fit on masked values
-            ff = np.polyfit(hc_ll_test[mask], d[mask], deg=9)
+            ff = nanpolyfit(hc_ll_test[mask], d[mask], deg=9)
             # get residuals (not masked or dimension break)
             res = d - np.polyval(ff, hc_ll_test)
             # normalise
@@ -899,8 +899,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             mask = np.ones_like(fp_x_ord, dtype='Bool')
             while sigmax > sigclip:
                 # fit on masked values
-                poly_wave_sol_final[onum] = np.polyfit(fp_x_ord[mask],
-                                                    fp_ll_new_ord[mask],
+                poly_wave_sol_final[onum] = nanpolyfit(fp_x_ord[mask],
+                                                       fp_ll_new_ord[mask],
                                     p['IC_LL_DEGR_FIT'], w=wei_ord[mask])[::-1]
                 # get residuals
                 res = fp_ll_new_ord - np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
@@ -962,7 +962,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         mask_all = np.ones_like(fp_xx_f, dtype='Bool')
         while sigmax > sigclip:
             # fit on masked values
-            fitfit = np.polyfit(fp_xx_f[mask_all],
+            fitfit = nanpolyfit(fp_xx_f[mask_all],
                                 res_modx[mask_all],0)
             # get residuals
             res = fp_xx_f - np.polyval(fitfit, fp_xx_f)
@@ -992,7 +992,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     #     wei_ord = np.asarray(wei)[ord_mask]
     #     # fit polynomial
     #     # pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
-    #     poly_wave_sol_final[onum][:-1] = np.polyfit(fp_x_ord, fp_ll_new_ord,
+    #     poly_wave_sol_final[onum][:-1] = nanpolyfit(fp_x_ord, fp_ll_new_ord,
     #                            p['IC_LL_DEGR_FIT']-1, w=wei_ord)[::-1]
     #     # get final wavelengths
     #     fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
@@ -1008,7 +1008,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     #         wei_ord = wei_ord[sig_mask]
     #         # refit polynomial
     #         #pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
-    #         poly_wave_sol_final[onum] = np.polyfit(fp_x_ord, fp_ll_new_ord,
+    #         poly_wave_sol_final[onum] = nanpolyfit(fp_x_ord, fp_ll_new_ord,
     #                                                p['IC_LL_DEGR_FIT'], w=wei_ord)[::-1]
     #         # get new final wavelengths
     #         fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1],

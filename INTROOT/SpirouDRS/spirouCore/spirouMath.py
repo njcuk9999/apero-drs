@@ -569,6 +569,13 @@ def IUVSpline(x, y, **kwargs):
     return InterpolatedUnivariateSpline(x, y, w=w, **kwargs)
 
 
+def nanpolyfit(x, y, deg, **kwargs):
+    # find the NaNs
+    nanmask = ~(np.isfinite(y) and np.isfinite(x))
+    # return polyfit without the nans
+    return nanpolyfit(x[nanmask], y[nanmask], deg, **kwargs)
+
+
 # TODO: Required commenting and cleaning up
 def linear_minimization(vector, sample):
     func_name = __NAME__ + '.linear_minimization()'

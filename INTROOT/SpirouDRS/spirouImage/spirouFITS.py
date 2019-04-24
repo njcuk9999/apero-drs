@@ -19,6 +19,7 @@ import string
 import os
 import warnings
 from collections import OrderedDict
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 import time
 
 from SpirouDRS import spirouConfig
@@ -1083,7 +1084,7 @@ def check_wave_sol_consistency(p, loc):
             # get the wave map for this order
             yfit = np.polyval(input_coeffs[order_num][::-1], xfit)
             # get the new coefficients based on a fit to this wavemap
-            coeffs = np.polyfit(xfit, yfit, required_ncoeffs)[::-1]
+            coeffs = nanpolyfit(xfit, yfit, required_ncoeffs)[::-1]
             # push into storage
             output_coeffs[order_num] = coeffs
             output_map[order_num] = yfit

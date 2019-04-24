@@ -383,7 +383,7 @@ def main():
     # plt.figure()
     # it = 0
     # for po in plot_order:
-    #     fit = np.polyfit(hc_x_match_1[order_match == po],
+    #     fit = nanpolyfit(hc_x_match_1[order_match == po],
     #                      hc_x_match_2[order_match == po] - hc_x_match_1[order_match == po],
     #                      deg=2)
     #     # plt.plot(hc_x_match_1[order_match==po],
