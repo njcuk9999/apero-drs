@@ -10,13 +10,13 @@ Created on 2017-11-07 at 13:46
 """
 from __future__ import division
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 from scipy import signal
 from collections import OrderedDict
 import warnings
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
+from SpirouDRS.spirouCore.spirouMath import IUVSpline
 
 # =============================================================================
 # Define variables
@@ -496,7 +496,9 @@ def fit2dpoly(x, y, z):
     a = np.array([ones, x, y, x**2, y**2, x*y]).T
     b = z.flatten()
     # perform a least squares fit on a and b
+    print('run np.linalg.lstsq')
     coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
+    print('end np.linalg.lstsq')
     # return the coefficients
     return coeff
 
