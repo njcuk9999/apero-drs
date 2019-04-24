@@ -18,6 +18,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouEXTOR
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -628,7 +630,7 @@ def calculate_fit(x, y, f):
                      residuals i.e. max(abs_res)
     """
     # Do initial fit (revere due to fortran compatibility)
-    a = np.polyfit(x, y, deg=f)[::-1]
+    a = nanpolyfit(x, y, deg=f)[::-1]
     # Get the intial fit data
     fit = np.polyval(a[::-1], x)
     # work out residuals

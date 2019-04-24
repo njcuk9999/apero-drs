@@ -19,6 +19,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -553,8 +555,7 @@ for sol_iteration in range(3):
                     index = [g[i], g[j], g[k]]
                     xx = xgau[index]
                     yy = wave_catalog[index]
-                    fit = np.polyfit(xx, yy,
-                                     2)  # fit the lines and take it as a
+                    fit = nanpolyfit(xx, yy, 2)  # fit the lines and take it as a
                     # best-guess solution
                     dd = (wave_catalog[g_all] / np.polyval(fit, np.array(
                         xgau[g_all])) - 1) * 299792.458  # error

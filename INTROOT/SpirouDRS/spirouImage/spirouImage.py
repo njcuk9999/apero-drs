@@ -28,7 +28,7 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
 from SpirouDRS.spirouCore.spirouMath import IUVSpline
-
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 import off_listing_REDUC_spirou
 
 from . import spirouFITS
@@ -1754,7 +1754,7 @@ def fit_tilt(pp, lloc):
     # get the x values for
     xfit = np.arange(lloc['NUMBER_ORDERS']/2)
     # get fit coefficients for the tilt polynomial fit
-    atc = np.polyfit(xfit, lloc['TILT'], pp['IC_TILT_FIT'])[::-1]
+    atc = nanpolyfit(xfit, lloc['TILT'], pp['IC_TILT_FIT'])[::-1]
     # get the yfit values for the fit
     yfit = np.polyval(atc[::-1], xfit)
     # get the rms for the residuls of the fit and the data
@@ -2031,7 +2031,7 @@ def get_shape_map_old(p, loc):
                     # max RV and fit on the neighbouring pixels
                     xff = slopes[maxpix - 1: maxpix + 2]
                     yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
-                    coeffs = np.polyfit(xff, yff, 2)
+                    coeffs = nanpolyfit(xff, yff, 2)
                     # if peak within range, then its fine
                     dcoeffs = -0.5 * coeffs[1] / coeffs[0]
                     if np.abs(dcoeffs) < 1:
@@ -2043,7 +2043,7 @@ def get_shape_map_old(p, loc):
             sigmax = np.inf
             while sigmax > sigclipmax:
                 # recalculate the fit
-                coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+                coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
                 # get the residuals
                 res = dxsection - np.polyval(coeffs, xsection)
                 # normalise residuals
@@ -2057,7 +2057,7 @@ def get_shape_map_old(p, loc):
             # -------------------------------------------------------------
             # fit a 2nd order polynomial to the slope vx position
             #    along order
-            coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+            coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
             # log slope at center
             s_xpix = dim1//2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
@@ -2375,7 +2375,7 @@ def get_shape_map(p, loc):
                     # max RV and fit on the neighbouring pixels
                     xff = slopes[maxpix - 1: maxpix + 2]
                     yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
-                    coeffs = np.polyfit(xff, yff, 2)
+                    coeffs = nanpolyfit(xff, yff, 2)
                     # if peak within range, then its fine
                     dcoeffs = -0.5 * coeffs[1] / coeffs[0]
                     if np.abs(dcoeffs) < 1:
@@ -2402,7 +2402,7 @@ def get_shape_map(p, loc):
             # sigma clip
             while sigmax > sigclipmax:
                 # recalculate the fit
-                coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+                coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
                 # get the residuals
                 res = dxsection - np.polyval(coeffs, xsection)
                 # normalise residuals
@@ -2416,7 +2416,7 @@ def get_shape_map(p, loc):
             # -------------------------------------------------------------
             # fit a 2nd order polynomial to the slope vx position
             #    along order
-            coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+            coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
             # log slope at center
             s_xpix = dim1//2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
@@ -2917,7 +2917,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     uppermask = dxpeak < np.percentile(dxpeak, deviant_percentiles[1])
     good = lowermask & uppermask
     # apply good mask and fit the peak separation
-    fit_peak_separation = np.polyfit(xpeak2_mean[good], dxpeak[good], 2)
+    fit_peak_separation = nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)
     # Looping through peaks and counting the number of meddx between peaks
     #    we know that peaks will be at integer multiple or medds (in the
     #    overwhelming majority, they will be at 1 x meddx)
@@ -2955,7 +2955,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     for zp in range(fpstart, fpend):
         # we take a trial solution between wave (from the theoretical FP
         #    solution) and the x position of measured peaks
-        fitzp = np.polyfit(wave_fp[zp - ipeak], xpeak2, 3)
+        fitzp = nanpolyfit(wave_fp[zp - ipeak], xpeak2, 3)
         # we predict an x position for the known U Ne lines
         xpos_predict = np.polyval(fitzp, une_lines)
         # deal with borders
@@ -2993,7 +2993,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
-        fit_err_xpix = np.polyfit(xpeak2[good], err_pix[good], 1)
+        fit_err_xpix = nanpolyfit(xpeak2[good], err_pix[good], 1)
         # get the deviation from error fit
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
@@ -3011,7 +3011,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
-        fit_err_xpix = np.polyfit(xpeak2[good], err_pix[good], 5)
+        fit_err_xpix = nanpolyfit(xpeak2[good], err_pix[good], 5)
         # get the deviation from error fit
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
@@ -3034,7 +3034,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     errpix_med = np.nanmedian(err_pix)
     std_corr = np.std(corr_err_xpix[xpos_predict_int])
     corr_med = np.nanmedian(corr_err_xpix[xpos_predict_int])
-    cent_fit = np.polyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
+    cent_fit = nanpolyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
     num_fp_cent = np.polyval(cent_fit, dim2//2)
     # log the statistics
     wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]

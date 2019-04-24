@@ -11,6 +11,8 @@ import warnings
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS.spirouEXTOR import DeBananafication
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # FP file for tilt/dx determination
 slope_file = '2295305a_pp.fits'
@@ -190,7 +192,7 @@ for iord in range(0, n_ord):
 
                 # we fit a parabolla to the max pixel and its 2 neighbours
                 with warnings.catch_warnings(record=True) as _:
-                    fit = np.polyfit(slopes[pixmax - 1:pixmax + 2],
+                    fit = nanpolyfit(slopes[pixmax - 1:pixmax + 2],
                                      medmax[pixmax - 1:pixmax + 2], 2)
 
                 # the deriv=0 point of the parabola is taken to be the position
@@ -244,7 +246,7 @@ for iord in range(0, n_ord):
         plt.plot(xpospeak, allslopes, 'go')
 
         # we fit a 2nd order polynomial to pos vs slope
-        slope = np.polyval(np.polyfit(xpospeak, allslopes, 2),
+        slope = np.polyval(nanpolyfit(xpospeak, allslopes, 2),
                            np.array(range(4088)))
 
         plt.plot(slope, 'k--')
