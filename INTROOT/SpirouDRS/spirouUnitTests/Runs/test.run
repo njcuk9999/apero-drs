@@ -1,4 +1,3 @@
-run004b = ['cal_SHAPE_spirou', 'TEST1/20180805', '2295680c_pp.fits', '2295525a_pp.fits']
 run005 = ['cal_FF_RAW_spirou', 'TEST1/20180805', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
 
 # Extract the HC's/FP's
