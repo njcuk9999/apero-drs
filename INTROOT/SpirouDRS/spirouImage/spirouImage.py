@@ -17,7 +17,6 @@ import warnings
 import scipy
 from scipy.ndimage import filters, median_filter
 from scipy.interpolate import griddata
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 from scipy.ndimage import filters
 from scipy.stats import stats
 from scipy.signal import medfilt
@@ -28,6 +27,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
+from SpirouDRS.spirouCore.spirouMath import IUVSpline
 
 import off_listing_REDUC_spirou
 

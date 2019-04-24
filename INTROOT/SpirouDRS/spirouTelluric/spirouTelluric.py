@@ -11,7 +11,6 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 from scipy.ndimage import filters
 from scipy.optimize import curve_fit
 import warnings
@@ -21,7 +20,7 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
 from SpirouDRS.spirouCore import spirouMath
-
+from SpirouDRS.spirouCore.spirouMath import IUVSpline
 
 # =============================================================================
 # Define variables
