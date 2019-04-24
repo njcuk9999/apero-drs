@@ -498,9 +498,7 @@ def fit2dpoly(x, y, z):
     a = np.array([ones, x, y, x**2, y**2, x*y]).T
     b = z.flatten()
     # perform a least squares fit on a and b
-    print('run np.linalg.lstsq')
     coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
-    print('end np.linalg.lstsq')
     # return the coefficients
     return coeff
 
