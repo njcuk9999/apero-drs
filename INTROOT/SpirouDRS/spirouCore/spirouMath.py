@@ -573,7 +573,7 @@ def nanpolyfit(x, y, deg, **kwargs):
     # find the NaNs
     nanmask = ~(np.isfinite(y) & np.isfinite(x))
     # return polyfit without the nans
-    return nanpolyfit(x[nanmask], y[nanmask], deg, **kwargs)
+    return np.polyfit(x[nanmask], y[nanmask], deg, **kwargs)
 
 
 # TODO: Required commenting and cleaning up
