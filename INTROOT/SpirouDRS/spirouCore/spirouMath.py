@@ -571,7 +571,7 @@ def IUVSpline(x, y, **kwargs):
 
 def nanpolyfit(x, y, deg, **kwargs):
     # find the NaNs
-    nanmask = ~(np.isfinite(y) and np.isfinite(x))
+    nanmask = ~(np.isfinite(y) & np.isfinite(x))
     # return polyfit without the nans
     return nanpolyfit(x[nanmask], y[nanmask], deg, **kwargs)
 
