@@ -1427,6 +1427,26 @@ def ext_1d_spectrum_plot(p, x, y):
     end_plotting(p, plot_name)
 
 
+def ext_1d_spectrum_debug_plot(p, x, y, w, kind):
+    plot_name = 'ext_1d_spectrum_debug_plot'
+    # set up fig
+    fig, frame = setup_figure(p)
+    # get weighted y
+    yw = y / w
+    # plot lines
+    frame.plot(x, y / np.nanmedian(y), color='r', label='prior to division')
+    frame.plot(x, w / np.nanmedian(w), color='c', label='weight vector')
+    frame.plot(x, yw / np.nanmedian(yw), color='k', label='after division')
+    # add legend
+    frame.legend(loc=0)
+    # set title
+    title = 'Debug plot for producing 1D spectrum. Kind = {0}'.format(kind)
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
 # =============================================================================
 # drift plotting function
 # =============================================================================
