@@ -266,9 +266,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Do correlation
     # ----------------------------------------------------------------------
     # calculate and fit the CCF
-    print('Start Coravelation (p, loc)')
     loc = spirouRV.Coravelation(p, loc)
-    print('End Coravelation (p, loc)')
 
     # ----------------------------------------------------------------------
     # Correlation stats
