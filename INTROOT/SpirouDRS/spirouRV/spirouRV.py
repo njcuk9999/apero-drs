@@ -116,7 +116,8 @@ def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     """
     func_name = __NAME__ + '.renormalise_cosmic2d()'
     # flag (saturated) fluxes above threshold as "bad pixels"
-    flag = (spe < threshold) & (speref < threshold)
+    with warnings.catch_warnings(record=True) as _:
+        flag = (spe < threshold) & (speref < threshold)
     # get the dimensions of spe
     dim1, dim2 = spe.shape
     # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
@@ -137,7 +138,8 @@ def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     zbottom = (spef / rnormspe) + spereff + stotal
     z = ztop / zbottom
     # get good values
-    goodvalues = abs(z) > 0
+    with warnings.catch_warnings(record=True) as _:
+        goodvalues = abs(z) > 0
     # set the bad values to NaN
     znan = np.copy(z)
     znan[~goodvalues] = np.nan
@@ -190,8 +192,9 @@ def calculate_rv_drifts_2d(speref, spe, wave, sigdet, threshold, size):
                      COMPARISON spectrum for each order
     """
     # flag bad pixels (less than threshold + difference less than threshold/10)
-    flag = (speref < threshold) & (spe < threshold)
-    flag &= (speref - spe < threshold / 10.)
+    with warnings.catch_warnings(record=True) as _:
+        flag = (speref < threshold) & (spe < threshold)
+        flag &= (speref - spe < threshold / 10.)
     # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
     for i_it in range(1, 2 * size, 1):
         flag[:, size:-size] *= flag[:, i_it: i_it - 2 * size]
