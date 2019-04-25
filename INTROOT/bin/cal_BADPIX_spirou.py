@@ -120,7 +120,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     bad_pixel_map = bad_pixel_map1 | bad_pixel_map2
     # total number of bad pixels
-    btotal = (np.sum(bad_pixel_map) / bad_pixel_map.size) * 100
+    btotal = (np.nansum(bad_pixel_map) / bad_pixel_map.size) * 100
     # log result
     text = 'Fraction of total bad pixels {0:.4f} %'
     WLOG(p, '', text.format(btotal))

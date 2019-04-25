@@ -1114,11 +1114,11 @@ def measure_dark(pp, image, image_name, short_name):
     # get the number of NaNs
     imax = image.size - len(fimage)
     # get the median value of the non-NaN data
-    med = np.median(fimage)
+    med = np.nanmedian(fimage)
     # get the 5th and 95th percentile qmin
     try:
         # noinspection PyTypeChecker
-        qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
+        qmin, qmax = np.nanpercentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG(pp, 'error', [e.message, emsg])
@@ -1407,7 +1407,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
                 log_opt: string, log option, normally the program name
 
     :param image: numpy array (2D), the iamge to median filter and normalise
-    :param method: string, "new" or "old" if "new" uses np.percentile else
+    :param method: string, "new" or "old" if "new" uses np.nanpercentile else
                    sorts the flattened image and takes the "percentile" (i.e.
                    90th) pixel value to normalise
     :param wmed: float or None, if not None defines the median filter width
@@ -1456,7 +1456,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
 
     if method == 'new':
         # get the 90th percentile of median image
-        norm = np.percentile(image_med[np.isfinite(image_med)], percentile)
+        norm = np.nanpercentile(image_med[np.isfinite(image_med)], percentile)
 
     else:
         v = image_med.reshape(np.product(image.shape))
@@ -2781,8 +2781,8 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         # define a segment between start and end
         segment = sp_fp[start:end]
         # push values into bottom and top
-        bottom[xpix] = np.percentile(segment, bottom_fp_percentile)
-        top[xpix] = np.percentile(segment, top_fp_percentile)
+        bottom[xpix] = np.nanpercentile(segment, bottom_fp_percentile)
+        top[xpix] = np.nanpercentile(segment, top_fp_percentile)
     # -------------------------------------------------------------------------
     # put a floor in the top values
     top_floor_value = top_floor_frac * np.max(top)
@@ -2801,7 +2801,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # >3-sigma peak relative to the continuum
     sp_hc = sp_hc - medfilt(sp_hc, med_filter_wid)
     # normalise HC to its absolute deviation
-    norm = np.median(np.abs(sp_hc[sp_hc != 0]))
+    norm = np.nanmedian(np.abs(sp_hc[sp_hc != 0]))
     sp_hc = sp_hc / norm
     # -------------------------------------------------------------------------
     # fpindex is a variable that contains the index of the FP peak interference
@@ -2913,8 +2913,8 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     xpeak2_mean = (xpeak2[1:] + xpeak2[:-1]) / 2
     dxpeak = xpeak2[1:] - xpeak2[:-1]
     # we clip the most deviant peaks
-    lowermask = dxpeak > np.percentile(dxpeak, deviant_percentiles[0])
-    uppermask = dxpeak < np.percentile(dxpeak, deviant_percentiles[1])
+    lowermask = dxpeak > np.nanpercentile(dxpeak, deviant_percentiles[0])
+    uppermask = dxpeak < np.nanpercentile(dxpeak, deviant_percentiles[1])
     good = lowermask & uppermask
     # apply good mask and fit the peak separation
     fit_peak_separation = nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)

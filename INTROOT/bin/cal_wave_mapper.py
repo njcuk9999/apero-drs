@@ -256,7 +256,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         WLOG(p, '', 'Correcting for flat={0}'.format(p['FLATFILE']))
         # normalise flat
         if p['EM_NORM_FLUX']:
-            image2 = image2 / np.median(image2)
+            image2 = image2 / np.nanmedian(image2)
         # correct for flat
         loc['SPE'] = loc['SPE'] * image2
         loc['SPE0'] = loc['SPE0'] * image2

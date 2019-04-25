@@ -208,7 +208,7 @@ def measure_background_flatfield_old(p, image, header, comments, badpixmask):
             maskedsubframe = subframe[mask]
             if len(maskedsubframe) > 0:
                 minlevel[i_it, j_it] = np.max(
-                    [np.percentile(maskedsubframe, percent), 0])
+                    [np.nanpercentile(maskedsubframe, percent), 0])
             else:
                 minlevel[i_it, j_it] = 0
 

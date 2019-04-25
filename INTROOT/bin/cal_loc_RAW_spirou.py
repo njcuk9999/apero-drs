@@ -310,8 +310,8 @@ def main(night_name=None, files=None):
     WLOG(p, 'info', ('On fiber {0} {1} orders geometry have been '
                                 'measured').format(p['FIBER'], rorder_num))
     # Get mean rms
-    mean_rms_center = np.sum(loc['RMS_CENTER'][:rorder_num]) * 1000/rorder_num
-    mean_rms_fwhm = np.sum(loc['RMS_FWHM'][:rorder_num]) * 1000/rorder_num
+    mean_rms_center = np.nansum(loc['RMS_CENTER'][:rorder_num]) * 1000/rorder_num
+    mean_rms_fwhm = np.nansum(loc['RMS_FWHM'][:rorder_num]) * 1000/rorder_num
     # Log mean rms values
     wmsg = 'Average uncertainty on {0}: {1:.2f} [mpix]'
     WLOG(p, 'info', wmsg.format('position', mean_rms_center))
@@ -330,31 +330,31 @@ def main(night_name=None, files=None):
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # ----------------------------------------------------------------------
     # check that max number of points rejected in center fit is below threshold
-    if np.sum(loc['MAX_RMPTS_POS']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
+    if np.nansum(loc['MAX_RMPTS_POS']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
         fmsg = 'abnormal points rejection during ctr fit ({0:.2f} > {1:.2f})'
-        fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_POS']),
+        fail_msg.append(fmsg.format(np.nansum(loc['MAX_RMPTS_POS']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
         passed = False
         qc_pass.append(0)
     else:
         qc_pass.append(1)
     # add to qc header lists
-    qc_values.append(np.sum(loc['MAX_RMPTS_POS']))
+    qc_values.append(np.nansum(loc['MAX_RMPTS_POS']))
     qc_names.append('sum(MAX_RMPTS_POS)')
     qc_logic.append('sum(MAX_RMPTS_POS) > {0:.2f}'
                     ''.format(p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
     # ----------------------------------------------------------------------
     # check that max number of points rejected in width fit is below threshold
-    if np.sum(loc['MAX_RMPTS_WID']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
+    if np.nansum(loc['MAX_RMPTS_WID']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
         fmsg = 'abnormal points rejection during width fit ({0:.2f} > {1:.2f})'
-        fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_WID']),
+        fail_msg.append(fmsg.format(np.nansum(loc['MAX_RMPTS_WID']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
         passed = False
         qc_pass.append(0)
     else:
         qc_pass.append(1)
     # add to qc header lists
-    qc_values.append(np.sum(loc['MAX_RMPTS_WID']))
+    qc_values.append(np.nansum(loc['MAX_RMPTS_WID']))
     qc_names.append('sum(MAX_RMPTS_WID)')
     qc_logic.append('sum(MAX_RMPTS_WID) > {0:.2f}'
                     ''.format(p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
@@ -451,9 +451,9 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_MAXFLX'],
                                value=float(loc['MAX_SIGNAL']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_CTR'],
-                               value=np.sum(loc['MAX_RMPTS_POS']))
+                               value=np.nansum(loc['MAX_RMPTS_POS']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_WID'],
-                               value=np.sum(loc['MAX_RMPTS_WID']))
+                               value=np.nansum(loc['MAX_RMPTS_WID']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_CTR'],
                                value=mean_rms_center)
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_WID'],
@@ -503,9 +503,9 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_MAXFLX'],
                                value=float(loc['MAX_SIGNAL']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_CTR'],
-                               value=np.sum(loc['MAX_RMPTS_POS']))
+                               value=np.nansum(loc['MAX_RMPTS_POS']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_WID'],
-                               value=np.sum(loc['MAX_RMPTS_WID']))
+                               value=np.nansum(loc['MAX_RMPTS_WID']))
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_CTR'],
                                value=mean_rms_center)
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_WID'],

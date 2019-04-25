@@ -1001,7 +1001,7 @@ def find_position_of_cent_col(values, threshold):
                 # ly is the cvalues values in this order (use lx to get them)
                 ly = values[lx]
                 # position = sum of (lx * ly) / sum of sum(ly)
-                position = np.sum(lx * ly * 1.0) / np.sum(ly)
+                position = np.nansum(lx * ly * 1.0) / np.nansum(ly)
                 # append position and width to storage
                 positions.append(position)
         # if row is still below threshold then move the row number forward
@@ -1074,7 +1074,7 @@ def locate_order_center(values, threshold, min_width=None):
                 # ly is the cvalues values in this order (use lx to get them)
                 ly = values[lx]
                 # position = sum of (lx * ly) / sum of sum(ly)
-                position = np.sum(lx * ly * 1.0) / np.sum(ly)
+                position = np.nansum(lx * ly * 1.0) / np.nansum(ly)
                 # width is just the distance from start to end
                 width = abs(order_end - order_start)
         # if row is still below threshold then move the row number forward
@@ -1143,7 +1143,7 @@ def locate_order_center(values, threshold, min_width=None):
 #             lx = np.arange(start, end + 1)
 #             ly = cvalues[lx]
 #             # position = sum of (lx * ly) / sum of sum(ly)
-#             positions.append(np.sum(lx * ly) / np.sum(ly))
+#             positions.append(np.nansum(lx * ly) / np.nansum(ly))
 #             # width = end - start, add one to end to get full pixel range
 #             widths.append(abs((end + 1 ) - start))
 #     # return positions

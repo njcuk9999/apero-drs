@@ -218,15 +218,15 @@ def main(night_name=None, files=None):
     # Locate valid pixels for PCA
     # ----------------------------------------------------------------------
     # determining the pixels relevant for PCA construction
-    keep = np.isfinite(np.sum(abso, axis=0))
+    keep = np.isfinite(np.nansum(abso, axis=0))
     # log fraction of valid (non NaN) pixels
-    fraction = np.sum(keep) / len(keep)
+    fraction = np.nansum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}'
     WLOG(p, '', wmsg.format(fraction))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as w:
         keep &= np.min(log_abso, axis=0) > -1
-    fraction = np.sum(keep) / len(keep)
+    fraction = np.nansum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels with transmission > 1 - (1/e) = {0:.3f}'
     WLOG(p, '', wmsg.format(fraction))
 

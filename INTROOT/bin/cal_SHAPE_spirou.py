@@ -241,7 +241,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(hcdata2 <= 0)
+    n_bad_pix = np.nansum(hcdata2 <= 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata2.shape)
     # Log number
     wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
@@ -251,7 +251,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(fpdata2 <= 0)
+    n_bad_pix = np.nansum(fpdata2 <= 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata2.shape)
     # Log number
     wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'

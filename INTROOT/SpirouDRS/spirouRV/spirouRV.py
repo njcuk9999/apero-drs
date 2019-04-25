@@ -125,11 +125,11 @@ def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     spereff = speref * flag
     spef = spe * flag
     # create a normalised spectrum
-    normspe = np.sum(spef, axis=1) / np.sum(spereff, axis=1)
+    normspe = np.nansum(spef, axis=1) / np.nansum(spereff, axis=1)
     # get normed spectrum for each pixel for each order
     rnormspe = np.repeat(normspe, dim2).reshape((dim1, dim2))
     # get the sum of values for the combined speref and spe for each order
-    stotal = np.sum(spereff + spef, axis=1) / dim2
+    stotal = np.nansum(spereff + spef, axis=1) / dim2
     stotal = np.repeat(stotal, dim2).reshape((dim1, dim2))
     # get difference over the normalised spectrum
     ztop = spereff - spef / rnormspe
@@ -141,7 +141,7 @@ def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     znan = np.copy(z)
     znan[~goodvalues] = np.nan
     # if we only have NaNs set rms to nan
-    if np.sum(np.isfinite(znan)) == 0:
+    if np.nansum(np.isfinite(znan)) == 0:
         rms = np.repeat(np.nan, znan.shape[0])
     # else get the rms for each order
     else:
@@ -155,11 +155,11 @@ def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     spirouCore.WarnLog(p, w, funcname=func_name)
     # get the total z above cut*mean
     with warnings.catch_warnings(record=True) as w:
-        cpt = np.sum(abs(z) > cut * rrms)
+        cpt = np.nansum(abs(z) > cut * rrms)
     # log warnings
     spirouCore.WarnLog(p, w, funcname=func_name)
     # create a normalise spectrum for the corrected spef
-    cnormspe = np.sum(spefc, axis=1) / np.sum(spereff, axis=1)
+    cnormspe = np.nansum(spefc, axis=1) / np.nansum(spereff, axis=1)
     # get the normed spectrum for each pixel for each order
     rcnormspe = np.repeat(cnormspe, dim2).reshape((dim1, dim2))
     # get the normalised spectrum using the corrected normalised spectrum
@@ -203,8 +203,8 @@ def calculate_rv_drifts_2d(speref, spe, wave, sigdet, threshold, size):
     # get the mask value
     maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
     # calculate the two sums
-    sum1 = np.sum((nwave * nspe) * (spe[:, 1:-1] - speref[:, 1:-1]) * maskv, 1)
-    sum2 = np.sum(sxn * ((nwave * nspe) ** 2) * maskv, 1)
+    sum1 = np.nansum((nwave * nspe) * (spe[:, 1:-1] - speref[:, 1:-1]) * maskv, 1)
+    sum2 = np.nansum(sxn * ((nwave * nspe) ** 2) * maskv, 1)
     # calculate RV drift
     rvdrift = CONSTANT_C * (sum1 / sum2)
     # return RV drift
@@ -299,14 +299,14 @@ def create_drift_file(p, loc):
 
         # normalize by the 98th percentile - avoids super-spurois pixels but
         #   keeps the top of the blaze around 1
-        # norm = np.percentile(tmp, 98)
+        # norm = np.nanpercentile(tmp, 98)
         # tmp /= norm
 
         # peak value depends on type of lamp
-        limit = np.median(tmp) * p['DRIFT_PEAK_PEAK_SIG_LIM'][lamp]
+        limit = np.nanmedian(tmp) * p['DRIFT_PEAK_PEAK_SIG_LIM'][lamp]
 
         # define the maximum pixel value of the normalized array
-        maxtmp = np.max(tmp)
+        maxtmp = np.nanmax(tmp)
         # set up loop constants
         xprev, ipeak = -99, 0
         nreject = 0
@@ -542,7 +542,7 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
 
     # log number of lines removed for width
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
-    WLOG(p, 'info', wmsg.format(np.sum(~mask)))
+    WLOG(p, 'info', wmsg.format(np.nansum(~mask)))
 
     print(len(loc['XPEAK_OLD']) - len(loc['XPEAK']))
     # log number of lines removed as double-fitted
@@ -613,7 +613,7 @@ def remove_zero_peaks(p, loc):
 
     # log number of lines removed
     wmsg = 'Nb of lines removed with no width measurement = {0}'
-    WLOG(p, 'info', wmsg.format(np.sum(~mask)))
+    WLOG(p, 'info', wmsg.format(np.nansum(~mask)))
 
     # return loc
     return loc
@@ -666,7 +666,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
             tmp = tmp / np.max(tmp)
 
             # sanity check that peak is within 0.5 pix of the barycenter
-            v = np.sum(index * tmp) / np.sum(tmp)
+            v = np.nansum(index * tmp) / np.nansum(tmp)
             if np.abs(v - xpeak0[peak]) < 0.5:
                 # try to gauss fit
                 try:
@@ -696,7 +696,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
             # get sp at indices
             tmp = sp[ordpeak[peak], index]
             # get position
-            xpeaks[peak] = np.sum(index * tmp) / np.sum(tmp)
+            xpeaks[peak] = np.nansum(index * tmp) / np.nansum(tmp)
     # finally return the xpeaks
     return xpeaks
 
@@ -746,7 +746,7 @@ def sigma_clip(loc, sigma=1.0):
     # get dv
     dv = loc['DV']
     # define a mask for sigma clip
-    mask = np.abs(dv - np.median(dv)) < sigma * np.std(dv)
+    mask = np.abs(dv - np.nanmedian(dv)) < sigma * np.nanstd(dv)
     # perform sigma clip and add to loc
     loc['DVC'] = loc['DV'][mask]
     loc['ORDERPEAKC'] = loc['ORDPEAK'][mask]
@@ -794,11 +794,11 @@ def drift_per_order(loc, fileno):
         # get the number of dvs in this order
         numdv = len(dv_order)
         # get the drift for this order
-        drift = np.median(dv_order)
-        driftleft = np.median(dv_order[:int(numdv / 2.0)])
-        driftright = np.median(dv_order[-int(numdv / 2.0):])
+        drift = np.nanmedian(dv_order)
+        driftleft = np.nanmedian(dv_order[:int(numdv / 2.0)])
+        driftright = np.nanmedian(dv_order[-int(numdv / 2.0):])
         # get the error in the drift
-        errdrift = np.std(dv_order) / np.sqrt(numdv)
+        errdrift = np.nanstd(dv_order) / np.sqrt(numdv)
 
         # add to storage
         loc['DRIFT'][fileno, order_num] = drift
@@ -859,11 +859,11 @@ def drift_all_orders(p, loc, fileno, nomin, nomax):
 
     # work out weighted mean drift
     with warnings.catch_warnings(record=True) as w:
-        sumerr = np.sum(1.0 / errdrift)
-        meanvr = np.sum(drift / errdrift) / sumerr
-        meanvrleft = np.sum(driftleft / errdrift) / sumerr
-        meanvrright = np.sum(driftright / errdrift) / sumerr
-        merrdrift = 1.0 / np.sqrt(np.sum(1.0 / errdrift ** 2))
+        sumerr = np.nansum(1.0 / errdrift)
+        meanvr = np.nansum(drift / errdrift) / sumerr
+        meanvrleft = np.nansum(driftleft / errdrift) / sumerr
+        meanvrright = np.nansum(driftright / errdrift) / sumerr
+        merrdrift = 1.0 / np.sqrt(np.nansum(1.0 / errdrift ** 2))
     # log warnings
     spirouCore.WarnLog(p, w, funcname=func_name)
 
@@ -1157,7 +1157,7 @@ def coravelation(p, loc, log=False):
         ll_sub_mask_d = ll_mask_d[cond]
         w_sub_mask = w_mask[cond]
         # if we have values that meet the "cond" condition then we can do CCF
-        if np.sum(cond) > 0:
+        if np.nansum(cond) > 0:
             # -----------------------------------------------------------------
             # calculate the CCF
             ccf_args = [ll_sub_mask_ctr, ll_sub_mask_d, w_sub_mask,
@@ -1529,7 +1529,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
 #     # condition definition
 #     cond1 = i_start == i_end
 #     # only continue if we have some terms
-#     if np.sum(cond1) > 0:
+#     if np.nansum(cond1) > 0:
 #         # define masked arrays
 #         dll_start = (dll[i_start])[cond1]
 #         flux_start = (flux[i_start])[cond1]
@@ -1542,17 +1542,17 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
 #         noise[cond1] = pix_s[cond1] * np.abs(flux_start)
 #         noise[cond1] += pix_s[cond1] * det_noise ** 2
 #         # calculate sums
-#         out_ccf += np.sum(out[cond1] * weight * blaze_cent)
-#         pix += np.sum(pix_s[cond1] * weight)
-#         llrange += np.sum(pix_s[cond1] * dll_start * weight)
-#         ccf_noise += np.sum(noise[cond1] * weight ** 2)
+#         out_ccf += np.nansum(out[cond1] * weight * blaze_cent)
+#         pix += np.nansum(pix_s[cond1] * weight)
+#         llrange += np.nansum(pix_s[cond1] * dll_start * weight)
+#         ccf_noise += np.nansum(noise[cond1] * weight ** 2)
 #     # -------------------------------------------------------------------------
 #     # condition   start + 1 = end
 #     # -------------------------------------------------------------------------
 #     # condition definition
 #     cond2 = (i_start + 1) == i_end
 #     # only continue if we have some terms
-#     if np.sum(cond2) > 0:
+#     if np.nansum(cond2) > 0:
 #         # define masked arrays
 #         ll_start = (ll[i_start])[cond2]
 #         dll_start = (dll[i_start])[cond2]
@@ -1573,17 +1573,17 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
 #         noise[cond2] += (pix_s[cond2] + pix_e[cond2]) * det_noise ** 2
 #         llrangetmp = (pix_s[cond2] * dll_start + pix_e[cond2] * dll_end)
 #         # calculate sums
-#         out_ccf += np.sum(out[cond2] * weight * blaze_cent)
-#         pix += np.sum((pix_s[cond2] + pix_e[cond2]) * weight)
-#         llrange += np.sum(llrangetmp * weight)
-#         ccf_noise += np.sum(noise[cond2] * weight ** 2)
+#         out_ccf += np.nansum(out[cond2] * weight * blaze_cent)
+#         pix += np.nansum((pix_s[cond2] + pix_e[cond2]) * weight)
+#         llrange += np.nansum(llrangetmp * weight)
+#         ccf_noise += np.nansum(noise[cond2] * weight ** 2)
 #     # -------------------------------------------------------------------------
 #     # condition   not (cond1 or cond2)
 #     # -------------------------------------------------------------------------
 #     # condition definition
 #     cond3 = ~(cond1 | cond2)
 #     # only continue if we have some terms
-#     if np.sum(cond3) > 0:
+#     if np.nansum(cond3) > 0:
 #         # define masked arrays
 #         ll_start = (ll[i_start])[cond3]
 #         ll_end1 = (ll[i_end - 1])[cond3]
@@ -1606,26 +1606,26 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
 #         noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise ** 2
 #         llrangetmp = (pix_s[cond3] * dll_start + pix_e[cond3] * dll_end)
 #         # calculate sums
-#         out_ccf += np.sum(out[cond3] * weight * blaze_cent)
-#         pix += np.sum((pix_s[cond3] + pix_e[cond3]) * weight)
-#         llrange += np.sum(llrangetmp * weight)
-#         ccf_noise += np.sum(noise[cond3] * weight ** 2)
+#         out_ccf += np.nansum(out[cond3] * weight * blaze_cent)
+#         pix += np.nansum((pix_s[cond3] + pix_e[cond3]) * weight)
+#         llrange += np.nansum(llrangetmp * weight)
+#         ccf_noise += np.nansum(noise[cond3] * weight ** 2)
 #         # calculate fractional contributions
 #         out_ccf_i = 0.0
 #         llrange_i = 0.0
 #         ccf_noise_i = 0.0
 #         for i in range(len(i_start)):
 #             start, end = i_start[cond3][i], i_end[cond3][i]
-#             out_ccf_i += np.sum(flux[start:end - 1] / blaze[start:end - 1])
-#             llrange_i += np.sum(dll[start:end - 1])
+#             out_ccf_i += np.nansum(flux[start:end - 1] / blaze[start:end - 1])
+#             llrange_i += np.nansum(dll[start:end - 1])
 #             # ccf noise calculation
 #             noisetmp = np.abs(flux[start:end - 1] + det_noise ** 2)
-#             ccf_noise_i += np.sum(noisetmp)
+#             ccf_noise_i += np.nansum(noisetmp)
 #         # add fractional contributions to totals
-#         out_ccf += (np.sum(out_ccf_i * weight * blaze_cent))
-#         pix += (np.sum(weight) * len(i_start))
-#         llrange += (np.sum(llrange_i * weight))
-#         ccf_noise += (np.sum(ccf_noise_i * weight ** 2))
+#         out_ccf += (np.nansum(out_ccf_i * weight * blaze_cent))
+#         pix += (np.nansum(weight) * len(i_start))
+#         llrange += (np.nansum(llrange_i * weight))
+#         ccf_noise += (np.nansum(ccf_noise_i * weight ** 2))
 #     # sqrt the noise
 #     ccf_noise = np.sqrt(ccf_noise)
 #     # return parameters
