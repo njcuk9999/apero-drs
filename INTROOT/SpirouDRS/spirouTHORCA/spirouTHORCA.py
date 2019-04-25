@@ -291,7 +291,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # create mask
         badfit = lines[:, 7] <= max_error_onfit
         # count number of bad lines
-        num_badfit = np.sum(badfit)
+        num_badfit = np.nansum(badfit)
         # put all bad fit lines to zero
         lines[:, 7][badfit] = 0.0
         # ---------------------------------------------------------------------
@@ -303,7 +303,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # create mask
         badsig = sigll >= max_error_sigll
         # count number of bad sig lines
-        num_badsig = np.sum(badsig)
+        num_badsig = np.nansum(badsig)
         # put all bad sig lines to zero
         lines[:, 7][badsig] = 0.0
         # ---------------------------------------------------------------------
@@ -312,7 +312,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # create mask
         badampl = lines[:, 2] >= max_ampl_lines
         # count number
-        num_badampl = np.sum(badampl)
+        num_badampl = np.nansum(badampl)
         # put all bad ampl to zero
         lines[:, 7][badsig] = 0.0
         # ---------------------------------------------------------------------
@@ -322,10 +322,10 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         badlines = badfit | badsig | badampl
         # count number
         # noinspection PyPep8
-        num_bad, num_total = np.sum(badlines), np.array(badlines).size
+        num_bad, num_total = np.nansum(badlines), np.array(badlines).size
         good_lines_total += num_total - num_bad
         # log only if we have bad
-        if np.sum(badlines) > 0:
+        if np.nansum(badlines) > 0:
             # wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
             #          num_badfit]
             # wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
@@ -453,7 +453,7 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     centpix = ll_out.shape[1]//2
     # get the mean pixel scale (in km/s/pixel) of the central pixel
     norm = dll_out[:, centpix]/ll_out[:, centpix]
-    meanpixscale = speed_of_light * np.sum(norm)/len(ll_out[:, centpix])
+    meanpixscale = speed_of_light * np.nansum(norm)/len(ll_out[:, centpix])
     # add to loc
     loc['LL_OUT_{0}'.format(iteration)] = ll_out
     loc.set_source('LL_OUT_{0}'.format(iteration), func_name)
@@ -637,8 +637,8 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         # calculate residuals (in km/s) between fit and original values
         respix = speed_of_light * (cfit - frac_ll_point)/frac_ll_point
         # calculate stats
-        mean = np.sum(respix) / len(respix)
-        mean2 = np.sum(respix ** 2) / len(respix)
+        mean = np.nansum(respix) / len(respix)
+        mean2 = np.nansum(respix ** 2) / len(respix)
         rms = np.sqrt(mean2 - mean ** 2)
         mindev = np.min(respix)
         maxdev = np.max(respix)
@@ -1160,11 +1160,11 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
                 # work out a pixel weighting
                 line_weight = 1.0/(sdata + image_ron**2)
                 # check that the sum of the weighted flux is not zero
-                if np.sum(sdata * line_weight) != 0:
+                if np.nansum(sdata * line_weight) != 0:
                     # if it isn't zero set the line value to the
                     #   weighted mean value
-                    line = np.sum(sll * sdata * line_weight)
-                    line = line / np.sum(sdata * line_weight)
+                    line = np.nansum(sll * sdata * line_weight)
+                    line = line / np.nansum(sdata * line_weight)
                 else:
                     # if it is zero then just use the line
                     line = float(ll_line_s[ll_i])
@@ -1195,7 +1195,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
         # calculate stats for logging
 #        min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
         min_ll, max_ll = np.min(ll_line_s), np.max(ll_line_s)
-        nlines_valid = np.sum(gauss_fit[:, 2] > 0)
+        nlines_valid = np.nansum(gauss_fit[:, 2] > 0)
         nlines_total = len(gauss_fit[:, 2])
         percentage_vlines = 100 * (nlines_valid/nlines_total)
         # log the stats for this order
@@ -1320,7 +1320,7 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
                 # fit = np.zeros_like(sll)
 
             # check for infinites
-            if np.sum(~np.isfinite(params) | ~np.isfinite(siga)) != 0:
+            if np.nansum(~np.isfinite(params) | ~np.isfinite(siga)) != 0:
                 params = [0.0, 0.0, 0.0, 0.0]
                 siga = [0.0, 0.0, 0.0, 0.0]
                 # fit = np.zeros_like(sll)
@@ -1361,7 +1361,7 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
         gauss_fit = np.array(gauss_fit).reshape(len(ll_line_s), 8)
         # calculate stats for logging
         min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
-        nlines_valid = np.sum(gauss_fit[:, 7] > 0)
+        nlines_valid = np.nansum(gauss_fit[:, 7] > 0)
         nlines_total = len(gauss_fit[:, 7])
         percentage_vlines = 100 * (nlines_valid/nlines_total)
         # log the stats for this order
@@ -1411,7 +1411,7 @@ def fit_emi_line(p, sll, sxpos, sdata, weight, mode=0):
     # normalise the wavelength data
     slln = (sll - sll[0])/(sll[-1]-sll[0])
     # test for NaNs
-    if np.sum(~np.isfinite(slln)) != 0:
+    if np.nansum(~np.isfinite(slln)) != 0:
         coeffs[2] = 0
         slln = 0
     # test for more than one zero value in data
@@ -1460,7 +1460,7 @@ def fit_emi_line(p, sll, sxpos, sdata, weight, mode=0):
             params[3] = 0
         # test for NaNs - if NaNs set to bad parameters
         # TODO: This should be here and work!!!
-        # if np.sum(~np.isfinite(params)) != 0:
+        # if np.nansum(~np.isfinite(params)) != 0:
         #     params[1] = 1
         #     params[2] = 0
         #     params[3] = 0
@@ -1728,8 +1728,8 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
             cfit = np.polyval(coeffs[::-1], lines)
             # calculate the variance
             res = cfit - x_fit
-            wsig = np.sum(res**2 * weight) / np.sum(weight)
-            wmean = (np.sum(res * weight) / np.sum(weight))
+            wsig = np.nansum(res**2 * weight) / np.nansum(weight)
+            wmean = (np.nansum(res * weight) / np.nansum(weight))
             var = wsig - (wmean ** 2)
             # append stats
             iter0.append([np.array(wmean), np.array(var),
@@ -1739,7 +1739,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
             # check improve condition (RMS > MAX_RMS)
             ll_fit_rms = abs(res) * np.sqrt(weight)
             badrms = ll_fit_rms > max_ll_fit_rms
-            improve = np.sum(badrms)
+            improve = np.nansum(badrms)
             # set largest weighted residual to zero
             largest = np.max(ll_fit_rms)
             badpoints = ll_fit_rms == largest
@@ -1747,7 +1747,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
             # only keep the lines that have postive weight
             goodmask = weight > 0.0
             # check that we have points
-            if np.sum(goodmask) == 0:
+            if np.nansum(goodmask) == 0:
                 emsg1 = ('Order {0}: Sigma clipping in 1D fit solution '
                          'failed'.format(order_num))
                 emsg2 = ('\tRMS > MAX_RMS={0}'
@@ -1791,11 +1791,11 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # get res1
         res1 = details[-1][1] - details[-1][2]
         # sum the weights (recursively)
-        sweight += np.sum(details[-1][3])
+        sweight += np.nansum(details[-1][3])
         # sum the weighted residuals in km/s
-        wsumres += np.sum(res1 * convert * details[-1][3])
+        wsumres += np.nansum(res1 * convert * details[-1][3])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(details[-1][3] * (res1 * convert) ** 2)
+        wsumres2 += np.nansum(details[-1][3] * (res1 * convert) ** 2)
         # store the conversion to km/s
         scale.append(convert)
     # convert to arrays
@@ -1805,7 +1805,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
     final_mean = (wsumres / sweight)
     final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # log the global stats
-    total_lines = np.sum(final_iter[:, 2])
+    total_lines = np.nansum(final_iter[:, 2])
     wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
     wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
               total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
@@ -1869,16 +1869,16 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
         # invert parameters
         # ---------------------------------------------------------------------
         # sum the weights (recursively)
-        sweight += np.sum(wei)
+        sweight += np.nansum(wei)
         # sum the weighted residuals in km/s
-        wsumres += np.sum(nres * wei)
+        wsumres += np.nansum(nres * wei)
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(wei * nres ** 2)
+        wsumres2 += np.nansum(wei * nres ** 2)
     # calculate the final var and mean
     final_mean = (wsumres / sweight)
     final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # log the invertion process
-    total_lines = np.sum(iter0[:, 2])
+    total_lines = np.nansum(iter0[:, 2])
     wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              1000.0 * np.sqrt(final_var / total_lines)]
     wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'

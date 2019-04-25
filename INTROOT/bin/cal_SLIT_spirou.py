@@ -145,7 +145,7 @@ def main(night_name=None, files=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(~np.isfinite(data2))
+    n_bad_pix = np.nansum(~np.isfinite(data2))
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'

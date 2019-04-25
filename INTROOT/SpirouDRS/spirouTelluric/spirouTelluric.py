@@ -97,7 +97,7 @@ def apply_template(p, loc):
             # if less than 50% of the order is considered valid, then set
             #     template value to 1 this only apply to the really contaminated
             #     orders
-            if np.sum(keep) > npix // 2:
+            if np.nansum(keep) > npix // 2:
                 # get the wave and template masked arrays
                 keepwave = wave[order_num, keep]
                 keeptmp = template[order_num, keep]
@@ -230,7 +230,7 @@ def calculate_telluric_absorption(p, loc):
             break
         # ---------------------------------------------------------------------
         # calculate how much the optical depth params change
-        dparam = np.sqrt(np.sum((guess - prev_guess) ** 2))
+        dparam = np.sqrt(np.nansum((guess - prev_guess) ** 2))
         # ---------------------------------------------------------------------
         # print progress
         wmsg = ('Iteration {0}/{1} H20 depth: {2:.4f} Other gases depth: '
@@ -254,8 +254,9 @@ def calculate_telluric_absorption(p, loc):
             # -----------------------------------------------------------------
             # if we have enough valid points, we normalize the domain by its
             #    median
-            if np.sum(good) > min_number_good_points:
-                limit = np.percentile(tau1[order_num][good], btrans_percentile)
+            if np.nansum(good) > min_number_good_points:
+                limit = np.nanpercentile(tau1[order_num][good],
+                                         btrans_percentile)
                 best_trans = tau1[order_num] > limit
                 norm = np.nanmedian(sp2[best_trans])
             else:
@@ -308,7 +309,7 @@ def calculate_telluric_absorption(p, loc):
             # get the gaussian kernal
             kernal_y = np.exp(-0.5*(kernal_x / ew) **2 )
             # normalise kernal so it is max at unity
-            kernal_y = kernal_y / np.sum(kernal_y)
+            kernal_y = kernal_y / np.nansum(kernal_y)
             # -----------------------------------------------------------------
             # construct a weighting matrix for the sed
             ww1 = np.convolve(good, kernal_y, mode='same')
@@ -355,7 +356,7 @@ def calculate_telluric_absorption(p, loc):
             #    absorptions
             pedestal = tau1[order_num] < 0.01
             # check if we have enough strong absorption
-            if np.sum(pedestal) > 100:
+            if np.nansum(pedestal) > 100:
                 zero_point = np.nanmedian(sp[order_num, pedestal])
                 # if zero_point is finite subtract it off the spectrum
                 if np.isfinite(zero_point):
@@ -517,7 +518,7 @@ def find_telluric_stars(p):
             mask = mask1 & mask2 & mask3
             # -----------------------------------------------------------------
             # append found files to this list
-            if np.sum(mask) > 0:
+            if np.nansum(mask) > 0:
                 for filename in index_filenames[mask]:
                     # construct absolute path
                     absfilename = os.path.join(dirname, filename)
@@ -610,8 +611,8 @@ def get_normalized_blaze(p, loc, hdr):
     # we mask domains that have <20% of the peak blaze of their respective order
     blaze_norm = np.array(blaze)
     for iord in range(blaze.shape[0]):
-        blaze_norm[iord, :] /= np.percentile(blaze_norm[iord, :],
-                                             p['TELLU_BLAZE_PERCENTILE'])
+        blaze_norm[iord, :] /= np.nanpercentile(blaze_norm[iord, :],
+                                                p['TELLU_BLAZE_PERCENTILE'])
     blaze_norm[blaze_norm < p['TELLU_CUT_BLAZE_NORM']] = np.nan
     # add to loc
     loc['BLAZE'] = blaze
@@ -632,7 +633,7 @@ def construct_convolution_kernal1(p, loc):
     # we only want an approximation of the absorption to find the continuum
     #    and estimate chemical abundances.
     #    there's no need for a varying kernel shape
-    ker /= np.sum(ker)
+    ker /= np.nansum(ker)
     # add to loc
     loc['KER'] = ker
     loc.set_source('KER', func_name)
@@ -776,7 +777,7 @@ def construct_convolution_kernal2(p, loc, vsini):
     # kernal is the a gaussian
     ker2 = np.exp(-.5 * (xx / ew) ** 2)
 
-    ker2 /= np.sum(ker2)
+    ker2 /= np.nansum(ker2)
     # add to loc
     loc['KER2'] = ker2
     loc.set_source('KER2', func_name)
@@ -867,7 +868,7 @@ def berv_correct_template(p, loc, thdr):
         # find good (not NaN) pixels
         keep = np.isfinite(loc['TEMPLATE'][order_num, :])
         # if we have enough values spline them
-        if np.sum(keep) > p['TELLU_FIT_KEEP_FRAC']:
+        if np.nansum(keep) > p['TELLU_FIT_KEEP_FRAC']:
             # define keep wave
             keepwave = loc['MASTERWAVE'][order_num, keep]
             # define keep temp
@@ -1001,7 +1002,7 @@ def calc_recon_abso(p, loc):
             start = order_num * xdim
             end = order_num * xdim + xdim
             # skip if whole order is NaNs
-            if np.sum(np.isfinite(log_resspec[start:end])) == 0:
+            if np.nansum(np.isfinite(log_resspec[start:end])) == 0:
                 continue
             # get median
             log_resspec_med = np.nanmedian(log_resspec[start:end])
@@ -1016,9 +1017,9 @@ def calc_recon_abso(p, loc):
         # --------------------------------------------------------------
         # identify good pixels to keep
         keep &= np.isfinite(fit_dd)
-        keep &= np.sum(np.isfinite(loc['FIT_PC']), axis=1) == loc['NPC']
+        keep &= np.nansum(np.isfinite(loc['FIT_PC']), axis=1) == loc['NPC']
         # log number of kept pixels
-        wmsg = '\tNumber to keep total = {0}'.format(np.sum(keep))
+        wmsg = '\tNumber to keep total = {0}'.format(np.nansum(keep))
         WLOG(p, '', wmsg)
         # --------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
@@ -1165,7 +1166,7 @@ def wave2wave(p, spectrum, wave1, wave2, reshape=False):
             WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
 
     # if they are the same
-    if np.sum(wave1 != wave2) == 0:
+    if np.nansum(wave1 != wave2) == 0:
         return spectrum
 
     # size of array, assumes wave1, wave2 and spectrum have same shape
@@ -1179,7 +1180,7 @@ def wave2wave(p, spectrum, wave1, wave2, reshape=False):
         g = np.isfinite(spectrum[iord, :])
 
         # if no valid pixel, thn skip order
-        if np.sum(g) != 0:
+        if np.nansum(g) != 0:
             # spline the spectrum
             spline = IUVSpline(wave1[iord, g], spectrum[iord, g], k=5, ext=1)
 

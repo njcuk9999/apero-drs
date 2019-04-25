@@ -521,8 +521,8 @@ def main(night_name=None, files=None):
                 # get the mask of those values above threshold
                 goodpix = (rowvalue > threshold) & (abso_med > threshold)
                 # apply the mask of good pixels to work out ratio
-                part1 = np.sum(rowvalue[goodpix] * abso_med[goodpix])
-                part2 = np.sum(abso_med[goodpix] ** 2)
+                part1 = np.nansum(rowvalue[goodpix] * abso_med[goodpix])
+                part2 = np.nansum(abso_med[goodpix] ** 2)
                 ratio = part1 / part2
                 # store normalised absol back on to log_abso
                 log_abso[jt, :] = log_abso[jt, :] / ratio
@@ -574,8 +574,8 @@ def main(night_name=None, files=None):
                 # find the good pixels
                 goodpix = (rowvalue > threshold2) & (abso_med2 > threshold2)
                 # get the ratio
-                part1 = np.sum(rowvalue[goodpix] * abso_med2[goodpix])
-                part2 = np.sum(abso_med2[goodpix] ** 2)
+                part1 = np.nansum(rowvalue[goodpix] * abso_med2[goodpix])
+                part2 = np.nansum(abso_med2[goodpix] ** 2)
                 cc[jt] = part1 / part2
             # fit the ratio across the points
             cfit = nanpolyfit(dvpixels, cc, fitdeg)

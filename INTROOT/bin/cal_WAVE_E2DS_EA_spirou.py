@@ -295,7 +295,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # -> right order
         # -> finite dv
         gg = (ord_t == iord) & (np.isfinite(dv))
-        nlines = np.sum(gg)
+        nlines = np.nansum(gg)
         # put lines into ALL_LINES structure
         # reminder:
         # gparams[0] = output wavelengths
@@ -696,8 +696,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
                 # if outlying order, recalculate stats
                 if redo_sigma:
-                    mean = np.sum(respix_2) / len(respix_2)
-                    mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                    mean = np.nansum(respix_2) / len(respix_2)
+                    mean2 = np.nansum(respix_2 ** 2) / len(respix_2)
                     rms = np.sqrt(mean2 - mean ** 2)
                     if rms > rms_littrow_max:
                         fmsg = ('Littrow test (x={0}) failed (sig littrow = '
@@ -803,7 +803,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=loc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
-                               value=np.sum(loc['TOT_LINE']))
+                               value=np.nansum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
@@ -834,7 +834,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
+    num_lines = int(np.nansum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
     err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
     # construct filename

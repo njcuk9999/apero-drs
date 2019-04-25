@@ -89,7 +89,7 @@ if __name__ == "__main__":
         data = data/blaze
 
         # get flux
-        flux = np.sum(data[np.isfinite(data)])
+        flux = np.nansum(data[np.isfinite(data)])
         fluxes.append(flux)
 
         # get time

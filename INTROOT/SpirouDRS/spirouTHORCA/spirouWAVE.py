@@ -180,16 +180,16 @@ def calculate_instrument_drift(p, loc):
     # calculate the weighted mean radial velocity
     # Question: why is this squared here but not in cal_DRIFT_E2DS??
     wref = 1.0 / dvrmsref ** 2
-    meanrv = -1.0 * np.sum(rv * wref) / np.sum(wref)
+    meanrv = -1.0 * np.nansum(rv * wref) / np.nansum(wref)
     # calculate residual
     residual = np.abs(rv - meanrv)
     # get all those rv values less than ic_wave_idrift_rv_cut
     norm = np.sqrt(dvrmsref ** 2 + dvrmsdata ** 2)
     cond = (residual / norm) > p['IC_WAVE_IDRIFT_RV_CUT']
     # recalculate the weighted mean radial velocity
-    meanrv2 = -1.0 * np.sum(rv[cond] / wref[cond]) / np.sum(wref[cond])
+    meanrv2 = -1.0 * np.nansum(rv[cond] / wref[cond]) / np.nansum(wref[cond])
     # keep the number of orders used
-    nborderout = np.sum(cond)
+    nborderout = np.nansum(cond)
     # ------------------------------------------------------------------
     # Quality control checks
     # ------------------------------------------------------------------
@@ -455,7 +455,7 @@ def fp_wavelength_sol_new(p, loc):
         floc['xxpos'] = loc['XPEAK'][gg]
         # get the median pixel difference between successive lines
         #    (to check for gaps)
-        xxpos_diff_med = np.median(floc['xxpos'][1:] - floc['xxpos'][:-1])
+        xxpos_diff_med = np.nanmedian(floc['xxpos'][1:] - floc['xxpos'][:-1])
         # store the amplitudes of the lines
         floc['ampl'] = loc['AMPPEAK'][gg]
         # store the values of the blaze at the pixel positions of the lines
@@ -518,7 +518,7 @@ def fp_wavelength_sol_new(p, loc):
                 ind = np.abs(ll_prev - floc['llpos'][cm_ind]).argmin()
                 # the peak matching the reddest may not always be found!!
                 # define maximum permitted difference
-                llpos_diff_med = np.median(
+                llpos_diff_med = np.nanmedian(
                     floc['llpos'][1:] - floc['llpos'][:-1])
                 # print(llpos_diff_med)
                 # print(abs(ll_prev[ind] - floc['llpos'][-1]))
@@ -925,8 +925,8 @@ def find_hc_gauss_peaks(p, loc):
 #             # get the peaks for this order
 #             order_peaks = peak[good]
 #             # we may have fewer lines within the order than nmax_bright
-#             if np.sum(good) <= nmax_bright:
-#                 nmax = np.sum(good) - 1
+#             if np.nansum(good) <= nmax_bright:
+#                 nmax = np.nansum(good) - 1
 #             else:
 #                 nmax = nmax_bright
 #             # Find the "nmax" brightest peaks
@@ -1018,7 +1018,7 @@ def find_hc_gauss_peaks(p, loc):
 #             pos_bright = np.where(good_bright)[0]
 #             pos = np.where(good)[0]
 #             # get number of good_bright
-#             num_gb = int(np.sum(good_bright))
+#             num_gb = int(np.nansum(good_bright))
 #             bestn = 0
 #             best_coeffs = np.zeros(triplet_deg + 1)
 #             # get the indices of the triplets of bright lines
@@ -1039,14 +1039,14 @@ def find_hc_gauss_peaks(p, loc):
 #                 # work out the error in velocity
 #                 ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
 #                 # work out the number of lines to keep
-#                 nkeep = np.sum(np.abs(ev) < cut_fit_threshold)
+#                 nkeep = np.nansum(np.abs(ev) < cut_fit_threshold)
 #                 # if number of lines to keep largest seen --> store
 #                 if nkeep > bestn:
 #                     bestn = nkeep
 #                     best_coeffs = np.array(coeffs)
 #             # Log the total number of valid lines found
 #             wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
-#             wargs = [order_num, bestn, np.sum(good_all)]
+#             wargs = [order_num, bestn, np.nansum(good_all)]
 #             WLOG(p, '', wmsg.format(*wargs))
 #             # if we have the minimum number of lines check that we satisfy
 #             #   the cut_fit_threshold for all good lines and reject outliers
@@ -1110,17 +1110,17 @@ def find_hc_gauss_peaks(p, loc):
 #         # ------------------------------------------------------------------
 #         # Quality check on the total number of lines found
 #         # ------------------------------------------------------------------
-#         if np.sum(good) < minimum_total_number_of_lines:
+#         if np.nansum(good) < minimum_total_number_of_lines:
 #             emsg1 = 'Insufficient number of lines found.'
 #             emsg2 = '\t Found = {0}  Required = {1}'
-#             eargs = [np.sum(good), minimum_total_number_of_lines]
+#             eargs = [np.nansum(good), minimum_total_number_of_lines]
 #             WLOG(p, 'error', [emsg1, emsg2.format(*eargs)])
 #
 #         # ------------------------------------------------------------------
 #         # Linear model slice generation
 #         # ------------------------------------------------------------------
 #         # storage for the linear model slice
-#         lin_mod_slice = np.zeros((len(xgau), np.sum(order_fit_continuity)))
+#         lin_mod_slice = np.zeros((len(xgau), np.nansum(order_fit_continuity)))
 #
 #         # construct the unit vectors for wavelength model
 #         # loop around order fit continuity values
@@ -1139,7 +1139,7 @@ def find_hc_gauss_peaks(p, loc):
 #         # ------------------------------------------------------------------
 #         # storage for arrays
 #         recon0 = np.zeros_like(wave_catalog)
-#         amps0 = np.zeros(np.sum(order_fit_continuity))
+#         amps0 = np.zeros(np.nansum(order_fit_continuity))
 #
 #         # Loop sigma_clip_num times for sigma clipping and numerical
 #         #    convergence. In most cases ~10 iterations would be fine but this
@@ -1156,8 +1156,8 @@ def find_hc_gauss_peaks(p, loc):
 #                 # work out the residuals
 #                 res = (wave_catalog - recon0)
 #                 # work out the sum of residuals
-#                 sum_r = np.sum(res * lin_mod_slice[:, a_it])
-#                 sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
+#                 sum_r = np.nansum(res * lin_mod_slice[:, a_it])
+#                 sum_l2 = np.nansum(lin_mod_slice[:, a_it] ** 2)
 #                 # normalise by sum squared
 #                 ampsx = sum_r / sum_l2
 #                 # add this contribution on
@@ -1305,8 +1305,8 @@ def generate_resolution_map(p, loc):
             b_wave_catalog = wave_catalog[mask]
 
             # set up storage for lines and dvs
-            all_lines = np.zeros((np.sum(mask), 2 * wsize + 1))
-            all_dvs = np.zeros((np.sum(mask), 2 * wsize + 1))
+            all_lines = np.zeros((np.nansum(mask), 2 * wsize + 1))
+            all_dvs = np.zeros((np.nansum(mask), 2 * wsize + 1))
 
             # set up base
             base = np.zeros(2 * wsize + 1, dtype=bool)
@@ -1318,7 +1318,7 @@ def generate_resolution_map(p, loc):
             # pixels. This allows us to merge all lines in a single
             # profile and removes differences in pixel sampling and
             # resolution.
-            for it in range(int(np.sum(mask))):
+            for it in range(int(np.nansum(mask))):
                 # get limits
                 border = int(b_orders[it])
                 start = int(b_xgau[it] + 0.5) - wsize
@@ -1326,8 +1326,8 @@ def generate_resolution_map(p, loc):
                 # get line
                 line = np.array(hc_sp)[border, start:end]
                 # subtract median base and normalise line
-                line -= np.median(line[base])
-                line /= np.sum(line)
+                line -= np.nanmedian(line[base])
+                line /= np.nansum(line)
                 # calculate velocity... express things in velocity
                 ratio = wave_map2[border, start:end] / b_wave_catalog[it]
                 dv = -speed_of_light * (ratio - 1)
@@ -1373,9 +1373,9 @@ def generate_resolution_map(p, loc):
                 # calculate residuals for full line list
                 res = all_lines - spirouMath.gauss_fit_s(all_dvs, *popt)
                 # calculate RMS of residuals
-                rms = res / np.median(np.abs(res))
+                rms = res / np.nanmedian(np.abs(res))
                 # calculate max deviation
-                maxdev = np.max(np.abs(rms[keep]))
+                maxdev = np.nanmax(np.abs(rms[keep]))
                 # re-calculate the keep mask
                 keep[np.abs(rms) > max_dev_threshold] = False
 
@@ -1393,7 +1393,7 @@ def generate_resolution_map(p, loc):
             # log resolution output
             wmsg = ('\tOrders {0} - {1}: nlines={2} xpos={3} '
                     'resolution={4:.5f} km/s R={5:.5f}')
-            wargs = [order_num, order_num + bin_order, np.sum(mask), xpos,
+            wargs = [order_num, order_num + bin_order, np.nansum(mask), xpos,
                      resolution,
                      resolution1]
             WLOG(p, '', wmsg.format(*wargs))
@@ -1412,9 +1412,9 @@ def generate_resolution_map(p, loc):
     loc.set_sources(sources, func_name)
 
     # print stats
-    wmsg1 = 'Mean resolution: {0:.3f}'.format(np.mean(resolution_map))
-    wmsg2 = 'Median resolution: {0:.3f}'.format(np.median(resolution_map))
-    wmsg3 = 'StdDev resolution: {0:.3f}'.format(np.std(resolution_map))
+    wmsg1 = 'Mean resolution: {0:.3f}'.format(np.nanmean(resolution_map))
+    wmsg2 = 'Median resolution: {0:.3f}'.format(np.nanmedian(resolution_map))
+    wmsg3 = 'StdDev resolution: {0:.3f}'.format(np.nanstd(resolution_map))
 
     WLOG(p, '', [wmsg1, wmsg2, wmsg3])
 
@@ -1739,8 +1739,8 @@ def fit_gaussian_triplets(p, loc):
             # get the peaks for this order
             order_peaks = peak[good]
             # we may have fewer lines within the order than nmax_bright
-            if np.sum(good) <= nmax_bright:
-                nmax = np.sum(good) - 1
+            if np.nansum(good) <= nmax_bright:
+                nmax = np.nansum(good) - 1
             else:
                 nmax = nmax_bright
             # Find the "nmax" brightest peaks
@@ -1832,7 +1832,7 @@ def fit_gaussian_triplets(p, loc):
             pos_bright = np.where(good_bright)[0]
             pos = np.where(good)[0]
             # get number of good_bright
-            num_gb = int(np.sum(good_bright))
+            num_gb = int(np.nansum(good_bright))
             bestn = 0
             best_coeffs = np.zeros(triplet_deg + 1)
             # get the indices of the triplets of bright lines
@@ -1853,14 +1853,14 @@ def fit_gaussian_triplets(p, loc):
                 # work out the error in velocity
                 ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
                 # work out the number of lines to keep
-                nkeep = np.sum(np.abs(ev) < cut_fit_threshold)
+                nkeep = np.nansum(np.abs(ev) < cut_fit_threshold)
                 # if number of lines to keep largest seen --> store
                 if nkeep > bestn:
                     bestn = nkeep
                     best_coeffs = np.array(coeffs)
             # Log the total number of valid lines found
             wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
-            wargs = [order_num, bestn, np.sum(good_all)]
+            wargs = [order_num, bestn, np.nansum(good_all)]
             WLOG(p, '', wmsg.format(*wargs))
             # if we have the minimum number of lines check that we satisfy
             #   the cut_fit_threshold for all good lines and reject outliers
@@ -1923,17 +1923,17 @@ def fit_gaussian_triplets(p, loc):
         # ------------------------------------------------------------------
         # Quality check on the total number of lines found
         # ------------------------------------------------------------------
-        if np.sum(good) < minimum_total_number_of_lines:
+        if np.nansum(good) < minimum_total_number_of_lines:
             emsg1 = 'Insufficient number of lines found.'
             emsg2 = '\t Found = {0}  Required = {1}'
-            eargs = [np.sum(good), minimum_total_number_of_lines]
+            eargs = [np.nansum(good), minimum_total_number_of_lines]
             WLOG(p, 'error', [emsg1, emsg2.format(*eargs)])
 
         # ------------------------------------------------------------------
         # Linear model slice generation
         # ------------------------------------------------------------------
         # storage for the linear model slice
-        lin_mod_slice = np.zeros((len(xgau), np.sum(order_fit_continuity)))
+        lin_mod_slice = np.zeros((len(xgau), np.nansum(order_fit_continuity)))
 
         # construct the unit vectors for wavelength model
         # loop around order fit continuity values
@@ -1952,7 +1952,7 @@ def fit_gaussian_triplets(p, loc):
         # ------------------------------------------------------------------
         # storage for arrays
         recon0 = np.zeros_like(wave_catalog)
-        amps0 = np.zeros(np.sum(order_fit_continuity))
+        amps0 = np.zeros(np.nansum(order_fit_continuity))
 
         # Loop sigma_clip_num times for sigma clipping and numerical
         #    convergence. In most cases ~10 iterations would be fine but this
@@ -1969,8 +1969,8 @@ def fit_gaussian_triplets(p, loc):
                 # work out the residuals
                 res = (wave_catalog - recon0)
                 # work out the sum of residuals
-                sum_r = np.sum(res * lin_mod_slice[:, a_it])
-                sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
+                sum_r = np.nansum(res * lin_mod_slice[:, a_it])
+                sum_l2 = np.nansum(lin_mod_slice[:, a_it] ** 2)
                 # normalise by sum squared
                 ampsx = sum_r / sum_l2
                 # add this contribution on
@@ -2103,7 +2103,7 @@ def fit_gaussian_triplets(p, loc):
         poly_wave_solc = np.zeros_like(loc['WAVEPARAMS'])
         for order_num in range(nbo):
             order_mask = orders == order_num
-            if np.sum(order_mask) == 0:
+            if np.nansum(order_mask) == 0:
                 print('No values found for order {0}'.format(order_num))
                 continue
 
@@ -2228,7 +2228,7 @@ def do_stuff(p, loc):
         # -> right order
         # -> finite dv
         gg = (ord_t == iord)
-        nlines = np.sum(gg)
+        nlines = np.nansum(gg)
         # put lines into ALL_LINES structure
         # reminder:
         # gparams[0] = output wavelengths
@@ -2331,7 +2331,7 @@ def fit_fp_linmin(p, loc):
     # Linear model slice generation
     # ------------------------------------------------------------------
     # storage for the linear model slice
-    lin_mod_slice = np.zeros((len(fp_xx), np.sum(order_fit_continuity)))
+    lin_mod_slice = np.zeros((len(fp_xx), np.nansum(order_fit_continuity)))
 
     # construct the unit vectors for wavelength model
     # loop around order fit continuity values
@@ -2350,7 +2350,7 @@ def fit_fp_linmin(p, loc):
     # ------------------------------------------------------------------
     # storage for arrays
     recon0 = np.zeros_like(fp_ll)
-    amps0 = np.zeros(np.sum(order_fit_continuity))
+    amps0 = np.zeros(np.nansum(order_fit_continuity))
 
     # Loop sigma_clip_num times for sigma clipping and numerical
     #    convergence. In most cases ~10 iterations would be fine but this
@@ -2367,8 +2367,8 @@ def fit_fp_linmin(p, loc):
             # work out the residuals
             res = (fp_ll - recon0)
             # work out the sum of residuals
-            sum_r = np.sum(res * lin_mod_slice[:, a_it])
-            sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
+            sum_r = np.nansum(res * lin_mod_slice[:, a_it])
+            sum_l2 = np.nansum(lin_mod_slice[:, a_it] ** 2)
             # normalise by sum squared
             ampsx = sum_r / sum_l2
             # add this contribution on

@@ -99,7 +99,7 @@ def main(night_name=None, files=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data2 == 0)
+    n_bad_pix = np.nansum(data2 == 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
@@ -124,7 +124,7 @@ def main(night_name=None, files=None):
     #    centpart = data2[col - slice:col + slice,:]
     #    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
     #    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
-    y = np.median(centpart, axis=1)
+    y = np.nanmedian(centpart, axis=1)
     # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))
     # ## weighted average
     plt.plot(np.arange(ny), y)

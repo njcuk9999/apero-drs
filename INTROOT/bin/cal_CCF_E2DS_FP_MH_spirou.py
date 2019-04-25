@@ -279,7 +279,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
     normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
@@ -288,7 +288,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     rv0 = float(ccf_res[1]) * 1.
@@ -435,7 +435,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the maximum number of orders to use
     nbmax = cp['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    cloc['AVERAGE_CCF'] = np.sum(cloc['CCF'][: nbmax], axis=0)
+    cloc['AVERAGE_CCF'] = np.nansum(cloc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
     normalized_ccf = cloc['AVERAGE_CCF'] / np.max(cloc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
@@ -444,7 +444,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     cloc['CCF_RES'] = ccf_res
     cloc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    cloc['MAXCPP'] = np.sum(cloc['CCF_MAX']) / np.sum(cloc['PIX_PASSED_ALL'])
+    cloc['MAXCPP'] = np.nansum(cloc['CCF_MAX']) / np.nansum(cloc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     cloc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
@@ -595,7 +595,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=loc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(loc['TOT_LINE']))
+                               value=np.nansum(loc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
@@ -677,7 +677,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=cloc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=cp['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(cloc['TOT_LINE']))
+                               value=np.nansum(cloc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])

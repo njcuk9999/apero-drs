@@ -233,7 +233,7 @@ if __name__ == '__main__':
         else:
             pos = (bigcube_filename == np.array(basefilenames))
 
-        if np.sum(pos) > 0:
+        if np.nansum(pos) > 0:
             # read header
             header = fits.getheader(bigcubes_files[pos][0])
             # get object name

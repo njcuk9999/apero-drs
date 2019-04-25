@@ -306,7 +306,7 @@ for iord in range(0, n_ord):
             ddx[ddx == 0] = np.nan
 
             g = (ypix2 >= 0)
-            if np.sum(g) != 0:
+            if np.nansum(g) != 0:
                 master_dxmap[ypix2[g], i] += (ddx + dx0)[g]
 
 pyfits.writeto((slope_file.split('_'))[0] + '_dxmap.fits', master_dxmap,

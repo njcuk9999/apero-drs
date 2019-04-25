@@ -82,9 +82,9 @@ def lin_mini(vector, sample):
 
         for i in range(sz_sample[0]):
             for j in range(i, sz_sample[0]):
-                mm[i, j] = np.sum(sample[i, :] * sample[j, :])
+                mm[i, j] = np.nansum(sample[i, :] * sample[j, :])
                 mm[j, i] = mm[i, j]
-            v[i] = np.sum(vector * sample[i, :])
+            v[i] = np.nansum(vector * sample[i, :])
         #
         if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[0]) + np.nan
@@ -108,9 +108,9 @@ def lin_mini(vector, sample):
 
         for i in range(sz_sample[1]):
             for j in range(i, sz_sample[1]):
-                mm[i, j] = np.sum(sample[:, i] * sample[:, j])
+                mm[i, j] = np.nansum(sample[:, i] * sample[:, j])
                 mm[j, i] = mm[i, j]
-            v[i] = np.sum(vector * sample[:, i])
+            v[i] = np.nansum(vector * sample[:, i])
 
         if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
@@ -209,7 +209,7 @@ def gaussfit(xpix, ypix, nn):
 
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * np.median(np.gradient(xpix)) / 2.354
+    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / 2.354
 
     a0 = None
     if nn == 3:
@@ -463,7 +463,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         for indmax in range(window * 2, nbpix - window * 2 - 1, window // 3):
             xpix = np.asarray(range(indmax - window, indmax + window))
             segment = np.array(hcdata[iord, indmax - window:indmax + window])
-            rms = np.median(np.abs(segment[1:] - segment[:-1]))
+            rms = np.nanmedian(np.abs(segment[1:] - segment[:-1]))
             peak = (np.max(segment) - np.nanmedian(segment))
 
             # peak needs to be well-behaved
@@ -591,19 +591,19 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             meddv[i] = np.nanmedian(dv[g])
             # print bin and total number of lines in 100-nm bin
             if ite == 0:
-                wargs = [xbin, xbin + 100, np.sum(g)]
+                wargs = [xbin, xbin + 100, np.nansum(g)]
                 wmsg = 'In wavelength bin {0}-{1}, {2} lines matched to ' \
                        'catalogue'
                 WLOG(p, '', wmsg.format(*wargs))
             elif ite == 1:
-                wargs = [xbin, xbin + 100, np.sum(g)]
+                wargs = [xbin, xbin + 100, np.nansum(g)]
                 wmsg = 'In wavelength bin {0}-{1}, {2} lines with dv<5 kept'
                 WLOG(p, '', wmsg.format(*wargs))
 
             i += 1
         # print total number of lines for ite=0
         if ite == 0:
-            wargs = [np.sum(np.isfinite(dv))]
+            wargs = [np.nansum(np.isfinite(dv))]
             wmsg = 'Total {0} lines matched to catalogue'
             WLOG(p, '', wmsg.format(*wargs))
 
@@ -618,7 +618,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         dv[err > 5] = np.nan
         # print total number of lines for ite=1
         if ite == 1:
-            wargs = [np.sum(np.isfinite(dv))]
+            wargs = [np.nansum(np.isfinite(dv))]
             wmsg = 'Total {0} lines with dv<5 kept'
             WLOG(p, '', wmsg.format(*wargs))
 
@@ -644,7 +644,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # -> right order
         # -> finite dv
         gg = (order_ == iord) & (np.isfinite(dv))
-        nlines = np.sum(gg)
+        nlines = np.nansum(gg)
 
         # if we have less than 10 lines, then its bad
         if nlines >= 10:
@@ -853,14 +853,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             orders = order_[gg]
             wave_line = wave_catalog[gg]
 
-            all_lines = np.zeros([np.sum(gg), 2 * window + 1])
-            all_dvs = np.zeros([np.sum(gg), 2 * window + 1])
+            all_lines = np.zeros([np.nansum(gg), 2 * window + 1])
+            all_dvs = np.zeros([np.nansum(gg), 2 * window + 1])
 
             base = np.zeros(2 * window + 1, dtype=bool)
             base[0:3] = True
             base[2 * window - 2:2 * window + 1] = True
             # noinspection PyTypeChecker
-            for i in range(np.sum(gg)):
+            for i in range(np.nansum(gg)):
                 part1 = int(orders[i])
                 part2 = int(xcens[i] + .5) - window
                 part3 = int(xcens[i] + .5) + window + 1
@@ -891,7 +891,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                                  popt_left[2], popt_left[3],
                                                  popt_left[4])
 
-                rms = res / np.median(np.abs(res))
+                rms = res / np.nanmedian(np.abs(res))
                 maxdev = np.max(np.abs(rms[keep]))
                 keep[np.abs(rms) > maxdev_threshold] = False
             resolution = popt_left[2] * 2.354
@@ -903,13 +903,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                    popt_left[3], popt_left[4])
 
             plt.plot(xx, gplot, 'k--')
-            wargs = [np.sum(gg), iord, iord + 9, xpos, resolution,
+            wargs = [np.nansum(gg), iord, iord + 9, xpos, resolution,
                      2.997e5 / resolution]
             wmsg = 'nlines={0}, orders={1}-{2}, x region={3}, ' \
                    'resolution={4:.2f} km/s, R={5:.2f}'
             WLOG(p, '', wmsg.format(*wargs))
 
-            #        print('nlines : ', np.sum(gg), 'iord=', iord,
+            #        print('nlines : ', np.nansum(gg), 'iord=', iord,
             #              ' xpos=', xpos,
             #              ' resolution = ', resolution, ' km/s', 'R = ',
             #              2.997e5 / resolution)
@@ -927,8 +927,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.tight_layout()
     plt.show()
 
-    wargs = [np.mean(resolution_map), np.median(resolution_map),
-             np.std(resolution_map)]
+    wargs = [np.nanmean(resolution_map), np.nanmedian(resolution_map),
+             np.nanstd(resolution_map)]
     wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
     WLOG(p, 'info', wmsg.format(*wargs))
 
@@ -957,7 +957,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # -> right order
         # -> finite dv
         gg = (order_ == iord) & (np.isfinite(dv))
-        nlines = np.sum(gg)
+        nlines = np.nansum(gg)
         # put lines into ALL_LINES structure
         # reminder:
         # gparams[0] = output wavelengths
@@ -1007,7 +1007,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # -> right order
             # -> finite dv
             gg = (order_ == iord) & (np.isfinite(dv))
-            nlines = np.sum(gg)
+            nlines = np.nansum(gg)
             # put lines into ALL_LINES structure
             # reminder:
             # gparams[0] = output wavelengths
@@ -1382,7 +1382,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
+    num_lines = int(np.nansum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
     err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
     # construct filename

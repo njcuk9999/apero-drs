@@ -247,8 +247,8 @@ def main(night_name=None, files=None):
         hc_ll_cat = loc['WAVE_CATALOG'][order_mask]
         hc_ll_diff = hc_ll_ord - hc_ll_cat
         res_hc.append(hc_ll_diff*speed_of_light/hc_ll_cat)
-        sumres_hc += np.sum(res_hc[order])
-        sumres2_hc += np.sum(res_hc[order] ** 2)
+        sumres_hc += np.nansum(res_hc[order])
+        sumres2_hc += np.nansum(res_hc[order] ** 2)
 
     total_lines_hc = len(np.concatenate(res_hc))
     final_mean_hc = sumres_hc/total_lines_hc

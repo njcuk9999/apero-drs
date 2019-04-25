@@ -149,9 +149,9 @@ def find_hotpix_offset(p, filename, yhot, xhot):
             # median the data_hot for this box position
             med_hotpix[posx, posy] = np.nanmedian(data_hot)
     # work out an rms
-    res = med_hotpix - np.median(med_hotpix)
+    res = med_hotpix - np.nanmedian(med_hotpix)
 
-    rms = np.median(np.abs(res))
+    rms = np.nanmedian(np.abs(res))
 
     snr_hotpix = res[med_size, med_size] / rms
 
