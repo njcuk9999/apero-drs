@@ -66,7 +66,8 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     :return weightedmean: float, weighted mean photon noise across all orders
     """
     # flag (saturated) fluxes above threshold as "bad pixels"
-    flag = spe < threshold
+    with warnings.catch_warnings(record=True) as _:
+        flag = spe < threshold
     # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
     for i_it in range(1, 2 * size, 1):
         flag[:, size:-size] *= flag[:, i_it: i_it - 2 * size]
