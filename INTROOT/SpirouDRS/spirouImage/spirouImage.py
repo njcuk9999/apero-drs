@@ -11,6 +11,8 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
 import os
 import glob
 import warnings
@@ -53,6 +55,11 @@ ParamDict = spirouConfig.ParamDict
 # get the config error
 ConfigError = spirouConfig.ConfigError
 # -----------------------------------------------------------------------------
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -3294,7 +3301,7 @@ def get_airmass(p, hdr):
 
 # TODO insert paremeter dictionnary
 # TODO: FIX PROBLEMS: Write doc string
-def e2dstos1d(wave, e2dsffb, sbin):
+def e2dstos1d_old(wave, e2dsffb, sbin):
     """
     Convert E2DS (2-dimension) spectra to 1-dimension spectra
     with merged spectral orders and regular sampling
@@ -3366,6 +3373,111 @@ def e2dstos1d(wave, e2dsffb, sbin):
 
     # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
     return xs1d, ys1d
+
+
+
+def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
+    """
+    Go from E2DS with a wave solution and blaze solution to a 1D spectrum
+
+    :param p:
+    :param wave:
+    :param e2ds:
+    :param blaze:
+    :return:
+    """
+
+    # get parameters from p
+    wavestart = p['EXTRACT_S1D_WAVESTART']
+    waveend = p['EXTRACT_S1D_WAVEEND']
+    binwave = p['IC_BIN_S1D_UWAVE']
+    binvelo = p['IC_BIN_S1D_UVELO']
+    smooth_size = p['IC_S1D_EDGE_SMOOTH_SIZE']
+    blazethres = p['IC_S1D_BLAZE_MIN']
+
+    # get size from e2ds
+    nord, npix = e2ds.shape
+
+    # -------------------------------------------------------------------------
+    # Decide on output wavelength grid
+    # -------------------------------------------------------------------------
+    if wgrid == 'wave':
+        wavegrid = np.arange(wavestart, waveend + binwave/2.0, binwave)
+    else:
+        # work out number of wavelength points
+        flambda = np.log(waveend/wavestart)
+        nlambda = np.round((speed_of_light / binvelo) * flambda)
+        # updating end wavelength slightly to have exactly 'step' km/s
+        waveend = np.exp(nlambda * (binvelo / speed_of_light)) * wavestart
+        # get the wavegrid
+        index = np.arange(nlambda) / nlambda
+        wavegrid = wavestart * np.exp(index * np.log(waveend / wavestart))
+
+    # -------------------------------------------------------------------------
+    # define a smooth transition mask at the edges of the image
+    # this ensures that the s1d has no discontinuity when going from one order
+    # to the next. We define a scale for this mask
+    # smoothing scale
+    # -------------------------------------------------------------------------
+    # define a kernal that goes from -3 to +3 smooth_sizes of the mask
+    xker = np.arange(-smooth_size * 3, smooth_size * 3, 1)
+    ker = np.exp(-0.5*(xker / smooth_size)**2)
+    # set up the edge vector
+    edges = np.ones(npix, dtype=bool)
+    # set edges of the image to 0 so that  we get a sloping weight
+    edges[:, int(smooth_size)] = False
+    edges[-int(smooth_size), :] = False
+    # define the weighting for the edges (slopevector)
+    slopevector = np.zeros_like(blaze)
+    # for each order find the sloping weight vector
+    for order_num in range(nord):
+        # get the blaze for this order
+        oblaze = blaze[order_num]
+        # find the valid pixels
+        cond1 = np.isfinite(oblaze)
+        cond2 = oblaze > (blazethres * np.nanmax(oblaze))
+        valid = cond1 & cond2 * edges
+        # convolve with the edge kernel
+        oweight = np.convolve(valid, ker, mode='same')
+        # normalise to the maximum
+        oweight = oweight / np.max(oweight)
+        # append to sloping vector storage
+        slopevector[order_num] = oweight
+
+    # multiple the spectrum and blaze by the sloping vector
+    blaze = blaze / slopevector
+    e2ds = e2ds / slopevector
+
+    # -------------------------------------------------------------------------
+    # Perform a weighted mean of overlapping orders
+    # by performing a spline of both the blaze and the spectrum
+    # -------------------------------------------------------------------------
+    out_spec = np.zeros_like(wavegrid)
+    weight = np.zeros_like(wavegrid)
+    # loop around all orders
+    for order_num in range(nord):
+        # identify the valid pixels
+        valid = np.isfinite(e2ds[order_num]) & np.isfinite(blaze[order_num])
+        # get this orders vectors
+        owave = wave[order_num, valid]
+        oe2ds = e2ds[order_num, valid]
+        oblaze = blaze[order_num, valid]
+        # create the splines for this order
+        spline_sp = IUVSpline(wave, oe2ds, k=5, ext=1)
+        spline_bl = IUVSpline(wave, oblaze, k=5, ext=1)
+        # can only spline in domain of the wave
+        useful_range = (wavegrid > np.nanmin(owave))
+        useful_range &= (wavegrid < np.nanmin(owave))
+        # get splines and add to outputs
+        weight[useful_range] += spline_bl(wavegrid[useful_range])
+        out_spec[useful_range] += spline_sp(wavegrid[useful_range])
+
+    # debug plot
+    if p['DRS_PLOT'] > 0 and p['DRS_DEBUG'] > 0:
+        sPlt.ext_1d_spectrum_debug_plot(p, wavegrid, out_spec, weight, wgrid)
+
+    # divide by weights
+    return wavegrid, out_spec / weight
 
 
 # =============================================================================
