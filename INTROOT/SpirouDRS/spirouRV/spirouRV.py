@@ -1175,7 +1175,15 @@ def coravelation(p, loc, log=False):
                         ll_map_b[order_num], s2d[order_num],
                         dll_map[order_num], blaze[order_num],
                         rv_ccf, det_noise]
+
+            # TODO: REMOVE =========================
+            print('Coravelation 1a')
+            # TODO: REMOVE =========================
             ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
+            # TODO: REMOVE =========================
+            print('Coravelation 1b')
+            # TODO: REMOVE =========================
+
 
             # -----------------------------------------------------------------
             # fit the CCF
@@ -1186,6 +1194,11 @@ def coravelation(p, loc, log=False):
                 ll_range, pix_passed = 0.0, 1.0
                 ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
                 ccf_o_results = np.zeros(4)
+
+            # TODO: REMOVE =========================
+            print('Coravelation 1c')
+            # TODO: REMOVE =========================
+
         else:
             # -----------------------------------------------------------------
             # else append empty stats
