@@ -1068,7 +1068,6 @@ def coravelation(p, loc, log=False):
     func_name = __NAME__ + '.coravelation()'
     # -------------------------------------------------------------------------
     # get constants from p
-    print('Coravelation 1')
     # -------------------------------------------------------------------------
     ccf_step = p['CCF_STEP']
     det_noise = p['CCF_DET_NOISE']
@@ -1077,7 +1076,6 @@ def coravelation(p, loc, log=False):
     c = CONSTANT_C / 1000.0
     # -------------------------------------------------------------------------
     # get data from loc
-    print('Coravelation 2')
     # -------------------------------------------------------------------------
     # get the wavelengths for the lines and the fit coefficients for each line
     ll_map, coeff_ll = loc['WAVE_LL'], loc['PARAM_LL']
@@ -1097,10 +1095,6 @@ def coravelation(p, loc, log=False):
     if ~np.isfinite(berv):
         berv = 0.0
         berv_max = 0.0
-
-
-    print('Coravelation 3')
-
     # -------------------------------------------------------------------------
     # log that we are computing ccf
     if log:
@@ -1117,9 +1111,6 @@ def coravelation(p, loc, log=False):
     # create a rv ccf range
     rv_ccf = np.arange(p['RVMIN'], p['RVMAX'], ccf_step)
     # -------------------------------------------------------------------------
-
-    print('Coravelation 4')
-
     # calculate modified map
     ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # calculate modified coefficients
@@ -1143,11 +1134,6 @@ def coravelation(p, loc, log=False):
     pix_passed_all = []
     ll_range_all = []
     tot_line = []
-
-
-    print('Coravelation 5')
-
-
     # -------------------------------------------------------------------------
     # graph set up
     if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
@@ -1157,14 +1143,15 @@ def coravelation(p, loc, log=False):
         fig = sPlt.define_figure()
     else:
         fig = None
-
-
-
-    print('Coravelation 6')
-
     # -------------------------------------------------------------------------
     # loop around the orders
     for order_num in range(len(ll_map)):
+
+
+        # TODO: REMOVE =========================
+        print('Coravelation 1')
+        # TODO: REMOVE =========================
+
         # get the line list limits
         ll_min = ll_map[order_num, 1] * constant1 / rvshift[0]
         ll_max = ll_map[order_num, -1] * constant2 / rvshift[-1]
@@ -1175,6 +1162,11 @@ def coravelation(p, loc, log=False):
         ll_sub_mask_ctr = ll_mask_ctr[cond]
         ll_sub_mask_d = ll_mask_d[cond]
         w_sub_mask = w_mask[cond]
+
+        # TODO: REMOVE =========================
+        print('Coravelation 2')
+        # TODO: REMOVE =========================
+
         # if we have values that meet the "cond" condition then we can do CCF
         if np.nansum(cond) > 0:
             # -----------------------------------------------------------------
@@ -1184,6 +1176,11 @@ def coravelation(p, loc, log=False):
                         dll_map[order_num], blaze[order_num],
                         rv_ccf, det_noise]
             ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
+
+            # TODO: REMOVE =========================
+            print('Coravelation 3')
+            # TODO: REMOVE =========================
+
             # -----------------------------------------------------------------
             # fit the CCF
             fit_args = [p, rv_ccf, np.array(ccf_o), fit_type]
@@ -1200,7 +1197,9 @@ def coravelation(p, loc, log=False):
             ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
             ccf_o_results = np.zeros(4)
 
-        print('Coravelation 8')
+        # TODO: REMOVE =========================
+        print('Coravelation 4')
+        # TODO: REMOVE =========================
 
         # ---------------------------------------------------------------------
         # append to storage
