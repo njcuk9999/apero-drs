@@ -199,7 +199,8 @@ def main(night_name=None, files=None):
             blaze[order_num] = bzo / np.nanpercentile(bzo, blaze_p)
 
         # find where the blaze is bad
-        badblaze = blaze < p['MKTELLU_CUT_BLAZE_NORM']
+        with warnings.catch_warnings(record=True) as _:
+            badblaze = blaze < p['MKTELLU_CUT_BLAZE_NORM']
         # set bad blaze to NaN
         blaze[badblaze] = np.nan
 
