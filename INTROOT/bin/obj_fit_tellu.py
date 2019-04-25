@@ -218,7 +218,7 @@ def main(night_name=None, files=None):
     # Locate valid pixels for PCA
     # ----------------------------------------------------------------------
     # determining the pixels relevant for PCA construction
-    keep = np.isfinite(np.nansum(abso, axis=0))
+    keep = np.isfinite(np.sum(abso, axis=0))
     # log fraction of valid (non NaN) pixels
     fraction = np.nansum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}'
