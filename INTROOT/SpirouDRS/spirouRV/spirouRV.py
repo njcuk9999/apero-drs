@@ -1146,12 +1146,6 @@ def coravelation(p, loc, log=False):
     # -------------------------------------------------------------------------
     # loop around the orders
     for order_num in range(len(ll_map)):
-
-
-        # TODO: REMOVE =========================
-        print('Coravelation 1')
-        # TODO: REMOVE =========================
-
         # get the line list limits
         ll_min = ll_map[order_num, 1] * constant1 / rvshift[0]
         ll_max = ll_map[order_num, -1] * constant2 / rvshift[-1]
@@ -1163,9 +1157,6 @@ def coravelation(p, loc, log=False):
         ll_sub_mask_d = ll_mask_d[cond]
         w_sub_mask = w_mask[cond]
 
-        # TODO: REMOVE =========================
-        print('Coravelation 2')
-        # TODO: REMOVE =========================
 
         # if we have values that meet the "cond" condition then we can do CCF
         if np.nansum(cond) > 0:
@@ -1176,10 +1167,6 @@ def coravelation(p, loc, log=False):
                         dll_map[order_num], blaze[order_num],
                         rv_ccf, det_noise]
             ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
-
-            # TODO: REMOVE =========================
-            print('Coravelation 3')
-            # TODO: REMOVE =========================
 
             # -----------------------------------------------------------------
             # fit the CCF
@@ -1197,10 +1184,6 @@ def coravelation(p, loc, log=False):
             ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
             ccf_o_results = np.zeros(4)
 
-        # TODO: REMOVE =========================
-        print('Coravelation 4')
-        # TODO: REMOVE =========================
-
         # ---------------------------------------------------------------------
         # append to storage
         orders.append(order_num)
@@ -1212,6 +1195,12 @@ def coravelation(p, loc, log=False):
         ccf_all_results.append(ccf_o_results)
         pix_passed_all.append(pix_passed)
         ll_range_all.append(ll_range)
+
+
+        # TODO: REMOVE =========================
+        print('Coravelation 1')
+        # TODO: REMOVE =========================
+
         # ---------------------------------------------------------------------
         # Plots
         # ---------------------------------------------------------------------
@@ -1219,6 +1208,11 @@ def coravelation(p, loc, log=False):
             # Plot rv vs ccf (and rv vs ccf_fit)
             sPlt.ccf_rv_ccf_plot(p, rv_ccf, ccf_o, ccf_o_fit, order=order_num,
                                  fig=fig)
+
+
+        # TODO: REMOVE =========================
+        print('Coravelation 2')
+        # TODO: REMOVE =========================
 
     # -------------------------------------------------------------------------
     # convert to arrays
@@ -1685,7 +1679,7 @@ def fit_ccf(p, rv, ccf, fit_type):
     # set up guess for gaussian fit
     # if fit_type == 0 then we have absorption lines
     if fit_type == 0:
-        if np.max(ccf) != 0:
+        if np.nanmax(ccf) != 0:
             a = np.array([-diff / max_ccf, rv[argmin], 4 * rvdiff, 0])
         else:
             a = np.zeros(4)
