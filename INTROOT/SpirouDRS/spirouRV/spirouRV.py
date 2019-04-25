@@ -1189,7 +1189,8 @@ def coravelation(p, loc, log=False):
             # fit the CCF
             fit_args = [p, rv_ccf, np.array(ccf_o), fit_type]
             try:
-                ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+                with warnings.catch_warnings(record=True) as _:
+                    ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
             except RuntimeError:
                 ll_range, pix_passed = 0.0, 1.0
                 ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
@@ -1212,7 +1213,7 @@ def coravelation(p, loc, log=False):
         tot_line.append(len(w_sub_mask))
         ccf_all.append(ccf_o)
         ccf_noise_all.append(ccf_noise)
-        ccf_max.append(np.max(ccf_o))
+        ccf_max.append(np.nanmax(ccf_o))
         ccf_all_fit.append(ccf_o_fit)
         ccf_all_results.append(ccf_o_results)
         pix_passed_all.append(pix_passed)
@@ -1694,7 +1695,7 @@ def fit_ccf(p, rv, ccf, fit_type):
         WLOG(p, 'error', emsg.format(*eargs))
 
     # get constants
-    max_ccf, min_ccf = np.max(ccf), np.min(ccf)
+    max_ccf, min_ccf = np.nanmax(ccf), np.nanmin(ccf)
     argmin, argmax = np.argmin(ccf), np.argmax(ccf)
     diff = max_ccf - min_ccf
     rvdiff = rv[1] - rv[0]
