@@ -718,9 +718,13 @@ def pearson_rtest(nbo, spe, speref):
     cc_orders = np.zeros(nbo)
     # loop around orders
     for order_num in range(nbo):
+        # get this orders values
         spei = spe[order_num, :]
         sperefi = speref[order_num, :]
-        cc_orders[order_num] = pearsonr(spei, sperefi)[0]
+        # find the NaNs
+        nanmask = np.isfinite(spei) & np.isfinite(sperefi)
+        # perform pearson r test
+        cc_orders[order_num] = pearsonr(spei[nanmask], sperefi[nanmask])[0]
     # return cc orders
     return cc_orders
 
