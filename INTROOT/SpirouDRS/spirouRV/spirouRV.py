@@ -1068,6 +1068,7 @@ def coravelation(p, loc, log=False):
     func_name = __NAME__ + '.coravelation()'
     # -------------------------------------------------------------------------
     # get constants from p
+    print('Coravelation 1')
     # -------------------------------------------------------------------------
     ccf_step = p['CCF_STEP']
     det_noise = p['CCF_DET_NOISE']
@@ -1076,6 +1077,7 @@ def coravelation(p, loc, log=False):
     c = CONSTANT_C / 1000.0
     # -------------------------------------------------------------------------
     # get data from loc
+    print('Coravelation 2')
     # -------------------------------------------------------------------------
     # get the wavelengths for the lines and the fit coefficients for each line
     ll_map, coeff_ll = loc['WAVE_LL'], loc['PARAM_LL']
@@ -1095,6 +1097,10 @@ def coravelation(p, loc, log=False):
     if ~np.isfinite(berv):
         berv = 0.0
         berv_max = 0.0
+
+
+    print('Coravelation 3')
+
     # -------------------------------------------------------------------------
     # log that we are computing ccf
     if log:
@@ -1111,6 +1117,9 @@ def coravelation(p, loc, log=False):
     # create a rv ccf range
     rv_ccf = np.arange(p['RVMIN'], p['RVMAX'], ccf_step)
     # -------------------------------------------------------------------------
+
+    print('Coravelation 4')
+
     # calculate modified map
     ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # calculate modified coefficients
@@ -1134,6 +1143,11 @@ def coravelation(p, loc, log=False):
     pix_passed_all = []
     ll_range_all = []
     tot_line = []
+
+
+    print('Coravelation 5')
+
+
     # -------------------------------------------------------------------------
     # graph set up
     if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
@@ -1143,6 +1157,11 @@ def coravelation(p, loc, log=False):
         fig = sPlt.define_figure()
     else:
         fig = None
+
+
+
+    print('Coravelation 6')
+
     # -------------------------------------------------------------------------
     # loop around the orders
     for order_num in range(len(ll_map)):
@@ -1180,6 +1199,9 @@ def coravelation(p, loc, log=False):
             ll_range, pix_passed = 0.0, 1.0
             ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
             ccf_o_results = np.zeros(4)
+
+        print('Coravelation 8')
+
         # ---------------------------------------------------------------------
         # append to storage
         orders.append(order_num)
