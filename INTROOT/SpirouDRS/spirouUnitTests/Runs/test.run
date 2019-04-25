@@ -2,6 +2,9 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
+# Run Make telluric db recipe (wrapper)
+run013 = ['obj_mk_tellu_db', '1']
+
 # Run Fit telluric recipes on Gl699
 run014a = ['obj_fit_tellu', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
 run014b = ['obj_fit_tellu', 'TEST4/20180527', '2279681o_pp_e2dsff_AB.fits']
