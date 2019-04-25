@@ -570,14 +570,34 @@ ic_cosmic_sigcut = 0.25  # 0.25
 #        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_thresh = 5
 
-#    Define the spectral bin for S1D spectra (nm)                - [cal_extract]
-ic_bin_s1d = 0.005
+
 
 #    Define the first order for the S1D spectra                  - [cal_extract]
 ic_start_order_1d = 1
 
 #    Define the last order for the S1D spectra                   - [cal_extract]
 ic_end_order_1d = 48
+
+#   Define the start s1d wavelength (in nm)
+extract_s1d_wavestart = 980
+
+#   Define the end s1d wavelength (in nm)
+extract_s1d_waveend = 2500
+
+#    Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
+ic_bin_s1d_uwave = 0.005
+
+#    Define the s1d spectral bin for S1D spectra (nm) when uniform in velocity
+ic_bin_s1d_uvelo = 1.0
+
+#    Define the s1d smoothing kernel for the transition between orders
+#             in pixels
+ic_s1d_edge_smooth_size = 40
+
+#    Define the threshold hold for a good blaze value (below the maximum value)
+#         here a value of 0.5 would be 50% of the maximum value
+ic_s1d_blaze_min = 0.05
+
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
