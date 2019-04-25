@@ -621,21 +621,19 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # 1-dimension spectral S1D
         # ------------------------------------------------------------------
-        # normalise E2DSFF with the blaze function
-        e2dsffb = loc['E2DSFF'] / loc['BLAZE']
-        # only want certain orders
-        s1dwave = loc['WAVE'][p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
-        s1de2dsffb = e2dsffb[p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
+        # # normalise E2DSFF with the blaze function
+        # e2dsffb = loc['E2DSFF'] / loc['BLAZE']
+        # # only want certain orders
+        # s1dwave = loc['WAVE'][p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
+        # s1de2dsffb = e2dsffb[p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
         # get arguments for E2DS to S1D
-        e2dsargs = [s1dwave, s1de2dsffb, p['IC_BIN_S1D']]
+        e2dsargs = [loc['WAVE'], loc['E2DSFF'], loc['BLAZE']]
         # get 1D spectrum
-        try:
-            xs1d, ys1d = spirouImage.E2DStoS1D(*e2dsargs)
-        except Exception as e:
-            emsg1 = 'Cannot compute 1D spectrum'
-            emsg2 = '\tError reads: {0}'.format(e)
-            WLOG(p, 'warning', [emsg1, emsg2])
-            xs1d, ys1d = None, None
+        xs1d1, ys1d1 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='wave')
+        # get 1D spectrum
+        xs1d2, ys1d2 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='velocity')
+
+        # TODO: continue here
         # Plot the 1D spectrum
         if p['DRS_PLOT'] and (xs1d is not None) and (ys1d is not None):
             sPlt.ext_1d_spectrum_plot(p, xs1d, ys1d)
@@ -662,6 +660,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
             WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename))
             # Write to file
+            # TODO: change to write table
             p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
 
     # ----------------------------------------------------------------------
