@@ -152,15 +152,11 @@ def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     # repeat the rms dim2 times
     rrms = np.repeat(rms, dim2).reshape((dim1, dim2))
     # for any values > cut*mean replace spef values with speref values
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         spefc = np.where(abs(z) > cut * rrms, spereff * rnormspe, spef)
-    # log warnings
-    spirouCore.WarnLog(p, w, funcname=func_name)
     # get the total z above cut*mean
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         cpt = np.nansum(abs(z) > cut * rrms)
-    # log warnings
-    spirouCore.WarnLog(p, w, funcname=func_name)
     # create a normalise spectrum for the corrected spef
     cnormspe = np.nansum(spefc, axis=1) / np.nansum(spereff, axis=1)
     # get the normed spectrum for each pixel for each order
