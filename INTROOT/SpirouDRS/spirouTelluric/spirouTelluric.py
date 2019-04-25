@@ -613,7 +613,9 @@ def get_normalized_blaze(p, loc, hdr):
     for iord in range(blaze.shape[0]):
         blaze_norm[iord, :] /= np.nanpercentile(blaze_norm[iord, :],
                                                 p['TELLU_BLAZE_PERCENTILE'])
-    blaze_norm[blaze_norm < p['TELLU_CUT_BLAZE_NORM']] = np.nan
+
+    with warnings.catch_warnings(record=True) as _:
+        blaze_norm[blaze_norm < p['TELLU_CUT_BLAZE_NORM']] = np.nan
     # add to loc
     loc['BLAZE'] = blaze
     loc['NBLAZE'] = blaze_norm
