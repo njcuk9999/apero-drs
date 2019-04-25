@@ -1907,6 +1907,7 @@ def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True,
     # set title labels limits
     targs = ['({0})'.format(kind), p['TARGET_RV'], p['CCF_MASK']]
     title = 'CCF plot {0}\n Target RV={1} km/s Mask={2}'.format(*targs)
+
     if order is not None:
         title += ' Order {0}'.format(order)
     frame.set(xlabel='Rv [km/s]', ylabel='CCF', title=title)
