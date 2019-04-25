@@ -1146,6 +1146,11 @@ def coravelation(p, loc, log=False):
     # -------------------------------------------------------------------------
     # loop around the orders
     for order_num in range(len(ll_map)):
+
+        # TODO: REMOVE =========================
+        print('Coravelation 0')
+        # TODO: REMOVE =========================
+
         # get the line list limits
         ll_min = ll_map[order_num, 1] * constant1 / rvshift[0]
         ll_max = ll_map[order_num, -1] * constant2 / rvshift[-1]
@@ -1156,6 +1161,10 @@ def coravelation(p, loc, log=False):
         ll_sub_mask_ctr = ll_mask_ctr[cond]
         ll_sub_mask_d = ll_mask_d[cond]
         w_sub_mask = w_mask[cond]
+
+        # TODO: REMOVE =========================
+        print('Coravelation 1')
+        # TODO: REMOVE =========================
 
 
         # if we have values that meet the "cond" condition then we can do CCF
@@ -1198,7 +1207,7 @@ def coravelation(p, loc, log=False):
 
 
         # TODO: REMOVE =========================
-        print('Coravelation 1')
+        print('Coravelation 2')
         # TODO: REMOVE =========================
 
         # ---------------------------------------------------------------------
@@ -1211,7 +1220,7 @@ def coravelation(p, loc, log=False):
 
 
         # TODO: REMOVE =========================
-        print('Coravelation 2')
+        print('Coravelation 3')
         # TODO: REMOVE =========================
 
     # -------------------------------------------------------------------------
