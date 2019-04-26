@@ -3425,8 +3425,8 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
     # set up the edge vector
     edges = np.ones(npix, dtype=bool)
     # set edges of the image to 0 so that  we get a sloping weight
-    edges[:int(smooth_size)] = False
-    edges[-int(smooth_size):] = False
+    edges[:int(1.5 * smooth_size)] = False
+    edges[-int(1.5 * smooth_size):] = False
     # define the weighting for the edges (slopevector)
     slopevector = np.zeros_like(blaze)
     # for each order find the sloping weight vector
