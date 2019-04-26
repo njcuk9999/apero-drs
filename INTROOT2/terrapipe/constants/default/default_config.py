@@ -204,7 +204,7 @@ DRS_MAX_IO_DISPLAY_LIMIT = Const('DRS_MAX_IO_DISPLAY_LIMIT', value=15,
                                  dtype=int, source=__NAME__)
 
 # DRS Header string
-DRS_HEADER = Const('DRS_HEADER', value=(' ' + '*'*65), dtype=str,
+DRS_HEADER = Const('DRS_HEADER', value=(' ' + '*'*75), dtype=str,
                    source=__NAME__)
 
 # Defines a master switch, whether to report warnings that are caught in
