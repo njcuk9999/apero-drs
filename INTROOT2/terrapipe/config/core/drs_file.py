@@ -926,7 +926,7 @@ class DrsFitsFile(DrsInputFile):
         #     not found)
         for key in output_hdr_keys:
             if key in self.hdict:
-                self.output_dict[key] = str(self.hdict[key][0])
+                self.output_dict[key] = str(self.hdict[key])
             else:
                 self.output_dict[key] = '--'
 
