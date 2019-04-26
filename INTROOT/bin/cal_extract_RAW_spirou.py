@@ -640,7 +640,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
         hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d1[0])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
-                                   value=p['IC_BIN_S1D'])
+                                   value=p['IC_BIN_S1D_UWAVE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
         hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
                                    value='Relative Flux')

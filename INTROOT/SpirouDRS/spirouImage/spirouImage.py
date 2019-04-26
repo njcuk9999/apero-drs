@@ -3435,18 +3435,20 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
         oblaze = blaze[order_num]
         # find the valid pixels
         cond1 = np.isfinite(oblaze)
-        cond2 = oblaze > (blazethres * np.nanmax(oblaze))
-        valid = cond1 & cond2 * edges
+        with warnings.catch_warnings(record=True) as _:
+            cond2 = oblaze > (blazethres * np.nanmax(oblaze))
+        valid = cond1 & cond2 & edges
         # convolve with the edge kernel
         oweight = np.convolve(valid, ker, mode='same')
         # normalise to the maximum
-        oweight = oweight / np.max(oweight)
+        oweight = oweight / np.nanmax(oweight)
         # append to sloping vector storage
         slopevector[order_num] = oweight
 
     # multiple the spectrum and blaze by the sloping vector
-    blaze = blaze / slopevector
-    e2ds = e2ds / slopevector
+    with warnings.catch_warnings(record=True) as _:
+        blaze = blaze / slopevector
+        e2ds = e2ds / slopevector
 
     # -------------------------------------------------------------------------
     # Perform a weighted mean of overlapping orders
@@ -3467,7 +3469,7 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
         spline_bl = IUVSpline(owave, oblaze, k=5, ext=1)
         # can only spline in domain of the wave
         useful_range = (wavegrid > np.nanmin(owave))
-        useful_range &= (wavegrid < np.nanmin(owave))
+        useful_range &= (wavegrid < np.nanmax(owave))
         # get splines and add to outputs
         weight[useful_range] += spline_bl(wavegrid[useful_range])
         out_spec[useful_range] += spline_sp(wavegrid[useful_range])
