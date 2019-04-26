@@ -180,7 +180,12 @@ def write_table(p, table, filename, fmt='fits', header=None):
         data, filehdr = fits.getdata(filename, header=True)
         # push keys into file header (value, comment tuple)
         for key in list(header.keys()):
-            filehdr[key] = tuple(header[key])
+            try:
+                filehdr[key] = tuple(header[key])
+            except ValueError:
+                if np.isnan(header[key][0]):
+                    filehdr[key] = tuple(['nan', header[key][1]])
+
         # get and check for file lock file
         lock, lock_file = spirouFITS.check_fits_lock_file(p, filename)
         # try to write table to file
