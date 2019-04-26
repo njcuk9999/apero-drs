@@ -3,7 +3,7 @@ Package containing all constants Classes and functionality
 
 DRS Import Rules:
 
-- only from drsmodule.locale
+- only from terrapipe.locale
 
 Created on 2019-01-17 at 14:09
 

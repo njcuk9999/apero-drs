@@ -773,7 +773,7 @@ class LoadData:
         :type instrument: str
         """
         self.instrument = instrument
-        # get parameters from drsmodule
+        # get parameters from terrapipe
         _, params = config.setup('None', instrument, quiet=True)
         self.drs_params = params
         # get database

@@ -762,7 +762,7 @@ def main(instrument=None):
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
-    # get parameters from drsmodule
+    # get parameters from terrapipe
     _, params = config.setup('None', instrument, quiet=True)
     # define allowed instruments
     if instrument not in INSTRUMENTS:
@@ -817,7 +817,7 @@ class LoadData:
         self.entries = OrderedDict()
         self.lengths = OrderedDict()
         self.options = OrderedDict()
-        # get parameters from drsmodule
+        # get parameters from terrapipe
         _, params = config.setup('None', self.instrument, quiet=True)
         self.params = params
         self.pconstant = constants.pload(self.instrument)

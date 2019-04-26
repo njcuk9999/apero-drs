@@ -16,7 +16,7 @@ import sys
 # Define variables
 # =============================================================================
 # Define package name
-PACKAGE = 'drsmodule'
+PACKAGE = 'terrapipe'
 # track used warnings
 USED_TEXT_WARNINGS = []
 USED_DRS_WARNINGS = []
@@ -428,7 +428,7 @@ def clear_warnings():
 
 
 # Define basic log function (for when we don't have full logger functionality)
-#   i.e. within drsmodule.locale or drmodule.constants
+#   i.e. within terrapipe.locale or terrapipe.constants
 #   Note this can't be language specific=
 def basiclogger(message=None, level=None, name=None, force_exit=True,
                 wlog=None, **kwargs):

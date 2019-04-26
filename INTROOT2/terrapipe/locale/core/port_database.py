@@ -21,7 +21,7 @@ from terrapipe.locale import drs_exceptions
 # Define variables
 # =============================================================================
 # define the package name
-PACKAGE = 'drsmodule'
+PACKAGE = 'terrapipe'
 # define the database path relative to package
 DATABASE_PATH = './locale/databases/'
 # define the backup path relative to package

@@ -19,7 +19,7 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX', 'HISTO_BINS',
            'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH', 'QC_MAX_DARK']
 # set name
-__NAME__ = 'drsmodule.constants.default.default_constants'
+__NAME__ = 'terrapipe.constants.default.default_constants'
 
 # Constants class
 Const = constant_functions.Const

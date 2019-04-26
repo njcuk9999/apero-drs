@@ -24,7 +24,7 @@ from . import drs_exceptions
 __NAME__ = 'drs_text.py'
 __INSTRUMENT__ = None
 # Define package name
-PACKAGE = 'drsmodule'
+PACKAGE = 'terrapipe'
 # file locations
 DEFAULT_PATH = './locale/databases/'
 INSTRUMENT_PATH = './locale/databases/'

@@ -11,7 +11,7 @@ from terrapipe.constants.default.default_config import *
 # TODO:    in import * module
 
 
-__NAME__ = 'drsmodule.config.instruments.nirps.default_config'
+__NAME__ = 'terrapipe.config.instruments.nirps.default_config'
 
 # -----------------------------------------------------------------------------
 # global settings

@@ -18,7 +18,7 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME']
 
 # set name
-__NAME__ = 'drsmodule.constants.default.default_config'
+__NAME__ = 'terrapipe.constants.default.default_config'
 
 # Constants definition
 Const = constant_functions.Const

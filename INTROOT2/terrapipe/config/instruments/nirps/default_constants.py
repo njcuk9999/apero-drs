@@ -10,7 +10,7 @@ from terrapipe.constants.default.default_constants import *
 # TODO: Note: If variables are not showing up MUST CHECK __all__ definition
 # TODO:    in import * module
 
-__NAME__ = 'drsmodule.config.instruments.nirps.default_constants'
+__NAME__ = 'terrapipe.config.instruments.nirps.default_constants'
 
 # -----------------------------------------------------------------------------
 # NIRPS Constant definitions
