@@ -14,6 +14,7 @@ import numpy as np
 import time
 import matplotlib
 import os
+import warnings
 from astropy import constants as cc
 from astropy import units as uu
 
@@ -1432,7 +1433,8 @@ def ext_1d_spectrum_debug_plot(p, x, y, w, kind):
     # set up fig
     fig, frame = setup_figure(p)
     # get weighted y
-    yw = y / w
+    with warnings.catch_warnings(record=True) as _:
+        yw = y / w
     # plot lines
     frame.plot(x, y / np.nanmedian(y), color='r', label='prior to division')
     frame.plot(x, w / np.nanmedian(w), color='c', label='weight vector')

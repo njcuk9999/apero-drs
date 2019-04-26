@@ -3459,6 +3459,9 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
     for order_num in range(nord):
         # identify the valid pixels
         valid = np.isfinite(e2ds[order_num]) & np.isfinite(blaze[order_num])
+        # if we have no valid points we need to skip
+        if np.sum(valid) == 0:
+            continue
         # get this orders vectors
         owave = wave[order_num, valid]
         oe2ds = e2ds[order_num, valid]
@@ -3473,12 +3476,20 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
         weight[useful_range] += spline_bl(wavegrid[useful_range])
         out_spec[useful_range] += spline_sp(wavegrid[useful_range])
 
+    # need to deal with zero weight --> set them to NaNs
+    zeroweights = weight == 0
+    weight[zeroweights] = np.nan
+
     # debug plot
     if p['DRS_PLOT'] > 0 and p['DRS_DEBUG'] > 0:
         sPlt.ext_1d_spectrum_debug_plot(p, wavegrid, out_spec, weight, wgrid)
 
+    # work out the weighted spectrum
+    with warnings.catch_warnings(record=True) as _:
+        w_out_spec = out_spec / weight
+
     # divide by weights
-    return wavegrid, out_spec / weight
+    return wavegrid, w_out_spec
 
 
 # =============================================================================
