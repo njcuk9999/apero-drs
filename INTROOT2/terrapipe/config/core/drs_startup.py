@@ -500,6 +500,15 @@ def _display_drs_title(p):
     # Log title
     _display_title(p, title)
 
+    # get colours
+    colors = COLOR()
+    # get pconstant
+    pconstant = constants.pload(p['INSTRUMENT'])
+    # noinspection PyPep8
+    logo = pconstant.SPLASH()
+    for line in logo:
+        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
+
 
 def _display_title(p, title):
     """
