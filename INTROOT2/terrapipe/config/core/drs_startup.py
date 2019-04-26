@@ -505,7 +505,7 @@ def _display_drs_title(p):
     # get pconstant
     pconstant = constants.pload(p['INSTRUMENT'])
     # noinspection PyPep8
-    logo = pconstant.SPLASH()
+    logo = pconstant.LOGO()
     for line in logo:
         WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
 
