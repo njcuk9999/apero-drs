@@ -11,6 +11,7 @@ Created on 2018-08-28
 """
 from __future__ import division
 import os
+import numpy as np
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -20,6 +21,10 @@ from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
 
+from astropy import constants as cc
+from astropy import units as uu
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 # =============================================================================
 # Define variables
@@ -223,6 +228,37 @@ def main(night_name=None, files=None):
         p.set_source('QC', __NAME__ + '/main()')
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
+    # ----------------------------------------------------------------------
+    # log the global stats
+    # ----------------------------------------------------------------------
+
+    # calculate catalog-fit residuals in km/s
+
+    res_hc =[]
+    sumres_hc = 0.0
+    sumres2_hc = 0.0
+
+    for order in range(loc['NBO']):
+        # get HC line wavelengths for the order
+        order_mask = loc['ORD_T'] == order
+        hc_x_ord = loc['XGAU_T'][order_mask]
+        hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][order][::-1],hc_x_ord)
+        hc_ll_cat = loc['WAVE_CATALOG'][order_mask]
+        hc_ll_diff = hc_ll_ord - hc_ll_cat
+        res_hc.append(hc_ll_diff*speed_of_light/hc_ll_cat)
+        sumres_hc += np.nansum(res_hc[order])
+        sumres2_hc += np.nansum(res_hc[order] ** 2)
+
+    total_lines_hc = len(np.concatenate(res_hc))
+    final_mean_hc = sumres_hc/total_lines_hc
+    final_var_hc = (sumres2_hc/total_lines_hc) - (final_mean_hc ** 2)
+    wmsg1 = 'On fiber {0} HC fit line statistic:'.format(p['FIBER'])
+    wargs2 = [final_mean_hc * 1000.0, np.sqrt(final_var_hc) * 1000.0,
+              total_lines_hc, 1000.0 * np.sqrt(final_var_hc / total_lines_hc)]
+    wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} HC lines (error on mean '
+             'value:{3:.4f}[m/s])'.format(*wargs2))
+    WLOG(p, 'info', [wmsg1, wmsg2])
 
     # ----------------------------------------------------------------------
     # Save wave map to file

@@ -22,7 +22,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
-
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 from SpirouDRS import spirouRV
 
 from astropy import constants as cc
@@ -306,7 +306,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         peak_num_init = np.arange(len(x_fp))
         # find gaps in x
         # get median of x difference
-        med_x_diff = np.median(x_fp[1:] - x_fp[:-1])
+        med_x_diff = np.nanmedian(x_fp[1:] - x_fp[:-1])
         # get array of x differences
         x_diff = x_fp[1:] - x_fp[:-1]
         # get indices where x_diff differs too much from median
@@ -318,7 +318,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         cond4 = x_diff < 1.25 * med_x_diff
         x_good_ind = np.where(cond3 & cond4)
         # fit x_fp v x_diff for good points
-        cfit_xdiff = np.polyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
+        cfit_xdiff = nanpolyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
         # loop over gap points
         for i in range(np.shape(x_gap_ind)[1]):
             # # find closest good x diff
@@ -451,7 +451,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.ylabel('e-')
         plt.title('FP order ' + str(n_fin - 1))
 
-        max_y_val = np.percentile(fpdata[n_fin - 1], 95)
+        max_y_val = np.nanpercentile(fpdata[n_fin - 1], 95)
         label1 = 'HC Ref - {0}'.format(hc_ll_red)
         label2 = 'FP Ref - {0}'.format(fp_ll_ref[n_fin - n_init - 1])
 
@@ -491,11 +491,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             fp_ll_diff = fp_ll_ord[1:] - fp_ll_ord[:-1]
             fp_ll_diff_prev = fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1]
             # mask to keep only difference between no-gap lines for both ord
-            mask_ll_diff = fp_ll_diff > 0.75 * np.median(fp_ll_diff)
-            mask_ll_diff &= fp_ll_diff < 1.25 * np.median(fp_ll_diff)
-            mask_ll_diff_prev = fp_ll_diff_prev > 0.75 * np.median(
+            mask_ll_diff = fp_ll_diff > 0.75 * np.nanmedian(fp_ll_diff)
+            mask_ll_diff &= fp_ll_diff < 1.25 * np.nanmedian(fp_ll_diff)
+            mask_ll_diff_prev = fp_ll_diff_prev > 0.75 * np.nanmedian(
                 fp_ll_diff_prev)
-            mask_ll_diff_prev &= fp_ll_diff_prev < 1.25 * np.median(
+            mask_ll_diff_prev &= fp_ll_diff_prev < 1.25 * np.nanmedian(
                 fp_ll_diff_prev)
             # get last diff for current order, first for prev
             ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
@@ -589,7 +589,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     # save HC line wavelength
                     hc_ll_test.append(hc_ll_ord[j])
                     # test for FP gap
-                    med_x_diff = np.median(fp_x_ord[1:] - fp_x_ord[:-1])
+                    med_x_diff = np.nanmedian(fp_x_ord[1:] - fp_x_ord[:-1])
                     if (t2 < 0.75 * med_x_diff) or (t2 > 1.25 * med_x_diff):
                         d_test.append(0.5 * t1 * (t2 / t3))
                         one_m_d_test.append(1. / m_ord[k])
@@ -604,13 +604,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     d_all = np.copy(np.asarray(d))
     one_m_d_all = np.copy(np.asarray(one_m_d))
     # define boundaries and mask
-    # critlower = np.median(d) - np.std(d) * 4.
-    # critupper = np.median(d) + np.std(d) * 4.
+    # critlower = np.nanmedian(d) - np.nanstd(d) * 4.
+    # critupper = np.nanmedian(d) + np.nanstd(d) * 4.
     # sig_clip_d = np.where((d > critlower) & (d < critupper))
     # get difference in consecutive points (zero added for dimensionality)
     d_diff = np.concatenate(([0], d_all[1:] - d_all[:-1]))
-    critlower = np.median(d_diff) - np.std(d_diff)
-    critupper = np.median(d_diff) + np.std(d_diff)
+    critlower = np.nanmedian(d_diff) - np.nanstd(d_diff)
+    critupper = np.nanmedian(d_diff) + np.nanstd(d_diff)
     sig_clip_d = np.where((d_diff > critlower) & (d_diff < critupper))
     # sigma clip
     d = np.asarray(d)[sig_clip_d]
@@ -641,7 +641,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     d = np.asarray(d)[one_m_sort]
 
     # initial polynomial fit
-    fit_1m_d_init = np.polyfit(one_m_d, d, 5)
+    fit_1m_d_init = nanpolyfit(one_m_d, d, 5)
     # get residuals
     res = d - np.polyval(fit_1m_d_init, one_m_d)
     # mask points at +/- 1 sigma
@@ -650,7 +650,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     d = d[sig_clip]
 
     # second polynomial fit
-    fit_1m_d = np.polyfit(one_m_d, d, 10)
+    fit_1m_d = nanpolyfit(one_m_d, d, 10)
     fit_1m_d_func = np.poly1d(fit_1m_d)
     res_d_final = d - fit_1m_d_func(one_m_d)
 
@@ -748,7 +748,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get weights for the order
         wei_ord = np.asarray(wei)[ord_mask]
         # fit polynomial
-        pout = np.polyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
+        pout = nanpolyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
                           w=wei_ord)
         poly_wave_sol_final[onum] = pout[::-1]
         # get final wavelengths
@@ -765,7 +765,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             wei_ord = wei_ord[sig_mask]
             # refit polynomial
             #pargs = [fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'], w=wei_ord]
-            pout = np.polyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
+            pout = nanpolyfit(fp_x_ord, fp_ll_new_ord, p['IC_LL_DEGR_FIT'],
                               w=wei_ord)
             poly_wave_sol_final[onum] = pout[::-1]
             # get new final wavelengths
@@ -792,11 +792,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         convert = speed_of_light * dldx / fp_ll_final_ord
         scale.append(convert)
         # sum the weights (recursively)
-        sweight += np.sum(wei_clip[onum])
+        sweight += np.nansum(wei_clip[onum])
         # sum the weighted residuals in km/s
-        wsumres += np.sum(res_clip[onum] * wei_clip[onum])
+        wsumres += np.nansum(res_clip[onum] * wei_clip[onum])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(wei_clip[onum] * res_clip[onum] ** 2)
+        wsumres2 += np.nansum(wei_clip[onum] * res_clip[onum] ** 2)
 
     # calculate the final var and mean
     total_lines = len(np.concatenate(fp_ll_in_clip))
@@ -812,8 +812,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # rest = (np.concatenate(fp_ll_final_clip)-np.concatenate(fp_ll_in_clip))\
     #        *speed_of_light/np.concatenate(fp_ll_in_clip)
-    # print(1000 * np.sqrt((np.sum(rest ** 2) / total_lines -
-    #                       np.sum(rest / total_lines) ** 2) / total_lines))
+    # print(1000 * np.sqrt((np.nansum(rest ** 2) / total_lines -
+    #                       np.nansum(rest / total_lines) ** 2) / total_lines))
 
     if p['DRS_PLOT']:
         # control plot - single order - TODO move to spirouPlot
@@ -974,7 +974,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
     normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
@@ -983,7 +983,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
@@ -1089,8 +1089,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     fail_msg.append(wmsg.format())
                 # if outlying order, recalculate stats
                 if redo_sigma:
-                    mean = np.sum(respix_2) / len(respix_2)
-                    mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                    mean = np.nansum(respix_2) / len(respix_2)
+                    mean2 = np.nansum(respix_2 ** 2) / len(respix_2)
                     rms = np.sqrt(mean2 - mean ** 2)
                     if rms > rms_littrow_max:
                         fmsg = ('Littrow test (x={0}) failed (sig littrow = '
@@ -1177,7 +1177,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=loc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(loc['TOT_LINE']))
+                               value=np.nansum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)

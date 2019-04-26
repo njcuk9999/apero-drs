@@ -18,15 +18,19 @@ import glob
 # =============================================================================
 # Define variables
 # =============================================================================
+kind = 1
+# kind = 2
+
 WORKSPACE_RAW = '/spirou/cfht_nights/common/raw/'
 WORKSPACE0 = '/spirou/cfht_nights/common/tmp/'
-WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_2/'
-WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_2/'
+WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_{0}/'.format(kind)
+WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_{0}/'.format(kind)
 WORKSPACE3 = '/spirou/drs/spirou_py3/INTROOT/SpirouDRS/data/constants/'
 
 WHITELIST_FILE = os.path.join(WORKSPACE3, 'tellu_whitelist.txt')
 MASTERTELLU_FILE = os.path.join(WORKSPACE2, 'master_tellu_SPIROU.txt')
-TELLU_KEY = 'TELL_MAP'
+TELLU_KEY1 = 'TELL_OBJ'
+TELLU_KEY2 = 'TELL_MAP'
 BIGCUBE_FILE = 'BigCube_*'
 INDEX_FILENAME = 'index.fits'
 DRS_OUTS = ['OBJ_FP', 'OBJ_DARK']
@@ -34,6 +38,7 @@ DRS_IDS = ['EXT_E2DS_AB']
 RAW_SUFFIX = 'o.fits'
 PP_SUFFIX = 'o_pp.fits'
 E2DS_SUFFIX = 'o_pp_e2ds_AB.fits'
+
 
 # =============================================================================
 # Define functions
@@ -178,6 +183,7 @@ def compare_pp_e2ds_files(pfiles, efiles):
 
     return not_found_index, found_index, not_found_disk, found_disk
 
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -196,7 +202,8 @@ if __name__ == '__main__':
     wlist = np.loadtxt(WHITELIST_FILE, dtype=str)
 
     # load up the master tellu file
-    mastertellu = load_db(MASTERTELLU_FILE, 'TELL_MAP')
+    tellu_files1 = load_db(MASTERTELLU_FILE, TELLU_KEY1)
+    tellu_files2 = load_db(MASTERTELLU_FILE, TELLU_KEY2)
 
     # load up raw file objnames
     all_raw_filenames, all_raw_objnames = get_raw_files(suffix=RAW_SUFFIX)
@@ -212,7 +219,8 @@ if __name__ == '__main__':
 
     not_found_disk, found_disk, not_found_index, found_index = [], [], [], []
 
-    totals = dict(RAW=0, PPD=0, PPI=0, E2DSD=0, E2DSI=0, TELLUDB=0, BIGCUBE=0)
+    totals = dict(RAW=0, PPD=0, PPI=0, E2DSD=0, E2DSI=0, TELLOBJ=0, TELLMAP=0,
+                  BIGCUBE=0)
     # loop around big cubes
     for objname in wlist:
 
@@ -225,7 +233,7 @@ if __name__ == '__main__':
         else:
             pos = (bigcube_filename == np.array(basefilenames))
 
-        if np.sum(pos) > 0:
+        if np.nansum(pos) > 0:
             # read header
             header = fits.getheader(bigcubes_files[pos][0])
             # get object name
@@ -260,21 +268,25 @@ if __name__ == '__main__':
         e2ds_nfi, e2ds_fi, e2ds_nfd, e2ds_fd = eout
 
         # find all objects in master tellu that match
-        matching_filenames = find_matching(objname, mastertellu)
+        matching_filenames1 = find_matching(objname, tellu_files1)
+        matching_filenames2 = find_matching(objname, tellu_files2)
         # add to totals
         totals['RAW'] += len(raw_files)
         totals['PPD'] += len(pp_disk_files)
         totals['PPI'] += len(pp_files)
         totals['BIGCUBE'] += len(bigtable)
-        totals['TELLUDB'] += len(matching_filenames)
+        totals['TELLOBJ'] += len(matching_filenames1)
+        totals['TELLMAP'] += len(matching_filenames2)
         totals['E2DSI'] += len(e2ds_files)
         totals['E2DSD'] += len(e2ds_disk_files)
         # store in file and print
         pargs = [objname, len(raw_files), len(pp_disk_files), len(pp_files),
                  len(e2ds_disk_files), len(e2ds_files),
-                 len(matching_filenames), len(bigtable)]
+                 len(matching_filenames1), len(matching_filenames2),
+                 len(bigtable)]
         print('{0:15s}: raw={1:3d} PPD={2:3d} PPI={3:3d} E2DSD={4:3d} '
-              'E2DSI={5:3d} telluDB={6:3d} BigCube={7:3d}'.format(*pargs))
+              'E2DSI={5:3d} TELLMAP={7:3d} TELLOBJ={6:3d} BigCube={8:3d}'
+              ''.format(*pargs))
         storage[objname] = pargs[1:]
 
         not_found_disk += e2ds_nfd
@@ -284,8 +296,8 @@ if __name__ == '__main__':
 
     totals['tt'] = 'totals'
     print('{tt:15s}: raw={RAW:3d} PPD={PPD:3d} PPI={PPI:3d} E2DSD={E2DSD:3d} '
-          'E2DSI={E2DSI:3d} telluDB={TELLUDB:3d} BigCube={BIGCUBE:3d}'
-          ''.format(**totals))
+          'E2DSI={E2DSI:3d} TELLMAP={TELLMAP:3d} TELLOBJ={TELLOBJ:3d} '
+          'BigCube={BIGCUBE:3d}'.format(**totals))
 
 # =============================================================================
 # End of code

@@ -20,6 +20,7 @@ from astropy import units as uu
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy import stats
 from datetime import datetime, tzinfo, timedelta
 from time import mktime
@@ -545,11 +546,34 @@ def get_dll_from_coefficients(params, nx, nbo):
         # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
         for it in range(len(coeffs) - 1):
             yfiti.append((it + 1) * coeffs[it + 1] * xfit ** it)
-        yfit = np.sum(yfiti, axis=0)
+        yfit = np.nansum(yfiti, axis=0)
         # add to line list storage
         ll[order_num, :] = yfit
     # return line list
     return ll
+
+
+def IUVSpline(x, y, **kwargs):
+    # check whether weights are set
+    w = kwargs.get('w', None)
+    # if we don't have weights set them all to 1
+    if w is None:
+        w = np.ones_like(y)
+    # find all NaN values
+    nanmask = ~np.isfinite(y)
+    # set weights of NaNs to 0
+    w[nanmask] = 0
+    # set values of y to 0
+    y[nanmask] = 0
+    # to the interpolated univariate spline
+    return InterpolatedUnivariateSpline(x, y, w=w, **kwargs)
+
+
+def nanpolyfit(x, y, deg, **kwargs):
+    # find the NaNs
+    nanmask = np.isfinite(y) & np.isfinite(x)
+    # return polyfit without the nans
+    return np.polyfit(x[nanmask], y[nanmask], deg, **kwargs)
 
 
 # TODO: Required commenting and cleaning up
@@ -855,12 +879,12 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         nanmask = np.logical_not(np.isnan(ytmp))
         if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
-            xmean = np.mean(xtmp[nanmask])
+            xmean = np.nanmean(xtmp[nanmask])
             # calculate median y within the bin
-            medy = np.median(ytmp[nanmask])
+            medy = np.nanmedian(ytmp[nanmask])
 
             # calculate median deviation
-            medydev = np.median(np.absolute(ytmp[nanmask] - medy))
+            medydev = np.nanmedian(np.abs(ytmp[nanmask] - medy))
             # create mask to filter data outside n*sigma range
             filtermask = (ytmp[nanmask] > medy) & (ytmp[nanmask] < medy +
                                                    sigmaclip * medydev)
@@ -869,13 +893,13 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                 xbin.append(xmean)
                 if mode == 'max':
                     # save maximum y of filtered data
-                    ybin.append(np.max(ytmp[nanmask][filtermask]))
+                    ybin.append(np.nanmax(ytmp[nanmask][filtermask]))
                 elif mode == 'median':
                     # save median y of filtered data
-                    ybin.append(np.median(ytmp[nanmask][filtermask]))
+                    ybin.append(np.nanmedian(ytmp[nanmask][filtermask]))
                 elif mode == 'mean':
                     # save mean y of filtered data
-                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
+                    ybin.append(np.nanmean(ytmp[nanmask][filtermask]))
                 else:
                     emsg = 'Can not recognize selected mode="{0}"...exiting'
                     print(emsg.format(mode))

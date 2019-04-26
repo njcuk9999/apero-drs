@@ -138,10 +138,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # read first file (fpfitsfilename)
     fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
 
+    # TODO: ------------------------------------------------------------
+    # TODO remove to test NaNs
+    # TODO: ------------------------------------------------------------
+    # hcmask = np.isfinite(hcdata)
+    # fpmask = np.isfinite(fpdata)
+    # hcdata[~hcmask] = 0.0
+    # fpdata[~fpmask] = 0.0
+    # TODO: ------------------------------------------------------------
+
     # add data and hdr to loc
     loc = ParamDict()
     loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
     loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+
     # set the source
     sources = ['HCDATA', 'HCHDR', 'HCCDR']
     loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
@@ -285,7 +295,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # -> right order
         # -> finite dv
         gg = (ord_t == iord) & (np.isfinite(dv))
-        nlines = np.sum(gg)
+        nlines = np.nansum(gg)
         # put lines into ALL_LINES structure
         # reminder:
         # gparams[0] = output wavelengths
@@ -534,16 +544,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+    normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
@@ -686,8 +696,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
                 # if outlying order, recalculate stats
                 if redo_sigma:
-                    mean = np.sum(respix_2) / len(respix_2)
-                    mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                    mean = np.nansum(respix_2) / len(respix_2)
+                    mean2 = np.nansum(respix_2 ** 2) / len(respix_2)
                     rms = np.sqrt(mean2 - mean ** 2)
                     if rms > rms_littrow_max:
                         fmsg = ('Littrow test (x={0}) failed (sig littrow = '
@@ -772,23 +782,28 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                      values=loc['LL_PARAM_FINAL'])
 
     # add FP CCF drift
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
-                               value=loc['RV_CCF'][0])
+    # target RV and width
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                               value=p['TARGET_RV'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                               value=p['CCF_WIDTH'])
     # the rv step
-    rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
+    # rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
+                               value=p['CCF_STEP'])
+
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
                                value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
                                value=loc['MAXCPP'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(loc['TOT_LINE']))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
+                               value=np.nansum(loc['TOT_LINE']))
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
@@ -819,7 +834,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
+    num_lines = int(np.nansum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
     err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
     # construct filename

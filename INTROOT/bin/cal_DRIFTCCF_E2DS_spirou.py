@@ -243,16 +243,16 @@ def main(night_name=None, reffile=None):
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+    normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
@@ -352,7 +352,7 @@ def main(night_name=None, reffile=None):
         # calculate flux ratio
         # ------------------------------------------------------------------
         sorder = p['IC_DRIFT_ORDER_PLOT']
-        fratio = np.sum(loc['SPE'][sorder]) / np.sum(loc['SPEREF'][sorder])
+        fratio = np.nansum(loc['SPE'][sorder]) / np.nansum(loc['SPEREF'][sorder])
         loc['FLUXRATIO'][i_it] = fratio
 
         # ------------------------------------------------------------------
@@ -380,9 +380,9 @@ def main(night_name=None, reffile=None):
         # get the maximum number of orders to use
         nbmax = p['CCF_NUM_ORDERS_MAX']
         # get the average ccf
-        loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+        loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
         # normalize the average ccf
-        normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+        normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
         # get the fit for the normalized average ccf
         ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                            fit_type=1)
@@ -395,7 +395,7 @@ def main(night_name=None, reffile=None):
         deltatime = (bjdspe - bjdref) * 24
 
         err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
-        merr = 1. / np.sqrt(np.sum((1. / err_meanrv) ** 2))
+        merr = 1. / np.sqrt(np.nansum((1. / err_meanrv) ** 2))
         # Log the RV properties
         wmsg = ('Time from ref= {0:.2f} h '
                 '- Flux Ratio= {1:.2f} '

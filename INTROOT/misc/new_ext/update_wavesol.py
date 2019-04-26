@@ -35,8 +35,8 @@ map_orders = pyfits.getdata(map_order_file)
 map_dx = pyfits.getdata(map_dx_file)
 
 for iord in range(49):
-	w = np.sum( map_orders == iord ,axis=0)
-	dx = np.sum( (map_orders == iord)*map_dx ,axis=0)/w
+	w = np.nansum( map_orders == iord ,axis=0)
+	dx = np.nansum( (map_orders == iord)*map_dx ,axis=0)/w
 
 	xpix = np.arange(4088)
 	gg=np.isfinite(dx)  & (dx !=0)

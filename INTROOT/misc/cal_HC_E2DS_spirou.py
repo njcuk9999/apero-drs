@@ -246,6 +246,8 @@ def part2(p, loc):
     # fit lines
     start = p['IC_HC_N_ORD_START_2']
     end = p['IC_HC_N_ORD_FINAL_2']
+
+
     # redefine echelle orders
     orderrange = np.arange(start, end)
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
@@ -257,7 +259,15 @@ def part2(p, loc):
     # ------------------------------------------------------------------
     # Littrow test
     # ------------------------------------------------------------------
-    ckwargs = dict(ll=loc['LL_OUT_2'], iteration=2, log=True)
+    start = p['IC_LITTROW_ORDER_INIT_2']
+    #end = p['IC_LITTROW_ORDER_FINAL_2']
+
+    # redefine echelle orders
+    orderrange = np.arange(start, end)
+    loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
+    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+
+    ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # ------------------------------------------------------------------
@@ -307,6 +317,9 @@ def part2(p, loc):
         # get the abs min and max dev littrow values
         min_littrow = abs(loc['LITTROW_MINDEV_2'][x_it])
         max_littrow = abs(loc['LITTROW_MAXDEV_2'][x_it])
+        # get the corresponding order
+        min_littrow_ord = loc['LITTROW_MINDEVORD_2'][x_it]
+        max_littrow_ord = loc['LITTROW_MAXDEVORD_2'][x_it]
         # check if sig littrow is above maximum
         rms_littrow_max = p['QC_RMS_LITTROW_MAX']
         dev_littrow_max = p['QC_DEV_LITTROW_MAX']
@@ -319,8 +332,9 @@ def part2(p, loc):
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
-                    '{1:.2f}|{2:.2f} > {3:.2f})')
-            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max]
+                    '{1:.2f}|{2:.2f} > {3:.2f} for order {4}|{5})')
+            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+                     min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
     # finally log the failed messages and set QC = 1 if we pass the
@@ -359,6 +373,9 @@ def part2(p, loc):
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
 
     # set the input files
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
+
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'], value=p['FLATFILE'])
     # add quality control
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
@@ -394,7 +411,7 @@ def part2(p, loc):
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_iterations = int(np.sum(loc['X_ITER_2'][:, 2]))
+    num_iterations = int(np.nansum(loc['X_ITER_2'][:, 2]))
     err = 1000 * np.sqrt(final_var/num_iterations)
     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_2'])
     # construct filename

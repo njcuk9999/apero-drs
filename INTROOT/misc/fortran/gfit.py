@@ -292,7 +292,7 @@ def mrqcof(x, y, sig, ndata, a, ma=4):
         # calculate the new value of beta
         beta = beta + dy * wt
         # calculate new chisq value
-        chisq = chisq + np.sum(dy * dy * sig2i)
+        chisq = chisq + np.nansum(dy * dy * sig2i)
     # TODO loops may be possible to eliminate?
     for j in range(1, 4):
         for k in range(0, j):
