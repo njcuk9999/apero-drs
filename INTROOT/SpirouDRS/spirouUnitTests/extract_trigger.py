@@ -611,7 +611,7 @@ def unit_wrapper(p, runs):
 def trigger_preprocess(p, filelist):
     recipe = 'cal_preprocess_spirou'
     # define path to raw folder
-    rawpath = p['DRS_DATA_WORKING']
+    rawpath = p['DRS_DATA_RAW']
     # get night name
     night_names, filenames = get_night_name(rawpath, filelist)
     # catch errors
