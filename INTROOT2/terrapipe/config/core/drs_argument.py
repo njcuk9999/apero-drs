@@ -1201,15 +1201,16 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
     # construct print error message (with usage help)
     pmsgs = ['']
 
+    # print info
     if not return_string:
         pmsgs.append(green + params['DRS_HEADER'] + end)
         pmsgs.append(green + ' ' + text['40-005-00001'].format(program) + end)
         pmsgs.append(green + params['DRS_HEADER'] + end)
-        imsgs = _get_version_info(params, green, end)
-        pmsgs += imsgs
-        pmsgs.append('')
-        pmsgs.append(blue + parser.format_usage() + end)
-        pmsgs.append('')
+    #     imsgs = _get_version_info(params, green, end)
+    #     pmsgs += imsgs
+    #     pmsgs.append('')
+    #     pmsgs.append(blue + parser.format_usage() + end)
+    #     pmsgs.append('')
     for wmsg in wmsgs:
         pmsgs.append(green + wmsg + end)
     # deal with returning/printing
