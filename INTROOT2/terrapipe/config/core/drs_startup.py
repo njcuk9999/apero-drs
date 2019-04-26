@@ -529,8 +529,9 @@ def _display_logo(p):
     # noinspection PyPep8
     logo = pconstant.LOGO()
     for line in logo:
-        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
-    WLOG(p, '', p['DRS_HEADER'], wrap=False)
+        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False,
+             printonly=True)
+    WLOG(p, '', p['DRS_HEADER'], wrap=False, printonly=True)
 
 
 def _display_ee(p):
@@ -554,8 +555,9 @@ def _display_ee(p):
     # noinspection PyPep8
     logo = pconstant.SPLASH()
     for line in logo:
-        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
-    WLOG(p, '', p['DRS_HEADER'])
+        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False,
+             printonly=True)
+    WLOG(p, '', p['DRS_HEADER'], printonly=True)
 
 
 def _display_initial_parameterisation(p):
