@@ -517,7 +517,7 @@ def _display_title(p, title):
     """
     # print and log
     WLOG(p, '', p['DRS_HEADER'], wrap=False)
-    WLOG(p, '', '\n{0}\n'.format(title), wrap=False)
+    WLOG(p, '', ' *\n{0}\n *'.format(title), wrap=False)
     WLOG(p, '', p['DRS_HEADER'], wrap=False)
 
 
