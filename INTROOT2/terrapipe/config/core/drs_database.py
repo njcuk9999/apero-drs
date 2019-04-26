@@ -228,7 +228,7 @@ def _get_time(params, dbname, hdict=None, header=None, kind=None):
     if hdict is not None:
         if timekey in hdict:
             # get the raw time from the header
-            raw_time = hdict[timekey][0]
+            raw_time = hdict[timekey]
         else:
             eargs = [dbname, 'hdict', timekey, func_name]
             WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
