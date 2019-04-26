@@ -255,6 +255,9 @@ class Logger:
         if not logonly:
             # loop around raw messages
             for mess in raw_messages1:
+                # add a space to the start of messages (if not present)
+                if not mess.startswith(' '):
+                    mess = ' ' + mess
                 # Get the time now in human readable format
                 human_time = time.get_hhmmss_now()
                 # storage for cmds
