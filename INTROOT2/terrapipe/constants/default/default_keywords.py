@@ -16,7 +16,7 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_EXT_TYPE', 'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT']
 # set name
-__NAME__ = 'drsmodule.constants.default.default_keywords'
+__NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
 Const = constant_functions.Const
 # Keyword defintion

@@ -9,7 +9,7 @@ Created on 2019-01-21 at 09:37
 
 import rules:
     Cannot import drs_table
-    Cannot import whole of drsmodule.config (drs_setup uses drs_table)
+    Cannot import whole of terrapipe.config (drs_setup uses drs_table)
 
 @author: cook
 """

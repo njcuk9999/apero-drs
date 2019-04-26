@@ -5,7 +5,7 @@ Constants parameter functions
 
 DRS Import Rules:
 
-- only from drsmodule.locale
+- only from terrapipe.locale
 
 Created on 2019-01-17 at 15:24
 
@@ -28,7 +28,7 @@ from . import constant_functions
 # Define script name
 __NAME__ = 'param_functions.py'
 # Define package name
-PACKAGE = 'drsmodule'
+PACKAGE = 'terrapipe'
 # Define relative path to 'const' sub-package
 CONST_PATH = './config/instruments/'
 CORE_PATH = './constants/default/'
