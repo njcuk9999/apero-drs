@@ -213,7 +213,6 @@ class DrsInputFile:
         nkwargs['directory'] = kwargs.get('directory', drsfile.directory)
         nkwargs['data'] = kwargs.get('data', drsfile.data)
         nkwargs['header'] = kwargs.get('header', drsfile.header)
-        nkwargs['comments'] = kwargs.get('comments', drsfile.comments)
         nkwargs['fileset'] = kwargs.get('fileset', self.fileset)
         # return new instance of DrsFitsFile
         return DrsInputFile(**nkwargs)
@@ -467,7 +466,6 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['directory'] = kwargs.get('directory', drsfile.directory)
         nkwargs['data'] = kwargs.get('data', drsfile.data)
         nkwargs['header'] = kwargs.get('header', drsfile.header)
-        nkwargs['comments'] = kwargs.get('comments', drsfile.comments)
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['hdict'] = kwargs.get('hdict', drsfile.hdict)
         nkwargs['output_dict'] = kwargs.get('output_dict', drsfile.output_dict)
