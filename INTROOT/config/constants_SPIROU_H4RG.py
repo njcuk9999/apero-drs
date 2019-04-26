@@ -592,7 +592,7 @@ ic_bin_s1d_uvelo = 1.0
 
 #    Define the s1d smoothing kernel for the transition between orders
 #             in pixels
-ic_s1d_edge_smooth_size = 40
+ic_s1d_edge_smooth_size = 100
 
 #    Define the threshold hold for a good blaze value (below the maximum value)
 #         here a value of 0.5 would be 50% of the maximum value
