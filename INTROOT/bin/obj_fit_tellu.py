@@ -541,7 +541,7 @@ def main(night_name=None, files=None):
         if p['DRS_PLOT'] > 0:
             sPlt.ext_1d_spectrum_plot(p, xs1d1, ys1d1)
         # construct file name
-        s1dfile1, tag3 = spirouConfig.Constants.EXTRACT_S1D_FILE1(p)
+        s1dfile1, tag3 = spirouConfig.Constants.TELLU_FIT_S1D_FILE1(p)
         s1dfilename1 = os.path.basename(s1dfile1)
         # add header keys
         # set the version
@@ -577,7 +577,7 @@ def main(night_name=None, files=None):
         if p['DRS_PLOT'] > 0:
             sPlt.ext_1d_spectrum_plot(p, xs1d2, ys1d2)
         # construct file name
-        s1dfile2, tag4 = spirouConfig.Constants.EXTRACT_S1D_FILE2(p)
+        s1dfile2, tag4 = spirouConfig.Constants.TELLU_FIT_S1D_FILE2(p)
         s1dfilename2 = os.path.basename(s1dfile2)
         # add header keys
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
