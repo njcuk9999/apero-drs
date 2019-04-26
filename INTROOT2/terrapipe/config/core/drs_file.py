@@ -76,7 +76,6 @@ class DrsInputFile:
         self.directory = kwargs.get('directory', None)
         self.data = kwargs.get('data', None)
         self.header = kwargs.get('header', None)
-        self.comments = kwargs.get('comments', None)
         self.index = kwargs.get('index', None)
         self.fileset = kwargs.get('fileset', [])
         # allow instance to be associated with a filename
@@ -129,7 +128,6 @@ class DrsInputFile:
         kwargs['directory'] = kwargs.get('directory', self.directory)
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
-        kwargs['comments'] = kwargs.get('comments', self.comments)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         # return new instance
         return DrsInputFile(name, **kwargs)
@@ -358,11 +356,10 @@ class DrsFitsFile(DrsInputFile):
         # set empty fits file storage
         self.data = kwargs.get('data', None)
         self.header = kwargs.get('header', None)
-        self.comments = kwargs.get('comments', None)
         self.index = kwargs.get('index', None)
         # set additional attributes
         self.shape = kwargs.get('shape', None)
-        self.hdict = kwargs.get('hdict', OrderedDict())
+        self.hdict = kwargs.get('hdict', fits.Header())
         self.output_dict = kwargs.get('output_dict', OrderedDict())
 
     def get_header_keys(self, kwargs):
@@ -405,7 +402,6 @@ class DrsFitsFile(DrsInputFile):
         kwargs['directory'] = kwargs.get('directory', self.directory)
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
-        kwargs['comments'] = kwargs.get('comments', self.comments)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         kwargs['check_ext'] = kwargs.get('check_ext', self.ext)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
@@ -813,9 +809,7 @@ class DrsFitsFile(DrsInputFile):
         # TODO:    But this is over 55% of the time of this function
         # TODO     May be needed if "data" linked to "hdu"
         self.data = data
-        self.header = OrderedDict(zip(header.keys(), header.values()))
-        self.comments = OrderedDict(zip(header.keys(), header.comments))
-
+        self.header = fits.Header(header)
         # set the shape
         if self.data is not None:
             self.shape = self.data.shape
@@ -826,7 +820,7 @@ class DrsFitsFile(DrsInputFile):
         self.check_filename()
         # try to open header
         try:
-            self.header = fits.getdata(self.filename, ext=ext)
+            self.data = fits.getdata(self.filename, ext=ext)
         except Exception as e:
             eargs = [self.basename, ext, type(e), e, func_name]
             self.__error__(TextEntry('01-001-00009', args=eargs))
@@ -1004,7 +998,6 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['directory'] = self.directory
         nkwargs['data'] = data
         nkwargs['header'] = self.header
-        nkwargs['comments'] = self.comments
         nkwargs['shape'] = data.shape
         nkwargs['hdict'] = self.hdict
         nkwargs['output_dict'] = self.output_dict
@@ -1240,12 +1233,12 @@ class DrsFitsFile(DrsInputFile):
         if drs_file is None:
             self.check_read()
             fileheader = self.header
-            filecomments = self.comments
+            filecomments = self.header.comments
         else:
             # check that data/header is read
             drs_file.check_read()
             fileheader = drs_file.header
-            filecomments = drs_file.comments
+            filecomments = drs_file.header.comments
         # loop around keys in header
         for key in list(fileheader.keys()):
             if root is not None:
