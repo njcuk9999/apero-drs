@@ -1442,7 +1442,8 @@ def ext_1d_spectrum_debug_plot(p, x, y, w, kind):
     # set title
     title = 'Debug plot for producing 1D spectrum. Kind = {0}'.format(kind)
     # set labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title,
+              ylim=[-1, 3])
     # end plotting function properly
     end_plotting(p, plot_name)
 
