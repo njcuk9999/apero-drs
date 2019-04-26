@@ -13,12 +13,12 @@ import traceback
 import numpy as np
 import os
 
-from drsmodule import constants
-from drsmodule import config
-from drsmodule import locale
-from drsmodule.science import preprocessing
-from drsmodule.io import drs_image
-from drsmodule.config.instruments.spirou import file_definitions
+from terrapipe import constants
+from terrapipe import config
+from terrapipe import locale
+from terrapipe.science import preprocessing
+from terrapipe.io import drs_image
+from terrapipe.config.instruments.spirou import file_definitions
 
 # =============================================================================
 # Define variables

@@ -12,9 +12,9 @@ Created on 2018-09-14 at 13:57
 from __future__ import division
 import traceback
 
-from drsmodule import constants
-from drsmodule import config
-from drsmodule import locale
+from terrapipe import constants
+from terrapipe import config
+from terrapipe import locale
 
 # =============================================================================
 # Define variables

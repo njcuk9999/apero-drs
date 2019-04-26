@@ -12,13 +12,13 @@ Created on 2019-03-23 at 13:01
 from __future__ import division
 import numpy as np
 
-from drsmodule import constants
-from drsmodule import config
-from drsmodule import locale
-from drsmodule.config.core import drs_database
-from drsmodule.config.instruments.spirou import file_definitions
-from drsmodule.io import drs_fits
-from drsmodule.science.calib import dark
+from terrapipe import constants
+from terrapipe import config
+from terrapipe import locale
+from terrapipe.config.core import drs_database
+from terrapipe.config.instruments.spirou import file_definitions
+from terrapipe.io import drs_fits
+from terrapipe.science.calib import dark
 
 
 # =============================================================================
