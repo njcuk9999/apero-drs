@@ -3463,8 +3463,8 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
         oe2ds = e2ds[order_num, valid]
         oblaze = blaze[order_num, valid]
         # create the splines for this order
-        spline_sp = IUVSpline(wave, oe2ds, k=5, ext=1)
-        spline_bl = IUVSpline(wave, oblaze, k=5, ext=1)
+        spline_sp = IUVSpline(owave, oe2ds, k=5, ext=1)
+        spline_bl = IUVSpline(owave, oblaze, k=5, ext=1)
         # can only spline in domain of the wave
         useful_range = (wavegrid > np.nanmin(owave))
         useful_range &= (wavegrid < np.nanmin(owave))
