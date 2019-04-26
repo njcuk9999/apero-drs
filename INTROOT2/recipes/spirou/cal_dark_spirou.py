@@ -233,12 +233,12 @@ def __main__(recipe, params):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', TextEntry('40-005-00001'))
+            WLOG(params, 'info', TextEntry('40-005-10001'))
             params['QC'] = 1
             params.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-00002') + farg)
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
             params['QC'] = 0
             params.set_source('QC', __NAME__ + '/main()')
         # store in qc_params
