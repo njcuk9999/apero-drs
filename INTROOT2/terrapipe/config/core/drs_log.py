@@ -267,13 +267,16 @@ class Logger:
                     # get new messages (wrapped at CHAR_LEN)
                     new_messages = textwrap(mess, char_len)
                     for new_message in new_messages:
+                        # add a space to the start of messages (if not present)
+                        if not new_message.startswith(' '):
+                            new_message = ' ' + new_message
                         cmdargs = [human_time, code, option, new_message]
                         cmd = LOGFMT.format(*cmdargs)
                         # append separate commands for log writing
                         cmds.append(cmd)
                         # add to logger storage
-                        self.logger_storage(params, key, human_time, new_message,
-                                            printonly)
+                        self.logger_storage(params, key, human_time,
+                                            new_message, printonly)
                         # print to stdout
                         printlog(self, params, cmd, key, colour)
                 else:
@@ -282,7 +285,8 @@ class Logger:
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
-                    self.logger_storage(params, key, human_time, mess, printonly)
+                    self.logger_storage(params, key, human_time, mess,
+                                        printonly)
                     # print to stdout
                     printlog(self, params, cmd, key, colour)
         # ---------------------------------------------------------------------
