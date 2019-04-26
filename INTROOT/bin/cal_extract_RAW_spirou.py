@@ -619,49 +619,68 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 
         # ------------------------------------------------------------------
-        # 1-dimension spectral S1D
+        # 1-dimension spectral S1D (uniform in wavelength)
         # ------------------------------------------------------------------
-        # # normalise E2DSFF with the blaze function
-        # e2dsffb = loc['E2DSFF'] / loc['BLAZE']
-        # # only want certain orders
-        # s1dwave = loc['WAVE'][p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
-        # s1de2dsffb = e2dsffb[p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
         # get arguments for E2DS to S1D
         e2dsargs = [loc['WAVE'], loc['E2DSFF'], loc['BLAZE']]
         # get 1D spectrum
         xs1d1, ys1d1 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='wave')
+        # Plot the 1D spectrum
+        if p['DRS_PLOT'] > 0:
+            sPlt.ext_1d_spectrum_plot(p, xs1d1, ys1d1)
+        # construct file name
+        s1dfile1, tag3 = spirouConfig.Constants.EXTRACT_S1D_FILE1(p)
+        s1dfilename1 = os.path.basename(s1dfile1)
+        # add header keys
+        # set the version
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d1[0])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
+                                   value=p['IC_BIN_S1D'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
+                                   value='Relative Flux')
+        # log writing to file
+        wmsg = 'Saving 1D spectrum (uniform in wavelength) for Fiber {0} in {1}'
+        WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename1))
+        # Write to file
+        columns = ['wavelength', 'flux', 'eflux']
+        values = [xs1d1, ys1d1, np.zeros_like(ys1d1)]
+        units = ['nm', None, None]
+        s1d1 = spirouImage.MakeTable(p, columns, values, units=units)
+        spirouImage.WriteTable(p, s1d1, s1dfile1, header=hdict)
+
+        # ------------------------------------------------------------------
+        # 1-dimension spectral S1D (uniform in velocity)
+        # ------------------------------------------------------------------
+        # get arguments for E2DS to S1D
+        e2dsargs = [loc['WAVE'], loc['E2DSFF'], loc['BLAZE']]
         # get 1D spectrum
         xs1d2, ys1d2 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='velocity')
-
-        # TODO: continue here
         # Plot the 1D spectrum
-        if p['DRS_PLOT'] and (xs1d is not None) and (ys1d is not None):
-            sPlt.ext_1d_spectrum_plot(p, xs1d, ys1d)
-
+        if p['DRS_PLOT'] > 0:
+            sPlt.ext_1d_spectrum_plot(p, xs1d2, ys1d2)
         # construct file name
-        if (xs1d is not None) and (ys1d is not None):
-            s1dfile, tag3 = spirouConfig.Constants.EXTRACT_S1D_FILE(p)
-            s1dfilename = os.path.basename(s1dfile)
-
-            # add header keys
-            # set the version
-            hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-            hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
-                                       value=p['DPRTYPE'])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d[0])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
-                                       value=p['IC_BIN_S1D'])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
-            hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
-                                       value='Relative Flux')
-            # log writing to file
-            wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
-            WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename))
-            # Write to file
-            # TODO: change to write table
-            p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
+        s1dfile2, tag4 = spirouConfig.Constants.EXTRACT_S1D_FILE2(p)
+        s1dfilename2 = os.path.basename(s1dfile2)
+        # add header keys
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        # log writing to file
+        wmsg = 'Saving 1D spectrum (uniform in velocity) for Fiber {0} in {1}'
+        WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename2))
+        # Write to file
+        columns = ['wavelength', 'flux', 'eflux']
+        values = [xs1d2, ys1d2, np.zeros_like(ys1d2)]
+        units = ['nm', None, None]
+        s1d2 = spirouImage.MakeTable(p, columns, values, units=units)
+        spirouImage.WriteTable(p, s1d2, s1dfile2, header=hdict)
 
     # ----------------------------------------------------------------------
     # End Message
