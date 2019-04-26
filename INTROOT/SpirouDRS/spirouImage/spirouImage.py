@@ -3434,13 +3434,14 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
         # get the blaze for this order
         oblaze = blaze[order_num]
         # find the valid pixels
-        cond1 = np.isfinite(oblaze)
+        cond1 = np.isfinite(oblaze) & np.isfinite(e2ds[order_num])
         with warnings.catch_warnings(record=True) as _:
             cond2 = oblaze > (blazethres * np.nanmax(oblaze))
         valid = cond1 & cond2 & edges
         # convolve with the edge kernel
         oweight = np.convolve(valid, ker, mode='same')
         # normalise to the maximum
+        oweight = oweight - np.nanmin(oweight)
         oweight = oweight / np.nanmax(oweight)
         # append to sloping vector storage
         slopevector[order_num] = oweight
