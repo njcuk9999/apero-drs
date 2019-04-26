@@ -534,7 +534,7 @@ def main(night_name=None, files=None):
         # 1-dimension spectral S1D (uniform in wavelength)
         # ------------------------------------------------------------------
         # get arguments for E2DS to S1D
-        e2dsargs = [loc['WAVE'], sp_out, loc['BLAZE']]
+        e2dsargs = [loc['WAVE'], sp_out, loc['NBLAZE']]
         # get 1D spectrum
         xs1d1, ys1d1 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='wave')
         # Plot the 1D spectrum
