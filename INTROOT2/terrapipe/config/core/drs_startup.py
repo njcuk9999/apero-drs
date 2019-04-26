@@ -296,10 +296,14 @@ def main_end_script(params, success, outputs='reduced', end=True):
     if end:
         if success:
             iargs = [params['RECIPE']]
+            WLOG(params, 'info', params['DRS_HEADER'])
             WLOG(params, 'info', TextEntry('40-003-00001', args=iargs))
+            WLOG(params, 'info', params['DRS_HEADER'])
         else:
             wargs = [params['RECIPE']]
+            WLOG(params, 'info', params['DRS_HEADER'])
             WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs))
+            WLOG(params, 'info', params['DRS_HEADER'])
         # ---------------------------------------------------------------------
         # add the logger messages to p
         params = WLOG.output_param_dict(params)
