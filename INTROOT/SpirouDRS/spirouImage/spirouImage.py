@@ -3447,8 +3447,8 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
 
     # multiple the spectrum and blaze by the sloping vector
     with warnings.catch_warnings(record=True) as _:
-        blaze = blaze / slopevector
-        e2ds = e2ds / slopevector
+        blaze = blaze * slopevector
+        e2ds = e2ds * slopevector
 
     # -------------------------------------------------------------------------
     # Perform a weighted mean of overlapping orders
