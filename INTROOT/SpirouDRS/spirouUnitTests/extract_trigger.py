@@ -62,9 +62,9 @@ RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = False
 RUN_EXTRACT_DARK = False
-RUN_EXTRACT_ALL = True
-RUN_OBJ_MK_TELLU = True
-RUN_OBJ_FIT_TELLU = True
+RUN_EXTRACT_ALL = False
+RUN_OBJ_MK_TELLU = False
+RUN_OBJ_FIT_TELLU = False
 
 # skip found files
 SKIP_DONE_PP = True
@@ -158,7 +158,7 @@ def skip_done_raw_files(p, filelist):
         path = path.replace('.fits', ppext)
         # if does not exist add to newfile list
         if not os.path.exists(path):
-            newfilelist.append(path)
+            newfilelist.append(filename)
     # return unfound files
     return newfilelist
 
