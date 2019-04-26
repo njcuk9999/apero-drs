@@ -499,15 +499,8 @@ def _display_drs_title(p):
 
     # Log title
     _display_title(p, title)
+    _display_logo(p)
 
-    # get colours
-    colors = COLOR()
-    # get pconstant
-    pconstant = constants.pload(p['INSTRUMENT'])
-    # noinspection PyPep8
-    logo = pconstant.LOGO()
-    for line in logo:
-        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
 
 
 def _display_title(p, title):
@@ -522,10 +515,22 @@ def _display_title(p, title):
 
     :returns: None
     """
-    # Log title
-    wmsgs = [p['DRS_HEADER'], '\n{0}\n'.format(title), p['DRS_HEADER']]
     # print and log
-    WLOG(p, '', wmsgs, wrap=False)
+    WLOG(p, '', p['DRS_HEADER'], wrap=False)
+    WLOG(p, '', '\n{0}\n'.format(title), wrap=False)
+    WLOG(p, '', p['DRS_HEADER'], wrap=False)
+
+
+def _display_logo(p):
+    # get colours
+    colors = COLOR()
+    # get pconstant
+    pconstant = constants.pload(p['INSTRUMENT'])
+    # noinspection PyPep8
+    logo = pconstant.LOGO()
+    for line in logo:
+        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
+    WLOG(p, '', p['DRS_HEADER'], wrap=False)
 
 
 def _display_ee(p):
