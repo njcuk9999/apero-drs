@@ -383,6 +383,19 @@ class PseudoConstants:
         return logo
 
     def LOGO(self):
+        """
+        Terrapipe logo
+
+        Font Author: ?
+
+        More Info:
+            https://web.archive.org/web/20120819044459/http://www.roysac.com/
+                 thedrawfonts-tdf.asp
+
+        FIGFont created with: http://patorjk.com/figfont-editor
+
+        :return:
+        """
         logo = ["████████╗███████╗██████╗ ██████╗  █████╗ ██████╗ ██╗██████╗ ███████╗",
                 "╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗██║██╔══██╗██╔════╝",
                 "   ██║   █████╗  ██████╔╝██████╔╝███████║██████╔╝██║██████╔╝█████╗  ",
