@@ -306,7 +306,7 @@ def main(night_name=None, reffile=None):
         # calculate flux ratio
         # ------------------------------------------------------------------
         sorder = p['IC_DRIFT_ORDER_PLOT']
-        fratio = np.sum(loc['SPE'][sorder])/np.sum(loc['SPEREF'][sorder])
+        fratio = np.nansum(loc['SPE'][sorder])/np.nansum(loc['SPEREF'][sorder])
         loc['FLUXRATIO'][i_it] = fratio
         # ------------------------------------------------------------------
         # Calculate delta time

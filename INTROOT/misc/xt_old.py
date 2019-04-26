@@ -172,7 +172,7 @@ for ite_banana in range(nbanana):
 				v[-1]=0
 				maxpix=np.nanargmax(rvcontent[:,k]*v)
 				# max RV and fit on the neighbouring pixels
-				fit = np.polyfit(slopes[maxpix-1:maxpix+2],rvcontent[maxpix-1:maxpix+2,k],2)
+				fit = nanpolyfit(slopes[maxpix-1:maxpix+2],rvcontent[maxpix-1:maxpix+2,k],2)
 				# if peak within range, then its fine
 				if (np.abs(-.5*fit[1]/fit[0])<1):
 					dxsection[k]=-.5*fit[1]/fit[0]
@@ -181,7 +181,7 @@ for ite_banana in range(nbanana):
 			keep=np.isfinite(dxsection)
 		sigmax=99
 		while sigmax>4:
-			fit=np.polyfit(xsection[keep],dxsection[keep],2)
+			fit=nanpolyfit(xsection[keep],dxsection[keep],2)
 			res=(dxsection-np.polyval(fit,xsection))
 			res-=np.nanmedian(res[keep])
 			res/=np.nanmedian(np.abs(res[keep]))
@@ -189,7 +189,7 @@ for ite_banana in range(nbanana):
 			keep &= (np.abs(res)<4)
 		#
 		# we fit a 2nd order polynomial to the slope vx position along order
-		fit=np.polyfit(xsection[keep],dxsection[keep],2)
+		fit=nanpolyfit(xsection[keep],dxsection[keep],2)
 		print('slope at pixel 2044 : ',np.arctan(np.polyval(fit,2044))*180/np.pi,' deg')
 		slope = np.polyval(fit,np.arange(4088))
 		#

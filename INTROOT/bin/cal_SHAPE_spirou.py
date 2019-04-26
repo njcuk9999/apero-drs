@@ -188,7 +188,6 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     WLOG(p, '', ('FP Image format changed to '
                             '{0}x{1}').format(*fpdata2.shape))
 
-
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
@@ -242,7 +241,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(hcdata2 <= 0)
+    n_bad_pix = np.nansum(hcdata2 <= 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata2.shape)
     # Log number
     wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
@@ -252,7 +251,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(fpdata2 <= 0)
+    n_bad_pix = np.nansum(fpdata2 <= 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata2.shape)
     # Log number
     wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
@@ -389,7 +388,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
         output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
         input_hc_file, tag3 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
-        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
+        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_OUT_HC_FILE(p)
         overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
