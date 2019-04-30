@@ -59,12 +59,12 @@ RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_EXTRACT_TELLU = False
-RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
-RUN_OBJ_MK_TELLU = False
-RUN_OBJ_FIT_TELLU = False
+RUN_OBJ_MK_TELLU = True
+RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
@@ -78,7 +78,7 @@ SKIP_DONE_FIT_TELLU = False
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 5
+MAX_PROCESSES = 8
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -705,9 +705,9 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
-        # if DATES is not None:
-        #     if night_name.replace('/', '') not in DATES:
-        #         continue
+        if DATES is not None:
+            if night_name.replace('/', '') not in DATES:
+                continue
 
         # log progress
         wmsgs = [spirouStartup.spirouStartup.HEADER]
