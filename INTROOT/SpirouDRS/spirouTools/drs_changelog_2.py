@@ -50,6 +50,13 @@ def git_tag_head(version):
     os.system('git tag {0}'.format(version))
 
 def git_change_log(filename):
+    """
+    requires pip install gitchangelog
+
+    :param filename:
+    :return:
+    """
+
     os.system('gitchangelog > {0}'.format(filename))
 
 
