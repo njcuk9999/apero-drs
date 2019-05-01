@@ -19,7 +19,7 @@ import os
 # Define variables
 # =============================================================================
 INPUTDIR = '/spirou/cfht_nights/cfht_April19/perrun'
-INPUTDIR = '/spirou/cfht_nights/cfht_April19/pernight'
+#INPUTDIR = '/spirou/cfht_nights/cfht_April19/pernight'
 
 # -----------------------------------------------------------------------------
 KEYS = dict()
@@ -78,7 +78,9 @@ if __name__ == "__main__":
             abspath1 = os.path.join(root1, outfilename)
 
             # do not change files that do not start with a number
-            if not filename[0].isdigit():
+            if not filename[0].isdigit() or not filename.endswith('.fits'):
+                print('\tCopying file {0}'.format(abspath))
+                shutil.copy(abspath, abspath1)
                 continue
             # correct header keys
             if filename.endswith('.fits'):
