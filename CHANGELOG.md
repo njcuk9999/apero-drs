@@ -6987,3 +6987,282 @@
 
 ================================================================================
 	- cal_extract_RAW_spirou.py - turn off ic_extract debug (rev.a83e1626)
+
+
+
+================================================================================
+* Tue Mar 12 2019 melissa-hobson <melihobson@gmail.com> - 0.4.103
+
+================================================================================
+	- Updates to cal_WAVE_NEW_2 (rev.6dc053d7)
+
+
+
+================================================================================
+* Thu Mar 28 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.104
+
+================================================================================
+	- fix bug in extraction modes for cal_exposure_meter and cal_wave_mapper (rev.40bcfdb7)
+	- cal_FF_RAW_spirou.py - missed the debananafication (rev.8a5443f1)
+	- cal_extract/cal_ff - fix mode extract_shape/ll (rev.20b448ec)
+	- cal_extract/cal_FF - fix mode selection (rev.07a07e3c)
+	- spirouImage.py - DeBananafication needs ParamDict in function call (rev.9ba58e8e)
+	- make_1ds_etienne_new.py - new s1d code to integrate into the drs (rev.01a5986a)
+	- spirouImage.py - fix for use of DeBananafication since change to function (for cal_SHAPE here) (rev.5bea07c1)
+	- update date/version/changelog/update_notes (rev.eb1d8e49)
+
+
+
+================================================================================
+* Thu Mar 28 2019 melissa-hobson <melihobson@gmail.com> - 0.4.105
+
+================================================================================
+	- cal_HC_E2DS_EA: log statistics (rev.a46a488a)
+
+
+
+================================================================================
+* Fri Mar 29 2019 melissa-hobson <melihobson@gmail.com> - 0.4.106
+
+================================================================================
+	- github backup before merging with master (rev.2a68e6bc)
+	- cal_WAVE_NEW improved cross-order matching (rev.a7e105c4)
+
+
+
+================================================================================
+* Tue Apr 02 2019 melissa-hobson <melihobson@gmail.com> - 0.4.107
+
+================================================================================
+	- cal_WAVE_NEW: modified FP CCF keywords spirouKeywords: added unique WFP keywords for wave FP CCF keys (rev.fa90a6f3)
+	- config save (rev.d399b296)
+
+
+
+================================================================================
+* Wed Apr 03 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.108
+
+================================================================================
+	- spirouPlot.py - allow all orders to be plot in tellu plot (rev.f4e1ad05)
+
+
+
+================================================================================
+* Wed Apr 03 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.109
+
+================================================================================
+	- update test.run (rev.ca1d8ed7)
+	- spirouWAVE.py - comment out non-used line (rev.841eed05)
+	- SpirouDrs.data - undo changes from Melissa Branch (rev.c67bc842)
+	- config.py - undo changes from Melissa Branch (rev.361992ec)
+	- cal_WAVE_E2DS_EA_spirou.py - undo changes from Melissa branch (rev.2bb8c07b)
+	- cal_extract_RAW_spirou.py - add WFP keys to cal extract and deal with not having values (rev.891de849)
+	- cal_extract_RAW_spirou.py - add WFP keys to cal extract (rev.e03fd069)
+	- cal_CCF_E2DS_FP_spirou.py - replace manual call to filename (rev.554a4507)
+	- spirouEXTOR.py - fix normalisation of spelong (E2DSLL) (rev.0adadff5)
+
+
+
+================================================================================
+* Wed Apr 03 2019 melissa-hobson <melihobson@gmail.com> - 0.4.110
+
+================================================================================
+	- cal_WAVE_NEW: fixes to m(x) residuals plot (rev.3b063b05)
+	- cal_CCF_E2DS_FP: keeps base name only for WFP file (rev.50e03788)
+	- cal_WAVE_E2DS_EA: save wave FP CCF keys (rev.961be7fc)
+	- cal_WAVE_NEW: save wave FP CCF target RV and width (rev.1b963f91)
+	- cal_CCF_E2DS_FP: writes WFP keys to CCF headers properly (rev.8de078ff)
+	- cal_CCF_E2DS_FP: read correct keyword for drift (rev.b1749985)
+	- cal_CCF_E2DS_FP: reads correct keyword for wave sol drift, writes WFP keys to CCF headers (rev.55c0e408)
+	- spirouKeywords: add wave FP CCF keys to list (rev.ca49bcc0)
+
+
+
+================================================================================
+* Thu Apr 04 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.111
+
+================================================================================
+	- cal_SHAPE_spirou.py - fix typo in output filenames (only affected debug outputs) (rev.c5b69f3a)
+	- cal_CCF_wrap_MH.py - fix typo in return table values 'cloc' --> 'loc' (rev.db5ae6f1)
+	- cal_CCF_wrap_MH.py - call from command line was missing (rev.673c40db)
+	- cal_CCF_wrapper changes for Melissa (temporary addition of cal_CCF_E2DS_FP_MH_spirou.py) (rev.6436fcce)
+
+
+
+================================================================================
+* Fri Apr 05 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.112
+
+================================================================================
+	- spirouEXTOR.py - remove weighting of raw pixels less than zero to very low value (rev.cac18d7c)
+	- spirouConst.py - update date and version (rev.d19bdcc2)
+	- cal_SHAPE_spirou_old.py - edit background correction (rev.80520b94)
+	- cal_SLIT_spirou.py - do not mask out the zeros (rev.fa707ee1)
+	- caal_loc_RAW_spirou.py - do not mask out the zeros (rev.9bec375f)
+	- cal_FF_RAW_spirou.py - do not mask out the zeros (rev.ef4d1eec)
+	- cal_extract_RAW_spirou.py - do not mask out the zeros (rev.9e6ee0ab)
+	- spirouBACK.py - add background debug plot to background finding function (rev.b863345b)
+	- cal_SLIT_spirou.py - add hdr and cdr to background correction (to save debug file) (rev.e79da9b5)
+	- cal_loc_RAW_spirou.py - add hdr and cdr to background correction (to save debug file) (rev.d83820c3)
+	- cal_extract_RAW_spirou.py - add hdr and cdr to background correction (to save debug file) (rev.bd7b9a3a)
+	- cal_FF_RAW_spirou.py - add hdr and cdr to background correction (to save debug file) (rev.59d7a14b)
+	- misc/cal_SHAPE_spirou_old.py - add changes to background subtraction (rev.2b31f748)
+	- cal_low_RAW_spirou.py - add changes to background subtraction (rev.0938ba11)
+	- cal_FF_RAW_spirou.py - add changes to background subtraction (rev.0f46aa1b)
+	- spirouWAVE.py - add initial keep parameter for line width (rev.2937c924)
+	- spirouBACK.py - add Etienne's changes into measure_background_flatfield (rev.76f52723)
+	- cal_WAVE_NEW_E2DS_spirou_2.py - add fix for updating the HC/Fp header for wave solution (rev.01b4b1c0)
+	- constants_SPIROU_H4RG.py - change background correction constants (rev.3735fb00)
+	- cal_extract_RAW_spirou.py - change background correction to Etienne's new method! (rev.af2c9bc2)
+
+
+
+================================================================================
+* Sat Apr 06 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.113
+
+================================================================================
+	- cal_FF_RAW_spirou.py - remove background subtraction (for test) (rev.86c2d730)
+	- test.run - update test.run (rev.4d532076)
+	- cal_FF_RAW_spirou.py - unfix negative values set to zero (rev.9b01b46a)
+
+
+
+================================================================================
+* Sun Apr 07 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.114
+
+================================================================================
+	- cal_FF_RAW_spirou.py - re-add in new background subtraction (rev.81d687a6)
+	- spirouEXTOR.py - reset raw_weights (rev.79275a7d)
+	- spirouEXTOR.py - reset raw_weights (rev.89afcca7)
+	- cal_FF_RAW_spirou.py - try to match neil branch (rev.aa5b8dda)
+	- cal_FF_RAW_spirou.py - try to match master (rev.165511a1)
+	- cal_FF_RAW_spirou.py - test force extractff type to 3c (rev.8ea9a04e)
+	- spirouBACK.py - add in old measure background function (as test) (rev.df8f9be4)
+	- cal_FF_RAW_spirou.py - redo debananafication (rev.9d332245)
+	- cal_FF_RAW_spirou.py - undo debananafication (rev.9a207ff7)
+	- reset cal_loc (no background) for test (rev.ce933bc4)
+	- reset cal_loc (no background) for test (rev.22f6acbe)
+	- cal_FF_RAW_spirou.py - remove background subtraction (for test) (rev.7083a406)
+
+
+
+================================================================================
+* Mon Apr 08 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.115
+
+================================================================================
+	- spirouEXTOR.py - add options in extraction method to test different weighting systems (rev.6f3f474d)
+	- spirouImage.py - replace zeros with NaNs (rev.e909f60d)
+	- spirouFLAT.py - replace zero's with NaNs (rev.ca1bc4e9)
+	- spirouEXTOR.py - replace zeros with NaNs (rev.d6d61821)
+	- spirouPlot.py - replace zeros with NaNs (rev.b178ce49)
+	- spirouBACK.py - replace zeros with NaNs (rev.a386fade)
+	- cal_FF_RAW_spirou.py - replace zeros with nans (rev.1d0ea71c)
+	- spirouEXTOR.py - readd raw_weights (rev.b9a9a60f)
+
+
+
+================================================================================
+* Wed Apr 10 2019 njcuk9999 <neil.james.cook@gmail.com> - 0.4.116
+
+================================================================================
+	- update test.run (rev.40fb702a)
+	- spirouRV.py - deal with NaNs (rev.bb533a39)
+	- spirouLOCOR.py - deal with NaNs (rev.35b03bf3)
+	- spirouImage.py - deal with NaNs (rev.f4bfaa87)
+	- spirouPlot.py - convert zeros to NaNs (rev.396dad14)
+	- see_shift.py - test for pixel shifting by different amounts (rev.8c1547e8)
+	- cal_WAVE_E2DS_EA_spirou.py - convert zeros to NaNs (rev.1073a2e0)
+	- cal_SLIT_spirou.py - change zeros to NaNs (rev.7268bc23)
+	- cal_loc_RAW_spirou.py - change zeros to NaNs (rev.45aad289)
+	- cal_extract_RAW_spirou.py - change zeros to NaN (rev.8f57fd93)
+
+
+
+================================================================================
+* Wed Apr 24 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.117
+
+================================================================================
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.474cec87)
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.7db4647d)
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.9a3b2d53)
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.06e6a318)
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.4a3170cb)
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.bdae77f7)
+	- change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit (rev.dce74cb5)
+	- change the way InterpolatedUnivariateSpline works (rev.56e6db79)
+	- update test.run (rev.13ffd01f)
+	- update test.run (rev.43b9a420)
+
+
+
+================================================================================
+* Thu Apr 25 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.118
+
+================================================================================
+	- spirouImage.py - write new s1d function (rev.9791da7a)
+	- spirouPlot.py - add ext_1d_spectrum_debug_plot plot for debugging s1d plot (rev.3b683a68)
+	- constants_SPIROU_H4RG.py - add new s1d constants (rev.dae6fa8f)
+	- cal_extract_RAW_spirou.py - added new s1d code (not finished) (rev.f1b34838)
+	- spirouRV.py - update pearson r test for NaNs (rev.afc06b24)
+	- update test.run (rev.136d3627)
+	- spirouRV.py - catch NaN warnings that are valid (rev.ba10e189)
+	- spirouRV.py - catch NaN warnings that are valid (rev.bb0413c3)
+	- spirouRV.py - catch NaN warnings that are valid (rev.e2e5099d)
+	- spirouRV.py - catch NaN warnings that are valid (rev.b68b0018)
+	- spirouRV.py - looking for NaN warnings (rev.526a74a8)
+	- spirouRV.py - looking for NaN warnings (rev.a36047d2)
+	- cal_CCF_E2DS_FP_spirou.py - looking for NaN warnings (rev.b60e5e0c)
+	- cal_CCF_E2DS_FP_spirou.py - looking for NaN warnings (rev.467d92d1)
+	- cal_CCF_E2DS_FP_spirou.py - looking for NaN warnings (rev.2d0dea48)
+	- cal_CCF_E2DS_FP_spirou.py - looking for NaN warnings (rev.14f65ed8)
+	- cal_CCF_E2DS_FP_spirou.py - looking for NaN warnings (rev.894608a1)
+	- cal_CCF_E2DS_FP_spirou.py - looking for NaN warnings (rev.6b0c1b69)
+	- spirouTelluric.py - catch warnings from less than for NaNs (rev.5425fbd4)
+	- compare_outputs.py - script to difference all outputs in two folders with files of the same name (output difference) (rev.d0d7910d)
+	- constants_SPIROU_H4RG.py - turn off plotting all fit_tellu orders (rev.12a044a2)
+	- obj_mk_tellu_new.py - add warning around less than (for NaNs) (rev.3d7cc239)
+	- obj_fit_tellu.py - remove a NaN sum (rev.70688966)
+	- test.run - update just mk_tellu/fit_tellu to test (rev.bc727b72)
+	- test.run - update just fit_tellu to test (rev.fdb98d2a)
+	- change np.sum --> np.nansum, np.mean --> np.nanmean, np.median --> np.nanmedian etc (rev.d68dfdd7)
+
+
+
+================================================================================
+* Fri Apr 26 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.119
+
+================================================================================
+	- extract_trigger.py - correct mistake with extraction trigger (rev.d23ab0a7)
+	- update test.run (rev.de0fd097)
+	- spirouTable.py - fix problem with NaNs in header (make string) (rev.5b5d9f05)
+	- spirouTable.py - fix problem with NaNs in header (make string) (rev.fea24bd1)
+	- extract_trigger.py - should use DRS_DATA_RAW in preprocessing (rev.07aeeaa0)
+	- obj_fit_tellu.py - add s1d telluric corrected files (rev.c67964fa)
+	- spirouImage.py - correct s1d ith telluric NaNs (rev.d2c02a1b)
+	- obj_fit_tellu.py - change to NBLAZE (rev.68e96cdc)
+	- spirouImage.py - new s1d - deal with full order being NaNs (for telluric) (rev.56365352)
+	- obj_fit_tellu.py - save s1d for corrected spectrum (rev.ad4b9da8)
+	- constants_SPIROU_H4RG.py - increase edge smoothing size (rev.99f0cce4)
+	- constants_SPIROU_H4RG.py - increase edge smoothing size (rev.f2e758b3)
+	- constants_SPIROU_H4RG.py - increase edge smoothing size (rev.88c9f646)
+	- cal_extract_RAW_spirou.py - s1d fix problems with adding new s1d code (rev.7f76591c)
+	- cal_extract_RAW_spirou.py - s1d fix problems with adding new s1d code (rev.1621a6e4)
+	- spirouImage.py - new s1d - iuv spline wrong (rev.b4c5cb78)
+	- spirouImage.py - edges was wrong (rev.a188cbdc)
+	- cal_extract_RAW_spirou.py - correct s1d (now s1dw and s1dv) (rev.900e5514)
+
+
+
+================================================================================
+* Mon Apr 29 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.120
+
+================================================================================
+	- compare_outputs.py - change paths (rev.68d2bd68)
+
+
+
+================================================================================
+* Tue Apr 30 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.121
+
+================================================================================
+	- update trigger (rev.dd8bbabb)
+	- obj_fit_tellu.py - fix NBLAZE to BLAZE in uniform velocity s1d (rev.7c861048)
