@@ -19,7 +19,7 @@ import os
 # Define variables
 # =============================================================================
 INPUTDIR = '/spirou/cfht_nights/cfht_April19/perrun'
-# INPUTDIR = '/spirou/cfht_nights/cfht_April19/pernight'
+INPUTDIR = '/spirou/cfht_nights/cfht_April19/pernight'
 
 # -----------------------------------------------------------------------------
 KEYS = dict()
@@ -69,17 +69,13 @@ if __name__ == "__main__":
                 if not os.path.exists(root1):
                     os.makedirs(root1)
             elif 'pernight' in root:
-                root1 = root.replace('perrun', 'perrun1')
+                root1 = root.replace('pernight', 'pernight1')
                 if not os.path.exists(root1):
                     os.makedirs(root1)
             else:
                 root1 = root
             abspath = os.path.join(root, filename)
             abspath1 = os.path.join(root1, outfilename)
-
-            # skip done files
-            if os.path.exists(abspath1):
-                continue
 
             # do not change files that do not start with a number
             if not filename[0].isdigit():
@@ -93,9 +89,10 @@ if __name__ == "__main__":
                         if key in header:
                             header[key] = KEYS[key]
                     # remove some keys from files
-                    if 's1d' in filename:
+                    if 'tellu' in filename:
                         for key in RKEYS:
-                            del header[key]
+                            if key in header:
+                                del header[key]
                     # write to file
                     fits.writeto(abspath1, data, header, overwrite=True)
                     print('\tWriting complete')
