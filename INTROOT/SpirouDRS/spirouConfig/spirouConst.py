@@ -2230,7 +2230,7 @@ def TELLU_FIT_OUT_FILE(p, filename):
 
 
 # noinspection PyPep8Naming
-def TELLU_FIT_S1D_FILE1(p, fiber=None):
+def TELLU_FIT_S1D_FILE1(p, filename):
     """
     Defines the 1D extraction file name and location
 
@@ -2246,23 +2246,21 @@ def TELLU_FIT_S1D_FILE1(p, fiber=None):
     :return e2dsfits: string, the filename and location of the extraction
                       E2DS file
     """
-    func_name = 'EXTRACT_S1D_FILE'
+    func_name = 'TELLU_S1D_FILE1'
     # define filename
-    if fiber is None:
-        fiber = p['FIBER']
-    reducedfolder = p['REDUCED_DIR']
-    newext = '_s1dw_tellu_corrected.fits'
-    oldext = '.fits'
-    filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
-    absfilepath = os.path.join(reducedfolder, filename)
+    absfilepath, _ = TELLU_FIT_OUT_FILE(p, filename)
+    if 'e2dsff' in absfilepath:
+        absfilepath = absfilepath.replace('e2dsff', 's1d_w_')
+    else:
+        absfilepath = absfilepath.replace('e2ds', 's1d_w_')
     # get tag
-    tag = tags[func_name] + '_{0}'.format(fiber)
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
-    return absfilepath, tag
+    return absfilepath, tag + 'tellu'
 
 
 # noinspection PyPep8Naming
-def TELLU_FIT_S1D_FILE2(p, fiber=None):
+def TELLU_FIT_S1D_FILE2(p, filename):
     """
     Defines the 1D extraction file name and location
 
@@ -2278,19 +2276,17 @@ def TELLU_FIT_S1D_FILE2(p, fiber=None):
     :return e2dsfits: string, the filename and location of the extraction
                       E2DS file
     """
-    func_name = 'EXTRACT_S1D_FILE'
+    func_name = 'TELLU_S1D_FILE2'
     # define filename
-    if fiber is None:
-        fiber = p['FIBER']
-    reducedfolder = p['REDUCED_DIR']
-    newext = '_s1dv_tellu_corrected.fits'
-    oldext = '.fits'
-    filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
-    absfilepath = os.path.join(reducedfolder, filename)
+    absfilepath, _ = TELLU_FIT_OUT_FILE(p, filename)
+    if 'e2dsff' in absfilepath:
+        absfilepath = absfilepath.replace('e2dsff', 's1d_w_')
+    else:
+        absfilepath = absfilepath.replace('e2ds', 's1d_w_')
     # get tag
-    tag = tags[func_name] + '_{0}'.format(fiber)
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
-    return absfilepath, tag
+    return absfilepath, tag + 'tellu'
 
 
 # noinspection PyPep8Naming
