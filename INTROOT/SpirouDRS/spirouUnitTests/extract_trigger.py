@@ -59,11 +59,11 @@ RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
-RUN_OBJ_MK_TELLU = True
+RUN_OBJ_MK_TELLU = False
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
@@ -78,7 +78,7 @@ SKIP_DONE_FIT_TELLU = False
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 8
+MAX_PROCESSES = 5
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -88,6 +88,10 @@ INPUT_WAVE_C = '_e2dsff_C.fits'
 
 INPUT_MK_TELLU = '_e2dsff_AB.fits'
 INPUT_FIT_TELLU = '_e2dsff_AB.fits'
+
+# define the science targets
+SCIENCE_TARGETS = ['Gl699', 'Gl15A']
+SCIENCE_TARGETS = ['HD189733', 'GJ1002']
 
 # -----------------------------------------------------------------------------
 # allowed files
@@ -1491,7 +1495,7 @@ def main(night_name=None):
     if RUN_EXTRACT_OBJ:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['OBJ_FP', 'OBJ_DARK'],
-                           fobjnames=['Gl699', 'Gl15A'])
+                           fobjnames=SCIENCE_TARGETS)
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
     # 12. extract objects
     if RUN_EXTRACT_ALL:
@@ -1511,7 +1515,7 @@ def main(night_name=None):
     # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
         lls = trigger_main(p, loc, recipe='obj_fit_tellu',
-                           fobjnames=['Gl699', 'Gl15A'])
+                           fobjnames=SCIENCE_TARGETS)
         all_lls['obj_fit_tellu (OBJ)'] = lls
 
     # if test run print report
