@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Add git tools to replace drs_changelog. [Neil Cook]
+- Add git tools to replace drs_changelog. [Neil Cook]
 - Update_fileversion.py - remove skip file check. [Neil Cook]
 - SpirouConst.py - add new filenames. [Neil Cook]
 - Output_keys.py - add tellu s1d keys. [Neil Cook]
