@@ -2,8 +2,12 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+0.4.122 (2019-05-02)
+--------------------
+- Drs_changelog_2.py - add updating of drs files. [Neil Cook]
+- Drs_changelog_2.py - add updating of drs files. [Neil Cook]
+- Update_fileversion.py - add extra code to fix the fix. [Neil Cook]
+- Drs_changelog_2.py - update new change log code. [Neil Cook]
 - Add git tools to replace drs_changelog. [Neil Cook]
 - Add git tools to replace drs_changelog. [Neil Cook]
 - Update_fileversion.py - remove skip file check. [Neil Cook]

@@ -142,6 +142,8 @@ def main():
     if version is not None:
         # tag head with version
         git_tag_head(version)
+    else:
+        version = str(__version__)
 
     # update DRS files
     update_version_file(VERSIONFILE, version)
@@ -154,7 +156,7 @@ def main():
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
