@@ -11,10 +11,12 @@ Created on 2019-05-01 at 17:02
 """
 
 import os
+import shutil
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
+from datetime import datetime
 
 # =============================================================================
 # Define variables
@@ -33,7 +35,13 @@ CONSTANTS = spirouConfig.Constants
 rargs = [CONSTANTS.PACKAGE(), '../../']
 PATH = spirouConfig.spirouConfigFile.get_relative_folder(*rargs)
 FILENAME = os.path.join(PATH, 'changelog.md')
+VERSIONFILE = os.path.join(PATH, 'VERSION.txt')
+rargs = [CONSTANTS.PACKAGE(), './spirouConfig']
+CONSTPATH = spirouConfig.spirouConfigFile.get_relative_folder(*rargs)
+CONSTFILE = os.path.join(CONSTPATH, 'spirouConst.py')
 
+VERSIONSTR = '__version__ = '
+DATESTR = '__date__ = '
 
 # =============================================================================
 # Define functions
@@ -75,6 +83,49 @@ def git_change_log(filename):
     os.system('gitchangelog > {0}'.format(filename))
 
 
+def update_version_file(filename, version):
+    # read file and delete
+    f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+    # make backup
+    shutil.copy(filename, filename + '.backup')
+
+    os.remove(filename)
+    # edit first line
+    lines[0] = 'DRS_VERSION = {0}\n'.format(version)
+    # write file and save
+    f = open(filename, 'w')
+    f.writelines(lines)
+    f.close()
+    # remove backup
+    os.remove(filename + '.backup')
+
+
+def update_py_version(filename, version):
+    # read const file
+    f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+    # find version and date to change
+    version_it, date_it = None, None
+    for it, line in enumerate(lines):
+        if line.startswith(VERSIONSTR):
+            version_it = it
+        if line.startswith(DATESTR):
+            date_it = it
+    # update version
+    lines[version_it] = '{0} \'{1}\'\n'.format(VERSIONSTR.strip(), version)
+    # update date
+    dt = datetime.now()
+    dargs = [DATESTR.strip(), dt.year, dt.month, dt.day]
+    lines[date_it] = '{0} \'{1:04d}-{2:02d}-{3:02d}\'\n'.format(*dargs)
+    # write lines
+    f = open(filename, 'w')
+    f.writelines(lines)
+    f.close()
+
+
 def main():
     # ----------------------------------------------------------------------
     # get values from config file
@@ -88,9 +139,14 @@ def main():
         # tag head with version
         git_tag_head(version)
 
+    # update DRS files
+    update_version_file(VERSIONFILE, version)
+    update_py_version(CONSTFILE, version)
+
     # create new changelog
     WLOG(p, '', 'Updating changelog')
     git_change_log(FILENAME)
+
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
