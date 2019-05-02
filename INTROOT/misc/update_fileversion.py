@@ -18,8 +18,8 @@ import os
 # =============================================================================
 # Define variables
 # =============================================================================
-INPUTDIR = '/spirou/cfht_nights/cfht_April19/perrun'
-#INPUTDIR = '/spirou/cfht_nights/cfht_April19/pernight'
+#INPUTDIR = '/spirou/cfht_nights/cfht_April19/perrun'
+INPUTDIR = '/spirou/cfht_nights/cfht_April19/pernight'
 
 # -----------------------------------------------------------------------------
 KEYS = dict()
@@ -107,3 +107,45 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
+
+# import os
+# from astropy.io import fits
+#
+# RKEYS = ['CRPIX1', 'CRVAL1', 'CDELT1', 'CTYPE1', 'BUNIT']
+#
+# errors = []
+#
+# for root, dirs, files in os.walk('./'):
+#     for filename in files:
+#         abspath = os.path.join(root, filename)
+#         if not filename.endswith('.fits'):
+#             continue
+#         try:
+#             if 'pp_s1dv' in filename:
+#                 data, header = fits.getdata(abspath, header=True)
+#                 abspath1 = abspath.replace('pp_s1dv', 'pp_s1d_v')
+#                 print('Processing file {0}'.format(abspath))
+#                 for key in RKEYS:
+#                     if key in header:
+#                         del header[key]
+#                 # write to file
+#                 fits.writeto(abspath1, data, header, overwrite=True)
+#                 print('\tWriting complete')
+#                 os.remove(abspath)
+#             elif 'pp_s1dw' in filename:
+#                 data, header = fits.getdata(abspath, header=True)
+#                 abspath1 = abspath.replace('pp_s1dw', 'pp_s1d_w')
+#                 print('Processing file {0}'.format(abspath))
+#                 for key in RKEYS:
+#                     if key in header:
+#                         del header[key]
+#                 # write to file
+#                 fits.writeto(abspath1, data, header, overwrite=True)
+#                 print('\tWriting complete')
+#                 os.remove(abspath)
+#         except Exception as e:
+#             errors.append([type(e), e, abspath])
+#
+# for error in errors:
+#     print('Error {0}: {1} \n\t File={2}'.format(*error))
+
