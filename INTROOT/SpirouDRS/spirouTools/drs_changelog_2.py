@@ -107,6 +107,8 @@ def update_py_version(filename, version):
     f = open(filename, 'r')
     lines = f.readlines()
     f.close()
+    # make backup
+    shutil.copy(filename, filename + '.backup')
     # find version and date to change
     version_it, date_it = None, None
     for it, line in enumerate(lines):
@@ -124,6 +126,8 @@ def update_py_version(filename, version):
     f = open(filename, 'w')
     f.writelines(lines)
     f.close()
+    # remove backup
+    os.remove(filename + '.backup')
 
 
 def main():
