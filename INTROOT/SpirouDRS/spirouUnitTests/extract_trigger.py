@@ -60,7 +60,7 @@ RUN_EXTRACT_HCFP = False
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = False
-RUN_EXTRACT_OBJ = True
+RUN_EXTRACT_OBJ = False
 RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
 RUN_OBJ_MK_TELLU = False
@@ -734,6 +734,13 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
                                             fdprtypes, fobjnames)
         # make sure MJDATE is float
         vindex[DATECOL] = np.array(vindex[DATECOL]).astype(float)
+
+        # deal with recipes that need custom arguments
+        if recipe == 'obj_fit_tellu_db':
+            custom_args = [1, ','.join(fobjnames)]
+        else:
+            custom_args = None
+
         # make the runs
         runs = trigger_runs(p, recipe, night_name, control, vindex)
         # update recipe names (fudge)
@@ -741,7 +748,7 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
             recipe1 = 'cal_HC_E2DS_EA_spirou'
         elif recipe == 'cal_WAVE_E2DS_spirou':
             recipe1 = 'cal_WAVE_E2DS_EA_spirou'
-        elif recipe == 'obj_mk_tellu_db':
+        elif recipe == 'obj_mk_tellu_db' or recipe == 'obj_fit_tellu_db':
             recipe1 = str(recipe)
             night_name = None
             skip = True
@@ -760,7 +767,8 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     return lls
 
 
-def trigger_runs(p, recipe, night_name, control, vindex):
+def trigger_runs(p, recipe, night_name, control, vindex,
+                 custom_args=None):
     # define groups of different objects
     groups = get_groups(vindex)
 
@@ -797,6 +805,9 @@ def trigger_runs(p, recipe, night_name, control, vindex):
 
     if recipe == 'obj_mk_tellu_db':
         return [[]]
+
+    if recipe == 'obj_fit_tellu':
+        return [custom_args]
 
     if recipe == 'obj_fit_tellu':
         return obj_fit_tellu(p, night_name, vindex, groups)
@@ -1514,7 +1525,7 @@ def main(night_name=None):
 
     # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
-        lls = trigger_main(p, loc, recipe='obj_fit_tellu',
+        lls = trigger_main(p, loc, recipe='obj_fit_tellu_db',
                            fobjnames=SCIENCE_TARGETS)
         all_lls['obj_fit_tellu (OBJ)'] = lls
 
