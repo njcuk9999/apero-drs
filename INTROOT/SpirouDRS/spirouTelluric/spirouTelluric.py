@@ -14,6 +14,7 @@ import os
 from scipy.ndimage import filters
 from scipy.optimize import curve_fit
 import warnings
+import sys
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -434,6 +435,8 @@ def update_process(p, title, objname, i1, t1, i2, t2):
 
 
 def get_arguments(p, absfilename):
+    # reset sys.argv
+    sys.argv = []
     # get constants from p
     path = p['ARG_FILE_DIR']
     # get relative path
