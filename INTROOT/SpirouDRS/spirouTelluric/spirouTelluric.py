@@ -550,7 +550,7 @@ def find_objects(p):
     ext_types = p['TELLU_DB_ALLOWED_EXT_TYPE']
 
     # strip objects
-    if p['OBJECTS'] is None:
+    if p['OBJECTS'] == 'None':
         object_mask = []
     else:
         object_mask = []
@@ -558,7 +558,6 @@ def find_objects(p):
         if type(p['OBJECTS']) is str:
             p['OBJECTS'] = p['OBJECTS'].split(',')
 
-        print(p['OBJECTS'])
         for objname in p['OBJECTS']:
             object_mask.append(objname.strip().upper())
 
