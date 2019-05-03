@@ -68,6 +68,8 @@ Wave2Wave = spirouTelluric.wave2wave
 
 FindTelluricStars = spirouTelluric.find_telluric_stars
 
+FindObjects = spirouTelluric.find_objects
+
 UpdateProcessDB = spirouTelluric.update_process
 
 GetDBarguments = spirouTelluric.get_arguments
