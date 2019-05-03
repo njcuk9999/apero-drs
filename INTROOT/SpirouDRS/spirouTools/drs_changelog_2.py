@@ -185,8 +185,12 @@ def main(preview=1):
     if p['PREVIEW']:
         uinput = input('Keep changes? [Y]es [N]o:\t')
         if 'Y' in uinput.upper():
+            # redo tagging
+            git_tag_head(version)
+            # update version file and python version file
             update_version_file(VERSIONFILE, version)
             update_py_version(CONSTFILE, version)
+            # move the tmp.txt to change log
             shutil.move('tmp.txt', FILENAME)
         else:
             os.remove('tmp.txt')
