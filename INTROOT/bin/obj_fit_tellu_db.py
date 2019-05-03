@@ -87,22 +87,22 @@ def main(cores=1, objects=None, filetype='EXT_E2DS_FF_AB'):
     # -------------------------------------------------------------------------
     # Step 1: Run fit_tellu on all objects
     # -------------------------------------------------------------------------
-    for t_it, target in enumerate(list(target_list.keys())):
-        # loop around object filenames
-        for o_it, objfilename in enumerate(target_list[target]):
-            # Log progress
-            pargs = [p, 'Fit Tellurics', target, t_it, nfound,
-                     o_it, len(target_list[target])]
-            spirouTelluric.UpdateProcessDB(*pargs)
-            # get arguments from filename
-            args = spirouTelluric.GetDBarguments(p, objfilename)
-            # run obj_mk_tellu
-            try:
-                obj_fit_tellu.main(**args)
-            except SystemExit as e:
-                errors.append([pargs[1], objfilename, e])
-            # force close all plots
-            sPlt.closeall()
+    # for t_it, target in enumerate(list(target_list.keys())):
+    #     # loop around object filenames
+    #     for o_it, objfilename in enumerate(target_list[target]):
+    #         # Log progress
+    #         pargs = [p, 'Fit Tellurics', target, t_it, nfound,
+    #                  o_it, len(target_list[target])]
+    #         spirouTelluric.UpdateProcessDB(*pargs)
+    #         # get arguments from filename
+    #         args = spirouTelluric.GetDBarguments(p, objfilename)
+    #         # run obj_mk_tellu
+    #         try:
+    #             obj_fit_tellu.main(**args)
+    #         except SystemExit as e:
+    #             errors.append([pargs[1], objfilename, e])
+    #         # force close all plots
+    #         sPlt.closeall()
 
     # -------------------------------------------------------------------------
     # Step 2: Run mk_obj_template on each science target
@@ -144,6 +144,27 @@ def main(cores=1, objects=None, filetype='EXT_E2DS_FF_AB'):
                 errors.append([pargs[1], objfilename, e])
             # force close all plots
             sPlt.closeall()
+
+    # -------------------------------------------------------------------------
+    # Step 4: Re-Run mk_obj_template on each science target
+    # -------------------------------------------------------------------------
+    for t_it, target in enumerate(list(target_list.keys())):
+        # log progress (big)
+        pmsg = 'Make Telluric Template II: Processing object = {0} ({1}/{2}'
+        wmsgs = ['', '=' * 60, '', pmsg.format(target, t_it + 1, nfound),
+                 '', '=' * 60, '']
+        WLOG(p, 'info', wmsgs, wrap=False)
+        # get last object
+        objfilename = target_list[target][-1]
+        # get arguments from filename
+        args = spirouTelluric.GetDBarguments(p, objfilename)
+        # run obj_mk_obj_template
+        try:
+            obj_mk_obj_template.main(**args)
+        except SystemExit as e:
+            errors.append(['Telluric Template', target, e])
+        # force close all plots
+        sPlt.closeall()
 
     # ----------------------------------------------------------------------
     # Print all errors
