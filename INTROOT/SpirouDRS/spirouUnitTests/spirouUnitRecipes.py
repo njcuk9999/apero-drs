@@ -46,6 +46,7 @@ import off_listing_REDUC_spirou
 import obj_mk_tellu
 import obj_mk_tellu_db
 import obj_fit_tellu
+import obj_fit_tellu_db
 import obj_mk_obj_template
 import visu_RAW_spirou
 import visu_E2DS_spirou
@@ -92,6 +93,7 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'obj_mk_obj_template',
                  'obj_mk_tellu',
                  'obj_fit_tellu',
+                 'obj_fit_tellu_db',
                  'obj_mk_tellu_db',
                  'obj_mk_obj_template',
                  'visu_RAW_spirou',
@@ -137,6 +139,7 @@ def get_versions():
     vv[obj_mk_tellu.__NAME__] = obj_mk_tellu.__version__
     vv[obj_mk_tellu_db.__NAME__] = obj_mk_tellu_db.__version__
     vv[obj_fit_tellu.__NAME__] = obj_fit_tellu.__version__
+    vv[obj_fit_tellu_db.__NAME__] = obj_fit_tellu_db.__version__
     vv[obj_mk_obj_template] = obj_mk_obj_template.__version__
     vv[visu_RAW_spirou.__NAME__] = visu_RAW_spirou.__version__
     vv[visu_E2DS_spirou.__NAME__] = visu_E2DS_spirou.__version__
@@ -829,6 +832,30 @@ def unit_test_obj_fit_tellu(p, rname, inputs):
     name = 'obj_fit_tellu'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
+
+    # get arguments
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
+    return args, name
+
+
+def unit_test_obj_fit_tellu_db(p, rname, inputs):
+    """
+    unit_test_cal_exposure_meter
+
+    input = night_name files
+    output = EM_SPE_FILE, EM_WAVE_FILE, EM_MASK_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+
+    :return args: dict, the parameters to pass to the run
+    """
+    # define name and arguments
+    name = 'obj_fit_tellu_db'
+    arg_names = ['cores', 'objects']
+    arg_types = [int, str]
 
     # get arguments
     args = get_args(p, name, rname, inputs, arg_names, arg_types)
