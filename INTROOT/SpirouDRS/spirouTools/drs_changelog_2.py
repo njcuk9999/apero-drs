@@ -72,6 +72,11 @@ def git_tag_head(version):
 
     os.system('git tag {0}'.format(version))
 
+
+def git_remove_tag(version):
+    os.system('git tag -d {0}'.format(version))
+
+
 def git_change_log(filename):
     """
     requires pip install gitchangelog
@@ -130,10 +135,24 @@ def update_py_version(filename, version):
     os.remove(filename + '.backup')
 
 
-def main():
+def preview_log(filename):
+    os.system('more {0}'.format(filename))
+
+
+def main(preview=1):
     # ----------------------------------------------------------------------
     # get values from config file
     p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
+
+    customargs = spirouStartup.GetCustomFromRuntime(p, [0], [int], ['preview'],
+                                                    calls=[preview],
+                                                    required=[False],
+                                                    require_night_name=False)
+    p = spirouStartup.LoadArguments(p, None, customargs=customargs,
+                                    require_night_name=False)
+
+    if p['PREVIEW']:
+        WLOG(p, 'info', 'Running in preview mode.')
 
     WLOG(p, '', 'Reading DRS version')
     # set new version
@@ -142,16 +161,35 @@ def main():
     if version is not None:
         # tag head with version
         git_tag_head(version)
+        new = True
     else:
         version = str(__version__)
+        new = False
 
     # update DRS files
-    update_version_file(VERSIONFILE, version)
-    update_py_version(CONSTFILE, version)
+    if not p['PREVIEW']:
+        update_version_file(VERSIONFILE, version)
+        update_py_version(CONSTFILE, version)
 
     # create new changelog
     WLOG(p, '', 'Updating changelog')
-    git_change_log(FILENAME)
+    if not p['PREVIEW']:
+        git_change_log(FILENAME)
+    else:
+        git_change_log('tmp.txt')
+        preview_log('tmp.txt')
+        if new:
+            git_remove_tag(version)
+
+    # if we are in preview mode should we keep these changes and update version
+    if p['PREVIEW']:
+        uinput = input('Keep changes? [Y]es [N]o:\t')
+        if 'Y' in uinput.upper():
+            update_version_file(VERSIONFILE, version)
+            update_py_version(CONSTFILE, version)
+            shutil.move('tmp.txt', FILENAME)
+        else:
+            os.remove('tmp.txt')
 
     # ----------------------------------------------------------------------
     # End Message
