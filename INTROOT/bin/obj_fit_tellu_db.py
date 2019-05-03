@@ -132,7 +132,7 @@ def main(cores=1, objects=None, filetype='EXT_E2DS_FF_AB'):
         # loop around object filenames
         for o_it, objfilename in enumerate(target_list[target]):
             # Log progress
-            pargs = [p, 'Fit Tellurics', target, t_it, nfound,
+            pargs = [p, 'Fit Tellurics II', target, t_it, nfound,
                      o_it, len(target_list[target])]
             spirouTelluric.UpdateProcessDB(*pargs)
             # get arguments from filename
