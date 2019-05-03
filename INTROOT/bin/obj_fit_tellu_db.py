@@ -114,7 +114,7 @@ def main(cores=1, objects=None, filetype='EXT_E2DS_FF_AB'):
                  '', '=' * 60, '']
         WLOG(p, 'info', wmsgs, wrap=False)
         # get last object
-        objfilename = target[target][-1]
+        objfilename = target_list[target][-1]
         # get arguments from filename
         args = spirouTelluric.GetDBarguments(p, objfilename)
         # run obj_mk_obj_template
