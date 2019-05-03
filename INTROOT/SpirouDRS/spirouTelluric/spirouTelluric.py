@@ -620,7 +620,6 @@ def find_objects(p):
                 absfilename = os.path.join(dirname, filename_it)
                 # filter by object type
                 if len(object_mask) > 0:
-                    print('{0} in {1}'.format(objname_it, object_mask))
                     if objname_it.strip().upper() in object_mask:
                         valid = True
                     else:
