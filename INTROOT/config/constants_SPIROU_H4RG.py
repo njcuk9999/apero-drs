@@ -1295,14 +1295,13 @@ MKTELLU_PLOT_ORDER_NUMS = [19, 26, 35]
 
 
 # -----------------------------------------------------------------------------
-#  New make telluric db parameter
+#  make telluric db parameter
 # -----------------------------------------------------------------------------
 # Allowed data types (corresponding to header key defined by "KW_OUTPUT")
 TELLU_DB_ALLOWED_OUTPUT = ['EXT_E2DS_AB', 'EXT_E2DS_A', 'EXT_E2DS_B', 'EXT_E2DS_FF_AB', 'EXT_E2DS_FF_A', 'EXT_E2DS_FF_B']
 
 # Allowed data types (corresponding to header key defined by "KW_EXT_TYPE")
 TELLU_DB_ALLOWED_EXT_TYPE = ['OBJ_DARK', 'OBJ_FP']
-
 
 # -----------------------------------------------------------------------------
 #   polarimetry parameters
