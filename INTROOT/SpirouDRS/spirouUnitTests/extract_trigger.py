@@ -742,7 +742,8 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
             custom_args = None
 
         # make the runs
-        runs = trigger_runs(p, recipe, night_name, control, vindex)
+        runs = trigger_runs(p, recipe, night_name, control, vindex,
+                            custom_args)
         # update recipe names (fudge)
         if recipe == 'cal_HC_E2DS_spirou':
             recipe1 = 'cal_HC_E2DS_EA_spirou'
@@ -806,7 +807,7 @@ def trigger_runs(p, recipe, night_name, control, vindex,
     if recipe == 'obj_mk_tellu_db':
         return [[]]
 
-    if recipe == 'obj_fit_tellu':
+    if recipe == 'obj_fit_tellu_db':
         return [custom_args]
 
     if recipe == 'obj_fit_tellu':
