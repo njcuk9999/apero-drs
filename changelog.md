@@ -2,6 +2,25 @@ Changelog
 =========
 
 
+0.4.123 (2019-05-03)
+--------------------
+- Drs_changelog_2.py - add changes to allow preview mode. [Neil Cook]
+- Obj_fit_tellu_db.py - correct type in wlog message. [Neil Cook]
+- SpirouTelluric.py - p['OBJECTS'] when None will be a string. [Neil
+  Cook]
+- Obj_fit_tellu_db.py - add full run through 1. fit_tellu 2. mk_template
+  3. fit_tellu. [Neil Cook]
+- SpirouTelluric.py - need to clean out sys.argv before running codes.
+  [Neil Cook]
+- SpirouDB.py - need to make sure folder exists otherwise lock will
+  persist. [Neil Cook]
+- Obj_fit_tellu_db.py - correct bug in writing code. [Neil Cook]
+- SpirouTelluric.py - add find_objects function and alias. [Neil Cook]
+- Constants_SPIROU_H4RG.py - correction to comments. [Neil Cook]
+- Obj_fit_tellu_db.py - first commit of fit tellu db redo. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.4.122 (2019-05-02)
 --------------------
 - Drs_changelog_2.py - add updating of drs files. [Neil Cook]
