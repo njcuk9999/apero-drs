@@ -150,27 +150,30 @@ def main(preview=1):
                                                     require_night_name=False)
     p = spirouStartup.LoadArguments(p, None, customargs=customargs,
                                     require_night_name=False)
-
+    # ----------------------------------------------------------------------
+    # if in preview mode tell user
     if p['PREVIEW']:
         WLOG(p, 'info', 'Running in preview mode.')
-
+    # ----------------------------------------------------------------------
+    # read and ask for new version
     WLOG(p, '', 'Reading DRS version')
     # set new version
     version = ask_for_new_version()
     # add tag of version
     if version is not None:
         # tag head with version
+        git_remove_tag(version)
         git_tag_head(version)
         new = True
     else:
         version = str(__version__)
         new = False
-
+    # ----------------------------------------------------------------------
     # update DRS files
     if not p['PREVIEW']:
         update_version_file(VERSIONFILE, version)
         update_py_version(CONSTFILE, version)
-
+    # ----------------------------------------------------------------------
     # create new changelog
     WLOG(p, '', 'Updating changelog')
     if not p['PREVIEW']:
@@ -180,12 +183,13 @@ def main(preview=1):
         preview_log('tmp.txt')
         if new:
             git_remove_tag(version)
-
+    # ----------------------------------------------------------------------
     # if we are in preview mode should we keep these changes and update version
     if p['PREVIEW']:
         uinput = input('Keep changes? [Y]es [N]o:\t')
         if 'Y' in uinput.upper():
             # redo tagging
+            git_remove_tag(version)
             git_tag_head(version)
             # update version file and python version file
             update_version_file(VERSIONFILE, version)
