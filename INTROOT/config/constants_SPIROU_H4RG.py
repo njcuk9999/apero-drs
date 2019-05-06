@@ -453,7 +453,7 @@ SHAPE_LONG_DX_MEDFILT_WID = 9
 ic_do_bkgr_subtraction = 1
 
 #    Do background percentile to compute minium value (%)             - [cal_ff]
-ic_bkgr_percent = 5
+ic_bkgr_percent = 10
 
 #    Half-size of window for background measurements                  - [cal_ff]
 ic_bkgr_window = 50
