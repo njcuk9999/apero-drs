@@ -4,6 +4,14 @@ Changelog
 
 0.4.123 (2019-05-03)
 --------------------
+- Drs_changelog_2.py - update comments for new changelogger. [Neil Cook]
+- Extract_trigger.py - update bugs. [Neil Cook]
+- SpirouUnitRecipes.py - update for fit_tellu_db. [Neil Cook]
+- Extract_trigger.py - update for fit_tellu_db. [Neil Cook]
+- SpirouTelluric.py - remove the print statement. [Neil Cook]
+- Obj_fit_tellu_db.py - add in second making of the target template.
+  [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
 - Drs_changelog_2.py - add changes to allow preview mode. [Neil Cook]
 - Obj_fit_tellu_db.py - correct type in wlog message. [Neil Cook]
 - SpirouTelluric.py - p['OBJECTS'] when None will be a string. [Neil
