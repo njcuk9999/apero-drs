@@ -128,6 +128,10 @@ TELLU_FIT_OUT_FILE = 'TELLU_CORRECTED'
 # Defines the telluric reconstructed file tag
 TELLU_FIT_RECON_FILE = 'TELLU_RECON'
 
+# Define the telluric extraction S1D file tags
+TELLU_S1D_FILE1 = 'TELLU_S1D_W'
+TELLU_S1D_FILE2 = 'TELLU_S1D_V'
+
 # Defines the object tellu template file tag
 OBJTELLU_TEMPLATE_FILE = 'OBJTELLU_TEMPLATE'
 

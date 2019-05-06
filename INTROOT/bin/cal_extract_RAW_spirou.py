@@ -43,7 +43,11 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-
+# debug (skip ic_ff_extract_type = ic_extract_type)
+DEBUG = False
+# define ll extract types
+EXTRACT_LL_TYPES = ['3c', '3d', '4a', '4b', '5a', '5b']
+EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 
 # =============================================================================
 # Define functions
@@ -164,7 +168,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data1 == 0)
+    n_bad_pix = np.sum(~np.isfinite(data1))
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data1.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
@@ -188,12 +192,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data1)
+        bargs = [p, data1, hdr, cdr]
+        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
     else:
         background = np.zeros_like(data1)
     # apply background correction to data (and set to zero where negative)
-    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    data1 = np.where(data1 > 0, data1 - background, 0)
+    data1 = data1 - background
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -201,7 +205,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts (if the mode requires it)
-    if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+    if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
         p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
         loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
     else:
@@ -213,6 +217,44 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
+
+    # ----------------------------------------------------------------------
+    # Get all fiber data (for all fibers)
+    # ----------------------------------------------------------------------
+    # TODO: This is temp solution for options 5a and 5b
+    loc_fibers = spirouLOCOR.GetFiberData(p, hdr)
+
+    # ------------------------------------------------------------------
+    # Deal with debananafication
+    # ------------------------------------------------------------------
+    # if mode 4a or 4b we need to straighten in x only
+    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        # log progress
+        WLOG(p, '', 'Debananafying (straightening) image')
+        # get the shape map
+        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+        # debananafy data
+        bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
+        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # if mode 5a or 5b we need to straighten in x and y using the
+    #     polynomial fits for location
+    elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+        # log progress
+        WLOG(p, '', 'Debananafying (straightening) image')
+        # get the shape map
+        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
+        # get the bad pixel map
+        p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True,
+                                                 quiet=True)
+        # debananafy data
+        bkwargs = dict(image=np.array(data1), kind='full', badpix=badpix,
+                       dx=shapemap, pos_a=loc_fibers['A']['ACC'],
+                       pos_b=loc_fibers['B']['ACC'],
+                       pos_c=loc_fibers['C']['ACC'])
+        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+    # in any other mode we do not straighten
+    else:
+        data2 = np.array(data1)
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -233,16 +275,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wave_fiber = 'AB'
         else:
             wave_fiber = fiber
-
         # get wave image
-        wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                           return_filename=True,
-                                           return_header=True, fiber=wave_fiber)
+        wkwargs = dict(hdr=hdr, return_wavemap=True, return_filename=True,
+                       return_header=True, fiber=wave_fiber)
+        wout = spirouImage.GetWaveSolution(p, **wkwargs)
         loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout[:3]
         loc['WAVEHDR'], loc['WSOURCE'] = wout[3:]
         source_names = ['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR']
         loc.set_sources(source_names, wsource)
-
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
         loc.set_source('WAVE_ACQTIMES', __NAME__ + '.main()')
@@ -254,14 +294,35 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('WAVE_CODE', __NAME__ + '.main()')
 
         # ----------------------------------------------------------------------
+        # Get WFP keys
+        # ----------------------------------------------------------------------
+        # Read the WFP keys - if they don't exist set to None and deal
+        #    with later
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_DRIFT',
+                                  name='WFP_DRIFT', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_FWHM',
+                                  name='WFP_FWHM', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_CONTRAST',
+                                  name='WFP_CONTRAST', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_MAXCPP',
+                                  name='WFP_MAXCPP', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_MASK',
+                                  name='WFP_MASK', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_LINES',
+                                  name='WFP_LINES', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_TARG_RV',
+                                  name='WFP_TARG_RV', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_WIDTH',
+                                  name='WFP_WIDTH', required=False)
+        p = spirouImage.ReadParam(p, loc['WAVEHDR'], 'KW_WFP_STEP',
+                                  name='WFP_STEP', required=False)
+
+        # ----------------------------------------------------------------------
         # Read Flat file
         # ----------------------------------------------------------------------
         fout = spirouImage.ReadFlatFile(p, hdr, return_header=True)
         p, loc['FLAT'], flathdr = fout
         loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
-        # get all values in flat that are zero to 1
-        loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
-
         # get flat extraction mode
         if p['KW_E2DS_EXTM'][0] in flathdr:
             flat_ext_mode = flathdr[p['KW_E2DS_EXTM'][0]]
@@ -273,10 +334,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # get extraction method and function
         extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
-        # compare flat extraction mode to extraction mode
-        spirouEXTOR.CompareExtMethod(p, flat_ext_mode, extmethod,
-                                     'FLAT', 'EXTRACTION')
-
+        if not DEBUG:
+            # compare flat extraction mode to extraction mode
+            spirouEXTOR.CompareExtMethod(p, flat_ext_mode, extmethod,
+                                         'FLAT', 'EXTRACTION')
         # ------------------------------------------------------------------
         # Read Blaze file
         # ------------------------------------------------------------------
@@ -285,55 +346,19 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('BLAZE', blazesource)
 
         # ------------------------------------------------------------------
-        # Get localisation coefficients
+        # Get fiber specific parameters from loc_fibers
         # ------------------------------------------------------------------
         # get this fibers parameters
         p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
-        # get localisation fit coefficients
-        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
-        # ------------------------------------------------------------------
-        # Read image order profile
-        # ------------------------------------------------------------------
-        order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p, hdr)
-
-        # ------------------------------------------------------------------
-        # Deal with debananafication
-        # ------------------------------------------------------------------
-        if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
-            # log progress
-            WLOG(p, '', 'Debananafying (straightening) image')
-            # get the shape map
-            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-            # debananafy data and order profile
-            data2 = spirouEXTOR.DeBananafication(np.array(data1), shapemap)
-            order_profile = spirouEXTOR.DeBananafication(order_profile,
-                                                         shapemap)
-        else:
-            data2 = np.array(data1)
-
-        # ------------------------------------------------------------------
-        # Average AB into one fiber for AB, A and B
-        # ------------------------------------------------------------------
-        # if we have an AB fiber merge fit coefficients by taking the average
-        # of the coefficients
-        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        # if fiber is AB take the average of the orders
-        if fiber == 'AB':
-            # merge
-            loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
-            loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
-            # set the number of order to half of the original
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is B take the even orders
-        elif fiber == 'B':
-            loc['ACC'] = loc['ACC'][:-1:2]
-            loc['ASS'] = loc['ASS'][:-1:2]
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
-        # if fiber is A take the even orders
-        elif fiber == 'A':
-            loc['ACC'] = loc['ACC'][1::2]
-            loc['ASS'] = loc['ASS'][1::2]
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        # get localisation parameters
+        for key in loc_fibers[fiber]:
+            loc[key] = loc_fibers[fiber][key]
+            loc.set_source(key, loc_fibers[fiber].sources[key])
+        # get locofile source
+        p['LOCOFILE'] = loc['LOCOFILE']
+        p.set_source('LOCOFILE', loc.sources['LOCOFILE'])
+        # get the order_profile
+        order_profile = loc_fibers[fiber]['ORDER_PROFILE']
 
         # ------------------------------------------------------------------
         # Set up Extract storage
@@ -368,7 +393,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # deal with different return
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 e2ds, e2dsll, cpt = eout
             else:
                 e2ds, cpt = eout
@@ -382,7 +407,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             blaze_win1 = int(data2.shape[0] / 2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0] / 2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
-            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
+            flux = np.nansum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise ** 2)
             # log the SNR RMS
@@ -390,12 +415,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wargs = [p['FIBER'], order_num, snr, cpt]
             WLOG(p, '', wmsg.format(*wargs))
             # add calculations to storage
-            e2ds = np.where(loc['BLAZE'][order_num] > 1, e2ds, 0.)
             loc['E2DS'][order_num] = e2ds
             loc['E2DSFF'][order_num] = e2ds / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
             # save the longfile
-            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 loc['E2DSLL'].append(e2dsll)
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
@@ -414,12 +438,15 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)
-                sPlt.ext_aorder_fit(p, loc, data2, max_signal / 10.)
+                sPlt.ext_aorder_fit(p, loc, data1, max_signal / 10.)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
+                sPlt.ext_sorder_fit(p, loc, data1, max_signal / 10.)
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
+
+            if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
+                sPlt.ext_debanana_plot(p, loc, data2, max_signal / 10.)
 
         # ----------------------------------------------------------------------
         # Quality control
@@ -491,14 +518,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                    value=p['BADPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
-        if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
                                    value=p['BLAZFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'],
                                    value=p['FLATFILE'])
-        if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                        value=p['SHAPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
@@ -541,6 +568,29 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add wave solution degree of fit
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                    value=loc['WAVEPARAMS'].shape[1] - 1)
+        # -------------------------------------------------------------------------
+        # add keys of the wave solution FP CCF
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'],
+                                   value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
+                                   value=p['WFP_DRIFT'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'],
+                                   value=p['WFP_FWHM'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
+                                   value=p['WFP_CONTRAST'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
+                                   value=p['WFP_MAXCPP'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'],
+                                   value=p['WFP_MASK'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
+                                   value=p['WFP_LINES'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                                   value=p['WFP_TARG_RV'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                                   value=p['WFP_WIDTH'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
+                                   value=p['WFP_STEP'])
+
         # write 1D list of the SNR
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_E2DS_SNR'],
                                          values=loc['SNR'])
@@ -564,55 +614,66 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
-        if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+        if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
             llstack = np.vstack(loc['E2DSLL'])
             p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 
         # ------------------------------------------------------------------
-        # 1-dimension spectral S1D
+        # 1-dimension spectral S1D (uniform in wavelength)
         # ------------------------------------------------------------------
-        # normalise E2DSFF with the blaze function
-        e2dsffb = loc['E2DSFF'] / loc['BLAZE']
-        # only want certain orders
-        s1dwave = loc['WAVE'][p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
-        s1de2dsffb = e2dsffb[p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
         # get arguments for E2DS to S1D
-        e2dsargs = [s1dwave, s1de2dsffb, p['IC_BIN_S1D']]
+        e2dsargs = [loc['WAVE'], loc['E2DSFF'], loc['BLAZE']]
         # get 1D spectrum
-        try:
-            xs1d, ys1d = spirouImage.E2DStoS1D(*e2dsargs)
-        except Exception as e:
-            emsg1 = 'Cannot compute 1D spectrum'
-            emsg2 = '\tError reads: {0}'.format(e)
-            WLOG(p, 'warning', [emsg1, emsg2])
-            xs1d, ys1d = None, None
+        xs1d1, ys1d1 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='wave')
         # Plot the 1D spectrum
-        if p['DRS_PLOT'] and (xs1d is not None) and (ys1d is not None):
-            sPlt.ext_1d_spectrum_plot(p, xs1d, ys1d)
-
+        if p['DRS_PLOT'] > 0:
+            sPlt.ext_1d_spectrum_plot(p, xs1d1, ys1d1)
         # construct file name
-        if (xs1d is not None) and (ys1d is not None):
-            s1dfile, tag3 = spirouConfig.Constants.EXTRACT_S1D_FILE(p)
-            s1dfilename = os.path.basename(s1dfile)
+        s1dfile1, tag3 = spirouConfig.Constants.EXTRACT_S1D_FILE1(p)
+        s1dfilename1 = os.path.basename(s1dfile1)
+        # add header keys
+        # set the version
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        # log writing to file
+        wmsg = 'Saving 1D spectrum (uniform in wavelength) for Fiber {0} in {1}'
+        WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename1))
+        # Write to file
+        columns = ['wavelength', 'flux', 'eflux']
+        values = [xs1d1, ys1d1, np.zeros_like(ys1d1)]
+        units = ['nm', None, None]
+        s1d1 = spirouImage.MakeTable(p, columns, values, units=units)
+        spirouImage.WriteTable(p, s1d1, s1dfile1, header=hdict)
 
-            # add header keys
-            # set the version
-            hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-            hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
-                                       value=p['DPRTYPE'])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d[0])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
-                                       value=p['IC_BIN_S1D'])
-            hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
-            hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
-                                       value='Relative Flux')
-            # log writing to file
-            wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
-            WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename))
-            # Write to file
-            p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
+        # ------------------------------------------------------------------
+        # 1-dimension spectral S1D (uniform in velocity)
+        # ------------------------------------------------------------------
+        # get arguments for E2DS to S1D
+        e2dsargs = [loc['WAVE'], loc['E2DSFF'], loc['BLAZE']]
+        # get 1D spectrum
+        xs1d2, ys1d2 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='velocity')
+        # Plot the 1D spectrum
+        if p['DRS_PLOT'] > 0:
+            sPlt.ext_1d_spectrum_plot(p, xs1d2, ys1d2)
+        # construct file name
+        s1dfile2, tag4 = spirouConfig.Constants.EXTRACT_S1D_FILE2(p)
+        s1dfilename2 = os.path.basename(s1dfile2)
+        # add header keys
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        # log writing to file
+        wmsg = 'Saving 1D spectrum (uniform in velocity) for Fiber {0} in {1}'
+        WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename2))
+        # Write to file
+        columns = ['wavelength', 'flux', 'eflux']
+        values = [xs1d2, ys1d2, np.zeros_like(ys1d2)]
+        units = ['nm', None, None]
+        s1d2 = spirouImage.MakeTable(p, columns, values, units=units)
+        spirouImage.WriteTable(p, s1d2, s1dfile2, header=hdict)
 
     # ----------------------------------------------------------------------
     # End Message

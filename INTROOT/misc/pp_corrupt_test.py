@@ -43,7 +43,7 @@ def stats(iterator, isgood, image, hdr, kind='med'):
 
         elif kind == 'numdark':
             darkampmask = image[:, :600] > 10
-            num = np.sum(darkampmask)
+            num = np.nansum(darkampmask)
             pargs = [iterator, isgood, num]
             print('\t{0} [{1}] Num > 10 (X 0:600) = {2}'.format(*pargs))
 

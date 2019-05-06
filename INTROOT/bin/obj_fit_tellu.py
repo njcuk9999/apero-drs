@@ -220,13 +220,13 @@ def main(night_name=None, files=None):
     # determining the pixels relevant for PCA construction
     keep = np.isfinite(np.sum(abso, axis=0))
     # log fraction of valid (non NaN) pixels
-    fraction = np.sum(keep) / len(keep)
+    fraction = np.nansum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}'
     WLOG(p, '', wmsg.format(fraction))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as w:
         keep &= np.min(log_abso, axis=0) > -1
-    fraction = np.sum(keep) / len(keep)
+    fraction = np.nansum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels with transmission > 1 - (1/e) = {0:.3f}'
     WLOG(p, '', wmsg.format(fraction))
 
@@ -529,6 +529,65 @@ def main(night_name=None, files=None):
         WLOG(p, '', wmsg)
         # write sp_out to file
         p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
+
+        # ------------------------------------------------------------------
+        # 1-dimension spectral S1D (uniform in wavelength)
+        # ------------------------------------------------------------------
+        # get arguments for E2DS to S1D
+        e2dsargs = [loc['WAVE'], sp_out, loc['BLAZE']]
+        # get 1D spectrum
+        xs1d1, ys1d1 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='wave')
+        # Plot the 1D spectrum
+        if p['DRS_PLOT'] > 0:
+            sPlt.ext_1d_spectrum_plot(p, xs1d1, ys1d1)
+        # construct file name
+        targs = [p, raw_in_file]
+        s1dfile1, tag3 = spirouConfig.Constants.TELLU_FIT_S1D_FILE1(*targs)
+        s1dfilename1 = os.path.basename(s1dfile1)
+        # add header keys
+        # set the version
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        # log writing to file
+        wmsg = 'Saving 1D spectrum (uniform in wavelength) in {0}'
+        WLOG(p, '', wmsg.format(s1dfilename1))
+        # Write to file
+        columns = ['wavelength', 'flux', 'eflux']
+        values = [xs1d1, ys1d1, np.zeros_like(ys1d1)]
+        units = ['nm', None, None]
+        s1d1 = spirouImage.MakeTable(p, columns, values, units=units)
+        spirouImage.WriteTable(p, s1d1, s1dfile1, header=hdict)
+
+        # ------------------------------------------------------------------
+        # 1-dimension spectral S1D (uniform in velocity)
+        # ------------------------------------------------------------------
+        # get arguments for E2DS to S1D
+        e2dsargs = [loc['WAVE'], sp_out, loc['BLAZE']]
+        # get 1D spectrum
+        xs1d2, ys1d2 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='velocity')
+        # Plot the 1D spectrum
+        if p['DRS_PLOT'] > 0:
+            sPlt.ext_1d_spectrum_plot(p, xs1d2, ys1d2)
+        # construct file name
+        targs = [p, raw_in_file]
+        s1dfile2, tag4 = spirouConfig.Constants.TELLU_FIT_S1D_FILE2(*targs)
+        s1dfilename2 = os.path.basename(s1dfile2)
+        # add header keys
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
+        # log writing to file
+        wmsg = 'Saving 1D spectrum (uniform in velocity) in {0}'
+        WLOG(p, '', wmsg.format(s1dfilename2))
+        # Write to file
+        columns = ['wavelength', 'flux', 'eflux']
+        values = [xs1d2, ys1d2, np.zeros_like(ys1d2)]
+        units = ['nm', None, None]
+        s1d2 = spirouImage.MakeTable(p, columns, values, units=units)
+        spirouImage.WriteTable(p, s1d2, s1dfile2, header=hdict)
 
         # ------------------------------------------------------------------
         # Write reconstructed absorption to E2DS

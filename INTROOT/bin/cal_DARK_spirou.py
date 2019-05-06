@@ -155,7 +155,7 @@ def main(night_name=None, files=None):
         datacutmask = ~((data0 > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
     spirouCore.spirouLog.warninglogger(p, w)
     # get number of pixels above cut limit or NaN
-    n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
+    n_bad_pix = np.product(data.shape) - np.nansum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
     p['DADEADALL'] = n_bad_pix * 100 / np.product(data.shape)
     p.set_source('DADEADALL', __NAME__ + '/main()')
