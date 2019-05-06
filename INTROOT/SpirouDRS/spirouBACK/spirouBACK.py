@@ -54,7 +54,8 @@ def make_background_map(p, image, badpixmask):
 
     # set image bad pixels to NaN
     image0 = np.array(image)
-    image0[badpixmask] = np.nan
+    badmask = np.array(badpixmask, dtype=bool)
+    image0[badmask] = np.nan
 
     # image that will contain the background estimate
     backest = np.zeros_like(image0)
@@ -64,7 +65,7 @@ def make_background_map(p, image, badpixmask):
     # can simply take a median along the "fast" dispersion to find the
     # order profile. We pick width to be small enough for the orders not
     # to show a significant curvature within w pixels
-    for x_it in range(image0.shape[1], width):
+    for x_it in range(0, image0.shape[1], width):
         # ribbon to find the order profile
         ribbon = np.nanmedian(image0[:, x_it:x_it + width], axis=1)
 
