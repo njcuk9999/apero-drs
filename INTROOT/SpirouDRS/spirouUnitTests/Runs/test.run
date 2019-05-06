@@ -1,44 +1,46 @@
-run011h = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295547o_pp.fits']
-run011i = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295548o_pp.fits']
-run011j = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295549o_pp.fits']
-run011k = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295550o_pp.fits']
+# Calibrations
+run001 = ['cal_DARK_spirou', 'TEST1/20180805', 'dark_dark_P5_003d_pp.fits']
+run002 = ['cal_BADPIX_spirou', 'TEST1/20180805', '2295524f_pp.fits', 'dark_dark_P5_003d_pp.fits']
+run003a = ['cal_loc_RAW_spirou', 'TEST1/20180805', '2295510f_pp.fits', '2295511f_pp.fits', '2295512f_pp.fits', '2295513f_pp.fits', '2295514f_pp.fits']
+run003b = ['cal_loc_RAW_spirou', 'TEST1/20180805', '2295515f_pp.fits', '2295516f_pp.fits', '2295517f_pp.fits', '2295518f_pp.fits', '2295519f_pp.fits']
+run004a = ['cal_SLIT_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run004b = ['cal_SHAPE_spirou', 'TEST1/20180805', '2295680c_pp.fits', '2295525a_pp.fits']
+run005 = ['cal_FF_RAW_spirou', 'TEST1/20180805', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
 
-# Run Make telluric db recipe (wrapper)
-run013 = ['obj_mk_tellu_db', '1']
+# Extract the HC's/FP's
+run006a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run006b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
 
-# Run Fit telluric recipes on Gl699
-run014a = ['obj_fit_tellu', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
-run014b = ['obj_fit_tellu', 'TEST4/20180527', '2279681o_pp_e2dsff_AB.fits']
-run014c = ['obj_fit_tellu', 'TEST4/20180527', '2279682o_pp_e2dsff_AB.fits']
-run014d = ['obj_fit_tellu', 'TEST4/20180527', '2279683o_pp_e2dsff_AB.fits']
-run014e = ['obj_fit_tellu', 'TEST4/20180527', '2279684o_pp_e2dsff_AB.fits']
-run014f = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
-run014g = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
-run014h = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
-run014i = ['obj_fit_tellu', 'TEST2/20180805', '2295548o_pp_e2dsff_AB.fits']
-run014j = ['obj_fit_tellu', 'TEST2/20180805', '2295549o_pp_e2dsff_AB.fits']
-run014k = ['obj_fit_tellu', 'TEST2/20180805', '2295550o_pp_e2dsff_AB.fits']
+# Run Wave solution analysis
+run007a = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
+run007b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_C.fits']
+run008a = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
+run008b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_C.fits', '2295680c_pp_e2ds_C.fits']
 
-# Run make obj template on Gl699
-run015 = ['obj_mk_obj_template', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
+# Extract the FPs/HCs
+run009a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run009b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295526a_pp.fits']
+run009c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295527a_pp.fits']
+run009d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295528a_pp.fits']
+run009e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295529a_pp.fits']
+run009f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
+run009g = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295532c_pp.fits']
 
-# Run Fit telluric recipes on Gl699
-run016a = ['obj_fit_tellu', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
-run016b = ['obj_fit_tellu', 'TEST4/20180527', '2279681o_pp_e2dsff_AB.fits']
-run016c = ['obj_fit_tellu', 'TEST4/20180527', '2279682o_pp_e2dsff_AB.fits']
-run016d = ['obj_fit_tellu', 'TEST4/20180527', '2279683o_pp_e2dsff_AB.fits']
-run016e = ['obj_fit_tellu', 'TEST4/20180527', '2279684o_pp_e2dsff_AB.fits']
-run016f = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
-run016g = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
-run016h = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
-run016i = ['obj_fit_tellu', 'TEST2/20180805', '2295548o_pp_e2dsff_AB.fits']
-run016j = ['obj_fit_tellu', 'TEST2/20180805', '2295549o_pp_e2dsff_AB.fits']
-run016k = ['obj_fit_tellu', 'TEST2/20180805', '2295550o_pp_e2dsff_AB.fits']
+# Extract a single science (to test)
+run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
 
-# Run make obj template on Gl699
-run017 = ['obj_mk_obj_template', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
+# Run drift analysis
+run011a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run011b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run011c = ['cal_DRIFTCCF_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 
-# Test cal_CCF  on Gl699
-run018a = ['cal_CCF_E2DS_spirou', 'TEST4/20180527', '2279682o_pp_e2dsff_AB_tellu_corrected.fits', 'gl581_Sep18_cleaned.mas', -110, 30, 0.5]
-run018b = ['cal_CCF_E2DS_FP_spirou', 'TEST4/20180527', '2279682o_pp_e2dsff_AB_tellu_corrected.fits', 'gl581_Sep18_cleaned.mas', -110, 30, 0.5]
+# Run CCF test
+run012 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
 
+# Run Other tests
+run013 = ['off_listing_RAW_spirou', 'TEST1/20180805']
+run014 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
+run015 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run016 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run017 = ['cal_exposure_meter', 'TEST1/20180805', '2295520f_pp.fits']
+run018 = ['cal_wave_mapper', 'TEST1/20180805', '2295520f_pp.fits', '2295525a_pp_e2ds']
