@@ -184,7 +184,7 @@ def measure_background_from_map(p, image, header, comments):
     # write debug to file
     spirouImage.WriteImageMulti(p, debug_background, dimages, hdicts=dheaders)
     # ----------------------------------------------------------------------
-    return
+    return background_image_full
 
 
 def measure_background_flatfield(p, image, header, comments):
