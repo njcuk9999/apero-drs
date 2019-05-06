@@ -263,7 +263,6 @@ def main(night_name=None, flatfile=None, darkfile=None):
     backmap = np.array(backmap, dtype=int)
     p, spirouImage.WriteImage(p, backmapfits, backmap, hdict)
 
-
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
@@ -279,9 +278,9 @@ def main(night_name=None, flatfile=None, darkfile=None):
         # bad pixel map
         keydb = 'BKGRDMAP'
         # copy dark fits file to the calibDB folder
-        spirouDB.PutCalibFile(p, badpixelfits)
+        spirouDB.PutCalibFile(p, backmapfits)
         # update the master calib DB file with new key
-        spirouDB.UpdateCalibMaster(p, keydb, badpixelfitsname, fhdr)
+        spirouDB.UpdateCalibMaster(p, keydb, backmapfitsname, fhdr)
 
     # ----------------------------------------------------------------------
     # End Message
