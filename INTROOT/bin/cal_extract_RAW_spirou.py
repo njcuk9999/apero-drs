@@ -193,7 +193,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
         bargs = [p, data1, hdr, cdr]
-        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
+        # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
+        background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
         background = np.zeros_like(data1)
     # apply background correction to data (and set to zero where negative)
