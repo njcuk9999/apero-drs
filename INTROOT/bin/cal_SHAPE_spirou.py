@@ -195,43 +195,9 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
     p['BADPFILE'] = 'None'
 
-    # ----------------------------------------------------------------------
-    # Background computation for HC file
-    # ----------------------------------------------------------------------
-    # if p['IC_DO_BKGR_SUBTRACTION']:
-    #     # log that we are doing background measurement
-    #     WLOG(p, '', 'Doing background measurement on HC frame')
-    #     # get the bkgr measurement
-    #     bdata = spirouBACK.MeasureBackgroundFF(p, hcdata2)
-    #     background, gridx, gridy, minlevel = bdata
-    # else:
-    #     background = np.zeros_like(hcdata2)
-    #
-    # hcdata2 = hcdata2 - background
-    #
-    # # correct data2 with background (where positive)
-    # hcdata2 = np.where(hcdata2 > 0, hcdata2 - background, 0)
-
     # save data to loc
     loc['HCDATA'] = hcdata2
     loc.set_source('HCDATA', __NAME__ + '/main()')
-
-    # ----------------------------------------------------------------------
-    # Background computation for FP file
-    # ----------------------------------------------------------------------
-    # if p['IC_DO_BKGR_SUBTRACTION']:
-    #     # log that we are doing background measurement
-    #     WLOG(p, '', 'Doing background measurement on FP frame')
-    #     # get the bkgr measurement
-    #     bdata = spirouBACK.MeasureBackgroundFF(p, fpdata2)
-    #     background, gridx, gridy, minlevel = bdata
-    # else:
-    #     background = np.zeros_like(fpdata2)
-    #
-    # fpdata2 = fpdata2 - background
-    #
-    # # correct data2 with background (where positive)
-    # fpdata2 = np.where(fpdata2 > 0, fpdata2 - background, 0)
 
     # save data to loc
     loc['FPDATA'] = fpdata2
