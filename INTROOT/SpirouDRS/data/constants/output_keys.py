@@ -20,6 +20,9 @@ DARK_BADPIX_FILE = 'DARK_BADPIX'
 # Defines the bad pixel tag from cal_BADPIX
 BADPIX_FILE = 'BADPIX'
 
+# Defines the background map tag from cal_BADPIX
+BKGD_MAP_FILE = 'BKGRD_MAP'
+
 # Defines the localisation order profile tag
 LOC_ORDER_PROFILE_FILE = 'LOC_ORDERP'
 
