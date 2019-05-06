@@ -140,6 +140,19 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
+
+    # rotate the image and convert from ADU/s to e-
+    flat1 = spirouImage.FlipImage(p, flat_ref)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    flat1 = spirouImage.ResizeImage(p, flat1, **bkwargs)
+    # log change in data size
+    wmsg = 'Image format changed to {1}x{0}'
+    WLOG(p, '', wmsg.format(*flat1.shape))
+
+    # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
     badpixelmap = spirouImage.FlipImage(p, bad_pixel_map)
     # resize image
@@ -148,14 +161,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
                    getshape=False)
     badpixelmap = spirouImage.ResizeImage(p, badpixelmap, **bkwargs)
     # log change in data size
-    wmsg = 'Image format changed to {1}x{0}'
+    wmsg = 'Bad pixel map format changed to {1}x{0}'
     WLOG(p, '', wmsg.format(*badpixelmap.shape))
-
 
     # ----------------------------------------------------------------------
     # Create background map mask
     # ----------------------------------------------------------------------
-    backmap = spirouBACK.MakeBackgroundMap(p, flat_ref, badpixelmap)
+    backmap = spirouBACK.MakeBackgroundMap(p, flat1, badpixelmap)
 
     # ----------------------------------------------------------------------
     # Quality control
