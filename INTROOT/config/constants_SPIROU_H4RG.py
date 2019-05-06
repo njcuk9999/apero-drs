@@ -458,6 +458,16 @@ ic_bkgr_percent = 5
 #    Half-size of window for background measurements                  - [cal_ff]
 ic_bkgr_window = 50
 
+#    Width of the box to produce the background mask
+IC_BKGR_BOXSIZE = 64
+
+#    Size in pixels of the convolve tophat for the background mask
+IC_BKGR_MASK_CONVOLVE_SIZE = 7
+
+#    If a pixel has this or more "dark" neighbours, we consider it dark
+#        regardless of its initial value
+IC_BKGR_N_BAD_NEIGHBOURS = 3
+
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 49  # 36
 
