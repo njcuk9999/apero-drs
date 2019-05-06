@@ -637,13 +637,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d1[0])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
-                                   value=p['IC_BIN_S1D_UWAVE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
-                                   value='Relative Flux')
         # log writing to file
         wmsg = 'Saving 1D spectrum (uniform in wavelength) for Fiber {0} in {1}'
         WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename1))

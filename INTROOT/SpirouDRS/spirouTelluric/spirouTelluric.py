@@ -14,6 +14,7 @@ import os
 from scipy.ndimage import filters
 from scipy.optimize import curve_fit
 import warnings
+import sys
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -434,6 +435,8 @@ def update_process(p, title, objname, i1, t1, i2, t2):
 
 
 def get_arguments(p, absfilename):
+    # reset sys.argv
+    sys.argv = []
     # get constants from p
     path = p['ARG_FILE_DIR']
     # get relative path
@@ -464,7 +467,7 @@ def find_telluric_stars(p):
         for allowedtype in allowedtypes:
             emsgs.append('\t\t - "{0}"'.format(allowedtype))
     # -------------------------------------------------------------------------
-    # store index files
+    # get index files
     index_files = []
     # walk through path and find index files
     for root, dirs, files in os.walk(path):
@@ -537,6 +540,100 @@ def find_telluric_stars(p):
         if len(valid_obj_files) > 0:
             valid_files[tell_name] = valid_obj_files
     # return full list
+    return valid_files
+
+
+def find_objects(p):
+    path = p['ARG_FILE_DIR']
+    filetype = p['FILETYPE']
+    allowedtypes = p['TELLU_DB_ALLOWED_OUTPUT']
+    ext_types = p['TELLU_DB_ALLOWED_EXT_TYPE']
+
+    # strip objects
+    if p['OBJECTS'] == 'None':
+        object_mask = []
+    else:
+        object_mask = []
+
+        if type(p['OBJECTS']) is str:
+            p['OBJECTS'] = p['OBJECTS'].split(',')
+
+        for objname in p['OBJECTS']:
+            object_mask.append(objname.strip().upper())
+
+    # -------------------------------------------------------------------------
+    # check file type is allowed
+    if filetype not in allowedtypes:
+        emsgs = ['Invalid file type = {0}'.format(filetype),
+                 '\t Must be one of the following']
+        for allowedtype in allowedtypes:
+            emsgs.append('\t\t - "{0}"'.format(allowedtype))
+    # -------------------------------------------------------------------------
+    # get index files
+    index_files = []
+    # walk through path and find index files
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
+                index_files.append(os.path.join(root, filename))
+    # log number of index files found
+    if len(index_files) > 0:
+        wmsg = 'Found {0} index files'
+        WLOG(p, '', wmsg.format(len(index_files)))
+    else:
+        emsg = ('No index files found. Please run a off_listing script to '
+                'continue')
+        WLOG(p, 'error', emsg)
+    # -------------------------------------------------------------------------
+    # valid files dictionary (key = telluric object name)
+    valid_files = dict()
+    # loop through index files
+    for index_file in index_files:
+        # read index file
+        index = spirouImage.ReadFitsTable(p, index_file)
+        # get directory
+        dirname = os.path.dirname(index_file)
+        # get filename and object name
+        index_filenames = index['FILENAME']
+        index_objnames = index['OBJNAME']
+        index_output = index[p['KW_OUTPUT'][0]]
+        index_ext_type = index[p['KW_EXT_TYPE'][0]]
+        # ---------------------------------------------------------------------
+        # mask by KW_OUTPUT
+        mask1 = index_output == filetype
+        # mask by KW_EXT_TYPE
+        mask2 = np.zeros(len(index), dtype=bool)
+        for ext_type in ext_types:
+            mask2 |= (index_ext_type == ext_type)
+        # combine masks
+        mask = mask1 & mask2
+        # ---------------------------------------------------------------------
+        if np.nansum(mask) > 0:
+            # set valid to False
+            valid = False
+            # loop around rows that are in mask
+            for it in range(len(index_filenames[mask])):
+                # get object name
+                objname_it = index_objnames[mask][it]
+                filename_it = index_filenames[mask][it]
+                # construct absolute path
+                absfilename = os.path.join(dirname, filename_it)
+                # filter by object type
+                if len(object_mask) > 0:
+                    if objname_it.strip().upper() in object_mask:
+                        valid = True
+                    else:
+                        valid = False
+                else:
+                    valid = True
+                # if valid add filename to valid list
+                if valid:
+                    if objname_it in valid_files:
+                        valid_files[objname_it].append(absfilename)
+                    else:
+                        valid_files[objname_it] = [absfilename]
+    # -------------------------------------------------------------------------
+    # return full list of valid files
     return valid_files
 
 

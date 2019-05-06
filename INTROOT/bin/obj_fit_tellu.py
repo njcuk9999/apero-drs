@@ -541,7 +541,8 @@ def main(night_name=None, files=None):
         if p['DRS_PLOT'] > 0:
             sPlt.ext_1d_spectrum_plot(p, xs1d1, ys1d1)
         # construct file name
-        s1dfile1, tag3 = spirouConfig.Constants.TELLU_FIT_S1D_FILE1(p)
+        targs = [p, raw_in_file]
+        s1dfile1, tag3 = spirouConfig.Constants.TELLU_FIT_S1D_FILE1(*targs)
         s1dfilename1 = os.path.basename(s1dfile1)
         # add header keys
         # set the version
@@ -549,13 +550,6 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d1[0])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
-                                   value=p['IC_BIN_S1D_UWAVE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
-        hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
-                                   value='Relative Flux')
         # log writing to file
         wmsg = 'Saving 1D spectrum (uniform in wavelength) in {0}'
         WLOG(p, '', wmsg.format(s1dfilename1))
@@ -570,14 +564,15 @@ def main(night_name=None, files=None):
         # 1-dimension spectral S1D (uniform in velocity)
         # ------------------------------------------------------------------
         # get arguments for E2DS to S1D
-        e2dsargs = [loc['WAVE'], sp_out, loc['NBLAZE']]
+        e2dsargs = [loc['WAVE'], sp_out, loc['BLAZE']]
         # get 1D spectrum
         xs1d2, ys1d2 = spirouImage.E2DStoS1D(p, *e2dsargs, wgrid='velocity')
         # Plot the 1D spectrum
         if p['DRS_PLOT'] > 0:
             sPlt.ext_1d_spectrum_plot(p, xs1d2, ys1d2)
         # construct file name
-        s1dfile2, tag4 = spirouConfig.Constants.TELLU_FIT_S1D_FILE2(p)
+        targs = [p, raw_in_file]
+        s1dfile2, tag4 = spirouConfig.Constants.TELLU_FIT_S1D_FILE2(*targs)
         s1dfilename2 = os.path.basename(s1dfile2)
         # add header keys
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])

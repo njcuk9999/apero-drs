@@ -23,19 +23,31 @@ import warnings
 # =============================================================================
 # Define variables
 # =============================================================================
-INPUT1 = '/scratch/Projects/spirou/data_dev_nonan/reduced/TEST2/20180801/'
+INPUT1 = '/scratch/Projects/spirou/data_dev_nonan/reduced/'
 NAME1 = 'NO NAN'
-INPUT2 = '/scratch/Projects/spirou/data_dev_nan/reduced/TEST2/20180801/'
+INPUT2 = '/scratch/Projects/spirou/data_dev_nan/reduced/'
 NAME2 = 'NAN'
 
 
-OUTPUT = '/scratch/Projects/spirou/data_dev_nan_diff/reduced/TEST2/20180801'
+OUTPUT = '/scratch/Projects/spirou/data_dev_nan_diff/reduced/'
 
 # -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def find_files(path):
+    outfiles = []
+    for root, dirs, files in os.walk(path):
+        # get uncommon path
+        cpath = os.path.commonpath([path, root])
+        upath = root.split(cpath + os.sep)[-1]
+        for filename in files:
+            fpath = os.path.join(upath, filename)
+            outfiles.append(fpath)
+    return outfiles
+
+
 def add_to_stats(d1, d2, diff, dheader):
 
     dheader['@MEAN'] = (np.nanmean(diff), 'Mean of diff')
@@ -99,9 +111,9 @@ def diff_header(h1, h2):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # get files in input 1
-    files1 = os.listdir(INPUT1)
+    files1 = find_files(INPUT1)
     # get files in input 2
-    files2 = os.listdir(INPUT2)
+    files2 = find_files(INPUT2)
     # ----------------------------------------------------------------------
     jointfiles = []
     print('Checking file outputs the same')
@@ -142,10 +154,17 @@ if __name__ == "__main__":
         header_12 = diff_header(header1, header2)
         with warnings.catch_warnings(record=True) as _:
             header_12 = add_to_stats(data1, data2, diff_12, header_12)
-        # write to diff file
-        outpath = os.path.join(OUTPUT, 'DIFF_' + filename)
+        # construct diff file output name
+        indir = os.path.dirname(filename)
+        infile = os.path.basename(filename)
+        outpath = os.path.join(OUTPUT, indir)
+        outfile = os.path.join(outpath, 'DIFF_' + infile)
+        # check outpath directory
+        if not os.path.exists(outpath):
+            os.makedirs(outpath)
+        # write diff file
         with warnings.catch_warnings(record=True) as _:
-            fits.writeto(outpath, diff_12, header=header_12, overwrite=True)
+            fits.writeto(outfile, diff_12, header=header_12, overwrite=True)
 
 
 
