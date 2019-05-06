@@ -109,7 +109,7 @@ def measure_background_from_map(p, image, header, comments):
     # get badpixmask
     bmap, bhdr, badfile = spirouImage.GetBackgroundMap(p, header)
     # create mask from badpixmask
-    mask = np.array(bmap, dtype=bool)
+    bmap = np.array(bmap, dtype=bool)
     # copy image
     image1 = np.array(image)
     # set to NAN all "illuminated" (non-background) pixels
@@ -132,8 +132,7 @@ def measure_background_from_map(p, image, header, comments):
         for j_it in range(len(yc)):
             xci, yci = xc[i_it], yc[j_it]
             # get the pixels for this box
-            subframe = image1[xci - width:xci + width,
-                       yci - width:yci + width]
+            subframe = image1[xci - width:xci + width, yci - width:yci + width]
             subframe = subframe.ravel()
             # get the (2*size)th minimum pixel
             with warnings.catch_warnings(record=True) as _:
@@ -182,7 +181,8 @@ def measure_background_from_map(p, image, header, comments):
     hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Background Binned')
     dheaders = [hdict1, hdict2, hdict3, hdict4]
     # write debug to file
-    spirouImage.WriteImageMulti(p, debug_background, dimages, hdicts=dheaders)
+    _ = spirouImage.WriteImageMulti(p, debug_background, dimages,
+                                    hdicts=dheaders)
     # ----------------------------------------------------------------------
     return background_image_full
 
