@@ -24,7 +24,7 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.097'
+__version__ = '0.4.123'
 # Define Authors
 # noinspection PyPep8
 __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
@@ -32,7 +32,7 @@ __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2019-03-19'
+__date__ = '2019-05-03'
 
 
 # =============================================================================
@@ -1102,6 +1102,37 @@ def FF_FLAT_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
+def BACKGROUND_CORRECT_FILE(p, fiber=None):
+    """
+    Defines the flat field file name and location to save flat field file to
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+
+    :return flatfits: string, the flat field filename and location
+    """
+    func_name = 'EXTRACT_E2DS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    e2ds_ext = '_background_{0}.fits'.format(fiber)
+    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+    e2dsfits = os.path.join(reducedfolder, 'DEBUG_' + e2dsfitsname)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return e2dsfits, tag
+
+
+# noinspection PyPep8Naming
 def EXTRACT_E2DS_FILE(p, fiber=None):
     """
     Defines the extraction E2DS file name and location
@@ -1228,7 +1259,7 @@ def EXTRACT_LOCO_FILE(p):
 
 
 # noinspection PyPep8Naming
-def EXTRACT_S1D_FILE(p, fiber=None):
+def EXTRACT_S1D_FILE1(p, fiber=None):
     """
     Defines the 1D extraction file name and location
 
@@ -1249,7 +1280,39 @@ def EXTRACT_S1D_FILE(p, fiber=None):
     if fiber is None:
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    newext = '_s1d_{0}.fits'.format(fiber)
+    newext = '_s1dw_{0}.fits'.format(fiber)
+    oldext = '.fits'
+    filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
+    absfilepath = os.path.join(reducedfolder, filename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return absfilepath, tag
+
+
+# noinspection PyPep8Naming
+def EXTRACT_S1D_FILE2(p, fiber=None):
+    """
+    Defines the 1D extraction file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    func_name = 'EXTRACT_S1D_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    newext = '_s1dv_{0}.fits'.format(fiber)
     oldext = '.fits'
     filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
     absfilepath = os.path.join(reducedfolder, filename)
@@ -2163,6 +2226,67 @@ def TELLU_FIT_OUT_FILE(p, filename):
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return absolute path
     return outfile1, tag
+
+
+
+# noinspection PyPep8Naming
+def TELLU_FIT_S1D_FILE1(p, filename):
+    """
+    Defines the 1D extraction file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    func_name = 'TELLU_S1D_FILE1'
+    # define filename
+    absfilepath, _ = TELLU_FIT_OUT_FILE(p, filename)
+    if 'e2dsff' in absfilepath:
+        absfilepath = absfilepath.replace('e2dsff', 's1d_w_')
+    else:
+        absfilepath = absfilepath.replace('e2ds', 's1d_w_')
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return absfilepath, tag + 'tellu'
+
+
+# noinspection PyPep8Naming
+def TELLU_FIT_S1D_FILE2(p, filename):
+    """
+    Defines the 1D extraction file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    func_name = 'TELLU_S1D_FILE2'
+    # define filename
+    absfilepath, _ = TELLU_FIT_OUT_FILE(p, filename)
+    if 'e2dsff' in absfilepath:
+        absfilepath = absfilepath.replace('e2dsff', 's1d_w_')
+    else:
+        absfilepath = absfilepath.replace('e2ds', 's1d_w_')
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return absfilepath, tag + 'tellu'
 
 
 # noinspection PyPep8Naming

@@ -37,8 +37,8 @@ def get_offset_sp(sp_fp,sp_hc,iord,doplot=False):
 			end=4087
 
 		segment=sp_fp[start:end]
-		bottom[i] = np.percentile(segment,10)
-		top[i] = np.percentile(segment,95)
+		bottom[i] = np.nanpercentile(segment,10)
+		top[i] = np.nanpercentile(segment,95)
 
 	top[top<=(0.1*np.max(top))]=(0.1*np.max(top))
 
@@ -56,7 +56,7 @@ def get_offset_sp(sp_fp,sp_hc,iord,doplot=False):
 	# >3-sigma peak relative to the continuum
 	sp_hc -= medfilt(sp_hc,15)
 	# we normalized the HC to its absolute deviation 
-	sp_hc/=np.median(np.abs(sp_hc[sp_hc!=0]))
+	sp_hc/=np.nanmedian(np.abs(sp_hc[sp_hc!=0]))
 
 	# The reference solution. All FP peaks will be anchored to this
 	# wavelength solution
@@ -190,7 +190,7 @@ def get_offset_sp(sp_fp,sp_hc,iord,doplot=False):
 	dxpeak = xpeak2[1:]-xpeak2[:-1]
 
 	# we clip the most deviant peaks
-	g=(dxpeak>np.percentile(dxpeak,5)) & (dxpeak<np.percentile(dxpeak,95))
+	g=(dxpeak>np.nanpercentile(dxpeak,5)) & (dxpeak<np.nanpercentile(dxpeak,95))
 	fit_peak_separation = np.polyfit(xpeak2b[g],dxpeak[g],2)
 
 

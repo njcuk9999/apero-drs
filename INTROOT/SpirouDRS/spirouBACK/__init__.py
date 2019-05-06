@@ -37,6 +37,8 @@ BoxSmoothedMinMax = spirouBACK.measure_box_min_max
 
 MeasureBackgroundFF = spirouBACK.measure_background_flatfield
 
+MeasureBackgroundFF_OLD = spirouBACK.measure_background_flatfield_old
+
 MeasureMinMax = spirouBACK.measure_box_min_max
 
 MeasureMinMaxSignal = spirouBACK.measure_min_max

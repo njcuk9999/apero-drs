@@ -58,7 +58,7 @@ wave_file = 'spirou_wave_H4RG_v1.fits'
 # we mask domains that have <20% of the peak blaze of their respective order
 blaze_norm = blaze + 0
 for iord in range(49):
-    blaze_norm[iord, :] /= np.percentile(blaze_norm[iord, :], 95)
+    blaze_norm[iord, :] /= np.nanpercentile(blaze_norm[iord, :], 95)
 
 blaze_norm[blaze_norm < cut_blaze_norm] = np.nan
 
@@ -72,7 +72,7 @@ for ific in range(len(trans_files)):
     abso[ific, :] = (pyfits.getdata(trans_files[ific])).reshape(4088 * 49)
 
 # determining the pixels relevant for PCA construction
-keep = np.isfinite(np.sum(abso, axis=0))
+keep = np.isfinite(np.nansum(abso, axis=0))
 
 #
 print('fraction of valid pixels (not NaNs in abso) : ', np.mean(keep))
@@ -163,7 +163,7 @@ for fic in fics:
             for iord in range(49):
                 # noinspection PyUnboundLocalVariable
                 keep = np.isfinite(template[iord, :])
-                if np.sum(keep) > 20:
+                if np.nansum(keep) > 20:
                     s = InterpolatedUnivariateSpline(waves[iord, keep],
                                                      template[iord, keep],
                                                      ext=3)
@@ -196,7 +196,7 @@ for fic in fics:
                 ew = 30 / 2.2 / 2.354  # gaussian ew for vinsi km/s
                 xx = np.arange(ew * 6) - ew * 3
                 ker2 = np.exp(-.5 * (xx / ew) ** 2)
-                ker2 /= np.sum(ker2)
+                ker2 /= np.nansum(ker2)
 
                 for iord in range(49):
                     # print(iord)
@@ -227,7 +227,7 @@ for fic in fics:
                 ew = 30 / 2.2 / 2.354  # gaussian ew of smoothing kernel km/s
                 xx = np.arange(ew * 6) - ew * 3
                 ker2 = np.exp(-.5 * (xx / ew) ** 2)
-                ker2 /= np.sum(ker2)
+                ker2 /= np.nansum(ker2)
 
                 for iord in range(49):
 
@@ -262,9 +262,9 @@ for fic in fics:
 
             keep &= np.isfinite(fit_dd)
             # noinspection PyUnboundLocalVariable
-            keep &= (np.sum(np.isfinite(fit_pc), axis=1) == npc)
+            keep &= (np.nansum(np.isfinite(fit_pc), axis=1) == npc)
 
-            print('total keep : ', np.sum(keep))
+            print('total keep : ', np.nansum(keep))
 
             amps, recon = lin_mini(fit_dd[keep], fit_pc[keep, :])
 

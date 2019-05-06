@@ -85,7 +85,7 @@ def gaussfit(xpix, ypix, nn):
 
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * np.median(np.gradient(xpix)) / 2.354
+    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / 2.354
 
     if nn == 3:
         # only amp, cen and ew

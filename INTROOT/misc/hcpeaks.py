@@ -19,6 +19,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -130,7 +132,7 @@ def gaussfit(xpix1, ypix1, nn):
 
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * np.median(np.gradient(xpix1)) / 2.3548200450309493
+    ew_guess = 2 * np.nanmedian(np.gradient(xpix1)) / 2.3548200450309493
 
     if nn == 3:
         # only amp, cen and ew
@@ -204,9 +206,9 @@ def lin_mini(vector, sample):
 
         for it in range(sz_sample[0]):
             for jt in range(it, sz_sample[0]):
-                mm[it, jt] = np.sum(sample[it, :] * sample[jt, :])
+                mm[it, jt] = np.nansum(sample[it, :] * sample[jt, :])
                 mm[j, it] = mm[it, jt]
-            vv[it] = np.sum(vector * sample[it, :])
+            vv[it] = np.nansum(vector * sample[it, :])
         #
         if np.linalg.det(mm) == 0:
             amps1 = np.zeros(sz_sample[0]) + np.nan
@@ -230,9 +232,9 @@ def lin_mini(vector, sample):
 
         for it in range(sz_sample[1]):
             for jt in range(it, sz_sample[1]):
-                mm[it, jt] = np.sum(sample[:, it] * sample[:, jt])
+                mm[it, jt] = np.nansum(sample[:, it] * sample[:, jt])
                 mm[jt, it] = mm[it, jt]
-            vv[i] = np.sum(vector * sample[:, it])
+            vv[i] = np.nansum(vector * sample[:, it])
 
         if np.linalg.det(mm) == 0:
             amps1 = np.zeros(sz_sample[1]) + np.nan
@@ -377,7 +379,7 @@ if not os.path.isfile(catalog_name):
             xpix = np.asarray(range(indmax - w, indmax + w))
 
             segment = np.array(hc_sp_order[indmax - w:indmax + w])
-            rms = np.median(np.abs(segment[1:] - segment[:-1]))
+            rms = np.nanmedian(np.abs(segment[1:] - segment[:-1]))
             peak = (np.max(segment) - np.nanmedian(segment))
 
             # peak needs to be well-behaved
@@ -509,8 +511,8 @@ for sol_iteration in range(3):
         good = (order_ == iord)
         nmax = nmax_bright  # we may have fewer lines within the order than
         # the nmax_bright variable
-        if np.sum(g) < nmax_bright:
-            nmax = np.sum(g) - 1
+        if np.nansum(g) < nmax_bright:
+            nmax = np.nansum(g) - 1
         good &= peak > (peak2[::-1])[nmax]
         brightest_lines[good] = True
 
@@ -553,13 +555,12 @@ for sol_iteration in range(3):
                     index = [g[i], g[j], g[k]]
                     xx = xgau[index]
                     yy = wave_catalog[index]
-                    fit = np.polyfit(xx, yy,
-                                     2)  # fit the lines and take it as a
+                    fit = nanpolyfit(xx, yy, 2)  # fit the lines and take it as a
                     # best-guess solution
                     dd = (wave_catalog[g_all] / np.polyval(fit, np.array(
                         xgau[g_all])) - 1) * 299792.458  # error
 
-                    nkeep = np.sum(np.abs(dd) < cut_fit_threshold)
+                    nkeep = np.nansum(np.abs(dd) < cut_fit_threshold)
                     if nkeep > bestn:  # the number of good lines is the
                         # largest seen to date
                         bestn = nkeep
@@ -602,12 +603,12 @@ for sol_iteration in range(3):
     ew = ew[g]
     gauss_rms_dev = gauss_rms_dev[g]
 
-    if np.sum(g) < 200:
+    if np.nansum(g) < 200:
         print('Error: We have less than 200 good lines total')
         exit()
 
     # for ite in range(5):
-    lin_model_slice = np.zeros([len(xgau), np.sum(order_fit_continuity)])
+    lin_model_slice = np.zeros([len(xgau), np.nansum(order_fit_continuity)])
 
     # we construct the unit vectors for our wavelength model
     ii = 0
@@ -620,7 +621,7 @@ for sol_iteration in range(3):
 
     recon0 = np.zeros_like(wave_catalog)
 
-    amps0 = np.zeros(np.sum(order_fit_continuity))
+    amps0 = np.zeros(np.nansum(order_fit_continuity))
 
     # we loop 20 times for sigma clipping and numerical convergence
     # in most cases ~10 iterations would be fine, but this is really fast
@@ -630,8 +631,8 @@ for sol_iteration in range(3):
         recon0 += recon
 
         for aa in range(len(amps0)):
-            ampsx = np.sum(
-                (wave_catalog - recon0) * lin_model_slice[:, aa]) / np.sum(
+            ampsx = np.nansum(
+                (wave_catalog - recon0) * lin_model_slice[:, aa]) / np.nansum(
                 lin_model_slice[:, aa] ** 2)
             amps0[aa] += ampsx
             recon0 += (ampsx * lin_model_slice[:, aa])
@@ -734,20 +735,20 @@ for iord in range(0, 49, bin_ord):
         orders = order_[gg]
         wave_line = wave_catalog[gg]
 
-        all_lines = np.zeros([np.sum(gg), 2 * w + 1])
-        all_dvs = np.zeros([np.sum(gg), 2 * w + 1])
+        all_lines = np.zeros([np.nansum(gg), 2 * w + 1])
+        all_dvs = np.zeros([np.nansum(gg), 2 * w + 1])
 
         base = np.zeros(2 * w + 1, dtype=bool)
         base[0:3] = True
         base[2 * w - 2:2 * w + 1] = True
 
         # noinspection PyTypeChecker
-        for i in range(np.sum(gg)):
+        for i in range(np.nansum(gg)):
             all_lines[i, :] = hc_ini[int(orders[i]),
                                      int(xcens[i] + .5) - w:
                                      int(xcens[i] + .5) + w + 1]
-            all_lines[i, :] -= np.median(all_lines[i, base])
-            all_lines[i, :] /= np.sum(all_lines[i, :])
+            all_lines[i, :] -= np.nanmedian(all_lines[i, base])
+            all_lines[i, :] /= np.nansum(all_lines[i, :])
             # noinspection PyUnboundLocalVariable
             v = -299792.458 * (wave_map2[int(orders[i]),
                                int(xcens[i] + .5) - w:int(
@@ -771,7 +772,7 @@ for iord in range(0, 49, bin_ord):
                                              popt_left[1], popt_left[2],
                                              popt_left[3], popt_left[4])
 
-            rms = res / np.median(np.abs(res))
+            rms = res / np.nanmedian(np.abs(res))
             maxdev = np.max(np.abs(rms[keep]))
             keep[np.abs(rms) > maxdev_threshold] = False
             n_it += 1
@@ -786,7 +787,7 @@ for iord in range(0, 49, bin_ord):
                                popt_left[3], popt_left[4])
 
         plt.plot(xx, gplot, 'k--')
-        print('nlines : ', np.sum(gg), 'iord=', iord, ' xpos=', xpos,
+        print('nlines : ', np.nansum(gg), 'iord=', iord, ' xpos=', xpos,
               ' resolution = ', resolution, ' km/s', 'R = ',
               299792.458 / resolution)
         plt.xlim([-8, 8])
@@ -802,5 +803,5 @@ for iord in range(0, 49, bin_ord):
 plt.show()
 
 print('mean resolution : ', np.mean(resolution_map))
-print('median resolution : ', np.median(resolution_map))
+print('median resolution : ', np.nanmedian(resolution_map))
 print('stddev resolution : ', np.std(resolution_map))

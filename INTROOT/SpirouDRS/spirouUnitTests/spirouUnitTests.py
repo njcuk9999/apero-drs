@@ -116,7 +116,7 @@ def unit_log_title(p, title=' START OF UNIT TESTS'):
 def log_timings(p, times):
 
     # add times together
-    times['Total'] = np.sum(list(times.values()))
+    times['Total'] = np.nansum(list(times.values()))
     # log the times
     WLOG(p, '', '')
     WLOG(p, '', spirouStartup.spirouStartup.HEADER)
