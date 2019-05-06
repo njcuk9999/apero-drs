@@ -1354,6 +1354,68 @@ def get_badpixel_map(p, header=None, quiet=False):
         WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
 
 
+def get_background_map(p, header=None, quiet=False):
+    """
+    Get the background map from the calibDB
+
+        Must contain at least:
+                calibDB: dictionary, the calibration database dictionary
+                         (if not in "p" we construct it and need "max_time_unix"
+                max_time_unix: float, the unix time to use as the time of
+                                reference (used only if calibDB is not defined)
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, the program name for logging
+        May contain:
+            calibDB: dictionary, the calibration database
+
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+
+    :return: badpixmask: numpy array (2D), the bad pixel mask
+    """
+    func_name = __NAME__ + '.get_background_map()'
+    # get calibDB
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouDB.GetAcqTime(p, header)
+        # get calibDB
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
+    else:
+        try:
+            cdb = p['CALIBDB']
+            acqtime = p['MAX_TIME_UNIX']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [e.message, emsg])
+            cdb, acqtime = None, None
+
+    # try to read 'BADPIX' from cdb
+    if 'BKGRDMAP' in cdb:
+        bmapfile = os.path.join(p['DRS_CALIB_DB'], cdb['BKGRDMAP'][1])
+        if not quiet:
+            WLOG(p, '', 'Doing Background Correction using ' + bmapfile)
+        background_map, bhdr, nx, ny = spirouFITS.read_raw_data(p, bmapfile)
+        return background_map, bhdr, bmapfile
+    else:
+        # get master config file name
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+        # deal with extra constrain on file from "closer/older"
+        comptype = p.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = '(with unit time <={1})'
+        else:
+            extstr = ''
+        # log error
+        emsg1 = 'No valid BKGRDMAP in calibDB {0} ' + extstr
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
+
+
 def correct_for_badpix(p, image, header, return_map=False, quiet=True):
     """
     Corrects "image" for "BADPIX" using calibDB file (header must contain
