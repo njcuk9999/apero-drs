@@ -13,6 +13,8 @@ import numpy as np
 import warnings
 from scipy.interpolate import griddata
 from scipy import signal
+from scipy.signal import convolve2d
+from scipy.ndimage import map_coordinates as mapc
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -42,6 +44,148 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
+def make_background_map(p, image, badpixmask):
+
+    # get constants
+    width = p['IC_BKGR_BOXSIZE']
+    percent = p['IC_BKGR_PERCENT']
+    csize = p['IC_BKGR_MASK_CONVOLVE_SIZE']
+    nbad = p['IC_BKGR_N_BAD_NEIGHBOURS']
+
+    # set image bad pixels to NaN
+    image0 = np.array(image)
+    image0[badpixmask] = np.nan
+
+    # image that will contain the background estimate
+    backest = np.zeros_like(image0)
+
+    # we slice the image in ribbons of width "width".
+    # The slicing is done in the cross-dispersion direction, so we
+    # can simply take a median along the "fast" dispersion to find the
+    # order profile. We pick width to be small enough for the orders not
+    # to show a significant curvature within w pixels
+    for x_it in range(image0.shape[1], width):
+        # ribbon to find the order profile
+        ribbon = np.nanmedian(image0[:, x_it:x_it + width], axis=1)
+
+        for y_it in range(image0.shape[0]):
+            # we perform a running Nth percentile filter along the
+            # order profile. The box of the filter is w. Note that it could
+            # differ in princile from w, its just the same for the sake of
+            # simplicity.
+            ystart = y_it - width // 2
+            yend = y_it + width // 2
+            if ystart < 0:
+                ystart = 0
+            if yend > image0.shape[0] - 1:
+                yend = image0.shape[0] - 1
+            # background estimate
+            backest_pix = np.nanpercentile(ribbon[ystart:yend], percent)
+            backest[y_it, x_it: x_it + width] = backest_pix
+    # the mask is the area that is below then Nth percentile threshold
+    backmask = np.array(image0 < backest, dtype=float)
+    # we take advantage of the order geometry and for that the "dark"
+    # region of the array be continuous in the "fast" dispersion axis
+    nribbon = convolve2d(backmask, np.ones([1, csize]), mode='same')
+    # we remove from the binary mask all isolated (within 1x7 ribbon)
+    # dark pixels
+    backmask[nribbon == 1] = 0
+    # If a pixel has 3 or more "dark" neighbours, we consider it dark
+    # regardless of its initial value
+    backmask[nribbon >= nbad] = 1
+
+    # return the background mask
+    return backmask
+
+
+def measure_background_from_map(p, image, header, comments):
+
+    func_name = __NAME__ + '.measure_background_from_map()'
+
+    # get constants
+    width = p['IC_BKGR_BOXSIZE']
+
+    # get badpixmask
+    bmap, bhdr, badfile = spirouImage.GetBackgroundMap(p, header)
+    # create mask from badpixmask
+    mask = np.array(bmap, dtype=bool)
+    # copy image
+    image1 = np.array(image)
+    # set to NAN all "illuminated" (non-background) pixels
+    image1[~bmap] = np.nan
+
+    # create the box centers
+    # we construct a binned-down version of the full image with the estimate
+    # of the background for each x+y "center". This image will be up-scaled to
+    # the size of the full science image and subtracted
+
+    # x and y centers for each background calculation
+    xc = np.arange(width, image1.shape[0], width)
+    yc = np.arange(width, image1.shape[1], width)
+    # background map (binned-down for now)
+    background_image = np.zeros((len(xc), len(yc)))
+    # loop around all boxes with centers xc and yc
+    # and find pixels within a given widths
+    # around these centers in the full image
+    for i_it in range(len(xc)):
+        for j_it in range(len(yc)):
+            xci, yci = xc[i_it], yc[j_it]
+            # get the pixels for this box
+            subframe = image1[xci - width:xci + width,
+                       yci - width:yci + width]
+            subframe = subframe.ravel()
+            # get the (2*size)th minimum pixel
+            with warnings.catch_warnings(record=True) as _:
+                # do not use the nanpercentile, just a median
+                # as we masked non-background pixels with NaNs
+                value = np.nanmedian(subframe)
+
+            if np.isfinite(value):
+                background_image[i_it, j_it] = value
+            else:
+                background_image[i_it, j_it] = 0.0
+
+    # define a mapping grid from size of background_image (image1[0]/width) by
+    #    (image1[1]/width)
+    # get shapes
+    gridshape = background_image.shape
+    imageshape = image1.shape
+    # get fractional positions of the full image
+    indices = np.indices(imageshape)
+    fypix = indices[0]/imageshape[0]
+    fxpix = indices[1]/imageshape[1]
+    # scalge fraction positions to size of background image
+    sypix = gridshape[0] * fypix
+    sxpix = gridshape[1] * fxpix
+    # coords for mapping
+    coords = np.array([sypix, sxpix])
+    # expand image onto the grid that matches the size of the input image
+    background_image_full = mapc(background_image, coords,
+                                 order=2, cval=np.nan, output=float,
+                                 mode='constant')
+
+    # ----------------------------------------------------------------------
+    # Produce DEBUG plot
+    # ----------------------------------------------------------------------
+    data1 = image - background_image_full
+    # construct debug background file name
+    debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
+    # construct images
+    dimages = [data1, image1, background_image_full, background_image]
+    # construct hdicts
+    hdict = spirouImage.CopyOriginalKeys(header, comments)
+    drsname = ['DRSNAME', None, 'Extension description']
+    hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
+    hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Original')
+    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Background Full')
+    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Background Binned')
+    dheaders = [hdict1, hdict2, hdict3, hdict4]
+    # write debug to file
+    spirouImage.WriteImageMulti(p, debug_background, dimages, hdicts=dheaders)
+    # ----------------------------------------------------------------------
+    return
+
+
 def measure_background_flatfield(p, image, header, comments):
     """
     Measures the background of a flat field image - currently does not work
