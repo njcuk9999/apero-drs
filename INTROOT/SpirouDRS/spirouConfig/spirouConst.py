@@ -768,6 +768,33 @@ def BADPIX_FILE(p):
     return badpixelfits, tag
 
 
+
+# noinspection PyPep8Naming
+def BKGD_MAP_FILE(p):
+    """
+    Defines the bad pixel path and file name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                flatfile: string, the flat file name (used to name the
+                          badpix file, replacing .fits with _badpixel.fits
+    :return string: the badpix path and filename
+    """
+    func_name = 'BKGD_MAP_FILE'
+    # define filename
+    reducedfolder = p['REDUCED_DIR']
+    calibprefix = CALIB_PREFIX(p)
+    badpixelfn = p['FLATFILE'].replace('.fits', '_bmap.fits')
+    badpixelfitsname = calibprefix + badpixelfn
+    badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return badpixelfits, tag
+
+
 # noinspection PyPep8Naming
 def LOC_ORDER_PROFILE_FILE(p):
     """
