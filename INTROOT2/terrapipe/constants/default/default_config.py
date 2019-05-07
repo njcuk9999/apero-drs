@@ -79,7 +79,8 @@ DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__)
 # General properites
 # =============================================================================
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.4.016', dtype=str, source=__NAME__)
+DRS_VERSION = Const('DRS_VERSION', value='0.4.016', dtype=str,
+                    source=__NAME__)
 
 # Authors
 AUTHORS = Const('AUTHOR',
