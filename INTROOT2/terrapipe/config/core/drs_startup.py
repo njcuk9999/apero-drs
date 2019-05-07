@@ -1004,14 +1004,16 @@ def _find_recipe(name='None', instrument='None'):
     """
     # deal with no instrument
     if instrument == 'None' or instrument is None:
-        empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
-        return empty
+        ipath = CORE_PATH
+        instrument = None
+    else:
+        ipath = INSTRUMENT_PATH
     # deal with no name or no instrument
     if name == 'None' or name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty
     # else we have a name and an instrument
-    margs = [instrument, ['recipe_definitions.py'], INSTRUMENT_PATH, CORE_PATH]
+    margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
     modules = constants.getmodnames(*margs, path=False)
     # load module
     mod = constants.import_module(modules[0], full=True)
@@ -1026,6 +1028,10 @@ def _find_recipe(name='None', instrument='None'):
             found_recipe = recipe
         elif recipe.name.strip('.py') == name:
             found_recipe = recipe
+
+    if instrument is None and found_recipe is None:
+        empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
+        return empty
     if found_recipe is None:
         WLOG(None, 'error', TextEntry('00-007-00001', args=name))
     # return
