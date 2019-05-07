@@ -99,30 +99,134 @@ def make_background_map(p, image, badpixmask):
     return backmask
 
 
+def make_local_background_map(p, image):
+    """
+    determine the proper amplitude for the  scaling of the
+    scattered-light image
+
+    :param p:
+    :param image:
+    :return:
+    """
+    func_name = __NAME__ + '.make_local_background_map()'
+    # get constants from parameter dictionary
+    xsize = p['IC_BKGR_LOCAL_XSIZE']
+    ysize = p['IC_BKGR_LOCAL_YSIZE']
+    bthres = p['IC_BKGR_LOCAL_THRES']
+    wx_ker = p['IC_BKGR_KER_WX']
+    wy_ker = p['IC_BKGR_KER_WY']
+    # measure local background
+    scat_light = measure_local_background(p, image)
+
+    # define the start and end of the center
+    startx = (image.shape[1] // 2) - xsize
+    endx = (image.shape[1] // 2) + xsize
+    starty = (image.shape[0] // 2) - ysize
+    endy = (image.shape[0] // 2) + ysize
+
+    # log process
+    WLOG(p, '', 'Optimizing amplitude for scattered light scaling')
+    WLOG(p, '', '')
+
+    # we extract a median order profile for the center of the image
+    profile = np.nanmedian(image[:, startx:endx], axis=1)
+    profile2 = np.nanmedian(scat_light[:, startx:endx], axis=1)
+
+    # we look at the central part of the array and at the pixels
+    # that are smaller than (bthres * 100)% of the peak of the orders
+    keep = profile < (bthres * np.max(profile))
+    # only look at those pixels in the center (y-direction)
+    keep[:starty] = False
+    keep[endy:] = False
+
+    # we determine the scattered light profile for both the model and the
+    # observed scatter
+    observed_scatter = profile - np.mean(profile[keep])
+    model_scatter = profile2 - np.mean(profile2[keep])
+
+    # we perform a dot-product between the obsered and modelled scattered
+    # light to find the amplitude of our model
+    part1 = observed_scatter[keep] * model_scatter[keep]
+    part2 = observed_scatter[keep] ** 2
+    amp = np.sum(part1)/np.sum(part2)
+
+    # divide the scattered light by the amp
+    profile2 = profile2 / amp
+
+    # print out some stats
+    wmsg1 = 'Amplitude to be used for scattered light scaling: {0}'
+    wmsg2 = 'wx = {0}, wy = {1}'
+    wmsg3 = 'fractional rms = {0}'
+    WLOG(p, 'info', wmsg1.format(amp))
+    WLOG(p, 'info', wmsg2.format(wx_ker, wy_ker))
+    WLOG(p, 'info', wmsg3.format(np.std(profile2[keep] - profile[keep])))
+
+    if p['DRS_PLOT'] > 0:
+        sPlt.local_scattered_light_plot(p, image, keep, profile, profile2, amp)
+
+
+def measure_local_background(p, image):
+    func_name = __NAME__ + '.measure_local_background()'
+    # get constants from parameter dictionary
+    wx_ker = p['IC_BKGR_KER_WX']
+    wy_ker = p['IC_BKGR_KER_WY']
+    sig_ker = p['IC_BKGR_KER_SIG']
+    # log process
+    WLOG(p, '', 'Measuring local background using 2D Gaussian Kernel')
+    # construct a convolution kernel. We go from -"sig_ker" to +"sig_ker" sigma
+    #   in each direction. Its important no to make the kernel too big
+    #   as this slows-down the 2D convolution. Do NOT make it a -10 to
+    #   +10 sigma gaussian!
+    ker_sigx = int((wx_ker * sig_ker * 2) + 1)
+    ker_sigy = int((wy_ker * sig_ker * 2) + 1)
+    kery, kerx = np.indices([ker_sigy, ker_sigx], dtype=float)
+    # this normalises kernal x and y between +1 and -1
+    kery = kery - np.mean(kery)
+    kerx = kerx - np.mean(kerx)
+    # calculate 2D gaussian kernel
+    ker = np.exp(-0.5 * ((kerx / wx_ker)**2 + (kery / wy_ker)**2))
+    # we normalize the integral of the kernel to 1 so that the AMP factor
+    #    corresponds to the fraction of scattered light and therefore has a
+    #    physical meaning.
+    ker = ker / np.sum(ker)
+    # we determine the scattered light image by convolving our image by
+    #    the kernel
+    scattered_light = convolve2d(image, ker, mode='same')
+    # returned the scattered light
+    return scattered_light
+
+
 def measure_background_from_map(p, image, header, comments):
-
     func_name = __NAME__ + '.measure_background_from_map()'
-
-    # get constants
+    # get constants from parameter dictionary
     width = p['IC_BKGR_BOXSIZE']
+    amp_ker = p['IC_BKGR_KER_AMP']
+    # ------------------------------------------------------------------------
+    # measure local background
+    scattered_light = measure_local_background(p, image)
+    # we extract a median order profile for the center of the image
+    local_background_correction = scattered_light / amp_ker
+    # correct the image for local background
+    image1 = image - local_background_correction
 
+    # -------------------------------------------------------------------------
     # get badpixmask
     bmap, bhdr, badfile = spirouImage.GetBackgroundMap(p, header)
     # create mask from badpixmask
     bmap = np.array(bmap, dtype=bool)
     # copy image
-    image1 = np.array(image)
+    image2 = np.array(image1)
     # set to NAN all "illuminated" (non-background) pixels
-    image1[~bmap] = np.nan
-
+    image2[~bmap] = np.nan
+    # -------------------------------------------------------------------------
     # create the box centers
     # we construct a binned-down version of the full image with the estimate
     # of the background for each x+y "center". This image will be up-scaled to
     # the size of the full science image and subtracted
 
     # x and y centers for each background calculation
-    xc = np.arange(width, image1.shape[0], width)
-    yc = np.arange(width, image1.shape[1], width)
+    xc = np.arange(width, image2.shape[0], width)
+    yc = np.arange(width, image2.shape[1], width)
     # background map (binned-down for now)
     background_image = np.zeros((len(xc), len(yc)))
     # loop around all boxes with centers xc and yc
@@ -132,7 +236,7 @@ def measure_background_from_map(p, image, header, comments):
         for j_it in range(len(yc)):
             xci, yci = xc[i_it], yc[j_it]
             # get the pixels for this box
-            subframe = image1[xci - width:xci + width, yci - width:yci + width]
+            subframe = image2[xci - width:xci + width, yci - width:yci + width]
             subframe = subframe.ravel()
             # get the (2*size)th minimum pixel
             with warnings.catch_warnings(record=True) as _:
@@ -149,7 +253,7 @@ def measure_background_from_map(p, image, header, comments):
     #    (image1[1]/width)
     # get shapes
     gridshape = background_image.shape
-    imageshape = image1.shape
+    imageshape = image2.shape
     # get fractional positions of the full image
     indices = np.indices(imageshape)
     fypix = indices[0]/imageshape[0]
@@ -171,16 +275,20 @@ def measure_background_from_map(p, image, header, comments):
     # construct debug background file name
     debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
     # construct images
-    dimages = [data1, image, image1, background_image_full, background_image]
+    dimages = [data1, image, image1, image2, local_background_correction,
+               background_image_full, background_image]
     # construct hdicts
     hdict = spirouImage.CopyOriginalKeys(header, comments)
     drsname = ['EXTDESC', None, 'Extension description']
     hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
     hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Original')
-    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Original NaN fill')
-    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Background Full')
-    hdict5 = spirouImage.AddKey(p, hdict, drsname, value='Background Binned')
-    dheaders = [hdict1, hdict2, hdict3, hdict4, hdict5]
+    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Locally corrected')
+    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='LC NaN filled')
+    hdict5 = spirouImage.AddKey(p, hdict, drsname, value='Local Background')
+    hdict6 = spirouImage.AddKey(p, hdict, drsname, value='Global Background')
+    hdict7 = spirouImage.AddKey(p, hdict, drsname,
+                                value='Global Background Binned')
+    dheaders = [hdict1, hdict2, hdict3, hdict4, hdict5, hdict6, hdict7]
     # write debug to file
     _ = spirouImage.WriteImageMulti(p, debug_background, dimages,
                                     hdicts=dheaders)
