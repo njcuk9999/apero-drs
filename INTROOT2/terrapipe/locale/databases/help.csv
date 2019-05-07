@@ -24,3 +24,5 @@
 "POS_ARG_TEXT","TEXT","","None"," positional arguments"," arguments de position",""
 "USAGE_TEXT","TEXT","","None"," Usage:"," L'utilisation:",""
 "YES_TEXT","TEXT","","None","yes","oui",""
+"PREVIEW_HELP","HELP","","None","[BOOLEAN] If True previews the changelog before making any changes if False makes changes without preview","",""
+"CHANGELOG_DESCRIPTION","HELP","","None","Produces a nicely formatted change log (using git). Requires gitchangelog to be installed via 'pip install gitchangelog'","",""
