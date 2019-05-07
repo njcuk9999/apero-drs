@@ -97,6 +97,6 @@ test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
 # -----------------------------------------------------------------------------
 drs_changelog.name = 'drs_changelog.py'
 drs_changelog.instrument = __INSTRUMENT__
-drs_changelog.description = Help['']
+drs_changelog.description = Help['CHANGELOG_DESCRIPTION']
 drs_changelog.arg(pos=0, name='preview', dtype='bool',
                   helpstr=Help['PREVIEW_HELP'])
