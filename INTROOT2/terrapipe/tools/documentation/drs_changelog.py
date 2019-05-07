@@ -181,7 +181,7 @@ def main(preview=1, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = config.end_main(params, success)
+    params = config.end_main(params, success, outputs=None)
     # return a copy of locally defined variables in the memory
     return config.get_locals(dict(locals()), llmain)
 
