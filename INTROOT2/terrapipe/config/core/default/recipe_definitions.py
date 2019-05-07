@@ -32,8 +32,10 @@ drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
 test = drs_recipe(__INSTRUMENT__)
+drs_changelog = drs_recipe(__INSTRUMENT__)
+
 # push into a list
-recipes = [test]
+recipes = [test, drs_changelog]
 
 # =============================================================================
 # Recipe definitions
@@ -89,3 +91,12 @@ test.kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
            helpstr='test 1', required=True)
 test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
            files=[sf.pp_file], helpstr='test 2', required=True)
+
+# -----------------------------------------------------------------------------
+# drs_changelog.py
+# -----------------------------------------------------------------------------
+drs_changelog.name = 'drs_changelog.py'
+drs_changelog.instrument = __INSTRUMENT__
+drs_changelog.description = Help['']
+drs_changelog.arg(pos=0, name='preview', dtype='bool',
+                  helpstr=Help['PREVIEW_HELP'])
