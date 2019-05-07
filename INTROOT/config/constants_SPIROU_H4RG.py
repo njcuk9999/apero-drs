@@ -464,6 +464,27 @@ IC_BKGR_BOXSIZE = 64
 #    Size in pixels of the convolve tophat for the background mask
 IC_BKGR_MASK_CONVOLVE_SIZE = 7
 
+#    Background kernel width in in x and y [pixels]
+IC_BKGR_KER_WX = 1
+IC_BKGR_KER_WY = 9
+
+#    Kernel amplitude determined from drs_local_scatter.py
+IC_BKGR_KER_AMP = 47
+
+#    The size of the center of the image +/- these values from the center
+IC_BKGR_LOCAL_XSIZE = 16
+IC_BKGR_LOCAL_YSIZE =  300
+
+#     Define the fraction of the maximum flux that we use to measure the
+#         local background
+IC_BKGR_LOCAL_THRES = 0.005
+
+#    construct a convolution kernel. We go from -IC_BKGR_KER_SIG to
+#        +IC_BKGR_KER_SIG sigma in each direction. Its important no to
+#        make the kernel too big as this slows-down the 2D convolution.
+#        Do NOT make it a -10 to +10 sigma gaussian!
+IC_BKGR_KER_SIG = 3
+
 #    If a pixel has this or more "dark" neighbours, we consider it dark
 #        regardless of its initial value
 IC_BKGR_N_BAD_NEIGHBOURS = 3
