@@ -26,3 +26,4 @@
 "YES_TEXT","TEXT","","None","yes","oui",""
 "PREVIEW_HELP","HELP","","None","[BOOLEAN] If True previews the changelog before making any changes if False makes changes without preview","",""
 "CHANGELOG_DESCRIPTION","HELP","","None","Produces a nicely formatted change log (using git). Requires gitchangelog to be installed via 'pip install gitchangelog'","",""
+"TEST_DESCRIPTION","HELP","","None","This is the top level test recipe","",""
