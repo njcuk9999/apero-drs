@@ -189,7 +189,7 @@ def main(preview=1, **kwargs):
 def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # if in preview mode tell user
-    if params['PREVIEW']:
+    if params['INPUTS']['PREVIEW']:
         WLOG(params, 'info', 'Running in preview mode.')
     # ----------------------------------------------------------------------
     # read and ask for new version
@@ -207,13 +207,13 @@ def __main__(recipe, params):
         new = False
     # ----------------------------------------------------------------------
     # update DRS files
-    if not params['PREVIEW']:
+    if not params['INPUTS']['PREVIEW']:
         update_version_file(VERSIONFILE, version)
         update_py_version(CONSTFILE, version)
     # ----------------------------------------------------------------------
     # create new changelog
     WLOG(params, '', 'Updating changelog')
-    if not params['PREVIEW']:
+    if not params['INPUTS']['PREVIEW']:
         git_change_log(FILENAME)
     else:
         git_change_log('tmp.txt')
@@ -222,7 +222,7 @@ def __main__(recipe, params):
             git_remove_tag(version)
     # ----------------------------------------------------------------------
     # if we are in preview mode should we keep these changes and update version
-    if params['PREVIEW']:
+    if params['INPUTS']['PREVIEW']:
         uinput = input('Keep changes? [Y]es [N]o:\t')
         if 'Y' in uinput.upper():
             # redo tagging
