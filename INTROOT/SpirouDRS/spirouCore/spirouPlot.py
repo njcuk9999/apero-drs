@@ -392,6 +392,37 @@ def darkplot_histograms(pp):
 
 
 # =============================================================================
+# background plotting functions
+# =============================================================================
+def local_scattered_light_plot(p, image, keep, profile, profile2, amp):
+    plot_name = 'local_scattered_light'
+    # get constants from parameter dictionary
+    ysize = p['IC_BKGR_LOCAL_YSIZE']
+    bthres = p['IC_BKGR_LOCAL_THRES']
+    filename = p['ARG_FILE_NAMES'][0]
+    # define the start and end of the center
+    starty = (image.shape[0] // 2) - ysize
+    endy = (image.shape[0] // 2) + ysize
+    # set up figure
+    fig, frame = setup_figure(p)
+    # set up a set of indices but ignore the indices we are not using
+    index = np.arange(len(keep), dtype=float)
+    index[~keep] = np.nan
+    # plot the lines
+    frame.plot(index, profile, label='Scattered light between orders')
+    frame.plot(index, profile2, label='Model')
+    frame.plot(index, profile - profile2, label='Difference', marker='.',
+               linestyle='None')
+
+    frame.set(xlabel='Pixel number', ylabel='Flux',
+              xlim=[starty, endy], ylim=[0, (bthres * np.max(profile))],
+              title='File = {0}  Amp = {1}'.format(filename, amp))
+    frame.legend(loc=0)
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
+# =============================================================================
 # localization plotting functions
 # =============================================================================
 # TODO: Why is this still here?
