@@ -155,8 +155,8 @@ def measure_background_from_map(p, image, header, comments):
     fypix = indices[0]/imageshape[0]
     fxpix = indices[1]/imageshape[1]
     # scalge fraction positions to size of background image
-    sypix = gridshape[0] * fypix
-    sxpix = gridshape[1] * fxpix
+    sypix = (gridshape[0]-1) * fypix
+    sxpix = (gridshape[1]-1) * fxpix
     # coords for mapping
     coords = np.array([sypix, sxpix])
     # expand image onto the grid that matches the size of the input image
@@ -171,15 +171,16 @@ def measure_background_from_map(p, image, header, comments):
     # construct debug background file name
     debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
     # construct images
-    dimages = [data1, image1, background_image_full, background_image]
+    dimages = [data1, image, image1, background_image_full, background_image]
     # construct hdicts
     hdict = spirouImage.CopyOriginalKeys(header, comments)
-    drsname = ['DRSNAME', None, 'Extension description']
+    drsname = ['EXTDESC', None, 'Extension description']
     hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
     hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Original')
-    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Background Full')
-    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Background Binned')
-    dheaders = [hdict1, hdict2, hdict3, hdict4]
+    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Original NaN fill')
+    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Background Full')
+    hdict5 = spirouImage.AddKey(p, hdict, drsname, value='Background Binned')
+    dheaders = [hdict1, hdict2, hdict3, hdict4, hdict5]
     # write debug to file
     _ = spirouImage.WriteImageMulti(p, debug_background, dimages,
                                     hdicts=dheaders)
