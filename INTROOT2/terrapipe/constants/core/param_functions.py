@@ -539,7 +539,7 @@ class ParamDict(CaseInsensitiveDict):
                 sargs = [key + '[DICT]', strvalue, self.sources[key]]
                 strvalues += [pfmt.format(*sargs)]
             else:
-                strvalue = value.__repr__()[:40]
+                strvalue = str(value)[:40]
                 sargs = [key + ':', strvalue, self.sources[key]]
                 strvalues += [pfmt.format(*sargs)]
         # combine list into single string
