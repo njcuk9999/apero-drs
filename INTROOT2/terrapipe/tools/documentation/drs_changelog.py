@@ -16,6 +16,7 @@ from datetime import datetime
 
 from terrapipe import config
 from terrapipe import constants
+from terrapipe import locale
 from terrapipe.io import drs_path
 
 # =============================================================================
@@ -32,6 +33,9 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
+# Get the text types
+TextEntry = locale.drs_text.TextEntry
+TextDict = locale.drs_text.TextDict
 # -----------------------------------------------------------------------------
 rargs = [Constants, Constants['DRS_PACKAGE'], '../../']
 PATH = drs_path.get_relative_folder(*rargs)
@@ -57,25 +61,39 @@ DRS_DATE = Const('DATE', value='{0}', dtype=str,
 # =============================================================================
 # Define functions
 # =============================================================================
-def ask_for_new_version():
-    print('Current version is {0}'.format(__version__))
-    uinput1 = str(input('\n\t New version required? [Y]es or [N]o:\t'))
+def ask_for_new_version(params):
 
+    # get the text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # log current version
+    print(textdict['40-501-00001'].format(__version__))
+    # ask if we wish to change version
+    uinput1 = str(input(textdict['40-501-00002'] + ' [Y]es or [N]o:\t'))
+    # if yes change the version
     if 'Y' in uinput1.upper():
         cond = True
         uinput2a = ''
         while cond:
-            uinput2a = str(input('\n\t Please Enter new version:\t'))
-            uinput2b = str(input('\n\t Please Re-Enter new version:\t'))
+            # ask for new version
+            uinput2a = str(input(textdict['40-501-00003']))
+            # ask for new version again (must match)
+            uinput2b = str(input(textdict['40-501-00004']))
+            # if both versions don't match
             if uinput2a != uinput2b:
-                print('Versions do not match')
+                # print that versions don't match
+                print(textdict['40-501-00005'])
             else:
-                print('\n\t New version is "{0}"'.format(uinput2a))
-                uinput3 = str(input('\t\tIs this correct? [Y]es or [N]o:\t'))
+                # print the new version
+                print(textdict['40-501-00006'].format(uinput2a))
+                # ask if new version is correct
+                qinput3 = textdict['40-501-00007'] + ' [Y]es or [N]o:\t'
+                uinput3 = str(input(qinput3))
                 if 'Y' in uinput3.upper():
                     cond = False
+        # return new version
         return uinput2a
     else:
+        # return None if we didn't want to change the version
         return None
 
 
@@ -187,15 +205,18 @@ def main(preview=1, **kwargs):
 
 
 def __main__(recipe, params):
+
+    # get the text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
-        WLOG(params, 'info', 'Running in preview mode.')
+        WLOG(params, 'info', TextEntry('40-501-0008'))
     # ----------------------------------------------------------------------
     # read and ask for new version
-    WLOG(params, '', 'Reading DRS version')
+    WLOG(params, '', TextEntry('40-501-0009'))
     # set new version
-    version = ask_for_new_version()
+    version = ask_for_new_version(params)
     # add tag of version
     if version is not None:
         # tag head with version
@@ -212,18 +233,25 @@ def __main__(recipe, params):
         update_py_version(CONSTFILE, version)
     # ----------------------------------------------------------------------
     # create new changelog
-    WLOG(params, '', 'Updating changelog')
+    # log that we are updating the change log
+    WLOG(params, '', TextEntry('40-501-0010'))
+    # if not in preview mode modify the changelog directly
     if not params['INPUTS']['PREVIEW']:
         git_change_log(FILENAME)
+    # else save to a tmp file
     else:
         git_change_log('tmp.txt')
         preview_log('tmp.txt')
+        # if the version is new make sure this version is not a git tag
+        #    already (won't fail if we don't have the tag)
         if new:
             git_remove_tag(version)
     # ----------------------------------------------------------------------
     # if we are in preview mode should we keep these changes and update version
     if params['INPUTS']['PREVIEW']:
-        uinput = input('Keep changes? [Y]es [N]o:\t')
+        # ask whether to keep changes
+        uinput = input(textdict['40-501-0011'] + ' [Y]es [N]o:\t')
+        # if we want to keep the changes apply changes from above
         if 'Y' in uinput.upper():
             # redo tagging
             git_remove_tag(version)
