@@ -33,11 +33,11 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = config.wlog
 # -----------------------------------------------------------------------------
-rargs = [Constants['DRS_PACKAGE'], '../../']
+rargs = [Constants, Constants['DRS_PACKAGE'], '../../']
 PATH = drs_path.get_relative_folder(*rargs)
 FILENAME = os.path.join(PATH, 'changelog.md')
 VERSIONFILE = os.path.join(PATH, 'VERSION.txt')
-rargs = [Constants['DRS_PACKAGE'], './spirouConfig']
+rargs = [Constants, Constants['DRS_PACKAGE'], './spirouConfig']
 CONSTPATH = drs_path.get_relative_folder(*rargs)
 CONSTFILE = os.path.join(CONSTPATH, 'spirouConst.py')
 
