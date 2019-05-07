@@ -54,7 +54,11 @@ class PseudoConstants:
         # get the message directory
         if 'DRS_DATA_MSG' not in p:
             p['DRS_DATA_MSG'] = './'
-        if not os.path.exists(p['DRS_DATA_MSG']):
+        # if it is set to None
+        elif p['DRS_DATA_MSG'] is None:
+            p['DRS_DATA_MSG'] = './'
+        # if path does not exist
+        elif not os.path.exists(p['DRS_DATA_MSG']):
             p['DRS_DATA_MSG'] = './'
         # get the night name directory
         if 'NIGHTNAME' not in p:
