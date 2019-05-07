@@ -37,12 +37,21 @@ rargs = [Constants, Constants['DRS_PACKAGE'], '../../']
 PATH = drs_path.get_relative_folder(*rargs)
 FILENAME = os.path.join(PATH, 'changelog.md')
 VERSIONFILE = os.path.join(PATH, 'VERSION.txt')
-rargs = [Constants, Constants['DRS_PACKAGE'], './spirouConfig']
+rargs = [Constants, Constants['DRS_PACKAGE'], './constants/default']
 CONSTPATH = drs_path.get_relative_folder(*rargs)
-CONSTFILE = os.path.join(CONSTPATH, 'spirouConst.py')
+CONSTFILE = os.path.join(CONSTPATH, 'default_config.py')
+# define line parameters
+VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
+DATESTR_PREFIX = 'DRS_DATE = Const('
 
-VERSIONSTR = '__version__ = '
-DATESTR = '__date__ = '
+VERSIONSTR = """
+DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str, 
+                    source=__NAME__)
+"""
+DATESTR = """
+DRS_DATE = Const('DATE', value='{0}', dtype=str, 
+                 source=__NAME__)
+"""
 
 
 # =============================================================================
@@ -119,16 +128,17 @@ def update_py_version(filename, version):
     # find version and date to change
     version_it, date_it = None, None
     for it, line in enumerate(lines):
-        if line.startswith(VERSIONSTR):
+        if line.startswith(VERSIONSTR_PREFIX):
             version_it = it
-        if line.startswith(DATESTR):
+        if line.startswith(DATESTR_PREFIX):
             date_it = it
     # update version
-    lines[version_it] = '{0} \'{1}\'\n'.format(VERSIONSTR.strip(), version)
+    lines[version_it] = VERSIONSTR.format(version)
     # update date
     dt = datetime.now()
     dargs = [DATESTR.strip(), dt.year, dt.month, dt.day]
-    lines[date_it] = '{0} \'{1:04d}-{2:02d}-{3:02d}\'\n'.format(*dargs)
+    datestr = '{0} \'{1:04d}-{2:02d}-{3:02d}\'\n'.format(*dargs)
+    lines[date_it] = DATESTR.format(datestr)
     # write lines
     f = open(filename, 'w')
     f.writelines(lines)
