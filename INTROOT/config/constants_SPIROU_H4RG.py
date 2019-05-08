@@ -610,7 +610,7 @@ ic_start_order_1d = 1
 ic_end_order_1d = 48
 
 #   Define the start s1d wavelength (in nm)
-extract_s1d_wavestart = 980
+extract_s1d_wavestart = 965
 
 #   Define the end s1d wavelength (in nm)
 extract_s1d_waveend = 2500
