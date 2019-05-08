@@ -41,8 +41,12 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get param dictionary
 ParamDict = spirouConfig.ParamDict
-
+# -----------------------------------------------------------------------------
 # EMAIL SETTINGS
+#    Note must have yagmail and dependencies installed
+#    Will ask for keyring password each time or email password
+#    One email will send at start and one at end with the log printed to the
+#    body of the message (PID in subject)
 EMAIL = True
 EMAIL_ADDRESS = 'neil.james.cook@gmail.com'
 try:
@@ -53,14 +57,11 @@ try:
         YAG = yagmail.SMTP(EMAIL_ADDRESS)
 except:
     YAG = None
-
+# -----------------------------------------------------------------------------
 # test run
 TEST_RUN = True
 TEST_STORE = []
-
-# define run number
-RUNNUMBER = 0
-
+# -----------------------------------------------------------------------------
 # switches
 RUN_BADPIX = True
 RUN_DARK = True
@@ -77,7 +78,7 @@ RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
 RUN_OBJ_MK_TELLU = False
 RUN_OBJ_FIT_TELLU = False
-
+# -----------------------------------------------------------------------------
 # skip found files
 SKIP_DONE_PP = True
 SKIP_DONE_EXTRACT = False
@@ -85,35 +86,32 @@ SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
 SKIP_DONE_FIT_TELLU = False
-
+# -----------------------------------------------------------------------------
 # turn on parallelisation
 PARALLEL = False
-
 # Max Processes
 MAX_PROCESSES = 8
-
+# -----------------------------------------------------------------------------
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
 INPUT_HC_C = '_e2dsff_C.fits'
 INPUT_WAVE_AB = '_e2dsff_AB.fits'
 INPUT_WAVE_C = '_e2dsff_C.fits'
-
 INPUT_MK_TELLU = '_e2dsff_AB.fits'
 INPUT_FIT_TELLU = '_e2dsff_AB.fits'
-
+# -----------------------------------------------------------------------------
 # define the science targets
 SCIENCE_TARGETS = ['Gl699', 'Gl15A']
 # SCIENCE_TARGETS = ['HD189733', 'GJ1002']
-
 # -----------------------------------------------------------------------------
+# define run number
+RUNNUMBER = 0
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 DATECOL = 'MJDATE'
 # DATECOL = 'LAST_MODIFIED'
-
 # telluric object list
 TELL_WHITELIST = spirouTelluric.GetWhiteList()
-
 # this is only used if DATES is not None
 DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-05-27', '2018-05-28', '2018-05-29', '2018-05-30', '2018-05-31',
