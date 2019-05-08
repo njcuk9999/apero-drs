@@ -42,43 +42,55 @@ sPlt = spirouCore.sPlt
 # Get param dictionary
 ParamDict = spirouConfig.ParamDict
 
+# EMAIL SETTINGS
+EMAIL = True
+EMAIL_ADDRESS = 'neil.james.cook@gmail.com'
+try:
+    if not EMAIL:
+        YAG = None
+    else:
+        import yagmail
+        YAG = yagmail.SMTP(EMAIL_ADDRESS)
+except:
+    YAG = None
+
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
 RUNNUMBER = 0
 
 # switches
-RUN_BADPIX = False
-RUN_DARK = False
-RUN_LOC = False
-RUN_SLIT = False
-RUN_SHAPE = False
-RUN_FLAT = False
-RUN_EXTRACT_HCFP = False
-RUN_HC_WAVE = False
-RUN_WAVE_WAVE = False
+RUN_BADPIX = True
+RUN_DARK = True
+RUN_LOC = True
+RUN_SLIT = True
+RUN_SHAPE = True
+RUN_FLAT = True
+RUN_EXTRACT_HCFP = True
+RUN_HC_WAVE = True
+RUN_WAVE_WAVE = True
 RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = False
 RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
 RUN_OBJ_MK_TELLU = False
-RUN_OBJ_FIT_TELLU = True
+RUN_OBJ_FIT_TELLU = False
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = True
+SKIP_DONE_EXTRACT = False
 SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
 SKIP_DONE_FIT_TELLU = False
 
 # turn on parallelisation
-PARALLEL = True
+PARALLEL = False
 
 # Max Processes
-MAX_PROCESSES = 5
+MAX_PROCESSES = 8
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -91,7 +103,7 @@ INPUT_FIT_TELLU = '_e2dsff_AB.fits'
 
 # define the science targets
 SCIENCE_TARGETS = ['Gl699', 'Gl15A']
-SCIENCE_TARGETS = ['HD189733', 'GJ1002']
+# SCIENCE_TARGETS = ['HD189733', 'GJ1002']
 
 # -----------------------------------------------------------------------------
 # allowed files
@@ -120,6 +132,34 @@ DATES = None
 # =============================================================================
 # Define functions
 # =============================================================================
+def send_email(params, kind='start'):
+
+    if YAG is None:
+        return 0
+
+    if kind == 'start':
+        receiver = EMAIL_ADDRESS
+        subject = ('[SPIROU-DRS] {0} has started (PID = {1})'
+                   ''.format(__NAME__, params['PID']))
+        body = ''
+        for logmsg in WLOG.pout['LOGGER_ALL']:
+            body += '{0}\t{1}\n'.format(*logmsg)
+
+    elif kind == 'end':
+        receiver = EMAIL_ADDRESS
+        subject = ('[SPIROU-DRS] {0} has finished (PID = {1})'
+                   ''.format(__NAME__, params['PID']))
+
+        body = ''
+        for logmsg in params['LOGGER_FULL']:
+            for log in logmsg:
+                body += '{0}\t{1}\n'.format(*log)
+    else:
+        return 0
+
+    YAG.send(to=receiver, subject=subject, contents=body)
+
+
 def find_all_raw_files(p):
     # define path to walk around
     if p['ARG_NIGHT_NAME'] == '':
@@ -1407,6 +1447,9 @@ def main(night_name=None):
 
     loc = ParamDict()
 
+    # send email if configured
+    send_email(p, kind='start')
+
     # ----------------------------------------------------------------------
     # Check pre-processing
     # ----------------------------------------------------------------------
@@ -1550,6 +1593,10 @@ def main(night_name=None):
     # End Message
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p, outputs=None)
+
+    # send email if configured
+    send_email(p, kind='end')
+
     # return locals
     return dict(locals())
 
