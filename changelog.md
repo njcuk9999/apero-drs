@@ -2,6 +2,59 @@ Changelog
 =========
 
 
+0.5.000 (2019-05-08)
+--------------------
+- Comp_s1d_to_s2d.py - compare the output of s1d to s2d. [Neil Cook]
+- Test.run - update text.run. [Neil Cook]
+- Time_log_file.py - code to measure timing of log printouts. [Neil
+  Cook]
+- Constnats_SPIROU_H4RG.py - update s1d starting wavelength from 980 to
+  965. [Neil Cook]
+- Changed permissions on new tools in spirouTools. [Neil Cook]
+- SpirouMath.py - add nanpad and killnan functions. [Neil Cook]
+- SpirouBACK.py - re-add warning around backmask condition. [Neil Cook]
+- Constants_SPIROU_H4RG.py - chagne IC_BKGR_BOXSIZE from 64 to 128.
+  [Neil Cook]
+- Drs_local_background.py - first commit - code to find amplitude scale
+  for local background (using DARK_FLAT) [Neil Cook]
+- SpirouPlot.py - add local_scattered_light_plot. [Neil Cook]
+- SpirouBACK.py - add function make_local_background_map and
+  measure_local_background. [Neil Cook]
+- Recipe_control.txt - add drs_local_background to valid receipes. [Neil
+  Cook]
+- Constants_SPIROU_H4RG.py - add constants for drs_local_background.py.
+  [Neil Cook]
+- Constants_SPIROU_H4RG.py - update ic_bkgr_percent value. [Neil Cook]
+- SpirouBACK.py - add adjustments to background correction. [Neil Cook]
+- SpirouBACK.py - fix some bugs with measure background from map
+  function. [Neil Cook]
+- Update test.run. [Neil Cook]
+- Cal_BADPIX_spirou.py - background addition - fix typo in new file
+  upload to calibDB. [Neil Cook]
+- SpirouBACK.py - return background image only. [Neil Cook]
+- Cal_extract,FF,loc,SHAPE,slit - replace old background measurement
+  with new one. [Neil Cook]
+- SpirouBACK.py - correct bug in new function. [Neil Cook]
+- Constants_SPIROU_H4RG.py - change background from 5 to 10. [Neil Cook]
+- Cal_BADPIX_spirou.py - resize flat as well as bad pixel. [Neil Cook]
+- SpirouImage.py - add function get_background_map. [Neil Cook]
+- SpirouConst.py - add function BKGD_MAP_FILE. [Neil Cook]
+- SpirouBACK.py - add functions: make_background_map and
+  measure_background_from_map. [Neil Cook]
+- Output_keys.py - add background map tag. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add new background map constants. [Neil
+  Cook]
+- Cal_BADPIX_spirou.py - add the background map making and save to
+  calibDB. [Neil Cook]
+- Merge branch 'dev2' [Neil Cook]
+
+  Conflicts:
+  	INTROOT/SpirouDRS/spirouUnitTests/Runs/test.run
+- Remove CHANGELOG.md. [Neil Cook]
+- Update changelog. [Neil Cook]
+- Test.run. [Neil Cook]
+
+
 0.4.123 (2019-05-03)
 --------------------
 - Drs_changelog_2.py - update comments for new changelogger. [Neil Cook]
@@ -4292,10 +4345,6 @@ Changelog
 - Modified cal_extract to save wavefile name and wave file dates (for
   telluric) [njcuk9999]
 - Update date/version/changelog. [njcuk9999]
-
-
-0.2.68 (2018-07-17)
--------------------
 - Copy (same) [njcuk9999]
 - Update tellu recipes: fix bug with file name. [njcuk9999]
 - Update tellu recipes: drs telluDB reset now resets telluDB not calibDB
@@ -4327,10 +4376,6 @@ Changelog
 - Merge pull request #375 from njcuk9999/neil. [Neil Cook]
 
   Neil
-
-
-0.2.67 (2018-07-16)
--------------------
 - Telluric integration: bug fixes (after move of functions) [njcuk9999]
 - Updated call to plot. [njcuk9999]
 - Moved debug plot back to main code. [njcuk9999]
@@ -4852,6 +4897,8 @@ Changelog
   type spirouTHORCA.decide_on_lamp_type: - changed to identify lamp from
   fiber position (for use w/odometer names) - previous version moved to
   decide_on_lamp_type_old. [melissa-hobson]
+- Update date and version. [Neil Cook]
+- Fix for loggers being out of range. [Neil Cook]
 
 
 0.2.073 (2018-06-26)
@@ -4869,12 +4916,6 @@ Changelog
 - Merge pull request #347 from njcuk9999/master. [melissa-hobson]
 
   Melissa
-
-
-0.254 (2018-06-24)
-------------------
-- Update date and version. [Neil Cook]
-- Fix for loggers being out of range. [Neil Cook]
 - Merge pull request #345 from njcuk9999/neil. [Neil Cook]
 
   Neil - confirmed tested on H4RG files
@@ -4907,10 +4948,6 @@ Changelog
 - Updated recipes main end script (to allow piping of logging into p -
   thus accessible outside via ll['p']['LOGGING_ERROR'] for example.
   [Neil Cook]
-
-
-0.253 (2018-06-22)
-------------------
 - Cal_WAVE_NEW_E2DS_spirou.py: first version (untested) [melissa-hobson]
 - Merge pull request #344 from njcuk9999/master. [melissa-hobson]
 
