@@ -309,7 +309,11 @@ class Logger:
         # populate log keys
         for key in storekey:
             self.pout[processid][storekey[key]] = []
+            if storekey[key] in self.pout:
+                self.pout[storekey[key]] = []
         self.pout[processid]['LOGGER_FULL'] = []
+        if 'LOGGER_FULL' in self.pout:
+            self.pout['LOGGER_FULL'] = []
 
 
 # =============================================================================
