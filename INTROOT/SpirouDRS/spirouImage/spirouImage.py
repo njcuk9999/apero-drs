@@ -3455,7 +3455,7 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
     binwave = p['IC_BIN_S1D_UWAVE']
     binvelo = p['IC_BIN_S1D_UVELO']
     smooth_size = p['IC_S1D_EDGE_SMOOTH_SIZE']
-    blazethres = p['IC_S1D_BLAZE_MIN']
+    blazethres = p['TELLU_CUT_BLAZE_NORM']
 
     # get size from e2ds
     nord, npix = e2ds.shape
