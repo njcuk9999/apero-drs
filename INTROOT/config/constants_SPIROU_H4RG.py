@@ -459,7 +459,7 @@ ic_bkgr_percent = 5
 ic_bkgr_window = 50
 
 #    Width of the box to produce the background mask
-IC_BKGR_BOXSIZE = 64
+IC_BKGR_BOXSIZE = 128
 
 #    Size in pixels of the convolve tophat for the background mask
 IC_BKGR_MASK_CONVOLVE_SIZE = 7
