@@ -625,11 +625,6 @@ ic_bin_s1d_uvelo = 1.0
 #             in pixels
 ic_s1d_edge_smooth_size = 20
 
-#    Define the threshold hold for a good blaze value (below the maximum value)
-#         here a value of 0.5 would be 50% of the maximum value
-ic_s1d_blaze_min = 0.05
-
-
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
 # -----------------------------------------------------------------------------
