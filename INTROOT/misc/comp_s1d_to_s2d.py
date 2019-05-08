@@ -63,11 +63,12 @@ if __name__ == "__main__":
         else:
             colour = 'b'
 
-        frame.plot(wave[order_num], data3[order_num]/np.nanmedian(data3),
+        nblaze = blaze[order_num]/np.nanmax(blaze[order_num])
+        bmask = nblaze > 0.2
+        frame.plot(wave[order_num][bmask], data3[order_num][bmask]/np.nanmedian(data3),
                    color=colour, linewidth=0.5)
 
-        frame.plot(wave[order_num], blaze[order_num]/np.nanmax(blaze[order_num]),
-                   color='orange')
+        frame.plot(wave[order_num][bmask], nblaze[bmask], color='orange')
 
     # plot the s1d
     frame.plot(data2['wavelength'], data2['flux']/np.nanmedian(data2['flux']),
