@@ -4,6 +4,11 @@ Changelog
 
 0.5.000 (2019-05-08)
 --------------------
+- SpirouImage.py - replace IC_S1D_BLAZE_MIN with TELLU_CUT_BLAZE_NORM.
+  [Neil Cook]
+- SpirouConst.py - update version/changelog/constants file. [Neil Cook]
+- Comp_s1d_to_s2d.py - add a normalised blaze cut. [Neil Cook]
+- Constants_SPIROU_H4RG.py - change the blaze min value. [Neil Cook]
 - Comp_s1d_to_s2d.py - compare the output of s1d to s2d. [Neil Cook]
 - Test.run - update text.run. [Neil Cook]
 - Time_log_file.py - code to measure timing of log printouts. [Neil
