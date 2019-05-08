@@ -4,6 +4,11 @@ Changelog
 
 0.5.000 (2019-05-08)
 --------------------
+- Update test.run. [Neil Cook]
+- Extract_trigger.py - add email option (start + end) [Neil Cook]
+- SpirouPlot.py - add fix for large files saved to disk (should be
+  temporary fix) [Neil Cook]
+- SpirouLOG.py - clear out logs after run. [Neil Cook]
 - SpirouImage.py - replace IC_S1D_BLAZE_MIN with TELLU_CUT_BLAZE_NORM.
   [Neil Cook]
 - SpirouConst.py - update version/changelog/constants file. [Neil Cook]
