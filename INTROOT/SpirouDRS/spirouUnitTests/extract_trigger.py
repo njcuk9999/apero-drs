@@ -59,7 +59,7 @@ except:
     YAG = None
 # -----------------------------------------------------------------------------
 # test run
-TEST_RUN = True
+TEST_RUN = False
 TEST_STORE = []
 # -----------------------------------------------------------------------------
 # switches
@@ -88,9 +88,9 @@ SKIP_DONE_MK_TELLU = False
 SKIP_DONE_FIT_TELLU = False
 # -----------------------------------------------------------------------------
 # turn on parallelisation
-PARALLEL = False
+PARALLEL = True
 # Max Processes
-MAX_PROCESSES = 8
+MAX_PROCESSES = 5
 # -----------------------------------------------------------------------------
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'

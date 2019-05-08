@@ -4,6 +4,8 @@ Changelog
 
 0.5.000 (2019-05-08)
 --------------------
+- Extract_trigger.py - update comments. [Neil Cook]
+- Changelog.md - update the change log with new commits. [Neil Cook]
 - Update test.run. [Neil Cook]
 - Extract_trigger.py - add email option (start + end) [Neil Cook]
 - SpirouPlot.py - add fix for large files saved to disk (should be
