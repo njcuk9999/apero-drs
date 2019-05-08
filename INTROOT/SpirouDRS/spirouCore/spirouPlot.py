@@ -42,6 +42,11 @@ if matplotlib.get_backend() == 'MacOSX':
 else:
     matplotlib_emsg = []
 
+# TODO: fix better
+# this is here to allow one to save plots with big numbers of points
+matplotlib.rcParams['agg.path.chunksize'] = 10000
+
+
 # =============================================================================
 # Define variables
 # =============================================================================
