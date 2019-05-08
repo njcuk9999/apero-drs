@@ -84,7 +84,8 @@ def make_background_map(p, image, badpixmask):
             backest_pix = np.nanpercentile(ribbon[ystart:yend], percent)
             backest[y_it, x_it: x_it + width] = backest_pix
     # the mask is the area that is below then Nth percentile threshold
-    backmask = np.array(image0 < backest, dtype=float)
+    with warnings.catch_warnings(record=True) as _:
+        backmask = np.array(image0 < backest, dtype=float)
     # we take advantage of the order geometry and for that the "dark"
     # region of the array be continuous in the "fast" dispersion axis
     nribbon = convolve2d(backmask, np.ones([1, csize]), mode='same')
@@ -189,9 +190,15 @@ def measure_local_background(p, image):
     #    corresponds to the fraction of scattered light and therefore has a
     #    physical meaning.
     ker = ker / np.sum(ker)
+
+    # we need to remove NaNs from image
+    WLOG(p, '', '\tPadding NaNs')
+    image1 = spirouCore.spirouMath.nanpad(image)
+
     # we determine the scattered light image by convolving our image by
     #    the kernel
-    scattered_light = convolve2d(image, ker, mode='same')
+    WLOG(p, '', '\tCalculating 2D convolution')
+    scattered_light = convolve2d(image1, ker, mode='same')
     # returned the scattered light
     return scattered_light
 
