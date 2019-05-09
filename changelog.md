@@ -4,6 +4,10 @@ Changelog
 
 0.5.000 (2019-05-09)
 --------------------
+- Extract_trigger.py - modify extract trigger. [Neil Cook]
+- SpirouTDB.py - add locking of file in put_file. [Neil Cook]
+- SpirouCDB.py - add locking of file in put_file. [Neil Cook]
+- Update date and changelog. [Neil Cook]
 - SpirouCDB.py - fix calibDB file copy in parallisation. [Neil Cook]
 - Extract_trigger.py - note problem with parallisation. [Neil Cook]
 - Update changelog.md. [Neil Cook]
