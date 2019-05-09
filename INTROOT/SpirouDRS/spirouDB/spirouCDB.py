@@ -362,11 +362,17 @@ def put_file(p, inputfile):
     func_name = __NAME__ + '.put_file()'
     # construct output filename
     outputfile = os.path.join(p['DRS_CALIB_DB'], os.path.split(inputfile)[1])
+
+    # get and check for file lock file
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # noinspection PyExceptClausesOrder
     try:
         shutil.copyfile(inputfile, outputfile)
         os.chmod(outputfile, 0o0644)
     except IOError:
+        # close lock file
+        spirouDB.close_lock_file(p, lock, lock_file)
+        # log
         emsg1 = 'I/O problem on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2])
@@ -374,6 +380,8 @@ def put_file(p, inputfile):
         emsg1 = 'Unable to chmod on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
         WLOG(p, '', [emsg1, emsg2])
+    # close lock file
+    spirouDB.close_lock_file(p, lock , lock_file)
 
 
 def copy_files(p, header=None):
@@ -434,26 +442,30 @@ def copy_files(p, header=None):
             else:
                 # Make sure old path exists
                 if not os.path.exists(oldloc):
+                    # close lock file
+                    spirouDB.close_lock_file(p, lock, lock_file)
+                    # log
                     emsg1 = ('Error file {0} define in calibDB (key={1}) '
                              'does not exist').format(oldloc, key)
                     emsg2 = '    function = {0}'.format(func_name)
                     WLOG(p, 'error', [emsg1, emsg2])
-                    # close lock file
-                    spirouDB.close_lock_file(p, lock, lock_file)
+
                 # try to copy --> if not raise an error and log it
                 try:
                     shutil.copyfile(oldloc, newloc)
                     wmsg = 'Cal. file: {0} copied in dir {1}'
                     WLOG(p, '', wmsg.format(filename, reduced_dir))
                 except IOError:
+                    # close lock file
+                    spirouDB.close_lock_file(p, lock, lock_file)
+                    # log
                     emsg1 = ('I/O problem on input file from calibDB: {0}'
                              '').format(oldloc)
                     emsg2 = ('   or problem on writing to outfile file: {0}'
                              '').format(newloc)
                     emsg3 = '    function = {0}'.format(func_name)
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
-                    # close lock file
-                    spirouDB.close_lock_file(p, lock, lock_file)
+
         # else if the file doesn't exist
         else:
             # try to copy --> if not raise an error and log it
@@ -462,11 +474,12 @@ def copy_files(p, header=None):
                 wmsg = 'Calib file: {0} copied in dir {1}'
                 WLOG(p, '', wmsg.format(filename, reduced_dir))
             except IOError:
+                # close lock file
+                spirouDB.close_lock_file(p, lock, lock_file)
+                # log
                 emsg1 = 'I/O problem on {0} or {1}'.format(oldloc, newloc)
                 emsg2 = '   function = {0}'.format(func_name)
                 WLOG(p, 'error', [emsg1, emsg2])
-                # close lock file
-                spirouDB.close_lock_file(p, lock, lock_file)
 
     # close lock file
     spirouDB.close_lock_file(p, lock , lock_file)
