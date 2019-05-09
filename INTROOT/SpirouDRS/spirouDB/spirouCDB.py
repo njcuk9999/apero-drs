@@ -412,6 +412,9 @@ def copy_files(p, header=None):
     reduced_dir = p['REDUCED_DIR']
     calib_dir = p['DRS_CALIB_DB']
 
+    # get and check for file lock file
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
+
     # loop around the files in Calib database
     for row in range(len(c_database)):
         # Get the key for this entry
@@ -435,6 +438,8 @@ def copy_files(p, header=None):
                              'does not exist').format(oldloc, key)
                     emsg2 = '    function = {0}'.format(func_name)
                     WLOG(p, 'error', [emsg1, emsg2])
+                    # close lock file
+                    spirouDB.close_lock_file(p, lock, lock_file)
                 # try to copy --> if not raise an error and log it
                 try:
                     shutil.copyfile(oldloc, newloc)
@@ -447,6 +452,8 @@ def copy_files(p, header=None):
                              '').format(newloc)
                     emsg3 = '    function = {0}'.format(func_name)
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
+                    # close lock file
+                    spirouDB.close_lock_file(p, lock, lock_file)
         # else if the file doesn't exist
         else:
             # try to copy --> if not raise an error and log it
@@ -458,6 +465,11 @@ def copy_files(p, header=None):
                 emsg1 = 'I/O problem on {0} or {1}'.format(oldloc, newloc)
                 emsg2 = '   function = {0}'.format(func_name)
                 WLOG(p, 'error', [emsg1, emsg2])
+                # close lock file
+                spirouDB.close_lock_file(p, lock, lock_file)
+
+    # close lock file
+    spirouDB.close_lock_file(p, lock , lock_file)
 
 
 def get_file_name(p, key, hdr=None, filename=None, required=True):
