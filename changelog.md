@@ -2,8 +2,11 @@ Changelog
 =========
 
 
-0.5.000 (2019-05-08)
+0.5.000 (2019-05-09)
 --------------------
+- SpirouCDB.py - fix calibDB file copy in parallisation. [Neil Cook]
+- Extract_trigger.py - note problem with parallisation. [Neil Cook]
+- Update changelog.md. [Neil Cook]
 - Extract_trigger.py - update comments. [Neil Cook]
 - Changelog.md - update the change log with new commits. [Neil Cook]
 - Update test.run. [Neil Cook]
