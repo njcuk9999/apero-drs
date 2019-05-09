@@ -32,7 +32,7 @@ __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
 # Define release type
 __release__ = 'beta pre-release'
 # Define date of last edit
-__date__ = '2019-05-08'
+__date__ = '2019-05-09'
 
 
 # =============================================================================
