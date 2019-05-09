@@ -88,8 +88,7 @@ SKIP_DONE_MK_TELLU = False
 SKIP_DONE_FIT_TELLU = False
 # -----------------------------------------------------------------------------
 # turn on parallelisation
-# TODO: something wrong with parallisation when copying calibDB files
-PARALLEL = False
+PARALLEL = True
 # Max Processes
 MAX_PROCESSES = 5
 # -----------------------------------------------------------------------------
