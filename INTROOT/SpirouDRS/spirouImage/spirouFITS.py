@@ -21,6 +21,7 @@ import warnings
 from collections import OrderedDict
 from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 import time
+import copy
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -53,6 +54,67 @@ FORBIDDEN_DRS_KEY = spirouConfig.Constants.FORBIDDEN_COPY_DRS_KEYS()
 FORBIDDEN_HEADER_PREFIXES = spirouConfig.Constants.FORBIDDEN_HEADER_PREFIXES()
 # object name bad characters
 BADCHARS = [' '] + list(string.punctuation)
+
+
+class Header(fits.Header):
+    """
+    Wrapper class for fits headers that allows us to add functionality.
+    - Stores temporary items with keys starting with '@@@'
+       - Only shows up through "[]" and "in" operations
+    - Can automatically convert NaN values to strings
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__temp_items = {}
+
+    def __setitem__(self, key, item):
+        if key.startswith('@@@'):
+            self.__temp_items.__setitem__(self.__get_temp_key(key), item)
+        else:
+            nan_filtered = self.__nan_check(item)
+            super().__setitem__(key, nan_filtered)
+
+    def __getitem__(self, key):
+        if key.startswith('@@@'):
+            return self.__temp_items.__getitem__(self.__get_temp_key(key))
+        else:
+            return super().__getitem__(key)
+
+    def __contains__(self, key):
+        if key.startswith('@@@'):
+            return self.__temp_items.__contains__(self.__get_temp_key(key))
+        else:
+            return super().__contains__(key)
+
+    def copy(self, strip=False):
+        header = Header(super().copy(strip), copy=False)
+        header.__temp_items = self.__temp_items.copy()
+        return header
+
+    def to_fits_header(self, strip=True, nan_to_string=True):
+        header = super().copy(strip=strip)
+        if nan_to_string:
+            for key in list(header.keys()):
+                header[key] = header[key]
+        return header
+
+    @staticmethod
+    def from_fits_header(fits_header):
+        return Header(fits_header, copy=True)
+
+    @staticmethod
+    def __get_temp_key(key):
+        return key[3:]
+
+    @staticmethod
+    def __nan_check(value):
+        if isinstance(value, float) and np.isnan(value):
+            return 'NaN'
+        elif type(value) == tuple:
+            return (Header.__nan_check(value[0]),) + value[1:]
+        else:
+            return value
 
 
 # =============================================================================
@@ -109,9 +171,7 @@ def readimage(p, filename=None, log=True, kind=None):
     # log that we have loaded the image
     if log:
         WLOG(p, '', '{0} {1} x {2} loaded'.format(kind, nx, ny))
-    # convert header to python dictionary
-    header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
-    comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
+    header = Header.from_fits_header(imageheader)
     # # add some keys to the header-
     if filename is None:
         header['@@@hname'] = p['ARG_FILE_NAMES'][0] + ' Header File'
@@ -120,7 +180,7 @@ def readimage(p, filename=None, log=True, kind=None):
         header['@@@hname'] = filename + ' Header File'
         header['@@@fname'] = filename
     # return data, header, data.shape[0], data.shape[1]
-    return image, header, comments, nx, ny
+    return image, header, nx, ny
 
 
 def readdata(p, filename, log=True, return_header=True, return_shape=True):
@@ -159,17 +219,15 @@ def readdata(p, filename, log=True, return_header=True, return_shape=True):
     # read image from fits file
     rdata = read_raw_data(p, filename, getheader=return_header,
                           getshape=return_shape)
-    # if we are returnning header then add some keys
+    # if we are returning header then add some keys
     if return_header:
         image, imageheader, nx, ny = rdata
-        # convert header to python dictionary
-        header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
-        comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
+        header = Header.from_fits_header(imageheader)
         # # add some keys to the header-
         header['@@@hname'] = filename + ' Header File'
         header['@@@fname'] = filename
         if return_shape:
-            return image, header, comments, nx, ny
+            return image, header, nx, ny
         else:
             return image, header
     else:
@@ -267,15 +325,13 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     p['FITSFILENAME'] = filename
     p.append_source('FITSFILENAME', __NAME__)
 
-    # convert header to python dictionary
-    header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
-    comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
+    header = Header.from_fits_header(imageheader)
     # # add some keys to the header-
     header['@@@hname'] = filename + ' Header File'
-    header['@@@fname'] = p['FITSFILENAME']
+    header['@@@fname'] = filename
 
     # return data, header, data.shape[0], data.shape[1]
-    return p, image, header, comments
+    return p, image, header
 
 
 def writeimage(p, filename, image, hdict=None, dtype=None):
@@ -288,15 +344,8 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
                         output file headers as the values
     :param filename: string, filename to save the fits file to
     :param image: numpy array (2D), the image
-    :param hdict: dictionary or None, header dictionary to write to fits file
-
-                Must be in form:
-
-                        hdict[key] = (value, comment)
-                or
-                        hdict[key] = value     (comment will be equal to
-                                                "UNKNOWN"
-                if None does not write header to fits file
+    :param hdict: Header or None, header dictionary to write to fits file
+                  if None does not write header to fits file
 
     :param dtype: None or hdu format type, forces the image to be in the
                   format type specified (if not None)
@@ -318,7 +367,8 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
             WLOG(p, 'error', [emsg1.format(filename), emsg2, emsg3])
     # create the primary hdu
     try:
-        hdu = fits.PrimaryHDU(image)
+        header = hdict.to_fits_header() if hdict is not None else None
+        hdu = fits.PrimaryHDU(image, header)
     except Exception as e:
         emsg1 = 'Cannot open image with astropy.io.fits'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
@@ -328,10 +378,6 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
     # force type
     if dtype is not None:
         hdu.scale(type=dtype, **SCALEARGS)
-    # add header keys to the hdu header
-    if hdict is not None:
-        for key in list(hdict.keys()):
-            hdu.header[key] = (str(hdict[key][0]), str(hdict[key][1]))
     # get and check for file lock file
     lock, lock_file = check_fits_lock_file(p, filename)
     # write to file
@@ -376,16 +422,9 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     :param filename: string, filename to save the fits file to
     :param image_list: list of "numy arrys", the list of images to save each
                        image must be a numpy array (2D)
-    :param hdict: dictionary or None, header dictionary to write to fits file.
+    :param hdict: Header or None, header dictionary to write to fits file.
                   Written to the primary only! (see hdicts for adding to all)
-
-                Must be in form:
-
-                        hdict[key] = (value, comment)
-                or
-                        hdict[key] = value     (comment will be equal to
-                                                "UNKNOWN"
-                if None does not write header to fits file
+                  if None does not write header to fits file
 
     :param dtype: None or hdu format type, forces the image to be in the
                   format type specified (if not None). Written to the
@@ -456,11 +495,12 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     # create the multi HDU list
     try:
         # add the first image to the primary hdu
-        hdu1 = fits.PrimaryHDU(image_list[0])
+        headers = [hdict.to_fits_header() if hdict else None for hdict in hdicts]
+        hdu1 = fits.PrimaryHDU(image_list[0], headers[0])
         # add all others afterwards
         hdus = [hdu1]
-        for image in image_list[1:]:
-            hdus.append(fits.ImageHDU(image))
+        for image, header in zip(image_list[1:], headers[1:]):
+            hdus.append(fits.ImageHDU(image, header))
         # add to HDU list
         hdu = fits.HDUList(hdus)
     except Exception as e:
@@ -474,14 +514,6 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         for it in range(len(hdu)):
             if dtypes[it] is not None:
                 hdu[it].scale(type=dtypes[it], **SCALEARGS)
-    # add header keys to the hdu header
-    if hdicts is not None:
-        for it in range(len(hdu)):
-            if hdicts[it] is not None:
-                for key in list(hdicts[it].keys()):
-                    hentry = (str(hdicts[it][key][0]),
-                              str(hdicts[it][key][1]))
-                    hdu[it].header[key] = hentry
 
     # close hdu we are finished
     if hdu is not None:
@@ -520,7 +552,8 @@ def write_image_table(p, filename, image=None, table=None, hdict=None,
     if image is not None:
         # create the primary hdu
         try:
-            hdu_image = fits.PrimaryHDU(image)
+            header = hdict.to_fits_header() if hdict is not None else None
+            hdu_image = fits.PrimaryHDU(image, header)
         except Exception as e:
             emsg1 = 'Cannot open image with astropy.io.fits.PrimaryHDU'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
@@ -530,10 +563,6 @@ def write_image_table(p, filename, image=None, table=None, hdict=None,
         # force type
         if dtype is not None:
             hdu_image.scale(type=dtype, **SCALEARGS)
-        # add header keys to the hdu header
-        if hdict is not None:
-            for key in list(hdict.keys()):
-                hdu_image.header[key] = hdict[key]
     else:
         hdu_image = None
 
@@ -618,7 +647,7 @@ def write_output_dict(p, filename, hdict):
         p['OUTPUTS'][bfilename][key] = '--'
         if hdict is not None:
             if key in hdict:
-                p['OUTPUTS'][bfilename][key] = str(hdict[key][0])
+                p['OUTPUTS'][bfilename][key] = str(hdict[key])
     # add DRS_TYPE
     if 'DRS_TYPE' not in p:
         emsg1 = 'Dev Error: DRS_TYPE not in "p". Incorrect setup to recipe.'
@@ -677,8 +706,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG(p, '', wmsg)
     # read read_file
-    rout = readimage(p, filename=read_file, log=False)
-    image, hdict, _, nx, ny = rout
+    image, hdict, _, _ = readimage(p, filename=read_file, log=False)
     # get the tilt keys
     tilt = read_key_1d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'])
     # get the tilt file
@@ -735,8 +763,7 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG(p, '', wmsg)
     # read read_file
-    rout = readimage(p, filename=read_file, log=False)
-    shapemap, hdict, _, nx, ny = rout
+    shapemap, _, _, _ = readimage(p, filename=read_file, log=False)
     # set NaN values to zeros
     shapemap[~np.isfinite(shapemap)] = 0.0
 
@@ -807,8 +834,7 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
         wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
         WLOG(p, '', wmsg)
     # read read_file
-    rout = readimage(p, filename=read_file, log=False)
-    wave, hdict, _, nx, ny = rout
+    wave, hdict, _, _ = readimage(p, filename=read_file, log=False)
 
     if return_header:
         return wave, hdict
@@ -998,8 +1024,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # -------------------------------------------------------------------------
     # if filename is given we should get it from the filename
     if filename is not None:
-        rout = readimage(p, filename=filename, log=False)
-        wavemap, hdict, _, nx, ny = rout
+        wavemap, hdict, _, _ = readimage(p, filename=filename, log=False)
         waveparams = read_waveparams(p, hdict)
         obtain = 'file'
     # if force calibDB is True
@@ -1160,8 +1185,7 @@ def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
     if return_filename:
         return read_file
     # read read_file
-    rout = readimage(p, filename=read_file, log=False)
-    hcref, hdict, _, nx, ny = rout
+    hcref, hdict, _, _ = readimage(p, filename=read_file, log=False)
 
     if return_header:
         return hcref, hdict
@@ -1221,8 +1245,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG(p, '', wmsg)
     # read read_file
-    rout = readdata(p, filename=read_file, log=False)
-    flat, hdict, _, nx, ny = rout
+    flat, hdict, _, _ = readdata(p, filename=read_file, log=False)
     # get flat file name
     p['FLATFILE'] = os.path.basename(read_file)
     p.set_source('FLATFILE', func_name)
@@ -1275,8 +1298,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG(p, '', wmsg)
     # read read_file
-    rout = readdata(p, filename=read_file, log=False)
-    blaze, hdict, _, nx, ny = rout
+    blaze, _, _, _ = readdata(p, filename=read_file, log=False)
     # get blaze file name
     p['BLAZFILE'] = os.path.basename(read_file)
     p.set_source('BLAZFILE', func_name)
@@ -1346,7 +1368,7 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
     WLOG(p, '', wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
-    # return order profile (via readimage = image, hdict, commments, nx, ny
+    # return order profile (via readimage = image, hdict, nx, ny
     return rout
 
 
@@ -1441,14 +1463,14 @@ def close_fits_lock_file(p, lock, lock_file, filename):
 def update_wave_sol_hc(p, loc, filename):
 
     # get original data and header
-    data, hdr, comments, _, _ = readimage(p, filename)
+    data, hdr, _, _ = readimage(p, filename)
 
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.basename(wavefits)
 
     # add keys from original header file
-    hdict = copy_original_keys(loc['HCHDR'], loc['HCCDR'], allkeys=True)
+    hdict = copy_original_keys(loc['HCHDR'], allkeys=True)
     # add wave file name
     hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
     # add wave solution date
@@ -1467,14 +1489,14 @@ def update_wave_sol_hc(p, loc, filename):
 def update_wave_sol(p, loc, filename):
 
     # get original data and header
-    data, hdr, comments, _, _ = readimage(p, filename)
+    data, hdr, _, _ = readimage(p, filename)
 
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
     wavefitsname = os.path.basename(wavefits)
 
     # copy original keys
-    hdict = copy_original_keys(hdr, comments, allkeys=True)
+    hdict = copy_original_keys(hdr, allkeys=True)
 
     hdict = add_new_key(p, hdict, p['KW_CDBWAVE'], value=wavefitsname)
 
@@ -1604,14 +1626,12 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     return values
 
 
-def copy_original_keys(header, comments, forbid_keys=True, allkeys=False):
+def copy_original_keys(header, forbid_keys=True, allkeys=False):
     """
     Copies keys from hdr dictionary to hdict, if forbid_keys is True some
     keys will not be copies (defined in python code)
 
     :param header: header dictionary from readimage (ReadImage) function
-
-    :param comments: comment dictionary from readimage (ReadImage) function
 
     :param hdict: dictionary or None, header dictionary to write to fits file
                   if None hdict is created
@@ -1631,30 +1651,28 @@ def copy_original_keys(header, comments, forbid_keys=True, allkeys=False):
                    key/value pairs from the header (that are NOT in
                    spirouConfig.spirouConst.FORBIDDEN_COPY_KEY)
     """
-    hdict = OrderedDict()
 
-    for key in list(header.keys()):
+    def __keep_card(card):
+        key = card[0]
         # skip if key is forbidden keys
         if forbid_keys and (key in FORBIDDEN_COPY_KEY):
-            continue
+            return False
         # skip if key is drs forbidden key (unless allkeys)
         elif (key in FORBIDDEN_DRS_KEY) and (not allkeys):
-            continue
+            return False
         # skip if key added temporarily in code (denoted by @@@)
         elif '@@@' in key:
-            continue
+            return False
         # skip QC keys  (unless allkeys)
         elif (key == 'QC') and not allkeys:
-            continue
+            return False
         elif is_forbidden_prefix(key) and (not allkeys):
-            continue
-        # else add key to hdict
-        else:
-            # if key in "comments" add it as a tuple else comment_ is blank
-            if key in comments:
-                hdict[key] = (header[key], comments[key])
-            else:
-                hdict[key] = (header[key], '')
+            return False
+        return True
+
+    copy_cards = filter(__keep_card, header.cards)
+    hdict = Header(copy_cards)
+
     # return the hdict ready to write to fits file
     return hdict
 
@@ -1672,7 +1690,7 @@ def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     Copy keys from a filename to hdict
 
     :param p: ParamDict - the constant parameter dictionary
-    :param hdict: dictionary or None, header dictionary to write to fits file
+    :param hdict: Header or None, fits header to write to fits file
                   if None hdict is created
     :param filename: string, location and filename of the FITS rec to open
 
@@ -1688,21 +1706,20 @@ def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     func_name = __NAME__ + '.copy_root_keys()'
     # deal with no hdict and no filename
     if hdict is None:
-        hdict = OrderedDict()
+        hdict = Header()
     if filename is None:
         emsg1 = 'No filename defined (Filename is required)'
         emsg2 = '    function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2])
     # read header file
-    hdr, cmts = read_raw_header(p, filename=filename, headerext=ext)
+    hdr = read_raw_header(p, filename=filename, headerext=ext)
     # loop around header keys
-    for key in list(hdr.keys()):
-        # if we have a root only copy those keys that start with root
-        if root is not None:
-            if key.startswith(root):
-                hdict[key] = (hdr[key], cmts[key])
-        else:
-            hdict[key] = (hdr[key], cmts[key])
+    if root is None:
+        hdict.extend(hdr.cards)
+    else:
+        copy_cards = filter(lambda card: card[0].startswith(root), hdr.cards)
+        hdict.extend(copy_cards)
+
     # return header
     return hdict
 
@@ -1715,7 +1732,7 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
     if hdict is None creates a new dictionary
 
     :param p: ParamDict - the constant parameter dictionary
-    :param hdict: dictionary or None, storage for adding to FITS rec
+    :param hdict: Header or None, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
     :param value: object or None, if any python object (other than None) will
@@ -1727,7 +1744,7 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
     func_name = __NAME__ + '.add_ney_key()'
     # deal with no hdict
     if hdict is None:
-        hdict = OrderedDict()
+        hdict = Header()
     # deal with no keywordstore
     if keywordstore is None:
         emsg1 = '"keywordstore" must be defined.'
@@ -1755,7 +1772,7 @@ def add_new_keys(p, hdict=None, keywordstores=None, values=None):
             [key, value, comment]    where key and comment are strings
 
     :param p: ParamDict - the constant parameter dictionary
-    :param hdict: dictionary or None, storage for adding to FITS rec if None
+    :param hdict: Header or None, storage for adding to FITS rec if None
                   creates a new dictionary to store keys in
     :param keywordstores: list of lists, list of "keyword list" lists
                           (defined in spirouKeywords.py)
@@ -1771,7 +1788,7 @@ def add_new_keys(p, hdict=None, keywordstores=None, values=None):
     func_name = __NAME__ + '.add_new_keys()'
     # deal with no hdict
     if hdict is None:
-        hdict = OrderedDict()
+        hdict = Header()
 
     if keywordstores is None:
         emsg1 = '"keywordstores" must be defined as a list of keyword stores'
@@ -1907,7 +1924,7 @@ def add_qc_keys(p, hdict, qcparams):
               'KW_DRS_QC_PASS']
     # deal with no hdict
     if hdict is None:
-        hdict = OrderedDict()
+        hdict = Header()
     # check lengths are the same
     lengths = []
     for qcparam in qcparams:
@@ -2018,11 +2035,10 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
         else:
             fitsfilename = filename
         # get the hdict
-        hdict, _ = read_raw_header(p, fitsfilename, headerext=0)
+        hdict = read_raw_header(p, fitsfilename, headerext=0)
     else:
-        if type(hdict) not in [dict, OrderedDict, ParamDict]:
-            emsg1 = ('"hdict" must be None or a valid python dictionary or '
-                     'Parameter Dictionary')
+        if not isinstance(hdict, (dict, Header)):
+            emsg1 = ('"hdict" must be None or a dictionary or Header')
             emsg2 = '    function = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2])
     # get the key from header dictionary
@@ -2032,7 +2048,7 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
         return 'UNKNOWN'
 
 
-def read_header(p=None, filepath=None, ext=0, return_comments=False):
+def read_header(p=None, filepath=None, ext=0):
     """
     Read the header from a file at "filepath" with extention "ext" (default=0)
 
@@ -2042,9 +2058,8 @@ def read_header(p=None, filepath=None, ext=0, return_comments=False):
 
     :param filepath: string, filename and path of FITS file to open
     :param ext: int, extension in FITS rec to open (default = 0)
-    :param return_comments: bool, if True returns a dictionary of the comments
 
-    :return hdict: dictionary, the dictionary with key value pairs
+    :return hdict: Header, the header
     """
     func_name = __NAME__ + '.read_header()'
     # if filepath is None raise error
@@ -2060,14 +2075,8 @@ def read_header(p=None, filepath=None, ext=0, return_comments=False):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2])
         header = None
-    # load in to dictionary
-    hdict = OrderedDict(zip(header.keys(), header.values()))
-    cdict = OrderedDict(zip(header.keys(), header.comments))
-    # return hdict
-    if return_comments:
-        return hdict, cdict
-    else:
-        return hdict
+    hdict = Header.from_fits_header(header)
+    return hdict
 
 
 def read_key(p, hdict=None, key=None):
@@ -2334,12 +2343,8 @@ def read_raw_header(p, filename, headerext=0):
     :param filename: string, the filename to open with astropy.io.fits
     :param headerext: int, the extension to read the header from
 
-    :return hdr: dictionary, the HEADER dictionary of key/value pairs,
-                 where the values are the values in the HEADER
-    :return cmt: dictionary,  the comment dictionary from the HEADER fits file
-                 of key/value pairs, where the values are the comments
-                 from the HEADER file (for use in copying/writing keys to
-                 new file)
+    :return header: the Header of key/value pairs,
+                    where the values are the values in the HEADER
     """
     func_name = __NAME__ + '.read_raw_header()'
     # get the data
@@ -2369,13 +2374,10 @@ def read_raw_header(p, filename, headerext=0):
             WLOG(p, 'error', [emsg1.format(filename, openext), emsg2, emsg3])
             header = None
     else:
-        header = hdu[0]
-    # convert header to python dictionary
-    hdr = OrderedDict(zip(header.keys(), header.values()))
-    cmt = OrderedDict(zip(header.keys(), header.comments))
-
+        header = hdu[0].header
+    hdr = Header.from_fits_header(header)
     # return header dictionaries
-    return hdr, cmt
+    return hdr
 
 
 def math_controller(p, data, header, filenames, framemath=None, directory=None):

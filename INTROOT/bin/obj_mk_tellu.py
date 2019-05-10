@@ -88,8 +88,8 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     loc = ParamDict()
     rd = spirouImage.ReadImage(p, p['FITSFILENAME'])
-    loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['YDIM'], loc['XDIM'] = rd
-    loc.set_sources(['DATA', 'DATAHDR', 'DATACDR', 'XDIM', 'YDIM'], main_name)
+    loc['DATA'], loc['DATAHDR'], loc['YDIM'], loc['XDIM'] = rd
+    loc.set_sources(['DATA', 'DATAHDR', 'XDIM', 'YDIM'], main_name)
 
     # ------------------------------------------------------------------
     # Get the wave solution
@@ -168,7 +168,7 @@ def main(night_name=None, files=None):
         # Read obj telluric file and correct for blaze
         # ------------------------------------------------------------------
         # get image
-        sp, shdr, scdr, _, _ = spirouImage.ReadImage(p, filename)
+        sp, shdr, _, _ = spirouImage.ReadImage(p, filename)
         # divide my blaze
         sp = sp / loc['BLAZE']
 
@@ -380,7 +380,7 @@ def main(night_name=None, files=None):
         # get raw file name
         raw_in_file = os.path.basename(p['FITSFILENAME'])
         # copy original keys
-        hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+        hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'])
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
@@ -470,7 +470,7 @@ def main(night_name=None, files=None):
         # loop around outputfiles and add them to abso
         for it, filename in enumerate(p['OUTPUTFILES']):
             # push data into array
-            data_it, _, _, _, _ = spirouImage.ReadImage(p, filename)
+            data_it, _, _, _ = spirouImage.ReadImage(p, filename)
             abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
         # set values less than low threshold to low threshold
         # set values higher than high threshold to 1
@@ -486,7 +486,7 @@ def main(night_name=None, files=None):
         # get raw file name
         raw_in_file = os.path.basename(p['FITSFILENAME'])
         # write the map to file
-        hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+        hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'])
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)

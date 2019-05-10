@@ -203,7 +203,7 @@ def measure_local_background(p, image):
     return scattered_light
 
 
-def measure_background_from_map(p, image, header, comments):
+def measure_background_from_map(p, image, header):
     func_name = __NAME__ + '.measure_background_from_map()'
     # get constants from parameter dictionary
     width = p['IC_BKGR_BOXSIZE']
@@ -285,7 +285,7 @@ def measure_background_from_map(p, image, header, comments):
     dimages = [data1, image, image1, image2, local_background_correction,
                background_image_full, background_image]
     # construct hdicts
-    hdict = spirouImage.CopyOriginalKeys(header, comments)
+    hdict = spirouImage.CopyOriginalKeys(header)
     drsname = ['EXTDESC', None, 'Extension description']
     hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
     hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Original')
@@ -303,7 +303,7 @@ def measure_background_from_map(p, image, header, comments):
     return background_image_full
 
 
-def measure_background_flatfield(p, image, header, comments):
+def measure_background_flatfield(p, image, header):
     """
     Measures the background of a flat field image - currently does not work
     as need an interpolation function (see code)
@@ -405,7 +405,7 @@ def measure_background_flatfield(p, image, header, comments):
     # construct images
     dimages = [data1, background, image1, image_med]
     # construct hdicts
-    hdict = spirouImage.CopyOriginalKeys(header, comments)
+    hdict = spirouImage.CopyOriginalKeys(header)
     drsname = ['DRSNAME', None, 'Extension description']
     hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
     hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Background')
@@ -421,7 +421,7 @@ def measure_background_flatfield(p, image, header, comments):
     return background, gridx1c, gridy1c, minlevel2
 
 
-def measure_background_flatfield_old(p, image, header, comments, badpixmask):
+def measure_background_flatfield_old(p, image, header, badpixmask):
 
     """
     Measures the background of a flat field image - currently does not work

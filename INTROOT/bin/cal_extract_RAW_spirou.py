@@ -103,7 +103,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files
@@ -192,7 +192,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data1, hdr, cdr]
+        bargs = [p, data1, hdr]
         # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
         background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
@@ -507,7 +507,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         wmsg = 'Saving E2DSFF spectrum of Fiber {0} in {1}'
         WLOG(p, '', wmsg.format(p['FIBER'], e2dsfffitsname))
         # add keys from original header file
-        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        hdict = spirouImage.CopyOriginalKeys(hdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
