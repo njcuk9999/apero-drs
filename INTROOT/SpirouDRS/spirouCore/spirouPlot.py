@@ -219,6 +219,7 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
     :param nrows:
     :return:
     """
+    func_name = __NAME__ + '.setup_figure()'
     fix = True
     while fix:
         if ncols == 0 and nrows == 0:
@@ -249,6 +250,9 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     emsg2 = '\tBackend = {0}'.format(plt.get_backend())
                     emsg3 = '\tError {0}: {1}'.format(type(e), e)
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
+    emsg1 = 'Problem with matplotlib figure/frame setup'
+    emsg2 = '\tfunction = {0}'.format(func_name)
+    WLOG(p, 'error', [emsg1, emsg2])
 
 
 # TODO: Need a better fix for this
