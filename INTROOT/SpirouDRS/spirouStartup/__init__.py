@@ -10,7 +10,6 @@ Created on 2017-11-17 at 13:38
 """
 from SpirouDRS import spirouConfig
 from . import spirouStartup
-from . import spirouStartup2
 
 # =============================================================================
 # Define variables
