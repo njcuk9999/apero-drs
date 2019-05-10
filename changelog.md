@@ -2,8 +2,16 @@ Changelog
 =========
 
 
-0.5.000 (2019-05-09)
+0.5.000 (2019-05-10)
 --------------------
+- SpirouDB.py - add lock file in waiting printout. [Neil Cook]
+- SpirouPlot.py - attempt to setup_figure a second time before crashing.
+  [Neil Cook]
+- SpirouPlot.py - attempt to setup_figure a second time before crashing.
+  [Neil Cook]
+- Update test.run. [Neil Cook]
+- SpirouPlot.py - fix to plot crash. [Neil Cook]
+- Update changelog.md. [Neil Cook]
 - Extract_trigger.py - modify extract trigger. [Neil Cook]
 - SpirouTDB.py - add locking of file in put_file. [Neil Cook]
 - SpirouCDB.py - add locking of file in put_file. [Neil Cook]
