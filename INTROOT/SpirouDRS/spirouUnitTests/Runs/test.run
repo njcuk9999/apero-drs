@@ -1,8 +1,3 @@
-run011h = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295547o_pp.fits']
-run011i = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295548o_pp.fits']
-run011j = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295549o_pp.fits']
-run011k = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295550o_pp.fits']
-
 # Run Make telluric db recipe (wrapper)
 run013 = ['obj_mk_tellu_db', '1']
 

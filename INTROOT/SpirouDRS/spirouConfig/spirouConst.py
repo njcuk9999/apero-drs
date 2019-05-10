@@ -24,15 +24,15 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.123'
+__version__ = '0.5.000'
 # Define Authors
 # noinspection PyPep8
 __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
               'I. Boisse, E. Martioli')
 # Define release type
-__release__ = 'alpha pre-release'
+__release__ = 'beta pre-release'
 # Define date of last edit
-__date__ = '2019-05-03'
+__date__ = '2019-05-10'
 
 
 # =============================================================================
@@ -760,6 +760,33 @@ def BADPIX_FILE(p):
     reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     badpixelfn = p['FLATFILE'].replace('.fits', '_badpixel.fits')
+    badpixelfitsname = calibprefix + badpixelfn
+    badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return badpixelfits, tag
+
+
+
+# noinspection PyPep8Naming
+def BKGD_MAP_FILE(p):
+    """
+    Defines the bad pixel path and file name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                flatfile: string, the flat file name (used to name the
+                          badpix file, replacing .fits with _badpixel.fits
+    :return string: the badpix path and filename
+    """
+    func_name = 'BKGD_MAP_FILE'
+    # define filename
+    reducedfolder = p['REDUCED_DIR']
+    calibprefix = CALIB_PREFIX(p)
+    badpixelfn = p['FLATFILE'].replace('.fits', '_bmap.fits')
     badpixelfitsname = calibprefix + badpixelfn
     badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
     # get tag

@@ -22,6 +22,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouBACK
 
 # =============================================================================
 # Define variables
@@ -139,6 +140,19 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
+
+    # rotate the image and convert from ADU/s to e-
+    flat1 = spirouImage.FlipImage(p, flat_ref)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    flat1 = spirouImage.ResizeImage(p, flat1, **bkwargs)
+    # log change in data size
+    wmsg = 'Image format changed to {1}x{0}'
+    WLOG(p, '', wmsg.format(*flat1.shape))
+
+    # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
     badpixelmap = spirouImage.FlipImage(p, bad_pixel_map)
     # resize image
@@ -147,8 +161,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
                    getshape=False)
     badpixelmap = spirouImage.ResizeImage(p, badpixelmap, **bkwargs)
     # log change in data size
-    wmsg = 'Image format changed to {1}x{0}'
+    wmsg = 'Bad pixel map format changed to {1}x{0}'
     WLOG(p, '', wmsg.format(*badpixelmap.shape))
+
+    # ----------------------------------------------------------------------
+    # Create background map mask
+    # ----------------------------------------------------------------------
+    backmap = spirouBACK.MakeBackgroundMap(p, flat1, badpixelmap)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -215,14 +234,53 @@ def main(night_name=None, flatfile=None, darkfile=None):
     p, spirouImage.WriteImage(p, badpixelfits, badpixelmap, hdict)
 
     # ----------------------------------------------------------------------
+    # Save the background map
+    # ----------------------------------------------------------------------
+    # get raw badpixel file
+    raw_badp_file1 = os.path.basename(p['flatfile'])
+    raw_badp_file2 = os.path.basename(p['darkfile'])
+    # construct background map file name
+    backmapfits, tag = spirouConfig.Constants.BKGD_MAP_FILE(p)
+    backmapfitsname = os.path.split(backmapfits)[-1]
+    # log that we are saving bad pixel map in dir
+    WLOG(p, '', 'Saving Bad Pixel Map in ' + backmapfitsname)
+    # add keys from original header files
+    # Question Why only the keys from the flat file?
+    # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
+    hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
+    # add new keys
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                     values=p['FLATFILE'], dim1name='flatfile')
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
+                                     values=p['DARKFILE'], dim1name='darkfile')
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
+    # write to file
+    backmap = np.array(backmap, dtype=int)
+    p, spirouImage.WriteImage(p, backmapfits, backmap, hdict)
+
+    # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
     if p['QC']:
+        # bad pixel map
         keydb = 'BADPIX'
         # copy dark fits file to the calibDB folder
         spirouDB.PutCalibFile(p, badpixelfits)
         # update the master calib DB file with new key
         spirouDB.UpdateCalibMaster(p, keydb, badpixelfitsname, fhdr)
+        # ------------------------------------------------------------------
+        # background mask
+        # bad pixel map
+        keydb = 'BKGRDMAP'
+        # copy dark fits file to the calibDB folder
+        spirouDB.PutCalibFile(p, backmapfits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, backmapfitsname, fhdr)
 
     # ----------------------------------------------------------------------
     # End Message

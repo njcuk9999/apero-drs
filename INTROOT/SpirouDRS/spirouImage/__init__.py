@@ -77,6 +77,8 @@ CorrectForDark = spirouImage.correct_for_dark
 
 CorrectForBadPix = spirouImage.correct_for_badpix
 
+GetBackgroundMap = spirouImage.get_background_map
+
 E2DStoS1D = spirouImage.e2dstos1d
 
 EarthVelocityCorrection = spirouBERV.earth_velocity_correction
