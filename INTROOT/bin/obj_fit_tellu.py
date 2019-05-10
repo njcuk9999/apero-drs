@@ -83,8 +83,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     loc = ParamDict()
     rd = spirouImage.ReadImage(p, p['FITSFILENAME'])
-    loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['XDIM'], loc['YDIM'] = rd
-    loc.set_sources(['DATA', 'DATAHDR', 'DATACDR', 'XDIM', 'YDIM'], main_name)
+    loc['DATA'], loc['DATAHDR'], loc['XDIM'], loc['YDIM'] = rd
+    loc.set_sources(['DATA', 'DATAHDR', 'XDIM', 'YDIM'], main_name)
 
     # ----------------------------------------------------------------------
     # Get object name, airmass and berv
@@ -145,7 +145,7 @@ def main(night_name=None, files=None):
     else:
         loc['FLAG_TEMPLATE'] = True
         # load template
-        template, _, _, _, _ = spirouImage.ReadImage(p, template_file)
+        template, _, _, _ = spirouImage.ReadImage(p, template_file)
         # add to loc
         loc['TEMPLATE'] = template
     # set the source for flag and template
@@ -195,7 +195,7 @@ def main(night_name=None, files=None):
         # loop around outputfiles and add them to abso
         for it, filename in enumerate(trans_files):
             # load data
-            data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
+            data_it, _, _, _ = spirouImage.ReadImage(p, filename=filename)
             # push data into array
             abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
         # log progres
@@ -294,7 +294,7 @@ def main(night_name=None, files=None):
         # Read filename
         # ------------------------------------------------------------------
         # read image
-        tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
+        tdata, thdr, _, _ = spirouImage.ReadImage(p, filename)
         # normalise with blaze function
         loc['SP'] = tdata / loc['NBLAZE']
         loc.set_source('SP', main_name)
@@ -478,7 +478,7 @@ def main(night_name=None, files=None):
         # get raw file name
         raw_in_file = os.path.basename(p['FITSFILENAME'])
         # copy original keys
-        hdict = spirouImage.CopyOriginalKeys(thdr, tcdr)
+        hdict = spirouImage.CopyOriginalKeys(thdr)
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],

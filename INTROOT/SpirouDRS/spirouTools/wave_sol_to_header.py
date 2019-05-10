@@ -97,7 +97,7 @@ def main(night_name=None):
         # Read image file
         # ---------------------------------------------------------------------
         # read the image data
-        p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+        p, data, hdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
         # ---------------------------------------------------------------------
         # Load calibDB for this file
@@ -145,7 +145,7 @@ def main(night_name=None):
         WLOG(p, '', wmsg.format(p['FIBER'], basefilename))
 
         # add keys from original header file
-        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        hdict = spirouImage.CopyOriginalKeys(hdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],

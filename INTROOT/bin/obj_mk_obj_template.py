@@ -72,7 +72,7 @@ def main(night_name=None, files=None):
     loc = ParamDict()
     # read first file and assign values
     rdata = spirouImage.ReadImage(p, p['FITSFILENAME'])
-    loc['DATA'], loc['DATAHDR'], loc['DATACDR'] = rdata[:3]
+    loc['DATA'], loc['DATAHDR'] = rdata[:2]
 
     # Get object name and airmass
     loc['OBJNAME'] = spirouImage.GetObjName(p, loc['DATAHDR'])
@@ -206,7 +206,7 @@ def main(night_name=None, files=None):
         image = image.reshape(loc['DATA'].shape)
         # ------------------------------------------------------------------
         # Load the data for this file
-        tdata0, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
+        tdata0, thdr, _, _ = spirouImage.ReadImage(p, filename)
         nbo, npix = tdata0.shape
         # Correct for the blaze
         tdata = tdata0 / loc['NBLAZE']
@@ -361,7 +361,7 @@ def main(night_name=None, files=None):
     outfilename = os.path.basename(outfile)
 
     # hdict is first file keys
-    hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+    hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

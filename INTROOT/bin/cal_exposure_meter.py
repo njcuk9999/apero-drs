@@ -81,7 +81,7 @@ def main(night_name=None, flatfile=None):
     # Read flat image file
     # ----------------------------------------------------------------------
     # read the image data (for the header only)
-    image, hdr, cdr, ny, nx = spirouImage.ReadData(p, reffile)
+    image, hdr, ny, nx = spirouImage.ReadData(p, reffile)
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files
