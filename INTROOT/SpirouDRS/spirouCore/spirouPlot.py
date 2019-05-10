@@ -206,7 +206,7 @@ def define_save_name(p, plotname):
     return paths
 
 
-def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
+def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1, attempt=0):
     """
     Extra steps to setup figure. On some OS getting error
 
@@ -250,9 +250,13 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     emsg2 = '\tBackend = {0}'.format(plt.get_backend())
                     emsg3 = '\tError {0}: {1}'.format(type(e), e)
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
-    emsg1 = 'Problem with matplotlib figure/frame setup'
-    emsg2 = '\tfunction = {0}'.format(func_name)
-    WLOG(p, 'error', [emsg1, emsg2])
+
+    if attempt == 0:
+        setup_figure(p, figsize=FIGSIZE, ncols=ncols, nrows=nrows, attempt=1)
+    else:
+        emsg1 = 'Problem with matplotlib figure/frame setup'
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2])
 
 
 # TODO: Need a better fix for this
