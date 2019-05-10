@@ -56,7 +56,7 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
+    data, hdr, nx, ny = spirouImage.ReadImage(p)
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files

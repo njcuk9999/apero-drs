@@ -61,7 +61,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # ------------------------------------------------------------------
     # read the image data
     rout = spirouImage.ReadImage(p, filename=p['UFILE'])
-    image, hdr, cdr, nx, ny = rout
+    image, hdr, nx, ny = rout
 
     # ----------------------------------------------------------------------
     # un-Resize image
@@ -88,7 +88,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # log that we are saving rotated image
     WLOG(p, '', 'Saving Rotated Image in ' + outfitsname)
     # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     # write to file
     p = spirouImage.WriteImage(p, outfits, newimage, hdict)
 

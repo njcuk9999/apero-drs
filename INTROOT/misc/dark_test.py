@@ -53,7 +53,7 @@ def dark_setup(night_name, files):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='average')
+    p, data, hdr = spirouImage.ReadImageAndCombine(p, framemath='average')
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files

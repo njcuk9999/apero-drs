@@ -132,12 +132,12 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # read the image data
         rout = spirouImage.ReadImage(p, filename=ufile)
-        image, hdr, cdr, nx, ny = rout
+        image, hdr, nx, ny = rout
 
         # ------------------------------------------------------------------
         # Identify file (and update filename, header and comments)
         # ------------------------------------------------------------------
-        ufile, hdr, cdr = spirouImage.IdentifyUnProFile(p, ufile, hdr, cdr)
+        ufile, hdr = spirouImage.IdentifyUnProFile(p, ufile, hdr)
 
         # ------------------------------------------------------------------
         # correct image
@@ -237,7 +237,7 @@ def main(night_name=None, ufiles=None):
         # log that we are saving rotated image
         WLOG(p, '', 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
-        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        hdict = spirouImage.CopyOriginalKeys(hdr)
 
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_PPVERSION'])

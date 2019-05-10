@@ -57,7 +57,7 @@ def get_full_flat(p):
         emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
         WLOG(p, 'error', emsg.format(filename, datadir))
     # read image
-    mdata, _, _, _, _ = spirouImage.ReadImage(p, absfilename, kind='FULLFLAT')
+    mdata, _, _, _ = spirouImage.ReadImage(p, absfilename, kind='FULLFLAT')
     # return image
     return mdata
 
@@ -125,8 +125,8 @@ def find_hotpix_offset(p, filename, yhot, xhot):
     med_size = p['PP_CORRUPT_MED_SIZE']
     # get data
     try:
-        data, hdr, _, _, _ = spirouImage.ReadImage(p, filename, kind='None',
-                                                   log=False)
+        data, hdr, _, _ = spirouImage.ReadImage(p, filename, kind='None',
+                                                log=False)
     except SystemExit:
         return np.nan
 

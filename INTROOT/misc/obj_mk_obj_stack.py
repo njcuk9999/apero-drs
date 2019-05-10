@@ -70,7 +70,7 @@ def main(night_name=None, files=None):
     loc = ParamDict()
     # read first file and assign values
     rdata = spirouImage.ReadImage(p, p['FITSFILENAME'])
-    loc['DATA'], loc['DATAHDR'], loc['DATACDR'] = rdata[:3]
+    loc['DATA'], loc['DATAHDR'] = rdata[:2]
 
     # Get output key
     loc['OUTPUT'] = loc['DATAHDR'][p['KW_OUTPUT'][0]]
@@ -146,7 +146,7 @@ def main(night_name=None, files=None):
         base_filelist.append(basefilename)
         # ------------------------------------------------------------------
         # Load the data for this file
-        tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
+        tdata, thdr, _, _ = spirouImage.ReadImage(p, filename)
         # ------------------------------------------------------------------
         # log stats
         wmsg = 'Processing file {0} of {1} file={2}'
@@ -168,7 +168,7 @@ def main(night_name=None, files=None):
     wmsg1 = 'Saving bigcube to file {0}'.format(os.path.basename(outfile))
 
     # hdict is first file keys
-    hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+    hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

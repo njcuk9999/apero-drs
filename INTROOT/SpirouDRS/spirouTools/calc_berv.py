@@ -122,7 +122,7 @@ def main(night_name=None, e2dsfiles=None):
         # Read image file
         # ----------------------------------------------------------------------
         # read the image data
-        e2ds, hdr, cdr, nbo, nx = spirouImage.ReadData(p, e2dsfile)
+        e2ds, hdr, nbo, nx = spirouImage.ReadData(p, e2dsfile)
         # add to loc
         loc = ParamDict()
         loc['E2DS'] = e2ds
@@ -167,7 +167,7 @@ def main(night_name=None, e2dsfiles=None):
         # ----------------------------------------------------------------------
         outfilename = str(e2dsfile)
         # add keys
-        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        hdict = spirouImage.CopyOriginalKeys(hdr)
 
         # add berv values
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
