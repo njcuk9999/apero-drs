@@ -310,6 +310,7 @@ def get_check_lock_file(p, dbkind):
     # check if lock file already exists
     if os.path.exists(lock_file):
         WLOG(p, 'warning', '{0} locked. Waiting...'.format(name))
+        WLOG(p, 'warning', '\tFilename = {0}'.format(lock_file))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     while os.path.exists(lock_file) or wait_time > max_wait_time:
