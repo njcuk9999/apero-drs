@@ -252,7 +252,8 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1, attempt=0):
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     if attempt == 0:
-        setup_figure(p, figsize=FIGSIZE, ncols=ncols, nrows=nrows, attempt=1)
+        return setup_figure(p, figsize=FIGSIZE, ncols=ncols, nrows=nrows,
+                            attempt=1)
     else:
         emsg1 = 'Problem with matplotlib figure/frame setup'
         emsg2 = '\tfunction = {0}'.format(func_name)
