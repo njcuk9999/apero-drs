@@ -452,11 +452,42 @@ SHAPE_LONG_DX_MEDFILT_WID = 9
 #    Do background measurement (True = 1, False = 0)                  - [cal_ff]
 ic_do_bkgr_subtraction = 1
 
-#    Do background percentile to compute minium value (%)             - [cal_ff]
+#    Do background percentile to compute minimum value (%)             - [cal_ff]
 ic_bkgr_percent = 5
 
 #    Half-size of window for background measurements                  - [cal_ff]
 ic_bkgr_window = 50
+
+#    Width of the box to produce the background mask
+IC_BKGR_BOXSIZE = 128
+
+#    Size in pixels of the convolve tophat for the background mask
+IC_BKGR_MASK_CONVOLVE_SIZE = 7
+
+#    Background kernel width in in x and y [pixels]
+IC_BKGR_KER_WX = 1
+IC_BKGR_KER_WY = 9
+
+#    Kernel amplitude determined from drs_local_scatter.py
+IC_BKGR_KER_AMP = 47
+
+#    The size of the center of the image +/- these values from the center
+IC_BKGR_LOCAL_XSIZE = 16
+IC_BKGR_LOCAL_YSIZE =  300
+
+#     Define the fraction of the maximum flux that we use to measure the
+#         local background
+IC_BKGR_LOCAL_THRES = 0.005
+
+#    construct a convolution kernel. We go from -IC_BKGR_KER_SIG to
+#        +IC_BKGR_KER_SIG sigma in each direction. Its important no to
+#        make the kernel too big as this slows-down the 2D convolution.
+#        Do NOT make it a -10 to +10 sigma gaussian!
+IC_BKGR_KER_SIG = 3
+
+#    If a pixel has this or more "dark" neighbours, we consider it dark
+#        regardless of its initial value
+IC_BKGR_N_BAD_NEIGHBOURS = 3
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 49  # 36
@@ -579,7 +610,7 @@ ic_start_order_1d = 1
 ic_end_order_1d = 48
 
 #   Define the start s1d wavelength (in nm)
-extract_s1d_wavestart = 980
+extract_s1d_wavestart = 965
 
 #   Define the end s1d wavelength (in nm)
 extract_s1d_waveend = 2500
@@ -593,11 +624,6 @@ ic_bin_s1d_uvelo = 1.0
 #    Define the s1d smoothing kernel for the transition between orders
 #             in pixels
 ic_s1d_edge_smooth_size = 20
-
-#    Define the threshold hold for a good blaze value (below the maximum value)
-#         here a value of 0.5 would be 50% of the maximum value
-ic_s1d_blaze_min = 0.05
-
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters

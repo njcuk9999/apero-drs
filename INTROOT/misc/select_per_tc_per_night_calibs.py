@@ -40,8 +40,8 @@ OUTFOLDER2 = '/spirou/cfht_nights/cfht_April19/perrun/calibDB/'
 # if true use TC_DATES to select calib files
 TC_DATES = OrderedDict(tc2=1527445620.0, tc3=1533144101.0,
                        tc4=1537723992.0, tc5=1540519817.9,
-                       tc6=1545188394.0, tc7=1547746944.8)
-
+                       tc6=1545188394.0, tc7=1547746944.8,
+                       r01=1550540510.3, r02=1556070098.5)
 
 HEADER = """# H4RG File (Copied from SpirouDRS data folder)
 WAVE_AB None MASTER_WAVE.fits 1970-01-01-00:00:00.000000 0.0

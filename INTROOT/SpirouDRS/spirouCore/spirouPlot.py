@@ -42,6 +42,11 @@ if matplotlib.get_backend() == 'MacOSX':
 else:
     matplotlib_emsg = []
 
+# TODO: fix better
+# this is here to allow one to save plots with big numbers of points
+matplotlib.rcParams['agg.path.chunksize'] = 10000
+
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -201,7 +206,7 @@ def define_save_name(p, plotname):
     return paths
 
 
-def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
+def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1, attempt=0):
     """
     Extra steps to setup figure. On some OS getting error
 
@@ -214,6 +219,7 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
     :param nrows:
     :return:
     """
+    func_name = __NAME__ + '.setup_figure()'
     fix = True
     while fix:
         if ncols == 0 and nrows == 0:
@@ -244,6 +250,14 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     emsg2 = '\tBackend = {0}'.format(plt.get_backend())
                     emsg3 = '\tError {0}: {1}'.format(type(e), e)
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
+
+    if attempt == 0:
+        return setup_figure(p, figsize=FIGSIZE, ncols=ncols, nrows=nrows,
+                            attempt=1)
+    else:
+        emsg1 = 'Problem with matplotlib figure/frame setup'
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2])
 
 
 # TODO: Need a better fix for this
@@ -389,6 +403,37 @@ def darkplot_histograms(pp):
     # TODO: Needs axis labels and title
     # end plotting function properly
     end_plotting(pp, plot_name)
+
+
+# =============================================================================
+# background plotting functions
+# =============================================================================
+def local_scattered_light_plot(p, image, keep, profile, profile2, amp):
+    plot_name = 'local_scattered_light'
+    # get constants from parameter dictionary
+    ysize = p['IC_BKGR_LOCAL_YSIZE']
+    bthres = p['IC_BKGR_LOCAL_THRES']
+    filename = p['ARG_FILE_NAMES'][0]
+    # define the start and end of the center
+    starty = (image.shape[0] // 2) - ysize
+    endy = (image.shape[0] // 2) + ysize
+    # set up figure
+    fig, frame = setup_figure(p)
+    # set up a set of indices but ignore the indices we are not using
+    index = np.arange(len(keep), dtype=float)
+    index[~keep] = np.nan
+    # plot the lines
+    frame.plot(index, profile, label='Scattered light between orders')
+    frame.plot(index, profile2, label='Model')
+    frame.plot(index, profile - profile2, label='Difference', marker='.',
+               linestyle='None')
+
+    frame.set(xlabel='Pixel number', ylabel='Flux',
+              xlim=[starty, endy], ylim=[0, (bthres * np.max(profile))],
+              title='File = {0}  Amp = {1}'.format(filename, amp))
+    frame.legend(loc=0)
+    # end plotting function properly
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
