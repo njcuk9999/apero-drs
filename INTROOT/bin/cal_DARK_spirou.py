@@ -75,7 +75,7 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='average')
+    p, data, hdr = spirouImage.ReadImageAndCombine(p, framemath='average')
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files
@@ -252,7 +252,7 @@ def main(night_name=None, files=None):
     # log saving dark frame
     WLOG(p, '', 'Saving Dark frame in ' + darkfitsname)
     # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
@@ -290,7 +290,7 @@ def main(night_name=None, files=None):
     # log that we are saving bad pixel map in dir
     WLOG(p, '', 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])

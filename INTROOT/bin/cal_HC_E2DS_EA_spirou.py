@@ -81,12 +81,12 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all files
-    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(p, 'add')
+    p, hcdata, hchdr = spirouImage.ReadImageAndCombine(p, 'add')
     # add data and hdr to loc
     loc = ParamDict()
-    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
+    loc['HCDATA'], loc['HCHDR'] = hcdata, hchdr
     # set the source
-    sources = ['HCDATA', 'HCHDR', 'HCCDR']
+    sources = ['HCDATA', 'HCHDR']
     loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
 
     # ----------------------------------------------------------------------
@@ -278,7 +278,7 @@ def main(night_name=None, files=None):
     WLOG(p, '', wmsg.format(*wargs))
     # write solution to fitsfilename header
     # copy original keys
-    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'])
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
