@@ -10,16 +10,24 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
            'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
            'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
-           'COMBINE_IMAGES', 'QC_DARK_TIME', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+           # image constants
+           'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
+           'IMAGE_X_LOW', 'IMAGE_X_HIGH',
            'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
            'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
+           # qc constants
+           'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
+           'QC_MAX_DARK',
+           # dark constants
            'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
            'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
-           'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX', 'HISTO_BINS',
-           'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH', 'QC_MAX_DARK',
+           'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
+            # badpix constants
            'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
            'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
+           'BADPIX_NORM_PERCENTILE',
+           # bkgr constants
            'BKGR_BOXSIZE', 'BKGR_PERCENTAGE', 'BKGR_MASK_CONVOLVE_SIZE',
            'BKGR_N_BAD_NEIGHBOURS']
 
@@ -41,8 +49,16 @@ DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
 # =============================================================================
 # Defines whether to by default combine images that are inputted at the same
 #   time
-COMBINE_IMAGES = Const('COMBINE_IMAGES', dtype=bool, value=True,
-                       source=__NAME__)
+INPUT_COMBINE_IMAGES = Const('INPUT_COMBINE_IMAGES', dtype=bool, value=True,
+                             source=__NAME__)
+
+# Defines whether to, by default, flip images that are inputted
+INPUT_FLIP_IMAGE = Const('INPUT_FLIP_IMAGE', dtype=bool, value=True,
+                         source=__NAME__)
+
+# Defines whether to, by default, resize images that are inputted
+INPUT_RESIZE_IMAGE = Const('INPUT_RESIZE_IMAGE', dtype=bool, value=True,
+                           source=__NAME__)
 
 # Defines the resized image
 IMAGE_X_LOW = Const('IMAGE_X_LOW', value=None, dtype=int, minimum=0,
@@ -175,10 +191,16 @@ HISTO_RANGE_HIGH = Const('HISTO_RANGE_LOW', value=None, dtype=int,
 BADPIX_FULL_FLAT = Const('BADPIX_FULL_FLAT', value=None, dtype=str,
                          source=__NAME__)
 
-#   Define the median image in the x dimension over a             - [cal_badpix]
-#       boxcar of this width (formally wmed)
-BADPIX_FLAT_MED_WID = Const('BADPIX_FLAT_MED_WID', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0)
+
+#   Percentile to normalise to when normalising and median filtering
+#      image [percentage]
+BADPIX_NORM_PERCENTILE = Const('BADPIX_NORM_PERCENTILE', value=None,
+                               dtype=float, source=__NAME__,
+                               minimum=0.0, maximum=100.0)
+
+#   Define the median image in the x dimension over a boxcar of this width
+BADPIX_FLAT_MED_WID = Const('BADPIX_FLAT_MED_WID', value=None, dtype=int,
+                            source=__NAME__, minimum=0)
 
 #   Define the maximum differential pixel cut ratio
 BADPIX_FLAT_CUT_RATIO = Const('BADPIX_FLAT_CUT_RATIO', value=None, dtype=float,
@@ -206,7 +228,7 @@ BKGR_PERCENTAGE = Const('BKGR_PERCENTAGE', value=None, dtype=float,
 
 #    Size in pixels of the convolve tophat for the background mask
 BKGR_MASK_CONVOLVE_SIZE = Const('BKGR_MASK_CONVOLVE_SIZE', value=None,
-                                dtype=float, source=__NAME__, minimum=0.0)
+                                dtype=int, source=__NAME__, minimum=0)
 
 #    If a pixel has this or more "dark" neighbours, we consider it dark
 #        regardless of its initial value
