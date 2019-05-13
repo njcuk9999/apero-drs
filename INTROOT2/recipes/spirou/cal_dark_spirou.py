@@ -42,6 +42,7 @@ TextDict = locale.drs_text.TextDict
 DARK_FILE = file_definitions.out_dark
 SKY_FILE = file_definitions.out_sky
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -105,7 +106,7 @@ def __main__(recipe, params):
     for infile in infiles:
         rawfiles.append(infile.basename)
     # combine input images if required
-    if params['COMBINE_IMAGES']:
+    if params['INPUT_COMBINE_IMAGES']:
         # get combined file
         infiles = [drs_fits.combine(params, infiles, math='average')]
     # get the number of infiles
