@@ -225,7 +225,8 @@ def __main__(recipe, params):
         # add process id
         outfile.add_hkey('KW_PID', value=params['PID'])
         # add input filename
-        outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename])
+        outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename],
+                            dim1name='infile')
         # add qc parameters
         outfile.add_qckeys(qc_params)
         # add dprtype
