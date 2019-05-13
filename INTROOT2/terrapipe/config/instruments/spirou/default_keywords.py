@@ -203,3 +203,34 @@ KW_DARK_R_MED.set(key='DARMED', comment='median dark level red part [ADU/s]')
 # The threshold of the dark level to retain in ADU
 KW_DARK_CUT = KW_DARK_CUT.copy(__NAME__)
 KW_DARK_CUT.set(key='DACUT', comment='Threshold of dark level retain [ADU/s]')
+
+# -----------------------------------------------------------------------------
+# Define cal_badpix variables
+# -----------------------------------------------------------------------------
+# fraction of hot pixels
+KW_BHOT = KW_BHOT.copy(__NAME__)
+KW_BHOT.set(key='BHOT', comment='Frac of hot px [%]')
+
+# fraction of bad pixels from flat
+KW_BBFLAT = KW_BBFLAT.copy(__NAME__)
+KW_BBFLAT.set(key='BBFLAT', comment='Frac of bad px from flat [%]')
+
+# fraction of non-finite pixels in dark
+KW_BNDARK = KW_BNDARK.copy(__NAME__)
+KW_BNDARK.set(key='BNDARK', comment='Frac of non-finite px in dark [%]')
+
+# fraction of non-finite pixels in flat
+KW_BNFLAT = KW_BNFLAT.copy(__NAME__)
+KW_BNFLAT.set(key='BNFLAT', comment='Frac of non-finite px in flat [%]')
+
+# fraction of bad pixels with all criteria
+KW_BBAD = KW_BBAD.copy(__NAME__)
+KW_BBAD.set(key='BBAD', comment='Frac of bad px with all criteria [%]')
+
+# fraction of un-illuminated pixels (from engineering flat)
+KW_BNILUM = KW_BNILUM.copy(__NAME__)
+KW_BNILUM.set(key='BNILUM', comment='Frac of un-illuminated pixels [%]')
+
+# fraction of total bad pixels
+KW_BTOT = KW_BTOT.copy(__NAME__)
+KW_BTOT.set(key='BTOT', comment='Frac of bad pixels (total) [%]')
