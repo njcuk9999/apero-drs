@@ -24,7 +24,7 @@ from terrapipe.science.calib import background
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_DARK_spirou.py'
+__NAME__ = 'cal_badpix_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -38,6 +38,9 @@ WLOG = config.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
+# Define the output files
+BADPIX = file_definitions.out_badpix
+BACKMAP = file_definitions.out_backmap
 
 
 # =============================================================================
@@ -155,7 +158,7 @@ def __main__(recipe, params):
         # total number of bad pixels
         btotal = (np.nansum(bad_pixel_map) / bad_pixel_map.size) * 100
         # log result
-        WLOG(params, '', TextEntry('40-012-00007', args=btotal))
+        WLOG(params, '', TextEntry('40-012-00007', args=[btotal]))
 
         # ------------------------------------------------------------------
         # Plots
@@ -195,7 +198,112 @@ def __main__(recipe, params):
         bargs = [flat_image1, bad_pixel_map1]
         backmap = background.create_background_map(params, *bargs)
 
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        # set passed variable and fail message list
+        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # ------------------------------------------------------------------
+        # TODO: Needs doing
+        # add to qc header lists
+        qc_values.append('None')
+        qc_names.append('None')
+        qc_logic.append('None')
+        qc_pass.append(1)
+        # ------------------------------------------------------------------
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if np.sum(qc_pass) == len(qc_pass):
+            WLOG(params, 'info', TextEntry('40-005-10001'))
+            params['QC'] = 1
+            params.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            params['QC'] = 0
+            params.set_source('QC', __NAME__ + '/main()')
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
+        # ----------------------------------------------------------------------
+        # Save bad pixel mask
+        # ----------------------------------------------------------------------
+        badpixfile = BADPIX.newcopy(recipe=recipe)
+        # construct the filename from file instance
+        badpixfile.construct_filename(params, infile=flatfile)
+        # ------------------------------------------------------------------
+        # define header keys for output file
+        # copy keys from input file
+        badpixfile.copy_original_keys(flatfile)
+        # add version
+        badpixfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add process id
+        badpixfile.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        badpixfile.add_hkey('KW_OUTPUT', value=badpixfile.name)
+        # add input files
+        badpixfile.add_hkey_1d('KW_INFILE1', values=[flatfile.basename])
+        badpixfile.add_hkey_1d('KW_INFILE2', values=[darkfile.basename])
+        # add qc parameters
+        badpixfile.add_qckeys(qc_params)
+        # add background statistics
+        badpixfile.add_hkey('KW_BHOT', value=bstats_a[0])
+        badpixfile.add_hkey('KW_BBFLAT', value=bstats_a[1])
+        badpixfile.add_hkey('KW_BNDARK', value=bstats_a[2])
+        badpixfile.add_hkey('KW_BNFLAT', value=bstats_a[3])
+        badpixfile.add_hkey('KW_BBAD', value=bstats_a[4])
+        badpixfile.add_hkey('KW_BNILUM', value=bstats_b)
+        badpixfile.add_hkey('KW_BTOT', value=btotal)
+        # write to file
+        bad_pixel_map1 = np.array(bad_pixel_map1, dtype=int)
+        # copy data
+        badpixfile.data = bad_pixel_map1
+        # ------------------------------------------------------------------
+        # log that we are saving rotated image
+        WLOG(params, '', TextEntry('40-010-00010', args=[badpixfile.filename]))
+        # write image to file
+        badpixfile.write()
+
+        # ----------------------------------------------------------------------
+        # Save background map file
+        # ----------------------------------------------------------------------
+        backmapfile = BACKMAP.newcopy(recipe=recipe)
+        # construct the filename from file instance
+        backmapfile.construct_filename(params, infile=flatfile)
+        # ------------------------------------------------------------------
+        # define header keys for output file
+        # copy keys from input file
+        backmapfile.copy_original_keys(flatfile)
+        # add version
+        backmapfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add process id
+        backmapfile.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        backmapfile.add_hkey('KW_OUTPUT', value=backmapfile.name)
+        # add input files
+        backmapfile.add_hkey_1d('KW_INFILE1', values=[flatfile.basename],
+                                dim1name='flatfile')
+        backmapfile.add_hkey_1d('KW_INFILE2', values=[darkfile.basename],
+                                dim1name='darkfile')
+        # add qc parameters
+        backmapfile.add_qckeys(qc_params)
+        # write to file
+        backmap = np.array(backmap, dtype=int)
+        # copy data
+        backmapfile.data = backmap
+        # ------------------------------------------------------------------
+        # log that we are saving rotated image
+        WLOG(params, '', TextEntry('40-010-00010', args=[backmapfile.filename]))
+        # write image to file
+        backmapfile.write()
+
+        # ------------------------------------------------------------------
+        # Move to calibDB and update calibDB
+        # ------------------------------------------------------------------
+        if params['QC']:
+            drs_database.add_file(params, badpixfile)
+            drs_database.add_file(params, backmapfile)
 
     # ----------------------------------------------------------------------
     # End of main code
