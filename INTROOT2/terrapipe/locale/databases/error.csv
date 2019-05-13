@@ -437,7 +437,7 @@
 "40-010-00007","ALL","QC failure message for presprocess SNR hotpix","{0} = snr hotpix value; {1} = snr hotpix threshold; {2} = filename","File was found to be corrupted. \n\t SNR_HOTPIX < threshold \n\t {0:.4e} < {1:4e}. \n\t File will not be saved. \n\t File = {2}","",""
 "40-010-00008","ALL","QC failure message for preprocessing rms","{0} = max rms value; {1} = rms threshold; {2} = filename","File was found to be corrupted. \n\t RMS < threshold \n\t {0:.4e} > {1:.4e}. \n\t File will not be saved. \n\t File = {2}","",""
 "40-010-00009","ALL","Prints where we are saving the rotated image to","{0} = output filename","Saving rotated image in {0}","",""
-"40-010-00010","ALL","","","","",""
+"40-010-00010","ALL","Prints that we are saving image to file","{0} = output filename","Saving image to {0}","",""
 "","","","","","",""
 "40-011-00000","ALL","Dark messages","None","\t","",""
 "40-011-00001","ALL","Prints that we are doing dark measurement","None","Doing Dark measurement","",""
