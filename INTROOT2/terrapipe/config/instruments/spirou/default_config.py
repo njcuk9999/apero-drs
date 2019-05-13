@@ -95,3 +95,10 @@ TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
 # the calibration database name
 CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
 CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
+
+# =============================================================================
+# DRS INTERNAL PATHS
+# =============================================================================
+#  where the bad pixel data are stored
+DRS_BADPIX_DATA = DRS_BADPIX_DATA.copy(__NAME__)
+DRS_BADPIX_DATA.value = './data/spirou/engineering/'

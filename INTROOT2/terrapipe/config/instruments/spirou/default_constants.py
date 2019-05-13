@@ -158,3 +158,46 @@ HISTO_RANGE_LOW.value = -0.2
 HISTO_RANGE_HIGH = HISTO_RANGE_HIGH.copy(__NAME__)
 HISTO_RANGE_HIGH.value = 0.8
 
+# =============================================================================
+# CALIBRATION: BAD PIXEL SETTINGS
+# =============================================================================
+#   Defines the full detector flat file (located in the data folder)
+BADPIX_FULL_FLAT = BADPIX_FULL_FLAT.copy(__NAME__)
+BADPIX_FULL_FLAT.value = 'detector_flat_full.fits'
+
+#   Define the median image in the x dimension over a boxcar of this width
+BADPIX_FLAT_MED_WID = BADPIX_FLAT_MED_WID.copy(__NAME__)
+BADPIX_FLAT_MED_WID.value = 7.0
+
+#   Define the maximum differential pixel cut ratio
+BADPIX_FLAT_CUT_RATIO = BADPIX_FLAT_CUT_RATIO.copy(__NAME__)
+BADPIX_FLAT_CUT_RATIO.value = 0.5
+
+#   Define the illumination cut parameter
+BADPIX_ILLUM_CUT = BADPIX_ILLUM_CUT.copy(__NAME__)
+BADPIX_ILLUM_CUT.value = 0.05
+
+#   Define the maximum flux in ADU/s to be considered too hot to be used
+BADPIX_MAX_HOTPIX = BADPIX_MAX_HOTPIX.copy(__NAME__)
+BADPIX_MAX_HOTPIX.value = 5.0
+
+#   Defines the threshold on the full detector flat file to deem pixels as good
+BADPIX_FULL_THRESHOLD = BADPIX_FULL_THRESHOLD.copy(__NAME__)
+BADPIX_FULL_THRESHOLD.value = 0.3
+
+#    Width of the box to produce the background mask
+BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
+BKGR_BOXSIZE.value = 128
+
+#    Do background percentile to compute minimum value (%)
+BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
+BKGR_PERCENTAGE.value = 5.0
+
+#    Size in pixels of the convolve tophat for the background mask
+BKGR_MASK_CONVOLVE_SIZE = BKGR_MASK_CONVOLVE_SIZE.copy(__NAME__)
+BKGR_MASK_CONVOLVE_SIZE.value = 7
+
+#    If a pixel has this or more "dark" neighbours, we consider it dark
+#        regardless of its initial value
+BKGR_N_BAD_NEIGHBOURS = BKGR_N_BAD_NEIGHBOURS.copy(__NAME__)
+BKGR_N_BAD_NEIGHBOURS.value = 3
