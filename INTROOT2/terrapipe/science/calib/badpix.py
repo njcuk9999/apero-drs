@@ -246,7 +246,7 @@ def locate_bad_pixels_full(params, image):
     """
     func_name = __NAME__ + '.locate_bad_pixels_full()'
     # log that we are looking for bad pixels
-    WLOG(params, '', WLOG('40-012-00002'))
+    WLOG(params, '', TextEntry('40-012-00002'))
     # get parameters from p
     filename = params['BADPIX_FULL_FLAT']
     threshold = params['BADPIX_FULL_THRESHOLD']
@@ -272,7 +272,7 @@ def locate_bad_pixels_full(params, image):
     # -------------------------------------------------------------------------
     # log results
     badpix_stats = (np.sum(mask) / np.array(mask).size) * 100
-    WLOG(params, '', TextEntry('40-12-00004', args=[badpix_stats]))
+    WLOG(params, '', TextEntry('40-012-00004', args=[badpix_stats]))
     # return mask
     return mask, badpix_stats
 
