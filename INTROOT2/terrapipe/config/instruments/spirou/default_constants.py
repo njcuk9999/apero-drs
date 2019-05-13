@@ -28,8 +28,16 @@ DATA_ENGINEERING.value = './data/spirou/engineering/'
 # =============================================================================
 # Defines whether to by default combine images that are inputted at the same
 #   time
-COMBINE_IMAGES = COMBINE_IMAGES.copy(__NAME__)
-COMBINE_IMAGES.value = True
+INPUT_COMBINE_IMAGES = INPUT_COMBINE_IMAGES.copy(__NAME__)
+INPUT_COMBINE_IMAGES.value = True
+
+# Defines whether to, by default, flip images that are inputted
+INPUT_FLIP_IMAGE = INPUT_FLIP_IMAGE.copy(__NAME__)
+INPUT_FLIP_IMAGE.value = True
+
+# Defines whether to, by default, resize images that are inputted
+INPUT_RESIZE_IMAGE = INPUT_RESIZE_IMAGE.copy(__NAME__)
+INPUT_RESIZE_IMAGE.value = True
 
 # Defines the resized image
 IMAGE_X_LOW = IMAGE_X_LOW.copy(__NAME__)
@@ -165,9 +173,15 @@ HISTO_RANGE_HIGH.value = 0.8
 BADPIX_FULL_FLAT = BADPIX_FULL_FLAT.copy(__NAME__)
 BADPIX_FULL_FLAT.value = 'detector_flat_full.fits'
 
+#   Percentile to normalise to when normalising and median filtering
+#      image [percentage]
+BADPIX_NORM_PERCENTILE = BADPIX_NORM_PERCENTILE.copy(__NAME__)
+BADPIX_NORM_PERCENTILE.value = 90.0
+
+
 #   Define the median image in the x dimension over a boxcar of this width
 BADPIX_FLAT_MED_WID = BADPIX_FLAT_MED_WID.copy(__NAME__)
-BADPIX_FLAT_MED_WID.value = 7.0
+BADPIX_FLAT_MED_WID.value = 7
 
 #   Define the maximum differential pixel cut ratio
 BADPIX_FLAT_CUT_RATIO = BADPIX_FLAT_CUT_RATIO.copy(__NAME__)
