@@ -224,7 +224,7 @@ cal_pp.arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
-cal_badpix.name = 'cal_BADPIX_spirou.py'
+cal_badpix.name = 'cal_badpix_spirou.py'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
@@ -236,10 +236,10 @@ cal_badpix.run_order = 1
 cal_badpix.arg(pos=0, **directory)
 cal_badpix.kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
                  nargs='+', filelogic='exclusive', required=True,
-                 helpstr=Help['BADPIX_FLATFILE_HELP'])
+                 helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
 cal_badpix.kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
                  nargs='+', filelogic='exclusive', required=True,
-                 helpstr=Help['BADPIX_DARKFILE_HELP'])
+                 helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(default=True, **combine)
 cal_badpix.kwarg(**flipimage)
@@ -251,7 +251,7 @@ cal_badpix.kwarg(**resize)
 # -----------------------------------------------------------------------------
 # cal_dark_spirou
 # -----------------------------------------------------------------------------
-cal_dark.name = 'cal_DARK_spirou.py'
+cal_dark.name = 'cal_dark_spirou.py'
 cal_dark.instrument = __INSTRUMENT__
 cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
