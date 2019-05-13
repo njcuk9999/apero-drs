@@ -14,7 +14,9 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_UTC_OBS', 'KW_OUTPUT',
            'KW_EXT_TYPE', 'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
-           'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT']
+           'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
+           'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
+           'KW_BNILUM', 'KW_BTOT']
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
@@ -168,3 +170,27 @@ KW_DARK_R_MED = Keyword('KW_DARK_R_MED', key=0, dtype=float, source=__NAME__)
 
 # The threshold of the dark level to retain in ADU
 KW_DARK_CUT = Keyword('KW_DARK_CUT', key=0, dtype=float, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define cal_badpix variables
+# -----------------------------------------------------------------------------
+# fraction of hot pixels
+KW_BHOT = Keyword('KW_BHOT', key=0, dtype=float, source=__NAME__)
+
+# fraction of bad pixels from flat
+KW_BBFLAT = Keyword('KW_BBFLAT', key=0, dtype=float, source=__NAME__)
+
+# fraction of non-finite pixels in dark
+KW_BNDARK = Keyword('KW_BNDARK', key=0, dtype=float, source=__NAME__)
+
+# fraction of non-finite pixels in flat
+KW_BNFLAT = Keyword('KW_BNFLAT', key=0, dtype=float, source=__NAME__)
+
+# fraction of bad pixels with all criteria
+KW_BBAD = Keyword('KW_BBAD', key=0, dtype=float, source=__NAME__)
+
+# fraction of un-illuminated pixels (from engineering flat)
+KW_BNILUM = Keyword('KW_BNILUM', key=0, dtype=float, source=__NAME__)
+
+# fraction of total bad pixels
+KW_BTOT = Keyword('KW_BTOT', key=0, dtype=float, source=__NAME__)
