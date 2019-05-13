@@ -24,7 +24,7 @@ from terrapipe.science.calib import dark
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_DARK_spirou.py'
+__NAME__ = 'cal_dark_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -38,7 +38,7 @@ WLOG = config.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the DARK file
+# Define the output files
 DARK_FILE = file_definitions.out_dark
 SKY_FILE = file_definitions.out_sky
 
@@ -267,7 +267,7 @@ def __main__(recipe, params):
         # add output tag
         outfile.add_hkey('KW_OUTPUT', value=outfile.name)
         # add input files
-        outfile.add_hkey_1d('KW_INFILE1', values=rawfiles)
+        outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='darkfile')
         # add qc parameters
         outfile.add_qckeys(qc_params)
         # add blue/red/full detector parameters
@@ -287,9 +287,7 @@ def __main__(recipe, params):
         outfile.data = image0c
         # ------------------------------------------------------------------
         # log that we are saving rotated image
-        wargs = [outfile.filename]
-        WLOG(params, '', TextEntry('40-010-00009', args=wargs))
-        # ------------------------------------------------------------------
+        WLOG(params, '', TextEntry('40-010-00010', args=[outfile.filename]))
         # write image to file
         outfile.write()
         # ------------------------------------------------------------------
