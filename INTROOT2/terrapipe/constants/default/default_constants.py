@@ -17,7 +17,12 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
            'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
            'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX', 'HISTO_BINS',
-           'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH', 'QC_MAX_DARK']
+           'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH', 'QC_MAX_DARK',
+           'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
+           'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
+           'BKGR_BOXSIZE', 'BKGR_PERCENTAGE', 'BKGR_MASK_CONVOLVE_SIZE',
+           'BKGR_N_BAD_NEIGHBOURS']
+
 # set name
 __NAME__ = 'terrapipe.constants.default.default_constants'
 
@@ -161,3 +166,49 @@ HISTO_RANGE_LOW = Const('HISTO_RANGE_LOW', value=None, dtype=int,
                         source=__NAME__)
 HISTO_RANGE_HIGH = Const('HISTO_RANGE_LOW', value=None, dtype=int,
                         source=__NAME__)
+
+
+# =============================================================================
+# CALIBRATION: BAD PIXEL SETTINGS
+# =============================================================================
+#   Defines the full detector flat file (located in the data folder)
+BADPIX_FULL_FLAT = Const('BADPIX_FULL_FLAT', value=None, dtype=str,
+                         source=__NAME__)
+
+#   Define the median image in the x dimension over a             - [cal_badpix]
+#       boxcar of this width (formally wmed)
+BADPIX_FLAT_MED_WID = Const('BADPIX_FLAT_MED_WID', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0)
+
+#   Define the maximum differential pixel cut ratio
+BADPIX_FLAT_CUT_RATIO = Const('BADPIX_FLAT_CUT_RATIO', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0)
+
+#   Define the illumination cut parameter
+BADPIX_ILLUM_CUT = Const('BADPIX_ILLUM_CUT', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+#   Define the maximum flux in ADU/s to be considered too hot to be used
+BADPIX_MAX_HOTPIX = Const('BADPIX_MAX_HOTPIX', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+#   Defines the threshold on the full detector flat file to deem pixels as good
+BADPIX_FULL_THRESHOLD = Const('BADPIX_FULL_THRESHOLD', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0)
+
+#    Width of the box to produce the background mask
+BKGR_BOXSIZE = Const('BKGR_BOXSIZE', value=None, dtype=int,
+                     source=__NAME__, minimum=0)
+
+#    Do background percentile to compute minimum value (%)
+BKGR_PERCENTAGE = Const('BKGR_PERCENTAGE', value=None, dtype=float,
+                        source=__NAME__, minimum=0.0, maximum=100.0)
+
+#    Size in pixels of the convolve tophat for the background mask
+BKGR_MASK_CONVOLVE_SIZE = Const('BKGR_MASK_CONVOLVE_SIZE', value=None,
+                                dtype=float, source=__NAME__, minimum=0.0)
+
+#    If a pixel has this or more "dark" neighbours, we consider it dark
+#        regardless of its initial value
+BKGR_N_BAD_NEIGHBOURS = Const('BKGR_N_BAD_NEIGHBOURS', value=None, dtype=int,
+                              source=__NAME__, minimum=0)

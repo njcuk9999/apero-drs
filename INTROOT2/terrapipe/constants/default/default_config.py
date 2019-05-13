@@ -15,7 +15,8 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
            'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
-           'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME']
+           'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
+           'DRS_BADPIX_DATA']
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_config'
@@ -138,6 +139,10 @@ DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
 DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
                             value='./config/core/default',
                             source=__NAME__)
+
+#  where the bad pixel data are stored
+DRS_BADPIX_DATA = Const('DRS_BADPIX_DATA', dtype=str, source=__NAME__)
+
 
 # =============================================================================
 # DRS INDEXING SETTINGS
