@@ -46,7 +46,7 @@ backsub = dict(name='--backsub', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr=Help['COMBINE_HELP'], default_ref='COMBINE_IMAGES')
+               helpstr=Help['COMBINE_HELP'], default_ref='INPUT_COMBINE_IMAGES')
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=Help['DODARK_HELP'])
@@ -58,7 +58,8 @@ extractmethod = dict(name='--extractmethod', dtype='options',
 # -----------------------------------------------------------------------------
 extfiber = dict(name='--extfiber', dtype='options', default='ALL',
                 helpstr=Help['EXTFIBER_HELP'],
-                options=['ALL', 'AB', 'A', 'B', 'C'])
+                options=['ALL', 'AB', 'A', 'B', 'C'],
+                default_ref='INPUT_FLIP_IMAGE')
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
                  helpstr=Help['FLIPIMAGE_HELP'],
@@ -75,7 +76,7 @@ plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
             default_ref='DRS_PLOT', minimum=0, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
-              helpstr=Help['RESIZE_HELP'])
+              helpstr=Help['RESIZE_HELP'], default_ref='INPUT_RESIZE_IMAGE')
 
 # =============================================================================
 # File option definitions
@@ -233,16 +234,14 @@ cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
 cal_badpix.run_order = 1
 cal_badpix.arg(pos=0, **directory)
-cal_badpix.arg(name='flatfile', dtype='file', files=[sf.pp_flat_flat], pos=1,
-               filelogic='exclusive', helpstr=Help['BADPIX_FLATFILE_HELP'])
-cal_badpix.arg(name='darkfile', dtype='file', files=[sf.pp_dark_dark], pos=2,
-               filelogic='exclusive', helpstr=Help['BADPIX_DARKFILE_HELP'])
+cal_badpix.kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
+                 nargs='+', filelogic='exclusive', required=True,
+                 helpstr=Help['BADPIX_FLATFILE_HELP'])
+cal_badpix.kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
+                 nargs='+', filelogic='exclusive', required=True,
+                 helpstr=Help['BADPIX_DARKFILE_HELP'])
 cal_badpix.kwarg(**add_cal)
-cal_badpix.kwarg(**badfile)
-cal_badpix.kwarg(**dobad)
 cal_badpix.kwarg(default=True, **combine)
-cal_badpix.kwarg(**darkfile)
-cal_badpix.kwarg(**dodark)
 cal_badpix.kwarg(**flipimage)
 cal_badpix.kwarg(**fluxunits)
 cal_badpix.kwarg(**plot)
