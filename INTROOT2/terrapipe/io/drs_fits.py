@@ -308,6 +308,34 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
     return newimage
 
 
+def flip_image(params, image, fliprows=True, flipcols=True):
+    """
+    Flips the image in the x and/or the y direction
+
+    :param p: ParamDict, the constants parameter dictionary
+    :param image: numpy array (2D), the image
+    :param fliprows: bool, if True reverses row order (axis = 0)
+    :param flipcols: bool, if True reverses column order (axis = 1)
+
+    :return newimage: numpy array (2D), the flipped image
+    """
+    func_name = __NAME__ + '.flip_image()'
+    # raise error if image is not 2D
+    if len(image.shape) < 2:
+        eargs = [image.shape, func_name]
+        WLOG(params, 'error', TextEntry('09-002-00001', args=eargs))
+    # flip both dimensions
+    if fliprows and flipcols:
+        return image[::-1, ::-1]
+    # flip first dimension
+    elif fliprows:
+        return image[::-1, :]
+    # flip second dimension
+    elif flipcols:
+        return image[:, ::-1]
+    # if both false just return image (no operation done)
+    else:
+        return image
 
 
 # =============================================================================
