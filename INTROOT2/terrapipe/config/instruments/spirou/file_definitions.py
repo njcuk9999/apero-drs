@@ -251,7 +251,13 @@ out_sky = drs_finput('SKY', KW_OUTPUT='SKY', ext='.fits',
                       dbname='calibration', dbkey='SKYDARK')
 # -----------------------------------------------------------------------------
 # badpix out file
-out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX')
+out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
+                        ext='_badpixel.fits', outfunc=out.badpix_file,
+                        dbname='calibration', dbkey='BADPIX')
+out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
+                         ext='_bmap.fits', outfunc=out.backmap_file,
+                         dbname='calibration', dbkey='BKGRDMAP')
+
 # -----------------------------------------------------------------------------
 # loc
 out_loc_orderp_ab = drs_finput('LOC_ORDERP_AB', KW_OUTPUT='LOC_ORDERP_AB',
