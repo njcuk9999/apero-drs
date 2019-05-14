@@ -274,7 +274,7 @@ cal_dark.kwarg(**resize)
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
 # -----------------------------------------------------------------------------
-cal_loc.name = 'cal_loc_RAW_spirou.py'
+cal_loc.name = 'cal_loc_spirou.py'
 cal_loc.instrument = __INSTRUMENT__
 cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'

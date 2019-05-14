@@ -166,6 +166,16 @@ HISTO_RANGE_LOW.value = -0.2
 HISTO_RANGE_HIGH = HISTO_RANGE_HIGH.copy(__NAME__)
 HISTO_RANGE_HIGH.value = 0.8
 
+#    Define whether to use SKYDARK for dark corrections
+USE_SKYDARK_CORRECTION = USE_SKYDARK_CORRECTION.copy(__NAME__)
+USE_SKYDARK_CORRECTION.value = False
+
+#    If use_skydark_correction is True define whether we use
+#       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
+USE_SKYDARK_ONLY = USE_SKYDARK_ONLY.copy(__NAME__)
+USE_SKYDARK_ONLY.value = False
+
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL SETTINGS
 # =============================================================================
