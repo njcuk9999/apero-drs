@@ -180,16 +180,16 @@ def write_table(p, table, filename, fmt='fits', header=None):
             eargs = [fmt, func_name]
             WLOG(p, 'error', TextEntry('01-002-00007', args=eargs))
     # get and check for file lock file
-    lock, lock_file = drs_lock.check_fits_lock_file(p, filename)
+    lock, lock_file = drs_lock.check_lock_file(p, filename)
     # try to write table to file
     try:
         # write file
         table.write(filename, format=fmt, overwrite=True)
         # close lock file
-        drs_lock.close_fits_lock_file(p, lock, lock_file, filename)
+        drs_lock.close_lock_file(p, lock, lock_file, filename)
     except Exception as e:
         # close lock file
-        drs_lock.close_fits_lock_file(p, lock, lock_file, filename)
+        drs_lock.close_lock_file(p, lock, lock_file, filename)
         # log error
         eargs = [type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00008', args=eargs))
@@ -201,16 +201,16 @@ def write_table(p, table, filename, fmt='fits', header=None):
         for key in list(header.keys()):
             filehdr[key] = tuple(header[key])
         # get and check for file lock file
-        lock, lock_file = drs_lock.check_fits_lock_file(p, filename)
+        lock, lock_file = drs_lock.check_lock_file(p, filename)
         # try to write table to file
         try:
             # save data
             fits.writeto(filename, data, filehdr, overwrite=True)
             # close lock file
-            drs_lock.close_fits_lock_file(p, lock, lock_file, filename)
+            drs_lock.close_lock_file(p, lock, lock_file, filename)
         except Exception as e:
             # close lock file
-            drs_lock.close_fits_lock_file(p, lock, lock_file, filename)
+            drs_lock.close_lock_file(p, lock, lock_file, filename)
             # log error
             eargs = [type(e), e, func_name]
             WLOG(p, 'error', TextEntry('01-002-00009', args=eargs))
@@ -453,16 +453,16 @@ def write_fits_table(p, astropy_table, output_filename):
         WLOG(p, 'error', TextEntry('01-002-00016', args=eargs))
 
     # get and check for file lock file
-    lock, lock_file = drs_lock.check_fits_lock_file(p, output_filename)
+    lock, lock_file = drs_lock.check_lock_file(p, output_filename)
     # write data
     try:
         # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
         # close lock file
-        drs_lock.close_fits_lock_file(p, lock, lock_file, output_filename)
+        drs_lock.close_lock_file(p, lock, lock_file, output_filename)
     except Exception as e:
         # close lock file
-        drs_lock.close_fits_lock_file(p, lock, lock_file, output_filename)
+        drs_lock.close_lock_file(p, lock, lock_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
