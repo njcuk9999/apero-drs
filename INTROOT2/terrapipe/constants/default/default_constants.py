@@ -23,6 +23,7 @@ __all__ = ['PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
            'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
            'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
+           'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY',
             # badpix constants
            'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
            'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -183,6 +184,14 @@ HISTO_RANGE_LOW = Const('HISTO_RANGE_LOW', value=None, dtype=int,
 HISTO_RANGE_HIGH = Const('HISTO_RANGE_LOW', value=None, dtype=int,
                         source=__NAME__)
 
+#    Define whether to use SKYDARK for dark corrections
+USE_SKYDARK_CORRECTION = Const('USE_SKYDARK_CORRECTION', value=None,
+                               dtype=bool, source=__NAME__)
+
+#    If use_skydark_correction is True define whether we use
+#       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
+USE_SKYDARK_ONLY = Const('USE_SKYDARK_ONLY', value=None, dtype=bool,
+                         source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL SETTINGS
