@@ -271,9 +271,9 @@ def main_end_script(params, success, outputs='reduced', end=True):
     # construct a lock file name
     opath = pconstant.INDEX_LOCK_FILENAME(params)
     # index if we have outputs
-    if outputs is not None:
+    if (outputs is not None) and success:
         # get and check for file lock file
-        lock, lock_file = drs_lock.check_fits_lock_file(params, opath)
+        lock, lock_file = drs_lock.check_lock_file(params, opath)
         # Must now deal with errors and make sure we close the lock file
         try:
             if outputs == 'pp':
@@ -283,13 +283,13 @@ def main_end_script(params, success, outputs='reduced', end=True):
                 # index outputs to reduced dir
                 _index_outputs(params)
             # close lock file
-            drs_lock.close_fits_lock_file(params, lock, lock_file, opath)
+            drs_lock.close_lock_file(params, lock, lock_file, opath)
         # Must close lock file
         except SystemExit as e:
-            drs_lock.close_fits_lock_file(params, lock, lock_file, opath)
+            drs_lock.close_lock_file(params, lock, lock_file, opath)
             raise e
         except Exception as e:
-            drs_lock.close_fits_lock_file(params, lock, lock_file, opath)
+            drs_lock.close_lock_file(params, lock, lock_file, opath)
             raise e
     # -------------------------------------------------------------------------
     # log end message
