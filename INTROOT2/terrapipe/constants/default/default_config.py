@@ -15,8 +15,8 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
            'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
-           'DB_MAX_WAIT', 'FITSOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
-           'DRS_BADPIX_DATA']
+           'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
+           'DRS_BADPIX_DATA', 'CALIB_DB_MATCH']
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_config'
@@ -165,7 +165,7 @@ DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,
                     source=__NAME__)
 
 # file max wait
-FITSOPEN_MAX_WAIT = Const('FITSOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
+LOCKOPEN_MAX_WAIT = Const('LOCKOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
                           source=__NAME__)
 
 # the telluric database name
@@ -175,6 +175,18 @@ TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
 # the calibration database name
 CALIB_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
                       value='master_calib.txt')
+
+#   Define the match type for calibDB files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+CALIB_DB_MATCH = Const('CALIB_DB_MATCH', dtype=str, source=__NAME__,
+                       value='closest')
 
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
