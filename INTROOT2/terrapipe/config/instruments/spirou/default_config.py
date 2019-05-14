@@ -85,8 +85,8 @@ DB_MAX_WAIT = DB_MAX_WAIT.copy(__NAME__)
 DB_MAX_WAIT.value = 600
 
 # file max wait
-FITSOPEN_MAX_WAIT = FITSOPEN_MAX_WAIT.copy(__NAME__)
-FITSOPEN_MAX_WAIT.value = 600
+LOCKOPEN_MAX_WAIT = LOCKOPEN_MAX_WAIT.copy(__NAME__)
+LOCKOPEN_MAX_WAIT.value = 600
 
 # the telluric database name
 TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
@@ -95,6 +95,18 @@ TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
 # the calibration database name
 CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
 CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
+
+#   Define the match type for calibDB files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
+CALIB_DB_MATCH.value = 'closest'
 
 # =============================================================================
 # DRS INTERNAL PATHS
