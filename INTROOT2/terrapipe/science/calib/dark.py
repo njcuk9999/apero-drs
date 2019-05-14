@@ -11,12 +11,15 @@ Created on 2019-03-25 at 12:29
 """
 from __future__ import division
 import numpy as np
+import os
 import warnings
 
 from terrapipe import constants
 from terrapipe.config import drs_log
 from terrapipe import locale
 from terrapipe.config import drs_file
+from terrapipe.config.core import drs_database
+from terrapipe.io import drs_fits
 
 # =============================================================================
 # Define variables
@@ -136,6 +139,133 @@ def measure_dark_badpix(params, image, nanmask):
     WLOG(params, 'info', TextEntry('40-011-00007', args=wargs))
     # return dadeadall
     return baddark, dadeadall
+
+
+def correction(params, image, header, nfiles=1, return_dark=False):
+    """
+    Corrects "image" for "dark" using calibDB file (header must contain
+    value of p['ACQTIME_KEY'] as a keyword)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                nbframes: int, the number of frames/files (usually the length
+                          of "arg_file_names")
+                calibDB: dictionary, the calibration database dictionary
+                         (if not in "p" we construct it and need "max_time_unix"
+                max_time_unix: float, the unix time to use as the time of
+                                reference (used only if calibDB is not defined)
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param image: numpy array (2D), the image
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+    :param nfiles: int or None, number of files that created image (need to
+                   multiply by this to get the total dark) if None uses
+                   p['NBFRAMES']
+    :param return_dark: bool, if True returns corrected_image and dark
+                        if False (default) returns corrected_image
+
+    :return corrected_image: numpy array (2D), the dark corrected image
+                             only returned if return_dark = True:
+    :return darkimage: numpy array (2D), the dark
+    """
+    func_name = __NAME__ + '.correct_for_dark()'
+    # get constants from p
+    use_sky = params['USE_SKYDARK_CORRECTION']
+    skydark_only = params['USE_SKYDARK_ONLY']
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+
+    # -------------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+
+    # get filename col
+    filecol, timecol = cdb.file_col, cdb.time_col
+
+    # get the dark entries
+    darkentries = drs_database.get_key_from_db(params, 'DARK', cdb, header,
+                                               n_ent=1, required=False)
+    # get the sky entries
+    skyentries = drs_database.get_key_from_db(params, 'SKYDARK', cdb, header,
+                                              n_ent=1, required=False)
+    # get the time used from header
+    usetime = drs_database.get_header_time(params, cdb, header)
+
+    # -------------------------------------------------------------------------
+    # try to read 'DARK' from cdb
+    if len(darkentries) > 0:
+        darkfilename = darkentries[filecol][0]
+        darkfile = os.path.join(params['DRS_CALIB_DB'], darkfilename)
+        darktime = darkentries[timecol][0]
+    else:
+        darkfile = None
+        darktime = None
+    # try to read 'SKYDARK' from cdb
+    if len(skyentries) > 0:
+        skydarkfilename = skyentries[filecol][0]
+        skydarkfile = os.path.join(params['DRS_CALIB_DB'], skydarkfilename)
+        skytime = skyentries[timecol][0]
+    else:
+        skydarkfile = None
+        skytime = None
+
+    # -------------------------------------------------------------------------
+    # load the correct dark image
+    # -------------------------------------------------------------------------
+    # setup logic used in multiple
+    cond1 = skydarkfile is not None
+    cond2 = darkfile is not None
+    # if we have both darkfile and skydarkfile use the closest
+    if use_sky and cond1 and cond2 and (not skydark_only):
+        # find closest to obs time
+        pos = np.argmin(abs(np.array([skytime, darktime]) - usetime))
+        if pos == 0:
+            use_file, use_type = str(skydarkfile), 'SKY'
+        else:
+            use_file, use_type = str(darkfile),  'DARK'
+    # else if we only have sky
+    elif use_sky and cond1:
+        use_file, use_type = str(skydarkfile), 'SKY'
+    # else if only have a dark
+    elif cond2:
+        use_file, use_type = str(darkfile), 'DARK'
+    # else we don't have either --> error
+    else:
+        # deal with extra constrain on file from "closer/older"
+        comptype = params.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = textdict['00-011-00004'].format(usetime)
+        else:
+            extstr = ''
+        # log error
+        eargs = [cdb.abspath, extstr, func_name]
+        if use_sky and (not skydark_only):
+            emsg1 = TextEntry('00-011-00001', args=eargs)
+        elif use_sky and skydark_only:
+            emsg1 = TextEntry('00-011-00003', args=eargs)
+        else:
+            emsg1 = TextEntry('00-011-00002', args=eargs)
+        WLOG(params, 'error', emsg1)
+        use_file, use_type = None, None
+    # -------------------------------------------------------------------------
+    # do dark using correct file
+    darkimage, dhdr = drs_fits.read(params, use_file, gethdr=True)
+    # Read dark file
+    wargs = [use_type, use_file]
+    WLOG(params, '', TextEntry('40-011-00011', args=wargs))
+    corrected_image = image - (darkimage * nfiles)
+    # -------------------------------------------------------------------------
+    # get the dark filename (from header)
+    params['DARKFILE'] = os.path.basename(use_file)
+    params.set_source('DARKFILE', func_name)
+
+    # finally return datac
+    if return_dark:
+        return params, corrected_image, darkimage
+    else:
+        return params, corrected_image
 
 
 # =============================================================================
