@@ -16,10 +16,11 @@ from terrapipe import constants
 from terrapipe import config
 from terrapipe import locale
 from terrapipe.config.core import drs_database
-from terrapipe.config.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import dark
-
+from terrapipe.science.calib import badpix
+from terrapipe.science.calib import background
+from terrapipe.science.calib import localisation
 
 # =============================================================================
 # Define variables
@@ -140,27 +141,49 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correction of DARK
         # ------------------------------------------------------------------
+        # image 1 is corrected for dark
         params, image1 = dark.correction(params, image, header, len(rawfiles))
+
+        # ------------------------------------------------------------------
+        # Flip images
+        # ------------------------------------------------------------------
+        # image 2 is flipped (if required)
+        if params['INPUT_FLIP_IMAGE']:
+            # flip flat
+            image2 = drs_fits.flip_image(params, image1)
+        else:
+            image2 = np.array(image1)
 
         # ------------------------------------------------------------------
         # Resize image
         # ------------------------------------------------------------------
-        # TODO: complete
+        # image 2 is resized (if required)
+        if params['INPUT_RESIZE_IMAGE']:
+            # get resize size
+            sargs = dict(xlow=params['IMAGE_X_LOW'],
+                         xhigh=params['IMAGE_X_HIGH'],
+                         ylow=params['IMAGE_Y_LOW'],
+                         yhigh=params['IMAGE_Y_HIGH'])
+            # resize flat
+            image2 = drs_fits.resize(params, image2, **sargs)
 
         # ------------------------------------------------------------------
         # Correct for the BADPIX mask (set all bad pixels to NaNs)
         # ------------------------------------------------------------------
-        # TODO: complete
+        # image 3 is corrected for bad pixels
+        params, image3 = badpix.correction(params, image2, header)
 
         # ------------------------------------------------------------------
         # Background computation
         # ------------------------------------------------------------------
-        # TODO: complete
+        # image 4 is corrected for background
+        params, image4 = background.correction(recipe, params, infile,
+                                               image3, header)
 
         # ------------------------------------------------------------------
         # Construct image order_profile
         # ------------------------------------------------------------------
-        # TODO: complete
+        order_profile = localisation.calculate_order_profile(params, image4)
 
         # ------------------------------------------------------------------
         # Write image order_profile to file
