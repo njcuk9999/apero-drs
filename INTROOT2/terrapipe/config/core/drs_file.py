@@ -19,7 +19,7 @@ from collections import OrderedDict
 from . import drs_log
 from terrapipe import constants
 from terrapipe.locale import drs_text
-
+from terrapipe.io import drs_fits
 
 # =============================================================================
 # Define variables
@@ -358,8 +358,12 @@ class DrsFitsFile(DrsInputFile):
         self.index = kwargs.get('index', None)
         # set additional attributes
         self.shape = kwargs.get('shape', None)
-        self.hdict = kwargs.get('hdict', fits.Header())
+        self.hdict = kwargs.get('hdict', drs_fits.Header())
         self.output_dict = kwargs.get('output_dict', OrderedDict())
+        self.datatype = kwargs.get('datatype', 'image')
+        self.dtype = kwargs.get('dtype', None)
+        self.data_array = None
+        self.header_array = None
 
     def get_header_keys(self, kwargs):
         # add values to the header
@@ -408,6 +412,8 @@ class DrsFitsFile(DrsInputFile):
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         kwargs['dbname'] = kwargs.get('dbname', self.dbname)
         kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
+        kwargs['datatype'] = kwargs.get('datatype', self.datatype)
+        kwargs['dtype'] = kwargs.get('dtype', self.dtype)
         for key in self.required_header_keys:
             kwargs[key] = self.required_header_keys[key]
         self.get_header_keys(kwargs)
@@ -473,6 +479,8 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         nkwargs['dbname'] = kwargs.get('dbname', self.dbname)
         nkwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
+        nkwargs['datatype'] = kwargs.get('datatype', self.datatype)
+        nkwargs['dtype'] = kwargs.get('dtype', self.dtype)
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
 
@@ -738,7 +746,7 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
-    def read(self, ext=None, hdr_ext=0, check=True):
+    def read(self, ext=None, check=True):
         """
         Read this fits file data and header
 
@@ -760,54 +768,20 @@ class DrsFitsFile(DrsInputFile):
         params = self.recipe.drs_params
         # check that filename is set
         self.check_filename()
-        # attempt to open hdu of fits file
-        try:
-            hdu = fits.open(self.filename)
-        except Exception as e:
-            eargs = [self.basename, type(e), e, func_name]
-            self.__error__(TextEntry('01-001-00006', args=eargs))
-            hdu = None
-        # get the number of fits files in filename
-        try:
-            n_ext = len(hdu)
-        except Exception as e:
-            self.__warning__(TextEntry('10-001-00005', args=[type(e), e]))
-            n_ext = None
-        # deal with unknown number of extensions
-        if n_ext is None:
-            data, header = deal_with_bad_header(params, hdu, self.filename)
-        # else get the data and header based on how many extnesions there are
-        else:
-            # deal with extension number
-            if n_ext == 1 and ext is None:
-                ext = 0
-            elif n_ext > 1 and ext is None:
-                ext = 1
-            # try to open the data
-            try:
-                data = hdu[ext].data
-            except Exception as e:
-                eargs = [self.basename, ext, type(e), e, func_name]
-                self.__error__(TextEntry('01-001-00007', args=eargs))
-                data = None
-            # try to open the header
-            try:
-                header = hdu[hdr_ext].header
-            except Exception as e:
-                eargs = [self.basename, ext, type(e), e, func_name]
-                self.__error__(TextEntry('01-001-00008', args=eargs))
-                data = None
-                header = None
-        # close the HDU
-        if hdu is not None:
-            hdu.close()
 
-        # push into storage
-        # TODO: Note this used to be "self.data = np.array(data)"
-        # TODO:    But this is over 55% of the time of this function
-        # TODO     May be needed if "data" linked to "hdu"
-        self.data = data
-        self.header = fits.Header(header)
+        # get data format
+        if self.datatype == 'image':
+            fmt = 'fits-image'
+        elif self.datatype == 'table':
+            fmt = 'fits-table'
+        else:
+            fmt = None
+
+        out = drs_fits.read(params, self.filename, getdata=True, gethdr=True,
+                            fmt=fmt, ext=ext)
+
+        self.data = out[0]
+        self.header = drs_fits.Header.from_fits_header(out[1])
         # set the shape
         if self.data is not None:
             self.shape = self.data.shape
@@ -816,23 +790,24 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.read_data()'
         # check that filename is set
         self.check_filename()
-        # try to open header
-        try:
-            self.data = fits.getdata(self.filename, ext=ext)
-        except Exception as e:
-            eargs = [self.basename, ext, type(e), e, func_name]
-            self.__error__(TextEntry('01-001-00009', args=eargs))
+        # get params
+        params = self.recipe.drs_params
+        # get data
+        data = drs_fits.read(params, self.filename, ext=ext)
+        # assign to object
+        self.data = data
 
     def read_header(self, ext=0):
         func_name = __NAME__ + '.DrsFitsFile.read_header()'
         # check that filename is set
         self.check_filename()
-        # try to open header
-        try:
-            self.header = fits.getheader(self.filename, ext=ext)
-        except Exception as e:
-            eargs = [self.basename, ext, type(e), e, func_name]
-            self.__error__(TextEntry('01-001-00010', args=eargs))
+        # get params
+        params = self.recipe.drs_params
+        # get header
+        header = drs_fits.read_header(params, self.filename, ext=ext)
+        # assign to object
+        self.header = header
+
 
     def check_read(self):
         # check that data/header/comments is not None
@@ -841,8 +816,32 @@ class DrsFitsFile(DrsInputFile):
             eargs = [func, func + '.read()']
             self.__error__(TextEntry('00-001-00004', args=eargs))
 
-    def read_multi(self):
-        pass
+    def read_multi(self, ext=None, check=True):
+        func_name = __NAME__ + '.DrsFitsFile.read()'
+        # check if we have data set
+        if check:
+            cond1 = self.data is not None
+            cond2 = self.header is not None
+            if cond1 and cond2:
+                return True
+        # get params
+        params = self.recipe.drs_params
+        # check that filename is set
+        self.check_filename()
+        # get data format
+        out = drs_fits.read(params, self.filename, getdata=True, gethdr=True,
+                            fmt='fits-multi')
+
+        self.data = out[0][0]
+        self.header = drs_fits.Header.from_fits_header(out[1][0])
+        self.data_array = out[0]
+        # append headers (as copy)
+        self.header_array = []
+        for header in out[1]:
+            self.header_array.append(drs_fits.Header.from_fits_header(header))
+        # set the shape
+        if self.data is not None:
+            self.shape = self.data.shape
 
     def write(self, dtype=None):
         func_name = __NAME__ + '.DrsFitsFile.write()'
@@ -851,58 +850,35 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # check that filename is set
         self.check_filename()
-        # ---------------------------------------------------------------------
-        # check if file exists and remove it if it does
-        if os.path.exists(self.filename):
-            try:
-                os.remove(self.filename)
-            except Exception as e:
-                eargs = [self.basename, type(e), e, func_name]
-                self.__error__(TextEntry('01-001-00003', args=eargs))
-        # ---------------------------------------------------------------------
-        # create the primary hdu
-        try:
-            hdu = fits.PrimaryHDU(self.data)
-        except Exception as e:
-            eargs = [type(e), e, func_name]
-            self.__error__(TextEntry('01-001-00004', args=eargs))
-            hdu = None
-        # force type
-        if dtype is not None:
-            hdu.scale(type=dtype, **SCALEARGS)
-        # ---------------------------------------------------------------------
-        # add header keys to the hdu header
-        if self.hdict is not None:
-            for key in list(self.hdict.keys()):
-                hdu.header[key] = self.hdict[key]
-        # ---------------------------------------------------------------------
         # write to file
-        with warnings.catch_warnings(record=True) as w:
-            try:
-                hdu.writeto(self.filename, overwrite=True)
-            except Exception as e:
-                eargs = [self.basename, type(e), e, func_name]
-                self.__error__(TextEntry('01-001-00005', args=eargs))
-        # ---------------------------------------------------------------------
-        # ignore truncated comment warning since spirou images have some poorly
-        #   formatted header cards
-        w1 = []
-        for warning in w:
-            # Note: cannot change language as we are looking for python error
-            #       this is in english and shouldn't be changed
-            wmsg = 'Card is too long, comment will be truncated.'
-            if wmsg != str(warning.message):
-                w1.append(warning)
-        # add warnings to the warning logger and log if we have them
-        drs_log.warninglogger(params, w1)
+        drs_fits.write(params, self.filename, self.data, self.header,
+                       self.datatype, self.dtype, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
         # add output to outfiles
         params['OUTFILES'][self.basename] = self.output_dict
 
-    def write_multi(self):
-        pass
+    def write_multi(self, data_list, header_list, datatype_list, dtype_list):
+        func_name = __NAME__ + '.DrsFitsFile.write_multi()'
+        # get params
+        params = self.recipe.drs_params
+        # ---------------------------------------------------------------------
+        # check that filename is set
+        self.check_filename()
+        # get data and header lists
+        data_list = [self.data] + data_list
+        header_list = [self.header] + header_list
+        datatype_list = [self.datatype] + datatype_list
+        dtype_list = [self.dtype] + dtype_list
+        # write to file
+        drs_fits.write(params, self.filename, data_list, header_list,
+                       datatype_list, dtype_list, func=func_name)
+        # ---------------------------------------------------------------------
+        # write output dictionary
+        self.output_dictionary()
+        # add output to outfiles
+        params['OUTFILES'][self.basename] = self.output_dict
 
     def output_dictionary(self):
         """
@@ -1201,7 +1177,8 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
-    def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None):
+    def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None,
+                           allkeys=False):
         """
         Copies keys from hdr dictionary to DrsFile.hdict,
         if forbid_keys is True some keys will not be copied
@@ -1224,43 +1201,40 @@ class DrsFitsFile(DrsInputFile):
 
         :return None:
         """
-
         # get pconstant
         pconstant = self.recipe.drs_pconstant
         # get drs_file header/comments
         if drs_file is None:
             self.check_read()
             fileheader = self.header
-            filecomments = self.header.comments
         else:
             # check that data/header is read
             drs_file.check_read()
             fileheader = drs_file.header
-            filecomments = drs_file.header.comments
-        # loop around keys in header
-        for key in list(fileheader.keys()):
-            if root is not None:
-                if key.startswith(root):
-                    # if key in "comments" add it as a tuple else
-                    #    comments is blank
-                    if key in filecomments:
-                        self.hdict[key] = (fileheader[key], filecomments[key])
-                    else:
-                        self.hdict[key] = (fileheader[key], '')
 
-            # skip if key is forbidden keys
+        def __keep_card(card):
+            key = card[0]
+            if root is not None:
+                if not key.startswith(root):
+                    return False
+            # skip if key is forbidden key
             if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEYS()):
-                continue
+                return False
+            # skip if key is drs forbidden key (unless allkeys)
+            elif (key in pconstant.FORBIDDEN_DRS_KEY()) and (not allkeys):
+                return False
             # skip if key added temporarily in code (denoted by @@@)
             elif '@@@' in key:
-                continue
-            # else add key to hdict
+                return False
+            # skip QC keys (unless allkeys)
+            elif is_forbidden_prefix(pconstant, key) and (not allkeys):
+                return False
             else:
-                # if key in "comments" add it as a tuple else comments is blank
-                if key in filecomments:
-                    self.hdict[key] = (fileheader[key], filecomments[key])
-                else:
-                    self.hdict[key] = (fileheader[key], '')
+                return True
+        # filter and create new header
+        copy_cards = filter(__keep_card, fileheader.cards)
+        self.hdict = drs_fits.Header(copy_cards)
+        # return True to show completed successfully
         return True
 
     def add_hkey(self, key=None, keyword=None, value=None, comment=None):
@@ -1707,6 +1681,14 @@ def test_for_formatting(key, number):
         return '{0}{1}'.format(key, number)
     else:
         return test_str
+
+
+def is_forbidden_prefix(pconstant, key):
+    cond = False
+    for prefix in pconstant.FORBIDDEN_HEADER_PREFIXES():
+        if key.startswith(prefix):
+            cond = True
+    return cond
 
 
 # =============================================================================
