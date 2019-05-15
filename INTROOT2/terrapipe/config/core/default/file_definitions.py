@@ -16,11 +16,12 @@ Created on 2018-10-31 at 18:06
 from terrapipe import constants
 from terrapipe.config import drs_file
 
+from . import output_filenames as out
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'recipe_definitions.py'
+__NAME__ = 'config.core.default.file_definitions.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -53,6 +54,13 @@ pp_file = drs_finput('DRS_PP', ext='pp.fits')
 # =============================================================================
 # generic out file
 out_file = drs_finput('DRS_OUTPUT')
+
+
+# =============================================================================
+# Debug Files
+# =============================================================================
+debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
+                        ext='background_{0}.fits', outfunc=out.debug_back)
 
 
 # =============================================================================
