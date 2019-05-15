@@ -63,21 +63,21 @@ TEST_RUN = False
 TEST_STORE = []
 # -----------------------------------------------------------------------------
 # switches
-RUN_BADPIX = True
-RUN_DARK = True
-RUN_LOC = True
-RUN_SLIT = True
-RUN_SHAPE = True
-RUN_FLAT = True
-RUN_EXTRACT_HCFP = True
-RUN_HC_WAVE = True
-RUN_WAVE_WAVE = True
-RUN_EXTRACT_TELLU = False
-RUN_EXTRACT_OBJ = False
+RUN_BADPIX = False
+RUN_DARK = False
+RUN_LOC = False
+RUN_SLIT = False
+RUN_SHAPE = False
+RUN_FLAT = False
+RUN_EXTRACT_HCFP = False
+RUN_HC_WAVE = False
+RUN_WAVE_WAVE = False
+RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
-RUN_OBJ_MK_TELLU = False
-RUN_OBJ_FIT_TELLU = False
+RUN_OBJ_MK_TELLU = True
+RUN_OBJ_FIT_TELLU = True
 # -----------------------------------------------------------------------------
 # skip found files
 SKIP_DONE_PP = True
@@ -90,7 +90,7 @@ SKIP_DONE_FIT_TELLU = False
 # turn on parallelisation
 PARALLEL = True
 # Max Processes
-MAX_PROCESSES = 5
+MAX_PROCESSES = 8
 # -----------------------------------------------------------------------------
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -101,8 +101,9 @@ INPUT_MK_TELLU = '_e2dsff_AB.fits'
 INPUT_FIT_TELLU = '_e2dsff_AB.fits'
 # -----------------------------------------------------------------------------
 # define the science targets
-SCIENCE_TARGETS = ['Gl699', 'Gl15A']
+# SCIENCE_TARGETS = ['Gl699', 'Gl15A']
 # SCIENCE_TARGETS = ['HD189733', 'GJ1002']
+SCIENCE_TARGETS = ['Gl699', 'Gl15A', 'HD189733', 'GJ1002']
 # -----------------------------------------------------------------------------
 # define run number
 RUNNUMBER = 0
