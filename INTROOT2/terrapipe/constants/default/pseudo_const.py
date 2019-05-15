@@ -41,6 +41,26 @@ class PseudoConstants:
         # return keys
         return forbidden_keys
 
+    # noinspection PyPep8Naming
+    def FORBIDDEN_HEADER_PREFIXES(self):
+        """
+        Define the QC keys prefixes that should not be copied (i.e. they are
+        just for the input file not the output file)
+
+        :return keys:
+        """
+        prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
+        # return keys
+        return prefixes
+
+    # noinspection PyPep8Naming
+    def FORBIDDEN_DRS_KEY(self):
+        # DRS OUTPUT KEYS
+        forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
+                          'DRSOUTID']
+        # return keys
+        return forbidden_keys
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
