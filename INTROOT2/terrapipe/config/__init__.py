@@ -41,6 +41,9 @@ end = drs_startup.exit_script
 # The logging script
 wlog = drs_log.wlog
 
+# param checking function
+pcheck = drs_log.find_param
+
 
 # =============================================================================
 # End of code
