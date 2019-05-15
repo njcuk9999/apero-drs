@@ -10,7 +10,7 @@ from terrapipe.constants.default.default_constants import *
 # TODO: Note: If variables are not showing up MUST CHECK __all__ definition
 # TODO:    in import * module
 
-__NAME__ = 'terrapipe.config.instruments.spirou.default_constants'
+__NAME__ = 'config.instruments.spirou.default_constants.py'
 
 # =============================================================================
 # Spirou Constant definitions
@@ -177,7 +177,7 @@ USE_SKYDARK_ONLY.value = False
 
 
 # =============================================================================
-# CALIBRATION: BAD PIXEL SETTINGS
+# CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
 #   Defines the full detector flat file (located in the data folder)
 BADPIX_FULL_FLAT = BADPIX_FULL_FLAT.copy(__NAME__)
@@ -209,6 +209,10 @@ BADPIX_MAX_HOTPIX.value = 5.0
 BADPIX_FULL_THRESHOLD = BADPIX_FULL_THRESHOLD.copy(__NAME__)
 BADPIX_FULL_THRESHOLD.value = 0.3
 
+
+# =============================================================================
+# CALIBRATION: BACKGROUND CORRECTION SETTINGS
+# =============================================================================
 #    Width of the box to produce the background mask
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
 BKGR_BOXSIZE.value = 128
@@ -225,3 +229,33 @@ BKGR_MASK_CONVOLVE_SIZE.value = 7
 #        regardless of its initial value
 BKGR_N_BAD_NEIGHBOURS = BKGR_N_BAD_NEIGHBOURS.copy(__NAME__)
 BKGR_N_BAD_NEIGHBOURS.value = 3
+
+#    Do background measurement (True or False)
+BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
+BKGR_NO_SUBTRACTION.value = False
+
+#    Kernel amplitude determined from drs_local_scatter.py
+BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
+BKGR_KER_AMP.value = 47
+
+#    Background kernel width in in x and y [pixels]
+BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)
+BKGR_KER_WX.value = 1
+BKGR_KER_WY = BKGR_KER_WY.copy(__NAME__)
+BKGR_KER_WY.value = 9
+
+#    construct a convolution kernel. We go from -BKGR_KER_SIG to
+#        +BKGR_KER_SIG sigma in each direction. Its important no to
+#        make the kernel too big as this slows-down the 2D convolution.
+#        Do NOT make it a -10 to +10 sigma gaussian!
+BKGR_KER_SIG = BKGR_KER_SIG.copy(__NAME__)
+BKGR_KER_SIG.value = 3
+
+
+# =============================================================================
+# CALIBRATION: LOCALISATION SETTINGS
+# =============================================================================
+#   Size of the order_profile smoothed box
+#     (from pixel - size to pixel + size)
+LOC_ORDERP_BOX_SIZE = LOC_ORDERP_BOX_SIZE.copy(__NAME__)
+LOC_ORDERP_BOX_SIZE.value = 5

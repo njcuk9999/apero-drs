@@ -10,7 +10,7 @@ from terrapipe.constants.default.default_keywords import *
 # TODO: Note: If variables are not showing up MUST CHECK __all__ definition
 # TODO:    in import * module
 
-__NAME__ = 'terrapipe.config.instruments.spirou.default_keywords'
+__NAME__ = 'config.instruments.spirou.default_keywords.py'
 
 # -----------------------------------------------------------------------------
 # Required header keys (main fits file)

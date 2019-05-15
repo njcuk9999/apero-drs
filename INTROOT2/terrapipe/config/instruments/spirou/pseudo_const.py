@@ -17,7 +17,7 @@ from terrapipe.constants.default import pseudo_const
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'spirou.pseudo_const'
+__NAME__ = 'config.instruments.spirou.pseudo_const'
 __INSTRUMENT__ = 'SPIROU'
 # get parameters
 PARAMS = constants.load(__INSTRUMENT__)

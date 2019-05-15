@@ -9,7 +9,7 @@ from . import file_definitions as sf
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'recipe_definitions.py'
+__NAME__ = 'config.instruments.spirou.recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
