@@ -15,10 +15,12 @@ import warnings
 import os
 from scipy.ndimage import filters
 
+from terrapipe import config
 from terrapipe import constants
-from terrapipe.config import drs_log
 from terrapipe import locale
+from terrapipe.config import drs_log
 from terrapipe.config import drs_file
+from terrapipe.config.core import drs_database
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 
@@ -43,13 +45,14 @@ WLOG = drs_log.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
+# alias pcheck
+pcheck = config.pcheck
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def normalise_median_flat(params, image, method='new', wmed=None,
-                          percentile=None):
+def normalise_median_flat(params, image, method='new', **kwargs):
     """
     Applies a median filter and normalises. Median filter is applied with width
     "wmed" or p["BADPIX_FLAT_MED_WID"] if wmed is None) and then normalising by
@@ -68,10 +71,12 @@ def normalise_median_flat(params, image, method='new', wmed=None,
     :param method: string, "new" or "old" if "new" uses np.nanpercentile else
                    sorts the flattened image and takes the "percentile" (i.e.
                    90th) pixel value to normalise
-    :param wmed: float or None, if not None defines the median filter width
+    :param kwargs: keyword arguments
+
+    :keyword wmed: float or None, if not None defines the median filter width
                  if None uses p["BADPIX_MED_WID", see
                  scipy.ndimage.filters.median_filter "size" for more details
-    :param percentile: float or None, if not None degines the percentile to
+    :keyword percentile: float or None, if not None degines the percentile to
                        normalise the image at, if None used from
                        p["BADPIX_NORM_PERCENTILE"]
 
@@ -84,8 +89,8 @@ def normalise_median_flat(params, image, method='new', wmed=None,
     WLOG(params, '', TextEntry('40-012-00001'))
 
     # get used percentile
-    if percentile is None:
-        percentile = params['BADPIX_NORM_PERCENTILE']
+    percentile = pcheck(params, 'BADPIX_NORM_PERCENTILE', 'percentile', kwargs,
+                        func_name)
 
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -93,8 +98,7 @@ def normalise_median_flat(params, image, method='new', wmed=None,
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    if wmed is None:
-        wmed = params['BADPIX_FLAT_MED_WID']
+    wmed = pcheck(params, 'BADPIX_FLAT_MED_WID', 'wmed', kwargs, func_name)
 
     # create storage for median-filtered flat image
     image_med = np.zeros_like(image)
@@ -116,7 +120,7 @@ def normalise_median_flat(params, image, method='new', wmed=None,
     return image_med/norm, image/norm
 
 
-def locate_bad_pixels(params, fimage, fmed, dimage, wmed=None):
+def locate_bad_pixels(params, fimage, fmed, dimage, **kwargs):
     """
     Locate the bad pixels in the flat image and the dark image
 
@@ -156,11 +160,11 @@ def locate_bad_pixels(params, fimage, fmed, dimage, wmed=None):
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    if wmed is None:
-        wmed = params['BADPIX_FLAT_MED_WID']
+    wmed = pcheck(params, 'BADPIX_FLAT_MED_WID', 'wmed', kwargs, func_name)
 
     # maxi differential pixel response relative to the expected value
-    cut_ratio = params['BADPIX_FLAT_CUT_RATIO']
+    cut_ratio = pcheck(params, 'BADPIX_FLAT_CUT_RATIO', 'cut_ratio', kwargs,
+                       func_name)
     # illumination cut parameter. If we only cut the pixels that
     # fractionnally deviate by more than a certain amount, we are going
     # to have lots of bad pixels in unillumnated regions of the array.
@@ -170,10 +174,11 @@ def locate_bad_pixels(params, fimage, fmed, dimage, wmed=None):
     # to about 1. We then set an illumination threshold below which
     # only the dark current will be a relevant parameter to decide that
     #  a pixel is "bad"
-    illum_cut = params['BADPIX_ILLUM_CUT']
-
+    illum_cut = pcheck(params, 'BADPIX_ILLUM_CUT', 'illum_cut', kwargs,
+                       func_name)
     # hotpix. Max flux in ADU/s to be considered too hot to be used
-    max_hotpix = params['BADPIX_MAX_HOTPIX']
+    max_hotpix = pcheck(params, 'BADPIX_MAX_HOTPIX', 'max_hotpix', kwargs,
+                        func_name)
     # -------------------------------------------------------------------------
     # create storage for ratio of flat_ref to flat_med
     fratio = np.zeros_like(fimage)
@@ -226,7 +231,7 @@ def locate_bad_pixels(params, fimage, fmed, dimage, wmed=None):
     return badpix_map, badpix_stats
 
 
-def locate_bad_pixels_full(params, image):
+def locate_bad_pixels_full(params, image, **kwargs):
     """
     Locate the bad pixels identified from the full engineering flat image
     (location defined from p['BADPIX_FULL_FLAT'])
@@ -248,11 +253,14 @@ def locate_bad_pixels_full(params, image):
     # log that we are looking for bad pixels
     WLOG(params, '', TextEntry('40-012-00002'))
     # get parameters from p
-    filename = params['BADPIX_FULL_FLAT']
-    threshold = params['BADPIX_FULL_THRESHOLD']
-    # construct filepath
+    filename = pcheck(params, 'BADPIX_FULL_FLAT', 'filename', kwargs, func_name)
+    threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', 'threshold', kwargs,
+                       func_name)
+    # get package/folder specific paths
     package = params['DRS_PACKAGE']
-    relfolder = params['DRS_BADPIX_DATA']
+    relfolder = pcheck(params, 'DRS_BADPIX_DATA', 'directory', kwargs,
+                       func_name)
+    # construct filepath
     datadir = drs_path.get_relative_folder(params, package, relfolder)
     absfilename = os.path.join(datadir, filename)
     # check that filepath exists and log an error if it was not found
@@ -276,6 +284,67 @@ def locate_bad_pixels_full(params, image):
     # return mask
     return mask, badpix_stats
 
+
+def correction(params, image, header, return_map=False):
+    """
+    Corrects "image" for "BADPIX" using calibDB file (header must contain
+    value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                calibDB: dictionary, the calibration database dictionary
+                         (if not in "p" we construct it and need "max_time_unix"
+                max_time_unix: float, the unix time to use as the time of
+                                reference (used only if calibDB is not defined)
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param image: numpy array (2D), the image
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+    :param return_map: bool, if True returns bad pixel map else returns
+                       corrected image
+
+    :returns: numpy array (2D), the corrected image where all bad pixels are
+              set to zeros or the bad pixel map (if return_map = True)
+    """
+    func_name = __NAME__ + '.correct_for_baxpix()'
+    # -------------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+
+    # TODO: check whether we have bad pixel file set from input arguments
+
+    # get the badpix entries
+    badpixentries = drs_database.get_key_from_db(params, 'BADPIX', cdb, header,
+                                                 n_ent=1)
+    # get badpix filename
+    badpixfilename = badpixentries[filecol][0]
+    badpixfile = os.path.join(params['DRS_CALIB_DB'], badpixfilename)
+    # -------------------------------------------------------------------------
+    # get bad pixel file
+    badpiximage = drs_fits.read(params, badpixfile)
+    # create mask from badpixmask
+    mask = np.array(badpiximage, dtype=bool)
+    # -------------------------------------------------------------------------
+    # get badpixel file
+    params['BADPFILE'] = badpixfilename
+    params.set_source('BADPFILE', func_name)
+    # if return map just return the bad pixel map
+    if return_map:
+        return params, mask
+    # else put NaNs into the image
+    else:
+        # log that we are setting background pixels to NaN
+        WLOG(params, '', TextEntry('40-012-00008', args=[badpixfile]))
+        # correct image (set bad pixels to zero)
+        corrected_image = np.array(image)
+        corrected_image[mask] = np.nan
+        # finally return corrected_image
+        return params, corrected_image
 
 
 # =============================================================================
