@@ -10,16 +10,17 @@ Created on 2019-03-21 at 11:36
 @author: cook
 """
 from __future__ import division
-import traceback
-import os
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-import numpy as np
+from astropy import version as av
+import os
+import warnings
+import traceback
 
 from terrapipe import constants
 from terrapipe.config import drs_log
 from terrapipe import locale
-from terrapipe.config import drs_file
 
 # =============================================================================
 # Define variables
@@ -35,11 +36,74 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # get param dict
 ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
+# TODO: This should be changed for astropy -> 2.0.1
+# bug that hdu.scale has bug before version 2.0.1
+if av.major < 2 or (av.major == 2 and av.minor < 1):
+    SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
+else:
+    SCALEARGS = dict(bscale=1, bzero=0)
+
+
+# =============================================================================
+# Define classes
+# =============================================================================
+class Header(fits.Header):
+    """
+    Wrapper class for fits headers that allows us to add functionality.
+    - Stores temporary items with keys starting with '@@@'
+       - Only shows up through "[]" and "in" operations
+    - Can automatically convert NaN values to strings
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__temp_items = {}
+
+    def __setitem__(self, key, item):
+        if key.startswith('@@@'):
+            self.__temp_items.__setitem__(self.__get_temp_key(key), item)
+        else:
+            super().__setitem__(key, item)
+
+    def __getitem__(self, key):
+        if key.startswith('@@@'):
+            return self.__temp_items.__getitem__(self.__get_temp_key(key))
+        else:
+            return super().__getitem__(key)
+
+    def __contains__(self, key):
+        if key.startswith('@@@'):
+            return self.__temp_items.__contains__(self.__get_temp_key(key))
+        else:
+            return super().__contains__(key)
+
+    def copy(self, strip=False):
+        header = Header(self, copy=True)
+        if strip:
+            header._strip()
+        header.__temp_items = self.__temp_items.copy()
+        return header
+
+    def to_fits_header(self, strip=True, nan_to_string=True):
+        header = super().copy(strip=strip)
+        if nan_to_string:
+            for key in list(header.keys()):
+                value = header[key]
+                if type(value) == float and np.isnan(value):
+                    header[key] = 'NaN'
+        return header
+
+    @staticmethod
+    def from_fits_header(fits_header):
+        return Header(fits_header, copy=True)
+
+    @staticmethod
+    def __get_temp_key(key):
+        return key[3:]
 
 
 # =============================================================================
@@ -71,7 +135,7 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
     """
     func_name = __NAME__ + '.read()'
     # define allowed values of 'fmt'
-    allowed_formats = ['fits-image', 'fits-table']
+    allowed_formats = ['fits-image', 'fits-table', 'fits-multi']
     # -------------------------------------------------------------------------
     # deal with filename not existing
     if not os.path.exists(filename):
@@ -89,6 +153,8 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
         data, header = _read_fitsimage(params, filename, getdata, gethdr, ext)
     elif fmt == 'fits-table':
         data, header = _read_fitstable(params, filename, getdata, gethdr, ext)
+    elif fmt == 'fits-multi':
+        data, header = _read_fitsmulti(params, filename, getdata, gethdr)
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
@@ -106,7 +172,70 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
         return None
 
 
-def _read_fitsimage(params, filename, getdata, gethdr, ext):
+def read_header(params, filename, ext=0):
+    func_name = __NAME__ + '.read_header()'
+    # try to open header
+    try:
+        header = fits.getheader(filename, ext=ext)
+    except Exception as e:
+        eargs = [os.path.basename(filename), ext, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
+        header = None
+    # return header
+    return header
+
+
+def _read_fitsmulti(params, filename, getdata, gethdr):
+
+    func_name = __NAME__ + '._read_fitsmulti()'
+    # attempt to open hdu of fits file
+    try:
+        hdulist = fits.open(filename)
+    except Exception as e:
+        eargs = [filename, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('01-001-00006', args=eargs))
+        hdulist = None
+    # -------------------------------------------------------------------------
+    # get the number of fits files in filename
+    try:
+        n_ext = len(hdulist)
+    except Exception as e:
+        WLOG(params, 'warning', TextEntry('10-001-00005', args=[type(e), e]))
+        n_ext = None
+    # deal with unknown number of extensions
+    if n_ext is None:
+        data, header = deal_with_bad_header(params, hdulist, filename)
+    # -------------------------------------------------------------------------
+    # else get the data and header based on how many extnesions there are
+    else:
+        data, header = [], []
+        for it in range(n_ext):
+            # append header
+            try:
+                header.append(hdulist[it].header)
+            except Exception as e:
+                eargs = [os.path.basename(filename), it, type(e), e, func_name]
+                WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+            # append data
+            try:
+                if isinstance(hdulist[it].data, fits.BinTableHDU):
+                    data.append(Table.read(hdulist[it].data))
+                else:
+                    data.append(hdulist[it].data)
+            except Exception as e:
+                eargs = [os.path.basename(filename), it, type(e), e, func_name]
+                WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+    # -------------------------------------------------------------------------
+    # return data and/or header
+    if getdata and gethdr:
+        return data, header
+    elif getdata:
+        return data
+    else:
+        return header
+
+
+def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
@@ -138,7 +267,7 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext):
     return data, header
 
 
-def _read_fitstable(params, filename, getdata, gethdr, ext):
+def _read_fitstable(params, filename, getdata, gethdr, ext=0):
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
@@ -173,9 +302,87 @@ def _read_fitstable(params, filename, getdata, gethdr, ext):
 # =============================================================================
 # Define write functions
 # =============================================================================
-# TODO: write function (if needed)
-def write(params, filename, header=None, comments=None):
-    return 0
+def write(params, filename, data, header, datatype, dtype=None, func_name=None):
+    # deal with function name coming from somewhere else
+    if func_name is None:
+        func_name = __NAME__ + '.write()'
+    else:
+        func_name += '(via {0})'.format(__NAME__ + '.write()')
+    # ----------------------------------------------------------------------
+    # check if file exists and remove it if it does
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+        except Exception as e:
+            eargs = [os.path.basename(filename), type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('01-001-00003', args=eargs))
+    # ----------------------------------------------------------------------
+    # make sure we are dealing with lists of data and headers
+    if not isinstance(data, list):
+        data = [data]
+    if not isinstance(header, list):
+        header = [header]
+    if not isinstance(datatype, list):
+        datatype = [datatype]
+    if dtype is not None and not isinstance(dtype, list):
+        dtype = [dtype]
+    # ----------------------------------------------------------------------
+    # header must be same length as data
+    if len(data) != len(header):
+        raise ValueError()
+    # datatype must be same length as data
+    if len(data) != len(datatype):
+        raise ValueError()
+    # if dtype is not None must be same length as data
+    if len(data) != len(dtype):
+        raise ValueError()
+    # ----------------------------------------------------------------------
+    # create the multi HDU list
+    try:
+        # try to create primary HDU first
+        hdu0 = fits.PrimaryHDU(data[0], header=header[0])
+        if dtype is not None:
+            hdu0.scale(type=dtype[0], **SCALEARGS)
+        # add all others afterwards
+        hdus = [hdu0]
+        for it in range(1, len(data)):
+            if datatype[it] == 'image':
+                fitstype = fits.ImageHDU
+            elif datatype[it] == 'table':
+                fitstype = fits.BinTableHDU
+            else:
+                continue
+            # add to hdu list
+            hdu_i = fitstype(data[it], header=header[it])
+            if dtype is not None:
+                hdu_i.scale(type=dtype[it])
+            hdus.append(hdu_i)
+        # convert to  HDU list
+        hdulist = fits.HDUList(hdus)
+    except Exception as e:
+        eargs = [type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('01-001-00004', args=eargs))
+        hdulist = None
+    # ---------------------------------------------------------------------
+    # write to file
+    with warnings.catch_warnings(record=True) as w:
+        try:
+            hdulist.writeto(filename, overwrite=True)
+        except Exception as e:
+            eargs = [os.path.basename(filename), type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('01-001-00005', args=eargs))
+    # ---------------------------------------------------------------------
+    # ignore truncated comment warning since spirou images have some poorly
+    #   formatted header cards
+    w1 = []
+    for warning in w:
+        # Note: cannot change language as we are looking for python error
+        #       this is in english and shouldn't be changed
+        wmsg = 'Card is too long, comment will be truncated.'
+        if wmsg != str(warning.message):
+            w1.append(warning)
+    # add warnings to the warning logger and log if we have them
+    drs_log.warninglogger(params, w1)
 
 
 # =============================================================================
@@ -336,6 +543,54 @@ def flip_image(params, image, fliprows=True, flipcols=True):
     # if both false just return image (no operation done)
     else:
         return image
+
+
+# =============================================================================
+# Worker functions
+# =============================================================================
+def deal_with_bad_header(p, hdu, filename):
+    """
+    Deal with bad headers by iterating through good hdu's until we hit a
+    problem
+
+    :param p: ParamDict, the constants file
+    :param hdu: astropy.io.fits HDU
+    :param filename: string - the filename for logging
+
+    :return data:
+    :return header:
+    """
+    # define condition to pass
+    cond = True
+    # define iterator
+    it = 0
+    # define storage
+    datastore = []
+    headerstore = []
+    # loop through HDU's until we cannot open them
+    while cond:
+        # noinspection PyBroadException
+        try:
+            datastore.append(hdu[it].data)
+            headerstore.append(hdu[it].header)
+        except:
+            cond = False
+        # iterate
+        it += 1
+    # print message
+    if len(datastore) > 0:
+        dargs = [it-1, filename]
+        WLOG(p, 'warning', TextEntry('10-001-00001', args=dargs))
+    # find the first one that contains equal shaped array
+    valid = []
+    for d_it in range(len(datastore)):
+        if hasattr(datastore[d_it], 'shape'):
+            valid.append(d_it)
+    # if valid is empty we have a problem
+    if len(valid) == 0:
+        WLOG(p, 'error', TextEntry('01-001-00001', args=[filename]))
+    # return valid data
+    return datastore, headerstore
 
 
 # =============================================================================
