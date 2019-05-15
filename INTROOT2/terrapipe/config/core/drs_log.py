@@ -499,11 +499,21 @@ wlog = Logger()
 # =============================================================================
 # Define function
 # =============================================================================
-def find_param(params, key, function):
+def find_param(params, key, name=None, kwargs=None, func=None):
+
+    # deal with no function
+    if func is None:
+        func = 'UNKNOWN'
+    # deal with no name
+    if name is None:
+        name = key
+    # deal with key not found in params
     if key not in params:
-        eargs = [key, function]
+        eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
-    return params[key]
+    # set value
+    return kwargs.get(name, params[key])
+
 
 
 def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
