@@ -190,7 +190,8 @@ def __main__(recipe, params):
             # resize bad pixel map
             bad_pixel_map1 = drs_fits.resize(params, bad_pixel_map1, **sargs)
         else:
-            flat_image1, bad_pixel_map1 = flat_image, bad_pixel_map
+            flat_image1 = np.array(flat_image)
+            bad_pixel_map1 = np.array(bad_pixel_map)
 
         # ------------------------------------------------------------------
         # Create background map mask
