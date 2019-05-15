@@ -11,7 +11,7 @@ from terrapipe.constants.default.default_config import *
 # TODO:    in import * module
 
 
-__NAME__ = 'terrapipe.config.instruments.spirou.default_config'
+__NAME__ = 'config.instruments.spirou.default_config.py'
 
 # -----------------------------------------------------------------------------
 # global settings

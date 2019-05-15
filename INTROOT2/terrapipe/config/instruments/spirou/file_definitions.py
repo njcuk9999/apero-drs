@@ -20,8 +20,8 @@ from . import output_filenames as out
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'recipe_definitions.py'
-__INSTRUMENT__ = 'NIRPS'
+__NAME__ = 'config.instruments.spirou.file_defintions.py'
+__INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

@@ -19,8 +19,8 @@ from terrapipe import locale
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'io.drs_path.py'
-__INSTRUMENT__ = None
+__NAME__ = 'config.instruments.spirou.output_filenames.py'
+__INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
