@@ -90,7 +90,7 @@ SKIP_DONE_FIT_TELLU = False
 # turn on parallelisation
 PARALLEL = True
 # Max Processes
-MAX_PROCESSES = 10
+MAX_PROCESSES = 8
 # -----------------------------------------------------------------------------
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
