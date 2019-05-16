@@ -331,21 +331,6 @@ def get_check_lock_file(p, dbkind):
 
 def open_lock_file(p, lock_file):
     # try to open the lock file
-    cond = True
-    while cond:
-        dirname = os.path.dirname(lock_file)
-
-        if os.path.exists(dirname):
-            break
-        # if path doesn't exist it may be that we have sub-directories
-        #   so try replacing the last os.sep with
-        else:
-            dirname1 = os.path.dirname(dirname)
-            filename = (lock_file.split(dirname1)[-1]).replace(os.sep, '_')
-            lock_file = os.path.join(dirname1, filename)
-        if os.sep not in lock_file:
-            break
-
     if not os.path.exists(os.path.dirname(lock_file)):
         emsg = 'Lock directory does not exist. Dir={0}'
         WLOG(p, 'error', emsg.format(os.path.dirname(lock_file)))
