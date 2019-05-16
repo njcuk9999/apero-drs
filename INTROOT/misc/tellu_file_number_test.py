@@ -22,9 +22,9 @@ kind = 1
 # kind = 2
 
 WORKSPACE_RAW = '/spirou/cfht_nights/common/raw/'
-WORKSPACE0 = '/spirou/cfht_nights/common/tmp/'
-WORKSPACE1 = '/spirou/cfht_nights/cfht_Jan19/reduced_{0}/'.format(kind)
-WORKSPACE2 = '/spirou/cfht_nights/cfht_Jan19/telluDB_{0}/'.format(kind)
+WORKSPACE0 = '/spirou/cfht_nights/cfht_May19/common/tmp/'
+WORKSPACE1 = '/spirou/cfht_nights/cfht_May19/perrun/reduced/'
+WORKSPACE2 = '/spirou/cfht_nights/cfht_May19/perrun/telluDB/'
 WORKSPACE3 = '/spirou/drs/spirou_py3/INTROOT/SpirouDRS/data/constants/'
 
 WHITELIST_FILE = os.path.join(WORKSPACE3, 'tellu_whitelist.txt')
