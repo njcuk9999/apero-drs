@@ -1386,6 +1386,7 @@ def open_fits_lock_file(p, lock_file, filename):
     # try to open the lock file
     cond = True
     while cond:
+        print(lock_file)
         dirname = os.path.dirname(lock_file)
 
         if os.path.exists(dirname):
