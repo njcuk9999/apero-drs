@@ -72,11 +72,11 @@ RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_EXTRACT_TELLU = True
-RUN_EXTRACT_OBJ = True
+RUN_EXTRACT_TELLU = False
+RUN_EXTRACT_OBJ = False
 RUN_EXTRACT_DARK = False
 RUN_EXTRACT_ALL = False
-RUN_OBJ_MK_TELLU = True
+RUN_OBJ_MK_TELLU = False
 RUN_OBJ_FIT_TELLU = True
 # -----------------------------------------------------------------------------
 # skip found files
@@ -90,7 +90,7 @@ SKIP_DONE_FIT_TELLU = False
 # turn on parallelisation
 PARALLEL = True
 # Max Processes
-MAX_PROCESSES = 8
+MAX_PROCESSES = 10
 # -----------------------------------------------------------------------------
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
