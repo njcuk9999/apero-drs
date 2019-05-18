@@ -16,6 +16,7 @@ from terrapipe import constants
 from terrapipe import config
 from terrapipe import locale
 from terrapipe.config.core import drs_database
+from terrapipe.config.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import dark
 from terrapipe.science.calib import badpix
@@ -29,6 +30,7 @@ __NAME__ = 'cal_loc_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
+PConstants = constants.pload(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
@@ -40,6 +42,10 @@ WLOG = config.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
+ORDERP_AB = file_definitions.out_loc_orderp_ab
+ORDERP_C = file_definitions.out_loc_orderp_c
+# alias pcheck
+pcheck = config.pcheck
 
 
 # =============================================================================
@@ -111,6 +117,9 @@ def __main__(recipe, params):
     if params['INPUT_COMBINE_IMAGES']:
         # get combined file
         infiles = [drs_fits.combine(params, infiles, math='average')]
+        combine = True
+    else:
+        combine = False
     # get the number of infiles
     num_files = len(infiles)
 
@@ -138,6 +147,21 @@ def __main__(recipe, params):
         gain = infile.get_key('KW_GAIN')
         # get data type
         dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        # ------------------------------------------------------------------
+        # identify fiber type
+        if dprtype == 'FLAT_DARK':
+            params['FIBER'] = 'AB'
+        elif dprtype == 'DARK_FLAT':
+            params['FIBER'] = 'C'
+        else:
+            eargs = [dprtype, recipe.name, 'FLAT_DARK or DARK_FLAT',
+                     infile.basename]
+            WLOG(params, 'error', TextEntry('00-013-00001', args=eargs))
+            params['FIBER'] = None
+        params.set_source('FIBER', mainname)
+        # get fiber parameters
+        params = PConstants.FIBER_SETTINGS(params)
+
         # ------------------------------------------------------------------
         # Correction of DARK
         # ------------------------------------------------------------------
@@ -186,49 +210,89 @@ def __main__(recipe, params):
         order_profile = localisation.calculate_order_profile(params, image4)
 
         # ------------------------------------------------------------------
-        # Write image order_profile to file
-        # ------------------------------------------------------------------
-        # TODO: complete
-
-        # ------------------------------------------------------------------
-        # Move order_profile to calibDB and update calibDB
-        # ------------------------------------------------------------------
-        # TODO: complete
-
-        # ------------------------------------------------------------------
         # Localization of orders on central column
         # ------------------------------------------------------------------
-        # TODO: complete
-
-        # ------------------------------------------------------------------
-        # Measurement and correction of background on the central column
-        # ------------------------------------------------------------------
-        # TODO: complete
-
-        # ------------------------------------------------------------------
-        # Search for order center on the central column - quick estimation
-        # ------------------------------------------------------------------
-        # TODO: complete
-
-        # ------------------------------------------------------------------
-        # Search for order center and profile on specific columns
-        # ------------------------------------------------------------------
-        # TODO: complete
+        largs = [order_profile, sigdet]
+        lout = localisation.find_and_fit_localisation(params, *largs)
+        # get parameters from lout
+        cent_0, cent_coeffs, cent_rms, cent_max_ptp = lout[:4]
+        cent_frac_ptp, cent_max_rmpts = lout[4:6]
+        wid_0, wid_coeffs, wid_rms, wid_max_ptp = lout[6:10]
+        wid_frac_ptp, wid_max_rmpts, xplot, yplot = lout[10:]
 
         # ------------------------------------------------------------------
         # Plot the image (ready for fit points to be overplotted later)
         # ------------------------------------------------------------------
-        # TODO: complete
+        # Plot the image (ready for fit points to be overplotted later)
+        if params['DRS_PLOT'] > 0:
+            # get saturation threshold
+            sat_thres = pcheck(params, 'LOC_SAT_THRES') * gain * num_files
+            # plot image above saturation threshold
+            # TODO: Add sPlt.locplot_im_sat_threshold(p, loc, data2, sat_thres)
 
         # ------------------------------------------------------------------
         # Plot of RMS for positions and widths
         # ------------------------------------------------------------------
-        # TODO: complete
+        if params['DRS_PLOT'] > 0:
+            # TODO: Add sPlt.locplot_order_number_against_rms(p, loc, rorder_num)
+            pass
 
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
+        # set passed variable and fail message list
+        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+
         # TODO: complete
+
+        # ------------------------------------------------------------------
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if np.sum(qc_pass) == len(qc_pass):
+            WLOG(params, 'info', TextEntry('40-005-10001'))
+            params['QC'] = 1
+            params.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            params['QC'] = 0
+            params.set_source('QC', __NAME__ + '/main()')
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+
+        # ------------------------------------------------------------------
+        # Write image order_profile to file
+        # ------------------------------------------------------------------
+        if params['FIBER'] == 'AB':
+            orderpfile = ORDERP_AB.newcopy(recipe=recipe)
+        else:
+            orderpfile = ORDERP_C.newcopy(recipe=recipe)
+        # construct the filename from file instance
+        orderpfile.construct_filename(params, infile=infile)
+        # define header keys for output file
+        # copy keys from input file
+        orderpfile.copy_original_keys(infile)
+        # add version
+        orderpfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add process id
+        orderpfile.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        orderpfile.add_hkey('KW_OUTPUT', value=orderpfile.name)
+        # add input files (and deal with combining or not combining)
+        if combine:
+            hfiles = rawfiles
+        else:
+            hfiles = [infile.basename]
+        orderpfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
+        # add qc parameters
+        orderpfile.add_qckeys(qc_params)
+        # copy data
+        orderpfile.data = order_profile
+        # log that we are saving rotated image
+        WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
+        # write image to file
+        orderpfile.write()
 
         # ------------------------------------------------------------------
         # Save and record of image of localization with order center
@@ -249,8 +313,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        # TODO: complete
-
+        if params['QC']:
+            drs_database.add_file(params, orderpfile)
 
     # ----------------------------------------------------------------------
     # End of main code
