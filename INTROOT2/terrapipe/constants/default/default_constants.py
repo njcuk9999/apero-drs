@@ -19,6 +19,11 @@ __all__ = [# preprocessing constants
            # qc constants
            'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
            'QC_MAX_DARK',
+           # fiber constants
+           'FIBER_FIRST_ORDER_JUMP_AB', 'FIBER_FIRST_ORDER_JUMP_A',
+           'FIBER_FIRST_ORDER_JUMP_B', 'FIBER_FIRST_ORDER_JUMP_C',
+           'FIBER_MAX_NUM_ORDERS_AB', 'FIBER_MAX_NUM_ORDERS_A',
+           'FIBER_MAX_NUM_ORDERS_B', 'FIBER_MAX_NUM_ORDERS_C',
            # dark constants
            'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
@@ -34,7 +39,14 @@ __all__ = [# preprocessing constants
            'BKGR_N_BAD_NEIGHBOURS', 'BKGR_NO_SUBTRACTION', 'BKGR_KER_AMP',
            'BKGR_KER_WX', 'BKGR_KER_WY', 'BKGR_KER_SIG',
            # localisation constants
-           'LOC_ORDERP_BOX_SIZE']
+           'LOC_ORDERP_BOX_SIZE', 'LOC_START_ROW_OFFSET', 'LOC_CENTRAL_COLUMN',
+           'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE',
+           'LOC_WIDTH_POLY_DEG', 'LOC_CENT_POLY_DEG', 'LOC_COLUMN_SEP_FITTING',
+           'LOC_EXT_WINDOW_SIZE', 'LOC_IMAGE_GAP', 'LOC_ORDER_WIDTH_MIN',
+           'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
+           'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
+           'LOC_SAT_THRES',
+           ]
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_constants'
@@ -74,6 +86,30 @@ IMAGE_Y_LOW = Const('IMAGE_Y_LOW', value=None, dtype=int, minimum=0,
                     source=__NAME__)
 IMAGE_Y_HIGH = Const('IMAGE_Y_HIGH', value=None, dtype=int, minimum=0,
                      source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: FIBER SETTINGS
+# =============================================================================
+#   Number of orders to skip at start of image
+FIBER_FIRST_ORDER_JUMP_AB = Const('FIBER_FIRST_ORDER_JUMP_AB', value=None,
+                                  dtype=int, minimum=0, source=__NAME__)
+FIBER_FIRST_ORDER_JUMP_A = Const('FIBER_FIRST_ORDER_JUMP_A', value=None,
+                                 dtype=int, minimum=0, source=__NAME__)
+FIBER_FIRST_ORDER_JUMP_B = Const('FIBER_FIRST_ORDER_JUMP_B', value=None,
+                                 dtype=int, minimum=0, source=__NAME__)
+FIBER_FIRST_ORDER_JUMP_C = Const('FIBER_FIRST_ORDER_JUMP_C', value=None,
+                                 dtype=int, minimum=0, source=__NAME__)
+
+#   Maximum number of order to use
+FIBER_MAX_NUM_ORDERS_AB = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+                                dtype=int, minimum=1, source=__NAME__)
+FIBER_MAX_NUM_ORDERS_A = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+                               dtype=int, minimum=1, source=__NAME__)
+FIBER_MAX_NUM_ORDERS_B = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+                               dtype=int, minimum=1, source=__NAME__)
+FIBER_MAX_NUM_ORDERS_C = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+                               dtype=int, minimum=1, source=__NAME__)
+
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -275,6 +311,79 @@ BKGR_KER_SIG = Const('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__)
 #     (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = Const('LOC_ORDERP_BOX_SIZE', value=None, dtype=int,
                             source=__NAME__)
+
+
+
+#   row number of image to start localisation processing at
+LOC_START_ROW_OFFSET = Const('LOC_START_ROW_OFFSET', value=None, dtype=int,
+                             source=__NAME__, minimum=0)
+
+#   Definition of the central column for use in localisation
+LOC_CENTRAL_COLUMN = Const('LOC_CENTRAL_COLUMN', value=None, dtype=int,
+                           source=__NAME__, minimum=0)
+
+#   Half spacing between orders
+LOC_HALF_ORDER_SPACING = Const('LOC_HALF_ORDER_SPACING', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0)
+
+# Minimum amplitude to accept (in e-)
+LOC_MINPEAK_AMPLITUDE = Const('LOC_MINPEAK_AMPLITUDE', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0)
+
+#   Order of polynomial to fit for widths
+LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
+                           source=__NAME__, minimum=1)
+
+#   Order of polynomial to fit for positions
+LOC_CENT_POLY_DEG = Const('LOC_CENT_POLY_DEG', value=None, dtype=int,
+                          source=__NAME__, minimum=1)
+
+#   Define the column separation for fitting orders
+LOC_COLUMN_SEP_FITTING = Const('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
+                               source=__NAME__, minimum=1)
+
+#   Definition of the extraction window size (half size)
+LOC_EXT_WINDOW_SIZE = Const('LOC_EXT_WINDOW_SIZE', value=None, dtype=int,
+                            source=__NAME__, minimum=1)
+
+#   Definition of the gap index in the selected area
+LOC_IMAGE_GAP = Const('LOC_IMAGE_GAP', value=None, dtype=int, source=__NAME__,
+                      minimum=0)
+
+#   Define minimum width of order to be accepted
+LOC_ORDER_WIDTH_MIN = Const('LOC_ORDER_WIDTH_MIN', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0)
+
+#   Define the noise multiplier threshold in order to accept an
+#       order center as usable i.e.
+#       max(pixel value) - min(pixel value) > THRES * RDNOISE
+LOC_NOISE_MULTIPLIER_THRES = Const('LOC_NOISE_MULTIPLIER_THRES', value=None,
+                                   dtype=float, source=__NAME__, minimum=0.0)
+
+#   Maximum rms for sigma-clip order fit (center positions)
+LOC_MAX_RMS_CENT = Const('LOC_MAX_RMS_CENT', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+#   Maximum peak-to-peak for sigma-clip order fit (center positions)
+LOC_MAX_PTP_CENT = Const('LOC_MAX_PTP_CENT', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+#   Maximum frac ptp/rms for sigma-clip order fit (center positions)
+LOC_PTPORMS_CENT = Const('LOC_PTPORMS_CENT', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+#   Maximum rms for sigma-clip order fit (width)
+LOC_MAX_RMS_WID = Const('LOC_MAX_RMS_WID', value=None, dtype=float,
+                        source=__NAME__, minimum=0.0)
+
+#   Maximum fractional peak-to-peak for sigma-clip order fit (width)
+LOC_MAX_PTP_WID = Const('LOC_MAX_PTP_WID', value=None, dtype=float,
+                        source=__NAME__, minimum=0.0)
+
+#   Saturation threshold for localisation
+LOC_SAT_THRES = Const('LOC_SAT_THRES', value=None, dtype=float, source=__NAME__,
+                      minimum=0.0)
+
 
 
 
