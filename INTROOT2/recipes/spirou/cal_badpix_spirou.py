@@ -105,16 +105,20 @@ def __main__(recipe, params):
     flatfiles = params['INPUTS']['FLATFILES'][1]
     darkfiles = params['INPUTS']['DARKFILES'][1]
     # get list of filenames (for output)
-    rawfiles = []
+    rawflatfiles, rawdarkfiles = [], []
     for infile in flatfiles:
-        rawfiles.append(infile.basename)
+        rawflatfiles.append(infile.basename)
+    for infile in darkfiles:
+        rawdarkfiles.append(infile.basename)
     # combine input flat images if required
     if params['INPUT_COMBINE_IMAGES']:
         # get combined file
         flatfiles = [drs_fits.combine(params, flatfiles, math='average')]
         # get combined file
         darkfiles = [drs_fits.combine(params, darkfiles, math='average')]
-
+        combine = True
+    else:
+        combine = False
     # warn user if lengths differ
     if len(flatfiles) != len(darkfiles):
         wargs = [len(flatfiles), len(darkfiles)]
@@ -244,8 +248,14 @@ def __main__(recipe, params):
         # add output tag
         badpixfile.add_hkey('KW_OUTPUT', value=badpixfile.name)
         # add input files
-        badpixfile.add_hkey_1d('KW_INFILE1', values=[flatfile.basename])
-        badpixfile.add_hkey_1d('KW_INFILE2', values=[darkfile.basename])
+        if combine:
+            hfiles1, hfiles2 = rawflatfiles, rawdarkfiles
+        else:
+            hfiles1, hfiles2 = [flatfile.basename], [darkfile.basename]
+        badpixfile.add_hkey_1d('KW_INFILE1', values=hfiles1,
+                               dim1name='flatfile')
+        badpixfile.add_hkey_1d('KW_INFILE2', values=hfiles2,
+                               dim1name='darkfile')
         # add qc parameters
         badpixfile.add_qckeys(qc_params)
         # add background statistics
@@ -262,7 +272,7 @@ def __main__(recipe, params):
         badpixfile.data = bad_pixel_map1
         # ------------------------------------------------------------------
         # log that we are saving rotated image
-        WLOG(params, '', TextEntry('40-010-00010', args=[badpixfile.filename]))
+        WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
         # write image to file
         badpixfile.write()
 
@@ -282,11 +292,15 @@ def __main__(recipe, params):
         backmapfile.add_hkey('KW_PID', value=params['PID'])
         # add output tag
         backmapfile.add_hkey('KW_OUTPUT', value=backmapfile.name)
-        # add input files
-        backmapfile.add_hkey_1d('KW_INFILE1', values=[flatfile.basename],
-                                dim1name='flatfile')
-        backmapfile.add_hkey_1d('KW_INFILE2', values=[darkfile.basename],
-                                dim1name='darkfile')
+        # add input files (and deal with combining or not combining)
+        if combine:
+            hfiles1, hfiles2 = rawflatfiles, rawdarkfiles
+        else:
+            hfiles1, hfiles2 = [flatfile.basename], [darkfile.basename]
+        badpixfile.add_hkey_1d('KW_INFILE1', values=hfiles1,
+                               dim1name='flatfile')
+        badpixfile.add_hkey_1d('KW_INFILE2', values=hfiles2,
+                               dim1name='darkfile')
         # add qc parameters
         backmapfile.add_qckeys(qc_params)
         # write to file
@@ -295,7 +309,7 @@ def __main__(recipe, params):
         backmapfile.data = backmap
         # ------------------------------------------------------------------
         # log that we are saving rotated image
-        WLOG(params, '', TextEntry('40-010-00010', args=[backmapfile.filename]))
+        WLOG(params, '', TextEntry('40-012-00014', args=[backmapfile.filename]))
         # write image to file
         backmapfile.write()
 
