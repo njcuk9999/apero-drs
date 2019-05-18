@@ -13,6 +13,7 @@ import os
 
 from terrapipe import constants
 from terrapipe import config
+from terrapipe.config.core.default import output_filenames
 from terrapipe import locale
 
 
@@ -37,30 +38,12 @@ TextEntry = locale.drs_text.TextEntry
 # =============================================================================
 # Define functions
 # =============================================================================
-def pp_file(params, **kwargs):
-    func_name = __NAME__ + '.pp_file()'
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
-    outfile = kwargs.get('outfile', None)
-    # deal with kwargs that are required
-    if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
-    if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
-    # construct out filename
-    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
-    # get output path from params
-    outpath = params['OUTPATH']
-    # get output night name from params
-    outdirectory = params['NIGHTNAME']
-    # construct absolute path
-    abspath = os.path.join(outpath, outdirectory, outfilename)
-    # return absolute path
-    return abspath
+def general_file(params, **kwargs):
+    return output_filenames.general_file(params, **kwargs)
 
 
-def dark_file(params, **kwargs):
-    func_name = __NAME__ + '.dark_file()'
+def calib_file(params, **kwargs):
+    func_name = __NAME__ + '.general_file()'
     # get parameters from keyword arguments
     infile = kwargs.get('infile', None)
     outfile = kwargs.get('outfile', None)
@@ -82,77 +65,6 @@ def dark_file(params, **kwargs):
     # return absolute path
     return abspath
 
-
-def sky_file(params, **kwargs):
-    func_name = __NAME__ + '.dark_file()'
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
-    outfile = kwargs.get('outfile', None)
-    # deal with kwargs that are required
-    if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
-    if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
-    # construct out filename
-    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
-    # add calibration prefix
-    outfilename = _calibration_prefix(params) + outfilename
-    # get output path from params
-    outpath = params['OUTPATH']
-    # get output night name from params
-    outdirectory = params['NIGHTNAME']
-    # construct absolute path
-    abspath = os.path.join(outpath, outdirectory, outfilename)
-    # return absolute path
-    return abspath
-
-
-def badpix_file(params, **kwargs):
-    func_name = __NAME__ + '.dark_file()'
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
-    outfile = kwargs.get('outfile', None)
-    # deal with kwargs that are required
-    if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
-    if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
-    # construct out filename
-    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
-    # add calibration prefix
-    outfilename = _calibration_prefix(params) + outfilename
-    # get output path from params
-    outpath = params['OUTPATH']
-    # get output night name from params
-    outdirectory = params['NIGHTNAME']
-    # construct absolute path
-    abspath = os.path.join(outpath, outdirectory, outfilename)
-    # return absolute path
-    return abspath
-
-
-def backmap_file(params, **kwargs):
-    func_name = __NAME__ + '.dark_file()'
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
-    outfile = kwargs.get('outfile', None)
-    # deal with kwargs that are required
-    if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
-    if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
-    # construct out filename
-    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
-    # add calibration prefix
-    outfilename = _calibration_prefix(params) + outfilename
-    # get output path from params
-    outpath = params['OUTPATH']
-    # get output night name from params
-    outdirectory = params['NIGHTNAME']
-    # construct absolute path
-    abspath = os.path.join(outpath, outdirectory, outfilename)
-    # return absolute path
-    return abspath
 
 
 # =============================================================================

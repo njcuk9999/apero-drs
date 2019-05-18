@@ -49,6 +49,33 @@ IMAGE_Y_LOW.value = 250
 IMAGE_Y_HIGH = IMAGE_Y_HIGH.copy(__NAME__)
 IMAGE_Y_HIGH.value = 3350
 
+
+# =============================================================================
+# CALIBRATION: FIBER SETTINGS
+# =============================================================================
+#   Number of orders to skip at start of image
+FIBER_FIRST_ORDER_JUMP_AB = FIBER_FIRST_ORDER_JUMP_AB.copy(__NAME__)
+FIBER_FIRST_ORDER_JUMP_A = FIBER_FIRST_ORDER_JUMP_A.copy(__NAME__)
+FIBER_FIRST_ORDER_JUMP_B = FIBER_FIRST_ORDER_JUMP_B.copy(__NAME__)
+FIBER_FIRST_ORDER_JUMP_C = FIBER_FIRST_ORDER_JUMP_C.copy(__NAME__)
+# set values
+FIBER_FIRST_ORDER_JUMP_AB.value = 2
+FIBER_FIRST_ORDER_JUMP_A.value = 0
+FIBER_FIRST_ORDER_JUMP_B.value = 0
+FIBER_FIRST_ORDER_JUMP_C.value = 1
+
+#   Maximum number of order to use
+FIBER_MAX_NUM_ORDERS_AB = FIBER_MAX_NUM_ORDERS_AB.copy(__NAME__)
+FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
+FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
+FIBER_MAX_NUM_ORDERS_C = FIBER_MAX_NUM_ORDERS_C.copy(__NAME__)
+# set values
+FIBER_MAX_NUM_ORDERS_AB.value = 98
+FIBER_MAX_NUM_ORDERS_A.value = 49
+FIBER_MAX_NUM_ORDERS_B.value = 49
+FIBER_MAX_NUM_ORDERS_C.value = 49
+
+
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
@@ -259,3 +286,73 @@ BKGR_KER_SIG.value = 3
 #     (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = LOC_ORDERP_BOX_SIZE.copy(__NAME__)
 LOC_ORDERP_BOX_SIZE.value = 5
+
+#   row number of image to start localisation processing at
+LOC_START_ROW_OFFSET = LOC_START_ROW_OFFSET.copy(__NAME__)
+LOC_START_ROW_OFFSET.value = 0
+
+#   Definition of the central column for use in localisation
+LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
+LOC_CENTRAL_COLUMN.value = 2500
+
+#   Half spacing between orders
+LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
+LOC_HALF_ORDER_SPACING.value = 45
+
+# Minimum amplitude to accept (in e-)
+LOC_MINPEAK_AMPLITUDE = LOC_MINPEAK_AMPLITUDE.copy(__NAME__)
+LOC_MINPEAK_AMPLITUDE.value = 10    # 50
+
+#   Order of polynomial to fit for widths
+LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
+LOC_WIDTH_POLY_DEG.value = 4
+
+#   Order of polynomial to fit for positions
+LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
+LOC_CENT_POLY_DEG.value = 4
+
+#   Define the column separation for fitting orders
+LOC_COLUMN_SEP_FITTING = LOC_COLUMN_SEP_FITTING.copy(__NAME__)
+LOC_COLUMN_SEP_FITTING.value = 20
+
+#   Definition of the extraction window size (half size)
+LOC_EXT_WINDOW_SIZE = LOC_EXT_WINDOW_SIZE.copy(__NAME__)
+LOC_EXT_WINDOW_SIZE.value = 15  # 20 # 40 # 12
+
+#   Definition of the gap index in the selected area
+LOC_IMAGE_GAP = LOC_IMAGE_GAP.copy(__NAME__)
+LOC_IMAGE_GAP.value = 0
+
+#   Define minimum width of order to be accepted
+LOC_ORDER_WIDTH_MIN = LOC_ORDER_WIDTH_MIN.copy(__NAME__)
+LOC_ORDER_WIDTH_MIN.value = 10   # 5
+
+#   Define the noise multiplier threshold in order to accept an
+#       order center as usable i.e.
+#       max(pixel value) - min(pixel value) > THRES * RDNOISE
+LOC_NOISE_MULTIPLIER_THRES = LOC_NOISE_MULTIPLIER_THRES.copy(__NAME__)
+LOC_NOISE_MULTIPLIER_THRES.value = 50  # 30  #10 # 100.0
+
+#   Maximum rms for sigma-clip order fit (center positions)
+LOC_MAX_RMS_CENT = LOC_MAX_RMS_CENT.copy(__NAME__)
+LOC_MAX_RMS_CENT.value = 0.1
+
+#   Maximum peak-to-peak for sigma-clip order fit (center positions)
+LOC_MAX_PTP_CENT = LOC_MAX_PTP_CENT.copy(__NAME__)
+LOC_MAX_PTP_CENT.value = 0.300
+
+#   Maximum frac ptp/rms for sigma-clip order fit (center positions)
+LOC_PTPORMS_CENT = LOC_PTPORMS_CENT.copy(__NAME__)
+LOC_PTPORMS_CENT.value = 8.0
+
+#   Maximum rms for sigma-clip order fit (width)
+LOC_MAX_RMS_WID = LOC_MAX_RMS_WID.copy(__NAME__)
+LOC_MAX_RMS_WID.value = 1.0
+
+#   Maximum fractional peak-to-peak for sigma-clip order fit (width)
+LOC_MAX_PTP_WID = LOC_MAX_PTP_WID.copy(__NAME__)
+LOC_MAX_PTP_WID.value = 10.0
+
+#   Saturation threshold for localisation
+LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
+LOC_SAT_THRES.value = 1000  # 64536
