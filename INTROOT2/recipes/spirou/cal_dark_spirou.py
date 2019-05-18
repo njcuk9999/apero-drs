@@ -109,6 +109,9 @@ def __main__(recipe, params):
     if params['INPUT_COMBINE_IMAGES']:
         # get combined file
         infiles = [drs_fits.combine(params, infiles, math='average')]
+        combine = True
+    else:
+        combine = False
     # get the number of infiles
     num_files = len(infiles)
     # ----------------------------------------------------------------------
@@ -266,8 +269,12 @@ def __main__(recipe, params):
         outfile.add_hkey('KW_PID', value=params['PID'])
         # add output tag
         outfile.add_hkey('KW_OUTPUT', value=outfile.name)
-        # add input files
-        outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='darkfile')
+        # add input files (and deal with combining or not combining)
+        if combine:
+            hfiles = rawfiles
+        else:
+            hfiles = [infile.basename]
+        outfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='darkfile')
         # add qc parameters
         outfile.add_qckeys(qc_params)
         # add blue/red/full detector parameters
@@ -287,7 +294,7 @@ def __main__(recipe, params):
         outfile.data = image0c
         # ------------------------------------------------------------------
         # log that we are saving rotated image
-        WLOG(params, '', TextEntry('40-010-00010', args=[outfile.filename]))
+        WLOG(params, '', TextEntry('40-011-00012', args=[outfile.filename]))
         # write image to file
         outfile.write()
         # ------------------------------------------------------------------
