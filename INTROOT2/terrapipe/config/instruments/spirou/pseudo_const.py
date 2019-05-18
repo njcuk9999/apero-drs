@@ -12,7 +12,7 @@ Created on 2019-01-18 at 14:44
 
 from terrapipe import constants
 from terrapipe.constants.default import pseudo_const
-
+from terrapipe.locale import drs_exceptions
 
 # =============================================================================
 # Define variables
@@ -23,7 +23,9 @@ __INSTRUMENT__ = 'SPIROU'
 PARAMS = constants.load(__INSTRUMENT__)
 # get default Constant class
 DefaultConstants = pseudo_const.PseudoConstants
-# -----------------------------------------------------------------------------
+# get error
+ConfigError = drs_exceptions.ConfigError
+
 
 # =============================================================================
 # Define Constants class (pseudo constants)
@@ -76,6 +78,33 @@ class PseudoConstants(DefaultConstants):
                 '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
                 '']
         return logo
+
+
+    # =========================================================================
+    # FIBER SETTINGS
+    # =========================================================================
+    def FIBER_SETTINGS(self, params, fiber=None):
+        source = __NAME__ + '.FIBER_SETTINGS()'
+        # get fiber type
+        if fiber is None:
+            fiber = params['FIBER']
+        # list fiber keys
+        keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS']
+        # loop around all fiber keys and add to params
+        for key in keys:
+            # get fiber key
+            key1 = '{0}_{1}'.format(key, fiber)
+            # deal with key not existing
+            if key1 not in params:
+                emsg = 'Fiber Constant Error. Instrument requires key = {0}'
+                ConfigError(emsg.format(key1), level='error')
+            # if key exists add it for this fiber
+            else:
+                params[key] = params[key1]
+                params.set_source(key, source)
+        # return params
+        return params
+
 
 
 # =============================================================================
