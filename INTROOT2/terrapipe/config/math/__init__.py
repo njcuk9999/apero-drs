@@ -15,11 +15,13 @@ from . import general
 # Define functions
 # =============================================================================
 
-
 killnan = general.killnan
+
+measure_box_min_max = general.measure_box_min_max
 
 nanpad = general.nanpad
 
+nanpolyfit = general.nanpolyfit
 
 # =============================================================================
 # End of code
