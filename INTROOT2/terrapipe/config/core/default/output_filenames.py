@@ -19,7 +19,7 @@ from terrapipe import locale
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'io.drs_path.py'
+__NAME__ = 'config.core.default.output_filenames.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -37,8 +37,8 @@ TextEntry = locale.drs_text.TextEntry
 # =============================================================================
 # Define functions
 # =============================================================================
-def pp_file(params, **kwargs):
-    func_name = __NAME__ + '.pp_file()'
+def general_file(params, **kwargs):
+    func_name = __NAME__ + '.general_file()'
     # get parameters from keyword arguments
     infile = kwargs.get('infile', None)
     outfile = kwargs.get('outfile', None)
@@ -59,7 +59,7 @@ def pp_file(params, **kwargs):
     return abspath
 
 
-def debug_back(params, **kwargs):
+def debug_file(params, **kwargs):
     func_name = __NAME__ + '.debug_back()'
     # get parameters from keyword arguments
     infile = kwargs.get('infile', None)
