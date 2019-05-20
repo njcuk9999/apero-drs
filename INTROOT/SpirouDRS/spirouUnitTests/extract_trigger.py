@@ -41,14 +41,27 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get param dictionary
 ParamDict = spirouConfig.ParamDict
-
+# -----------------------------------------------------------------------------
+# EMAIL SETTINGS
+#    Note must have yagmail and dependencies installed
+#    Will ask for keyring password each time or email password
+#    One email will send at start and one at end with the log printed to the
+#    body of the message (PID in subject)
+EMAIL = True
+EMAIL_ADDRESS = 'neil.james.cook@gmail.com'
+try:
+    if not EMAIL:
+        YAG = None
+    else:
+        import yagmail
+        YAG = yagmail.SMTP(EMAIL_ADDRESS)
+except:
+    YAG = None
+# -----------------------------------------------------------------------------
 # test run
 TEST_RUN = False
 TEST_STORE = []
-
-# define run number
-RUNNUMBER = 0
-
+# -----------------------------------------------------------------------------
 # switches
 RUN_BADPIX = False
 RUN_DARK = False
@@ -62,10 +75,10 @@ RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = False
 RUN_EXTRACT_DARK = False
-RUN_EXTRACT_ALL = True
-RUN_OBJ_MK_TELLU = True
+RUN_EXTRACT_ALL = False
+RUN_OBJ_MK_TELLU = False
 RUN_OBJ_FIT_TELLU = True
-
+# -----------------------------------------------------------------------------
 # skip found files
 SKIP_DONE_PP = True
 SKIP_DONE_EXTRACT = False
@@ -73,31 +86,33 @@ SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
 SKIP_DONE_FIT_TELLU = False
-
+# -----------------------------------------------------------------------------
 # turn on parallelisation
 PARALLEL = True
-
 # Max Processes
-MAX_PROCESSES = 5
-
+MAX_PROCESSES = 8
+# -----------------------------------------------------------------------------
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
 INPUT_HC_C = '_e2dsff_C.fits'
 INPUT_WAVE_AB = '_e2dsff_AB.fits'
 INPUT_WAVE_C = '_e2dsff_C.fits'
-
 INPUT_MK_TELLU = '_e2dsff_AB.fits'
 INPUT_FIT_TELLU = '_e2dsff_AB.fits'
-
 # -----------------------------------------------------------------------------
+# define the science targets
+# SCIENCE_TARGETS = ['Gl699', 'Gl15A']
+# SCIENCE_TARGETS = ['HD189733', 'GJ1002']
+SCIENCE_TARGETS = ['Gl699', 'Gl15A', 'HD189733', 'GJ1002']
+# -----------------------------------------------------------------------------
+# define run number
+RUNNUMBER = 0
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 DATECOL = 'MJDATE'
 # DATECOL = 'LAST_MODIFIED'
-
 # telluric object list
 TELL_WHITELIST = spirouTelluric.GetWhiteList()
-
 # this is only used if DATES is not None
 DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-05-27', '2018-05-28', '2018-05-29', '2018-05-30', '2018-05-31',
@@ -116,6 +131,34 @@ DATES = None
 # =============================================================================
 # Define functions
 # =============================================================================
+def send_email(params, kind='start'):
+
+    if YAG is None:
+        return 0
+
+    if kind == 'start':
+        receiver = EMAIL_ADDRESS
+        subject = ('[SPIROU-DRS] {0} has started (PID = {1})'
+                   ''.format(__NAME__, params['PID']))
+        body = ''
+        for logmsg in WLOG.pout['LOGGER_ALL']:
+            body += '{0}\t{1}\n'.format(*logmsg)
+
+    elif kind == 'end':
+        receiver = EMAIL_ADDRESS
+        subject = ('[SPIROU-DRS] {0} has finished (PID = {1})'
+                   ''.format(__NAME__, params['PID']))
+
+        body = ''
+        for logmsg in params['LOGGER_FULL']:
+            for log in logmsg:
+                body += '{0}\t{1}\n'.format(*log)
+    else:
+        return 0
+
+    YAG.send(to=receiver, subject=subject, contents=body)
+
+
 def find_all_raw_files(p):
     # define path to walk around
     if p['ARG_NIGHT_NAME'] == '':
@@ -158,7 +201,7 @@ def skip_done_raw_files(p, filelist):
         path = path.replace('.fits', ppext)
         # if does not exist add to newfile list
         if not os.path.exists(path):
-            newfilelist.append(path)
+            newfilelist.append(filename)
     # return unfound files
     return newfilelist
 
@@ -611,7 +654,7 @@ def unit_wrapper(p, runs):
 def trigger_preprocess(p, filelist):
     recipe = 'cal_preprocess_spirou'
     # define path to raw folder
-    rawpath = p['DRS_DATA_WORKING']
+    rawpath = p['DRS_DATA_RAW']
     # get night name
     night_names, filenames = get_night_name(rawpath, filelist)
     # catch errors
@@ -705,9 +748,9 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
-        # if DATES is not None:
-        #     if night_name.replace('/', '') not in DATES:
-        #         continue
+        if DATES is not None:
+            if night_name.replace('/', '') not in DATES:
+                continue
 
         # log progress
         wmsgs = [spirouStartup.spirouStartup.HEADER]
@@ -730,14 +773,22 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
                                             fdprtypes, fobjnames)
         # make sure MJDATE is float
         vindex[DATECOL] = np.array(vindex[DATECOL]).astype(float)
+
+        # deal with recipes that need custom arguments
+        if recipe == 'obj_fit_tellu_db':
+            custom_args = [1, ','.join(fobjnames)]
+        else:
+            custom_args = None
+
         # make the runs
-        runs = trigger_runs(p, recipe, night_name, control, vindex)
+        runs = trigger_runs(p, recipe, night_name, control, vindex,
+                            custom_args)
         # update recipe names (fudge)
         if recipe == 'cal_HC_E2DS_spirou':
             recipe1 = 'cal_HC_E2DS_EA_spirou'
         elif recipe == 'cal_WAVE_E2DS_spirou':
             recipe1 = 'cal_WAVE_E2DS_EA_spirou'
-        elif recipe == 'obj_mk_tellu_db':
+        elif recipe == 'obj_mk_tellu_db' or recipe == 'obj_fit_tellu_db':
             recipe1 = str(recipe)
             night_name = None
             skip = True
@@ -756,7 +807,8 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     return lls
 
 
-def trigger_runs(p, recipe, night_name, control, vindex):
+def trigger_runs(p, recipe, night_name, control, vindex,
+                 custom_args=None):
     # define groups of different objects
     groups = get_groups(vindex)
 
@@ -793,6 +845,9 @@ def trigger_runs(p, recipe, night_name, control, vindex):
 
     if recipe == 'obj_mk_tellu_db':
         return [[]]
+
+    if recipe == 'obj_fit_tellu_db':
+        return [custom_args]
 
     if recipe == 'obj_fit_tellu':
         return obj_fit_tellu(p, night_name, vindex, groups)
@@ -1391,6 +1446,9 @@ def main(night_name=None):
 
     loc = ParamDict()
 
+    # send email if configured
+    send_email(p, kind='start')
+
     # ----------------------------------------------------------------------
     # Check pre-processing
     # ----------------------------------------------------------------------
@@ -1491,7 +1549,7 @@ def main(night_name=None):
     if RUN_EXTRACT_OBJ:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['OBJ_FP', 'OBJ_DARK'],
-                           fobjnames=['Gl699', 'Gl15A'])
+                           fobjnames=SCIENCE_TARGETS)
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
     # 12. extract objects
     if RUN_EXTRACT_ALL:
@@ -1510,8 +1568,8 @@ def main(night_name=None):
 
     # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
-        lls = trigger_main(p, loc, recipe='obj_fit_tellu',
-                           fobjnames=['Gl699', 'Gl15A'])
+        lls = trigger_main(p, loc, recipe='obj_fit_tellu_db',
+                           fobjnames=SCIENCE_TARGETS)
         all_lls['obj_fit_tellu (OBJ)'] = lls
 
     # if test run print report
@@ -1534,6 +1592,10 @@ def main(night_name=None):
     # End Message
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p, outputs=None)
+
+    # send email if configured
+    send_email(p, kind='end')
+
     # return locals
     return dict(locals())
 

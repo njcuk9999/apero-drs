@@ -118,16 +118,16 @@ def dark_setup(night_name, files):
     p = spirouImage.MeasureDark(p, datared, 'Red part', 'red')
 
     # get stats
-    stats1 = [data.size, np.sum(~np.isfinite(data)),
+    stats1 = [data.size, np.nansum(~np.isfinite(data)),
               np.nanmedian(data),
-              np.sum(~np.isfinite(data)) * 100 / np.product(data.shape),
+              np.nansum(~np.isfinite(data)) * 100 / np.product(data.shape),
               p['DADEAD_FULL'],
-              datablue.size, np.sum(~np.isfinite(datablue)),
+              datablue.size, np.nansum(~np.isfinite(datablue)),
               np.nanmedian(datablue),
-              np.sum(~np.isfinite(datablue)) * 100 / np.product(datablue.shape),
-              p['DADEAD_BLUE'], datared.size, np.sum(~np.isfinite(datared)),
+              np.nansum(~np.isfinite(datablue)) * 100 / np.product(datablue.shape),
+              p['DADEAD_BLUE'], datared.size, np.nansum(~np.isfinite(datared)),
               np.nanmedian(datared),
-              np.sum(~np.isfinite(datared)) * 100 / np.product(datared.shape),
+              np.nansum(~np.isfinite(datared)) * 100 / np.product(datared.shape),
               p['DADEAD_RED']]
 
     return stats1

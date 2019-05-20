@@ -75,7 +75,7 @@ if __name__ == "__main__":
     tell_obj = np.array(tell_obj)
     hdr_obj = np.array(hdr_obj)
     mask = tell_obj != hdr_obj
-    print('Number OBJNAMES not equal = {0}'.format(np.sum(mask)))
+    print('Number OBJNAMES not equal = {0}'.format(np.nansum(mask)))
 
 
 # =============================================================================

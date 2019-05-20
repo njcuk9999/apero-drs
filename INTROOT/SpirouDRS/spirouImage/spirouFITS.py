@@ -19,6 +19,7 @@ import string
 import os
 import warnings
 from collections import OrderedDict
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 import time
 
 from SpirouDRS import spirouConfig
@@ -1083,7 +1084,7 @@ def check_wave_sol_consistency(p, loc):
             # get the wave map for this order
             yfit = np.polyval(input_coeffs[order_num][::-1], xfit)
             # get the new coefficients based on a fit to this wavemap
-            coeffs = np.polyfit(xfit, yfit, required_ncoeffs)[::-1]
+            coeffs = nanpolyfit(xfit, yfit, required_ncoeffs)[::-1]
             # push into storage
             output_coeffs[order_num] = coeffs
             output_map[order_num] = yfit
@@ -1284,7 +1285,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None,
-                                     required=True):
+                                     required=True, return_filename=False):
     """
     Read the order profile superposition image from either "filename" (if not
     None) or get filename from the calibration database using "p"
@@ -1308,6 +1309,8 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
                      "p" the order profile is read straight from "filename"
     :param required: bool, if True code generates log exit else raises a
                      ConfigError (to be caught)
+
+    :param return_filename: bool, if True returns
 
     :return orderp: numpy array (2D), the order profile image read from file
     """
@@ -1335,6 +1338,9 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
         read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # if return_filename only return filename
+    if return_filename:
+        return read_file
     # log order profile file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG(p, '', wmsg)
@@ -1377,11 +1383,10 @@ def check_fits_lock_file(p, filename):
 
 def open_fits_lock_file(p, lock_file, filename):
 
-    # need to make sure lock_file directory is valid
-    lock_dir = os.path.dirname(lock_file)
-    if not os.path.exists(lock_dir):
-        emsg = 'Lock file directory does not exist ({0})'
-        WLOG(p, 'error', emsg.format(lock_dir))
+    # try to open the lock file
+    if not os.path.exists(os.path.dirname(lock_file)):
+        emsg = 'Lock directory does not exist. Dir={0}'
+        WLOG(p, 'error', emsg.format(os.path.dirname(lock_file)))
 
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time

@@ -154,7 +154,7 @@ if os.path.isfile(template_file):
 	for iord in range(49):
 		g=np.isfinite(template[iord,:])
 
-		if np.sum(g)>2044:
+		if np.nansum(g)>2044:
 			# spline the template to the correct velocity
 			spline=InterpolatedUnivariateSpline(wave[iord,g]*relativistic_doppler,template[iord,g],k=1,ext=3)
 			template[iord,:]=spline(wave[iord,:])
@@ -237,7 +237,7 @@ while (dparam>dparam_threshold) & (ite < nite_max) & (fail==False):
 		fail=True
 
 	# how much did the optical depth params changed
-	dparam=np.sqrt(np.sum((guess-prev_guess)**2))
+	dparam=np.sqrt(np.nansum((guess-prev_guess)**2))
 
 	print('ite = ',ite,'/',nite_max,', H2O depth : ',guess[0],', ','other gases depth : ',guess[1],', airmass',airmass)
 	print('Convergence parameter : ',dparam)
@@ -256,9 +256,9 @@ while (dparam>dparam_threshold) & (ite < nite_max) & (fail==False):
 
 		g=keep[iord,:]
 
-		if np.sum(g)>100:
+		if np.nansum(g)>100:
 			# if we have enough valid points, we normalized the domain by its median
-			best_trans = (tau1[iord*4088:iord*4088+4088]>np.percentile((tau1[iord*4088:iord*4088+4088])[g],95))
+			best_trans = (tau1[iord*4088:iord*4088+4088]>np.nanpercentile((tau1[iord*4088:iord*4088+4088])[g],95))
 			norm = np.nanmedian(sp2[best_trans])
 		else:
 			norm=1.0
@@ -294,7 +294,7 @@ while (dparam>dparam_threshold) & (ite < nite_max) & (fail==False):
 		xx=np.arange(-np.int(wconv[iord]*2),np.int(wconv[iord]*2))
 		#ker=1/(1+(xx/(wconv[iord]/16))**2)
 		ker=np.exp(-0.5*(xx/ew)**2)
-		ker/=np.sum(ker)
+		ker/=np.nansum(ker)
 
 		# update of the SED
 		ww1=np.convolve(g,ker,mode='same')
@@ -315,7 +315,7 @@ while (dparam>dparam_threshold) & (ite < nite_max) & (fail==False):
 		# of pixels where the transmission is expected to be smaller than 1%. This 
 		# improves things in the stronger absorptions
 		pedestal=tau1[iord*4088:iord*4088+4088]<0.01
-		nlow=np.sum(pedestal)
+		nlow=np.nansum(pedestal)
 		if nlow >100:
 			zp=np.nanmedian(sp[iord,pedestal])
 			if np.isfinite(zp):
@@ -327,7 +327,7 @@ while (dparam>dparam_threshold) & (ite < nite_max) & (fail==False):
 		if (ite==10) & doplot:
 			print('iord = ',iord)
 			g=keep[iord,:]
-			if np.sum(g)>100:
+			if np.nansum(g)>100:
 				plt.title('Order : '+str(iord))
 				plt.plot(wave[iord,:],tau1[iord*4088:iord*4088+4088],'c-',label = 'tapas fit')
 				plt.plot(wave[iord,:],sp[iord,:],'k-',label='input SP')

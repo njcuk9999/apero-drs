@@ -20,6 +20,9 @@ DARK_BADPIX_FILE = 'DARK_BADPIX'
 # Defines the bad pixel tag from cal_BADPIX
 BADPIX_FILE = 'BADPIX'
 
+# Defines the background map tag from cal_BADPIX
+BKGD_MAP_FILE = 'BKGRD_MAP'
+
 # Defines the localisation order profile tag
 LOC_ORDER_PROFILE_FILE = 'LOC_ORDERP'
 
@@ -127,6 +130,10 @@ TELLU_FIT_OUT_FILE = 'TELLU_CORRECTED'
 
 # Defines the telluric reconstructed file tag
 TELLU_FIT_RECON_FILE = 'TELLU_RECON'
+
+# Define the telluric extraction S1D file tags
+TELLU_S1D_FILE1 = 'TELLU_S1D_W'
+TELLU_S1D_FILE2 = 'TELLU_S1D_V'
 
 # Defines the object tellu template file tag
 OBJTELLU_TEMPLATE_FILE = 'OBJTELLU_TEMPLATE'

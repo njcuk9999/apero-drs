@@ -118,13 +118,13 @@ if __name__ == "__main__":
         # convert to dv
         dv = ((diff/data_ref)) * 299792458
         # normalise scatter around zero
-        ddv = dv - np.median(dv)
+        ddv = dv - np.nanmedian(dv)
         # get the standard deviation
         x_ind, y_ind = np.indices(ddv.shape)
         stdmask = np.zeros_like(ddv, dtype=bool)
         for stdorder in STD_ORDER:
             stdmask |= (x_ind == stdorder)
-        std = np.std(ddv[stdmask])
+        std = np.nanstd(ddv[stdmask])
 
         # construct title
         title = '{0} ({1}) std={2:.3f}'

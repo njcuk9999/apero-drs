@@ -12,9 +12,13 @@ from __future__ import division
 import numpy as np
 import warnings
 from scipy.interpolate import griddata
+from scipy import signal
+from scipy.signal import convolve2d
+from scipy.ndimage import map_coordinates as mapc
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -40,7 +44,385 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_background_flatfield(p, image):
+def make_background_map(p, image, badpixmask):
+
+    # get constants
+    width = p['IC_BKGR_BOXSIZE']
+    percent = p['IC_BKGR_PERCENT']
+    csize = p['IC_BKGR_MASK_CONVOLVE_SIZE']
+    nbad = p['IC_BKGR_N_BAD_NEIGHBOURS']
+
+    # set image bad pixels to NaN
+    image0 = np.array(image)
+    badmask = np.array(badpixmask, dtype=bool)
+    image0[badmask] = np.nan
+
+    # image that will contain the background estimate
+    backest = np.zeros_like(image0)
+
+    # we slice the image in ribbons of width "width".
+    # The slicing is done in the cross-dispersion direction, so we
+    # can simply take a median along the "fast" dispersion to find the
+    # order profile. We pick width to be small enough for the orders not
+    # to show a significant curvature within w pixels
+    for x_it in range(0, image0.shape[1], width):
+        # ribbon to find the order profile
+        ribbon = np.nanmedian(image0[:, x_it:x_it + width], axis=1)
+
+        for y_it in range(image0.shape[0]):
+            # we perform a running Nth percentile filter along the
+            # order profile. The box of the filter is w. Note that it could
+            # differ in princile from w, its just the same for the sake of
+            # simplicity.
+            ystart = y_it - width // 2
+            yend = y_it + width // 2
+            if ystart < 0:
+                ystart = 0
+            if yend > image0.shape[0] - 1:
+                yend = image0.shape[0] - 1
+            # background estimate
+            backest_pix = np.nanpercentile(ribbon[ystart:yend], percent)
+            backest[y_it, x_it: x_it + width] = backest_pix
+    # the mask is the area that is below then Nth percentile threshold
+    with warnings.catch_warnings(record=True) as _:
+        backmask = np.array(image0 < backest, dtype=float)
+    # we take advantage of the order geometry and for that the "dark"
+    # region of the array be continuous in the "fast" dispersion axis
+    nribbon = convolve2d(backmask, np.ones([1, csize]), mode='same')
+    # we remove from the binary mask all isolated (within 1x7 ribbon)
+    # dark pixels
+    backmask[nribbon == 1] = 0
+    # If a pixel has 3 or more "dark" neighbours, we consider it dark
+    # regardless of its initial value
+    backmask[nribbon >= nbad] = 1
+
+    # return the background mask
+    return backmask
+
+
+def make_local_background_map(p, image):
+    """
+    determine the proper amplitude for the  scaling of the
+    scattered-light image
+
+    :param p:
+    :param image:
+    :return:
+    """
+    func_name = __NAME__ + '.make_local_background_map()'
+    # get constants from parameter dictionary
+    xsize = p['IC_BKGR_LOCAL_XSIZE']
+    ysize = p['IC_BKGR_LOCAL_YSIZE']
+    bthres = p['IC_BKGR_LOCAL_THRES']
+    wx_ker = p['IC_BKGR_KER_WX']
+    wy_ker = p['IC_BKGR_KER_WY']
+    # measure local background
+    scat_light = measure_local_background(p, image)
+
+    # define the start and end of the center
+    startx = (image.shape[1] // 2) - xsize
+    endx = (image.shape[1] // 2) + xsize
+    starty = (image.shape[0] // 2) - ysize
+    endy = (image.shape[0] // 2) + ysize
+
+    # log process
+    WLOG(p, '', 'Optimizing amplitude for scattered light scaling')
+    WLOG(p, '', '')
+
+    # we extract a median order profile for the center of the image
+    profile = np.nanmedian(image[:, startx:endx], axis=1)
+    profile2 = np.nanmedian(scat_light[:, startx:endx], axis=1)
+
+    # we look at the central part of the array and at the pixels
+    # that are smaller than (bthres * 100)% of the peak of the orders
+    keep = profile < (bthres * np.max(profile))
+    # only look at those pixels in the center (y-direction)
+    keep[:starty] = False
+    keep[endy:] = False
+
+    # we determine the scattered light profile for both the model and the
+    # observed scatter
+    observed_scatter = profile - np.mean(profile[keep])
+    model_scatter = profile2 - np.mean(profile2[keep])
+
+    # we perform a dot-product between the obsered and modelled scattered
+    # light to find the amplitude of our model
+    part1 = observed_scatter[keep] * model_scatter[keep]
+    part2 = observed_scatter[keep] ** 2
+    amp = np.sum(part1)/np.sum(part2)
+
+    # divide the scattered light by the amp
+    profile2 = profile2 / amp
+
+    # print out some stats
+    wmsg1 = 'Amplitude to be used for scattered light scaling: {0}'
+    wmsg2 = 'wx = {0}, wy = {1}'
+    wmsg3 = 'fractional rms = {0}'
+    WLOG(p, 'info', wmsg1.format(amp))
+    WLOG(p, 'info', wmsg2.format(wx_ker, wy_ker))
+    WLOG(p, 'info', wmsg3.format(np.std(profile2[keep] - profile[keep])))
+
+    if p['DRS_PLOT'] > 0:
+        sPlt.local_scattered_light_plot(p, image, keep, profile, profile2, amp)
+
+
+def measure_local_background(p, image):
+    func_name = __NAME__ + '.measure_local_background()'
+    # get constants from parameter dictionary
+    wx_ker = p['IC_BKGR_KER_WX']
+    wy_ker = p['IC_BKGR_KER_WY']
+    sig_ker = p['IC_BKGR_KER_SIG']
+    # log process
+    WLOG(p, '', 'Measuring local background using 2D Gaussian Kernel')
+    # construct a convolution kernel. We go from -"sig_ker" to +"sig_ker" sigma
+    #   in each direction. Its important no to make the kernel too big
+    #   as this slows-down the 2D convolution. Do NOT make it a -10 to
+    #   +10 sigma gaussian!
+    ker_sigx = int((wx_ker * sig_ker * 2) + 1)
+    ker_sigy = int((wy_ker * sig_ker * 2) + 1)
+    kery, kerx = np.indices([ker_sigy, ker_sigx], dtype=float)
+    # this normalises kernal x and y between +1 and -1
+    kery = kery - np.mean(kery)
+    kerx = kerx - np.mean(kerx)
+    # calculate 2D gaussian kernel
+    ker = np.exp(-0.5 * ((kerx / wx_ker)**2 + (kery / wy_ker)**2))
+    # we normalize the integral of the kernel to 1 so that the AMP factor
+    #    corresponds to the fraction of scattered light and therefore has a
+    #    physical meaning.
+    ker = ker / np.sum(ker)
+
+    # we need to remove NaNs from image
+    WLOG(p, '', '\tPadding NaNs')
+    image1 = spirouCore.spirouMath.nanpad(image)
+
+    # we determine the scattered light image by convolving our image by
+    #    the kernel
+    WLOG(p, '', '\tCalculating 2D convolution')
+    scattered_light = convolve2d(image1, ker, mode='same')
+    # returned the scattered light
+    return scattered_light
+
+
+def measure_background_from_map(p, image, header, comments):
+    func_name = __NAME__ + '.measure_background_from_map()'
+    # get constants from parameter dictionary
+    width = p['IC_BKGR_BOXSIZE']
+    amp_ker = p['IC_BKGR_KER_AMP']
+    # ------------------------------------------------------------------------
+    # measure local background
+    scattered_light = measure_local_background(p, image)
+    # we extract a median order profile for the center of the image
+    local_background_correction = scattered_light / amp_ker
+    # correct the image for local background
+    image1 = image - local_background_correction
+
+    # -------------------------------------------------------------------------
+    # get badpixmask
+    bmap, bhdr, badfile = spirouImage.GetBackgroundMap(p, header)
+    # create mask from badpixmask
+    bmap = np.array(bmap, dtype=bool)
+    # copy image
+    image2 = np.array(image1)
+    # set to NAN all "illuminated" (non-background) pixels
+    image2[~bmap] = np.nan
+    # -------------------------------------------------------------------------
+    # create the box centers
+    # we construct a binned-down version of the full image with the estimate
+    # of the background for each x+y "center". This image will be up-scaled to
+    # the size of the full science image and subtracted
+
+    # x and y centers for each background calculation
+    xc = np.arange(width, image2.shape[0], width)
+    yc = np.arange(width, image2.shape[1], width)
+    # background map (binned-down for now)
+    background_image = np.zeros((len(xc), len(yc)))
+    # loop around all boxes with centers xc and yc
+    # and find pixels within a given widths
+    # around these centers in the full image
+    for i_it in range(len(xc)):
+        for j_it in range(len(yc)):
+            xci, yci = xc[i_it], yc[j_it]
+            # get the pixels for this box
+            subframe = image2[xci - width:xci + width, yci - width:yci + width]
+            subframe = subframe.ravel()
+            # get the (2*size)th minimum pixel
+            with warnings.catch_warnings(record=True) as _:
+                # do not use the nanpercentile, just a median
+                # as we masked non-background pixels with NaNs
+                value = np.nanmedian(subframe)
+
+            if np.isfinite(value):
+                background_image[i_it, j_it] = value
+            else:
+                background_image[i_it, j_it] = 0.0
+
+    # define a mapping grid from size of background_image (image1[0]/width) by
+    #    (image1[1]/width)
+    # get shapes
+    gridshape = background_image.shape
+    imageshape = image2.shape
+    # get fractional positions of the full image
+    indices = np.indices(imageshape)
+    fypix = indices[0]/imageshape[0]
+    fxpix = indices[1]/imageshape[1]
+    # scalge fraction positions to size of background image
+    sypix = (gridshape[0]-1) * fypix
+    sxpix = (gridshape[1]-1) * fxpix
+    # coords for mapping
+    coords = np.array([sypix, sxpix])
+    # expand image onto the grid that matches the size of the input image
+    background_image_full = mapc(background_image, coords,
+                                 order=2, cval=np.nan, output=float,
+                                 mode='constant')
+
+    # ----------------------------------------------------------------------
+    # Produce DEBUG plot
+    # ----------------------------------------------------------------------
+    data1 = image - background_image_full
+    # construct debug background file name
+    debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
+    # construct images
+    dimages = [data1, image, image1, image2, local_background_correction,
+               background_image_full, background_image]
+    # construct hdicts
+    hdict = spirouImage.CopyOriginalKeys(header, comments)
+    drsname = ['EXTDESC', None, 'Extension description']
+    hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
+    hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Original')
+    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Locally corrected')
+    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='LC NaN filled')
+    hdict5 = spirouImage.AddKey(p, hdict, drsname, value='Local Background')
+    hdict6 = spirouImage.AddKey(p, hdict, drsname, value='Global Background')
+    hdict7 = spirouImage.AddKey(p, hdict, drsname,
+                                value='Global Background Binned')
+    dheaders = [hdict1, hdict2, hdict3, hdict4, hdict5, hdict6, hdict7]
+    # write debug to file
+    _ = spirouImage.WriteImageMulti(p, debug_background, dimages,
+                                    hdicts=dheaders)
+    # ----------------------------------------------------------------------
+    return background_image_full
+
+
+def measure_background_flatfield(p, image, header, comments):
+    """
+    Measures the background of a flat field image - currently does not work
+    as need an interpolation function (see code)
+
+    :param p: parameter dictionary, ParamDict containing constants
+
+            Must contain at least:
+                IC_BKGR_WINDOW: int, Half-size of window for background
+                                measurements
+                GAIN: float, the gain of the image (from HEADER)
+                SIGDET: float, the read noise of the image (from HEADER)
+                log_opt: string, log option, normally the program name
+
+    :param image: numpy array (2D), the image to measure the background of
+
+    :return background: numpy array (2D), the background image (currently all
+                        zeros) as background not implemented
+    :return xc: numpy array (1D), the box centers (x positions) used to create
+                the background image
+    :return yc: numpy array (1D), the box centers (y positions) used to create
+                the background image
+    :return minlevel: numpy array (2D), the 2 * size -th minimum pixel value
+                      of each box for each pixel in the image
+    """
+    # func_name = __NAME__ + '.measure_background_flatfield()'
+
+    image1 = np.array(image)
+    image_med = signal.medfilt(image1, [3, 3])
+
+    # get constants
+    size = p['IC_BKGR_WINDOW']
+    percent = p['IC_BKGR_PERCENT']
+    # create the box centers
+    xc = np.arange(size, image_med.shape[0], 2 * size)
+    yc = np.arange(size, image_med.shape[1], 2 * size)
+    # min level box
+    minlevel = np.zeros((len(xc), len(yc)))
+    # loop around all boxes with centers xc and yc
+    for i_it in range(len(xc)):
+        for j_it in range(len(yc)):
+            xci, yci = xc[i_it], yc[j_it]
+            # get the pixels for this box
+            subframe = image_med[xci - size:xci + size,
+                                 yci - size:yci + size].ravel()
+            # get the (2*size)th minimum pixel
+            with warnings.catch_warnings(record=True) as _:
+                value = np.nanpercentile(subframe, percent)
+
+            if np.isfinite(value):
+                minlevel[i_it, j_it] = value
+            else:
+                minlevel[i_it, j_it] = 0.0
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    gridx1, gridy1 = np.mgrid[size:image_med.shape[0]:2 * size,
+                              size:image_med.shape[1]:2 * size]
+    gridx2, gridy2 = np.indices(image_med.shape)
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    minlevel2 = np.zeros((minlevel.shape[0] + 2, minlevel.shape[1] + 2),
+                         dtype=float)
+    minlevel2[1:-1, 1:-1] = minlevel
+    minlevel2[0, 1:-1] = minlevel[0]
+    minlevel2[-1, 1:-1] = minlevel[-1]
+    minlevel2[1:-1, 0] = minlevel[:, 0]
+    minlevel2[1:-1, -1] = minlevel[:, -1]
+    minlevel2[0, 0] = minlevel[0, 0]
+    minlevel2[-1, -1] = minlevel[-1, -1]
+    minlevel2[0, -1] = minlevel[0, -1]
+    minlevel2[-1, 0] = minlevel[-1, 0]
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    gridx1c = np.zeros((gridx1.shape[0] + 2, gridx1.shape[1] + 2), dtype=float)
+    gridx1c[1:-1, 1:-1] = gridx1
+    gridx1c[0, :] = 0
+    gridx1c[-1, :] = np.shape(image_med)[0]
+    gridx1c[:, 0] = gridx1c[:, 1]
+    gridx1c[:, -1] = gridx1c[:, -2]
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    gridy1c = np.zeros((gridy1.shape[0] + 2, gridy1.shape[1] + 2), dtype=float)
+    gridy1c[1:-1, 1:-1] = gridy1
+    gridy1c[:, 0] = 0
+    gridy1c[:, -1] = np.shape(image_med)[1]
+    gridy1c[0, :] = gridy1c[1, :]
+    gridy1c[-1, :] = gridy1c[-2, :]
+
+    # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
+    points = np.array([gridx1c.ravel(), gridy1c.ravel()]).T
+    background = griddata(points, minlevel2.ravel(), (gridx2, gridy2),
+                          method='cubic')
+
+    # ----------------------------------------------------------------------
+    # Produce DEBUG plot
+    # ----------------------------------------------------------------------
+    data1 = image - background
+    # construct debug background file name
+    debug_background, tag = spirouConfig.Constants.BACKGROUND_CORRECT_FILE(p)
+    # construct images
+    dimages = [data1, background, image1, image_med]
+    # construct hdicts
+    hdict = spirouImage.CopyOriginalKeys(header, comments)
+    drsname = ['DRSNAME', None, 'Extension description']
+    hdict1 = spirouImage.AddKey(p, hdict, drsname, value='Corrected')
+    hdict2 = spirouImage.AddKey(p, hdict, drsname, value='Background')
+    hdict3 = spirouImage.AddKey(p, hdict, drsname, value='Original')
+    hdict4 = spirouImage.AddKey(p, hdict, drsname, value='Median')
+    dheaders = [hdict1, hdict2, hdict3, hdict4]
+    # write debug to file
+    spirouImage.WriteImageMulti(p, debug_background, dimages, hdicts=dheaders)
+    # ----------------------------------------------------------------------
+
+
+    # return background, xc, yc and minlevel
+    return background, gridx1c, gridy1c, minlevel2
+
+
+def measure_background_flatfield_old(p, image, header, comments, badpixmask):
+
     """
     Measures the background of a flat field image - currently does not work
     as need an interpolation function (see code)
@@ -87,7 +469,7 @@ def measure_background_flatfield(p, image):
             maskedsubframe = subframe[mask]
             if len(maskedsubframe) > 0:
                 minlevel[i_it, j_it] = np.max(
-                    [np.percentile(maskedsubframe, percent), 0])
+                    [np.nanpercentile(maskedsubframe, percent), 0])
             else:
                 minlevel[i_it, j_it] = 0
 
@@ -231,12 +613,9 @@ def measure_min_max(pp, y):
     miny, maxy = measure_box_min_max(y, pp['IC_LOCNBPIX'])
     # record the maximum signal in the central column
     # QUESTION: Why the third biggest?
-    max_signal = np.sort(y)[-3]
+    max_signal = np.nanpercentile(y, 95)
     # get the difference between max and min pixel values
-    with warnings.catch_warnings(record=True) as w:
-        diff_maxmin = maxy - miny
-    # log any catch warnings
-    spirouCore.WarnLog(pp, w, funcname)
+    diff_maxmin = maxy - miny
     # return values
     return miny, maxy, max_signal, diff_maxmin
 
@@ -268,8 +647,8 @@ def measure_box_min_max(y, size):
     # loop around each pixel from "size" to length - "size" (non-edge pixels)
     # and get the minimum and maximum of each box
     for it in range(size, ny - size):
-        min_image[it] = np.min(y[it - size:it + size])
-        max_image[it] = np.max(y[it - size:it + size])
+        min_image[it] = np.nanmin(y[it - size:it + size])
+        max_image[it] = np.nanmax(y[it - size:it + size])
 
     # deal with leading edge --> set to value at size
     min_image[0:size] = min_image[size]

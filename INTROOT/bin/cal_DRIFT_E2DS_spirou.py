@@ -286,12 +286,12 @@ def main(night_name=None, reffile=None):
         # Calculate RV properties
         # ------------------------------------------------------------------
         # calculate the mean flux ratio
-        meanfratio = np.mean(cfluxr)
+        meanfratio = np.nanmean(cfluxr)
         # calculate the weighted mean radial velocity
         wref = 1.0/dvrmsref
-        meanrv = -1.0 * np.sum(rv * wref)/np.sum(wref)
+        meanrv = -1.0 * np.nansum(rv * wref)/np.nansum(wref)
         err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
-        merr = 1./np.sqrt(np.sum((1./err_meanrv)**2))
+        merr = 1./np.sqrt(np.nansum((1./err_meanrv)**2))
         # Log the RV properties
         wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s '
                 '- Flux ratio= {3:.3f} - Nb Comsic= {4}')
@@ -311,20 +311,20 @@ def main(night_name=None, reffile=None):
     # if use mean
     if p['DRIFT_TYPE_E2DS'].upper() == 'WEIGHTED MEAN':
         # mean radial velocity
-        sumwref = np.sum(wref[:nomax])
-        meanrv = np.sum(loc['DRIFT'][:, :nomax] * wref[:nomax], 1)/sumwref
+        sumwref = np.nansum(wref[:nomax])
+        meanrv = np.nansum(loc['DRIFT'][:, :nomax] * wref[:nomax], 1)/sumwref
         # error in mean radial velocity
         errdrift2 = loc['ERRDRIFT'][:, :nomax]**2
-        meanerr = 1.0/np.sqrt(np.sum(1.0/errdrift2, 1))
+        meanerr = 1.0/np.sqrt(np.nansum(1.0/errdrift2, 1))
         # add to loc
         loc['MDRIFT'] = meanrv
         loc['MERRDRIFT'] = meanerr
     # else use median
     else:
         # median drift
-        loc['MDRIFT'] = np.median(loc['DRIFT'][:, :nomax], 1)
+        loc['MDRIFT'] = np.nanmedian(loc['DRIFT'][:, :nomax], 1)
         # median err drift
-        loc['MERRDRIFT'] = np.median(loc['ERRDRIFT'][:, :nomax], 1)
+        loc['MERRDRIFT'] = np.nanmedian(loc['ERRDRIFT'][:, :nomax], 1)
     # ------------------------------------------------------------------
     # set source
     loc.set_sources(['mdrift', 'merrdrift'], __NAME__ + '/main()()')

@@ -59,7 +59,7 @@ DRS_DATA_PLOT = '/drs/spirou/data/plot'
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
-DRS_UCONFIG = '/home/mhobson/spiroudrsconfig/'
+# DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
