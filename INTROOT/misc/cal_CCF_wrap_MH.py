@@ -25,7 +25,7 @@ WLOG = spirouCore.wlog
 # define the arguments for each run
 # Note: MUST be one entry per run
 NUMBER_RUNS = 13
-NIGHT_NAMES = ['ccftest'] * NUMBER_RUNS
+NIGHT_NAMES = ['ccftest/cons_shape'] * NUMBER_RUNS
 E2DSFILES = ['2375577o_pp_e2dsff_wave12_AB.fits',
              '2375577o_pp_e2dsff_wave13_AB.fits',
              '2375577o_pp_e2dsff_wave14_AB.fits',
@@ -43,19 +43,20 @@ MASKS = ['gl581_Sep18_cleaned.mas'] * NUMBER_RUNS
 RVS = [-76] * NUMBER_RUNS
 WIDTHS = [30.0] * NUMBER_RUNS
 STEPS = [0.5] * NUMBER_RUNS
-WAVEFILES = ['/data/CFHT/calibDB_1/19AQ02-Feb12_2374782a_pp_2374786c_pp_wave_new_AB.fits',
-             '/data/CFHT/calibDB_1/19AQ02-Feb13_2374832a_pp_2374836c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb14_2375095a_pp_2375097c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb15_2375121a_pp_2375125c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb16_2375312a_pp_2375316c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb17_2375473a_pp_2375475c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb18_2375657a_pp_2375661c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb19_2375687a_pp_2375691c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb21_2375743a_pp_2375747c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb22_2375771a_pp_2375775c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb23_2375803a_pp_2375807c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb24_2375831a_pp_2375835c_pp_wave_new_AB.fits',
-'/data/CFHT/calibDB_1/19AQ02-Feb25_2376092a_pp_2376096c_pp_wave_new_AB.fits'
+WAVEFILES = [
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2374782a_pp_2374786c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2374832a_pp_2374836c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375095a_pp_2375097c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375121a_pp_2375125c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375312a_pp_2375316c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375473a_pp_2375475c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375657a_pp_2375661c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375687a_pp_2375691c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375743a_pp_2375747c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375771a_pp_2375775c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375803a_pp_2375807c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2375831a_pp_2375835c_pp_wave_new_AB.fits',
+    '/data/CFHT/reduced/ccftest/cons_shape/cons_shape_2376092a_pp_2376096c_pp_wave_new_AB.fits'
              ]
 # define which variables to save from run
 SAVE_VALUES_LOC = ['CONTRAST', 'RV', 'FWHM', 'MAXCPP', 'WAVEFILE']
@@ -63,7 +64,7 @@ SAVE_VALUES_CLOC = ['CONTRAST', 'RV', 'FWHM', 'MAXCPP', 'WAVEFILE']
 SAVE_VALUES_CP = ['DRIFT0']
 SAVE_VALUES_P = []
 # define the output file
-OUTPUTFILENAME = 'Gl411_cff_wavenew.fits'
+OUTPUTFILENAME = 'Gl411_cff_wavenew_hawaii.fits'
 
 
 # =============================================================================

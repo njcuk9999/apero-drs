@@ -159,7 +159,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                       filename='/home/data/CFHT/calibDB_1/19AQ02-Feb12_2374782a_pp_2374786c_pp_wave_new_AB.fits',
+                                       filename='/home/data/CFHT/calibDB_1/19AQ02-Feb13_2374832a_pp_2374836c_pp_wave_new_AB.fits',
                                        return_filename=True, fiber=wave_fiber)
     param_ll, wave_ll, wavefile, wsource = wout
     # save to storage
@@ -354,7 +354,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     cloc.set_sources(['speref'], __NAME__ + '/main()')
     # get the wave solution
     wout = spirouImage.GetWaveSolution(cp, hdr=chdr, return_wavemap=True,
-                                       filename='/home/data/CFHT/calibDB_1/19AQ02-Feb12_2374782a_pp_2374786c_pp_wave_new_C.fits',
+                                       filename='/home/data/CFHT/calibDB_1/19AQ02-Feb13_2374832a_pp_2374836c_pp_wave_new_C.fits',
                                        return_filename=True, return_header=True,
                                        fiber=wave_fiber)
     param_ll, wave_ll, wavefile, whdr, wsource = wout
