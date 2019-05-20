@@ -381,6 +381,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # add the jump
             peak_num_init[x_gap_ind[0][i] + 1:] += x_jump
 
+
         # INITTEST save original (HC sol) wavelengths
         # fp_ll_ref_init.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], x_fp[fp_ref_ind]))
         fp_ll_init.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], x_fp))
@@ -1374,11 +1375,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
-    # get raw input file name
-    raw_infile1 = os.path.basename(p['HCFILES'][0])
+    # get raw input file name(s)
+    raw_infiles1 = []
+    for hcfile in p['HCFILES']:
+        raw_infiles1.append(os.path.basename(hcfile))
     raw_infile2 = os.path.basename(p['FPFILE'])
-    tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
-    tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
+    # # get raw input file name
+    # raw_infile1 = os.path.basename(p['HCFILES'][0])
+    # raw_infile2 = os.path.basename(p['FPFILE'])
+    # tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
+    # tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_NEW(p)
     wavefitsname = os.path.split(wavefits)[-1]
@@ -1453,14 +1459,24 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # only copy over if QC passed
     if p['QC']:
-        # update original E2DS hcfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
-        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
-        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
-        # update original E2DS fpfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0b)
+        # loop around hc files and update header with
+        for hcfile in p['HCFILES']:
+            raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], hcfile)
+            p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath1)
+        # update fp file
         raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
-        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+        p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath2)
+
+    # # only copy over if QC passed
+    # if p['QC']:
+    #     # update original E2DS hcfile and add header keys (via hdict)
+    #     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
+    #     raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+    #     p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
+    #     # update original E2DS fpfile and add header keys (via hdict)
+    #     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0b)
+    #     raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
+    #     p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
 
     # # ------------------------------------------------------------------
     # # Save to result table
