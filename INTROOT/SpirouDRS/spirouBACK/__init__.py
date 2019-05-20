@@ -35,7 +35,15 @@ __all__ = ['BoxSmoothedMinMax',
 # =============================================================================
 BoxSmoothedMinMax = spirouBACK.measure_box_min_max
 
+MakeLocalBackgroundMap = spirouBACK.make_local_background_map
+
+MakeBackgroundMap = spirouBACK.make_background_map
+
+MeasureBackgroundMap = spirouBACK.measure_background_from_map
+
 MeasureBackgroundFF = spirouBACK.measure_background_flatfield
+
+MeasureBackgroundFF_OLD = spirouBACK.measure_background_flatfield_old
 
 MeasureMinMax = spirouBACK.measure_box_min_max
 

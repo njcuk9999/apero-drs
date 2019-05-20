@@ -310,6 +310,7 @@ def get_check_lock_file(p, dbkind):
     # check if lock file already exists
     if os.path.exists(lock_file):
         WLOG(p, 'warning', '{0} locked. Waiting...'.format(name))
+        WLOG(p, 'warning', '\tFilename = {0}'.format(lock_file))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     while os.path.exists(lock_file) or wait_time > max_wait_time:
@@ -330,6 +331,10 @@ def get_check_lock_file(p, dbkind):
 
 def open_lock_file(p, lock_file):
     # try to open the lock file
+    if not os.path.exists(os.path.dirname(lock_file)):
+        emsg = 'Lock directory does not exist. Dir={0}'
+        WLOG(p, 'error', emsg.format(os.path.dirname(lock_file)))
+
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     open_file = True
@@ -340,7 +345,8 @@ def open_lock_file(p, lock_file):
             open_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG(p, 'warning', 'Waiting to open lock')
+                wmsg = 'Waiting to open lock: {0}'
+                WLOG(p, 'warning', wmsg.format(lock_file))
             time.sleep(1)
             wait_time += 1
     if wait_time > p['DB_MAX_WAIT']:

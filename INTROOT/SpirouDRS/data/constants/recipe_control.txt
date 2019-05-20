@@ -282,6 +282,7 @@ visu_WAVE_spirou, 1, EXT_E2DS_FF_AB, None, None, None, AB, HCONE_HCONE, HCONE_HC
 visu_WAVE_spirou, 1, EXT_E2DS_FF_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
 visu_WAVE_spirou, 1, EXT_E2DS_FF_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
 visu_WAVE_spirou, 1, EXT_E2DS_FF_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+drs_local_background, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, LOCALIZATION, 3, 1
 
 #
 # ---- Add extra DRS files which aren't currently used in recipes but should be identified

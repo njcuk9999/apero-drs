@@ -37,7 +37,8 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-
+# define ll extract types
+EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 
 # # test files
 # night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
@@ -130,7 +131,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
 
-    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+    if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
         # log progress
         WLOG(p, '', 'Debananafying (straightening) image')
         # get the shape map
@@ -255,7 +256,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         WLOG(p, '', 'Correcting for flat={0}'.format(p['FLATFILE']))
         # normalise flat
         if p['EM_NORM_FLUX']:
-            image2 = image2 / np.median(image2)
+            image2 = image2 / np.nanmedian(image2)
         # correct for flat
         loc['SPE'] = loc['SPE'] * image2
         loc['SPE0'] = loc['SPE0'] * image2

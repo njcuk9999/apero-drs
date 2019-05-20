@@ -275,7 +275,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
     normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
@@ -284,7 +284,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     rv0 = float(ccf_res[1]) * 1.
@@ -431,16 +431,16 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the maximum number of orders to use
     nbmax = cp['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    cloc['AVERAGE_CCF'] = np.sum(cloc['CCF'][: nbmax], axis=0)
+    cloc['AVERAGE_CCF'] = np.nansum(cloc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = cloc['AVERAGE_CCF'] / np.max(cloc['AVERAGE_CCF'])
+    normalized_ccf = cloc['AVERAGE_CCF'] / np.nanmax(cloc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = spirouRV.FitCCF(p, cloc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     cloc['CCF_RES'] = ccf_res
     cloc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    cloc['MAXCPP'] = np.sum(cloc['CCF_MAX']) / np.sum(cloc['PIX_PASSED_ALL'])
+    cloc['MAXCPP'] = np.nansum(cloc['CCF_MAX']) / np.nansum(cloc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     cloc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
@@ -550,16 +550,26 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # -------------------------------------------------------------------------
     # add keys of the wave solution FP CCF
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'], value = cloc['WAVEFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'], value = whdr[p['KW_WFP_DRIFT'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value = whdr[p['KW_WFP_FWHM'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'], value = whdr[p['KW_WFP_CONTRAST'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'], value = whdr[p['KW_WFP_MAXCPP'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value = whdr[p['KW_WFP_MASK'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'], value = whdr[p['KW_WFP_LINES'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'], value = whdr[p['KW_WFP_TARG_RV'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'], value = whdr[p['KW_WFP_WIDTH'][0]])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'], value = whdr[p['KW_WFP_STEP'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'],
+                               value = cloc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
+                               value = whdr[p['KW_WFP_DRIFT'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'],
+                               value = whdr[p['KW_WFP_FWHM'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
+                               value = whdr[p['KW_WFP_CONTRAST'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
+                               value = whdr[p['KW_WFP_MAXCPP'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'],
+                               value = whdr[p['KW_WFP_MASK'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
+                               value = whdr[p['KW_WFP_LINES'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                               value = whdr[p['KW_WFP_TARG_RV'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                               value = whdr[p['KW_WFP_WIDTH'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
+                               value = whdr[p['KW_WFP_STEP'][0]])
     # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys
@@ -581,7 +591,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=loc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(loc['TOT_LINE']))
+                               value=np.nansum(loc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
@@ -597,7 +607,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, corfile, data_ab, hdict)
-
 
     # ----------------------------------------------------------------------
     # archive ccf C to fits file
@@ -664,7 +673,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=cloc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=cp['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(cloc['TOT_LINE']))
+                               value=np.nansum(cloc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])

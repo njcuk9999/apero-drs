@@ -430,15 +430,15 @@ def lsd_analysis(p, loc):
                                             loc['LSD_VELOCITIES'], mmp)
 
     # calculate statistical quantities
-    loc['LSD_POL_MEAN'] = np.mean(loc['LSD_POL'])
-    loc['LSD_POL_STDDEV'] = np.std(loc['LSD_POL'])
-    loc['LSD_POL_MEDIAN'] = np.median(loc['LSD_POL'])
-    loc['LSD_POL_MEDABSDEV'] = np.median(np.abs(loc['LSD_POL'] -
+    loc['LSD_POL_MEAN'] = np.nanmean(loc['LSD_POL'])
+    loc['LSD_POL_STDDEV'] = np.nanstd(loc['LSD_POL'])
+    loc['LSD_POL_MEDIAN'] = np.nanmedian(loc['LSD_POL'])
+    loc['LSD_POL_MEDABSDEV'] = np.nanmedian(np.abs(loc['LSD_POL'] -
                                                 loc['LSD_POL_MEDIAN']))
-    loc['LSD_STOKESVQU_MEAN'] = np.mean(loc['LSD_STOKESVQU'])
-    loc['LSD_STOKESVQU_STDDEV'] = np.std(loc['LSD_STOKESVQU'])
-    loc['LSD_NULL_MEAN'] = np.mean(loc['LSD_NULL'])
-    loc['LSD_NULL_STDDEV'] = np.std(loc['LSD_NULL'])
+    loc['LSD_STOKESVQU_MEAN'] = np.nanmean(loc['LSD_STOKESVQU'])
+    loc['LSD_STOKESVQU_STDDEV'] = np.nanstd(loc['LSD_STOKESVQU'])
+    loc['LSD_NULL_MEAN'] = np.nanmean(loc['LSD_NULL'])
+    loc['LSD_NULL_STDDEV'] = np.nanstd(loc['LSD_NULL'])
 
     return loc
 
@@ -543,7 +543,7 @@ def calculate_lsd_profile(wl, flux, fluxerr, vels, mm, normalize=False):
     # calculate velocity profile
     zz = mmt_x_s2_x_mm_inv.dot(x_corr_term)
     # recover last point
-    zz[-1] = np.median(zz[-6:-2])
+    zz[-1] = np.nanmedian(zz[-6:-2])
 
     if normalize:
         # calculate continuum of LSD profile to remove trend

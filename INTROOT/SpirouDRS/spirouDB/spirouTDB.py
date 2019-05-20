@@ -430,18 +430,30 @@ def put_file(p, inputfile):
     func_name = __NAME__ + '.put_file()'
     # construct output filename
     outputfile = os.path.join(p['DRS_TELLU_DB'], os.path.split(inputfile)[1])
+
+    # get and check for file lock file
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # noinspection PyExceptClausesOrder
     try:
         shutil.copyfile(inputfile, outputfile)
         os.chmod(outputfile, 0o0644)
     except IOError:
+        # close lock file
+        spirouDB.close_lock_file(p, lock, lock_file)
+        # log
         emsg1 = 'I/O problem on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2])
     except OSError:
+        # close lock file
+        spirouDB.close_lock_file(p, lock, lock_file)
+        # log
         emsg1 = 'Unable to chmod on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
         WLOG(p, '', [emsg1, emsg2])
+
+    # close lock file
+    spirouDB.close_lock_file(p, lock, lock_file)
 
 
 def update_database_tell_mole(p, filename, hdr=None):
