@@ -135,12 +135,12 @@ def scale_image(p, image, scale=None):
             return np.sqrt(newimage), '(scale = {0})'.format(scale)
     elif type(scale) == tuple:
         # get min and max points
-        uppermask = newimage > np.percentile(newimage, scale[1])
-        lowermask = newimage < np.percentile(newimage, scale[0])
+        uppermask = newimage > np.nanpercentile(newimage, scale[1])
+        lowermask = newimage < np.nanpercentile(newimage, scale[0])
         good = ~uppermask & ~lowermask
         # apply the masks
-        newimage[uppermask] = np.max(newimage[good])
-        newimage[lowermask] = np.min(newimage[good])
+        newimage[uppermask] = np.nanmax(newimage[good])
+        newimage[lowermask] = np.nanmin(newimage[good])
         # sort out string scale
         sscale = '(scale = {0}% - {1}%)'.format(*scale)
         # return scale

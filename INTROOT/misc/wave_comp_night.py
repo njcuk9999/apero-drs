@@ -188,15 +188,15 @@ def main():
     #         label4 = '2018-09-24 - Order {0}'.format(order_num)
     #         label5 = '2018-09-25 - Order {0}'.format(order_num)
     #
-    #         frames[it].plot(x1[mask1], y1[mask1] / np.median(y1[mask1]),
+    #         frames[it].plot(x1[mask1], y1[mask1] / np.nanmedian(y1[mask1]),
     #                         label=label1)
-    #         frames[it].plot(x2[mask2], y2[mask2] / np.median(y2[mask2]),
+    #         frames[it].plot(x2[mask2], y2[mask2] / np.nanmedian(y2[mask2]),
     #                         label=label2)
-    #         frames[it].plot(x3[mask3], y3[mask3] / np.median(y3[mask3]),
+    #         frames[it].plot(x3[mask3], y3[mask3] / np.nanmedian(y3[mask3]),
     #                         label=label3)
-    #         frames[it].plot(x4[mask4], y4[mask4] / np.median(y4[mask4]),
+    #         frames[it].plot(x4[mask4], y4[mask4] / np.nanmedian(y4[mask4]),
     #                         label=label4)
-    #         frames[it].plot(x5[mask5], y5[mask5] / np.median(y5[mask5]),
+    #         frames[it].plot(x5[mask5], y5[mask5] / np.nanmedian(y5[mask5]),
     #                         label=label5)
     #
     #         frames[it].set(xlabel='Wavelength', ylabel='norm flux')
@@ -383,7 +383,7 @@ def main():
     # plt.figure()
     # it = 0
     # for po in plot_order:
-    #     fit = np.polyfit(hc_x_match_1[order_match == po],
+    #     fit = nanpolyfit(hc_x_match_1[order_match == po],
     #                      hc_x_match_2[order_match == po] - hc_x_match_1[order_match == po],
     #                      deg=2)
     #     # plt.plot(hc_x_match_1[order_match==po],
@@ -400,8 +400,8 @@ def main():
     # rv_std_ord = []
     # # calculate per-order RV std dev
     # for po in plot_order:
-    #     rv_med_ord.append(np.median(rv[order_match == po]))
-    #     rv_std_ord.append(np.std(rv[order_match == po]))
+    #     rv_med_ord.append(np.nanmedian(rv[order_match == po]))
+    #     rv_std_ord.append(np.nanstd(rv[order_match == po]))
     #
 
 

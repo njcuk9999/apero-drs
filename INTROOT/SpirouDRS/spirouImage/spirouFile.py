@@ -586,7 +586,7 @@ def fiber_params(pp, fiber, merge=False):
         fparams = spirouConfig.ExtractDictParams(pp, '_fpall', fiber,
                                                  merge=merge)
     except ConfigError as e:
-        WLOG(e.level, pp['LOG_OPT'], e.msg)
+        WLOG(pp, e.level, e.message)
         fparams = ParamDict()
     # return fiber dictionary
     return fparams

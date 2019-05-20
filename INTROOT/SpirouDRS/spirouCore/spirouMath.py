@@ -20,6 +20,7 @@ from astropy import units as uu
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy import stats
 from datetime import datetime, tzinfo, timedelta
 from time import mktime
@@ -545,11 +546,79 @@ def get_dll_from_coefficients(params, nx, nbo):
         # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
         for it in range(len(coeffs) - 1):
             yfiti.append((it + 1) * coeffs[it + 1] * xfit ** it)
-        yfit = np.sum(yfiti, axis=0)
+        yfit = np.nansum(yfiti, axis=0)
         # add to line list storage
         ll[order_num, :] = yfit
     # return line list
     return ll
+
+
+def IUVSpline(x, y, **kwargs):
+    # check whether weights are set
+    w = kwargs.get('w', None)
+    # if we don't have weights set them all to 1
+    if w is None:
+        w = np.ones_like(y)
+    # find all NaN values
+    nanmask = ~np.isfinite(y)
+    # set weights of NaNs to 0
+    w[nanmask] = 0
+    # set values of y to 0
+    y[nanmask] = 0
+    # to the interpolated univariate spline
+    return InterpolatedUnivariateSpline(x, y, w=w, **kwargs)
+
+
+def nanpad(oimage):
+    """
+    Pads NaN values with the median (non NaN values from the 9 pixels around
+    it) does this iteratively until no NaNs are left - if all 9 pixels are
+    NaN - median is NaN
+
+    :param oimage: numpy array (2D), the input image with NaNs
+    :type oimage: np.ndarray
+
+    :return: Nan-removed copy of original image
+    :rtype: np.ndarray
+    """
+    image = np.array(oimage)
+    # replace the NaNs on the edge with zeros
+    image[:, 0] = killnan(image[:, 0], 0)
+    image[0, :] = killnan(image[0, :], 0)
+    image[:, -1] = killnan(image[:, -1], 0)
+    image[-1, :] = killnan(image[-1, :], 0)
+    # find x/y positions of NaNs
+    gy, gx = np.where(~np.isfinite(image))
+    # for each NaN, find the 8 neighbouring pixels and pad them
+    # into an array that is 9xN.
+    while len(gy) != 0:
+        # array that contains neighbours to a given pixel along
+        # the axis 1
+        tmp = np.zeros([len(gy), 9])
+        # pad the neighbour array
+        for it in range(9):
+            ypix = gy + (it // 3) - 1
+            xpix = gx + (it % 3) - 1
+            tmp[:, it] = image[ypix, xpix]
+        # median the neghbours and pad back into the input image
+        with warnings.catch_warnings(record=True) as _:
+            image[gy, gx] = np.nanmedian(tmp, axis=1)
+        # find NaNs again and pad again if needed
+        gy, gx = np.where(~np.isfinite(image))
+    # return padded image
+    return image
+
+
+def killnan(vect, val=0):
+    mask = ~np.isfinite(vect)
+    vect[mask] = val
+    return vect
+
+def nanpolyfit(x, y, deg, **kwargs):
+    # find the NaNs
+    nanmask = np.isfinite(y) & np.isfinite(x)
+    # return polyfit without the nans
+    return np.polyfit(x[nanmask], y[nanmask], deg, **kwargs)
 
 
 # TODO: Required commenting and cleaning up
@@ -855,12 +924,12 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         nanmask = np.logical_not(np.isnan(ytmp))
         if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
-            xmean = np.mean(xtmp[nanmask])
+            xmean = np.nanmean(xtmp[nanmask])
             # calculate median y within the bin
-            medy = np.median(ytmp[nanmask])
+            medy = np.nanmedian(ytmp[nanmask])
 
             # calculate median deviation
-            medydev = np.median(np.absolute(ytmp[nanmask] - medy))
+            medydev = np.nanmedian(np.abs(ytmp[nanmask] - medy))
             # create mask to filter data outside n*sigma range
             filtermask = (ytmp[nanmask] > medy) & (ytmp[nanmask] < medy +
                                                    sigmaclip * medydev)
@@ -869,13 +938,13 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                 xbin.append(xmean)
                 if mode == 'max':
                     # save maximum y of filtered data
-                    ybin.append(np.max(ytmp[nanmask][filtermask]))
+                    ybin.append(np.nanmax(ytmp[nanmask][filtermask]))
                 elif mode == 'median':
                     # save median y of filtered data
-                    ybin.append(np.median(ytmp[nanmask][filtermask]))
+                    ybin.append(np.nanmedian(ytmp[nanmask][filtermask]))
                 elif mode == 'mean':
                     # save mean y of filtered data
-                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
+                    ybin.append(np.nanmean(ytmp[nanmask][filtermask]))
                 else:
                     emsg = 'Can not recognize selected mode="{0}"...exiting'
                     print(emsg.format(mode))

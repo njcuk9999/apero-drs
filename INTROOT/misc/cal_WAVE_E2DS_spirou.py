@@ -400,7 +400,7 @@ def part2test(p, loc):
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_iterations = int(np.sum(loc['X_ITER_2'][:, 2]))
+    num_iterations = int(np.nansum(loc['X_ITER_2'][:, 2]))
     err = 1000 * np.sqrt(final_var/num_iterations)
     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_2'])
     # construct filename

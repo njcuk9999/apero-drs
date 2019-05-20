@@ -1,68 +1,99 @@
-Update Note Summary - Version 0.4.091 (Since 0.4.072)
+# Update Note Summary - Version 0.5.000 (Since 0.4.102)
 
-Not fixed:
-- all issues with DRS_PLOT = 2   - mode not currently supported for stable run
-- Known issues here: https://github.com/njcuk9999/spirou_py3/wiki/known-issues
+Summary of changes from V0.4.102 to 0.5.000 (beta)
+Note for the full change log see changelog.md
 
-Changes:
+## Not yet in DRS:
 
-- Fixes to mk_tellu
+- cal_WAVE_E2DS_NEW - not yet in main bin directory and not tested for NaN
+  compatibility [Melissa/Neil]
+- cal_CCF_E2DS_[all] - not added correction for weighting by telluric "recon"
+  spectra [Francois]
+- cal_SHAPE/cal_WAVE - not addressed problems with using shape per night vs
+  one per run
+- plotting - not addressed multiple issues - if you have problems just set
+  DRS_PLOT = 0
 
-- Added error handling to mk_tellu_db
+## Changes
 
-- Fixed Bug in cal_validate (w.r.t. required modules with X.Y.Z instead of X.Y)
+- cal_BADPIX_spirou.py
+    - background map now created from flat flat
+    - correction functionality to allow NaN propagation
 
-- Fixed bug with indexing while running in parallel
+- cal_loc
+    - correction functionality to allow NaN propagation
+    - improved background subtraction using background map and a 2D convolution
+      and deal with local and global background
 
-- option to use sky darks re-added
-    - set "use_skydark_correction" to True to use
-    - by default with use the closest DARK/SKYDARK if True
-    - to only use SKYDARK set "use_skydark_only" to False
-    - to only use DARK set "use_skydark_correction" to False
+- cal_SLIT
+    - correction functionality to allow NaN propagation
+    - improved background subtraction using background map and a 2D convolution
+      and deal with local and global background
 
-- Fixed mis-communication for outputs of CCF_FP
-    - Now have a CCF_FP_AB and CCF_FP_C output (both tablular and fits)
-    - Only allowed OBJ_FP files
+- cal_SHAPE
+    - correction functionality to allow NaN propagation
 
-- Fixed localisation plot bug (locplot_im_sat_threshold)
+- cal_FF_RAW_spirou
+    - fix bug with flat/blaze not being shape corrected (debananfication)
+    - debananafication of order profile / science done before fiber loop
+    - debananafication modified to correct hot pixels for science data
+    - debananafication modified to straighten image using loc (dy shift)
+    - extracion methods changed to not extract by loc but extract over
+      straighten image
+    - correction functionality to allow NaN propagation
+    - bad blaze (below threshold) now returns NaNs
+    - improved background subtraction using background map and a 2D convolution
+      and deal with local and global background
+    - s1d now saved as s1d_v and s1d_w
+      (v = constant velocity bins, w = constant wavelength bins)
 
-- Fixed bug in sPlt.debug_locplot
+- cal_extract_RAW_spirou
+    - debananafication of order profile / science done before fiber loop
+    - debananafication modified to correct hot pixels for science data
+    - debananafication modified to straighten image using loc (dy shift)
+    - extracion methods changed to not extract by loc but extract over
+      straighten image
+    - correction functionality to allow NaN propagation
+    - improved background subtraction using background map and a 2D convolution
+      and deal with local and global background
+    - s1d now saved as s1d_v and s1d_w
+      (v = constant velocity bins, w = constant wavelength bins)
 
-- Fixed bug in indexing (parallisation problem)
+- cal_WAVE_[all]
+    - updated FP CCF keys to make more sense
+    - correction functionality to allow NaN propagation
 
-- Fixed bug in pre-processing
+- obj_mk_tellu
+    - correction functionality to allow NaN propagation
 
-- Fixed bug in keylookup (BIGBUG introducted recently)
+- obj_fit_tellu
+    - s1d added to telluric corrected spectra
+    - s1d now saved as s1d_v and s1d_w
+      (v = constant velocity bins, w = constant wavelength bins)
+    - correction functionality to allow NaN propagation
 
-- Fixed miscommunication in CCF --> now produce both AB and C files
+- obj_fit_tellu_db
+    - new receipe to automate reprocessing of tellurics for database (similar
+      to obj_mk_tellu_db)
+    - does fit_tellu on all observations of inputted targets
+    - does mk_template on all inputted targets
+    - does fit_tellu on all observations of inputted target
+      (using updated template)
 
-- Added back SKYDARK (not tested yet)
+- Cal_CCF_E2DS_[all]
+    - update keys from cal_WAVE plus CCF keys to make more sense
+    - correction functionality to allow NaN propagation
 
-- Work on cal_WAVE_NEW_E2DS and cal_WAVE_NEW_E2DS_2 (Melissa)
+- cal_CCF_E2DS_FP_MH_spirou
+    - temporary addition for testing please ignore
 
-- Fixed fits lock timer
-
-- Added a wait timer for barrycorrpy
-
-- Added BERVHOUR header key
-
-- Added WMEANREF (for AB and C) to header (CCFWMR1 and CCFWMR2 respectively)
-
-- Added PID header key
-
-- Added new keys for calibdb inputs used for outputs
-
-- Added new key for input files (removed old ones)
-
-- Added quality control header keys to all recipes
-    - QCC       (The overall QC value for all QV)
-    - QCC###V   (The current value that is checked)
-    - QCC###N   (The variable name)
-    - QCC###L   (The logic used for QC check)
-    - QCC###P   (The value of this QC)
-
-- some pep8 clean up
-
-
-
-
+- other
+    - update to change log code (only dependency is gitchangelog installable
+      via pip
+    - note numpy has to be forced to use one core if running in parallel do
+      this by adding the following to the environment:
+            - export OPENBLAS_NUM_THREADS=3
+            - export MKL_NUM_THREADS=3
+    - fixes for calibDB/telluDB reading/writing in parallel
+    - added drs_local_background to spirouTools to determine one of the local
+      background constants

@@ -25,7 +25,7 @@ import shutil
 # =============================================================================
 # Define variables
 # =============================================================================
-PATH = '/spirou/cfht_nights/cfht_Jan19/calibDB_master'
+PATH = '/spirou/cfht_nights/cfht_May19/pernight/calibDB_master/'
 
 FILE = 'master_calib_SPIROU.txt'
 
@@ -33,15 +33,15 @@ OUTFILE1 = 'master_calib_SPIROU_pernight.txt'
 OUTFILE2 = 'master_calib_SPIROU_pertc.txt'
 
 
-OUTFOLDER1 = '/spirou/cfht_nights/cfht_Jan19/calibDB_pernight'
-OUTFOLDER2 = '/spirou/cfht_nights/cfht_Jan19/calibDB_pertc'
+OUTFOLDER1 = '/spirou/cfht_nights/cfht_May19/pernight/calibDB/'
+OUTFOLDER2 = '/spirou/cfht_nights/cfht_May19/perrun/calibDB/'
 
 # -----------------------------------------------------------------------------
 # if true use TC_DATES to select calib files
 TC_DATES = OrderedDict(tc2=1527445620.0, tc3=1533144101.0,
-                       tc4=1537723992.0, tc5=1545188394.0,
-                       tc6=1547746944.8)
-
+                       tc4=1537723992.0, tc5=1540519817.9,
+                       tc6=1545188394.0, tc7=1547746944.8,
+                       r01=1550540510.3, r02=1556070098.5)
 
 HEADER = """# H4RG File (Copied from SpirouDRS data folder)
 WAVE_AB None MASTER_WAVE.fits 1970-01-01-00:00:00.000000 0.0
@@ -51,6 +51,9 @@ WAVE_C None MASTER_WAVE.fits 1970-01-01-00:00:00.000000 0.0
 
 #Drs Processed
 """
+
+SKIP_FOUND = True
+
 
 # =============================================================================
 # Define functions
@@ -87,6 +90,10 @@ def copy_files(my_entries, outpath):
         infilename = os.path.join(PATH, filename)
         outfilename = os.path.join(outpath, filename)
 
+        if SKIP_FOUND:
+            if os.path.exists(outfilename):
+                continue
+
         # print progress
         print('Copying {0} --> {1}'.format(infilename, outfilename))
 
@@ -106,7 +113,6 @@ if __name__ == "__main__":
 
     # load filenames
     fitsfiles = glob.glob(os.path.join(PATH, '*.fits'))
-
 
     # locate found calib files
     found = []
@@ -169,7 +175,6 @@ if __name__ == "__main__":
     for line in range(len(tc_entries)):
         outfile.write(' '.join(tc_entries[line]) + '\n')
     outfile.close()
-
 
     # copy files from entries
     copy_files(entries, OUTFOLDER1)

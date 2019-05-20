@@ -14,6 +14,7 @@ import numpy as np
 import time
 import matplotlib
 import os
+import warnings
 from astropy import constants as cc
 from astropy import units as uu
 
@@ -40,6 +41,11 @@ if matplotlib.get_backend() == 'MacOSX':
                        'Qt5Agg not available']
 else:
     matplotlib_emsg = []
+
+# TODO: fix better
+# this is here to allow one to save plots with big numbers of points
+matplotlib.rcParams['agg.path.chunksize'] = 10000
+
 
 # =============================================================================
 # Define variables
@@ -200,7 +206,7 @@ def define_save_name(p, plotname):
     return paths
 
 
-def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
+def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1, attempt=0):
     """
     Extra steps to setup figure. On some OS getting error
 
@@ -213,6 +219,7 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
     :param nrows:
     :return:
     """
+    func_name = __NAME__ + '.setup_figure()'
     fix = True
     while fix:
         if ncols == 0 and nrows == 0:
@@ -243,6 +250,14 @@ def setup_figure(p, figsize=FIGSIZE, ncols=1, nrows=1):
                     emsg2 = '\tBackend = {0}'.format(plt.get_backend())
                     emsg3 = '\tError {0}: {1}'.format(type(e), e)
                     WLOG(p, 'error', [emsg1, emsg2, emsg3])
+
+    if attempt == 0:
+        return setup_figure(p, figsize=FIGSIZE, ncols=ncols, nrows=nrows,
+                            attempt=1)
+    else:
+        emsg1 = 'Problem with matplotlib figure/frame setup'
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2])
 
 
 # TODO: Need a better fix for this
@@ -278,7 +293,7 @@ def darkplot_image_and_regions(pp, image):
     fig, frame = setup_figure(pp)
     # plot the image
     clim = (0., 10 * pp['MED_FULL'])
-    im = frame.imshow(image, origin='lower', clim=clim, cmap='jet')
+    im = frame.imshow(image, origin='lower', clim=clim, cmap='viridis')
     # plot the colorbar
     cbar = plt.colorbar(im, ax=frame)
     cbar.set_label('ADU/s')
@@ -328,7 +343,7 @@ def darkplot_datacut(p, imagecut):
     # imagecut need to be integers
     imagecut = imagecut.astype(np.int)
     # plot the image cut
-    im = frame.imshow(imagecut, origin='lower', cmap='gray')
+    im = frame.imshow(imagecut, origin='lower', cmap='viridis')
     # plot the colorbar
     fig.colorbar(im, ax=frame)
     # make sure image is bounded by shape
@@ -388,6 +403,37 @@ def darkplot_histograms(pp):
     # TODO: Needs axis labels and title
     # end plotting function properly
     end_plotting(pp, plot_name)
+
+
+# =============================================================================
+# background plotting functions
+# =============================================================================
+def local_scattered_light_plot(p, image, keep, profile, profile2, amp):
+    plot_name = 'local_scattered_light'
+    # get constants from parameter dictionary
+    ysize = p['IC_BKGR_LOCAL_YSIZE']
+    bthres = p['IC_BKGR_LOCAL_THRES']
+    filename = p['ARG_FILE_NAMES'][0]
+    # define the start and end of the center
+    starty = (image.shape[0] // 2) - ysize
+    endy = (image.shape[0] // 2) + ysize
+    # set up figure
+    fig, frame = setup_figure(p)
+    # set up a set of indices but ignore the indices we are not using
+    index = np.arange(len(keep), dtype=float)
+    index[~keep] = np.nan
+    # plot the lines
+    frame.plot(index, profile, label='Scattered light between orders')
+    frame.plot(index, profile2, label='Model')
+    frame.plot(index, profile - profile2, label='Difference', marker='.',
+               linestyle='None')
+
+    frame.set(xlabel='Pixel number', ylabel='Flux',
+              xlim=[starty, endy], ylim=[0, (bthres * np.max(profile))],
+              title='File = {0}  Amp = {1}'.format(filename, amp))
+    frame.legend(loc=0)
+    # end plotting function properly
+    end_plotting(p, plot_name)
 
 
 # =============================================================================
@@ -457,7 +503,7 @@ def locplot_im_sat_threshold(p, loc, image, threshold):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='gist_gray')
+    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='viridis')
     # set the limits
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
 
@@ -674,7 +720,8 @@ def slit_sorder_plot(pp, loc, image):
     offsetarray = np.zeros(len(loc['ASS'][order]))
     offsetarray[0] = offset
     # plot image
-    frame.imshow(image, origin='lower', clim=(0., np.mean(image)))
+    frame.imshow(image, origin='lower', clim=(0., np.mean(image)),
+                 cmap='viridis')
     # calculate selected order fit
     xfit = np.arange(image.shape[1])
     yfit1 = np.polyval((loc['ACC'][order] + offsetarray)[::-1], xfit)
@@ -790,7 +837,7 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
             # ----------------------------------------------------------------
             # frame 2
             # ----------------------------------------------------------------
-            frame2.imshow(ccor, aspect=0.2)
+            frame2.imshow(ccor, aspect=0.2, cmap='viridis')
             frame2.plot(dx - np.min(ddx), dypix, color='r', marker='o',
                         ls='None')
             frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
@@ -828,7 +875,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # plot dx
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax)
+    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis')
 
     divider1 = make_axes_locatable(frame1)
     cax1 = divider1.append_axes("top", size="10%", pad=0.05)
@@ -843,7 +890,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # plot dx2
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax)
+    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis')
 
     divider2 = make_axes_locatable(frame2)
     cax2 = divider2.append_axes("top", size="10%", pad=0.05)
@@ -858,7 +905,7 @@ def slit_shape_dx_plot(p, dx, dx2, bnum):
     # plot diff
     vmin = (-0.5 * sig_dx) + zeropoint
     vmax = (0.5 * sig_dx) + zeropoint
-    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax)
+    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis')
 
     divider3 = make_axes_locatable(frame3)
     cax3 = divider3.append_axes("top", size="10%", pad=0.05)
@@ -956,7 +1003,7 @@ def ff_sorder_fit_edges(p, loc, image):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='viridis')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -976,6 +1023,46 @@ def ff_sorder_fit_edges(p, loc, image):
     frame.plot(xfit, yfithigh, color='blue', linestyle='--')
     # set title labels limits
     title = 'Image fit for order {0} fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
+def ff_debanana_plot(p, loc, image):
+    plot_name = 'ff_debanana_plot'
+    # get constants
+    selected_order = p['IC_EXT_ORDER_PLOT']
+    fiber = p['FIBER']
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
+    dim1, dim2 = image.shape
+    # set up fig
+    fig, frame = setup_figure(p)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='viridis')
+    # loop around the order numbers
+    acc = loc['ACC'][selected_order]
+    # work out offsets for this order
+    offsetarraylow = np.zeros(len(acc))
+    offsetarrayhigh = np.zeros(len(acc))
+    offsetarraylow[0] = range2
+    offsetarrayhigh[0] = range1
+    # get fit and edge fits
+    xfit = np.arange(dim2)
+    yfit = np.repeat(np.polyval(acc[::-1], dim2 // 2), dim2)
+    yfitlow = np.repeat(np.polyval((acc + offsetarraylow)[::-1], dim2 // 2),
+                        dim2)
+    yfithigh = np.repeat(np.polyval((acc - offsetarrayhigh)[::-1], dim2 // 2),
+                         dim2)
+    # plot fits
+    frame.plot(xfit, yfit, color='red', label='fit')
+    frame.plot(xfit, yfitlow, color='blue', label='Fit edge',
+               linestyle='--')
+    frame.plot(xfit, yfithigh, color='blue', linestyle='--')
+    # set title labels limits
+    title = 'Image debananafied fit for order {0} fiber {1}'
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
               title=title.format(selected_order, fiber))
     # Add legend
@@ -1017,7 +1104,7 @@ def ff_aorder_fit_edges(p, loc, image):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='viridis')
 
     # loop around the order numbers
     for order_num in range(len(loc['ACC']) // p['NBFIB']):
@@ -1090,10 +1177,10 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     x = np.arange(len(e2ds))
     # plot e2ds for selected order
     #    frame.plot(x, e2ds, label='E2DS')
-    frame.plot(x[e2ds > 0], e2ds[e2ds > 0], label='E2DS')
+    frame.plot(x, e2ds, label='E2DS', marker='.', markersize=2)
     # plot blaze function
     #    frame.plot(x, blaze, label='Blaze')
-    frame.plot(x[blaze > 1], blaze[blaze > 1], label='Blaze')
+    frame.plot(x, blaze, label='Blaze')
     # set title labels limits
     title = 'E2DS + BLAZE spectral order {0} fiber {1}'
     frame.set(title=title.format(selected_order, fiber))
@@ -1194,7 +1281,7 @@ def ext_sorder_fit(p, loc, image, cut=20000):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='viridis')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -1214,6 +1301,46 @@ def ext_sorder_fit(p, loc, image, cut=20000):
     frame.plot(xfit, yfithigh, color='blue', linestyle='--')
     # set title labels limits
     title = 'Image fit for order {0} fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
+def ext_debanana_plot(p, loc, image, cut=20000):
+    plot_name = 'ext_debanana_plot'
+    # get constants
+    selected_order = p['IC_EXT_ORDER_PLOT']
+    fiber = p['FIBER']
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
+    dim1, dim2 = image.shape
+    # set up fig
+    fig, frame = setup_figure(p)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='viridis')
+    # loop around the order numbers
+    acc = loc['ACC'][selected_order]
+    # work out offsets for this order
+    offsetarraylow = np.zeros(len(acc))
+    offsetarrayhigh = np.zeros(len(acc))
+    offsetarraylow[0] = range2
+    offsetarrayhigh[0] = range1
+    # get fit and edge fits
+    xfit = np.arange(dim2)
+    yfit = np.repeat(np.polyval(acc[::-1], dim2 // 2), dim2)
+    yfitlow = np.repeat(np.polyval((acc + offsetarraylow)[::-1], dim2 // 2),
+                        dim2)
+    yfithigh = np.repeat(np.polyval((acc - offsetarrayhigh)[::-1], dim2 // 2),
+                         dim2)
+    # plot fits
+    frame.plot(xfit, yfit, color='red', label='fit')
+    frame.plot(xfit, yfitlow, color='blue', label='Fit edge',
+               linestyle='--')
+    frame.plot(xfit, yfithigh, color='blue', linestyle='--')
+    # set title labels limits
+    title = 'Image debananafied fit for order {0} fiber {1}'
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
               title=title.format(selected_order, fiber))
     # Add legend
@@ -1253,7 +1380,7 @@ def ext_aorder_fit(p, loc, image, cut=20000):
     # set up fig
     fig, frame = setup_figure(p)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='viridis')
     # loop around the order numbers
     for order_num in range(len(loc['ACC']) // p['NBFIB']):
         acc = loc['ACC'][order_num]
@@ -1342,6 +1469,28 @@ def ext_1d_spectrum_plot(p, x, y):
     title = 'Spectrum (1D) Order {0} to {1}'.format(*targs)
     # set labels
     frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
+def ext_1d_spectrum_debug_plot(p, x, y, w, kind):
+    plot_name = 'ext_1d_spectrum_debug_plot'
+    # set up fig
+    fig, frame = setup_figure(p)
+    # get weighted y
+    with warnings.catch_warnings(record=True) as _:
+        yw = y / w
+    # plot lines
+    frame.plot(x, y / np.nanmedian(y), color='r', label='prior to division')
+    frame.plot(x, w / np.nanmedian(w), color='c', label='weight vector')
+    frame.plot(x, yw / np.nanmedian(yw), color='k', label='after division')
+    # add legend
+    frame.legend(loc=0)
+    # set title
+    title = 'Debug plot for producing 1D spectrum. Kind = {0}'.format(kind)
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title,
+              ylim=[-1, 3])
     # end plotting function properly
     end_plotting(p, plot_name)
 
@@ -1665,7 +1814,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
         ytext.append('Order {0} = FAILED'.format(bad_order))
     # -------------------------------------------------------------------------
     # plot the reference frame
-    frame1.imshow(speref_image)
+    frame1.imshow(speref_image, cmap='viridis')
     frame1.set(title='Reference frame')
     # turn off axis labels
     frame1.set_yticks(yticks)
@@ -1673,7 +1822,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     frame1.set_xticklabels([])
     # -------------------------------------------------------------------------
     # plot the science frame
-    frame2.imshow(spe_image)
+    frame2.imshow(spe_image, cmap='viridis')
     frame2.set(title='Iteration frame')
     # turn off axis labels
     frame2.set_yticks(yticks)
@@ -2532,33 +2681,44 @@ def tellu_fit_recon_abso_plot(p, loc):
         black = 'w'
     else:
         black = 'k'
+
+    nbo = loc['WAVE_IT'].shape[0]
+
     # get constants from p
     selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
-    # get data dimensions
-    ydim, xdim = loc['DATA'].shape
-    # get selected order wave lengths
-    swave = loc['WAVE_IT'][selected_order, :]
-    # get the data from loc for selected order
-    start, end = selected_order * xdim, selected_order * xdim + xdim
-    ssp = np.array(loc['SP'][selected_order, :])
-    ssp2 = np.array(loc['SP2'][start:end])
-    stemp2 = np.array(loc['TEMPLATE2'][start:end])
-    srecon_abso = np.array(loc['RECON_ABSO'][start:end])
-    # set up fig
-    fig, frame = setup_figure(p)
-    # plot spectra for selected order
-    frame.plot(swave, ssp / np.nanmedian(ssp), color=black, label='input SP')
-    frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
-               label='Cleaned SP')
-    frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
-               label='Template')
-    frame.plot(swave, srecon_abso, color='r', label='recon abso')
-    # add legend
-    frame.legend(loc=0)
-    # add labels
-    title = 'Reconstructed Absorption (Order = {0})'
-    frame.set(title=title.format(selected_order),
-              xlabel='Wavelength [nm]', ylabel='Normalised flux')
+
+    if selected_order == 'all':
+        sorders = list(range(0, nbo))
+    else:
+        sorders = [selected_order]
+
+    for selected_order in sorders:
+        # get data dimensions
+        ydim, xdim = loc['DATA'].shape
+        # get selected order wave lengths
+        swave = loc['WAVE_IT'][selected_order, :]
+        # get the data from loc for selected order
+        start, end = selected_order * xdim, selected_order * xdim + xdim
+        ssp = np.array(loc['SP'][selected_order, :])
+        ssp2 = np.array(loc['SP2'][start:end])
+        stemp2 = np.array(loc['TEMPLATE2'][start:end])
+        srecon_abso = np.array(loc['RECON_ABSO'][start:end])
+        # set up fig
+        fig, frame = setup_figure(p)
+        # plot spectra for selected order
+        frame.plot(swave, ssp / np.nanmedian(ssp), color=black,
+                   label='input SP')
+        frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
+                   label='Cleaned SP')
+        frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
+                   label='Template')
+        frame.plot(swave, srecon_abso, color='r', label='recon abso')
+        # add legend
+        frame.legend(loc=0)
+        # add labels
+        title = 'Reconstructed Absorption (Order = {0})'
+        frame.set(title=title.format(selected_order),
+                  xlabel='Wavelength [nm]', ylabel='Normalised flux')
 
     # end plotting function properly
     end_plotting(p, plot_name)

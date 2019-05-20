@@ -41,6 +41,8 @@ FindOrderCtrs = spirouLOCOR.find_order_centers
 
 GetCoeffs = spirouLOCOR.get_loc_coefficients
 
+GetFiberData = spirouLOCOR.get_fiber_data
+
 ImageLocSuperimp = spirouLOCOR.image_localization_superposition
 
 InitialOrderFit = spirouLOCOR.initial_order_fit

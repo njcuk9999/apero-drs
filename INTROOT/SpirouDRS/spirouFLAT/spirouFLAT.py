@@ -14,6 +14,8 @@ import numpy as np
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
+
 
 # =============================================================================
 # Define variables
@@ -61,15 +63,25 @@ def measure_blaze_for_order(p, y):
     # set up x range
     x = np.arange(len(y))
     # remove bad pixels
-    mask = y > 0
+    # mask = y > 0
+    mask = np.isfinite(y)
+
     yc = y[mask]
     xc = x[mask]
+
     # do poly fit
-    coeffs = np.polyfit(xc, yc, deg=fitdegree)
+    coeffs = nanpolyfit(xc, yc, deg=fitdegree)
     # get the fit values for these coefficients
     fity = np.polyval(coeffs, x)
     # calculate the blaze as the fit values for all good pixels and 1 elsewise
-    blaze = np.where(mask, fity, 1.0)
+    # blaze = np.where(mask, fity, np.nan)
+    blaze = np.array(fity)
+    # blaze is not usable outside valid range (where y is finite)
+    xmin = np.min(x[mask])
+    xmax = np.max(x[mask])
+    blaze[x < xmin] = np.nan
+    blaze[x > xmax] = np.nan
+
     # return blaze
     return blaze
 
