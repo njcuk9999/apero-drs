@@ -188,7 +188,6 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     WLOG(p, '', ('FP Image format changed to '
                             '{0}x{1}').format(*fpdata2.shape))
 
-
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
@@ -196,43 +195,9 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
     p['BADPFILE'] = 'None'
 
-    # ----------------------------------------------------------------------
-    # Background computation for HC file
-    # ----------------------------------------------------------------------
-    # if p['IC_DO_BKGR_SUBTRACTION']:
-    #     # log that we are doing background measurement
-    #     WLOG(p, '', 'Doing background measurement on HC frame')
-    #     # get the bkgr measurement
-    #     bdata = spirouBACK.MeasureBackgroundFF(p, hcdata2)
-    #     background, gridx, gridy, minlevel = bdata
-    # else:
-    #     background = np.zeros_like(hcdata2)
-    #
-    # hcdata2 = hcdata2 - background
-    #
-    # # correct data2 with background (where positive)
-    # hcdata2 = np.where(hcdata2 > 0, hcdata2 - background, 0)
-
     # save data to loc
     loc['HCDATA'] = hcdata2
     loc.set_source('HCDATA', __NAME__ + '/main()')
-
-    # ----------------------------------------------------------------------
-    # Background computation for FP file
-    # ----------------------------------------------------------------------
-    # if p['IC_DO_BKGR_SUBTRACTION']:
-    #     # log that we are doing background measurement
-    #     WLOG(p, '', 'Doing background measurement on FP frame')
-    #     # get the bkgr measurement
-    #     bdata = spirouBACK.MeasureBackgroundFF(p, fpdata2)
-    #     background, gridx, gridy, minlevel = bdata
-    # else:
-    #     background = np.zeros_like(fpdata2)
-    #
-    # fpdata2 = fpdata2 - background
-    #
-    # # correct data2 with background (where positive)
-    # fpdata2 = np.where(fpdata2 > 0, fpdata2 - background, 0)
 
     # save data to loc
     loc['FPDATA'] = fpdata2
@@ -242,7 +207,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(hcdata2 <= 0)
+    n_bad_pix = np.nansum(hcdata2 <= 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata2.shape)
     # Log number
     wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
@@ -252,7 +217,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(fpdata2 <= 0)
+    n_bad_pix = np.nansum(fpdata2 <= 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata2.shape)
     # Log number
     wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
@@ -389,7 +354,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
         output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
         input_hc_file, tag3 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
-        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
+        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_OUT_HC_FILE(p)
         overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)

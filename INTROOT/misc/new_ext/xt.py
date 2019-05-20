@@ -135,7 +135,7 @@ for ite_banana in range(nbanana):
 	# images are as straight as can be
 
 	# if the map is not zeros, we use it as a starting point
-	if np.sum(master_dxmap!=0)!=0:
+	if np.nansum(master_dxmap!=0)!=0:
 		data2 = debanananificator(data1,master_dxmap)
 		data2_hc = debanananificator(data1_hc,master_dxmap)
 		flag_start_slope=False
@@ -367,7 +367,7 @@ for ite_banana in range(nbanana):
 
 			g=(ypix2>=0) & (good_cc_mask == 1)
 			
-			if np.sum(g)!=0:
+			if np.nansum(g)!=0:
 				if ite_banana ==0:
 					order_overlap[ypix2[g],i] += (map_orders[ypix2[g],i] != (-1) )
 					map_orders[ypix2[g],i]=iord

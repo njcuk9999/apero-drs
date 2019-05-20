@@ -452,11 +452,42 @@ SHAPE_LONG_DX_MEDFILT_WID = 9
 #    Do background measurement (True = 1, False = 0)                  - [cal_ff]
 ic_do_bkgr_subtraction = 1
 
-#    Do background percentile to compute minium value (%)             - [cal_ff]
-ic_bkgr_percent = 3
+#    Do background percentile to compute minimum value (%)             - [cal_ff]
+ic_bkgr_percent = 5
 
 #    Half-size of window for background measurements                  - [cal_ff]
 ic_bkgr_window = 50
+
+#    Width of the box to produce the background mask
+IC_BKGR_BOXSIZE = 128
+
+#    Size in pixels of the convolve tophat for the background mask
+IC_BKGR_MASK_CONVOLVE_SIZE = 7
+
+#    Background kernel width in in x and y [pixels]
+IC_BKGR_KER_WX = 1
+IC_BKGR_KER_WY = 9
+
+#    Kernel amplitude determined from drs_local_scatter.py
+IC_BKGR_KER_AMP = 47
+
+#    The size of the center of the image +/- these values from the center
+IC_BKGR_LOCAL_XSIZE = 16
+IC_BKGR_LOCAL_YSIZE =  300
+
+#     Define the fraction of the maximum flux that we use to measure the
+#         local background
+IC_BKGR_LOCAL_THRES = 0.005
+
+#    construct a convolution kernel. We go from -IC_BKGR_KER_SIG to
+#        +IC_BKGR_KER_SIG sigma in each direction. Its important no to
+#        make the kernel too big as this slows-down the 2D convolution.
+#        Do NOT make it a -10 to +10 sigma gaussian!
+IC_BKGR_KER_SIG = 3
+
+#    If a pixel has this or more "dark" neighbours, we consider it dark
+#        regardless of its initial value
+IC_BKGR_N_BAD_NEIGHBOURS = 3
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 49  # 36
@@ -545,9 +576,9 @@ ic_extnbsig = 1  # 2.5
 #                 5b - shape map + weight extraction (cosmic correction)
 #                      + fractional pix
 #                          (function = spirouEXTOR.extract_shape_weight_cosm2)
-ic_extract_type = '4b'  # '3d'
+ic_extract_type = '5b'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
-ic_ff_extract_type = '4a'
+ic_ff_extract_type = '5a'
 
 #   Set the number of pixels to set as                   - [cal_extract, cal_FF]
 #       the border (needed to allow for tilt to not go off edge of image)
@@ -570,14 +601,29 @@ ic_cosmic_sigcut = 0.25  # 0.25
 #        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_thresh = 5
 
-#    Define the spectral bin for S1D spectra (nm)                - [cal_extract]
-ic_bin_s1d = 0.005
+
 
 #    Define the first order for the S1D spectra                  - [cal_extract]
 ic_start_order_1d = 1
 
 #    Define the last order for the S1D spectra                   - [cal_extract]
 ic_end_order_1d = 48
+
+#   Define the start s1d wavelength (in nm)
+extract_s1d_wavestart = 965
+
+#   Define the end s1d wavelength (in nm)
+extract_s1d_waveend = 2500
+
+#    Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
+ic_bin_s1d_uwave = 0.005
+
+#    Define the s1d spectral bin for S1D spectra (nm) when uniform in velocity
+ic_bin_s1d_uvelo = 1.0
+
+#    Define the s1d smoothing kernel for the transition between orders
+#             in pixels
+ic_s1d_edge_smooth_size = 20
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
@@ -1172,9 +1218,11 @@ tellu_lambda_max = 2100.0
 tellu_fit_vsini = 15.0
 tellu_fit_niter = 4
 tellu_fit_vsini2 = 30.0
-tellu_fit_recon_plt_order = 33
 tellu_fit_log_limit = -0.5
 
+# Defines the order to plot the reconstructed absorption for
+#    Note this can be a number or 'all' to display all orders
+tellu_fit_recon_plt_order = 33    # 'all'    # 33
 
 # -----------------------------------------------------------------------------
 #  New make telluric parameter
@@ -1273,14 +1321,13 @@ MKTELLU_PLOT_ORDER_NUMS = [19, 26, 35]
 
 
 # -----------------------------------------------------------------------------
-#  New make telluric db parameter
+#  make telluric db parameter
 # -----------------------------------------------------------------------------
 # Allowed data types (corresponding to header key defined by "KW_OUTPUT")
 TELLU_DB_ALLOWED_OUTPUT = ['EXT_E2DS_AB', 'EXT_E2DS_A', 'EXT_E2DS_B', 'EXT_E2DS_FF_AB', 'EXT_E2DS_FF_A', 'EXT_E2DS_FF_B']
 
 # Allowed data types (corresponding to header key defined by "KW_EXT_TYPE")
 TELLU_DB_ALLOWED_EXT_TYPE = ['OBJ_DARK', 'OBJ_FP']
-
 
 # -----------------------------------------------------------------------------
 #   polarimetry parameters

@@ -11,13 +11,14 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
 import os
 import glob
 import warnings
 import scipy
 from scipy.ndimage import filters, median_filter
 from scipy.interpolate import griddata
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 from scipy.ndimage import filters
 from scipy.stats import stats
 from scipy.signal import medfilt
@@ -28,7 +29,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
-
+from SpirouDRS.spirouCore.spirouMath import IUVSpline
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 import off_listing_REDUC_spirou
 
 from . import spirouFITS
@@ -53,6 +55,11 @@ ParamDict = spirouConfig.ParamDict
 # get the config error
 ConfigError = spirouConfig.ConfigError
 # -----------------------------------------------------------------------------
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -1114,11 +1121,11 @@ def measure_dark(pp, image, image_name, short_name):
     # get the number of NaNs
     imax = image.size - len(fimage)
     # get the median value of the non-NaN data
-    med = np.median(fimage)
+    med = np.nanmedian(fimage)
     # get the 5th and 95th percentile qmin
     try:
         # noinspection PyTypeChecker
-        qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
+        qmin, qmax = np.nanpercentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG(pp, 'error', [e.message, emsg])
@@ -1285,7 +1292,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         return p, corrected_image
 
 
-def get_badpixel_map(p, header=None):
+def get_badpixel_map(p, header=None, quiet=False):
     """
     Get the bad pixel map from the calibDB
 
@@ -1328,7 +1335,8 @@ def get_badpixel_map(p, header=None):
     # try to read 'BADPIX' from cdb
     if 'BADPIX' in cdb:
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
-        WLOG(p, '', 'Doing Bad Pixel Correction using ' + badpixfile)
+        if not quiet:
+            WLOG(p, '', 'Doing Bad Pixel Correction using ' + badpixfile)
         badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(p, badpixfile)
         return badpixmask, bhdr, badpixfile
     else:
@@ -1346,7 +1354,69 @@ def get_badpixel_map(p, header=None):
         WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
 
 
-def correct_for_badpix(p, image, header):
+def get_background_map(p, header=None, quiet=False):
+    """
+    Get the background map from the calibDB
+
+        Must contain at least:
+                calibDB: dictionary, the calibration database dictionary
+                         (if not in "p" we construct it and need "max_time_unix"
+                max_time_unix: float, the unix time to use as the time of
+                                reference (used only if calibDB is not defined)
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, the program name for logging
+        May contain:
+            calibDB: dictionary, the calibration database
+
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+
+    :return: badpixmask: numpy array (2D), the bad pixel mask
+    """
+    func_name = __NAME__ + '.get_background_map()'
+    # get calibDB
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouDB.GetAcqTime(p, header)
+        # get calibDB
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
+    else:
+        try:
+            cdb = p['CALIBDB']
+            acqtime = p['MAX_TIME_UNIX']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [e.message, emsg])
+            cdb, acqtime = None, None
+
+    # try to read 'BADPIX' from cdb
+    if 'BKGRDMAP' in cdb:
+        bmapfile = os.path.join(p['DRS_CALIB_DB'], cdb['BKGRDMAP'][1])
+        if not quiet:
+            WLOG(p, '', 'Doing Background Correction using ' + bmapfile)
+        background_map, bhdr, nx, ny = spirouFITS.read_raw_data(p, bmapfile)
+        return background_map, bhdr, bmapfile
+    else:
+        # get master config file name
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+        # deal with extra constrain on file from "closer/older"
+        comptype = p.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = '(with unit time <={1})'
+        else:
+            extstr = ''
+        # log error
+        emsg1 = 'No valid BKGRDMAP in calibDB {0} ' + extstr
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
+
+
+def correct_for_badpix(p, image, header, return_map=False, quiet=True):
     """
     Corrects "image" for "BADPIX" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
@@ -1364,22 +1434,30 @@ def correct_for_badpix(p, image, header):
     :param image: numpy array (2D), the image
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
+    :param return_map: bool, if True returns bad pixel map else returns
+                       corrected image
 
-    :return corrected_image: numpy array (2D), the corrected image where all
-                             bad pixels are set to zeros
+    :returns: numpy array (2D), the corrected image where all bad pixels are
+              set to zeros or the bad pixel map (if return_map = True)
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
     # get badpixmask
-    badpixmask, bhdr, badfile = get_badpixel_map(p, header)
+    badpixmask, bhdr, badfile = get_badpixel_map(p, header, quiet=quiet)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
-    # correct image (set bad pixels to zero)
-    corrected_image = np.where(mask, np.zeros_like(image), image)
+
     # get badpixel file
     p['BADPFILE'] = os.path.basename(badfile)
     p.set_source('BADPFILE', func_name)
-    # finally return corrected_image
-    return p, corrected_image
+
+    if return_map:
+        return p, mask
+    else:
+        # correct image (set bad pixels to zero)
+        corrected_image = np.array(image)
+        corrected_image[mask] = np.nan
+        # finally return corrected_image
+        return p, corrected_image
 
 
 def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
@@ -1398,7 +1476,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
                 log_opt: string, log option, normally the program name
 
     :param image: numpy array (2D), the iamge to median filter and normalise
-    :param method: string, "new" or "old" if "new" uses np.percentile else
+    :param method: string, "new" or "old" if "new" uses np.nanpercentile else
                    sorts the flattened image and takes the "percentile" (i.e.
                    90th) pixel value to normalise
     :param wmed: float or None, if not None defines the median filter width
@@ -1447,7 +1525,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
 
     if method == 'new':
         # get the 90th percentile of median image
-        norm = np.percentile(image_med[np.isfinite(image_med)], percentile)
+        norm = np.nanpercentile(image_med[np.isfinite(image_med)], percentile)
 
     else:
         v = image_med.reshape(np.product(image.shape))
@@ -1692,9 +1770,10 @@ def get_tilt(pp, lloc, image):
         # extract this AB order
         lloc = spirouEXTOR.ExtractABOrderOffset(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
+        nanmask = np.isfinite(lloc['CENT1']) & np.isfinite(lloc['CENT2'])
         # interpolate the pixels on to the extracted centers
-        cent1i = np.interp(os_pixels, pixels, lloc['CENT1'])
-        cent2i = np.interp(os_pixels, pixels, lloc['CENT2'])
+        cent1i = np.interp(os_pixels, pixels[nanmask], lloc['CENT1'][nanmask])
+        cent2i = np.interp(os_pixels, pixels[nanmask], lloc['CENT2'][nanmask])
         # --------------------------------------------------------------------
         # get the correlations between cent2i and cent1i
         cori = np.correlate(cent2i, cent1i, mode='same')
@@ -1744,7 +1823,7 @@ def fit_tilt(pp, lloc):
     # get the x values for
     xfit = np.arange(lloc['NUMBER_ORDERS']/2)
     # get fit coefficients for the tilt polynomial fit
-    atc = np.polyfit(xfit, lloc['TILT'], pp['IC_TILT_FIT'])[::-1]
+    atc = nanpolyfit(xfit, lloc['TILT'], pp['IC_TILT_FIT'])[::-1]
     # get the yfit values for the fit
     yfit = np.polyval(atc[::-1], xfit)
     # get the rms for the residuls of the fit and the data
@@ -1920,7 +1999,7 @@ def get_shape_map_old(p, loc):
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
         if np.sum(master_dxmap != 0) != 0:
-            data2 = spirouEXTOR.DeBananafication(data1, master_dxmap)
+            data2 = spirouEXTOR.DeBananafication(p, data1, dx=master_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -2021,7 +2100,7 @@ def get_shape_map_old(p, loc):
                     # max RV and fit on the neighbouring pixels
                     xff = slopes[maxpix - 1: maxpix + 2]
                     yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
-                    coeffs = np.polyfit(xff, yff, 2)
+                    coeffs = nanpolyfit(xff, yff, 2)
                     # if peak within range, then its fine
                     dcoeffs = -0.5 * coeffs[1] / coeffs[0]
                     if np.abs(dcoeffs) < 1:
@@ -2033,7 +2112,7 @@ def get_shape_map_old(p, loc):
             sigmax = np.inf
             while sigmax > sigclipmax:
                 # recalculate the fit
-                coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+                coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
                 # get the residuals
                 res = dxsection - np.polyval(coeffs, xsection)
                 # normalise residuals
@@ -2047,7 +2126,7 @@ def get_shape_map_old(p, loc):
             # -------------------------------------------------------------
             # fit a 2nd order polynomial to the slope vx position
             #    along order
-            coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+            coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
             # log slope at center
             s_xpix = dim1//2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
@@ -2251,8 +2330,8 @@ def get_shape_map(p, loc):
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
         if np.sum(master_dxmap != 0) != 0:
-            hcdata2 = spirouEXTOR.DeBananafication(hcdata1, master_dxmap)
-            fpdata2 = spirouEXTOR.DeBananafication(fpdata1, master_dxmap)
+            hcdata2 = spirouEXTOR.DeBananafication(p, hcdata1, dx=master_dxmap)
+            fpdata2 = spirouEXTOR.DeBananafication(p, fpdata1, dx=master_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -2365,7 +2444,7 @@ def get_shape_map(p, loc):
                     # max RV and fit on the neighbouring pixels
                     xff = slopes[maxpix - 1: maxpix + 2]
                     yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
-                    coeffs = np.polyfit(xff, yff, 2)
+                    coeffs = nanpolyfit(xff, yff, 2)
                     # if peak within range, then its fine
                     dcoeffs = -0.5 * coeffs[1] / coeffs[0]
                     if np.abs(dcoeffs) < 1:
@@ -2392,7 +2471,7 @@ def get_shape_map(p, loc):
             # sigma clip
             while sigmax > sigclipmax:
                 # recalculate the fit
-                coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+                coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
                 # get the residuals
                 res = dxsection - np.polyval(coeffs, xsection)
                 # normalise residuals
@@ -2406,7 +2485,7 @@ def get_shape_map(p, loc):
             # -------------------------------------------------------------
             # fit a 2nd order polynomial to the slope vx position
             #    along order
-            coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+            coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
             # log slope at center
             s_xpix = dim1//2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
@@ -2667,8 +2746,8 @@ def get_shape_map(p, loc):
     master_dxmap[nanmask] = 0.0
 
     # apply very last update of the debananafication
-    hcdata2 = spirouEXTOR.DeBananafication(hcdata1, master_dxmap)
-    fpdata2 = spirouEXTOR.DeBananafication(fpdata1, master_dxmap)
+    hcdata2 = spirouEXTOR.DeBananafication(p, hcdata1, dx=master_dxmap)
+    fpdata2 = spirouEXTOR.DeBananafication(p, fpdata1, dx=master_dxmap)
 
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
@@ -2771,8 +2850,8 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         # define a segment between start and end
         segment = sp_fp[start:end]
         # push values into bottom and top
-        bottom[xpix] = np.percentile(segment, bottom_fp_percentile)
-        top[xpix] = np.percentile(segment, top_fp_percentile)
+        bottom[xpix] = np.nanpercentile(segment, bottom_fp_percentile)
+        top[xpix] = np.nanpercentile(segment, top_fp_percentile)
     # -------------------------------------------------------------------------
     # put a floor in the top values
     top_floor_value = top_floor_frac * np.max(top)
@@ -2791,7 +2870,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # >3-sigma peak relative to the continuum
     sp_hc = sp_hc - medfilt(sp_hc, med_filter_wid)
     # normalise HC to its absolute deviation
-    norm = np.median(np.abs(sp_hc[sp_hc != 0]))
+    norm = np.nanmedian(np.abs(sp_hc[sp_hc != 0]))
     sp_hc = sp_hc / norm
     # -------------------------------------------------------------------------
     # fpindex is a variable that contains the index of the FP peak interference
@@ -2903,11 +2982,11 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     xpeak2_mean = (xpeak2[1:] + xpeak2[:-1]) / 2
     dxpeak = xpeak2[1:] - xpeak2[:-1]
     # we clip the most deviant peaks
-    lowermask = dxpeak > np.percentile(dxpeak, deviant_percentiles[0])
-    uppermask = dxpeak < np.percentile(dxpeak, deviant_percentiles[1])
+    lowermask = dxpeak > np.nanpercentile(dxpeak, deviant_percentiles[0])
+    uppermask = dxpeak < np.nanpercentile(dxpeak, deviant_percentiles[1])
     good = lowermask & uppermask
     # apply good mask and fit the peak separation
-    fit_peak_separation = np.polyfit(xpeak2_mean[good], dxpeak[good], 2)
+    fit_peak_separation = nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)
     # Looping through peaks and counting the number of meddx between peaks
     #    we know that peaks will be at integer multiple or medds (in the
     #    overwhelming majority, they will be at 1 x meddx)
@@ -2945,7 +3024,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     for zp in range(fpstart, fpend):
         # we take a trial solution between wave (from the theoretical FP
         #    solution) and the x position of measured peaks
-        fitzp = np.polyfit(wave_fp[zp - ipeak], xpeak2, 3)
+        fitzp = nanpolyfit(wave_fp[zp - ipeak], xpeak2, 3)
         # we predict an x position for the known U Ne lines
         xpos_predict = np.polyval(fitzp, une_lines)
         # deal with borders
@@ -2983,7 +3062,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
-        fit_err_xpix = np.polyfit(xpeak2[good], err_pix[good], 1)
+        fit_err_xpix = nanpolyfit(xpeak2[good], err_pix[good], 1)
         # get the deviation from error fit
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
@@ -3001,7 +3080,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
-        fit_err_xpix = np.polyfit(xpeak2[good], err_pix[good], 5)
+        fit_err_xpix = nanpolyfit(xpeak2[good], err_pix[good], 5)
         # get the deviation from error fit
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
@@ -3024,7 +3103,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     errpix_med = np.nanmedian(err_pix)
     std_corr = np.std(corr_err_xpix[xpos_predict_int])
     corr_med = np.nanmedian(corr_err_xpix[xpos_predict_int])
-    cent_fit = np.polyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
+    cent_fit = nanpolyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
     num_fp_cent = np.polyval(cent_fit, dim2//2)
     # log the statistics
     wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
@@ -3284,7 +3363,7 @@ def get_airmass(p, hdr):
 
 # TODO insert paremeter dictionnary
 # TODO: FIX PROBLEMS: Write doc string
-def e2dstos1d(wave, e2dsffb, sbin):
+def e2dstos1d_old(wave, e2dsffb, sbin):
     """
     Convert E2DS (2-dimension) spectra to 1-dimension spectra
     with merged spectral orders and regular sampling
@@ -3356,6 +3435,124 @@ def e2dstos1d(wave, e2dsffb, sbin):
 
     # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
     return xs1d, ys1d
+
+
+
+def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
+    """
+    Go from E2DS with a wave solution and blaze solution to a 1D spectrum
+
+    :param p:
+    :param wave:
+    :param e2ds:
+    :param blaze:
+    :return:
+    """
+
+    # get parameters from p
+    wavestart = p['EXTRACT_S1D_WAVESTART']
+    waveend = p['EXTRACT_S1D_WAVEEND']
+    binwave = p['IC_BIN_S1D_UWAVE']
+    binvelo = p['IC_BIN_S1D_UVELO']
+    smooth_size = p['IC_S1D_EDGE_SMOOTH_SIZE']
+    blazethres = p['TELLU_CUT_BLAZE_NORM']
+
+    # get size from e2ds
+    nord, npix = e2ds.shape
+
+    # -------------------------------------------------------------------------
+    # Decide on output wavelength grid
+    # -------------------------------------------------------------------------
+    if wgrid == 'wave':
+        wavegrid = np.arange(wavestart, waveend + binwave/2.0, binwave)
+    else:
+        # work out number of wavelength points
+        flambda = np.log(waveend/wavestart)
+        nlambda = np.round((speed_of_light / binvelo) * flambda)
+        # updating end wavelength slightly to have exactly 'step' km/s
+        waveend = np.exp(nlambda * (binvelo / speed_of_light)) * wavestart
+        # get the wavegrid
+        index = np.arange(nlambda) / nlambda
+        wavegrid = wavestart * np.exp(index * np.log(waveend / wavestart))
+
+    # -------------------------------------------------------------------------
+    # define a smooth transition mask at the edges of the image
+    # this ensures that the s1d has no discontinuity when going from one order
+    # to the next. We define a scale for this mask
+    # smoothing scale
+    # -------------------------------------------------------------------------
+    # define a kernal that goes from -3 to +3 smooth_sizes of the mask
+    xker = np.arange(-smooth_size * 3, smooth_size * 3, 1)
+    ker = np.exp(-0.5*(xker / smooth_size)**2)
+    # set up the edge vector
+    edges = np.ones(npix, dtype=bool)
+    # set edges of the image to 0 so that  we get a sloping weight
+    edges[:int(3 * smooth_size)] = False
+    edges[-int(3 * smooth_size):] = False
+    # define the weighting for the edges (slopevector)
+    slopevector = np.zeros_like(blaze)
+    # for each order find the sloping weight vector
+    for order_num in range(nord):
+        # get the blaze for this order
+        oblaze = blaze[order_num]
+        # find the valid pixels
+        cond1 = np.isfinite(oblaze) & np.isfinite(e2ds[order_num])
+        with warnings.catch_warnings(record=True) as _:
+            cond2 = oblaze > (blazethres * np.nanmax(oblaze))
+        valid = cond1 & cond2 & edges
+        # convolve with the edge kernel
+        oweight = np.convolve(valid, ker, mode='same')
+        # normalise to the maximum
+        oweight = oweight - np.nanmin(oweight)
+        oweight = oweight / np.nanmax(oweight)
+        # append to sloping vector storage
+        slopevector[order_num] = oweight
+
+    # multiple the spectrum and blaze by the sloping vector
+    blaze = blaze * slopevector
+    e2ds = e2ds * slopevector
+
+    # -------------------------------------------------------------------------
+    # Perform a weighted mean of overlapping orders
+    # by performing a spline of both the blaze and the spectrum
+    # -------------------------------------------------------------------------
+    out_spec = np.zeros_like(wavegrid)
+    weight = np.zeros_like(wavegrid)
+    # loop around all orders
+    for order_num in range(nord):
+        # identify the valid pixels
+        valid = np.isfinite(e2ds[order_num]) & np.isfinite(blaze[order_num])
+        # if we have no valid points we need to skip
+        if np.sum(valid) == 0:
+            continue
+        # get this orders vectors
+        owave = wave[order_num, valid]
+        oe2ds = e2ds[order_num, valid]
+        oblaze = blaze[order_num, valid]
+        # create the splines for this order
+        spline_sp = IUVSpline(owave, oe2ds, k=5, ext=1)
+        spline_bl = IUVSpline(owave, oblaze, k=5, ext=1)
+        # can only spline in domain of the wave
+        useful_range = (wavegrid > np.nanmin(owave))
+        useful_range &= (wavegrid < np.nanmax(owave))
+        # get splines and add to outputs
+        weight[useful_range] += spline_bl(wavegrid[useful_range])
+        out_spec[useful_range] += spline_sp(wavegrid[useful_range])
+
+    # need to deal with zero weight --> set them to NaNs
+    zeroweights = weight == 0
+    weight[zeroweights] = np.nan
+
+    # debug plot
+    if p['DRS_PLOT'] > 0 and p['DRS_DEBUG'] > 0:
+        sPlt.ext_1d_spectrum_debug_plot(p, wavegrid, out_spec, weight, wgrid)
+
+    # work out the weighted spectrum
+    with warnings.catch_warnings(record=True) as _:
+        w_out_spec = out_spec / weight
+
+    # divide by weights
+    return wavegrid, w_out_spec
 
 
 # =============================================================================

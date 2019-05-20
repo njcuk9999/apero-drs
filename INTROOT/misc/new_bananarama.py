@@ -11,7 +11,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
-
+from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 import time
 
 # =============================================================================
@@ -186,7 +186,7 @@ for ite_banana in range(nbanana):
                 v[-1] = 0
                 maxpix = np.nanargmax(rvcontent[:, k] * v)
                 # max RV and fit on the neighbouring pixels
-                fit = np.polyfit(slopes[maxpix - 1:maxpix + 2],
+                fit = nanpolyfit(slopes[maxpix - 1:maxpix + 2],
                                  rvcontent[maxpix - 1:maxpix + 2, k], 2)
                 # if peak within range, then its fine
                 if np.abs(-.5 * fit[1] / fit[0]) < 1:
@@ -198,7 +198,7 @@ for ite_banana in range(nbanana):
         sigmax = 99
         while sigmax > 4:
             # noinspection PyUnboundLocalVariable
-            fit = np.polyfit(xsection[keep], dxsection[keep], 2)
+            fit = nanpolyfit(xsection[keep], dxsection[keep], 2)
             res = (dxsection - np.polyval(fit, xsection))
             res -= np.nanmedian(res[keep])
             res /= np.nanmedian(np.abs(res[keep]))
@@ -209,7 +209,7 @@ for ite_banana in range(nbanana):
         #
         # we fit a 2nd order polynomial to the slope vx position along order
         # noinspection PyUnboundLocalVariable
-        fit = np.polyfit(xsection[keep], dxsection[keep], 2)
+        fit = nanpolyfit(xsection[keep], dxsection[keep], 2)
         print('slope at pixel 2044 : ',
               np.arctan(np.polyval(fit, 2044)) * 180 / np.pi, ' deg')
         slope = np.polyval(fit, np.arange(4088))

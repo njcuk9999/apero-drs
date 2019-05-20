@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+cal_CCF_E2DS_FP_MH_spirou wrapper (with different runs)
+"""
 from collections import OrderedDict
 from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouStartup
 
 import cal_CCF_E2DS_FP_MH_spirou
 
@@ -55,6 +59,8 @@ WAVEFILES = ['/home/mhobson/SPIRou_data/reduced/wavesol_allshape/Melissa_2374832
 '/home/mhobson/SPIRou_data/reduced/wavesol_allshape/Melissa_2375831a_pp_2375835c_pp_wave_new_AB.fits',
 '/home/mhobson/SPIRou_data/reduced/wavesol_allshape/Melissa_2376092a_pp_2376096c_pp_wave_new_AB.fits'
              ]
+WAVEFILES = ['/data/CFHT/calibDB_1/19AQ02-Feb13_2374832a_pp_2374836c_pp_wave_new_AB.fits',
+             ] * NUMBER_RUNS
 # define which variables to save from run
 SAVE_VALUES_LOC = ['CONTRAST', 'RV', 'FWHM', 'MAXCPP', 'WAVEFILE']
 SAVE_VALUES_CLOC = ['CONTRAST', 'RV', 'FWHM', 'MAXCPP', 'WAVEFILE']

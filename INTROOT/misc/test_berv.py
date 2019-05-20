@@ -152,17 +152,17 @@ if __name__ == "__main__":
         bervs = storage[names[v_it]][0]
         bjds = storage[names[v_it]][1]
         if v_it == 0:
-            var = dates.plot_date - np.median(dates.plot_date)
+            var = dates.plot_date - np.nanmedian(dates.plot_date)
             xlabel = '$\Delta$' + names[v_it] + ' [{0}]'.format(units[v_it])
         elif v_it == 1:
-            var = times.plot_date - np.median(times.plot_date)
+            var = times.plot_date - np.nanmedian(times.plot_date)
             xlabel = '$\Delta$' + names[v_it] + ' [{0}]'.format(units[v_it])
         else:
             var = variables[v_it]
             xlabel = names[v_it] + ' [{0}]'.format(units[v_it])
 
-        y0 = np.array(bervs) - np.median(bervs)
-        y1 = np.array(bjds) - np.median(bjds)
+        y0 = np.array(bervs) - np.nanmedian(bervs)
+        y1 = np.array(bjds) - np.nanmedian(bjds)
 
         # plot
         fig, frames = plt.subplots(nrows=2, ncols=1)

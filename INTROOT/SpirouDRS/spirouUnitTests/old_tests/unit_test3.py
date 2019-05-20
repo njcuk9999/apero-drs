@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------
     # end total timer
-    times['Total'] = np.sum(list(times.values()))
+    times['Total'] = np.nansum(list(times.values()))
 
     # ----------------------------------------------------------------------
     # Timing stats
