@@ -18,6 +18,7 @@ from terrapipe import locale
 from terrapipe.config.core import drs_database
 from terrapipe.config.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_image
 from terrapipe.science.calib import badpix
 from terrapipe.science.calib import background
 
@@ -174,9 +175,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if params['INPUT_FLIP_IMAGE']:
             # flip flat
-            flat_image1 = drs_fits.flip_image(params, flat_image)
+            flat_image1 = drs_image.flip_image(params, flat_image)
             # flip bad pixel map
-            bad_pixel_map1 = drs_fits.flip_image(params, bad_pixel_map)
+            bad_pixel_map1 = drs_image.flip_image(params, bad_pixel_map)
         else:
             flat_image1, bad_pixel_map1 = flat_image, bad_pixel_map
 
@@ -190,9 +191,9 @@ def __main__(recipe, params):
                          ylow=params['IMAGE_Y_LOW'],
                          yhigh=params['IMAGE_Y_HIGH'])
             # resize flat
-            flat_image1 = drs_fits.resize(params, flat_image1, **sargs)
+            flat_image1 = drs_image.resize(params, flat_image1, **sargs)
             # resize bad pixel map
-            bad_pixel_map1 = drs_fits.resize(params, bad_pixel_map1, **sargs)
+            bad_pixel_map1 = drs_image.resize(params, bad_pixel_map1, **sargs)
         else:
             flat_image1 = np.array(flat_image)
             bad_pixel_map1 = np.array(bad_pixel_map)

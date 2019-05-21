@@ -18,6 +18,7 @@ from terrapipe import locale
 from terrapipe.config.core import drs_database
 from terrapipe.config.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_image
 from terrapipe.science.calib import dark
 
 
@@ -156,13 +157,13 @@ def __main__(recipe, params):
                        xhigh=params['IMAGE_X_BLUE_HIGH'],
                        ylow=params['IMAGE_Y_BLUE_LOW'],
                        yhigh=params['IMAGE_Y_BLUE_HIGH'])
-        imageblue = drs_fits.resize(params, image0, **bkwargs)
+        imageblue = drs_image.resize(params, image0, **bkwargs)
         # resize red image
         bkwargs = dict(xlow=params['IMAGE_X_RED_LOW'],
                        xhigh=params['IMAGE_X_RED_HIGH'],
                        ylow=params['IMAGE_Y_RED_LOW'],
                        yhigh=params['IMAGE_Y_RED_HIGH'])
-        imagered = drs_fits.resize(params, image0, **bkwargs)
+        imagered = drs_image.resize(params, image0, **bkwargs)
         # ------------------------------------------------------------------
         # Dark Measurement
         # ------------------------------------------------------------------
