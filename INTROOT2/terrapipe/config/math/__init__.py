@@ -15,6 +15,8 @@ from . import general
 # Define functions
 # =============================================================================
 
+calculate_polyvals = general.calculate_polyvals
+
 killnan = general.killnan
 
 measure_box_min_max = general.measure_box_min_max
