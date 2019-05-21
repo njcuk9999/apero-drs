@@ -380,8 +380,48 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
     # return
     outputs = [cent_0, cent_coeffs, cent_rms, cent_max_ptp, cent_frac_ptp,
                cent_max_rmpts, wid_0, wid_coeffs, wid_rms, wid_max_ptp,
-               wid_frac_ptp, wid_max_rmpts, xplot, yplot]
+               wid_frac_ptp, wid_max_rmpts, xplot, yplot, rorder_num,
+               mean_rms_cent, mean_rms_wid, max_signal, mean_backgrd]
     return outputs
+
+
+def image_superimp(image, coeffs):
+    """
+    Take an image and superimpose zeros over the positions in the image where
+    the central fits where found to be
+
+    :param image: numpy array (2D), the image
+    :param coeffs: coefficient array,
+                   size = (number of orders x number of coefficients in fit)
+                   output array will be size = (number of orders x dim)
+    :return newimage: numpy array (2D), the image with super-imposed zero filled
+                      fits
+    """
+    # copy the old image
+    newimage = image.copy()
+    # get the number of orders
+    n_orders = len(coeffs)
+    # get the pixel positions along the order
+    xdata = np.arange(image.shape[1])
+    # loop around each order
+    fitxarray, fityarray = [], []
+    for order_num in range(n_orders):
+        # get the pixel positions across the order (from fit coeffs in position)
+        # add 0.5 to account for later conversion to int
+        fity = np.polyval(coeffs[order_num][::-1], xdata) + 0.5
+        # elements must be > 0 and less than image.shape[0]
+        mask = (fity > 0) & (fity < image.shape[0])
+        # Add good values to storage array
+        fityarray = np.append(fityarray, fity[mask])
+        fitxarray = np.append(fitxarray, xdata[mask])
+
+    # convert fitxarray and fityarra to integers
+    fitxarray = np.array(fitxarray, dtype=int)
+    fityarray = np.array(fityarray, dtype=int)
+    # use fitxarray and fityarray as positions to set 0 in newimage
+    newimage[fityarray, fitxarray] = 0
+    # return newimage
+    return newimage
 
 
 # =============================================================================
