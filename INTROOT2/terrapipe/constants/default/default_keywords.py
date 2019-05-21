@@ -16,7 +16,12 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_EXT_TYPE', 'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
            'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
-           'KW_BNILUM', 'KW_BTOT']
+           'KW_BNILUM', 'KW_BTOT', 'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK',
+           'KW_CDBORDP', 'KW_CDBLOCO', 'KW_CDBSHAPE', 'KW_CDBFLAT',
+           'KW_CDBBLAZE', 'KW_CDBWAVE', 'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
+           'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
+           'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
+           'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF']
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
@@ -130,6 +135,20 @@ KW_INFILE2 = Keyword('KW_INFILE2', key='', dtype=str, source=__NAME__)
 KW_INFILE3 = Keyword('KW_INFILE3', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
+# Define database input keywords
+# -----------------------------------------------------------------------------
+KW_CDBDARK = Keyword('KW_CDBDARK', key='', dtype=str, source=__NAME__)
+KW_CDBBAD = Keyword('KW_CDBBAD', key='', dtype=str, source=__NAME__)
+KW_CDBBACK = Keyword('KW_CDBBACK', key='', dtype=str, source=__NAME__)
+KW_CDBORDP = Keyword('KW_CDBORDP', key='', dtype=str, source=__NAME__)
+KW_CDBLOCO = Keyword('KW_CDBLOCO', key='', dtype=str, source=__NAME__)
+KW_CDBSHAPE = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
+KW_CDBFLAT = Keyword('KW_CDBFLAT', key='', dtype=str, source=__NAME__)
+KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__)
+KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__)
+
+
+# -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
 # the output key for drs outputs
@@ -151,46 +170,73 @@ KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
 # Define cal_dark variables
 # -----------------------------------------------------------------------------
 # The fraction of dead pixels in the dark (in %)
-KW_DARK_DEAD = Keyword('DADEAD', key=0, dtype=float, source=__NAME__)
+KW_DARK_DEAD = Keyword('DADEAD', key='', dtype=float, source=__NAME__)
 
 # The median dark level in ADU/s
-KW_DARK_MED = Keyword('KW_DARK_MED', key=0, dtype=float, source=__NAME__)
+KW_DARK_MED = Keyword('KW_DARK_MED', key='', dtype=float, source=__NAME__)
 
 # The fraction of dead pixels in the blue part of the dark (in %)
-KW_DARK_B_DEAD = Keyword('KW_DARK_B_DEAD', key=0, dtype=float, source=__NAME__)
+KW_DARK_B_DEAD = Keyword('KW_DARK_B_DEAD', key='', dtype=float, source=__NAME__)
 
 # The median dark level in the blue part of the dark in ADU/s
-KW_DARK_B_MED = Keyword('KW_DARK_B_MED', key=0, dtype=float, source=__NAME__)
+KW_DARK_B_MED = Keyword('KW_DARK_B_MED', key='', dtype=float, source=__NAME__)
 
 # The fraction of dead pixels in the red part of the dark (in %)
-KW_DARK_R_DEAD = Keyword('KW_DARK_R_DEAD', key=0, dtype=float, source=__NAME__)
+KW_DARK_R_DEAD = Keyword('KW_DARK_R_DEAD', key='', dtype=float, source=__NAME__)
 
 # The median dark level in the red part of the dark in ADU/s
-KW_DARK_R_MED = Keyword('KW_DARK_R_MED', key=0, dtype=float, source=__NAME__)
+KW_DARK_R_MED = Keyword('KW_DARK_R_MED', key='', dtype=float, source=__NAME__)
 
 # The threshold of the dark level to retain in ADU
-KW_DARK_CUT = Keyword('KW_DARK_CUT', key=0, dtype=float, source=__NAME__)
+KW_DARK_CUT = Keyword('KW_DARK_CUT', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define cal_badpix variables
 # -----------------------------------------------------------------------------
 # fraction of hot pixels
-KW_BHOT = Keyword('KW_BHOT', key=0, dtype=float, source=__NAME__)
+KW_BHOT = Keyword('KW_BHOT', key='', dtype=float, source=__NAME__)
 
 # fraction of bad pixels from flat
-KW_BBFLAT = Keyword('KW_BBFLAT', key=0, dtype=float, source=__NAME__)
+KW_BBFLAT = Keyword('KW_BBFLAT', key='', dtype=float, source=__NAME__)
 
 # fraction of non-finite pixels in dark
-KW_BNDARK = Keyword('KW_BNDARK', key=0, dtype=float, source=__NAME__)
+KW_BNDARK = Keyword('KW_BNDARK', key='', dtype=float, source=__NAME__)
 
 # fraction of non-finite pixels in flat
-KW_BNFLAT = Keyword('KW_BNFLAT', key=0, dtype=float, source=__NAME__)
+KW_BNFLAT = Keyword('KW_BNFLAT', key='', dtype=float, source=__NAME__)
 
 # fraction of bad pixels with all criteria
-KW_BBAD = Keyword('KW_BBAD', key=0, dtype=float, source=__NAME__)
+KW_BBAD = Keyword('KW_BBAD', key='', dtype=float, source=__NAME__)
 
 # fraction of un-illuminated pixels (from engineering flat)
-KW_BNILUM = Keyword('KW_BNILUM', key=0, dtype=float, source=__NAME__)
+KW_BNILUM = Keyword('KW_BNILUM', key='', dtype=float, source=__NAME__)
 
 # fraction of total bad pixels
-KW_BTOT = Keyword('KW_BTOT', key=0, dtype=float, source=__NAME__)
+KW_BTOT = Keyword('KW_BTOT', key='', dtype=float, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define localisation variables
+# -----------------------------------------------------------------------------
+# root for localisation header keys
+ROOT_DRS_LOC = Const('ROOT_DRS_LOC', value=None, dtype=str, source=__NAME__)
+
+KW_LOC_BCKGRD = Keyword('KW_LOC_BCKGRD', key='', dtype=float, source=__NAME__)
+KW_LOC_NBO = Keyword('KW_LOC_NBO', key='', dtype=int, source=__NAME__)
+KW_LOC_DEG_C = Keyword('KW_LOC_DEG_C', key='', dtype=int, source=__NAME__)
+KW_LOC_DEG_W = Keyword('KW_LOC_DEG_W', key='', dtype=int, source=__NAME__)
+KW_LOC_MAXFLX = Keyword('KW_LOC_MAXFLX', key='', dtype=float, source=__NAME__)
+KW_LOC_SMAXPTS_CTR = Keyword('KW_LOC_SMAXPTS_CTR', key='', dtype=int,
+                             source=__NAME__)
+KW_LOC_SMAXPTS_WID = Keyword('KW_LOC_SMAXPTS_WID', key='', dtype=int,
+                             source=__NAME__)
+KW_LOC_RMS_CTR = Keyword('KW_LOC_RMS_CTR', key='', dtype=float, source=__NAME__)
+KW_LOC_RMS_WID = Keyword('KW_LOC_RMS_WID', key='', dtype=float, source=__NAME__)
+KW_LOC_CTR_COEFF = Keyword('KW_LOC_CTR_COEFF', key='', dtype=int,
+                           source=__NAME__)
+KW_LOC_WID_COEFF = Keyword('KW_LOC_WID_COEFF', key='', dtype=int,
+                           source=__NAME__)
+
+
+
+
+

@@ -18,7 +18,9 @@ __all__ = [# preprocessing constants
            'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
            # qc constants
            'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
-           'QC_MAX_DARK',
+           'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
+           'QC_LOC_MAXFIT_REMOVED_WID', 'QC_LOC_RMSMAX_CTR',
+           'QC_LOC_RMSMAX_WID',
            # fiber constants
            'FIBER_FIRST_ORDER_JUMP_AB', 'FIBER_FIRST_ORDER_JUMP_A',
            'FIBER_FIRST_ORDER_JUMP_B', 'FIBER_FIRST_ORDER_JUMP_C',
@@ -45,7 +47,7 @@ __all__ = [# preprocessing constants
            'LOC_EXT_WINDOW_SIZE', 'LOC_IMAGE_GAP', 'LOC_ORDER_WIDTH_MIN',
            'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
            'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
-           'LOC_SAT_THRES',
+           'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE',
            ]
 
 # set name
@@ -384,6 +386,23 @@ LOC_MAX_PTP_WID = Const('LOC_MAX_PTP_WID', value=None, dtype=float,
 LOC_SAT_THRES = Const('LOC_SAT_THRES', value=None, dtype=float, source=__NAME__,
                       minimum=0.0)
 
+#   Maximum points removed in location fit
+QC_LOC_MAXFIT_REMOVED_CTR = Const('QC_LOC_MAXFIT_REMOVED_CTR', value=None,
+                                  dtype=int, source=__NAME__, minimum=0)
 
+#   Maximum points removed in width fit
+QC_LOC_MAXFIT_REMOVED_WID = Const('QC_LOC_MAXFIT_REMOVED_WID', value=None,
+                                  dtype=int, source=__NAME__, minimum=0)
 
+#   Maximum rms allowed in fitting location
+QC_LOC_RMSMAX_CTR = Const('QC_LOC_RMSMAX_CTR' ,value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+#   Maximum rms allowed in fitting width
+QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID' ,value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+#   Option for archiving the location image
+LOC_SAVE_SUPERIMP_FILE =  Const('LOC_SAVE_SUPERIMP_FILE', value=None,
+                                dtype=bool, source=__NAME__)
 
