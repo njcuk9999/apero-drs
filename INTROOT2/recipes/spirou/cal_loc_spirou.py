@@ -235,7 +235,8 @@ def __main__(recipe, params):
         cent_frac_ptp, cent_max_rmpts = lout[4:6]
         wid_0, wid_coeffs, wid_rms, wid_max_ptp = lout[6:10]
         wid_frac_ptp, wid_max_rmpts, xplot, yplot = lout[10:14]
-        rorder_num, mean_rms_cent, mean_rms_wid = lout[14:]
+        rorder_num, mean_rms_cent, mean_rms_wid = lout[14:17]
+        max_signal, mean_backgrd = lout[17:]
 
         # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values
@@ -392,7 +393,10 @@ def __main__(recipe, params):
         # Save and record of image of localization with order center
         #     and keywords
         # ------------------------------------------------------------------
-        loco1file = LOCO1_AB.newcopy(recipe=recipe)
+        if params['FIBER'] == 'AB':
+            loco1file = LOCO1_AB.newcopy(recipe=recipe)
+        else:
+            loco1file = LOCO1_C.newcopy(recipe=recipe)
         # construct the filename from file instance
         loco1file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -414,9 +418,19 @@ def __main__(recipe, params):
         loco1file.add_hkey('KW_CDBBAD', value=params['BADPFILE'])
         loco1file.add_hkey('KW_CDBBACK', value=params['BACKFILE'])
         # add localisation parameters
-
-        # TODO: complete
-
+        loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
+        loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)
+        loco1file.add_hkey('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
+        loco1file.add_hkey('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
+        loco1file.add_hkey('KW_LOC_MAXFLX', value=max_signal)
+        loco1file.add_hkey('KW_LOC_SMAXPTS_CTR', value=max_removed_cent)
+        loco1file.add_hkey('KW_LOC_SMAXPTS_WID', value=max_removed_wid)
+        loco1file.add_hkey('KW_LOC_RMS_CTR', value=rmsmax_cent)
+        loco1file.add_hkey('KW_LOC_RMS_WID', value=rmsmax_wid)
+        # write 2D list of position fit coefficients
+        loco1file.add_hkeys_2d('KW_LOCO_CTR_COEFF', value=cent_coeffs)
+        # write 2D list of width fit coefficients
+        loco1file.add_hkeys_2d('KW_LOCO_WID_COEFF', value=wid_coeffs)
         # add qc parameters
         loco1file.add_qckeys(qc_params)
         # copy data
@@ -430,18 +444,59 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save and record of image of sigma
         # ------------------------------------------------------------------
-        # TODO: complete
+        if params['FIBER'] == 'AB':
+            loco2file = LOCO2_AB.newcopy(recipe=recipe)
+        else:
+            loco2file = LOCO2_C.newcopy(recipe=recipe)
+        # construct the filename from file instance
+        loco2file.construct_filename(params, infile=infile)
+        # ------------------------------------------------------------------
+        # define header keys for output file
+        # copy keys from loco1file
+        loco2file.copy_hdict(loco1file)
+        # copy data
+        loco2file.data = width_fits
+        # ------------------------------------------------------------------
+        # log that we are saving rotated image
+        WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
+        # write image to file
+        loco2file.write()
 
         # ------------------------------------------------------------------
         # Save and Record of image of localization
         # ------------------------------------------------------------------
-        # TODO: complete
+        if params['LOC_SAVE_SUPERIMP_FILE']:
+            # --------------------------------------------------------------
+            # super impose zeros over the fit in the image
+            image5 = localisation.image_superimp(image4, cent_coeffs)
+            # --------------------------------------------------------------
+            if params['FIBER'] == 'AB':
+                loco3file = LOCO3_AB.newcopy(recipe=recipe)
+            else:
+                loco3file = LOCO3_C.newcopy(recipe=recipe)
+            # construct the filename from file instance
+            loco3file.construct_filename(params, infile=infile)
+            # --------------------------------------------------------------
+            # define header keys for output file
+            # copy keys from loco1file
+            loco3file.copy_hdict(loco1file)
+            # copy data
+            loco3file.data = image5
+            # --------------------------------------------------------------
+            # log that we are saving rotated image
+            wargs = [loco3file.filename]
+            WLOG(params, '', TextEntry('40-013-00021', args=wargs))
+            # write image to file
+            loco3file.write()
 
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
         if params['QC']:
+            # copy the order profile to the calibDB
             drs_database.add_file(params, orderpfile)
+            # copy the loco file to the calibDB
+            drs_database.add_file(params, loco1file)
 
     # ----------------------------------------------------------------------
     # End of main code
