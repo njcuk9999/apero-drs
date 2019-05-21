@@ -69,6 +69,31 @@ def measure_box_min_max(y, size):
     return min_image, max_image
 
 
+def calculate_polyvals(coeffs, dim):
+    """
+    Calculates all fits in coeffs array across pixels of size=dim
+
+    :param coeffs: coefficient array,
+                   size = (number of orders x number of coefficients in fit)
+                   output array will be size = (number of orders x dim)
+    :param dim: int, number of pixels to calculate fit for
+                fit will be done over x = 0 to dim in steps of 1
+    :return yfits: array,
+                   size = (number of orders x dim)
+                   the fit for each order at each pixel values from 0 to dim
+    """
+    # create storage array
+    yfits = np.zeros((len(coeffs), dim))
+    # get pixel range for dimension
+    xfit = np.arange(0, dim, 1)
+    # loop around each fit and fit
+    for j_it in range(len(coeffs)):
+        yfits[j_it] = np.polyval(coeffs[j_it][::-1], xfit)
+    # return fits
+    return yfits
+
+
+
 # =============================================================================
 # Define NaN functions
 # =============================================================================
