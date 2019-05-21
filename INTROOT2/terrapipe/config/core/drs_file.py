@@ -1536,6 +1536,9 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return key, dvalue, comment
 
+    def copy_hdict(self, drsfile):
+        self.hdict = drsfile.hdict
+
 
 # =============================================================================
 # User functions
