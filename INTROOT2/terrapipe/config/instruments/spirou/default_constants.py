@@ -356,3 +356,26 @@ LOC_MAX_PTP_WID.value = 10.0
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
 LOC_SAT_THRES.value = 1000  # 64536
+
+#   Maximum points removed in location fit
+QC_LOC_MAXFIT_REMOVED_CTR = QC_LOC_MAXFIT_REMOVED_CTR.copy(__NAME__)
+QC_LOC_MAXFIT_REMOVED_CTR.value = 1500
+
+#   Maximum points removed in width fit
+QC_LOC_MAXFIT_REMOVED_WID = QC_LOC_MAXFIT_REMOVED_WID.copy(__NAME__)
+QC_LOC_MAXFIT_REMOVED_WID.value = 105
+
+#   Maximum rms allowed in fitting location
+QC_LOC_RMSMAX_CTR = QC_LOC_RMSMAX_CTR.copy(__NAME__)
+QC_LOC_RMSMAX_CTR.value = 100
+
+#   Maximum rms allowed in fitting width
+QC_LOC_RMSMAX_WID = QC_LOC_RMSMAX_WID.copy(__NAME__)
+QC_LOC_RMSMAX_WID.value = 500
+
+#   Option for archiving the location image
+LOC_SAVE_SUPERIMP_FILE = LOC_SAVE_SUPERIMP_FILE.copy(__NAME__)
+LOC_SAVE_SUPERIMP_FILE.value = True
+
+
+
