@@ -179,12 +179,9 @@ def write_table(p, table, filename, fmt='fits', header=None):
         # reload fits data
         data, filehdr = fits.getdata(filename, header=True)
         # push keys into file header (value, comment tuple)
-        for key in list(header.keys()):
-            try:
-                filehdr[key] = tuple(header[key])
-            except ValueError:
-                if np.isnan(header[key][0]):
-                    filehdr[key] = tuple(['nan', header[key][1]])
+        combined_hdr = spirouFITS.Header(filehdr)
+        combined_hdr.extend(header.cards, update=True)
+        filehdr = combined_hdr.to_fits_header(strip=False)
 
         # get and check for file lock file
         lock, lock_file = spirouFITS.check_fits_lock_file(p, filename)

@@ -72,7 +72,8 @@ class Header(fits.Header):
         if key.startswith('@@@'):
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
         else:
-            super().__setitem__(key, item)
+            nan_filtered = self.__nan_check(item)
+            super().__setitem__(key, nan_filtered)
 
     def __getitem__(self, key):
         if key.startswith('@@@'):
@@ -97,9 +98,7 @@ class Header(fits.Header):
         header = super().copy(strip=strip)
         if nan_to_string:
             for key in list(header.keys()):
-                value = header[key]
-                if type(value) == float and np.isnan(value):
-                    header[key] = 'NaN'
+                header[key] = header[key]
         return header
 
     @staticmethod
@@ -109,6 +108,15 @@ class Header(fits.Header):
     @staticmethod
     def __get_temp_key(key):
         return key[3:]
+
+    @staticmethod
+    def __nan_check(value):
+        if isinstance(value, float) and np.isnan(value):
+            return 'NaN'
+        elif type(value) == tuple:
+            return (Header.__nan_check(value[0]),) + value[1:]
+        else:
+            return value
 
 
 # =============================================================================
