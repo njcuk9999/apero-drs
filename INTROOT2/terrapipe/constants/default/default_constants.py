@@ -26,6 +26,8 @@ __all__ = [# preprocessing constants
            'FIBER_FIRST_ORDER_JUMP_B', 'FIBER_FIRST_ORDER_JUMP_C',
            'FIBER_MAX_NUM_ORDERS_AB', 'FIBER_MAX_NUM_ORDERS_A',
            'FIBER_MAX_NUM_ORDERS_B', 'FIBER_MAX_NUM_ORDERS_C',
+           'FIBER_SET_NUM_FIBERS_AB', 'FIBER_SET_NUM_FIBERS_A',
+           'FIBER_SET_NUM_FIBERS_B', 'FIBER_SET_NUM_FIBERS_C',
            # dark constants
            'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
@@ -47,7 +49,7 @@ __all__ = [# preprocessing constants
            'LOC_EXT_WINDOW_SIZE', 'LOC_IMAGE_GAP', 'LOC_ORDER_WIDTH_MIN',
            'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
            'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
-           'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE',
+           'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
            ]
 
 # set name
@@ -105,12 +107,22 @@ FIBER_FIRST_ORDER_JUMP_C = Const('FIBER_FIRST_ORDER_JUMP_C', value=None,
 #   Maximum number of order to use
 FIBER_MAX_NUM_ORDERS_AB = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
                                 dtype=int, minimum=1, source=__NAME__)
-FIBER_MAX_NUM_ORDERS_A = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+FIBER_MAX_NUM_ORDERS_A = Const('FIBER_MAX_NUM_ORDERS_A', value=None,
                                dtype=int, minimum=1, source=__NAME__)
-FIBER_MAX_NUM_ORDERS_B = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+FIBER_MAX_NUM_ORDERS_B = Const('FIBER_MAX_NUM_ORDERS_B', value=None,
                                dtype=int, minimum=1, source=__NAME__)
-FIBER_MAX_NUM_ORDERS_C = Const('FIBER_MAX_NUM_ORDERS_AB', value=None,
+FIBER_MAX_NUM_ORDERS_C = Const('FIBER_MAX_NUM_ORDERS_C', value=None,
                                dtype=int, minimum=1, source=__NAME__)
+
+#   Number of fibers
+FIBER_SET_NUM_FIBERS_AB = Const('FIBER_SET_NUM_FIBERS_AB', value=None,
+                                dtype=int, minimum=1, source=__NAME__)
+FIBER_SET_NUM_FIBERS_A = Const('FIBER_SET_NUM_FIBERS_A', value=None,
+                                dtype=int, minimum=1, source=__NAME__)
+FIBER_SET_NUM_FIBERS_B = Const('FIBER_SET_NUM_FIBERS_B', value=None,
+                                dtype=int, minimum=1, source=__NAME__)
+FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
+                                dtype=int, minimum=1, source=__NAME__)
 
 
 # =============================================================================
@@ -326,11 +338,15 @@ LOC_CENTRAL_COLUMN = Const('LOC_CENTRAL_COLUMN', value=None, dtype=int,
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = Const('LOC_HALF_ORDER_SPACING', value=None,
-                               dtype=float, source=__NAME__, minimum=0.0)
+                               dtype=int, source=__NAME__, minimum=0)
 
 # Minimum amplitude to accept (in e-)
 LOC_MINPEAK_AMPLITUDE = Const('LOC_MINPEAK_AMPLITUDE', value=None, dtype=float,
                               source=__NAME__, minimum=0.0)
+
+#   Normalised amplitude threshold to accept pixels for background calculation
+LOC_BKGRD_THRESHOLD = Const('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0)
 
 #   Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
