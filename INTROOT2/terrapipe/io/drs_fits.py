@@ -19,7 +19,7 @@ import warnings
 import traceback
 
 from terrapipe import constants
-from terrapipe.config import drs_log
+from terrapipe.config.core import drs_log
 from terrapipe import locale
 
 # =============================================================================
@@ -302,12 +302,12 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
 # =============================================================================
 # Define write functions
 # =============================================================================
-def write(params, filename, data, header, datatype, dtype=None, func_name=None):
+def write(params, filename, data, header, datatype, dtype=None, func=None):
     # deal with function name coming from somewhere else
-    if func_name is None:
+    if func is None:
         func_name = __NAME__ + '.write()'
     else:
-        func_name += '(via {0})'.format(__NAME__ + '.write()')
+        func_name = '{0} (via {1})'.format(func, __NAME__ + '.write()')
     # ----------------------------------------------------------------------
     # check if file exists and remove it if it does
     if os.path.exists(filename):
@@ -329,40 +329,43 @@ def write(params, filename, data, header, datatype, dtype=None, func_name=None):
     # ----------------------------------------------------------------------
     # header must be same length as data
     if len(data) != len(header):
-        raise ValueError()
+        eargs = [filename, len(data), len(header), func_name]
+        WLOG(params, 'error', TextEntry('00-013-00004', args=eargs))
     # datatype must be same length as data
     if len(data) != len(datatype):
-        raise ValueError()
+        eargs = [filename, len(data), len(datatype), func_name]
+        WLOG(params, 'error', TextEntry('00-013-00005', args=eargs))
     # if dtype is not None must be same length as data
     if len(data) != len(dtype):
-        raise ValueError()
+        eargs = [filename, len(data), len(dtype), func_name]
+        WLOG(params, 'error', TextEntry('00-013-00006', args=eargs))
     # ----------------------------------------------------------------------
     # create the multi HDU list
-    try:
-        # try to create primary HDU first
-        hdu0 = fits.PrimaryHDU(data[0], header=header[0])
+    #try:
+    # try to create primary HDU first
+    hdu0 = fits.PrimaryHDU(data[0], header=header[0])
+    if dtype is not None:
+        hdu0.scale(type=dtype[0], **SCALEARGS)
+    # add all others afterwards
+    hdus = [hdu0]
+    for it in range(1, len(data)):
+        if datatype[it] == 'image':
+            fitstype = fits.ImageHDU
+        elif datatype[it] == 'table':
+            fitstype = fits.BinTableHDU
+        else:
+            continue
+        # add to hdu list
+        hdu_i = fitstype(data[it], header=header[it])
         if dtype is not None:
-            hdu0.scale(type=dtype[0], **SCALEARGS)
-        # add all others afterwards
-        hdus = [hdu0]
-        for it in range(1, len(data)):
-            if datatype[it] == 'image':
-                fitstype = fits.ImageHDU
-            elif datatype[it] == 'table':
-                fitstype = fits.BinTableHDU
-            else:
-                continue
-            # add to hdu list
-            hdu_i = fitstype(data[it], header=header[it])
-            if dtype is not None:
-                hdu_i.scale(type=dtype[it])
-            hdus.append(hdu_i)
-        # convert to  HDU list
-        hdulist = fits.HDUList(hdus)
-    except Exception as e:
-        eargs = [type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00004', args=eargs))
-        hdulist = None
+            hdu_i.scale(type=dtype[it])
+        hdus.append(hdu_i)
+    # convert to  HDU list
+    hdulist = fits.HDUList(hdus)
+    # except Exception as e:
+    #     eargs = [type(e), e, func_name]
+    #     WLOG(params, 'error', TextEntry('01-001-00004', args=eargs))
+    #     hdulist = None
     # ---------------------------------------------------------------------
     # write to file
     with warnings.catch_warnings(record=True) as w:
