@@ -89,7 +89,8 @@ class PseudoConstants(DefaultConstants):
         if fiber is None:
             fiber = params['FIBER']
         # list fiber keys
-        keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS']
+        keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
+                'FIBER_SET_NUM_FIBERS']
         # loop around all fiber keys and add to params
         for key in keys:
             # get fiber key
