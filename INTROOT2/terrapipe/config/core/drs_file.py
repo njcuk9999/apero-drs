@@ -1265,8 +1265,10 @@ class DrsFitsFile(DrsInputFile):
         params = self.recipe.drs_params
         # if key is set use it (it should be from parameter dictionary
         if key is not None:
-            if key in params:
+            if isinstance(key, str) and (key in params):
                 kwstore = params[key]
+            elif isinstance(key, list):
+                kwstore = list(key)
             else:
                 eargs = [key, func_name]
                 self.__error__(TextEntry('00-001-00008', args=eargs))
