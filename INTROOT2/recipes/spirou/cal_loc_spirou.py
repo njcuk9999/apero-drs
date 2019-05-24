@@ -192,7 +192,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         #  Convert ADU/s to electrons
         # ------------------------------------------------------------------
-        image2 = drs_image.convert_to_e(params, image2)
+        image2 = drs_image.convert_to_e(params, image2, gain=gain,
+                                        exptime=exptime)
 
         # ------------------------------------------------------------------
         # Resize image
