@@ -287,22 +287,22 @@ def debug_file(recipe, params, infile, dlist):
     kws4 = ['EXTDESC4', 'LC NaN filled', 'Extension 4 description']
     kws5 = ['EXTDESC5', 'Local Background', 'Extension 5 description']
     kws6 = ['EXTDESC6', 'Global Background', 'Extension 6 description']
+    kws7 = ['EXTDESC7', 'Global binned background', 'Extension 7 description']
     # add to hdict
-    debug_back.add_hkey(keyword=kws1)
-    debug_back.add_hkey(keyword=kws2)
-    debug_back.add_hkey(keyword=kws3)
-    debug_back.add_hkey(keyword=kws4)
-    debug_back.add_hkey(keyword=kws5)
-    debug_back.add_hkey(keyword=kws6)
-
+    debug_back.add_hkey(key=kws1)
+    debug_back.add_hkey(key=kws2)
+    debug_back.add_hkey(key=kws3)
+    debug_back.add_hkey(key=kws4)
+    debug_back.add_hkey(key=kws5)
+    debug_back.add_hkey(key=kws6)
+    debug_back.add_hkey(key=kws7)
     # add primage data to debug_back file
     debug_back.data = dlist[0]
     # construct header list
-    hlist = [debug_back.hdict, debug_back.hdict, debug_back.hdict,
-             debug_back.hdict, debug_back.hdict]
+    hlist = [drs_fits.Header.copy(debug_back.hdict)] * (len(dlist) - 1)
     # construct data type list
-    datatypelist = ['image', 'image', 'image', 'image', 'image']
-    dtypelist = [None, None, None, None, None]
+    datatypelist = ['image'] * (len(dlist) - 1)
+    dtypelist = [None] * (len(dlist) - 1)
     # write multiple to file
     debug_back.write_multi(dlist[1:], hlist, datatypelist, dtypelist)
 
