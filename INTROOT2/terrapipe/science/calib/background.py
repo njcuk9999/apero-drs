@@ -258,8 +258,8 @@ def correction(recipe, params, infile, image, header, return_map=False,
         debug_file(recipe, params, infile, dimages)
         # ------------------------------------------------------------------
         # get background file
-        params['BADPFILE'] = bkgrdfilename
-        params.set_source('BADPFILE', func_name)
+        params['BACKFILE'] = bkgrdfilename
+        params.set_source('BACKFILE', func_name)
         # if return map just return the bad pixel map
         if return_map:
             return params, background_image_full
@@ -299,7 +299,9 @@ def debug_file(recipe, params, infile, dlist):
     # add primage data to debug_back file
     debug_back.data = dlist[0]
     # construct header list
-    hlist = [drs_fits.Header.copy(debug_back.hdict)] * (len(dlist) - 1)
+    hlist = []
+    for it in range((len(dlist) -1 )):
+        hlist.append(debug_back.hdict.to_fits_header())
     # construct data type list
     datatypelist = ['image'] * (len(dlist) - 1)
     dtypelist = [None] * (len(dlist) - 1)
