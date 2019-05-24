@@ -581,9 +581,9 @@ def _get_time(params, dbname, hdict=None, header=None, kind=None):
     func_name = __NAME__ + '._get_time()'
     # ----------------------------------------------------------------------
     # get keywords from params
-    timekey = drs_log.find_param(params, 'KW_ACQTIME', func_name)[0]
-    timefmt = drs_log.find_param(params, 'KW_ACQTIME_FMT', func_name)
-    timetype = drs_log.find_param(params, 'KW_ACQTIME_DTYPE', func_name)
+    timekey = drs_log.find_param(params, 'KW_ACQTIME', func=func_name)[0]
+    timefmt = drs_log.find_param(params, 'KW_ACQTIME_FMT', func=func_name)
+    timetype = drs_log.find_param(params, 'KW_ACQTIME_DTYPE', func=func_name)
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
