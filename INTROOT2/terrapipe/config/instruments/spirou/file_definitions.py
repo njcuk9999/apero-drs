@@ -269,17 +269,26 @@ out_loc_orderp_c = drs_finput('LOC_ORDERP_C', KW_OUTPUT='LOC_ORDERP_C',
                                outfunc=out.calib_file,
                                dbname='calibration', dbkey='ORDER_PROFILE_C')
 out_loc_loco_ab = drs_finput('LOC_LOCO_AB', KW_OUTPUT='LOC_LOCO_AB',
-                             fiber='AB')
+                             fiber='AB', ext='_loco_AB.fits',
+                             outfunc=out.calib_file,
+                             dbname='calibration', dbkey='LOC_AB')
 out_loc_loco_c = drs_finput('LOC_LOCO_C', KW_OUTPUT='LOC_LOCO_C',
-                            fiber='C')
+                            fiber='C', ext='_loco_C.fits',
+                            outfunc=out.calib_file,
+                            dbname='calibration', dbkey='LOC_C')
 out_loc_loco_2_ab = drs_finput('LOC_FWHM_AB', KW_OUTPUT='LOC_FWHM_AB',
-                              fiber='AB')
+                               fiber='AB', ext='_fwhm-order_AB.fits',
+                               outfunc=out.calib_file)
 out_loc_loco_2c = drs_finput('LOC_FWHM_C', KW_OUTPUT='LOC_FWHM_C',
-                             fiber='C')
+                             fiber='C', ext='_fwhm-order_C.fits',
+                             outfunc=out.calib_file)
 out_loc_loco_3_ab = drs_finput('LOC_SUP_AB', KW_OUTPUT='LOC_SUP_AB',
-                              fiber='AB')
+                              fiber='AB', ext='_with-order_AB.fits',
+                              outfunc=out.calib_file)
 out_loc_loco_3_c = drs_finput('LOC_SUP_C', KW_OUTPUT='LOC_SUP_C',
-                              fiber='C')
+                              fiber='C', ext='_with-order_C.fits',
+                              outfunc=out.calib_file)
+
 # -----------------------------------------------------------------------------
 # slit
 out_slit_tilt = drs_finput('SLIT_TILT', KW_OUTPUT='SLIT_TILT')
