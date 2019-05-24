@@ -1401,7 +1401,7 @@ class DrsFitsFile(DrsInputFile):
             # add to header dictionary
             self.hdict[keyname] = (value, comm)
 
-    def add_hkeys_2d(self, kwstore=None, values=None, key=None,
+    def add_hkeys_2d(self, key=None, keyword=None, values=None,
                      comment=None, dim1name=None, dim2name=None):
         """
         Add a new 2d list to key using the "kwstore"[0] or "key" as prefix
@@ -1438,9 +1438,6 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         func_name = __NAME__ + '.DrsFitsFile.add_header_key_1d_list()'
-        # deal with no keywordstore
-        if (kwstore is None) and (key is None or comment is None):
-            self.__error__(TextEntry('00-001-00015', args=[func_name]))
         # deal with no dim names
         if dim1name is None:
             dim1name = 'dim1'
@@ -1449,9 +1446,18 @@ class DrsFitsFile(DrsInputFile):
         # check for kwstore in params
         self.check_recipe()
         params = self.recipe.drs_params
-        # check for kwstore in params
-        if kwstore in params:
-            kwstore = params[kwstore]
+        # if key is set use it (it should be from parameter dictionary
+        if key is not None:
+            if isinstance(key, str) and (key in params):
+                kwstore = params[key]
+            elif isinstance(key, list):
+                kwstore = list(key)
+            else:
+                eargs = [key, func_name]
+                self.__error__(TextEntry('00-001-00008', args=eargs))
+                kwstore = None
+        else:
+            kwstore = [keyword, None, comment]
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
             key, dvalue, comment = self.get_keywordstore(kwstore, func_name)
