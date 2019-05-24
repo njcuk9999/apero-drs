@@ -526,7 +526,7 @@
 "40-013-00018","ALL","Prints that the QC failed for the number of orders found","{0} = number of orders found; {1} = number of orders required","abnormal number of identified orders (found {0:.2f} expected {1:.2f}","",""
 "40-013-00019","ALL","Prints that we are saving the loco1 file to file","{0} = output filename","Saving loco1 file to {0}","",""
 "40-013-00020","ALL","Prints that we are saving the loco2 file to file","{0} = output filename","Saving loco2 file to {0}","",""
-"40-013-00021","ALL","","","","",""
+"40-013-00021","ALL","Prints that we are saving the loco3 file to file","{0} = output filename","Saving loco3 file to {0}","",""
 "40-013-00022","ALL","","","","",""
 "40-013-00023","ALL","","","","",""
 "","","","","","",""
