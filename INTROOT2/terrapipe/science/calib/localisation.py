@@ -315,14 +315,14 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
             # --------------------------------------------------------------
             # initial fit for center positions for this order
             cent_y = cent_0[rorder_num, :][mask]
-            iofargs = [params, xpix, cent_y, central_col, cent_poly_deg]
+            iofargs = [params, xpix, cent_y, cent_poly_deg, central_col]
             cf_data = initial_order_fit(*iofargs, kind='center')
             # append centers for plot
             xplot.append(xpix), yplot.append(cent_y)
             # --------------------------------------------------------------
             # initial fit for widths for this order
             wid_y = wid_0[rorder_num, :][mask]
-            iofargs = [params, xpix, wid_y, central_col, wid_poly_deg]
+            iofargs = [params, xpix, wid_y, wid_poly_deg, central_col]
             wf_data = initial_order_fit(*iofargs, kind='fwhm')
             # --------------------------------------------------------------
             # Log order number and fit at central pixel and width and rms
@@ -347,7 +347,7 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
             # --------------------------------------------------------------
             # sigma fit params for width
             sigfargs = [params, xpix, wid_y, wf_data, wid_poly_deg,
-                        rorder_num, wid_max_rmpts[rorder_num]]
+                        wid_max_rmpts[rorder_num]]
             sigfkwargs = dict(ic_max_ptp=-np.inf, ic_max_ptp_frac=max_ptp_wid,
                               ic_ptporms=None, ic_max_rms=max_rms_wid,
                               kind='fwhm')
