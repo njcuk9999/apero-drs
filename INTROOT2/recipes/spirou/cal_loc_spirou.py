@@ -280,31 +280,35 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # check that max number of points rejected in center fit is below
         #    threshold
-        if np.nansum(cent_max_rmpts) > max_removed_cent:
+        sum_cent_max_rmpts = np.nansum(cent_max_rmpts)
+        if sum_cent_max_rmpts > max_removed_cent:
             # add failed message to fail message list
-            fargs = [np.nansum(cent_max_rmpts), max_removed_cent]
+            fargs = [sum_cent_max_rmpts, max_removed_cent]
             fail_msg.append(textdict['40-013-00014'].format(*fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(np.nansum(cent_max_rmpts))
+        qc_values.append(sum_cent_max_rmpts)
         qc_names.append('sum(MAX_RMPTS_POS')
-        qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'.format(cent_max_rmpts))
+        qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
+                        ''.format(sum_cent_max_rmpts))
         # ----------------------------------------------------------------------
         # check that  max number of points rejected in width fit is below
         #   threshold
-        if np.nansum(wid_max_rmpts) > max_removed_wid:
+        sum_wid_max_rmpts = np.nansum(wid_max_rmpts)
+        if sum_wid_max_rmpts > max_removed_wid:
             # add failed message to fail message list
-            fargs = [np.nansum(cent_max_rmpts), max_removed_wid]
+            fargs = [sum_wid_max_rmpts, max_removed_wid]
             fail_msg.append(textdict['40-013-00015'].format(*fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(np.nansum(wid_max_rmpts))
+        qc_values.append(sum_wid_max_rmpts)
         qc_names.append('sum(MAX_RMPTS_WID)')
-        qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'.format(max_removed_wid))
+        qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'
+                        ''.format(sum_wid_max_rmpts))
         # ------------------------------------------------------------------
         if mean_rms_cent > rmsmax_cent:
             # add failed message to fail message list
@@ -429,9 +433,11 @@ def __main__(recipe, params):
         loco1file.add_hkey('KW_LOC_RMS_CTR', value=rmsmax_cent)
         loco1file.add_hkey('KW_LOC_RMS_WID', value=rmsmax_wid)
         # write 2D list of position fit coefficients
-        loco1file.add_hkeys_2d('KW_LOCO_CTR_COEFF', value=cent_coeffs)
+        loco1file.add_hkeys_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
+                               dim1name='order', dim2name='coeff')
         # write 2D list of width fit coefficients
-        loco1file.add_hkeys_2d('KW_LOCO_WID_COEFF', value=wid_coeffs)
+        loco1file.add_hkeys_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
+                               dim1name='order', dim2name='coeff')
         # add qc parameters
         loco1file.add_qckeys(qc_params)
         # copy data
