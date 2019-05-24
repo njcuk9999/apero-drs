@@ -60,7 +60,7 @@ out_file = drs_finput('DRS_OUTPUT')
 # Debug Files
 # =============================================================================
 debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
-                        ext='background_{0}.fits', outfunc=out.debug_file)
+                        ext='background.fits', outfunc=out.debug_file)
 
 
 # =============================================================================
