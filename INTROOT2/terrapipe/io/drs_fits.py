@@ -336,9 +336,10 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
         eargs = [filename, len(data), len(datatype), func_name]
         WLOG(params, 'error', TextEntry('00-013-00005', args=eargs))
     # if dtype is not None must be same length as data
-    if len(data) != len(dtype):
-        eargs = [filename, len(data), len(dtype), func_name]
-        WLOG(params, 'error', TextEntry('00-013-00006', args=eargs))
+    if dtype is not None:
+        if len(data) != len(dtype):
+            eargs = [filename, len(data), len(dtype), func_name]
+            WLOG(params, 'error', TextEntry('00-013-00006', args=eargs))
     # ----------------------------------------------------------------------
     # create the multi HDU list
     #try:
