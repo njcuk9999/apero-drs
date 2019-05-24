@@ -53,6 +53,11 @@ IMAGE_Y_HIGH.value = 3350
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
+# Note new fiber settings musts also be added to pseudo_const
+#   in the "FIBER_SETTINGS" function i.e.
+#            keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
+#                    'FIBER_SET_NUM_FIBERS']
+
 #   Number of orders to skip at start of image
 FIBER_FIRST_ORDER_JUMP_AB = FIBER_FIRST_ORDER_JUMP_AB.copy(__NAME__)
 FIBER_FIRST_ORDER_JUMP_A = FIBER_FIRST_ORDER_JUMP_A.copy(__NAME__)
@@ -75,6 +80,16 @@ FIBER_MAX_NUM_ORDERS_A.value = 49
 FIBER_MAX_NUM_ORDERS_B.value = 49
 FIBER_MAX_NUM_ORDERS_C.value = 49
 
+#   Number of fibers
+FIBER_SET_NUM_FIBERS_AB = FIBER_SET_NUM_FIBERS_AB.copy(__NAME__)
+FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
+FIBER_SET_NUM_FIBERS_B = FIBER_SET_NUM_FIBERS_B.copy(__NAME__)
+FIBER_SET_NUM_FIBERS_C =FIBER_SET_NUM_FIBERS_C.copy(__NAME__)
+# set values
+FIBER_SET_NUM_FIBERS_AB.value = 2
+FIBER_SET_NUM_FIBERS_A.value = 1
+FIBER_SET_NUM_FIBERS_B.value = 1
+FIBER_SET_NUM_FIBERS_C.value = 1
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -352,6 +367,10 @@ LOC_MAX_RMS_WID.value = 1.0
 #   Maximum fractional peak-to-peak for sigma-clip order fit (width)
 LOC_MAX_PTP_WID = LOC_MAX_PTP_WID.copy(__NAME__)
 LOC_MAX_PTP_WID.value = 10.0
+
+#   Normalised amplitude threshold to accept pixels for background calculation
+LOC_BKGRD_THRESHOLD = LOC_BKGRD_THRESHOLD.copy(__NAME__)
+LOC_BKGRD_THRESHOLD.value = 0.17  # 0.18
 
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
