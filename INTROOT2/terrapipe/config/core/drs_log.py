@@ -500,7 +500,14 @@ wlog = Logger()
 # Define function
 # =============================================================================
 def find_param(params, key, name=None, kwargs=None, func=None):
-
+    # deal with no kwargs
+    if kwargs is None:
+        rkwargs = dict()
+    else:
+        rkwargs = dict()
+        # force all kwargs to be upper case
+        for kwarg in kwargs:
+            rkwargs[kwarg.upper()] = kwargs[kwarg]
     # deal with no function
     if func is None:
         func = 'UNKNOWN'
@@ -508,11 +515,17 @@ def find_param(params, key, name=None, kwargs=None, func=None):
     if name is None:
         name = key
     # deal with key not found in params
-    if key not in params:
+    if (key not in params) and (key.upper() not in rkwargs):
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
+        value = None
+    elif key in params:
+        value = params[key]
+    else:
+        value = rkwargs[key.upper()]
+
     # set value
-    return kwargs.get(name, params[key])
+    return value
 
 
 
