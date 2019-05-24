@@ -168,7 +168,7 @@ KW_CDBSHAPE.set(key='CDBSHAPE', comment='The calibration SHAPE file used')
 KW_CDBFLAT = KW_CDBFLAT.copy(__NAME__)
 KW_CDBFLAT.set(key='CDBFLAT', comment='The calibration FLAT file used')
 KW_CDBBLAZE = KW_CDBBLAZE.copy(__NAME__)
-KW_CDBBLAZE.set(keys='CDBBLAZE', comment='The calibration BLAZE file used')
+KW_CDBBLAZE.set(key='CDBBLAZE', comment='The calibration BLAZE file used')
 KW_CDBWAVE = KW_CDBWAVE.copy(__NAME__)
 KW_CDBWAVE.set(key='CDBWAVE', comment='The calibration WAVE file used')
 
@@ -263,50 +263,49 @@ KW_BTOT.set(key='BTOT', comment='Frac of bad pixels (total) [%]')
 # -----------------------------------------------------------------------------
 # root for localisation header keys
 ROOT_DRS_LOC = ROOT_DRS_LOC.copy(__NAME__)
-ROOT_DRS_LOC.value = 'L0'
+ROOT_DRS_LOC.value = root_loc
 
 # Mean background (as percentage)
 KW_LOC_BCKGRD = KW_LOC_BCKGRD.copy(__NAME__)
-KW_LOC_BCKGRD.set(key=ROOT_DRS_LOC + 'BCKGRD', comment='mean background [%]')
+KW_LOC_BCKGRD.set(key=root_loc + 'BCKGRD', comment='mean background [%]')
 
 # Number of orders located
 KW_LOC_NBO = KW_LOC_NBO.copy(__NAME__)
-KW_LOC_NBO.set(key=ROOT_DRS_LOC + 'NBO', comment='nb orders localised')
+KW_LOC_NBO.set(key=root_loc + 'NBO', comment='nb orders localised')
 
 # fit degree for order centers
 KW_LOC_DEG_C = KW_LOC_DEG_C.copy(__NAME__)
-KW_LOC_DEG_C.set(key=ROOT_DRS_LOC + 'DEGCTR', comment='degree fit ctr ord')
+KW_LOC_DEG_C.set(key=root_loc + 'DEGCTR', comment='degree fit ctr ord')
 
 # fit degree for order widths
 KW_LOC_DEG_W = KW_LOC_DEG_W.copy(__NAME__)
-KW_LOC_DEG_W.set(key=ROOT_DRS_LOC + 'DEGFWH', comment='degree fit width ord')
+KW_LOC_DEG_W.set(key=root_loc + 'DEGFWH', comment='degree fit width ord')
 
 # Maximum flux in order
 KW_LOC_MAXFLX = KW_LOC_MAXFLX.copy(__NAME__)
-KW_LOC_MAXFLX.set(key=ROOT_DRS_LOC + 'FLXMAX',
-                  comment='max flux in order [ADU]')
+KW_LOC_MAXFLX.set(key=root_loc + 'FLXMAX', comment='max flux in order [ADU]')
 
 # Maximum number of removed points allowed for location fit
 KW_LOC_SMAXPTS_CTR = KW_LOC_SMAXPTS_CTR.copy(__NAME__)
-KW_LOC_SMAXPTS_CTR.set(key=ROOT_DRS_LOC + 'CTRMAX', comment='max rm pts ctr')
+KW_LOC_SMAXPTS_CTR.set(key=root_loc + 'CTRMAX', comment='max rm pts ctr')
 
 # Maximum number of removed points allowed for width fit
 KW_LOC_SMAXPTS_WID = KW_LOC_SMAXPTS_WID.copy(__NAME__)
-KW_LOC_SMAXPTS_WID.set(key=ROOT_DRS_LOC + 'WIDMAX', comment='max rm pts width')
+KW_LOC_SMAXPTS_WID.set(key=root_loc + 'WIDMAX', comment='max rm pts width')
 
 # Maximum rms allowed for location fit
 KW_LOC_RMS_CTR = KW_LOC_RMS_CTR.copy(__NAME__)
-KW_LOC_RMS_CTR.set(key=ROOT_DRS_LOC + 'RMSCTR', comment='max rms ctr')
+KW_LOC_RMS_CTR.set(key=root_loc + 'RMSCTR', comment='max rms ctr')
 
 # Maximum rms allowed for width fit (formally KW_LOC_rms_fwhm)
 KW_LOC_RMS_WID = KW_LOC_RMS_WID.copy(__NAME__)
-KW_LOC_RMS_WID.set(key=ROOT_DRS_LOC + 'RMSWID', comment='max rms width')
+KW_LOC_RMS_WID.set(key=root_loc + 'RMSWID', comment='max rms width')
 
 # Coeff center order
 KW_LOC_CTR_COEFF = KW_LOC_CTR_COEFF.copy(__NAME__)
-KW_LOC_CTR_COEFF.set(key=ROOT_DRS_LOC + 'CTR', comment='Coeff center')
+KW_LOC_CTR_COEFF.set(key=root_loc + 'CTR', comment='Coeff center')
 
 # Coeff width order
 KW_LOC_WID_COEFF = KW_LOC_WID_COEFF.copy(__NAME__)
-KW_LOC_WID_COEFF.set(key=ROOT_DRS_LOC + 'FW', comment='Coeff fwhm')
+KW_LOC_WID_COEFF.set(key=root_loc + 'FW', comment='Coeff fwhm')
 
