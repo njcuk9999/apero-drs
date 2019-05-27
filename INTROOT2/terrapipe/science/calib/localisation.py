@@ -148,7 +148,8 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
                          func=func_name)
     max_ptp_wid = pcheck(params, 'LOC_MAX_PTP_WID', 'max_ptp_wid', kwargs,
                          func=func_name)
-
+    center_drop = pcheck(params, 'LOC_ORDER_CURVE_DROP', 'curve_drop', kwargs,
+                         func=func_name)
     # ----------------------------------------------------------------------
     # Step 1: Measure and correct background on the central column
     # ----------------------------------------------------------------------
@@ -292,11 +293,12 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
                 # if the width is zero set the position back to the original
                 # position
                 if width == 0:
-                    center = float(
-                        rowcenter) - 2  # to force the order curvature
+                    # to force the order curvature
+                    center = float(rowcenter) - center_drop
             else:
                 width = 0
-                center = float(rowcenter) - 2  # to force the order curvature
+                # to force the order curvature
+                center = float(rowcenter) - center_drop
             # add these positions to storage
             cent_0[order_num, col] = center
             wid_0[order_num, col] = width

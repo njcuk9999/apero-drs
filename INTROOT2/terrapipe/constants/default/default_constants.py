@@ -50,6 +50,7 @@ __all__ = [# preprocessing constants
            'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
            'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
            'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
+           'LOC_ORDER_CURVE_DROP',
            ]
 
 # set name
@@ -347,6 +348,11 @@ LOC_MINPEAK_AMPLITUDE = Const('LOC_MINPEAK_AMPLITUDE', value=None, dtype=float,
 #   Normalised amplitude threshold to accept pixels for background calculation
 LOC_BKGRD_THRESHOLD = Const('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
                             source=__NAME__, minimum=0.0)
+
+#   Define the amount we drop from the centre of the order when
+#      previous order center is missed (in finding the position)
+LOC_ORDER_CURVE_DROP = Const('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
 
 #   Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,

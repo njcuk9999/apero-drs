@@ -370,7 +370,12 @@ LOC_MAX_PTP_WID.value = 10.0
 
 #   Normalised amplitude threshold to accept pixels for background calculation
 LOC_BKGRD_THRESHOLD = LOC_BKGRD_THRESHOLD.copy(__NAME__)
-LOC_BKGRD_THRESHOLD.value = 0.17  # 0.18
+LOC_BKGRD_THRESHOLD.value = 0.15    # 0.17  # 0.18
+
+#   Define the amount we drop from the centre of the order when
+#      previous order center is missed (in finding the position)
+LOC_ORDER_CURVE_DROP = LOC_ORDER_CURVE_DROP.copy(__NAME__)
+LOC_ORDER_CURVE_DROP.value = 2.0
 
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
