@@ -1383,11 +1383,10 @@ def check_fits_lock_file(p, filename):
 
 def open_fits_lock_file(p, lock_file, filename):
 
-    # need to make sure lock_file directory is valid
-    lock_dir = os.path.dirname(lock_file)
-    if not os.path.exists(lock_dir):
-        emsg = 'Lock file directory does not exist ({0})'
-        WLOG(p, 'error', emsg.format(lock_dir))
+    # try to open the lock file
+    if not os.path.exists(os.path.dirname(lock_file)):
+        emsg = 'Lock directory does not exist. Dir={0}'
+        WLOG(p, 'error', emsg.format(os.path.dirname(lock_file)))
 
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time

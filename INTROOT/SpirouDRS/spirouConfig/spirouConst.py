@@ -1307,7 +1307,7 @@ def EXTRACT_S1D_FILE1(p, fiber=None):
     if fiber is None:
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    newext = '_s1dw_{0}.fits'.format(fiber)
+    newext = '_s1d_w_{0}.fits'.format(fiber)
     oldext = '.fits'
     filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
     absfilepath = os.path.join(reducedfolder, filename)
@@ -1339,7 +1339,7 @@ def EXTRACT_S1D_FILE2(p, fiber=None):
     if fiber is None:
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    newext = '_s1dv_{0}.fits'.format(fiber)
+    newext = '_s1d_v_{0}.fits'.format(fiber)
     oldext = '.fits'
     filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
     absfilepath = os.path.join(reducedfolder, filename)
@@ -2277,9 +2277,9 @@ def TELLU_FIT_S1D_FILE1(p, filename):
     # define filename
     absfilepath, _ = TELLU_FIT_OUT_FILE(p, filename)
     if 'e2dsff' in absfilepath:
-        absfilepath = absfilepath.replace('e2dsff', 's1d_w_')
+        absfilepath = absfilepath.replace('e2dsff', 's1d_w')
     else:
-        absfilepath = absfilepath.replace('e2ds', 's1d_w_')
+        absfilepath = absfilepath.replace('e2ds', 's1d_w')
     # get tag
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
@@ -2307,9 +2307,9 @@ def TELLU_FIT_S1D_FILE2(p, filename):
     # define filename
     absfilepath, _ = TELLU_FIT_OUT_FILE(p, filename)
     if 'e2dsff' in absfilepath:
-        absfilepath = absfilepath.replace('e2dsff', 's1d_w_')
+        absfilepath = absfilepath.replace('e2dsff', 's1d_v')
     else:
-        absfilepath = absfilepath.replace('e2ds', 's1d_w_')
+        absfilepath = absfilepath.replace('e2ds', 's1d_v')
     # get tag
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
