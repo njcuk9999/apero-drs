@@ -184,6 +184,15 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     p, blaze0 = spirouImage.ReadBlazeFile(p, hdr)
 
     # ----------------------------------------------------------------------
+    #   Remove domain with telluric > 50%
+    # ----------------------------------------------------------------------
+    if 'tellu_corrected' in e2dsfilename:
+        WLOG(p, 'warning', 'Remove domain with telluric transmission < 50%')
+        reconfilename = e2dsfilename.replace('corrected', 'recon')
+        recon, rhdr, rcdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
+        e2ds = np.where(recon > p['CCF_TELLU_THRES'], e2ds, np.nan)
+
+    # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
     # reset flat to all ones
@@ -203,12 +212,17 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
         # Second approach replacing N.A.N by the Adjusted Blaze
         e2dsb = e2ds / blaze0
-        for i in np.arange(len(e2ds)):
+        # get the start and end values
+        cent_start = int(e2ds.shape[1] / 4)
+        cent_end = int(3 * e2ds.shape[1] / 4)
+        # loop around orders
+        for order_num in np.arange(e2ds.shape[0]):
             with warnings.catch_warnings(record=True) as _:
-                rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
+                nanmask = np.isfinite(e2dsb[order_num, cent_start:cent_end])
+                rap = np.mean(e2dsb[order_num, cent_start:cent_end][nanmask])
             if np.isnan(rap):
                 rap = 0.0
-            e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
+            e2ds[order_num] = np.where(np.isfinite(e2dsb[order_num]), e2ds[order_num], blaze0[order_num] * rap)
 
     # ----------------------------------------------------------------------
     # correct extracted image for flat
@@ -222,7 +236,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Compute photon noise uncertainty for reference file
     # ----------------------------------------------------------------------
     # set up the arguments for DeltaVrms2D
-    dargs = [loc['E2DS'], loc['WAVE_LL']]
+    dargs = [loc['E2DSFF'], loc['WAVE_LL']]
     dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
                    threshold=p['IC_DRIFT_MAXFLUX'])
     # run DeltaVrms2D
@@ -293,16 +307,33 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the FWHM value
     loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
 
+    #############################################
+    #  CCF_NOISE uncertainty
+    #############################################
+    # Calculate the total CCF noise
+    CCF_noise_tot = np.sqrt(sum(loc['CCF_noise'] ** 2))
+    # Calculate the slope of the CCF
+    CCF_slope = (loc['AVERAGE_CCF'][2:] - loc['AVERAGE_CCF'][:-2]) / (loc['RV_CCF'][2:] - loc['RV_CCF'][:-2])
+    # Calculate the CCF oversampling
+    ccf_oversamp = p['IMAGE_PIXEL_SIZE'] / p['CCF_STEP']
+    # create a list of indices based on the oversample grid size
+    indexlist = np.array(np.arange(np.round(len(CCF_slope) / ccf_oversamp)) * ccf_oversamp, dtype=int)
+    # we only want the unique pixels (not oversampled)
+    indexlist = np.unique(indexlist)
+    # get the rv noise from the sum of pixels for those points that are not oversampled
+    rv_noise = np.sqrt(np.sum(CCF_slope[indexlist] ** 2 / CCF_noise_tot[1:-1][indexlist] **2))
+    loc['RV_NOISE'] = rv_noise
+
     # ----------------------------------------------------------------------
     # set the source
-    keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm',
+    keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm', 'rv_noise',
             'ccf_res', 'ccf_fit']
     loc.set_sources(keys, __NAME__ + '/main()')
     # ----------------------------------------------------------------------
     # log the stats
-    wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] '
-            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
-    wargs = [loc['CONTRAST'], loc['RV'], loc['FWHM'], loc['MAXCPP']]
+    wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] RV_NOISE={2:.5f}[km/s]'
+            'FWHM={3:.4f}[km/s] maxcpp={4:.1f}')
+    wargs = [loc['CONTRAST'], loc['RV'], loc['RV_NOISE'], loc['FWHM'], loc['MAXCPP']]
     WLOG(p, 'info', wmsg.format(*wargs))
 
     # ----------------------------------------------------------------------
@@ -449,12 +480,30 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
             'CCF_RES', 'CCF_FIT']
     cloc.set_sources(keys, __NAME__ + '/main()')
+
+    #############################################
+    #  CCF_NOISE uncertainty
+    #############################################
+    # Calculate the total CCF noise
+    CCF_noise_tot = np.sqrt(sum(cloc['CCF_noise'] ** 2))
+    # Calculate the slope of the CCF
+    CCF_slope = (cloc['AVERAGE_CCF'][2:] - cloc['AVERAGE_CCF'][:-2]) / (cloc['RV_CCF'][2:] - cloc['RV_CCF'][:-2])
+    # Calculate the CCF oversampling
+    ccf_oversamp = cp['IMAGE_PIXEL_SIZE'] / cp['CCF_STEP']
+    # create a list of indices based on the oversample grid size
+    indexlist = np.array(np.arange(np.round(len(CCF_slope) / ccf_oversamp)) * ccf_oversamp, dtype=int)
+    # we only want the unique pixels (not oversampled)
+    indexlist = np.unique(indexlist)
+    # get the rv noise from the sum of pixels for those points that are not oversampled
+    rv_noise = np.sqrt(np.sum(CCF_slope[indexlist] ** 2 / CCF_noise_tot[1:-1][indexlist] **2))
+    cloc['RV_NOISE'] = rv_noise
+
     # ----------------------------------------------------------------------
     # log the stats
     wmsg = ('FP Correlation: C={0:.1f}[%] ABSOLUTE DRIFT={1:.2f}[m/s] '
-            'RELATIVE DRIFT={2:.2f}[m/s] FWHM={3:.4f}[km/s] maxcpp={4:.1f}')
-    wargs = [cloc['CONTRAST'], cloc['RV']*1000.,
-             (cloc['RV']-cp['DRIFT0'])*1000., cloc['FWHM'], cloc['MAXCPP']]
+            'RELATIVE DRIFT={2:.2f}[m/s] DRIFT_NOISE={3:.2f}[m/s]  FWHM={4:.4f}[km/s] maxcpp={5:.1f}')
+    wargs = [cloc['CONTRAST'], cloc['RV'] * 1000.,
+             (cloc['RV'] - cp['DRIFT0']) * 1000., cloc['RV_NOISE'] * 1000., cloc['FWHM'], cloc['MAXCPP']]
     WLOG(p, 'info', wmsg.format(*wargs))
     # ----------------------------------------------------------------------
     # rv ccf plot
@@ -590,6 +639,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
                                value=np.nansum(loc['TOT_LINE']))
+    # add telluric cut criteria
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_TELL'],
+                               value=p['CCF_TELLU_THRES'])
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
@@ -672,6 +724,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=cp['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
                                value=np.nansum(cloc['TOT_LINE']))
+    # add telluric cut criteria
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_TELL'],
+                               value=cp['CCF_TELLU_THRES'])
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
