@@ -251,6 +251,7 @@ def find_order_centers(pp, image, loc, order_num):
     sigdet, locthreshold = pp['SIGDET'], pp['IC_LOCSEUIL']
     widthmin = pp['IC_WIDTHMIN']
     nm_threshold = pp['IC_NOISE_MULT_THRES']
+    curve_drop = pp['LOC_ORDER_CURVE_DROP']
     nx2 = image.shape[1]
     # get columns (start from the center and work outwards right side first
     # the left side) the order of these seems weird but we calculate row centers
@@ -305,10 +306,14 @@ def find_order_centers(pp, image, loc, order_num):
             # if the width is zero set the position back to the original
             # position
             if width == 0:
-                center = float(rowcenter)-2  # to force the order curvature
+                # to force the order curvature
+                # TODO: FIX: This is needed in new drs
+                center = float(rowcenter) - curve_drop
         else:
             width = 0
-            center = float(rowcenter) - 2  # to force the order curvature
+            # to force the order curvature
+            # TODO: FIX: This is needed in new drs
+            center = float(rowcenter) - curve_drop
         # add these positions to storage
         loc['CTRO'][order_num, col] = center
         loc['SIGO'][order_num, col] = width
