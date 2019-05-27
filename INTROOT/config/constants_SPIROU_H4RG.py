@@ -56,6 +56,9 @@ ic_altit_obs = 4.204
 # -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
+# Define the pixel size in km/s / pix
+#    also used for the median sampling size in tellu correction
+IMAGE_PIXEL_SIZE = 2.28
 
 #   Resize blue window                                              - [cal_dark]
 ic_ccdx_blue_low = 100  # 500
@@ -324,6 +327,12 @@ ic_loc_delta_width = 1.85
 
 #   Localisation option 1: Option for archiving the location image   - [cal_loc]
 ic_locopt1 = 1
+
+
+#   Define the amount we drop from the centre of the order when      - [cal_loc]
+#      previous order center is missed (in finding the position)
+loc_order_curve_drop = 2
+
 
 # -----------------------------------------------------------------------------
 #   cal_slit (tilt) parameters
@@ -844,6 +853,12 @@ ccf_num_orders_max = 48
 #                     CURRENTLY NOT WORKING!!!
 bervmode = "new"
 
+
+#   Define the telluric transmission threshold below which we        - [cal_CCF]
+#       do not use the flux as part of the RV/CCF analysis
+CCF_TELLU_THRES = 0.5
+
+
 # -----------------------------------------------------------------------------
 #   cal_exposure_meter parameters
 # -----------------------------------------------------------------------------
@@ -1187,9 +1202,6 @@ n_iter_sed_hotstar = 5
 #     to the true width
 tellu_vsini = 250.0
 
-# Define the median sampling expressed in km/s / pix
-tellu_med_sampling = 2.2
-
 # TODO: Need comments
 tellu_sigma_dev = 5
 tellu_bad_threshold = 1.2
@@ -1304,9 +1316,6 @@ MKTELLU_TRANS_SIGMA_CLIP = 20.0
 
 # median-filter the trans data measured in pixels
 MKTELLU_TRANS_TEMPLATE_MEDFILT = 31
-
-# Define the median sampling expressed in km/s / pix
-MKTELLU_MED_SAMPLING = 2.2
 
 # Define the threshold for "small" values that do not add to the weighting
 MKTELLU_SMALL_WEIGHTING_ERROR = 0.01
