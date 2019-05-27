@@ -35,5 +35,4 @@ run017 = ['obj_mk_obj_template', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
 
 # Test cal_CCF  on Gl699
 run018a = ['cal_CCF_E2DS_spirou', 'TEST4/20180527', '2279682o_pp_e2dsff_AB_tellu_corrected.fits', 'gl581_Sep18_cleaned.mas', -110, 30, 0.5]
-run018b = ['cal_CCF_E2DS_FP_spirou', 'TEST4/20180527', '2279682o_pp_e2dsff_AB_tellu_corrected.fits', 'gl581_Sep18_cleaned.mas', -110, 30, 0.5]
 
