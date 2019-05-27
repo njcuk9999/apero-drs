@@ -16,7 +16,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
 import cal_BADPIX_spirou
-import cal_CCF_E2DS_spirou
+from misc import cal_CCF_E2DS_spirou
 import cal_DARK_spirou
 import cal_DRIFT_RAW_spirou
 import cal_DRIFT_E2DS_spirou

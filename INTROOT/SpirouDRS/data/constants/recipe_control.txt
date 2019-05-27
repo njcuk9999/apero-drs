@@ -199,18 +199,6 @@ cal_CCF_E2DS_spirou, 1, POL_DEG, None, None, None, AB, None, None, REDUC, CCF, 1
 cal_CCF_E2DS_spirou, 1, POL_STOKES_I, None, None, None, AB, None, None, REDUC, CCF, 11, 1
 cal_CCF_E2DS_spirou, 1, POL_LSD, None, None, None, AB, None, None, REDUC, CCF, 11, 1
 
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_AB, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_A, None, None, None, A, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_B, None, None, None, B, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_FF_AB, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_FF_A, None, None, None, A, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_FF_B, None, None, None, B, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, TELLU_CORRECTED_AB, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, TELLU_CORRECTED_A, None, None, None, A, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, TELLU_CORRECTED_B, None, None, None, B, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, POL_DEG, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, POL_STOKES_I, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, POL_LSD, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
 #
 # ---- Telluric recipes
 #

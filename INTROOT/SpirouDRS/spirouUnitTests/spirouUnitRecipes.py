@@ -23,7 +23,6 @@ from SpirouDRS import spirouCore
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
-import cal_CCF_E2DS_FP_spirou
 import cal_DARK_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
@@ -70,7 +69,6 @@ WLOG = spirouCore.wlog
 # define valid recipes
 VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_CCF_E2DS_spirou',
-                 'cal_CCF_E2DS_FP_spirou',
                  'cal_DARK_spirou',
                  'cal_DRIFT_E2DS_spirou',
                  'cal_DRIFTPEAK_E2DS_spirou',
@@ -116,7 +114,6 @@ def get_versions():
     vv = OrderedDict()
     vv[cal_BADPIX_spirou.__NAME__] = cal_BADPIX_spirou.__version__
     vv[cal_CCF_E2DS_spirou.__NAME__] = cal_CCF_E2DS_spirou.__version__
-    vv[cal_CCF_E2DS_FP_spirou.__NAME__] = cal_CCF_E2DS_FP_spirou.__version__
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
@@ -517,29 +514,6 @@ def unit_test_cal_ccf_e2ds_spirou(p, rname, inputs):
     """
     # define name and arguments
     name = 'cal_CCF_E2DS_spirou'
-    arg_names = ['night_name', 'e2dsfile', 'mask', 'rv', 'width', 'step']
-    arg_types = [str, str, str, float, int, float]
-
-    # get arguments
-    args = get_args(p, name, rname, inputs, arg_names, arg_types)
-    return args, name
-
-
-def unit_test_cal_ccf_e2ds_fp_spirou(p, rname, inputs):
-    """
-    unit_test_cal_ccf_e2ds_spirou
-
-    input = night_name files
-    output = DRIFTPEAK_E2DS_FITS_FILE, DRIFTPEAK_E2DS_TBL_FILE
-
-    :param rname: string, identifier for this run
-    :param inputs: list of objects, raw parameters to pass to run, if outputs
-                   is None returns parameters to pass to file
-
-    :return args: dict, the parameters to pass to the run
-    """
-    # define name and arguments
-    name = 'cal_CCF_E2DS_FP_spirou'
     arg_names = ['night_name', 'e2dsfile', 'mask', 'rv', 'width', 'step']
     arg_types = [str, str, str, float, int, float]
 
