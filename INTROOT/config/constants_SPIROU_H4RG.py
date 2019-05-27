@@ -288,7 +288,7 @@ ic_min_amplitude = 10  # 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.17  # 0.18
+ic_locseuil = 0.15     # 0.17  # 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
 ic_satseuil = 1000  # 64536
