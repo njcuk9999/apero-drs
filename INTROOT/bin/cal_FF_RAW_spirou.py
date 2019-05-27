@@ -191,7 +191,7 @@ def main(night_name=None, files=None):
     # Deal with debananafication
     # ------------------------------------------------------------------
     # if mode 4a or 4b we need to straighten in x only
-    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+    if p['IC_FF_EXTRACT_TYPE'] in ['4a', '4b']:
         # log progress
         WLOG(p, '', 'Debananafying (straightening) image')
         # get the shape map
@@ -201,7 +201,7 @@ def main(night_name=None, files=None):
         data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
     # if mode 5a or 5b we need to straighten in x and y using the
     #     polynomial fits for location
-    elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+    elif p['IC_FF_EXTRACT_TYPE'] in ['5a', '5b']:
         # log progress
         WLOG(p, '', 'Debananafying (straightening) image')
         # get the shape map
@@ -286,7 +286,7 @@ def main(night_name=None, files=None):
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # deal with different return
-            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
+            if p['IC_FF_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 e2ds, e2dsll, cpt = eout
             else:
                 e2ds, cpt = eout
@@ -323,7 +323,7 @@ def main(night_name=None, files=None):
             loc['BLAZE'][order_num] = blaze
             loc['FLAT'][order_num] = flat
             # save the longfile
-            if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
+            if p['IC_FF_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
                 loc['E2DSLL'].append(e2dsll)
             # set sources
             source = __NAME__ + '/main()()'
@@ -433,7 +433,7 @@ def main(night_name=None, files=None):
                                    value=p['BADPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
-        if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
+        if p['IC_FF_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
@@ -482,7 +482,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
-        if p['IC_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
+        if p['IC_FF_EXTRACT_TYPE'] in EXTRACT_LL_TYPES:
             llstack = np.vstack(loc['E2DSLL'])
             p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 
