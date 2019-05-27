@@ -25,7 +25,7 @@ import shutil
 # =============================================================================
 # Define variables
 # =============================================================================
-PATH = '/spirou/cfht_nights/cfht_April19/pernight/calibDB_master/'
+PATH = '/spirou/cfht_nights/cfht_May19/pernight/calibDB_master/'
 
 FILE = 'master_calib_SPIROU.txt'
 
@@ -33,8 +33,8 @@ OUTFILE1 = 'master_calib_SPIROU_pernight.txt'
 OUTFILE2 = 'master_calib_SPIROU_pertc.txt'
 
 
-OUTFOLDER1 = '/spirou/cfht_nights/cfht_April19/pernight/calibDB/'
-OUTFOLDER2 = '/spirou/cfht_nights/cfht_April19/perrun/calibDB/'
+OUTFOLDER1 = '/spirou/cfht_nights/cfht_May19/pernight/calibDB/'
+OUTFOLDER2 = '/spirou/cfht_nights/cfht_May19/perrun/calibDB/'
 
 # -----------------------------------------------------------------------------
 # if true use TC_DATES to select calib files
