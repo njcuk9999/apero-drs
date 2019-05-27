@@ -186,13 +186,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     #############################
     #   Remove domain with telluric > 50%
     ###############################
-    #TODO : Put this part as option in Constant
-    #TODO : put the threshold 0.5 as constant
-    if str.find(e2dsfilename,'tellu_corrected')>0:
+    # TODO : Put this part as option in Constant
+    # TODO : put the threshold 0.5 as constant
+    if str.find(e2dsfilename, 'tellu_corrected') > 0:
         WLOG(p, 'warning', 'Remove domain with telluric transmission < 50%')
-        reconfilename=str.replace(e2dsfilename,'corrected','recon')
+        reconfilename = str.replace(e2dsfilename, 'corrected', 'recon')
         recon, rhdr, rcdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
-        e2ds=np.where(recon > 0.5, e2ds, np.nan)
+        e2ds = np.where(recon > 0.5, e2ds, np.nan)
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
@@ -201,7 +201,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # set blaze to all ones (if not bug in correlbin !!!
     # TODO Check why Blaze makes bugs in correlbin
     loc['BLAZE'] = np.ones((nbo, nx))
-#    loc['BLAZE'] = blaze0
+    #    loc['BLAZE'] = blaze0
     # set sources
     # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
     loc.set_sources(['blaze'], __NAME__ + '/main()')
@@ -216,7 +216,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         e2dsb = e2ds / blaze0
         for i in np.arange(len(e2ds)):
             with warnings.catch_warnings(record=True) as _:
-                rap = np.mean(e2dsb[i,1000:3000][np.isfinite(e2dsb[i,1000:3000])])
+                rap = np.mean(e2dsb[i, 1000:3000][np.isfinite(e2dsb[i, 1000:3000])])
             if np.isnan(rap):
                 rap = 0.0
             e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
@@ -233,7 +233,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Compute photon noise uncertainty for reference file
     # ----------------------------------------------------------------------
     # set up the arguments for DeltaVrms2D
-#    dargs = [loc['E2DS'], loc['WAVE_LL']]
+    #    dargs = [loc['E2DS'], loc['WAVE_LL']]
     dargs = [loc['E2DSFF'], loc['WAVE_LL']]
     dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
                    threshold=p['IC_DRIFT_MAXFLUX'])
@@ -311,13 +311,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     CCF_noise_tot = np.sqrt(sum(loc['CCF_noise'] ** 2))
     CCF_slope = (loc['AVERAGE_CCF'][2:] - loc['AVERAGE_CCF'][:-2]) / (loc['RV_CCF'][2:] - loc['RV_CCF'][:-2])
-    ic_plate_scale=2.28 #km/s   TODO add in the constants
+    ic_plate_scale = 2.28  # km/s   TODO add in the constants
     ccf_oversamp = ic_plate_scale / p['CCF_STEP']
     indexlist = map(int, np.arange(np.round(len(CCF_slope) / ccf_oversamp)) * ccf_oversamp)
     qq = np.zeros(len(CCF_slope))
     for i in indexlist: qq[i] = 1
     rv_noise = (sum(np.compress(qq, CCF_slope ** 2) / np.compress(qq, CCF_noise_tot[1:-1] ** 2))) ** (-0.5)
-    loc['RV_NOISE']=rv_noise
+    loc['RV_NOISE'] = rv_noise
 
     # ----------------------------------------------------------------------
     # set the source
@@ -482,22 +482,20 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     CCF_noise_tot = np.sqrt(sum(cloc['CCF_noise'] ** 2))
     CCF_slope = (cloc['AVERAGE_CCF'][2:] - cloc['AVERAGE_CCF'][:-2]) / (cloc['RV_CCF'][2:] - cloc['RV_CCF'][:-2])
-    ic_plate_scale=2.28 #km/s   TODO add in the constants
+    ic_plate_scale = 2.28  # km/s   TODO add in the constants
     ccf_oversamp = ic_plate_scale / cp['CCF_STEP']
     indexlist = map(int, np.arange(np.round(len(CCF_slope) / ccf_oversamp)) * ccf_oversamp)
     qq = np.zeros(len(CCF_slope))
     for i in indexlist: qq[i] = 1
     rv_noise = (sum(np.compress(qq, CCF_slope ** 2) / np.compress(qq, CCF_noise_tot[1:-1] ** 2))) ** (-0.5)
-    cloc['RV_NOISE']=rv_noise
-
-
+    cloc['RV_NOISE'] = rv_noise
 
     # ----------------------------------------------------------------------
     # log the stats
     wmsg = ('FP Correlation: C={0:.1f}[%] ABSOLUTE DRIFT={1:.2f}[m/s] '
             'RELATIVE DRIFT={2:.2f}[m/s] DRIFT_NOISE={3:.2f}[m/s]  FWHM={4:.4f}[km/s] maxcpp={5:.1f}')
-    wargs = [cloc['CONTRAST'], cloc['RV']*1000.,
-             (cloc['RV']-cp['DRIFT0'])*1000., cloc['RV_NOISE']*1000.,cloc['FWHM'], cloc['MAXCPP']]
+    wargs = [cloc['CONTRAST'], cloc['RV'] * 1000.,
+             (cloc['RV'] - cp['DRIFT0']) * 1000., cloc['RV_NOISE'] * 1000., cloc['FWHM'], cloc['MAXCPP']]
     WLOG(p, 'info', wmsg.format(*wargs))
     # ----------------------------------------------------------------------
     # rv ccf plot
@@ -626,7 +624,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, corfile, data_ab, hdict)
-
 
     # ----------------------------------------------------------------------
     # archive ccf C to fits file
