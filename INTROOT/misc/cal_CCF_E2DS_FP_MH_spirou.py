@@ -30,7 +30,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_CCF_E2DS_FP_spirou_new.py'
+__NAME__ = 'cal_CCF_E2DS_FP_MH_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -48,7 +48,7 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
-         step=None):
+         step=None, wavefile=None):
     """
     cal_CCF_E2DS_spirou.py main function, if arguments are None uses
     arguments from run time i.e.:
@@ -74,13 +74,15 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
-    pos = [0, 1, 2, 3, 4]
-    fmt = [str, str, float, float, float]
-    name = ['e2dsfile', 'ccf_mask', 'target_rv', 'ccf_width', 'ccf_step']
-    lname = ['input_file', 'CCF_mask', 'RV', 'CCF_width', 'CCF_step']
-    req = [True, True, True, False, False]
-    call = [e2dsfile, mask, rv, width, step]
-    call_priority = [True, True, True, True, True]
+    pos = [0, 1, 2, 3, 4, 5]
+    fmt = [str, str, float, float, float, str]
+    name = ['e2dsfile', 'ccf_mask', 'target_rv', 'ccf_width', 'ccf_step',
+            'inwavefile']
+    lname = ['input_file', 'CCF_mask', 'RV', 'CCF_width', 'CCF_step',
+            'inwavefile']
+    req = [True, True, True, False, False, False]
+    call = [e2dsfile, mask, rv, width, step, wavefile]
+    call_priority = [True, True, True, True, True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime(p, pos, fmt, name, req,
                                                     call, call_priority, lname)
@@ -88,6 +90,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='e2dsfile',
                                     mainfitsdir='reduced')
+
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
@@ -158,8 +161,10 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     else:
         wave_fiber = p['FIBER']
     # get wave image
+    infileab = p['inwavefile']
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                       return_filename=True, fiber=wave_fiber)
+                                       return_filename=True, fiber=wave_fiber,
+                                       filename=infileab)
     param_ll, wave_ll, wavefile, wsource = wout
     # save to storage
     loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'], loc['WSOURCE'] = wout
@@ -183,16 +188,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     p, blaze0 = spirouImage.ReadBlazeFile(p, hdr)
 
-    #############################
-    #   Remove domain with telluric > 50%
-    ###############################
-    # TODO : Put this part as option in Constant
-    # TODO : put the threshold 0.5 as constant
-    if str.find(e2dsfilename, 'tellu_corrected') > 0:
-        WLOG(p, 'warning', 'Remove domain with telluric transmission < 50%')
-        reconfilename = str.replace(e2dsfilename, 'corrected', 'recon')
-        recon, rhdr, rcdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
-        e2ds = np.where(recon > 0.5, e2ds, np.nan)
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
@@ -201,7 +196,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # set blaze to all ones (if not bug in correlbin !!!
     # TODO Check why Blaze makes bugs in correlbin
     loc['BLAZE'] = np.ones((nbo, nx))
-    #    loc['BLAZE'] = blaze0
     # set sources
     # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
     loc.set_sources(['blaze'], __NAME__ + '/main()')
@@ -216,7 +210,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         e2dsb = e2ds / blaze0
         for i in np.arange(len(e2ds)):
             with warnings.catch_warnings(record=True) as _:
-                rap = np.mean(e2dsb[i, 1000:3000][np.isfinite(e2dsb[i, 1000:3000])])
+                rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
             if np.isnan(rap):
                 rap = 0.0
             e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
@@ -233,8 +227,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Compute photon noise uncertainty for reference file
     # ----------------------------------------------------------------------
     # set up the arguments for DeltaVrms2D
-    #    dargs = [loc['E2DS'], loc['WAVE_LL']]
-    dargs = [loc['E2DSFF'], loc['WAVE_LL']]
+    dargs = [loc['E2DS'], loc['WAVE_LL']]
     dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
                    threshold=p['IC_DRIFT_MAXFLUX'])
     # run DeltaVrms2D
@@ -286,7 +279,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the maximum number of orders to use
     nbmax = p['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
     normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
@@ -295,7 +288,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     rv0 = float(ccf_res[1]) * 1.
@@ -305,30 +298,16 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the FWHM value
     loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
 
-    #############################################
-    #  CCF_NOISE uncertainty
-    #############################################
-
-    CCF_noise_tot = np.sqrt(sum(loc['CCF_noise'] ** 2))
-    CCF_slope = (loc['AVERAGE_CCF'][2:] - loc['AVERAGE_CCF'][:-2]) / (loc['RV_CCF'][2:] - loc['RV_CCF'][:-2])
-    ic_plate_scale = 2.28  # km/s   TODO add in the constants
-    ccf_oversamp = ic_plate_scale / p['CCF_STEP']
-    indexlist = map(int, np.arange(np.round(len(CCF_slope) / ccf_oversamp)) * ccf_oversamp)
-    qq = np.zeros(len(CCF_slope))
-    for i in indexlist: qq[i] = 1
-    rv_noise = (sum(np.compress(qq, CCF_slope ** 2) / np.compress(qq, CCF_noise_tot[1:-1] ** 2))) ** (-0.5)
-    loc['RV_NOISE'] = rv_noise
-
     # ----------------------------------------------------------------------
     # set the source
-    keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm', 'rv_noise',
+    keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm',
             'ccf_res', 'ccf_fit']
     loc.set_sources(keys, __NAME__ + '/main()')
     # ----------------------------------------------------------------------
     # log the stats
-    wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] RV_NOISE={2:.5f}[km/s]'
-            'FWHM={3:.4f}[km/s] maxcpp={4:.1f}')
-    wargs = [loc['CONTRAST'], loc['RV'], loc['RV_NOISE'], loc['FWHM'], loc['MAXCPP']]
+    wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] '
+            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+    wargs = [loc['CONTRAST'], loc['RV'], loc['FWHM'], loc['MAXCPP']]
     WLOG(p, 'info', wmsg.format(*wargs))
 
     # ----------------------------------------------------------------------
@@ -378,9 +357,10 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     cloc['SPEREF'] = speref
     cloc.set_sources(['speref'], __NAME__ + '/main()')
     # get the wave solution
+    infilec = p['inwavefile'].replace('AB.fits', 'C.fits')
     wout = spirouImage.GetWaveSolution(cp, hdr=chdr, return_wavemap=True,
                                        return_filename=True, return_header=True,
-                                       fiber=wave_fiber)
+                                       fiber=wave_fiber, filename=infilec)
     param_ll, wave_ll, wavefile, whdr, wsource = wout
     # save to storage
     cloc['PARAM_LL'], cloc['WAVE_LL'], cloc['WAVEFILE'] = wout[:3]
@@ -390,7 +370,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     cloc.set_sources(sourcenames, source)
 
     # Read the CCFRV2 FP Drift value on the wavefile of fiber C
-    cp = spirouImage.ReadParam(cp, whdr, 'KW_CCF_RV', name='DRIFT0',
+    cp = spirouImage.ReadParam(cp, whdr, 'KW_WFP_DRIFT', name='DRIFT0',
                                required=False)
     if cp['DRIFT0'] is not None:
         wmsg = ('Absolute drift of FP used for wavelength solution on '
@@ -455,7 +435,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the maximum number of orders to use
     nbmax = cp['CCF_NUM_ORDERS_MAX']
     # get the average ccf
-    cloc['AVERAGE_CCF'] = np.sum(cloc['CCF'][: nbmax], axis=0)
+    cloc['AVERAGE_CCF'] = np.nansum(cloc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
     normalized_ccf = cloc['AVERAGE_CCF'] / np.max(cloc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
@@ -464,7 +444,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     cloc['CCF_RES'] = ccf_res
     cloc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    cloc['MAXCPP'] = np.sum(cloc['CCF_MAX']) / np.sum(cloc['PIX_PASSED_ALL'])
+    cloc['MAXCPP'] = np.nansum(cloc['CCF_MAX']) / np.nansum(cloc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     cloc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
@@ -475,27 +455,12 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
             'CCF_RES', 'CCF_FIT']
     cloc.set_sources(keys, __NAME__ + '/main()')
-
-    #############################################
-    #  CCF_NOISE uncertainty
-    #############################################
-
-    CCF_noise_tot = np.sqrt(sum(cloc['CCF_noise'] ** 2))
-    CCF_slope = (cloc['AVERAGE_CCF'][2:] - cloc['AVERAGE_CCF'][:-2]) / (cloc['RV_CCF'][2:] - cloc['RV_CCF'][:-2])
-    ic_plate_scale = 2.28  # km/s   TODO add in the constants
-    ccf_oversamp = ic_plate_scale / cp['CCF_STEP']
-    indexlist = map(int, np.arange(np.round(len(CCF_slope) / ccf_oversamp)) * ccf_oversamp)
-    qq = np.zeros(len(CCF_slope))
-    for i in indexlist: qq[i] = 1
-    rv_noise = (sum(np.compress(qq, CCF_slope ** 2) / np.compress(qq, CCF_noise_tot[1:-1] ** 2))) ** (-0.5)
-    cloc['RV_NOISE'] = rv_noise
-
     # ----------------------------------------------------------------------
     # log the stats
     wmsg = ('FP Correlation: C={0:.1f}[%] ABSOLUTE DRIFT={1:.2f}[m/s] '
-            'RELATIVE DRIFT={2:.2f}[m/s] DRIFT_NOISE={3:.2f}[m/s]  FWHM={4:.4f}[km/s] maxcpp={5:.1f}')
-    wargs = [cloc['CONTRAST'], cloc['RV'] * 1000.,
-             (cloc['RV'] - cp['DRIFT0']) * 1000., cloc['RV_NOISE'] * 1000., cloc['FWHM'], cloc['MAXCPP']]
+            'RELATIVE DRIFT={2:.2f}[m/s] FWHM={3:.4f}[km/s] maxcpp={4:.1f}')
+    wargs = [cloc['CONTRAST'], cloc['RV']*1000.,
+             (cloc['RV']-cp['DRIFT0'])*1000., cloc['FWHM'], cloc['MAXCPP']]
     WLOG(p, 'info', wmsg.format(*wargs))
     # ----------------------------------------------------------------------
     # rv ccf plot
@@ -588,6 +553,28 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # -------------------------------------------------------------------------
+    # add keys of the wave solution FP CCF
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'],
+                               value = cloc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
+                               value = whdr[p['KW_WFP_DRIFT'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'],
+                               value = whdr[p['KW_WFP_FWHM'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
+                               value = whdr[p['KW_WFP_CONTRAST'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
+                               value = whdr[p['KW_WFP_MAXCPP'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'],
+                               value = whdr[p['KW_WFP_MASK'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
+                               value = whdr[p['KW_WFP_LINES'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'],
+                               value = whdr[p['KW_WFP_TARG_RV'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'],
+                               value = whdr[p['KW_WFP_WIDTH'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'],
+                               value = whdr[p['KW_WFP_STEP'][0]])
+    # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
@@ -608,7 +595,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=loc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(loc['TOT_LINE']))
+                               value=np.nansum(loc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
@@ -658,6 +645,18 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # -------------------------------------------------------------------------
+    # add keys of the wave solution FP CCF
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FILE'], value = os.path.basename(cloc['WAVEFILE']))
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'], value = whdr[p['KW_WFP_DRIFT'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value = whdr[p['KW_WFP_FWHM'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'], value = whdr[p['KW_WFP_CONTRAST'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'], value = whdr[p['KW_WFP_MAXCPP'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value = whdr[p['KW_WFP_MASK'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'], value = whdr[p['KW_WFP_LINES'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_TARG_RV'], value = whdr[p['KW_WFP_TARG_RV'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_WIDTH'], value = whdr[p['KW_WFP_WIDTH'][0]])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_STEP'], value = whdr[p['KW_WFP_STEP'][0]])
+    # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
@@ -678,7 +677,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                value=cloc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=cp['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
-                               value=np.sum(cloc['TOT_LINE']))
+                               value=np.nansum(cloc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
