@@ -74,6 +74,8 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_CCF_RV',
             'KW_CCF_RVC',
             'KW_CCF_WMREF',
+            'KW_CCF_RVNOISE',
+            'KW_CCF_TELL',
             'KW_CDBBAD',
             'KW_CDBBLAZE',
             'KW_CDBDARK',
@@ -572,7 +574,8 @@ KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
 KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
 KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
 KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
-KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum']
+KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum (km/s)']
+KW_CCF_RVNOISE = ['RVNOISE', 0, 'RV photon noise uncertainty on CCF (km/s)']
 
 KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
 KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
