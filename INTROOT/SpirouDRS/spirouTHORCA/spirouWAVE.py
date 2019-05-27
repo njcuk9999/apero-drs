@@ -750,10 +750,15 @@ def find_hc_gauss_peaks(p, loc):
             xpix = np.arange(istart, iend, 1)
             # get the spectrum at these points
             segment = np.array(hc_sp_order[istart:iend])
+            # check there are not too many nans in segment:
+            # if total not-nans is smaller than gaussian params +1
+            if np.sum(~np.isnan(segment)) < gfitmode + 1:
+                # continue to next segment
+                continue
             # calculate the RMS
             rms = np.nanmedian(np.abs(segment[1:] - segment[:-1]))
             # find the peak pixel value
-            peak = np.max(segment) - np.nanmedian(segment)
+            peak = np.nanmax(segment) - np.nanmedian(segment)
             # -----------------------------------------------------------------
             # keep only peaks that are well behaved:
             # RMS not zero
