@@ -2,6 +2,55 @@ Changelog
 =========
 
 
+0.5.001 (2019-05-27)
+--------------------
+- SpirouPlot.py - add output_rv to ccf_rv_ccf_plot. [njcuk9999]
+- SpirouKeywords.py - add new CCF keyword defintions. [njcuk9999]
+- Cal_CCF_E2DS_spirou.py - renamed from cal_CCF_E2DS_FP_spirou.py.
+  [njcuk9999]
+- Deal with move of cal_CCF_E2DS_FP_spirou.py. [njcuk9999]
+- Move older CCF recipes to misc folder. [njcuk9999]
+- Removed old cal_CCF_E2DS_spirou.py. [njcuk9999]
+- Cal_CCF_E2DS_spirou.py - from cal_CCF_E2DS_FP.py + cosmetic changes.
+  [njcuk9999]
+- Cal_CCF_E2DS_FP_spirou.py - add changes to allow science without FP.
+  [njcuk9999]
+- Cal_FF_RAW_spirou.py - IC_EXTRACT_TYPE --> IC_FF_EXTRACT_TYPE (always
+  for cal_FF) [njcuk9999]
+- SpirouTelluric.py - change parameter name MKTELLU_MED_SAMPLING -->
+  IMAGE_PIXEL_SIZE. [njcuk9999]
+- SpirouLOCOR.py - add curve drop parameter. [njcuk9999]
+- Constants_SPIROU_H4RG.py - change loc threshold. [njcuk9999]
+- SpirouKeyword.py - Add key word for CCF (telluric cut) [njcuk9999]
+- Constants_SPIROU_H4RG.py - add new constants for CCF. [njcuk9999]
+- Cal_loc_RAW_spirou.py - correct a bug in DEBUG (should be > 0)
+  [njcuk9999]
+- Cal_CCF_E2DS_FP_spirou.py - add changes from @Francois for CCF masked
+  by tellurics. [njcuk9999]
+- Cal_CCF_E2DS_FP_spirou_new.py - modify line endings. [njcuk9999]
+- Cal_CCF_E2DS_FP_spirou_new.py - francois changes to cal ccf (to be
+  integrated into cal_CCF actual) [njcuk9999]
+- SpirouConst.py - fix s1d names. [Neil Cook]
+- SpirouStartup.py - fix the windows/unix night_name bug. [Neil Cook]
+- SpirouFITS.py, spirouDB.py - reset. [Neil Cook]
+- SpirouFITS.py, spirouDB.py - fix problem with windows and lock file
+  including paths that do not exist (i.e. when using night names with
+  sub-directories) [Neil Cook]
+- SpirouFITS.py, spirouDB.py - fix problem with windows and lock file
+  including paths that do not exist (i.e. when using night names with
+  sub-directories) [Neil Cook]
+- SpirouFITS.py, spirouDB.py - fix problem with windows and lock file
+  including paths that do not exist (i.e. when using night names with
+  sub-directories) [Neil Cook]
+- Extract_trigger.py - update run. [Neil Cook]
+- SpirouConst.py - _w_ --> _v_ [Neil Cook]
+- Update settings for reprocess extract tellu/obj run for May
+  pernight/perrun runs. [Neil Cook]
+- Select_per_tc_per_night_calibs.py - add Feb and April runs to the per
+  run selection. [Neil Cook]
+- Update date/version/update notes/changelog. [Neil Cook]
+
+
 0.5.000 (2019-05-10)
 --------------------
 - SpirouDB.py - add lock file in waiting printout. [Neil Cook]
@@ -4372,6 +4421,10 @@ Changelog
 - Modified cal_extract to save wavefile name and wave file dates (for
   telluric) [njcuk9999]
 - Update date/version/changelog. [njcuk9999]
+
+
+0.2.68 (2018-07-17)
+-------------------
 - Copy (same) [njcuk9999]
 - Update tellu recipes: fix bug with file name. [njcuk9999]
 - Update tellu recipes: drs telluDB reset now resets telluDB not calibDB
@@ -4403,6 +4456,10 @@ Changelog
 - Merge pull request #375 from njcuk9999/neil. [Neil Cook]
 
   Neil
+
+
+0.2.67 (2018-07-16)
+-------------------
 - Telluric integration: bug fixes (after move of functions) [njcuk9999]
 - Updated call to plot. [njcuk9999]
 - Moved debug plot back to main code. [njcuk9999]
@@ -4924,8 +4981,6 @@ Changelog
   type spirouTHORCA.decide_on_lamp_type: - changed to identify lamp from
   fiber position (for use w/odometer names) - previous version moved to
   decide_on_lamp_type_old. [melissa-hobson]
-- Update date and version. [Neil Cook]
-- Fix for loggers being out of range. [Neil Cook]
 
 
 0.2.073 (2018-06-26)
@@ -4943,6 +4998,12 @@ Changelog
 - Merge pull request #347 from njcuk9999/master. [melissa-hobson]
 
   Melissa
+
+
+0.254 (2018-06-24)
+------------------
+- Update date and version. [Neil Cook]
+- Fix for loggers being out of range. [Neil Cook]
 - Merge pull request #345 from njcuk9999/neil. [Neil Cook]
 
   Neil - confirmed tested on H4RG files
@@ -4975,6 +5036,10 @@ Changelog
 - Updated recipes main end script (to allow piping of logging into p -
   thus accessible outside via ll['p']['LOGGING_ERROR'] for example.
   [Neil Cook]
+
+
+0.253 (2018-06-22)
+------------------
 - Cal_WAVE_NEW_E2DS_spirou.py: first version (untested) [melissa-hobson]
 - Merge pull request #344 from njcuk9999/master. [melissa-hobson]
 
