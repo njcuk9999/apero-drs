@@ -217,6 +217,9 @@ histo_range_high = 0.8
 #   Define a bad pixel cut limit (in ADU/s)                         - [cal_dark]
 dark_cutlimit = 5.0
 
+#   Define the allowed dark file types                       - [cal_dark_master]
+ALLOWED_DARK_TYPES = ['DARK_DARK']
+
 # -----------------------------------------------------------------------------
 #   cal_loc parameters
 # -----------------------------------------------------------------------------
