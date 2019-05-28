@@ -3131,6 +3131,80 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
 # =============================================================================
 # Get basic image properties
 # =============================================================================
+def get_files(p, filetype=None, allowedtypes=None):
+
+    # get parameters from p
+    path = p['ARG_FILE_DIR']
+    if filetype is None:
+        WLOG(p, 'error', 'Filetype not set')
+    if allowedtypes is None:
+        WLOG(p, 'error', 'Allowed types not set')
+    # -------------------------------------------------------------------------
+    # check file type is allowed
+    if filetype not in allowedtypes:
+        emsgs = ['Invalid file type = {0}'.format(filetype),
+                 '\t Must be one of the following']
+        for allowedtype in allowedtypes:
+            emsgs.append('\t\t - "{0}"'.format(allowedtype))
+        WLOG(p, 'error', emsgs)
+    # -------------------------------------------------------------------------
+    # get index files
+    index_files = []
+    # walk through path and find index files
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
+                index_files.append(os.path.join(root, filename))
+
+    # log number of index files found
+    if len(index_files) > 0:
+        wmsg = 'Found {0} index files'
+        WLOG(p, '', wmsg.format(len(index_files)))
+    else:
+        emsg = ('No index files found. Please run a off_listing script to '
+                'continue')
+        WLOG(p, 'error', emsg)
+    # -------------------------------------------------------------------------
+    # valid files dictionary (key = telluric object name)
+    valid_files = []
+
+    # ---------------------------------------------------------------------
+    # loop through index files
+    for index_file in index_files:
+        # read index file
+        index = spirouTable.read_fits_table(p, index_file)
+
+        print(index)
+
+        # get directory
+        dirname = os.path.dirname(index_file)
+        # -----------------------------------------------------------------
+        # get filename and object name
+        index_filenames = index['FILENAME']
+        index_output = index[p['KW_DPRTYPE'][0]]
+        # -----------------------------------------------------------------
+        # mask by KW_OUTPUT
+        mask = index_output == filetype
+        # -----------------------------------------------------------------
+        # append found files to this list
+        if np.nansum(mask) > 0:
+            for filename in index_filenames[mask]:
+                # construct absolute path
+                absfilename = os.path.join(dirname, filename)
+                # check that file exists
+                if not os.path.exists(absfilename):
+                    continue
+                # append to storage
+                if filename not in valid_files:
+                    valid_files.append(absfilename)
+    # ---------------------------------------------------------------------
+    # log found
+    wmsg = '\tFound {0} {1} files'.format(len(valid_files), filetype)
+    WLOG(p, '', wmsg)
+    # return full list
+    return valid_files
+
+
 def get_exptime(p, hdr, name=None, return_value=False):
     """
     Get Exposure time from HEADER. Wrapper for spirouImage.get_param
