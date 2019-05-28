@@ -748,8 +748,8 @@ KW_DRS_QC_PASS = ['QCC{0:03d}P', 0, 'Quality control passed']
 # -----------------------------------------------------------------------------
 # file inputs
 KW_INFILE1 = ['INF1{0:03d}', '', 'Input file used to create output']
-KW_INFILE2 = ['INF1{0:03d}', '', 'Input file used to create output (2nd)']
-KW_INFILE3 = ['INF1{0:03d}', '', 'Input file used to create output (3rd)']
+KW_INFILE2 = ['INF2{0:03d}', '', 'Input file used to create output (2nd)']
+KW_INFILE3 = ['INF3{0:03d}', '', 'Input file used to create output (3rd)']
 # calibration inputs
 KW_CDBDARK = ['CDBDARK', '', 'The calibration DARK file used']
 KW_CDBBAD = ['CDBBAD', '', 'The calibration BADPIX file used']
