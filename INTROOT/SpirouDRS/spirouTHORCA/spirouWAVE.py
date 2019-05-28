@@ -554,7 +554,8 @@ def fp_wavelength_sol_new(p, loc):
                     floc['m_fp'] = mpeak
                     floc['dopd_t'] = dopd_t
             else:
-                print('no overlap for order ' + str(order_num))
+                wmsg = 'No overlap for order {0}'
+                WLOG(p, 'warning', wmsg.format(order_num))
                 # save previous mpeak calculated
                 m_init = mpeak[cm_ind]
                 m_test = mpeak[cm_ind]
@@ -1683,7 +1684,7 @@ def fit_gaussian_triplets(p, loc):
     :param loc:
     :return:
     """
-
+    func_name = __NAME__ + '.fit_gaussian_triplets()'
     # get constants from p
     nmax_bright = p['HC_NMAX_BRIGHT']
     n_iterations = p['HC_NITER_FIT_TRIPLET']
@@ -1807,7 +1808,8 @@ def fit_gaussian_triplets(p, loc):
             # get the center of the distribution
             dv_cen = histcenters[np.argmax(histval)]
             # define a mask to remove points away from center of histogram
-            mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
+            with warnings.catch_warnings(record=True) as _:
+                mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
             # apply mask to dv and to brightest lines
             dv[mask] = np.nan
             brightest_lines[mask] = False
@@ -1817,7 +1819,8 @@ def fit_gaussian_triplets(p, loc):
         # re-find the center of the distribution
         dv_cen = histcenters[np.argmax(histval)]
         # re-define the mask to remove poitns away from center of histogram
-        mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
+        with warnings.catch_warnings(record=True) as _:
+            mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
         # re-apply mask to dv and to brightest lines
         dv[mask] = np.nan
         brightest_lines[mask] = False
@@ -1880,7 +1883,8 @@ def fit_gaussian_triplets(p, loc):
                 #    those greater than cut_fit_threshold
                 if np.nanmax(abs_ev) > cut_fit_threshold:
                     # get outliers
-                    outliers = pos[abs_ev > cut_fit_threshold]
+                    with warnings.catch_warnings(record=True) as _:
+                        outliers = pos[abs_ev > cut_fit_threshold]
                     # set outliers to NaN in wave catalog
                     wave_catalog[outliers] = np.nan
                     # set dv of outliers to NaN
@@ -1965,7 +1969,8 @@ def fit_gaussian_triplets(p, loc):
         for sigma_it in range(sigma_clip_num):
             # calculate the linear minimization
             largs = [wave_catalog - recon0, lin_mod_slice]
-            amps, recon = spirouMath.linear_minimization(*largs)
+            with warnings.catch_warnings(record=True) as _:
+                amps, recon = spirouMath.linear_minimization(*largs)
             # add the amps and recon to new storage
             amps0 = amps0 + amps
             recon0 = recon0 + recon
@@ -2109,7 +2114,8 @@ def fit_gaussian_triplets(p, loc):
         for order_num in range(nbo):
             order_mask = orders == order_num
             if np.nansum(order_mask) == 0:
-                print('No values found for order {0}'.format(order_num))
+                wmsg = 'No values found for order {0}'
+                WLOG(p, 'warning', wmsg.format(order_num))
                 continue
 
             ppx = xgau[order_mask]
