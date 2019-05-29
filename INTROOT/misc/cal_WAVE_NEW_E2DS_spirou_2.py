@@ -14,6 +14,7 @@ from __future__ import division
 import numpy as np
 import matplotlib.cm as cm
 import os
+import warnings
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -187,9 +188,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
 
     loc = spirouImage.CheckWaveSolConsistency(p, loc)
-
-    p['IC_LL_DEGR_FIT'] = 4
-    p['IC_LITTROW_ORDER_FIT_DEG'] = 4
+    #
+    # p['IC_LL_DEGR_FIT'] = 4
+    # p['IC_LITTROW_ORDER_FIT_DEG'] = 4
 
 
     # ----------------------------------------------------------------------
@@ -349,9 +350,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get x values of FP lines
         x_fp = loc['XPEAK'][mask_fp]
         # get 30% blaze mask
-        mb = np.where(loc['BLAZE'][order_num]>0.3*np.max(loc['BLAZE'][order_num]))
+        with warnings.catch_warnings(record=True) as _:
+            mb = np.where(loc['BLAZE'][order_num]>0.3*np.nanmax(loc['BLAZE'][order_num]))
         # keep only x values at above 30% blaze
-        x_fp = x_fp[np.logical_and(np.max(mb) > x_fp, np.min(mb) < x_fp)]
+        x_fp = x_fp[np.logical_and(np.nanmax(mb) > x_fp, np.nanmin(mb) < x_fp)]
         # initial differential numbering (assuming no gaps)
         peak_num_init = np.arange(len(x_fp))
         # find gaps in x
@@ -578,9 +580,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get HC line pixel positions for the order
         hc_x_ord = loc['XGAU_T'][hc_mask]
         # get 30% blaze mask
-        mb = np.where(loc['BLAZE'][ord_num] > 0.3 * np.max(loc['BLAZE'][ord_num]))
+        with warnings.catch_warnings(record=True) as _:
+            mb = np.where(loc['BLAZE'][ord_num] > 0.3 * np.nanmax(loc['BLAZE'][ord_num]))
         # keep only x values at above 30% blaze
-        blaze_mask = np.logical_and(np.max(mb) > hc_x_ord, np.min(mb) < hc_x_ord)
+        blaze_mask = np.logical_and(np.nanmax(mb) > hc_x_ord, np.nanmin(mb) < hc_x_ord)
         hc_x_ord = hc_x_ord[blaze_mask]
         # get HC line wavelengths for the order
         hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][ord_num + n_init][::-1],
@@ -1093,7 +1096,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             #        col2_1 = col2[np.mod(order_num, 2)]
             # plot hc data
             plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
-            plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][order_num]), color=col1_1,
+            plt.vlines(hc_ll, 0, np.nanmax(loc['HCDATA'][order_num]), color=col1_1,
                        linestyles=lty_1)
             plt.xlabel('Wavelength (nm)')
             plt.ylabel('Flux')
@@ -1145,7 +1148,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # p['IC_LITTROW_ORDER_INIT_2'] = n_init
     loc['X_MEAN_2'] = final_mean
     loc['X_VAR_2'] = final_var
-
 
     ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
     loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
