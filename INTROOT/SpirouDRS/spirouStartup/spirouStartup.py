@@ -1111,9 +1111,14 @@ def set_arg_file_dir(p, mfd=None, require_night_name=True):
                 ARG_FILE_DIR: string, the directory containing the files
                               in p['ARG_FILE_NAMES']
     """
+    # fix for when someone enters the wrong path in windows/unix
+    if 'win' in sys.platform:
+        p['ARG_NIGHT_NAME'] = p['ARG_NIGHT_NAME'].replace(r'/', os.sep)
+    else:
+        p['ARG_NIGHT_NAME'] = p['ARG_NIGHT_NAME'].replace('\\', os.sep)
 
     # first we need to make sure night_name doesn't have backslahses at the end
-    while p['ARG_NIGHT_NAME'].endswith('/'):
+    while p['ARG_NIGHT_NAME'].endswith(os.sep):
         p['ARG_NIGHT_NAME'] = p['ARG_NIGHT_NAME'][:-1]
 
     # define the raw/reduced/calib folder from cparams
