@@ -17,6 +17,9 @@ DARK_FILE = 'DARK'
 # Defines the bad pix  tag from cal_DARK
 DARK_BADPIX_FILE = 'DARK_BADPIX'
 
+# Define the dark master file tag from cal_dark_master
+DARK_MASTER_FILE = 'DARK_MASTER'
+
 # Defines the bad pixel tag from cal_BADPIX
 BADPIX_FILE = 'BADPIX'
 
