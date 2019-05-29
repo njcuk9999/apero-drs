@@ -248,7 +248,7 @@ def main(night_name=None, files=None):
     rawdarkfile = os.path.basename(p['FITSFILENAME'])
     # construct folder and filename
     darkfits, tag = spirouConfig.Constants.DARK_FILE(p)
-    darkfitsname = os.path.split(darkfits)[-1]
+    darkfitsname = os.path.basename(darkfits)
     # log saving dark frame
     WLOG(p, '', 'Saving Dark frame in ' + darkfitsname)
     # add keys from original header file
