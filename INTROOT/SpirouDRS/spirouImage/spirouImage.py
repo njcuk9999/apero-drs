@@ -3155,7 +3155,6 @@ def get_files(p, filetype=None, allowedtypes=None):
         for filename in files:
             if filename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
                 index_files.append(os.path.join(root, filename))
-
     # log number of index files found
     if len(index_files) > 0:
         wmsg = 'Found {0} index files'
@@ -3167,15 +3166,11 @@ def get_files(p, filetype=None, allowedtypes=None):
     # -------------------------------------------------------------------------
     # valid files dictionary (key = telluric object name)
     valid_files = []
-
     # ---------------------------------------------------------------------
     # loop through index files
     for index_file in index_files:
         # read index file
         index = spirouTable.read_fits_table(p, index_file)
-
-        print(index)
-
         # get directory
         dirname = os.path.dirname(index_file)
         # -----------------------------------------------------------------
@@ -3195,7 +3190,7 @@ def get_files(p, filetype=None, allowedtypes=None):
                 if not os.path.exists(absfilename):
                     continue
                 # append to storage
-                if filename not in valid_files:
+                if absfilename not in valid_files:
                     valid_files.append(absfilename)
     # ---------------------------------------------------------------------
     # log found
