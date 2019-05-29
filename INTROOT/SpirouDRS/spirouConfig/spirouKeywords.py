@@ -250,11 +250,14 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_WAVE_PARAM',
             'KW_WAVE_TIME1',
             'KW_WAVE_TIME2',
-            'KW_ppversion',
+            'KW_PPVERSION',
             'KW_root_drs_flat',
             'KW_root_drs_hc',
             'KW_root_drs_loc',
-            'KW_version']
+            'KW_VERSION',
+            'KW_WEATHER_TOWER_TEMP',
+            'KW_CASS_TEMP',
+            'KW_HUMIDITY']
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -390,14 +393,23 @@ KW_CMPLTEXP = ['CMPLTEXP', None, '']
 # define the total number of exposures HEADER key
 KW_NEXP = ['NEXP', None, '']
 
+# define the weather tower temperature HEADER key
+KW_WEATHER_TOWER_TEMP = ['TEMPERAT', None, '']
+
+# define the cassegrain temperature HEADER key
+KW_CASS_TEMP = ['SB_POL_T', None, '']
+
+# define the humidity temperature HEADER key
+KW_HUMIDITY = ['RELHUMID', None, '']
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
 # DRS version
-KW_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+KW_VERSION = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
-KW_ppversion = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+KW_PPVERSION = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
                 'DRS Pre-Processing version']
 
 KW_PID = ['DRSPID', '', 'The process ID that outputted this file.']
