@@ -217,8 +217,20 @@ histo_range_high = 0.8
 #   Define a bad pixel cut limit (in ADU/s)                         - [cal_dark]
 dark_cutlimit = 5.0
 
+
+# -----------------------------------------------------------------------------
+#   cal_dark_master parameters
+# -----------------------------------------------------------------------------
 #   Define the allowed dark file types                       - [cal_dark_master]
 ALLOWED_DARK_TYPES = ['DARK_DARK']
+
+#   Define the maximum time span to combine dark files       - [cal_dark_master]
+#      over (in hours)
+DARK_MASTER_MATCH_TIME = 2
+
+#   median filter size for dark master                       - [cal_dark_master]
+DARK_MASTER_MED_SIZE = 4
+
 
 # -----------------------------------------------------------------------------
 #   cal_loc parameters
