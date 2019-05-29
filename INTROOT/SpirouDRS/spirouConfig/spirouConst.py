@@ -718,6 +718,22 @@ def DARK_FILE(p):
 
 
 # noinspection PyPep8Naming
+def DARK_FILE_MASTER(p, filename):
+    func_name = 'DARK_MASTER_FILE'
+    # define input dir
+    outdir = p['REDUCED_DIR']
+    basefile = os.path.basename(filename)
+    # define filename
+    basefile = basefile.replace('.fits', '_dark_master.fits')
+    # construt absolute filename
+    darkmasterfits = os.path.join(outdir, basefile)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return darkmasterfits, tag
+
+
+# noinspection PyPep8Naming
 def DARK_BADPIX_FILE(p):
     """
     Defines the bad pix file from cal_DARK
