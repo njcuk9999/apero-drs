@@ -435,12 +435,12 @@ def clean_hotpix(image, badpix):
     # are left as is
     image_rms_measurement = np.array(image)
 
-    # First we construct a 'flattenned' image
+    # First we construct a 'flattened' image
     # We perform a low-pass filter along the x axis
     # filtering the image so that only pixel-to-pixel structures
     # remain. This is use to find big outliers in RMS.
-    # First we apply a median filtering, which removes big outlies
-    # and then we smooth the image to avoid big regions fillted with zeros.
+    # First we apply a median filtering, which removes big outliers
+    # and then we smooth the image to avoid big regions filled with zeros.
     # Regions filled with zeros in the low-pass image happen when the local
     # median is equal to the pixel value in the input image.
     #
