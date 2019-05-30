@@ -89,6 +89,11 @@ use_skydark_correction = False
 #       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
 use_skydark_only = False
 
+#   Some recipes will extract only if the file does not already exist
+#       this switch overrides that functionality
+always_extract = False
+
+
 # -----------------------------------------------------------------------------
 #   fiber variables
 # -----------------------------------------------------------------------------
