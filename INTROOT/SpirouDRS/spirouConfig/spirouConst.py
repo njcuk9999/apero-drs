@@ -1176,7 +1176,7 @@ def BACKGROUND_CORRECT_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
-def EXTRACT_E2DS_FILE(p, fiber=None):
+def EXTRACT_E2DS_FILE(p, fiber=None, filename=None):
     """
     Defines the extraction E2DS file name and location
 
@@ -1196,9 +1196,13 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     # define filename
     if fiber is None:
         fiber = p['FIBER']
+    if filename is None:
+        filename = p['ARG_FILE_NAMES'][0]
+
     reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
-    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+
+    e2dsfitsname = filename.replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     # get tag
     tag = tags[func_name] + '_{0}'.format(fiber)
