@@ -15,6 +15,7 @@ Last modified: 2017-10-11 at 10:49
 """
 from __future__ import division
 import numpy as np
+from astropy.time import Time
 import os
 import time
 import sys
@@ -72,7 +73,7 @@ def run_begin(recipe, quiet=False):
     func_name = __NAME__ + '.run_begin()'
 
     # set up process id
-    pid = assign_pid()
+    pid, htime = assign_pid()
 
     # Clean WLOG
     WLOG.clean_log(pid)
@@ -85,6 +86,11 @@ def run_begin(recipe, quiet=False):
     # add process id to cparams
     cparams['PID'] = pid
     cparams.set_source('PID', func_name)
+    # add date now to cparams
+    cparams['DATE_NOW'] = htime
+    cparams.set_source('DATE_NOW', func_name)
+    cparams['DRS_DATE'] = str(__date__)
+    cparams.set_source('DRS_DATE', func_name)
 
     # log warning messages
     if len(warn_messages) > 0:
@@ -130,7 +136,15 @@ def run_begin(recipe, quiet=False):
 
 
 def assign_pid():
-    return 'PID-{0:020d}'.format(int(time.time() * 1e7))
+    # get the time now from astropy
+    timenow = Time.now()
+    # get unix and human time from astropy time now
+    unixtime = timenow.unix * 1e7
+    humantime = timenow.iso
+    # write pid
+    pid = 'PID-{0:020d}'.format(int(unixtime))
+    # return pid and human time
+    return pid, humantime
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
