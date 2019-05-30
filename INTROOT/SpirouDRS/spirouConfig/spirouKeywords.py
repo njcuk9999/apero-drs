@@ -409,9 +409,17 @@ KW_HUMIDITY = ['RELHUMID', None, '']
 KW_VERSION = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
+# the preprocessed DRS version
 KW_PPVERSION = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
                 'DRS Pre-Processing version']
 
+# the release date of the DRS
+KW_DRS_DATE = ['DRSVDATE', '', 'DRS Release date']
+
+# The date when processed
+KW_DATE_NOW = ['DRSPDATE', '', 'DRS Processed date']
+
+# DRS Process ID
 KW_PID = ['DRSPID', '', 'The process ID that outputted this file.']
 
 # root keys (for use below and in finding keys later)

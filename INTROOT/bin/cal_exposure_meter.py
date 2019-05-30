@@ -258,6 +258,8 @@ def main(night_name=None, flatfile=None):
     hdict = OrderedDict()
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     # set the input files
     if loc['SHAPE'] is not None:
@@ -368,6 +370,10 @@ def main(night_name=None, flatfile=None):
             specfilename = os.path.split(specfitsfile)[-1]
             # set the version
             hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                       value=p['DRS_DATE'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                       value=p['DATE_NOW'])
             hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
             # log progress
             wmsg = 'Writing spectrum to file {0}'
@@ -383,6 +389,10 @@ def main(night_name=None, flatfile=None):
             wavefilename = os.path.split(wavefitsfile)[-1]
             # set the version
             hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                       value=p['DRS_DATE'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                       value=p['DATE_NOW'])
             hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
             # log progress
             wmsg = 'Writing wave image to file {0}'
@@ -398,6 +408,10 @@ def main(night_name=None, flatfile=None):
             maskfilename = os.path.split(maskfitsfile)[-1]
             # set the version
             hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                       value=p['DRS_DATE'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                       value=p['DATE_NOW'])
             hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
             # log progress
             wmsg = 'Writing telluric mask to file {0}'
