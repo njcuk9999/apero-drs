@@ -52,18 +52,18 @@ EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 # Define functions
 # =============================================================================
 
-if True:
+# if True:
+#
+#
+#     import matplotlib.pyplot as plt
+#     from astropy.io import fits
+#     night_name = '2018-08-05'
+#     files = ['2295507d_pp.fits','2295508d_pp.fits','2295509d_pp.fits','2295656d_pp.fits','2295657d_pp.fits','2295658d_pp.fits']
+#
+#     outname = '/spirou/sandbox/thermal_demo.fits'
 
 
-    import matplotlib.pyplot as plt
-    from astropy.io import fits 
-    night_name = '2018-08-05'
-    files = ['2295507d_pp.fits','2295508d_pp.fits','2295509d_pp.fits','2295656d_pp.fits','2295657d_pp.fits','2295658d_pp.fits']
-
-    outname = '/spirou/sandbox/thermal_demo.fits'
-
-
-    #def main(night_name=None, files=None):
+def main(night_name=None, files=None):
     """
     cal_FF_RAW_spirou.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -80,6 +80,7 @@ if True:
     :return ll: dictionary, containing all the local variables defined in
                 main
     """
+
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
