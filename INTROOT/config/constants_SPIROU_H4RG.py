@@ -995,7 +995,7 @@ ic_hc_n_ord_start_2 = 0  # 5  #0
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
-ic_hc_n_ord_final_2 = 46  # 40    #46
+ic_hc_n_ord_final_2 = 47  # 40    #46
 
 #  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
 #      Currently allowed modes are:
@@ -1143,6 +1143,21 @@ HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
 ic_wave_fp_cm_ind = -2
 # order to plot HC + fitted lines                                     - [cal_HC]
 ic_wave_ea_plot_order = 7
+# Select the HC wavelength solution mode                            - [cal_wave]
+#   Should be one of the following:
+#       0 - Etienne method
+WAVE_MODE_HC = 0
+# Select the FP wavelength solution mode                            - [cal_wave]
+#   Should be one of the following:
+#       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
+#       1 - following C Lovis (previously WAVE_NEW)
+WAVE_MODE_FP = 0
+#  Defines order from which the solution is calculated      - [cal_HC, cal_wave]
+WAVE_N_ORD_START = 0
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
+WAVE_N_ORD_FINAL = 47
+
+
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters
