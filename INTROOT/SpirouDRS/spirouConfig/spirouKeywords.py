@@ -257,7 +257,11 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_VERSION',
             'KW_WEATHER_TOWER_TEMP',
             'KW_CASS_TEMP',
-            'KW_HUMIDITY']
+            'KW_HUMIDITY',
+            'KW_DRS_DATE',
+            'KW_DATE_NOW',
+            'KW_FIBER'
+            ]
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -429,6 +433,9 @@ KW_root_drs_hc = ['LMP', None, '']
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
+
+# define fiber type in header keywords
+KW_FIBER = ['FIBER', None, 'The fiber associated with this file']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables

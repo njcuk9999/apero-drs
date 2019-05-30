@@ -515,6 +515,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
                                    value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_FIBER'], value=p['FIBER'])
 
         # set the input files
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],

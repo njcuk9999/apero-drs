@@ -430,6 +430,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
                                    value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_FIBER'], value=p['FIBER'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])
