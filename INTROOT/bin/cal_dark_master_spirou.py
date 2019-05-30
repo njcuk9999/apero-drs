@@ -125,19 +125,21 @@ def main(filetype='DARK_DARK'):
     matched_id = np.zeros_like(dark_time, dtype=int)
     # loop until all files are matched with all other files taken within
     #    DARK_MASTER_MATCH_TIME
-    group_num = 1
-    while np.min(matched_id) == 0:
+    group_num, it = 1, 0
+    while np.min(matched_id) == 0 and it < len(dark_time):
         # find all non-matched dark times
         non_matched = matched_id == 0
         # find the first non-matched dark time
-        first = np.argmin(np.where(non_matched)[0])
+        first = np.min(np.where(non_matched)[0])
         # find all non-matched that are lower than threshold (in days)
         time_thres = p['DARK_MASTER_MATCH_TIME'] / 24.0
-        group_mask = (dark_time[first] - dark_time) < time_thres
+        group_mask = np.abs(dark_time[first] - dark_time) < time_thres
         # add this group to matched_id
         matched_id[group_mask] = group_num
         # change the group number (add 1)
         group_num += 1
+        # increase iterator
+        it += 1
     # -------------------------------------------------------------------------
     # get the most recent position
     lastpos = np.argmax(dark_time)
