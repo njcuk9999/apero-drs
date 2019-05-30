@@ -17,6 +17,8 @@ import os
 import warnings
 import itertools
 from collections import OrderedDict
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -295,167 +297,1003 @@ def do_fp_wavesol(p, loc):
             # Plot the FP line wavelength residuals
             sPlt.wave_fp_wavelength_residuals(p, loc)
 
-    # ------------------------------------------------------------------
-    # Create new wavelength solution
-    # ------------------------------------------------------------------
-    # TODO: Melissa fault - fix later
-    p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
-                                   p['IC_FP_N_ORD_START'])
-    p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
-                                   p['IC_FP_N_ORD_FINAL'])
-    start = p['IC_HC_N_ORD_START_2']
-    end = p['IC_HC_N_ORD_FINAL_2']
+        # ------------------------------------------------------------------
+        # Create new wavelength solution
+        # ------------------------------------------------------------------
+        # TODO: Melissa fault - fix later
+        p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
+                                       p['IC_FP_N_ORD_START'])
+        p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
+                                       p['IC_FP_N_ORD_FINAL'])
+        start = p['IC_HC_N_ORD_START_2']
+        end = p['IC_HC_N_ORD_FINAL_2']
 
-    # recalculate echelle orders for Fit1DSolution
-    o_orders = np.arange(start, end)
-    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
-    loc['ECHELLE_ORDERS'] = echelle_order
-    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+        # recalculate echelle orders for Fit1DSolution
+        o_orders = np.arange(start, end)
+        echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+        loc['ECHELLE_ORDERS'] = echelle_order
+        loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
-    # select the orders to fit
-    lls = loc['LITTROW_EXTRAP_SOL_1'][start:end]
-    loc = fit_1d_solution(p, loc, lls, iteration=2)
-    # from here, LL_OUT_2 wil be 0-47
+        # select the orders to fit
+        lls = loc['LITTROW_EXTRAP_SOL_1'][start:end]
+        loc = fit_1d_solution(p, loc, lls, iteration=2)
+        # from here, LL_OUT_2 wil be 0-47
 
-    # ------------------------------------------------------------------
-    # Repeat Littrow test
-    # ------------------------------------------------------------------
-    start = p['IC_LITTROW_ORDER_INIT_2']
-    end = p['IC_LITTROW_ORDER_FINAL_2']
-    # recalculate echelle orders for Littrow check
-    o_orders = np.arange(start, end)
-    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
-    loc['ECHELLE_ORDERS'] = echelle_order
-    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+        # ------------------------------------------------------------------
+        # Repeat Littrow test
+        # ------------------------------------------------------------------
+        start = p['IC_LITTROW_ORDER_INIT_2']
+        end = p['IC_LITTROW_ORDER_FINAL_2']
+        # recalculate echelle orders for Littrow check
+        o_orders = np.arange(start, end)
+        echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+        loc['ECHELLE_ORDERS'] = echelle_order
+        loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
-    # Do Littrow check
-    ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
-    loc = calculate_littrow_sol(p, loc, **ckwargs)
+        # Do Littrow check
+        ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
+        loc = calculate_littrow_sol(p, loc, **ckwargs)
 
-    # Plot wave solution littrow check
-    if p['DRS_PLOT'] > 0:
-        # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+        # Plot wave solution littrow check
+        if p['DRS_PLOT'] > 0:
+            # plot littrow x pixels against fitted wavelength solution
+            sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
-    # ------------------------------------------------------------------
-    # extrapolate Littrow solution
-    # ------------------------------------------------------------------
-    ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
-    loc = extrapolate_littrow_sol(p, loc, **ekwargs)
+        # ------------------------------------------------------------------
+        # extrapolate Littrow solution
+        # ------------------------------------------------------------------
+        ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+        loc = extrapolate_littrow_sol(p, loc, **ekwargs)
 
-    # ------------------------------------------------------------------
-    # Plot littrow solution
-    # ------------------------------------------------------------------
-    if p['DRS_PLOT'] > 0:
-        # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
+        # ------------------------------------------------------------------
+        # Plot littrow solution
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT'] > 0:
+            # plot littrow x pixels against fitted wavelength solution
+            sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
 
-    # ------------------------------------------------------------------
-    # Join 0-47 and 47-49 solutions
-    # ------------------------------------------------------------------
-    loc = join_orders(p, loc)
+        # ------------------------------------------------------------------
+        # Join 0-47 and 47-49 solutions
+        # ------------------------------------------------------------------
+        loc = join_orders(p, loc)
 
-    # ------------------------------------------------------------------
-    # Plot single order, wavelength-calibrated, with found lines
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Plot single order, wavelength-calibrated, with found lines
+        # ------------------------------------------------------------------
 
-    if p['DRS_PLOT'] > 0:
-        sPlt.wave_ea_plot_single_order(p, loc)
+        if p['DRS_PLOT'] > 0:
+            sPlt.wave_ea_plot_single_order(p, loc)
 
-    # ----------------------------------------------------------------------
-    # Do correlation on FP spectra
-    # ----------------------------------------------------------------------
+        # ----------------------------------------------------------------------
+        # Do correlation on FP spectra
+        # ----------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
-    # Compute photon noise uncertainty for FP
-    # ------------------------------------------------------------------
-    # set up the arguments for DeltaVrms2D
-    dargs = [loc['FPDATA'], loc['LL_FINAL']]
-    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
-                   threshold=p['IC_DRIFT_MAXFLUX'])
-    # run DeltaVrms2D
-    dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
-    # save to loc
-    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
-    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
-    # log the estimated RV uncertainty
-    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
+        # ------------------------------------------------------------------
+        # Compute photon noise uncertainty for FP
+        # ------------------------------------------------------------------
+        # set up the arguments for DeltaVrms2D
+        dargs = [loc['FPDATA'], loc['LL_FINAL']]
+        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                       threshold=p['IC_DRIFT_MAXFLUX'])
+        # run DeltaVrms2D
+        dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+        # save to loc
+        loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
+        loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+        # log the estimated RV uncertainty
+        wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+        WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
 
-    # Use CCF Mask function with drift constants
-    p['CCF_MASK'] = p['DRIFT_CCF_MASK']
-    p['TARGET_RV'] = p['DRIFT_TARGET_RV']
-    p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
-    p['CCF_STEP'] = p['DRIFT_CCF_STEP']
-    p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
-    p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
+        # Use CCF Mask function with drift constants
+        p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+        p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+        p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+        p['CCF_STEP'] = p['DRIFT_CCF_STEP']
+        p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+        p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
 
-    # get the CCF mask from file (check location of mask)
-    loc = spirouRV.GetCCFMask(p, loc)
+        # get the CCF mask from file (check location of mask)
+        loc = spirouRV.GetCCFMask(p, loc)
 
-    # TODO Check why Blaze makes bugs in correlbin
-    loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
-    # set sources
-    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
-    loc.set_source('blaze', __NAME__ + '/main()')
+        # TODO Check why Blaze makes bugs in correlbin
+        loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
+        # set sources
+        # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+        loc.set_source('blaze', __NAME__ + '/main()')
 
-    # ----------------------------------------------------------------------
-    # Do correlation on FP
-    # ----------------------------------------------------------------------
-    # calculate and fit the CCF
-    loc['E2DSFF'] = np.array(loc['FPDATA'])
-    loc.set_source('E2DSFF', __NAME__ + '/main()')
-    p['CCF_FIT_TYPE'] = 1
-    loc['BERV'] = 0.0
-    loc['BERV_MAX'] = 0.0
-    loc['BJD'] = 0.0
+        # ----------------------------------------------------------------------
+        # Do correlation on FP
+        # ----------------------------------------------------------------------
+        # calculate and fit the CCF
+        loc['E2DSFF'] = np.array(loc['FPDATA'])
+        loc.set_source('E2DSFF', __NAME__ + '/main()')
+        p['CCF_FIT_TYPE'] = 1
+        loc['BERV'] = 0.0
+        loc['BERV_MAX'] = 0.0
+        loc['BJD'] = 0.0
 
-    # run the RV coravelation function with these parameters
-    loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
-    loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
-    loc = spirouRV.Coravelation(p, loc)
+        # run the RV coravelation function with these parameters
+        loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
+        loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
+        loc = spirouRV.Coravelation(p, loc)
 
-    # ----------------------------------------------------------------------
-    # Update the Correlation stats with values using fiber C (FP) drift
-    # ----------------------------------------------------------------------
-    # get the maximum number of orders to use
-    nbmax = p['CCF_NUM_ORDERS_MAX']
-    # get the average ccf
-    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
-    # normalize the average ccf
-    normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
-    # get the fit for the normalized average ccf
-    ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
-                                       fit_type=1)
-    loc['CCF_RES'] = ccf_res
-    loc['CCF_FIT'] = ccf_fit
-    # get the max cpp
-    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
-    # get the RV value from the normalised average ccf fit center location
-    loc['RV'] = float(ccf_res[1])
-    # get the contrast (ccf fit amplitude)
-    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
-    # get the FWHM value
-    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
-    # set the source
-    keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
-            'CCF_RES', 'CCF_FIT']
-    loc.set_sources(keys, __NAME__ + '/main()')
-    # ----------------------------------------------------------------------
-    # log the stats
-    wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
-            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
-    wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
-    WLOG(p, 'info', wmsg.format(*wargs))
-    # ----------------------------------------------------------------------
-    # rv ccf plot
-    # ----------------------------------------------------------------------
-    if p['DRS_PLOT'] > 0:
-        # Plot rv vs ccf (and rv vs ccf_fit)
-        p['OBJNAME'] = 'FP'
-        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+        # ----------------------------------------------------------------------
+        # Update the Correlation stats with values using fiber C (FP) drift
+        # ----------------------------------------------------------------------
+        # get the maximum number of orders to use
+        nbmax = p['CCF_NUM_ORDERS_MAX']
+        # get the average ccf
+        loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
+        # normalize the average ccf
+        normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
+        # get the fit for the normalized average ccf
+        ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
+                                           fit_type=1)
+        loc['CCF_RES'] = ccf_res
+        loc['CCF_FIT'] = ccf_fit
+        # get the max cpp
+        loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
+        # get the RV value from the normalised average ccf fit center location
+        loc['RV'] = float(ccf_res[1])
+        # get the contrast (ccf fit amplitude)
+        loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+        # get the FWHM value
+        loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+        # set the source
+        keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
+                'CCF_RES', 'CCF_FIT']
+        loc.set_sources(keys, __NAME__ + '/main()')
+        # ----------------------------------------------------------------------
+        # log the stats
+        wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
+                'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+        wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
+        WLOG(p, 'info', wmsg.format(*wargs))
+        # ----------------------------------------------------------------------
+        # rv ccf plot
+        # ----------------------------------------------------------------------
+        if p['DRS_PLOT'] > 0:
+            # Plot rv vs ccf (and rv vs ccf_fit)
+            p['OBJNAME'] = 'FP'
+            sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
-    # TODO : Add QC of the FP CCF
+        # TODO : Add QC of the FP CCF
+
+    # Using the C Lovis (WAVE_NEW_2) method:
+    elif p['WAVE_MODE_FP'] == 1:
+        # get FP peaks
+        loc = find_fp_lines_new(p, loc)
+
+        # get parameters from p
+        n_init = 0  # p['IC_FP_N_ORD_START']
+        n_fin = 47  # p['IC_FP_N_ORD_FINAL'] # note: no lines in 48 from calHC
+        size = p['IC_FP_SIZE']
+        threshold = p['IC_FP_THRESHOLD']
+        dopd0 = 2.44962434814043e7  # 2.450101e7  # 2.4508e7   # p['IC_FP_DOPD0']
+        fit_deg = p['IC_FP_FIT_DEGREE']
+        # get parameters from loc
+        fpdata = loc['FPDATA']
+
+        # set up storage
+        fp_ll = []
+        fp_ll2 = []
+        fp_order = []
+        fp_xx = []
+        # reference peaks
+        fp_ll_ref = []
+        fp_xx_ref = []
+        hc_ll_ref = []
+        hc_xx_ref = []
+        dif_n = []
+        peak_num_init = []
+
+        # INITTEST saves
+        fp_ll_init = []
+        fp_ll_ref_init = []
+
+        # loop over orders
+        for order_num in range(n_init, n_fin):
+            # ----------------------------------------------------------------------
+            # number fp peaks differentially and identify gaps
+            # ----------------------------------------------------------------------
+
+            # get mask of FP lines for order
+            mask_fp = loc['ORDPEAK'] == order_num
+            # get x values of FP lines
+            x_fp = loc['XPEAK'][mask_fp]
+            # get 30% blaze mask
+            with warnings.catch_warnings(record=True) as _:
+                mb = np.where(loc['BLAZE'][order_num] > 0.3 * np.nanmax(loc['BLAZE'][order_num]))
+            # keep only x values at above 30% blaze
+            x_fp = x_fp[np.logical_and(np.nanmax(mb) > x_fp, np.nanmin(mb) < x_fp)]
+            # initial differential numbering (assuming no gaps)
+            peak_num_init = np.arange(len(x_fp))
+            # find gaps in x
+            # get median of x difference
+            med_x_diff = np.nanmedian(x_fp[1:] - x_fp[:-1])
+            # get array of x differences
+            x_diff = x_fp[1:] - x_fp[:-1]
+            # get indices where x_diff differs too much from median
+            cond1 = x_diff < 0.75 * med_x_diff
+            cond2 = x_diff > 1.25 * med_x_diff
+            x_gap_ind = np.where(cond1 | cond2)
+            # get the opposite mask (no-gap points)
+            cond3 = x_diff > 0.75 * med_x_diff
+            cond4 = x_diff < 1.25 * med_x_diff
+            x_good_ind = np.where(cond3 & cond4)
+            # fit x_fp v x_diff for good points
+            cfit_xdiff = nanpolyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
+            # loop over gap points
+            for i in range(np.shape(x_gap_ind)[1]):
+                # # find closest good x diff
+                # x_diff_aux_ind = np.argmin(abs(x_good_ind - x_gap_ind[0][i]))
+                # x_diff_aux = x_diff[x_good_ind[0][x_diff_aux_ind]]
+                # get estimated xdiff value from the fit
+                x_diff_aux = np.polyval(cfit_xdiff, x_fp[1:][x_gap_ind[0][i]])
+                # estimate missed peaks
+                x_jump = int(np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux))) - 1
+                # add the jump
+                peak_num_init[x_gap_ind[0][i] + 1:] += x_jump
+
+            # INITTEST save original (HC sol) wavelengths
+            # fp_ll_ref_init.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], x_fp[fp_ref_ind]))
+            fp_ll_init.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], x_fp))
+            dif_num = peak_num_init
+
+            # save differential numbering
+            dif_n.append(dif_num)
+            # save order number
+            fp_order.append(np.ones(len(x_fp)) * order_num)
+            # save x positions
+            fp_xx.append(x_fp)
+
+        # INITTEST replace fp_lls with init version
+        fp_ll = fp_ll_init
+        # fp_ll_ref = fp_ll_ref_init
+
+        # ----------------------------------------------------------------------
+        # Assign absolute FP numbers for reddest order
+        # ----------------------------------------------------------------------
+
+        # determine absolute number for reference peak of reddest order
+        # m_init = int(round(dopd0 / fp_ll_ref[n_fin - n_init - 1]))
+        # INITTEST take reddest FP line
+        m_init = int(round(dopd0 / fp_ll[-1][-1]))
+        # absolute numbers for reddest order:
+        # get differential numbers for reddest order peaks
+        aux_n = dif_n[n_fin - n_init - 1]
+        # calculate absolute peak numbers for reddest order
+        m_aux = m_init - aux_n + aux_n[-1]
+        # set m vector
+        m = m_aux
+        # initialise vector of order numbers for previous order
+        m_ord_prev = m_aux
+
+        # ----------------------------------------------------------------------
+        # Assign absolute FP numbers for rest of orders by wavelength matching
+        # ----------------------------------------------------------------------
+
+        # define no-overlap-matching function (sorry Neil)
+        def no_overlap_match_calc(fp_ll_ord, fp_ll_ord_prev,
+                                  fp_ll_diff, fp_ll_diff_prev, m_ord_prev):
+            # print warning re no overlap
+            wmsg = 'no overlap for order ' + str(i) + ', estimating gap size'
+            WLOG(p, 'warning', wmsg.format())
+            # mask to keep only difference between no-gap lines for both ord
+            mask_ll_diff = fp_ll_diff > 0.75 * np.nanmedian(fp_ll_diff)
+            mask_ll_diff &= fp_ll_diff < 1.25 * np.nanmedian(fp_ll_diff)
+            mask_ll_diff_prev = fp_ll_diff_prev > 0.75 * np.nanmedian(
+                fp_ll_diff_prev)
+            mask_ll_diff_prev &= fp_ll_diff_prev < 1.25 * np.nanmedian(
+                fp_ll_diff_prev)
+            # get last diff for current order, first for prev
+            ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
+            ll_diff_init = fp_ll_diff_prev[mask_ll_diff_prev][0]
+            # estimate lines missed using both ll_diff
+            ll_miss = fp_ll_ord_prev[0] - fp_ll_ord[-1]
+            m_end_1 = int(np.round(ll_miss / ll_diff_fin))
+            m_end_2 = int(np.round(ll_miss / ll_diff_init))
+            # check they are the same, print warning if not
+            if not m_end_1 == m_end_2:
+                wmsg = ('Missing line estimate miss-match: {0} v {1} '
+                        'from {2:.5f} v {3:.5f}')
+                wargs = [m_end_1, m_end_2, ll_diff_fin, ll_diff_init]
+                WLOG(p, 'warning', wmsg.format(*wargs))
+            # calculate m_end
+            m_end = int(m_ord_prev[0]) + m_end_1
+            # define array of absolute peak numbers
+            m_ord = m_end + dif_n[i][-1] - dif_n[i]
+            # return m_ord
+            return m_ord
+
+        # loop over orders from reddest-1 to bluest
+        for i in range(n_fin - n_init - 2, -1, -1):
+            # define auxiliary arrays with ll for order and previous order
+            fp_ll_ord = fp_ll[i]
+            fp_ll_ord_prev = fp_ll[i + 1]
+            # define median ll diff for both orders
+            fp_ll_diff = np.nanmedian(fp_ll_ord[1:] - fp_ll_ord[:-1])
+            fp_ll_diff_prev = np.nanmedian(fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1])
+            # check if overlap
+            if fp_ll_ord[-1] >= fp_ll_ord_prev[0]:
+                # get overlapping peaks for both
+                # allow 0.25*lldiff offsets
+                mask_ord_over = fp_ll_ord >= fp_ll_ord_prev[0] - 0.25 * fp_ll_diff_prev
+                fp_ll_ord_over = fp_ll_ord[mask_ord_over]
+                mask_prev_over = fp_ll_ord_prev <= fp_ll_ord[-1] + 0.25 * fp_ll_diff
+                fp_ll_prev_over = fp_ll_ord_prev[mask_prev_over]
+                # loop to find closest match
+                mindiff = []
+                argmindiff = []
+                for j in range(len(fp_ll_ord_over)):
+                    diff = np.abs(fp_ll_prev_over - fp_ll_ord_over[j])
+                    mindiff.append(np.min(diff))
+                    argmindiff.append(np.argmin(diff))
+                # check that smallest diff is in fact a line match
+                if np.min(mindiff) < 0.25 * fp_ll_diff:
+                    # set the match m as the one for the smallest diff
+                    m_match = argmindiff[np.argmin(mindiff)]
+                    # get line number for peak with smallest diff
+                    m_end = m_ord_prev[mask_prev_over][m_match]
+                    # get dif n for peak with smallest diff
+                    dif_n_match = dif_n[i][mask_ord_over][np.argmin(mindiff)]
+                    # define array of absolute peak numbers
+                    m_ord = m_end + dif_n_match - dif_n[i]
+                # if not treat as no overlap
+                else:
+                    m_ord = no_overlap_match_calc(fp_ll_ord, fp_ll_ord_prev,
+                                                  fp_ll_diff, fp_ll_diff_prev, m_ord_prev)
+            # if no overlap
+            else:
+                m_ord = no_overlap_match_calc(fp_ll_ord, fp_ll_ord_prev,
+                                              fp_ll_diff, fp_ll_diff_prev, m_ord_prev)
+            # insert absolute order numbers at the start of m
+            m = np.concatenate((m_ord, m))
+            # redefine order number vector for previous order
+            m_ord_prev = m_ord
+
+        # ----------------------------------------------------------------------
+        # Derive d for each HC line
+        # ----------------------------------------------------------------------
+
+        # set up storage
+        # m(x) fit coefficients
+        coeff_xm_all = []
+        # m(x) fit dispersion
+        xm_disp = []
+        # effective cavity width for the HC lines
+        d = []
+        # 1/line number of the closest FP line to each HC line
+        one_m_d = []
+        # line number of the closest FP line to each HC line
+        m_d = []
+        one_m_d_w = []
+        # wavelength of HC lines
+        hc_ll_test = []
+        # pixel value of kept HC lines
+        hc_xx_test = []
+        # order of kept hc lines
+        hc_ord_test = []
+
+        # Test if fp gaps create the bad points
+        d_test = []
+        one_m_d_test = []
+
+        # save mask for m(x) fits
+        xm_mask = []
+        # loop over orders
+        for ord_num in range(n_fin - n_init):
+            # create order mask
+            ind_ord = np.where(np.concatenate(fp_order).ravel() == ord_num + n_init)
+            # get FP line wavelengths for the order
+            fp_ll_ord = fp_ll[ord_num]
+            # get FP line pixel positions for the order
+            fp_x_ord = fp_xx[ord_num]
+            # get FP line numbers for the order
+            m_ord = m[ind_ord]
+            # HC mask - keep best lines with small dv at above 30% blaze only
+            cond1 = abs(loc['DV_T']) < 0.25
+            cond2 = loc['ORD_T'] == ord_num + n_init
+            hc_mask = np.where(cond1 & cond2)
+            # get HC line pixel positions for the order
+            hc_x_ord = loc['XGAU_T'][hc_mask]
+            # get 30% blaze mask
+            with warnings.catch_warnings(record=True) as _:
+                mb = np.where(loc['BLAZE'][ord_num] > 0.3 * np.nanmax(loc['BLAZE'][ord_num]))
+            # keep only x values at above 30% blaze
+            blaze_mask = np.logical_and(np.nanmax(mb) > hc_x_ord, np.nanmin(mb) < hc_x_ord)
+            hc_x_ord = hc_x_ord[blaze_mask]
+            # get HC line wavelengths for the order
+            hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][ord_num + n_init][::-1],
+                                   hc_x_ord)
+            # get corresponding catalogue lines from loc
+            hc_ll_ord_cat = loc['WAVE_CATALOG'][hc_mask][blaze_mask]
+
+            # fit x vs m for FP lines w/sigma-clipping
+            sigclip = 7
+            # initialise the while loop
+            sigmax = sigclip + 1
+            # initialise mask
+            mask = np.ones_like(fp_x_ord, dtype='Bool')
+            while sigmax > sigclip:
+                # fit on masked values
+                coeff_xm = nanpolyfit(fp_x_ord[mask], m_ord[mask], deg=p['IC_LL_DEGR_FIT'])
+                # get residuals (not masked or dimension break)
+                res = m_ord - np.polyval(coeff_xm, fp_x_ord)
+                # normalise
+                res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+                # get the max residual in sigmas
+                sigmax = np.max(res[mask])
+                # mask all outliers
+                if sigmax > sigclip:
+                    mask[res >= sigclip] = False
+            # save coefficients
+            coeff_xm_all.append(coeff_xm)
+            # save dispersion
+            xm_disp.append(np.std(m_ord[mask] - np.polyval(coeff_xm, fp_x_ord[mask])))
+            # save mask
+            xm_mask.append(mask)
+
+            # get fractional m for HC lines from fit
+            m_hc = np.polyval(coeff_xm, hc_x_ord)
+            # get cavity width for HC lines from FP equation
+            d_hc = m_hc * hc_ll_ord_cat / 2.
+            # save in arrays
+            d.append(d_hc)
+            one_m_d.append(1 / m_hc)
+            m_d.append(m_hc)
+            hc_ll_test.append(hc_ll_ord_cat)
+            hc_xx_test.append(hc_x_ord)
+            hc_ord_test.append((ord_num + n_init) * np.ones_like(hc_x_ord))
+
+        # plots
+        if p['DRS_PLOT']:
+            # residuals plot
+            plt.figure()
+            # loop over orders
+            for ord_num in range(n_fin - n_init):
+                # create order mask
+                ind_ord = np.where(np.concatenate(fp_order).ravel() == ord_num + n_init)
+                # get FP line pixel positions for the order
+                fp_x_ord = fp_xx[ord_num]
+                # get FP line numbers for the order
+                m_ord = m[ind_ord]
+                # get m(x) mask for the order
+                mask = xm_mask[ord_num]
+                # get coefficients for the order
+                coeff_xm = coeff_xm_all[ord_num]
+                # plot residuals
+                plt.plot(fp_x_ord[mask], m_ord[mask] - np.polyval(coeff_xm, fp_x_ord[mask]) + 0.01 * ord_num, '.')
+            plt.xlabel('FP pixel position')
+            plt.ylabel('m(x) residuals (shifted +0.01*Order)')
+
+            # m(x) dispersion plot
+            plt.figure()
+            plt.plot(np.arange(n_fin - n_init), xm_disp, '.')
+            plt.xlabel('Order')
+            plt.ylabel('m(x) dispersion')
+
+            # verification plot
+            plt.figure()
+            plt.plot(np.concatenate(hc_ll_test).ravel(), np.concatenate(d).ravel(), '.')
+            plt.xlabel('HC line wavelengths')
+            plt.ylabel('cavity width')
+
+        # flatten arrays
+        one_m_d_sa = one_m_d
+        d_sa = d
+        m_d_sa = m_d
+        one_m_d = np.concatenate(one_m_d).ravel()
+        d = np.concatenate(d).ravel()
+        m_d = np.concatenate(m_d).ravel()
+        hc_ll_test = np.concatenate(hc_ll_test).ravel()
+        hc_xx_test = np.concatenate(hc_xx_test).ravel()
+        hc_ord_test = np.concatenate(hc_ord_test).ravel()
+
+        # log line number span
+        wargs = [round(m_d[0]), round(m_d[-1])]
+        wmsg = 'Mode number span: {0} - {1}'
+        WLOG(p, '', wmsg.format(*wargs))
+
+        # ----------------------------------------------------------------------
+        # Fit (1/m) vs d
+        # ----------------------------------------------------------------------
+
+        # decide if refit or read fit from file
+        update_cavity = not os.path.exists('cavity_length_m_fit.dat')
+
+        if update_cavity:
+            # define sorted arrays
+            one_m_sort = np.asarray(one_m_d).argsort()
+            one_m_d = np.asarray(one_m_d)[one_m_sort]
+            d = np.asarray(d)[one_m_sort]
+
+            # polynomial fit
+            fit_1m_d = nanpolyfit(one_m_d, d, 9)
+            fit_1m_d_func = np.poly1d(fit_1m_d)
+            res_d_final = d - fit_1m_d_func(one_m_d)
+
+            if p['DRS_PLOT']:
+                # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
+                plt.figure()
+                plt.subplot(211)
+                # plot values
+                plt.plot(one_m_d, d, 'o')
+                # plot initial cavity width value
+                plt.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
+                # plot reference peak of reddest order
+                plt.plot(1. / m_init, dopd0 / 2., 'D')
+                # plot fit
+                plt.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
+                plt.xlabel('1/m')
+                plt.ylabel('d')
+                plt.legend(loc='best')
+                plt.title('Interpolated cavity width for HC lines')
+                # plot residuals
+                plt.subplot(212)
+                plt.plot(one_m_d, res_d_final, '.')
+                plt.xlabel('1/m')
+                plt.ylabel('residuals [nm]')
+
+            # fit d v wavelength w/sigma-clipping
+            sigclip = 7
+            # initialise the while loop
+            sigmax = sigclip + 1
+            # initialise mask
+            mask = np.ones_like(hc_ll_test, dtype='Bool')
+            while sigmax > sigclip:
+                # fit on masked values
+                ff = nanpolyfit(hc_ll_test[mask], d[mask], deg=9)
+                # get residuals (not masked or dimension break)
+                res = d - np.polyval(ff, hc_ll_test)
+                # normalise
+                res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+                # get the max residual in sigmas
+                sigmax = np.max(res[mask])
+                # mask all outliers
+                if sigmax > sigclip:
+                    mask[res >= sigclip] = False
+
+            # write polyfits to files
+            # TODO proper paths
+            np.savetxt('cavity_length_m_fit.dat', fit_1m_d)
+            np.savetxt('cavity_length_ll_fit.dat', ff)
+        else:
+            # read fit coefficients from files
+            # TODO proper paths
+            fit_1m_d = np.genfromtxt('cavity_length_m_fit.dat')
+            ff = np.genfromtxt('cavity_length_ll_fit.dat')
+            fit_1m_d_func = np.poly1d(fit_1m_d)
+            # get achromatic cavity change - ie shift
+            residual = d - np.polyval(ff, hc_ll_test)
+            # update coeffs with mean shift
+            ff[-1] += np.nanmedian(residual)
+
+        fitval = np.polyval(ff, hc_ll_test)
+
+        if p['DRS_PLOT']:
+            # plot wavelength vs d and the fitted polynomial - TODO move to spirouPLOT
+            plt.figure()
+            plt.subplot(211)
+            # plot values
+            plt.plot(hc_ll_test, d, '.')
+            # plot initial cavity width value
+            plt.hlines(dopd0 / 2., min(hc_ll_test), max(hc_ll_test), label='original d')
+            # plot reference peak of reddest order
+            plt.plot(fp_ll[-1][-1], dopd0 / 2., 'D')
+            # plot fit
+            plt.plot(hc_ll_test, fitval, label='polynomial fit')
+            plt.xlabel('wavelength')
+            plt.ylabel('d')
+            plt.legend(loc='best')
+            plt.title('Interpolated cavity width for HC lines')
+            # plot residuals
+            plt.subplot(212)
+            plt.plot(hc_ll_test, d - fitval, '.')
+            plt.xlabel('wavelength')
+            plt.ylabel('residuals [nm]')
+
+        # ----------------------------------------------------------------------
+        # Update FP peak wavelengths
+        # ----------------------------------------------------------------------
+
+        # define storage
+        fp_ll_new = []
+
+        # loop over peak numbers
+        for i in range(len(m)):
+            # calculate wavelength from fit to 1/m vs d
+            fp_ll_new.append(2 * fit_1m_d_func(1. / m[i]) / m[i])
+
+        # from the d v wavelength fit
+        fp_ll_new_2 = np.ones_like(m) * 1600.
+        for ite in range(6):
+            recon_d = np.polyval(ff, fp_ll_new_2)
+            fp_ll_new_2 = recon_d / m * 2
+        # TODO toggle to switch between fp ll fits
+        fp_ll_new = fp_ll_new_2
+
+        # save to loc (flattened)
+        loc['FP_LL_NEW'] = np.array(fp_ll_new)
+        loc['FP_XX_NEW'] = np.array(np.concatenate(fp_xx).ravel())
+        loc['FP_ORD_NEW'] = np.array(np.concatenate(fp_order).ravel())
+
+        if p['DRS_PLOT']:
+            # plot by order - TODO move to spirouPLOT
+            # define colours
+            # noinspection PyUnresolvedReferences
+            col = cm.rainbow(np.linspace(0, 1, n_fin))
+            plt.figure()
+            for ind_ord in range(n_fin - n_init):
+                # get parameters for initial wavelength solution
+                c_aux = np.poly1d(loc['POLY_WAVE_SOL'][ind_ord + n_init][::-1])
+                # order mask
+                ord_mask = np.where(
+                    np.concatenate(fp_order).ravel() == ind_ord + n_init)
+                # get FP line pixel positions for the order
+                fp_x_ord = fp_xx[ind_ord]
+                # derive FP line wavelengths using initial solution
+                fp_ll_orig = c_aux(fp_x_ord)
+                # get new FP line wavelengths for the order
+                fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
+                # plot old-new wavelengths
+                plt.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord, '.',
+                         label='order ' + str(ind_ord), color=col[ind_ord])
+            plt.xlabel('FP peak position [pix]')
+            ylabel = 'FP old-new wavelength difference [nm] (shifted +0.001 per order)'
+            plt.ylabel(ylabel)
+            plt.legend(loc='best')
+
+        # ----------------------------------------------------------------------
+        # Fit wavelength solution from FP peaks
+        # ----------------------------------------------------------------------
+
+
+        # set up storage arrays
+        xpix = np.arange(loc['NBPIX'])
+        wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
+        poly_wave_sol_final = np.zeros((n_fin - n_init, p['IC_LL_DEGR_FIT'] + 1))
+        wsumres = 0.0
+        wsumres2 = 0.0
+        total_lines = 0.0
+        sweight = 0.0
+        fp_x_final_clip = []
+        fp_ll_final_clip = []
+        fp_ll_in_clip = []
+        res_clip = []
+        wei_clip = []
+        scale = []
+
+        # weights - dummy array
+        wei = np.ones_like(fp_ll_new)
+        # flat x array
+        fp_xx_f = np.array(np.concatenate(fp_xx).ravel())
+
+        # fit x v wavelength w/sigma-clipping
+        # we remove modulo 1 pixel errors in line centers
+        n_ite_mod_x = 3
+        for ite in range(n_ite_mod_x):
+            wsumres = 0.0
+            wsumres2 = 0.0
+            total_lines = 0.0
+            sweight = 0.0
+            fp_x_final_clip = []
+            fp_ll_final_clip = []
+            fp_ll_in_clip = []
+            res_clip = []
+            wei_clip = []
+            scale = []
+            res_modx = np.zeros_like(fp_xx_f)
+            # loop over the orders
+            for onum in range(n_fin - n_init):
+                # order mask
+                ord_mask = np.where(np.concatenate(fp_order).ravel() == onum + n_init)
+                # get FP line pixel positions for the order
+                fp_x_ord = fp_xx_f[ord_mask]
+                # get new FP line wavelengths for the order
+                fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
+                # get weights for the order
+                wei_ord = np.asarray(wei)[ord_mask]
+                # fit sol w/sigma-clip
+                # set sigma
+                sigclip = 7
+                # initialise the while loop
+                sigmax = sigclip + 1
+                # initialise mask
+                mask = np.ones_like(fp_x_ord, dtype='Bool')
+                while sigmax > sigclip:
+                    # fit on masked values
+                    poly_wave_sol_final[onum] = nanpolyfit(fp_x_ord[mask],
+                                                           fp_ll_new_ord[mask],
+                                                           p['IC_LL_DEGR_FIT'], w=wei_ord[mask])[::-1]
+                    # get residuals
+                    res = fp_ll_new_ord - np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
+                    # normalise
+                    res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+                    # get the max residual in sigmas
+                    sigmax = np.max(res[mask])
+                    # mask outliers
+                    if sigmax > sigclip:
+                        mask[res >= sigclip] = False
+
+                res_modx[ord_mask] = 2.998e5 * (fp_ll_new_ord /
+                                                np.polyval(poly_wave_sol_final[onum][::-1],
+                                                           fp_x_ord) - 1)
+                # mask input arrays for stats
+                fp_x_ord = fp_x_ord[mask]
+                fp_ll_new_ord = fp_ll_new_ord[mask]
+                wei_ord = wei_ord[mask]
+                # get final wavelengths
+                fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
+                # save wave map
+                wave_map_final[onum] = np.polyval(poly_wave_sol_final[onum][::-1], xpix)
+                # save aux arrays
+                fp_x_final_clip.append(fp_x_ord)
+                fp_ll_final_clip.append(fp_ll_final_ord)
+                fp_ll_in_clip.append(fp_ll_new_ord)
+                # residuals in km/s
+                # recalculate the residuals (not absolute value!!)
+                res = fp_ll_final_ord - fp_ll_new_ord
+                res_clip.append(res * speed_of_light / fp_ll_new_ord)
+                wei_clip.append(wei_ord)
+                # save stats
+                # get the derivative of the coefficients
+                poly = np.poly1d(poly_wave_sol_final[onum][::-1])
+                dldx = np.polyder(poly)(fp_x_ord)
+                # work out conversion factor
+                convert = speed_of_light * dldx / fp_ll_final_ord
+                scale.append(convert)
+                # sum the weights (recursively)
+                sweight += np.nansum(wei_clip[onum])
+                # sum the weighted residuals in km/s
+                wsumres += np.nansum(res_clip[onum] * wei_clip[onum])
+                # sum the weighted squared residuals in km/s
+                wsumres2 += np.nansum(wei_clip[onum] * res_clip[onum] ** 2)
+
+            # we construct a sin/cos model of the error in line center position
+            # and fit it to the residuals
+            cos = np.cos(2 * np.pi * (fp_xx_f % 1))
+            sin = np.sin(2 * np.pi * (fp_xx_f % 1))
+
+            # find points that are not residual outliers
+            # We fit a zeroth order polynomial, so it returns
+            # outliers to the mean value.
+            # set sigma
+            sigclip = 7
+            # initialise the while loop
+            sigmax = sigclip + 1
+            # initialise mask
+            mask_all = np.ones_like(fp_xx_f, dtype='Bool')
+            while sigmax > sigclip:
+                # fit on masked values
+                fitfit = nanpolyfit(fp_xx_f[mask_all],
+                                    res_modx[mask_all], 0)
+                # get residuals
+                res = fp_xx_f - np.polyval(fitfit, fp_xx_f)
+                # normalise
+                res = np.abs(res / np.nanmedian(np.abs(res[mask_all])))
+                # get the max residual in sigmas
+                sigmax = np.max(res[mask_all])
+                # mask outliers
+                if sigmax > sigclip:
+                    mask_all[res >= sigclip] = False
+            # create model
+            acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / np.nansum(cos[mask_all] ** 2)
+            asin = np.nansum(sin[mask_all] * res_modx[mask_all]) / np.nansum(sin[mask_all] ** 2)
+            model_sin = (cos * acos + sin * asin)
+            # update the xpeak positions with model
+            fp_xx_f += model_sin / 2.2
+
+
+        # calculate the final var and mean
+        total_lines = len(np.concatenate(fp_ll_in_clip))
+        final_mean = wsumres / sweight
+        final_var = (wsumres2 / sweight) - (final_mean ** 2)
+        # log the global stats
+        wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+        wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+                  total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
+        wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+                 'value:{3:.4f}[m/s])'.format(*wargs2))
+        WLOG(p, 'info', [wmsg1, wmsg2])
+
+
+        if p['DRS_PLOT']:
+            # control plot - single order - TODO move to spirouPlot
+            plot_order = p['IC_WAVE_EA_PLOT_ORDER']
+            plt.figure()
+            # get mask for HC lines
+            hc_mask = loc['ORD_T'] == plot_order
+            # get hc lines
+            hc_ll = loc['WAVE_CATALOG'][hc_mask]
+            # plot hc data
+            plt.plot(wave_map_final[plot_order - n_init], loc['HCDATA'][plot_order])
+            plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][plot_order]))
+            plt.xlabel('Wavelength')
+            plt.ylabel('Flux')
+
+        if p['DRS_PLOT']:
+            # control plot - selection of orders - TODO move to spirouPlot
+            n_plot_init = 0
+            n_plot_fin = np.min((n_fin - 1, 5))
+
+            plt.figure()
+            # define spectral order colours
+            col1 = ['black', 'grey']
+            lty = ['--', ':']
+            #    col2 = ['green', 'purple']
+            # loop through the orders
+            for order_num in range(n_plot_init, n_plot_fin):
+                # set up mask for the order
+                gg = loc['ORD_T'] == order_num
+                # keep only lines for the order
+                hc_ll = loc['WAVE_CATALOG'][gg]
+                # get colours from order parity
+                col1_1 = col1[np.mod(order_num, 2)]
+                lty_1 = lty[np.mod(order_num, 2)]
+                #        col2_1 = col2[np.mod(order_num, 2)]
+                # plot hc data
+                plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
+                plt.vlines(hc_ll, 0, np.nanmax(loc['HCDATA'][order_num]), color=col1_1,
+                           linestyles=lty_1)
+                plt.xlabel('Wavelength (nm)')
+                plt.ylabel('Flux')
+
+        safetytest = np.copy(wave_map_final)
+
+        # # TODO test linmin fitting
+
+        # ----------------------------------------------------------------------
+        # Do Littrow check
+        # ----------------------------------------------------------------------
+        # reset orders to ignore 0 in Littrow
+        start = p['IC_LITTROW_ORDER_INIT_2']
+        end = p['IC_LITTROW_ORDER_FINAL_2']
+        # recalculate echelle orders for Littrow check
+        o_orders = np.arange(start, end)
+        echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+        loc['ECHELLE_ORDERS'] = echelle_order
+        loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+
+        # Do Littrow check
+        ckwargs = dict(ll=wave_map_final[start:end, :], iteration=2, log=True)
+        loc = calculate_littrow_sol(p, loc, **ckwargs)
+
+        # Plot wave solution littrow check
+        if p['DRS_PLOT']:
+            # plot littrow x pixels against fitted wavelength solution
+            sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+
+        # ------------------------------------------------------------------
+        # extrapolate Littrow solution
+        # ------------------------------------------------------------------
+
+        # saves for compatibility
+        loc['LL_OUT_2'] = wave_map_final
+        loc['LL_PARAM_2'] = poly_wave_sol_final
+        p['IC_HC_N_ORD_START_2'] = n_init
+        p['IC_HC_N_ORD_FINAL_2'] = n_fin
+        # p['IC_LITTROW_ORDER_INIT_2'] = n_init
+        loc['X_MEAN_2'] = final_mean
+        loc['X_VAR_2'] = final_var
+
+        ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+        loc = extrapolate_littrow_sol(p, loc, **ekwargs)
+
+        # ------------------------------------------------------------------
+        # Plot littrow solution
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # plot littrow x pixels against fitted wavelength solution
+            sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
+
+        # ------------------------------------------------------------------
+        # Join 0-47 and 47-49 solutions
+        # ------------------------------------------------------------------
+        loc = join_orders(p, loc)
+
+        # ------------------------------------------------------------------
+        # Plot single order, wavelength-calibrated, with found lines
+        # ------------------------------------------------------------------
+
+        if p['DRS_PLOT']:
+            sPlt.wave_ea_plot_single_order(p, loc)
+
+        # ----------------------------------------------------------------------
+        # Do correlation on FP spectra
+        # ----------------------------------------------------------------------
+
+        # ------------------------------------------------------------------
+        # Compute photon noise uncertainty for FP
+        # ------------------------------------------------------------------
+        # set up the arguments for DeltaVrms2D
+        dargs = [loc['FPDATA'], loc['LL_FINAL']]
+        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                       threshold=p['IC_DRIFT_MAXFLUX'])
+        # run DeltaVrms2D
+        dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+        # save to loc
+        loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
+        loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+        # log the estimated RV uncertainty
+        wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+        WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
+
+        # Use CCF Mask function with drift constants
+        p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+        p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+        p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+        p['CCF_STEP'] = p['DRIFT_CCF_STEP']
+        p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+        p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
+
+        # get the CCF mask from file (check location of mask)
+        loc = spirouRV.GetCCFMask(p, loc)
+
+        # TODO Check why Blaze makes bugs in correlbin
+        loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
+        # set sources
+        # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+        loc.set_source('blaze', __NAME__ + '/main()')
+
+        # ----------------------------------------------------------------------
+        # Do correlation on FP
+        # ----------------------------------------------------------------------
+        # calculate and fit the CCF
+        loc['E2DSFF'] = np.array(loc['FPDATA'])
+        loc.set_source('E2DSFF', __NAME__ + '/main()')
+        p['CCF_FIT_TYPE'] = 1
+        loc['BERV'] = 0.0
+        loc['BERV_MAX'] = 0.0
+        loc['BJD'] = 0.0
+
+        # run the RV coravelation function with these parameters
+        loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
+        loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
+        loc = spirouRV.Coravelation(p, loc)
+
+        # ----------------------------------------------------------------------
+        # Update the Correlation stats with values using fiber C (FP) drift
+        # ----------------------------------------------------------------------
+        # get the maximum number of orders to use
+        nbmax = p['CCF_NUM_ORDERS_MAX']
+        # get the average ccf
+        loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
+        # normalize the average ccf
+        normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+        # get the fit for the normalized average ccf
+        ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
+                                           fit_type=1)
+        loc['CCF_RES'] = ccf_res
+        loc['CCF_FIT'] = ccf_fit
+        # get the max cpp
+        loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
+        # get the RV value from the normalised average ccf fit center location
+        loc['RV'] = float(ccf_res[1])
+        # get the contrast (ccf fit amplitude)
+        loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+        # get the FWHM value
+        loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+        # set the source
+        keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
+                'CCF_RES', 'CCF_FIT']
+        loc.set_sources(keys, __NAME__ + '/main()')
+        # ----------------------------------------------------------------------
+        # log the stats
+        wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
+                'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+        wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
+        WLOG(p, 'info', wmsg.format(*wargs))
+        # ----------------------------------------------------------------------
+        # rv ccf plot
+        # ----------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # Plot rv vs ccf (and rv vs ccf_fit)
+            p['OBJNAME'] = 'FP'
+            sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+
+        # TODO : Add QC of the FP CCF
+
     return loc
 
 
