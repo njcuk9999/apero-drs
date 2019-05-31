@@ -1219,9 +1219,9 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
 
     # -------------------------------------------------------------------------
     # try to read 'DARK' from cdb
-    if 'DARK' in cdb:
-        darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
-        darktime = float(cdb['DARK'][-1])
+    if 'DARKM' in cdb:
+        darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARKM'][1])
+        darktime = float(cdb['DARKM'][-1])
     else:
         darkfile = None
         darktime = None
@@ -1275,7 +1275,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         use_file, use_type = None, None
     # -------------------------------------------------------------------------
     # do dark using correct file
-    darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, use_file)
+    darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, use_file, imageext=0)
     # Read dark file
     wmsg = [use_type, use_file]
     WLOG(p, '', 'Doing Dark Correction using {0}: {1}'.format(*wmsg))
