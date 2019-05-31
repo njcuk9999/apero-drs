@@ -2165,7 +2165,8 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
 # =============================================================================
 # Define pyfits worker functions
 # =============================================================================
-def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0):
+def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0,
+                  imageext=None):
     """
     Reads the raw data and possibly header using astropy.io.fits
 
@@ -2214,13 +2215,16 @@ def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0):
         WLOG(p, 'error', [emsg1.format(filename), emsg2, emsg3])
         hdu = None
     # get the number of fits files in filename
-    try:
-        ext = len(hdu)
-    except Exception as e:
-        wmsg1 = 'Problem with one of the extensions'
-        wmsg2 = '    Error reads: {0}'.format(e)
-        WLOG(p, 'warning', [wmsg1, wmsg2])
-        ext = None
+    if imageext is not None:
+        ext = imageext
+    else:
+        try:
+            ext = len(hdu)
+        except Exception as e:
+            wmsg1 = 'Problem with one of the extensions'
+            wmsg2 = '    Error reads: {0}'.format(e)
+            WLOG(p, 'warning', [wmsg1, wmsg2])
+            ext = None
 
     # deal with unknown ext
     if ext is None:
@@ -2229,7 +2233,9 @@ def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0):
 
     # Get the data and header based on how many extensions there are
     else:
-        if ext == 1:
+        if imageext is not None:
+            openext = imageext
+        elif ext == 1:
             openext = 0
         else:
             openext = 1
