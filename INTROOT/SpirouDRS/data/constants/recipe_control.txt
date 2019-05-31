@@ -39,6 +39,8 @@ cal_DARK_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DA
 cal_DARK_spirou, 1, o, OBJECT, pos_pk, pos_pk, None, OBJ_DARK, None, RAW, DARK, 1, 1
 cal_BADPIX_spirou, 1, f, FLAT, pos_wl, pos_wl, None, FLAT_FLAT, flat_flat, RAW, BAD-PIXEL, 2, 1
 cal_BADPIX_spirou, 2, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, BAD-PIXEL, 2, 1
+cal_dark_master_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
+cal_thermal_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
 #
 # ---- Localisation recipes
 #
