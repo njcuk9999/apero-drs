@@ -142,7 +142,7 @@ def readimage(p, filename=None, log=True, kind=None):
                  used in logging (if log = True)
 
     :return image: numpy array (2D), the image
-    :return header: dictionary, the header file of the image
+    :return header: Header, the header file of the image
     :return nx: int, the shape in the first dimension, i.e. data.shape[0]
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
     """
@@ -1631,7 +1631,7 @@ def copy_original_keys(header, forbid_keys=True, allkeys=False):
     Copies keys from hdr dictionary to hdict, if forbid_keys is True some
     keys will not be copies (defined in python code)
 
-    :param header: header dictionary from readimage (ReadImage) function
+    :param header: Header from readimage (ReadImage) function
 
     :param hdict: dictionary or None, header dictionary to write to fits file
                   if None hdict is created
@@ -1690,7 +1690,7 @@ def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     Copy keys from a filename to hdict
 
     :param p: ParamDict - the constant parameter dictionary
-    :param hdict: Header or None, fits header to write to fits file
+    :param hdict: Header or None, header dictionary to write to fits file
                   if None hdict is created
     :param filename: string, location and filename of the FITS rec to open
 
@@ -2396,7 +2396,7 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
                 log_opt: string, log option, normally the program name
 
     :param data: numpy array (2D), the image
-    :param header: header dictionary from readimage (ReadImage) function
+    :param header: Header from readimage (ReadImage) function
     :param filenames: list of strings, the filenames to read and combine with
                       "data"
     :param framemath: string, or None controls how files should be added
@@ -2415,7 +2415,7 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
 
     :return p: dictionary, parameter dictionary
     :return data: numpy array (2D), the image
-    :return header: header dictionary from readimage (ReadImage) function
+    :return header: Header from readimage (ReadImage) function
     """
     func_name = __NAME__ + '.math_controler()'
     # deal with no framemath

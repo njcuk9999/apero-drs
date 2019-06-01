@@ -191,7 +191,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     if str.find(e2dsfilename, 'tellu_corrected') > 0:
         WLOG(p, 'warning', 'Remove domain with telluric transmission < 50%')
         reconfilename = str.replace(e2dsfilename, 'corrected', 'recon')
-        recon, rhdr, rcdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
+        recon, rhdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
         e2ds = np.where(recon > 0.5, e2ds, np.nan)
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
