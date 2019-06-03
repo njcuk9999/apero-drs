@@ -55,6 +55,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # User functions
 # =============================================================================
 
+
 def do_hc_wavesol(p, loc):
     """
     Calculate the wavelength solution from the HC file
@@ -112,7 +113,8 @@ def do_hc_wavesol(p, loc):
         # Generate Resolution map and line profiles
         # ---------------------------------------------------------------------
         # log progress
-        wmsg = 'Generating resolution map and '
+        wmsg = 'Generating resolution map and calculating line spread function'
+        WLOG(p, '', wmsg)
         # generate resolution map
         loc = generate_resolution_map(p, loc)
         # map line profile map
@@ -161,7 +163,6 @@ def do_hc_wavesol(p, loc):
             # -> right order
             # -> finite dv
             gg = (ord_t == iord) & (np.isfinite(dv))
-            nlines = np.nansum(gg)
             # put lines into ALL_LINES structure
             # reminder:
             # gparams[0] = output wavelengths
@@ -267,7 +268,9 @@ def do_fp_wavesol(p, loc):
     loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
     loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
 
+    # ------------------------------------------------------------------
     # Using the Bauer15 (WAVE_E2DS_EA) method:
+    # ------------------------------------------------------------------
     if p['WAVE_MODE_FP'] == 0:
         # ------------------------------------------------------------------
         # Find FP lines
@@ -296,13 +299,7 @@ def do_fp_wavesol(p, loc):
         # ------------------------------------------------------------------
         # Create new wavelength solution
         # ------------------------------------------------------------------
-        # TODO: Melissa fault - fix later
-        # p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
-        #                                p['IC_FP_N_ORD_START'])
-        # p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
-        #                                p['IC_FP_N_ORD_FINAL'])
-        # start = p['IC_HC_N_ORD_START_2']
-        # end = p['IC_HC_N_ORD_FINAL_2']
+
         start = p['WAVE_N_ORD_START']
         end = p['WAVE_N_ORD_FINAL']
 
@@ -317,17 +314,26 @@ def do_fp_wavesol(p, loc):
         loc = fit_1d_solution(p, loc, lls, iteration=2)
         # from here, LL_OUT_2 wil be 0-47
 
+    # ------------------------------------------------------------------
     # Using the C Lovis (WAVE_NEW_2) method:
+    # ------------------------------------------------------------------
     elif p['WAVE_MODE_FP'] == 1:
-        # get FP peaks
+        # ------------------------------------------------------------------
+        # Find FP lines
+        # ------------------------------------------------------------------
+        # print message to screen
+        wmsg = 'Identification of lines in reference file: {0}'
+        WLOG(p, '', wmsg.format(p['FPFILE']))
+
+        # get FP peaks (calls spirouRV functions)
         loc = find_fp_lines_new(p, loc)
 
         # get parameters from p
-        n_init = 0  # p['IC_FP_N_ORD_START']
-        n_fin = 47  # p['IC_FP_N_ORD_FINAL'] # note: no lines in 48 from calHC
+        n_init = p['WAVE_N_ORD_START']  #0
+        n_fin = p['WAVE_N_ORD_FINAL']    #47 # note: no lines in 48 from calHC
         size = p['IC_FP_SIZE']
         threshold = p['IC_FP_THRESHOLD']
-        dopd0 = 2.44962434814043e7  # 2.450101e7  # 2.4508e7   # p['IC_FP_DOPD0']
+        dopd0 = p['IC_FP_DOPD0']
         fit_deg = p['IC_FP_FIT_DEGREE']
         # get parameters from loc
         fpdata = loc['FPDATA']
@@ -345,69 +351,59 @@ def do_fp_wavesol(p, loc):
         dif_n = []
         peak_num_init = []
 
-        # INITTEST saves
-        fp_ll_init = []
-        fp_ll_ref_init = []
-
         # loop over orders
         for order_num in range(n_init, n_fin):
-            # ----------------------------------------------------------------------
-            # number fp peaks differentially and identify gaps
-            # ----------------------------------------------------------------------
-
+            # ------------------------------------------------------------------
+            # Number FP peaks differentially and identify gaps
+            # ------------------------------------------------------------------
             # get mask of FP lines for order
             mask_fp = loc['ORDPEAK'] == order_num
             # get x values of FP lines
             x_fp = loc['XPEAK'][mask_fp]
             # get 30% blaze mask
             with warnings.catch_warnings(record=True) as _:
-                mb = np.where(loc['BLAZE'][order_num] > 0.3 * np.nanmax(loc['BLAZE'][order_num]))
+                mb = np.where(loc['BLAZE'][order_num] > p['WAVE_BLAZE_THRESH'] *
+                              np.nanmax(loc['BLAZE'][order_num]))
             # keep only x values at above 30% blaze
-            x_fp = x_fp[np.logical_and(np.nanmax(mb) > x_fp, np.nanmin(mb) < x_fp)]
+            x_fp = x_fp[np.logical_and(np.nanmax(mb) > x_fp,
+                                       np.nanmin(mb) < x_fp)]
             # initial differential numbering (assuming no gaps)
             peak_num_init = np.arange(len(x_fp))
             # find gaps in x
-            # get median of x difference
-            med_x_diff = np.nanmedian(x_fp[1:] - x_fp[:-1])
             # get array of x differences
             x_diff = x_fp[1:] - x_fp[:-1]
+            # get median of x difference
+            med_x_diff = np.nanmedian(x_diff)
             # get indices where x_diff differs too much from median
-            cond1 = x_diff < 0.75 * med_x_diff
-            cond2 = x_diff > 1.25 * med_x_diff
+            cond1 = x_diff < p['WAVE_FP_XDIF_MIN'] * med_x_diff
+            cond2 = x_diff > p['WAVE_FP_XDIF_MAX'] * med_x_diff
             x_gap_ind = np.where(cond1 | cond2)
             # get the opposite mask (no-gap points)
-            cond3 = x_diff > 0.75 * med_x_diff
-            cond4 = x_diff < 1.25 * med_x_diff
+            cond3 = x_diff > p['WAVE_FP_XDIF_MIN'] * med_x_diff
+            cond4 = x_diff < p['WAVE_FP_XDIF_MAX'] * med_x_diff
             x_good_ind = np.where(cond3 & cond4)
             # fit x_fp v x_diff for good points
             cfit_xdiff = nanpolyfit(x_fp[1:][x_good_ind], x_diff[x_good_ind], 2)
             # loop over gap points
             for i in range(np.shape(x_gap_ind)[1]):
-                # # find closest good x diff
-                # x_diff_aux_ind = np.argmin(abs(x_good_ind - x_gap_ind[0][i]))
-                # x_diff_aux = x_diff[x_good_ind[0][x_diff_aux_ind]]
                 # get estimated xdiff value from the fit
                 x_diff_aux = np.polyval(cfit_xdiff, x_fp[1:][x_gap_ind[0][i]])
                 # estimate missed peaks
-                x_jump = int(np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux))) - 1
+                x_jump = np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux)) - 1
                 # add the jump
-                peak_num_init[x_gap_ind[0][i] + 1:] += x_jump
+                peak_num_init[x_gap_ind[0][i] + 1:] += int(x_jump)
 
-            # INITTEST save original (HC sol) wavelengths
-            # fp_ll_ref_init.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], x_fp[fp_ref_ind]))
-            fp_ll_init.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], x_fp))
-            dif_num = peak_num_init
+            # Calculate original (HC sol) FP wavelengths
+            fp_ll.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1],
+                                         x_fp))
 
             # save differential numbering
-            dif_n.append(dif_num)
+            dif_n.append(peak_num_init)
             # save order number
             fp_order.append(np.ones(len(x_fp)) * order_num)
             # save x positions
             fp_xx.append(x_fp)
 
-        # INITTEST replace fp_lls with init version
-        fp_ll = fp_ll_init
-        # fp_ll_ref = fp_ll_ref_init
 
         # ----------------------------------------------------------------------
         # Assign absolute FP numbers for reddest order
