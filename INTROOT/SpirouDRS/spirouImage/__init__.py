@@ -83,6 +83,8 @@ E2DStoS1D = spirouImage.e2dstos1d
 
 EarthVelocityCorrection = spirouBERV.earth_velocity_correction
 
+FindFiles = spirouImage.get_files
+
 FitTilt = spirouImage.fit_tilt
 
 FixNonPreProcess = spirouImage.fix_non_preprocessed

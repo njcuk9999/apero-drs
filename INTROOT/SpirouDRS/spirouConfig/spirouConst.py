@@ -24,7 +24,7 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.5.000'
+__version__ = '0.5.001'
 # Define Authors
 # noinspection PyPep8
 __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
@@ -32,7 +32,7 @@ __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
 # Define release type
 __release__ = 'beta pre-release'
 # Define date of last edit
-__date__ = '2019-05-10'
+__date__ = '2019-05-27'
 
 
 # =============================================================================
@@ -718,6 +718,22 @@ def DARK_FILE(p):
 
 
 # noinspection PyPep8Naming
+def DARK_FILE_MASTER(p, filename):
+    func_name = 'DARK_MASTER_FILE'
+    # define input dir
+    outdir = p['REDUCED_DIR']
+    basefile = os.path.basename(filename)
+    # define filename
+    basefile = basefile.replace('.fits', '_dark_master.fits')
+    # construt absolute filename
+    darkmasterfits = os.path.join(outdir, basefile)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return darkmasterfits, tag
+
+
+# noinspection PyPep8Naming
 def DARK_BADPIX_FILE(p):
     """
     Defines the bad pix file from cal_DARK
@@ -1160,7 +1176,7 @@ def BACKGROUND_CORRECT_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
-def EXTRACT_E2DS_FILE(p, fiber=None):
+def EXTRACT_E2DS_FILE(p, fiber=None, filename=None):
     """
     Defines the extraction E2DS file name and location
 
@@ -1180,9 +1196,13 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     # define filename
     if fiber is None:
         fiber = p['FIBER']
+    if filename is None:
+        filename = p['ARG_FILE_NAMES'][0]
+
     reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
-    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+
+    e2dsfitsname = filename.replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     # get tag
     tag = tags[func_name] + '_{0}'.format(fiber)

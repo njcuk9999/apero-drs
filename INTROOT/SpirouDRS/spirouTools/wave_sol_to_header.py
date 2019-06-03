@@ -148,6 +148,10 @@ def main(night_name=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         # set the input files
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],

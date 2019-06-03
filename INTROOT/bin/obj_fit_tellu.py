@@ -481,6 +481,10 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr)
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         # set the input files
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'],
@@ -547,6 +551,10 @@ def main(night_name=None, files=None):
         # add header keys
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
@@ -576,6 +584,10 @@ def main(night_name=None, files=None):
         s1dfilename2 = os.path.basename(s1dfile2)
         # add header keys
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])

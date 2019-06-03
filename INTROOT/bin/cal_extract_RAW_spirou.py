@@ -510,7 +510,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_FIBER'], value=p['FIBER'])
 
         # set the input files
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
@@ -635,6 +640,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add header keys
         # set the version
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
@@ -663,6 +672,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         s1dfilename2 = os.path.basename(s1dfile2)
         # add header keys
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                    value=p['DPRTYPE'])
