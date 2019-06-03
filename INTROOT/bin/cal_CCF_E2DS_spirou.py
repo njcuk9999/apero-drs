@@ -116,7 +116,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    e2ds, hdr, cdr, nbo, nx = spirouImage.ReadData(p, e2dsfilename)
+    e2ds, hdr, nbo, nx = spirouImage.ReadData(p, e2dsfilename)
     # add to loc
     loc = ParamDict()
     loc['E2DS'] = e2ds
@@ -195,7 +195,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         wmsg = 'Remove domain with telluric transmission < {0:.0f}%'
         WLOG(p, 'warning', wmsg.format(p['CCF_TELLU_THRES'] * 100))
         reconfilename = e2dsfilename.replace('corrected', 'recon')
-        recon, rhdr, rcdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
+        recon, rhdr, rnbo, rnx = spirouImage.ReadData(p, reconfilename)
         e2ds = np.where(recon > p['CCF_TELLU_THRES'], e2ds, np.nan)
 
     # ----------------------------------------------------------------------
@@ -398,7 +398,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         e2dsc_file = spirouRV.GetFiberC_E2DSName(cp, hdr)
         e2dsc_filename = os.path.basename(e2dsc_file)
         # load the E2DS fiber C data
-        speref, chdr, ccdr, nbo, nx = spirouImage.ReadData(cp, e2dsc_file)
+        speref, chdr, nbo, nx = spirouImage.ReadData(cp, e2dsc_file)
         # change the fiber/wave fiber to fiber C
         cp['FIBER'], wave_fiber = 'C', 'C'
         cloc['SPEREF'] = speref
@@ -609,7 +609,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # add the average ccf to the end of ccf
     data_ab = np.vstack([loc['CCF'], loc['AVERAGE_CCF']])
     # add drs keys
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
@@ -720,7 +720,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         # add the average ccf to the end of ccf
         data_c = np.vstack([cloc['CCF'], cloc['AVERAGE_CCF']])
         # add drs keys
-        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        hdict = spirouImage.CopyOriginalKeys(hdr)
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
                                    value=p['DRS_DATE'])

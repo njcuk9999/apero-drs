@@ -848,7 +848,7 @@ def get_fiber_data(p, hdr):
         # ------------------------------------------------------------------
         # Read image order profile
         # ------------------------------------------------------------------
-        order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p_tmp, hdr)
+        order_profile, _, nx, ny = spirouImage.ReadOrderProfile(p_tmp, hdr)
 
         # see if we have a straightened order_profile
         orderp_s, orderp_f = get_straightened_orderprofile(p_tmp, hdr)

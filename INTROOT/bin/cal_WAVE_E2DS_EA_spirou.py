@@ -134,9 +134,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # read and combine all HC files except the first (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(*rargs)
+    p, hcdata, hchdr = spirouImage.ReadImageAndCombine(*rargs)
     # read first file (fpfitsfilename)
-    fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
+    fpdata, fphdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
 
     # TODO: ------------------------------------------------------------
     # TODO remove to test NaNs
@@ -149,13 +149,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # add data and hdr to loc
     loc = ParamDict()
-    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
-    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+    loc['HCDATA'], loc['HCHDR'] = hcdata, hchdr
+    loc['FPDATA'], loc['FPHDR'] = fpdata, fphdr
 
     # set the source
-    sources = ['HCDATA', 'HCHDR', 'HCCDR']
+    sources = ['HCDATA', 'HCHDR']
     loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
-    sources = ['FPDATA', 'FPHDR', 'FPCDR']
+    sources = ['FPDATA', 'FPHDR']
     loc.set_sources(sources, 'spirouImage.ReadImage()')
 
     # ----------------------------------------------------------------------
@@ -749,7 +749,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     WLOG(p, '', wmsg.format(*wargs))
     # write solution to fitsfilename header
     # copy original keys
-    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

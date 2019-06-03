@@ -58,7 +58,7 @@ def sort_polar_files(p, polardict):
                        input data
                        adds an entry for each filename, each entry is a
                        dictionary containing:
-                       - basename, hdr, cdr, exposure, stokes, fiber, data
+                       - basename, hdr, exposure, stokes, fiber, data
                        for each file
     """
 
@@ -80,7 +80,7 @@ def sort_polar_files(p, polardict):
             continue
         # ------------------------------------------------------------------
         # Read E2DS input file
-        data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, filepath)
+        data, hdr, nx, ny = spirouImage.ReadImage(p, filepath)
         # ------------------------------------------------------------------
         # get base file name
         basename = os.path.basename(filename)
@@ -115,8 +115,6 @@ def sort_polar_files(p, polardict):
         polardict[filename]["basename"] = basename
         # store header
         polardict[filename]["hdr"] = hdr
-        # store header comments
-        polardict[filename]["cdr"] = cdr
         # store exposure number
         polardict[filename]["exposure"] = exposure
         # store stokes parameter
@@ -160,7 +158,6 @@ def load_data(p, polardict, loc):
                   all input exposures.
             BASENAME, string, basename for base FITS file
             HDR: dictionary, header from base FITS file
-            CDR: dictionary, header comments from base FITS file
             STOKES: string, stokes parameter detected in sequence
             NEXPOSURES: int, number of exposures in polar sequence
     """
@@ -222,13 +219,12 @@ def load_data(p, polardict, loc):
         if (exposure == 1) and (fiber == 'A'):
             loc['BASENAME'] = entry['basename']
             loc['HDR'] = entry['hdr']
-            loc['CDR'] = entry['cdr']
             p['FIBER'] = 'A'
             # set sources
             # Question: we need the fiber for the wavelength solution
             # Question: We should be using A?
             p.set_source('FIBER', func_name)
-            loc.set_sources(['BASENAME', 'HDR', 'CDR'], func_name)
+            loc.set_sources(['BASENAME', 'HDR'], func_name)
         # get the data from entry
         data = entry['data']
         # set the zeros to ones (in data)
@@ -874,7 +870,7 @@ def polar_products_header(p, loc, polardict, qc_params):
     """
     
     # add keys from original header of base file
-    hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
+    hdict = spirouImage.CopyOriginalKeys(loc['HDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
