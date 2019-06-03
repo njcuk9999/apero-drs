@@ -176,7 +176,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get tilts
     p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hchdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
-    # make copy of blaze (as it's overwritten later)
+    # make copy of blaze (as it's overwritten later in CCF part)
+    # TODO is this needed? More sensible to make and set copy in CCF?
     loc['BLAZE2'] = np.copy(loc['BLAZE'])
 
     # ----------------------------------------------------------------------
@@ -210,6 +211,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # log that we are running the HC part and the mode
     wmsg = 'Now running the HC solution, mode = {0}'
     WLOG(p, 'info', wmsg.format(p['WAVE_MODE_HC']))
+
     # get the solution
     loc = spirouWAVE2.do_hc_wavesol(p, loc)
 
@@ -231,12 +233,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         qc_pass.append(1)
     # add to qc header lists
     qc_values.append(loc['SIG1'])
-    qc_names.append('SIG1')
+    qc_names.append('SIG1 HC')
     qc_logic.append('SIG1 > {0:.2f}'.format(p['QC_HC_WAVE_SIGMA_MAX']))
     # ----------------------------------------------------------------------
     # check the difference between consecutive orders is always positive
     # get the differences
-    wave_diff = loc['WAVE_MAPC'][1:]-loc['WAVE_MAPC'][:-1]
+    wave_diff = loc['WAVE_MAP2'][1:]-loc['WAVE_MAP2'][:-1]
     if np.min(wave_diff) < 0:
         fmsg = 'Negative wavelength difference between orders'
         fail_msg.append(fmsg)
@@ -246,7 +248,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         qc_pass.append(1)
     # add to qc header lists
     qc_values.append(np.min(wave_diff))
-    qc_names.append('MIN WAVE DIFF')
+    qc_names.append('MIN WAVE DIFF HC')
     qc_logic.append('MIN WAVE DIFF < 0')
 
     # ----------------------------------------------------------------------
@@ -299,6 +301,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Save wave map to file
     # ----------------------------------------------------------------------
+    # TODO single file-naming function? Ask Neil
     # get base input filenames
     bfilenames = []
     for raw_file in p['ARG_FILE_NAMES']:
@@ -431,19 +434,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # passed, fail_msg = True, []
         # qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
         # ----------------------------------------------------------------------
-        # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
-        if loc['SIG1'] > p['QC_HC_WAVE_SIGMA_MAX']:
-            fmsg = 'Sigma too high ({0:.5f} > {1:.5f})'
-            fail_msg.append(fmsg.format(loc['SIG1'], p['QC_HC_WAVE_SIGMA_MAX']))
-            passed = False
-            qc_pass.append(0)
-        else:
-            qc_pass.append(1)
-        # add to qc header lists
-        qc_values.append(loc['SIG1'])
-        qc_names.append('SIG1')
-        qc_logic.append('SIG1 > {0:.2f}'.format(p['QC_HC_WAVE_SIGMA_MAX']))
-        # ----------------------------------------------------------------------
         # check the difference between consecutive orders is always positive
         # get the differences
         wave_diff = loc['LL_FINAL'][1:] - loc['LL_FINAL'][:-1]
@@ -456,7 +446,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             qc_pass.append(1)
         # add to qc header lists
         qc_values.append(np.min(wave_diff))
-        qc_names.append('MIN WAVE DIFF')
+        qc_names.append('MIN WAVE DIFF FP-HC')
         qc_logic.append('MIN WAVE DIFF < 0')
         # ----------------------------------------------------------------------
         # check for infinites and NaNs in mean residuals from fit
@@ -718,24 +708,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             WLOG(p, '', wmsg.format(wavetblname))
             spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
 
-        # ----------------------------------------------------------------------
-        # Save resolution and line profiles to file
-        # ----------------------------------------------------------------------
-        raw_infile = os.path.basename(p['FITSFILENAME'])
-        # get wave filename
-        resfits, tag3 = spirouConfig.Constants.WAVE_RES_FILE_EA(p)
-        resfitsname = os.path.basename(resfits)
-        WLOG(p, '', 'Saving wave resmap to {0}'.format(resfitsname))
-
-        # make a copy of the E2DS file for the calibBD
-        # set the version
-        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-
-        # get res data in correct format
-        resdata, hdicts = spirouWAVE2.generate_res_files(p, loc, hdict)
-        # save to file
-        p = spirouImage.WriteImageMulti(p, resfits, resdata, hdicts=hdicts)
 
         # TODO fix res table for mode 1
         if p['WAVE_MODE_FP'] == 0:
@@ -792,8 +764,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
             spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
+    # If the HC solution failed QCs we do not compute FP-HC solution
     elif has_fp and not p['QC']:
         wmsg = 'HC solution failed quality controls; FP not processed'
+        WLOG(p, 'warning', wmsg)
+
+    # If there is no FP file we log that
+    elif not has_fp:
+        wmsg = 'No FP file given; FP-HC combined solution cannot be generated'
         WLOG(p, 'warning', wmsg)
 
     # ----------------------------------------------------------------------

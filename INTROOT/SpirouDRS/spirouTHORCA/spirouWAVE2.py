@@ -87,7 +87,7 @@ def do_hc_wavesol(p, loc):
     loc = generate_wave_map(p, loc)
 
     # ----------------------------------------------------------------------
-    # Create new wavelength solution (method 0)
+    # Create new wavelength solution (method 0, old cal_HC_E2DS_EA)
     # ----------------------------------------------------------------------
     if p['WAVE_MODE_HC'] == 0:
 
@@ -2057,6 +2057,10 @@ def fit_gaussian_triplets(p, loc):
 
         # loop around the orders
         for order_num in range(nbo):
+            order_mask = orders == order_num
+            if np.nansum(order_mask) == 0:
+                wmsg = 'No values found for order {0}'
+                WLOG(p, 'warning', wmsg.format(order_num))
             ii = 0
             for expo_xpix in range(len(order_fit_continuity)):
                 for expo_order in range(order_fit_continuity[expo_xpix]):
@@ -2073,74 +2077,73 @@ def fit_gaussian_triplets(p, loc):
         # TODO ----------------------------------------------------------------
         # TODO: Remove below
         # TODO ----------------------------------------------------------------
-        wave_map3 = np.zeros((nbo, nbpix))
-        poly_wave_sol3 = np.zeros_like(loc['WAVEPARAMS'])
-        wave_mapc = np.zeros((nbo, nbpix))
-        poly_wave_solc = np.zeros_like(loc['WAVEPARAMS'])
-        for order_num in range(nbo):
-            order_mask = orders == order_num
-            if np.nansum(order_mask) == 0:
-                wmsg = 'No values found for order {0}'
-                WLOG(p, 'warning', wmsg.format(order_num))
-                continue
-
-            ppx = xgau[order_mask]
-            ppy = wave_catalog[order_mask]
-            wcoeffs = nanpolyfit(ppx, ppy, loc['WAVEPARAMS'].shape[1]-1)[::-1]
-            poly_wave_sol3[order_num, :] = wcoeffs
-            wave_map3[order_num, :] = np.polyval(wcoeffs[::-1], xpix)
-
-            ppx2 = xgau[order_mask]
-            ppy2 = wave_catalog[order_mask]
-            cheb_coeffs = chebyshev.chebfit(ppx2, ppy2, 4)
-            poly_wave_solc[order_num, :] = cheb_coeffs
-
-            ppx3 = np.arange(loc['NBPIX'])
-            wave_mapc[order_num, :] = chebyshev.chebval(ppx3, cheb_coeffs)
-        # save parameters to loc
-        loc['WAVE_CATALOG'] = wave_catalog
-        loc['AMP_CATALOG'] = amp_catalog
-        loc['SIG'] = sig
-        loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
-        loc['POLY_WAVE_SOL'] = poly_wave_sol
-        loc['WAVE_MAP2'] = wave_map2
-        loc['XGAU_T'] = xgau
-        loc['ORD_T'] = orders
-        loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
-        loc['DV_T'] = dv
-        loc['EW_T'] = ew
-        loc['PEAK_T'] = peak2
-
-        loc2 = spirouConfig.ParamDict()
-        for key in loc:
-            loc2[key] = loc[key]
-        loc2['POLY_WAVE_SOL'] = poly_wave_sol3
-        loc2['WAVE_MAP2'] = wave_map3
-
-        do_stuff(p, loc)
-        do_stuff(p, loc2)
-
-    loc['POLY_WAVE_SOL3'] = poly_wave_sol3
-    loc['WAVE_MAP3'] = wave_map3
-
-    loc['POLY_WAVE_SOL4'] = poly_wave_solc
-    loc['WAVE_MAP4'] = wave_mapc
-
-    #loc['POLY_WAVE_SOL4'][-1] = poly_wave_sol[-1]
-    #loc['WAVE_MAP4'][-1] = wave_map3[-1]
-
-    ppx4 = np.arange(loc['NBPIX'])
-    loc['POLY_WAVE_SOL4'][-2] = chebyshev.chebfit(ppx4, loc['WAVE_MAP2'][-2], 4)
-    loc['WAVE_MAP4'][-2] = chebyshev.chebval(ppx4, loc['POLY_WAVE_SOL4'][-2])
-
-    loc['POLY_WAVE_SOL4'][-1] = chebyshev.chebfit(ppx4, loc['WAVE_MAP2'][-1], 4)
-    loc['WAVE_MAP4'][-1] = chebyshev.chebval(ppx4, loc['POLY_WAVE_SOL4'][-1])
-
-    loc['POLY_WAVE_SOL5'] = poly_wave_sol
-    loc['WAVE_MAP5'] = wave_map2
-
-    loc['POLY_WAVE_SOL5'][0] = poly_wave_sol3[0]
-    loc['WAVE_MAP5'][0] = wave_map3[0]
+    #     wave_map3 = np.zeros((nbo, nbpix))
+    #     poly_wave_sol3 = np.zeros_like(loc['WAVEPARAMS'])
+    #     wave_mapc = np.zeros((nbo, nbpix))
+    #     poly_wave_solc = np.zeros_like(loc['WAVEPARAMS'])
+    #     for order_num in range(nbo):
+    #         order_mask = orders == order_num
+    #         # check if there are found lines, if not continue
+    #         if np.nansum(order_mask) == 0:
+    #             continue
+    #
+    #         ppx = xgau[order_mask]
+    #         ppy = wave_catalog[order_mask]
+    #         wcoeffs = nanpolyfit(ppx, ppy, loc['WAVEPARAMS'].shape[1]-1)[::-1]
+    #         poly_wave_sol3[order_num, :] = wcoeffs
+    #         wave_map3[order_num, :] = np.polyval(wcoeffs[::-1], xpix)
+    #
+    #         ppx2 = xgau[order_mask]
+    #         ppy2 = wave_catalog[order_mask]
+    #         cheb_coeffs = chebyshev.chebfit(ppx2, ppy2, 4)
+    #         poly_wave_solc[order_num, :] = cheb_coeffs
+    #
+    #         ppx3 = np.arange(loc['NBPIX'])
+    #         wave_mapc[order_num, :] = chebyshev.chebval(ppx3, cheb_coeffs)
+    #     # save parameters to loc
+    #     loc['WAVE_CATALOG'] = wave_catalog
+    #     loc['AMP_CATALOG'] = amp_catalog
+    #     loc['SIG'] = sig
+    #     loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
+    #     loc['POLY_WAVE_SOL'] = poly_wave_sol
+    #     loc['WAVE_MAP2'] = wave_map2
+    #     loc['XGAU_T'] = xgau
+    #     loc['ORD_T'] = orders
+    #     loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+    #     loc['DV_T'] = dv
+    #     loc['EW_T'] = ew
+    #     loc['PEAK_T'] = peak2
+    #
+    #     loc2 = spirouConfig.ParamDict()
+    #     for key in loc:
+    #         loc2[key] = loc[key]
+    #     loc2['POLY_WAVE_SOL'] = poly_wave_sol3
+    #     loc2['WAVE_MAP2'] = wave_map3
+    #
+    #     do_stuff(p, loc)
+    #     do_stuff(p, loc2)
+    #
+    # loc['POLY_WAVE_SOL3'] = poly_wave_sol3
+    # loc['WAVE_MAP3'] = wave_map3
+    #
+    # loc['POLY_WAVE_SOL4'] = poly_wave_solc
+    # loc['WAVE_MAP4'] = wave_mapc
+    #
+    # #loc['POLY_WAVE_SOL4'][-1] = poly_wave_sol[-1]
+    # #loc['WAVE_MAP4'][-1] = wave_map3[-1]
+    #
+    # ppx4 = np.arange(loc['NBPIX'])
+    # loc['POLY_WAVE_SOL4'][-2] = chebyshev.chebfit(ppx4, loc['WAVE_MAP2'][-2], 4)
+    # loc['WAVE_MAP4'][-2] = chebyshev.chebval(ppx4, loc['POLY_WAVE_SOL4'][-2])
+    #
+    # loc['POLY_WAVE_SOL4'][-1] = chebyshev.chebfit(ppx4, loc['WAVE_MAP2'][-1], 4)
+    # loc['WAVE_MAP4'][-1] = chebyshev.chebval(ppx4, loc['POLY_WAVE_SOL4'][-1])
+    #
+    # loc['POLY_WAVE_SOL5'] = poly_wave_sol
+    # loc['WAVE_MAP5'] = wave_map2
+    #
+    # loc['POLY_WAVE_SOL5'][0] = poly_wave_sol3[0]
+    # loc['WAVE_MAP5'][0] = wave_map3[0]
 
     # TODO ----------------------------------------------------------------
     # TODO: Remove above
@@ -2174,8 +2177,8 @@ def fit_gaussian_triplets(p, loc):
     loc['LIN_MOD_SLICE'] = lin_mod_slice
     loc['RECON0'] = recon0
 
-    loc['POLY_WAVE_SOLC'] = poly_wave_solc
-    loc['WAVE_MAPC'] = wave_mapc
+    # loc['POLY_WAVE_SOLC'] = poly_wave_solc
+    # loc['WAVE_MAPC'] = wave_mapc
 
     # return loc
     return loc
