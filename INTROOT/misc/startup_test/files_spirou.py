@@ -14,7 +14,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 
-from . import spirouFile
+from misc.startup_test import spirouFile
 
 # =============================================================================
 # Define Files
