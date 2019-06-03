@@ -137,14 +137,22 @@ def do_hc_wavesol(p, loc):
         n_ord_start = p['WAVE_N_ORD_START']
         n_ord_final = p['WAVE_N_ORD_FINAL']
 
-        # get values from loc
+        # get values from loc:
+        # line centers in pixels
         xgau = np.array(loc['XGAU_T'])
+        # distance from catalogue in km/s - used for sanity checks
         dv = np.array(loc['DV_T'])
+        # fitted polynomials per order
         fit_per_order = np.array(loc['POLY_WAVE_SOL'])
+        # equivalent width of fitted gaussians to each line (in pixels)
         ew = np.array(loc['EW_T'])
+        # amplitude  of fitted gaussians to each line
         peak = np.array(loc['PEAK_T'])
+        # catalogue line amplitude
         amp_catalog = np.array(loc['AMP_CATALOG'])
+        # catalogue line wavelength
         wave_catalog = np.array(loc['WAVE_CATALOG'])
+        # spectral order for each line
         ord_t = np.array(loc['ORD_T'])
 
         # loop through orders
@@ -165,32 +173,23 @@ def do_hc_wavesol(p, loc):
             # gparams[6] = output pixel sigma width (gauss fit width in pixels)
             # gparams[7] = output weights for the pixel position
 
-            chebval = np.polynomial.chebyshev.chebval
-
             # dummy array for weights
             test = np.ones(np.shape(xgau[gg]), 'd') * 1e4
-            # get the final wavelength value for each peak in order
+            # get the final wavelength value for each peak in the order
             output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
-            # output_wave_1 = chebval(xgau[gg], fit_per_order[iord])
             # convert the pixel equivalent width to wavelength units
             xgau_ew_ini = xgau[gg] - ew[gg] / 2
             xgau_ew_fin = xgau[gg] + ew[gg] / 2
             ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
             ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
-            # ew_ll_ini = chebval(xgau_ew_ini, fit_per_order[iord])
-            # ew_ll_fin = chebval(xgau_ew_fin, fit_per_order[iord])
             ew_ll = ew_ll_fin - ew_ll_ini
-            # put all lines in the order into array
+            # put all lines in the order into single array
             gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
                                           wave_catalog[gg] - output_wave_1,
                                           amp_catalog[gg],
                                           xgau[gg], ew[gg], test))
             # append the array for the order into a list
             all_lines_1.append(gau_params)
-            # save dv in km/s and auxiliary order number
-            # res_1 = np.concatenate((res_1,2.997e5*(input_wave - output_wave_1)/
-            #                        output_wave_1))
-            # ord_save = np.concatenate((ord_save, test*iord))
 
         # add to loc
         loc['ALL_LINES_1'] = all_lines_1
@@ -215,9 +214,6 @@ def do_hc_wavesol(p, loc):
         echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
         loc['ECHELLE_ORDERS'] = echelle_order
         loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
-
-        # reset Littrow fit degree
-        p['IC_LITTROW_FIT_DEG_1'] = 7
 
         # Do Littrow check
         ckwargs = dict(ll=loc['LL_OUT_1'][start:end, :], iteration=1, log=True)
@@ -301,12 +297,14 @@ def do_fp_wavesol(p, loc):
         # Create new wavelength solution
         # ------------------------------------------------------------------
         # TODO: Melissa fault - fix later
-        p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
-                                       p['IC_FP_N_ORD_START'])
-        p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
-                                       p['IC_FP_N_ORD_FINAL'])
-        start = p['IC_HC_N_ORD_START_2']
-        end = p['IC_HC_N_ORD_FINAL_2']
+        # p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
+        #                                p['IC_FP_N_ORD_START'])
+        # p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
+        #                                p['IC_FP_N_ORD_FINAL'])
+        # start = p['IC_HC_N_ORD_START_2']
+        # end = p['IC_HC_N_ORD_FINAL_2']
+        start = p['WAVE_N_ORD_START']
+        end = p['WAVE_N_ORD_FINAL']
 
         # recalculate echelle orders for Fit1DSolution
         o_orders = np.arange(start, end)
@@ -318,146 +316,6 @@ def do_fp_wavesol(p, loc):
         lls = loc['LITTROW_EXTRAP_SOL_1'][start:end]
         loc = fit_1d_solution(p, loc, lls, iteration=2)
         # from here, LL_OUT_2 wil be 0-47
-
-        # ------------------------------------------------------------------
-        # Repeat Littrow test
-        # ------------------------------------------------------------------
-        start = p['IC_LITTROW_ORDER_INIT_2']
-        end = p['IC_LITTROW_ORDER_FINAL_2']
-        # recalculate echelle orders for Littrow check
-        o_orders = np.arange(start, end)
-        echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
-        loc['ECHELLE_ORDERS'] = echelle_order
-        loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
-
-        # Do Littrow check
-        ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
-        loc = calculate_littrow_sol(p, loc, **ckwargs)
-
-        # Plot wave solution littrow check
-        if p['DRS_PLOT'] > 0:
-            # plot littrow x pixels against fitted wavelength solution
-            sPlt.wave_littrow_check_plot(p, loc, iteration=2)
-
-        # ------------------------------------------------------------------
-        # extrapolate Littrow solution
-        # ------------------------------------------------------------------
-        ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
-        loc = extrapolate_littrow_sol(p, loc, **ekwargs)
-
-        # ------------------------------------------------------------------
-        # Plot littrow solution
-        # ------------------------------------------------------------------
-        if p['DRS_PLOT'] > 0:
-            # plot littrow x pixels against fitted wavelength solution
-            sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
-
-        # ------------------------------------------------------------------
-        # Join 0-47 and 47-49 solutions
-        # ------------------------------------------------------------------
-        loc = join_orders(p, loc)
-
-        # ------------------------------------------------------------------
-        # Plot single order, wavelength-calibrated, with found lines
-        # ------------------------------------------------------------------
-
-        if p['DRS_PLOT'] > 0:
-            sPlt.wave_ea_plot_single_order(p, loc)
-
-        # ----------------------------------------------------------------------
-        # Do correlation on FP spectra
-        # ----------------------------------------------------------------------
-
-        # ------------------------------------------------------------------
-        # Compute photon noise uncertainty for FP
-        # ------------------------------------------------------------------
-        # set up the arguments for DeltaVrms2D
-        dargs = [loc['FPDATA'], loc['LL_FINAL']]
-        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
-                       threshold=p['IC_DRIFT_MAXFLUX'])
-        # run DeltaVrms2D
-        dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
-        # save to loc
-        loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
-        loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
-        # log the estimated RV uncertainty
-        wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-        WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
-
-        # Use CCF Mask function with drift constants
-        p['CCF_MASK'] = p['DRIFT_CCF_MASK']
-        p['TARGET_RV'] = p['DRIFT_TARGET_RV']
-        p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
-        p['CCF_STEP'] = p['DRIFT_CCF_STEP']
-        p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
-        p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
-
-        # get the CCF mask from file (check location of mask)
-        loc = spirouRV.GetCCFMask(p, loc)
-
-        # TODO Check why Blaze makes bugs in correlbin
-        loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
-        # set sources
-        # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
-        loc.set_source('blaze', __NAME__ + '/main()')
-
-        # ----------------------------------------------------------------------
-        # Do correlation on FP
-        # ----------------------------------------------------------------------
-        # calculate and fit the CCF
-        loc['E2DSFF'] = np.array(loc['FPDATA'])
-        loc.set_source('E2DSFF', __NAME__ + '/main()')
-        p['CCF_FIT_TYPE'] = 1
-        loc['BERV'] = 0.0
-        loc['BERV_MAX'] = 0.0
-        loc['BJD'] = 0.0
-
-        # run the RV coravelation function with these parameters
-        loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
-        loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
-        loc = spirouRV.Coravelation(p, loc)
-
-        # ----------------------------------------------------------------------
-        # Update the Correlation stats with values using fiber C (FP) drift
-        # ----------------------------------------------------------------------
-        # get the maximum number of orders to use
-        nbmax = p['CCF_NUM_ORDERS_MAX']
-        # get the average ccf
-        loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
-        # normalize the average ccf
-        normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
-        # get the fit for the normalized average ccf
-        ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
-                                           fit_type=1)
-        loc['CCF_RES'] = ccf_res
-        loc['CCF_FIT'] = ccf_fit
-        # get the max cpp
-        loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
-        # get the RV value from the normalised average ccf fit center location
-        loc['RV'] = float(ccf_res[1])
-        # get the contrast (ccf fit amplitude)
-        loc['CONTRAST'] = np.abs(100 * ccf_res[0])
-        # get the FWHM value
-        loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
-        # set the source
-        keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
-                'CCF_RES', 'CCF_FIT']
-        loc.set_sources(keys, __NAME__ + '/main()')
-        # ----------------------------------------------------------------------
-        # log the stats
-        wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
-                'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
-        wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
-        WLOG(p, 'info', wmsg.format(*wargs))
-        # ----------------------------------------------------------------------
-        # rv ccf plot
-        # ----------------------------------------------------------------------
-        if p['DRS_PLOT'] > 0:
-            # Plot rv vs ccf (and rv vs ccf_fit)
-            p['OBJNAME'] = 'FP'
-            sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
-
-        # TODO : Add QC of the FP CCF
 
     # Using the C Lovis (WAVE_NEW_2) method:
     elif p['WAVE_MODE_FP'] == 1:
@@ -1143,31 +1001,9 @@ def do_fp_wavesol(p, loc):
 
         # # TODO test linmin fitting
 
-        # ----------------------------------------------------------------------
-        # Do Littrow check
-        # ----------------------------------------------------------------------
-        # reset orders to ignore 0 in Littrow
-        start = p['IC_LITTROW_ORDER_INIT_2']
-        end = p['IC_LITTROW_ORDER_FINAL_2']
-        # recalculate echelle orders for Littrow check
-        o_orders = np.arange(start, end)
-        echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
-        loc['ECHELLE_ORDERS'] = echelle_order
-        loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
-
-        # Do Littrow check
-        ckwargs = dict(ll=wave_map_final[start:end, :], iteration=2, log=True)
-        loc = calculate_littrow_sol(p, loc, **ckwargs)
-
-        # Plot wave solution littrow check
-        if p['DRS_PLOT']:
-            # plot littrow x pixels against fitted wavelength solution
-            sPlt.wave_littrow_check_plot(p, loc, iteration=2)
-
         # ------------------------------------------------------------------
-        # extrapolate Littrow solution
+        # Saves for compatibility w/already defined functions
         # ------------------------------------------------------------------
-
         # saves for compatibility
         loc['LL_OUT_2'] = wave_map_final
         loc['LL_PARAM_2'] = poly_wave_sol_final
@@ -1177,122 +1013,149 @@ def do_fp_wavesol(p, loc):
         loc['X_MEAN_2'] = final_mean
         loc['X_VAR_2'] = final_var
 
-        ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
-        loc = extrapolate_littrow_sol(p, loc, **ekwargs)
+    # ----------------------------------------------------------------------
+    # LITTROW SECTION - common to all methods
+    # ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # Do Littrow check
+    # ----------------------------------------------------------------------
+    # reset orders to ignore 0 in Littrow
+    start = p['IC_LITTROW_ORDER_INIT_2']
+    end = p['IC_LITTROW_ORDER_FINAL_2']
+    # recalculate echelle orders for Littrow check
+    o_orders = np.arange(start, end)
+    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+    loc['ECHELLE_ORDERS'] = echelle_order
+    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
-        # ------------------------------------------------------------------
-        # Plot littrow solution
-        # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
-            # plot littrow x pixels against fitted wavelength solution
-            sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
+    # Do Littrow check
+    ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
+    loc = calculate_littrow_sol(p, loc, **ckwargs)
 
-        # ------------------------------------------------------------------
-        # Join 0-47 and 47-49 solutions
-        # ------------------------------------------------------------------
-        loc = join_orders(p, loc)
+    # Plot wave solution littrow check
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
-        # ------------------------------------------------------------------
-        # Plot single order, wavelength-calibrated, with found lines
-        # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # extrapolate Littrow solution
+    # ------------------------------------------------------------------
+    ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+    loc = extrapolate_littrow_sol(p, loc, **ekwargs)
 
-        if p['DRS_PLOT']:
-            sPlt.wave_ea_plot_single_order(p, loc)
+    # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT'] > 0:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_extrap_plot(p, loc, iteration=2)
 
-        # ----------------------------------------------------------------------
-        # Do correlation on FP spectra
-        # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Join 0-47 and 47-49 solutions
+    # ------------------------------------------------------------------
+    loc = join_orders(p, loc)
 
-        # ------------------------------------------------------------------
-        # Compute photon noise uncertainty for FP
-        # ------------------------------------------------------------------
-        # set up the arguments for DeltaVrms2D
-        dargs = [loc['FPDATA'], loc['LL_FINAL']]
-        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
-                       threshold=p['IC_DRIFT_MAXFLUX'])
-        # run DeltaVrms2D
-        dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
-        # save to loc
-        loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
-        loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
-        # log the estimated RV uncertainty
-        wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-        WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
+    # ------------------------------------------------------------------
+    # Plot single order, wavelength-calibrated, with found lines
+    # ------------------------------------------------------------------
 
-        # Use CCF Mask function with drift constants
-        p['CCF_MASK'] = p['DRIFT_CCF_MASK']
-        p['TARGET_RV'] = p['DRIFT_TARGET_RV']
-        p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
-        p['CCF_STEP'] = p['DRIFT_CCF_STEP']
-        p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
-        p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
+    if p['DRS_PLOT'] > 0:
+        sPlt.wave_ea_plot_single_order(p, loc)
 
-        # get the CCF mask from file (check location of mask)
-        loc = spirouRV.GetCCFMask(p, loc)
+    # ----------------------------------------------------------------------
+    # FP CCF COMPUTATION - common to all methods
+    # ----------------------------------------------------------------------
 
-        # TODO Check why Blaze makes bugs in correlbin
-        loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
-        # set sources
-        # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
-        loc.set_source('blaze', __NAME__ + '/main()')
+    # ------------------------------------------------------------------
+    # Compute photon noise uncertainty for FP
+    # ------------------------------------------------------------------
+    # set up the arguments for DeltaVrms2D
+    dargs = [loc['FPDATA'], loc['LL_FINAL']]
+    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                   threshold=p['IC_DRIFT_MAXFLUX'])
+    # run DeltaVrms2D
+    dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+    # save to loc
+    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
+    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+    # log the estimated RV uncertainty
+    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
 
-        # ----------------------------------------------------------------------
-        # Do correlation on FP
-        # ----------------------------------------------------------------------
-        # calculate and fit the CCF
-        loc['E2DSFF'] = np.array(loc['FPDATA'])
-        loc.set_source('E2DSFF', __NAME__ + '/main()')
-        p['CCF_FIT_TYPE'] = 1
-        loc['BERV'] = 0.0
-        loc['BERV_MAX'] = 0.0
-        loc['BJD'] = 0.0
+    # Use CCF Mask function with drift constants
+    p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+    p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+    p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+    p['CCF_STEP'] = p['DRIFT_CCF_STEP']
+    p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+    p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
 
-        # run the RV coravelation function with these parameters
-        loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
-        loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
-        loc = spirouRV.Coravelation(p, loc)
+    # get the CCF mask from file (check location of mask)
+    loc = spirouRV.GetCCFMask(p, loc)
 
-        # ----------------------------------------------------------------------
-        # Update the Correlation stats with values using fiber C (FP) drift
-        # ----------------------------------------------------------------------
-        # get the maximum number of orders to use
-        nbmax = p['CCF_NUM_ORDERS_MAX']
-        # get the average ccf
-        loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
-        # normalize the average ccf
-        normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
-        # get the fit for the normalized average ccf
-        ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
-                                           fit_type=1)
-        loc['CCF_RES'] = ccf_res
-        loc['CCF_FIT'] = ccf_fit
-        # get the max cpp
-        loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
-        # get the RV value from the normalised average ccf fit center location
-        loc['RV'] = float(ccf_res[1])
-        # get the contrast (ccf fit amplitude)
-        loc['CONTRAST'] = np.abs(100 * ccf_res[0])
-        # get the FWHM value
-        loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
-        # set the source
-        keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
-                'CCF_RES', 'CCF_FIT']
-        loc.set_sources(keys, __NAME__ + '/main()')
-        # ----------------------------------------------------------------------
-        # log the stats
-        wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
-                'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
-        wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
-        WLOG(p, 'info', wmsg.format(*wargs))
-        # ----------------------------------------------------------------------
-        # rv ccf plot
-        # ----------------------------------------------------------------------
-        if p['DRS_PLOT']:
-            # Plot rv vs ccf (and rv vs ccf_fit)
-            p['OBJNAME'] = 'FP'
-            sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+    # TODO Check why Blaze makes bugs in correlbin
+    loc['BLAZE'] = np.ones((loc['NBO'], loc['NBPIX']))
+    # set sources
+    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    loc.set_source('blaze', __NAME__ + '/main()')
 
-        # TODO : Add QC of the FP CCF
+    # ----------------------------------------------------------------------
+    # Do correlation on FP
+    # ----------------------------------------------------------------------
+    # calculate and fit the CCF
+    loc['E2DSFF'] = np.array(loc['FPDATA'])
+    loc.set_source('E2DSFF', __NAME__ + '/main()')
+    p['CCF_FIT_TYPE'] = 1
+    loc['BERV'] = 0.0
+    loc['BERV_MAX'] = 0.0
+    loc['BJD'] = 0.0
+
+    # run the RV coravelation function with these parameters
+    loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
+    loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
+    loc = spirouRV.Coravelation(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Update the Correlation stats with values using fiber C (FP) drift
+    # ----------------------------------------------------------------------
+    # get the maximum number of orders to use
+    nbmax = p['CCF_NUM_ORDERS_MAX']
+    # get the average ccf
+    loc['AVERAGE_CCF'] = np.nansum(loc['CCF'][: nbmax], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['AVERAGE_CCF'] / np.nanmax(loc['AVERAGE_CCF'])
+    # get the fit for the normalized average ccf
+    ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
+                                       fit_type=1)
+    loc['CCF_RES'] = ccf_res
+    loc['CCF_FIT'] = ccf_fit
+    # get the max cpp
+    loc['MAXCPP'] = np.nansum(loc['CCF_MAX']) / np.nansum(loc['PIX_PASSED_ALL'])
+    # get the RV value from the normalised average ccf fit center location
+    loc['RV'] = float(ccf_res[1])
+    # get the contrast (ccf fit amplitude)
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+    # get the FWHM value
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+    # set the source
+    keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
+            'CCF_RES', 'CCF_FIT']
+    loc.set_sources(keys, __NAME__ + '/main()')
+    # ----------------------------------------------------------------------
+    # log the stats
+    wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
+            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+    wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
+    WLOG(p, 'info', wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
+    # rv ccf plot
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT'] > 0:
+        # Plot rv vs ccf (and rv vs ccf_fit)
+        p['OBJNAME'] = 'FP'
+        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+
+    # TODO : Add QC of the FP CCF
 
     return loc
 
@@ -1882,19 +1745,6 @@ def fit_gaussian_triplets(p, loc):
         gauss_rms_dev = gauss_rms_dev[good]
         peak2 = peak2[good]
 
-        # test save pre-sig-clip arrays to go into cal_wave
-        # create mask
-        good = np.isfinite(wave_catalog)
-        # apply mask
-        wave_catalog_0 = wave_catalog[good]
-        amp_catalog_0 = amp_catalog[good]
-        xgau_0 = xgau[good]
-        orders_0 = orders[good]
-        dv_0 = dv[good]
-        ew_0 = ew[good]
-        gauss_rms_dev_0 = gauss_rms_dev[good]
-        peak2_0 = peak2[good]
-
         # ------------------------------------------------------------------
         # Quality check on the total number of lines found
         # ------------------------------------------------------------------
@@ -2076,6 +1926,7 @@ def fit_gaussian_triplets(p, loc):
 
         # TODO ----------------------------------------------------------------
         # TODO: Remove below
+        # TODO: or reformat to allow different ployfits w/switch?
         # TODO ----------------------------------------------------------------
     #     wave_map3 = np.zeros((nbo, nbpix))
     #     poly_wave_sol3 = np.zeros_like(loc['WAVEPARAMS'])
@@ -2147,6 +1998,7 @@ def fit_gaussian_triplets(p, loc):
 
     # TODO ----------------------------------------------------------------
     # TODO: Remove above
+    # TODO: or reformat to allow different polyfits w/switch?
     # TODO ----------------------------------------------------------------
 
     # save parameters to loc
@@ -2163,16 +2015,6 @@ def fit_gaussian_triplets(p, loc):
     loc['DV_T'] = dv
     loc['EW_T'] = ew
     loc['PEAK_T'] = peak2
-
-    # save test
-    loc['WAVE_CATALOG_0'] = wave_catalog_0
-    loc['AMP_CATALOG_0'] = amp_catalog_0
-    loc['XGAU_T_0'] = xgau_0
-    loc['ORD_T_0'] = orders_0
-    loc['GAUSS_RMS_DEV_T_0'] = gauss_rms_dev_0
-    loc['DV_T_0'] = dv_0
-    loc['EW_T_0'] = ew_0
-    loc['PEAK_T_0'] = peak2_0
 
     loc['LIN_MOD_SLICE'] = lin_mod_slice
     loc['RECON0'] = recon0
@@ -2358,7 +2200,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     Calculate the Littrow solution for this iteration for a set of cut points
 
     Uses ALL_LINES_i  where i = iteration to calculate the littrow solutions
-    for defiend cut points (given a cut_step and fit_deg of
+    for defined cut points (given a cut_step and fit_deg of
     IC_LITTROW_CUT_STEP_i and IC_LITTROW_FIT_DEG_i where i = iteration)
 
     :param p: parameter dictionary, ParamDict containing constants
