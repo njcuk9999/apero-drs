@@ -21,9 +21,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 
-from . import spirouRecipe
-from . import spirouFile
-from . import recipes_spirou
+from misc.startup_test import spirouRecipe, recipes_spirou, spirouFile
 
 # =============================================================================
 # Define variables
