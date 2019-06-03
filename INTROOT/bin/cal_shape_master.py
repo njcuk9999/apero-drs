@@ -75,21 +75,20 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     if hcfile is None or fpfile is None:
-        names, types = ['hcfile', 'fpfiles'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
-                                                        last_multi=True)
+        names, types = ['hcfile', 'fpfile'], [str, str]
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names)
     else:
-        customargs = dict(hcfile=hcfile, fpfiles=fpfile)
+        customargs = dict(hcfile=hcfile, fpfile=fpfile)
 
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='fpfiles')
+                                    mainfitsfile='fpfile')
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, hcfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['HCFILE'])
-    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, files=p['FPFILE'])
+    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['FPFILE'])
     # set fiber (it doesn't matter with the 2D image but we need this to get
     # the lamp type for FPFILES and HCFILES, AB == C
     p['FIBER'] = 'AB'
@@ -134,7 +133,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # Once we have checked the e2dsfile we can load calibDB
     # ----------------------------------------------------------------------
     # as we have custom arguments need to load the calibration database
-    p = spirouStartup.LoadCalibDB(p, hdr=fphdr)
+    p = spirouStartup.LoadCalibDB(p)
 
     # add a force plot off
     p['PLOT_PER_ORDER'] = PLOT_PER_ORDER
@@ -152,8 +151,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # get lamp parameters
     p = spirouTHORCA.GetLampParams(p, hchdr)
     # get FP_FP DPRTYPE
-    p = spirouImage.ReadParam(p, fphdr, p['KW_DPRTYPE'][0], 'DPRTYPE',
-                              dtype=str)
+    p = spirouImage.ReadParam(p, fphdr, 'KW_DPRTYPE', 'DPRTYPE', dtype=str)
 
     # -------------------------------------------------------------------------
     # get all FP_FP files
@@ -241,8 +239,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
                    getshape=False)
     fpdata2 = spirouImage.ResizeImage(p, fpdata0, **bkwargs)
     # log change in data size
-    WLOG(p, '', ('FP Image format changed to '
-                            '{0}x{1}').format(*fpdata2.shape))
+    WLOG(p, '', ('FP Image format changed to {0}x{1}').format(*fpdata2.shape))
 
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
