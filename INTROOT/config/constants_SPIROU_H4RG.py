@@ -475,6 +475,28 @@ SHAPE_SHORT_DX_MEDFILT_WID = 9
 SHAPE_LONG_DX_MEDFILT_WID = 9
 
 # -----------------------------------------------------------------------------
+#   cal_shape_master parameters
+# -----------------------------------------------------------------------------
+#   Define the allowed fp file types                        - [cal_shape_master]
+ALLOWED_FP_TYPES = ['FP_FP']
+
+#   Define the maximum time span to combine fp files        - [cal_shape_master]
+#      over (in hours)
+FP_MASTER_MATCH_TIME = 2
+
+#   Define the percentile at which the FPs are normalised   - [cal_shape_master]
+FP_MASTER_PERCENT_THRES = 90.0
+
+#   Define the +- offset of the cross-correlation for      - [cal_shape_master]
+#       shifting the FPs to the master FP frame
+FP_MASTER_CC_OFFSET = 11
+
+#   Define the number of iterations for the correlation     - [cal_shape_master]
+#       used in shifting the FPs to the master FP frame
+FP_MASTER_CC_NITER = 3
+
+
+# -----------------------------------------------------------------------------
 #   cal_ff parameters
 # -----------------------------------------------------------------------------
 
