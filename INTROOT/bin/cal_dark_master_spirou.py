@@ -96,8 +96,7 @@ def main(filetype='DARK_DARK'):
     dark_exp, dark_pp_version, dark_wt_temp = [], [], []
     basenames, nightnames, dark_cass_temp, dark_humidity = [], [], [], []
     # log progress
-    wmsg = 'Reading all dark file headers'
-    WLOG(p, '', wmsg.format(p['DARK_MASTER_MATCH_TIME']))
+    WLOG(p, '', 'Reading all dark file headers')
     # looping through the file headers
     for it in range(len(filenames)):
         # get night name
@@ -121,25 +120,10 @@ def main(filetype='DARK_DARK'):
     # log progress
     wmsg = 'Matching dark files by observation time (+/- {0} hrs)'
     WLOG(p, '', wmsg.format(p['DARK_MASTER_MATCH_TIME']))
-    # ID of matched multiplets of files
-    matched_id = np.zeros_like(dark_time, dtype=int)
-    # loop until all files are matched with all other files taken within
-    #    DARK_MASTER_MATCH_TIME
-    group_num, it = 1, 0
-    while np.min(matched_id) == 0 and it < len(dark_time):
-        # find all non-matched dark times
-        non_matched = matched_id == 0
-        # find the first non-matched dark time
-        first = np.min(np.where(non_matched)[0])
-        # find all non-matched that are lower than threshold (in days)
-        time_thres = p['DARK_MASTER_MATCH_TIME'] / 24.0
-        group_mask = np.abs(dark_time[first] - dark_time) < time_thres
-        # add this group to matched_id
-        matched_id[group_mask] = group_num
-        # change the group number (add 1)
-        group_num += 1
-        # increase iterator
-        it += 1
+    # get the time threshold
+    time_thres = p['DARK_MASTER_MATCH_TIME']
+    # get items grouped by time
+    matched_id = spirouImage.GroupFilesByTime(p, dark_time, time_thres)
     # -------------------------------------------------------------------------
     # get the most recent position
     lastpos = np.argmax(dark_time)
