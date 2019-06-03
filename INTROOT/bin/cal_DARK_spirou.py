@@ -248,13 +248,15 @@ def main(night_name=None, files=None):
     rawdarkfile = os.path.basename(p['FITSFILENAME'])
     # construct folder and filename
     darkfits, tag = spirouConfig.Constants.DARK_FILE(p)
-    darkfitsname = os.path.split(darkfits)[-1]
+    darkfitsname = os.path.basename(darkfits)
     # log saving dark frame
     WLOG(p, '', 'Saving Dark frame in ' + darkfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
@@ -293,6 +295,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # add qc parameters

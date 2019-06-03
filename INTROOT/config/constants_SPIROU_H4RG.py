@@ -56,6 +56,9 @@ ic_altit_obs = 4.204
 # -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
+# Define the pixel size in km/s / pix
+#    also used for the median sampling size in tellu correction
+IMAGE_PIXEL_SIZE = 2.28
 
 #   Resize blue window                                              - [cal_dark]
 ic_ccdx_blue_low = 100  # 500
@@ -85,6 +88,11 @@ use_skydark_correction = False
 #    If use_skydark_correction is True define whether we use
 #       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
 use_skydark_only = False
+
+#   Some recipes will extract only if the file does not already exist
+#       this switch overrides that functionality
+always_extract = False
+
 
 # -----------------------------------------------------------------------------
 #   fiber variables
@@ -214,6 +222,21 @@ histo_range_high = 0.8
 #   Define a bad pixel cut limit (in ADU/s)                         - [cal_dark]
 dark_cutlimit = 5.0
 
+
+# -----------------------------------------------------------------------------
+#   cal_dark_master parameters
+# -----------------------------------------------------------------------------
+#   Define the allowed dark file types                       - [cal_dark_master]
+ALLOWED_DARK_TYPES = ['DARK_DARK']
+
+#   Define the maximum time span to combine dark files       - [cal_dark_master]
+#      over (in hours)
+DARK_MASTER_MATCH_TIME = 2
+
+#   median filter size for dark master                       - [cal_dark_master]
+DARK_MASTER_MED_SIZE = 4
+
+
 # -----------------------------------------------------------------------------
 #   cal_loc parameters
 # -----------------------------------------------------------------------------
@@ -285,7 +308,7 @@ ic_min_amplitude = 10  # 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.17  # 0.18
+ic_locseuil = 0.15     # 0.17  # 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
 ic_satseuil = 1000  # 64536
@@ -324,6 +347,12 @@ ic_loc_delta_width = 1.85
 
 #   Localisation option 1: Option for archiving the location image   - [cal_loc]
 ic_locopt1 = 1
+
+
+#   Define the amount we drop from the centre of the order when      - [cal_loc]
+#      previous order center is missed (in finding the position)
+loc_order_curve_drop = 2
+
 
 # -----------------------------------------------------------------------------
 #   cal_slit (tilt) parameters
@@ -844,6 +873,12 @@ ccf_num_orders_max = 48
 #                     CURRENTLY NOT WORKING!!!
 bervmode = "new"
 
+
+#   Define the telluric transmission threshold below which we        - [cal_CCF]
+#       do not use the flux as part of the RV/CCF analysis
+CCF_TELLU_THRES = 0.5
+
+
 # -----------------------------------------------------------------------------
 #   cal_exposure_meter parameters
 # -----------------------------------------------------------------------------
@@ -1187,9 +1222,6 @@ n_iter_sed_hotstar = 5
 #     to the true width
 tellu_vsini = 250.0
 
-# Define the median sampling expressed in km/s / pix
-tellu_med_sampling = 2.2
-
 # TODO: Need comments
 tellu_sigma_dev = 5
 tellu_bad_threshold = 1.2
@@ -1304,9 +1336,6 @@ MKTELLU_TRANS_SIGMA_CLIP = 20.0
 
 # median-filter the trans data measured in pixels
 MKTELLU_TRANS_TEMPLATE_MEDFILT = 31
-
-# Define the median sampling expressed in km/s / pix
-MKTELLU_MED_SAMPLING = 2.2
 
 # Define the threshold for "small" values that do not add to the weighting
 MKTELLU_SMALL_WEIGHTING_ERROR = 0.01

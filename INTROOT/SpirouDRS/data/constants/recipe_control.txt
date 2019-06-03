@@ -39,6 +39,8 @@ cal_DARK_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DA
 cal_DARK_spirou, 1, o, OBJECT, pos_pk, pos_pk, None, OBJ_DARK, None, RAW, DARK, 1, 1
 cal_BADPIX_spirou, 1, f, FLAT, pos_wl, pos_wl, None, FLAT_FLAT, flat_flat, RAW, BAD-PIXEL, 2, 1
 cal_BADPIX_spirou, 2, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, BAD-PIXEL, 2, 1
+cal_dark_master_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
+cal_thermal_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
 #
 # ---- Localisation recipes
 #
@@ -199,18 +201,6 @@ cal_CCF_E2DS_spirou, 1, POL_DEG, None, None, None, AB, None, None, REDUC, CCF, 1
 cal_CCF_E2DS_spirou, 1, POL_STOKES_I, None, None, None, AB, None, None, REDUC, CCF, 11, 1
 cal_CCF_E2DS_spirou, 1, POL_LSD, None, None, None, AB, None, None, REDUC, CCF, 11, 1
 
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_AB, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_A, None, None, None, A, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_B, None, None, None, B, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_FF_AB, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_FF_A, None, None, None, A, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, EXT_E2DS_FF_B, None, None, None, B, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, TELLU_CORRECTED_AB, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, TELLU_CORRECTED_A, None, None, None, A, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, TELLU_CORRECTED_B, None, None, None, B, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, POL_DEG, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, POL_STOKES_I, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
-cal_CCF_E2DS_FP_spirou, 1, POL_LSD, None, None, None, AB, OBJ_FP, OBJ_FP, REDUC, CCF, 11, 1
 #
 # ---- Telluric recipes
 #

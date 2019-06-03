@@ -165,6 +165,8 @@ def main(night_name=None, files=None):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
@@ -199,7 +201,7 @@ def main(night_name=None, files=None):
     # log progress
     WLOG(p, '', 'Searching order center on central column')
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
-    if p['DRS_DEBUG'] == 0 and p['DRS_PLOT']:
+    if p['DRS_DEBUG'] > 0 and p['DRS_PLOT']:
         sPlt.debug_locplot_min_ycc_loc_threshold(p, loc['YCC'])
     # find the central positions of the orders in the central
     posc_all = spirouLOCOR.FindPosCentCol(loc['YCC'], p['IC_LOCSEUIL'])
@@ -431,6 +433,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
@@ -486,6 +490,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
@@ -538,6 +544,11 @@ def main(night_name=None, files=None):
         data4 = spirouLOCOR.ImageLocSuperimp(data2o, loc['ACC'][0:rorder_num])
         # save this image to file
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],
+                                   value=p['DRS_DATE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'],
+                                   value=p['DATE_NOW'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_FIBER'], value=p['FIBER'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'],
                                    value=p['DARKFILE'])

@@ -74,6 +74,8 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_CCF_RV',
             'KW_CCF_RVC',
             'KW_CCF_WMREF',
+            'KW_CCF_RVNOISE',
+            'KW_CCF_TELL',
             'KW_CDBBAD',
             'KW_CDBBLAZE',
             'KW_CDBDARK',
@@ -248,11 +250,18 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_WAVE_PARAM',
             'KW_WAVE_TIME1',
             'KW_WAVE_TIME2',
-            'KW_ppversion',
+            'KW_PPVERSION',
             'KW_root_drs_flat',
             'KW_root_drs_hc',
             'KW_root_drs_loc',
-            'KW_version']
+            'KW_VERSION',
+            'KW_WEATHER_TOWER_TEMP',
+            'KW_CASS_TEMP',
+            'KW_HUMIDITY',
+            'KW_DRS_DATE',
+            'KW_DATE_NOW',
+            'KW_FIBER'
+            ]
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -388,16 +397,33 @@ KW_CMPLTEXP = ['CMPLTEXP', None, '']
 # define the total number of exposures HEADER key
 KW_NEXP = ['NEXP', None, '']
 
+# define the weather tower temperature HEADER key
+KW_WEATHER_TOWER_TEMP = ['TEMPERAT', None, '']
+
+# define the cassegrain temperature HEADER key
+KW_CASS_TEMP = ['SB_POL_T', None, '']
+
+# define the humidity temperature HEADER key
+KW_HUMIDITY = ['RELHUMID', None, '']
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
 # DRS version
-KW_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+KW_VERSION = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
-KW_ppversion = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+# the preprocessed DRS version
+KW_PPVERSION = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
                 'DRS Pre-Processing version']
 
+# the release date of the DRS
+KW_DRS_DATE = ['DRSVDATE', '', 'DRS Release date']
+
+# The date when processed
+KW_DATE_NOW = ['DRSPDATE', '', 'DRS Processed date']
+
+# DRS Process ID
 KW_PID = ['DRSPID', '', 'The process ID that outputted this file.']
 
 # root keys (for use below and in finding keys later)
@@ -407,6 +433,9 @@ KW_root_drs_hc = ['LMP', None, '']
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
+
+# define fiber type in header keywords
+KW_FIBER = ['FIBER', None, 'The fiber associated with this file']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -567,11 +596,13 @@ KW_CCF_CONTRAST = ['CCFCONT', 0, 'Contrast of  CCF (%)']
 KW_CCF_MAXCPP = ['CCFMACP', 0, 'max count/pixel of CCF (e-)']
 KW_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 KW_CCF_LINES = ['CCFLINE', 0, 'nbr of lines used']
+KW_CCF_TELL = ['CCFTELLC', 0, 'Telluric threshold for CCF rejection']
 KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
 KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
 KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
 KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
-KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum']
+KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum (km/s)']
+KW_CCF_RVNOISE = ['RVNOISE', 0, 'RV photon noise uncertainty on CCF (km/s)']
 
 KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
 KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
@@ -744,8 +775,8 @@ KW_DRS_QC_PASS = ['QCC{0:03d}P', 0, 'Quality control passed']
 # -----------------------------------------------------------------------------
 # file inputs
 KW_INFILE1 = ['INF1{0:03d}', '', 'Input file used to create output']
-KW_INFILE2 = ['INF1{0:03d}', '', 'Input file used to create output (2nd)']
-KW_INFILE3 = ['INF1{0:03d}', '', 'Input file used to create output (3rd)']
+KW_INFILE2 = ['INF2{0:03d}', '', 'Input file used to create output (2nd)']
+KW_INFILE3 = ['INF3{0:03d}', '', 'Input file used to create output (3rd)']
 # calibration inputs
 KW_CDBDARK = ['CDBDARK', '', 'The calibration DARK file used']
 KW_CDBBAD = ['CDBBAD', '', 'The calibration BADPIX file used']

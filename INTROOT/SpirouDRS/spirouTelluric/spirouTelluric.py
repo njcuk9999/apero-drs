@@ -136,7 +136,7 @@ def calculate_telluric_absorption(p, loc):
     nsigclip = p['MKTELLU_TRANS_SIGMA_CLIP']
     med_filt = p['MKTELLU_TRANS_TEMPLATE_MEDFILT']
     small_weight = p['MKTELLU_SMALL_WEIGHTING_ERROR']
-    tellu_med_sampling = p['MKTELLU_MED_SAMPLING']
+    tellu_med_sampling = p['IMAGE_PIXEL_SIZE']
     plot_order_nums = p['MKTELLU_PLOT_ORDER_NUMS']
 
     # get data from loc
@@ -870,7 +870,7 @@ def construct_convolution_kernal2(p, loc, vsini):
     func_name = __NAME__ + '.construct_convolution_kernal2()'
 
     # gaussian ew for vinsi km/s
-    ew = vsini / p['TELLU_MED_SAMPLING'] / SIG_FWHM
+    ew = vsini / p['IMAGE_PIXEL_SIZE'] / SIG_FWHM
     # set up the kernel exponent
     xx = np.arange(ew * 6) - ew * 3
     # kernal is the a gaussian

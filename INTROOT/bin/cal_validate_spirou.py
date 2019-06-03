@@ -318,11 +318,12 @@ def main(check=1, debug_mode=0):
     # Get config parameters
     cparams, _ = spirouConfig.ReadConfigFile()
     # get drs_name and drs_version
-    cparams['PID'] = Startup.assign_pid()
+    cparams['PID'], cparams['DATE_NOW'] = Startup.assign_pid()
     cparams['RECIPE'] = __NAME__.replace('.py', '')
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
-    cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
+    sources = ['PID', 'DATE_NOW', 'RECIPE', 'DRS_NAME', 'DRS_VERSION']
+    cparams.set_sources(sources, __NAME__ + '.main()')
     # display title
     Startup.display_drs_title(cparams)
     # check input parameters

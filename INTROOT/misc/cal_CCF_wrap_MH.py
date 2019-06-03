@@ -9,14 +9,13 @@ from astropy.table import Table
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
-import cal_CCF_E2DS_FP_MH_spirou
-
+from misc import cal_CCF_E2DS_FP_MH_spirou
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_CCF_E2DS_FP_spirou.py'
+__NAME__ = 'cal_CCF_wrap_MH.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
