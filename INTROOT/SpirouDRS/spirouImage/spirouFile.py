@@ -213,7 +213,7 @@ def sort_by_name(filelist):
 # =============================================================================
 # Define ID functions (pre-processing)
 # =============================================================================
-def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
+def identify_unprocessed_file(p, filename, hdr=None):
     """
     Identify a unprocessed raw file (from recipe control file), adds suffix
     and header key (DPRTYPE) accordingly
@@ -227,14 +227,9 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
     :param filename: string, the filename to check
     :param hdr: dictionary or None, the HEADER dictionary to check for keys and
                 associated values, if None attempt to open HEADER from filename
-    :param cdr: dictionary or None, the HEADER dictionary to check for keys and
-                associated comments, if None attempt to open HEADER from
-                filename
 
     :return newfn: string, the new filename with added suffix
     :return hdr: dictionary, the HEADER with added HEADER key/value pair
-                 (DPRTYPE)
-    :return cdr: dictionary, the HEADER with added HEADER key/comment pair
                  (DPRTYPE)
     """
     # ----------------------------------------------------------------------
@@ -245,7 +240,7 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
     control = control[rawmask]
     # ----------------------------------------------------------------------
     # get file header (if not passed in)
-    hdr, cdr = get_header_file(p, filename, hdr, cdr)
+    hdr = get_header_file(p, filename, hdr)
     # ----------------------------------------------------------------------
     # Step 1: Look for odometer code in filename (e.g. d.fits f.fits o.fits)
     # get check and code
@@ -256,14 +251,14 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
     # ----------------------------------------------------------------------
     # if step 2 succeed ID file
     if cond2:
-        newfn, hdr, cdr = id_mode(p, control, filename, hdr, cdr, code,
-                                  obstype, ccas, cref)
+        newfn, hdr = id_mode(p, control, filename, hdr, code,
+                             obstype, ccas, cref)
     # else we don't have the file key and header fallback on checking filename
     else:
-        newfn, hdr, cdr = fallback_id_mode(p, control, filename, hdr, cdr)
+        newfn, hdr = fallback_id_mode(p, control, filename, hdr)
     # ----------------------------------------------------------------------
     # return filename and header
-    return newfn, hdr, cdr
+    return newfn, hdr
 
 
 # =============================================================================
@@ -610,7 +605,7 @@ def get_control_file(p):
     return control
 
 
-def get_header_file(p, filename, hdr=None, cdr=None):
+def get_header_file(p, filename, hdr=None):
     func_name = __NAME__ + '.get_header_file()'
     # get header if None
     if hdr is None:
@@ -619,9 +614,9 @@ def get_header_file(p, filename, hdr=None, cdr=None):
             emsg2 = '    fuction = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1.format(filename), emsg2])
         else:
-            hdr, cdr = spirouFITS.read_header(p, filename, return_comments=True)
+            hdr = spirouFITS.read_header(p, filename)
     # return header and comments
-    return hdr, cdr
+    return hdr
 
 
 def get_properties_from_control(p, control):
@@ -691,7 +686,7 @@ def odometer_header(p, hdr):
     return cond, obstype, ccas, cref
 
 
-def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
+def id_mode(p, control, filename, hdr, code, obstype, ccas, cref):
     # get base filename (no path)
     basefilename = os.path.basename(filename)
     # find a match for code, obstype, ccas, cref
@@ -710,13 +705,12 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
             wmsg = '\tID via HEADER   OCODE={0} OBSTYPE={1} CCAS={2} CREF={3}'
             WLOG(p, '', wmsg.format(code, obstype, ccas, cref))
         # add key to header
-        hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
-        cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
+        hdr[p['KW_DPRTYPE'][0]] = (dprtype.strip(), p['KW_DPRTYPE'][2])
         # update filename (if required)
         newfilename = str(filename)
         # now try updating filename
         if p['PP_MODE'] == 0:
-            return newfilename, hdr, cdr
+            return newfilename, hdr
         elif (dstring == 'None') and (dstring not in basefilename):
             # try setting dstring to OBSTYPE
             if p['kw_OBJNAME'][0] in hdr:
@@ -731,7 +725,7 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
             newext = '_{0}.fits'.format(dstring)
             newfilename = filename.replace('.fits', newext)
         # return new filename and header
-        return newfilename, hdr, cdr
+        return newfilename, hdr
     else:
         # deal with no match
         emsg1 = ('File {0} not identified as a valid DRS input.'
@@ -741,10 +735,9 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         WLOG(p, 'warning', [emsg1, emsg2])
 
         # add key to header
-        hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
-        cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
+        hdr[p['KW_DPRTYPE'][0]] = ('UNKNOWN', p['KW_DPRTYPE'][2])
 
-        return filename, hdr, cdr
+        return filename, hdr
 
 
 def find_match(control, code, obstype, ccas, cref):
@@ -802,7 +795,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
     # get header
     # -----------------------------------------------------------------------
     # make sure we have header
-    hdr, _ = get_header_file(p, filename, hdr)
+    hdr = get_header_file(p, filename, hdr)
     # -----------------------------------------------------------------------
     # get control values
     # -----------------------------------------------------------------------
@@ -820,8 +813,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             dprtype = hdr[p['KW_DPRTYPE'][0]].strip()
         # if we don't have it, obtain it
         else:
-            _, hdr, _ = identify_unprocessed_file(p, filename, hdr=None,
-                                                  cdr=None)
+            _, hdr = identify_unprocessed_file(p, filename, hdr=None)
             dprtype = hdr[p['KW_DPRTYPE'][0]].strip()
     # else check that we are looking for a REDUC file
     elif kinds[0].upper() == 'REDUC':
@@ -987,7 +979,7 @@ def strip_string_list(string_list):
     return new_list
 
 
-def fallback_id_mode(p, control, filename, hdr, cdr):
+def fallback_id_mode(p, control, filename, hdr):
     # get base filename (no path)
     basefilename = os.path.basename(filename)
     # get unique_strings
@@ -1009,17 +1001,15 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
                 wmsg = '\tID via filename   file={0}'
                 WLOG(p, '', wmsg.format(basefilename))
             # update header key 'DPRTYPE
-            hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
-            cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
+            hdr[p['KW_DPRTYPE'][0]] = (dprtype.strip(), p['KW_DPRTYPE'][2])
             # return original filename and header
-            return filename, hdr, cdr
+            return filename, hdr
     # if file not found log this
     emsg = 'File "{0}" not identified as a valid DRS input.'
     WLOG(p, 'warning', emsg.format(basefilename))
     # update header key 'DPRTYPE
-    hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
-    cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
-    return filename, hdr, cdr
+    hdr[p['KW_DPRTYPE'][0]] = ('UNKNOWN', p['KW_DPRTYPE'][2])
+    return filename, hdr
 
 
 # TODO: Not used
@@ -1071,13 +1061,13 @@ def check_id_header(p, control, recipe, filename, hdr=None):
     # get base filename (no path)
     basefilename = os.path.basename(filename)
     # load header
-    hdr, _ = get_header_file(p, filename, hdr)
+    hdr = get_header_file(p, filename, hdr)
     # check for DPRTYPE in header
     if p['KW_DPRTYPE'][0] in hdr:
         dprtype = hdr[p['KW_DPRTYPE'][0]]
     # if we don't have it, obtain it
     else:
-        _, hdr, _ = identify_unprocessed_file(p, filename, hdr=None, cdr=None)
+        _, hdr = identify_unprocessed_file(p, filename, hdr=None)
         dprtype = hdr[p['KW_DPRTYPE'][0]]
     # -----------------------------------------------------------------------
     # Only should be looking at the raw file for header info

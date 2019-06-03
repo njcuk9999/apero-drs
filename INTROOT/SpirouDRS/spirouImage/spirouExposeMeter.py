@@ -59,8 +59,7 @@ def get_telluric(p, loc):
     # load the telluric model
 
     tapas_file = spirouDB.GetDatabaseTellMole(p)
-    tdata = spirouFITS.readimage(p, tapas_file, kind='TAPAS')
-    tapas, thdr, tcmt, _, _ = tdata
+    tapas, _, _, _ = spirouFITS.readimage(p, tapas_file, kind='TAPAS')
 
     # add model and mask to loc
     loc['TELL_X'] = tapas['wavelength']

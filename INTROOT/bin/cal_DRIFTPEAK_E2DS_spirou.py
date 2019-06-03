@@ -98,7 +98,7 @@ def main(night_name=None, reffile=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['REFFILENAME'])
+    speref, hdr, nbo, nx = spirouImage.ReadData(p, p['REFFILENAME'])
     # add to loc
     loc = ParamDict()
     loc['SPEREF'] = speref
@@ -281,7 +281,7 @@ def main(night_name=None, reffile=None):
         # ------------------------------------------------------------------
         # read data
         rout = spirouImage.ReadData(p, filename=fpfile, log=False)
-        loc['SPE'], hdri, cdri, nxi, nyi = rout
+        loc['SPE'], hdri, nxi, nyi = rout
         # apply flat
         loc['SPE'] = loc['SPE']/loc['FLAT']
         # get acqtime
@@ -417,7 +417,7 @@ def main(night_name=None, reffile=None):
     wmsg = 'Saving drift values of Fiber {0} in {1}'
     WLOG(p, '', wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

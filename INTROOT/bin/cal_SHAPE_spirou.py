@@ -114,18 +114,18 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ----------------------------------------------------------------------
     # read and combine all FP files except the first (fpfitsfilename)
     rargs = [p, 'add', fpfitsfilename, fpfilenames[1:]]
-    p, fpdata, fphdr, fpcdr = spirouImage.ReadImageAndCombine(*rargs)
+    p, fpdata, fphdr = spirouImage.ReadImageAndCombine(*rargs)
     # read first file (hcfitsfilename)
-    hcdata, hchdr, hccdr, _, _ = spirouImage.ReadImage(p, hcfitsfilename)
+    hcdata, hchdr, _, _ = spirouImage.ReadImage(p, hcfitsfilename)
 
     # add data and hdr to loc
     loc = ParamDict()
-    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
-    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+    loc['HCDATA'], loc['HCHDR'] = hcdata, hchdr
+    loc['FPDATA'], loc['FPHDR'] = fpdata, fphdr
     # set the source
-    sources = ['HCDATA', 'HCHDR', 'HCCDR']
+    sources = ['HCDATA', 'HCHDR']
     loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
-    sources = ['FPDATA', 'FPHDR', 'FPCDR']
+    sources = ['FPDATA', 'FPHDR']
     loc.set_sources(sources, 'spirouImage.ReadImage()')
 
     # ---------------------------------------------------------------------
@@ -325,7 +325,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     wmsg = 'Saving shape information in file: {0}'
     WLOG(p, '', wmsg.format(shapefitsname))
     # Copy keys from fits file
-    hdict = spirouImage.CopyOriginalKeys(fphdr, fpcdr)
+    hdict = spirouImage.CopyOriginalKeys(fphdr)
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

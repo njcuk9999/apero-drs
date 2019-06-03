@@ -86,8 +86,8 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     loc = ParamDict()
     rd = spirouImage.ReadImage(p, p['FITSFILENAME'])
-    loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['YDIM'], loc['XDIM'] = rd
-    loc.set_sources(['DATA', 'DATAHDR', 'DATACDR', 'XDIM', 'YDIM'], main_name)
+    loc['DATA'], loc['DATAHDR'], loc['YDIM'], loc['XDIM'] = rd
+    loc.set_sources(['DATA', 'DATAHDR', 'XDIM', 'YDIM'], main_name)
 
     # ------------------------------------------------------------------
     # Get the wave solution
@@ -182,7 +182,7 @@ def main(night_name=None, files=None):
         # Read obj telluric file and correct blaze (per order)
         # ------------------------------------------------------------------
         # get image
-        sp, shdr, scdr, _, _ = spirouImage.ReadImage(p, filename)
+        sp, shdr, _, _ = spirouImage.ReadImage(p, filename)
 
         # get blaze
         p, blaze = spirouImage.ReadBlazeFile(p, shdr)
@@ -248,7 +248,7 @@ def main(night_name=None, files=None):
         else:
             loc['FLAG_TEMPLATE'] = True
             # load template
-            template, _, _, _, _ = spirouImage.ReadImage(p, template_file)
+            template, _, _, _ = spirouImage.ReadImage(p, template_file)
             # add to loc
             loc['TEMPLATE'] = template
             # construct progres string
@@ -409,7 +409,7 @@ def main(night_name=None, files=None):
         # get raw file name
         raw_in_file = os.path.basename(p['FITSFILENAME'])
         # copy original keys
-        hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+        hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'])
         # add version number
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'],

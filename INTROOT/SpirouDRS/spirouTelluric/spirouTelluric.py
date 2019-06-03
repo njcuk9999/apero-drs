@@ -772,7 +772,7 @@ def get_molecular_tell_lines(p, loc):
     # tapas = pyfits.getdata('tapas_model.fits')
     tapas_file = spirouDB.GetDatabaseTellMole(p)
     tdata = spirouImage.ReadImage(p, tapas_file, kind='TAPAS')
-    tapas, thdr, tcmt, _, _ = tdata
+    tapas, thdr, _, _ = tdata
 
     # load all current telluric convolve files
     convolve_files = spirouDB.GetDatabaseTellConv(p, required=False)

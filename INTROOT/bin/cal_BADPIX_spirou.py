@@ -89,10 +89,10 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Read the flat file
     fdata = spirouImage.ReadImage(p, flatfilename, kind='FLAT')
-    flat_ref, fhdr, fcmt, nx1, ny1 = fdata
+    flat_ref, fhdr, nx1, ny1 = fdata
     # Read the dark file
     ddata = spirouImage.ReadImage(p, darkfilename, kind='DARK')
-    dark_ref, dhdr, dcmt, nx2, ny2 = ddata
+    dark_ref, dhdr, nx2, ny2 = ddata
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files
@@ -209,8 +209,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
     WLOG(p, '', 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header files
     # Question Why only the keys from the flat file?
-    # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
-    hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
+    # hdict = spirouImage.CopyOriginalKeys(dhdr)
+    hdict = spirouImage.CopyOriginalKeys(fhdr)
     # add new keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
@@ -246,8 +246,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
     WLOG(p, '', 'Saving Bad Pixel Map in ' + backmapfitsname)
     # add keys from original header files
     # Question Why only the keys from the flat file?
-    # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
-    hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
+    # hdict = spirouImage.CopyOriginalKeys(dhdr)
+    hdict = spirouImage.CopyOriginalKeys(fhdr)
     # add new keys
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
