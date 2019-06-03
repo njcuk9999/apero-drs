@@ -962,7 +962,7 @@ ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg_1 = 5  # 5  # 4
+ic_Littrow_fit_deg_1 = 8  # 5  # 4
 ic_Littrow_fit_deg_2 = 8  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
@@ -974,7 +974,7 @@ ic_Littrow_order_init_1 = 0
 ic_Littrow_order_init_2 = 1
 
 #  Define the order to end the Littrow fit at	            - [cal_HC, cal_wave]
-ic_Littrow_order_final_1 = 46
+ic_Littrow_order_final_1 = 47
 ic_Littrow_order_final_2 = 47
 
 #  Define orders to ignore in Littrow fit                   - [cal_HC, cal_wave]
