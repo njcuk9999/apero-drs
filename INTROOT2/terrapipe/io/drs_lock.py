@@ -75,7 +75,7 @@ def check_lock_file(p, filename):
         WLOG(p, 'warning', TextEntry('10-001-00002', args=[filename]))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
-    while os.path.exists(lock_file) or wait_time > max_wait_time:
+    while os.path.exists(lock_file) and wait_time < max_wait_time:
         time.sleep(1)
         wait_time += 1
     if wait_time > max_wait_time:
