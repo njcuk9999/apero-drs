@@ -14,11 +14,8 @@ import time
 from multiprocessing import Manager, Process
 from collections import OrderedDict
 
-from SpirouDRS import spirouStartup
 from SpirouDRS import spirouCore
-from SpirouDRS.spirouStartup import spirouStartup2
-from SpirouDRS.spirouStartup import recipes_spirou
-
+from misc.startup_test import recipes_spirou, spirouStartup2
 
 # =============================================================================
 # Define variables
