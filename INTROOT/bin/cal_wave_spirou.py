@@ -209,7 +209,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # log that we are running the HC part and the mode
     wmsg = 'Now running the HC solution, mode = {0}'
-    WLOG(p, wmsg.format(p['WAVE_MODE_HC']))
+    WLOG(p, 'info', wmsg.format(p['WAVE_MODE_HC']))
     # get the solution
     loc = spirouWAVE2.do_hc_wavesol(p, loc)
 
@@ -737,40 +737,42 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # save to file
         p = spirouImage.WriteImageMulti(p, resfits, resdata, hdicts=hdicts)
 
-        # ------------------------------------------------------------------
-        # Save line list table file
-        # ------------------------------------------------------------------
-        # construct filename
-        # TODO proper column values
-        wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
-        wavelltblname = os.path.split(wavelltbl)[-1]
-        # construct and write table
-        columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
-        columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
-                         '{:12.4f}', '{:12.4f}', '{:8.4f}']
+        # TODO fix res table for mode 1
+        if p['WAVE_MODE_FP'] == 0:
+            # ------------------------------------------------------------------
+            # Save line list table file
+            # ------------------------------------------------------------------
+            # construct filename
+            # TODO proper column values
+            wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
+            wavelltblname = os.path.split(wavelltbl)[-1]
+            # construct and write table
+            columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
+            columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
+                             '{:12.4f}', '{:12.4f}', '{:8.4f}']
 
-        columnvalues = []
-        # construct column values (flatten over orders)
-        for it in range(len(loc['X_DETAILS_2'])):
-            for jt in range(len(loc['X_DETAILS_2'][it][0])):
-                row = [float(it), loc['X_DETAILS_2'][it][0][jt],
-                       loc['LL_DETAILS_2'][it][0][jt],
-                       loc['X_DETAILS_2'][it][3][jt],
-                       loc['X_DETAILS_2'][it][1][jt],
-                       loc['X_DETAILS_2'][it][2][jt],
-                       loc['SCALE_2'][it][jt]]
-                columnvalues.append(row)
+            columnvalues = []
+            # construct column values (flatten over orders)
+            for it in range(len(loc['X_DETAILS_2'])):
+                for jt in range(len(loc['X_DETAILS_2'][it][0])):
+                    row = [float(it), loc['X_DETAILS_2'][it][0][jt],
+                           loc['LL_DETAILS_2'][it][0][jt],
+                           loc['X_DETAILS_2'][it][3][jt],
+                           loc['X_DETAILS_2'][it][1][jt],
+                           loc['X_DETAILS_2'][it][2][jt],
+                           loc['SCALE_2'][it][jt]]
+                    columnvalues.append(row)
 
-        # log saving
-        wmsg = 'List of lines used saved in {0}'
-        WLOG(p, '', wmsg.format(wavelltblname))
+            # log saving
+            wmsg = 'List of lines used saved in {0}'
+            WLOG(p, '', wmsg.format(wavelltblname))
 
-        # make table
-        columnvalues = np.array(columnvalues).T
-        table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
-                                      formats=columnformats)
-        # write table
-        spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
+            # make table
+            columnvalues = np.array(columnvalues).T
+            table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
+                                          formats=columnformats)
+            # write table
+            spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
 
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
