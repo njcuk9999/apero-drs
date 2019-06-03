@@ -34,9 +34,11 @@ printl = spirouCore.PrintLog
 # -----------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = ['/spirouUnitTests/', '/documentation/', '/man/',
-                    '/spirouTools/', '/misc/']
+                    '/spirouTools/', '/misc/', '/config/']
 # dependencies to exclude
-EXCLUDE_MOD_STR = ['SpirouDRS', 'spirou']
+EXCLUDE_MOD_STR = ['SpirouDRS', 'spirou', 'obj_', 'cal_']
+# debug mode
+DEBUG = True
 
 
 # =============================================================================
@@ -61,7 +63,7 @@ def get_python_files(path):
     return pyfiles
 
 
-def get_import_statements(files):
+def get_import_statements(p, files):
     importslist = []
 
     statsdict = OrderedDict()
@@ -69,6 +71,8 @@ def get_import_statements(files):
     statsdict['total empty lines'] = 0
     statsdict['total lines of comments'] = 0
     statsdict['total lines of code'] = 0
+
+    statsdict2 = OrderedDict()
 
     infodict = OrderedDict()
     infodict['imports'] = []
@@ -79,7 +83,14 @@ def get_import_statements(files):
         f = open(filename)
         # read all lines from this iteration
         lines = f.readlines()
+
         statsdict['total lines'] += len(lines)
+        statsdict2[filename] = OrderedDict()
+        statsdict2[filename]['total lines'] = len(lines)
+        statsdict2[filename]['total empty lines'] = 0
+        statsdict2[filename]['total lines of comments'] = 0
+        statsdict2[filename]['total lines of code'] = 0
+
         # loop around the lines of code in this file
         docstring_skip = False
         for line in lines:
@@ -88,18 +99,22 @@ def get_import_statements(files):
             if docstring_skip:
                 # print('\tSkip doc string')
                 statsdict['total lines of comments'] += 1
+                statsdict2[filename]['total lines of comments'] += 1
                 continue
             # blank lines should not count
             if len(line.strip()) == 0:
                 statsdict['total empty lines'] += 1
+                statsdict2[filename]['total empty lines'] += 1
                 continue
             # commented lines should not count
             elif line.strip()[0] == '#':
                 statsdict['total lines of comments'] += 1
+                statsdict2[filename]['total lines of comments'] += 1
                 continue
             else:
                 statsdict['total lines of code'] += 1
-            # filter any lines with excluded strings in
+                statsdict2[filename]['total lines of code'] += 1
+                # filter any lines with excluded strings in
             excluded = False
             for ext in EXCLUDE_MOD_STR:
                 if ext in line:
@@ -110,6 +125,16 @@ def get_import_statements(files):
                 infodict['imports'].append(line.replace('\n', ''))
                 infodict['filename'].append(filename)
                 # print('\tWritten...')
+
+        if DEBUG:
+            # print total number of lines
+            WLOG(p, '', '='*50)
+            WLOG(p, '', 'Stats file={0}'.format(os.path.basename(filename)))
+            WLOG(p, '', '=' * 50)
+            stats = statsdict2[filename]
+            for stat in stats:
+                WLOG(p, '', '\t{0}: {1}'.format(stat, stats[stat]))
+
     # return
     return importslist, statsdict, infodict
 
@@ -193,17 +218,21 @@ def main(return_locals=False):
     python_files = get_python_files(PATH)
     # get all import statements
     WLOG(p, '', 'Getting import statements')
-    rimports, stats, info = get_import_statements(python_files)
+    rimports, stats, info = get_import_statements(p, python_files)
     # clean imports
     imports = clean_imports(rimports)
     # get versions
     versions = get_current_versions(imports)
     # print total number of lines
+    WLOG(p, '', '=' * 50)
     WLOG(p, '', 'Stats:')
+    WLOG(p, '', '=' * 50)
     for stat in stats:
         WLOG(p, '', '\t{0}: {1}'.format(stat, stats[stat]))
     # print import statements
+    WLOG(p, '', '=' * 50)
     WLOG(p, '', 'Import statements found are:')
+    WLOG(p, '', '=' * 50)
     for it in range(len(imports)):
         args = [imports[it], versions[it]]
         if versions[it] is not None:

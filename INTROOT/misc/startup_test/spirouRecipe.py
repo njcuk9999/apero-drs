@@ -66,14 +66,26 @@ DEBUG = False
 # =============================================================================
 # Adapted from: https://stackoverflow.com/a/16942165
 class DRSArgumentParser(argparse.ArgumentParser):
+    """
+    Custom argument parser designed to deal with recipe arguments
+    """
     def __init__(self, recipe, **kwargs):
+        # set recipe
         self.recipe = recipe
+        # set blank variables for now
         self.args = None
         self.argv = None
         self.namespace = None
+        # construct argparse ArgumentParser class
         argparse.ArgumentParser.__init__(self, **kwargs)
 
     def parse_args(self, args=None, namespace=None):
+        """
+
+        :param args:
+        :param namespace:
+        :return:
+        """
         if args is None:
             self.args = sys.argv[1:]
         else:

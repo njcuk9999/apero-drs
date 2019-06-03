@@ -1,7 +1,5 @@
-from . import spirouRecipe
-from . import spirouFile
-from . import files_spirou as sf
-from . import recipe_descriptions as rd
+from misc.startup_test import spirouRecipe, files_spirou as sf, spirouFile, \
+    recipe_descriptions as rd
 from SpirouDRS import spirouConfig
 
 # =============================================================================
