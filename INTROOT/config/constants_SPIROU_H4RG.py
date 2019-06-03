@@ -1025,7 +1025,7 @@ ic_fp_threshold = 0.3  # 0.2
 
 #  Define the initial value of FP effective cavity width            - [cal_wave]
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
-ic_fp_dopd0 = 2.44999e7  # 2.45e7
+ic_fp_dopd0 = 2.44962434814043e7    # 2.44999e7  # 2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
 #      the measured cavity width for each line
@@ -1152,11 +1152,16 @@ WAVE_MODE_HC = 0
 #       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
 #       1 - following C Lovis (previously WAVE_NEW)
 WAVE_MODE_FP = 0
-#  Defines order from which the solution is calculated      - [cal_HC, cal_wave]
+#  Defines order from which the solution is calculated              - [cal_wave]
 WAVE_N_ORD_START = 0
-#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
+#  Defines order to which the solution is calculated                - [cal_wave]
 WAVE_N_ORD_FINAL = 47
-
+# Minimum blaze threshold to keep FP peaks                          - [cal_wave]
+WAVE_BLAZE_THRESH = 0.3
+# Minimum FP peaks pixel separation fraction diff. from median      - [cal_wave]
+WAVE_FP_XDIF_MIN = 0.75
+# Maximum FP peaks pixel separation fraction diff. from median      - [cal_wave]
+WAVE_FP_XDIF_MAX = 1.25
 
 
 # -----------------------------------------------------------------------------
