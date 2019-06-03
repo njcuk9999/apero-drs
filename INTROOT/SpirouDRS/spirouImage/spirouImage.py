@@ -3139,7 +3139,7 @@ def construct_master_fp(p, refimage, filenames, matched_id):
     # Read individual files and sum groups
     # ----------------------------------------------------------------------
     # log process
-    WLOG(p, '', 'Reading Dark files and combining groups')
+    WLOG(p, '', 'Reading FP files and combining groups')
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of dark cube
@@ -3147,11 +3147,11 @@ def construct_master_fp(p, refimage, filenames, matched_id):
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
-        WLOG(p, '', 'Group {0} of {1}'.format(g_it + 1, len(u_groups)))
+        WLOG(p, '', 'FP Group {0} of {1}'.format(g_it + 1, len(u_groups)))
         # find all files for this group
         fp_ids = filenames[matched_id == group_num]
         # only combine if 3 or more images were taken
-        if np.sum(fp_ids) >= 3:
+        if len(fp_ids) >= 3:
             # load this groups files into a cube
             cube = []
             for filename in fp_ids:
@@ -3207,7 +3207,8 @@ def register_fp(p, image1, image2):
 
     # to increase the contribution of low-flux regions, we x-correlate
     # the square root of the images.
-    image1b[image1b < 0] = 0
+    with warnings.catch_warnings(record=True) as _:
+        image1b[image1b < 0] = 0
     image1b = np.sqrt(image1b)
 
     # range of dy to be explored the same size of cc offset will
@@ -3224,6 +3225,9 @@ def register_fp(p, image1, image2):
 
     # loop around for the number of iterations
     for iteration in range(niter):
+        # log progress
+        wmsg = '\tProcessing FP image shift. Iteration {0} of {1}'
+        WLOG(p, '', wmsg.format(iteration + 1, niter))
         # value of x-correlation for all offset
         cc = np.zeros([len(dy), len(dx)])
         # if this is not the first iteration then map the coordinates
@@ -3234,7 +3238,8 @@ def register_fp(p, image1, image2):
         # we will extract a varying region within shifted_image but we just
         #   want to compute square root once
         simage_tmp = np.array(simage)
-        simage_tmp[simage_tmp < 0] = 0.0
+        with warnings.catch_warnings(record=True) as _:
+            simage_tmp[simage_tmp < 0] = 0.0
         simage_tmp = np.sqrt(simage_tmp)
 
         # x -correlate image1 with shifted image
@@ -3254,7 +3259,7 @@ def register_fp(p, image1, image2):
         # log progress
         wmsg = ('\tIteration {0}: Increment in dy = {1}, in dx = {2}, '
                 'DX ref = {3}, DY ref = {4}')
-        wargs = [iteration, dy_shift, dx_shift, dx_ref, dy_ref]
+        wargs = [iteration + 1, dy_shift, dx_shift, dx_ref, dy_ref]
         WLOG(p, '', wmsg.format(*wargs))
     # shift to the max cross-correlation position
     coords = [yy + dy_ref, xx + dx_ref]
@@ -3491,6 +3496,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
                key = name is returned
     """
     func_name = __NAME__ + '.get_param()'
+
     # get header keyword
     try:
         key = p[keyword][0]
