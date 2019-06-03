@@ -64,7 +64,7 @@ def main(night_name=None, key=None, filename=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    image, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['FITSFILENAME'])
+    image, hdr, nbo, nx = spirouImage.ReadData(p, p['FITSFILENAME'])
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB

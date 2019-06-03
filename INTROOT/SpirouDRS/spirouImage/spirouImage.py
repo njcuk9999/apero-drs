@@ -950,7 +950,7 @@ def get_full_flat(p):
         emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
         WLOG(p, 'error', emsg.format(filename, datadir))
     # read image
-    mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
+    mdata, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # return image
     return mdata
 
@@ -1708,7 +1708,7 @@ def locate_bad_pixels_full(p, image):
         emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
         WLOG(p, 'error', emsg.format(filename, datadir))
     # read image
-    mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
+    mdata, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
 
     if image.shape != mdata.shape:
         wmsg = 'Full flat shape = {0}, image shape = {1}'

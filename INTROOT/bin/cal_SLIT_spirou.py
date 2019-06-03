@@ -81,7 +81,7 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files
@@ -131,7 +131,7 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        bargs = [p, data2, hdr, cdr]
+        bargs = [p, data2, hdr]
         # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
         background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
@@ -282,7 +282,7 @@ def main(night_name=None, files=None):
     wmsg = 'Saving tilt information in file: {0}'
     WLOG(p, '', wmsg.format(tiltfitsname))
     # Copy keys from fits file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

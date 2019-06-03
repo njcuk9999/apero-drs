@@ -67,7 +67,7 @@ def main(night_name=None, files=None):
     p.set_source('REFFILENAME', __NAME__ + '/main()')
     # get the fiber type
     p['FIBER'] = 'AB'
-    e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
+    e2ds, hdr, nx, ny = spirouImage.ReadImage(p)
 
     # Force A and B to AB solution
     if p['FIBER'] in ['A', 'B']:

@@ -57,7 +57,7 @@ if __name__ == "__main__":
     p = spirouStartup.LoadCalibDB(p)
 
     # load ref spectrum
-    e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
+    e2ds, hdr, nx, ny = spirouImage.ReadImage(p)
     # get blaze
     blaze = spirouImage.ReadBlazeFile(p)
     # get wave image
