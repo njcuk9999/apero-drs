@@ -69,6 +69,8 @@ ConvertToE = spirouImage.convert_to_e
 
 ConvertToADU = spirouImage.convert_to_adu
 
+ConstructMasterFP = spirouImage.construct_master_fp
+
 CopyOriginalKeys = spirouFITS.copy_original_keys
 
 CopyRootKeys = spirouFITS.copy_root_keys
@@ -114,6 +116,8 @@ GetKeys = spirouFITS.keyslookup
 GetTilt = spirouImage.get_tilt
 
 GetShapeMap = spirouImage.get_shape_map
+
+GroupFilesByTime = spirouImage.group_files_by_time
 
 GetObjName = spirouImage.get_obj_name
 

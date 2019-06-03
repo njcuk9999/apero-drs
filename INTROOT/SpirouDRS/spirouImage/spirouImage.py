@@ -18,8 +18,8 @@ import glob
 import warnings
 import scipy
 from scipy.ndimage import filters, median_filter
+from scipy.ndimage import map_coordinates as mapc
 from scipy.interpolate import griddata
-from scipy.ndimage import filters
 from scipy.stats import stats
 from scipy.signal import medfilt
 from scipy.optimize import curve_fit
@@ -3128,6 +3128,174 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     return loc
 
 
+def construct_master_fp(p, refimage, filenames, matched_id):
+
+    # get values from p
+    percent_thres = p['FP_MASTER_PERCENT_THRES']
+
+    # get the shape from the reference image
+    ny, nx = refimage.shape
+    # ----------------------------------------------------------------------
+    # Read individual files and sum groups
+    # ----------------------------------------------------------------------
+    # log process
+    WLOG(p, '', 'Reading Dark files and combining groups')
+    # Find all unique groups
+    u_groups = np.unique(matched_id)
+    # storage of dark cube
+    fp_cube, dx_ref_list, dy_ref_list = [], [], []
+    # loop through groups
+    for g_it, group_num in enumerate(u_groups):
+        # log progress
+        WLOG(p, '', 'Group {0} of {1}'.format(g_it + 1, len(u_groups)))
+        # find all files for this group
+        fp_ids = filenames[matched_id == group_num]
+        # only combine if 3 or more images were taken
+        if np.sum(fp_ids) >= 3:
+            # load this groups files into a cube
+            cube = []
+            for filename in fp_ids:
+                # read data
+                data_it, _, _, _ = spirouFITS.readimage(p, filename, log=False)
+                # normalise to the FP_MASTER_PERCENT_THRES percentile
+                data_it = data_it / np.nanpercentile(data_it, percent_thres)
+                # add to cube
+                cube.append(data_it)
+            # median fp cube
+            groupfp = np.nanmedian(cube, axis=0)
+            # shift group to master
+            groupfp, dx_ref, dy_ref = register_fp(p, refimage, groupfp)
+            # append to cube
+            fp_cube.append(groupfp)
+            for filename in fp_ids:
+                dx_ref_list.append(dx_ref)
+                dy_ref_list.append(dy_ref)
+    # convert fp cube to array
+    fp_cube = np.array(fp_cube)
+    # return fp_cube
+    return fp_cube, dx_ref_list, dy_ref_list
+
+
+def register_fp(p, image1, image2):
+    """
+    Provide two images and find the cross-correlation peak in 2D. This
+    performs iteratively a 1D correlation in both Y and X direction.
+    :param p: parameter dictionary
+    :param image1: numpy array (1D), the reference FP
+    :param image2: numpy array (1D), the FP to shift
+    :return:
+    """
+
+    # get constants from p
+    wcc = p['FP_MASTER_CC_OFFSET']
+    niter = p['FP_MASTER_CC_NITER']
+    # get the shape
+    wwy = np.array(image1.shape[0] - wcc * 2) // 2
+    wwx = np.array(image1.shape[1] - wcc * 2) // 2
+
+    # generate x/y indices for the entire image
+    yy, xx = np.indices(image1.shape, dtype=float)
+
+    # global offset applied to image2
+    dx_ref = 0
+    dy_ref = 0
+
+    # extract central regions of the array
+    starty, endy = image1.shape[0] // 2 - wwy, image1.shape[0] // 2 + wwy
+    startx, endx = image1.shape[1] // 2 - wwx, image1.shape[1] // 2 + wwx
+    image1b = np.array(image1[starty:endy, startx:endx])
+
+    # to increase the contribution of low-flux regions, we x-correlate
+    # the square root of the images.
+    image1b[image1b < 0] = 0
+    image1b = np.sqrt(image1b)
+
+    # range of dy to be explored the same size of cc offset will
+    #    be explored in x
+    dx = np.arange(-wcc, wcc)
+    dy = np.arange(-wcc, wcc)
+    # get start and end points
+    start_y_arr = image1.shape[0] // 2 - wwy + dy
+    end_y_arr = image1.shape[0] // 2 + wwy + dy
+    start_x_arr = image1.shape[1] // 2 - wwx + dx
+    end_x_arr = image1.shape[1] // 2 + wwx + dx
+    # copy the image2 to the shifted image
+    simage = np.array(image2)
+
+    # loop around for the number of iterations
+    for iteration in range(niter):
+        # value of x-correlation for all offset
+        cc = np.zeros([len(dy), len(dx)])
+        # if this is not the first iteration then map the coordinates
+        if iteration > 0:
+            coords = [yy + dy_ref, xx + dx_ref]
+            simage = mapc(simage, coords, order=2, cval=0, output=float,
+                          mode='constant')
+        # we will extract a varying region within shifted_image but we just
+        #   want to compute square root once
+        simage_tmp = np.array(simage)
+        simage_tmp[simage_tmp < 0] = 0.0
+        simage_tmp = np.sqrt(simage_tmp)
+
+        # x -correlate image1 with shifted image
+        for it in range(len(dy)):
+            # loop around x axis
+            for jt in range(len(dx)):
+                # get start and end points
+                starty, endy = start_y_arr[it], end_y_arr[it]
+                startx, endx = start_x_arr[it], end_x_arr[it]
+                # get shifted image
+                simageb = np.array(simage_tmp[starty:endy, startx:endx])
+                # correlate (sum of product)
+                cc[it, jt] = np.nansum(image1b * simageb)
+        # fit 2D peak and apply to shift
+        dy_shift, dx_shift = twod_peak_fit(dx, dy, cc, wcc)
+        dy_ref, dx_ref = dy_ref + dy_shift, dx_ref + dx_shift
+        # log progress
+        wmsg = ('\tIteration {0}: Increment in dy = {1}, in dx = {2}, '
+                'DX ref = {3}, DY ref = {4}')
+        wargs = [iteration, dy_shift, dx_shift, dx_ref, dy_ref]
+        WLOG(p, '', wmsg.format(*wargs))
+    # shift to the max cross-correlation position
+    coords = [yy + dy_ref, xx + dx_ref]
+    simage = mapc(image2, coords, order=2, cval=0, output=float,
+                  mode='constant')
+    # return the shifted image and the amount of shift applied in x and y
+    return simage, dx_ref, dy_ref
+
+
+def twod_peak_fit(xx, yy, zz, size):
+    # get peak position (in y and x)
+    imax = np.argmax(yy)
+    dy0, dx0 = imax // len(xx), imax % len(xx)
+    # 2nd order fit to the cross-correlation peak (in y)
+    if np.abs(yy[dy0]) <= (size - 2):
+        # get the y start and end points
+        d_start, d_end = dy0 - 1, dy0 + 2
+        # calculate the center in y using polynomial fit (quadratic)
+        coeffs = np.polyfit(yy[d_start:d_end], zz[d_start:d_end, dx0], 2)
+        # add center 2nd order shift to the shift (differential of coeffs)
+        yshift = (-0.5 * coeffs[1] / coeffs[0])
+    # else just add the max shift
+    else:
+        yshift = yy[dy0]
+
+    # 2nd order fit to the cross-correlation peak (in x)
+    if np.abs(xx[dx0] <= (size - 2)):
+        # get the x start and end points
+        d_start, d_end = dx0 - 1, dx0 + 2
+        # calculate the center in x using polynomial fit (quadratic)
+        coeffs = np.polyfit(xx[d_start:d_end], zz[dy0, d_start:d_end])
+        # add center 2nd order shift to the shift (differential of coeffs)
+        xshift = (-0.5 * coeffs[1] / coeffs[0])
+    # else just add the max shift
+    else:
+        xshift = xx[dx0]
+    # return the x and y shifts
+    return yshift, xshift
+
+
+
 # =============================================================================
 # Get basic image properties
 # =============================================================================
@@ -3198,6 +3366,39 @@ def get_files(p, filetype=None, allowedtypes=None):
     WLOG(p, '', wmsg)
     # return full list
     return valid_files
+
+
+def group_files_by_time(p, times, time_thres, time_unit='hours'):
+    func_name = __NAME__ + '.group_files_by_time()'
+    # make sure time units are correct
+    if time_unit == 'hours':
+        time_thres = time_thres / 24
+    elif time_unit == 'days':
+        pass
+    else:
+        emsg1 = 'Time unit not supported must be "hours" or "days"'
+        emsg2 = 'function = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2])
+    # ID of matched multiplets of files
+    matched_id = np.zeros_like(times, dtype=int)
+    # loop until all files are matched with all other files taken within
+    #    DARK_MASTER_MATCH_TIME
+    group_num, it = 1, 0
+    while np.min(matched_id) == 0 and it < len(times):
+        # find all non-matched dark times
+        non_matched = matched_id == 0
+        # find the first non-matched dark time
+        first = np.min(np.where(non_matched)[0])
+        # find all non-matched that are lower than threshold (in days)
+        group_mask = np.abs(times[first] - times) < time_thres
+        # add this group to matched_id
+        matched_id[group_mask] = group_num
+        # change the group number (add 1)
+        group_num += 1
+        # increase iterator
+        it += 1
+    # return the group match id
+    return matched_id
 
 
 def get_exptime(p, hdr, name=None, return_value=False):
