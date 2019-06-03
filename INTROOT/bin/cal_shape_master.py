@@ -52,7 +52,7 @@ PLOT_PER_ORDER = False
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, hcfile=None, fpfiles=None):
+def main(night_name=None, hcfile=None, fpfile=None):
     """
     cal_SLIT_spirou.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -74,12 +74,12 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    if hcfile is None or fpfiles is None:
+    if hcfile is None or fpfile is None:
         names, types = ['hcfile', 'fpfiles'], [str, str]
         customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
                                                         last_multi=True)
     else:
-        customargs = dict(hcfile=hcfile, fpfiles=fpfiles)
+        customargs = dict(hcfile=hcfile, fpfiles=fpfile)
 
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
@@ -89,14 +89,13 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, hcfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['HCFILE'])
-    p, fpfilenames = spirouStartup.MultiFileSetup(p, files=p['FPFILES'])
+    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, files=p['FPFILE'])
     # set fiber (it doesn't matter with the 2D image but we need this to get
     # the lamp type for FPFILES and HCFILES, AB == C
     p['FIBER'] = 'AB'
     p['FIB_TYP'] = [p['FIBER']]
     fsource = __NAME__ + '/main()'
     p.set_sources(['FIBER', 'FIB_TYP'], fsource)
-
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
