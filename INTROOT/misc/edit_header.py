@@ -66,14 +66,14 @@ def main(night_name=None, reffile=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['REFFILENAME'])
+    data, hdr, nbo, nx = spirouImage.ReadData(p, p['REFFILENAME'])
     # ----------------------------------------------------------------------
     # Add keys and save file
     # ----------------------------------------------------------------------
     newfilename = p['REFFILE'].replace('.fits', '_edit.fits')
     newpath = os.path.join(p['ARG_FILE_DIR'], newfilename)
     # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr)
     # set the version
     hdict = spirouImage.AddKey(p, hdict, HEADER_KEY, value=HEADER_VALUE)
     # log saving

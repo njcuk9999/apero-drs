@@ -145,7 +145,7 @@ def main(filetype='DARK_DARK'):
     lastpos = np.argmax(dark_time)
     # load up the most recent dark
     rout = spirouImage.ReadImage(p, filenames[lastpos], log=False)
-    data_ref, hdr_ref, cdr_ref, nx, ny = rout
+    data_ref, hdr_ref, nx, ny = rout
     # set the night name and update the reduced directory
     p['ARG_NIGHT_NAME'] = nightnames[lastpos]
     p.set_source('ARG_NIGHT_NAME', __NAME__ + '.main()')
@@ -174,7 +174,7 @@ def main(filetype='DARK_DARK'):
         cube = []
         for filename in dark_ids:
             # read data
-            data_it, _, _, _, _ = spirouImage.ReadImage(p, filename, log=False)
+            data_it, _, _, _ = spirouImage.ReadImage(p, filename, log=False)
             # add to cube
             cube.append(data_it)
         # median dark cube
@@ -258,7 +258,7 @@ def main(filetype='DARK_DARK'):
               dark_cass_temp, dark_humidity, dark_pp_version, matched_id]
     darktable = spirouImage.MakeTable(p, colnames, values)
     # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr_ref, cdr_ref)
+    hdict = spirouImage.CopyOriginalKeys(hdr_ref)
     # define new keys to add
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])

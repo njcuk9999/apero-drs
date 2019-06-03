@@ -87,7 +87,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # Read flat image file
     # ----------------------------------------------------------------------
     # read the image data (for the header only)
-    image, hdr, cdr, ny, nx = spirouImage.ReadData(p, reffile)
+    image, hdr, ny, nx = spirouImage.ReadData(p, reffile)
 
     # ----------------------------------------------------------------------
     # fix for un-preprocessed files
@@ -213,7 +213,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
                          emsg2, emsg3.format(p['E2DSPREFIX'])]
                 WLOG(p, 'error', emsgs)
         # get data
-        e2dsdata, ehdr, ecdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
+        e2dsdata, ehdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
         # store data
         loc['E2DSFILES'][fiber] = e2dsdata
         loc['E2DSFILENAMES'].append(e2dsfilename)

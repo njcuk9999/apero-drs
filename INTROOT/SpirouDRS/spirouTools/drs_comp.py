@@ -179,8 +179,8 @@ def main(night_name=None, oldfile=None, newfile=None):
     if not os.path.exists(p['NEWFILE']):
         WLOG(p, 'error', emsg.format('new', p['NEWFILE']))
     # load files
-    data1, hdr1, cdr1, _, _ = spirouImage.ReadImage(p, filename=oldfile)
-    data2, hdr2, cdr2, _, _ = spirouImage.ReadImage(p, filename=newfile)
+    data1, hdr1, _, _ = spirouImage.ReadImage(p, filename=oldfile)
+    data2, hdr2, _, _ = spirouImage.ReadImage(p, filename=newfile)
 
     # ----------------------------------------------------------------------
     # Do difference image
