@@ -52,6 +52,8 @@ cal_loc_RAW_spirou, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, LO
 cal_SLIT_spirou, 1, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SLIT, 4, 1
 cal_SHAPE_spirou, 1, c, COMPARISON, pos_hc1, pos_hc1, None, HCONE_HCONE, hcone_hcone, RAW, SHAPE, 4, 1
 cal_SHAPE_spirou, 2, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SHAPE, 4, 1
+cal_shape_master, 1, c, COMPARISON, pos_hc1, pos_hc1, None, HCONE_HCONE, hcone_hcone, RAW, SHAPE, 4, 1
+cal_shape_master, 2, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SHAPE, 4, 1
 #
 # ---- Flat fielding recipes
 #
