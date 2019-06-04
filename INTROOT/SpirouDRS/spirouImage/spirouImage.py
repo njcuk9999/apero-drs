@@ -3233,7 +3233,7 @@ def register_fp(p, image1, image2):
         # if this is not the first iteration then map the coordinates
         if iteration > 0:
             coords = [yy + dy_ref, xx + dx_ref]
-            simage = mapc(simage, coords, order=2, cval=0, output=float,
+            simage = mapc(image2, coords, order=2, cval=0, output=float,
                           mode='constant')
         # we will extract a varying region within shifted_image but we just
         #   want to compute square root once
@@ -3248,19 +3248,19 @@ def register_fp(p, image1, image2):
             for jt in range(len(dx)):
                 # get start and end points
                 starty, endy = start_y_arr[it], end_y_arr[it]
-                startx, endx = start_x_arr[it], end_x_arr[it]
+                startx, endx = start_x_arr[jt], end_x_arr[jt]
                 # get shifted image
-                simageb = np.array(simage_tmp[starty:endy, startx:endx])
+                simageb = simage_tmp[starty:endy, startx:endx]
                 # correlate (sum of product)
                 cc[it, jt] = np.nansum(image1b * simageb)
         # fit 2D peak and apply to shift
         dy_shift, dx_shift = twod_peak_fit(dx, dy, cc, wcc)
         dy_ref, dx_ref = dy_ref + dy_shift, dx_ref + dx_shift
         # log progress
-        wmsg = ('\tIteration {0}: Increment in dy = {1}, in dx = {2}, '
-                'DX ref = {3}, DY ref = {4}')
+        wmsg = ['\tIteration {0}: Increment in dy = {1:.6f}, in dx = {2:.6f}',
+                '\tIteration {0}: DX ref = {3:.6f}, DY ref = {4:.6f}']
         wargs = [iteration + 1, dy_shift, dx_shift, dx_ref, dy_ref]
-        WLOG(p, '', wmsg.format(*wargs))
+        WLOG(p, '', [wmsg[0].format(*wargs), wmsg[1].format(*wargs)])
     # shift to the max cross-correlation position
     coords = [yy + dy_ref, xx + dx_ref]
     simage = mapc(image2, coords, order=2, cval=0, output=float,
@@ -3271,7 +3271,7 @@ def register_fp(p, image1, image2):
 
 def twod_peak_fit(xx, yy, zz, size):
     # get peak position (in y and x)
-    imax = np.argmax(yy)
+    imax = np.argmax(zz)
     dy0, dx0 = imax // len(xx), imax % len(xx)
     # 2nd order fit to the cross-correlation peak (in y)
     if np.abs(yy[dy0]) <= (size - 2):
@@ -3280,7 +3280,7 @@ def twod_peak_fit(xx, yy, zz, size):
         # calculate the center in y using polynomial fit (quadratic)
         coeffs = np.polyfit(yy[d_start:d_end], zz[d_start:d_end, dx0], 2)
         # add center 2nd order shift to the shift (differential of coeffs)
-        yshift = (-0.5 * coeffs[1] / coeffs[0])
+        yshift = -0.5 * coeffs[1] / coeffs[0]
     # else just add the max shift
     else:
         yshift = yy[dy0]
@@ -3290,9 +3290,9 @@ def twod_peak_fit(xx, yy, zz, size):
         # get the x start and end points
         d_start, d_end = dx0 - 1, dx0 + 2
         # calculate the center in x using polynomial fit (quadratic)
-        coeffs = np.polyfit(xx[d_start:d_end], zz[dy0, d_start:d_end])
+        coeffs = np.polyfit(xx[d_start:d_end], zz[dy0, d_start:d_end], 2)
         # add center 2nd order shift to the shift (differential of coeffs)
-        xshift = (-0.5 * coeffs[1] / coeffs[0])
+        xshift = -0.5 * coeffs[1] / coeffs[0]
     # else just add the max shift
     else:
         xshift = xx[dx0]
