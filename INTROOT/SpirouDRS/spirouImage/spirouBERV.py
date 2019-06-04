@@ -13,10 +13,14 @@ import numpy as np
 import os
 import dbm
 import time
+from astropy.time import Time, TimeDelta
+from astropy import units as uu
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
 from . import spirouImage
+from . import spirouBERVest
+from . import spirouFITS
 
 # =============================================================================
 # Define variables
@@ -51,8 +55,7 @@ def get_earth_velocity_correction(p, loc, hdr):
     # -----------------------------------------------------------------------
     #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)
     # -----------------------------------------------------------------------
-    # if p['IC_IMAGE_TYPE'] == 'H4RG':
-    if p['IC_IMAGE_TYPE'] == 'H4RG' and p['OBSTYPE'] == 'OBJECT':
+    if p['OBSTYPE'] == 'OBJECT':
         # ----------------------------------------------------------------------
         # Read star parameters
         # ----------------------------------------------------------------------
@@ -66,18 +69,28 @@ def get_earth_velocity_correction(p, loc, hdr):
         # ----------------------------------------------------------------------
         loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
-        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = np.nan, np.nan, np.nan
-        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
-        # store the obs_hour
-        loc['BERVHOUR'] = np.nan
-        loc.set_source('BERVHOUR', func_name)
+        loc = earth_velocity_correction(p, loc, method='off')
 
     # return loc
     return p, loc
 
 
-def earth_velocity_correction(p, loc, method='old'):
+def earth_velocity_correction(p, loc, method):
     func_name = __NAME__ + '.earth_velocity_correction()'
+
+    if method == 'off':
+        # not an estimate
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = np.nan, np.nan, np.nan
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+        # store the obs_hour
+        loc['BERVHOUR'], loc['BERVHOUR_EST'] = np.nan, np.nan
+        loc.set_sources(['BERVHOUR', 'BERVHOUR_EST'], func_name)
+        # set estimate measurements to nan
+        loc['BERV_EST'], loc['BJD_EST'] = np.nan, np.nan
+        loc['BERV_MAX_EST'] = np.nan
+        loc.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST'], func_name)
+        return loc
+
     # get the observation date
     obs_year = int(p['DATE-OBS'][0:4])
     obs_month = int(p['DATE-OBS'][5:7])
@@ -96,7 +109,7 @@ def earth_velocity_correction(p, loc, method='old'):
     ra_hour = float(objra[0])
     ra_min = float(objra[1]) / 60.
     ra_second = float(objra[2]) / 3600.
-    target_alpha = ra_hour + ra_min + ra_second
+    target_alpha = (ra_hour + ra_min + ra_second) * 15
     # get the DEC in degrees
     objdec = p['OBJDEC'].split(':')
     dec_hour = float(objdec[0])
@@ -117,53 +130,98 @@ def earth_velocity_correction(p, loc, method='old'):
             obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
             p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
-    berv, bjd, bervmax = newbervmain(*args, method=method)
-    # log output
-    wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
-    WLOG(p, 'info', wmsg.format(berv))
+    if p['DRS_MODE'].upper() == 'QUICK':
+        WLOG(p, 'warning', 'DRS in QUICK MODE - BERV is only an estimate')
+        berv, bjd, bervmax = newbervmain(*args, method='estimate')
+        estimate = True
+    else:
+        try:
+            berv, bjd, bervmax = newbervmain(*args, method=method)
+            estimate = False
+        except Exception as e:
+            emsg1 = 'BERV Calculation failed, falling back to estimate'
+            emsg2 = '\tError {0}: {1}'.format(type(e), e)
+            WLOG(p, 'warning', [emsg1, emsg2])
+            berv, bjd, bervmax = newbervmain(*args, method='estimate')
+            estimate = True
 
     # finally save berv, bjd, bervmax to p
-    loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
-    loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
-    # store the obs_hour
-    loc['BERVHOUR'] = obs_hour
-    loc.set_source('BERVHOUR', func_name)
+    if estimate:
+        # log output
+        wmsg = 'ESTIMATED Barycentric Earth RV correction: {0:.3f} km/s'
+        WLOG(p, 'info', wmsg.format(berv))
+        # estimate
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = np.nan, np.nan, np.nan
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+        # store the obs_hour
+        loc['BERVHOUR'], loc['BERVHOUR_EST'] = np.nan, obs_hour
+        loc.set_sources(['BERVHOUR', 'BERVHOUR_EST'], func_name)
+        # set estimate measurements to nan
+        loc['BERV_EST'], loc['BJD_EST'] = berv, bjd
+        loc['BERV_MAX_EST'] = bervmax
+        loc.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST'], func_name)
+    else:
+        # log output
+        wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
+        WLOG(p, 'info', wmsg.format(berv))
+        # not an estimate
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
+        # store the obs_hour
+        loc['BERVHOUR'], loc['BERVHOUR_EST'] = obs_hour, np.nan
+        loc.set_sources(['BERVHOUR', 'BERVHOUR_EST'], func_name)
+        # set estimate measurements to nan
+        loc['BERV_EST'], loc['BJD_EST'] = np.nan, np.nan
+        loc['BERV_MAX_EST'] = np.nan
+        loc.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST'], func_name)
+
 
     # return p
     return loc
 
 
 def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
-                obs_lat, obs_alt, pmra, pmde, method='old'):
+                obs_lat, obs_alt, pmra, pmde, method='new'):
     # if method is off return zeros
     if method == 'off':
         WLOG(p, 'warning', 'BERV not calculated.')
-        return 0.0, 0.0, 0.0
+        return np.nan, np.nan, np.nan
 
-    # if old use FORTRAN
-    if method == 'old':
-        # need to import
-        # noinspection PyBroadException
-        try:
-            # noinspection PyUnresolvedReferences
-            from SpirouDRS.fortran import newbervmain
-        except Exception as e:
-            emsg1 = ('For method="old" must compile fortran routine '
-                     '"newbervmain" in the SpirouDRS/fortran directory:')
-            emsg2 = '\t>>> f2py -c -m newbervmain --noopt --quiet newbervmain.f'
-            WLOG(p, 'error', [emsg1, emsg2])
-        # pipe to FORTRAN
-        # newbervmain needs RA in hour, obs_long West and obs_alt in km
-        args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
-                obs_alt, pmra, pmde]
-        berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
-        # return berv, bjd, bervmax
-        return berv1, bjd1, bervmax1
+    # estimate method using helcorr from pyastronomy
+    if method == 'estimate':
 
+        tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+        t = Time(tstr, scale='utc')
+        # add exposure time
+        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        t1 = t + tdelta
+        # storage for bervs
+        bervs, bjds = [], []
+        # loop around every 1.5 days in a year
+        for dayit in np.arange(0., 365., 1.5):
+            # get julien date for this day iteration
+            jdi = t1.jd + dayit
+            # calculate estimate of berv
+            bargs = [obs_long, obs_lat, obs_alt, ra, dec, jdi]
+            berv, bjd = spirouBERVest.helcorr(*bargs)
+            # append to lists
+            bervs.append(berv)
+            bjds.append(bjd)
+        # convert lists to numpy arrays
+        bervs = np.array(bervs)
+        bjds = np.array(bjds)
+        # get berv
+        berv2 = bervs[0]
+        # bjd2 = bresults2[0].jd
+        bjd2 = bjds[0]
+        # work ou the maximum barycentric correction
+        bervmax2 = np.max(abs(bervs))
+        # return results
+        return berv2, bjd2, bervmax2
+
+    # calculation method using barycorrpy
     if method == 'new':
         # calculate JD time (as Astropy.Time object)
-        from astropy.time import Time, TimeDelta
-        from astropy import units as uu
         tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
         t = Time(tstr, scale='utc')
         # add exposure time
@@ -199,56 +257,39 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         except Exception as _:
             emsg1 = 'For method="new" must have barcorrpy installed '
             emsg2 = '\ti.e. ">>> pip install barycorrpy'
-            WLOG(p, 'error', [emsg1, emsg2])
-            barycorrpy = None
-            iers = None
-
+            WLOG(p, 'warning', [emsg1, emsg2])
+            raise ImportError(emsg1 + '\n' + emsg2)
         # set up the barycorr arguments
-        bkwargs = dict(ra=ra * 15., dec=dec, epoch=equinox, pmra=pmra,
+        bkwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra,
                        pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,
                        longi=obs_long * -1, alt=obs_alt * 1000.,
                        leap_dir=data_folder)
-
         # get the julien UTC date for observation and obs + 1 year
         jdutc = list(t1.jd + np.arange(0., 365., 1.5))
-
-        def berv_calculation():
-            try:
-                return barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
-            except dbm.error:
-                WLOG(p, 'warning', 'DBM locked in astropy. Waiting...')
-            except iers.IERSRangeError:
-                WLOG(p, 'warning', 'Failed to download IERS. Waiting...')
-
-        max_wait_time = p['DB_MAX_WAIT']
-        bresults1 = try_until_valid_or_timeout(berv_calculation, max_wait_time)
-        if bresults1 is None:
-            emsg = ('Required data can not be accessed for barycorrpy '
-                    '(wait time exceeded).')
-            WLOG(p, 'error', emsg)
-
+        # construct lock filename
+        lfilename = os.path.join(p['DRS_DATA_REDUC'], 'BERV_lockfile')
+        # add a wait for parallelisation
+        lock, lfile = spirouFITS.check_fits_lock_file(p, lfilename)
+        # calculate barycorrpy
+        try:
+            bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+        except Exception as e:
+            # close lock
+            spirouFITS.close_fits_lock_file(p, lock, lfile, lfilename)
+            # re-raise exception to catch later
+            raise e
+        # end wait for parallelisation
+        spirouFITS.close_fits_lock_file(p, lock, lfile, lfilename)
+        # convert JDUTC to BJDTDB
         bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
-
+        # get berv
         berv2 = bresults1[0][0] / 1000.0
-        # bjd2 = bresults2[0].jd
+        # get bjd
         bjd2 = bresults2[0][0]
         # work ou the maximum barycentric correction
         bervmax2 = np.max(abs(bresults1[0] / 1000.))
-
         # return results
         return berv2, bjd2, bervmax2
-
-
-def try_until_valid_or_timeout(operation, max_wait_time):
-    wait_time = 0
-    results = None
-    while results is None and wait_time < max_wait_time:
-        results = operation()
-        if results:
-            return results
-        else:
-            time.sleep(1)
-            wait_time += 1
 
 
 # =============================================================================
