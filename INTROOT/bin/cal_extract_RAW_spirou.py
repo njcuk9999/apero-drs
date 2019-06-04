@@ -551,6 +551,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                    value=loc['BERV_MAX'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_B_OBS_HOUR'],
                                    value=loc['BERVHOUR'])
+        # add barycentric estimate keys to header
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_EST'],
+                                   value=loc['BERV_EST'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BJD_EST'],
+                                   value=loc['BJD_EST'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
+                                   value=loc['BERV_MAX_EST'])
         # add qc parameters
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
         hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
