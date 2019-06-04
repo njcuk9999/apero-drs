@@ -42,6 +42,15 @@ ic_display_timeout = 0.5
 #       no night name argument
 drs_night_name_display_limit = 10
 
+
+#   drs mode (for switching on and off quick mode)
+#      WARNING Quick mode will not give science grade outputs!
+#      choose from: "full" and "quick"
+#   Note: QUICK mode does the following:
+#       - extraction: BERV calculation is just an estimate (~100 m/s)
+#       - extraction: hot pixels are not cleaned
+drs_mode = 'FULL'
+
 # -----------------------------------------------------------------------------
 #  CFHT variables
 # -----------------------------------------------------------------------------
