@@ -3132,9 +3132,6 @@ def construct_master_fp(p, refimage, filenames, matched_id):
 
     # get values from p
     percent_thres = p['FP_MASTER_PERCENT_THRES']
-
-    # get the shape from the reference image
-    ny, nx = refimage.shape
     # ----------------------------------------------------------------------
     # Read individual files and sum groups
     # ----------------------------------------------------------------------
@@ -3163,6 +3160,9 @@ def construct_master_fp(p, refimage, filenames, matched_id):
                 cube.append(data_it)
             # median fp cube
             groupfp = np.nanmedian(cube, axis=0)
+            # set NaNs to zero
+            nanmask = ~np.isfinite(groupfp)
+            groupfp[nanmask] = 0.0
             # shift group to master
             groupfp, dx_ref, dy_ref = register_fp(p, refimage, groupfp)
             # append to cube
