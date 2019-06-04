@@ -374,7 +374,9 @@ def debananafication(p, image=None, badpix=None, dx=None, kind='full',
     # Cleans an image by finding pixels that are high-sigma
     #     (positive or negative) outliers compared to their immediate
     #     neighbours.
-    if dyfix and (kind.lower() == 'full'):
+    if p['DRS_MODE'].upper() == 'QUICK' and kind.lower() == 'full':
+        WLOG(p, 'warning', 'DRS in QUICK MODE - skipping hotpixel cleaning')
+    elif dyfix and (kind.lower() == 'full'):
         image0 = clean_hotpix(image0, badpix)
     # ----------------------------------------------------------------------
     # we shift all lines by the appropiate, pixel-dependent, dx
