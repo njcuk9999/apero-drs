@@ -89,20 +89,22 @@ def register_fp(im1, im2_ini, doplot=False, wcc=11, niter=3):
         # 2nd order fit to the cc peak
         if np.abs(dy[dy0]) <= (wcc - 2):
             fit = np.polyfit(dy[dy0 - 1:dy0 + 2], cc[dy0 - 1:dy0 + 2, dx0][:], 2)
-            dy_ref += (-.5 * fit[1] / fit[0])
+            y_shift = (-.5 * fit[1] / fit[0])
         else:
-            dy_ref += (dy[dy0])
+            y_shift = (dy[dy0])
+        dy_ref += y_shift
 
-        print('increment in dy : ', (-.5 * fit[1] / fit[0]))
+        print('increment in dy : ', y_shift)
 
         # 2nd order fit to the cc peak
         if np.abs(dx[dx0]) <= (wcc - 2):
             fit = np.polyfit(dx[dx0 - 1:dx0 + 2], cc[dy0, dx0 - 1:dx0 + 2], 2)
-            dx_ref += (-.5 * fit[1] / fit[0])
+            x_shift = (-.5 * fit[1] / fit[0])
         else:
-            dx_ref += (dx[dx0])
+            x_shift = (dx[dx0])
+        dx_ref += x_shift
 
-        print('increment in dx : ', (-.5 * fit[1] / fit[0]))
+        print('increment in dx : ', x_shift)
 
         print('DX/DY ref : ', dx_ref, dy_ref)
 
@@ -138,7 +140,7 @@ def get_master_fp(ref_fp_file, all_fps, N_dt_bin=2):
     #             from the same batch
 
     # ****** TO BE REMOVED ************************************
-    ref_fp_file = '2279802a_pp.fits'
+    ref_fp_file = '2295525a_pp.fits'
     all_fps = np.array(glob.glob('*a_pp.fits'))
     # ****** TO BE REMOVED ************************************
 
@@ -205,7 +207,7 @@ def get_master_fp(ref_fp_file, all_fps, N_dt_bin=2):
                 print(fic)
                 tmp = fits.getdata(fic)  # -dark
 
-                tmp = trim_image(tmp)  # TO BE REMOVED
+                # tmp = trim_image(tmp)  # TO BE REMOVED
 
                 tmp /= np.nanpercentile(tmp, 90)
                 cube.append(tmp)
