@@ -329,14 +329,9 @@ def do_fp_wavesol(p, loc):
         loc = find_fp_lines_new(p, loc)
 
         # get parameters from p
-        n_init = p['WAVE_N_ORD_START']  #0
-        n_fin = p['WAVE_N_ORD_FINAL']    #47 # note: no lines in 48 from calHC
-        size = p['IC_FP_SIZE']
-        threshold = p['IC_FP_THRESHOLD']
+        n_init = p['WAVE_N_ORD_START']  # 0
+        n_fin = p['WAVE_N_ORD_FINAL']    # 47 note: no lines in 48 from calHC
         dopd0 = p['IC_FP_DOPD0']
-        fit_deg = p['IC_FP_FIT_DEGREE']
-        # get parameters from loc
-        fpdata = loc['FPDATA']
 
         # set up storage
         # FP peak wavelengths
@@ -347,7 +342,6 @@ def do_fp_wavesol(p, loc):
         fp_xx = []
         # FP peak differential numbering
         dif_n = []
-
 
         # loop over orders
         for order_num in range(n_init, n_fin):
@@ -393,7 +387,7 @@ def do_fp_wavesol(p, loc):
 
             # Calculate original (HC sol) FP wavelengths
             fp_ll.append(np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1],
-                                         x_fp))
+                                    x_fp))
 
             # save differential numbering
             dif_n.append(peak_num_init)
@@ -401,7 +395,6 @@ def do_fp_wavesol(p, loc):
             fp_order.append(np.ones(len(x_fp)) * order_num)
             # save x positions
             fp_xx.append(x_fp)
-
 
         # ----------------------------------------------------------------------
         # Assign absolute FP numbers for reddest order
@@ -498,7 +491,6 @@ def do_fp_wavesol(p, loc):
         one_m_d = []
         # line number of the closest FP line to each HC line
         m_d = []
-        one_m_d_w = []
         # wavelength of HC lines
         hc_ll_test = []
         # pixel value of kept HC lines
@@ -506,58 +498,36 @@ def do_fp_wavesol(p, loc):
         # order of kept hc lines
         hc_ord_test = []
 
-        # Test if fp gaps create the bad points
-        d_test = []
-        one_m_d_test = []
-
         # save mask for m(x) fits
         xm_mask = []
         # loop over orders
         for ord_num in range(n_fin - n_init):
             # create order mask
             ind_ord = np.where(np.concatenate(fp_order).ravel() == ord_num + n_init)
-            # get FP line wavelengths for the order
-            fp_ll_ord = fp_ll[ord_num]
             # get FP line pixel positions for the order
             fp_x_ord = fp_xx[ord_num]
             # get FP line numbers for the order
             m_ord = m[ind_ord]
-            # HC mask - keep best lines with small dv at above 30% blaze only
-            cond1 = abs(loc['DV_T']) < 0.25
+            # HC mask for the order - keep best lines (small dv) only
+            cond1 = abs(loc['DV_T']) < p['WAVE_DV_MAX']
             cond2 = loc['ORD_T'] == ord_num + n_init
             hc_mask = np.where(cond1 & cond2)
             # get HC line pixel positions for the order
             hc_x_ord = loc['XGAU_T'][hc_mask]
             # get 30% blaze mask
             with warnings.catch_warnings(record=True) as _:
-                mb = np.where(loc['BLAZE'][ord_num] > 0.3 * np.nanmax(loc['BLAZE'][ord_num]))
+                mb = np.where(loc['BLAZE'][ord_num] > p['WAVE_BLAZE_THRESH'] *
+                              np.nanmax(loc['BLAZE'][ord_num]))
             # keep only x values at above 30% blaze
-            blaze_mask = np.logical_and(np.nanmax(mb) > hc_x_ord, np.nanmin(mb) < hc_x_ord)
+            blaze_mask = np.logical_and(np.nanmax(mb) > hc_x_ord,
+                                        np.nanmin(mb) < hc_x_ord)
             hc_x_ord = hc_x_ord[blaze_mask]
-            # get HC line wavelengths for the order
-            hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][ord_num + n_init][::-1],
-                                   hc_x_ord)
             # get corresponding catalogue lines from loc
             hc_ll_ord_cat = loc['WAVE_CATALOG'][hc_mask][blaze_mask]
 
             # fit x vs m for FP lines w/sigma-clipping
-            sigclip = 7
-            # initialise the while loop
-            sigmax = sigclip + 1
-            # initialise mask
-            mask = np.ones_like(fp_x_ord, dtype='Bool')
-            while sigmax > sigclip:
-                # fit on masked values
-                coeff_xm = nanpolyfit(fp_x_ord[mask], m_ord[mask], deg=p['IC_LL_DEGR_FIT'])
-                # get residuals (not masked or dimension break)
-                res = m_ord - np.polyval(coeff_xm, fp_x_ord)
-                # normalise
-                res = np.abs(res / np.nanmedian(np.abs(res[mask])))
-                # get the max residual in sigmas
-                sigmax = np.max(res[mask])
-                # mask all outliers
-                if sigmax > sigclip:
-                    mask[res >= sigclip] = False
+            coeff_xm, mask = sigclip_polyfit(p, fp_x_ord, m_ord,
+                                             p['IC_LL_DEGR_FIT'])
             # save coefficients
             coeff_xm_all.append(coeff_xm)
             # save dispersion
@@ -569,46 +539,23 @@ def do_fp_wavesol(p, loc):
             m_hc = np.polyval(coeff_xm, hc_x_ord)
             # get cavity width for HC lines from FP equation
             d_hc = m_hc * hc_ll_ord_cat / 2.
-            # save in arrays
+            # save in arrays:
+            # cavity width for hc lines
             d.append(d_hc)
+            # 1/m for HC lines
             one_m_d.append(1 / m_hc)
+            # m for HC lines
             m_d.append(m_hc)
+            # catalogue wavelengths
             hc_ll_test.append(hc_ll_ord_cat)
+            # HC line centers (pixel position)
             hc_xx_test.append(hc_x_ord)
+            # HC line orders
             hc_ord_test.append((ord_num + n_init) * np.ones_like(hc_x_ord))
 
-        # plots
-        if p['DRS_PLOT']:
-            # residuals plot
-            plt.figure()
-            # loop over orders
-            for ord_num in range(n_fin - n_init):
-                # create order mask
-                ind_ord = np.where(np.concatenate(fp_order).ravel() == ord_num + n_init)
-                # get FP line pixel positions for the order
-                fp_x_ord = fp_xx[ord_num]
-                # get FP line numbers for the order
-                m_ord = m[ind_ord]
-                # get m(x) mask for the order
-                mask = xm_mask[ord_num]
-                # get coefficients for the order
-                coeff_xm = coeff_xm_all[ord_num]
-                # plot residuals
-                plt.plot(fp_x_ord[mask], m_ord[mask] - np.polyval(coeff_xm, fp_x_ord[mask]) + 0.01 * ord_num, '.')
-            plt.xlabel('FP pixel position')
-            plt.ylabel('m(x) residuals (shifted +0.01*Order)')
-
-            # m(x) dispersion plot
-            plt.figure()
-            plt.plot(np.arange(n_fin - n_init), xm_disp, '.')
-            plt.xlabel('Order')
-            plt.ylabel('m(x) dispersion')
-
-            # verification plot
-            plt.figure()
-            plt.plot(np.concatenate(hc_ll_test).ravel(), np.concatenate(d).ravel(), '.')
-            plt.xlabel('HC line wavelengths')
-            plt.ylabel('cavity width')
+        # residuals plot
+        if p['DRS_PLOT'] and p['DRS_DEBUG'] > 0:
+            sPlt.fp_m_x_residuals(p, fp_order, fp_xx, m, xm_mask, coeff_xm_all)
 
         # flatten arrays
         one_m_d_sa = one_m_d
@@ -621,7 +568,7 @@ def do_fp_wavesol(p, loc):
         hc_xx_test = np.concatenate(hc_xx_test).ravel()
         hc_ord_test = np.concatenate(hc_ord_test).ravel()
 
-        # log line number span
+        # log absolute peak number span
         wargs = [round(m_d[0]), round(m_d[-1])]
         wmsg = 'Mode number span: {0} - {1}'
         WLOG(p, '', wmsg.format(*wargs))
@@ -630,8 +577,25 @@ def do_fp_wavesol(p, loc):
         # Fit (1/m) vs d
         # ----------------------------------------------------------------------
 
-        # decide if refit or read fit from file
-        update_cavity = not os.path.exists('cavity_length_m_fit.dat')
+        # get the update cavity value from p
+        update_cavity = p['WAVE_UPDATE_CAVITY']
+
+        # check if cavity fits exist, else they need to be created
+        m_d_path = os.path.join(p['DRS_ROOT'],'SpirouDRS/data/wavelength_cats',
+                                'cavity_length_m_fit.dat')
+        ll_d_path = os.path.join(p['DRS_ROOT'],'SpirouDRS/data/wavelength_cats',
+                                'cavity_length_ll_fit.dat')
+        #
+        if not os.path.exists(m_d_path):
+            wmsg = 'WAVE_UPDATE_CAVITY = False but m vs cavity length fit ' \
+                   'does not exist; fits will be created'
+            WLOG(p, 'warning', wmsg)
+            update_cavity = True
+        elif not os.path.exists(ll_d_path):
+            wmsg = 'WAVE_UPDATE_CAVITY = False but ll vs cavity length fit ' \
+                   'does not exist; fits will be created'
+            WLOG(p, 'warning', wmsg)
+            update_cavity = True
 
         if update_cavity:
             # define sorted arrays
@@ -639,90 +603,37 @@ def do_fp_wavesol(p, loc):
             one_m_d = np.asarray(one_m_d)[one_m_sort]
             d = np.asarray(d)[one_m_sort]
 
-            # polynomial fit
+            # polynomial fit for d vs 1/m
             fit_1m_d = nanpolyfit(one_m_d, d, 9)
             fit_1m_d_func = np.poly1d(fit_1m_d)
             res_d_final = d - fit_1m_d_func(one_m_d)
 
-            if p['DRS_PLOT']:
-                # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
-                plt.figure()
-                plt.subplot(211)
-                # plot values
-                plt.plot(one_m_d, d, 'o')
-                # plot initial cavity width value
-                plt.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
-                # plot reference peak of reddest order
-                plt.plot(1. / m_init, dopd0 / 2., 'D')
-                # plot fit
-                plt.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
-                plt.xlabel('1/m')
-                plt.ylabel('d')
-                plt.legend(loc='best')
-                plt.title('Interpolated cavity width for HC lines')
-                # plot residuals
-                plt.subplot(212)
-                plt.plot(one_m_d, res_d_final, '.')
-                plt.xlabel('1/m')
-                plt.ylabel('residuals [nm]')
-
             # fit d v wavelength w/sigma-clipping
-            sigclip = 7
-            # initialise the while loop
-            sigmax = sigclip + 1
-            # initialise mask
-            mask = np.ones_like(hc_ll_test, dtype='Bool')
-            while sigmax > sigclip:
-                # fit on masked values
-                ff = nanpolyfit(hc_ll_test[mask], d[mask], deg=9)
-                # get residuals (not masked or dimension break)
-                res = d - np.polyval(ff, hc_ll_test)
-                # normalise
-                res = np.abs(res / np.nanmedian(np.abs(res[mask])))
-                # get the max residual in sigmas
-                sigmax = np.max(res[mask])
-                # mask all outliers
-                if sigmax > sigclip:
-                    mask[res >= sigclip] = False
+            fit_ll_d, mask = sigclip_polyfit(p, hc_ll_test, d, degree=9)
 
-            # write polyfits to files
-            # TODO proper paths
-            np.savetxt('cavity_length_m_fit.dat', fit_1m_d)
-            np.savetxt('cavity_length_ll_fit.dat', ff)
+            # plot d vs 1/m fit and residuals
+            if p['DRS_PLOT']:
+                sPlt.interpolated_cavity_width_HC(p, one_m_d, d, m_init,
+                                                  fit_1m_d_func, res_d_final)
+
+            # write polynomial fits to files
+            np.savetxt(m_d_path, fit_1m_d)
+            np.savetxt(ll_d_path, fit_ll_d)
         else:
             # read fit coefficients from files
-            # TODO proper paths
-            fit_1m_d = np.genfromtxt('cavity_length_m_fit.dat')
-            ff = np.genfromtxt('cavity_length_ll_fit.dat')
+            fit_1m_d = np.genfromtxt(m_d_path)
+            fit_ll_d = np.genfromtxt(ll_d_path)
             fit_1m_d_func = np.poly1d(fit_1m_d)
             # get achromatic cavity change - ie shift
-            residual = d - np.polyval(ff, hc_ll_test)
+            residual = d - np.polyval(fit_ll_d, hc_ll_test)
             # update coeffs with mean shift
-            ff[-1] += np.nanmedian(residual)
+            fit_ll_d[-1] += np.nanmedian(residual)
 
-        fitval = np.polyval(ff, hc_ll_test)
+        fitval = np.polyval(fit_ll_d, hc_ll_test)
 
         if p['DRS_PLOT']:
-            # plot wavelength vs d and the fitted polynomial - TODO move to spirouPLOT
-            plt.figure()
-            plt.subplot(211)
-            # plot values
-            plt.plot(hc_ll_test, d, '.')
-            # plot initial cavity width value
-            plt.hlines(dopd0 / 2., min(hc_ll_test), max(hc_ll_test), label='original d')
-            # plot reference peak of reddest order
-            plt.plot(fp_ll[-1][-1], dopd0 / 2., 'D')
-            # plot fit
-            plt.plot(hc_ll_test, fitval, label='polynomial fit')
-            plt.xlabel('wavelength')
-            plt.ylabel('d')
-            plt.legend(loc='best')
-            plt.title('Interpolated cavity width for HC lines')
-            # plot residuals
-            plt.subplot(212)
-            plt.plot(hc_ll_test, d - fitval, '.')
-            plt.xlabel('wavelength')
-            plt.ylabel('residuals [nm]')
+            # plot wavelength vs d and the fitted polynomial
+            sPlt.interpolated_cavity_width_ll_HC(p, hc_ll_test, d, fp_ll, fitval)
 
         # ----------------------------------------------------------------------
         # Update FP peak wavelengths
@@ -739,7 +650,7 @@ def do_fp_wavesol(p, loc):
         # from the d v wavelength fit
         fp_ll_new_2 = np.ones_like(m) * 1600.
         for ite in range(6):
-            recon_d = np.polyval(ff, fp_ll_new_2)
+            recon_d = np.polyval(fit_ll_d, fp_ll_new_2)
             fp_ll_new_2 = recon_d / m * 2
         # TODO toggle to switch between fp ll fits
         fp_ll_new = fp_ll_new_2
@@ -3426,6 +3337,30 @@ def no_overlap_match_calc(p, ord_num, fp_ll_ord, fp_ll_ord_prev,
     m_ord = m_end + dif_n[ord_num][-1] - dif_n[ord_num]
     # return m_ord
     return m_ord
+
+
+def sigclip_polyfit(p, xx, yy, degree):
+    # read constants from p
+    sigclip = p['WAVE_SIGCLIP']
+    # initialise the while loop
+    sigmax = sigclip + 1
+    # initialise mask
+    mask = np.ones_like(xx, dtype='Bool')
+    while sigmax > sigclip:
+        # fit on masked values
+        coeff = nanpolyfit(xx[mask], yy[mask], deg=degree)
+        # get residuals (not masked or dimension breaks)
+        res = yy - np.polyval(coeff, xx)
+        # normalise the residuals
+        res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+        # get the max residual in sigmas
+        sigmax = np.max(res[mask])
+        # mask all outliers
+        if sigmax > sigclip:
+            mask[res >= sigclip] = False
+    # return the coefficients and mask
+    return coeff, mask
+
 
 # =============================================================================
 # End of code
