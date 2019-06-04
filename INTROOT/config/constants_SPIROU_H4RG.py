@@ -1162,8 +1162,12 @@ WAVE_BLAZE_THRESH = 0.3
 WAVE_FP_XDIF_MIN = 0.75
 # Maximum FP peaks pixel separation fraction diff. from median      - [cal_wave]
 WAVE_FP_XDIF_MAX = 1.25
-
-
+# Minimum FP peaks wavelength separation fraction diff. from median - [cal_wave]
+WAVE_FP_LLDIF_MIN = 0.75
+# Maximum FP peaks wavelength separation fraction diff. from median - [cal_wave]
+WAVE_FP_LLDIF_MAX = 1.25
+# Maximum fract. wavelength offset between cross-matched FP peaks   - [cal_wave]
+WAVE_FP_LL_OFFSET = 0.25
 # -----------------------------------------------------------------------------
 #  Telluric parameters
 # -----------------------------------------------------------------------------
