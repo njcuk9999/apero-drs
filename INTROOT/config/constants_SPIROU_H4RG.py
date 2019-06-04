@@ -1151,7 +1151,7 @@ WAVE_MODE_HC = 0
 #   Should be one of the following:
 #       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
 #       1 - following C Lovis (previously WAVE_NEW)
-WAVE_MODE_FP = 0
+WAVE_MODE_FP = 1
 #  Defines order from which the solution is calculated              - [cal_wave]
 WAVE_N_ORD_START = 0
 #  Defines order to which the solution is calculated                - [cal_wave]
@@ -1168,6 +1168,13 @@ WAVE_FP_LLDIF_MIN = 0.75
 WAVE_FP_LLDIF_MAX = 1.25
 # Maximum fract. wavelength offset between cross-matched FP peaks   - [cal_wave]
 WAVE_FP_LL_OFFSET = 0.25
+# Maximum DV to keep HC lines in combined (WAVE_NEW) solution       - [cal_wave]
+WAVE_DV_MAX = 0.25
+# Sigma-clip value for sigclip_polyfit                              - [cal_wave]
+WAVE_SIGCLIP = 7
+# Decide whether to refit the cavity width                          - [cal_wave]
+WAVE_UPDATE_CAVITY = False
+
 # -----------------------------------------------------------------------------
 #  Telluric parameters
 # -----------------------------------------------------------------------------
