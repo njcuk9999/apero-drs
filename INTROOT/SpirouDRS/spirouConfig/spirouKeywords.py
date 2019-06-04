@@ -50,10 +50,10 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_AIRMASS',
             'KW_BBAD',
             'KW_BBFLAT',
-            'KW_BERV',
-            'KW_BERV_MAX',
+            'KW_BERV', 'KW_BERV_EST',
+            'KW_BERV_MAX', 'KW_BERV_MAX_EST',
             'KW_BHOT',
-            'KW_BJD',
+            'KW_BJD', 'KW_BJD_EST',
             'KW_BNDARK',
             'KW_BNFLAT',
             'KW_BNILUM',
@@ -579,6 +579,17 @@ KW_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
 KW_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 
 # -----------------------------------------------------------------------------
+# Define BERV variables
+# -----------------------------------------------------------------------------
+KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
+KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
+KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
+KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
+KW_BERV_EST = ['ESTBERV', 0, 'ESTIMATED BC Velocity']
+KW_BJD_EST = ['ESTBJD', 0, 'ESTIMATED BJD']
+KW_BERV_MAX_EST = ['ESTBMAX', 0, 'ESTIMATED Max BC Velocity']
+
+# -----------------------------------------------------------------------------
 # Define DRIFT variables
 # -----------------------------------------------------------------------------
 KW_REF_RV = ['DFTREFRV', 0, 'Reference RV [m/s]']
@@ -597,10 +608,6 @@ KW_CCF_MAXCPP = ['CCFMACP', 0, 'max count/pixel of CCF (e-)']
 KW_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 KW_CCF_LINES = ['CCFLINE', 0, 'nbr of lines used']
 KW_CCF_TELL = ['CCFTELLC', 0, 'Telluric threshold for CCF rejection']
-KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
-KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
-KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
-KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
 KW_CCF_WMREF = ['DVRMS', 0, 'RV photon noise uncertainty on spectrum (km/s)']
 KW_CCF_RVNOISE = ['RVNOISE', 0, 'RV photon noise uncertainty on CCF (km/s)']
 
