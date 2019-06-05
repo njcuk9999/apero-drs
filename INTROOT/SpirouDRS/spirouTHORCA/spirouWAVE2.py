@@ -558,14 +558,10 @@ def do_fp_wavesol(p, loc):
             sPlt.fp_m_x_residuals(p, fp_order, fp_xx, m, xm_mask, coeff_xm_all)
 
         # flatten arrays
-        one_m_d_sa = one_m_d
-        d_sa = d
-        m_d_sa = m_d
         one_m_d = np.concatenate(one_m_d).ravel()
         d = np.concatenate(d).ravel()
         m_d = np.concatenate(m_d).ravel()
         hc_ll_test = np.concatenate(hc_ll_test).ravel()
-        hc_xx_test = np.concatenate(hc_xx_test).ravel()
         hc_ord_test = np.concatenate(hc_ord_test).ravel()
 
         # log absolute peak number span
@@ -581,10 +577,10 @@ def do_fp_wavesol(p, loc):
         update_cavity = p['WAVE_UPDATE_CAVITY']
 
         # check if cavity fits exist, else they need to be created
-        m_d_path = os.path.join(p['DRS_ROOT'],'SpirouDRS/data/wavelength_cats',
+        m_d_path = os.path.join(p['DRS_ROOT'], 'SpirouDRS/data/wavelength_cats',
                                 'cavity_length_m_fit.dat')
-        ll_d_path = os.path.join(p['DRS_ROOT'],'SpirouDRS/data/wavelength_cats',
-                                'cavity_length_ll_fit.dat')
+        ll_d_path = os.path.join(p['DRS_ROOT'], 'SpirouDRS/data/wavelength_cats'
+                                 , 'cavity_length_ll_fit.dat')
         #
         if not os.path.exists(m_d_path):
             wmsg = 'WAVE_UPDATE_CAVITY = False but m vs cavity length fit ' \
@@ -613,8 +609,8 @@ def do_fp_wavesol(p, loc):
 
             # plot d vs 1/m fit and residuals
             if p['DRS_PLOT']:
-                sPlt.interpolated_cavity_width_HC(p, one_m_d, d, m_init,
-                                                  fit_1m_d_func, res_d_final)
+                sPlt.interpolated_cavity_width_one_m_hc(p, one_m_d, d, m_init,
+                                                    fit_1m_d_func, res_d_final)
 
             # write polynomial fits to files
             np.savetxt(m_d_path, fit_1m_d)
@@ -633,7 +629,7 @@ def do_fp_wavesol(p, loc):
 
         if p['DRS_PLOT']:
             # plot wavelength vs d and the fitted polynomial
-            sPlt.interpolated_cavity_width_ll_HC(p, hc_ll_test, d, fp_ll, fitval)
+            sPlt.interpolated_cavity_width_ll_hc(p, hc_ll_test, d, fp_ll, fitval)
 
         # ----------------------------------------------------------------------
         # Update FP peak wavelengths
@@ -642,18 +638,21 @@ def do_fp_wavesol(p, loc):
         # define storage
         fp_ll_new = []
 
-        # loop over peak numbers
-        for i in range(len(m)):
-            # calculate wavelength from fit to 1/m vs d
-            fp_ll_new.append(2 * fit_1m_d_func(1. / m[i]) / m[i])
+        # get the fitting mode from p
+        fp_llfit_mode = p['WAVE_FP_LLFIT_MODE']
 
-        # from the d v wavelength fit
-        fp_ll_new_2 = np.ones_like(m) * 1600.
-        for ite in range(6):
-            recon_d = np.polyval(fit_ll_d, fp_ll_new_2)
-            fp_ll_new_2 = recon_d / m * 2
-        # TODO toggle to switch between fp ll fits
-        fp_ll_new = fp_ll_new_2
+        if fp_llfit_mode == 0:
+            # derive using 1/m vs d fit
+            # loop over peak numbers
+            for i in range(len(m)):
+                # calculate wavelength from fit to 1/m vs d
+                fp_ll_new.append(2 * fit_1m_d_func(1. / m[i]) / m[i])
+        elif fp_llfit_mode == 1:
+            # from the d v wavelength fit - iterative fit
+            fp_ll_new = np.ones_like(m) * 1600.
+            for ite in range(6):
+                recon_d = np.polyval(fit_ll_d, fp_ll_new)
+                fp_ll_new = recon_d / m * 2
 
         # save to loc (flattened)
         loc['FP_LL_NEW'] = np.array(fp_ll_new)
@@ -661,35 +660,11 @@ def do_fp_wavesol(p, loc):
         loc['FP_ORD_NEW'] = np.array(np.concatenate(fp_order).ravel())
 
         if p['DRS_PLOT']:
-            # plot by order - TODO move to spirouPLOT
-            # define colours
-            # noinspection PyUnresolvedReferences
-            col = cm.rainbow(np.linspace(0, 1, n_fin))
-            plt.figure()
-            for ind_ord in range(n_fin - n_init):
-                # get parameters for initial wavelength solution
-                c_aux = np.poly1d(loc['POLY_WAVE_SOL'][ind_ord + n_init][::-1])
-                # order mask
-                ord_mask = np.where(
-                    np.concatenate(fp_order).ravel() == ind_ord + n_init)
-                # get FP line pixel positions for the order
-                fp_x_ord = fp_xx[ind_ord]
-                # derive FP line wavelengths using initial solution
-                fp_ll_orig = c_aux(fp_x_ord)
-                # get new FP line wavelengths for the order
-                fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
-                # plot old-new wavelengths
-                plt.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord, '.',
-                         label='order ' + str(ind_ord), color=col[ind_ord])
-            plt.xlabel('FP peak position [pix]')
-            ylabel = 'FP old-new wavelength difference [nm] (shifted +0.001 per order)'
-            plt.ylabel(ylabel)
-            plt.legend(loc='best')
+            sPlt.fp_ll_difference(p, loc)
 
         # ----------------------------------------------------------------------
         # Fit wavelength solution from FP peaks
         # ----------------------------------------------------------------------
-
 
         # set up storage arrays
         xpix = np.arange(loc['NBPIX'])
@@ -697,27 +672,18 @@ def do_fp_wavesol(p, loc):
         poly_wave_sol_final = np.zeros((n_fin - n_init, p['IC_LL_DEGR_FIT'] + 1))
         wsumres = 0.0
         wsumres2 = 0.0
-        total_lines = 0.0
         sweight = 0.0
-        fp_x_final_clip = []
-        fp_ll_final_clip = []
         fp_ll_in_clip = []
-        res_clip = []
-        wei_clip = []
-        scale = []
 
         # weights - dummy array
         wei = np.ones_like(fp_ll_new)
-        # flat x array
-        fp_xx_f = np.array(np.concatenate(fp_xx).ravel())
 
         # fit x v wavelength w/sigma-clipping
-        # we remove modulo 1 pixel errors in line centers
+        # we remove modulo 1 pixel errors in line centers - 3 iterations
         n_ite_mod_x = 3
         for ite in range(n_ite_mod_x):
             wsumres = 0.0
             wsumres2 = 0.0
-            total_lines = 0.0
             sweight = 0.0
             fp_x_final_clip = []
             fp_ll_final_clip = []
@@ -725,62 +691,47 @@ def do_fp_wavesol(p, loc):
             res_clip = []
             wei_clip = []
             scale = []
-            res_modx = np.zeros_like(fp_xx_f)
+            res_modx = np.zeros_like(loc['FP_XX_NEW'])
             # loop over the orders
             for onum in range(n_fin - n_init):
                 # order mask
-                ord_mask = np.where(np.concatenate(fp_order).ravel() == onum + n_init)
+                ord_mask = np.where(np.concatenate(fp_order).ravel() == onum +
+                                    n_init)
                 # get FP line pixel positions for the order
-                fp_x_ord = fp_xx_f[ord_mask]
+                fp_x_ord = loc['FP_XX_NEW'][ord_mask]
                 # get new FP line wavelengths for the order
                 fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
                 # get weights for the order
                 wei_ord = np.asarray(wei)[ord_mask]
-                # fit sol w/sigma-clip
-                # set sigma
-                sigclip = 7
-                # initialise the while loop
-                sigmax = sigclip + 1
-                # initialise mask
-                mask = np.ones_like(fp_x_ord, dtype='Bool')
-                while sigmax > sigclip:
-                    # fit on masked values
-                    poly_wave_sol_final[onum] = nanpolyfit(fp_x_ord[mask],
-                                                           fp_ll_new_ord[mask],
-                                                           p['IC_LL_DEGR_FIT'], w=wei_ord[mask])[::-1]
-                    # get residuals
-                    res = fp_ll_new_ord - np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
-                    # normalise
-                    res = np.abs(res / np.nanmedian(np.abs(res[mask])))
-                    # get the max residual in sigmas
-                    sigmax = np.max(res[mask])
-                    # mask outliers
-                    if sigmax > sigclip:
-                        mask[res >= sigclip] = False
-
-                res_modx[ord_mask] = 2.998e5 * (fp_ll_new_ord /
-                                                np.polyval(poly_wave_sol_final[onum][::-1],
-                                                           fp_x_ord) - 1)
-                # mask input arrays for stats
+                # fit solution w/sigma-clip
+                coeffs, mask = sigclip_polyfit(p, fp_x_ord, fp_ll_new_ord,
+                                            p['IC_LL_DEGR_FIT'], wei_ord)
+                # store the coefficients
+                poly_wave_sol_final[onum] = coeffs[::-1]
+                # get the residuals modulo x
+                res_modx[ord_mask] = speed_of_light * (fp_ll_new_ord /
+                                                       np.polyval(coeffs,
+                                                                  fp_x_ord) - 1)
+                # mask input arrays for statistics
                 fp_x_ord = fp_x_ord[mask]
                 fp_ll_new_ord = fp_ll_new_ord[mask]
                 wei_ord = wei_ord[mask]
                 # get final wavelengths
-                fp_ll_final_ord = np.polyval(poly_wave_sol_final[onum][::-1], fp_x_ord)
+                fp_ll_final_ord = np.polyval(coeffs, fp_x_ord)
                 # save wave map
-                wave_map_final[onum] = np.polyval(poly_wave_sol_final[onum][::-1], xpix)
-                # save aux arrays
+                wave_map_final[onum] = np.polyval(coeffs, xpix)
+                # save masked arrays
                 fp_x_final_clip.append(fp_x_ord)
                 fp_ll_final_clip.append(fp_ll_final_ord)
                 fp_ll_in_clip.append(fp_ll_new_ord)
+                wei_clip.append(wei_ord)
                 # residuals in km/s
-                # recalculate the residuals (not absolute value!!)
+                # calculate the residuals for the final masked arrays
                 res = fp_ll_final_ord - fp_ll_new_ord
                 res_clip.append(res * speed_of_light / fp_ll_new_ord)
-                wei_clip.append(wei_ord)
                 # save stats
                 # get the derivative of the coefficients
-                poly = np.poly1d(poly_wave_sol_final[onum][::-1])
+                poly = np.poly1d(coeffs)
                 dldx = np.polyder(poly)(fp_x_ord)
                 # work out conversion factor
                 convert = speed_of_light * dldx / fp_ll_final_ord
@@ -794,37 +745,21 @@ def do_fp_wavesol(p, loc):
 
             # we construct a sin/cos model of the error in line center position
             # and fit it to the residuals
-            cos = np.cos(2 * np.pi * (fp_xx_f % 1))
-            sin = np.sin(2 * np.pi * (fp_xx_f % 1))
+            cos = np.cos(2 * np.pi * (loc['FP_XX_NEW'] % 1))
+            sin = np.sin(2 * np.pi * (loc['FP_XX_NEW'] % 1))
 
             # find points that are not residual outliers
             # We fit a zeroth order polynomial, so it returns
             # outliers to the mean value.
-            # set sigma
-            sigclip = 7
-            # initialise the while loop
-            sigmax = sigclip + 1
-            # initialise mask
-            mask_all = np.ones_like(fp_xx_f, dtype='Bool')
-            while sigmax > sigclip:
-                # fit on masked values
-                fitfit = nanpolyfit(fp_xx_f[mask_all],
-                                    res_modx[mask_all], 0)
-                # get residuals
-                res = fp_xx_f - np.polyval(fitfit, fp_xx_f)
-                # normalise
-                res = np.abs(res / np.nanmedian(np.abs(res[mask_all])))
-                # get the max residual in sigmas
-                sigmax = np.max(res[mask_all])
-                # mask outliers
-                if sigmax > sigclip:
-                    mask_all[res >= sigclip] = False
+            outl_fit, mask_all = sigclip_polyfit(loc['FP_XX_NEW'], res_modx, 0)
             # create model
-            acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / np.nansum(cos[mask_all] ** 2)
-            asin = np.nansum(sin[mask_all] * res_modx[mask_all]) / np.nansum(sin[mask_all] ** 2)
+            acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / \
+                   np.nansum(cos[mask_all] ** 2)
+            asin = np.nansum(sin[mask_all] * res_modx[mask_all]) / \
+                   np.nansum(sin[mask_all] ** 2)
             model_sin = (cos * acos + sin * asin)
             # update the xpeak positions with model
-            fp_xx_f += model_sin / 2.2
+            loc['FP_XX_NEW'] += model_sin / 2.2
 
 
         # calculate the final var and mean
@@ -840,48 +775,17 @@ def do_fp_wavesol(p, loc):
         WLOG(p, 'info', [wmsg1, wmsg2])
 
 
-        if p['DRS_PLOT']:
-            # control plot - single order - TODO move to spirouPlot
-            plot_order = p['IC_WAVE_EA_PLOT_ORDER']
-            plt.figure()
-            # get mask for HC lines
-            hc_mask = loc['ORD_T'] == plot_order
-            # get hc lines
-            hc_ll = loc['WAVE_CATALOG'][hc_mask]
-            # plot hc data
-            plt.plot(wave_map_final[plot_order - n_init], loc['HCDATA'][plot_order])
-            plt.vlines(hc_ll, 0, np.max(loc['HCDATA'][plot_order]))
-            plt.xlabel('Wavelength')
-            plt.ylabel('Flux')
 
-        if p['DRS_PLOT']:
-            # control plot - selection of orders - TODO move to spirouPlot
-            n_plot_init = 0
-            n_plot_fin = np.min((n_fin - 1, 5))
+        if p['DRS_PLOT'] and p['DRS_DEBUG'] > 0:
+            if p['WAVE_PLOT_MULTI_INIT'] >= p['WAVE_N_ORD_FINAL']:
+                wmsg = 'First order for multi-order plot, {0}, higher than final' \
+                       'wavelength solution order {1}; no plot'
+                WLOG(p, 'warning', wmsg.format(p['WAVE_PLOT_MULTI_INIT'],
+                                               p['WAVE_N_ORD_FINAL']))
+            else:
+                sPlt.wave_plot_multi_order(p, hc_ll_test, hc_ord_test,
+                                           wave_map_final, loc['HCDATA'])
 
-            plt.figure()
-            # define spectral order colours
-            col1 = ['black', 'grey']
-            lty = ['--', ':']
-            #    col2 = ['green', 'purple']
-            # loop through the orders
-            for order_num in range(n_plot_init, n_plot_fin):
-                # set up mask for the order
-                gg = loc['ORD_T'] == order_num
-                # keep only lines for the order
-                hc_ll = loc['WAVE_CATALOG'][gg]
-                # get colours from order parity
-                col1_1 = col1[np.mod(order_num, 2)]
-                lty_1 = lty[np.mod(order_num, 2)]
-                #        col2_1 = col2[np.mod(order_num, 2)]
-                # plot hc data
-                plt.plot(wave_map_final[order_num - n_init], loc['HCDATA'][order_num])
-                plt.vlines(hc_ll, 0, np.nanmax(loc['HCDATA'][order_num]), color=col1_1,
-                           linestyles=lty_1)
-                plt.xlabel('Wavelength (nm)')
-                plt.ylabel('Flux')
-
-        safetytest = np.copy(wave_map_final)
 
         # # TODO test linmin fitting
 
@@ -3339,7 +3243,23 @@ def no_overlap_match_calc(p, ord_num, fp_ll_ord, fp_ll_ord_prev,
     return m_ord
 
 
-def sigclip_polyfit(p, xx, yy, degree):
+def sigclip_polyfit(p, xx, yy, degree, weight = None):
+    """
+    Fit a polynomial with sigma-clipping of outliers
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            WAVE_SIGCLIP: clipping parameter
+
+    :param xx: numpy array, x values to fit
+    :param yy: numpy array, y values to fit
+    :param degree: int, the degree of fit
+    :param weight: optional, numpy array, weights to the fit
+
+    :return coeff: the fit coefficients
+    :return mask: the sigma-clip mask
+
+    """
     # read constants from p
     sigclip = p['WAVE_SIGCLIP']
     # initialise the while loop
@@ -3348,7 +3268,7 @@ def sigclip_polyfit(p, xx, yy, degree):
     mask = np.ones_like(xx, dtype='Bool')
     while sigmax > sigclip:
         # fit on masked values
-        coeff = nanpolyfit(xx[mask], yy[mask], deg=degree)
+        coeff = nanpolyfit(xx[mask], yy[mask], deg=degree, w=weight)
         # get residuals (not masked or dimension breaks)
         res = yy - np.polyval(coeff, xx)
         # normalise the residuals
