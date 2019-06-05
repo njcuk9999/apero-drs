@@ -1174,6 +1174,15 @@ WAVE_DV_MAX = 0.25
 WAVE_SIGCLIP = 7
 # Decide whether to refit the cavity width                          - [cal_wave]
 WAVE_UPDATE_CAVITY = False
+# Select the FP wavelength fitting (WAVE_MODE_FP = 1 only)          - [cal_wave]
+#   Should be one of the following:
+#       0 - derive using the 1/m vs d fit from HC lines
+#       1 - derive using the ll vs d fit from HC lines
+WAVE_FP_LLFIT_MODE = 1
+# First order for multi-order plot                                  - [cal_wave]
+WAVE_PLOT_MULTI_INIT = 20
+# Nuber of orders in multi-order plot                               - [cal_wave]
+WAVE_PLOT_MULTI_NBO = 5
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters
