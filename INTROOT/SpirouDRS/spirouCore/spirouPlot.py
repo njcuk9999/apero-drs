@@ -2499,6 +2499,7 @@ def wave_ea_plot_single_order(p, loc):
 
 def fp_m_x_residuals(p, fp_order, fp_xx, m, xm_mask, coeff_xm_all):
     plot_name = 'fp_m_x_residuals'
+    # get constants from p
     n_init = p['WAVE_N_ORD_START']
     n_fin = p['WAVE_N_ORD_FINAL']
     # set up fig
@@ -2518,14 +2519,14 @@ def fp_m_x_residuals(p, fp_order, fp_xx, m, xm_mask, coeff_xm_all):
         # plot residuals
         frame.plot(fp_x_ord[mask], m_ord[mask] -
                    np.polyval(coeff_xm, fp_x_ord[mask]) + 0.01 * ord_num, '.')
-    frame.set(xlabel = 'FP pixel position',
-              ylabel = 'm(x) residuals (shifted +0.01*Order)')
+    frame.set(xlabel='FP pixel position',
+              ylabel='m(x) residuals (shifted +0.01*Order)')
     # end plotting function properly
     end_plotting(p, plot_name)
 
 
-def interpolated_cavity_width_one_m_HC(p, one_m_d, d, m_init, fit_1m_d_func,
-                                 res_d_final):
+def interpolated_cavity_width_one_m_hc(p, one_m_d, d, m_init, fit_1m_d_func,
+                                       res_d_final):
     plot_name = 'interpolated_cavity_width_one_m_HC'
     # get constants from p
     dopd0 = p['IC_FP_DOPD0']
@@ -2544,7 +2545,7 @@ def interpolated_cavity_width_one_m_HC(p, one_m_d, d, m_init, fit_1m_d_func,
     # plot residuals - separate subplot
     frame2.plot(one_m_d, res_d_final, '.')
     # set labels
-    frame1.set(xlabel = '1/m', ylabel = 'cavity width d')
+    frame1.set(xlabel='1/m', ylabel='cavity width d')
     frame2.set(xlabel='1/m', ylabel='residuals [nm]')
     # plot legend
     frame1.legend(loc='best')
@@ -2554,7 +2555,7 @@ def interpolated_cavity_width_one_m_HC(p, one_m_d, d, m_init, fit_1m_d_func,
     end_plotting(p, plot_name)
 
 
-def interpolated_cavity_width_ll_HC(p, hc_ll, d, fp_ll, fitval):
+def interpolated_cavity_width_ll_hc(p, hc_ll, d, fp_ll, fitval):
     plot_name = 'interpolated_cavity_width_ll_HC'
     # get constants from p
     dopd0 = p['IC_FP_DOPD0']
@@ -2573,12 +2574,75 @@ def interpolated_cavity_width_ll_HC(p, hc_ll, d, fp_ll, fitval):
     # plot residuals - separate subplot
     frame2.plot(hc_ll, d - fitval, '.')
     # set labels
-    frame1.set(xlabel = 'wavelength', ylabel = 'cavity width d')
+    frame1.set(xlabel='wavelength', ylabel='cavity width d')
     frame2.set(xlabel='wavelength', ylabel='residuals [nm]')
     # plot legend
     frame1.legend(loc='best')
     # add title
     plt.suptitle('Interpolated cavity width vs wavelength for HC lines')
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
+def fp_ll_difference(p, loc):
+    plot_name = 'fp_ll_difference'
+    # get constants from p
+    n_init = p['WAVE_N_ORD_START']
+    n_fin = p['WAVE_N_ORD_FINAL']
+    # set up fig
+    fig, frame = setup_figure(p)
+    # define colours
+    import matplotlib.cm as cm
+    # noinspection PyUnresolvedReferences
+    col = cm.rainbow(np.linspace(0, 1, n_fin))
+    # loop through the orders
+    for ind_ord in range(n_fin - n_init):
+        # get parameters for initial wavelength solution
+        c_aux = np.poly1d(loc['POLY_WAVE_SOL'][ind_ord + n_init][::-1])
+        # order mask
+        ord_mask = np.where(loc['FP_ORD_NEW'] == ind_ord + n_init)
+        # get FP line pixel positions for the order
+        fp_x_ord = loc['FP_LL_NEW'][ord_mask]
+        # derive FP line wavelengths using initial solution
+        fp_ll_orig = c_aux(fp_x_ord)
+        # get new FP line wavelengths for the order
+        fp_ll_new_ord = loc['FP_LL_NEW'][ord_mask]
+        # plot old-new wavelengths
+        frame.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord, '.',
+                   label='order ' + str(ind_ord), color=col[ind_ord])
+    frame.set(xlabel='FP peak position [pix]',
+    ylabel='FP old-new wavelength difference [nm] (shifted +0.001 per order)')
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
+def wave_plot_multi_order(p, hc_ll, hc_ord, wave_map, hcdata):
+    plot_name = 'wave_plot_multi_order'
+    # get constants from p
+    n_plot_init = p['WAVE_PLOT_MULTI_INIT']
+    n_fin = p['WAVE_N_ORD_FINAL']
+    nbo = p['WAVE_PLOT_MULTI_NBO']
+    # compute final plotting order
+    n_plot_fin = np.min(n_plot_init + nbo, n_fin)
+    # set up fig
+    fig, frame = setup_figure(p)
+    # define colours and line types for alternate order fitted lines
+    col = ['black', 'grey']
+    lty = ['--', ':']
+    for order_num in range(n_plot_init, n_plot_fin):
+        # select lines for the order
+        hc_ll_plot = hc_ll[hc_ord == order_num]
+        # get colour and style from order parity
+        col_plot = col[np.mod(order_num, 2)]
+        lty_plot = lty[np.mod(order_num, 2)]
+        # plot hc spectra
+        frame.plot(wave_map[order_num], hcdata[order_num])
+        # plot used HC lines
+        frame.vlines(hc_ll_plot, 0, np.nanmax(hcdata[order_num]),
+                     color=col_plot, linestyles=lty_plot)
+        # set axis labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='Normalised flux',
+              title='HC spectra + used HC lines')
     # end plotting function properly
     end_plotting(p, plot_name)
 
