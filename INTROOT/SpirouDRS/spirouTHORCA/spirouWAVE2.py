@@ -361,9 +361,9 @@ def do_fp_wavesol(p, loc):
                 mb = np.where(loc['BLAZE'][order_num] > p['WAVE_BLAZE_THRESH'] *
                               np.nanmax(loc['BLAZE'][order_num]))
             # keep only x values at above 30% blaze
-            x_fp = x_fp[np.logical_and(np.nanmax(mb) > x_fp,
-                                       np.nanmin(mb) < x_fp)]
             amp_fp = amp_fp[np.logical_and(np.nanmax(mb) > x_fp,
+                                       np.nanmin(mb) < x_fp)]
+            x_fp = x_fp[np.logical_and(np.nanmax(mb) > x_fp,
                                        np.nanmin(mb) < x_fp)]
             # initial differential numbering (assuming no gaps)
             peak_num_init = np.arange(len(x_fp))
@@ -721,25 +721,6 @@ def do_fp_wavesol(p, loc):
         p['IC_HC_N_ORD_START_2'] = n_init
         p['IC_HC_N_ORD_FINAL_2'] = n_fin
         # p['IC_LITTROW_ORDER_INIT_2'] = n_init
-
-        # set up x_details and ll_details structures for line list table:
-        # X_DETAILS_i: list, [lines, xfit, cfit, weight] where
-        #   lines= original wavelength-centers used for the fit
-        #   xfit= original pixel-centers used for the fit
-        #   cfit= fitted pixel-centers using fit coefficients
-        #   weight=the line weights used
-        # LL_DETAILS_i: numpy array (1D), the [nres, wei] where
-        #   nres = normalised residuals in km/s
-        #   wei = the line weights
-        x_details = []
-        ll_details = []
-        for ord_num in range(n_init, n_fin):
-            omask = loc['FP_ORD_CL'] == ord_num
-            x_details.append([loc['FP_LLIN_CL'][omask], loc['FP_XIN_CL'][omask],
-                           loc['FP_XOUT_CL'][omask], loc['FP_WEI_CL'][omask]])
-            ll_details.append([loc['RES_CL'][omask], loc['FP_WEI_CL'][omask]])
-        loc['X_DETAILS_2'] = x_details
-        loc['LL_DETAILS_2'] = ll_details
 
     # ----------------------------------------------------------------------
     # LITTROW SECTION - common to all methods
@@ -3392,6 +3373,25 @@ def fit_1d_solution_sigclip(p, loc):
     loc['X_VAR_2'] = final_var
     loc['TOTAL_LINES_2'] = total_lines
     loc['SCALE_2'] = scale
+
+    # set up x_details and ll_details structures for line list table:
+    # X_DETAILS_i: list, [lines, xfit, cfit, weight] where
+    #   lines= original wavelength-centers used for the fit
+    #   xfit= original pixel-centers used for the fit
+    #   cfit= fitted pixel-centers using fit coefficients
+    #   weight=the line weights used
+    # LL_DETAILS_i: numpy array (1D), the [nres, wei] where
+    #   nres = normalised residuals in km/s
+    #   wei = the line weights
+    x_details = []
+    ll_details = []
+    for ord_num in range(n_init, n_fin):
+        omask = loc['FP_ORD_CL'] == ord_num
+        x_details.append([loc['FP_LLIN_CL'][omask], loc['FP_XIN_CL'][omask],
+                          loc['FP_XOUT_CL'][omask], loc['FP_WEI_CL'][omask]])
+        ll_details.append([loc['RES_CL'][omask], loc['FP_WEI_CL'][omask]])
+    loc['X_DETAILS_2'] = x_details
+    loc['LL_DETAILS_2'] = ll_details
 
     # return
     return loc
