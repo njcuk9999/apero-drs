@@ -97,7 +97,13 @@ if __name__ == '__main__':
         fpath = os.path.join(filestore, filename)
         if os.path.exists(fpath):
             fhdr = fits.getheader(fpath)
-            fberv.append(float(fhdr['BERV']))
+
+            if np.isnan(float(fhdr['BERV'])):
+                berv = float(fhdr['BERV_EST'])
+            else:
+                berv = float(fhdr['BERV'])
+
+            fberv.append(berv)
             fmjdate.append(float(fhdr['MJDATE']))
             fobjname.append(str(fhdr['OBJNAME']))
         else:
@@ -131,6 +137,7 @@ if __name__ == '__main__':
 
     plt.show()
     plt.close()
+
 
 # =============================================================================
 # End of code
