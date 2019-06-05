@@ -3140,7 +3140,7 @@ def construct_master_fp(p, refimage, filenames, matched_id):
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of dark cube
-    fp_cube, dx_ref_list, dy_ref_list = [], [], []
+    fp_cube, transforms_list = [], []
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
@@ -3160,20 +3160,19 @@ def construct_master_fp(p, refimage, filenames, matched_id):
                 cube.append(data_it)
             # median fp cube
             groupfp = np.nanmedian(cube, axis=0)
-            # set NaNs to zero
-            nanmask = ~np.isfinite(groupfp)
-            groupfp[nanmask] = 0.0
+            # shift group to master
+            transforms = get_linear_transform_params(p, refimage, groupfp)
+            groupfp = linear_transform(groupfp, transforms)
             # shift group to master
             groupfp, dx_ref, dy_ref = register_fp(p, refimage, groupfp)
             # append to cube
             fp_cube.append(groupfp)
             for filename in fp_ids:
-                dx_ref_list.append(dx_ref)
-                dy_ref_list.append(dy_ref)
+                transforms_list.append(transforms)
     # convert fp cube to array
     fp_cube = np.array(fp_cube)
     # return fp_cube
-    return fp_cube, dx_ref_list, dy_ref_list
+    return fp_cube, transforms_list
 
 
 def register_fp(p, image1, image2):
@@ -3299,6 +3298,41 @@ def twod_peak_fit(xx, yy, zz, size):
     # return the x and y shifts
     return yshift, xshift
 
+
+def get_linear_transform_params(p, image1, image2):
+    # TODO: fill in this function
+    return transforms
+
+
+def linear_transform(image, transforms):
+    # copy image
+    image = np.array(image)
+    # transforming an image with the 6 linear transform terms
+    # Be careful with NaN values, there should be none
+    dx, dy, A, B, C, D = transforms
+    # ge tthe x and y indices
+    yy, xx = np.indices(image.shape, dtype=float)  # /10.
+
+    xx2 = dx + xx * A + yy * B
+    yy2 = dy + xx * C + yy * D
+    # get all non NaN pixels
+    valid_mask = np.isfinite(image)
+    # get the float mask as weights
+    weights = valid_mask.astype(float)
+    # set all NaN pixels to zero (for transform
+    image[~valid_mask] = 0
+    # we need to properly propagate NaN in the interpolation.
+    out_image = mapc(image, [yy2, xx2], order=2, cval=np.nan, output=float,
+                     mode='constant')
+    out_weight = mapc(weights, [yy2, xx2], order=2, cval=0, output=float,
+                      mode='constant')
+    out_image = out_image / out_weight
+    out_image[out_weight < 0.5] = np.nan
+
+    return out_image
+
+
+    return image
 
 
 # =============================================================================
