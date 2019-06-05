@@ -932,29 +932,6 @@ def calculate_absorption_pca(p, loc, x, mask):
     return loc
 
 
-def get_berv_value(p, hdr, filename=None):
-    # deal with no filename
-    if filename is None:
-        if '@@@fname' in hdr:
-            filename = hdr['@@@fname']
-        else:
-            filename = 'UNKNOWN'
-
-    # Check for BERV key in header
-    if p['KW_BERV'][0] not in hdr:
-        emsg = 'HEADER error, file="{0}". Keyword {1} not found'
-        eargs = [filename, p['KW_BERV'][0]]
-        WLOG(p, 'error', emsg.format(*eargs))
-        dv, bjd, bvmax = 0.0, -9999, 0.0
-    else:
-        # Get the Barycentric correction from header
-        dv = float(hdr[p['KW_BERV'][0]])
-        bjd = float(hdr[p['KW_BJD'][0]])
-        bvmax = float(hdr[p['KW_BERV_MAX'][0]])
-    # return dv, bjd, dvmax
-    return dv, bjd, bvmax
-
-
 def berv_correct_template(p, loc, thdr):
     func_name = __NAME__ + '.interp_at_shifted_wavelengths()'
     # Get the Barycentric correction from header

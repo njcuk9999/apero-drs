@@ -48,8 +48,6 @@ GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
 
 GetNormalizedBlaze = spirouTelluric.get_normalized_blaze
 
-GetBERV = spirouTelluric.get_berv_value
-
 GetBlackList = spirouTelluric.get_blacklist
 
 GetWhiteList = spirouTelluric.get_whitelist
