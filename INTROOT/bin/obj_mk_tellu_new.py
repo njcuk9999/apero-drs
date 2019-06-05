@@ -222,10 +222,10 @@ def main(night_name=None, files=None):
         # Get the airmass
         loc['AIRMASS'] = spirouImage.GetAirmass(p, shdr)
         # Get the Barycentric correction from header
-        loc['BERV'], _, _ = spirouTelluric.GetBERV(p, shdr)
+        p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, shdr)
         # set sources
         source = main_name + '+ spirouImage.ReadParams()'
-        loc.set_sources(['OBJNAME', 'AIRMASS', 'BERV'], source)
+        loc.set_sources(['OBJNAME', 'AIRMASS'], source)
 
         # ------------------------------------------------------------------
         # get output transmission filename
