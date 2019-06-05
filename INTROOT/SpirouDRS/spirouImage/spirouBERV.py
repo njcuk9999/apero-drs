@@ -39,15 +39,60 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # Define functions
 # =============================================================================
-# =============================================================================
-# Addition non-extraction function
-# =============================================================================
+def get_berv_value(p, hdr, filename=None):
+    # deal with no filename
+    if filename is None:
+        if '@@@fname' in hdr:
+            filename = hdr['@@@fname']
+        else:
+            filename = 'UNKNOWN'
+
+    # Check for BERV key in header
+    if p['KW_BERV'][0] not in hdr:
+        emsg = 'HEADER error, file="{0}". Keyword {1} not found'
+        eargs = [filename, p['KW_BERV'][0]]
+        WLOG(p, 'error', emsg.format(*eargs))
+        dv, bjd, bvmax, bsource = np.nan, np.nan, np.nan, 'None'
+    else:
+        # Get the Barycentric correction from header
+        dv = float(hdr[p['KW_BERV'][0]])
+        bjd = float(hdr[p['KW_BJD'][0]])
+        bvmax = float(hdr[p['KW_BERV_MAX'][0]])
+        bsource = hdr[p['KW_BERV_SOURCE'][0]]
+
+        # check that dv is not NaN
+        cond1 = np.isnan(dv) or np.isnan(bjd) or np.isnan(bvmax)
+        cond2 = bsource.upper() == 'ESTIMATE'
+        if cond1 or cond2:
+            # log warning
+            wmsg = 'BERV Calculation is NaN, using BERV Estimate'
+            WLOG(p, 'warning', wmsg)
+            dv = float(hdr[p['KW_BERV_EST'][0]])
+            bjd = float(hdr[p['KW_BJD_EST'][0]])
+            bvmax = float(hdr[p['KW_BERV_MAX_EST'][0]])
+            bsource = hdr[p['KW_BERV_SOURCE'][0]]
+
+    # return dv, bjd, dvmax
+    return dv, bjd, bvmax, bsource
+
+
 def get_earth_velocity_correction(p, loc, hdr):
     func_name = __NAME__ + '.get_earth_velocity_correction()'
+    # if BERV is in the header use it
     if p['KW_BERV'][0] in hdr:
-        loc['BERV'] = float(hdr[p['KW_BERV'][0]])
-        loc['BJD'] = float(hdr[p['KW_BJD'][0]])
-        loc['BERV_MAX'] = float(hdr[p['KW_BERV_MAX'][0]])
+        # deal with no filename
+        if '@@@fname' in hdr:
+                filename = hdr['@@@fname']
+        else:
+            filename = 'UNKNOWN'
+        # get the BERV value
+        dv, bjd, bvmax, bsource = get_berv_value(p, hdr)
+        loc['BERV'] = dv
+        loc['BJD'] = bjd
+        loc['BERV_MAX'] = bvmax
+        loc['BERV_SOURCE'] = bsource
+        source = 'Header file={0}'.format(filename)
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX', 'BERV_SOURCE'], source)
         return p, loc
 
     # Get the OBSTYPE for file (from hdr)
@@ -88,7 +133,9 @@ def earth_velocity_correction(p, loc, method):
         # set estimate measurements to nan
         loc['BERV_EST'], loc['BJD_EST'] = np.nan, np.nan
         loc['BERV_MAX_EST'] = np.nan
-        loc.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST'], func_name)
+        loc['BERV_SOURCE'] = 'None'
+        sources = ['BERV_EST', 'BJD_EST', 'BERV_MAX_EST']
+        loc.set_sources(sources, func_name)
         return loc
 
     # get the observation date
@@ -160,6 +207,9 @@ def earth_velocity_correction(p, loc, method):
         loc['BERV_EST'], loc['BJD_EST'] = berv, bjd
         loc['BERV_MAX_EST'] = bervmax
         loc.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST'], func_name)
+        # set berv source
+        loc['BERV_SOURCE'] = 'Estimate'
+        loc.set_source('BERV_SOURCE', func_name)
     else:
         # log output
         wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
@@ -174,7 +224,9 @@ def earth_velocity_correction(p, loc, method):
         loc['BERV_EST'], loc['BJD_EST'] = np.nan, np.nan
         loc['BERV_MAX_EST'] = np.nan
         loc.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST'], func_name)
-
+        # set berv source
+        loc['BERV_SOURCE'] = 'barycorrpy'
+        loc.set_source('BERV_SOURCE', func_name)
 
     # return p
     return loc

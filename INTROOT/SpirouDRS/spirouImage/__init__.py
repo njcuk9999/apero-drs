@@ -103,6 +103,8 @@ GetExpTime = spirouImage.get_exptime
 
 GetEarthVelocityCorrection = spirouBERV.get_earth_velocity_correction
 
+GetBERV = spirouBERV.get_berv_value
+
 GetBadPixMap = spirouImage.get_badpixel_map
 
 GetGain = spirouImage.get_gain
