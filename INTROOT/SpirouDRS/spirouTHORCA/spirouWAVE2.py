@@ -774,6 +774,7 @@ def do_fp_wavesol(p, loc):
         loc['FP_XIN_CL'] = np.array(np.concatenate(fp_x_in_clip).ravel())
         loc['FP_XOUT_CL'] = np.array(np.concatenate(fp_x_final_clip).ravel())
         loc['FP_WEI_CL'] = np.array(np.concatenate(wei_clip).ravel())
+        loc['RES_CL'] = np.array(np.concatenate(res_clip).ravel())
 
         # calculate the final var and mean
         total_lines = len(np.concatenate(fp_ll_in_clip))
@@ -813,19 +814,25 @@ def do_fp_wavesol(p, loc):
         loc['X_VAR_2'] = final_var
         loc['TOTAL_LINES_2'] = total_lines
         loc['SCALE_2'] = scale
-        # set up x_details structure for line list table:
+        # set up x_details and ll_details structures for line list table:
         # X_DETAILS_i: list, [lines, xfit, cfit, weight] where
         #   lines= original wavelength-centers used for the fit
         #   xfit= original pixel-centers used for the fit
         #   cfit= fitted pixel-centers using fit coefficients
         #   weight=the line weights used
-        details = []
-        for ord_num in range(n_init, n_fin):
-            omask = loc['FP_ORD_NEW'] == ord_num
-            details.append(loc['FP_LLIN_CL'][omask], loc['FP_XIN_CL'][omask],
-                           loc['FP_XOUT_CL'][omask], loc['FP_WEI_CL'][omask])
-        loc['X_DETAILS_2'] = details
+        # LL_DETAILS_i: numpy array (1D), the [nres, wei] where
+        #   nres = normalised residuals in km/s
+        #   wei = the line weights
 
+        x_details = []
+        ll_details = []
+        for ord_num in range(n_init, n_fin):
+            omask = loc['FP_ORD_CL'] == ord_num
+            x_details.append([loc['FP_LLIN_CL'][omask], loc['FP_XIN_CL'][omask],
+                           loc['FP_XOUT_CL'][omask], loc['FP_WEI_CL'][omask]])
+            ll_details.append([loc['RES_CL'][omask], loc['FP_WEI_CL'][omask]])
+        loc['X_DETAILS_2'] = x_details
+        loc['LL_DETAILS_2'] = ll_details
 
     # ----------------------------------------------------------------------
     # LITTROW SECTION - common to all methods
