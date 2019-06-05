@@ -690,6 +690,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                value=loc['BERV_MAX'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_SOURCE'],
+                               value=loc['BERV_SOURCE'])
     # -------------------------------------------------------------------------
     # Add the RV drift from fiber C to CCF header
     if p['HAS_FP']:
@@ -804,6 +806,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_SOURCE'],
+                                   value=loc['BERV_SOURCE'])
         # -------------------------------------------------------------------------
         # Add the RV drift from fiber C to CCF header
         hdict = spirouImage.AddKey(p, hdict, p['KW_DRIFT_RV'],
