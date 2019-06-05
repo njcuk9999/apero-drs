@@ -548,7 +548,7 @@ def update_database_tell_obj(p, filename, objname, berv, airmass, watercol,
 
 
 def update_database_tell_recon(p, filename, objname, berv, airmass, watercol,
-                             hdr=None):
+                               hdr=None):
     # define key
     key = 'TELL_RECON'
     # get h_time and u_time
