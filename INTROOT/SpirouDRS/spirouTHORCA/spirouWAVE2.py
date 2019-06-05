@@ -258,7 +258,7 @@ def do_fp_wavesol(p, loc):
             FPDATA: numpy array (2D), the image data
             FPHDR: dictionary, the header dictionary for FPDATA
 
-    :return:
+    :return: loc
     """
 
     # ------------------------------------------------------------------
@@ -668,129 +668,126 @@ def do_fp_wavesol(p, loc):
         # Fit wavelength solution from FP peaks
         # ----------------------------------------------------------------------
 
-        # set up storage arrays
-        xpix = np.arange(loc['NBPIX'])
-        wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
-        poly_wave_sol_final = np.zeros((n_fin - n_init, p['IC_LL_DEGR_FIT'] + 1))
-        wsumres = 0.0
-        wsumres2 = 0.0
-        sweight = 0.0
-        fp_ll_in_clip = []
+        # # set up storage arrays
+        # xpix = np.arange(loc['NBPIX'])
+        # wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
+        # poly_wave_sol_final = np.zeros((n_fin - n_init, p['IC_LL_DEGR_FIT'] + 1))
+        #
+        # # weights - dummy array
+        # loc['FP_WEI'] = np.ones_like(fp_ll_new)
+        #
+        # # fit x v wavelength w/sigma-clipping
+        # # we remove modulo 1 pixel errors in line centers - 3 iterations
+        # n_ite_mod_x = 3
+        # for ite in range(n_ite_mod_x):
+        #     wsumres = 0.0
+        #     wsumres2 = 0.0
+        #     sweight = 0.0
+        #     fp_x_final_clip = []
+        #     fp_x_in_clip = []
+        #     fp_ll_final_clip = []
+        #     fp_ll_in_clip = []
+        #     fp_ord_clip = []
+        #     res_clip = []
+        #     wei_clip = []
+        #     scale = []
+        #     res_modx = np.zeros_like(loc['FP_XX_NEW'])
+        #     # loop over the orders
+        #     for onum in range(n_fin - n_init):
+        #         # order mask
+        #         ord_mask = np.where(loc['FP_ORD_NEW'] == onum +
+        #                             n_init)
+        #         # get FP line pixel positions for the order
+        #         fp_x_ord = loc['FP_XX_NEW'][ord_mask]
+        #         # get new FP line wavelengths for the order
+        #         fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
+        #         # get weights for the order
+        #         wei_ord = np.asarray(wei)[ord_mask]
+        #         # fit solution w/sigma-clip
+        #         coeffs, mask = sigclip_polyfit(p, fp_x_ord, fp_ll_new_ord,
+        #                                     p['IC_LL_DEGR_FIT'], wei_ord)
+        #         # store the coefficients
+        #         poly_wave_sol_final[onum] = coeffs[::-1]
+        #         # get the residuals modulo x
+        #         res_modx[ord_mask] = speed_of_light * (fp_ll_new_ord /
+        #                                                np.polyval(coeffs,
+        #                                                           fp_x_ord) - 1)
+        #         # mask input arrays for statistics
+        #         fp_x_ord = fp_x_ord[mask]
+        #         fp_ll_new_ord = fp_ll_new_ord[mask]
+        #         wei_ord = wei_ord[mask]
+        #         # get final wavelengths
+        #         fp_ll_final_ord = np.polyval(coeffs, fp_x_ord)
+        #         # save wave map
+        #         wave_map_final[onum] = np.polyval(coeffs, xpix)
+        #         # save masked arrays
+        #         fp_x_final_clip.append(fp_x_ord)
+        #         fp_x_in_clip.append(loc['FP_XX_INIT'][ord_mask][mask])
+        #         fp_ll_final_clip.append(fp_ll_final_ord)
+        #         fp_ll_in_clip.append(fp_ll_new_ord)
+        #         fp_ord_clip.append(loc['FP_ORD_NEW'][ord_mask][mask])
+        #         wei_clip.append(wei_ord)
+        #         # residuals in km/s
+        #         # calculate the residuals for the final masked arrays
+        #         res = fp_ll_final_ord - fp_ll_new_ord
+        #         res_clip.append(res * speed_of_light / fp_ll_new_ord)
+        #         # save stats
+        #         # get the derivative of the coefficients
+        #         poly = np.poly1d(coeffs)
+        #         dldx = np.polyder(poly)(fp_x_ord)
+        #         # work out conversion factor
+        #         convert = speed_of_light * dldx / fp_ll_final_ord
+        #         scale.append(convert)
+        #         # sum the weights (recursively)
+        #         sweight += np.nansum(wei_clip[onum])
+        #         # sum the weighted residuals in km/s
+        #         wsumres += np.nansum(res_clip[onum] * wei_clip[onum])
+        #         # sum the weighted squared residuals in km/s
+        #         wsumres2 += np.nansum(wei_clip[onum] * res_clip[onum] ** 2)
+        #
+        #     # we construct a sin/cos model of the error in line center position
+        #     # and fit it to the residuals
+        #     cos = np.cos(2 * np.pi * (loc['FP_XX_NEW'] % 1))
+        #     sin = np.sin(2 * np.pi * (loc['FP_XX_NEW'] % 1))
+        #
+        #     # find points that are not residual outliers
+        #     # We fit a zeroth order polynomial, so it returns
+        #     # outliers to the mean value.
+        #     outl_fit, mask_all = sigclip_polyfit(p, loc['FP_XX_NEW'],
+        #                                          res_modx, 0)
+        #     # create model
+        #     acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / \
+        #            np.nansum(cos[mask_all] ** 2)
+        #     asin = np.nansum(sin[mask_all] * res_modx[mask_all]) / \
+        #            np.nansum(sin[mask_all] ** 2)
+        #     model_sin = (cos * acos + sin * asin)
+        #     # update the xpeak positions with model
+        #     loc['FP_XX_NEW'] += model_sin / 2.2
+        #
+        # # save final (sig-clipped) arrays to loc
+        # loc['FP_ORD_CL'] = np.array(np.concatenate(fp_ord_clip).ravel())
+        # loc['FP_LLIN_CL'] = np.array(np.concatenate(fp_ll_in_clip).ravel())
+        # loc['FP_XIN_CL'] = np.array(np.concatenate(fp_x_in_clip).ravel())
+        # loc['FP_XOUT_CL'] = np.array(np.concatenate(fp_x_final_clip).ravel())
+        # loc['FP_WEI_CL'] = np.array(np.concatenate(wei_clip).ravel())
+        # loc['RES_CL'] = np.array(np.concatenate(res_clip).ravel())
+        # # calculate the final var and mean
+        # total_lines = len(np.concatenate(loc['FP_LLIN_CL']))
+        # final_mean = wsumres / sweight
+        # final_var = (wsumres2 / sweight) - (final_mean ** 2)
+        # # log the global stats
+        # wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+        # wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+        #           total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
+        # wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+        #          'value:{3:.4f}[m/s])'.format(*wargs2))
+        # WLOG(p, 'info', [wmsg1, wmsg2])
 
-        # weights - dummy array
-        wei = np.ones_like(fp_ll_new)
+        loc = fit_1d_solution_sigclip(p, loc)
 
-        # fit x v wavelength w/sigma-clipping
-        # we remove modulo 1 pixel errors in line centers - 3 iterations
-        n_ite_mod_x = 3
-        for ite in range(n_ite_mod_x):
-            wsumres = 0.0
-            wsumres2 = 0.0
-            sweight = 0.0
-            fp_x_final_clip = []
-            fp_x_in_clip = []
-            fp_ll_final_clip = []
-            fp_ll_in_clip = []
-            fp_ord_clip = []
-            res_clip = []
-            wei_clip = []
-            scale = []
-            res_modx = np.zeros_like(loc['FP_XX_NEW'])
-            # loop over the orders
-            for onum in range(n_fin - n_init):
-                # order mask
-                ord_mask = np.where(loc['FP_ORD_NEW'] == onum +
-                                    n_init)
-                # get FP line pixel positions for the order
-                fp_x_ord = loc['FP_XX_NEW'][ord_mask]
-                # get new FP line wavelengths for the order
-                fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
-                # get weights for the order
-                wei_ord = np.asarray(wei)[ord_mask]
-                # fit solution w/sigma-clip
-                coeffs, mask = sigclip_polyfit(p, fp_x_ord, fp_ll_new_ord,
-                                            p['IC_LL_DEGR_FIT'], wei_ord)
-                # store the coefficients
-                poly_wave_sol_final[onum] = coeffs[::-1]
-                # get the residuals modulo x
-                res_modx[ord_mask] = speed_of_light * (fp_ll_new_ord /
-                                                       np.polyval(coeffs,
-                                                                  fp_x_ord) - 1)
-                # mask input arrays for statistics
-                fp_x_ord = fp_x_ord[mask]
-                fp_ll_new_ord = fp_ll_new_ord[mask]
-                wei_ord = wei_ord[mask]
-                # get final wavelengths
-                fp_ll_final_ord = np.polyval(coeffs, fp_x_ord)
-                # save wave map
-                wave_map_final[onum] = np.polyval(coeffs, xpix)
-                # save masked arrays
-                fp_x_final_clip.append(fp_x_ord)
-                fp_x_in_clip.append(loc['FP_XX_INIT'][ord_mask][mask])
-                fp_ll_final_clip.append(fp_ll_final_ord)
-                fp_ll_in_clip.append(fp_ll_new_ord)
-                fp_ord_clip.append(loc['FP_ORD_NEW'][ord_mask][mask])
-                wei_clip.append(wei_ord)
-                # residuals in km/s
-                # calculate the residuals for the final masked arrays
-                res = fp_ll_final_ord - fp_ll_new_ord
-                res_clip.append(res * speed_of_light / fp_ll_new_ord)
-                # save stats
-                # get the derivative of the coefficients
-                poly = np.poly1d(coeffs)
-                dldx = np.polyder(poly)(fp_x_ord)
-                # work out conversion factor
-                convert = speed_of_light * dldx / fp_ll_final_ord
-                scale.append(convert)
-                # sum the weights (recursively)
-                sweight += np.nansum(wei_clip[onum])
-                # sum the weighted residuals in km/s
-                wsumres += np.nansum(res_clip[onum] * wei_clip[onum])
-                # sum the weighted squared residuals in km/s
-                wsumres2 += np.nansum(wei_clip[onum] * res_clip[onum] ** 2)
-
-            # we construct a sin/cos model of the error in line center position
-            # and fit it to the residuals
-            cos = np.cos(2 * np.pi * (loc['FP_XX_NEW'] % 1))
-            sin = np.sin(2 * np.pi * (loc['FP_XX_NEW'] % 1))
-
-            # find points that are not residual outliers
-            # We fit a zeroth order polynomial, so it returns
-            # outliers to the mean value.
-            outl_fit, mask_all = sigclip_polyfit(p, loc['FP_XX_NEW'],
-                                                 res_modx, 0)
-            # create model
-            acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / \
-                   np.nansum(cos[mask_all] ** 2)
-            asin = np.nansum(sin[mask_all] * res_modx[mask_all]) / \
-                   np.nansum(sin[mask_all] ** 2)
-            model_sin = (cos * acos + sin * asin)
-            # update the xpeak positions with model
-            loc['FP_XX_NEW'] += model_sin / 2.2
-
-        # save final (sig-clipped) arrays to loc
-        loc['FP_ORD_CL'] = np.array(np.concatenate(fp_ord_clip).ravel())
-        loc['FP_LLIN_CL'] = np.array(np.concatenate(fp_ll_in_clip).ravel())
-        loc['FP_XIN_CL'] = np.array(np.concatenate(fp_x_in_clip).ravel())
-        loc['FP_XOUT_CL'] = np.array(np.concatenate(fp_x_final_clip).ravel())
-        loc['FP_WEI_CL'] = np.array(np.concatenate(wei_clip).ravel())
-        loc['RES_CL'] = np.array(np.concatenate(res_clip).ravel())
-
-        # calculate the final var and mean
-        total_lines = len(np.concatenate(fp_ll_in_clip))
-        final_mean = wsumres / sweight
-        final_var = (wsumres2 / sweight) - (final_mean ** 2)
-        # log the global stats
-        wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
-        wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
-                  total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
-        wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
-                 'value:{3:.4f}[m/s])'.format(*wargs2))
-        WLOG(p, 'info', [wmsg1, wmsg2])
-
-
-
+        # Multi-order HC lines plot
         if p['DRS_PLOT'] and p['DRS_DEBUG'] > 0:
+            # check the orders to be plotted are sensible
             if p['WAVE_PLOT_MULTI_INIT'] >= p['WAVE_N_ORD_FINAL']:
                 wmsg = 'First order for multi-order plot, {0}, higher than ' \
                        'final wavelength solution order {1}; no plot created'
@@ -798,22 +795,17 @@ def do_fp_wavesol(p, loc):
                                                p['WAVE_N_ORD_FINAL']))
             else:
                 sPlt.wave_plot_multi_order(p, hc_ll_test, hc_ord_test,
-                                           wave_map_final, loc['HCDATA'])
+                                           loc['LL_OUT_2'], loc['HCDATA'])
 
         # # TODO test linmin fitting
 
         # ------------------------------------------------------------------
         # Saves for compatibility w/already defined functions
         # ------------------------------------------------------------------
-        loc['LL_OUT_2'] = wave_map_final
-        loc['LL_PARAM_2'] = poly_wave_sol_final
         p['IC_HC_N_ORD_START_2'] = n_init
         p['IC_HC_N_ORD_FINAL_2'] = n_fin
         # p['IC_LITTROW_ORDER_INIT_2'] = n_init
-        loc['X_MEAN_2'] = final_mean
-        loc['X_VAR_2'] = final_var
-        loc['TOTAL_LINES_2'] = total_lines
-        loc['SCALE_2'] = scale
+
         # set up x_details and ll_details structures for line list table:
         # X_DETAILS_i: list, [lines, xfit, cfit, weight] where
         #   lines= original wavelength-centers used for the fit
@@ -2902,7 +2894,7 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     # get the mean pixel scale (in km/s/pixel) of the central pixel
     norm = dll_out[:, centpix]/ll_out[:, centpix]
     meanpixscale = speed_of_light * np.nansum(norm)/len(ll_out[:, centpix])
-    #get the total number of lines used
+    # get the total number of lines used
     total_lines = int(np.nansum(loc['X_ITER_2'][:, 2]))
     # add to loc
     loc['LL_OUT_{0}'.format(iteration)] = ll_out
@@ -3233,7 +3225,7 @@ def no_overlap_match_calc(p, ord_num, fp_ll_ord, fp_ll_ord_prev,
             WAVE_FP_LLDIF_MIN: float, defines the maximum fraction of the median
                         wavelength difference we accept as no gap between lines
 
-    :param ord num: the order number
+    :param ord_num: the order number
     :param fp_ll_ord: the FP peak wavelengths for the current order
     :param fp_ll_ord_prev: the FP peak wavelengths for the previous order
     :param fp_ll_diff: wavelength difference between consecutive FP peaks
@@ -3280,7 +3272,6 @@ def no_overlap_match_calc(p, ord_num, fp_ll_ord, fp_ll_ord_prev,
     # return m_ord
     return m_ord
 
-
 def sigclip_polyfit(p, xx, yy, degree, weight = None):
     """
     Fit a polynomial with sigma-clipping of outliers
@@ -3324,6 +3315,171 @@ def sigclip_polyfit(p, xx, yy, degree, weight = None):
     # return the coefficients and mask
     return coeff, mask
 
+def fit_1d_solution_sigclip(p, loc):
+    """
+    Fits the 1D solution between pixel position and wavelength
+    Uses sigma-clipping and removes modulo 1 pixel errors
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            WAVE_N_ORD_START: first order of the wavelength solution
+            WAVE_N_ORD_FINAL: last order of the wavelength solution
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            FP_XX_NEW: FP pixel pisitions
+            FP_LL_NEW: FP wavelengths
+            FP_ORD_NEW: FP line orders
+            FP_WEI: FP line weights
+
+    :param ll: numpy array (1D), the initial guess wavelengths for each line
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                FP_ORD_CL = np array, FP line orders (sigma-clipped)
+                FP_LLIN_CL = np array, FP wavelengths (sigma-clipped)
+                FP_XIN_CL = np array, FP initial pixel values (sigma-clipped)
+                FP_XOUT_CL = np array, FP corrected pixel values (sigma-clipped)
+                FP_WEI_CL = np array, weights (sigma-clipped)
+                RES_CL = np array, normalised residuals in km/s
+                LL_OUT_2 = np array, output wavelength map
+                LL_PARAM_2 = np array, polynomial coefficients
+                X_MEAN_2 = final mean
+                X_VAR_2 = final var
+                TOTAL_LINES_2 = total lines
+                SCALE_2 = scale
+
+    """
+    func_name = __NAME__ + '.fit_1d_solution_sigclip()'
+    # read constants from p
+    n_init = p['WAVE_N_ORD_START']
+    n_fin = p['WAVE_N_ORD_FINAL']
+
+    # set up storage arrays
+    xpix = np.arange(loc['NBPIX'])
+    wave_map_final = np.zeros((n_fin - n_init, loc['NBPIX']))
+    poly_wave_sol_final = np.zeros((n_fin - n_init, p['IC_LL_DEGR_FIT'] + 1))
+
+    # fit x v wavelength w/sigma-clipping
+    # we remove modulo 1 pixel errors in line centers - 3 iterations
+    n_ite_mod_x = 3
+    for ite in range(n_ite_mod_x):
+        # set up storage
+        wsumres = 0.0
+        wsumres2 = 0.0
+        sweight = 0.0
+        fp_x_final_clip = []
+        fp_x_in_clip = []
+        fp_ll_final_clip = []
+        fp_ll_in_clip = []
+        fp_ord_clip = []
+        res_clip = []
+        wei_clip = []
+        scale = []
+        res_modx = np.zeros_like(loc['FP_XX_NEW'])
+        # loop over the orders
+        for onum in range(n_fin - n_init):
+            # order mask
+            ord_mask = np.where(loc['FP_ORD_NEW'] == onum +
+                                n_init)
+            # get FP line pixel positions for the order
+            fp_x_ord = loc['FP_XX_NEW'][ord_mask]
+            # get new FP line wavelengths for the order
+            fp_ll_new_ord = np.asarray(loc['FP_LL_NEW'])[ord_mask]
+            # get weights for the order
+            wei_ord = np.asarray(loc['FP_WEI'])[ord_mask]
+            # fit solution for the order w/sigma-clipping
+            coeffs, mask = sigclip_polyfit(p, fp_x_ord, fp_ll_new_ord,
+                                           p['IC_LL_DEGR_FIT'], wei_ord)
+            # store the coefficients
+            poly_wave_sol_final[onum] = coeffs[::-1]
+            # get the residuals modulo x
+            res_modx[ord_mask] = speed_of_light * (fp_ll_new_ord /
+                                                   np.polyval(coeffs,
+                                                              fp_x_ord) - 1)
+            # mask input arrays for statistics
+            fp_x_ord = fp_x_ord[mask]
+            fp_ll_new_ord = fp_ll_new_ord[mask]
+            wei_ord = wei_ord[mask]
+            # get final wavelengths
+            fp_ll_final_ord = np.polyval(coeffs, fp_x_ord)
+            # save wave map
+            wave_map_final[onum] = np.polyval(coeffs, xpix)
+            # save masked arrays
+            fp_x_final_clip.append(fp_x_ord)
+            fp_x_in_clip.append(loc['FP_XX_INIT'][ord_mask][mask])
+            fp_ll_final_clip.append(fp_ll_final_ord)
+            fp_ll_in_clip.append(fp_ll_new_ord)
+            fp_ord_clip.append(loc['FP_ORD_NEW'][ord_mask][mask])
+            wei_clip.append(wei_ord)
+            # residuals in km/s
+            # calculate the residuals for the final masked arrays
+            res = fp_ll_final_ord - fp_ll_new_ord
+            res_clip.append(res * speed_of_light / fp_ll_new_ord)
+            # save stats
+            # get the derivative of the coefficients
+            poly = np.poly1d(coeffs)
+            dldx = np.polyder(poly)(fp_x_ord)
+            # work out conversion factor
+            convert = speed_of_light * dldx / fp_ll_final_ord
+            scale.append(convert)
+            # sum the weights (recursively)
+            sweight += np.nansum(wei_clip[onum])
+            # sum the weighted residuals in km/s
+            wsumres += np.nansum(res_clip[onum] * wei_clip[onum])
+            # sum the weighted squared residuals in km/s
+            wsumres2 += np.nansum(wei_clip[onum] * res_clip[onum] ** 2)
+
+        # we construct a sin/cos model of the error in line center position
+        # and fit it to the residuals
+        cos = np.cos(2 * np.pi * (loc['FP_XX_NEW'] % 1))
+        sin = np.sin(2 * np.pi * (loc['FP_XX_NEW'] % 1))
+
+        # find points that are not residual outliers
+        # We fit a zeroth order polynomial, so it returns
+        # outliers to the mean value.
+        outl_fit, mask_all = sigclip_polyfit(p, loc['FP_XX_NEW'],
+                                             res_modx, 0)
+        # create model
+        acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / \
+               np.nansum(cos[mask_all] ** 2)
+        asin = np.nansum(sin[mask_all] * res_modx[mask_all]) / \
+               np.nansum(sin[mask_all] ** 2)
+        model_sin = (cos * acos + sin * asin)
+        # update the xpeak positions with model
+        loc['FP_XX_NEW'] += model_sin / 2.2
+
+    # calculate the final var and mean
+    total_lines = len(np.concatenate(fp_ll_in_clip))
+    final_mean = wsumres / sweight
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the global stats
+    wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+    wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
+    wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+             'value:{3:.4f}[m/s])'.format(*wargs2))
+    WLOG(p, 'info', [wmsg1, wmsg2])
+
+    # save final (sig-clipped) arrays to loc
+    loc['FP_ORD_CL'] = np.array(np.concatenate(fp_ord_clip).ravel())
+    loc['FP_LLIN_CL'] = np.array(np.concatenate(fp_ll_in_clip).ravel())
+    loc['FP_XIN_CL'] = np.array(np.concatenate(fp_x_in_clip).ravel())
+    loc['FP_XOUT_CL'] = np.array(np.concatenate(fp_x_final_clip).ravel())
+    loc['FP_WEI_CL'] = np.array(np.concatenate(wei_clip).ravel())
+    loc['RES_CL'] = np.array(np.concatenate(res_clip).ravel())
+    loc['LL_OUT_2'] = wave_map_final
+    loc['LL_PARAM_2'] = poly_wave_sol_final
+    loc['X_MEAN_2'] = final_mean
+    loc['X_VAR_2'] = final_var
+    loc['TOTAL_LINES_2'] = total_lines
+    loc['SCALE_2'] = scale
+
+    # return
+    return loc
 
 # =============================================================================
 # End of code
