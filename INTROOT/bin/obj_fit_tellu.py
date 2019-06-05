@@ -94,10 +94,12 @@ def main(night_name=None, files=None):
     # Get the airmass
     loc['AIRMASS'] = spirouImage.GetAirmass(p, loc['DATAHDR'])
     # Get the Barycentric correction from header
-    loc['BERV'], _, _ = spirouTelluric.GetBERV(p, loc['DATAHDR'])
+    p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, loc['DATAHDR'])
     # set sources
     source = main_name + '+ spirouImage.ReadParams()'
-    loc.set_sources(['OBJNAME', 'AIRMASS', 'BERV'], source)
+    loc.set_sources(['OBJNAME', 'AIRMASS'], source)
+    loc.set_sources(['OBJNAME', 'AIRMASS'], source)
+
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
