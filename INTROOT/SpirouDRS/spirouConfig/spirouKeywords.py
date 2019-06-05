@@ -52,6 +52,7 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_BBFLAT',
             'KW_BERV', 'KW_BERV_EST',
             'KW_BERV_MAX', 'KW_BERV_MAX_EST',
+            'KW_BERV_SOURCE',
             'KW_BHOT',
             'KW_BJD', 'KW_BJD_EST',
             'KW_BNDARK',
@@ -588,6 +589,7 @@ KW_B_OBS_HOUR = ['BCHOUR', 0, 'Observation hour used for BC']
 KW_BERV_EST = ['ESTBERV', 0, 'ESTIMATED BC Velocity']
 KW_BJD_EST = ['ESTBJD', 0, 'ESTIMATED BJD']
 KW_BERV_MAX_EST = ['ESTBMAX', 0, 'ESTIMATED Max BC Velocity']
+KW_BERV_SOURCE = ['BERVSRCE', '', 'Source of BERV (Barycorrpy/Estimate)']
 
 # -----------------------------------------------------------------------------
 # Define DRIFT variables
