@@ -762,7 +762,6 @@ def do_fp_wavesol(p, loc):
             # update the xpeak positions with model
             loc['FP_XX_NEW'] += model_sin / 2.2
 
-
         # calculate the final var and mean
         total_lines = len(np.concatenate(fp_ll_in_clip))
         final_mean = wsumres / sweight
@@ -779,21 +778,19 @@ def do_fp_wavesol(p, loc):
 
         if p['DRS_PLOT'] and p['DRS_DEBUG'] > 0:
             if p['WAVE_PLOT_MULTI_INIT'] >= p['WAVE_N_ORD_FINAL']:
-                wmsg = 'First order for multi-order plot, {0}, higher than final' \
-                       'wavelength solution order {1}; no plot'
+                wmsg = 'First order for multi-order plot, {0}, higher than ' \
+                       'final wavelength solution order {1}; no plot created'
                 WLOG(p, 'warning', wmsg.format(p['WAVE_PLOT_MULTI_INIT'],
                                                p['WAVE_N_ORD_FINAL']))
             else:
                 sPlt.wave_plot_multi_order(p, hc_ll_test, hc_ord_test,
                                            wave_map_final, loc['HCDATA'])
 
-
         # # TODO test linmin fitting
 
         # ------------------------------------------------------------------
         # Saves for compatibility w/already defined functions
         # ------------------------------------------------------------------
-        # saves for compatibility
         loc['LL_OUT_2'] = wave_map_final
         loc['LL_PARAM_2'] = poly_wave_sol_final
         p['IC_HC_N_ORD_START_2'] = n_init
@@ -801,6 +798,7 @@ def do_fp_wavesol(p, loc):
         # p['IC_LITTROW_ORDER_INIT_2'] = n_init
         loc['X_MEAN_2'] = final_mean
         loc['X_VAR_2'] = final_var
+        loc['TOTAL_LINES_2'] = total_lines
 
     # ----------------------------------------------------------------------
     # LITTROW SECTION - common to all methods
@@ -944,7 +942,7 @@ def do_fp_wavesol(p, loc):
         p['OBJNAME'] = 'FP'
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
-    # TODO : Add QC of the FP CCF
+    # TODO : Add QC of the FP CCF once they are defined
 
     return loc
 
@@ -2826,6 +2824,7 @@ def fit_1d_solution(p, loc, ll, iteration=0):
                 DLL_OUT_i: numpy array (2D), the output delta wavelengths for
                            each pixel and each order (in the shape of original
                            image)
+                TOTAL_LINES_i: Total number of lines used
 
                 where i = iteration
 
@@ -2869,11 +2868,15 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     # get the mean pixel scale (in km/s/pixel) of the central pixel
     norm = dll_out[:, centpix]/ll_out[:, centpix]
     meanpixscale = speed_of_light * np.nansum(norm)/len(ll_out[:, centpix])
+    #get the total number of lines used
+    total_lines = int(np.nansum(loc['X_ITER_2'][:, 2]))
     # add to loc
     loc['LL_OUT_{0}'.format(iteration)] = ll_out
     loc.set_source('LL_OUT_{0}'.format(iteration), func_name)
     loc['DLL_OUT_{0}'.format(iteration)] = dll_out
     loc.set_source('DLL_OUT_{0}'.format(iteration), func_name)
+    loc['TOTAL_LINES_{0}'.format(iteration)] = total_lines
+    loc.set_source('TOTAL_LINES_{0}'.format(iteration), func_name)
     # log message
     wmsg = 'On fiber {0} mean pixel scale at center: {1:.4f} [km/s/pixel]'
     WLOG(p, 'info', wmsg.format(p['FIBER'], meanpixscale))
