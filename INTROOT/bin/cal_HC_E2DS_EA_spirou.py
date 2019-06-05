@@ -216,7 +216,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # check the difference between consecutive orders is always positive
     # get the differences
-    wave_diff = loc['WAVE_MAPC'][1:]-loc['WAVE_MAPC'][:-1]
+    wave_diff = loc['WAVE_MAP2'][1:]-loc['WAVE_MAP2'][:-1]
     if np.min(wave_diff) < 0:
         fmsg = 'Negative wavelength difference between orders'
         fail_msg.append(fmsg)
