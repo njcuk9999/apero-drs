@@ -657,6 +657,8 @@ def do_fp_wavesol(p, loc):
         # save to loc (flattened)
         loc['FP_LL_NEW'] = np.array(fp_ll_new)
         loc['FP_XX_NEW'] = np.array(np.concatenate(fp_xx).ravel())
+        # duplicate for saving
+        loc['FP_XX_INIT'] = np.array(np.concatenate(fp_xx).ravel())
         loc['FP_ORD_NEW'] = np.array(np.concatenate(fp_order).ravel())
 
         if p['DRS_PLOT']:
@@ -686,8 +688,10 @@ def do_fp_wavesol(p, loc):
             wsumres2 = 0.0
             sweight = 0.0
             fp_x_final_clip = []
+            fp_x_in_clip = []
             fp_ll_final_clip = []
             fp_ll_in_clip = []
+            fp_ord_clip = []
             res_clip = []
             wei_clip = []
             scale = []
@@ -695,7 +699,7 @@ def do_fp_wavesol(p, loc):
             # loop over the orders
             for onum in range(n_fin - n_init):
                 # order mask
-                ord_mask = np.where(np.concatenate(fp_order).ravel() == onum +
+                ord_mask = np.where(loc['FP_ORD_NEW'] == onum +
                                     n_init)
                 # get FP line pixel positions for the order
                 fp_x_ord = loc['FP_XX_NEW'][ord_mask]
@@ -722,8 +726,10 @@ def do_fp_wavesol(p, loc):
                 wave_map_final[onum] = np.polyval(coeffs, xpix)
                 # save masked arrays
                 fp_x_final_clip.append(fp_x_ord)
+                fp_x_in_clip.append(loc['FP_XX_INIT'][ord_mask][mask])
                 fp_ll_final_clip.append(fp_ll_final_ord)
                 fp_ll_in_clip.append(fp_ll_new_ord)
+                fp_ord_clip.append(loc['FP_ORD_NEW'][ord_mask][mask])
                 wei_clip.append(wei_ord)
                 # residuals in km/s
                 # calculate the residuals for the final masked arrays
@@ -762,6 +768,13 @@ def do_fp_wavesol(p, loc):
             # update the xpeak positions with model
             loc['FP_XX_NEW'] += model_sin / 2.2
 
+        # save final (sig-clipped) arrays to loc
+        loc['FP_ORD_CL'] = np.array(np.concatenate(fp_ord_clip).ravel())
+        loc['FP_LLIN_CL'] = np.array(np.concatenate(fp_ll_in_clip).ravel())
+        loc['FP_XIN_CL'] = np.array(np.concatenate(fp_x_in_clip).ravel())
+        loc['FP_XOUT_CL'] = np.array(np.concatenate(fp_x_final_clip).ravel())
+        loc['FP_WEI_CL'] = np.array(np.concatenate(wei_clip).ravel())
+
         # calculate the final var and mean
         total_lines = len(np.concatenate(fp_ll_in_clip))
         final_mean = wsumres / sweight
@@ -799,6 +812,20 @@ def do_fp_wavesol(p, loc):
         loc['X_MEAN_2'] = final_mean
         loc['X_VAR_2'] = final_var
         loc['TOTAL_LINES_2'] = total_lines
+        loc['SCALE_2'] = scale
+        # set up x_details structure for line list table:
+        # X_DETAILS_i: list, [lines, xfit, cfit, weight] where
+        #   lines= original wavelength-centers used for the fit
+        #   xfit= original pixel-centers used for the fit
+        #   cfit= fitted pixel-centers using fit coefficients
+        #   weight=the line weights used
+        details = []
+        for ord_num in range(n_init, n_fin):
+            omask = loc['FP_ORD_NEW'] == ord_num
+            details.append(loc['FP_LLIN_CL'][omask], loc['FP_XIN_CL'][omask],
+                           loc['FP_XOUT_CL'][omask], loc['FP_WEI_CL'][omask])
+        loc['X_DETAILS_2'] = details
+
 
     # ----------------------------------------------------------------------
     # LITTROW SECTION - common to all methods

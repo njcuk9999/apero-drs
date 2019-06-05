@@ -55,6 +55,7 @@ has_fp = True
 # Define functions
 # =============================================================================
 
+
 def main(night_name=None, fpfile=None, hcfiles=None):
     """
     cal_wave_spirou.py main function, if night_name and files are None uses
@@ -273,7 +274,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # calculate catalog-fit residuals in km/s
 
-    res_hc =[]
+    res_hc = []
     sumres_hc = 0.0
     sumres2_hc = 0.0
 
@@ -281,7 +282,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get HC line wavelengths for the order
         order_mask = loc['ORD_T'] == order
         hc_x_ord = loc['XGAU_T'][order_mask]
-        hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][order][::-1],hc_x_ord)
+        hc_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][order][::-1], hc_x_ord)
         hc_ll_cat = loc['WAVE_CATALOG'][order_mask]
         hc_ll_diff = hc_ll_ord - hc_ll_cat
         res_hc.append(hc_ll_diff*speed_of_light/hc_ll_cat)
@@ -600,8 +601,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
         # set the input files
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
+                                   value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
+                                   value=loc['WAVEFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
                                    value=loc['WSOURCE'])
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
@@ -642,12 +645,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # add ccf stats
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_DRIFT'],
                                    value=loc['CCF_RES'][1])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'], value=loc['FWHM'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_FWHM'],
+                                   value=loc['FWHM'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_CONTRAST'],
                                    value=loc['CONTRAST'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MAXCPP'],
                                    value=loc['MAXCPP'])
-        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'], value=p['CCF_MASK'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_MASK'],
+                                   value=p['CCF_MASK'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WFP_LINES'],
                                    value=np.nansum(loc['TOT_LINE']))
 
@@ -674,7 +679,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
             p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath2)
 
-
         # ------------------------------------------------------------------
         # Save to result table
         # ------------------------------------------------------------------
@@ -700,50 +704,49 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                         [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
                         [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
         # make table
-        table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
+        table = spirouImage.MakeTable(p, columns=columnnames,
+                                      values=columnvalues,
                                       formats=columnformats)
         # merge table
         wmsg = 'Global result summary saved in {0}'
         WLOG(p, '', wmsg.format(wavetblname))
         spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
 
+        # ------------------------------------------------------------------
+        # Save line list table file
+        # ------------------------------------------------------------------
+        # construct filename
+        # TODO proper column values
+        wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
+        wavelltblname = os.path.split(wavelltbl)[-1]
+        # construct and write table
+        columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
+        columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
+                         '{:12.4f}', '{:12.4f}', '{:8.4f}']
 
-        # TODO fix res table for mode 1
-        if p['WAVE_MODE_FP'] == 0:
-            # ------------------------------------------------------------------
-            # Save line list table file
-            # ------------------------------------------------------------------
-            # construct filename
-            # TODO proper column values
-            wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
-            wavelltblname = os.path.split(wavelltbl)[-1]
-            # construct and write table
-            columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
-            columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
-                             '{:12.4f}', '{:12.4f}', '{:8.4f}']
+        columnvalues = []
+        # construct column values (flatten over orders)
+        for it in range(len(loc['X_DETAILS_2'])):
+            for jt in range(len(loc['X_DETAILS_2'][it][0])):
+                row = [float(it), loc['X_DETAILS_2'][it][0][jt],
+                       loc['LL_DETAILS_2'][it][0][jt],
+                       loc['X_DETAILS_2'][it][3][jt],
+                       loc['X_DETAILS_2'][it][1][jt],
+                       loc['X_DETAILS_2'][it][2][jt],
+                       loc['SCALE_2'][it][jt]]
+                columnvalues.append(row)
 
-            columnvalues = []
-            # construct column values (flatten over orders)
-            for it in range(len(loc['X_DETAILS_2'])):
-                for jt in range(len(loc['X_DETAILS_2'][it][0])):
-                    row = [float(it), loc['X_DETAILS_2'][it][0][jt],
-                           loc['LL_DETAILS_2'][it][0][jt],
-                           loc['X_DETAILS_2'][it][3][jt],
-                           loc['X_DETAILS_2'][it][1][jt],
-                           loc['X_DETAILS_2'][it][2][jt],
-                           loc['SCALE_2'][it][jt]]
-                    columnvalues.append(row)
+        # log saving
+        wmsg = 'List of lines used saved in {0}'
+        WLOG(p, '', wmsg.format(wavelltblname))
 
-            # log saving
-            wmsg = 'List of lines used saved in {0}'
-            WLOG(p, '', wmsg.format(wavelltblname))
-
-            # make table
-            columnvalues = np.array(columnvalues).T
-            table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
-                                          formats=columnformats)
-            # write table
-            spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
+        # make table
+        columnvalues = np.array(columnvalues).T
+        table = spirouImage.MakeTable(p, columns=columnnames,
+                                      values=columnvalues,
+                                      formats=columnformats)
+        # write table
+        spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
 
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
