@@ -159,7 +159,8 @@ def main(night_name=None, e2dsfiles=None):
             loc = spirouImage.EarthVelocityCorrection(p, loc,
                                                       method=p['CCF_BERVMODE'])
         else:
-            loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0, 0.0
+            loc['BERV'], loc['BJD'] = 0.0, 0.0
+            loc['BERV_MAX'], loc['BERV_SOURCE'] = 0.0, 'None'
             loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
 
         # ----------------------------------------------------------------------
@@ -174,6 +175,8 @@ def main(night_name=None, e2dsfiles=None):
         hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_SOURCE'],
+                                   value=loc['BERV_SOURCE'])
 
         # write image and add header keys (via hdict)
         p = spirouImage.WriteImage(p, outfilename, e2ds, hdict)
