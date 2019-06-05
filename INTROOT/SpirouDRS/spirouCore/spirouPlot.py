@@ -2602,7 +2602,7 @@ def fp_ll_difference(p, loc):
         # order mask
         ord_mask = np.where(loc['FP_ORD_NEW'] == ind_ord + n_init)
         # get FP line pixel positions for the order
-        fp_x_ord = loc['FP_LL_NEW'][ord_mask]
+        fp_x_ord = loc['FP_XX_NEW'][ord_mask]
         # derive FP line wavelengths using initial solution
         fp_ll_orig = c_aux(fp_x_ord)
         # get new FP line wavelengths for the order
@@ -2623,7 +2623,7 @@ def wave_plot_multi_order(p, hc_ll, hc_ord, wave_map, hcdata):
     n_fin = p['WAVE_N_ORD_FINAL']
     nbo = p['WAVE_PLOT_MULTI_NBO']
     # compute final plotting order
-    n_plot_fin = np.min(n_plot_init + nbo, n_fin)
+    n_plot_fin = min(n_plot_init + nbo, n_fin)
     # set up fig
     fig, frame = setup_figure(p)
     # define colours and line types for alternate order fitted lines
