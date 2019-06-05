@@ -674,39 +674,38 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
             p = spirouImage.UpdateWaveSolution(p, loc, raw_infilepath2)
 
-    # TODO fix res table for mode 1
-        if p['WAVE_MODE_FP'] == 0:
-            # ------------------------------------------------------------------
-            # Save to result table
-            # ------------------------------------------------------------------
-            # calculate stats for table
-            final_mean = 1000 * loc['X_MEAN_2']
-            final_var = 1000 * loc['X_VAR_2']
-            num_lines = int(np.nansum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
-            err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
-            sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
-            # construct filename
-            wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
-            wavetblname = os.path.basename(wavetbl)
-            # construct and write table
-            columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
-                           'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
-                           'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
-            columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
-                             '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
-                             '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
-            columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
-                            [p['FIBER']], [final_mean], [final_var],
-                            [num_lines], [err], [sig_littrow[0]],
-                            [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
-                            [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
-            # make table
-            table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
-                                          formats=columnformats)
-            # merge table
-            wmsg = 'Global result summary saved in {0}'
-            WLOG(p, '', wmsg.format(wavetblname))
-            spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
+
+        # ------------------------------------------------------------------
+        # Save to result table
+        # ------------------------------------------------------------------
+        # calculate stats for table
+        final_mean = 1000 * loc['X_MEAN_2']
+        final_var = 1000 * loc['X_VAR_2']
+        num_lines = loc['TOTAL_LINES_2']
+        err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
+        sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
+        # construct filename
+        wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
+        wavetblname = os.path.basename(wavetbl)
+        # construct and write table
+        columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+                       'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
+                       'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
+        columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
+                         '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
+                         '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
+        columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
+                        [p['FIBER']], [final_mean], [final_var],
+                        [num_lines], [err], [sig_littrow[0]],
+                        [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
+                        [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
+        # make table
+        table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
+                                      formats=columnformats)
+        # merge table
+        wmsg = 'Global result summary saved in {0}'
+        WLOG(p, '', wmsg.format(wavetblname))
+        spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
 
 
         # TODO fix res table for mode 1
