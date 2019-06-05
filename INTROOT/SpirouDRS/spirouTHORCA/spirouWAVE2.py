@@ -751,7 +751,8 @@ def do_fp_wavesol(p, loc):
             # find points that are not residual outliers
             # We fit a zeroth order polynomial, so it returns
             # outliers to the mean value.
-            outl_fit, mask_all = sigclip_polyfit(loc['FP_XX_NEW'], res_modx, 0)
+            outl_fit, mask_all = sigclip_polyfit(p, loc['FP_XX_NEW'],
+                                                 res_modx, 0)
             # create model
             acos = np.nansum(cos[mask_all] * res_modx[mask_all]) / \
                    np.nansum(cos[mask_all] ** 2)
@@ -3267,8 +3268,13 @@ def sigclip_polyfit(p, xx, yy, degree, weight = None):
     # initialise mask
     mask = np.ones_like(xx, dtype='Bool')
     while sigmax > sigclip:
+        # Need to mask weight here if not None
+        if weight is not None:
+            weight2 = weight[mask]
+        else:
+            weight2 = None
         # fit on masked values
-        coeff = nanpolyfit(xx[mask], yy[mask], deg=degree, w=weight)
+        coeff = nanpolyfit(xx[mask], yy[mask], deg=degree, w=weight2)
         # get residuals (not masked or dimension breaks)
         res = yy - np.polyval(coeff, xx)
         # normalise the residuals
