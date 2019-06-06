@@ -382,11 +382,11 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # get the raw tilt file name
     raw_shape_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
-    shapefits, tag = spirouConfig.Constants.SLIT_XSHAPE_FILE(p)
-    shapefitsname = os.path.basename(shapefits)
+    shapexfits, tag = spirouConfig.Constants.SLIT_XSHAPE_FILE(p)
+    shapexfitsname = os.path.basename(shapexfits)
     # Log that we are saving tilt file
     wmsg = 'Saving shape x information in file: {0}'
-    WLOG(p, '', wmsg.format(shapefitsname))
+    WLOG(p, '', wmsg.format(shapexfitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(fphdr)
     # add version number
@@ -406,7 +406,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write tilt file to file
-    p = spirouImage.WriteImageTable(p, shapefits, image=loc['DXMAP'],
+    p = spirouImage.WriteImageTable(p, shapexfits, image=loc['DXMAP'],
                                     table=fptable, hdict=hdict)
 
     # ------------------------------------------------------------------
@@ -415,11 +415,11 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # get the raw tilt file name
     raw_shape_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
-    shapefits, tag = spirouConfig.Constants.SLIT_YSHAPE_FILE(p)
-    shapefitsname = os.path.basename(shapefits)
+    shapeyfits, tag = spirouConfig.Constants.SLIT_YSHAPE_FILE(p)
+    shapeyfitsname = os.path.basename(shapeyfits)
     # Log that we are saving tilt file
     wmsg = 'Saving shape y information in file: {0}'
-    WLOG(p, '', wmsg.format(shapefitsname))
+    WLOG(p, '', wmsg.format(shapeyfitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(fphdr)
     # add version number
@@ -439,7 +439,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write tilt file to file
-    p = spirouImage.WriteImageTable(p, shapefits, image=loc['DYMAP'],
+    p = spirouImage.WriteImageTable(p, shapeyfits, image=loc['DYMAP'],
                                     table=fptable, hdict=hdict)
 
     # ------------------------------------------------------------------
@@ -448,11 +448,11 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # get the raw tilt file name
     raw_shape_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
-    shapefits, tag = spirouConfig.Constants.SLIT_MASTER_FP_FILE(p)
-    shapefitsname = os.path.basename(shapefits)
+    fpmasterfits, tag = spirouConfig.Constants.SLIT_MASTER_FP_FILE(p)
+    fpmasterfitsname = os.path.basename(fpmasterfits)
     # Log that we are saving tilt file
     wmsg = 'Saving master FP file: {0}'
-    WLOG(p, '', wmsg.format(shapefitsname))
+    WLOG(p, '', wmsg.format(fpmasterfitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(fphdr)
     # add version number
@@ -472,7 +472,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write tilt file to file
-    p = spirouImage.WriteImageTable(p, shapefits, image=fpdata1,
+    p = spirouImage.WriteImageTable(p, fpmasterfits, image=fpdata1,
                                     table=fptable, hdict=hdict)
 
     # ------------------------------------------------------------------
@@ -508,12 +508,18 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
     if p['QC']:
-        keydb = 'SHAPE'
+        # add shape x
+        keydb = 'SHAPEX'
         # copy shape file to the calibDB folder
-        spirouDB.PutCalibFile(p, shapefits)
+        spirouDB.PutCalibFile(p, shapexfits)
         # update the master calib DB file with new key
-        spirouDB.UpdateCalibMaster(p, keydb, shapefitsname, fphdr)
-
+        spirouDB.UpdateCalibMaster(p, keydb, shapeyfitsname, fphdr)
+        # add shape y
+        keydb = 'SHAPEY'
+        # copy shape file to the calibDB folder
+        spirouDB.PutCalibFile(p, shapeyfits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, shapeyfitsname, fphdr)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
