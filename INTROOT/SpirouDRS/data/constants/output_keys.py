@@ -42,7 +42,11 @@ LOC_LOCO_FILE3 = 'LOC_SUP'
 SLIT_TILT_FILE = 'SLIT_TILT'
 
 # Define the shape file tag
-SLIT_SHAPE_FILE = 'SLIT_SHAPE'
+SLIT_XSHAPE_FILE = 'SLIT_SHAPE_X'
+SLIT_YSHAPE_FILE = 'SLIT_SHAPE_Y'
+
+# Define the master FP file tag
+SLIT_MASTER_FP_FILE = 'MASTER_FP'
 
 # Define the shape sanity check debug files
 SLIT_SHAPE_IN_FP_FILE = 'SHAPE_IN_FP'
