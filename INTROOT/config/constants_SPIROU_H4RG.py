@@ -504,6 +504,21 @@ FP_MASTER_CC_OFFSET = 11
 #       used in shifting the FPs to the master FP frame
 FP_MASTER_CC_NITER = 3
 
+#  Define the percentile which defines a true FP peak [0-100]
+SHAPE_MASTER_VALIDFP_PERCENTILE = 80
+
+#  Define the fractional flux an FP much have compared to its neighbours
+SHAPE_MASTER_VALIDFP_THRESHOLD = 1.5
+
+#  Define the number of iterations used to get the linear transform params
+SHAPE_MASTER_LINTRANS_NITER = 5
+
+#  Define the initial search box size (in pixels) around the fp peaks
+SHAPE_MASTER_FP_INI_BOXSIZE = 11
+
+#  Define the small search box size (in pixels) around the fp peaks
+SHAPE_MASTER_FP_SMALL_BOXSIZE = 2
+
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
