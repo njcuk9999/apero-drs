@@ -46,7 +46,10 @@ from lin_mini import lin_mini
 import warnings
 
 
-def lin_transform(image, lin_transform_vect):
+def ea_transform(image, lin_transform_vect=None, dxmap=None, dymap=None):
+
+    if lin_transform_vect is None:
+        lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
 
     image = np.array(image)
     # transforming an image with the 6 linear transform terms
@@ -62,7 +65,12 @@ def lin_transform(image, lin_transform_vect):
     yy, xx = np.indices([sz[0], sz[1]], dtype=float)  # /10.
 
     xx2 = dx + xx * A + yy * B
+    if dxmap is not None:
+        xx2 += dxmap
+
     yy2 = dy + xx * C + yy * D
+    if dymap is not None:
+        yy2 += dymap
 
     valid_mask = np.isfinite(image)
     mask = valid_mask.astype(float)
@@ -124,7 +132,7 @@ def get_lin_transform_params(im1_ini, im2_ini, niterations=5, doplot=False):
             im2 = np.array(im2_ini)
         else:
             # now we have some real transforms
-            im2 = lin_tranform(im2_ini, lin_transform_vect)
+            im2 = ea_transform(im2_ini, lin_transform_vect)
 
         box2 = np.zeros([8, sz[0], sz[1]])
         i = 0
@@ -189,73 +197,8 @@ def get_lin_transform_params(im1_ini, im2_ini, niterations=5, doplot=False):
         xpeak2 = xpeak2[keep]
         ypeak2 = ypeak2[keep]
 
-        # black magic arithmetic for replace a 2nd order polynomial by
-        # some arithmedic directly on pixel values to find
-        # the maxima in x and y for each peak
-
-        # vectors to contain peak pixels and its neighbours in x or y for
-        # im1 and im2
-        vvy1 = np.zeros([3, len(ypeak1)])
-        vvx1 = np.zeros([3, len(ypeak1)])
-        vvy2 = np.zeros([3, len(ypeak1)])
-        vvx2 = np.zeros([3, len(ypeak1)])
-
-        # accurate position of all peaks
-        dx1 = np.zeros(len(xpeak1))
-        dy1 = np.zeros(len(xpeak1))
-        dx2 = np.zeros(len(xpeak1))
-        dy2 = np.zeros(len(xpeak1))
-
-        # pad values of neighbours in vv[xy][12]
-        for i in range(-1, 2):
-            vvy1[i + 1, :] = im1[ypeak1 + i, xpeak1]
-            vvx1[i + 1, :] = im1[ypeak1, xpeak1 + i]
-            vvy2[i + 1, :] = im2[ypeak2 + i, xpeak2]
-            vvx2[i + 1, :] = im2[ypeak2, xpeak2 + i]
-
-        # subtract peak pixel value
-        vvx1[0, :] -= vvx1[1, :]
-        vvx1[2, :] -= vvx1[1, :]
-        vvx1[1, :] -= vvx1[1, :]
-
-        # find the slope of the linear fix
-        mx1 = (vvx1[2, :] - vvx1[0, :]) / 2
-
-        # find the 2nd order of the polynomial
-        ax1 = vvx1[2, :] - mx1
-
-        # all the same in y direction for im1
-        vvy1[0, :] -= vvy1[1, :]
-        vvy1[2, :] -= vvy1[1, :]
-        vvy1[1, :] -= vvy1[1, :]
-
-        my1 = (vvy1[2, :] - vvy1[0, :]) / 2
-        ay1 = vvy1[2, :] - my1
-
-        # same arithmetics for im2
-        vvx2[0, :] -= vvx2[1, :]
-        vvx2[2, :] -= vvx2[1, :]
-        vvx2[1, :] -= vvx2[1, :]
-
-        # finding x slopes and 2nd order terms in im2
-        mx2 = (vvx2[2, :] - vvx2[0, :]) / 2
-        ax2 = vvx2[2, :] - mx2
-
-        vvy2[0, :] -= vvy2[1, :]
-        vvy2[2, :] -= vvy2[1, :]
-        vvy2[1, :] -= vvy2[1, :]
-
-        # finding y slopes and 2nd order terms in im2
-        my2 = (vvy2[2, :] - vvy2[0, :]) / 2
-        ay2 = vvy2[2, :] - my2
-
-        # peaks position is point of zero derivative. We add the integer
-        # pixel value of [xy]peak[12]
-        x1 = -.5 * mx1 / ax1 + xpeak1
-        y1 = -.5 * my1 / ay1 + ypeak1
-
-        x2 = -.5 * mx2 / ax2 + xpeak2
-        y2 = -.5 * my2 / ay2 + ypeak2
+        x1, y1 = xy_acc_peak(xpeak1, ypeak1, im1)
+        x2, y2 = xy_acc_peak(xpeak2, ypeak2, im2)
 
         # we loop on the linear model converting x1 y1 to x2 y2
         nbad = 1
@@ -319,21 +262,41 @@ def get_lin_transform_params(im1_ini, im2_ini, niterations=5, doplot=False):
 
         if (doplot == True) and (ite_transform + 1) == (niterations):
             plt.subplot(2, 2, 1)
-            plt.hist2d(x1, (x1 - x2), bins=50)
-            plt.xlabel('x1')
+            plt.hist2d(x1, (x1 - x2), bins=50, range=[[0, 4088], [-.05, .05]])
+            for pbin in range(0, 4080, 100):
+                g = (np.abs(x1 - pbin) < 50)
+                if np.sum(g) > 100:
+                    plt.plot([pbin], [np.nanmedian((x1 - x2)[g])], 'w.')
+                    plt.xlabel('x1')
             plt.ylabel('x1-x2')
+            plt.ylim([-.05, .05])
             plt.subplot(2, 2, 2)
-            plt.hist2d(y1, (x1 - x2), bins=50)
-            plt.xlabel('y1')
+            plt.hist2d(y1, (x1 - x2), bins=50, range=[[0, 4088], [-.05, .05]])
+            for pbin in range(0, 4080, 100):
+                g = (np.abs(y1 - pbin) < 50)
+                if np.sum(g) > 10:
+                    plt.plot([pbin], [np.nanmedian((x1 - x2)[g])], 'w.')
+                    plt.xlabel('y1')
             plt.ylabel('x1-x2')
+            plt.ylim([-.05, .05])
             plt.subplot(2, 2, 3)
-            plt.hist2d(x1, (y1 - y2), bins=50)
-            plt.xlabel('x1')
+            plt.hist2d(x1, (y1 - y2), bins=50, range=[[0, 4088], [-.05, .05]])
+            for pbin in range(0, 4080, 100):
+                g = (np.abs(x1 - pbin) < 50)
+                if np.sum(g) > 10:
+                    plt.plot([pbin], [np.nanmedian((y1 - y2)[g])], 'w.')
+                    plt.xlabel('x1')
             plt.ylabel('y1-y2')
+            plt.ylim([-.05, .05])
             plt.subplot(2, 2, 4)
-            plt.hist2d(y1, (y1 - y2), bins=50)
-            plt.xlabel('y1')
+            plt.hist2d(y1, (y1 - y2), bins=50, range=[[0, 4088], [-.05, .05]])
+            for pbin in range(0, 4080, 100):
+                g = (np.abs(y1 - pbin) < 50)
+                if np.sum(g) > 10:
+                    plt.plot([pbin], [np.nanmedian((y1 - y2)[g])], 'w.')
+                    plt.xlabel('y1')
             plt.ylabel('y1-y2')
+            plt.ylim([-.05, .05])
             plt.show()
 
     return lin_transform_vect
@@ -434,7 +397,7 @@ def get_master_fp(ref_fp_file, all_fps, N_dt_bin=2, doplot=False):
 
             transforms = get_lin_transform_params(im1, im2, niterations=5,
                                                   doplot=True)
-            im2 = lin_tranform(im2, transforms)
+            im2 = ea_transform(im2, transforms)
 
             all_fps_cube.append(im2)
 
@@ -444,6 +407,48 @@ def get_master_fp(ref_fp_file, all_fps, N_dt_bin=2, doplot=False):
     fits.writeto('super_cube.fits', all_fps_cube, overwrite=True)
     fits.writeto('super_mean.fits', np.sum(all_fps_cube, axis=0),
                  overwrite=True)
+
+
+def xy_acc_peak(xpeak, ypeak, im):
+    # black magic arithmetic for replace a 2nd order polynomial by
+    # some arithmetic directly on pixel values to find
+    # the maxima in x and y for each peak
+
+    # vectors to contain peak pixels and its neighbours in x or y for
+    # im1 and im2
+    vvy = np.zeros([3, len(ypeak)])
+    vvx = np.zeros([3, len(ypeak)])
+
+    # pad values of neighbours in vv[xy][12]
+    for i in range(-1, 2):
+        vvy[i + 1, :] = im[ypeak + i, xpeak]
+        vvx[i + 1, :] = im[ypeak, xpeak + i]
+
+    # subtract peak pixel value
+    vvx[0, :] -= vvx[1, :]
+    vvx[2, :] -= vvx[1, :]
+
+    # find the slope of the linear fix
+    mx = (vvx[2, :] - vvx[0, :]) / 2
+
+    # find the 2nd order of the polynomial
+    ax = vvx[2, :] - mx
+
+    # all the same in y direction for im
+    vvy[0, :] -= vvy[1, :]
+    vvy[2, :] -= vvy[1, :]
+
+    my = (vvy[2, :] - vvy[0, :]) / 2
+    ay = vvy[2, :] - my
+
+    # peaks position is point of zero derivative. We add the integer
+    # pixel value of [xy]peak[12]
+    x1 = -0.5 * mx / ax + xpeak
+    y1 = -0.5 * my / ay + ypeak
+
+    return x1,y1
+
+
 
 # =============================================================================
 # End of code
