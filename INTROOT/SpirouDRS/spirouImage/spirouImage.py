@@ -35,6 +35,7 @@ import off_listing_REDUC_spirou
 
 from . import spirouFITS
 from . import spirouTable
+from . import spirouFile
 
 # =============================================================================
 # Define variables
@@ -2262,8 +2263,8 @@ def get_shape_map_old(p, loc):
     return loc
 
 
-def get_shape_map(p, loc):
-    func_name = __NAME__ + '.get_shape_map()'
+def get_x_shape_map(p, loc):
+    func_name = __NAME__ + '.get_x_shape_map()'
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
     width = p['SHAPE_ABC_WIDTH']
@@ -2278,12 +2279,12 @@ def get_shape_map(p, loc):
 
     plot_on = p.get(p['PLOT_PER_ORDER'], False)
     # get data from loc
-    hcdata1 = np.array(loc['HCDATA'])
-    fpdata1 = np.array(loc['FPDATA'])
+    hcdata1 = np.array(loc['HCDATA1'])
+    fpdata1 = np.array(loc['FPDATA1'])
     nbo = loc['NUMBER_ORDERS'] // 2
     acc = loc['ACC']
     # get the dimensions
-    dim0, dim1 = loc['HCDATA'].shape
+    dim0, dim1 = loc['HCDATA1'].shape
     master_dxmap = np.zeros_like(hcdata1)
     # storage for mapping orders
     map_orders = np.zeros_like(hcdata1) - 1
@@ -2321,6 +2322,8 @@ def get_shape_map(p, loc):
         # find the order center y order center
         ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
 
+    # TODO: move spirouEXTOR.clean_hotpix here (before loop)
+
     # -------------------------------------------------------------------------
     # iterating the correction, from coarser to finer
     for banana_num in range(nbanana):
@@ -2330,8 +2333,8 @@ def get_shape_map(p, loc):
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
         if np.sum(master_dxmap != 0) != 0:
-            hcdata2 = spirouEXTOR.DeBananafication(p, hcdata1, dx=master_dxmap)
-            fpdata2 = spirouEXTOR.DeBananafication(p, fpdata1, dx=master_dxmap)
+            hcdata2 = ea_transform(hcdata1, dxmap=master_dxmap)
+            fpdata2 = ea_transform(fpdata1, dxmap=master_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -2773,6 +2776,259 @@ def get_shape_map(p, loc):
     return loc
 
 
+def get_y_shape_map(p, loc, hdr):
+    func_name = __NAME__ + '.get_y_shape_map()'
+    # get data from loc
+    nbo = loc['NUMBER_ORDERS'] // 2
+    dim1, dim2 = loc['FPDATA1'].shape
+
+    # x indices in the initial image
+    xpix = np.arange(dim2)
+
+    # TODO: This is very messy --> clean up
+    loc_fibers = dict()
+    # loop around fiber types
+    for fiber in ['AB', 'A', 'B', 'C']:
+        p_tmp, loc_tmp = p.copy(), ParamDict()
+        # set fiber
+        p_tmp['FIBER'] = fiber
+        p_tmp.set_source('FIBER', __NAME__ + '/main()()')
+        # --------------------------------------------------------------
+        # Get localisation coefficients
+        # --------------------------------------------------------------
+        # get this fibers parameters
+        p_tmp = spirouFile.fiber_params(p_tmp, p_tmp['FIBER'], merge=True)
+        # get localisation fit coefficients
+        p_tmp, loc_tmp = get_loc_coefficients(p_tmp, hdr)
+        loc_tmp['LOCOFILE'] = p_tmp['LOCOFILE']
+        loc_tmp.set_source('LOCOFILE', p_tmp.sources['LOCOFILE'])
+        # --------------------------------------------------------------
+        # Average AB into one fiber for AB, A and B
+        # --------------------------------------------------------------
+        # if we have an AB fiber merge fit coefficients by taking the
+        # average
+        # of the coefficients
+        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
+        # if fiber is AB take the average of the orders
+        if fiber == 'AB':
+            # merge
+            loc_tmp['ACC'] = merge_coefficients(loc_tmp, loc_tmp['ACC'], step=2)
+            loc_tmp['ASS'] = merge_coefficients(loc_tmp, loc_tmp['ASS'], step=2)
+            # set the number of order to half of the original
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # if fiber is B take the even orders
+        elif fiber == 'B':
+            loc_tmp['ACC'] = loc_tmp['ACC'][:-1:2]
+            loc_tmp['ASS'] = loc_tmp['ASS'][:-1:2]
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # if fiber is A take the even orders
+        elif fiber == 'A':
+            loc_tmp['ACC'] = loc_tmp['ACC'][1::2]
+            loc_tmp['ASS'] = loc_tmp['ASS'][1::2]
+            loc_tmp['NUMBER_ORDERS'] = int(loc_tmp['NUMBER_ORDERS'] / 2.0)
+        # ------------------------------------------------------------------
+        # append to storage dictionary
+        # ------------------------------------------------------------------
+        loc_fibers[fiber] = loc_tmp.copy()
+
+    # set pos_a, pos_b, pos_c
+    pos_a = loc_fibers['A']
+    pos_b = loc_fibers['B']
+    pos_c = loc_fibers['C']
+
+    # looping through x pixels
+    # We take each column and determine where abc fibers fall relative
+    # to the central pixel in x (normally, that's 4088/2) along the y axis.
+    # This difference in position gives a dy that need to be applied to
+    # straighten the orders
+
+    # Once we have determined this for all abc fibers and all orders, we
+    # fit a Nth order polynomial to the dy versus y relation along the
+    # column, and apply a spline to straighten the order.
+    y0 = np.zeros((nbo * 3, dim2))
+    # set a master dy map
+    master_dymap = np.zeros_like(loc['FPDATA'])
+    # loop around orders and get polynomial values for fibers A, B and C
+    for order_num in range(nbo):
+        iord = order_num * 3
+        y0[iord, :] = np.polyval(pos_a[order_num, :][::-1], xpix)
+        y0[iord + 1, :] = np.polyval(pos_b[order_num, :][::-1], xpix)
+        y0[iord + 2, :] = np.polyval(pos_c[order_num, :][::-1], xpix)
+    # loop around each x pixel (columns)
+    for ix in range(dim2):
+        # dy for all orders and all fibers
+        dy = y0[:, ix] - y0[:, dim2 // 2]
+        # fitting the dy to the position of the order
+        yfit = nanpolyfit(y0[:, ix], dy, 3)
+        ypix = np.arange(dim1)
+        # add to the master dy map
+        master_dymap[:, ix] = np.polyval(yfit, ypix)
+    # add DXMAP to loc
+    loc['DYMAP'] = master_dymap
+    loc.set_source('DYMAP', func_name)
+    # return loc
+    return loc
+
+
+def get_loc_coefficients(p, hdr=None, loc=None):
+    """
+    Extracts loco coefficients from parameters keys (uses header="hdr" provided
+    to get acquisition time or uses p['FITSFILENAME'] to get acquisition time if
+    "hdr" is None
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                kw_LOCO_NBO: list, keyword store for the number of orders
+                             located
+                kw_LOCO_DEG_C: list, keyword store for the fit degree for
+                               order centers
+                kw_LOCO_DEG_W: list, keyword store for the fit degree for
+                               order widths
+                kw_LOCO_CTR_COEFF: list, keyword store for the Coeff center
+                                   order
+                kw_LOCO_FWHM_COEFF: list, keyword store for the Coeff width
+                                    order
+                LOC_FILE: string, the suffix for the location calibration
+                          database key (usually the fiber type)
+                             - read from "loc_file_fpall", if not defined
+                               uses p['FIBER']
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                calibDB: dictionary, the calibration database dictionary
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                log_opt: string, log option, normally the program name
+
+    :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
+    :param loc: parameter dictionary, ParamDict containing data
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                number_orders: int, the number of orders in reference spectrum
+                nbcoeff_ctr: int, number of coefficients for the center fit
+                nbcoeff_wid: int, number of coefficients for the width fit
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+    """
+    func_name = __NAME__ + '.get_loc_coefficients()'
+    # get keywords
+    loco_nbo = p['KW_LOCO_NBO'][0]
+    loco_deg_c, loco_deg_w = p['KW_LOCO_DEG_C'][0], p['KW_LOCO_DEG_W'][0]
+    loco_ctr_coeff = p['KW_LOCO_CTR_COEFF'][0]
+    loco_fwhm_coeff = p['KW_LOCO_FWHM_COEFF'][0]
+
+    # get loc file
+    if 'LOC_FILE' in p:
+        loc_file = 'LOC_' + p['LOC_FILE']
+    else:
+        loc_file = 'LOC_' + p['FIBER']
+
+    # get calibDB
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouDB.GetAcqTime(p, hdr)
+        # get calibDB
+        c_database, p = spirouDB.GetCalibDatabase(p, acqtime)
+    else:
+        c_database = p['CALIBDB']
+        acqtime = p['MAX_TIME_HUMAN']
+
+    # get the reduced dir name
+    reduced_dir = p['REDUCED_DIR']
+
+    # set up the loc param dict
+    if loc is None:
+        loc = ParamDict()
+
+    # check for localization file for this fiber
+    if not (loc_file in c_database):
+        emsg1 = ('No order geometry defined in the calibDB for fiber: {0}'
+                 '').format(p['FIBER'])
+        emsg2 = ('    requires key="{0}" in calibDB file (with time < {1}).'
+                 '').format(loc_file, acqtime)
+        emsg3 = '    Unable to complete the recipe, FATAL'
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+    # construct the localization file name
+    loco_file = os.path.join(reduced_dir, c_database[loc_file][1])
+    # log that we are reading localization parameters
+    wmsg = 'Reading localization parameters of Fiber {0} in {1}'
+    WLOG(p, '', wmsg.format(p['FIBER'], c_database[loc_file][1]))
+    # get header for loco file
+    hdict = spirouFITS.read_header(p, loco_file)
+    # Get number of orders from header
+    loc['NUMBER_ORDERS'] = int(spirouFITS.read_key(p, hdict, loco_nbo))
+    # Get the number of fit coefficients from header
+    loc['NBCOEFF_CTR'] = int(spirouFITS.read_key(p, hdict, loco_deg_c)) + 1
+    loc['NBCOEFF_WID'] = int(spirouFITS.read_key(p, hdict, loco_deg_w)) + 1
+    # Read the coefficients from header
+    #     for center fits
+    loc['ACC'] = spirouFITS.read_key_2d_list(p, hdict, loco_ctr_coeff,
+                                             loc['NUMBER_ORDERS'],
+                                             loc['NBCOEFF_CTR'])
+    #     for width fits
+    loc['ASS'] = spirouFITS.read_key_2d_list(p, hdict, loco_fwhm_coeff,
+                                             loc['NUMBER_ORDERS'],
+                                             loc['NBCOEFF_WID'])
+    # add some other parameters to loc
+    loc['LOCO_CTR_COEFF'] = loco_ctr_coeff
+    loc['LOCO_FWHM_COEFF'] = loco_fwhm_coeff
+    loc['LOCO_CTR_FILE'] = loco_file
+    loc['LOCO_FWHM_FILE'] = loco_file
+    # add source
+    added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass',
+             'loco_ctr_coeff', 'loco_fwhm_coeff', 'loco_ctr_file',
+             'loco_fwhm_file']
+    loc.set_sources(added, func_name)
+
+    # get filename
+    p['LOCOFILE'] = os.path.basename(loco_file)
+    p.set_source('LOCOFILE', func_name)
+
+    # return the loc param dict
+    return p, loc
+
+
+def merge_coefficients(loc, coeffs, step):
+    """
+    Takes a list of coefficients "coeffs" and merges them based on "step"
+    using the mean of "step" blocks
+
+    i.e. shrinks a list of N coefficients to N/2 (if step = 2) where
+         indices 0 and 1 are averaged, indices 2 and 3 are averaged etc
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                number_orders: int, the number of orders in reference spectrum
+
+    :param coeffs: numpy array (2D), the list of coefficients
+                   shape = (number of orders x number of fit parameters)
+
+    :param step: int, the step between merges
+                 i.e. total size before = "number_orders"
+                      total size after = "number_orders"/step
+
+    :return newcoeffs: numpy array (2D), the new list of coefficients
+                shape = (number of orders/step x number of fit parmaeters)
+    """
+    # get number of orders
+    nbo = loc['NUMBER_ORDERS']
+    # copy coeffs
+    newcoeffs = coeffs.copy()
+    # get sum of 0 to step pixels
+    cosum = np.array(coeffs[0:nbo:step, :])
+    for i_it in range(1, step):
+        cosum = cosum + coeffs[i_it:nbo:step, :]
+    # overwrite values into coeffs array
+    newcoeffs[0:int(nbo/step), :] = (1/step)*cosum
+    # return merged coeffients
+    return newcoeffs
+
+
 def median_filter_ea(vector, width):
     """
     Median filter array "vector" by a box of width "width"
@@ -2827,7 +3083,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     absdev_threshold = p['SHAPEOFFSET_ABSDEV_THRESHOLD']
     # -------------------------------------------------------------------------
     # get data from loc
-    dim1, dim2 = np.shape(loc['HCDATA'])
+    dim1, dim2 = np.shape(loc['HCDATA1'])
     poly_wave_ref = loc['MASTERWAVEP']
     une_lines = loc['LL_LINE']
     poly_cavity = loc['CAVITY_LEN_COEFFS']
@@ -2835,7 +3091,6 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # define storage for the bottom and top values of the FPs
     bottom = np.zeros_like(sp_fp)
     top = np.zeros_like(sp_fp)
-
     # -------------------------------------------------------------------------
     # loop around pixels
     for xpix in range(dim2):
@@ -2960,14 +3215,12 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
                 coeffs, _ = curve_fit(spirouMath.gauss_fit_s, xx, yy, p0=guess)
                 goodfit = True
             except Exception as _:
-                goodfit = False
+                goodfit, coeffs = False, None
             # if we had a fit then update some values
             if goodfit:
                 xpeak.append(coeffs[1])
                 peakval.append(coeffs[0])
                 ewval.append(coeffs[2])
-
-    # TODO: Question: xpeak is off from EA code by ~ 10e-6
 
     # -------------------------------------------------------------------------
     # sort FP peaks by their x pixel position
@@ -3144,27 +3397,34 @@ def construct_master_fp(p, refimage, filenames, matched_id):
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
-        WLOG(p, '', 'FP Group {0} of {1}'.format(g_it + 1, len(u_groups)))
+        wmsg = 'Combining FP Group {0} of {1}'
+        WLOG(p, 'info', wmsg.format(g_it + 1, len(u_groups)))
         # find all files for this group
         fp_ids = filenames[matched_id == group_num]
         # only combine if 3 or more images were taken
         if len(fp_ids) >= 3:
             # load this groups files into a cube
             cube = []
-            for filename in fp_ids:
+            for f_it, filename in enumerate(fp_ids):
+                # log reading of data
+                basename = os.path.basename(filename)
+                wmsg = '\tReading file {0} ({1} / {2})'
+                WLOG(p, '', wmsg.format(basename, f_it + 1, len(fp_ids)))
                 # read data
                 data_it, _, _, _ = spirouFITS.readimage(p, filename, log=False)
                 # normalise to the FP_MASTER_PERCENT_THRES percentile
                 data_it = data_it / np.nanpercentile(data_it, percent_thres)
                 # add to cube
                 cube.append(data_it)
+            # log progress
+            wmsg = 'Calculating median of {0} images'
+            WLOG(p, '', wmsg.format(len(fp_ids)))
             # median fp cube
-            groupfp = np.nanmedian(cube, axis=0)
+            with warnings.catch_warnings(record=True) as _:
+                groupfp = np.nanmedian(cube, axis=0)
             # shift group to master
             transforms = get_linear_transform_params(p, refimage, groupfp)
-            groupfp = linear_transform(groupfp, transforms)
-            # shift group to master
-            groupfp, dx_ref, dy_ref = register_fp(p, refimage, groupfp)
+            groupfp = ea_transform(groupfp, lin_transform_vect=transforms)
             # append to cube
             fp_cube.append(groupfp)
             for filename in fp_ids:
@@ -3172,100 +3432,47 @@ def construct_master_fp(p, refimage, filenames, matched_id):
     # convert fp cube to array
     fp_cube = np.array(fp_cube)
     # return fp_cube
-    return fp_cube, transforms_list
+    return fp_cube, np.array(transforms_list)
 
 
-def register_fp(p, image1, image2):
-    """
-    Provide two images and find the cross-correlation peak in 2D. This
-    performs iteratively a 1D correlation in both Y and X direction.
-    :param p: parameter dictionary
-    :param image1: numpy array (1D), the reference FP
-    :param image2: numpy array (1D), the FP to shift
-    :return:
-    """
+def xy_acc_peak(xpeak, ypeak, im):
+    # black magic arithmetic for replace a 2nd order polynomial by
+    # some arithmetic directly on pixel values to find
+    # the maxima in x and y for each peak
 
-    # get constants from p
-    wcc = p['FP_MASTER_CC_OFFSET']
-    niter = p['FP_MASTER_CC_NITER']
-    # get the shape
-    wwy = np.array(image1.shape[0] - wcc * 2) // 2
-    wwx = np.array(image1.shape[1] - wcc * 2) // 2
+    # vectors to contain peak pixels and its neighbours in x or y for
+    # im1 and im2
+    vvy = np.zeros([3, len(ypeak)])
+    vvx = np.zeros([3, len(ypeak)])
 
-    # generate x/y indices for the entire image
-    yy, xx = np.indices(image1.shape, dtype=float)
+    # pad values of neighbours in vv[xy][12]
+    for i in range(-1, 2):
+        vvy[i + 1, :] = im[ypeak + i, xpeak]
+        vvx[i + 1, :] = im[ypeak, xpeak + i]
 
-    # global offset applied to image2
-    dx_ref = 0
-    dy_ref = 0
+    # subtract peak pixel value
+    vvx[0, :] -= vvx[1, :]
+    vvx[2, :] -= vvx[1, :]
 
-    # extract central regions of the array
-    starty, endy = image1.shape[0] // 2 - wwy, image1.shape[0] // 2 + wwy
-    startx, endx = image1.shape[1] // 2 - wwx, image1.shape[1] // 2 + wwx
-    image1b = np.array(image1[starty:endy, startx:endx])
+    # find the slope of the linear fix
+    mx = (vvx[2, :] - vvx[0, :]) / 2
 
-    # to increase the contribution of low-flux regions, we x-correlate
-    # the square root of the images.
-    with warnings.catch_warnings(record=True) as _:
-        image1b[image1b < 0] = 0
-    image1b = np.sqrt(image1b)
+    # find the 2nd order of the polynomial
+    ax = vvx[2, :] - mx
 
-    # range of dy to be explored the same size of cc offset will
-    #    be explored in x
-    dx = np.arange(-wcc, wcc)
-    dy = np.arange(-wcc, wcc)
-    # get start and end points
-    start_y_arr = image1.shape[0] // 2 - wwy + dy
-    end_y_arr = image1.shape[0] // 2 + wwy + dy
-    start_x_arr = image1.shape[1] // 2 - wwx + dx
-    end_x_arr = image1.shape[1] // 2 + wwx + dx
-    # copy the image2 to the shifted image
-    simage = np.array(image2)
+    # all the same in y direction for im
+    vvy[0, :] -= vvy[1, :]
+    vvy[2, :] -= vvy[1, :]
 
-    # loop around for the number of iterations
-    for iteration in range(niter):
-        # log progress
-        wmsg = '\tProcessing FP image shift. Iteration {0} of {1}'
-        WLOG(p, '', wmsg.format(iteration + 1, niter))
-        # value of x-correlation for all offset
-        cc = np.zeros([len(dy), len(dx)])
-        # if this is not the first iteration then map the coordinates
-        if iteration > 0:
-            coords = [yy + dy_ref, xx + dx_ref]
-            simage = mapc(image2, coords, order=2, cval=0, output=float,
-                          mode='constant')
-        # we will extract a varying region within shifted_image but we just
-        #   want to compute square root once
-        simage_tmp = np.array(simage)
-        with warnings.catch_warnings(record=True) as _:
-            simage_tmp[simage_tmp < 0] = 0.0
-        simage_tmp = np.sqrt(simage_tmp)
+    my = (vvy[2, :] - vvy[0, :]) / 2
+    ay = vvy[2, :] - my
 
-        # x -correlate image1 with shifted image
-        for it in range(len(dy)):
-            # loop around x axis
-            for jt in range(len(dx)):
-                # get start and end points
-                starty, endy = start_y_arr[it], end_y_arr[it]
-                startx, endx = start_x_arr[jt], end_x_arr[jt]
-                # get shifted image
-                simageb = simage_tmp[starty:endy, startx:endx]
-                # correlate (sum of product)
-                cc[it, jt] = np.nansum(image1b * simageb)
-        # fit 2D peak and apply to shift
-        dy_shift, dx_shift = twod_peak_fit(dx, dy, cc, wcc)
-        dy_ref, dx_ref = dy_ref + dy_shift, dx_ref + dx_shift
-        # log progress
-        wmsg = ['\tIteration {0}: Increment in dy = {1:.6f}, in dx = {2:.6f}',
-                '\tIteration {0}: DX ref = {3:.6f}, DY ref = {4:.6f}']
-        wargs = [iteration + 1, dy_shift, dx_shift, dx_ref, dy_ref]
-        WLOG(p, '', [wmsg[0].format(*wargs), wmsg[1].format(*wargs)])
-    # shift to the max cross-correlation position
-    coords = [yy + dy_ref, xx + dx_ref]
-    simage = mapc(image2, coords, order=2, cval=0, output=float,
-                  mode='constant')
-    # return the shifted image and the amount of shift applied in x and y
-    return simage, dx_ref, dy_ref
+    # peaks position is point of zero derivative. We add the integer
+    # pixel value of [xy]peak[12]
+    x1 = -0.5 * mx / ax + xpeak
+    y1 = -0.5 * my / ay + ypeak
+
+    return x1,y1
 
 
 def twod_peak_fit(xx, yy, zz, size):
@@ -3300,39 +3507,249 @@ def twod_peak_fit(xx, yy, zz, size):
 
 
 def get_linear_transform_params(p, image1, image2):
-    # TODO: fill in this function
-    return transforms
+    # TODO -------------------------------------------
+    # TODO: move to constants
+    # TODO -------------------------------------------
 
 
-def linear_transform(image, transforms):
-    # copy image
+    # TODO -------------------------------------------
+
+    # get parameters from p
+    maxn_percent = p['SHAPE_MASTER_VALIDFP_PERCENTILE']
+    maxn_thres = p['SHAPE_MASTER_VALIDFP_THRESHOLD']
+    niterations = p['SHAPE_MASTER_LINTRANS_NITER']
+    ini_boxsize = p['SHAPE_MASTER_FP_INI_BOXSIZE']
+    small_boxsize = p['SHAPE_MASTER_FP_SMALL_BOXSIZE']
+    # get the shape of the image
+    dim1, dim2 = image1.shape
+    # check that image is correct shape
+    if image2.shape != image1.shape:
+        emsg = 'Image 1 (shape={0}) not the same as image 2 (shape={1})'
+        WLOG(p, 'error', emsg.format(image1.shape, image2.shape))
+    # linear transform vector
+    # with dx0,dy0,A,B,C,D
+    # we start assuming that there is no shift in x or y
+    # and that the image is not sheared or rotated
+    lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
+    # find the fp peaks (via max neighbours) in image1
+    mask1 = max_neighbour_mask(image1, maxn_percent, maxn_thres)
+    # copy image2
+    image3 = np.array(image2)
+    # print out initial conditions of linear transform vector
+    WLOG(p, '', 'Linear transformation start point:')
+    ltv = np.array(lin_transform_vect)
+    wmsg1 = '\tdx={0:.6f} dy={1:.6f}'.format(*ltv)
+    wargs2 = [dim2, (ltv[2] - 1) * dim2, ltv[3] * dim2]
+    wmsg2 = '\t{0}(A-1)={1:.6f}\t{0}B={2:.6f}'.format(*wargs2)
+    wargs3 = [dim2, ltv[3] * dim2, (ltv[5] - 1) * dim2]
+    wmsg3 = '\t{0}C={1:.6f}\t{0}(D-1)={2:.6f}'.format(*wargs3)
+    WLOG(p, '', [wmsg1, wmsg2, wmsg3])
+    # loop around iterations
+    for n_it in range(niterations):
+        # log progress
+        wmsg = 'Iteration {0}/{1}'
+        WLOG(p, '', wmsg.format(n_it + 1, niterations))
+        # transform image2 if we have some transforms (initial we don't)
+        if n_it > 0:
+            image3 = ea_transform(image2, lin_transform_vect)
+        # find the fp peaks (via max neighbours) in image2
+        mask2 = max_neighbour_mask(image3, maxn_percent, maxn_thres)
+        # we search in +- wdd to find the maximum number of matching
+        # bright peaks. We first explore a big +-11 pixel range, but
+        # afterward we can scan a much smaller region
+        if n_it == 0:
+            wdd = ini_boxsize
+        else:
+            wdd = small_boxsize
+        # define the scanning range in dx and dy
+        dd = np.arange(-wdd, wdd + 1)
+        map_dxdy = np.zeros([len(dd), len(dd)])
+        # peaks cannot be at the edges of the image
+        mask1[:wdd + 1, :] = False
+        mask1[:, :wdd + 1] = False
+        mask1[-wdd -1:, :] = False
+        mask1[:, -wdd -1:] = False
+        # get the positions of the x and y peaks (based on mask1)
+        ypeak1, xpeak1 = np.where(mask1)
+        # fill map_dxdy with the mean of the wdd box
+        for y_it in range(len(dd)):
+            for x_it in range(len(dd)):
+                # get the boolean values for mask 2 for this dd
+                boxvalues = mask2[ypeak1 + dd[y_it], xpeak1 + dd[x_it]]
+                # push these values into the map
+                map_dxdy[y_it, x_it] = np.mean(boxvalues)
+        # get the shifts for these mapped values
+        pos = np.argmax(map_dxdy)
+        dy0, dx0 = -dd[pos // len(dd)], -dd[pos % len(dd)]
+        # shift by integer if dx0 or dy0 is not 0
+        # this is used later to ensures that the pixels found as
+        # peaks in one image are also peaks in the other.
+        mask2b = np.roll(np.roll(mask2, dy0, axis=0), dx0, axis=1)
+        # position of peaks in 2nd image
+        xpeak2 = np.array(xpeak1 - dx0, dtype=int)
+        ypeak2 = np.array(ypeak1 - dy0, dtype=int)
+        # peaks in image1 must be peaks in image2 when accounting for the
+        # integer offset
+        keep = mask2b[ypeak1, xpeak1]
+        xpeak1 = xpeak1[keep]
+        ypeak1 = ypeak1[keep]
+        xpeak2 = xpeak2[keep]
+        ypeak2 = ypeak2[keep]
+        # do a fit to these positions in both images to get the peak centers
+        x1, y1 = xy_acc_peak(xpeak1, ypeak1, image1)
+        x2, y2 = xy_acc_peak(xpeak2, ypeak2, image3)
+        # we loop on the linear model converting x1 y1 to x2 y2
+        nbad, ampsx, ampsy = 1, np.zeros(3), np.zeros(3)
+        while nbad != 0:
+            # define vectory
+            vvv = np.zeros([3, len(x1)])
+            vvv[0, :], vvv[1, :], vvv[2, :] = np.ones_like(x1), x1, y1
+            # linear minimisation of difference w.r.t. v
+            ampsx, xrecon = spirouMath.linear_minimization(x1 - x2, vvv)
+            ampsy, yrecon = spirouMath.linear_minimization(y1 - y2, vvv)
+            # express distance of all residual error in x1-y1 and y1-y2
+            # in absolute deviation
+            xnanmed = np.nanmedian(np.abs((x1 - x2) - xrecon))
+            ynanmed = np.nanmedian(np.abs((y1 - y2) - yrecon))
+            xrms = ((x1 - x2) - xrecon) ** 2 / xnanmed
+            yrms = ((y1 - y2) - yrecon) ** 2 / ynanmed
+            # How many 'sigma' for the core of distribution
+            nsig = np.sqrt(xrms ** 2 + yrms ** 2)
+            with warnings.catch_warnings(record=True) as _:
+                bad = nsig > 1.5
+            # remove outliers and start again if there was one
+            nbad = np.sum(bad)
+            x1, x2 = x1[~bad], x2[~bad]
+            y1, y2 = y1[~bad], y2[~bad]
+        # we have our linear transform terms!
+        dx0, dy0 = ampsx[0], ampsy[0]
+        d_transform = [dx0, dy0, ampsx[1], ampsx[2], ampsy[1], ampsy[2]]
+        # propagate to linear transform vector
+        lin_transform_vect -= d_transform
+        ltv = np.array(lin_transform_vect)
+        # print out per iteration
+        wmsg1 = '\tdx={0:.6f} dy={1:.6f}'.format(*ltv)
+        wargs2 = [dim2, (ltv[2]-1) * dim2, ltv[3] * dim2]
+        wmsg2 = '\t{0}(A-1)={1:.6f}\t{0}B={2:.6f}'.format(*wargs2)
+        wargs3 = [dim2, ltv[3] * dim2, (ltv[5] - 1) * dim2]
+        wmsg3 = '\t{0}C={1:.6f}\t{0}(D-1)={2:.6f}'.format(*wargs3)
+        WLOG(p, '', [wmsg1, wmsg2, wmsg3])
+    # plot if in debug mode
+    if p['DRS_DEBUG'] > 0 and p['DRS_PLOT'] > 0:
+        sPlt.shape_linear_trans_param_plot(p, image1, x1, x2, y1, y2)
+    # return linear transform vector
+    return lin_transform_vect
+
+
+def max_neighbour_mask(image, percent, thres):
+    # construct a cube with 8 slices that contain the 8 neighbours
+    #   of any pixel. This is used to find pixels brighter that their
+    #   neighbours
+    box = np.zeros([9, image.shape[0], image.shape[1]], dtype=float)
+    xpos, ypos = np.indices([3, 3]) - 1
+    # loop around
+    for it in range(len(xpos.flatten())):
+        dx, dy = xpos.flatten()[it], ypos.flatten()[it]
+        if (dx == 0) and (dy == 0):
+            box[it] = np.nan
+        else:
+            box[it] = np.roll(np.roll(image, dx, axis=0), dy, axis=1)
+    # maximum value of neighbouring pixels
+    max_neighbours = np.nanmax(box, axis=0)
+
+    # find pixels brighter than neighbours and brighter than 80th percentile
+    # of image. These are the peaks of FP lines
+    # we also impose that the pixel be within 1.5x of its neighbours
+    # to filter-out noise excursions
+    with warnings.catch_warnings(record=True) as _:
+        mask = (image > max_neighbours)
+        mask &= (image > np.nanpercentile(image, percent))
+        mask &= (image / max_neighbours < thres)
+    # return mask of where peaks are
+    return mask
+
+
+def ea_transform(image, lin_transform_vect=None, dxmap=None, dymap=None):
+    """
+    Shifts / transforms image by three different transformations:
+
+    a) a linear transform (defined by "lin_transform_vect")
+
+        this is a list of components for the shift:
+            dx, dy, A, B, C, D
+        where dx and dy are shifts in x and y and A, B, C, D form the
+        transform matrix:
+
+                    [ A   B
+                      C   D ]
+
+    b) a shift in x position (dxmap) where a shift is defined for each pixel
+
+    c) a shift in y position (dymap) where a shift is defined for each pixel
+
+    :param image: numpy array (2D), the image to transform
+    :param lin_transform_vect: np.ndarray [size=6], the linear transform
+                               parameters (dx, dy, A, B, C, D)
+    :param dxmap: numpy array (2D), the x shift map (same size as image)
+    :param dymap: numpy array (2D), the y shift map (same size as image)
+
+    :type image: np.ndarray
+    :type lin_transform_vect: np.ndarray
+    :type dxmap: np.ndarray
+    :type dymap: np.ndarray
+
+    :returns: The transformed image
+    :rtype: np.ndarray
+    """
+    func_name = __NAME__ + '.ea_transform()'
+    # check size of dx and dy map
+    if dxmap is not None:
+        if dxmap.shape != image.shape:
+            emsg = ('Incorrect shape for dx map (shape={0}) must be {1}'
+                    '\n\t function = {2}')
+            eargs = [dxmap.shape, image.shape, func_name]
+            raise ValueError(emsg.format(*eargs))
+    if dymap is not None:
+        if dymap.shape != image.shape:
+            emsg = ('Incorrect shape for dy map (shape={0}) must be {1}'
+                    '\n\t function = {2}')
+            eargs = [dxmap.shape, image.shape, func_name]
+            raise ValueError(emsg.format(*eargs))
+    # deal with no linear transform required (just a dxmap or dymap shift)
+    if lin_transform_vect is None:
+        lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
+    # copy the image
     image = np.array(image)
     # transforming an image with the 6 linear transform terms
     # Be careful with NaN values, there should be none
-    dx, dy, A, B, C, D = transforms
-    # ge tthe x and y indices
-    yy, xx = np.indices(image.shape, dtype=float)  # /10.
-
+    dx, dy, A, B, C, D = lin_transform_vect
+    # get the pixel locations for the image
+    yy, xx = np.indices(image.shape, dtype=float)
+    # get the shifted x pixel locations
     xx2 = dx + xx * A + yy * B
+    if dxmap is not None:
+        xx2 += dxmap
+    # get the shifted y pixel locations
     yy2 = dy + xx * C + yy * D
-    # get all non NaN pixels
+    if dymap is not None:
+        yy2 += dymap
+    # get the valid (non Nan) pixels
     valid_mask = np.isfinite(image)
-    # get the float mask as weights
-    weights = valid_mask.astype(float)
-    # set all NaN pixels to zero (for transform
+    # set the weight equal to the valid pixels (1 for valid, 0 for not valid)
+    weight = valid_mask.astype(float)
+    # set all NaNs to zero (for transform)
     image[~valid_mask] = 0
     # we need to properly propagate NaN in the interpolation.
     out_image = mapc(image, [yy2, xx2], order=2, cval=np.nan, output=float,
                      mode='constant')
-    out_weight = mapc(weights, [yy2, xx2], order=2, cval=0, output=float,
+    out_weight = mapc(weight, [yy2, xx2], order=2, cval=0, output=float,
                       mode='constant')
-    out_image = out_image / out_weight
-    out_image[out_weight < 0.5] = np.nan
-
+    # divide by the weight (NaN pixels)
+    with warnings.catch_warnings(record=True) as _:
+        out_image = out_image / out_weight
+        out_image[out_weight < 0.5] = np.nan
+    # return transformed image
     return out_image
-
-
-    return image
 
 
 # =============================================================================

@@ -117,7 +117,9 @@ GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
 
-GetShapeMap = spirouImage.get_shape_map
+GetXShapeMap = spirouImage.get_x_shape_map
+
+GetYShapeMap = spirouImage.get_y_shape_map
 
 GroupFilesByTime = spirouImage.group_files_by_time
 

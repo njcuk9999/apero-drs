@@ -3007,7 +3007,7 @@ Changelog
   imports as required) [Neil Cook]
 - SpirouPlot.py - add slit shape plot. [Neil Cook]
 - SpirouKeywords.py - add kw_SHAPEFILE to output keys. [Neil Cook]
-- SpirouConst.py - add SLIT_SHAPE_FILE filename definition. [Neil Cook]
+- SpirouConst.py - add SLIT_XSHAPE_FILE filename definition. [Neil Cook]
 - Output_keys.py - add slit_shape_file output key. [Neil Cook]
 - New_bananarama.py - fix to work with DRS. [Neil Cook]
 - Cal_SLIT_spirou.py - replace old path function with new and correct
