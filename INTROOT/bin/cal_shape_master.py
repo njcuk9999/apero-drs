@@ -185,7 +185,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # match files by date
     # -------------------------------------------------------------------------
     # log progress
-    wmsg = 'Matching dark files by observation time (+/- {0} hrs)'
+    wmsg = 'Matching FP files by observation time (+/- {0} hrs)'
     WLOG(p, '', wmsg.format(p['DARK_MASTER_MATCH_TIME']))
     # get the time threshold
     time_thres = p['FP_MASTER_MATCH_TIME']
@@ -196,19 +196,23 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # construct the master fp file
     # -------------------------------------------------------------------------
     cargs = [fpdata, fpfilenames, matched_id]
-    fpcube, dxrefs, dyrefs = spirouImage.ConstructMasterFP(p, *cargs)
+    fpcube, transforms = spirouImage.ConstructMasterFP(p, *cargs)
+    # log process
+    wmsg1 = 'Master FP construction complete.'
+    wmsg2 = '\tAdding {0} group images to form FP master image'
+    WLOG(p, 'info', [wmsg1, wmsg2.format(len(fpcube))])
     # sum the cube to make fp data
     fpdata = np.sum(fpcube, axis=0)
+    # set the number of frames
+    # TODO: Question - how many frames? len(fpfilenames) or len(fpdata)
+    p['NBFRAMES'] = len(fpcube)
+    p.set_source('NBFRAMES', __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    # p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
-    hcdatac = hcdata
-    p['DARKFILE'] = 'None'
-
-    # p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
-    fpdatac = fpdata
+    p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
+    p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
 
     # ----------------------------------------------------------------------
     # Resize hc data
@@ -221,10 +225,9 @@ def main(night_name=None, hcfile=None, fpfile=None):
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    hcdata2 = spirouImage.ResizeImage(p, hcdata0, **bkwargs)
+    hcdata1 = spirouImage.ResizeImage(p, hcdata0, **bkwargs)
     # log change in data size
-    WLOG(p, '', ('HC Image format changed to '
-                            '{0}x{1}').format(*hcdata2.shape))
+    WLOG(p, '', ('HC Image format changed to {0}x{1}').format(*hcdata1.shape))
 
     # ----------------------------------------------------------------------
     # Resize fp data
@@ -237,31 +240,26 @@ def main(night_name=None, hcfile=None, fpfile=None):
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    fpdata2 = spirouImage.ResizeImage(p, fpdata0, **bkwargs)
+    fpdata1 = spirouImage.ResizeImage(p, fpdata0, **bkwargs)
     # log change in data size
-    WLOG(p, '', ('FP Image format changed to {0}x{1}').format(*fpdata2.shape))
+    WLOG(p, '', ('FP Image format changed to {0}x{1}').format(*fpdata1.shape))
 
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
-    # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
-    p['BADPFILE'] = 'None'
-
-    # save data to loc
-    loc['HCDATA'] = hcdata2
-    loc.set_source('HCDATA', __NAME__ + '/main()')
-
-    # save data to loc
-    loc['FPDATA'] = fpdata2
-    loc.set_source('FPDATA', __NAME__ + '/main()')
+    p, hcdata1 = spirouImage.CorrectForBadPix(p, hcdata1, hchdr)
+    p, fpdata1 = spirouImage.CorrectForBadPix(p, fpdata1, fphdr)
+    # add to loc
+    loc['HCDATA1'] = hcdata1
+    loc['FPDATA1'] = fpdata1
+    loc.set_sources(['HCDATA1', 'FPDATA1'], __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.nansum(hcdata2 <= 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata2.shape)
+    n_bad_pix = np.nansum(hcdata1 <= 0)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata1.shape)
     # Log number
     wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
     WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
@@ -270,8 +268,8 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.nansum(fpdata2 <= 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata2.shape)
+    n_bad_pix = np.nansum(fpdata1 <= 0)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata1.shape)
     # Log number
     wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
     WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
@@ -326,7 +324,8 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # ------------------------------------------------------------------
     # Calculate shape map
     # ------------------------------------------------------------------
-    loc = spirouImage.GetShapeMap(p, loc)
+    loc = spirouImage.GetXShapeMap(p, loc)
+    loc = spirouImage.GetYShapeMap(p, loc, fphdr)
 
     # ------------------------------------------------------------------
     # Plotting
@@ -367,21 +366,26 @@ def main(night_name=None, hcfile=None, fpfile=None):
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ------------------------------------------------------------------
+    # Writing FP big table
+    # ------------------------------------------------------------------
+    # construct big fp table
+    colnames = ['FILENAME', 'NIGHT', 'MJDATE', 'EXPTIME', 'PVERSION',
+                'GROUPID', 'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
+    values = [basenames, nightnames, fp_time, fp_exp, fp_pp_version,
+              matched_id, transforms[:, 0], transforms[:, 1],
+              transforms[:, 2], transforms[:, 3], transforms[:, 4]]
+    fptable = spirouImage.MakeTable(p, colnames, values)
+
+    # ------------------------------------------------------------------
     # Writing DXMAP to file
     # ------------------------------------------------------------------
     # get the raw tilt file name
     raw_shape_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
-    shapefits, tag = spirouConfig.Constants.SLIT_SHAPE_FILE(p)
+    shapefits, tag = spirouConfig.Constants.SLIT_XSHAPE_FILE(p)
     shapefitsname = os.path.basename(shapefits)
-    # construct big fp table
-    colnames = ['FILENAME', 'NIGHT', 'MJDATE', 'EXPTIME', 'PVERSION',
-                'GROUPID', 'DXREF', 'DYREF']
-    values = [basenames, nightnames, fp_time, fp_exp, fp_pp_version,
-              matched_id, dxrefs, dyrefs]
-    fptable = spirouImage.MakeTable(p, colnames, values)
     # Log that we are saving tilt file
-    wmsg = 'Saving shape information in file: {0}'
+    wmsg = 'Saving shape x information in file: {0}'
     WLOG(p, '', wmsg.format(shapefitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(fphdr)
@@ -403,6 +407,72 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write tilt file to file
     p = spirouImage.WriteImageTable(p, shapefits, image=loc['DXMAP'],
+                                    table=fptable, hdict=hdict)
+
+    # ------------------------------------------------------------------
+    # Writing DYMAP to file
+    # ------------------------------------------------------------------
+    # get the raw tilt file name
+    raw_shape_file = os.path.basename(p['FITSFILENAME'])
+    # construct file name and path
+    shapefits, tag = spirouConfig.Constants.SLIT_YSHAPE_FILE(p)
+    shapefitsname = os.path.basename(shapefits)
+    # Log that we are saving tilt file
+    wmsg = 'Saving shape y information in file: {0}'
+    WLOG(p, '', wmsg.format(shapefitsname))
+    # Copy keys from fits file
+    hdict = spirouImage.CopyOriginalKeys(fphdr)
+    # add version number
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                     dim1name='hcfile', values=p['HCFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
+                                     dim1name='fpfile', values=p['FPFILES'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
+    # write tilt file to file
+    p = spirouImage.WriteImageTable(p, shapefits, image=loc['DYMAP'],
+                                    table=fptable, hdict=hdict)
+
+    # ------------------------------------------------------------------
+    # Writing Master FP to file
+    # ------------------------------------------------------------------
+    # get the raw tilt file name
+    raw_shape_file = os.path.basename(p['FITSFILENAME'])
+    # construct file name and path
+    shapefits, tag = spirouConfig.Constants.SLIT_MASTER_FP_FILE(p)
+    shapefitsname = os.path.basename(shapefits)
+    # Log that we are saving tilt file
+    wmsg = 'Saving master FP file: {0}'
+    WLOG(p, '', wmsg.format(shapefitsname))
+    # Copy keys from fits file
+    hdict = spirouImage.CopyOriginalKeys(fphdr)
+    # add version number
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
+                                     dim1name='hcfile', values=p['HCFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
+                                     dim1name='fpfile', values=p['FPFILES'])
+    # add qc parameters
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
+    # write tilt file to file
+    p = spirouImage.WriteImageTable(p, shapefits, image=fpdata1,
                                     table=fptable, hdict=hdict)
 
     # ------------------------------------------------------------------
