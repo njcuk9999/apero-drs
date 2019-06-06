@@ -188,7 +188,7 @@ def main(night_name=None, files=None):
     # get the raw tilt file name
     raw_shape_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
-    shapefits, tag = spirouConfig.Constants.SLIT_SHAPE_FILE(p)
+    shapefits, tag = spirouConfig.Constants.SLIT_XSHAPE_FILE(p)
     shapefitsname = os.path.basename(shapefits)
     # Log that we are saving tilt file
     wmsg = 'Saving shape information in file: {0}'
