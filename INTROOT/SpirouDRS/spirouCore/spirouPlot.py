@@ -966,6 +966,70 @@ def slit_shape_offset_plot(p, loc, bnum=None, order=None):
     end_plotting(p, plot_name)
 
 
+def shape_linear_trans_param_plot(p, image, x1, x2, y1, y2):
+    plot_name = 'shape_linear_trans_param_plot'
+    # get image shape
+    dim1, dim2 = image.shape
+    # get calculated parameters
+    diffx = x1 - x2
+    diffy = y1 - y2
+    xrange = [0, dim2]
+    yrange = [-0.05, 0.05]
+    nbins = 50
+    pstep = 100
+    # set up fig
+    fig, frames = setup_figure(p, ncols=2, nrows=2)
+    # set up mean points plot
+    mkwargs = dict(color='w', linestyle='None', marker='.')
+    # ----------------------------------------------------------------------
+    # plot[0,0] x1 vs x1 - x2
+    # ----------------------------------------------------------------------
+    frames[0, 0].hist2d(x1, diffx, bins=nbins, range=[xrange, yrange])
+    frames[0, 0].set(xlabel='x1', ylabel='x1 - x2')
+    # calculate bin mean
+    for pbin in range(0, dim2, pstep):
+        keep = np.abs(x1 - pbin < nbins)
+        nanmed = np.nanmedian(diffx[keep])
+        if np.sum(keep) > 100:
+            frames[0, 0].plot([pbin], nanmed, **mkwargs)
+    # ----------------------------------------------------------------------
+    # plot[0,1] y1 vs x1 - x2
+    # ----------------------------------------------------------------------
+    frames[0, 1].hist2d(y1, diffx, bins=nbins, range=[xrange, yrange])
+    frames[0, 0].set(xlabel='y1', ylabel='x1 - x2')
+    # calculate bin mean
+    for pbin in range(0, dim2, pstep):
+        keep = np.abs(y1 - pbin < nbins)
+        nanmed = np.nanmedian(diffx[keep])
+        if np.sum(keep) > 100:
+            frames[0, 0].plot([pbin], nanmed, **mkwargs)
+    # ----------------------------------------------------------------------
+    # plot[1,0] x1 vs y1 - y2
+    # ----------------------------------------------------------------------
+    frames[1, 0].hist2d(x1, diffy, bins=nbins, range=[xrange, yrange])
+    frames[0, 0].set(xlabel='x1', ylabel='y1 - y2')
+    # calculate bin mean
+    for pbin in range(0, dim2, pstep):
+        keep = np.abs(x1 - pbin < nbins)
+        nanmed = np.nanmedian(diffy[keep])
+        if np.sum(keep) > 100:
+            frames[0, 0].plot([pbin], nanmed, **mkwargs)
+    # ----------------------------------------------------------------------
+    # plot[1,1] y1 vs y1 - y2
+    # ----------------------------------------------------------------------
+    frames[1, 1].hist2d(y1, diffy, bins=nbins, range=[xrange, yrange])
+    frames[0, 0].set(xlabel='y1', ylabel='y1 - y2')
+    # calculate bin mean
+    for pbin in range(0, dim2, pstep):
+        keep = np.abs(y1 - pbin < nbins)
+        nanmed = np.nanmedian(diffy[keep])
+        if np.sum(keep) > 100:
+            frames[0, 0].plot([pbin], nanmed, **mkwargs)
+    # ----------------------------------------------------------------------
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
 # =============================================================================
 # ff plotting function
 # =============================================================================
