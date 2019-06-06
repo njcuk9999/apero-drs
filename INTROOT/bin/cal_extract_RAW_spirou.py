@@ -236,6 +236,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         p, shapemap = spirouImage.ReadShapeMap(p, hdr)
         # debananafy data
         bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
+        # TODO: move spirouEXTOR.clean_hotpix here (before loop)
+        # TODO: change to ea_transform (instead of DeBananafication
         data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
     # if mode 5a or 5b we need to straighten in x and y using the
     #     polynomial fits for location
@@ -252,6 +254,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                        dx=shapemap, pos_a=loc_fibers['A']['ACC'],
                        pos_b=loc_fibers['B']['ACC'],
                        pos_c=loc_fibers['C']['ACC'])
+        # TODO: move spirouEXTOR.clean_hotpix here (before loop)
+        # TODO: change to ea_transform (instead of DeBananafication
         data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
     # in any other mode we do not straighten
     else:
