@@ -961,7 +961,7 @@ def SLIT_TILT_FILE(p):
 
 
 # noinspection PyPep8Naming
-def SLIT_SHAPE_FILE(p):
+def SLIT_XSHAPE_FILE(p):
     """
     Defines the shape file location and filename
 
@@ -975,11 +975,53 @@ def SLIT_SHAPE_FILE(p):
 
     :return tiltfits: string, slit tilt file location and filename
     """
-    func_name = 'SLIT_SHAPE_FILE'
+    func_name = 'SLIT_XSHAPE_FILE'
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILES'][0].replace('.fits', '_shape.fits')
+    shapefn = p['FPFILES'][0].replace('.fits', '_shapex.fits')
+    shapefitsname = calibprefix + shapefn
+    shapefits = os.path.join(reduced_dir, shapefitsname)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return shapefits, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_YSHAPE_FILE(p):
+    """
+    Defines the shape file location and filename
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return tiltfits: string, slit tilt file location and filename
+    """
+    func_name = 'SLIT_YSHAPE_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    calibprefix = CALIB_PREFIX(p)
+    shapefn = p['FPFILES'][0].replace('.fits', '_shapey.fits')
+    shapefitsname = calibprefix + shapefn
+    shapefits = os.path.join(reduced_dir, shapefitsname)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return shapefits, tag
+
+
+def SLIT_MASTER_FP_FILE(p):
+    func_name = 'SLIT_MASTER_FP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    calibprefix = CALIB_PREFIX(p)
+    shapefn = p['FPFILES'][0].replace('.fits', '_masterfp.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
