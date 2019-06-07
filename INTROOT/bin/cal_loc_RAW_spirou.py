@@ -137,10 +137,12 @@ def main(night_name=None, files=None):
         # get the bkgr measurement
         bargs = [p, data2, hdr]
         # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
-        background = spirouBACK.MeasureBackgroundMap(*bargs)
+        p, background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
         background = np.zeros_like(data2)
-    # apply background correction to data (and set to zero where negative)
+        p['BKGRDFILE'] = 'None'
+        p.set_source('BKGRDFILE', __NAME__ + '.main()')
+    # apply background correction to data
     data2 = data2 - background
 
     # ----------------------------------------------------------------------
@@ -495,6 +497,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBACK'],
+                               value=p['BKGRDFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
                                      values=p['ARG_FILE_NAMES'])
     # add outputs
