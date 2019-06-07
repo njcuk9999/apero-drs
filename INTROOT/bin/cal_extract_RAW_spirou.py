@@ -194,9 +194,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # get the bkgr measurement
         bargs = [p, data1, hdr]
         # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
-        background = spirouBACK.MeasureBackgroundMap(*bargs)
+        p, background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
         background = np.zeros_like(data1)
+        p['BKGRDFILE'] = 'None'
+        p.set_source('BKGRDFILE', __NAME__ + '.main()')
     # apply background correction to data (and set to zero where negative)
     data1 = data1 - background
 
@@ -230,33 +232,35 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ------------------------------------------------------------------
     # if mode 4a or 4b we need to straighten in x only
     if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        # get the shape parameters
+        p, shapem_x = spirouImage.GetShapeX(p, hdr)
+        p, shape_local = spirouImage.GetShapeLocal(p, hdr)
         # log progress
         WLOG(p, '', 'Debananafying (straightening) image')
-        # get the shape map
-        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-        # debananafy data
-        bkwargs = dict(image=np.array(data1), kind='full', dx=shapemap)
-        # TODO: move spirouEXTOR.clean_hotpix here (before loop)
-        # TODO: change to ea_transform (instead of DeBananafication
-        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+        # apply shape transforms
+        targs = dict(lin_transform_vect=shape_local, dxmap=shapem_x)
+        data2 = spirouImage.EATransform(data1, **targs)
+
     # if mode 5a or 5b we need to straighten in x and y using the
     #     polynomial fits for location
     elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+        # get the shape parameters
+        p, shapem_x = spirouImage.GetShapeX(p, hdr)
+        p, shapem_y = spirouImage.GetShapeY(p, hdr)
+        p, shape_local = spirouImage.GetShapeLocal(p, hdr)
+        # get the bad pixel map
+        bkwargs = dict(return_map=True, quiet=True)
+        p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, **bkwargs)
+        # log progress
+        WLOG(p, '', 'Cleaning image')
+        # clean the image
+        data1 = spirouEXTOR.CleanHotpix(data1, badpix)
         # log progress
         WLOG(p, '', 'Debananafying (straightening) image')
-        # get the shape map
-        p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-        # get the bad pixel map
-        p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, return_map=True,
-                                                 quiet=True)
-        # debananafy data
-        bkwargs = dict(image=np.array(data1), kind='full', badpix=badpix,
-                       dx=shapemap, pos_a=loc_fibers['A']['ACC'],
-                       pos_b=loc_fibers['B']['ACC'],
-                       pos_c=loc_fibers['C']['ACC'])
-        # TODO: move spirouEXTOR.clean_hotpix here (before loop)
-        # TODO: change to ea_transform (instead of DeBananafication
-        data2 = spirouEXTOR.DeBananafication(p, **bkwargs)
+        # apply shape transforms
+        targs = dict(lin_transform_vect=shape_local, dxmap=shapem_x,
+                     dymap=shapem_y)
+        data2 = spirouImage.EATransform(data1, **targs)
     # in any other mode we do not straighten
     else:
         data2 = np.array(data1)
@@ -528,6 +532,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                    value=p['BADPFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'],
                                    value=p['LOCOFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBACK'],
+                                   value=p['BKGRDFILE'])
         if p['IC_EXTRACT_TYPE'] not in EXTRACT_SHAPE_TYPES:
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTILT'],
                                        value=p['TILTFILE'])
@@ -536,8 +542,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFLAT'],
                                    value=p['FLATFILE'])
         if p['IC_EXTRACT_TYPE'] in EXTRACT_SHAPE_TYPES:
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPEX'],
+                                       value=p['SHAPEXFILE'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPEY'],
+                                       value=p['SHAPEYFILE'])
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
-                                       value=p['SHAPFILE'])
+                                       value=p['SHAPEFILE'])
+
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
         hdict = spirouImage.AddKey(p, hdict, p['KW_WAVESOURCE'],
