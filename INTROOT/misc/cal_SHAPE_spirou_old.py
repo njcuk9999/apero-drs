@@ -135,12 +135,12 @@ def main(night_name=None, files=None):
         # get the bkgr measurement
         bargs = [p, data2, hdr, badpixmap]
         # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
-        background = spirouBACK.MeasureBackgroundMap(*bargs)
+        p, background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
         background = np.zeros_like(data2)
-    # apply background correction to data (and set to zero where negative)
-    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    # data2 = np.where(data2 > 0, data2 - background, 0)
+        p['BKGRDFILE'] = 'None'
+        p.set_source('BKGRDFILE', __NAME__ + '.main()')
+    # apply background correction to data
     data2 = data2 - background
 
     # save data to loc
