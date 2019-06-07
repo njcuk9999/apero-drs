@@ -18,8 +18,8 @@ Up-to-date with cal_SLIT_spirou AT-4 V47
 from __future__ import division
 import numpy as np
 import os
+import warnings
 
-from SpirouDRS import spirouBACK
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -27,6 +27,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
+from SpirouDRS import spirouEXTOR
 
 
 # =============================================================================
@@ -153,6 +154,86 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # get FP_FP DPRTYPE
     p = spirouImage.ReadParam(p, fphdr, 'KW_DPRTYPE', 'DPRTYPE', dtype=str)
 
+
+    # ----------------------------------------------------------------------
+    # Correction of reference FP
+    # ----------------------------------------------------------------------
+    # set the number of frames
+    p['NBFRAMES'] = 1
+    p.set_source('NBFRAMES', __NAME__ + '.main()')
+    # Correction of DARK
+    p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
+    # Resize hc data
+    # rotate the image and convert from ADU/s to e-
+    fpdata = spirouImage.ConvertToE(spirouImage.FlipImage(p, fpdatac), p=p)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    fpdata1 = spirouImage.ResizeImage(p, fpdata, **bkwargs)
+    # log change in data size
+    WLOG(p, '',
+         ('FPref Image format changed to {0}x{1}').format(*fpdata1.shape))
+    # Correct for the BADPIX mask (set all bad pixels to zero)
+    bargs = [p, fpdata1, hchdr]
+    p, fpdata1 = spirouImage.CorrectForBadPix(*bargs)
+    p, badpixmask = spirouImage.CorrectForBadPix(*bargs, return_map=True)
+    # log progress
+    WLOG(p, '', 'Cleaning FPref hot pixels')
+    # correct hot pixels
+    fpdata1 = spirouEXTOR.CleanHotpix(fpdata1, badpixmask)
+    # add to loc
+    loc['FPDATA1'] = fpdata1
+    loc.set_source('FPDATA1', __NAME__ + '.main()')
+    # Log the number of dead pixels
+    # get the number of bad pixels
+    with warnings.catch_warnings(record=True) as _:
+        n_bad_pix = np.nansum(fpdata1 <= 0)
+        n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata1.shape)
+    # Log number
+    wmsg = 'Nb FPref dead pixels = {0} / {1:.2f} %'
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+
+    # ----------------------------------------------------------------------
+    # Correction of HC
+    # ----------------------------------------------------------------------
+    # set the number of frames
+    p['NBFRAMES'] = 1
+    p.set_source('NBFRAMES', __NAME__ + '.main()')
+    # Correction of DARK
+    p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
+    # Resize hc data
+    # rotate the image and convert from ADU/s to e-
+    hcdata = spirouImage.ConvertToE(spirouImage.FlipImage(p, hcdatac), p=p)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    hcdata1 = spirouImage.ResizeImage(p, hcdata, **bkwargs)
+    # log change in data size
+    WLOG(p, '',
+         ('HC Image format changed to {0}x{1}').format(*hcdata1.shape))
+    # Correct for the BADPIX mask (set all bad pixels to zero)
+    bargs = [p, hcdata1, hchdr]
+    p, hcdata1 = spirouImage.CorrectForBadPix(*bargs)
+    p, badpixmask = spirouImage.CorrectForBadPix(*bargs, return_map=True)
+    # log progress
+    WLOG(p, '', 'Cleaning HC hot pixels')
+    # correct hot pixels
+    fpdata1 = spirouEXTOR.CleanHotpix(hcdata1, badpixmask)
+    # add to loc
+    loc['HCDATA1'] = hcdata1
+    loc.set_source('HCDATA1', __NAME__ + '.main()')
+    # Log the number of dead pixels
+    # get the number of bad pixels
+    with warnings.catch_warnings(record=True) as _:
+        n_bad_pix = np.nansum(hcdata1 <= 0)
+        n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata1.shape)
+    # Log number
+    wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+
+
     # -------------------------------------------------------------------------
     # get all FP_FP files
     # -------------------------------------------------------------------------
@@ -160,7 +241,6 @@ def main(night_name=None, hcfile=None, fpfile=None):
                           allowedtypes=p['ALLOWED_FP_TYPES'])
     # convert filenames to a numpy array
     fpfilenames = np.array(fpfilenames)
-    # -------------------------------------------------------------------------
     # julian date to know which file we need to
     # process together
     fp_time = np.zeros(len(fpfilenames))
@@ -169,8 +249,15 @@ def main(night_name=None, hcfile=None, fpfile=None):
     WLOG(p, '', 'Reading all fp file headers')
     # looping through the file headers
     for it in range(len(fpfilenames)):
+        # log progress
+        wmsg = '\tReading file {0} / {1}'
+        WLOG(p, 'info', wmsg.format(it + 1, len(fpfilenames)))
+        # get fp filename
+        fpfilename = fpfilenames[it]
         # get night name
         night_name = os.path.dirname(fpfilenames[it]).split(p['TMP_DIR'])[-1]
+        # read data
+        data_it, hdr_it, _, _ = spirouImage.ReadImage(p, fpfilename)
         # get header
         hdr = spirouImage.ReadHeader(p, filepath=fpfilenames[it])
         # add MJDATE to dark times
@@ -193,86 +280,19 @@ def main(night_name=None, hcfile=None, fpfile=None):
     matched_id = spirouImage.GroupFilesByTime(p, fp_time, time_thres)
 
     # -------------------------------------------------------------------------
-    # construct the master fp file
+    # construct the master fp file (+ correct for dark/badpix)
     # -------------------------------------------------------------------------
-    cargs = [fpdata, fpfilenames, matched_id]
+    cargs = [fpdata1, fpfilenames, matched_id]
     fpcube, transforms = spirouImage.ConstructMasterFP(p, *cargs)
     # log process
     wmsg1 = 'Master FP construction complete.'
     wmsg2 = '\tAdding {0} group images to form FP master image'
     WLOG(p, 'info', [wmsg1, wmsg2.format(len(fpcube))])
     # sum the cube to make fp data
-    fpdata = np.sum(fpcube, axis=0)
-    # set the number of frames
-    # TODO: Question - how many frames? len(fpfilenames) or len(fpdata)
-    p['NBFRAMES'] = len(fpcube)
-    p.set_source('NBFRAMES', __NAME__ + '.main()')
-
-    # ----------------------------------------------------------------------
-    # Correction of DARK
-    # ----------------------------------------------------------------------
-    p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
-    p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
-
-    # ----------------------------------------------------------------------
-    # Resize hc data
-    # ----------------------------------------------------------------------
-    # rotate the image and convert from ADU/s to e-
-    hcdata = spirouImage.ConvertToE(spirouImage.FlipImage(p, hcdatac), p=p)
-    # convert NaN to zeros
-    hcdata0 = np.where(~np.isfinite(hcdata), np.zeros_like(hcdata), hcdata)
-    # resize image
-    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
-                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
-                   getshape=False)
-    hcdata1 = spirouImage.ResizeImage(p, hcdata0, **bkwargs)
-    # log change in data size
-    WLOG(p, '', ('HC Image format changed to {0}x{1}').format(*hcdata1.shape))
-
-    # ----------------------------------------------------------------------
-    # Resize fp data
-    # ----------------------------------------------------------------------
-    # rotate the image and convert from ADU/s to e-
-    fpdata = spirouImage.ConvertToE(spirouImage.FlipImage(p, fpdatac), p=p)
-    # convert NaN to zeros
-    fpdata0 = np.where(~np.isfinite(fpdata), np.zeros_like(fpdata), fpdata)
-    # resize image
-    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
-                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
-                   getshape=False)
-    fpdata1 = spirouImage.ResizeImage(p, fpdata0, **bkwargs)
-    # log change in data size
-    WLOG(p, '', ('FP Image format changed to {0}x{1}').format(*fpdata1.shape))
-
-    # ----------------------------------------------------------------------
-    # Correct for the BADPIX mask (set all bad pixels to zero)
-    # ----------------------------------------------------------------------
-    p, hcdata1 = spirouImage.CorrectForBadPix(p, hcdata1, hchdr)
-    p, fpdata1 = spirouImage.CorrectForBadPix(p, fpdata1, fphdr)
+    fpdata1 = np.sum(fpcube, axis=0)
     # add to loc
-    loc['HCDATA1'] = hcdata1
     loc['FPDATA1'] = fpdata1
-    loc.set_sources(['HCDATA1', 'FPDATA1'], __NAME__ + '.main()')
-
-    # ----------------------------------------------------------------------
-    # Log the number of dead pixels
-    # ----------------------------------------------------------------------
-    # get the number of bad pixels
-    n_bad_pix = np.nansum(hcdata1 <= 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata1.shape)
-    # Log number
-    wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
-    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
-
-    # ----------------------------------------------------------------------
-    # Log the number of dead pixels
-    # ----------------------------------------------------------------------
-    # get the number of bad pixels
-    n_bad_pix = np.nansum(fpdata1 <= 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata1.shape)
-    # Log number
-    wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
-    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    loc.set_source('FPDATA1', __NAME__ + '.main()')
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
