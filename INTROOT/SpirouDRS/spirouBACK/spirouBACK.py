@@ -218,7 +218,7 @@ def measure_background_from_map(p, image, header):
 
     # -------------------------------------------------------------------------
     # get badpixmask
-    bmap, bhdr, badfile = spirouImage.GetBackgroundMap(p, header)
+    p, bmap, bhdr = spirouImage.GetBackgroundMap(p, header)
     # create mask from badpixmask
     bmap = np.array(bmap, dtype=bool)
     # copy image
@@ -300,7 +300,7 @@ def measure_background_from_map(p, image, header):
     _ = spirouImage.WriteImageMulti(p, debug_background, dimages,
                                     hdicts=dheaders)
     # ----------------------------------------------------------------------
-    return background_image_full
+    return p, background_image_full
 
 
 def measure_background_flatfield(p, image, header):
