@@ -393,7 +393,8 @@ def main(night_name=None, hcfile=None, fpfile=None):
                 'GROUPID', 'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
     values = [basenames, nightnames, fp_time, fp_exp, fp_pp_version,
               matched_id, transforms[:, 0], transforms[:, 1],
-              transforms[:, 2], transforms[:, 3], transforms[:, 4]]
+              transforms[:, 2], transforms[:, 3], transforms[:, 4],
+              transforms[:, 5]]
     fptable = spirouImage.MakeTable(p, colnames, values)
 
     # ------------------------------------------------------------------
