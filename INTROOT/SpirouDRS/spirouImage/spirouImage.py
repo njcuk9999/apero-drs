@@ -2800,10 +2800,6 @@ def get_x_shape_map(p, loc):
     nanmask = ~np.isfinite(master_dxmap)
     master_dxmap[nanmask] = 0.0
 
-    # apply very last update of the debananafication
-    hcdata2 = ea_transform(hcdata1, dxmap=master_dxmap)
-    fpdata2 = ea_transform(fpdata1, dxmap=master_dxmap)
-
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
 
@@ -2816,13 +2812,10 @@ def get_x_shape_map(p, loc):
     # add DXMAP to loc
     loc['DXMAP'] = master_dxmap
     # add new hcdata/fpdata and order overlap for sanity checks
-    loc['HCDATA2'] = hcdata2
-    loc['FPDATA2'] = fpdata2
     loc['ORDER_OVERLAP'] = order_overlap
     # set source
     keys = ['SLOPE_DEG', 'SLOPE', 'S_KEEP', 'XSECTION', 'CCOR', 'DDX',
-            'DX', 'DYPIX', 'C_KEEP', 'DXMAP', 'HCDATA2', 'FPDATA2',
-            'ORDER_OVERLAP']
+            'DX', 'DYPIX', 'C_KEEP', 'DXMAP', 'ORDER_OVERLAP']
     loc.set_sources(keys, func_name)
     # return loc
     return loc
