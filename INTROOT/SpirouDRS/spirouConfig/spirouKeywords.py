@@ -78,12 +78,15 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_CCF_RVNOISE',
             'KW_CCF_TELL',
             'KW_CDBBAD',
+            'KW_CDBBACK',
             'KW_CDBBLAZE',
             'KW_CDBDARK',
             'KW_CDBFLAT',
             'KW_CDBLOCO',
             'KW_CDBORDP',
             'KW_CDBSHAPE',
+            'KW_CDBSHAPEX',
+            'KW_CDBSHAPEY',
             'KW_CDBTILT',
             'KW_CDBWAVE',
             'KW_CDELT1',
@@ -789,10 +792,13 @@ KW_INFILE3 = ['INF3{0:03d}', '', 'Input file used to create output (3rd)']
 # calibration inputs
 KW_CDBDARK = ['CDBDARK', '', 'The calibration DARK file used']
 KW_CDBBAD = ['CDBBAD', '', 'The calibration BADPIX file used']
+KW_CDBBACK = ['CDBBACK', '', 'The calibration BACKGROUND file used']
 KW_CDBORDP = ['CDBORDP', '', 'The calibration ORDER_PROFILE file used']
 KW_CDBLOCO = ['CDBLOCO', '', 'The calibration LOC file used']
 KW_CDBTILT = ['CDBTILT', '', 'The calibration TILT file used']
-KW_CDBSHAPE = ['CDBSHAPE', '', 'The calibration SHAPE file used']
+KW_CDBSHAPE = ['CDBSHAPE', '', 'The calibration local SHAPE file used']
+KW_CDBSHAPEX = ['CDBSHAPX', '', 'The calibration SHAPE X file used']
+KW_CDBSHAPEY = ['CDBSHAPY', '', 'The calibration SHAPE Y file used']
 KW_CDBFLAT = ['CDBFLAT', '', 'The calibration FLAT file used']
 KW_CDBBLAZE = ['CDBBLAZE', '', 'The calibration BLAZE file used']
 KW_CDBWAVE = ['CDBWAVE', '', 'The calibration WAVE file used']
