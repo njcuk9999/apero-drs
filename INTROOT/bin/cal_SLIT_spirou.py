@@ -133,13 +133,13 @@ def main(night_name=None, files=None):
         # get the bkgr measurement
         bargs = [p, data2, hdr]
         # background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(*bargs)
-        background = spirouBACK.MeasureBackgroundMap(*bargs)
+        p, background = spirouBACK.MeasureBackgroundMap(*bargs)
     else:
         background = np.zeros_like(data2)
+        p['BKGRDFILE'] = 'None'
+        p.set_source('BKGRDFILE', __NAME__ + '.main()')
 
-    # correct data2 with background (where positive)
-    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    # data2 = np.where(data2 > 0, data2 - background, 0)
+    # correct data2 with background
     data2 = data2 - background
 
     # ----------------------------------------------------------------------
@@ -294,6 +294,8 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'],
                                value=p['BADPFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBLOCO'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBACK'],
+                               value=p['BKGRDFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
                                      values=p['ARG_FILE_NAMES'])
     # add qc parameters
