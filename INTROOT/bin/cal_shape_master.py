@@ -347,6 +347,15 @@ def main(night_name=None, hcfile=None, fpfile=None):
     loc = spirouImage.GetXShapeMap(p, loc)
     loc = spirouImage.GetYShapeMap(p, loc, fphdr)
 
+    # log progress
+    WLOG(p, '', 'Shape finding complete. Applying transforms.')
+    # apply very last update of the debananafication
+    tkwargs = dict(dxmap=loc['DXMAP']) #, dymap=loc['DYMAP'])
+    tkwargs= dict(dymap=loc['DYMAP'])
+    loc['HCDATA2'] = spirouImage.EATransform(loc['HCDATA1'], **tkwargs)
+    loc['FPDATA2'] = spirouImage.EATransform(loc['FPDATA1'], **tkwargs)
+    loc.set_sources(['HCDATA2', 'FPDATA2'], __NAME__ + '.main()')
+
     # ------------------------------------------------------------------
     # Plotting
     # ------------------------------------------------------------------
@@ -422,7 +431,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
-                                     dim1name='fpfile', values=p['FPFILES'])
+                                     dim1name='fpfile', values=p['FPFILE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
@@ -455,7 +464,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
-                                     dim1name='fpfile', values=p['FPFILES'])
+                                     dim1name='fpfile', values=p['FPFILE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
@@ -488,7 +497,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
-                                     dim1name='fpfile', values=p['FPFILES'])
+                                     dim1name='fpfile', values=p['FPFILE'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
@@ -510,13 +519,13 @@ def main(night_name=None, hcfile=None, fpfile=None):
         overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
-        p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA'], hdict)
+        p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA1'], hdict)
         # write output fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, output_fp_file, loc['FPDATA2'], hdict)
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
-        p = spirouImage.WriteImage(p, input_hc_file, loc['HCDATA'], hdict)
+        p = spirouImage.WriteImage(p, input_hc_file, loc['HCDATA1'], hdict)
         # write output fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         p = spirouImage.WriteImage(p, output_hc_file, loc['HCDATA2'], hdict)

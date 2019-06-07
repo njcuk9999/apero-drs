@@ -979,7 +979,7 @@ def SLIT_XSHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILES'][0].replace('.fits', '_shapex.fits')
+    shapefn = p['FPFILE'].replace('.fits', '_shapex.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1007,7 +1007,7 @@ def SLIT_YSHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILES'][0].replace('.fits', '_shapey.fits')
+    shapefn = p['FPFILE'].replace('.fits', '_shapex.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1021,7 +1021,7 @@ def SLIT_MASTER_FP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILES'][0].replace('.fits', '_masterfp.fits')
+    shapefn = p['FPFILE'].replace('.fits', '_shapex.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1036,7 +1036,7 @@ def SLIT_SHAPE_IN_FP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['FPFILES'][0]
+    oldfilename = p['FPFILE']
     # construct prefix
     prefix = 'SHAPE-DEBUG-StartingFp_'
     # construct new filename and full path
@@ -1054,7 +1054,7 @@ def SLIT_SHAPE_OUT_FP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['FPFILES'][0]
+    oldfilename = p['FPFILE']
     # construct prefix
     prefix = 'SHAPE-DEBUG-CorrectedFp_'
     # construct new filename and full path
@@ -1108,7 +1108,7 @@ def SLIT_SHAPE_OVERLAP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['FPFILES'][0]
+    oldfilename = p['FPFILE']
     # construct prefix
     prefix = 'SHAPE-DEBUG-Order_Overlap_'
     # construct new filename and full path
