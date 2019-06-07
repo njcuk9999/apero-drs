@@ -519,6 +519,9 @@ SHAPE_MASTER_FP_INI_BOXSIZE = 11
 #  Define the small search box size (in pixels) around the fp peaks
 SHAPE_MASTER_FP_SMALL_BOXSIZE = 2
 
+#  Define the largest standard deviation allowed for the shift in
+#     x or y when doing the linear transform
+SHAPE_QC_LINEAR_TRANS_RES_THRES = 0.1
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
