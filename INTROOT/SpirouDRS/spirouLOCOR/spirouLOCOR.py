@@ -857,14 +857,15 @@ def get_fiber_data(p, hdr):
         if p['IC_EXTRACT_TYPE'] in ['4a', '4b'] and (orderp_s is not None):
             order_profile = np.array(orderp_s)
         elif p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+            # get the shape parameters
+            p, shapem_x = spirouImage.GetShapeX(p, hdr)
+            p, shape_local = spirouImage.GetShapeLocal(p, hdr)
             # log progress
             wmsg = 'Debananafying (straightening) order profile {0}'
             WLOG(p, '', wmsg.format(fiber))
-            # get the shape map
-            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-            # debananfy order profile
-            bkwargs = dict(image=order_profile, dx=shapemap, kind='orderp')
-            order_profile = spirouEXTOR.DeBananafication(p, **bkwargs)
+            # apply shape transforms
+            targs = dict(lin_transform_vect=shape_local, dxmap=shapem_x)
+            order_profile = spirouImage.EATransform(order_profile, **targs)
             # save to disk
             np.save(orderp_f, order_profile)
         # if mode 5a or 5b we need to straighten in x and y using the
@@ -872,17 +873,24 @@ def get_fiber_data(p, hdr):
         elif p['IC_EXTRACT_TYPE'] in ['5a', '5b'] and (orderp_s is not None):
             order_profile = np.array(orderp_s)
         elif p['IC_EXTRACT_TYPE'] in ['5a', '5b']:
+            # get the shape parameters
+            p, shapem_x = spirouImage.GetShapeX(p, hdr)
+            p, shapem_y = spirouImage.GetShapeY(p, hdr)
+            p, shape_local = spirouImage.GetShapeLocal(p, hdr)
+            # bad pix mask params
+            bps = dict(header=hdr, return_map=True, quiet=True)
+            # get the bad pixel map
+            p, badpix = spirouImage.CorrectForBadPix(p, order_profile, **bps)
+            WLOG(p, '', 'Cleaning image')
+            # clean the image
+            order_profile = spirouEXTOR.CleanHotpix(order_profile, badpix)
             # log progress
             wmsg = 'Debananafying (straightening) order profile {0}'
             WLOG(p, '', wmsg.format(fiber))
-            # get the shape map
-            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
-            # debananfy order profile
-            bkwargs = dict(image=order_profile, dx=shapemap, kind='orderp',
-                           pos_a=loc_fibers['A']['ACC'],
-                           pos_b=loc_fibers['B']['ACC'],
-                           pos_c=loc_fibers['C']['ACC'])
-            order_profile = spirouEXTOR.DeBananafication(p, **bkwargs)
+            # apply shape transforms
+            targs = dict(lin_transform_vect=shape_local, dxmap=shapem_x,
+                         dymap=shapem_y)
+            order_profile = spirouImage.EATransform(order_profile, **targs)
             # save to disk
             np.save(orderp_f, order_profile)
         # ------------------------------------------------------------------
