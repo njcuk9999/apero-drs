@@ -81,6 +81,8 @@ CorrectForBadPix = spirouImage.correct_for_badpix
 
 GetBackgroundMap = spirouImage.get_background_map
 
+EATransform = spirouImage.ea_transform
+
 E2DStoS1D = spirouImage.e2dstos1d
 
 EarthVelocityCorrection = spirouBERV.earth_velocity_correction
@@ -116,6 +118,12 @@ GetKey = spirouFITS.keylookup
 GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
+
+GetShapeX = spirouImage.load_shape_x
+
+GetShapeY = spirouImage.load_shape_y
+
+GetShapeLocal = spirouImage.load_shape_local
 
 GetXShapeMap = spirouImage.get_x_shape_map
 
