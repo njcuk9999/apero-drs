@@ -556,17 +556,20 @@ def get_dll_from_coefficients(params, nx, nbo):
 def IUVSpline(x, y, **kwargs):
     # check whether weights are set
     w = kwargs.get('w', None)
-    # if we don't have weights set them all to 1
-    if w is None:
-        w = np.ones_like(y)
+    # copy x and y
+    x, y = np.array(x), np.array(y)
     # find all NaN values
     nanmask = ~np.isfinite(y)
-    # set weights of NaNs to 0
-    w[nanmask] = 0
-    # set values of y to 0
-    y[nanmask] = 0
-    # to the interpolated univariate spline
-    return InterpolatedUnivariateSpline(x, y, w=w, **kwargs)
+
+    if np.sum(nanmask) == len(y):
+        y = np.zeros_like(x)
+    else:
+        # replace all NaN's with linear interpolation
+        badspline = InterpolatedUnivariateSpline(x[~nanmask], y[~nanmask],
+                                                 k=1, ext=1)
+        y[nanmask] = badspline(x[nanmask])
+    # return spline
+    return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
 def nanpad(oimage):
