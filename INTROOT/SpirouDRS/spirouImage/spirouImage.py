@@ -1380,41 +1380,13 @@ def get_background_map(p, header=None, quiet=False):
     :return: badpixmask: numpy array (2D), the bad pixel mask
     """
     func_name = __NAME__ + '.get_background_map()'
-    # get calibDB
-    if 'calibDB' not in p:
-        # get acquisition time
-        acqtime = spirouDB.GetAcqTime(p, header)
-        # get calibDB
-        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
-    else:
-        try:
-            cdb = p['CALIBDB']
-            acqtime = p['MAX_TIME_UNIX']
-        except spirouConfig.ConfigError as e:
-            emsg = '    function = {0}'.format(func_name)
-            WLOG(p, 'error', [e.message, emsg])
-            cdb, acqtime = None, None
-
-    # try to read 'BADPIX' from cdb
-    if 'BKGRDMAP' in cdb:
-        bmapfile = os.path.join(p['DRS_CALIB_DB'], cdb['BKGRDMAP'][1])
-        if not quiet:
-            WLOG(p, '', 'Doing Background Correction using ' + bmapfile)
-        background_map, bhdr, nx, ny = spirouFITS.read_raw_data(p, bmapfile)
-        return background_map, bhdr, bmapfile
-    else:
-        # get master config file name
-        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
-        # deal with extra constrain on file from "closer/older"
-        comptype = p.get('CALIB_DB_MATCH', None)
-        if comptype == 'older':
-            extstr = '(with unit time <={1})'
-        else:
-            extstr = ''
-        # log error
-        emsg1 = 'No valid BKGRDMAP in calibDB {0} ' + extstr
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
+    key = 'BKGRDMAP'
+    outfile = 'BKGRDFILE'
+    if not quiet:
+        WLOG(p, '', 'Doing Background Correction using ' + p[outfile])
+    # load calibration file
+    p, ofile, ohdr = load_calib_file(p, header, key, outfile, func_name)
+    return p, ofile, ohdr
 
 
 def correct_for_badpix(p, image, header, return_map=False, quiet=True):
@@ -1446,14 +1418,15 @@ def correct_for_badpix(p, image, header, return_map=False, quiet=True):
     badpixmask, bhdr, badfile = get_badpixel_map(p, header, quiet=quiet)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
-
-    # get badpixel file
+    # get bad pixel file
     p['BADPFILE'] = os.path.basename(badfile)
     p.set_source('BADPFILE', func_name)
-
+    # return
     if return_map:
         return p, mask
     else:
+        # log doing bad pixel correction
+        WLOG(p, '', 'Doing Bad Pixel Correction {0}'.format(badfile))
         # correct image (set bad pixels to zero)
         corrected_image = np.array(image)
         corrected_image[mask] = np.nan
@@ -1794,6 +1767,71 @@ def get_tilt(pp, lloc, image):
         lloc['TILT'][int(order_num / 2)] = angle
     # return the lloc
     return lloc
+
+
+def load_shape_x(p, hdr):
+    func_name = __NAME__ + '.load_shape_x()'
+    key = 'SHAPEX'
+    outfile = 'SHAPEXFILE'
+    p, ofile, ohdr = load_calib_file(p, hdr, key, outfile, func_name)
+    return p, ofile
+
+
+def load_shape_y(p, hdr):
+    func_name = __NAME__ + '.load_shape_y()'
+    key = 'SHAPEY'
+    outfile = 'SHAPEYFILE'
+    p, ofile, ohdr = load_calib_file(p, hdr, key, outfile, func_name)
+    return p, ofile
+
+
+def load_shape_local(p, hdr):
+    func_name = __NAME__ + '.load_shape_local()'
+    key = 'SHAPE'
+    outfile = 'SHAPEFILE'
+    p, ofile, ohdr = load_calib_file(p, hdr, key, outfile, func_name)
+    return p, ofile
+
+
+def load_calib_file(p, header, key, outfile, func_name=None):
+    if func_name is None:
+        func_name = __NAME__ + '.load_calib_file()'
+    # get calibDB
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouDB.GetAcqTime(p, header)
+        # get calibDB
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
+    else:
+        try:
+            cdb = p['CALIBDB']
+            acqtime = p['MAX_TIME_UNIX']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [e.message, emsg])
+            cdb, acqtime = None, None
+    # try to read 'BADPIX' from cdb
+    if key in cdb:
+        calibfile = os.path.join(p['DRS_CALIB_DB'], cdb[key][1])
+        calibdata, calibhdr, _, _ = spirouFITS.read_raw_data(p, calibfile)
+        p[outfile] = calibfile
+        p.set_source(outfile, func_name)
+        # return parameter dictionary and shape file
+        return p, calibdata, calibhdr
+    else:
+        # get master config file name
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+        # deal with extra constrain on file from "closer/older"
+        comptype = p.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = '(with unit time <={1})'
+        else:
+            extstr = ''
+        # log error
+        emsg1 = 'No valid {2} in calibDB {0} ' + extstr
+        emsg2 = '    function = {0}'.format(func_name)
+        eargs = [masterfile, acqtime, key]
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
 
 
 def fit_tilt(pp, lloc):
@@ -2283,14 +2321,15 @@ def get_x_shape_map(p, loc):
     fpdata1 = np.array(loc['FPDATA1'])
     nbo = loc['NUMBER_ORDERS'] // 2
     acc = loc['ACC']
+
     # get the dimensions
-    dim0, dim1 = loc['HCDATA1'].shape
+    dim1, dim2 = loc['HCDATA1'].shape
     master_dxmap = np.zeros_like(hcdata1)
     # storage for mapping orders
     map_orders = np.zeros_like(hcdata1) - 1
     order_overlap = np.zeros_like(hcdata1)
-    slope_all_ord = np.zeros((nbo, dim1))
-    corr_dx_from_fp = np.zeros((nbo, dim1))
+    slope_all_ord = np.zeros((nbo, dim2))
+    corr_dx_from_fp = np.zeros((nbo, dim2))
 
     # define storage for plotting
     slope_deg_arr, slope_arr, skeep_arr = [], [], []
@@ -2299,7 +2338,7 @@ def get_x_shape_map(p, loc):
     dypix_arr, cckeep_arr = [], []
 
     # define storage in loc
-    loc['CORR_DX_FROM_FP'] = np.zeros((nbo, dim1))
+    loc['CORR_DX_FROM_FP'] = np.zeros((nbo, dim2))
     loc['XPEAK2'] = [[]] * nbo
     loc['PEAKVAL2'] = [[]] * nbo
     loc['EWVAL2'] = [[]] * nbo
@@ -2313,16 +2352,14 @@ def get_x_shape_map(p, loc):
     # -------------------------------------------------------------------------
     # create the x pixel vector (used with polynomials to find
     #    order center)
-    xpix = np.array(range(dim1))
+    xpix = np.array(range(dim2))
     # y order center positions (every other one)
-    ypix = np.zeros((nbo, dim1))
+    ypix = np.zeros((nbo, dim2))
     # loop around order number
     for order_num in range(nbo):
         # x pixel vecctor that is used with polynomials to
         # find the order center y order center
         ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
-
-    # TODO: move spirouEXTOR.clean_hotpix here (before loop)
 
     # -------------------------------------------------------------------------
     # iterating the correction, from coarser to finer
@@ -2365,15 +2402,15 @@ def get_x_shape_map(p, loc):
             WLOG(p, '', wmsg.format(*wargs))
             # -----------------------------------------------------------------
             # defining a ribbon that will contain the straightened order
-            ribbon_hc = np.zeros([width, dim1])
-            ribbon_fp = np.zeros([width, dim1])
+            ribbon_hc = np.zeros([width, dim2])
+            ribbon_fp = np.zeros([width, dim2])
             # get the widths
             widths = np.arange(width) - width / 2.0
             # get all bottoms and tops
-            bottoms = ypix[order_num] - width/2 - 2
-            tops = ypix[order_num] + width/2 + 2
+            bottoms = ypix[order_num] - width/ 2 - 2
+            tops = ypix[order_num] + width/ 2 + 2
             # splitting the original image onto the ribbon
-            for ix in range(dim1):
+            for ix in range(dim2):
                 # define bottom and top that encompasses all 3 fibers
                 bottom = int(bottoms[ix])
                 top = int(tops[ix])
@@ -2407,7 +2444,7 @@ def get_x_shape_map(p, loc):
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
-            xsection = dim1 * (np.arange(nsections) + 0.5) / nsections
+            xsection = dim2 * (np.arange(nsections) + 0.5) / nsections
             dxsection = np.repeat([np.nan], len(xsection))
             keep = np.zeros(len(dxsection), dtype=bool)
             ribbon_fp2 = np.array(ribbon_fp)
@@ -2431,8 +2468,8 @@ def get_x_shape_map(p, loc):
                 for nsection in range(nsections):
                     # sum of integral of derivatives == RV content.
                     # This should be maximal when the angle is right
-                    start = nsection * dim1//nsections
-                    end = (nsection + 1) * dim1//nsections
+                    start = nsection * dim2//nsections
+                    end = (nsection + 1) * dim2//nsections
                     grad = np.gradient(profile[start:end])
                     rvcontent[islope, nsection] = np.nansum(grad ** 2)
             # -------------------------------------------------------------
@@ -2465,8 +2502,6 @@ def get_x_shape_map(p, loc):
             res_residual = residual - np.nanmedian(residual)
             residual = residual / np.nanmedian(np.abs(res_residual))
             # work out the maximum sigma and update keep vector
-            # TODO: Question: sigmax is off by floating point
-            # TODO: Question: dxsection is off by floating point
             sigmax = np.nanmax(np.abs(residual[keep]))
             with warnings.catch_warnings(record=True) as _:
                 keep &= np.abs(residual) < sigclipmax
@@ -2490,13 +2525,13 @@ def get_x_shape_map(p, loc):
             #    along order
             coeffs = nanpolyfit(xsection[keep], dxsection[keep], 2)
             # log slope at center
-            s_xpix = dim1//2
+            s_xpix = dim2//2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
             wmsg = '\tSlope at pixel {0}: {1:.5f} deg'
             wargs = [s_xpix, s_ypix]
             WLOG(p, '', wmsg.format(*wargs))
             # get slope for full range
-            slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim1))
+            slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim2))
             # -------------------------------------------------------------
             # append to storage (for plotting)
             xsec_arr_i.append(np.array(xsection))
@@ -2691,7 +2726,7 @@ def get_x_shape_map(p, loc):
             fracs = ypix[order_num] - np.fix(ypix[order_num])
             widths = np.arange(width)
 
-            for ix in range(dim1):
+            for ix in range(dim2):
                 # get slope
                 slope = slope_all_ord[order_num, ix]
                 # get dx0 with slope factor added
@@ -2705,6 +2740,23 @@ def get_x_shape_map(p, loc):
                 ddx[ddx == 0] = np.nan
                 # only set positive ypixels
                 pos_y_mask = (ypix2 >= 0) & good_ccor_mask
+                # do not want overlap between orders and a gap of 1 pixel
+                ypix0 = ypix[order_num, ix]
+                # identify the upper bound of order
+                if order_num != (nbo-1):
+                    ypixa = ypix[order_num + 1, ix]
+                    upper_ylimit_overlap = ypix0 + 0.5 * (ypixa - ypix0) - 1
+                else:
+                    upper_ylimit_overlap = dim1 - 1
+                # identify the lower bound of order
+                if order_num !=0:
+                    ypixb = ypix[order_num - 1, ix]
+                    lower_ylimit_overlap = ypix0 - 0.5 * (ypix0 - ypixb) + 1
+                else:
+                    lower_ylimit_overlap = 0
+                # add these constraints to the position mask
+                pos_y_mask &= (ypix2 > lower_ylimit_overlap)
+                pos_y_mask &= (ypix2 < upper_ylimit_overlap)
                 # if we have some values add to master DX map
                 if np.sum(pos_y_mask) != 0:
                     # get positions in y
@@ -2719,7 +2771,7 @@ def get_x_shape_map(p, loc):
                         # update map_orders
                         map_orders[positions, ix] = order_num
 
-                    # get shifts combination od ddx and dx0 correction
+                    # get shifts combination of ddx and dx0 correction
                     ddx_f = ddx + dx0
                     shifts = ddx_f[pos_y_mask] - corr_dx_from_fp[order_num][ix]
                     # apply shifts to master dx map at correct positions
@@ -2749,8 +2801,8 @@ def get_x_shape_map(p, loc):
     master_dxmap[nanmask] = 0.0
 
     # apply very last update of the debananafication
-    hcdata2 = spirouEXTOR.DeBananafication(p, hcdata1, dx=master_dxmap)
-    fpdata2 = spirouEXTOR.DeBananafication(p, fpdata1, dx=master_dxmap)
+    hcdata2 = ea_transform(hcdata1, dxmap=master_dxmap)
+    fpdata2 = ea_transform(fpdata1, dxmap=master_dxmap)
 
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
@@ -2832,9 +2884,9 @@ def get_y_shape_map(p, loc, hdr):
         loc_fibers[fiber] = loc_tmp.copy()
 
     # set pos_a, pos_b, pos_c
-    pos_a = loc_fibers['A']
-    pos_b = loc_fibers['B']
-    pos_c = loc_fibers['C']
+    pos_a = loc_fibers['A']['ACC']
+    pos_b = loc_fibers['B']['ACC']
+    pos_c = loc_fibers['C']['ACC']
 
     # looping through x pixels
     # We take each column and determine where abc fibers fall relative
@@ -2846,8 +2898,12 @@ def get_y_shape_map(p, loc, hdr):
     # fit a Nth order polynomial to the dy versus y relation along the
     # column, and apply a spline to straighten the order.
     y0 = np.zeros((nbo * 3, dim2))
+
+    # log progress
+    WLOG(p, '', 'Creating DY map from localisation')
+
     # set a master dy map
-    master_dymap = np.zeros_like(loc['FPDATA'])
+    master_dymap = np.zeros_like(loc['FPDATA1'])
     # loop around orders and get polynomial values for fibers A, B and C
     for order_num in range(nbo):
         iord = order_num * 3
@@ -3385,6 +3441,9 @@ def construct_master_fp(p, refimage, filenames, matched_id):
 
     # get values from p
     percent_thres = p['FP_MASTER_PERCENT_THRES']
+
+    qc_res = p['SHAPE_QC_LINEAR_TRANS_RES_THRES']
+
     # ----------------------------------------------------------------------
     # Read individual files and sum groups
     # ----------------------------------------------------------------------
@@ -3408,14 +3467,50 @@ def construct_master_fp(p, refimage, filenames, matched_id):
             for f_it, filename in enumerate(fp_ids):
                 # log reading of data
                 basename = os.path.basename(filename)
-                wmsg = '\tReading file {0} ({1} / {2})'
-                WLOG(p, '', wmsg.format(basename, f_it + 1, len(fp_ids)))
+                wmsg = 'Reading file {0} ({1} / {2})'
+                WLOG(p, 'info', wmsg.format(basename, f_it + 1, len(fp_ids)))
                 # read data
-                data_it, _, _, _ = spirouFITS.readimage(p, filename, log=False)
+                data_it, hdr_it, _, _ = spirouFITS.readimage(p, filename)
+                # set the number of frames
+                p['NBFRAMES'] = 1
+                p.set_source('NBFRAMES', __NAME__ + '.main()')
+                # Correction of DARK
+                p, datac_it = correct_for_dark(p, data_it, hdr_it)
+                # Resize fp data
+                # rotate the image and convert from ADU/s to e-
+                data_it = flip_image(p, datac_it)
+                data_it = convert_to_e(data_it, p=p)
+                # convert NaN to zeros
+                # TODO: Do we need to set zeros?
+                data0_it = np.where(~np.isfinite(data_it),
+                                   np.zeros_like(data_it), data_it)
+                # resize image
+                bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                               ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                               getshape=False)
+                data1_it = resize(p, data0_it, **bkwargs)
+                # log change in data size
+                wmsg = 'FP Image {0} format changed to {1}x{2}'
+                WLOG(p, '', wmsg.format(f_it + 1, *data1_it.shape))
+                # Correct for the BADPIX mask (set all bad pixels to zero)
+                bargs = [p, data1_it, hdr_it]
+                p, data1_it = correct_for_badpix(*bargs)
+                p, badpixmask = correct_for_badpix(*bargs, return_map=True)
+                # get the number of bad pixels
+                with warnings.catch_warnings(record=True) as _:
+                    n_bad_pix = np.nansum(data1_it <= 0)
+                n_bad_pix_frac = n_bad_pix * 100 / np.product(data1_it.shape)
+                # Log number
+                wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
+                WLOG(p, '', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
                 # normalise to the FP_MASTER_PERCENT_THRES percentile
-                data_it = data_it / np.nanpercentile(data_it, percent_thres)
-                # add to cube
-                cube.append(data_it)
+                data1_it = data1_it / np.nanpercentile(data1_it, percent_thres)
+                # log progress
+                WLOG(p, '', 'Cleaning FP hot pixels')
+                # correct hot pixels
+                data1_it = spirouEXTOR.CleanHotpix(data1_it, badpixmask)
+                #add to cube
+                cube.append(data1_it)
             # log progress
             wmsg = 'Calculating median of {0} images'
             WLOG(p, '', wmsg.format(len(fp_ids)))
@@ -3423,7 +3518,24 @@ def construct_master_fp(p, refimage, filenames, matched_id):
             with warnings.catch_warnings(record=True) as _:
                 groupfp = np.nanmedian(cube, axis=0)
             # shift group to master
-            transforms = get_linear_transform_params(p, refimage, groupfp)
+            gout = get_linear_transform_params(p, refimage, groupfp)
+            transforms, xres, yres = gout
+            # quality control on group
+            if transforms is None:
+                wmsg1 = 'Quality control failed for group {0}'.format(g_it + 1)
+                wmsg2 = '\tImage quality too poor (sigma clip failed)'
+                WLOG(p, 'warning', [wmsg1, wmsg2])
+                # skip adding to group
+                continue
+            if (xres > qc_res) or (yres > qc_res):
+                # log QC failure
+                wmsg1 = 'Quality control failed for group {0}'.format(g_it + 1)
+                wmsg2 = '\tXRES = {0} YRES = {1} (limit = {2})'
+                wargs = [xres, yres, qc_res]
+                WLOG(p, 'warning', [wmsg1, wmsg2.format(*wargs)])
+                # skip adding to group
+                continue
+
             groupfp = ea_transform(groupfp, lin_transform_vect=transforms)
             # append to cube
             fp_cube.append(groupfp)
@@ -3507,12 +3619,6 @@ def twod_peak_fit(xx, yy, zz, size):
 
 
 def get_linear_transform_params(p, image1, image2):
-    # TODO -------------------------------------------
-    # TODO: move to constants
-    # TODO -------------------------------------------
-
-
-    # TODO -------------------------------------------
 
     # get parameters from p
     maxn_percent = p['SHAPE_MASTER_VALIDFP_PERCENTILE']
@@ -3536,7 +3642,7 @@ def get_linear_transform_params(p, image1, image2):
     # copy image2
     image3 = np.array(image2)
     # print out initial conditions of linear transform vector
-    WLOG(p, '', 'Linear transformation start point:')
+    WLOG(p, 'info', 'Linear transformation start point:')
     ltv = np.array(lin_transform_vect)
     wmsg1 = '\tdx={0:.6f} dy={1:.6f}'.format(*ltv)
     wargs2 = [dim2, (ltv[2] - 1) * dim2, ltv[3] * dim2]
@@ -3600,6 +3706,8 @@ def get_linear_transform_params(p, image1, image2):
         x2, y2 = xy_acc_peak(xpeak2, ypeak2, image3)
         # we loop on the linear model converting x1 y1 to x2 y2
         nbad, ampsx, ampsy = 1, np.zeros(3), np.zeros(3)
+
+        n_terms = len(x1)
         while nbad != 0:
             # define vectory
             vvv = np.zeros([3, len(x1)])
@@ -3619,8 +3727,16 @@ def get_linear_transform_params(p, image1, image2):
                 bad = nsig > 1.5
             # remove outliers and start again if there was one
             nbad = np.sum(bad)
+
             x1, x2 = x1[~bad], x2[~bad]
             y1, y2 = y1[~bad], y2[~bad]
+
+            if len(x1) < (0.5 * n_terms):
+                return None, None, None
+
+        xres = np.std((x1 - x2) - xrecon)
+        yres = np.std((y1 - y2) - yrecon)
+
         # we have our linear transform terms!
         dx0, dy0 = ampsx[0], ampsy[0]
         d_transform = [dx0, dy0, ampsx[1], ampsx[2], ampsy[1], ampsy[2]]
@@ -3638,7 +3754,7 @@ def get_linear_transform_params(p, image1, image2):
     if p['DRS_DEBUG'] > 0 and p['DRS_PLOT'] > 0:
         sPlt.shape_linear_trans_param_plot(p, image1, x1, x2, y1, y2)
     # return linear transform vector
-    return lin_transform_vect
+    return lin_transform_vect, xres, yres
 
 
 def max_neighbour_mask(image, percent, thres):
@@ -3655,7 +3771,8 @@ def max_neighbour_mask(image, percent, thres):
         else:
             box[it] = np.roll(np.roll(image, dx, axis=0), dy, axis=1)
     # maximum value of neighbouring pixels
-    max_neighbours = np.nanmax(box, axis=0)
+    with warnings.catch_warnings(record=True) as _:
+        max_neighbours = np.nanmax(box, axis=0)
 
     # find pixels brighter than neighbours and brighter than 80th percentile
     # of image. These are the peaks of FP lines
