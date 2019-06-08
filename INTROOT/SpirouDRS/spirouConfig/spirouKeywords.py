@@ -87,6 +87,8 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_CDBSHAPE',
             'KW_CDBSHAPEX',
             'KW_CDBSHAPEY',
+            'KW_CDBFPMASTER',
+            'KW_CDBTHERMAL',
             'KW_CDBTILT',
             'KW_CDBWAVE',
             'KW_CDELT1',
@@ -219,6 +221,9 @@ USE_KEYS = ['KW_ACQTIME',
             'KW_RDNOISE',
             'KW_REFFILE',
             'KW_REF_RV',
+            'KW_SHAPE_DX', 'KW_SHAPE_DY',
+            'KW_SHAPE_A', 'KW_SHAPE_B',
+            'KW_SHAPE_C', 'KW_SHAPE_D',
             'KW_TDBMAP',
             'KW_TDBOBJ',
             'KW_TDBRECON',
@@ -526,6 +531,23 @@ KW_LOC_RMS_WID = [KW_root_drs_loc[0] + 'RMSWID', 0, 'max rms width']
 # Tilt order keyword prefix
 KW_TILT = [KW_root_drs_loc[0] + 'TILT', 0, 'Tilt order']
 
+
+# -----------------------------------------------------------------------------
+# Define cal_shape variables
+# -----------------------------------------------------------------------------
+# the dx transform parameter
+KW_SHAPE_DX = ['SHAPE_DX', '', 'Transform parameter DX']
+# the dy transform parameter
+KW_SHAPE_DY = ['SHAPE_DY', '', 'Transform parameter DY']
+# the A transform parameter
+KW_SHAPE_A = ['SHAPE_A', '', 'Transform parameter A']
+# the B transform parameter
+KW_SHAPE_B = ['SHAPE_B', '', 'Transform parameter B']
+# the C transform parameter
+KW_SHAPE_C = ['SHAPE_C', '', 'Transform parameter C']
+# the D transform parameter
+KW_SHAPE_D = ['SHAPE_D', '', 'Transform parameter D']
+
 # -----------------------------------------------------------------------------
 # Define cal_FF variables
 # -----------------------------------------------------------------------------
@@ -799,6 +821,8 @@ KW_CDBTILT = ['CDBTILT', '', 'The calibration TILT file used']
 KW_CDBSHAPE = ['CDBSHAPE', '', 'The calibration local SHAPE file used']
 KW_CDBSHAPEX = ['CDBSHAPX', '', 'The calibration SHAPE X file used']
 KW_CDBSHAPEY = ['CDBSHAPY', '', 'The calibration SHAPE Y file used']
+KW_CDBFPMASTER = ['CDBFPMAS', '', 'The calibration SHAPE FP Master file used']
+KW_CDBTHERMAL = ['CDBTHERM', '', 'The calibration thermal file used.']
 KW_CDBFLAT = ['CDBFLAT', '', 'The calibration FLAT file used']
 KW_CDBBLAZE = ['CDBBLAZE', '', 'The calibration BLAZE file used']
 KW_CDBWAVE = ['CDBWAVE', '', 'The calibration WAVE file used']
