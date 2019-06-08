@@ -31,14 +31,11 @@ import cal_exposure_meter
 import cal_wave_mapper
 import cal_extract_RAW_spirou
 import cal_FF_RAW_spirou
-# import cal_HC_E2DS_spirou
 import cal_HC_E2DS_EA_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
-import cal_SHAPE_spirou
-# import cal_WAVE_E2DS_spirou
+import cal_shape_spirou
 import cal_WAVE_E2DS_EA_spirou
-# import cal_WAVE_NEW_E2DS_spirou
 import cal_preprocess_spirou
 import off_listing_RAW_spirou
 import off_listing_REDUC_spirou
@@ -81,7 +78,7 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_HC_E2DS_EA_spirou',
                  'cal_loc_RAW_spirou',
                  'cal_SLIT_spirou',
-                 'cal_SHAPE_spirou',
+                 'cal_shape_spirou',
                  'cal_WAVE_E2DS_spirou',
                  'cal_WAVE_E2DS_EA_spirou',
                  'cal_WAVE_NEW_E2DS_spirou',
@@ -126,7 +123,7 @@ def get_versions():
     vv[cal_HC_E2DS_EA_spirou.__NAME__] = cal_HC_E2DS_EA_spirou.__version__
     vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
     vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
-    vv[cal_SHAPE_spirou.__NAME__] = cal_SHAPE_spirou.__version__
+    vv[cal_shape_spirou.__NAME__] = cal_shape_spirou.__version__
     # vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
     vv[cal_WAVE_E2DS_EA_spirou.__NAME__] = cal_WAVE_E2DS_EA_spirou.__version__
     # vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou
@@ -292,9 +289,9 @@ def unit_test_cal_shape_spirou(p, rname, inputs):
     :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
-    name = 'cal_SHAPE_spirou'
-    arg_names = ['night_name', 'hcfile', 'fpfiles']
-    arg_types = [str, str, list]
+    name = 'cal_shape_spirou'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
 
     # get arguments
     args = get_args(p, name, rname, inputs, arg_names, arg_types)
