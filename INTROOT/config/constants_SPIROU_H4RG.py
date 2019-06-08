@@ -245,6 +245,33 @@ DARK_MASTER_MATCH_TIME = 2
 #   median filter size for dark master                       - [cal_dark_master]
 DARK_MASTER_MED_SIZE = 4
 
+# -----------------------------------------------------------------------------
+#   cal_thermal parameters
+# -----------------------------------------------------------------------------
+# define DPRTYPEs we need to correct thermal background using
+#    telluric absorption (TAPAS)
+THERMAL_CORRECTION_TYPE1 = ['OBJ_FP', 'OBJ_DARK']
+
+# define DPRTYPEs we need to correct thermal background using
+#     method 2
+# TODO: add method 2
+THERMAL_CORRECTION_TYPE2 = ['FP_FP', 'HC_HC']
+
+# maximum tapas transmission to be considered completely opaque for the
+# purpose of background determination in order 49.
+THERMAL_THRES_TAPAS_BGND = 0.010
+
+# width of the median filter used for the background
+THERMAL_BGND_FILTER_WID = 101
+
+# define tapas red limit (in nm)
+THERMAL_TAPAS_RED_LIMIT = 2499.9
+
+# define the order to perform the thermal background scaling on
+THERMAL_ORDER = 48
+
+# define the plotting start order for thermal debug plot
+THERMAL_DEBUG_PLOT_START_ORDER = 40
 
 # -----------------------------------------------------------------------------
 #   cal_loc parameters
