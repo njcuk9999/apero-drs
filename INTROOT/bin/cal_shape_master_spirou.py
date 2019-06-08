@@ -34,7 +34,7 @@ from SpirouDRS import spirouEXTOR
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_shape_master.py'
+__NAME__ = 'cal_shape_master_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -175,7 +175,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     WLOG(p, '',
          ('FPref Image format changed to {0}x{1}').format(*fpdata1.shape))
     # Correct for the BADPIX mask (set all bad pixels to zero)
-    bargs = [p, fpdata1, hchdr]
+    bargs = [p, fpdata1, fphdr]
     p, fpdata1 = spirouImage.CorrectForBadPix(*bargs)
     p, badpixmask = spirouImage.CorrectForBadPix(*bargs, return_map=True)
     # log progress
@@ -232,7 +232,6 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # Log number
     wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
     WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
-
 
     # -------------------------------------------------------------------------
     # get all FP_FP files
@@ -543,13 +542,19 @@ def main(night_name=None, hcfile=None, fpfile=None):
         # copy shape file to the calibDB folder
         spirouDB.PutCalibFile(p, shapexfits)
         # update the master calib DB file with new key
-        spirouDB.UpdateCalibMaster(p, keydb, shapeyfitsname, fphdr)
+        spirouDB.UpdateCalibMaster(p, keydb, shapexfitsname, fphdr)
         # add shape y
         keydb = 'SHAPEY'
         # copy shape file to the calibDB folder
         spirouDB.PutCalibFile(p, shapeyfits)
         # update the master calib DB file with new key
         spirouDB.UpdateCalibMaster(p, keydb, shapeyfitsname, fphdr)
+        # add fp master
+        keydb = 'FPMASTER'
+        # copy shape file to the calibDB folder
+        spirouDB.PutCalibFile(p, fpmasterfits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, fpmasterfitsname, fphdr)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
