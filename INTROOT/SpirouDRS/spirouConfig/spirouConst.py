@@ -960,6 +960,35 @@ def SLIT_TILT_FILE(p):
     return tiltfits, tag
 
 
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_LOCAL_FILE(p):
+    """
+    Defines the shape file location and filename
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return tiltfits: string, slit tilt file location and filename
+    """
+    func_name = 'SLIT_SHAPE_LOCAL_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    calibprefix = CALIB_PREFIX(p)
+    shapefn = p['ARG_FILE_NAMES'][0].replace('.fits', '_shape.fits')
+    shapefitsname = calibprefix + shapefn
+    shapefits = os.path.join(reduced_dir, shapefitsname)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return shapefits, tag
+
+
 # noinspection PyPep8Naming
 def SLIT_XSHAPE_FILE(p):
     """
@@ -1007,7 +1036,7 @@ def SLIT_YSHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILE'].replace('.fits', '_shapex.fits')
+    shapefn = p['FPFILE'].replace('.fits', '_shapey.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1021,7 +1050,7 @@ def SLIT_MASTER_FP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILE'].replace('.fits', '_shapex.fits')
+    shapefn = p['FPFILE'].replace('.fits', '_fpmaster.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
