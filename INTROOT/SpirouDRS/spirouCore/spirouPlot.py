@@ -1030,6 +1030,40 @@ def shape_linear_trans_param_plot(p, image, x1, x2, y1, y2):
     end_plotting(p, plot_name)
 
 
+def thermal_background_debug_plot(p, wave, image, thermal, torder,
+                                  torder_mask, fiber):
+    plot_name = 'thermal_background_debug_plot'
+
+    # get constants from p
+    startorder = p['THERMAL_DEBUG_PLOT_START_ORDER']
+
+    # get data
+    rwave = np.ravel(wave[startorder:])
+    rimage = np.ravel(image[startorder:])
+    rthermal = np.ravel(thermal[startorder:])
+
+    swave = wave[torder, torder_mask]
+    sthermal = thermal[torder][torder_mask]
+
+    # ----------------------------------------------------------------------
+    # set up fig
+    fig, frame = setup_figure(p)
+    # ----------------------------------------------------------------------
+    # plot data
+    frame.plot(rwave, rimage, color='k', label='input spectrum')
+    frame.plot(rwave, rthermal, color='r', label='scaled thermal')
+    frame.plot(swave, sthermal, color='b', marker='o', ls='None',
+               label='background sample region')
+    # set graph properties
+    frame.legend(loc=0)
+    title = 'Thermal scaled background (Fiber {0})'.format(fiber)
+    frame.set(xlabel='Wavelength [nm]', ylabel='Flux', title=title)
+
+    # ----------------------------------------------------------------------
+    # end plotting function properly
+    end_plotting(p, plot_name)
+
+
 # =============================================================================
 # ff plotting function
 # =============================================================================
