@@ -41,9 +41,10 @@ LOC_LOCO_FILE3 = 'LOC_SUP'
 # Defines the slit tilt file tag
 SLIT_TILT_FILE = 'SLIT_TILT'
 
-# Define the shape file tag
+# Define the shape file tags
 SLIT_XSHAPE_FILE = 'SLIT_SHAPE_X'
 SLIT_YSHAPE_FILE = 'SLIT_SHAPE_Y'
+SLIT_SHAPE_LOCAL_FILE = 'SLIT_SHAPE'
 
 # Define the master FP file tag
 SLIT_MASTER_FP_FILE = 'MASTER_FP'
