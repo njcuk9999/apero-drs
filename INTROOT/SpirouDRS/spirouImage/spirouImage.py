@@ -1790,10 +1790,36 @@ def load_shape_local(p, hdr):
     key = 'SHAPE'
     outfile = 'SHAPEFILE'
     p, ofile, ohdr = load_calib_file(p, hdr, key, outfile, func_name)
+    # vector in this case is 1D (dx, dy, A, B, C, D) so return only a
+    #   1D vector (as well as p)
+    return p, ofile[0]
+
+
+def load_master_fp(p, hdr):
+    func_name = __NAME__ + '.load_master_fp()'
+    key = 'FPMASTER'
+    outfile = 'FPMASTERFILE'
+    p, ofile, ohdr = load_calib_file(p, hdr, key, outfile, func_name)
     return p, ofile
 
 
-def load_calib_file(p, header, key, outfile, func_name=None):
+def load_tapas(p, hdr):
+    func_name = __NAME__ + '.load_tapas()'
+    key = 'TELL_MOLE'
+    outfile = 'TAPASFILE'
+    p, ofile, ohdr = load_calib_table(p, hdr, key, outfile, func_name)
+    return p, ofile
+
+
+def load_thermal(p, hdr, fiber):
+    func_name = __NAME__ + '.load_thermal()'
+    key = 'THERMAL_{0}'.format(fiber)
+    outfile = 'THERMALFILE_{0}'.format(fiber)
+    p, ofile, ohdr = load_calib_file(p, hdr, key, outfile, func_name)
+    return p, ofile
+
+
+def load_calib_file(p, header, key, outfile, func_name=None, ext=0):
     if func_name is None:
         func_name = __NAME__ + '.load_calib_file()'
     # get calibDB
@@ -1813,11 +1839,53 @@ def load_calib_file(p, header, key, outfile, func_name=None):
     # try to read 'BADPIX' from cdb
     if key in cdb:
         calibfile = os.path.join(p['DRS_CALIB_DB'], cdb[key][1])
-        calibdata, calibhdr, _, _ = spirouFITS.read_raw_data(p, calibfile)
+        calibdata, calibhdr, _, _ = spirouFITS.read_raw_data(p, calibfile,
+                                                             imageext=ext)
         p[outfile] = calibfile
         p.set_source(outfile, func_name)
         # return parameter dictionary and shape file
         return p, calibdata, calibhdr
+    else:
+        # get master config file name
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+        # deal with extra constrain on file from "closer/older"
+        comptype = p.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = '(with unit time <={1})'
+        else:
+            extstr = ''
+        # log error
+        emsg1 = 'No valid {2} in calibDB {0} ' + extstr
+        emsg2 = '    function = {0}'.format(func_name)
+        eargs = [masterfile, acqtime, key]
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
+
+
+def load_calib_table(p, header, key, outfile, func_name=None, ext=0):
+    if func_name is None:
+        func_name = __NAME__ + '.load_calib_file()'
+    # get calibDB
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouDB.GetAcqTime(p, header)
+        # get calibDB
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
+    else:
+        try:
+            cdb = p['CALIBDB']
+            acqtime = p['MAX_TIME_UNIX']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [e.message, emsg])
+            cdb, acqtime = None, None
+    # try to read 'BADPIX' from cdb
+    if key in cdb:
+        calibfile = os.path.join(p['DRS_CALIB_DB'], cdb[key][1])
+        calibdata = spirouTable.read_table(p, calibfile, fmt='fits')
+        p[outfile] = calibfile
+        p.set_source(outfile, func_name)
+        # return parameter dictionary and shape file
+        return p, calibdata, None
     else:
         # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
@@ -3434,7 +3502,6 @@ def construct_master_fp(p, refimage, filenames, matched_id):
 
     # get values from p
     percent_thres = p['FP_MASTER_PERCENT_THRES']
-
     qc_res = p['SHAPE_QC_LINEAR_TRANS_RES_THRES']
 
     # ----------------------------------------------------------------------

@@ -97,6 +97,8 @@ FlipImage = spirouImage.flip_image
 
 FiberParams = spirouFile.fiber_params
 
+GetLinearTransformParams = spirouImage.get_linear_transform_params
+
 GetSimilarDriftFiles = spirouImage.get_all_similar_files
 
 GetSigdet = spirouImage.get_sigdet
@@ -124,6 +126,12 @@ GetShapeX = spirouImage.load_shape_x
 GetShapeY = spirouImage.load_shape_y
 
 GetShapeLocal = spirouImage.load_shape_local
+
+GetFPMaster = spirouImage.load_master_fp
+
+GetTapas = spirouImage.load_tapas
+
+GetThermal = spirouImage.load_thermal
 
 GetXShapeMap = spirouImage.get_x_shape_map
 
