@@ -51,6 +51,8 @@ MeasureMinMaxSignal = spirouBACK.measure_min_max
 
 MeasureBkgrdGetCentPixs = spirouBACK.measure_background_and_get_central_pixels
 
+ThermalCorrect = spirouBACK.correction_thermal
+
 # =============================================================================
 # End of code
 # =============================================================================
