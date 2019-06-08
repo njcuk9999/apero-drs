@@ -248,6 +248,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         p, shapem_x = spirouImage.GetShapeX(p, hdr)
         p, shapem_y = spirouImage.GetShapeY(p, hdr)
         p, shape_local = spirouImage.GetShapeLocal(p, hdr)
+        p, fpmaster = spirouImage.GetFPMaster(p, hdr)
         # get the bad pixel map
         bkwargs = dict(return_map=True, quiet=True)
         p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, **bkwargs)
@@ -439,6 +440,28 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 WLOG(p, 'warning', wmsg.format(fiber, order_num))
 
         # ------------------------------------------------------------------
+        # Thermal correction
+        # ------------------------------------------------------------------
+        if p['DPRTYPE'] in p['THERMAL_CORRECTION_TYPE1']:
+            # correct E2DS
+            tkwargs = dict(image=loc['E2DS'], mode=1, fiber=fiber, hdr=hdr)
+            p, loc['E2DS'] = spirouBACK.ThermalCorrect(p, **tkwargs)
+            # correct E2DSFF
+            tkwargs = dict(image=loc['E2DSFF'], mode=1, fiber=fiber, hdr=hdr)
+            p, loc['E2DSFF'] = spirouBACK.ThermalCorrect(p, **tkwargs)
+        elif p['DPRTYPE'] in p['THERMAL_CORRECTION_TYPE2']:
+            # correct E2DS
+            tkwargs = dict(image=loc['E2DS'], mode=2, fiber=fiber, hdr=hdr)
+            p, loc['E2DS'] = spirouBACK.ThermalCorrect(p, **tkwargs)
+            # correct E2DSFF
+            tkwargs = dict(image=loc['E2DSFF'], mode=2, fiber=fiber, hdr=hdr)
+            p, loc['E2DSFF'] = spirouBACK.ThermalCorrect(p, **tkwargs)
+        else:
+            outfile = 'THERMALFILE_{0}'.format(fiber)
+            p[outfile] = 'None'
+            p.set_source(outfile, __NAME__ + '.main()')
+
+        # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
         if p['DRS_PLOT'] > 0:
@@ -548,6 +571,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                                        value=p['SHAPEYFILE'])
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                        value=p['SHAPEFILE'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFPMASTER'],
+                                       value=p['FPMASTERFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_CDBTHERMAL'],
+                                   value=p['THERMALFILE_{0}'.format(fiber)])
 
         hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'],
                                    value=loc['WAVEFILE'])
