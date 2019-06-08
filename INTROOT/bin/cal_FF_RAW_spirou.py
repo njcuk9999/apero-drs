@@ -207,6 +207,7 @@ def main(night_name=None, files=None):
         p, shapem_x = spirouImage.GetShapeX(p, hdr)
         p, shapem_y = spirouImage.GetShapeY(p, hdr)
         p, shape_local = spirouImage.GetShapeLocal(p, hdr)
+        p, fpmaster = spirouImage.GetFPMaster(p, hdr)
         # get the bad pixel map
         bkwargs = dict(return_map=True, quiet=True)
         p, badpix = spirouImage.CorrectForBadPix(p, data1, hdr, **bkwargs)
@@ -455,7 +456,8 @@ def main(night_name=None, files=None):
                                        value=p['SHAPEYFILE'])
             hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPE'],
                                        value=p['SHAPEFILE'])
-
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFPMASTER'],
+                                       value=p['FPMASTERFILE'])
         hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                          dim1name='file',
                                          values=p['ARG_FILE_NAMES'])
