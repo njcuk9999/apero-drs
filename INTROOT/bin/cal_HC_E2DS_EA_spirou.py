@@ -30,7 +30,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_HC_E2DS_spirou.py'
+__NAME__ = 'cal_HC_E2DS_EA_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()

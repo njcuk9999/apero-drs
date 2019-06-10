@@ -25,7 +25,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'off_listing_RAW_spirou.py'
+__NAME__ = 'off_listing_REDUC_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()

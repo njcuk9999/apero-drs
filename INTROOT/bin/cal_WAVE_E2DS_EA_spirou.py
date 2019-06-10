@@ -26,7 +26,7 @@ from SpirouDRS.spirouTHORCA import spirouWAVE
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_WAVE_E2DS_spirou.py'
+__NAME__ = 'cal_WAVE_E2DS_EA_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
