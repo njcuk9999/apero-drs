@@ -22,6 +22,8 @@ __version__ = 'Unknown'
 __author__ = 'Unknown'
 __release__ = 'Unknown'
 __date__ = 'Unknown'
+__args__ = ['check', 'debug_mode']
+__required__ = [False, False]
 # set modules required
 MODULES = OrderedDict()
 MODULES['numpy'] = '1.14.0'

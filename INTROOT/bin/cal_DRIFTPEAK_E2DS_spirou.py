@@ -37,6 +37,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __release__ = spirouConfig.Constants.RELEASE()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
+__args__ = ['night_name', 'reffile']
+__required__ = [True, True]
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function

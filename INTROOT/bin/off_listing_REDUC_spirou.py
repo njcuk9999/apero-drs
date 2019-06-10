@@ -31,6 +31,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+__args__ = ['night_name', 'quiet']
+__required__ = [True, False]
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get param dictionary

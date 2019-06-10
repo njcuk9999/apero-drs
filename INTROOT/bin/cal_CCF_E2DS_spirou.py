@@ -36,6 +36,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+__args__ = ['night_name', 'e2dsfile', 'mask', 'rv', 'width', 'step']
+__required__ = [True, True, True, False, False]
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
@@ -78,7 +80,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     fmt = [str, str, float, float, float]
     name = ['e2dsfile', 'ccf_mask', 'target_rv', 'ccf_width', 'ccf_step']
     lname = ['input_file', 'CCF_mask', 'RV', 'CCF_width', 'CCF_step']
-    req = [True, True, True, False, False]
+    req = __required__
     call = [e2dsfile, mask, rv, width, step]
     call_priority = [True, True, True, True, True]
     # now get custom arguments
