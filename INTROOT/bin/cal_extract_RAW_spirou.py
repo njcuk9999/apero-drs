@@ -442,21 +442,43 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Thermal correction
         # ------------------------------------------------------------------
-        if p['DPRTYPE'] in p['THERMAL_CORRECTION_TYPE1']:
+        # get fiber type
+        if fiber in ['AB', 'A', 'B']:
+            fibertype = p['DPRTYPE'].split('_')[0]
+        else:
+            fibertype = p['DPRTYPE'].split('_')[1]
+
+        # apply thermal correction based on fiber type
+        if fibertype in p['THERMAL_CORRECTION_TYPE1']:
+            # log progress
+            wmsg = 'Correcting thermal background for {0}={1} mode={2}'
+            wargs = [fiber, fibertype, 1]
+            WLOG(p, 'info', wmsg.format(*wargs))
             # correct E2DS
             tkwargs = dict(image=loc['E2DS'], mode=1, fiber=fiber, hdr=hdr)
             p, loc['E2DS'] = spirouBACK.ThermalCorrect(p, **tkwargs)
             # correct E2DSFF
-            tkwargs = dict(image=loc['E2DSFF'], mode=1, fiber=fiber, hdr=hdr)
+            tkwargs = dict(image=loc['E2DSFF'], mode=1, fiber=fiber, hdr=hdr,
+                           flat=loc['FLAT'])
             p, loc['E2DSFF'] = spirouBACK.ThermalCorrect(p, **tkwargs)
-        elif p['DPRTYPE'] in p['THERMAL_CORRECTION_TYPE2']:
+        elif fibertype in p['THERMAL_CORRECTION_TYPE2']:
+            # log progress
+            wmsg = 'Correcting thermal background for {0}={1} mode={2}'
+            wargs = [fiber, fibertype, 2]
+            WLOG(p, 'info', wmsg.format(*wargs))
             # correct E2DS
             tkwargs = dict(image=loc['E2DS'], mode=2, fiber=fiber, hdr=hdr)
             p, loc['E2DS'] = spirouBACK.ThermalCorrect(p, **tkwargs)
             # correct E2DSFF
-            tkwargs = dict(image=loc['E2DSFF'], mode=2, fiber=fiber, hdr=hdr)
+            tkwargs = dict(image=loc['E2DSFF'], mode=2, fiber=fiber, hdr=hdr,
+                           flat=loc['FLAT'])
             p, loc['E2DSFF'] = spirouBACK.ThermalCorrect(p, **tkwargs)
         else:
+            # log progress
+            wmsg = 'Not correcting thermal background for {0}={1}'
+            wargs = [fiber, fibertype]
+            WLOG(p, 'info', wmsg.format(*wargs))
+            # set filename for output
             outfile = 'THERMALFILE_{0}'.format(fiber)
             p[outfile] = 'None'
             p.set_source(outfile, __NAME__ + '.main()')
