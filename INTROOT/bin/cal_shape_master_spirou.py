@@ -346,6 +346,17 @@ def main(night_name=None, hcfile=None, fpfile=None):
     loc = spirouImage.GetXShapeMap(p, loc)
     loc = spirouImage.GetYShapeMap(p, loc, fphdr)
 
+    # ------------------------------------------------------------------
+    # Need to straighten the dxmap
+    # ------------------------------------------------------------------
+    # copy it first
+    loc['DXMAP0'] = np.array(loc['DXMAP'])
+    # straighten it
+    loc['DXMAP'] = spirouImage.EATransform(loc['DXMAP'], dymap=loc['DYMAP'])
+
+    # ------------------------------------------------------------------
+    # Need to straighten the hc data and fp data for debug
+    # ------------------------------------------------------------------
     # log progress
     WLOG(p, '', 'Shape finding complete. Applying transforms.')
     # apply very last update of the debananafication
@@ -514,7 +525,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
         output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
         input_hc_file, tag3 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
         output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_OUT_HC_FILE(p)
-        overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
+        bdxmap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_BDXMAP_FILE(p)
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA1'], hdict)
@@ -529,8 +540,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
         p = spirouImage.WriteImage(p, output_hc_file, loc['HCDATA2'], hdict)
         # write overlap file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag5)
-        p = spirouImage.WriteImage(p, overlap_file, loc['ORDER_OVERLAP'],
-                                   hdict)
+        p = spirouImage.WriteImage(p, bdxmap_file, loc['DXMAP0'], hdict)
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
