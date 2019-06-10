@@ -1132,14 +1132,14 @@ def SLIT_SHAPE_OUT_HC_FILE(p):
 
 
 # noinspection PyPep8Naming
-def SLIT_SHAPE_OVERLAP_FILE(p):
+def SLIT_SHAPE_BDXMAP_FILE(p):
     func_name = 'SLIT_SHAPE_OVERLAP_FILE'
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
     oldfilename = p['FPFILE']
     # construct prefix
-    prefix = 'SHAPE-DEBUG-Order_Overlap_'
+    prefix = 'SHAPE-DEBUG-BENT-DXMAP_'
     # construct new filename and full path
     newfilename = prefix + oldfilename
     abspath = os.path.join(reduced_dir, newfilename)
