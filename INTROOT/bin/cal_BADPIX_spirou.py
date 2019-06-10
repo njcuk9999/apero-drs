@@ -34,6 +34,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+__args__ = ['night_name', 'flatfile', 'darkfile']
+__required__ = [True, True, True]
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions

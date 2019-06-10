@@ -32,6 +32,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+__args__ = ['cores', 'filetype']
+__required__ = [False, False]
 # Get Logging function
 WLOG = spirouCore.wlog
 # Custom parameter dictionary
