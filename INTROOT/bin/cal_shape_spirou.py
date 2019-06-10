@@ -154,6 +154,14 @@ def main(night_name=None, files=None):
     gout = spirouImage.GetLinearTransformParams(p, masterfp, data1)
     transform, xres, yres = gout
 
+    # ------------------------------------------------------------------
+    # Need to straighten the fp data for debug
+    # ------------------------------------------------------------------
+    p, shapem_x = spirouImage.GetShapeX(p, hdr)
+    p, shapem_y = spirouImage.GetShapeY(p, hdr)
+    data2 = spirouImage.EATransform(data1, transform, dxmap=shapem_x,
+                                    dymap=shapem_y)
+
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
@@ -232,9 +240,12 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBDARK'], value=p['DARKFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBAD'], value=p['BADPFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPEX'],
+                               value=p['SHAPEXFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CDBSHAPEY'],
+                               value=p['SHAPEYFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBFPMASTER'],
                                value=p['FPMASTERFILE'])
-
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'], dim1name='file',
                                      values=p['ARG_FILE_NAMES'])
     # add qc parameters
@@ -260,6 +271,22 @@ def main(night_name=None, files=None):
         spirouDB.PutCalibFile(p, shapefits)
         # update the master calib DB file with new key
         spirouDB.UpdateCalibMaster(p, keydb, shapefitsname, hdr)
+
+    # ------------------------------------------------------------------
+    # Writing sanity check files
+    # ------------------------------------------------------------------
+    if p['SHAPE_DEBUG_OUTPUTS']:
+        # log
+        WLOG(p, '', 'Saving debug sanity check files')
+        # construct file names
+        input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
+        output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
+        # write input fp file
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
+        p = spirouImage.WriteImage(p, input_fp_file, data1, hdict)
+        # write output fp file
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
+        p = spirouImage.WriteImage(p, output_fp_file, data2, hdict)
 
     # ----------------------------------------------------------------------
     # End Message
