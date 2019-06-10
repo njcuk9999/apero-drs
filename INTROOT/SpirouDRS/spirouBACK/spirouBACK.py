@@ -661,14 +661,14 @@ def measure_box_min_max(y, size):
     return min_image, max_image
 
 
-def correction_thermal(p, image, hdr, mode, fiber):
+def correction_thermal(p, image, hdr, mode, fiber, flat=None):
     func_name = __NAME__ + '.correction_thermal()'
     # log progress
     wmsg = 'Correcting for Thermal Background (mode = {0})'
     WLOG(p, '', wmsg.format(mode))
     # decide on how to correct
     if mode == 1:
-        return correction_thermal1(p, image, hdr, fiber)
+        return correction_thermal1(p, image, hdr, fiber, flat)
     elif mode == 2:
         return correction_thermal2(p, image, fiber)
     else:
@@ -683,11 +683,11 @@ def correction_thermal(p, image, hdr, mode, fiber):
         return p, image
 
 
-def correction_thermal1(p, image, hdr, fiber):
+def correction_thermal1(p, image, hdr, fiber, flat=None):
     # get constants from p
     threshold_tapas_bgnd = p['THERMAL_THRES_TAPAS_BGND']
     bgnd_filter_width = p['THERMAL_BGND_FILTER_WID']
-    tapas_red_limit = p['THERMAL_TAPAS_RED_LIMIT']
+    th_red_limit = p['THERMAL_RED_LIMIT']
     torder = p['THERMAL_ORDER']
 
     # ----------------------------------------------------------------------
@@ -705,6 +705,9 @@ def correction_thermal1(p, image, hdr, fiber):
     # ----------------------------------------------------------------------
     # get the thermal extraction for this fiber
     p, thermal = spirouImage.GetThermal(p, hdr, fiber=fiber)
+    # if we have a flat we should apply it to the thermal
+    if flat is not None:
+        thermal = thermal / flat
     # ----------------------------------------------------------------------
     # load tapas
     p, tapas = spirouImage.GetTapas(p, hdr)
@@ -721,7 +724,7 @@ def correction_thermal1(p, image, hdr, fiber):
     # set torder mask all to False initially
     torder_mask = np.zeros_like(wave[torder, :], dtype=bool)
     # get the wave mask
-    wavemask = wave[torder] < tapas_red_limit
+    wavemask = wave[torder] < th_red_limit
     # get the tapas data for these wavelengths
     torder_tapas = sptapas(wave[torder, wavemask])
     # find those pixels lower than threshold in tapas
@@ -738,26 +741,89 @@ def correction_thermal1(p, image, hdr, fiber):
     ratio = np.nanmedian(thermal_torder / image_torder)
     # scale thermal by ratio
     thermal = thermal / ratio
+    # ----------------------------------------------------------------------
+    # plot debug plot
     if p['DRS_DEBUG'] > 0 and p['DRS_PLOT'] > 0:
         data = [wave, image, thermal, torder, torder_mask]
         sPlt.thermal_background_debug_plot(p, *data, fiber=fiber)
+    # ----------------------------------------------------------------------
     # correct image
     corrected_image = image - thermal
+    # ----------------------------------------------------------------------
     # return p and corrected image
     return p, corrected_image
 
 
-def correction_thermal2(p, image, fiber):
+def correction_thermal2(p, image, hdr, fiber, flat=None):
     func_name = __NAME__ + '.correction_thermal2()'
-    # print warning
-    wmsg = 'No correction set for mode 2. Correction skipped.'
-    WLOG(p, 'warning', wmsg)
-    # set tapas file used
-    outfile = 'THERMALFILE_{0}'.format(fiber)
-    p[outfile] = 'None'
-    p.set_source(outfile, func_name)
-    # return uncorrected image
-    return p, image
+    # get parameters from p
+    bgnd_filter_width = p['THERMAL_BGND_FILTER_WID']
+    envelope_percent = p['THERMAL_ENVELOPE_PERCENTILE']
+    torder = p['THERMAL_ORDER']
+    th_red_limit = p['THERMAL_RED_LIMIT']
+    th_blue_limit = p['THERMAL_RED_LIMIT']
+    # get the shape
+    dim1, dim2 = image.shape
+    # ----------------------------------------------------------------------
+    # Get master wavelength grid
+    masterwave = spirouDB.GetDatabaseMasterWave(p)
+    # Force A and B to AB solution
+    if fiber in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = fiber
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=masterwave, fiber=wave_fiber,
+                                       return_wavemap=True, quiet=True)
+    _, wave, _ = mout
+    # ----------------------------------------------------------------------
+    # get the thermal extraction for this fiber
+    p, thermal = spirouImage.GetThermal(p, hdr, fiber=fiber)
+    # if we have a flat we should apply it to the thermal
+    if flat is not None:
+        thermal = thermal / flat
+    # ----------------------------------------------------------------------
+    # set up an envelope to measure thermal background in image
+    envelope = np.zeros(dim2)
+    # loop around all pixels
+    for x_it in range(dim2):
+        # define start and end points
+        start = x_it - bgnd_filter_width // 2
+        end = x_it + bgnd_filter_width // 2
+        # deal with out of bounds
+        if start < 0:
+            start = 0
+        if end > dim2 -1:
+            end = dim2 - 1
+        # get the box for this pixel
+        imagebox = image[torder, start:end]
+        # get the envelope
+        envelope[x_it] = np.nanpercentile(imagebox, envelope_percent)
+    # ----------------------------------------------------------------------
+    # median filter the thermal (loop around orders)
+    for order_num in range(dim2):
+        thermal[order_num] = medfilt(thermal[order_num], bgnd_filter_width)
+    # ----------------------------------------------------------------------
+    # only keep wavelength in range of thermal limits
+    wavemask = (wave[torder] > th_blue_limit) & (wave[torder] < th_red_limit)
+    # we find the median scale between the observation and the thermal
+    #    background in domains where there is no transmission
+    thermal_torder = thermal[torder, wavemask]
+    envelope_torder = envelope[wavemask]
+    ratio = np.nanmedian(thermal_torder / envelope_torder)
+    # scale thermal by ratio
+    thermal = thermal / ratio
+    # ----------------------------------------------------------------------
+    # plot debug plot
+    if p['DRS_DEBUG'] > 0 and p['DRS_PLOT'] > 0:
+        data = [wave, image, thermal, torder, wavemask]
+        sPlt.thermal_background_debug_plot(p, *data, fiber=fiber)
+    # ----------------------------------------------------------------------
+    # correct image
+    corrected_image = image - thermal
+    # ----------------------------------------------------------------------
+    # return p and corrected image
+    return p, corrected_image
 
 
 # =============================================================================
