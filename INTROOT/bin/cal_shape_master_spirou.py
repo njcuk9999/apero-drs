@@ -340,10 +340,26 @@ def main(night_name=None, hcfile=None, fpfile=None):
     source = __NAME__ + '.main() + spirouImage.ReadCavityLength()'
     loc.set_source('CAVITY_LEN_COEFFS', source)
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Calculate shape map
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # calculate dx map
     loc = spirouImage.GetXShapeMap(p, loc)
+    # if dx map is None we shouldn't continue
+    if loc['DXMAP'] is None:
+        fargs = [loc['MAXDXMAPINFO'][0], loc['MAXDXMAPINFO'][1],
+                 loc['MAXDXMAPSTD'], p['SHAPE_QC_DXMAP_STD']]
+        fmsg = ('The std of the dxmap for order {0} y-pixel {1} is too large.'
+                 ' std = {2} (limit = {3})'.format(*fargs))
+        wmsg = 'QUALITY CONTROL FAILED: {0}'
+        WLOG(p, 'warning', wmsg.format(fmsg))
+        WLOG(p, 'warning', 'Cannot continue. Exiting.')
+        # End Message
+        p = spirouStartup.End(p)
+        # return a copy of locally defined variables in the memory
+        return dict(locals())
+
+    # calculate dymap
     loc = spirouImage.GetYShapeMap(p, loc, fphdr)
 
     # ------------------------------------------------------------------
@@ -396,9 +412,9 @@ def main(night_name=None, hcfile=None, fpfile=None):
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
     # add to qc header lists
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
+    qc_values.append(loc['MAXDXMAPSTD'])
+    qc_names.append('DXMAP STD')
+    qc_logic.append('DXMAP STD < {0}'.format(p['SHAPE_QC_DXMAP_STD']))
     qc_pass.append(1)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
