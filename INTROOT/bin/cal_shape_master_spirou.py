@@ -349,8 +349,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # log progress
     WLOG(p, '', 'Shape finding complete. Applying transforms.')
     # apply very last update of the debananafication
-    tkwargs = dict(dxmap=loc['DXMAP']) #, dymap=loc['DYMAP'])
-    tkwargs= dict(dymap=loc['DYMAP'])
+    tkwargs = dict(dxmap=loc['DXMAP'], dymap=loc['DYMAP'])
     loc['HCDATA2'] = spirouImage.EATransform(loc['HCDATA1'], **tkwargs)
     loc['FPDATA2'] = spirouImage.EATransform(loc['FPDATA1'], **tkwargs)
     loc.set_sources(['HCDATA2', 'FPDATA2'], __NAME__ + '.main()')
