@@ -556,6 +556,10 @@ SHAPE_MASTER_FP_SMALL_BOXSIZE = 2
 #     x or y when doing the linear transform
 SHAPE_QC_LINEAR_TRANS_RES_THRES = 0.1
 
+#  Defines the largest allowed standard deviation for a given
+#    per-order and per-x-pixel shift of the FP peaks
+SHAPE_QC_DXMAP_STD = 5
+
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
 # -----------------------------------------------------------------------------
