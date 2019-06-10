@@ -2382,6 +2382,7 @@ def get_x_shape_map(p, loc):
     min_good_corr = p['SHAPE_MIN_GOOD_CORRELATION']
     short_medfilt_width = p['SHAPE_SHORT_DX_MEDFILT_WID']
     long_medfilt_width = p['SHAPE_LONG_DX_MEDFILT_WID']
+    std_qc = p['SHAPE_QC_DXMAP_STD']
 
     plot_on = p.get(p['PLOT_PER_ORDER'], False)
     # get data from loc
@@ -2428,7 +2429,9 @@ def get_x_shape_map(p, loc):
         # x pixel vecctor that is used with polynomials to
         # find the order center y order center
         ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
-
+    # -------------------------------------------------------------------------
+    # storage of the dxmap standard deviations
+    dxmap_stds = []
     # -------------------------------------------------------------------------
     # iterating the correction, from coarser to finer
     for banana_num in range(nbanana):
@@ -2845,6 +2848,23 @@ def get_x_shape_map(p, loc):
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
 
+                    # after each iteration updating the dxmap, we verify
+                    # that the per-order and per-x-pixel shift is not larger
+                    # than the maximum seen over 'normal' images.
+                    dxmap_std = np.nanstd(master_dxmap[positions, ix])
+
+                    dxmap_stds.append(dxmap_std)
+
+                    # return here if QC not met
+                    if dxmap_std > std_qc:
+                        # add DXMAP to loc
+                        loc['DXMAP'] = None
+                        loc['MAXDXMAPSTD'] = dxmap_std
+                        loc['MAXDXMAPINFO'] = [order_num, ix]
+                        keys = ['DXMAP', 'MAXDXMAPSTD', 'MAXDXMAPINFO']
+                        loc.set_sources(keys, func_name)
+                        return loc
+
             # -----------------------------------------------------------------
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] >= 2) and plot_on:
                 # plot angle and offset plot for each order
@@ -2879,11 +2899,12 @@ def get_x_shape_map(p, loc):
     loc['C_KEEP'] = cckeep_arr
     # add DXMAP to loc
     loc['DXMAP'] = master_dxmap
+    loc['MAXDXMAPSTD'] = np.nanmax(dxmap_stds)
     # add new hcdata/fpdata and order overlap for sanity checks
     loc['ORDER_OVERLAP'] = order_overlap
     # set source
     keys = ['SLOPE_DEG', 'SLOPE', 'S_KEEP', 'XSECTION', 'CCOR', 'DDX',
-            'DX', 'DYPIX', 'C_KEEP', 'DXMAP', 'ORDER_OVERLAP']
+            'DX', 'DYPIX', 'C_KEEP', 'DXMAP', 'ORDER_OVERLAP', 'MAXDXMAPSTD']
     loc.set_sources(keys, func_name)
     # return loc
     return loc
