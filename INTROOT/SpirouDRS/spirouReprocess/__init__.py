@@ -12,6 +12,7 @@ Created on 2019-06-10 at 10:48
 
 from . import spirouRfiles
 from . import spirouRgen
+from . import spirouRprocess
 
 # =============================================================================
 # Define functions
@@ -23,6 +24,8 @@ FindTmpFiles = spirouRfiles.find_tmp_files
 FindRedFiles = spirouRfiles.find_reduced_files
 
 GenerateRunList = spirouRgen.generate
+
+ProcessRunList = spirouRprocess.process_run_list
 
 RunFile = spirouRfiles.read_run_file
 

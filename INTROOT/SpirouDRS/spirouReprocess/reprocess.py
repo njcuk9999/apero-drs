@@ -38,10 +38,9 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-# def main(runfile=None):
+#def main(runfile=None):
 if True:
     runfile = 'run_test002.ini'
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -68,23 +67,50 @@ if True:
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
+    # TODO: add id = 'all' mode
     runlist = spirouReprocess.GenerateRunList(p, tables, paths, runtable)
-
 
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
+    outlist = spirouReprocess.ProcessRunList(p, runlist)
+
+    # ----------------------------------------------------------------------
+    # Print out any errors
+    # ----------------------------------------------------------------------
+    # get header
+    header = spirouConfig.Constants.HEADER()
+    # loop around each entry of outlist and print any errors
+    for key in outlist:
+        if len(outlist[key]['ERROR']) > 0:
+            WLOG(p, '', '', colour='red')
+            WLOG(p, '', header, colour='red')
+            WLOG(p, 'warning', 'Error found for ID={0:05d}'.format(key),
+                 colour='red')
+            WLOG(p, '', header, colour='red')
+            WLOG(p, '', '', colour='red')
+            WLOG(p, 'warning', outlist[key]['ERROR'], colour='red')
+
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    p = spirouStartup.End(p)
+
+
+def main(runfile=None):
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
 
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# if __name__ == "__main__":
-#     # run main with no arguments (get from command line - sys.argv)
-#     ll = main()
-#     # exit message if in debug mode
-#     spirouStartup.Exit(ll, has_plots=False)
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message if in debug mode
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
