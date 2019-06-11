@@ -1382,10 +1382,12 @@ def get_background_map(p, header=None, quiet=False):
     func_name = __NAME__ + '.get_background_map()'
     key = 'BKGRDMAP'
     outfile = 'BKGRDFILE'
-    if not quiet:
-        WLOG(p, '', 'Doing Background Correction using ' + p[outfile])
     # load calibration file
     p, ofile, ohdr = load_calib_file(p, header, key, outfile, func_name)
+    # log if not quiet
+    if not quiet:
+        WLOG(p, '', 'Doing Background Correction using ' + p[outfile])
+    # return parameters
     return p, ofile, ohdr
 
 
