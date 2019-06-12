@@ -216,7 +216,7 @@ class _CheckDirectory(argparse.Action):
             return directory
         else:
             # get input dir
-            input_dir = self.recipe._get_input_dir()
+            input_dir = self.recipe.get_input_dir()
             # get listing message
             lmsgs = _print_list_msg(self.parser, self.recipe, input_dir,
                                     dircond=True, return_string=True)
@@ -431,7 +431,7 @@ class _MakeListing(argparse.Action):
 
     def _display_listing(self, namespace):
         # get input dir
-        input_dir = self.recipe._get_input_dir()
+        input_dir = self.recipe.get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', None)
         # deal with non set directory
@@ -474,7 +474,7 @@ class _MakeAllListing(argparse.Action):
 
     def _display_listing(self, namespace):
         # get input dir
-        input_dir = self.recipe._get_input_dir()
+        input_dir = self.recipe.get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', None)
         # deal with non set directory
@@ -2149,7 +2149,7 @@ def _check_file_location(recipe, argname, directory, filename):
     if directory is not None:
         input_dir = str(directory)
     else:
-        input_dir = recipe._get_input_dir()
+        input_dir = recipe.get_input_dir()
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
@@ -2280,7 +2280,7 @@ def _check_file_extension(recipe, argname, filename, ext=None):
 
 def _check_file_header(recipe, argname, drs_file, filename, directory):
     # get the input directory
-    inputdir = recipe._get_input_dir()
+    inputdir = recipe.get_input_dir()
     # create an instance of this drs_file with the filename set
     file_instance = drs_file.new(filename=filename, recipe=recipe)
     file_instance.read()
