@@ -733,7 +733,7 @@ extract_s1d_waveend = 2500
 #    Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 ic_bin_s1d_uwave = 0.005
 
-#    Define the s1d spectral bin for S1D spectra (nm) when uniform in velocity
+#    Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
 ic_bin_s1d_uvelo = 1.0
 
 #    Define the s1d smoothing kernel for the transition between orders
