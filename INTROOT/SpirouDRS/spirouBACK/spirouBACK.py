@@ -670,7 +670,7 @@ def correction_thermal(p, image, hdr, mode, fiber, flat=None):
     if mode == 1:
         return correction_thermal1(p, image, hdr, fiber, flat)
     elif mode == 2:
-        return correction_thermal2(p, image, fiber)
+        return correction_thermal2(p, image, hdr, fiber, flat)
     else:
         wmsg = 'Mode = {0} not supported. Correction skipped.'
         WLOG(p, 'warning', wmsg.format(mode))
