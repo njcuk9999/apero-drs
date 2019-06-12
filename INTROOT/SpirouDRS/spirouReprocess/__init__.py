@@ -27,7 +27,11 @@ GenerateRunList = spirouRgen.generate
 
 ProcessRunList = spirouRprocess.process_run_list
 
+ResetFiles = spirouRfiles.reset
+
 RunFile = spirouRfiles.read_run_file
+
+SendEmail = spirouRfiles.send_email
 
 # =============================================================================
 # End of code

@@ -12,9 +12,12 @@ Created on 2019-06-10 at 13:38
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+
+from SpirouDRS.spirouReprocess.redo import recipe_definitions as rd
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
@@ -80,89 +83,40 @@ RED_PROGRAMS = [cal_CCF_E2DS_spirou, cal_DRIFT_E2DS_spirou,
                 off_listing_REDUC_spirou, obj_mk_tellu_new,
                 obj_mk_tellu_db, obj_fit_tellu, obj_fit_tellu_db,
                 obj_mk_obj_template, visu_E2DS_spirou, pol_spirou]
+
 # define which recipes accept wildcards
 ALLOW_WILDCARDS = ['cal_preprocess_spirou']
 
 # -----------------------------------------------------------------------------
 # define run lists
 # -----------------------------------------------------------------------------
-RUN_LIST = dict()
-RUN_LIST['RUN_DARK_MASTER'] = cal_dark_master_spirou
-RUN_LIST['RUN_BADPIX_MASTER'] = cal_BADPIX_spirou
-RUN_LIST['RUN_LOC_MASTER'] = cal_loc_RAW_spirou
-RUN_LIST['RUN_SHAPE_MASTER'] = cal_shape_master_spirou
-RUN_LIST['RUN_MK_TELLU_DB'] = obj_mk_tellu_db
-RUN_LIST['RUN_FIT_TELLU_DB'] = obj_fit_tellu_db
-RUN_LIST['RUN_PREPROCESS'] = cal_preprocess_spirou
-RUN_LIST['RUN_BADPIX'] = cal_BADPIX_spirou
-RUN_LIST['RUN_LOC'] = cal_loc_RAW_spirou
-RUN_LIST['RUN_SHAPE'] = cal_shape_spirou
-RUN_LIST['RUN_FF'] = cal_FF_RAW_spirou
-RUN_LIST['RUN_THERMAL'] = cal_thermal_spirou
-RUN_LIST['RUN_WAVE'] = cal_WAVE_E2DS_EA_spirou
-RUN_LIST['RUN_EXTRACT_TELLU'] = cal_extract_RAW_spirou
-RUN_LIST['RUN_EXTRACT_OBJ'] = cal_extract_RAW_spirou
-RUN_LIST['RUN_EXTRACT_ALL'] = cal_extract_RAW_spirou
-RUN_LIST['RUN_MK_TELLU'] = obj_mk_tellu_new
-RUN_LIST['RUN_FIT_TELLU'] = obj_fit_tellu
-
-# -----------------------------------------------------------------------------
-# define skip list
-# -----------------------------------------------------------------------------
-# Format = [module, input_suffices, output_suffices
-SKIP_LIST = dict()
-# preprocessing
-inexts = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
-outexts = ['a_pp.fits', 'c_pp.fits', 'd_pp.fits', 'f_pp.fits', 'o_pp.fits']
-SKIP_LIST['SKIP_PREPROCESS'] = [cal_preprocess_spirou, inexts, outexts]
-
-# badpix
-inexts, outexts = ['f_pp.fits'], ['f_pp_badpixel.fits']
-SKIP_LIST['SKIP_BADPIX'] = [cal_BADPIX_spirou, inexts, outexts]
-
-# loc
-inexts = ['f_pp.fits', 'f_pp.fits']
-outexts = ['f_pp_loco_AB.fits', 'f_pp_loco_C.fits']
-SKIP_LIST['SKIP_LOC'] = [cal_loc_RAW_spirou, inexts, outexts]
-
-# shape
-inexts, outexts = ['a_pp.fits'], ['a_pp_shape.fits']
-SKIP_LIST['SKIP_SHAPE'] = [cal_shape_spirou, inexts, outexts]
-
-# ff
-inexts, outexts = ['f_pp.fits'], ['f_pp_flat_AB.fits']
-SKIP_LIST['SKIP_FF'] = [cal_FF_RAW_spirou, inexts, outexts]
-
-# thermal
-inexts, outexts = ['d_pp.fits'], ['d_pp_e2ds_AB.fits']
-SKIP_LIST['SKIP_THERMAL'] = [cal_thermal_spirou, inexts, outexts]
-
-# extract
-inexts = ['a_pp.fits', 'c_pp.fits', 'd_pp.fits', 'f_pp.fits', 'o_pp.fits']
-outexts = ['a_pp_e2ds_AB.fits', 'c_pp_e2ds_AB.fits', 'd_pp_e2ds_AB.fits',
-           'f_pp_e2ds_AB.fits', 'o_pp_e2ds_AB.fits']
-SKIP_LIST['SKIP_EXTRACT'] = [cal_extract_RAW_spirou, inexts, outexts]
-
-# mk_tellu
-inexts = ['o_pp_e2ds_AB.fits', 'o_pp_e2dsff_AB.fits']
-outexts = ['o_pp_e2ds_AB_trans.fits', 'o_pp_e2dsff_AB_trans.fits']
-SKIP_LIST['SKIP_MK_TELLU '] = [obj_mk_tellu_new, inexts, outexts]
-
-# fit_tellu
-inexts = ['o_pp_e2ds_AB.fits', 'o_pp_e2dsff_AB.fits']
-outexts = ['o_pp_e2ds_AB_tellu_corrected.fits',
-           'o_pp_e2dsff_AB_tellu_corrected.fits']
-SKIP_LIST['SKIP_FIT_TELLU'] = [obj_fit_tellu, inexts, outexts]
-
+MOD_LIST = OrderedDict()
+MOD_LIST['PREPROCESS'] = cal_preprocess_spirou
+MOD_LIST['DARK_MASTER'] = cal_dark_master_spirou
+MOD_LIST['BADPIX_MASTER'] = cal_BADPIX_spirou
+MOD_LIST['LOC_MASTER'] = cal_loc_RAW_spirou
+MOD_LIST['SHAPE_MASTER'] = cal_shape_master_spirou
+MOD_LIST['MK_TELLU_DB'] = obj_mk_tellu_db
+MOD_LIST['FIT_TELLU_DB'] = obj_fit_tellu_db
+MOD_LIST['BADPIX'] = cal_BADPIX_spirou
+MOD_LIST['LOC'] = cal_loc_RAW_spirou
+MOD_LIST['SHAPE'] = cal_shape_spirou
+MOD_LIST['FF'] = cal_FF_RAW_spirou
+MOD_LIST['THERMAL'] = cal_thermal_spirou
+MOD_LIST['WAVE'] = cal_WAVE_E2DS_EA_spirou
+MOD_LIST['EXTRACT_TELLU'] = cal_extract_RAW_spirou
+MOD_LIST['EXTRACT_OBJ'] = cal_extract_RAW_spirou
+MOD_LIST['EXTRACT_ALL'] = cal_extract_RAW_spirou
+MOD_LIST['KK_TELLU'] = obj_mk_tellu_new
+MOD_LIST['FIT_TELLU'] = obj_fit_tellu
 
 # -----------------------------------------------------------------------------
 # define the key to identify runs in config file
 RUN_KEY = 'ID'
 # column names for run tables
+ITABLE_FILECOL = 'FILENAME'
 NIGHT_COL = '@@@NIGHTNAME'
 ABSFILE_COL = '@@@ABSFILE'
-
-
 
 
 # =============================================================================
@@ -300,8 +254,11 @@ class Run:
 # Define user functions
 # =============================================================================
 def generate(params, tables, paths, runtable):
+
+    # get all values (upper case) using map function
+    rvalues = list(map(lambda x: x.upper(), runtable.values()))
     # sort out which mode we are in
-    if 'ALL' in runtable.values():
+    if 'ALL' in rvalues:
         return generate_all(params, tables, paths)
     else:
         return generate_ids(params, tables, paths, runtable)
@@ -329,24 +286,39 @@ def generate_ids(params, tables, paths, runtable):
         # append to list
         run_objects.append(run_object)
     # check list files against tables and assign a group
-    run_objects = check_runlist(params, tables, paths, run_objects, keylist)
+    run_objects = check_runlist(params, run_objects)
 
     # return run objects
     return run_objects
 
 
-def check_runlist(params, tables, paths, runlist, keylist):
-
+def check_runlist(params, runlist):
+    # ------------------------------------------------------------------
+    # storage of outlist
     out_runlist = []
-
+    # ------------------------------------------------------------------
     for it, run_item in enumerate(runlist):
-        # ------------------------------------------------------------------
         # check that we want to run this recipe
-        check = check_run_params(params, run_item)
+        check = False
         # ------------------------------------------------------------------
-        # for remaining arguments if they are fits file check that they are
-        #   valid (i.e. that they are in tables)
-        check_fits_files(params, it, run_item, keylist, tables, paths)
+        # find run_item in MOD_LIST
+        for key in MOD_LIST:
+            # get run_key
+            runkey = 'RUN_{0}'.format(key)
+            rl_item = MOD_LIST[key]
+            # check if recipe names agree
+            cond1 = run_item.recipename == remove_py(rl_item.__NAME__)
+            # check if key in params
+            cond2 = runkey in params
+            # if both conditions met then we take the condition from params
+            if cond1 and cond2:
+                check = params[runkey]
+                break
+            # if we don't have key in params and key isn't in MOD_LIST we should
+            #   just pass
+            elif not (cond1 and cond2):
+                check = True
+                break
         # ------------------------------------------------------------------
         # append to output
         if check:
@@ -359,9 +331,163 @@ def check_runlist(params, tables, paths, runlist, keylist):
 # Define "from automated" functions
 # =============================================================================
 def generate_all(params, tables, paths):
+    return []
+    # storage of runlist
+    runtable = dict()
+    runkey = 0
+    # loop around each module and find arguments
+    for modname in MOD_LIST:
+        # get recipe name
+        recipename = MOD_LIST[modname].__NAME__
+        recipeargs = MOD_LIST[modname].__args__
+        # get run name
+        runname = 'RUN_{0}'.format(modname)
+        # make sure item in params - skip if it isn't
+        if runname not in params:
+            continue
+        # make sure run list item is True in params
+        if params[runname]:
+            # find the recipe defintion
+            recipe = find_recipe(recipename)
+            # for now if recipe is None just skip
+            if recipe is None:
+                continue
+            # get associated file types
+            req_args = find_required_arguments(recipe, recipeargs)
+            # using the required arguments to generate a set of runlist entries
+            gargs = [recipe, req_args, tables, paths, MOD_LIST[modname]]
+            commands = generate_run_commands(params, *gargs)
+            # add this to runlist
+            for key in commands.keys():
+                runtable[runkey + key] = commands[key]
+    # return run objects (via generate ids)
+    return generate_ids(params, tables, paths, runtable)
 
-    pass
 
+def find_recipe(recipename):
+    for recipe in rd.recipes:
+        if recipename == recipe.name:
+            return recipe
+    else:
+        return None
+
+
+def find_required_arguments(recipe, recipeargs):
+    # storage for output arguments
+    outargs = dict()
+    # get recipe arg list without '-'
+    recipearglist = list(map(lambda x: x.replace('-', ''), recipe.args.keys()))
+    for rarg in recipeargs:
+        if rarg in recipearglist:
+            outargs[rarg] = recipe.args[rarg]['files']
+    return outargs
+
+
+def generate_run_commands(params, recipe, args, tables, paths, module):
+
+    # get the raw table
+    rawtable = tables[0]
+
+    # storage of output commands
+    commands = OrderedDict()
+
+    # define the keys
+    number = 0
+
+    outargs = OrderedDict()
+    # loop around arguments
+    for argname in args:
+        # get drs files
+        drsfiles = args[argname]
+        # set up a mask of the table
+        mask = np.zeros_like(rawtable[ITABLE_FILECOL], dtype=bool)
+        # set up storage for new filenames
+        newfilenames = np.array(rawtable[ITABLE_FILECOL])
+        # loop around files
+        for drsfile in drsfiles:
+            # get new files onto outargs
+            mask_it, newfiles = get_drs_file_mask(drsfile, rawtable)
+            newfilenames[mask_it] = newfiles
+            mask |= mask_it
+        # add the new file names to the rawtable
+        rawtable['NEWFILENAME'] = newfilenames
+        # get the group number
+        groups = group_drs_files(mask, rawtable)
+        rawtable['GROUPS'] = groups
+
+        outargs[argname] = rawtable[mask].copy()
+
+
+    return commands
+
+
+
+def get_drs_file_mask(drsfile, table):
+    # get in filenames
+    infilenames = table[ITABLE_FILECOL]
+    # -------------------------------------------------------------------------
+    # get output extension
+    outext = drsfile.args['ext']
+    # get input extension
+    while 'intype' in drsfile.args:
+        drsfile = drsfile.args['intype']
+    inext = drsfile.args['ext']
+    # -------------------------------------------------------------------------
+    # get required header keys
+    rkeys = dict()
+    for arg in drsfile.args:
+        if arg.startswith('KW_'):
+            rkeys[arg] = drsfile.args[arg]
+    # maask by the required header keys
+    mask = np.ones_like(infilenames, dtype=bool)
+    for key in rkeys:
+        mask &= table[key] == rkeys[key]
+    # -------------------------------------------------------------------------
+    # construct new filenames
+    outfilenames = []
+    for it, filename in enumerate(infilenames):
+        if not filename.endswith(inext):
+            mask[it] = False
+        if mask[it]:
+            outfilenames.append(filename.replace(inext, outext))
+    # -------------------------------------------------------------------------
+    # return the mask
+    return mask, outfilenames
+
+
+def group_drs_files(inmask, table):
+
+    groups = np.zeros(len(table))
+
+    # get the sequence column
+    sequence_col = table['KW_CMPLTEXP']
+    # start the group number at 1
+    group_number = 1
+    # by night name
+    for night in np.unique(table[NIGHT_COL]):
+        # deal with just this night name
+        nightmask = table[NIGHT_COL] == night
+        # remove any with invalid sequence numbers
+        nightmask &= (sequence_col != '') & inmask
+        # get the sequence number
+        sequences = sequence_col[nightmask].astype(int)
+        indices = np.arange(len(sequences))
+        # get the raw groups
+        rawgroups = np.array(-(sequences - indices) + 1)
+
+        nightgroup = np.zeros(np.sum(nightmask))
+        # loop around the unique groups and assign group number
+        for rgroup in np.unique(rawgroups):
+            # get group mask
+            groupmask = rawgroups == rgroup
+            # push the group number into night group
+            nightgroup[groupmask] = group_number
+            # add to the group number
+            group_number += 1
+        # add the night group to the full group
+        groups[nightmask] = nightgroup
+    # return the group
+    return groups
 
 
 
@@ -385,63 +511,8 @@ def remove_py(innames):
         return outnames
 
 
-def check_fits_files(params, it, run_item, keylist, tables, paths):
-
-    recipe, nightname = run_item.recipename, run_item.nightname
-    kind = run_item.kind
-    args, start = run_item.args, run_item.argstart
-    # get the table and path
-    rtable, rpath = tables[kind], paths[kind]
-
-    # ------------------------------------------------------------------
-    # for remaining arguments if they are fits file check that they are
-    #   valid (i.e. that they are in tables)
-    for arg in args[start:]:
-        # skip wildcard arguments if allowed
-        if recipe in ALLOW_WILDCARDS:
-            if '*' in arg:
-                continue
-        # must be fits files
-        if arg.endswith('.fits'):
-            # get absolute path
-            if nightname != '':
-                abspath = os.path.join(rpath, nightname, arg)
-            else:
-                abspath = None
-            # check night name in rtable
-            if nightname != '' and nightname not in rtable[NIGHT_COL]:
-                # log error
-                eargs = [recipe, RUN_KEY, keylist[it], run_item]
-                emsg1 = ('RunList Error: Night name "{0}" invalid'
-                         ''.format(nightname))
-                emsg2 = '\t Line: {1}{2} = {3}'.format(*eargs)
-                WLOG(params, 'error', [emsg1, emsg2])
-            # check arg (filename) in rtable
-            if abspath is not None and abspath not in rtable[ABSFILE_COL]:
-                # log error
-                eargs = [recipe, RUN_KEY, keylist[it], run_item]
-                emsg1 = ('RunList Error: Filename {0} not '
-                         'found'.format(abspath))
-                emsg2 = '\t Line: {1}{2} = {3}'.format(*eargs)
-                WLOG(params, 'error', [emsg1, emsg2])
-
-
 def check_run_params(params, run_item):
 
-    # check run list
-    for key in RUN_LIST:
-        rl_item = RUN_LIST[key]
-        # check if recipe names agree
-        cond1 = run_item.recipename == remove_py(rl_item.__NAME__)
-        # check if key in params
-        cond2 = key in params
-        # if both conditions met then we take the condition from params
-        if cond1 and cond2:
-            return params[key]
-        # if we don't have key in params and key isn't in RUN_LIST we should
-        #   just pass
-        elif not (cond1 and cond2):
-            return True
     # if we get to here then check has failed
     return False
 

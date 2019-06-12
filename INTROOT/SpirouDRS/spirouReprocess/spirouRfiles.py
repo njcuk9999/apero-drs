@@ -16,16 +16,11 @@ import os
 import sys
 from astropy.table import Table
 from collections import OrderedDict
-from multiprocessing import Process
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouStartup
-from SpirouDRS import spirouTelluric
-from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-from SpirouDRS.spirouUnitTests import spirouUnitTests
-
+from SpirouDRS.spirouTools import drs_reset
 
 # =============================================================================
 # Define variables
@@ -44,22 +39,6 @@ sPlt = spirouCore.sPlt
 # Get param dictionary
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
-# EMAIL SETTINGS
-#    Note must have yagmail and dependencies installed
-#    Will ask for keyring password each time or email password
-#    One email will send at start and one at end with the log printed to the
-#    body of the message (PID in subject)
-EMAIL = True
-EMAIL_ADDRESS = 'neil.james.cook@gmail.com'
-try:
-    if not EMAIL:
-        YAG = None
-    else:
-        import yagmail
-        YAG = yagmail.SMTP(EMAIL_ADDRESS)
-except:
-    YAG = None
-# -----------------------------------------------------------------------------
 # valid file types
 RAW_VALID = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 
@@ -67,8 +46,8 @@ RAW_VALID = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 ITABLE_FILECOL = 'FILENAME'
 NIGHT_COL = '@@@NIGHTNAME'
 ABSFILE_COL = '@@@ABSFILE'
-
-
+HEADERKEYS = ['KW_ACQTIME', 'KW_CCAS', 'KW_CREF', 'KW_CMPLTEXP', 'KW_NEXP']
+SORTCOL = 'KW_ACQTIME'
 # define where the run directory is
 RUN_DIR = '/scratch/Projects/spirou/data_dev/runs/'
 RUN_KEY = 'ID'
@@ -80,12 +59,18 @@ def find_raw_files(params):
     # get path
     path, rpath = get_path_and_check(params, 'DRS_DATA_RAW')
     # get files
-    nightnames, filelist, basenames = get_files(params, path, rpath)
+    gfout = get_files(params, path, rpath)
+    nightnames, filelist, basenames, kwargs = gfout
     # construct a table
     mastertable = Table()
     mastertable[NIGHT_COL] = nightnames
     mastertable[ITABLE_FILECOL] = basenames
     mastertable[ABSFILE_COL] = filelist
+    for kwarg in kwargs:
+        mastertable[kwarg] = kwargs[kwarg]
+    # sort by sortcol
+    sortmask = np.argsort(mastertable[SORTCOL])
+    mastertable = mastertable[sortmask]
     # return the file list
     return mastertable, rpath
 
@@ -137,7 +122,10 @@ def read_run_file(params, runfile=None):
         keys, values = np.loadtxt(runfile, delimiter='=', comments='#',
                                   unpack=True, dtype=str)
     except Exception as e:
-        WLOG(params, 'error', 'Error {0}: {1}'.format(type(e), e))
+        # log error
+        emsg1 = 'RunFileError: Cannot open file {0}'.format(runfile)
+        emsg2 = '\tError {0}: {1}'.format(type(e), e)
+        WLOG(params, 'error', [emsg1, emsg2])
         keys, values = [], []
     # ----------------------------------------------------------------------
     # table storage
@@ -197,16 +185,22 @@ def read_run_file(params, runfile=None):
     return params, runtable
 
 
-# =============================================================================
-# Define worker functions
-# =============================================================================
 def send_email(params, kind='start'):
 
-    if YAG is None:
+    if not params['SEND_EMAIL']:
         return 0
+    try:
+        import yagmail
+        YAG = yagmail.SMTP(params['EMAIL_ADDRESS'])
+    except ImportError:
+        WLOG(params, 'error', 'Cannot send email (need pip install yagmail)')
+        YAG = None
+    except Exception as e:
+        WLOG(params, 'error', 'Error {0}: {1}'.format(type(e), e))
+        YAG = None
 
     if kind == 'start':
-        receiver = EMAIL_ADDRESS
+        receiver = params['EMAIL_ADDRESS']
         subject = ('[SPIROU-DRS] {0} has started (PID = {1})'
                    ''.format(__NAME__, params['PID']))
         body = ''
@@ -214,10 +208,9 @@ def send_email(params, kind='start'):
             body += '{0}\t{1}\n'.format(*logmsg)
 
     elif kind == 'end':
-        receiver = EMAIL_ADDRESS
+        receiver = params['EMAIL_ADDRESS']
         subject = ('[SPIROU-DRS] {0} has finished (PID = {1})'
                    ''.format(__NAME__, params['PID']))
-
         body = ''
         for logmsg in params['LOGGER_FULL']:
             for log in logmsg:
@@ -228,6 +221,26 @@ def send_email(params, kind='start'):
     YAG.send(to=receiver, subject=subject, contents=body)
 
 
+def reset(params):
+    if not params['RESET_ALLOWED']:
+        return 0
+    if params['RESET_TMP']:
+        drs_reset.reset_tmp_folders(params, log=True)
+    if params['RESET_REDUCED']:
+        drs_reset.reset_reduced_folders(params, log=True)
+    if params['RESET_CALIB']:
+        drs_reset.reset_calibdb(params, log=True)
+    if params['RESET_TELLU']:
+        drs_reset.reset_telludb(params, log=True)
+    if params['RESET_LOG']:
+        drs_reset.reset_log(params)
+    if params['RESET_PLOT']:
+        drs_reset.reset_plot(params)
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
 def get_uncommon_path(path1, path2):
     """
     Get the uncommon path from path1 and path2
@@ -274,6 +287,10 @@ def get_files(params, path, rpath):
     func_name = __NAME__ + '.get_files()'
     # storage list
     filelist, basenames, nightnames = [], [], []
+    # populate the storage dictionary
+    kwargs = dict()
+    for key in HEADERKEYS:
+        kwargs[key] = []
     # get files
     for root, dirs, files in os.walk(path):
         for filename in files:
@@ -288,16 +305,33 @@ def get_files(params, path, rpath):
             for suffix in RAW_VALID:
                 if filename.endswith(suffix):
                     isvalid = True
+            # do not scan empty ucpath
+            if len(ucpath) == 0:
+                continue
+            # log the night directory
+            if ucpath not in nightnames:
+                WLOG(params, '', '\tScanning directory: {0}'.format(ucpath))
+            # get absolute path
+            abspath = os.path.join(root, filename)
             # if not valid skip
             if not isvalid:
                 continue
             # else append to list
             else:
                 nightnames.append(ucpath)
-                filelist.append(os.path.join(root, filename))
+                filelist.append(abspath)
                 basenames.append(filename)
+            # deal with header
+            if filename.endswith('.fits'):
+                header = spirouImage.ReadHeader(params, abspath)
+                for key in HEADERKEYS:
+                    rkey = params[key][0]
+                    if rkey in header:
+                        kwargs[key].append(header[rkey])
+                    else:
+                        kwargs[key].append('')
     # return filelist
-    return nightnames, filelist, basenames
+    return nightnames, filelist, basenames, kwargs
 
 
 def get_index_files(params, path, rpath):
@@ -331,7 +365,7 @@ def load_index_files(params, path, index_files, nightnames):
         # get this iterations night name
         nightname = nightnames[it]
         # log progress
-        wmsg = 'Loading index file {0}/{1} night: "{2}"'
+        wmsg = '\tLoading index file {0}/{1} night: "{2}"'
         WLOG(params, '', wmsg.format(it + 1, len(index_files), nightname))
         # load table
         itable = spirouImage.ReadTable(params, index_file, fmt='fits')

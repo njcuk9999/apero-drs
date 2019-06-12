@@ -13,7 +13,7 @@ from __future__ import division
 import numpy as np
 import os
 import multiprocessing
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Manager, Event
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -69,7 +69,8 @@ def process_run_list(params, runlist):
 # =============================================================================
 # Define processing functions
 # =============================================================================
-def linear_process(params, runlist, return_dict=None, number=0, cores=1):
+def linear_process(params, runlist, return_dict=None, number=0, cores=1,
+                   event=None):
 
     # deal with empty return_dict
     if return_dict is None:
@@ -104,6 +105,8 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1):
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
+            # flag finished
+            finished = True
         else:
             # try to run the main function
             try:
@@ -117,6 +120,8 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1):
                 pp['ERROR'] = list(ll_item['p']['LOGGER_ERROR'])
                 pp['WARNING'] = list(ll_item['p']['LOGGER_WARNING'])
                 pp['OUTPUTS'] = dict(ll_item['p']['OUTPUTS'])
+                # flag finished
+                finished = True
             # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
@@ -128,6 +133,8 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1):
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                # flag not finished
+                finished = False
             # --------------------------------------------------------------
             # Manage expected errors
             except SystemExit as e:
@@ -139,6 +146,13 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1):
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                # flag not finished
+                finished = False
+        # ------------------------------------------------------------------
+        # if STOP_AT_EXCEPTION and not finished stop here
+        if params['STOP_AT_EXCEPTION'] and not finished:
+            if event is not None:
+                event.set()
         # ------------------------------------------------------------------
         # append to return dict
         return_dict[priority] = pp
@@ -151,9 +165,13 @@ def multi_process(params, runlist, cores):
     grouplist = group_tasks(params, runlist, cores)
     # start process manager
     manager = Manager()
+    event = Event()
     return_dict = manager.dict()
     # loop around groups
     for g_it, group in enumerate(grouplist):
+        # skip if event is set
+        if event.is_set():
+            continue
         # process storage
         jobs = []
         # log progress
@@ -161,7 +179,8 @@ def multi_process(params, runlist, cores):
         # loop around sub groups (to be run at same time)
         for r_it, runlist_group in enumerate(group):
             # get args
-            args = [params, runlist_group, return_dict, r_it + 1, cores]
+            args = [params, runlist_group, return_dict, r_it + 1, cores,
+                    event]
             # get parallel process
             process = Process(target=linear_process, args=args)
             process.start()
@@ -169,10 +188,16 @@ def multi_process(params, runlist, cores):
         # do not continue until finished
         for proc in jobs:
             proc.join()
+            if event.is_set():
+                terminate_jobs(jobs)
+
     # return return_dict
     return dict(return_dict)
 
 
+def terminate_jobs(jobs):
+    for job in jobs:
+        job.terminate()
 
 
 # =============================================================================
