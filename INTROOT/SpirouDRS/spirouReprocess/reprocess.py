@@ -10,6 +10,7 @@ Created on 2019-06-10 at 10:49
 @author: cook
 """
 from __future__ import division
+import sys
 
 from SpirouDRS import spirouReprocess
 from SpirouDRS import spirouConfig
@@ -21,7 +22,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'extract_trigger.py'
+__NAME__ = 'reprocess.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -40,7 +41,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 #def main(runfile=None):
 if True:
-    runfile = 'run_test002.ini'
+    runfile = 'run_test001.ini'
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -50,6 +51,15 @@ if True:
     p = spirouStartup.LoadArguments(p, require_night_name=False)
     # deal with run file
     p, runtable = spirouReprocess.RunFile(p, runfile)
+    # reset sys.argv so it doesn't mess with recipes
+    sys.argv = [__NAME__]
+    # send email if configured
+    spirouReprocess.SendEmail(p, kind='start')
+
+    # ----------------------------------------------------------------------
+    # Deal with reset options
+    # ----------------------------------------------------------------------
+    spirouReprocess.ResetFiles(p)
 
     # ----------------------------------------------------------------------
     # find all files
@@ -67,7 +77,6 @@ if True:
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    # TODO: add id = 'all' mode
     runlist = spirouReprocess.GenerateRunList(p, tables, paths, runtable)
 
     # ----------------------------------------------------------------------
@@ -90,6 +99,9 @@ if True:
             WLOG(p, '', header, colour='red')
             WLOG(p, '', '', colour='red')
             WLOG(p, 'warning', outlist[key]['ERROR'], colour='red')
+
+    # send email if configured
+    spirouReprocess.SendEmail(p, kind='end')
 
     # ----------------------------------------------------------------------
     # End Message
