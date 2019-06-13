@@ -46,7 +46,8 @@ RAW_VALID = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 ITABLE_FILECOL = 'FILENAME'
 NIGHT_COL = '@@@NIGHTNAME'
 ABSFILE_COL = '@@@ABSFILE'
-HEADERKEYS = ['KW_ACQTIME', 'KW_CCAS', 'KW_CREF', 'KW_CMPLTEXP', 'KW_NEXP']
+HEADERKEYS = ['KW_ACQTIME', 'KW_CCAS', 'KW_CREF', 'KW_CMPLTEXP', 'KW_NEXP',
+              'KW_OBJECT']
 SORTCOL = 'KW_ACQTIME'
 # define where the run directory is
 RUN_DIR = '/scratch/Projects/spirou/data_dev/runs/'
@@ -167,6 +168,8 @@ def read_run_file(params, runfile=None):
                 value = True
             elif value.upper() == 'FALSE':
                 value = False
+            elif value.upper() == 'NONE':
+                value = None
             # log if we are overwriting value
             if key in params:
                 wmsg1 = 'Overwriting constant {0}'.format(key)
@@ -176,10 +179,6 @@ def read_run_file(params, runfile=None):
             # add to params
             params[key] = value
             params.set_source(key, func_name)
-
-    # deal with night name
-    if params['NIGHT_NAME'].upper() == 'NONE':
-        params['NIGHT_NAME'] = None
 
     # return parameter dictionary and runtable
     return params, runtable
