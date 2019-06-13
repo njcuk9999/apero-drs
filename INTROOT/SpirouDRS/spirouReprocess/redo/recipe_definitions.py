@@ -178,6 +178,7 @@ wavefile = dict(name='--wavefile', dtype='file', default='None',
 cal_badpix = drs_recipe(__INSTRUMENT__)
 cal_ccf = drs_recipe(__INSTRUMENT__)
 cal_dark = drs_recipe(__INSTRUMENT__)
+cal_dark_master = drs_recipe(__INSTRUMENT__)
 cal_drift1 = drs_recipe(__INSTRUMENT__)
 cal_drift2 = drs_recipe(__INSTRUMENT__)
 cal_extract = drs_recipe(__INSTRUMENT__)
@@ -187,13 +188,16 @@ cal_loc = drs_recipe(__INSTRUMENT__)
 cal_pp = drs_recipe(__INSTRUMENT__)
 cal_slit = drs_recipe(__INSTRUMENT__)
 cal_shape = drs_recipe(__INSTRUMENT__)
+cal_shape_master = drs_recipe(__INSTRUMENT__)
 cal_wave = drs_recipe(__INSTRUMENT__)
 
 test = drs_recipe(__INSTRUMENT__)
 # push into a list
-recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2,
-           cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
-           cal_shape, cal_wave,
+recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master,
+           cal_drift1, cal_drift2,
+           cal_extract, cal_ff, cal_hc, cal_loc, cal_pp,
+           cal_slit, cal_shape, cal_shape_master,
+           cal_wave,
            test]
 
 # =============================================================================
@@ -276,12 +280,12 @@ cal_pp.description = Help['PREPROCESS_DESC']
 cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
 cal_pp.arg(pos=0, **directory)
 cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
-           helpstr=Help['PREPROCESS_UFILES_HELP'])
+           helpstr=Help['PREPROCESS_UFILES_HELP'], limit=1)
 
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
-cal_badpix.name = 'cal_badpix_spirou.py'
+cal_badpix.name = 'cal_BADPIX_spirou.py'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
@@ -291,10 +295,10 @@ cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
 cal_badpix.run_order = 1
 cal_badpix.arg(pos=0, **directory)
-cal_badpix.kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
+cal_badpix.kwarg(name='-flatfile', dtype='files', files=[sf.pp_flat_flat],
                  nargs='+', filelogic='exclusive', required=True,
                  helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
-cal_badpix.kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
+cal_badpix.kwarg(name='-darkfile', dtype='files', files=[sf.pp_dark_dark],
                  nargs='+', filelogic='exclusive', required=True,
                  helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
 cal_badpix.kwarg(**add_cal)
@@ -327,6 +331,27 @@ cal_dark.kwarg(**fluxunits)
 cal_dark.kwarg(**plot)
 cal_dark.kwarg(**interactive)
 cal_dark.kwarg(**resize)
+
+
+# -----------------------------------------------------------------------------
+# cal_dark_master_spirou
+# -----------------------------------------------------------------------------
+cal_dark_master.name = 'cal_dark_master_spirou.py'
+cal_dark_master.instrument = __INSTRUMENT__
+cal_dark_master.outputdir = 'reduced'
+cal_dark_master.inputdir = 'tmp'
+cal_dark_master.intputtype = 'pp'
+cal_dark_master.extension = 'fits'
+cal_dark_master.description = Help['DARK_DESC']
+cal_dark_master.epilog = Help['DARK_EXAMPLE']
+cal_dark_master.run_order = 2
+cal_dark_master.kwarg(**add_cal)
+cal_dark_master.kwarg(default=True, **combine)
+cal_dark_master.kwarg(**flipimage)
+cal_dark_master.kwarg(**fluxunits)
+cal_dark_master.kwarg(**plot)
+cal_dark_master.kwarg(**interactive)
+cal_dark_master.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
@@ -388,7 +413,7 @@ cal_slit.kwarg(**resize)
 # -----------------------------------------------------------------------------
 # cal_SHAPE_spirou
 # -----------------------------------------------------------------------------
-cal_shape.name = 'cal_SHAPE_spirou.py'
+cal_shape.name = 'cal_shape_spirou.py'
 cal_shape.instrument = __INSTRUMENT__
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
@@ -398,9 +423,7 @@ cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
 cal_shape.run_order = 4
 cal_shape.arg(pos=0, **directory)
-cal_shape.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1', 
-              helpstr=Help['SHAPE_HCFILES_HELP'])
-cal_shape.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+', 
+cal_shape.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
               helpstr=Help['SHAPE_FPFILES_HELP'])
 cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
@@ -414,6 +437,37 @@ cal_shape.kwarg(**fluxunits)
 cal_shape.kwarg(**plot)
 cal_shape.kwarg(**interactive)
 cal_shape.kwarg(**resize)
+
+
+# -----------------------------------------------------------------------------
+# cal_shape_master_spirou
+# -----------------------------------------------------------------------------
+cal_shape_master.name = 'cal_shape_master_spirou.py'
+cal_shape_master.instrument = __INSTRUMENT__
+cal_shape_master.outputdir = 'reduced'
+cal_shape_master.inputdir = 'tmp'
+cal_shape_master.inputtype = 'pp'
+cal_shape_master.extension = 'fits'
+cal_shape_master.description = Help['SHAPE_DESC']
+cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
+cal_shape_master.run_order = 4
+cal_shape_master.arg(pos=0, **directory)
+cal_shape_master.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1',
+              helpstr=Help['SHAPE_HCFILES_HELP'])
+cal_shape_master.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+',
+              helpstr=Help['SHAPE_FPFILES_HELP'])
+cal_shape_master.kwarg(**add_cal)
+cal_shape_master.kwarg(**badfile)
+cal_shape_master.kwarg(**dobad)
+cal_shape_master.kwarg(**backsub)
+cal_shape_master.kwarg(default=True, **combine)
+cal_shape_master.kwarg(**darkfile)
+cal_shape_master.kwarg(**dodark)
+cal_shape_master.kwarg(**flipimage)
+cal_shape_master.kwarg(**fluxunits)
+cal_shape_master.kwarg(**plot)
+cal_shape_master.kwarg(**interactive)
+cal_shape_master.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_spirou
