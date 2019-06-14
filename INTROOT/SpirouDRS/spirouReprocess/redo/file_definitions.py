@@ -78,12 +78,15 @@ class DrsFile:
     def __repr__(self):
         return 'DrsRecipe[{0}]'.format(self.name)
 
+    def copy(self):
+        return DrsFile(self.name, **self.args)
+
     @staticmethod
     def add_required_keywords(drsfiles, kwargs):
         for kwarg in kwargs:
             for drsfile in drsfiles:
                 drsfile.addarg(kwarg, kwargs[kwarg])
-
+        return drsfiles
 
 # =============================================================================
 # TODO: replace with terrapipe
@@ -385,29 +388,41 @@ out_ff_flat_c = drs_finput('FF_FLAT_C', KW_OUTPUT='FF_FLAT_C', fiber='C')
 # -----------------------------------------------------------------------------
 # extract
 out_ext_e2ds_ab = drs_finput('EXTRACT_E2DS_AB', KW_OUTPUT='EXT_E2DS_AB',
-                             fiber='AB')
+                             fiber='AB', ext='_e2ds_AB.fits',
+                             intype=pp_file)
 out_ext_e2ds_a = drs_finput('EXTRACT_E2DS_A', KW_OUTPUT='EXT_E2DS_A',
-                            fiber='A')
+                            fiber='A', ext='_e2ds_A.fits',
+                             intype=pp_file)
 out_ext_e2ds_b = drs_finput('EXTRACT_E2DS_B', KW_OUTPUT='EXT_E2DS_B',
-                            fiber='B')
+                            fiber='B', ext='_e2ds_B.fits',
+                             intype=pp_file)
 out_ext_e2ds_c = drs_finput('EXTRACT_E2DS_C', KW_OUTPUT='EXT_E2DS_C',
-                            fiber='C')
+                            fiber='C', ext='_e2ds_C.fits',
+                             intype=pp_file)
 out_ext_e2dsff_ab = drs_finput('EXTRACT_E2DS_FF_AB', KW_OUTPUT='EXT_E2DS_FF_AB',
-                               fiber='AB')
+                               fiber='AB', ext='_e2dsff_AB.fits',
+                             intype=pp_file)
 out_ext_e2dsff_a = drs_finput('EXTRACT_E2DS_FF_A', KW_OUTPUT='EXT_E2DS_FF_A',
-                              fiber='A')
+                              fiber='A', ext='_e2dsff_A.fits',
+                             intype=pp_file)
 out_ext_e2dsff_b = drs_finput('EXTRACT_E2DS_FF_B', KW_OUTPUT='EXT_E2DS_FF_B',
-                              fiber='B')
+                              fiber='B', ext='_e2dsff_B.fits',
+                             intype=pp_file)
 out_ext_e2dsff_c = drs_finput('EXTRACT_E2DS_FF_C', KW_OUTPUT='EXT_E2DS_FF_C',
-                              fiber='C')
+                              fiber='C', ext='_e2dsff_C.fits',
+                             intype=pp_file)
 out_ext_e2dsll_ab = drs_finput('EXTRACT_E2DS_LL_AB', KW_OUTPUT='EXT_E2DS_LL_AB',
-                               fiber='AB')
+                               fiber='AB', ext='_e2dsll_AB.fits',
+                             intype=pp_file)
 out_ext_e2dsll_a = drs_finput('EXTRACT_E2DS_LL_A', KW_OUTPUT='EXT_E2DS_LL_A',
-                              fiber='A')
+                              fiber='A', ext='_e2dsll_A.fits',
+                             intype=pp_file)
 out_ext_e2dsll_b = drs_finput('EXTRACT_E2DS_LL_B', KW_OUTPUT='EXT_E2DS_LL_B',
-                              fiber='B')
+                              fiber='B', ext='_e2dsll_B.fits',
+                             intype=pp_file)
 out_ext_e2dsll_c = drs_finput('EXTRACT_E2DS_LL_C', KW_OUTPUT='EXT_E2DS_LL_C',
-                              fiber='C')
+                              fiber='C', ext='_e2dsll_C.fits',
+                             intype=pp_file)
 out_ext_loco_ab = drs_finput('EXTRACT_LOCO_AB', KW_OUTPUT='EXT_LOCO_AB',
                              fiber='AB')
 out_ext_loco_a = drs_finput('EXTRACT_LOCO_A', KW_OUTPUT='EXT_LOCO_A',
