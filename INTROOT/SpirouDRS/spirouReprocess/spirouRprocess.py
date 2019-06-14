@@ -92,15 +92,20 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1,
         pp['RUNSTRING'] = run_item.runstring
         # ------------------------------------------------------------------
         # log what we are running
-        wmsg = 'ID{0:05d} | {1}'.format(priority, run_item.runstring)
-        WLOG(params, 'info', wmsg, colour='magenta')
+        wmsg1 = 'ID{0:05d} | {1}'.format(priority, run_item.runstring)
+
         # deal with a debug run
         if params['DEBUG']:
             # log which core is being used (only if using multiple cores)
             if cores > 1:
                 wargs = ['', number, cores, run_item.nightname]
-                wmsg = '{0:7s} | core = {1}/{2} night = "{3}"'.format(*wargs)
-                WLOG(params, '', wmsg, colour='magenta')
+                wmsg2 = '{0:7s} | core = {1}/{2} night = "{3}"'.format(*wargs)
+                # log message 1
+                WLOG(params, 'info', [wmsg1, wmsg2], colour='magenta',
+                     wrap=False)
+            else:
+                # log message 1
+                WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
             # add default outputs
             pp['ERROR'] = []
             pp['WARNING'] = []
@@ -108,6 +113,8 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1,
             # flag finished
             finished = True
         else:
+            # log message 1
+            WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
             # try to run the main function
             try:
                 # ----------------------------------------------------------

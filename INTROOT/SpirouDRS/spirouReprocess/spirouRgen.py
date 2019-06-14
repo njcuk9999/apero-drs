@@ -11,8 +11,8 @@ Created on 2019-06-10 at 13:38
 """
 from __future__ import division
 import numpy as np
-import os
 from collections import OrderedDict
+from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -47,7 +47,6 @@ import obj_mk_obj_template
 import visu_RAW_spirou
 import visu_E2DS_spirou
 import pol_spirou
-
 
 # =============================================================================
 # Define variables
@@ -102,7 +101,8 @@ MOD_LIST['SHAPE'] = [cal_shape_spirou, None]
 MOD_LIST['FF'] = [cal_FF_RAW_spirou, None]
 MOD_LIST['THERMAL'] = [cal_thermal_spirou, None]
 MOD_LIST['EXTRACT_FPHC'] = [cal_extract_RAW_spirou, ['FP_FP', 'HC_HC']]
-MOD_LIST['WAVE'] = [cal_WAVE_E2DS_EA_spirou, None]
+MOD_LIST['WAVEHC'] = [cal_HC_E2DS_EA_spirou, ['HC_HC']]
+MOD_LIST['WAVE'] = [cal_WAVE_E2DS_EA_spirou, ['FP_FP', 'HC_HC']]
 MOD_LIST['EXTRACT_TELLU'] = [cal_extract_RAW_spirou, ['TELLURIC_TARGETS']]
 MOD_LIST['EXTRACT_OBJ'] = [cal_extract_RAW_spirou, ['SCIENCE_TARGETS']]
 MOD_LIST['EXTRACT_ALL'] = [cal_extract_RAW_spirou, None]
@@ -124,6 +124,7 @@ SFILTER = 'SCIENCE_TARGETS'
 TFILTER = 'TELLURIC_TARGETS'
 FP_FILTER = 'FP_FP'
 HC_FILTER = 'HC_HC'
+
 
 # =============================================================================
 # Define classes
@@ -200,7 +201,7 @@ class Run:
     def get_kwargs(self):
 
         left_args = self.args[self.argstart:]
-        req_args = self.recipemod.__args__[self.argstart -1:]
+        req_args = self.recipemod.__args__[self.argstart - 1:]
 
         # situation 1: number of required args = 1
         # solution 1: all left args are this req_args
@@ -260,7 +261,6 @@ class Run:
 # Define user functions
 # =============================================================================
 def generate(params, tables, paths, runtable):
-
     # get all values (upper case) using map function
     rvalues = list(map(lambda x: x.upper(), runtable.values()))
     # sort out which mode we are in
@@ -274,7 +274,6 @@ def generate(params, tables, paths, runtable):
 # Define "from id" functions
 # =============================================================================
 def generate_ids(params, tables, paths, runtable):
-
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
@@ -334,6 +333,332 @@ def check_runlist(params, runlist):
 
 
 # =============================================================================
+# Define classes
+# =============================================================================
+class Reprocesser:
+    def __init__(self, params, name, args):
+        self.params = params
+        self.name = remove_py(name)
+        self.arglist = args
+        self.recipe = self.find_recipe()
+        self.file_args = self.find_file_arguments()
+        self.file_groups = OrderedDict()
+        self.command_number = 0
+        self.commands = OrderedDict()
+
+    def find_recipe(self):
+        for recipe in rd.recipes:
+            if self.name == remove_py(recipe.name):
+                return recipe
+        else:
+            wmsg = '\tCannot find recipe "{0}" skipping.'
+            WLOG(self.params, 'warning', wmsg.format(self.name))
+            return None
+
+    def find_file_arguments(self):
+        """
+        # get associated file type arguments
+        :return:
+        """
+        if self.recipe is None:
+            return []
+        # storage for output arguments
+        outargs = dict()
+        # get recipe arg list without '-'
+        recipearglist = list(map(lambda x: x.replace('-', ''),
+                                 self.recipe.args.keys()))
+        oarglist = list(self.recipe.args.keys())
+        for rarg in self.arglist:
+            if rarg in recipearglist:
+                pos = recipearglist.index(rarg)
+                oarg = oarglist[pos]
+                outargs[oarg] = self.recipe.args[oarg]['files']
+        return outargs
+
+    def get_file_groups(self, table, filters):
+        if self.recipe is None:
+            return []
+        # for every file argument
+        for argname in self.file_args:
+            # add empty list for file argument
+            self.file_groups[argname] = []
+            # get this file argument's drs files
+            drsfiles = self.file_args[argname]
+            # create a table for this drs file
+            drstable = Table()
+            # for every type of file in file arguement
+            for d_it, drsfile in enumerate(drsfiles):
+                # need to find all files that below in this group
+                dargs = [drsfile, table, filters]
+                mask_it, newfiles = self.get_drsfile_mask(*dargs)
+                # add old columns
+                for col in table.colnames:
+                    drstable[col] = table[col][mask_it]
+                # add new files column
+                drstable['NEWFILES{0}'.format(d_it)] = newfiles
+            # need to group files
+            drstable['GROUPS'], nightmask = group_drs_files(drstable)
+            # mask by night mask
+            drstable = drstable[nightmask]
+            # need to get each groups mean
+            drstable['MEANDATE'] = get_group_mean(drstable)
+            # loop around groups and add to outargs
+            for g_it in range(1, int(max(drstable['GROUPS']))):
+                # get group table
+                grouptable = drstable[drstable['GROUPS'] == g_it].copy()
+                # add to file_groups
+                self.file_groups[argname].append(grouptable)
+
+    def get_drsfile_mask(self, drsfile, table, filters):
+        # get in filenames
+        infilenames = table[ITABLE_FILECOL]
+        # -------------------------------------------------------------------------
+        # get output extension
+        outext = drsfile.args['ext']
+        # get input extension
+        while 'intype' in drsfile.args:
+            drsfile = drsfile.args['intype']
+        inext = drsfile.args['ext']
+        # -------------------------------------------------------------------------
+        # get required header keys
+        rkeys = dict()
+        for arg in drsfile.args:
+            if arg.startswith('KW_'):
+                rkeys[arg] = drsfile.args[arg]
+        # maask by the required header keys
+        mask = np.ones_like(infilenames, dtype=bool)
+        for key in rkeys:
+            mask &= table[key] == rkeys[key]
+        # -------------------------------------------------------------------------
+        # deal with filters
+        if filters is not None:
+            # ------------------------------------------------------------------
+            # KW_OBJECT filters
+            # ------------------------------------------------------------------
+            # deal with science filter
+            if self.params[SFILTER] is not None and SFILTER in filters:
+                objectnames = self.params[SFILTER].split(' ')
+                # apply object names to mask
+                mask &= np.in1d(table['KW_OBJECT'], objectnames)
+            # deal with telluric filter
+            if TFILTER in filters:
+                if self.params[TFILTER] is None:
+                    objectnames = spirouTelluric.GetWhiteList()
+                else:
+                    objectnames = self.params[TFILTER].split(' ')
+                # apply object names to mask
+                mask &= np.in1d(table['KW_OBJECT'], objectnames)
+            # ------------------------------------------------------------------
+            # type filters
+            # ------------------------------------------------------------------
+            # type mask is initially all False
+            typemask = np.zeros(len(table), dtype=bool)
+            do_mask = False
+            # deal with an FP filter
+            if FP_FILTER in filters:
+                # conditions to be FP_FP
+                cond1 = table['KW_CCAS'] == 'pos_fp'
+                cond2 = table['KW_CREF'] == 'pos_fp'
+                # apply to mask
+                typemask |= (cond1 & cond2)
+                do_mask = True
+
+            # deal with an HC filter
+            if HC_FILTER in filters:
+                # conditions to be FP_FP
+                cond1 = table['KW_CCAS'] == 'pos_hc1'
+                cond2 = table['KW_CREF'] == 'pos_hc1'
+                # apply to mask
+                typemask |= (cond1 & cond2)
+                do_mask = True
+
+            # apply type mask to mask (only if we need to)
+            if do_mask:
+                mask &= typemask
+        # -------------------------------------------------------------------------
+        # construct new filenames
+        outfilenames = []
+        for it, filename in enumerate(infilenames):
+            if not filename.endswith(inext):
+                mask[it] = False
+            if mask[it]:
+                outfilenames.append(filename.replace(inext, outext))
+        # -------------------------------------------------------------------------
+        # return the mask
+        return mask, outfilenames
+
+    def generate_run_commands(self):
+        # case 1: deal with no argument list
+        if len(self.arglist) == 0:
+            self.commands[0] = '{0}'.format(self.name)
+        # case 2: we have one file argument group
+        elif len(self.file_groups) == 1:
+            # get primary arg name
+            argname1 = list(self.file_args.keys())[0]
+            # get limit for primary arg
+            limit = self.recipe.args[argname1].get('limit', None)
+            # set other args
+            other_args = []
+            # get filelist
+            arglist = self.get_filelist(argname1, other_args, limit)
+            # create commands
+            self.generate_commands(arglist)
+        # case 3: we have more than one file argument group
+        #    --> we must match files from each file argumentgroup
+        else:
+            # get primary arg name
+            argname1, other_args = self.get_minimum_file_argument()
+            # get limit for primary arg
+            limit = 1
+            # get filelist
+            arglist = self.get_filelist(argname1, other_args, limit)
+            # create commands
+            self.generate_commands(arglist)
+
+    def get_minimum_file_argument(self):
+        # start the minimum length of at infinite size
+        min_len = np.inf
+        # start the minimum file argument as None
+        min_arg = None
+        # loop around the arguments in file_gruops
+        for argname in self.file_groups:
+            # get the table for this file argument
+            argtable = self.file_groups[argname][0]
+            # if argtable is smaller in length this is the minim
+            if len(argtable) < min_len:
+                min_len = len(argtable)
+                min_arg = argname
+        # get list of other arguments
+        other_args = []
+        for argname in self.file_groups:
+            if argname != min_arg:
+                other_args.append(argname)
+        # return the minimum group
+        return min_arg, other_args
+
+    def get_filelist(self, arg1, args, limit=None):
+        if self.recipe is None:
+            return [], []
+        # set up storage
+        arglist = OrderedDict()
+        for rarg in self.arglist:
+            arglist[rarg] = []
+
+        # set up used groups (for each argument)
+        used_groups = dict()
+        for arg in args:
+            used_groups[arg] = []
+        # loop around the groups in arg1
+        for table1 in self.file_groups[arg1]:
+            # get the individual group values
+            night1 = table1[NIGHT_COL][0]
+            date1 = table1['MEANDATE'][0]
+            # get number of drsfiles
+            ntypes = len(self.file_args[arg1])
+            for ntype in range(ntypes):
+                newfiles1 = table1['NEWFILES{0}'.format(ntype)]
+                # --------------------------------------------------------------
+                # case a: no additional files args and want each file separate
+                if len(args) == 0 and limit == 1:
+                    for nfile1 in newfiles1:
+                        # add night name if in arguments
+                        if 'night_name' in self.arglist:
+                            arglist['night_name'].append(night1)
+                        # add other args (without dashes)
+                        arg1i = remove_dash(arg1)
+                        arglist[arg1i].append([nfile1])
+                # --------------------------------------------------------------
+                # case b: no additional files args and want all files together
+                elif len(args) == 0:
+                    # add night name if in arguments
+                    if 'night_name' in self.arglist:
+                        arglist['night_name'].append(night1)
+                    # add other args (without dashes)
+                    arg1i = remove_dash(arg1)
+                    arglist[arg1i].append(list(newfiles1))
+                # --------------------------------------------------------------
+                # case c: additional file args and want one from each group
+                else:
+                    # set up files2 storage (will have one file from each
+                    #   file argument
+                    files2 = OrderedDict()
+                    # loop around arguments and add one file to files2
+                    for arg2 in args:
+                        # used_groups is updated
+                        margs = [used_groups, night1, date1, arg2, ntype]
+                        nfiles, used_groups = self.match_groups(*margs)
+                        if nfiles is not None:
+                            files2[arg2] = nfiles
+                    # if files2 is not empty append it to filelist
+                    #     with files1[0]
+                    if len(files2) != 0:
+                        # add night name if in arguments
+                        if 'night_name' in self.arglist:
+                            arglist['night_name'].append(night1)
+                        # add other args (without dashes)
+                        arg1i = remove_dash(arg1)
+                        arglist[arg1i].append(list(newfiles1)[0])
+                        for arg2 in args:
+                            # add other args (without dashes)
+                            arg2i = remove_dash(arg2)
+                            arglist[arg2i].append(list(files2[arg2])[0])
+        # finally return night and file list
+        return arglist
+
+    def match_groups(self, used_groups, night1, date1, arg, ntype):
+        # set up storage
+        dates2, files2 = [], []
+        # loop around the groups in this argument
+        for table2 in self.file_groups[arg]:
+            # get the individual group values
+            files2i = table2['NEWFILES{0}'.format(ntype)]
+            group2i = table2['GROUPS'][0]
+            night2i = table2[NIGHT_COL][0]
+            date2i = table2['MEANDATE'][0]
+            # do not use groups we already have used
+            if group2i in used_groups[arg]:
+                date2i = np.inf
+            # do not use if nights are different
+            if night1 != night2i:
+                date2 = np.inf
+            # if we have reached here append to dates2
+            dates2.append(date2i)
+            files2.append(files2i)
+        # make dates a numpy array
+        dates2 = np.array(dates2)
+        # if we have no dates return None
+        if np.sum(np.isfinite(dates2)) == 0:
+            return None
+        # now find the closest date
+        diff = np.abs(dates2 - date1)
+        pos = int(np.argmin(diff))
+        # add position to used_group
+        used_groups[arg].append(pos)
+        # return the filename in the correct position
+        return files2[pos], used_groups
+
+    def generate_commands(self, arglist):
+        if self.recipe is None:
+            return 0
+        # get the number of arguments expected
+        number = len(list(arglist.values())[0])
+        # loop around the number of arguments expected
+        for it in range(number):
+            command = '{0} '.format(self.name)
+            # loop around expected keys
+            for key in self.arglist:
+                value = arglist[key][it]
+                if isinstance(value, list):
+                    command += '{0} '.format(' '.join(value))
+                else:
+                    command += '{0} '.format(value)
+            # add to command list
+            self.commands[self.command_number] = command.strip()
+            # iterate the command number
+            self.command_number += 1
+
+
+# =============================================================================
 # Define "from automated" functions
 # =============================================================================
 def generate_all(params, tables, paths):
@@ -345,12 +670,12 @@ def generate_all(params, tables, paths):
         # log progress
         WLOG(params, '', 'Checking run {0}'.format(modname))
         # get recipe name
-        recipename = MOD_LIST[modname][0].__NAME__
-        recipeargs = np.array(MOD_LIST[modname][0].__args__)
-        recipereqs = np.array(MOD_LIST[modname][0].__required__)
-        recipefilter = MOD_LIST[modname][1]
-        if len(recipeargs) > 0 and len(recipereqs) > 0:
-            recipeargs = list(recipeargs[recipereqs])
+        r_name = MOD_LIST[modname][0].__NAME__
+        r_args = np.array(MOD_LIST[modname][0].__args__)
+        r_reqs = np.array(MOD_LIST[modname][0].__required__)
+        r_filter = MOD_LIST[modname][1]
+        if len(r_args) > 0 and len(r_reqs) > 0:
+            r_args = list(r_args[r_reqs])
         # get run name
         runname = 'RUN_{0}'.format(modname)
         # make sure item in params - skip if it isn't
@@ -360,317 +685,51 @@ def generate_all(params, tables, paths):
         if params[runname]:
             # log progress
             wmsg = '\tGenerating runs for {0} [{1}]'
-            wargs = [modname, remove_py(recipename)]
-            WLOG(params, '', wmsg.format(*wargs))
-            # find the recipe defintion
-            recipe = find_recipe(params, recipename)
-            # for now if recipe is None just skip
-            if recipe is None:
-                continue
-            # --------------------------------------------------------------
-            # get associated file types
-            req_args = find_required_arguments(recipe, recipeargs)
-            # --------------------------------------------------------------
-            # deal with no arguments
-            if len(req_args) == 0:
-                commands = OrderedDict()
-                commands[0] = '{0}'.format(remove_py(recipename))
-            else:
-                # using the required arguments to generate a set of runlist
-                # entries
-                cargs = [recipe, req_args, tables, recipefilter]
-                commands = generate_run_commands(params, *cargs)
+            WLOG(params, '', wmsg.format(modname, remove_py(r_name)))
+            # get reprocesser
+            prog = Reprocesser(params, r_name, r_args)
+            # find file groups using raw table (tables[0])
+            prog.get_file_groups(tables[0], r_filter)
+            # generate run commands
+            prog.generate_run_commands()
             # --------------------------------------------------------------
             # add this to runlist
-            for key in commands.keys():
-                cargs = [runkey, commands[key]]
+            for key in prog.commands.keys():
+                cargs = [runkey, prog.commands[key]]
                 print('Adding {0}: {1}'.format(*cargs))
-                runtable[runkey] = commands[key]
+                runtable[runkey] = prog.commands[key]
                 # iterate runkey
                 runkey += 1
         # else print that we are skipping
         else:
             # log progress
             wmsg = '\t\tSkipping runs for {0} [{1}]'
-            wargs = [modname, remove_py(recipename)]
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '', wmsg.format(modname, remove_py(r_name)))
 
     # return run objects (via generate ids)
     return generate_ids(params, tables, paths, runtable)
 
 
-# =============================================================================
-# Define  worker functions
-# =============================================================================
-def find_recipe(params, recipename):
-    for recipe in rd.recipes:
-        if recipename == recipe.name:
-            return recipe
-    else:
-        wmsg = '\tCannot find recipe "{0}" skipping.'
-        WLOG(params, 'warning', wmsg.format(recipename))
-        return None
-
-
-def find_required_arguments(recipe, recipeargs):
-    # storage for output arguments
-    outargs = dict()
-    # get recipe arg list without '-'
-    recipearglist = list(map(lambda x: x.replace('-', ''), recipe.args.keys()))
-    oarglist = list(recipe.args.keys())
-    for rarg in recipeargs:
-        if rarg in recipearglist:
-            pos = recipearglist.index(rarg)
-            oarg = oarglist[pos]
-            outargs[oarg] = recipe.args[oarg]['files']
-    return outargs
-
-
-def generate_run_commands(params, recipe, args, tables, filters):
-    # get the raw table
-    rawtable = tables[0]
-    # storage of output commands
-    commands = OrderedDict()
-    # command number
-    number = 0
-    # define the keys
-    outargs = OrderedDict()
-    # ----------------------------------------------------------------------
-    # group the files
-    # ----------------------------------------------------------------------
-    # work out the mean date for each group
-    meandate = np.zeros(len(rawtable))
-    # loop around arguments
-    for argname in args:
-        # get the dtype
-        dtype = recipe.args[argname]['dtype']
-        # ------------------------------------------------------------------
-        if dtype not in ['file', 'files']:
-            continue
-        # get drs files
-        drsfiles = args[argname]
-        # ------------------------------------------------------------------
-        # set up a mask of the table
-        mask = np.zeros_like(rawtable[ITABLE_FILECOL], dtype=bool)
-        # set up storage for new filenames
-        newfilenames = list(rawtable[ITABLE_FILECOL])
-        # loop around files
-        for drsfile in drsfiles:
-            # get new files onto outargs
-            dargs = [drsfile, rawtable, filters]
-            mask_it, newfiles = get_drs_file_mask(params, *dargs)
-            jt = 0
-            for it in range(len(newfilenames)):
-                if mask_it[it]:
-                    newfilenames[it] = newfiles[jt]
-                    jt += 1
-            mask |= mask_it
-        # add the new file names to the rawtable
-        rawtable['NEWFILENAME'] = newfilenames
-        # get the group number
-        groups = group_drs_files(mask, rawtable)
-        rawtable['GROUPS'] = groups
-        # ------------------------------------------------------------------
-        # loop around each group and change the mean date for the files
-        for g_it in range(1, int(max(groups))):
-            # group mask
-            groupmask = (groups == g_it) & mask
-            # group mean
-            groupmean = np.mean(rawtable['KW_ACQTIME'][groupmask])
-            # save group mean
-            meandate[groupmask] = groupmean
-        # add meant to table
-        rawtable['MEANDATE'] = meandate
-        # ------------------------------------------------------------------
-        # separate the groups into smaller tables
-        outargs[argname] = []
-        # loop around groups and add to outargs
-        for g_it in range(1, int(max(groups))):
-            outargs[argname].append(rawtable[groups == g_it].copy())
-    # ----------------------------------------------------------------------
-    # sort out what to do with the groups
-    # ----------------------------------------------------------------------
-    # if we only have one file argument then we can put all files from a group
-    #  into a run
-    if len(outargs) == 1:
-        # get the arg name
-        argname = list(outargs.keys())[0]
-        recipename = remove_py(recipe.name)
-        recipeargs = recipe.args
-
-        # need to deal with having a limit of 1 file
-        if 'limit' in recipeargs[argname]:
-            for group in outargs[argname]:
-                # get the night name (should be the same for all)
-                nightname = group[NIGHT_COL][0]
-                # get the file list
-                filelist = np.array(group['NEWFILENAME'])
-                # loop around each file
-                for filename in filelist:
-                    # construct the command
-                    cargs = [recipename, nightname, filename]
-                    command_group = '{0} {1} {2}'.format(*cargs)
-                    # append to command dict
-                    commands[number] = command_group
-                    # iterate the command number
-                    number += 1
-        else:
-            # loop around groups
-            for group in outargs[argname]:
-                # get the night name (should be the same for all)
-                nightname = group[NIGHT_COL][0]
-                # get the file list
-                filelist = np.array(group['NEWFILENAME'])
-                # construct the command
-                cargs = [recipename, nightname, ' '.join(filelist)]
-                command_group = '{0} {1} {2}'.format(*cargs)
-                # append to command dict
-                commands[number] = command_group
-                # iterate the command number
-                number += 1
-    # if we have more than one file argument just take the first file of
-    #    each group
-    #    we also have to match groups so that we have the correct files for
-    #    both arguments
-    else:
-        # get the recipe name (command name)
-        recipename = remove_py(recipe.name)
-        # find the argument with the minimum number of groups
-        # (this is the group we will match to)
-        min_len, min_arg = np.inf, None
-        for argname in outargs:
-            if len(outargs[argname]) < min_len:
-                min_len, min_arg = len(outargs[argname]), argname
-        # get other args and setup storage for used groups in other args
-        used_groups = dict()
-        for argname in outargs:
-            if argname != min_arg:
-                used_groups[argname] = []
-        # loop around groups in "min_arg" and match to other args
-        #   Note they must be from the same night
-        for group1 in outargs[min_arg]:
-            # get the mean date for this group (all should be the same)
-            meandate1 = group1['MEANDATE'][0]
-            # get the night name (should be the same for all)
-            night1 = group1[NIGHT_COL][0]
-            # storage for the filelist
-            # TODO: TAKE THE FIRST FILE FROM GROUP1
-            filelist = [group1['NEWFILENAME'][0]]
-            # find the group in other groups that is closest in time to
-            # other "min arg group"
-            margs = [outargs, used_groups, meandate1, night1, filelist]
-            used_groups, filelist, found = match_groups(*margs)
-            # finally if a group to match all groups was found ("found")
-            # then we can construct a command run for this entry
-            # of group1
-            if found:
-                # construct the command
-                cargs = [recipename, night1, ' '.join(filelist)]
-                command_group = '{0} {1} {2}'.format(*cargs)
-                # append to command dict
-                commands[number] = command_group
-                # iterate the command number
-                number += 1
-    # return the command dictionary
-    return commands
-
-
-def get_drs_file_mask(params, drsfile, table, filters):
-
-
-    # get in filenames
-    infilenames = table[ITABLE_FILECOL]
-    # -------------------------------------------------------------------------
-    # get output extension
-    outext = drsfile.args['ext']
-    # get input extension
-    while 'intype' in drsfile.args:
-        drsfile = drsfile.args['intype']
-    inext = drsfile.args['ext']
-    # -------------------------------------------------------------------------
-    # get required header keys
-    rkeys = dict()
-    for arg in drsfile.args:
-        if arg.startswith('KW_'):
-            rkeys[arg] = drsfile.args[arg]
-    # maask by the required header keys
-    mask = np.ones_like(infilenames, dtype=bool)
-    for key in rkeys:
-        mask &= table[key] == rkeys[key]
-
-    # -------------------------------------------------------------------------
-    # deal with filters
-    if filters is not None:
-        # ------------------------------------------------------------------
-        # KW_OBJECT filters
-        # ------------------------------------------------------------------
-        # deal with science filter
-        if params[SFILTER] is not None and SFILTER in filters:
-            objectnames = params[SFILTER].split(' ')
-            # apply object names to mask
-            mask &= np.in1d(table['KW_OBJECT'], objectnames)
-        # deal with telluric filter
-        if TFILTER in filters:
-            if params[TFILTER] is None:
-                objectnames = spirouTelluric.GetWhiteList()
-            else:
-                objectnames = params[TFILTER].split(' ')
-            # apply object names to mask
-            mask &= np.in1d(table['KW_OBJECT'], objectnames)
-        # ------------------------------------------------------------------
-        # type filters
-        # ------------------------------------------------------------------
-        # type mask is initially all False
-        typemask = np.zeros(len(table), dtype=bool)
-        do_mask = False
-        # deal with an FP filter
-        if FP_FILTER in filters:
-            # conditions to be FP_FP
-            cond1 = table['KW_CCAS'] == 'pos_fp'
-            cond2 = table['KW_CREF'] == 'pos_fp'
-            # apply to mask
-            typemask |= (cond1 & cond2)
-            do_mask = True
-
-        # deal with an HC filter
-        if HC_FILTER in filters:
-            # conditions to be FP_FP
-            cond1 = table['KW_CCAS'] == 'pos_hc1'
-            cond2 = table['KW_CREF'] == 'pos_hc1'
-            # apply to mask
-            typemask |= (cond1 & cond2)
-            do_mask = True
-
-        # apply type mask to mask (only if we need to)
-        if do_mask:
-            mask &= typemask
-
-    # -------------------------------------------------------------------------
-    # construct new filenames
-    outfilenames = []
-    for it, filename in enumerate(infilenames):
-        if not filename.endswith(inext):
-            mask[it] = False
-        if mask[it]:
-            outfilenames.append(filename.replace(inext, outext))
-    # -------------------------------------------------------------------------
-    # return the mask
-    return mask, outfilenames
-
-
-def group_drs_files(inmask, table):
-
-    groups = np.zeros(len(table))
+def group_drs_files(drstable):
+    groups = np.zeros(len(drstable))
     # get the sequence column
-    sequence_col = table['KW_CMPLTEXP']
+    sequence_col = drstable['KW_CMPLTEXP']
     # start the group number at 1
     group_number = 1
+    # set up night mask
+    valid = np.zeros(len(drstable), dtype=bool)
     # by night name
-    for night in np.unique(table[NIGHT_COL]):
+    for night in np.unique(drstable[NIGHT_COL]):
         # deal with just this night name
-        nightmask = table[NIGHT_COL] == night
+        nightmask = drstable[NIGHT_COL] == night
+        # deal with only one file in nightmask
+        if np.sum(nightmask) == 1:
+            groups[nightmask] = group_number
+            group_number += 1
+            valid |= nightmask
+            continue
         # remove any with invalid sequence numbers
-        nightmask &= (sequence_col != '') & inmask
+        nightmask &= (sequence_col != '')
         # get the sequence number
         sequences = sequence_col[nightmask].astype(int)
         indices = np.arange(len(sequences))
@@ -688,47 +747,27 @@ def group_drs_files(inmask, table):
             group_number += 1
         # add the night group to the full group
         groups[nightmask] = nightgroup
+        # add to the valid mask
+        valid |= nightmask
     # return the group
-    return groups
+    return groups, valid
 
 
-def match_groups(outargs, used_groups, meandate1, night1, filelist):
-    found = True
-    # find the group in other groups that is closest in time to
-    # other "min arg group"
-    for argname2 in used_groups.keys():
-        # get the group2 filelist
-        tables2 = outargs[argname2]
-        # set up storage for mean dates of group2
-        meandates2 = []
-        # loop around groups in other group
-        for g_it2, group2 in enumerate(tables2):
-            # skip if in used_groups already
-            if g_it2 in used_groups[argname2]:
-                continue
-            # get the night for group2
-            night2 = group2[NIGHT_COL]
-            # if not in the same night then skip
-            if night1 != night2:
-                continue
-            # get the mean date for the other group
-            meandates2.append(group2['MEANDATE'][0])
-        # if meandates2 is empty then we need to skip this group1
-        if len(meandates2) == 0:
-            found = False
-            break
-        # find the closest group2 mean date to group1
-        diff = np.abs(np.array(meandates2) - meandate1)
-        closest = int(np.argmin(diff))
-        # get the closest table in group2
-        table2 = tables2[closest]
-        # get the file list from closest group
-        # TODO: TAKE THE FIRST FILE FROM GROUP2
-        filelist.append(table2['NEWFILENAME'][0])
-        # add to used_groups
-        used_groups[argname2].append(closest)
-    # return the used_groups and the updated filelist
-    return used_groups, filelist, found
+def get_group_mean(table):
+    # start of mean dates as zeros
+    meandate = np.zeros(len(table))
+    # get groups from table
+    groups = table['GROUPS']
+    # loop around each group and change the mean date for the files
+    for g_it in range(1, int(max(groups)) + 1):
+        # group mask
+        groupmask = (groups == g_it)
+        # group mean
+        groupmean = np.mean(table['KW_ACQTIME'][groupmask])
+        # save group mean
+        meandate[groupmask] = groupmean
+    # return mean date
+    return meandate
 
 
 def remove_py(innames):
@@ -747,10 +786,10 @@ def remove_py(innames):
         return outnames
 
 
-def check_run_params(params, run_item):
-
-    # if we get to here then check has failed
-    return False
+def remove_dash(instring):
+    while instring.startswith('-'):
+        instring = instring[1:]
+    return instring
 
 
 # =============================================================================
