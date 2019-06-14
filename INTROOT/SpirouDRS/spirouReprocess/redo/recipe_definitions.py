@@ -183,6 +183,7 @@ cal_drift1 = drs_recipe(__INSTRUMENT__)
 cal_drift2 = drs_recipe(__INSTRUMENT__)
 cal_extract = drs_recipe(__INSTRUMENT__)
 cal_ff = drs_recipe(__INSTRUMENT__)
+cal_thermal = drs_recipe(__INSTRUMENT__)
 cal_hc = drs_recipe(__INSTRUMENT__)
 cal_loc = drs_recipe(__INSTRUMENT__)
 cal_pp = drs_recipe(__INSTRUMENT__)
@@ -194,7 +195,7 @@ cal_wave = drs_recipe(__INSTRUMENT__)
 test = drs_recipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master,
-           cal_drift1, cal_drift2,
+           cal_drift1, cal_drift2, cal_thermal,
            cal_extract, cal_ff, cal_hc, cal_loc, cal_pp,
            cal_slit, cal_shape, cal_shape_master,
            cal_wave,
@@ -454,7 +455,7 @@ cal_shape_master.run_order = 4
 cal_shape_master.arg(pos=0, **directory)
 cal_shape_master.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1',
               helpstr=Help['SHAPE_HCFILES_HELP'])
-cal_shape_master.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+',
+cal_shape_master.arg(name='fpfile', dtype='files', files=[sf.pp_fp_fp], pos='2',
               helpstr=Help['SHAPE_FPFILES_HELP'])
 cal_shape_master.kwarg(**add_cal)
 cal_shape_master.kwarg(**badfile)
@@ -502,6 +503,40 @@ cal_ff.kwarg(**resize)
 cal_ff.kwarg(**shapefile)
 cal_ff.kwarg(**tiltfile)
 
+
+# -----------------------------------------------------------------------------
+# cal_thermal_spirou
+# -----------------------------------------------------------------------------
+cal_thermal.name = 'cal_thermal_spirou.py'
+cal_thermal.instrument = __INSTRUMENT__
+cal_thermal.outputdir = 'reduced'
+cal_thermal.inputdir = 'tmp'
+cal_thermal.inputtype = 'pp'
+cal_thermal.extension = 'fits'
+cal_thermal.description = Help['EXTRACT_DESC']
+cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
+cal_thermal.run_order = 6
+cal_thermal.arg(pos=0, **directory)
+cal_thermal.arg(name='files', dtype='files', pos='1+', files=[sf.pp_dark_dark],
+                helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'])
+cal_thermal.kwarg(**add_cal)
+cal_thermal.kwarg(**badfile)
+cal_thermal.kwarg(**dobad)
+cal_thermal.kwarg(**backsub)
+cal_thermal.kwarg(default=True, **combine)
+cal_thermal.kwarg(**darkfile)
+cal_thermal.kwarg(**dodark)
+cal_thermal.kwarg(default_ref='IC_EXTRACT_TYPE', **extractmethod)
+cal_thermal.kwarg(**extfiber)
+cal_thermal.kwarg(**flipimage)
+cal_thermal.kwarg(**fluxunits)
+cal_thermal.kwarg(**plot)
+cal_thermal.kwarg(**interactive)
+cal_thermal.kwarg(**resize)
+cal_thermal.kwarg(**shapefile)
+cal_thermal.kwarg(**tiltfile)
+
+
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
 # -----------------------------------------------------------------------------
@@ -538,7 +573,7 @@ cal_extract.kwarg(**tiltfile)
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
 # -----------------------------------------------------------------------------
-cal_hc.name = 'cal_HC_E2DS_spirou.py'
+cal_hc.name = 'cal_HC_E2DS_EA_spirou.py'
 cal_hc.instrument = __INSTRUMENT__
 cal_hc.outputdir = 'reduced'
 cal_hc.inputdir = 'reduced'
@@ -549,15 +584,20 @@ cal_hc.epilog = Help['HC_E2DS_EXAMPLE']
 cal_hc.run_order = 7
 # setup custom files (add a required keyword in the header to each file)
 #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
-cal_hc_files1 = [sf.out_ext_e2ds_ab, sf.out_ext_e2ds_c,
-                 sf.out_ext_e2dsff_ab, sf.out_ext_e2dsff_c]
-cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
-cal_hc_files2 = drs_file.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
+hc_file1 = sf.out_ext_e2dsff_ab.copy()
+hc_file1.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
+hc_file1.args['intype'] = sf.pp_hc1_hc1
+hc_file1.args['ext'] = 'c_e2ds_AB.fits'
+
+hc_file2 = sf.out_ext_e2dsff_c.copy()
+hc_file2.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
+hc_file2.args['intype'] = sf.pp_hc1_hc1
+hc_file2.args['ext'] = 'c_e2ds_AB.fits'
+
 # set up arguments
 cal_hc.arg(pos=0, **directory)
-cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
-           filelogic='exclusive', limit=1,
-           helpstr=Help['FILES_HELP'] + Help['HC_E2DS_FILES_HELP'])
+cal_hc.arg(name='files', dtype='files', pos='1+', files=[hc_file1, hc_file2],
+           filelogic='exclusive', helpstr=Help['FILES_HELP'])
 cal_hc.kwarg(**add_cal)
 cal_hc.kwarg(**plot)
 cal_hc.kwarg(**interactive)
@@ -568,7 +608,50 @@ cal_hc.kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
 # -----------------------------------------------------------------------------
-cal_wave.name = 'cal_WAVE_E2DS_spirou.py'
+cal_wave.name = 'cal_WAVE_E2DS_EA_spirou.py'
+cal_wave.instrument = __INSTRUMENT__
+cal_wave.outputdir = 'reduced'
+cal_wave.inputdir = 'reduced'
+cal_wave.inputtype = 'e2ds'
+cal_wave.extension = 'fits'
+cal_wave.description = Help['HC_E2DS_DESC']
+cal_wave.epilog = Help['HC_E2DS_EXAMPLE']
+cal_wave.run_order = 7
+# setup custom files (add a required keyword in the header to each file)
+#    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
+hc_file1 = sf.out_ext_e2dsff_ab.copy()
+hc_file1.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
+hc_file1.args['intype'] = sf.pp_hc1_hc1
+hc_file1.args['ext'] = 'c_e2ds_AB.fits'
+
+hc_file2 = sf.out_ext_e2dsff_c.copy()
+hc_file2.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
+hc_file2.args['intype'] = sf.pp_hc1_hc1
+hc_file2.args['ext'] = 'c_e2ds_AB.fits'
+
+fp_file1 = sf.out_ext_e2dsff_ab.copy()
+fp_file1.args['KW_EXT_TYPE'] = 'FP_FP'
+fp_file1.args['intype'] = sf.pp_fp_fp
+fp_file1.args['ext'] = 'a_e2ds_AB.fits'
+
+fp_file2 = sf.out_ext_e2dsff_c.copy()
+fp_file2.args['KW_EXT_TYPE'] = 'FP_FP'
+fp_file2.args['intype'] = sf.pp_fp_fp
+fp_file2.args['ext'] = 'a_e2ds_AB.fits'
+
+# set up arguments
+cal_wave.arg(pos=0, **directory)
+cal_wave.arg(name='fpfile', dtype='file', files=[fp_file1, fp_file2], pos='1',
+              helpstr=Help['SHAPE_HCFILES_HELP'])
+cal_wave.arg(name='hcfiles', dtype='files', files=[hc_file1, hc_file2], pos='2+',
+              helpstr=Help['SHAPE_FPFILES_HELP'])
+cal_wave.kwarg(**add_cal)
+cal_wave.kwarg(**plot)
+cal_wave.kwarg(**interactive)
+cal_wave.kwarg(**blazefile)
+cal_wave.kwarg(**flatfile)
+cal_wave.kwarg(**wavefile)
+
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
