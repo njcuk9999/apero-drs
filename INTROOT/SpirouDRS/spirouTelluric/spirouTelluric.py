@@ -1150,11 +1150,32 @@ def calc_molecular_absorption(p, loc):
                                                  klog_tapas_abso)
 
     # load amplitudes into loc
+    water_it, others_it = [], []
     for it, molecule in enumerate(p['TELLU_ABSORBERS'][1:]):
         # get molecule keyword store and key
         molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'][0], molecule.upper())
         # load into loc
         loc[molkey] = amps[it]
+        # record water col
+        if molecule == 'h2o':
+            water_it.append(it)
+        else:
+            others_it.append(it)
+
+    # set up second set of vectors (water + combined others)
+    klog_tapas_abso2 = np.zeros_like(klog_tapas_abso[:2])
+    # put water straight in
+    klog_tapas_abso2[0] = klog_tapas_abso[np.array(water_it)]
+    # combine others
+    klog_tapas_abso2[1] = np.sum(klog_tapas_abso[np.array(others_it)], axis=0)
+
+    # work out amplitudes and recon
+    amps, recon = spirouMath.linear_minimization(klog_recon_abso,
+                                                 klog_tapas_abso2)
+    # store these values
+    loc['TAU_H2O'] = amps[0]
+    loc['TAU_REST'] = amps[1]
+
     # return loc
     return loc
 
