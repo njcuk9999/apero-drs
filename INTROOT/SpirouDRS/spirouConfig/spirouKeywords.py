@@ -700,6 +700,8 @@ KW_WFP_STEP = ['WFPSTEP', None, 'wave sol FP CCF step [km/s]']
 # -----------------------------------------------------------------------------
 # Telluric absorption prefix (i.e. ABSO_H20)                     [OBJ_FIT_TELLU]
 KW_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
+KW_TAU_H2O = ['TAU_H2O', None, 'Tau Water Absorption']
+KW_TAU_REST = ['TAU_REST', None, 'Tau Rest (Combined) Absorption']
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
