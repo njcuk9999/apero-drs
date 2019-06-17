@@ -691,6 +691,16 @@ def MANUAL_FILE(p):
 # Define Output Filename functions
 # =============================================================================
 # noinspection PyPep8Naming
+def PP_FILE(p, filename, **kwargs):
+
+    inext = kwargs.get('inext', '.fits')
+    outfitsname = filename.replace(inext, p['PROCESSED_SUFFIX'])
+    save_dir = TMP_DIR(p)
+    outfits = os.path.join(save_dir, outfitsname)
+    return outfits
+
+
+# noinspection PyPep8Naming
 def DARK_FILE(p):
     """
     Defines the dark file
@@ -734,7 +744,7 @@ def DARK_FILE_MASTER(p, filename):
 
 
 # noinspection PyPep8Naming
-def DARK_BADPIX_FILE(p):
+def DARK_BADPIX_FILE(p, filename=None, **kwargs):
     """
     Defines the bad pix file from cal_DARK
 
@@ -750,7 +760,11 @@ def DARK_BADPIX_FILE(p):
     """
     func_name = 'DARK_BADPIX_FILE'
     # define filename
-    darkfile = DARK_FILE(p)[0]
+    if filename is None:
+        darkfile = DARK_FILE(p)[0]
+    else:
+        darkfile = filename
+
     badpixelfits = darkfile.replace('.fits', '_badpixel.fits')
     # get tag
     tag = tags[func_name]
@@ -759,7 +773,7 @@ def DARK_BADPIX_FILE(p):
 
 
 # noinspection PyPep8Naming
-def BADPIX_FILE(p):
+def BADPIX_FILE(p, filename=None, **kwargs):
     """
     Defines the bad pixel path and file name
 
@@ -775,7 +789,14 @@ def BADPIX_FILE(p):
     # define filename
     reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    badpixelfn = p['FLATFILE'].replace('.fits', '_badpixel.fits')
+    if filename is None:
+        badpixelfn = p['FLATFILE']
+    else:
+        badpixelfn = filename
+
+    inext = kwargs.get('inext', '.fits')
+    outext = kwargs.get('outext', '_badpixel.fits')
+    badpixelfn = badpixelfn.replace(inext, outext)
     badpixelfitsname = calibprefix + badpixelfn
     badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
     # get tag
@@ -843,7 +864,7 @@ def LOC_ORDER_PROFILE_FILE(p):
 
 
 # noinspection PyPep8Naming
-def LOC_LOCO_FILE(p):
+def LOC_LOCO_FILE(p, filename=None, **kwargs):
     """
     Defines the localisation file location and filename
 
@@ -860,10 +881,18 @@ def LOC_LOCO_FILE(p):
     func_name = 'LOC_LOCO_FILE'
     # define filename
     reducedfolder = p['REDUCED_DIR']
-    locoext = '_loco_{0}.fits'.format(p['FIBER'])
+
+    inext = kwargs.get('inext', '.fits')
+    outext = kwargs.get('outext', '_loco_{0}.fits')
+    locoext = outext.format(p['FIBER'])
+
     calibprefix = CALIB_PREFIX(p)
-    locofn = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
-    locofitsname = calibprefix + locofn
+    if filename is None:
+        locofn = p['ARG_FILE_NAMES'][0]
+    else:
+        locofn = filename
+
+    locofitsname = calibprefix + locofn.replace(inext, locoext)
     locofits = os.path.join(reducedfolder, locofitsname)
     # get tag
     tag = tags[func_name]
@@ -962,7 +991,7 @@ def SLIT_TILT_FILE(p):
 
 
 # noinspection PyPep8Naming
-def SLIT_SHAPE_LOCAL_FILE(p):
+def SLIT_SHAPE_LOCAL_FILE(p, filename=None, **kwargs):
     """
     Defines the shape file location and filename
 
@@ -980,8 +1009,15 @@ def SLIT_SHAPE_LOCAL_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['ARG_FILE_NAMES'][0].replace('.fits', '_shape.fits')
-    shapefitsname = calibprefix + shapefn
+
+    inext = kwargs.get('inext', '.fits')
+    outext = kwargs.get('outext', '_shape.fits')
+
+    if filename is None:
+        shapefn = p['ARG_FILE_NAMES'][0]
+    else:
+        shapefn = filename
+    shapefitsname = calibprefix + shapefn.replace(inext, outext)
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
     tag = tags[func_name]
@@ -990,7 +1026,7 @@ def SLIT_SHAPE_LOCAL_FILE(p):
 
 
 # noinspection PyPep8Naming
-def SLIT_XSHAPE_FILE(p):
+def SLIT_XSHAPE_FILE(p, filename=None, **kwargs):
     """
     Defines the shape file location and filename
 
@@ -1008,7 +1044,15 @@ def SLIT_XSHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILE'].replace('.fits', '_shapex.fits')
+    if filename is None:
+        shapefn = p['FPFILE']
+    else:
+        shapefn = filename
+
+    inext = kwargs.get('inext', '.fits')
+    outext = kwargs.get('outext', '_shapex.fits')
+
+    shapefn = shapefn.replace(inext, outext)
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1060,12 +1104,15 @@ def SLIT_MASTER_FP_FILE(p):
 
 
 # noinspection PyPep8Naming
-def SLIT_SHAPE_IN_FP_FILE(p):
+def SLIT_SHAPE_IN_FP_FILE(p, filename=None):
     func_name = 'SLIT_SHAPE_IN_FP_FILE'
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['FPFILE']
+    if filename is None:
+        oldfilename = p['FPFILE']
+    else:
+        oldfilename = filename
     # construct prefix
     prefix = 'SHAPE-DEBUG-StartingFp_'
     # construct new filename and full path
@@ -1078,12 +1125,15 @@ def SLIT_SHAPE_IN_FP_FILE(p):
 
 
 # noinspection PyPep8Naming
-def SLIT_SHAPE_OUT_FP_FILE(p):
+def SLIT_SHAPE_OUT_FP_FILE(p, filename=None):
     func_name = 'SLIT_SHAPE_OUT_FP_FILE'
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['FPFILE']
+    if filename is None:
+        oldfilename = p['FPFILE']
+    else:
+        oldfilename = filename
     # construct prefix
     prefix = 'SHAPE-DEBUG-CorrectedFp_'
     # construct new filename and full path
@@ -1183,7 +1233,7 @@ def FF_BLAZE_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
-def FF_FLAT_FILE(p, fiber=None):
+def FF_FLAT_FILE(p, fiber=None, filename=None, **kwargs):
     """
     Defines the flat field file name and location to save flat field file to
 
@@ -1204,9 +1254,17 @@ def FF_FLAT_FILE(p, fiber=None):
     if fiber is None:
         fiber = p['FIBER']
     reduced_dir = p['REDUCED_DIR']
-    flatext = '_flat_{0}.fits'.format(fiber)
     calibprefix = CALIB_PREFIX(p)
-    flatfn = p['ARG_FILE_NAMES'][0].replace('.fits', flatext)
+    if filename is None:
+        flatfn = p['ARG_FILE_NAMES'][0]
+    else:
+        flatfn = filename
+
+    inext = kwargs.get('inext', '.fits')
+    outext = kwargs.get('outext', '_flat_{0}.fits')
+    flatext = outext.format(fiber)
+
+    flatfn = flatfn.replace(inext, flatext)
     flatfitsname = calibprefix + flatfn
     flatfits = os.path.join(reduced_dir, flatfitsname)
     # get tag
@@ -1247,7 +1305,7 @@ def BACKGROUND_CORRECT_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
-def EXTRACT_E2DS_FILE(p, fiber=None, filename=None):
+def EXTRACT_E2DS_FILE(p, fiber=None, filename=None, **kwargs):
     """
     Defines the extraction E2DS file name and location
 
@@ -1271,9 +1329,10 @@ def EXTRACT_E2DS_FILE(p, fiber=None, filename=None):
         filename = p['ARG_FILE_NAMES'][0]
 
     reducedfolder = p['REDUCED_DIR']
-    e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
+    e2ds_ext = kwargs.get('e2ds_ext', '_e2ds_{0}.fits'.format(fiber))
+    in_ext = kwargs.get('inext', '.fits')
 
-    e2dsfitsname = filename.replace('.fits', e2ds_ext)
+    e2dsfitsname = filename.replace(in_ext, e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     # get tag
     tag = tags[func_name] + '_{0}'.format(fiber)
@@ -2001,17 +2060,21 @@ def WAVE_FILE(p):
 
 
 # noinspection PyPep8Naming
-def WAVE_FILE_EA(p):
+def WAVE_FILE_EA(p, filename=None, **kwargs):
     func_name = 'WAVE_FILE_EA'
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
     # get filename
-    filename = p['ARG_FILE_NAMES'][0]
+    if filename is None:
+        filename = p['ARG_FILE_NAMES'][0]
     # deal with E2DS files and E2DSFF files
     if 'e2dsff' in filename:
-        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+        old_ext = kwargs.get('oldext', '_e2dsff_{0}.fits')
     else:
-        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+        old_ext = kwargs.get('oldext', '_e2ds_{0}.fits')
+    # add fiber information
+    old_ext = old_ext.format(p['FIBER'])
+
     waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
@@ -2025,17 +2088,21 @@ def WAVE_FILE_EA(p):
 
 # add fp filename if it exists
 # noinspection PyPep8Naming
-def WAVE_FILE_EA_2(p):
+def WAVE_FILE_EA_2(p, filename=None, **kwargs):
     func_name = 'WAVE_FILE_EA'
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
     # get filename
-    filename = p['ARG_FILE_NAMES'][0]
+    if filename is None:
+        filename = p['ARG_FILE_NAMES'][0]
     # deal with E2DS files and E2DSFF files
     if 'e2dsff' in filename:
-        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+        old_ext = kwargs.get('oldext', '_e2dsff_{0}.fits')
     else:
-        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+        old_ext = kwargs.get('oldext', '_e2ds_{0}.fits')
+    # add fiber information
+    old_ext = old_ext.format(p['FIBER'])
+
     waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
@@ -2257,13 +2324,13 @@ def HC_INIT_LINELIST(p):
 
 
 # noinspection PyPep8Naming
-def TELLU_TRANS_MAP_FILE(p, filename):
+def TELLU_TRANS_MAP_FILE(p, filename, **kwargs):
     func_name = 'TELLU_TRANS_MAP_FILE'
     # get path
     path = p['ARG_FILE_DIR']
     # get extension
-    newext = '_trans.fits'
-    oldext = '.fits'
+    newext = kwargs.get('newext', '_trans.fits')
+    oldext = kwargs.get('oldext', '.fits')
     # construct filename
     filename = filename.replace(oldext, newext)
     # construct absolute path
@@ -2333,11 +2400,11 @@ def TELLU_ABSO_SAVE(p, file_time):
 
 
 # noinspection PyPep8Naming
-def TELLU_FIT_OUT_FILE(p, filename):
+def TELLU_FIT_OUT_FILE(p, filename, **kwargs):
     func_name = 'TELLU_FIT_OUT_FILE'
     # define filename
-    oldext = '.fits'
-    newext = '_tellu_corrected.fits'
+    oldext = kwargs.get('oldext', '.fits')
+    newext = kwargs.get('newext', '_tellu_corrected.fits')
     outfilename1 = os.path.basename(filename).replace(oldext, newext)
     outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
     # get tag
