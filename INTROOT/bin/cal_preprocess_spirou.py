@@ -233,9 +233,8 @@ def main(night_name=None, ufiles=None):
         # Save rotated image
         # ------------------------------------------------------------------
         # construct rotated file name
-        outfitsname = bfilename.replace('.fits', p['PROCESSED_SUFFIX'])
-        save_dir = spirouConfig.Constants.TMP_DIR(p)
-        outfits = os.path.join(save_dir, outfitsname)
+        outfits = spirouConfig.Constants.PP_FILE(p, bfilename)
+        outfitsname = os.path.basename(outfits)
         # log that we are saving rotated image
         WLOG(p, '', 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
