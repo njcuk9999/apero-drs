@@ -281,8 +281,11 @@ def main(night_name=None, files=None):
         # log
         WLOG(p, '', 'Saving debug sanity check files')
         # construct file names
-        input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
-        output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
+        dargs = [p, p['ARG_FILE_NAMES'][0]]
+        out1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(*dargs)
+        input_fp_file, tag1= out1
+        out2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(*dargs)
+        output_fp_file, tag2 = out2
         # write input fp file
         hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         p = spirouImage.WriteImage(p, input_fp_file, data1, hdict)
