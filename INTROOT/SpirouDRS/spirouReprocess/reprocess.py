@@ -84,21 +84,53 @@ if True:
     # ----------------------------------------------------------------------
     outlist = spirouReprocess.ProcessRunList(p, runlist)
 
+
+    # ----------------------------------------------------------------------
+    # Print timing
+    # ----------------------------------------------------------------------
+    # get header
+    header = spirouConfig.Constants.HEADER()
+    WLOG(p, '', '')
+    WLOG(p, '', header)
+    WLOG(p, '', 'Timings:')
+    WLOG(p, '', header)
+    WLOG(p, '', '')
+    # loop around timings (non-errors only)
+    for key in outlist:
+        cond1 = len(outlist[key]['ERROR']) == 0
+        cond2 = outlist[key]['TIMING'] is not None
+        if cond1 and cond2:
+            wmsg = 'ID={0:05d}  Time = {1}'
+            WLOG(p, '', wmsg.format(key, outlist[key]['TIMING']))
+            WLOG(p, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
+                 wrap=False)
+
     # ----------------------------------------------------------------------
     # Print out any errors
     # ----------------------------------------------------------------------
     # get header
     header = spirouConfig.Constants.HEADER()
+    WLOG(p, '', '')
+    WLOG(p, '', header)
+    WLOG(p, '', 'Errors:')
+    WLOG(p, '', header)
+    WLOG(p, '', '')
     # loop around each entry of outlist and print any errors
     for key in outlist:
         if len(outlist[key]['ERROR']) > 0:
             WLOG(p, '', '', colour='red')
             WLOG(p, '', header, colour='red')
             WLOG(p, 'warning', 'Error found for ID={0:05d}'.format(key),
-                 colour='red')
+                 colour='red', wrap=False)
+            WLOG(p, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
+                 colour='red', wrap=False)
             WLOG(p, '', header, colour='red')
             WLOG(p, '', '', colour='red')
-            WLOG(p, 'warning', outlist[key]['ERROR'], colour='red')
+            WLOG(p, 'warning', outlist[key]['ERROR'], colour='red', wrap=False)
+            WLOG(p, '', '', colour='red')
+            WLOG.printmessage(p, outlist[key]['TRACEBACK'], colour='red')
+            WLOG(p, '', '', colour='red')
+            WLOG(p, '', header, colour='red')
 
     # send email if configured
     spirouReprocess.SendEmail(p, kind='end')

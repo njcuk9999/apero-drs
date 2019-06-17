@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 from collections import OrderedDict
 from astropy.table import Table
+import os
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -58,6 +59,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# get constants
+Const = spirouConfig.Constants
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
@@ -110,6 +113,33 @@ MOD_LIST['MK_TELLU_DB'] = [obj_mk_tellu_db, None]
 MOD_LIST['FIT_TELLU_DB'] = [obj_fit_tellu_db, None]
 MOD_LIST['MK_TELLU'] = [obj_mk_tellu_new, ['TELLURIC_TARGETS']]
 MOD_LIST['FIT_TELLU'] = [obj_fit_tellu, ['SCIENCE_TARGETS']]
+
+
+SKIP_LIST = OrderedDict()
+SKIP_LIST['PREPROCESS'] = [cal_preprocess_spirou, Const.PP_FILE]
+SKIP_LIST['DARK_MASTER'] = [cal_dark_master_spirou, None]
+SKIP_LIST['BADPIX_MASTER'] = [cal_BADPIX_spirou, Const.BADPIX_FILE]
+SKIP_LIST['LOC_MASTER'] = [cal_loc_RAW_spirou, Const.LOC_LOCO_FILE]
+SKIP_LIST['SHAPE_MASTER'] = [cal_shape_master_spirou, Const.SLIT_XSHAPE_FILE]
+SKIP_LIST['BADPIX'] = [cal_BADPIX_spirou, Const.BADPIX_FILE]
+SKIP_LIST['LOC'] = [cal_loc_RAW_spirou, Const.LOC_LOCO_FILE]
+SKIP_LIST['SHAPE'] = [cal_shape_spirou, Const.SLIT_SHAPE_LOCAL_FILE]
+SKIP_LIST['FF'] = [cal_FF_RAW_spirou, Const.FF_FLAT_FILE]
+SKIP_LIST['THERMAL'] = [cal_thermal_spirou, Const.EXTRACT_E2DS_FILE]
+SKIP_LIST['EXTRACT_FPHC'] = [cal_extract_RAW_spirou, Const.EXTRACT_E2DS_FILE]
+SKIP_LIST['WAVEHC'] = [cal_HC_E2DS_EA_spirou, Const.WAVE_FILE_EA]
+SKIP_LIST['WAVE'] = [cal_WAVE_E2DS_EA_spirou, Const.WAVE_FILE_EA_2]
+SKIP_LIST['EXTRACT_TELLU'] = [cal_extract_RAW_spirou, Const.EXTRACT_E2DS_FILE]
+SKIP_LIST['EXTRACT_OBJ'] = [cal_extract_RAW_spirou, Const.EXTRACT_E2DS_FILE]
+SKIP_LIST['EXTRACT_ALL'] = [cal_extract_RAW_spirou, Const.EXTRACT_E2DS_FILE]
+SKIP_LIST['MK_TELLU_DB'] = [obj_mk_tellu_db, None]
+SKIP_LIST['FIT_TELLU_DB'] = [obj_fit_tellu_db, None]
+SKIP_LIST['MK_TELLU'] = [obj_mk_tellu_new, Const.TELLU_TRANS_MAP_FILE,
+                         dict(oldext='.fits',
+                              newext='_trans.fits')]
+SKIP_LIST['FIT_TELLU'] = [obj_fit_tellu, Const.TELLU_FIT_OUT_FILE,
+                          dict(oldext='.fits',
+                              newext='_tellu_corrected.fits')]
 
 # -----------------------------------------------------------------------------
 # define the key to identify runs in config file
@@ -304,7 +334,7 @@ def check_runlist(params, runlist):
     # ------------------------------------------------------------------
     for it, run_item in enumerate(runlist):
         # check that we want to run this recipe
-        check = False
+        check1 = False
         # ------------------------------------------------------------------
         # find run_item in MOD_LIST
         for key in MOD_LIST:
@@ -317,19 +347,87 @@ def check_runlist(params, runlist):
             cond2 = runkey in params
             # if both conditions met then we take the condition from params
             if cond1 and cond2:
-                check = params[runkey]
+                check1 = params[runkey]
                 break
             # if we don't have key in params and key isn't in MOD_LIST we should
             #   just pass
             elif not (cond1 and cond2):
-                check = True
+                check1 = True
                 break
         # ------------------------------------------------------------------
+        # check that we have files and if we want to skip them
+        check2 = True
+        # find run_item in MOD_LIST
+        for key in MOD_LIST:
+            # get run_key
+            runkey = 'SKIP_{0}'.format(key)
+            sl_item = SKIP_LIST[key][0]
+            sl_func = SKIP_LIST[key][1]
+            if len(SKIP_LIST[key]) == 3:
+                kwargs = SKIP_LIST[key][2]
+            else:
+                kwargs = dict()
+            # check if recipe names agree
+            cond1 = run_item.recipename == remove_py(sl_item.__NAME__)
+            # check if key in params
+            cond2 = runkey in params
+            # if both conditions met then we must check filename
+            if cond1 and cond2:
+                if 'MASTER' in key and params[runkey]:
+                    check2 = False
+                elif params[runkey]:
+                    check2 = check_skip(params, run_item, sl_func, kwargs)
+                else:
+                    check2 = True
+
         # append to output
-        if check:
+        if check1 and check2:
             out_runlist.append(run_item)
+        elif not check1:
+            print('Not running {0}: {1}'.format(it, run_item))
+        elif not check2:
+            print('Skipping {0}: {1}'.format(it, run_item))
     # return out list
     return out_runlist
+
+
+def check_skip(params, run_object, file_func, kwargs):
+    # look for fits files
+    files = []
+    for arg in run_object.args:
+        if arg.endswith('.fits'):
+            files.append(arg)
+    # run all files through the file function
+    for filename in files:
+        # make sure filename is a base filename
+        basename = os.path.basename(filename)
+        # loop through fiber types
+        for fiber in params['FIBER_TYPES']:
+            kwargs['FIBER'] = fiber
+            params['FIBER'] = fiber
+            params = setup_paths(params, run_object.nightname)
+            # try the outpath
+            outs = file_func(params, filename=basename, **kwargs)
+            # depends on output
+            if isinstance(outs, str):
+                outpath = outs
+            else:
+                outpath = outs[0]
+            # if this file is found then break
+            if os.path.exists(outpath):
+                return False
+    # if we get to here there are no skips
+    return True
+
+
+def setup_paths(params, nightname):
+
+    params['ARG_NIGHT_NAME'] = nightname
+    params['REDUCED_DIR'] = os.path.join(params['DRS_DATA_REDUC'], nightname)
+    params['TMP_DIR'] = os.path.join(params['DRS_DATA_WORKING'], nightname)
+
+    return params
+
 
 
 # =============================================================================
@@ -340,11 +438,21 @@ class Reprocesser:
         self.params = params
         self.name = remove_py(name)
         self.arglist = args
+        # this stores how many drs files there are per file arg
+        self.kinds = OrderedDict()
+        self.limit = None
+        # this stores the drs files themselves for each file arg
+        self.file_args = OrderedDict()
+        # get the recipe
         self.recipe = self.find_recipe()
-        self.file_args = self.find_file_arguments()
+        # fill self.kinds and self.file_args
+        self.find_file_arguments()
+        # storage for the file groups
         self.file_groups = OrderedDict()
+        # storage of the commands (and iteration number)
         self.command_number = 0
         self.commands = OrderedDict()
+
 
     def find_recipe(self):
         for recipe in rd.recipes:
@@ -362,8 +470,6 @@ class Reprocesser:
         """
         if self.recipe is None:
             return []
-        # storage for output arguments
-        outargs = dict()
         # get recipe arg list without '-'
         recipearglist = list(map(lambda x: x.replace('-', ''),
                                  self.recipe.args.keys()))
@@ -372,10 +478,18 @@ class Reprocesser:
             if rarg in recipearglist:
                 pos = recipearglist.index(rarg)
                 oarg = oarglist[pos]
-                outargs[oarg] = self.recipe.args[oarg]['files']
-        return outargs
+                drsfiles = self.recipe.args[oarg]['files']
+                self.file_args[oarg] = drsfiles
+                self.kinds[oarg] = len(drsfiles)
+        # set the limit
+        for oarg in self.kinds:
+            if self.limit is not None:
+                if self.kinds[oarg] > self.limit:
+                    self.limit = self.kinds[oarg]
+            else:
+                self.limit = self.kinds[oarg]
 
-    def get_file_groups(self, table, filters):
+    def get_file_groups(self, table, filters, night=None):
         if self.recipe is None:
             return []
         # for every file argument
@@ -389,7 +503,7 @@ class Reprocesser:
             # for every type of file in file arguement
             for d_it, drsfile in enumerate(drsfiles):
                 # need to find all files that below in this group
-                dargs = [drsfile, table, filters]
+                dargs = [drsfile, table, filters, night]
                 mask_it, newfiles = self.get_drsfile_mask(*dargs)
                 # add old columns
                 for col in table.colnames:
@@ -403,23 +517,23 @@ class Reprocesser:
             # need to get each groups mean
             drstable['MEANDATE'] = get_group_mean(drstable)
             # loop around groups and add to outargs
-            for g_it in range(1, int(max(drstable['GROUPS']))):
+            for g_it in range(1, int(max(drstable['GROUPS'])) + 1):
                 # get group table
                 grouptable = drstable[drstable['GROUPS'] == g_it].copy()
                 # add to file_groups
                 self.file_groups[argname].append(grouptable)
 
-    def get_drsfile_mask(self, drsfile, table, filters):
+    def get_drsfile_mask(self, drsfile, table, filters, night=None):
         # get in filenames
         infilenames = table[ITABLE_FILECOL]
-        # -------------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # get output extension
         outext = drsfile.args['ext']
         # get input extension
         while 'intype' in drsfile.args:
             drsfile = drsfile.args['intype']
         inext = drsfile.args['ext']
-        # -------------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # get required header keys
         rkeys = dict()
         for arg in drsfile.args:
@@ -429,12 +543,23 @@ class Reprocesser:
         mask = np.ones_like(infilenames, dtype=bool)
         for key in rkeys:
             mask &= table[key] == rkeys[key]
-        # -------------------------------------------------------------------------
+        # check for empty mask
+        if np.sum(mask) == 0:
+            return mask, []
+        # ------------------------------------------------------------------
+        # deal with a night filter
+        if night is not None:
+            mask &= (table[NIGHT_COL] == night)
+        # check for empty mask
+        if np.sum(mask) == 0:
+            return mask, []
+
+        # ------------------------------------------------------------------
         # deal with filters
         if filters is not None:
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # KW_OBJECT filters
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # deal with science filter
             if self.params[SFILTER] is not None and SFILTER in filters:
                 objectnames = self.params[SFILTER].split(' ')
@@ -678,6 +803,12 @@ def generate_all(params, tables, paths):
             r_args = list(r_args[r_reqs])
         # get run name
         runname = 'RUN_{0}'.format(modname)
+
+        # deal with master night
+        if 'MASTER' in modname.upper():
+            night = params['MASTER_NIGHT']
+        else:
+            night = None
         # make sure item in params - skip if it isn't
         if runname not in params:
             continue
@@ -688,13 +819,19 @@ def generate_all(params, tables, paths):
             WLOG(params, '', wmsg.format(modname, remove_py(r_name)))
             # get reprocesser
             prog = Reprocesser(params, r_name, r_args)
+
+            # update limit (for master sometimes need 1)
+            if 'MASTER' in modname.upper():
+                limit = prog.limit
+            else:
+                limit = None
             # find file groups using raw table (tables[0])
-            prog.get_file_groups(tables[0], r_filter)
+            prog.get_file_groups(tables[0], r_filter, night)
             # generate run commands
             prog.generate_run_commands()
             # --------------------------------------------------------------
             # add this to runlist
-            for key in prog.commands.keys():
+            for key in list(prog.commands.keys())[:limit]:
                 cargs = [runkey, prog.commands[key]]
                 print('Adding {0}: {1}'.format(*cargs))
                 runtable[runkey] = prog.commands[key]
@@ -728,8 +865,9 @@ def group_drs_files(drstable):
             group_number += 1
             valid |= nightmask
             continue
-        # remove any with invalid sequence numbers
-        nightmask &= (sequence_col != '')
+        # set invalid sequence numbers to 1
+        sequence_mask = sequence_col == ''
+        sequence_col[sequence_mask] = 1
         # get the sequence number
         sequences = sequence_col[nightmask].astype(int)
         indices = np.arange(len(sequences))
