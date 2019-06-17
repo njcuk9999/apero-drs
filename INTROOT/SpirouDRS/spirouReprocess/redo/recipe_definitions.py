@@ -43,8 +43,10 @@ class Helper:
     """
     Proxy class to avoid changes below
     """
+
     def __init__(self):
         pass
+
     def __getitem__(self, item):
         return item
 
@@ -68,6 +70,7 @@ class DrsRecipe:
 
     def __repr__(self):
         return 'DrsRecipe[{0}]'.format(self.name)
+
 
 # =============================================================================
 # TODO: replace with terrapipe
@@ -191,6 +194,10 @@ cal_slit = drs_recipe(__INSTRUMENT__)
 cal_shape = drs_recipe(__INSTRUMENT__)
 cal_shape_master = drs_recipe(__INSTRUMENT__)
 cal_wave = drs_recipe(__INSTRUMENT__)
+obj_fit_tellu = drs_recipe(__INSTRUMENT__)
+obj_mk_tellu = drs_recipe(__INSTRUMENT__)
+obj_fit_tellu_db = drs_recipe(__INSTRUMENT__)
+obj_mk_tellu_db = drs_recipe(__INSTRUMENT__)
 
 test = drs_recipe(__INSTRUMENT__)
 # push into a list
@@ -198,7 +205,8 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master,
            cal_drift1, cal_drift2, cal_thermal,
            cal_extract, cal_ff, cal_hc, cal_loc, cal_pp,
            cal_slit, cal_shape, cal_shape_master,
-           cal_wave,
+           cal_wave, obj_fit_tellu, obj_mk_tellu, obj_fit_tellu_db,
+           obj_mk_tellu_db,
            test]
 
 # =============================================================================
@@ -333,7 +341,6 @@ cal_dark.kwarg(**plot)
 cal_dark.kwarg(**interactive)
 cal_dark.kwarg(**resize)
 
-
 # -----------------------------------------------------------------------------
 # cal_dark_master_spirou
 # -----------------------------------------------------------------------------
@@ -396,7 +403,7 @@ cal_slit.description = Help['SLIT_DESC']
 cal_slit.epilog = Help['SLIT_EXAMPLE']
 cal_slit.run_order = 4
 cal_slit.arg(pos=0, **directory)
-cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+', 
+cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
              helpstr=Help['FILES_HELP'] + Help['SLIT_FILES_HELP'])
 cal_slit.kwarg(**add_cal)
 cal_slit.kwarg(**badfile)
@@ -439,7 +446,6 @@ cal_shape.kwarg(**plot)
 cal_shape.kwarg(**interactive)
 cal_shape.kwarg(**resize)
 
-
 # -----------------------------------------------------------------------------
 # cal_shape_master_spirou
 # -----------------------------------------------------------------------------
@@ -453,10 +459,11 @@ cal_shape_master.description = Help['SHAPE_DESC']
 cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
 cal_shape_master.run_order = 4
 cal_shape_master.arg(pos=0, **directory)
-cal_shape_master.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1',
-              helpstr=Help['SHAPE_HCFILES_HELP'])
+cal_shape_master.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1],
+                     pos='1',
+                     helpstr=Help['SHAPE_HCFILES_HELP'])
 cal_shape_master.arg(name='fpfile', dtype='files', files=[sf.pp_fp_fp], pos='2',
-              helpstr=Help['SHAPE_FPFILES_HELP'])
+                     helpstr=Help['SHAPE_FPFILES_HELP'])
 cal_shape_master.kwarg(**add_cal)
 cal_shape_master.kwarg(**badfile)
 cal_shape_master.kwarg(**dobad)
@@ -503,7 +510,6 @@ cal_ff.kwarg(**resize)
 cal_ff.kwarg(**shapefile)
 cal_ff.kwarg(**tiltfile)
 
-
 # -----------------------------------------------------------------------------
 # cal_thermal_spirou
 # -----------------------------------------------------------------------------
@@ -535,7 +541,6 @@ cal_thermal.kwarg(**interactive)
 cal_thermal.kwarg(**resize)
 cal_thermal.kwarg(**shapefile)
 cal_thermal.kwarg(**tiltfile)
-
 
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
@@ -587,12 +592,12 @@ cal_hc.run_order = 7
 hc_file1 = sf.out_ext_e2dsff_ab.copy()
 hc_file1.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
 hc_file1.args['intype'] = sf.pp_hc1_hc1
-hc_file1.args['ext'] = 'c_e2ds_AB.fits'
+hc_file1.args['ext'] = 'c_pp_e2ds_AB.fits'
 
 hc_file2 = sf.out_ext_e2dsff_c.copy()
 hc_file2.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
 hc_file2.args['intype'] = sf.pp_hc1_hc1
-hc_file2.args['ext'] = 'c_e2ds_AB.fits'
+hc_file2.args['ext'] = 'c_pp_e2ds_AB.fits'
 
 # set up arguments
 cal_hc.arg(pos=0, **directory)
@@ -616,42 +621,42 @@ cal_wave.inputtype = 'e2ds'
 cal_wave.extension = 'fits'
 cal_wave.description = Help['HC_E2DS_DESC']
 cal_wave.epilog = Help['HC_E2DS_EXAMPLE']
-cal_wave.run_order = 7
+cal_wave.run_order = 8
 # setup custom files (add a required keyword in the header to each file)
 #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
 hc_file1 = sf.out_ext_e2dsff_ab.copy()
 hc_file1.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
 hc_file1.args['intype'] = sf.pp_hc1_hc1
-hc_file1.args['ext'] = 'c_e2ds_AB.fits'
+hc_file1.args['ext'] = 'c_pp_e2ds_AB.fits'
 
 hc_file2 = sf.out_ext_e2dsff_c.copy()
 hc_file2.args['KW_EXT_TYPE'] = 'HCONE_HCONE'
 hc_file2.args['intype'] = sf.pp_hc1_hc1
-hc_file2.args['ext'] = 'c_e2ds_AB.fits'
+hc_file2.args['ext'] = 'c_pp_e2ds_AB.fits'
 
 fp_file1 = sf.out_ext_e2dsff_ab.copy()
 fp_file1.args['KW_EXT_TYPE'] = 'FP_FP'
 fp_file1.args['intype'] = sf.pp_fp_fp
-fp_file1.args['ext'] = 'a_e2ds_AB.fits'
+fp_file1.args['ext'] = 'a_pp_e2ds_AB.fits'
 
 fp_file2 = sf.out_ext_e2dsff_c.copy()
 fp_file2.args['KW_EXT_TYPE'] = 'FP_FP'
 fp_file2.args['intype'] = sf.pp_fp_fp
-fp_file2.args['ext'] = 'a_e2ds_AB.fits'
+fp_file2.args['ext'] = 'a_pp_e2ds_AB.fits'
 
 # set up arguments
 cal_wave.arg(pos=0, **directory)
 cal_wave.arg(name='fpfile', dtype='file', files=[fp_file1, fp_file2], pos='1',
-              helpstr=Help['SHAPE_HCFILES_HELP'])
-cal_wave.arg(name='hcfiles', dtype='files', files=[hc_file1, hc_file2], pos='2+',
-              helpstr=Help['SHAPE_FPFILES_HELP'])
+             helpstr=Help['SHAPE_HCFILES_HELP'])
+cal_wave.arg(name='hcfiles', dtype='files', files=[hc_file1, hc_file2],
+             pos='2+',
+             helpstr=Help['SHAPE_FPFILES_HELP'])
 cal_wave.kwarg(**add_cal)
 cal_wave.kwarg(**plot)
 cal_wave.kwarg(**interactive)
 cal_wave.kwarg(**blazefile)
 cal_wave.kwarg(**flatfile)
 cal_wave.kwarg(**wavefile)
-
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -669,12 +674,112 @@ cal_drift2.name = 'cal_DRIFTPEAK_E2DS_spirou.py'
 cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
 # obj_mk_tellu
 # -----------------------------------------------------------------------------
+obj_mk_tellu.name = 'obj_mk_tellu.py'
+obj_mk_tellu.instrument = __INSTRUMENT__
+obj_mk_tellu.outputdir = 'reduced'
+obj_mk_tellu.inputdir = 'reduced'
+obj_mk_tellu.inputtype = 'e2ds'
+obj_mk_tellu.extension = 'fits'
+obj_mk_tellu.description = Help['EXTRACT_DESC']
+obj_mk_tellu.epilog = Help['EXTRACT_EXAMPLE']
+obj_mk_tellu.run_order = 9
+obj_mk_tellu.arg(pos=0, **directory)
+obj_mk_tellu.arg(name='files', dtype='files', pos='1+',
+                 files=[sf.out_ext_e2dsff_ab],
+                 helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                 limit=1)
+obj_mk_tellu.kwarg(**add_cal)
+obj_mk_tellu.kwarg(**badfile)
+obj_mk_tellu.kwarg(**dobad)
+obj_mk_tellu.kwarg(**backsub)
+obj_mk_tellu.kwarg(default=True, **combine)
+obj_mk_tellu.kwarg(**darkfile)
+obj_mk_tellu.kwarg(**dodark)
+obj_mk_tellu.kwarg(default_ref='IC_EXTRACT_TYPE', **extractmethod)
+obj_mk_tellu.kwarg(**extfiber)
+obj_mk_tellu.kwarg(**flipimage)
+obj_mk_tellu.kwarg(**fluxunits)
+obj_mk_tellu.kwarg(**plot)
+obj_mk_tellu.kwarg(**interactive)
+obj_mk_tellu.kwarg(**resize)
+obj_mk_tellu.kwarg(**shapefile)
+obj_mk_tellu.kwarg(**tiltfile)
+
+# -----------------------------------------------------------------------------
+# obj_mk_tellu_db
+# -----------------------------------------------------------------------------
+obj_mk_tellu_db.name = 'obj_mk_tellu_db.py'
+obj_mk_tellu_db.instrument = __INSTRUMENT__
+obj_mk_tellu_db.outputdir = 'reduced'
+obj_mk_tellu_db.inputdir = 'reduced'
+obj_mk_tellu_db.intputtype = 'e2ds'
+obj_mk_tellu_db.extension = 'fits'
+obj_mk_tellu_db.description = Help['DARK_DESC']
+obj_mk_tellu_db.epilog = Help['DARK_EXAMPLE']
+obj_mk_tellu_db.run_order = 10
+obj_mk_tellu_db.kwarg(**add_cal)
+obj_mk_tellu_db.kwarg(default=True, **combine)
+obj_mk_tellu_db.kwarg(**flipimage)
+obj_mk_tellu_db.kwarg(**fluxunits)
+obj_mk_tellu_db.kwarg(**plot)
+obj_mk_tellu_db.kwarg(**interactive)
+obj_mk_tellu_db.kwarg(**resize)
+
+# -----------------------------------------------------------------------------
+# obj_fit_tellu
+# -----------------------------------------------------------------------------
+obj_fit_tellu.name = 'obj_fit_tellu.py'
+obj_fit_tellu.instrument = __INSTRUMENT__
+obj_fit_tellu.outputdir = 'reduced'
+obj_fit_tellu.inputdir = 'reduced'
+obj_fit_tellu.inputtype = 'e2ds'
+obj_fit_tellu.extension = 'fits'
+obj_fit_tellu.description = Help['EXTRACT_DESC']
+obj_fit_tellu.epilog = Help['EXTRACT_EXAMPLE']
+obj_fit_tellu.run_order = 11
+obj_fit_tellu.arg(pos=0, **directory)
+obj_fit_tellu.arg(name='files', dtype='files', pos='1+',
+                  files=[sf.out_ext_e2dsff_ab],
+                  helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                  limit=1)
+obj_fit_tellu.kwarg(**add_cal)
+obj_fit_tellu.kwarg(**badfile)
+obj_fit_tellu.kwarg(**dobad)
+obj_fit_tellu.kwarg(**backsub)
+obj_fit_tellu.kwarg(default=True, **combine)
+obj_fit_tellu.kwarg(**darkfile)
+obj_fit_tellu.kwarg(**dodark)
+obj_fit_tellu.kwarg(default_ref='IC_EXTRACT_TYPE', **extractmethod)
+obj_fit_tellu.kwarg(**extfiber)
+obj_fit_tellu.kwarg(**flipimage)
+obj_fit_tellu.kwarg(**fluxunits)
+obj_fit_tellu.kwarg(**plot)
+obj_fit_tellu.kwarg(**interactive)
+obj_fit_tellu.kwarg(**resize)
+obj_fit_tellu.kwarg(**shapefile)
+obj_fit_tellu.kwarg(**tiltfile)
+
+# -----------------------------------------------------------------------------
+# obj_fit_tellu_db
+# -----------------------------------------------------------------------------
+obj_fit_tellu_db.name = 'obj_fit_tellu_db.py'
+obj_fit_tellu_db.instrument = __INSTRUMENT__
+obj_fit_tellu_db.outputdir = 'reduced'
+obj_fit_tellu_db.inputdir = 'reduced'
+obj_fit_tellu_db.intputtype = 'e2ds'
+obj_fit_tellu_db.extension = 'fits'
+obj_fit_tellu_db.description = Help['DARK_DESC']
+obj_fit_tellu_db.epilog = Help['DARK_EXAMPLE']
+obj_fit_tellu_db.run_order = 12
+obj_fit_tellu_db.kwarg(**add_cal)
+obj_fit_tellu_db.kwarg(default=True, **combine)
+obj_fit_tellu_db.kwarg(**flipimage)
+obj_fit_tellu_db.kwarg(**fluxunits)
+obj_fit_tellu_db.kwarg(**plot)
+obj_fit_tellu_db.kwarg(**interactive)
+obj_fit_tellu_db.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # obj_mk_tell_template

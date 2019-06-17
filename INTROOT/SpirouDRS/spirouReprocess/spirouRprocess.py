@@ -12,6 +12,7 @@ Created on 2019-06-10 at 13:38
 from __future__ import division
 import numpy as np
 import os
+import time
 import multiprocessing
 from multiprocessing import Process, Manager, Event
 
@@ -110,11 +111,16 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1,
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
+            pp['TIMING'] = None
             # flag finished
             finished = True
         else:
             # log message 1
             WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
+
+            # start time
+            starttime = time.time()
+
             # try to run the main function
             try:
                 # ----------------------------------------------------------
@@ -127,11 +133,17 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['ERROR'] = list(ll_item['p']['LOGGER_ERROR'])
                 pp['WARNING'] = list(ll_item['p']['LOGGER_WARNING'])
                 pp['OUTPUTS'] = dict(ll_item['p']['OUTPUTS'])
+                pp['TRACEBACK'] = []
                 # flag finished
                 finished = True
             # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except:
+                    string_traceback = ''
                 emsgs = ['Unexpected error occured in run {0}'
                          ''.format(priority)]
                 for emsg in str(e).split('\n'):
@@ -140,11 +152,17 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = str(string_traceback)
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
             # Manage expected errors
             except SystemExit as e:
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except:
+                    string_traceback = ''
                 emsgs = ['Expected error occured in run {0}'
                          ''.format(priority)]
                 for emsg in str(e).split('\n'):
@@ -153,8 +171,16 @@ def linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = str(string_traceback)
                 # flag not finished
                 finished = False
+
+            # end time
+            endtime = time.time()
+
+            # add timing to pp
+            pp['TIMING'] = endtime - starttime
+
         # ------------------------------------------------------------------
         # if STOP_AT_EXCEPTION and not finished stop here
         if params['STOP_AT_EXCEPTION'] and not finished:
