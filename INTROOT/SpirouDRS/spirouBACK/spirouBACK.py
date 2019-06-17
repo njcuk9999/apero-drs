@@ -801,7 +801,7 @@ def correction_thermal2(p, image, hdr, fiber, flat=None):
         envelope[x_it] = np.nanpercentile(imagebox, envelope_percent)
     # ----------------------------------------------------------------------
     # median filter the thermal (loop around orders)
-    for order_num in range(dim2):
+    for order_num in range(dim1):
         thermal[order_num] = medfilt(thermal[order_num], bgnd_filter_width)
     # ----------------------------------------------------------------------
     # only keep wavelength in range of thermal limits
