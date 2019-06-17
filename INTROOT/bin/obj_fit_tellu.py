@@ -630,7 +630,11 @@ def main(night_name=None, files=None):
                 loc['WATERCOL'] = loc[molkey]
                 # set source
                 loc.set_source('WATERCOL', main_name)
-
+        # add the tau keys
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TAU_H2O'],
+                                   value=loc['TAU_H2O'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TAU_REST'],
+                                   value=loc['TAU_REST'])
         # log progress
         wmsg = 'Saving {0} to file'.format(outfilename2)
         WLOG(p, '', wmsg)
