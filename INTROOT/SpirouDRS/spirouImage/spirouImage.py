@@ -4430,8 +4430,9 @@ def e2dstos1d(p, wave, e2ds, blaze, wgrid='wave'):
         # convolve with the edge kernel
         oweight = np.convolve(valid, ker, mode='same')
         # normalise to the maximum
-        oweight = oweight - np.nanmin(oweight)
-        oweight = oweight / np.nanmax(oweight)
+        with warnings.catch_warnings(record=True) as _:
+            oweight = oweight - np.nanmin(oweight)
+            oweight = oweight / np.nanmax(oweight)
         # append to sloping vector storage
         slopevector[order_num] = oweight
 
