@@ -56,6 +56,9 @@ DRS_DATA_WORKING = '/drs/spirou/data/tmp'
 #   Define the plotting directory
 DRS_DATA_PLOT = '/drs/spirou/data/plot'
 
+#   Define the run directory
+DRS_DATA_RUN = '/drs/spirou/data/runs'
+
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
