@@ -50,7 +50,6 @@ HEADERKEYS = ['KW_ACQTIME', 'KW_CCAS', 'KW_CREF', 'KW_CMPLTEXP', 'KW_NEXP',
               'KW_OBJECT']
 SORTCOL = 'KW_ACQTIME'
 # define where the run directory is
-RUN_DIR = '/scratch/Projects/spirou/data_dev/runs/'
 RUN_KEY = 'ID'
 
 # =============================================================================
@@ -108,11 +107,18 @@ def read_run_file(params, runfile=None):
             WLOG(params, 'error', emsg)
         else:
             runfile = sys.argv[-1]
+
+    # get run directory
+    if not os.path.exists(params['DRS_DATA_RUN']):
+        emsg = 'Must define run path (DRS_DATA_RUN)'
+        WLOG(params, 'error', emsg)
+    else:
+        run_dir = params['DRS_DATA_RUN']
     # ----------------------------------------------------------------------
     # check if run file exists
     if not os.path.exists(runfile):
         # construct run file
-        runfile = os.path.join(RUN_DIR, runfile)
+        runfile = os.path.join(run_dir, runfile)
         # check that it exists
         if not os.path.exists(runfile):
             emsg = 'Cannot find run file {0}'
