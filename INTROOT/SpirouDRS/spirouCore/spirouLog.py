@@ -315,8 +315,8 @@ class Logger:
         if 'LOGGER_FULL' in self.pout:
             self.pout['LOGGER_FULL'] = []
 
-    def printmessage(self, params, message):
-        printlog(params, message, key='all', colour=None)
+    def printmessage(self, params, message, colour=None):
+        printlog(params, message, key='all', colour=colour)
 
 
 # =============================================================================
