@@ -475,6 +475,9 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
     func_name = __NAME__ + '.check_files_id()'
     # add new constant (for multiple files)
     p['DPRTYPES'] = []
+    # make sure files is a list
+    if isinstance(files, str):
+        files = [files]
     # loop around filenames in files
     for filename in files:
         # check id for each file

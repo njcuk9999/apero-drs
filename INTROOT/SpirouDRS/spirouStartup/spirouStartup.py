@@ -471,6 +471,9 @@ def multi_file_setup(p, files=None, log=True, skipcheck=False):
     # check file based on recipe name
     locations = []
     recipe = p['RECIPE']
+    # make sure files is a list
+    if isinstance(files, str):
+        files = [files]
     # loop around files
     for filename in files:
         p, path = spirouImage.CheckFile(p, filename, recipe, skipcheck,
