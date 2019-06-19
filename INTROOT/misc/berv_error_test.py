@@ -89,7 +89,8 @@ if __name__ == "__main__":
     filename = os.path.join(path, night_name, files[0])
     filename = os.path.join(path, 'TEST4/20180527/2279540o_pp_e2dsff_AB.fits')
 
-    filename = '/Data/projects/spirou/data_dev/reduced/from_ea/2294341o_pp_e2dsff_AB_tellu_corrected.fits'
+    filename = ('/Data/projects/spirou/data_dev/reduced/from_ea/'
+                '2294341o_pp_e2dsff_AB_tellu_corrected.fits')
 
     # ----------------------------------------------------------------------
     # Set up
@@ -148,15 +149,16 @@ if __name__ == "__main__":
     dec_second = np.sign(float(objdec[0])) * float(objdec[2]) / 3600.
     target_delta = dec_hour + dec_min + dec_second
     # set the proper motion and equinox
-    target_pmra = p['OBJRAPM']
-    target_pmde = p['OBJDECPM']
-    target_equinox = p['OBJEQUIN']
-    # target_equinox = 2451545.0
+    target_pmra = p['OBJRAPM'] * 1000
+    target_pmde = p['OBJDECPM'] * 1000
+    target_equinox = Time(float(p['OBJEQUIN']), format='decimalyear').jd
+
+    target_plx = 0.0
 
     # calculate JD time (as Astropy.Time object)
     tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
     t = Time(tstr, scale='utc')
-    tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+    tdelta = TimeDelta(((p['EXPTIME']) / 2.) * uu.s)
     t1 = t + tdelta
 
     # ----------------------------------------------------------------------
@@ -166,7 +168,7 @@ if __name__ == "__main__":
     args = [p, target_alpha, target_delta, target_equinox, obs_year,
             obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'] * -1,
             p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'] * 1000, target_pmra,
-            target_pmde]
+            target_pmde, target_plx]
     # get berv measurements
     results1 = spirouBERV.newbervmain(*args, method='estimate')
 
@@ -174,16 +176,21 @@ if __name__ == "__main__":
     args = [p, target_alpha, target_delta, target_equinox, obs_year,
             obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
             p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra,
-            target_pmde]
+            target_pmde, target_plx]
 
     results2 = spirouBERV.newbervmain(*args, method='new')
 
     results3 = etiennes_code(target_alpha, target_delta, target_equinox,
                              p['IC_LATIT_OBS'], p['IC_LONGIT_OBS'] * -1,
                              p['IC_ALTIT_OBS'] * 1000,
-                             target_pmra, target_pmde, 0.0, 0.0, t1.mjd)
+                             target_pmra, target_pmde, target_plx,
+                             0.0, t1.mjd)
 
     print('OBJECT = {0}'.format(hdr['OBJECT']))
+
+    print('ra={0} dec={1}'.format(target_alpha, target_delta))
+    print('pmra={0} pmde={1}'.format(target_pmra, target_pmde))
+
     print('{0:25s}'.format('ESTIMATE (PYASL)'), results1)
     print('{0:25s}'.format('SPIROU DRS (BARYCORRPY)'), results2)
     print('{0:25s}'.format('ETIENNE (BARYCORRPY)'), results3)
