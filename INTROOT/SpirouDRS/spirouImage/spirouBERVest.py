@@ -481,7 +481,6 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
     2005-June-20      Kochukhov Included precession of RA2000 and DEC2000 to current epoch
 
     """
-    from PyAstronomy.pyaC import degtorad
 
     # This reverts the original longitude convention. After this,
     # East longitudes are positive
@@ -524,16 +523,16 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
     # DIURNAL VELOCITY (see IRAF task noao.astutil.rvcorrect)
     # convert geodetic latitude into geocentric latitude to correct
     # for rotation of earth
-    dlat = -(11. * 60. + 32.743) * np.sin(2.0 * degtorad(obs_lat)) \
-           + 1.1633 * np.sin(4.0 * degtorad(obs_lat)) - \
-           0.0026 * np.sin(6.0 * degtorad(obs_lat))
+    dlat = -(11. * 60. + 32.743) * np.sin(2.0 * np.deg2rad(obs_lat)) \
+           + 1.1633 * np.sin(4.0 * np.deg2rad(obs_lat)) - \
+           0.0026 * np.sin(6.0 * np.deg2rad(obs_lat))
     lat = obs_lat + dlat / 3600.0
 
     # Calculate distance of observer from earth center
-    r = 6378160.0 * (0.998327073 + 0.001676438 * np.cos(2.0 * degtorad(lat))
+    r = 6378160.0 * (0.998327073 + 0.001676438 * np.cos(2.0 * np.deg2rad(lat))
                      - 0.00000351 * np.cos(
-                4.0 * degtorad(lat)) + 0.000000008 * np.cos(
-                6.0 * degtorad(lat))) \
+                4.0 * np.deg2rad(lat)) + 0.000000008 * np.cos(
+                6.0 * np.deg2rad(lat))) \
         + obs_alt
 
     # Calculate rotational velocity (perpendicular to the radius vector) in km/s
@@ -548,20 +547,20 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
     lmst = idlMod(gmst - obs_long / 15., 24)
 
     # Projection of rotational velocity along the line of sight
-    vdiurnal = v * np.cos(degtorad(lat)) * np.cos(degtorad(dec)
+    vdiurnal = v * np.cos(np.deg2rad(lat)) * np.cos(np.deg2rad(dec)
                                                   ) * np.sin(
-        degtorad(ra - lmst * 15))
+        np.deg2rad(ra - lmst * 15))
 
     # BARICENTRIC and HELIOCENTRIC VELOCITIES
     vh, vb = baryvel(xjd, 0)
 
     # Project to line of sight
-    vbar = vb[0] * np.cos(degtorad(dec)) * np.cos(degtorad(ra)) + vb[
-        1] * np.cos(degtorad(dec)) * np.sin(degtorad(ra)) + \
-           vb[2] * np.sin(degtorad(dec))
-    vhel = vh[0] * np.cos(degtorad(dec)) * np.cos(degtorad(ra)) + vh[
-        1] * np.cos(degtorad(dec)) * np.sin(degtorad(ra)) + \
-           vh[2] * np.sin(degtorad(dec))
+    vbar = vb[0] * np.cos(np.deg2rad(dec)) * np.cos(np.deg2rad(ra)) + vb[
+        1] * np.cos(np.deg2rad(dec)) * np.sin(np.deg2rad(ra)) + \
+           vb[2] * np.sin(np.deg2rad(dec))
+    vhel = vh[0] * np.cos(np.deg2rad(dec)) * np.cos(np.deg2rad(ra)) + vh[
+        1] * np.cos(np.deg2rad(dec)) * np.sin(np.deg2rad(ra)) + \
+           vh[2] * np.sin(np.deg2rad(dec))
 
     # Use barycentric velocity for correction
     corr = (vdiurnal + vbar)
