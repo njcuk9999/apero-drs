@@ -11,9 +11,9 @@ Created on 2019-06-05 at 09:05
 """
 from __future__ import division
 import numpy as np
-import itertools
-from tqdm import tqdm
-import matplotlib.pyplot as plt
+from astropy.time import Time, TimeDelta
+from astropy import units as uu
+import os
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -46,25 +46,63 @@ EXTRACT_LL_TYPES = ['3c', '3d', '4a', '4b', '5a', '5b']
 EXTRACT_SHAPE_TYPES = ['4a', '4b', '5a', '5b']
 
 
+def etiennes_code(ra, dec, epoch, lat, longi, alt, pmra, pmdec, px, rv, mjdate):
+
+    from barycorrpy import get_BC_vel
+    from barycorrpy import utc_tdb
+
+    obsname = ''
+    zmeas = 0.0
+    ephemeris = 'https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/a_old_versions/de405.bsp'
+
+    JDUTC = Time(mjdate, format='mjd', scale='utc')
+
+    bjd = utc_tdb.JDUTC_to_BJDTDB(JDUTC, ra=ra, dec=dec, obsname=obsname,
+                                  lat=lat, longi=longi, alt=alt, pmra=pmra,
+                                  pmdec=pmdec, px=px, rv=rv, epoch=epoch,
+                                  ephemeris=ephemeris, leap_update=True)
+
+    results = get_BC_vel(JDUTC=JDUTC, ra=ra, dec=dec, obsname=obsname, lat=lat,
+                         longi=longi, alt=alt, pmra=pmra, pmdec=pmdec, px=px,
+                         rv=rv, zmeas=zmeas, epoch=epoch, ephemeris=ephemeris,
+                         leap_update=True)
+
+    return results[0][0]/1000, bjd[0][0], np.nan
+
 # =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
 
+    path = '/Data/projects/spirou/data_dev/reduced'
+
     night_name = 'TEST1/20180805'
     files = ['2295545o_pp.fits']
+
+    night_name = '2019-01-17'
+    files = ['2368959o_pp.fits']
+
+    night_name = 'TEST2/20180805'
+    files = ['2295547o_pp_e2dsff_AB.fits']
+
+    filename = os.path.join(path, night_name, files[0])
+    filename = os.path.join(path, 'TEST4/20180527/2279540o_pp_e2dsff_AB.fits')
+
+    filename = '/Data/projects/spirou/data_dev/reduced/from_ea/2294341o_pp_e2dsff_AB_tellu_corrected.fits'
+
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, calibdb=True)
+    p = spirouStartup.LoadArguments(p, night_name, None,
+                                    require_night_name=False)
+
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    p, data, hdr = spirouFITS.readimage_and_combine(p, framemath='add')
+    data, hdr, _, _ = spirouFITS.read_raw_data(p, filename)
     # ----------------------------------------------------------------------
     # Read star parameters
     # ----------------------------------------------------------------------
@@ -79,6 +117,7 @@ if __name__ == "__main__":
     p = spirouImage.get_param(p, hdr, 'KW_OBJDECPM')
     p = spirouImage.get_param(p, hdr, 'KW_DATE_OBS', dtype=str)
     p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_ACQTIME', dtype=float)
 
     # ----------------------------------------------------------------------
     # Get berv parameters
@@ -112,68 +151,45 @@ if __name__ == "__main__":
     target_pmra = p['OBJRAPM']
     target_pmde = p['OBJDECPM']
     target_equinox = p['OBJEQUIN']
+    # target_equinox = 2451545.0
+
+    # calculate JD time (as Astropy.Time object)
+    tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+    t = Time(tstr, scale='utc')
+    tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+    t1 = t + tdelta
 
     # ----------------------------------------------------------------------
     # BERV TEST
     # ----------------------------------------------------------------------
-    # set up grid of ra and decs
-    ra_grid = np.arange(0, 360.0, 30.0)
-    dec_grid = np.arange(-90.0, 90.0, 15.0)
 
-    grid = list(itertools.product(ra_grid, dec_grid))
-
-    # storage
-    bervs1, bjds1, bervs2, bjds2, ras, decs = [], [], [], [], [], []
-
-    # loop around grid parameters
-    for ra, dec in tqdm(grid):
-        args = [p, ra, dec, target_equinox, obs_year,
-                obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'] * -1,
-                p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'] * 1000, target_pmra,
-                target_pmde]
-        # get berv measurements
-        results1 = spirouBERV.newbervmain(*args, method='estimate')
-
-        args = [p, ra, dec, target_equinox, obs_year,
-                obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
-                p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra,
-                target_pmde]
-
-        results2 = spirouBERV.newbervmain(*args, method='new')
-
-        # append to storage
-        bervs1.append(results1[0]), bervs2.append(results2[0])
-        bjds1.append(results1[1]), bjds2.append(results2[1])
-        ras.append(ra), decs.append(dec)
-
-    diff = np.array(bervs1) - np.array(bervs2)
+    args = [p, target_alpha, target_delta, target_equinox, obs_year,
+            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'] * -1,
+            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'] * 1000, target_pmra,
+            target_pmde]
+    # get berv measurements
+    results1 = spirouBERV.newbervmain(*args, method='estimate')
 
 
-    X, Y = np.meshgrid(ra_grid, dec_grid)
-    Z = diff.reshape(X.shape) * 1000
+    args = [p, target_alpha, target_delta, target_equinox, obs_year,
+            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
+            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra,
+            target_pmde]
 
-    plt.ioff()
-    plt.figure()
-    im = plt.contourf(X, Y, Z, 100)
-    cb = plt.colorbar(im)
-    cb.set_label('BERV difference [m/s]')
-    plt.title('Comparison between Barycorrpy and BERV Estimate')
-    # plt.scatter(X.flatten(), Y.flatten(), marker='x', color='k')
+    results2 = spirouBERV.newbervmain(*args, method='new')
 
-    plt.xlabel('Right Ascension')
-    plt.ylabel('Declination')
-    plt.xlim(0, 360)
-    plt.ylim(-90, 90)
+    results3 = etiennes_code(target_alpha, target_delta, target_equinox,
+                             p['IC_LATIT_OBS'], p['IC_LONGIT_OBS'] * -1,
+                             p['IC_ALTIT_OBS'] * 1000,
+                             target_pmra, target_pmde, 0.0, 0.0, t1.mjd)
 
+    print('OBJECT = {0}'.format(hdr['OBJECT']))
+    print('{0:25s}'.format('ESTIMATE (PYASL)'), results1)
+    print('{0:25s}'.format('SPIROU DRS (BARYCORRPY)'), results2)
+    print('{0:25s}'.format('ETIENNE (BARYCORRPY)'), results3)
 
-    plt.plot([258.82889052749744], [4.963906859911667], marker='x', color='w',
-             label='GJ1214')
-    plt.plot([269.45207512], [4.69339089], marker='*', color='w', label='Gl699')
+    print('{0:25s}'.format('HEADER'), (hdr['BERV'], hdr['BJD'], hdr['BERVMAX']))
 
-    plt.legend(loc=0)
-
-    plt.show()
-    plt.close()
 
 # =============================================================================
 # End of code
