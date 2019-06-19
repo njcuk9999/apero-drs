@@ -39,9 +39,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-#def main(runfile=None):
-if True:
-    runfile = 'run_test001.ini'
+def main(runfile=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -140,8 +138,6 @@ if True:
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p)
 
-
-def main(runfile=None):
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
