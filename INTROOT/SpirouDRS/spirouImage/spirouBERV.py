@@ -120,6 +120,98 @@ def get_earth_velocity_correction(p, loc, hdr):
     return p, loc
 
 
+def earth_velocity_correction(p, loc, method='off'):
+
+
+    from astropy.coordinates import SkyCoord
+    from astropy import units as uu
+
+
+    func_name = __NAME__ + '.earth_velocity_correction()'
+
+    # get out coordinates [in deg]
+    radecstr = '{0} {1}'.format(p['OBJRA'], p['OBJDEC'])
+    coords = SkyCoord(radecstr, unit=(uu.hourangle, uu.deg))
+    ra = coords.ra.value
+    dec = coords.dec.value
+    # ----------------------------------------------------------------------
+    # get pmra and pmde [in mas/yr]
+    pmra = p['OBJRAPM'] * 1000
+    pmde = p['OBJDECPM'] * 1000
+    # ----------------------------------------------------------------------
+    # get equinox (epoch in jd)
+    equinox = Time(float(p['OBJEQUIN'], format='decimalyear')).jd
+    # ----------------------------------------------------------------------
+    # get parallax
+    if 'PARALLAX' in p:
+        plx = p['PARALLAX']
+    else:
+        plx = 0.0
+    # ----------------------------------------------------------------------
+    # get time [as astropy.time object]
+    # time defined as MJDATE + 0.5 * EXPTIME
+    t = Time(p['MJDATE'], format='mjd')
+    t_delta = TimeDelta((p['EXPTIME'] / 2.0) * uu.s)
+    t1 = t + t_delta
+    # ----------------------------------------------------------------------
+    # get observatory parameters
+    long = p['IC_LONGIT_OBS']
+    lat = p['IC_LATIT_OBS']
+    alt = p['IC_ALTIT_OBS']
+    # ----------------------------------------------------------------------
+    # store variables
+    kwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra, pmdec=pmde,
+                  px=plx, lat=lat, longi=long, alt=alt)
+    # ----------------------------------------------------------------------
+    if method == 'off':
+        berv, bjd, bervmax = np.nan, np.nan, np.nan
+        bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
+    elif method == 'new':
+        berv, bjd, bervmax = use_barycorrpy(p, t1, **kwargs)
+        bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
+    elif method == 'estimate':
+        bervest, bjdest, bervmaxest = use_berv_est(p, t1, **kwargs)
+        berv, bjd, bervmax = np.nan, np.nan, np.nan
+    # ----------------------------------------------------------------------
+    # store values in loc
+    colnames = ['BERV', 'BJD', 'BERV_MAX', 'BERVHOUR']
+    colnames += ['BERV_EST', 'BJD_EST', 'BERV_MAX_EST']
+    values = [berv, bjd, bervmax, t1.mjd, bervest, bjdest, bervmaxest]
+
+    for it in range(len(colnames)):
+        loc[colnames[it]] = values[it]
+        loc.set_source(colnames[it], func_name)
+
+
+def use_barycorrpy(p, t, **kwargs):
+    # need to import barycorrpy which required online files (astropy iers)
+    #  therefore provide a way to set offline version first
+    # noinspection PyBroadException
+    try:
+        # file at: http://maia.usno.navy.mil/ser7/finals2000A.all
+        from astropy.utils import iers
+        # get package name and relative path
+        package = spirouConfig.Constants.PACKAGE()
+        iers_dir = spirouConfig.Constants.ASTROPY_IERS_DIR()
+        # get absolute folder path from package and relfolder
+        absfolder = spirouConfig.GetAbsFolderPath(package, iers_dir)
+        # get file name
+        file_a = os.path.basename(iers.iers.IERS_A_FILE)
+        path_a = os.path.join(absfolder, file_a)
+        # set table
+        iers.IERS.iers_table = iers.IERS_A.open(path_a)
+        import barycorrpy
+    except Exception as _:
+        emsg1 = 'For method="new" must have barcorrpy installed '
+        emsg2 = '\ti.e. ">>> pip install barycorrpy'
+        WLOG(p, 'warning', [emsg1, emsg2])
+        raise ImportError(emsg1 + '\n' + emsg2)
+
+        # get the julien UTC date for observation and obs + 1 year
+        jdutc = list(t.jd + np.arange(0., 365., 1.5))
+
+
+
 def earth_velocity_correction(p, loc, method):
     func_name = __NAME__ + '.earth_velocity_correction()'
 
@@ -233,7 +325,11 @@ def earth_velocity_correction(p, loc, method):
 
 
 def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
-                obs_lat, obs_alt, pmra, pmde, method='new'):
+                obs_lat, obs_alt, pmra, pmde, plx=None, method='new'):
+
+    if plx is None:
+        plx = 0.0
+
     # if method is off return zeros
     if method == 'off':
         WLOG(p, 'warning', 'BERV not calculated.')
@@ -245,7 +341,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
         t = Time(tstr, scale='utc')
         # add exposure time
-        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        tdelta = TimeDelta(((p['EXPTIME']) / 2.) * uu.s)
         t1 = t + tdelta
         # storage for bervs
         bervs, bjds = [], []
@@ -277,7 +373,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
         t = Time(tstr, scale='utc')
         # add exposure time
-        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        tdelta = TimeDelta(((p['EXPTIME']) / 2.) * uu.s)
         t1 = t + tdelta
         # ---------------------------------------------------------------------
         # get reset directory location
@@ -313,9 +409,10 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
             raise ImportError(emsg1 + '\n' + emsg2)
         # set up the barycorr arguments
         bkwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra,
-                       pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,
+                       pmdec=pmde, px=plx, rv=0.0, lat=obs_lat,
                        longi=obs_long * -1, alt=obs_alt * 1000.,
                        leap_dir=data_folder)
+        print(bkwargs)
         # get the julien UTC date for observation and obs + 1 year
         jdutc = list(t1.jd + np.arange(0., 365., 1.5))
         # construct lock filename
