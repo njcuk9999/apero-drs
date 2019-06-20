@@ -14,6 +14,8 @@ import numpy as np
 import itertools
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from astropy.time import Time, TimeDelta
+from astropy import units as uu
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -113,12 +115,19 @@ if __name__ == "__main__":
     target_pmde = p['OBJDECPM']
     target_equinox = p['OBJEQUIN']
 
+    # calculate JD time (as Astropy.Time object)
+    tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+    t = Time(tstr, scale='utc')
+    tdelta = TimeDelta(((p['EXPTIME']) / 2.) * uu.s)
+    t1 = t + tdelta
+
     # ----------------------------------------------------------------------
     # BERV TEST
     # ----------------------------------------------------------------------
     # set up grid of ra and decs
     ra_grid = np.arange(0, 360.0, 30.0)
     dec_grid = np.arange(-90.0, 90.0, 15.0)
+    target_plx = 100.0
 
     grid = list(itertools.product(ra_grid, dec_grid))
 
@@ -127,19 +136,16 @@ if __name__ == "__main__":
 
     # loop around grid parameters
     for ra, dec in tqdm(grid):
-        args = [p, ra, dec, target_equinox, obs_year,
-                obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'] * -1,
-                p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'] * 1000, target_pmra,
-                target_pmde]
-        # get berv measurements
-        results1 = spirouBERV.newbervmain(*args, method='estimate')
 
-        args = [p, ra, dec, target_equinox, obs_year,
-                obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
-                p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra,
-                target_pmde]
 
-        results2 = spirouBERV.newbervmain(*args, method='new')
+        kwargs = dict(ra=ra, dec=dec, epoch=target_equinox,
+                      pmra=target_pmra, pmde=target_pmde, plx=target_plx,
+                      lat=p['IC_LATIT_OBS'], long=p['IC_LONGIT_OBS'],
+                      alt=p['IC_ALTIT_OBS'])
+
+        results2 = spirouBERV.use_barycorrpy(p, t1, **kwargs)
+
+        results1 = spirouBERV.use_berv_est(p, t1, **kwargs)
 
         # append to storage
         bervs1.append(results1[0]), bervs2.append(results2[0])

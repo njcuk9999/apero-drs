@@ -153,7 +153,7 @@ if __name__ == "__main__":
     target_pmde = p['OBJDECPM'] * 1000
     target_equinox = Time(float(p['OBJEQUIN']), format='decimalyear').jd
 
-    target_plx = 0.0
+    target_plxs = np.arange(0, 1000, 10.0)
 
     # calculate JD time (as Astropy.Time object)
     tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
@@ -164,38 +164,63 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # BERV TEST
     # ----------------------------------------------------------------------
+    bervs1, bjds1 = [], []
+    bervs2, bjds2 = [], []
+    bervs3, bjds3 = [], []
 
-    args = [p, target_alpha, target_delta, target_equinox, obs_year,
-            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'] * -1,
-            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'] * 1000, target_pmra,
-            target_pmde, target_plx]
-    # get berv measurements
-    results1 = spirouBERV.newbervmain(*args, method='estimate')
+    for target_plx in target_plxs:
 
 
-    args = [p, target_alpha, target_delta, target_equinox, obs_year,
-            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
-            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra,
-            target_pmde, target_plx]
+        kwargs = dict(ra=target_alpha, dec=target_delta, epoch=target_equinox,
+                      pmra=target_pmra, pmde=target_pmde, plx=target_plx,
+                      lat=p['IC_LATIT_OBS'], long=p['IC_LONGIT_OBS'],
+                      alt=p['IC_ALTIT_OBS'])
 
-    results2 = spirouBERV.newbervmain(*args, method='new')
+        results2 = spirouBERV.use_barycorrpy(p, t1, **kwargs)
 
-    results3 = etiennes_code(target_alpha, target_delta, target_equinox,
-                             p['IC_LATIT_OBS'], p['IC_LONGIT_OBS'] * -1,
-                             p['IC_ALTIT_OBS'] * 1000,
-                             target_pmra, target_pmde, target_plx,
-                             0.0, t1.mjd)
+        results1 = spirouBERV.use_berv_est(p, t1, **kwargs)
 
-    print('OBJECT = {0}'.format(hdr['OBJECT']))
+        results3 = etiennes_code(target_alpha, target_delta, target_equinox,
+                                 p['IC_LATIT_OBS'], p['IC_LONGIT_OBS'],
+                                 p['IC_ALTIT_OBS'],
+                                 target_pmra, target_pmde, target_plx,
+                                 0.0, t1.mjd)
 
-    print('ra={0} dec={1}'.format(target_alpha, target_delta))
-    print('pmra={0} pmde={1}'.format(target_pmra, target_pmde))
+        # append to arrays
+        bervs1.append(results1[0])
+        bjds1.append(results1[1])
+        bervs2.append(results2[0])
+        bjds2.append(results2[1])
+        bervs3.append(results3[0])
+        bjds3.append(results3[1])
 
-    print('{0:25s}'.format('ESTIMATE (PYASL)'), results1)
-    print('{0:25s}'.format('SPIROU DRS (BARYCORRPY)'), results2)
-    print('{0:25s}'.format('ETIENNE (BARYCORRPY)'), results3)
+        # print out
+        print('OBJECT = {0}'.format(hdr['OBJECT']))
 
-    print('{0:25s}'.format('HEADER'), (hdr['BERV'], hdr['BJD'], hdr['BERVMAX']))
+        print('ra={0} dec={1}'.format(target_alpha, target_delta))
+        print('pmra={0} pmde={1}'.format(target_pmra, target_pmde))
+        print('plx={0}'.format(target_plx))
+
+        print('{0:25s}'.format('ESTIMATE (PYASL)'), results1)
+        print('{0:25s}'.format('SPIROU DRS (BARYCORRPY)'), results2)
+        print('{0:25s}'.format('ETIENNE (BARYCORRPY)'), results3)
+
+        print('{0:25s}'.format('HEADER'), (hdr['BERV'], hdr['BJD'], hdr['BERVMAX']))
+
+
+    # plot
+    import matplotlib.pyplot as plt
+    fig, frame = plt.subplots(ncols=1, nrows=1)
+    frame.plot(target_plxs, bervs1, marker='o', label='estimate')
+    frame.plot(target_plxs, bervs2, marker='+', label='spirou drs barcorrpy')
+    frame.plot(target_plxs, bervs3, marker='x', label='etienne barycorrpy')
+
+    frame.legend(loc=0)
+    frame.set(xlabel='parallax', ylabel='BERV [km/s]')
+    # sort out ylabels
+    yticks = frame.get_yticks()
+    yticklabels = ['{0:.5f}'.format(i) for i in yticks]
+    frame.set_yticklabels(yticklabels)
 
 
 # =============================================================================
