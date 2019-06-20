@@ -189,6 +189,8 @@ def use_barycorrpy(p, t, **kwargs):
               (optional) if not set this is set to 0.0 mas/yr
         plx: float, the parallax in mas (optional) if not set
              this is set to 0.0 mas
+        epoch: float, the epoch in Julien date
+               i.e. epoch = astropy.time.Time(2000.0, format='decimalyear').jd
 
         long: float, the longitude of the observatory (degrees)
               west is defined as negative
@@ -207,6 +209,9 @@ def use_barycorrpy(p, t, **kwargs):
 
     :param p: param dict or None
     :param t: astropy.time.Time object, the time to use
+              e.g. astropy.time.Time('2019-01-01 15:00:00', format='iso')
+              e.g. astropy.time.Time(2451544.5, format='jd')
+              e.g. astropy.time.Time(51544.0, format='mjd')
     :param kwargs: keyword arguments passed to berv calculator
     :returns: berv - Barycentric correction [km/s],
               bjd - The Barycentric Julien Date
@@ -314,6 +319,9 @@ def use_berv_est(p=None, t=None, **kwargs):
 
     :param p: param dict or None
     :param t: astropy.time.Time object, the time to use
+              e.g. astropy.time.Time('2019-01-01 15:00:00', format='iso')
+              e.g. astropy.time.Time(2451544.5, format='jd')
+              e.g. astropy.time.Time(51544.0, format='mjd')
     :param kwargs: keyword arguments passed to berv calculator
     :returns: berv - Barycentric correction [km/s],
               bjd - The Barycentric Julien Date
