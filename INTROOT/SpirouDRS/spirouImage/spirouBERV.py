@@ -11,9 +11,8 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 import os
-import dbm
-import time
 from astropy.time import Time, TimeDelta
+from astropy.coordinates import SkyCoord
 from astropy import units as uu
 
 from SpirouDRS import spirouCore
@@ -121,12 +120,6 @@ def get_earth_velocity_correction(p, loc, hdr):
 
 
 def earth_velocity_correction(p, loc, method='off'):
-
-
-    from astropy.coordinates import SkyCoord
-    from astropy import units as uu
-
-
     func_name = __NAME__ + '.earth_velocity_correction()'
 
     # get out coordinates [in deg]
@@ -160,18 +153,18 @@ def earth_velocity_correction(p, loc, method='off'):
     alt = p['IC_ALTIT_OBS']
     # ----------------------------------------------------------------------
     # store variables
-    kwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra, pmdec=pmde,
-                  px=plx, lat=lat, longi=long, alt=alt)
+    kwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra, pmde=pmde,
+                  plx=plx, lat=lat, long=long, alt=alt)
     # ----------------------------------------------------------------------
-    if method == 'off':
-        berv, bjd, bervmax = np.nan, np.nan, np.nan
-        bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
-    elif method == 'new':
+    if method == 'new':
         berv, bjd, bervmax = use_barycorrpy(p, t1, **kwargs)
         bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
     elif method == 'estimate':
         bervest, bjdest, bervmaxest = use_berv_est(p, t1, **kwargs)
         berv, bjd, bervmax = np.nan, np.nan, np.nan
+    else:
+        berv, bjd, bervmax = np.nan, np.nan, np.nan
+        bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
     # ----------------------------------------------------------------------
     # store values in loc
     colnames = ['BERV', 'BJD', 'BERV_MAX', 'BERVHOUR']
@@ -184,6 +177,49 @@ def earth_velocity_correction(p, loc, method='off'):
 
 
 def use_barycorrpy(p, t, **kwargs):
+    """
+    Calculate the BERV using barycorrpy
+
+    - kwargs must include:
+        ra: float, right ascension in degrees
+        dec: float, declination in degress
+        pmra: float, the proper motion in right ascension in mas/yr
+              (optional) if not set this is set to 0.0 mas/yr
+        pmde: float, the proper motion in declination in mas/yr
+              (optional) if not set this is set to 0.0 mas/yr
+        plx: float, the parallax in mas (optional) if not set
+             this is set to 0.0 mas
+
+        long: float, the longitude of the observatory (degrees)
+              west is defined as negative
+        lat: float, the latitude of the observatory (degrees)
+        alt: float, the altitude in meters
+
+    - kwargs that are optional:
+        return_all: bool, if True returns all bervs within time range
+                          if False returns berv at time "t"
+        timerange: numpy array, if not provided uses np.arange(0, 365, 1.5)
+                   the array of days to add on to "t"
+                   i.e. the default bervs calcualted are:
+                   t + [0, 1.5, 3.0, ..., 363, 364.5]
+                   this is used for the maximum berv returned and for
+                   return_all (where all bervs are returned)
+
+    :param p: param dict or None
+    :param t: astropy.time.Time object, the time to use
+    :param kwargs: keyword arguments passed to berv calculator
+    :returns: berv - Barycentric correction [km/s],
+              bjd - The Barycentric Julien Date
+              maxberv - the Maximum berv (if timerange not defined)
+    """
+
+    # get variables from kwargs
+    return_all = kwargs('return_all', False)
+    timerange = kwargs('timerange', np.arange(0., 365., 1.5))
+
+    kwargs['plx'] = kwargs.get('plx', 0.0)
+    kwargs['pmde'] = kwargs.get('pmde', 0.0)
+    kwargs['pmra'] = kwargs.get('pmra', 0.0)
     # need to import barycorrpy which required online files (astropy iers)
     #  therefore provide a way to set offline version first
     # noinspection PyBroadException
@@ -207,12 +243,128 @@ def use_barycorrpy(p, t, **kwargs):
         WLOG(p, 'warning', [emsg1, emsg2])
         raise ImportError(emsg1 + '\n' + emsg2)
 
-        # get the julien UTC date for observation and obs + 1 year
-        jdutc = list(t.jd + np.arange(0., 365., 1.5))
+    # get the julien UTC date for observation and obs + 1 year
+    jdutc = list(t.jd + timerange)
+    # construct lock filename
+    lfilename = os.path.join(p['DRS_DATA_REDUC'], 'BERV_lockfile')
+    # add a wait for parallelisation
+    lock, lfile = spirouFITS.check_fits_lock_file(p, lfilename)
+    # get args
+    bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
+                   epoch=kwargs['epoch'], px=kwargs['plx'],
+                   pmra=kwargs['pmra'], pmdec=kwargs['pmde'],
+                   lat=kwargs['lat'], longi=kwargs['long'],
+                   alt=kwargs['alt'])
+    # calculate barycorrpy
+    try:
+        bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+    except Exception as e:
+        # close lock
+        spirouFITS.close_fits_lock_file(p, lock, lfile, lfilename)
+            # re-raise exception to catch later
+        emsg1 = ('Error in barycorrpy. Error {0}: {1}'
+                 ''.format(type(e), e))
+        emsg2 = 'Parameters were: time={0}'.format(jdutc[0])
+        for kwarg in kwargs:
+            emsg2 += ' {0}={1}'.format(kwarg, kwargs[kwarg])
+        WLOG(p, 'error', [emsg1, emsg2])
+        bresults1 = None
+
+    # end wait for parallelisation
+    spirouFITS.close_fits_lock_file(p, lock, lfile, lfilename)
+    # convert JDUTC to BJDTDB
+    bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t, **bkwargs)
+
+    if return_all:
+        out = [bresults1[0] / 1000.0, bresults2[0],
+               np.max(abs(bresults1[0] / 1000.0))]
+        return out
+    else:
+        # get berv
+        berv2 = bresults1[0][0] / 1000.0
+        # get bjd
+        bjd2 = bresults2[0][0]
+        # work ou the maximum barycentric correction
+        bervmax2 = np.max(abs(bresults1[0] / 1000.))
+        # return results
+        return berv2, bjd2, bervmax2
 
 
+def use_berv_est(p=None, t=None, **kwargs):
+    """
+    Calculate the BERV using an estimation
 
-def earth_velocity_correction(p, loc, method):
+    - kwargs must include:
+        ra: float, right ascension in degrees
+        dec: float, declination in degress
+        long: float, the longitude of the observatory (degrees)
+              west is defined as negative
+        lat: float, the latitude of the observatory (degrees)
+        alt: float, the altitude in meters
+
+    - kwargs that are optional:
+        return_all: bool, if True returns all bervs within time range
+                          if False returns berv at time "t"
+        timerange: numpy array, if not provided uses np.arange(0, 365, 1.5)
+                   the array of days to add on to "t"
+                   i.e. the default bervs calcualted are:
+                   t + [0, 1.5, 3.0, ..., 363, 364.5]
+                   this is used for the maximum berv returned and for
+                   return_all (where all bervs are returned)
+
+    :param p: param dict or None
+    :param t: astropy.time.Time object, the time to use
+    :param kwargs: keyword arguments passed to berv calculator
+    :returns: berv - Barycentric correction [km/s],
+              bjd - The Barycentric Julien Date
+              maxberv - the Maximum berv (if timerange not defined)
+    """
+    # get variables from kwargs
+    return_all = kwargs.get('return_all', False)
+    timerange = kwargs.get('timerange', np.arange(0., 365., 1.5))
+
+    # get args
+    bkwargs = dict(ra2000=kwargs['ra'], dec2000=kwargs['dec'],
+                   obs_long=kwargs['long'], obs_lat=kwargs['lat'],
+                   obs_alt=kwargs['alt'])
+    # storage for bervs
+    bervs, bjds = [], []
+    # loop around every 1.5 days in a year
+    for dayit in timerange:
+        # get julien date for this day iteration
+        jdi = t.jd + dayit
+        # calculate estimate of berv
+        try:
+            berv, bjd = spirouBERVest.helcorr(jd=jdi, **bkwargs)
+        except Exception as e:
+            emsg1 = ('Error in estimating BERV. Error {0}: {1}'
+                     ''.format(type(e), e))
+            emsg2 = 'Parameters were: time={0}'.format(jdi)
+            for kwarg in kwargs:
+                emsg2 += ' {0}={1}'.format(kwarg, kwargs[kwarg])
+            WLOG(p, 'error', [emsg1, emsg2])
+            berv, bjd = None, None
+        # append to lists
+        bervs.append(berv)
+        bjds.append(bjd)
+    # convert lists to numpy arrays
+    bervs = np.array(bervs)
+    bjds = np.array(bjds)
+
+    if return_all:
+        return bervs, bjds, np.max(abs(bervs))
+    else:
+        # get berv
+        berv2 = bervs[0]
+        # bjd2 = bresults2[0].jd
+        bjd2 = bjds[0]
+        # work ou the maximum barycentric correction
+        bervmax2 = np.max(abs(bervs))
+        # return results
+        return berv2, bjd2, bervmax2
+
+
+def earth_velocity_correction_old(p, loc, method):
     func_name = __NAME__ + '.earth_velocity_correction()'
 
     if method == 'off':
