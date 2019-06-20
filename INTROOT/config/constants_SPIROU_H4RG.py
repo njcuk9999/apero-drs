@@ -55,12 +55,12 @@ drs_mode = 'FULL'
 #  CFHT variables
 # -----------------------------------------------------------------------------
 
-#  Defines the CFHT longitude West (deg)                             - [cal_CCF]
-ic_longit_obs = 155.468876
+#  Defines the CFHT longitude West is negative (deg)                 - [cal_CCF]
+ic_longit_obs = -155.468876
 #  Defines the CFHT latitude North (deg)                             - [cal_CCF]
 ic_latit_obs = 19.825252
-#  Defines the CFHT altitude (km)                                    - [cal_CCF]
-ic_altit_obs = 4.204
+#  Defines the CFHT altitude (m)                                     - [cal_CCF]
+ic_altit_obs = 4204
 
 # -----------------------------------------------------------------------------
 #  image variables
