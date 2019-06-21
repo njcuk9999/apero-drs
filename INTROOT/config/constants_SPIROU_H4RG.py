@@ -740,6 +740,10 @@ ic_bin_s1d_uvelo = 1.0
 #             in pixels
 ic_s1d_edge_smooth_size = 20
 
+
+#    Define dprtypes to calculate berv for
+EXT_ALLOWED_CALC_BERV_DPRTPYES = ['OBJ_FP', 'OBJ_DARK']
+
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
 # -----------------------------------------------------------------------------
