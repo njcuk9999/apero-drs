@@ -40,7 +40,7 @@ import cal_WAVE_E2DS_EA_spirou
 import cal_preprocess_spirou
 import off_listing_RAW_spirou
 import off_listing_REDUC_spirou
-import obj_mk_tellu_new
+import obj_mk_tellu
 import obj_mk_tellu_db
 import obj_fit_tellu
 import obj_fit_tellu_db
@@ -82,7 +82,7 @@ TMP_PROGRAMS = [cal_BADPIX_spirou, cal_dark_master_spirou,
 RED_PROGRAMS = [cal_CCF_E2DS_spirou, cal_DRIFT_E2DS_spirou,
                 cal_DRIFTPEAK_E2DS_spirou, cal_DRIFTCCF_E2DS_spirou,
                 cal_HC_E2DS_EA_spirou, cal_WAVE_E2DS_EA_spirou,
-                off_listing_REDUC_spirou, obj_mk_tellu_new,
+                off_listing_REDUC_spirou, obj_mk_tellu,
                 obj_mk_tellu_db, obj_fit_tellu, obj_fit_tellu_db,
                 obj_mk_obj_template, visu_E2DS_spirou, pol_spirou]
 
@@ -111,7 +111,7 @@ MOD_LIST['EXTRACT_OBJ'] = [cal_extract_RAW_spirou, ['SCIENCE_TARGETS']]
 MOD_LIST['EXTRACT_ALL'] = [cal_extract_RAW_spirou, None]
 MOD_LIST['MK_TELLU_DB'] = [obj_mk_tellu_db, None]
 MOD_LIST['FIT_TELLU_DB'] = [obj_fit_tellu_db, None]
-MOD_LIST['MK_TELLU'] = [obj_mk_tellu_new, ['TELLURIC_TARGETS']]
+MOD_LIST['MK_TELLU'] = [obj_mk_tellu, ['TELLURIC_TARGETS']]
 MOD_LIST['FIT_TELLU'] = [obj_fit_tellu, ['SCIENCE_TARGETS']]
 
 
@@ -134,7 +134,7 @@ SKIP_LIST['EXTRACT_OBJ'] = [cal_extract_RAW_spirou, Const.EXTRACT_E2DS_FILE]
 SKIP_LIST['EXTRACT_ALL'] = [cal_extract_RAW_spirou, Const.EXTRACT_E2DS_FILE]
 SKIP_LIST['MK_TELLU_DB'] = [obj_mk_tellu_db, None]
 SKIP_LIST['FIT_TELLU_DB'] = [obj_fit_tellu_db, None]
-SKIP_LIST['MK_TELLU'] = [obj_mk_tellu_new, Const.TELLU_TRANS_MAP_FILE,
+SKIP_LIST['MK_TELLU'] = [obj_mk_tellu, Const.TELLU_TRANS_MAP_FILE,
                          dict(oldext='.fits',
                               newext='_trans.fits')]
 SKIP_LIST['FIT_TELLU'] = [obj_fit_tellu, Const.TELLU_FIT_OUT_FILE,
