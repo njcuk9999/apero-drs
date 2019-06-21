@@ -709,6 +709,10 @@ def correction_thermal1(p, image, hdr, fiber, flat=None):
     if flat is not None:
         thermal = thermal / flat
     # ----------------------------------------------------------------------
+    # deal with rare case that thermal is all zeros
+    if np.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
+        return p, image
+    # ----------------------------------------------------------------------
     # load tapas
     p, tapas = spirouImage.GetTapas(p, hdr)
     wtapas, ttapas = tapas['wavelength'], tapas['trans_combined']
@@ -782,6 +786,10 @@ def correction_thermal2(p, image, hdr, fiber, flat=None):
     # if we have a flat we should apply it to the thermal
     if flat is not None:
         thermal = thermal / flat
+    # ----------------------------------------------------------------------
+    # deal with rare case that thermal is all zeros
+    if np.sum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
+        return p, image
     # ----------------------------------------------------------------------
     # set up an envelope to measure thermal background in image
     envelope = np.zeros(dim2)
