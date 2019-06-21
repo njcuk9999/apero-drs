@@ -11,11 +11,10 @@ Created on 2019-01-30 at 14:44
 """
 from __future__ import division
 
-import obj_mk_tellu_new
+import obj_mk_tellu
 import obj_fit_tellu
 import obj_mk_obj_template
 
-from SpirouDRS import spirouTools
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
@@ -103,7 +102,7 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
             args = spirouTelluric.GetDBarguments(p, objfilename)
             # run obj_mk_tellu
             try:
-                ll = obj_mk_tellu_new.main(**args)
+                ll = obj_mk_tellu.main(**args)
             except SystemExit as e:
                 errors.append([pargs[1], objfilename, e])
             # force close all plots
@@ -164,7 +163,7 @@ def main(cores=1, filetype='EXT_E2DS_FF_AB'):
             args = spirouTelluric.GetDBarguments(p, objfilename)
             # run obj_mk_tellu
             try:
-                obj_mk_tellu_new.main(**args)
+                obj_mk_tellu.main(**args)
             except SystemExit as e:
                 errors.append([pargs[1], objfilename, e])
             # force close all plots
