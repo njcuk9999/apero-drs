@@ -561,7 +561,7 @@ def IUVSpline(x, y, **kwargs):
     # find all NaN values
     nanmask = ~np.isfinite(y)
 
-    if np.sum(nanmask) == len(y):
+    if np.sum(~nanmask) < 2:
         y = np.zeros_like(x)
     else:
         # replace all NaN's with linear interpolation
