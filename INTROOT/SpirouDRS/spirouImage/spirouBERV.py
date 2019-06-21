@@ -95,11 +95,11 @@ def get_earth_velocity_correction(p, loc, hdr):
         return p, loc
 
     # Get the OBSTYPE for file (from hdr)
-    p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_DPRTYPE', dtype=str)
     # -----------------------------------------------------------------------
     #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)
     # -----------------------------------------------------------------------
-    if p['OBSTYPE'] == 'OBJECT':
+    if p['DPRTYPE'] in p['EXT_ALLOWED_CALC_BERV_DPRTPYES']:
         # ----------------------------------------------------------------------
         # Read star parameters
         # ----------------------------------------------------------------------
@@ -110,6 +110,9 @@ def get_earth_velocity_correction(p, loc, hdr):
         p = spirouImage.get_param(p, hdr, 'KW_OBJDECPM')
         p = spirouImage.get_param(p, hdr, 'KW_DATE_OBS', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
+        p = spirouImage.get_param(p, hdr, 'KW_ACQTIME', name='ACQTIME',
+                                  dtype=p['KW_ACQTIME_DTYPE'][1])
+        p['ACQTIME_FMT'] = p['KW_ACQTIME_FMT'][0]
         # ----------------------------------------------------------------------
         loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
@@ -121,59 +124,68 @@ def get_earth_velocity_correction(p, loc, hdr):
 
 def earth_velocity_correction(p, loc, method='off'):
     func_name = __NAME__ + '.earth_velocity_correction()'
-
-    # get out coordinates [in deg]
-    radecstr = '{0} {1}'.format(p['OBJRA'], p['OBJDEC'])
-    coords = SkyCoord(radecstr, unit=(uu.hourangle, uu.deg))
-    ra = coords.ra.value
-    dec = coords.dec.value
-    # ----------------------------------------------------------------------
-    # get pmra and pmde [in mas/yr]
-    pmra = p['OBJRAPM'] * 1000
-    pmde = p['OBJDECPM'] * 1000
-    # ----------------------------------------------------------------------
-    # get equinox (epoch in jd)
-    equinox = Time(float(p['OBJEQUIN'], format='decimalyear')).jd
-    # ----------------------------------------------------------------------
-    # get parallax
-    if 'PARALLAX' in p:
-        plx = p['PARALLAX']
+    # ---------------------------------------------------------------------
+    if method != 'off':
+        # get out coordinates [in deg]
+        radecstr = '{0} {1}'.format(p['OBJRA'], p['OBJDEC'])
+        coords = SkyCoord(radecstr, unit=(uu.hourangle, uu.deg))
+        ra = coords.ra.value
+        dec = coords.dec.value
+        # ------------------------------------------------------------------
+        # get pmra and pmde [in mas/yr]
+        pmra = p['OBJRAPM'] * 1000
+        pmde = p['OBJDECPM'] * 1000
+        # ------------------------------------------------------------------
+        # get equinox (epoch in jd)
+        equinox = Time(float(p['OBJEQUIN']), format='decimalyear').jd
+        # ------------------------------------------------------------------
+        # get parallax
+        if 'PARALLAX' in p:
+            plx = p['PARALLAX']
+        else:
+            plx = 0.0
+        # ---------------------------------------------------------------------
+        # get time [as astropy.time object]
+        # time defined as MJDATE + 0.5 * EXPTIME
+        t = Time(p['ACQTIME'], format=p['ACQTIME_FMT'])
+        t_delta = TimeDelta((p['EXPTIME'] / 2.0) * uu.s)
+        t1 = t + t_delta
+        # ------------------------------------------------------------------
+        # get observatory parameters
+        long = p['IC_LONGIT_OBS']
+        lat = p['IC_LATIT_OBS']
+        alt = p['IC_ALTIT_OBS']
+        # ------------------------------------------------------------------
+        # store variables
+        kwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra, pmde=pmde,
+                      plx=plx, lat=lat, long=long, alt=alt)
     else:
-        plx = 0.0
-    # ----------------------------------------------------------------------
-    # get time [as astropy.time object]
-    # time defined as MJDATE + 0.5 * EXPTIME
-    t = Time(p['MJDATE'], format='mjd')
-    t_delta = TimeDelta((p['EXPTIME'] / 2.0) * uu.s)
-    t1 = t + t_delta
-    # ----------------------------------------------------------------------
-    # get observatory parameters
-    long = p['IC_LONGIT_OBS']
-    lat = p['IC_LATIT_OBS']
-    alt = p['IC_ALTIT_OBS']
-    # ----------------------------------------------------------------------
-    # store variables
-    kwargs = dict(ra=ra, dec=dec, epoch=equinox, pmra=pmra, pmde=pmde,
-                  plx=plx, lat=lat, long=long, alt=alt)
+        t1, kwargs = None, dict()
     # ----------------------------------------------------------------------
     if method == 'new':
         berv, bjd, bervmax = use_barycorrpy(p, t1, **kwargs)
         bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
+        bervtime, bervsource = t1.mjd, 'barycorrpy'
     elif method == 'estimate':
         bervest, bjdest, bervmaxest = use_berv_est(p, t1, **kwargs)
         berv, bjd, bervmax = np.nan, np.nan, np.nan
+        bervtime, bervsource = t1.mjd, 'estimate'
     else:
         berv, bjd, bervmax = np.nan, np.nan, np.nan
         bervest, bjdest, bervmaxest = np.nan, np.nan, np.nan
+        bervtime, bervsource = 'None', 'None'
     # ----------------------------------------------------------------------
     # store values in loc
-    colnames = ['BERV', 'BJD', 'BERV_MAX', 'BERVHOUR']
+    colnames = ['BERV', 'BJD', 'BERV_MAX', 'BERVHOUR', 'BERV_SOURCE']
     colnames += ['BERV_EST', 'BJD_EST', 'BERV_MAX_EST']
-    values = [berv, bjd, bervmax, t1.mjd, bervest, bjdest, bervmaxest]
+    values = [berv, bjd, bervmax, bervtime, bervsource, bervest, bjdest,
+              bervmaxest]
 
     for it in range(len(colnames)):
         loc[colnames[it]] = values[it]
         loc.set_source(colnames[it], func_name)
+    # return the storage dictionary
+    return loc
 
 
 def use_barycorrpy(p, t, **kwargs):
@@ -182,7 +194,7 @@ def use_barycorrpy(p, t, **kwargs):
 
     - kwargs must include:
         ra: float, right ascension in degrees
-        dec: float, declination in degress
+        dec: float, declination in degrees
         pmra: float, the proper motion in right ascension in mas/yr
               (optional) if not set this is set to 0.0 mas/yr
         pmde: float, the proper motion in declination in mas/yr
@@ -219,8 +231,8 @@ def use_barycorrpy(p, t, **kwargs):
     """
 
     # get variables from kwargs
-    return_all = kwargs('return_all', False)
-    timerange = kwargs('timerange', np.arange(0., 365., 1.5))
+    return_all = kwargs.get('return_all', False)
+    timerange = kwargs.get('timerange', np.arange(0., 365., 1.5))
 
     kwargs['plx'] = kwargs.get('plx', 0.0)
     kwargs['pmde'] = kwargs.get('pmde', 0.0)
