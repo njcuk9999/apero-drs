@@ -332,8 +332,13 @@ def get_check_lock_file(p, dbkind):
 def open_lock_file(p, lock_file):
     # try to open the lock file
     if not os.path.exists(os.path.dirname(lock_file)):
-        emsg = 'Lock directory does not exist. Dir={0}'
-        WLOG(p, 'error', emsg.format(os.path.dirname(lock_file)))
+        try:
+            os.makedirs(os.path.dirname(lock_file))
+        except Exception as e:
+            emsg1 = ('Lock directory does not exist. Dir={0}'
+                     ''.format(os.path.dirname(lock_file)))
+            emsg2 = '\tError {0}: {1}'.format(type(e), e)
+            WLOG(p, 'error', [emsg1, emsg2])
 
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
