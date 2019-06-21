@@ -199,7 +199,7 @@ def main(filetype='DARK_DARK'):
         dark_cube1[bin_it] = bindark - lf_dark
     # -------------------------------------------------------------------------
     # median the dark cube to create the master dark
-    master_dark = np.nanmedian(dark_cube, axis=0)
+    master_dark = np.nanmedian(dark_cube1, axis=0)
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
