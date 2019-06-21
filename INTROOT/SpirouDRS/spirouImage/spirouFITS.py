@@ -1407,9 +1407,13 @@ def open_fits_lock_file(p, lock_file, filename):
 
     # try to open the lock file
     if not os.path.exists(os.path.dirname(lock_file)):
-        emsg = 'Lock directory does not exist. Dir={0}'
-        WLOG(p, 'error', emsg.format(os.path.dirname(lock_file)))
-
+        try:
+            os.makedirs(os.path.dirname(lock_file))
+        except Exception as e:
+            emsg1 = ('Lock directory does not exist. Dir={0}'
+                     ''.format(os.path.dirname(lock_file)))
+            emsg2 = '\tError {0}: {1}'.format(type(e), e)
+            WLOG(p, 'error', [emsg1, emsg2])
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
@@ -1724,7 +1728,8 @@ def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     return hdict
 
 
-def add_new_key(p, hdict=None, keywordstore=None, value=None):
+def add_new_key(p, hdict=None, keywordstore=None, value=None,
+                fullpath=False):
     """
     Add a new key to hdict from keywordstore, if value is not None then the
     keywordstore value is updated. Each keywordstore is in form:
@@ -1738,6 +1743,8 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
     :param value: object or None, if any python object (other than None) will
                   replace the value in keywordstore (i.e. keywordstore[1]) with
                   value, if None uses the value = keywordstore[1]
+    :param fullpath: bool, if True allows full paths otherwise paths converted
+                     to use the filename
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
@@ -1757,6 +1764,11 @@ def add_new_key(p, hdict=None, keywordstore=None, value=None):
     # set the value to default value if value is None
     if value is None:
         value = dvalue
+
+    # deal with paths (should only contain filename for header)
+    if isinstance(value, str):
+        if os.path.isfile(value) and (not fullpath):
+            value = os.path.basename(value)
 
     # add to the hdict dictionary in form (value, comment)
     hdict[key] = (value, comment)
