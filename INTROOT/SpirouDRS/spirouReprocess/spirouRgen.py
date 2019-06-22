@@ -806,7 +806,9 @@ def generate_all(params, tables, paths):
 
         # deal with master night
         if 'MASTER' in modname.upper():
-            night = params['MASTER_NIGHT']
+            # check that night name exists else break
+            night = check_nightname(params, params['MASTER_NIGHT'],
+                                    'Master night name')
         else:
             night = None
         # make sure item in params - skip if it isn't
@@ -928,6 +930,21 @@ def remove_dash(instring):
     while instring.startswith('-'):
         instring = instring[1:]
     return instring
+
+
+def check_nightname(params, nightname, description):
+
+    paths = [params['DRS_DATA_RAW']]
+
+    for path in paths:
+        abspath = os.path.join(path, nightname)
+
+        if not os.path.exists(abspath):
+            emsg = 'Night name ({0}) = {1} does not exist'
+            eargs = [description, abspath]
+            WLOG(params, 'error', emsg.format(*eargs))
+
+    return nightname
 
 
 # =============================================================================
