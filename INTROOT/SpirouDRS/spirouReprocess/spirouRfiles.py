@@ -238,23 +238,29 @@ def reset(params):
     if not params['RESET_ALLOWED']:
         return 0
     if params['RESET_TMP']:
-        drs_reset.reset_confirmation(params, 'tmp')
-        drs_reset.reset_tmp_folders(params, log=True)
+        reset = drs_reset.reset_confirmation(params, 'tmp')
+        if reset:
+            drs_reset.reset_tmp_folders(params, log=True)
     if params['RESET_REDUCED']:
-        drs_reset.reset_confirmation(params, 'reduced')
-        drs_reset.reset_reduced_folders(params, log=True)
+        reset = drs_reset.reset_confirmation(params, 'reduced')
+        if reset:
+            drs_reset.reset_reduced_folders(params, log=True)
     if params['RESET_CALIB']:
-        drs_reset.reset_confirmation(params, 'calibration')
-        drs_reset.reset_calibdb(params, log=True)
+        reset = drs_reset.reset_confirmation(params, 'calibration')
+        if reset:
+            drs_reset.reset_calibdb(params, log=True)
     if params['RESET_TELLU']:
-        drs_reset.reset_confirmation(params, 'telluric')
-        drs_reset.reset_telludb(params, log=True)
+        reset = drs_reset.reset_confirmation(params, 'telluric')
+        if reset:
+            drs_reset.reset_telludb(params, log=True)
     if params['RESET_LOG']:
-        drs_reset.reset_confirmation(params, 'log')
-        drs_reset.reset_log(params)
+        reset = drs_reset.reset_confirmation(params, 'log')
+        if reset:
+            drs_reset.reset_log(params)
     if params['RESET_PLOT']:
-        drs_reset.reset_confirmation(params, 'plot')
-        drs_reset.reset_plot(params)
+        reset = drs_reset.reset_confirmation(params, 'plot')
+        if reset:
+            drs_reset.reset_plot(params)
 
 
 # =============================================================================
