@@ -42,10 +42,14 @@ ParamDict = spirouConfig.ParamDict
 # valid file types
 RAW_VALID = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 
+# raw index file
+RAW_INDEX_FILE = 'rawindex.fits'
+
 # index filename column
 ITABLE_FILECOL = 'FILENAME'
 NIGHT_COL = '@@@NIGHTNAME'
 ABSFILE_COL = '@@@ABSFILE'
+MODIFIED_COL = '@@@MODIFIED'
 HEADERKEYS = ['KW_ACQTIME', 'KW_CCAS', 'KW_CREF', 'KW_CMPLTEXP', 'KW_NEXP',
               'KW_OBJECT']
 SORTCOL = 'KW_ACQTIME'
@@ -60,17 +64,21 @@ def find_raw_files(params):
     path, rpath = get_path_and_check(params, 'DRS_DATA_RAW')
     # get files
     gfout = get_files(params, path, rpath)
-    nightnames, filelist, basenames, kwargs = gfout
+    nightnames, filelist, basenames, mod_times, kwargs = gfout
     # construct a table
     mastertable = Table()
     mastertable[NIGHT_COL] = nightnames
     mastertable[ITABLE_FILECOL] = basenames
     mastertable[ABSFILE_COL] = filelist
+    mastertable[MODIFIED_COL] = mod_times
     for kwarg in kwargs:
         mastertable[kwarg] = kwargs[kwarg]
     # sort by sortcol
     sortmask = np.argsort(mastertable[SORTCOL])
     mastertable = mastertable[sortmask]
+    # save master table
+    mpath = os.path.join(params['DRS_DATA_RUN'], RAW_INDEX_FILE)
+    mastertable.write(mpath, overwrite=True)
     # return the file list
     return mastertable, rpath
 
@@ -230,16 +238,22 @@ def reset(params):
     if not params['RESET_ALLOWED']:
         return 0
     if params['RESET_TMP']:
+        drs_reset.reset_confirmation(params, 'tmp')
         drs_reset.reset_tmp_folders(params, log=True)
     if params['RESET_REDUCED']:
+        drs_reset.reset_confirmation(params, 'reduced')
         drs_reset.reset_reduced_folders(params, log=True)
     if params['RESET_CALIB']:
+        drs_reset.reset_confirmation(params, 'calibration')
         drs_reset.reset_calibdb(params, log=True)
     if params['RESET_TELLU']:
+        drs_reset.reset_confirmation(params, 'telluric')
         drs_reset.reset_telludb(params, log=True)
     if params['RESET_LOG']:
+        drs_reset.reset_confirmation(params, 'log')
         drs_reset.reset_log(params)
     if params['RESET_PLOT']:
+        drs_reset.reset_confirmation(params, 'plot')
         drs_reset.reset_plot(params)
 
 
@@ -291,7 +305,14 @@ def get_path_and_check(params, key):
 def get_files(params, path, rpath):
     func_name = __NAME__ + '.get_files()'
     # storage list
-    filelist, basenames, nightnames = [], [], []
+    filelist, basenames, nightnames, mod_times = [], [], [], []
+    # load raw index
+    rawindexfile = os.path.join(params['DRS_DATA_RUN'], RAW_INDEX_FILE)
+    if os.path.exists(rawindexfile):
+        rawindex = spirouImage.ReadTable(params, rawindexfile, fmt='fits')
+    else:
+        rawindex = None
+
     # populate the storage dictionary
     kwargs = dict()
     for key in HEADERKEYS:
@@ -318,6 +339,7 @@ def get_files(params, path, rpath):
                 WLOG(params, '', '\tScanning directory: {0}'.format(ucpath))
             # get absolute path
             abspath = os.path.join(root, filename)
+            modified = os.path.getmtime(abspath)
             # if not valid skip
             if not isvalid:
                 continue
@@ -326,8 +348,28 @@ def get_files(params, path, rpath):
                 nightnames.append(ucpath)
                 filelist.append(abspath)
                 basenames.append(filename)
+                mod_times.append(modified)
+
+            # see if file in raw index and has correct modified date
+            if rawindex is not None:
+                # find file
+                rowmask = (rawindex[ABSFILE_COL] == abspath)
+                # find match date
+                rowmask &= modified == rawindex[MODIFIED_COL]
+                # only continue if both conditions found
+                if np.sum(rowmask) > 0:
+                    # locate file
+                    row = np.where(rowmask)[0][0]
+                    # if both conditions met load from raw fits file
+                    for key in HEADERKEYS:
+                        kwargs[key].append(rawindex[key][row])
+                    # file was found
+                    rfound = True
+            else:
+                rfound = False
+
             # deal with header
-            if filename.endswith('.fits'):
+            if filename.endswith('.fits') and not rfound:
                 header = spirouImage.ReadHeader(params, abspath)
                 for key in HEADERKEYS:
                     rkey = params[key][0]
@@ -336,7 +378,7 @@ def get_files(params, path, rpath):
                     else:
                         kwargs[key].append('')
     # return filelist
-    return nightnames, filelist, basenames, kwargs
+    return nightnames, filelist, basenames, mod_times, kwargs
 
 
 def get_index_files(params, path, rpath):
