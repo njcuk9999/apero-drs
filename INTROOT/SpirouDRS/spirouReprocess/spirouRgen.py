@@ -492,6 +492,11 @@ class Reprocesser:
     def get_file_groups(self, table, filters, night=None):
         if self.recipe is None:
             return []
+
+        # get lengths of all files
+        lengths = map(lambda x: len(x), table[ITABLE_FILECOL])
+        maxlen = np.max(list(lengths))
+
         # for every file argument
         for argname in self.file_args:
             # add empty list for file argument
@@ -500,16 +505,26 @@ class Reprocesser:
             drsfiles = self.file_args[argname]
             # create a table for this drs file
             drstable = Table()
+            # add all columns
+            for col in table.colnames:
+                drstable[col] = table[col]
+            # add new file cols
+            for d_it in range(len(drsfiles)):
+                empty = [' '*maxlen*2]*len(drstable)
+                drstable['NEWFILES{0}'.format(d_it)] = empty
+            # full mask
+            mask_full = np.zeros((len(drstable)), dtype=bool)
             # for every type of file in file arguement
             for d_it, drsfile in enumerate(drsfiles):
                 # need to find all files that below in this group
                 dargs = [drsfile, table, filters, night]
                 mask_it, newfiles = self.get_drsfile_mask(*dargs)
-                # add old columns
-                for col in table.colnames:
-                    drstable[col] = table[col][mask_it]
                 # add new files column
-                drstable['NEWFILES{0}'.format(d_it)] = newfiles
+                drstable['NEWFILES{0}'.format(d_it)][mask_it] = newfiles
+                # change the full mask
+                mask_full |= mask_it
+            # mask the catalogue by full mask
+            drstable = drstable[mask_full]
             # need to group files
             drstable['GROUPS'], nightmask = group_drs_files(drstable)
             # mask by night mask
@@ -683,6 +698,14 @@ class Reprocesser:
             for ntype in range(ntypes):
                 newfiles1 = table1['NEWFILES{0}'.format(ntype)]
                 # --------------------------------------------------------------
+                #filter out empty files
+                fileslen1 = list(map(lambda x: len(x.strip()), newfiles1))
+                lenmask1 = np.array(fileslen1) > 0
+                newfiles1 = np.array(newfiles1)[lenmask1]
+                # if empty skip
+                if len(newfiles1) == 0:
+                    continue
+                # --------------------------------------------------------------
                 # case a: no additional files args and want each file separate
                 if len(args) == 0 and limit == 1:
                     for nfile1 in newfiles1:
@@ -737,6 +760,14 @@ class Reprocesser:
         for table2 in self.file_groups[arg]:
             # get the individual group values
             files2i = table2['NEWFILES{0}'.format(ntype)]
+            # deal with no filename (i.e. not in this group)
+            fileslen2 = list(map(lambda x: len(x.strip()), files2i))
+            lenmask2 = np.array(fileslen2) > 0
+            files2i = np.array(files2i)[lenmask2]
+            # deal with no groups members left
+            if len(files2i) == 0:
+                continue
+            # these properties are the same for all group members
             group2i = table2['GROUPS'][0]
             night2i = table2[NIGHT_COL][0]
             date2i = table2['MEANDATE'][0]
@@ -749,11 +780,14 @@ class Reprocesser:
             # if we have reached here append to dates2
             dates2.append(date2i)
             files2.append(files2i)
+        # deal with no members
+        if len(files2) == 0 :
+            return None, used_groups
         # make dates a numpy array
         dates2 = np.array(dates2)
         # if we have no dates return None
         if np.sum(np.isfinite(dates2)) == 0:
-            return None
+            return None, used_groups
         # now find the closest date
         diff = np.abs(dates2 - date1)
         pos = int(np.argmin(diff))
