@@ -935,7 +935,7 @@ def calculate_absorption_pca(p, loc, x, mask):
 def berv_correct_template(p, loc, thdr):
     func_name = __NAME__ + '.interp_at_shifted_wavelengths()'
     # Get the Barycentric correction from header
-    dv, _, _ = get_berv_value(p, thdr)
+    dv, _, _ = spirouImage.GetBERV(p, thdr)
     # set up storage for template
     template2 = np.zeros(np.product(loc['DATA'].shape))
     ydim, xdim = loc['DATA'].shape
