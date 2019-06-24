@@ -12,6 +12,7 @@ Import rules: Not spirouLOCOR
 from __future__ import division
 import numpy as np
 import os
+import shutil
 from astropy.table import Table, vstack
 from astropy.table import TableMergeError
 from astropy.io.registry import get_formats
@@ -381,14 +382,20 @@ def write_fits_table(p, astropy_table, output_filename):
         WLOG(p, 'error', [emsg1, emsg2])
     # get and check for file lock file
     lock, lock_file = spirouFITS.check_fits_lock_file(p, output_filename)
+    # get backup file name
+    backupfile = output_filename + '.bkup'
     # write data
     try:
         # remove file first
-        os.remove(output_filename)
+        if os.path.exists(output_filename):
+            shutil.move(output_filename, backupfile)
         # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
         # close lock file
         spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
+        # remove backup
+        if os.path.exists(backupfile):
+            os.remove(backupfile)
     except Exception as e:
         # close lock file
         spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
@@ -397,6 +404,9 @@ def write_fits_table(p, astropy_table, output_filename):
         emsg2 = '\tError was: {0}'.format(e)
         emsg3 = '\tfunction = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        # restore backup
+        if os.path.exists(backupfile):
+            shutil.move(backupfile, output_filename)
 
 
 # TODO: Find cause of this problem and fix properly
