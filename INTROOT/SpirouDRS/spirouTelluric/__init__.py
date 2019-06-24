@@ -23,7 +23,7 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define all
 __all__ = ['CheckBlackList', 'ConstructConvKernel1', 'ConstructConvKernel2',
-           'GetMolecularTellLines', 'GetNormalizedBlaze', 'GetBERV',
+           'GetMolecularTellLines', 'GetNormalizedBlaze',
            'CalculateAbsorptionPCA', 'CalcReconAbso', 'CalcMolecularAbsorption',
            'LinMini', 'Wave2Wave', 'GetBlackList', 'GetWhiteList']
 

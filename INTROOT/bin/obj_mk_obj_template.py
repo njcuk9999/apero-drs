@@ -287,7 +287,7 @@ def main(night_name=None, files=None):
 
         # ------------------------------------------------------------------
         # Get the Barycentric correction from header
-        dv, _, _ = spirouTelluric.GetBERV(p, thdr)
+        dv, _, _ = spirouImage.GetBERV(p, thdr)
         # ------------------------------------------------------------------
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
