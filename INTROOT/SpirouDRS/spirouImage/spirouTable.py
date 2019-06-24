@@ -391,12 +391,16 @@ def write_fits_table(p, astropy_table, output_filename):
             shutil.move(output_filename, backupfile)
         # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
-        # close lock file
-        spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
         # remove backup
         if os.path.exists(backupfile):
             os.remove(backupfile)
+        # close lock file
+        spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
+
     except Exception as e:
+        # restore backup
+        if os.path.exists(backupfile):
+            shutil.move(backupfile, output_filename)
         # close lock file
         spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
         # log error
@@ -404,9 +408,6 @@ def write_fits_table(p, astropy_table, output_filename):
         emsg2 = '\tError was: {0}'.format(e)
         emsg3 = '\tfunction = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2, emsg3])
-        # restore backup
-        if os.path.exists(backupfile):
-            shutil.move(backupfile, output_filename)
 
 
 # TODO: Find cause of this problem and fix properly
