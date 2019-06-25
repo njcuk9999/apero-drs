@@ -11,10 +11,10 @@ Created on 2019-01-19 at 13:37
 """
 from __future__ import division
 import numpy as np
+from astropy.time import Time
 import traceback
 import sys
 import os
-import time
 import code
 from collections import OrderedDict
 
@@ -53,6 +53,7 @@ COLOR = constants.Colors
 # get param dict
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
+DrsFitsFile = drs_file.DrsFitsFile
 # get the Drs Exceptions
 DrsError = drs_exceptions.DrsError
 DrsWarning = drs_exceptions.DrsWarning
@@ -100,13 +101,14 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     if fkwargs is None:
         fkwargs = dict()
     # set up process id
-    pid = _assign_pid()
+    pid, htime = _assign_pid()
     # Clean WLOG
     WLOG.clean_log(pid)
     # find recipe
     recipe = _find_recipe(name, instrument)
     # quietly load DRS parameters (for setup)
-    recipe.get_drs_params(quiet=True, pid=pid)
+    recipe.get_drs_params(quiet=True, pid=pid, date_now=htime,
+                          drs_date=str(__date__))
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
     # do not need to display if we have special keywords
@@ -339,6 +341,60 @@ def get_local_variables(*args):
     # return output dictionary
     return output_dict
 
+
+def get_file_definition(name, instrument, kind='raw'):
+    """
+    Finds a given recipe in the instruments definitions
+
+    :param name: string, the recipe name
+    :param instrument: string, the instrument name
+
+    :type name: str
+    :type instrument: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: if found the DrsRecipe, else raises SystemExit
+    :rtype: DrsFitsFile
+    """
+    # deal with no instrument
+    if instrument == 'None' or instrument is None:
+        ipath = CORE_PATH
+        instrument = None
+    else:
+        ipath = INSTRUMENT_PATH
+    # deal with no name or no instrument
+    if name == 'None' or name is None:
+        empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
+        return empty
+    # else we have a name and an instrument
+    margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
+    modules = constants.getmodnames(*margs, path=False)
+    # load module
+    mod = constants.import_module(modules[0], full=True)
+    # get a list of all recipes from modules
+    if kind == 'raw':
+        all_files = mod.raw_file.fileset
+    elif kind == 'tmp':
+        all_files = mod.pp_file.fileset
+    elif kind == 'red':
+        all_files = mod.out_file.fileset
+    else:
+        all_files = []
+
+    # try to locate this recipe
+    found_file = None, None
+    for filet in all_files:
+        if filet.name == name:
+            found_file = filet
+
+    if instrument is None and found_file is None:
+        empty = drs_file.DrsFitsFile('Empty')
+        return empty
+    if found_file is None:
+        WLOG(None, 'error', TextEntry('00-008-00011', args=[name]))
+    # return
+    return found_file
 
 
 def file_processing_update(params, it, num_files):
@@ -978,13 +1034,21 @@ def _find_ipython():
 # =============================================================================
 def _assign_pid():
     """
-    Assign a process id based on the time now
+    Assign a process id based on the time now and return it and the
+    time now
 
-    :return: the process id
-    :rtype: str
+    :return: the process id and the human time at creation
+    :rtype: tuple[str, str]
     """
-    pid = 'PID-{0:020d}'.format(int(time.time() * 1e7))
-    return pid
+    # get the time now from astropy
+    timenow = Time.now()
+    # get unix and human time from astropy time now
+    unixtime = timenow.unix * 1e7
+    humantime = timenow.iso
+    # write pid
+    pid = 'PID-{0:020d}'.format(int(unixtime))
+    # return pid and human time
+    return pid, humantime
 
 
 def _find_recipe(name='None', instrument='None'):
@@ -1033,7 +1097,7 @@ def _find_recipe(name='None', instrument='None'):
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
         return empty
     if found_recipe is None:
-        WLOG(None, 'error', TextEntry('00-007-00001', args=name))
+        WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
     # return
     return found_recipe
 
