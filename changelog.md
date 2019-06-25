@@ -2,7 +2,714 @@ Changelog
 =========
 
 
-0.5.001 (2019-05-27)
+0.5.025 (2019-06-24)
+--------------------
+- Obj_mk_obj_template.py + spirouTelluric - move location of GetBERV.
+  [njcuk9999]
+- SpirouTable.py - change order of backup operations (always close lock
+  file last) [njcuk9999]
+- SpirouTable.py - fix problem with closing/replacing index.fits.
+  [njcuk9999]
+
+
+0.5.024 (2019-06-24)
+--------------------
+- SpirouTable.py - remove the index file before writing it. [Neil Cook]
+- SpirouRfiles.py - if reset is true make user confirm it. [Neil Cook]
+- SpirouRfiles.py - add a raw index file that should save time opening
+  already read headers. [Neil Cook]
+
+
+0.5.023 (2019-06-23)
+--------------------
+- SpirouRgen.py - fix problem when two independent file types defined
+  (i.e. DARK_FLAT and FLAT_DARK) [Neil Cook]
+- SpirouRgen.py - check that master night name exists (raise error if it
+  doesn't) [Neil Cook]
+
+
+0.5.022 (2019-06-21)
+--------------------
+- SpirouRgen.py - rename obj_mk_tellu_new --> obj_mk_tellu. [Neil Cook]
+- SpirouFITS.py - try to create lock directory. [Neil Cook]
+- SpirouBERV.py - add keys for processing. [Neil Cook]
+- SpirouDB.py - try to create lock folder if needed. [Neil Cook]
+- SpirouMath.py - linear bad pix must have at least two non-NaN pixels.
+  [Neil Cook]
+- SpirouBACK.py - deal with thermal being empty or NaN filled entirely.
+  [Neil Cook]
+- Obj_mk_tellu_db.py - renamed obj_mk_tellu_new to obj_mk_tellu. [Neil
+  Cook]
+- Obj_mk_tellu.py - renamed from obj_mk_tellu_new.py. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add berv dtypes. [Neil Cook]
+- Cal_dark_master_spirou.py - fix type dark_cube --> dark_cube1. [Neil
+  Cook]
+
+
+0.5.021 (2019-06-20)
+--------------------
+- SpirouBERV.py - update comments to be more specific about inputs.
+  [njcuk9999]
+- SpirouBERV.py - update berv codes to be more specific about units etc.
+  [njcuk9999]
+- Update berv tests. [njcuk9999]
+- Constants_SPIROU_H4RG.py - update observatory location. [njcuk9999]
+
+
+0.5.020 (2019-06-19)
+--------------------
+- SpirouKeywords.py - add keywords to list. [njcuk9999]
+- Berv_error_test.py - continue testing of berv. [njcuk9999]
+- Reprocess.py - add back main function. [njcuk9999]
+- SpirouBERVest.py - degtorad --> deg2rad. [njcuk9999]
+- SpirouBERV - testing berv calculation. [njcuk9999]
+- SpirouImage/spirouStartup - make sure files is a list (if string make
+  a list) [njcuk9999]
+- SpirouLog.py - add colour option in wlog.printmessage. [njcuk9999]
+
+
+0.5.019 (2019-06-18)
+--------------------
+- SpirouImage.py - add warning capture for oweight (divide by NaNs okay)
+  [njcuk9999]
+- SpirouRfiles.py - add run directory from param dict. [njcuk9999]
+- Config.py - add run directory. [njcuk9999]
+
+
+0.5.018 (2019-06-17)
+--------------------
+- SpirouTelluric.py - add tau_h20 and tau_rest to code. [Neil Cook]
+- SpirouReprocess.py - add skipping into code. [Neil Cook]
+- SpirouLog.py - add method: "print message" [Neil Cook]
+- SpirouKeywords.py - add tau_h20 and tau_rest header keys. [Neil Cook]
+- SpirouConst.py - update file name function defintions. [Neil Cook]
+- SpirouBACK.py - correct typo dim2 --> dim1. [Neil Cook]
+- Obj_fit_tellu.py - add tau_h20 and tau_rest to header. [Neil Cook]
+- Cal_shape_spirou.py - change debug file defintions (need filename
+  defined) [Neil Cook]
+- Cal_preprocess_spirou.py - make file name come from definition. [Neil
+  Cook]
+
+
+0.5.017 (2019-06-14)
+--------------------
+- SpirouReprocess - update the reprocessing codes. [Neil Cook]
+- Recipe_defintions.py - fix some recipe definitions. [Neil Cook]
+- File_definitions.py - update file definitions. [Neil Cook]
+
+
+0.5.016 (2019-06-13)
+--------------------
+- SpirouReprocessing - continue work. [Neil Cook]
+- Correct recipe and file definitions for non-input-redo. [Neil Cook]
+- Obj_fit_tellu_db.py - correct number of required arguments. [Neil
+  Cook]
+
+
+0.5.015 (2019-06-12)
+--------------------
+- SpirouReprocess.py - continue writing code. [Neil Cook]
+- SpirouBACK.py - fix a problem with one of the returns in
+  correction_thermal. [Neil Cook]
+- Multiprocess_test.py - add an event (to terminate all current and
+  future jobs on crash) [Neil Cook]
+- Constants_SPIROU_H4RG.py - update a comment. [Neil Cook]
+- Merge branch 'input_redo' into dev. [Neil Cook]
+- Merge branch 'dev' into input_redo. [njcuk9999]
+- Merge branch 'dev' into input_redo. [njcuk9999]
+- Merge branch 'dev' into input_redo. [njcuk9999]
+
+  # Conflicts:
+  #	INTROOT2/drsmodule/io/drs_lock.py
+- Drs_lock.py - Merged 10b82f1 from @cusher into input_redo. [njcuk9999]
+- Localisation - update parameters for @melissa-hobson. [njcuk9999]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Localisation.py - continue work for cal_loc. [Neil Cook]
+- Background.py - fix backfile. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - fix write function having no dtype. [Neil Cook]
+- Constants.default.default_constants.py - add fiber_set_num key. [Neil
+  Cook]
+- Config.instruments.spirou.*.py - add/correct loc keys. [Neil Cook]
+- Drs_file.py - correct problems with add_hkeys_2d. [Neil Cook]
+- Cal_loc_spirou.py - continue work on input redo cal_loc. [Neil Cook]
+- Background.py - change key for add_hkey. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - fix import of drs_log. [Neil Cook]
+- General.py - fix imports. [Neil Cook]
+- Config.instruments.spirou.*.py - correct keys and constants. [Neil
+  Cook]
+- Drs_log.py - correct the find_param function. [Neil Cook]
+- Drs_file.py - fix when key = keywordstore. [Neil Cook]
+- Drs_database.py - correct call to find_param. [Neil Cook]
+- File_definitions.py - correct bad extension. [Neil Cook]
+- Cal_loc_spirou.py - continue fixes to input_redo changes. [Neil Cook]
+- Update language database. [Neil Cook]
+- Localisation.py - add image_superimp function. [Neil Cook]
+- Drs_fits.py - move the resize/flip images add convert functions. [Neil
+  Cook]
+- Constants.defaults.*.py - add constants/headers from localisation.
+  [Neil Cook]
+- Config.math - add calculate_polyvals function. [Neil Cook]
+- Instruments.spirou.*.py - add constants/keywords for localisation.
+  [Neil Cook]
+- Drs_file.py - add method 'copy_hdict' [Neil Cook]
+- Cal_loc_spirou.py - continue work on adapting recipe for terrapipe.
+  [Neil Cook]
+- Cal_loc_spirou.py - continue work on adapting recipe for terrapipe.
+  [Neil Cook]
+- Recipes.spirou - move flip/resize functions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.calib.localisation.py - continue work on localisation
+  functions. [Neil Cook]
+- Constants.default.*.py - add localisation constant defintions. [Neil
+  Cook]
+- Config.math.general.py - add measure_box_min_max, nanpolyfit. [Neil
+  Cook]
+- Config.instruments.spirou.*.py - add localisation constants. [Neil
+  Cook]
+- Output_filenames.py - make output file function generic. [Neil Cook]
+- File_definitions.py - make debug_back output generic to debug outputs.
+  [Neil Cook]
+- Cal_loc_spirou.py - continue work on porting over cal_loc. [Neil Cook]
+- Cal_dark_spirou.py - modify how combine works for header input files.
+  [Neil Cook]
+- Cal_badpix_spirou.py - modify how combine works for header input
+  files. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Localisation.py - continue development from cal_loc. [Neil Cook]
+- Dark.py - continue development from cal_loc. [Neil Cook]
+- Badpix.py - continue development from cal_loc. [Neil Cook]
+- Background.py - continue development from cal_loc. [Neil Cook]
+- Update the language database. [Neil Cook]
+- Drs_fits.py - work on read/write single and multi functions (should be
+  universal) + use @cusher Header class. [njcuk9999]
+- Constants.defaults.*.py - add cal_loc constants. [Neil Cook]
+- Config.__init__.py - add find_param (aliased to pcheck) to __init__
+  [Neil Cook]
+- Config.math - add a general math functions module (and nanpad/killnan
+  functions) [Neil Cook]
+- Config.instruments.spirou.*.py - add cal_loc constants and
+  definitions. [Neil Cook]
+- Drs_log.py - upgrade the find_param function to look in kwargs if
+  definied. [Neil Cook]
+- Drs_file.py - move read and write to io module. [Neil Cook]
+- Config.core.default.*.py - add loc constants and definitions. [Neil
+  Cook]
+- Cal_loc_spirou.py - continuing copying over and converting code. [Neil
+  Cook]
+- Cal_badpix_spirou.py - make sure images are np.array copies. [Neil
+  Cook]
+- Science/calib/dark.py - add dark correction function. [Neil Cook]
+- Drs_table.py - generalise lock functions. [Neil Cook]
+- Drs_path.py - pep8 corrections. [Neil Cook]
+- Drs_lock.py - generalise lock functions. [Neil Cook]
+- Constants/default - add initial cal_loc constants. [Neil Cook]
+- Config/instruments/spirou - add initial cal_loc constants. [Neil Cook]
+- Drs_startup.py - make lock functions more general and only index if
+  recipe was successful. [Neil Cook]
+- Drs_database.py - add first methods for new Database class. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Cal_loc_spirou.py - first commit [unfinished] [Neil Cook]
+- Badpix.py - fix bugs with conversion. [Neil Cook]
+- Update language database. [Neil Cook]
+- Default_keywords - add default badpix keyword definitions. [Neil Cook]
+- Default_constant.py - add input kwargs. [Neil Cook]
+- Recipe_definitions.py - finalise cal_badpix definition. [Neil Cook]
+- Output_filenames.py - add badpix_file and backmap_file. [Neil Cook]
+- File_definitions.py - add out_badpix and out_backmap output files.
+  [Neil Cook]
+- Default_keywords.py - add badpix header keywords. [Neil Cook]
+- Default_constants.py - add input kwargs. [Neil Cook]
+- Cal_preprocess_spirou.py - add dimanme for header of KW_INFILE1. [Neil
+  Cook]
+- Cal_dark_spirou.py - change __NAME__ to all lower case. [Neil Cook]
+- Cal_badpix_spirou.py - update and finish first test. [Neil Cook]
+- Badpix.py - first commit - space for bad pixel map functions. [Neil
+  Cook]
+- Background.py - first commit space for background functions. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - add flip_image function. [Neil Cook]
+- Default_config.py - add badpix values. [Neil Cook]
+- Default_config.py - add badpix values. [Neil Cook]
+- Cal_dark_spirou.py - change name of parmeter for combining files on
+  input. [Neil Cook]
+- Cal_badpix_spirou.py - first commit [UNFINISHED] [Neil Cook]
+- Default_config.py - update version. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Drs_reset.py - first commit of reset code. [Neil Cook]
+- Drs_changelog.py - add comments and move text to language database.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Update language database. [Neil Cook]
+- Default_config.py - update version and date. [Neil Cook]
+- Drs_changelog.py - make sure we define outputs=None for recipe without
+  outputs. [Neil Cook]
+- Psuedo_const.py - deal with DRS_DATA_MSG being None. [Neil Cook]
+- Drs_changelog.py - preview is in params['INPUT'] [Neil Cook]
+- Recipe_definitions.py - add definition for drs_changelog. [Neil Cook]
+- Drs_startup.py - allow no instrument to search for recipe name. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Param_functions.py - force printing to string. [Neil Cook]
+- Drs_changelog.py - update with new locations. [Neil Cook]
+- Default_config.py - give more space for version. [Neil Cook]
+- Drs_changelog.py - correct number of arguments for
+  get_relative_folder. [Neil Cook]
+- Recipe_definitions.py - add change log definition. [Neil Cook]
+- Update database. [Neil Cook]
+- Drs_changelog.py - first commit of drs changelog for input redo. [Neil
+  Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Drs_startup.py - end with header. [Neil Cook]
+- Drs_log.py - tidy up logging messages. [Neil Cook]
+- Drs_log.py - tidy up logging messages. [Neil Cook]
+- Drs_file.py - remove references to hdict comments (now in fits.Header)
+  [Neil Cook]
+- Drs_argument.py - do not print info. [Neil Cook]
+- Change text message. [Neil Cook]
+- Change text message. [Neil Cook]
+- Drs_startup.py - edit title. [Neil Cook]
+- Dark.py - remove warning about NaNs. [Neil Cook]
+- Drs_database.py - change how we access hdict. [Neil Cook]
+- Drs_file.py - deal with how to access hdict. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_startup.py - edit logo. [Neil Cook]
+- Drs_file.py - header is now fits.Header not OrderedDict. [Neil Cook]
+- Rename drs to terrapipe. [Neil Cook]
+- Rename drs to terrapipe. [Neil Cook]
+- Merge branch 'dev2' into input_redo. [Neil Cook]
+- Merge branch 'dev2' into input_redo. [Neil Cook]
+- Recipes.spirou.cal_preprocess_spirou.py - chmod +x. [njcuk9999]
+- Recipes.spirou.cal_dark_spirou.py - chmod +x. [njcuk9999]
+- Config.instruments.spirou.default_keywords.py - correct KW_EXT_TYPE
+  value (was a typo) [njcuk9999]
+- Drs_startup.py - don't try to create folders when we don't have
+  nightname. [njcuk9999]
+- File_explorer.py - define a path for ds9 (will need moving to some
+  installation specific place) and better deal with index col
+  differences in error report. [njcuk9999]
+- Constants.default.pseudo_const.py - add changes from old code (version
+  and pversion in index.fits) [njcuk9999]
+- Config.core.drs_file.py - fix bug "copy" --> "copyother" [njcuk9999]
+- Refactor new --> newcopy   and copy --> copyother. [Neil Cook]
+- Update datacutmask. [Neil Cook]
+- Update language database. [Neil Cook]
+- Update constants/config/keywords. [Neil Cook]
+- Drs_recipe.py - update functions after run through. [Neil Cook]
+- Drs_file.py - update functions after run through. [Neil Cook]
+- Drs_database.py - update functions after run through. [Neil Cook]
+- Channge ErrorEntry and ErrorText to TextEntry and TextDict. [Neil
+  Cook]
+- Drs_fits.py - deal with zero and one infiles separately. [Neil Cook]
+- Update language database. [Neil Cook]
+- Update constants files. [Neil Cook]
+- Delete drsmodule.config.database (moved to core in single .py file)
+  [Neil Cook]
+- Drs_startup.py - add run function (to keep recipes clean) [Neil Cook]
+- Drs_database.py - update datebase setting (combine calib and telluric)
+  [Neil Cook]
+- Cal_preprocess_spirou.py - update qc to match cal_dark. [Neil Cook]
+- Cal_dark_spirou.py - flesh out functionality. [Neil Cook]
+- Drsmodule.science.calib.dark.py - add measure_dark_badpix function.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Drsmodule.constants.default - add dark keys. [Neil Cook]
+- Drsmodule.config.instrument.spirou - add dark keys. [Neil Cook]
+- Drsmodule.config.database - first commit of database.py, calibdb.py,
+  telludb.py. [Neil Cook]
+- Cal_dark_spirou.py - fill out more of the sections. [Neil Cook]
+- Dark.py - first commit add measure_dark function. [Neil Cook]
+- Drs_fits.py - add combine and resize functions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Add new constants to constants/keyword files. [Neil Cook]
+- Drs_log.py - add find_param logger function. [Neil Cook]
+- Drs_file.py - add combine and get_key functions. [Neil Cook]
+- Blank_spirou.py - update the blank example script. [Neil Cook]
+- Cal_preprocess_spirou.py - move file processing to
+  config.file_processing_update. [Neil Cook]
+- Cal_dark_spirou.py - start filling out code. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - add skeleton for combine function. [Neil Cook]
+- Drsmodule.constants.default.default_constants.py - add COMBINE_IMAGES
+  constant. [Neil Cook]
+- Drsmodule.config.__init__.py - link to file_processing_update. [Neil
+  Cook]
+- Instruments.spirou.recipe_definitions.py - add default value for
+  combine option. [Neil Cook]
+- Instruments.spirou.default_constants.py - add combine_images constant.
+  [Neil Cook]
+- Drs_startup.py - add general file processing logger. [Neil Cook]
+- Recipes.spirou.cal_preprocessing_spirou - continue input_redo. [Neil
+  Cook]
+- Drsmodule.science.preprocessing - continue input_redo. [Neil Cook]
+- Drsmodule.locale - continue input_redo. [Neil Cook]
+- Drsmodule.io - continue input_redo. [Neil Cook]
+- Drsmodule.constants.default - continue input_redo. [Neil Cook]
+- Drsmodule.config.instruments - continue input_redo. [Neil Cook]
+- Drsmodule.config.core - continue input_redo. [Neil Cook]
+- Drsmodule.science.preprocessing - continue input_redo. [Neil Cook]
+- Drsmodule.locale - continue input_redo. [Neil Cook]
+- Drsmodule.io - continue input_redo. [Neil Cook]
+- Drsmodule.data - continue input_redo. [Neil Cook]
+- Drsmodule.constants.default - continue input_redo. [Neil Cook]
+- Drsmodule.constants.core - continue input_redo. [Neil Cook]
+- Drsmodule.config.instruments.spirou - continue input_redo. [Neil Cook]
+- Drsmodule.config.core - continue input_redo. [Neil Cook]
+- SpirouRecipe.py - continue input_redo. [Neil Cook]
+- Test_spirou.py - remove bad code (test to crash) [Neil Cook]
+- Identification.py - check file by copying drs_file over given_drs_file
+  and then use self.check_file() [Neil Cook]
+- Drs_recipe.py - move checking functionality to drs_file. [Neil Cook]
+- Dsr_file.py - add copy function to drs_file. [Neil Cook]
+- Update language file. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Identification.py - start writing code to identify drs file. [Neil
+  Cook]
+- File_definitions - change append to addset. [Neil Cook]
+- Drs_file.py - addset functions and plan new checking functions. [Neil
+  Cook]
+- Update input redo - work on cal_preprocess. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Continue working on upgrade. [Neil Cook]
+- Continue working on upgrade. [Neil Cook]
+- Update language database. [njcuk9999]
+- Add placeholders for preprocessing functions. [njcuk9999]
+- Add spirou preprocessing recipe. [njcuk9999]
+- Update test recipes. [njcuk9999]
+- Fix module pathing system. [njcuk9999]
+- Config.__init__.py - add alias to get_locals. [njcuk9999]
+- Recipe_definitions - update preprocessing defintion. [njcuk9999]
+- Default_config.py - make plot variables an int. [njcuk9999]
+- Drs_startup.py - add temp messgae for loading arguments + add a code
+  unsuccessful message. [njcuk9999]
+- Drs_recipe.py - change INPUT --> INTPUTS + make param dict.
+  [njcuk9999]
+- Drs_log.py - sort out LOGGER_ERROR etc (now stored per PID + add
+  Printer class (TLOG) to print temporary messages which disappear if no
+  other text inbetween. [njcuk9999]
+- Drs_argument.py - add a new line in the debug messages (for Printer to
+  be on new line) [njcuk9999]
+- Add __init__.py files to new folders. [njcuk9999]
+- Port_database.py - output more log messages. [njcuk9999]
+- Test_spirou.py - fix function call. [njcuk9999]
+- Update language database. [njcuk9999]
+- Constants_functions.py - fix problem with relative imports.
+  [njcuk9999]
+- Recipe_definitions.py - make plot and integer and only allow values 0,
+  1, 2. [njcuk9999]
+- Drs_startup.py - fix the printing of arg log strings (arguments used)
+  [njcuk9999]
+- Drs_recipe.py - fix missed error (should be from database) [njcuk9999]
+- Drs_arguemnt.py - allow arguments to specify a min and max value (and
+  check for it) [njcuk9999]
+- Attempt to remove relative imports. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- File_explorer.py - move data loading / mask applying to different
+  threads. [Neil Cook]
+- *.__init__.py - fix imports (should be empty) [Neil Cook]
+- Locale.core.__init__.py - fix imports (should be empty) [Neil Cook]
+- File_explorer.py - update length and add new instrument box. [Neil
+  Cook]
+- File_explorer.py - update about statement. [Neil Cook]
+- File_explorer.py - continue upgrade. [Neil Cook]
+- File_explorer.py - continue upgrade. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- File_explorer.py - continue to write code. [Neil Cook]
+- File_explorer.py - add table. [Neil Cook]
+- Config.__init__.py: add aliases to __all__ [Neil Cook]
+- Drsmodule.io - need to import drs_log separately (drs_startup uses
+  drs_table) [Neil Cook]
+- Find_error - change comment to better represent section. [Neil Cook]
+- Combine_index_files.py - pep8 changes. [Neil Cook]
+- File_explorer.py - app to find drs files. [Neil Cook]
+- Drs_table.py - update doc strings. [Neil Cook]
+- Drs_table.py - update doc strings. [Neil Cook]
+- Drs_lock.py - update doc strings. [Neil Cook]
+- Merge branch 'master' into input_redo. [Neil Cook]
+- Added a misc folder and a first misc script. [Neil Cook]
+- Recipes/test/* - update paths to drs_setup (via config) [Neil Cook]
+- __init__.py - add a functions section (currently blank) [Neil Cook]
+- Tools.* - update paths to drs_setup (via config) [Neil Cook]
+- Plotting.* - update paths to drs_setup (via config) [Neil Cook]
+- Io.* - update paths to drs_setup (via config) [Neil Cook]
+- Config.__init__.py - add aliases to functions that will be used lots.
+  [Neil Cook]
+- Drs_startup.py - continue improvements to documentation. [Neil Cook]
+- User_config.ini[NIRPS] - update DRS_PLOT value and comment (now an int
+  [0, 1, 2]) [Neil Cook]
+- Drs_text.py - make get_relative_folder a public function. [Neil Cook]
+- Find_error.py - update doc strings to pep8 standards. [Neil Cook]
+- Find_error.py - update comments. [Neil Cook]
+- Find_error.py - add drop down instrument box. [Neil Cook]
+- Find_error.py - improve gui. [Neil Cook]
+- Drs_setup - add better doc strings. [Neil Cook]
+- Find_error.py - continued to work on application. [njcuk9999]
+- Drs_text.py - got args for language database reads. [njcuk9999]
+- Constant_functions.py - added the source to dtype errors in config
+  files. [njcuk9999]
+- Drs_startup.py - allowed instrument to be None. [njcuk9999]
+- Tool to find error codes in database/code. [njcuk9999]
+- Drs general - initialise new sub package folders. [Neil Cook]
+- Drs general - initialise new sub package folders. [Neil Cook]
+- Merge remote-tracking branch 'origin/input_redo' into input_redo.
+  [Neil Cook]
+
+  Conflicts:
+  	INTROOT2/drsmodule/config/core/drs_startup.py
+- Default_config.py - add DRS_DATA_PLOT. [Neil Cook]
+- Add drs_data_plot to start up parameters. [Neil Cook]
+- Drs_recipe.py - change plotting mode - only if drs_plot is 1 (to
+  screen) [Neil Cook]
+- User_config.ini - add plot modes (instead of bool) [Neil Cook]
+
+
+0.5.014 (2019-06-11)
+--------------------
+- SpirouReprocess.py - add processing (parallalised) to reprocess. [Neil
+  Cook]
+- SpirouImage.py - fix small bug with position of log message. [Neil
+  Cook]
+- Multiprocess_test.py - test of multiple. [Neil Cook]
+
+
+0.5.013 (2019-06-10)
+--------------------
+- SpirouReprocess.py - first commit reworking of reprocessing script and
+  run files (works for unit test and any/all reprocessing) [Neil Cook]
+- Correct names. [Neil Cook]
+- Bin folder - add __args__ and __required__ [Neil Cook]
+- SpirouImage.py - add in shape qc. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add in shape qc. [Neil Cook]
+- Cal_shape_master_spirou.py - add in QC (std of shape map) [Neil Cook]
+- SpirouConst.py - remove overlap file and add SLIT_SHAPE_BDXMAP_FILE
+  debug file. [Neil Cook]
+- Cal_shape_spirou.py - produce debug plots to check transform for the
+  input fp file + save master shape (x/y) files to header. [Neil Cook]
+- Cal_shape_master_spirou.py - straighten the dxmap (using dymap) and
+  save the bent dxmap as debug product. [Neil Cook]
+- SpirouBACK.py - add correction_thermal2 functionality. [Neil Cook]
+- Recipe_control.txt - add new name for cal_shape_master
+  (cal_shape_master_spirou) [Neil Cook]
+- Constants_SPIROU_H4RG.py - add more thermal constants and correct
+  thermal correction types to single fiber values. [Neil Cook]
+- Cal_shape_master_spirou.py - correct both dx and dy maps. [Neil Cook]
+- Cal_extract_RAW_spirou.py - thermal correction must be based on
+  individual fiber type not DPRTYPE. [Neil Cook]
+
+
+0.5.012 (2019-06-08)
+--------------------
+- SpirouUnitRecipes.py - remove cal_SHAPE_spirou and add
+  cal_shape_spirou. [Neil Cook]
+- SpirouImage.py - add new loading functions (for new calibDB files)
+  [Neil Cook]
+- SpirouPlot.py - add new thermal_background_debug_plot function. [Neil
+  Cook]
+- SpirouKeywords.py - add shape and new cdb keys. [Neil Cook]
+- SpirouConst.py - add SLIT_SHAPE_LOCAL_FILE + fix slit_SHAPE functions.
+  [Neil Cook]
+- SpirouBACK.py - add correction_thermal, correction_thermal1 and
+  correction_thermal2. [Neil Cook]
+- Reset_calibDB - add tapas_all_sp.fits.gz to calibDB. [Neil Cook]
+- Recipe_control.txt - add cal_shape_spirou.py. [Neil Cook]
+- Output_keys.py - add local shape to tags. [Neil Cook]
+- Cal_SHAPE_spirou.py - moved from bin folder (now old code) [Neil Cook]
+- Constants_SPIROU_H4RG.py - add thermal constants. [Neil Cook]
+- Cal_shape_spirou.py - first commit new local shape recipe. [Neil Cook]
+- Cal_shape_master_spirou.py - put FPMASTER in calibDB. [Neil Cook]
+- Cal_FF_RAW_spirou.py - add FP master file getting. [Neil Cook]
+- Cal_extract_RAW_spirou.py - add thermal correction (untested) [Neil
+  Cook]
+
+
+0.5.011 (2019-06-07)
+--------------------
+- Cal_shape_master.py - apply dxmap and dymap + remove reference to
+  FPFILES (--> FPFILE) [Neil Cook]
+- SpirouLOCOR.py - add modifications for new shape parameters. [Neil
+  Cook]
+- SpirouImage.py - continue working on new shape functionality. [Neil
+  Cook]
+- SpirouEXTOR.__init__.py - add alias to CleanHotpix. [Neil Cook]
+- SpirouMath.py - change how IUVSpline deals with NaNs (full set of NaNs
+  and group of Nans --> fill with linear interp) [Neil Cook]
+- SpirouKeywords.py - add backgroun key and new shape header keys. [Neil
+  Cook]
+- SpirouBACK.py - return background filename for adding to header. [Neil
+  Cook]
+- Cal_shape_master.py - correct change to table (needed extra term)
+  [Neil Cook]
+- Cal_SHAPE_spirou_old.py - add changes for background file loading.
+  [Neil Cook]
+- Constants_SPIROU_H4RG.py - add shape master/local qc parameters. [Neil
+  Cook]
+- Cal_SLIT_spirou.py - add changes for background file loading. [Neil
+  Cook]
+- Cal_shape_master.py - add changes from Etiennes redo. [Neil Cook]
+- Cal_loc_RAW_spirou.py - add changes for background file getting. [Neil
+  Cook]
+- Cal_ff_raw_spirou.py - add changes for new shape files. [Neil Cook]
+- Cal_extract_RAW_spirou.py - add changes for new shape files. [Neil
+  Cook]
+
+
+0.5.010 (2019-06-06)
+--------------------
+- SpirouImage.py - add get_x_shape_map and get_y_shape_map functions and
+  aliases. [Neil Cook]
+- SpirouPlot.py - add shape_linear_trans_param_plot debug plot. [Neil
+  Cook]
+- SpirouConst.py - add dxmap, dymap and fpmaster file defintions. [Neil
+  Cook]
+- Output_keys.py - add dxmap, dymap and fpmaster file tags. [Neil Cook]
+- Register_fp_2.py - add etiennes additional changes. [Neil Cook]
+- Cal_SHAPE_spirou_old.py - refractor file name. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add new shape_master constants. [Neil Cook]
+- Cal_shape_master.py - continue adapting cal_shape_master to handle
+  dxmap and dymap. [Neil Cook]
+- Cal_SHAPE_spirou.py - refractor filename (now need sape x and shape y)
+  [Neil Cook]
+- Cal_shape_master.py - continue adding etiennes changes. [Neil Cook]
+- Cal_extract_RAW_spirou.py - write todos. [Neil Cook]
+
+
+0.5.009 (2019-06-05)
+--------------------
+- SpirouImage.py - start adding etiennes new adaptations to
+  register_fp_2. [Neil Cook]
+- Register_fp_2.py - add etiennes new register fp code. [Neil Cook]
+- Calc_berv.py - add berv source / berv est. [Neil Cook]
+- SpirouTelluric.py - move get_berv_value to spirouImage(spirouBERV)
+  [Neil Cook]
+- SpirouBERV.py - add get_berv_value and modify current functions to add
+  berv estimate + lock berv while calculating barycorrpy. [Neil Cook]
+- SpirouTDB.py - correct pep8. [Neil Cook]
+- SpirouKeywords.py - add berv est and berv source. [Neil Cook]
+- Test_bigcube_berv.py - add berv/berv_est test. [Neil Cook]
+- Obj_mk_tellu_new.py - change how berv is obtained. [Neil Cook]
+- Obj_fit_tellu.py - change how berv is obtained. [Neil Cook]
+- Cal_extract_RAW_spirou.py - add berv estimate and berv source. [Neil
+  Cook]
+- Cal_CCF_E2DS_spirou.py - add berv estimate and berv source. [Neil
+  Cook]
+- Berv_estimate_comparison.py - test and compare berv estimate to
+  barycorrpy. [Neil Cook]
+
+
+0.5.008 (2019-06-04)
+--------------------
+- SpirouImage.py - correction to register_fp. [Neil Cook]
+- SpirouKeywords.py - estimated BERV keys added. [Neil Cook]
+- Cal_extract_RAW_spirou.py - estimated BERV keys added to hdict. [Neil
+  Cook]
+- SpirouBERV.py - add implementation of BERV_EST and use lock file to
+  only open one BERV instance. [Neil Cook]
+- SpirouEXTOR.py - add quick mode for clean_hotpix. [Neil Cook]
+- Merge_fp_fp.py - correct typo for print statement. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add a way to turn off certain features that
+  slow down the code (not to be used for science data) [Neil Cook]
+- SpirouImage.py - correct construct_master_fp. [njcuk9999]
+
+
+0.5.007 (2019-06-03)
+--------------------
+- Cal_shape_master.py - continued work integrating fp master function.
+  [njcuk9999]
+- SpirouImage.py - continued work on FP master functions. [njcuk9999]
+- Cal_shape_master.py - change input to 1 hchc and 1 fpfp. [njcuk9999]
+- SpirouImage.py - add construct_master_fp, group_files_by_time and
+  register_fp functions (for cal_shape_master and cal_dark_master)
+  [njcuk9999]
+- Recipe_control.txt - add cal_shape_master.py to recipe control.
+  [njcuk9999]
+- Merge_fp_fp.py - etiennes merge fp code. [njcuk9999]
+- Constants_SPIROU_H4RG.py - add the cal_shape_master constants.
+  [njcuk9999]
+- Cal_shape_master.py - first commit - copy of cal_SHAPE_spirou.py -
+  with additions from Etienne for making the fp master file. [njcuk9999]
+- Cal_dark_master_spirou.py - remove code in common with shape master
+  into function. [njcuk9999]
+- Merge branch 'neil' into dev. [njcuk9999]
+- Merge pull request #566 from njcuk9999/header-copy-exact. [Neil Cook]
+
+  Header Copy Exact -- also implemented into `INTROOT2` in `input_redo` branch
+- Merge pull request #565 from njcuk9999/db-lock-fix. [Neil Cook]
+
+  DB lock check retry bug - Okay this one I can merge with both INTROOT and INTROOT2!
+- Fixed a bug with db locking check. [Chris Usher]
+
+
+0.5.006 (2019-06-01)
+--------------------
+- Updated to match changes on dev. [Chris Usher]
+- Reworked how fits headers are used. [Chris Usher]
+- Update test.run. [Neil Cook]
+- SpirouImage.py - change dark calibration to dark_master calibration,
+  make sure read_raw_data loading primary data array. [Neil Cook]
+- SpirouFITS.py - adjust read_raw_data to add an imageext (otherwise
+  defaults 0) [Neil Cook]
+- Recipe_control.txt - add cal_dark_master and cal_thermal_spirou. [Neil
+  Cook]
+- Cal_thermal_spirou.py - renamed from cal_thermal2_spirou.py. [Neil
+  Cook]
+
+
+0.5.005 (2019-05-30)
+--------------------
+- SpirouBERVest.py - first commit (test of berv estimate) [Neil Cook]
+- SpirouConst.py - add filename to EXTRACT_E2DS_FILE. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add always_extract. [Neil Cook]
+- Cal_thermal_spirou.py - continue work. [Neil Cook]
+- Cal_thermal2_spirou.py - extraction of darks (using cal_extract) [Neil
+  Cook]
+- Merge branch 'thermal' into dev. [Neil Cook]
+- Merge branch 'master' into thermal. [njcuk9999]
+- First commit of thermal recipe for Low pass dark/thermal calibration.
+  [njcuk9999]
+- Add fiber to header. [Neil Cook]
+- Add "DRS_DATE" and "DATE_NOW" to all recipes. [Neil Cook]
+- Cal_dark_master_spirou.py - fix bugs in while loop. [Neil Cook]
+
+
+0.5.004 (2019-05-29)
+--------------------
+- SpirouImage.py - correct get_files function. [Neil Cook]
+- SpirouEXTOR.py - fix comment typos. [Neil Cook]
+- SpirouKeywords.py - add dark master keys. [Neil Cook]
+- SpirouConst.py - add DARK_FILE_MASTER function. [Neil Cook]
+- Output_keys.py - add dark_master_file tag. [Neil Cook]
+- Constants_SPIROU_H4RG.py - add cal_dark_master constants. [Neil Cook]
+- Cal_DARK_spirou.py - correct typo. [Neil Cook]
+- Cal_dark_master_spirou.py - continue adapting new recipe. [Neil Cook]
+
+
+0.5.003 (2019-05-28)
+--------------------
+- SpirouImage.py - add get_files function. [njcuk9999]
+- SpirouImage.py - add get_files function. [njcuk9999]
+- Hp_dark.py - store EA cal_dark_master code (raw) [njcuk9999]
+- Constants_SPIROU_H4RG.py - add dark_master constant to constants.
+  [njcuk9999]
+- Cal_dark_master_spirou.py - first commit - first integration of EA
+  code. [njcuk9999]
+- SpirouKeywords.py - INFILE should be INF1, INF2, INF3. [njcuk9999]
+- Update date/version/changelog. [njcuk9999]
+- Cal_HC_E2DS_EA_spirou.py - CDBBAD --> CDBLAZE. [njcuk9999]
+
+
+0.5.002 (2019-05-27)
 --------------------
 - SpirouPlot.py - add output_rv to ccf_rv_ccf_plot. [njcuk9999]
 - SpirouKeywords.py - add new CCF keyword defintions. [njcuk9999]
@@ -30,6 +737,11 @@ Changelog
 - Cal_CCF_E2DS_FP_spirou_new.py - modify line endings. [njcuk9999]
 - Cal_CCF_E2DS_FP_spirou_new.py - francois changes to cal ccf (to be
   integrated into cal_CCF actual) [njcuk9999]
+
+
+0.5.001 (2019-05-27)
+--------------------
+- Merge branch 'master' into neil. [Neil Cook]
 - SpirouConst.py - fix s1d names. [Neil Cook]
 - SpirouStartup.py - fix the windows/unix night_name bug. [Neil Cook]
 - SpirouFITS.py, spirouDB.py - reset. [Neil Cook]
@@ -46,6 +758,8 @@ Changelog
 - SpirouConst.py - _w_ --> _v_ [Neil Cook]
 - Update settings for reprocess extract tellu/obj run for May
   pernight/perrun runs. [Neil Cook]
+- Move unused test modules to misc. [Neil Cook]
+- Drs_dependencies.py - add a debug mode. [Neil Cook]
 - Select_per_tc_per_night_calibs.py - add Feb and April runs to the per
   run selection. [Neil Cook]
 - Update date/version/update notes/changelog. [Neil Cook]
@@ -3007,7 +3721,7 @@ Changelog
   imports as required) [Neil Cook]
 - SpirouPlot.py - add slit shape plot. [Neil Cook]
 - SpirouKeywords.py - add kw_SHAPEFILE to output keys. [Neil Cook]
-- SpirouConst.py - add SLIT_XSHAPE_FILE filename definition. [Neil Cook]
+- SpirouConst.py - add SLIT_SHAPE_FILE filename definition. [Neil Cook]
 - Output_keys.py - add slit_shape_file output key. [Neil Cook]
 - New_bananarama.py - fix to work with DRS. [Neil Cook]
 - Cal_SLIT_spirou.py - replace old path function with new and correct
@@ -4981,6 +5695,8 @@ Changelog
   type spirouTHORCA.decide_on_lamp_type: - changed to identify lamp from
   fiber position (for use w/odometer names) - previous version moved to
   decide_on_lamp_type_old. [melissa-hobson]
+- Update date and version. [Neil Cook]
+- Fix for loggers being out of range. [Neil Cook]
 
 
 0.2.073 (2018-06-26)
@@ -4998,12 +5714,6 @@ Changelog
 - Merge pull request #347 from njcuk9999/master. [melissa-hobson]
 
   Melissa
-
-
-0.254 (2018-06-24)
-------------------
-- Update date and version. [Neil Cook]
-- Fix for loggers being out of range. [Neil Cook]
 - Merge pull request #345 from njcuk9999/neil. [Neil Cook]
 
   Neil - confirmed tested on H4RG files
@@ -5036,10 +5746,6 @@ Changelog
 - Updated recipes main end script (to allow piping of logging into p -
   thus accessible outside via ll['p']['LOGGING_ERROR'] for example.
   [Neil Cook]
-
-
-0.253 (2018-06-22)
-------------------
 - Cal_WAVE_NEW_E2DS_spirou.py: first version (untested) [melissa-hobson]
 - Merge pull request #344 from njcuk9999/master. [melissa-hobson]
 
