@@ -10,7 +10,6 @@ Created on 2019-01-17 at 14:31
 @author: cook
 """
 
-from .core import drs_file
 from .core import drs_log
 from .core import drs_recipe
 from .core import drs_startup
@@ -34,6 +33,9 @@ end_main = drs_startup.main_end_script
 
 # get the local variables
 get_locals = drs_startup.get_local_variables
+
+# get a file defintion from a filetype name
+get_file_definition = drs_startup.get_file_definition
 
 # Exit function
 end = drs_startup.exit_script

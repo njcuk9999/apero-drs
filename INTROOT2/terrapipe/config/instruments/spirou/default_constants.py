@@ -217,6 +217,16 @@ USE_SKYDARK_CORRECTION.value = False
 USE_SKYDARK_ONLY = USE_SKYDARK_ONLY.copy(__NAME__)
 USE_SKYDARK_ONLY.value = False
 
+#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#        only find those types define by 'filetype' but 'filetype' must
+#        be one of theses (strings separated by commas)
+ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
+ALLOWED_DARK_TYPES.value = 'DARK_DARK'
+
+#   Define the maximum time span to combine dark files over (in hours)
+DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
+DARK_MASTER_MATCH_TIME.value = 2
+
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS

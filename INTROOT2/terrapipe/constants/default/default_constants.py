@@ -33,7 +33,8 @@ __all__ = [# preprocessing constants
            'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
            'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
            'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
-           'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY',
+           'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
+           'DARK_MASTER_MATCH_TIME',
            # badpix constants
            'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
            'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -247,6 +248,18 @@ USE_SKYDARK_CORRECTION = Const('USE_SKYDARK_CORRECTION', value=None,
 #       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
 USE_SKYDARK_ONLY = Const('USE_SKYDARK_ONLY', value=None, dtype=bool,
                          source=__NAME__)
+
+#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#        only find those types define by 'filetype' but 'filetype' must
+#        be one of theses (strings separated by commas)
+ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
+                           source=__NAME__)
+
+#   Define the maximum time span to combine dark files over (in hours)
+DARK_MASTER_MATCH_TIME = Const('DARK_MASTER_MATCH_TIME', value=None, dtype=str,
+                               source=__NAME__)
+
+
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
