@@ -1,6 +1,6 @@
 from terrapipe import constants
 from terrapipe.config import drs_recipe
-from terrapipe.config import drs_file
+from terrapipe.config.core import drs_file
 from terrapipe.locale import drs_text
 
 from . import file_definitions as sf
@@ -121,6 +121,7 @@ drs_recipe = drs_recipe.DrsRecipe
 cal_badpix = drs_recipe(__INSTRUMENT__)
 cal_ccf = drs_recipe(__INSTRUMENT__)
 cal_dark = drs_recipe(__INSTRUMENT__)
+cal_dark_master = drs_recipe(__INSTRUMENT__)
 cal_drift1 = drs_recipe(__INSTRUMENT__)
 cal_drift2 = drs_recipe(__INSTRUMENT__)
 cal_extract = drs_recipe(__INSTRUMENT__)
@@ -134,8 +135,8 @@ cal_wave = drs_recipe(__INSTRUMENT__)
 
 test = drs_recipe(__INSTRUMENT__)
 # push into a list
-recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2,
-           cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
+recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
+           cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
            cal_shape, cal_wave,
            test]
 
@@ -206,6 +207,7 @@ test.kwarg(**flipimage)
 test.kwarg(**fluxunits)
 test.kwarg(**resize)
 
+
 # -----------------------------------------------------------------------------
 # cal_preprocess_spirou
 # -----------------------------------------------------------------------------
@@ -265,11 +267,27 @@ cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
              helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
 cal_dark.kwarg(**add_cal)
 cal_dark.kwarg(default=True, **combine)
-cal_dark.kwarg(**flipimage)
-cal_dark.kwarg(**fluxunits)
 cal_dark.kwarg(**plot)
 cal_dark.kwarg(**interactive)
-cal_dark.kwarg(**resize)
+
+# -----------------------------------------------------------------------------
+# cal_dark_master_spirou
+# -----------------------------------------------------------------------------
+cal_dark_master.name = 'cal_dark_master_spirou.py'
+cal_dark_master.instrument = __INSTRUMENT__
+cal_dark_master.outputdir = 'reduced'
+cal_dark_master.inputdir = 'tmp'
+cal_dark_master.intputtype = 'pp'
+cal_dark_master.extension = 'fits'
+cal_dark_master.description = Help['DARK_MASTER_DESC']
+cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
+cal_dark_master.run_order = 2
+cal_dark_master.kwarg(name='--filetype', dtype=str, default='DARK_DARK',
+                      helpstr=Help['DARK_MASTER_FILETYPE'])
+cal_dark_master.kwarg(**add_cal)
+cal_dark_master.kwarg(**plot)
+cal_dark_master.kwarg(**interactive)
+
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
