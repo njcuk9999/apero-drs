@@ -14,7 +14,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from terrapipe import constants
-from terrapipe.config import drs_file
+from terrapipe.config.core import drs_file
 
 from . import output_filenames as out
 

@@ -14,7 +14,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from terrapipe import constants
-from terrapipe.config import drs_file
+from terrapipe.config.core import drs_file
 from . import output_filenames as out
 
 # =============================================================================
@@ -246,36 +246,48 @@ out_file = drs_finput('DRS_OUTPUT')
 out_dark = drs_finput('DARK', KW_OUTPUT='DARK', ext='.fits',
                       outfunc=out.calib_file,
                       dbname='calibration', dbkey='DARK')
+out_file.addset(out_dark)
 out_sky = drs_finput('SKY', KW_OUTPUT='SKY', ext='.fits',
                       outfunc=out.calib_file,
                       dbname='calibration', dbkey='SKYDARK')
+out_file.addset(out_sky)
+out_dark_master = drs_finput('DARKM', KW_OUTPUT='DARKM',
+                             ext='_dark_master.fits',
+                             outfunc=out.calib_file,
+                             dbname='calibration', dbkey='DARKM')
+out_file.addset(out_dark_master)
 # -----------------------------------------------------------------------------
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
                         ext='_badpixel.fits', outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
+out_file.addset(out_badpix)
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
                          ext='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
-
+out_file.addset(out_backmap)
 # -----------------------------------------------------------------------------
 # loc
 out_loc_orderp_ab = drs_finput('LOC_ORDERP_AB', KW_OUTPUT='LOC_ORDERP_AB',
                                fiber='AB', ext='_order_profile_AB.fits',
                                outfunc=out.calib_file,
                                dbname='calibration', dbkey='ORDER_PROFILE_AB')
+out_file.addset(out_loc_orderp_ab)
 out_loc_orderp_c = drs_finput('LOC_ORDERP_C', KW_OUTPUT='LOC_ORDERP_C',
                               fiber='C', ext='_order_profile_C.fits',
                                outfunc=out.calib_file,
                                dbname='calibration', dbkey='ORDER_PROFILE_C')
+out_file.addset(out_loc_orderp_c)
 out_loc_loco_ab = drs_finput('LOC_LOCO_AB', KW_OUTPUT='LOC_LOCO_AB',
                              fiber='AB', ext='_loco_AB.fits',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='LOC_AB')
+out_file.addset(out_loc_loco_ab)
 out_loc_loco_c = drs_finput('LOC_LOCO_C', KW_OUTPUT='LOC_LOCO_C',
                             fiber='C', ext='_loco_C.fits',
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='LOC_C')
+out_file.addset(out_loc_loco_c)
 out_loc_loco_2_ab = drs_finput('LOC_FWHM_AB', KW_OUTPUT='LOC_FWHM_AB',
                                fiber='AB', ext='_fwhm-order_AB.fits',
                                outfunc=out.calib_file)
