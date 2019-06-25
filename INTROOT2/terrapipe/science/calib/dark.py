@@ -18,10 +18,11 @@ from terrapipe import constants
 from terrapipe import locale
 from terrapipe import config
 from terrapipe.config import drs_log
-from terrapipe.config import drs_file
+from terrapipe.config.core import drs_file
 from terrapipe.config.core import drs_database
 from terrapipe.io import drs_fits
-
+from terrapipe.io import drs_path
+from terrapipe.io import drs_table
 
 # =============================================================================
 # Define variables
@@ -48,7 +49,7 @@ pcheck = config.pcheck
 
 
 # =============================================================================
-# Define functions
+# Define dark functions
 # =============================================================================
 def measure_dark(params, image, entry_key, **kwargs):
     """
@@ -128,7 +129,7 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
     """
     func_name = __NAME__ + '.measure_dark_badpix()'
     # get constants from params/kwargs
-    darkcutlimit = pcheck(params, 'DARK_CUT_LIMIT', 'darkcutlimit', kwargs,
+    darkcutlimit = pcheck(params, 'DARK_CUTLIMIT', 'darkcutlimit', kwargs,
                            func_name)
     # get number of bad dark pixels (as a fraction of total pixels)
     with warnings.catch_warnings(record=True) as w:
@@ -276,6 +277,151 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
         return params, corrected_image, darkimage
     else:
         return params, corrected_image
+
+
+# =============================================================================
+# Define master dark functions
+# =============================================================================
+def construct_dark_table(params, filenames):
+    # define storage for table columns
+    dark_time, dark_exp, dark_pp_version = [], [], []
+    basenames, nightnames = [], []
+    dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
+    # log that we are reading all dark files
+    WLOG(params, '', TextEntry('40-011-10001'))
+    # loop through file headers
+    for it in range(len(filenames)):
+        # get the basename from filenames
+        basename = os.path.basename(filenames[it])
+        # get the night name
+        nightname = drs_path.get_nightname(params, filenames[it])
+        # read the header
+        hdr = drs_fits.read_header(params, filenames[it])
+        # get keys from hdr
+        acqtime = drs_fits.header_time(params, hdr, 'mjd')
+        exptime = hdr[params['KW_EXPTIME'][0]]
+        ppversion = hdr[params['KW_PPVERSION'][0]]
+        wt_temp = hdr[params['KW_WEATHER_TOWER_TEMP'][0]]
+        cass_temp = hdr[params['KW_CASS_TEMP'][0]]
+        humidity = hdr[params['KW_HUMIDITY'][0]]
+        # append to lists
+        dark_time.append(float(acqtime))
+        dark_exp.append(float(exptime))
+        dark_pp_version.append(ppversion)
+        basenames.append(basename)
+        nightnames.append(nightname)
+        dark_wt_temp.append(float(wt_temp))
+        dark_cass_temp.append(float(cass_temp))
+        dark_humidity.append(float(humidity))
+    # convert lists to table
+    columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
+               'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY']
+    values = [nightnames, basenames, filenames, dark_time, dark_exp,
+              dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity]
+    # make table using columns and values
+    dark_table = drs_table.make_table(params, columns, values)
+    # return table
+    return dark_table
+
+
+def construct_master_dark(params, dark_table, **kwargs):
+    func_name = __NAME__ + '.construct_master_dark'
+    # get constants from p
+    time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
+                        func_name)
+    med_size = pcheck(params, 'DARK_MASTER_MED_SIZE', 'med_size', kwargs,
+                      func_name)
+
+    # get col data from dark_table
+    filenames = dark_table['FILENAME']
+    dark_times = dark_table['MJDATE']
+
+    # ----------------------------------------------------------------------
+    # match files by date
+    # ----------------------------------------------------------------------
+    # log progress
+    WLOG(params, '', TextEntry('40-011-10002', args=[time_thres]))
+    # match files by time
+    matched_id = drs_path.group_files_by_time(params, dark_times, time_thres)
+    # get the most recent position
+    lastpos = np.argmax(dark_times)
+    # load up the most recent dark
+    data_ref, hdr_ref = drs_fits.read(params, filenames[lastpos], gethdr=True)
+    # ge the reference image shape
+    dim1, dim2 = data_ref.shape
+
+    # -------------------------------------------------------------------------
+    # Read individual files and sum groups
+    # -------------------------------------------------------------------------
+    # log process
+    WLOG(params, '', TextEntry('40-011-10003'))
+    # Find all unique groups
+    u_groups = np.unique(matched_id)
+    # currently number of bins == number of groups
+    num_bins = len(u_groups)
+    # storage of dark cube
+    dark_cube = np.zeros([num_bins, dim1, dim2])
+    bin_cube = np.zeros(num_bins)
+    # loop through groups
+    for g_it, group_num in enumerate(u_groups):
+        # log progress
+        wargs = [g_it + 1, len(u_groups)]
+        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
+        # find all files for this group
+        dark_ids = filenames[matched_id == group_num]
+        # load this groups files into a cube
+        cube = []
+        for filename in dark_ids:
+            # read data
+            data_it = drs_fits.read(params, filename)
+            # add to cube
+            cube.append(data_it)
+        # median dark cube
+        groupdark = np.nanmedian(cube, axis=0)
+        # sum within each bin
+        dark_cube[g_it % num_bins] += groupdark
+        # record the number of cubes that are going into this bin
+        bin_cube[g_it % num_bins] += 1
+    # need to normalize if we have more than 1 cube per bin
+    for bin_it in range(num_bins):
+        dark_cube[bin_it] /= bin_cube[bin_it]
+
+    # -------------------------------------------------------------------------
+    # we perform a median filter over a +/- "med_size" pixel box
+    # -------------------------------------------------------------------------
+    # log process
+    WLOG(params, '', TextEntry('40-011-10005', args=[num_bins]))
+    # storage of output dark cube
+    dark_cube1 = np.zeros([num_bins, dim1, dim2])
+    # loop around the bins
+    for bin_it in range(num_bins):
+        # get the dark for this bin
+        bindark = dark_cube[bin_it]
+        # performing a median filter of the image with [-med_size, med_size]
+        #     box in x and 1 pixel wide in y. Skips the pixel considered,
+        #     so this is equivalent of a 2*med_size boxcar
+        tmp = []
+        for jt in range(-med_size, med_size + 1):
+            if jt != 0:
+                tmp.append(np.roll(bindark, [0, jt]))
+        # low frequency image
+        lf_dark = np.nanmedian(tmp, axis=0)
+        # high frequency image
+        dark_cube1[bin_it] = bindark - lf_dark
+    # -------------------------------------------------------------------------
+    # median the dark cube to create the master dark
+    master_dark = np.nanmedian(dark_cube1, axis=0)
+
+    # -------------------------------------------------------------------------
+    # get infile from filetype
+    infile = config.get_file_definition(params['FILETYPE'],
+                                        params['INSTRUMENT'])
+    # set infile filename and read data
+    infile.set_filename(filenames[lastpos])
+    infile.read()
+    # -------------------------------------------------------------------------
+    # return master dark and the reference file
+    return master_dark, infile
 
 
 # =============================================================================
