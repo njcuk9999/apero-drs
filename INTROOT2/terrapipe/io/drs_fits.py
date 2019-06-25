@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+from astropy.time import Time
 from astropy import version as av
 import os
 import warnings
@@ -21,6 +22,7 @@ import traceback
 from terrapipe import constants
 from terrapipe.config.core import drs_log
 from terrapipe import locale
+from . import drs_table
 
 # =============================================================================
 # Define variables
@@ -390,6 +392,132 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
 
 
 # =============================================================================
+# Define search functions
+# =============================================================================
+def find_filetypes(params, filetype, allowedtypes=None, path=None):
+    """
+    Find all files in "path" with DPRTYPE = "filetype"
+
+    must be in "allowedtypes" if None
+    if path is "None" params['INPATH'] is used
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filetype: str, the value of DPRTYPE files must have
+    :param allowedtypes: list of strings, the allowed "filetypes" (filetypes
+                         can be a user input so must be checked for valid
+                         filetype) by default is undefined (thus all "filetypes"
+                         will be valid)
+    :param path: str, the path to check for filetypes (must have index files
+                 in this path or sub directories of this path)
+                 if path is "None" params['INPATH'] is used
+
+    :type params: ParamDict
+    :type filetype: str
+    :type allowedtypes: list[str]
+    :type path: str
+
+    :return:
+    """
+    func_name = __NAME__ + '.find_filetypes()'
+    # deal with no path set
+    if path is None:
+        path = params['INPATH']
+    # deal with no allowed types
+    if allowedtypes is None:
+        allowedtypes = [filetype]
+    elif isinstance(allowedtypes, str):
+        # split at commas
+        allowedtypes = allowedtypes.split(',')
+        # strip spaces
+        allowedtypes = list(map(lambda x: x.strip(), allowedtypes))
+    else:
+        allowedtypes = list(allowedtypes)
+    # ----------------------------------------------------------------------
+    # check file type is allowed
+    if filetype not in allowedtypes:
+        emsg = TextEntry('01-001-00020', args=[filetype, func_name])
+        for allowedtype in allowedtypes:
+            emsg += '\n\t - "{0}"'.format(allowedtype)
+        WLOG(params, 'error', emsg)
+    # ----------------------------------------------------------------------
+    # get index files
+    index_files = get_index_files(params, path)
+    # ----------------------------------------------------------------------
+    # valid files dictionary (key = telluric object name)
+    valid_files = []
+    # ----------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # loop through index files
+    for index_file in index_files:
+        # read index file
+        index = drs_table.read_fits_table(params, index_file)
+        # get directory
+        dirname = os.path.dirname(index_file)
+        # -----------------------------------------------------------------
+        # get filename and object name
+        index_filenames = index['FILENAME']
+        index_output = index[params['KW_DPRTYPE'][0]]
+        # -----------------------------------------------------------------
+        # mask by KW_OUTPUT
+        mask = index_output == filetype
+        # -----------------------------------------------------------------
+        # append found files to this list
+        if np.nansum(mask) > 0:
+            for filename in index_filenames[mask]:
+                # construct absolute path
+                absfilename = os.path.join(dirname, filename)
+                # check that file exists
+                if not os.path.exists(absfilename):
+                    continue
+                # append to storage
+                if absfilename not in valid_files:
+                    valid_files.append(absfilename)
+    # ---------------------------------------------------------------------
+    # log found
+    wargs = [len(valid_files), filetype]
+    WLOG(params, '', TextEntry('40-004-00004', args=wargs))
+    # return full list
+    return valid_files
+
+
+def get_index_files(params, path=None):
+    """
+    Get index files in path (or sub-directory of path)
+        if path is "None" params['INPATH'] is used
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param path: str, the path to check for filetypes (must have index files
+                 in this path or sub directories of this path)
+                 if path is "None" params['INPATH'] is used
+
+    :type params: ParamDict
+    :type path: str
+
+    :return: the absolute paths to all index files under path
+    :rtype: list[str]
+    """
+    func_name = __NAME__ + '.get_index_files()'
+    # deal with no path set
+    if path is None:
+        path = params['INPATH']
+    # storage of index files
+    index_files = []
+    # walk through path and find index files
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename == params['DRS_INDEX_FILE']:
+                index_files.append(os.path.join(root, filename))
+    # log number of index files found
+    if len(index_files) > 0:
+        WLOG(params, '', TextEntry('40-004-00003', args=[len(index_files)]))
+    else:
+        eargs = [path, func_name]
+        WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
+    # return the index files
+    return index_files
+
+
+# =============================================================================
 # Define other functions
 # =============================================================================
 def combine(params, infiles, math='average', same_type=True):
@@ -445,6 +573,47 @@ def combine(params, infiles, math='average', same_type=True):
     outfile = infiles[0].combine(infiles[1:], math, same_type)
     # return combined infile
     return outfile
+
+
+def header_time(params, hdr, out_fmt='mjd'):
+    """
+    Get acquisition time from header
+
+    :param params:
+    :param hdr:
+    :param out_fmt:
+
+    :type params: ParamDict
+    :type hdr: Header
+    :type out_fmt: str
+
+    :return:
+    """
+    func_name = __NAME__ + '.header_time()'
+    # get acqtime
+    time_key = params['KW_ACQTIME']
+    format_key = params['KW_ACQTIME_FMT']
+    dtype_key = params['KW_ACQTIME_DTYPE']
+    # get values from header
+    rawtime = hdr[time_key]
+    rawfmt = hdr[format_key]
+    rawdtype = hdr[dtype_key]
+    # get astropy time
+    acqtime = Time(rawdtype(rawtime), format=rawfmt)
+    # return time in requested format
+    if out_fmt is None:
+        return acqtime
+    elif out_fmt == 'mjd':
+        return acqtime.mjd
+    elif out_fmt == 'jd':
+        return acqtime.jd
+    elif out_fmt == 'iso':
+        return acqtime.iso
+    elif out_fmt == 'decimalyear':
+        return acqtime.decimalyear
+    else:
+        eargs = [out_fmt, func_name]
+        WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
 
 
 # =============================================================================
