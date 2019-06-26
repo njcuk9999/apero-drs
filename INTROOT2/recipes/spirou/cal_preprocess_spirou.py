@@ -11,9 +11,9 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 
-from terrapipe.core import constants
 from terrapipe import core
 from terrapipe import locale
+from terrapipe.core import constants
 from terrapipe.science import preprocessing
 from terrapipe.io import drs_image
 from terrapipe.core.instruments.spirou import file_definitions

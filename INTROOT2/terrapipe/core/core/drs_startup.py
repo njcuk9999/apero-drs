@@ -18,11 +18,11 @@ import os
 import code
 from collections import OrderedDict
 
-from terrapipe.core.instruments.default import pseudo_const
-from terrapipe.core import constants
 from terrapipe import plotting
 from terrapipe.locale import drs_text
 from terrapipe.locale import drs_exceptions
+from terrapipe.core import constants
+from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.io import drs_table
 from terrapipe.io import drs_path
 from terrapipe.io import drs_lock
