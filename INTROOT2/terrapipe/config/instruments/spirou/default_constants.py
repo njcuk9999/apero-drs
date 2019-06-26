@@ -227,6 +227,10 @@ ALLOWED_DARK_TYPES.value = 'DARK_DARK'
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
 DARK_MASTER_MATCH_TIME.value = 2
 
+#   median filter size for dark master
+DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
+DARK_MASTER_MED_SIZE.value = 4
+
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS

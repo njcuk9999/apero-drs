@@ -116,6 +116,18 @@ KW_OBJDECPM.set(key='OBJDECPM')
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
 KW_AIRMASS.set(key='AIRMASS')
 
+# define the weather tower temperature HEADER key
+KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
+KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT')
+
+# define the cassegrain temperature HEADER key
+KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
+KW_CASS_TEMP.set(key='SB_POL_T')
+
+# define the humidity HEADER key
+KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
+KW_HUMIDITY.set(key='RELHUMID')
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
@@ -129,6 +141,14 @@ KW_PPVERSION.set(key='PVERSION', comment='DRS Pre-Processing version')
 # DRS process ID
 KW_PID = KW_PID.copy(__NAME__)
 KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.')
+
+# Processed date keyword
+KW_DRS_DATE_NOW = KW_DRS_DATE_NOW.copy(__NAME__)
+KW_DRS_DATE_NOW.set(key='DRSPDATE', comment='DRS Processed date')
+
+# DRS version date keyword
+KW_DRS_DATE = KW_DRS_DATE.copy(__NAME__)
+KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date')
 
 # root keys (for use below and in finding keys later)
 root_loc = 'LO'

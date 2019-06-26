@@ -34,7 +34,7 @@ __all__ = [# preprocessing constants
            'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
            'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
            'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
-           'DARK_MASTER_MATCH_TIME',
+           'DARK_MASTER_MATCH_TIME', 'DARK_MASTER_MED_SIZE',
            # badpix constants
            'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
            'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -256,10 +256,12 @@ ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
                            source=__NAME__)
 
 #   Define the maximum time span to combine dark files over (in hours)
-DARK_MASTER_MATCH_TIME = Const('DARK_MASTER_MATCH_TIME', value=None, dtype=str,
-                               source=__NAME__)
+DARK_MASTER_MATCH_TIME = Const('DARK_MASTER_MATCH_TIME', value=None,
+                               dtype=float, source=__NAME__)
 
-
+#   median filter size for dark master
+DARK_MASTER_MED_SIZE = Const('DARK_MASTER_MED_SIZE', value=None, dtype=int,
+                             source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
