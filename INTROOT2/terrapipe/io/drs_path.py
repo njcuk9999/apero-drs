@@ -114,6 +114,9 @@ def get_nightname(params, filepath, root=None):
         dirname = os.path.dirname(filepath)
     # get the night name by splitting from the root dir
     night_name = dirname.split(root)[-1]
+    # remove any leading separators
+    while night_name.startswith(os.sep):
+        night_name = night_name[len(os.sep):]
     # get the night_name
     return night_name
 
