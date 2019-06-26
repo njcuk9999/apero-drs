@@ -1,5 +1,5 @@
 from terrapipe import constants
-from terrapipe.config import drs_recipe
+from terrapipe.config.core import drs_recipe
 from terrapipe.config.core import drs_file
 from terrapipe.locale import drs_text
 

@@ -17,7 +17,7 @@ import warnings
 from terrapipe import constants
 from terrapipe import locale
 from terrapipe import config
-from terrapipe.config import drs_log
+from terrapipe.config.core import drs_log
 from terrapipe.config.core import drs_file
 from terrapipe.config.core import drs_database
 from terrapipe.io import drs_fits

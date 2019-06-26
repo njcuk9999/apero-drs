@@ -23,7 +23,7 @@ from collections import OrderedDict
 
 from terrapipe import constants
 from terrapipe.locale import drs_text
-from terrapipe.config import drs_log
+from terrapipe.config.core import drs_log
 
 from . import drs_lock
 

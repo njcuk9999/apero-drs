@@ -17,9 +17,10 @@ import warnings
 from terrapipe import config
 from terrapipe import constants
 from terrapipe import locale
-from terrapipe.config import drs_log
-from terrapipe.config import drs_file
 from terrapipe.config import math
+from terrapipe.config.core import drs_log
+from terrapipe.config.core import drs_file
+
 
 # =============================================================================
 # Define variables
