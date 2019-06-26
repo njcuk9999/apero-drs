@@ -12,6 +12,7 @@ Created on 2019-01-19 at 12:03
 import numpy as np
 from astropy.io import fits
 from astropy import version as av
+from astropy.table import Table
 import os
 import warnings
 from collections import OrderedDict
@@ -808,7 +809,6 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.header = header
 
-
     def check_read(self):
         # check that data/header/comments is not None
         if self.data is None:
@@ -843,6 +843,14 @@ class DrsFitsFile(DrsInputFile):
         if self.data is not None:
             self.shape = self.data.shape
 
+    def update_header_with_hdict(self):
+        # deal with unset header
+        if self.header is None:
+            self.header = drs_fits.Header()
+        # add keys from hdict
+        for key in self.hdict:
+            self.header[key] = (self.hdict[key], self.hdict.comments[key])
+
     def write(self, dtype=None):
         func_name = __NAME__ + '.DrsFitsFile.write()'
         # get params
@@ -850,6 +858,8 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # check that filename is set
         self.check_filename()
+        # copy keys from hdict into header
+        self.update_header_with_hdict()
         # write to file
         drs_fits.write(params, self.filename, self.data, self.header,
                        self.datatype, self.dtype, func=func_name)
@@ -859,13 +869,37 @@ class DrsFitsFile(DrsInputFile):
         # add output to outfiles
         params['OUTFILES'][self.basename] = self.output_dict
 
-    def write_multi(self, data_list, header_list, datatype_list, dtype_list):
+    def write_multi(self, data_list, header_list=None, datatype_list=None,
+                    dtype_list=None):
         func_name = __NAME__ + '.DrsFitsFile.write_multi()'
         # get params
         params = self.recipe.drs_params
         # ---------------------------------------------------------------------
         # check that filename is set
         self.check_filename()
+        # copy keys from hdict into header
+        self.update_header_with_hdict()
+        # ---------------------------------------------------------------------
+        # deal with header list being empty
+        if header_list is None:
+            header_list = []
+            for it in range(len(data_list)):
+                if self.header is not None:
+                    header_list.append(self.header.to_fits_header())
+                else:
+                    header_list.append(None)
+        # deal with datatype_list being empty
+        if datatype_list is None:
+            datatype_list = []
+            for it in range(len(data_list)):
+                if isinstance(data_list[it], Table):
+                    datatype_list.append('table')
+                else:
+                    datatype_list.append('image')
+        # deal with dtype being empty
+        if dtype_list is None:
+            dtype_list = [None] * len(data_list)
+        # ---------------------------------------------------------------------
         # get data and header lists
         data_list = [self.data] + data_list
         header_list = [self.header] + header_list
