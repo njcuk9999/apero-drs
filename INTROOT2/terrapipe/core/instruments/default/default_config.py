@@ -1,5 +1,5 @@
 # This is the main config file
-from terrapipe.constants import constant_functions
+from terrapipe.core.constants import constant_functions
 
 # =============================================================================
 # Define variables
@@ -134,12 +134,12 @@ DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./data/', dtype=str,
 
 #   where instrument configuration files are stored
 DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
-                                  value='./config/instruments/',
+                                  value='./core/instruments/',
                                   source=__NAME__)
 
 #   where the core configuration files are stored
 DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
-                            value='./config/instruments/default',
+                            value='./core/instruments/default',
                             source=__NAME__)
 
 #  where the bad pixel data are stored

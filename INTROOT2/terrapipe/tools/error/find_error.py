@@ -16,8 +16,8 @@ from tkinter import messagebox
 import webbrowser
 import re
 
-from terrapipe import constants
-from terrapipe import config
+from terrapipe.core import constants
+from terrapipe import core
 from terrapipe.locale import drs_text
 
 # =============================================================================
@@ -33,7 +33,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = config.wlog
+WLOG = core.wlog
 
 # -----------------------------------------------------------------------------
 # define the program name
@@ -774,7 +774,7 @@ class LoadData:
         """
         self.instrument = instrument
         # get parameters from terrapipe
-        _, params = config.setup('None', instrument, quiet=True)
+        _, params = core.setup('None', instrument, quiet=True)
         self.drs_params = params
         # get database
         dout = self.load_databases()

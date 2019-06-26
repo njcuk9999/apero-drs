@@ -10,15 +10,13 @@ Created on 2019-01-19 at 12:03
 @author: cook
 """
 import numpy as np
-from astropy.io import fits
 from astropy import version as av
 from astropy.table import Table
 import os
-import warnings
 from collections import OrderedDict
 
 from . import drs_log
-from terrapipe import constants
+from terrapipe.core import constants
 from terrapipe.locale import drs_text
 from terrapipe.io import drs_fits
 

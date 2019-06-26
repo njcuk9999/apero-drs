@@ -16,14 +16,14 @@ import warnings
 from scipy.signal import convolve2d
 from scipy.ndimage import map_coordinates as mapc
 
-from terrapipe import config
-from terrapipe import constants
+from terrapipe import core
+from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.config import math
-from terrapipe.config.core import drs_log
-from terrapipe.config.core import drs_file
-from terrapipe.config.core import drs_database
-from terrapipe.config.instruments.default import file_definitions
+from terrapipe.core import math
+from terrapipe.core.core import drs_log
+from terrapipe.core.core import drs_file
+from terrapipe.core.core import drs_database
+from terrapipe.core.instruments.default import file_definitions
 from terrapipe.io import drs_fits
 
 
@@ -48,7 +48,7 @@ WLOG = drs_log.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
-pcheck = config.pcheck
+pcheck = core.pcheck
 # Define output files
 DEBUG_BACK = file_definitions.debug_back
 

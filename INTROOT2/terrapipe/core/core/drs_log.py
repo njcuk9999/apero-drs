@@ -19,11 +19,11 @@ import os
 import sys
 from time import sleep
 
-from terrapipe.config.instruments.default import pseudo_const
-from terrapipe import constants
+from terrapipe.core.instruments.default import pseudo_const
+from terrapipe.core import constants
 from terrapipe.locale import drs_text
 from terrapipe.locale import drs_exceptions
-from terrapipe.config.math import time
+from terrapipe.core.math import time
 
 
 # =============================================================================

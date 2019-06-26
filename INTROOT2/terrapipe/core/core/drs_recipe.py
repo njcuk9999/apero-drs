@@ -18,8 +18,8 @@ import sys
 import glob
 from collections import OrderedDict
 
-from terrapipe.config.instruments.default import pseudo_const
-from terrapipe import constants
+from terrapipe.core.instruments.default import pseudo_const
+from terrapipe.core import constants
 from terrapipe.locale import drs_text
 from . import drs_log
 from . import drs_argument

@@ -5,7 +5,7 @@ Created on 2019-01-17
 
 @author: cook
 """
-from terrapipe.config.instruments.default.default_keywords import *
+from terrapipe.core.instruments.default.default_keywords import *
 
 # TODO: Note: If variables are not showing up MUST CHECK __all__ definition
 # TODO:    in import * module

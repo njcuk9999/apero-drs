@@ -11,15 +11,14 @@ Created on 2019-05-15 at 13:48
 """
 from __future__ import division
 import numpy as np
-import os
 import warnings
 
-from terrapipe import config
-from terrapipe import constants
+from terrapipe import core
+from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.config import math
-from terrapipe.config.core import drs_log
-from terrapipe.config.core import drs_file
+from terrapipe.core import math
+from terrapipe.core.core import drs_log
+from terrapipe.core.core import drs_file
 
 
 # =============================================================================
@@ -43,7 +42,7 @@ WLOG = drs_log.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
-pcheck = config.pcheck
+pcheck = core.pcheck
 
 
 # =============================================================================

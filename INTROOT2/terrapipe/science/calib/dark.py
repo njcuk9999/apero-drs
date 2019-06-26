@@ -14,12 +14,12 @@ import numpy as np
 import os
 import warnings
 
-from terrapipe import constants
+from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe import config
-from terrapipe.config.core import drs_log
-from terrapipe.config.core import drs_file
-from terrapipe.config.core import drs_database
+from terrapipe import core
+from terrapipe.core.core import drs_log
+from terrapipe.core.core import drs_file
+from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_path
 from terrapipe.io import drs_table
@@ -45,7 +45,7 @@ WLOG = drs_log.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
-pcheck = config.pcheck
+pcheck = core.pcheck
 
 
 # =============================================================================
@@ -416,8 +416,8 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
 
     # -------------------------------------------------------------------------
     # get infile from filetype
-    infile = config.get_file_definition(params['FILETYPE'],
-                                        params['INSTRUMENT'])
+    infile = core.get_file_definition(params['FILETYPE'],
+                                      params['INSTRUMENT'])
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
     infile.read()

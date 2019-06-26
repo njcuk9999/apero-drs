@@ -19,8 +19,8 @@ import os
 import warnings
 import traceback
 
-from terrapipe import constants
-from terrapipe.config.core import drs_log
+from terrapipe.core import constants
+from terrapipe.core.core import drs_log
 from terrapipe import locale
 from . import drs_table
 

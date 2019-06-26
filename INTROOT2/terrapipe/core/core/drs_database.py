@@ -17,7 +17,7 @@ import os
 import shutil
 from collections import OrderedDict
 
-from terrapipe import constants
+from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.io import drs_lock
 from . import drs_log

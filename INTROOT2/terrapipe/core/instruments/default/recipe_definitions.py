@@ -1,5 +1,5 @@
-from terrapipe.constants import param_functions
-from terrapipe.config.core import drs_recipe
+from terrapipe.core.constants import param_functions
+from terrapipe.core.core import drs_recipe
 from terrapipe.locale import drs_text
 
 from . import file_definitions as sf

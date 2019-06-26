@@ -13,9 +13,9 @@ Created on 2019-03-21 at 14:28
 from __future__ import division
 import numpy as np
 
-from terrapipe import config
-from terrapipe import constants
-from terrapipe.config.core import drs_log
+from terrapipe import core
+from terrapipe.core import constants
+from terrapipe.core.core import drs_log
 from terrapipe import locale
 
 
@@ -38,7 +38,7 @@ WLOG = drs_log.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 # alias pcheck
-pcheck = config.pcheck
+pcheck = core.pcheck
 
 
 # =============================================================================

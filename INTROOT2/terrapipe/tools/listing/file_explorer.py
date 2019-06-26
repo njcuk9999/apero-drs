@@ -16,7 +16,7 @@ from collections import OrderedDict
 import pandas as pd
 import sys
 import threading
-import time
+
 # try to deal with python 2/3 compatibility
 if sys.version_info.major > 2:
     import tkinter as tk
@@ -28,8 +28,8 @@ else:
     import tkFont
     import ttk
 
-from terrapipe import constants
-from terrapipe import config
+from terrapipe.core import constants
+from terrapipe import core
 
 
 # =============================================================================
@@ -45,7 +45,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = config.wlog
+WLOG = core.wlog
 # -----------------------------------------------------------------------------
 # define the program name
 PROGRAM_NAME = 'DRS File Explorer'
@@ -763,7 +763,7 @@ def main(instrument=None):
     :rtype: dict
     """
     # get parameters from terrapipe
-    _, params = config.setup('None', instrument, quiet=True)
+    _, params = core.setup('None', instrument, quiet=True)
     # define allowed instruments
     if instrument not in INSTRUMENTS:
         emsgs = ['Instrument = "{0}" not valid.'.format(instrument),
@@ -818,7 +818,7 @@ class LoadData:
         self.lengths = OrderedDict()
         self.options = OrderedDict()
         # get parameters from terrapipe
-        _, params = config.setup('None', self.instrument, quiet=True)
+        _, params = core.setup('None', self.instrument, quiet=True)
         self.params = params
         self.pconstant = constants.pload(self.instrument)
         # set path from parameters
