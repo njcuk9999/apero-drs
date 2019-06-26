@@ -298,15 +298,8 @@ def debug_file(recipe, params, infile, dlist):
     debug_back.add_hkey(key=kws7)
     # add primage data to debug_back file
     debug_back.data = dlist[0]
-    # construct header list
-    hlist = []
-    for it in range((len(dlist) -1 )):
-        hlist.append(debug_back.hdict.to_fits_header())
-    # construct data type list
-    datatypelist = ['image'] * (len(dlist) - 1)
-    dtypelist = [None] * (len(dlist) - 1)
     # write multiple to file
-    debug_back.write_multi(dlist[1:], hlist, datatypelist, dtypelist)
+    debug_back.write_multi(data_list=dlist[1:])
 
 
 # =============================================================================
