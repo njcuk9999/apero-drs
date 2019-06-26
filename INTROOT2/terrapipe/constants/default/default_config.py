@@ -16,7 +16,9 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
            'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
-           'DRS_BADPIX_DATA', 'CALIB_DB_MATCH']
+           'DRS_BADPIX_DATA', 'CALIB_DB_MATCH', 'DRS_MOD_DATA_PATH',
+           'DRS_MOD_INSTRUMENT_CONFIG', 'DRS_MOD_CORE_CONFIG',
+           'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME', 'DRS_LOG_FORMAT']
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_config'
@@ -80,7 +82,7 @@ DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__)
 # General properites
 # =============================================================================
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.5.000', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value='0.5.025', dtype=str,
                     source=__NAME__)
 
 # Authors
@@ -94,7 +96,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__)
 
 # Date
-DRS_DATE = Const('DATE', value='2019-05-10', dtype=str, source=__NAME__)
+DRS_DATE = Const('DATE', value='2019-06-25', dtype=str, source=__NAME__)
 
 # Language
 LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],

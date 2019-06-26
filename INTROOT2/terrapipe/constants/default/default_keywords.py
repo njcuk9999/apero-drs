@@ -21,7 +21,9 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_CDBBLAZE', 'KW_CDBWAVE', 'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
            'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
            'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
-           'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF']
+           'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
+           'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
+           'KW_DRS_DATE_NOW', 'KW_DRS_DATE']
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
@@ -112,6 +114,15 @@ KW_OBJDECPM = Keyword('KW_OBJDECPM', key='', dtype=float, source=__NAME__)
 # define the airmass HEADER key
 KW_AIRMASS = Keyword('KW_AIRMASS', key='', dtype=float, source=__NAME__)
 
+# define the weather tower temperature HEADER key
+KW_WEATHER_TOWER_TEMP = Keyword('KW_WEATHER_TOWER_TEMP', key='', dtype=float,
+                                source=__NAME__)
+
+# define the cassegrain temperature HEADER key
+KW_CASS_TEMP = Keyword('KW_CASS_TEMP', key='', dtype=float, source=__NAME__)
+
+# define the humidity HEADER key
+KW_HUMIDITY = Keyword('KW_HUMIDITY', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -122,6 +133,13 @@ KW_PPVERSION = Keyword('KW_PPVERSION', key='', dtype=str, source=__NAME__)
 
 # DRS process ID
 KW_PID = Keyword('KW_PID', key='', dtype=str, source=__NAME__)
+
+# Processed date keyword
+KW_DRS_DATE_NOW = Keyword('KW_DRS_DATE_NOW', key='', dtype=str,
+                          source=__NAME__)
+
+# DRS version date keyword
+KW_DRS_DATE = Keyword('KW_DRS_DATE', key='', dtype=str, source=__NAME__)
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
