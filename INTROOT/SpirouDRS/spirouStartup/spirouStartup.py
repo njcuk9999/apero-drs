@@ -17,7 +17,6 @@ from __future__ import division
 import numpy as np
 from astropy.time import Time
 import os
-import time
 import sys
 import code
 from collections import OrderedDict
