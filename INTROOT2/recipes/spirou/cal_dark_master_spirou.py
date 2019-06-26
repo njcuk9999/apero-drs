@@ -18,6 +18,7 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_path
 from terrapipe.science.calib import dark
 
 
@@ -121,6 +122,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     cargs = [params, recipe, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
+    # get reference file night name
+    params['NIGHTNAME'] = drs_path.get_nightname(params, reffile.filename)
+    params.set_source('NIGHTNAME', mainname)
 
     # ------------------------------------------------------------------
     # Quality control
