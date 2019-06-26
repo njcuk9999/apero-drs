@@ -285,7 +285,7 @@ class Database():
 # =============================================================================
 # Define functions
 # =============================================================================
-def add_file(params, outfile):
+def add_file(params, outfile, night=None):
     func_name = __NAME__ + '.add_file()'
     # ------------------------------------------------------------------
     # get properties from outfile
@@ -315,9 +315,9 @@ def add_file(params, outfile):
     # ------------------------------------------------------------------
     # update database with key
     if dbname.lower() == 'telluric':
-        update_calibdb(params, dbname, dbkey, outfile)
+        update_calibdb(params, dbname, dbkey, outfile, night)
     elif dbname.lower() == 'calibration':
-        update_telludb(params, dbname, dbkey, outfile)
+        update_telludb(params, dbname, dbkey, outfile, night)
 
 
 def copy_calibrations(params, header):
@@ -413,8 +413,11 @@ def get_full_database(params, dbname):
 # Define calibration database functions
 # =============================================================================
 # TODO: Redo to use Database class
-def update_calibdb(params, dbname, dbkey, outfile):
+def update_calibdb(params, dbname, dbkey, outfile, night=None):
     func_name = __NAME__ + '.update_calibdb()'
+    # deal with no night name
+    if night is None:
+        night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
     # ----------------------------------------------------------------------
     # get the hdict
     hdict, header = _get_hdict(params, dbname, outfile)
@@ -424,7 +427,7 @@ def update_calibdb(params, dbname, dbkey, outfile):
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey)
-    nightname = str(params['NIGHTNAME'])
+    nightname = night
     filename = outfile.basename
     human_time = str(header_time.iso)
     unix_time = str(header_time.unix)
@@ -441,8 +444,11 @@ def update_calibdb(params, dbname, dbkey, outfile):
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
-def update_telludb(params, dbname, dbkey, outfile):
+def update_telludb(params, dbname, dbkey, outfile, night=None):
     func_name = __NAME__ + '.update_calibdb()'
+    # deal with no night name
+    if night is None:
+        night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
     # ----------------------------------------------------------------------
     # get the hdict
     hdict, header = _get_hdict(params, dbname, outfile)
@@ -452,7 +458,7 @@ def update_telludb(params, dbname, dbkey, outfile):
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey)
-    nightname = str(params['NIGHTNAME'])
+    nightname = night
     filename = outfile.basename
     human_time = str(header_time.iso).replace(' ', '_')
     unix_time = str(header_time.unix)
