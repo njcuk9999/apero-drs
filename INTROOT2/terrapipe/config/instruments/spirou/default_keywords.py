@@ -37,7 +37,7 @@ KW_ACQTIME_DTYPE.value = float
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
 KW_DATE_OBS.set(key='DATE-OBS')
 # define the observation time HEADER key
-KW_UTC_OBS = KW_UTC_OBS.copy('__NAME__')
+KW_UTC_OBS = KW_UTC_OBS.copy(__NAME__)
 KW_UTC_OBS.set(key='UTC-OBS')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
