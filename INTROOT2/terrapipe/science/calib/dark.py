@@ -324,7 +324,7 @@ def construct_dark_table(params, filenames):
     return dark_table
 
 
-def construct_master_dark(params, dark_table, **kwargs):
+def construct_master_dark(params, recipe, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
     # get constants from p
     time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
@@ -364,7 +364,7 @@ def construct_master_dark(params, dark_table, **kwargs):
     bin_cube = np.zeros(num_bins)
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
-        # log progress
+        # log progress group g_it + 1 of len(u_groups)
         wargs = [g_it + 1, len(u_groups)]
         WLOG(params, '', TextEntry('40-011-10004', args=wargs))
         # find all files for this group
@@ -377,7 +377,8 @@ def construct_master_dark(params, dark_table, **kwargs):
             # add to cube
             cube.append(data_it)
         # median dark cube
-        groupdark = np.nanmedian(cube, axis=0)
+        with warnings.catch_warnings(record=True) as _:
+            groupdark = np.nanmedian(cube, axis=0)
         # sum within each bin
         dark_cube[g_it % num_bins] += groupdark
         # record the number of cubes that are going into this bin
@@ -410,14 +411,15 @@ def construct_master_dark(params, dark_table, **kwargs):
         dark_cube1[bin_it] = bindark - lf_dark
     # -------------------------------------------------------------------------
     # median the dark cube to create the master dark
-    master_dark = np.nanmedian(dark_cube1, axis=0)
+    with warnings.catch_warnings(record=True) as _:
+        master_dark = np.nanmedian(dark_cube1, axis=0)
 
     # -------------------------------------------------------------------------
     # get infile from filetype
     infile = config.get_file_definition(params['FILETYPE'],
                                         params['INSTRUMENT'])
-    # set infile filename and read data
-    infile.set_filename(filenames[lastpos])
+    # construct new infile instance and read data
+    infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
     infile.read()
     # -------------------------------------------------------------------------
     # return master dark and the reference file
