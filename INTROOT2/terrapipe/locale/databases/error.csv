@@ -506,7 +506,7 @@
 "40-011-10003","ALL","prints that we are reading dark files and combining groups","None","Reading Dark files and combining groups","",""
 "40-011-10004","ALL","prints the group we are combining","{0} = iteration number; {1} = total number of groups","\t Group {0} of {1}","",""
 "40-011-10005","ALL","prints that we are performing the median filter and for how many bins","{0} = number of bins median filtering over","Performing median filter for {0} bins","",""
-"40-011-10006","ALL","","","","",""
+"40-011-10006","ALL","Prints that we are saving dark master file to file","{0} = output filename","Saving dark master file to {0}","",""
 "40-011-10007","ALL","","","","",""
 "","","","","","",""
 "","","","","","",""
