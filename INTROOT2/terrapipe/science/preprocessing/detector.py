@@ -13,8 +13,8 @@ import os
 import warnings
 from scipy import ndimage
 
-from terrapipe import constants
-from terrapipe import config
+from terrapipe.core import constants
+from terrapipe import core
 from terrapipe import locale
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
@@ -32,7 +32,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = config.wlog
+WLOG = core.wlog
 # get param dict
 ParamDict = constants.ParamDict
 # Get the text types

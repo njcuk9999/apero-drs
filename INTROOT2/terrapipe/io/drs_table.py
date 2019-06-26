@@ -21,9 +21,9 @@ from astropy.io.registry import get_formats
 from astropy.io import fits
 from collections import OrderedDict
 
-from terrapipe import constants
+from terrapipe.core import constants
 from terrapipe.locale import drs_text
-from terrapipe.config.core import drs_log
+from terrapipe.core.core import drs_log
 
 from . import drs_lock
 

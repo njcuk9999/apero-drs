@@ -17,9 +17,9 @@ from __future__ import division
 import os
 import time
 
-from terrapipe import constants
+from terrapipe.core import constants
 from terrapipe.locale import drs_text
-from terrapipe.config.core import drs_log
+from terrapipe.core.core import drs_log
 
 
 # =============================================================================

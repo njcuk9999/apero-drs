@@ -29,8 +29,8 @@ __NAME__ = 'param_functions.py'
 # Define package name
 PACKAGE = 'terrapipe'
 # Define relative path to 'const' sub-package
-CONST_PATH = './config/instruments/'
-CORE_PATH = './config/instruments/default/'
+CONST_PATH = './core/instruments/'
+CORE_PATH = './core/instruments/default/'
 # Define config/constant/keyword scripts to open
 SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']

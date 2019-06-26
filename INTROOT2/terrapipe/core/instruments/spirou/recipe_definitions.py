@@ -1,6 +1,6 @@
-from terrapipe import constants
-from terrapipe.config.core import drs_recipe
-from terrapipe.config.core import drs_file
+from terrapipe.core import constants
+from terrapipe.core.core import drs_recipe
+from terrapipe.core.core import drs_file
 from terrapipe.locale import drs_text
 
 from . import file_definitions as sf

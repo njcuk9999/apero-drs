@@ -18,8 +18,8 @@ import os
 import code
 from collections import OrderedDict
 
-from terrapipe.config.instruments.default import pseudo_const
-from terrapipe import constants
+from terrapipe.core.instruments.default import pseudo_const
+from terrapipe.core import constants
 from terrapipe import plotting
 from terrapipe.locale import drs_text
 from terrapipe.locale import drs_exceptions

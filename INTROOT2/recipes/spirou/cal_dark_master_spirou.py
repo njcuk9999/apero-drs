@@ -12,13 +12,12 @@ Created on 2019-03-23 at 13:01
 from __future__ import division
 import numpy as np
 
-from terrapipe import constants
-from terrapipe import config
+from terrapipe.core import constants
+from terrapipe import core
 from terrapipe import locale
-from terrapipe.config.core import drs_database
-from terrapipe.config.instruments.spirou import file_definitions
+from terrapipe.core.core import drs_database
+from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
-from terrapipe.io import drs_image
 from terrapipe.science.calib import dark
 
 
@@ -35,7 +34,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = config.wlog
+WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
@@ -72,19 +71,19 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = config.run(__main__, recipe, params)
+    llmain, success = core.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = config.end_main(params, success)
+    params = core.end_main(params, success)
     # return a copy of locally defined variables in the memory
-    return config.get_locals(dict(locals()), llmain)
+    return core.get_locals(dict(locals()), llmain)
 
 
 def __main__(recipe, params):
@@ -198,7 +197,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    config.end(ll, has_plots=True)
+    core.end(ll, has_plots=True)
 
 # =============================================================================
 # End of code

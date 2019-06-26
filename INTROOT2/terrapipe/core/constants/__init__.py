@@ -9,8 +9,8 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-
-from . import constant_functions, param_functions
+from . import constant_functions
+from . import param_functions
 
 # =============================================================================
 # Define variables

@@ -9,10 +9,9 @@ Created on 2019-03-05 16:37
 Version 0.0.1
 """
 from __future__ import division
-import traceback
 
-from terrapipe import constants
-from terrapipe import config
+from terrapipe.core import constants
+from terrapipe import core
 from terrapipe import locale
 
 # =============================================================================
@@ -28,11 +27,11 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = config.wlog
+WLOG = core.wlog
 # get param dict
 ParamDict = constants.ParamDict
-DrsFitsFile = config.core.drs_file.DrsFitsFile
-DrsRecipe = config.core.drs_recipe.DrsRecipe
+DrsFitsFile = core.core.drs_file.DrsFitsFile
+DrsRecipe = core.core.drs_recipe.DrsRecipe
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 

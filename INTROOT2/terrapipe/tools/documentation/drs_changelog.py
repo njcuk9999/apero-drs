@@ -14,8 +14,8 @@ import os
 import shutil
 from datetime import datetime
 
-from terrapipe import config
-from terrapipe import constants
+from terrapipe import core
+from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.io import drs_path
 
@@ -32,7 +32,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = config.wlog
+WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
@@ -189,19 +189,19 @@ def main(preview=1, **kwargs):
     fkwargs = dict(preview=preview, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = config.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = config.run(__main__, recipe, params)
+    llmain, success = core.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = config.end_main(params, success, outputs=None)
+    params = core.end_main(params, success, outputs=None)
     # return a copy of locally defined variables in the memory
-    return config.get_locals(dict(locals()), llmain)
+    return core.get_locals(dict(locals()), llmain)
 
 
 def __main__(recipe, params):
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    config.end(ll, has_plots=False)
+    core.end(ll, has_plots=False)
 
 
 # =============================================================================

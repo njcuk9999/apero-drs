@@ -10,8 +10,8 @@ Created on 2019-01-18 at 14:44
 @author: cook
 """
 
-from terrapipe import constants
-from terrapipe.config.instruments.default import pseudo_const
+from terrapipe.core import constants
+from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.locale import drs_exceptions
 
 # =============================================================================
