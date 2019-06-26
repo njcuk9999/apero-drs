@@ -107,8 +107,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     # find recipe
     recipe = _find_recipe(name, instrument)
     # quietly load DRS parameters (for setup)
-    recipe.get_drs_params(quiet=True, pid=pid, date_now=htime,
-                          drs_date=str(__date__))
+    recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
     # do not need to display if we have special keywords
@@ -303,9 +302,10 @@ def main_end_script(params, success, outputs='reduced', end=True):
             WLOG(params, 'info', params['DRS_HEADER'])
         else:
             wargs = [params['RECIPE']]
-            WLOG(params, 'info', params['DRS_HEADER'])
-            WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs))
-            WLOG(params, 'info', params['DRS_HEADER'])
+            WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+            WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs),
+                 colour='red')
+            WLOG(params, 'info', params['DRS_HEADER'], colour='red')
         # ---------------------------------------------------------------------
         # add the logger messages to p
         params = WLOG.output_param_dict(params)
