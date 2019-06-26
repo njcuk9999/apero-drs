@@ -15,7 +15,7 @@ import numpy as np
 
 from terrapipe import config
 from terrapipe import constants
-from terrapipe.config import drs_log
+from terrapipe.config.core import drs_log
 from terrapipe import locale
 
 

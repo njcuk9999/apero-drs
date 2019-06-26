@@ -15,7 +15,7 @@ from astropy import units as uu
 import os
 
 from terrapipe import constants
-from terrapipe.config import drs_log
+from terrapipe.config.core import drs_log
 from terrapipe import locale
 
 

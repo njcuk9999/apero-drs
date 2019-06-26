@@ -31,8 +31,8 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = config.wlog
 # get param dict
 ParamDict = constants.ParamDict
-DrsFitsFile = config.drs_file.DrsFitsFile
-DrsRecipe = config.drs_recipe.DrsRecipe
+DrsFitsFile = config.core.drs_file.DrsFitsFile
+DrsRecipe = config.core.drs_recipe.DrsRecipe
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 

@@ -24,7 +24,7 @@ from . import drs_log
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'drs_recipe.py'
+__NAME__ = 'drs_argument.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
