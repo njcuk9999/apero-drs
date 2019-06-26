@@ -69,7 +69,8 @@ class Header(fits.Header):
         if key.startswith('@@@'):
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
         else:
-            super().__setitem__(key, item)
+            nan_filtered = self.__nan_check(item)
+            super().__setitem__(key, nan_filtered)
 
     def __getitem__(self, key):
         if key.startswith('@@@'):
@@ -84,9 +85,7 @@ class Header(fits.Header):
             return super().__contains__(key)
 
     def copy(self, strip=False):
-        header = Header(self, copy=True)
-        if strip:
-            header._strip()
+        header = Header(super().copy(strip), copy=False)
         header.__temp_items = self.__temp_items.copy()
         return header
 
@@ -94,9 +93,7 @@ class Header(fits.Header):
         header = super().copy(strip=strip)
         if nan_to_string:
             for key in list(header.keys()):
-                value = header[key]
-                if type(value) == float and np.isnan(value):
-                    header[key] = 'NaN'
+                header[key] = header[key]
         return header
 
     @staticmethod
@@ -106,6 +103,15 @@ class Header(fits.Header):
     @staticmethod
     def __get_temp_key(key):
         return key[3:]
+
+    @staticmethod
+    def __nan_check(value):
+        if isinstance(value, float) and np.isnan(value):
+            return 'NaN'
+        elif type(value) == tuple:
+            return (Header.__nan_check(value[0]),) + value[1:]
+        else:
+            return value
 
 
 # =============================================================================
@@ -323,7 +329,7 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
     if not isinstance(data, list):
         data = [data]
     if not isinstance(header, list):
-        header = [header]
+        header = [header.to_fits_header()]
     if not isinstance(datatype, list):
         datatype = [datatype]
     if dtype is not None and not isinstance(dtype, list):
@@ -344,9 +350,12 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
             WLOG(params, 'error', TextEntry('00-013-00006', args=eargs))
     # ----------------------------------------------------------------------
     # create the multi HDU list
-    #try:
     # try to create primary HDU first
-    hdu0 = fits.PrimaryHDU(data[0], header=header[0])
+    if isinstance(header[0], Header):
+        header0 = header[0].to_fits_header()
+    else:
+        header0 = header[0]
+    hdu0 = fits.PrimaryHDU(data[0], header=header0)
     if dtype is not None:
         hdu0.scale(type=dtype[0], **SCALEARGS)
     # add all others afterwards
@@ -359,9 +368,14 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
         else:
             continue
         # add to hdu list
-        hdu_i = fitstype(data[it], header=header[it])
-        if dtype is not None:
-            hdu_i.scale(type=dtype[it])
+        if isinstance(header[it], Header):
+            header_it = header[it].to_fits_header()
+        else:
+            header_it = header[it]
+        hdu_i = fitstype(data[it], header=header_it)
+        if dtype is not None and datatype[it] == 'image':
+            if dtype[it] is not None:
+                hdu_i.scale(type=dtype[it])
         hdus.append(hdu_i)
     # convert to  HDU list
     hdulist = fits.HDUList(hdus)
@@ -591,15 +605,13 @@ def header_time(params, hdr, out_fmt='mjd'):
     """
     func_name = __NAME__ + '.header_time()'
     # get acqtime
-    time_key = params['KW_ACQTIME']
+    time_key = params['KW_ACQTIME'][0]
     format_key = params['KW_ACQTIME_FMT']
     dtype_key = params['KW_ACQTIME_DTYPE']
     # get values from header
     rawtime = hdr[time_key]
-    rawfmt = hdr[format_key]
-    rawdtype = hdr[dtype_key]
     # get astropy time
-    acqtime = Time(rawdtype(rawtime), format=rawfmt)
+    acqtime = Time(dtype_key(rawtime), format=format_key)
     # return time in requested format
     if out_fmt is None:
         return acqtime
