@@ -20,7 +20,10 @@ from collections import OrderedDict
 from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.io import drs_lock
+from terrapipe.io import drs_fits
+
 from . import drs_log
+
 
 # =============================================================================
 # Define variables
@@ -580,54 +583,14 @@ def _copy_db_file(params, dbname, inpath, outpath, lock=None,
 def _get_time(params, dbname, hdict=None, header=None, kind=None):
     func_name = __NAME__ + '._get_time()'
     # ----------------------------------------------------------------------
-    # get keywords from params
-    timekey = drs_log.find_param(params, 'KW_ACQTIME', func=func_name)[0]
-    timefmt = drs_log.find_param(params, 'KW_ACQTIME_FMT', func=func_name)
-    timetype = drs_log.find_param(params, 'KW_ACQTIME_DTYPE', func=func_name)
-    # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
-        if timekey in hdict:
-            # get the raw time from the header
-            raw_time = hdict[timekey]
-        else:
-            eargs = [dbname, 'hdict', timekey, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
-            raw_time = None
+        return drs_fits.header_time(params, hdict, out_fmt=kind)
     elif header is not None:
-        if timekey in header:
-            # get the raw time from the header
-            raw_time = header[timekey]
-        else:
-            eargs = [dbname, 'header', timekey, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
-            raw_time = None
+        return drs_fits.header_time(params, header, out_fmt=kind)
     else:
-        eargs = [dbname, 'hdict or header', timekey, func_name]
+        eargs = [dbname, 'hdict or header', func_name]
         WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
-        raw_time = None
-    # ----------------------------------------------------------------------
-    # convert raw time to astropy time
-    try:
-        a_time = Time(timetype(raw_time), format=timefmt)
-    except Exception as e:
-        eargs = [dbname, raw_time, timefmt, timetype, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
-        a_time = None
-    # ----------------------------------------------------------------------
-    # if kind is None return the astropy object
-    if kind is None:
-        return a_time
-    elif kind == 'human':
-        return str(a_time.iso)
-    elif kind == 'unix':
-        return float(a_time.unix)
-    elif kind == 'mjd':
-        return float(a_time.mjd)
-    else:
-        kinds = ['None', 'human', 'unix', 'mjd']
-        eargs = [dbname, ', '.join(kinds), kind, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
 
 
 def _read_lines_from_database(params, dbname):
