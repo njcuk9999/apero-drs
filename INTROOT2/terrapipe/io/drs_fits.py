@@ -589,7 +589,7 @@ def combine(params, infiles, math='average', same_type=True):
     return outfile
 
 
-def header_time(params, hdr, out_fmt='mjd'):
+def header_time(params, hdr, out_fmt='mjd', func=None, name=None):
     """
     Get acquisition time from header
 
@@ -603,29 +603,54 @@ def header_time(params, hdr, out_fmt='mjd'):
 
     :return:
     """
-    func_name = __NAME__ + '.header_time()'
+    if func is None:
+        func_name = __NAME__ + '.header_time()'
+    else:
+        func_name = func
+    # deal with no name
+    if name is None:
+        dbname = 'header_time'
+    else:
+        dbname = name
+        # ----------------------------------------------------------------------
     # get acqtime
-    time_key = params['KW_ACQTIME'][0]
-    format_key = params['KW_ACQTIME_FMT']
-    dtype_key = params['KW_ACQTIME_DTYPE']
+    time_key = drs_log.find_param(params, 'KW_ACQTIME', func=func_name)[0]
+    timefmt = drs_log.find_param(params, 'KW_ACQTIME_FMT', func=func_name)
+    timetype = drs_log.find_param(params, 'KW_ACQTIME_DTYPE', func=func_name)
+    # ----------------------------------------------------------------------
     # get values from header
-    rawtime = hdr[time_key]
+    if time_key in hdr:
+        rawtime = hdr[time_key]
+    else:
+        eargs = [dbname, 'hdict', time_key, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
+        rawtime = None
+    # ----------------------------------------------------------------------
     # get astropy time
-    acqtime = Time(dtype_key(rawtime), format=format_key)
+    try:
+        acqtime = Time(timetype(rawtime), format=timefmt)
+    except Exception as e:
+        eargs = [dbname, rawtime, timefmt, timetype, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
+        acqtime = None
+    # ----------------------------------------------------------------------
     # return time in requested format
     if out_fmt is None:
         return acqtime
     elif out_fmt == 'mjd':
-        return acqtime.mjd
+        return float(acqtime.mjd)
     elif out_fmt == 'jd':
-        return acqtime.jd
-    elif out_fmt == 'iso':
+        return float(acqtime.jd)
+    elif out_fmt == 'iso' or out_fmt=='human':
         return acqtime.iso
+    elif out_fmt == 'unix':
+        return float(acqtime.unix)
     elif out_fmt == 'decimalyear':
-        return acqtime.decimalyear
+        return float(acqtime.decimalyear)
     else:
-        eargs = [out_fmt, func_name]
-        WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
+        kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
+        eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
 
 
 # =============================================================================
