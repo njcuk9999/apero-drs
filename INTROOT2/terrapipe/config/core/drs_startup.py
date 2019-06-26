@@ -18,6 +18,7 @@ import os
 import code
 from collections import OrderedDict
 
+from terrapipe.config.instruments.default import pseudo_const
 from terrapipe import constants
 from terrapipe import plotting
 from terrapipe.locale import drs_text
@@ -49,7 +50,7 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = drs_log.wlog
 TLOG = drs_log.Printer
 # get print colours
-COLOR = constants.Colors
+COLOR = pseudo_const.Colors
 # get param dict
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe

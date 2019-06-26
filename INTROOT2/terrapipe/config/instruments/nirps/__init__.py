@@ -5,16 +5,10 @@
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-03-05 13:16
+Created on 2019-01-18 at 13:46
 
 @author: cook
 """
-from . import default_config
-from . import default_constants
-from . import default_keywords
-from . import recipe_definitions
-from . import file_definitions
-from . import pseudo_const
 
 # =============================================================================
 # Define functions

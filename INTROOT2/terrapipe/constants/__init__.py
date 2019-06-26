@@ -10,9 +10,7 @@ Created on 2019-01-17 at 14:31
 @author: cook
 """
 
-from .core import param_functions
-from .core import constant_functions
-from .default import pseudo_const
+from . import constant_functions, param_functions
 
 # =============================================================================
 # Define variables
@@ -26,8 +24,6 @@ __all__ = ['load', 'ParamDict', 'ArgumentError', 'ConfigError',
 TopConstants = param_functions.load_config()
 # get non-instrument psuedo constants (highest level)
 TopPseudoConstants = param_functions.load_pconfig()
-# Get Colours Class
-Colors = pseudo_const.Colors
 
 # =============================================================================
 # Define functions

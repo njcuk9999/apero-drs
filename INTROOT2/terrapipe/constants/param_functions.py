@@ -15,12 +15,11 @@ import numpy as np
 import sys
 import os
 import pkg_resources
-import importlib
+
 from collections import OrderedDict
 
 from terrapipe.locale import drs_exceptions
 from . import constant_functions
-
 
 # =============================================================================
 # Define variables
@@ -31,7 +30,7 @@ __NAME__ = 'param_functions.py'
 PACKAGE = 'terrapipe'
 # Define relative path to 'const' sub-package
 CONST_PATH = './config/instruments/'
-CORE_PATH = './constants/default/'
+CORE_PATH = './config/instruments/default/'
 # Define config/constant/keyword scripts to open
 SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']

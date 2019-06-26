@@ -10,11 +10,6 @@ Created on 2019-03-05 13:16
 @author: cook
 """
 
-from . import default_config
-from . import default_constants
-from . import default_keywords
-from . import pseudo_const
-
 # =============================================================================
 # Define functions
 # =============================================================================

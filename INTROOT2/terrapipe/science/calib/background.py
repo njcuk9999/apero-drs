@@ -20,10 +20,10 @@ from terrapipe import config
 from terrapipe import constants
 from terrapipe import locale
 from terrapipe.config import drs_log
-from terrapipe.config import drs_file
+from terrapipe.config.core import drs_file
 from terrapipe.config import math
 from terrapipe.config.core import drs_database
-from terrapipe.config.core.default import file_definitions
+from config.instruments.default import file_definitions
 from terrapipe.io import drs_fits
 
 
