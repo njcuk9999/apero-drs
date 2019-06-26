@@ -100,7 +100,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # extract file type from inputs
-    params['FILETYPE'] = params['INPUT']['FILETYPE']
+    params['FILETYPE'] = params['INPUTS']['FILETYPE']
     params.set_source('FILETYPE', mainname)
 
     # ----------------------------------------------------------------------
@@ -120,7 +120,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # match files by date and median to produce master dark
     # ----------------------------------------------------------------------
-    master_dark, reffile = dark.construct_master_dark(params, dark_table)
+    cargs = [params, recipe, dark_table]
+    master_dark, reffile = dark.construct_master_dark(*cargs)
 
     # ------------------------------------------------------------------
     # Quality control
@@ -173,12 +174,10 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # copy data
     outfile.data = master_dark
-    # construct data and header list
-    data_list = [dark_table]
-    header_list = [outfile.hdict.to_fits_header()]
-    datatype_list = ['table']
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-011-10006', args=[outfile.filename]))
     # write data and header list to file
-    outfile.write_multi(data_list, header_list)
+    outfile.write_multi(data_list=[dark_table])
 
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
