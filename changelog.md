@@ -2,6 +2,64 @@ Changelog
 =========
 
 
+0.5.027 (2019-06-26)
+--------------------
+- Drs_path.py - make sure night_name does not start with a separator in
+  "get_nightname" function. [Neil Cook]
+- Drs_database.py - allow the addition of the night name to "add_file"
+  function. [Neil Cook]
+- Cal_dark_master_spirou.py - add nightname from reference file. [Neil
+  Cook]
+- SpirouStartup.py - remove unused import. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - integrate _get_time functionality into header_time.
+  [Neil Cook]
+- Pseudo_const.py - add back nirps logo. [Neil Cook]
+- Drs_database.py - update _get_time to use drs_fits.header_time. [Neil
+  Cook]
+- Reorganize config and constants (now all in core sub-module) - update
+  module order. [Neil Cook]
+- Reorganize config and constants (now all in core sub-module) [Neil
+  Cook]
+- Reorganize where default settings are kept (now in
+  config.instruments.default) -- modifications to fix bugs. [Neil Cook]
+- Reorganize where default settings are kept (now in
+  config.instruments.default) -- modifications to fix bugs. [Neil Cook]
+- Reorganize where default settings are kept (now in
+  config.instruments.default) [Neil Cook]
+- Science.calib.dark.py - correct dark_master functionality including
+  setup to infile. [Neil Cook]
+- Background.py - update how debug file is made (with updates to
+  write_multi) [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_path.py - change conditions on finding time_unit to be astropy
+  unit/quantity. [Neil Cook]
+- Drs_fits.py - update Header class (from @cusher work) [Neil Cook]
+- Constants/keywords - add/update values for dark_master. [Neil Cook]
+- Drs_startup.py - fix get_drs_params inputs and make warning that code
+  did not complete successfully red. [Neil Cook]
+- Drs_file.py - make corrections to write_multi (including new
+  update_header_with_hdict function) [Neil Cook]
+- Cal_dark_master_spirou.py - finish converting dark_master to
+  terrapipe. [Neil Cook]
+
+
+0.5.026 (2019-06-25)
+--------------------
+- Science.calib.dark.py - add dark master functionality. [Neil Cook]
+- Update language database. [Neil Cook]
+- Terrapipe.io - add find_filetypes, get_index_files and header_time
+  functions. [Neil Cook]
+- Constants - add dark master constant definitions. [Neil Cook]
+- Drs_startup.py - add function get_file_definition and update pid
+  getting (to add htime) [Neil Cook]
+- File_definitions - add dark_master file definition. [Neil Cook]
+- Cal_dark_master_spirou.py - first commit and transfer from SpirouDRS.
+  [Neil Cook]
+- Remove old drsmodule files. [Neil Cook]
+- Update version/changelog and date. [Neil Cook]
+
+
 0.5.025 (2019-06-24)
 --------------------
 - Obj_mk_obj_template.py + spirouTelluric - move location of GetBERV.
@@ -5695,8 +5753,6 @@ Changelog
   type spirouTHORCA.decide_on_lamp_type: - changed to identify lamp from
   fiber position (for use w/odometer names) - previous version moved to
   decide_on_lamp_type_old. [melissa-hobson]
-- Update date and version. [Neil Cook]
-- Fix for loggers being out of range. [Neil Cook]
 
 
 0.2.073 (2018-06-26)
@@ -5714,6 +5770,12 @@ Changelog
 - Merge pull request #347 from njcuk9999/master. [melissa-hobson]
 
   Melissa
+
+
+0.254 (2018-06-24)
+------------------
+- Update date and version. [Neil Cook]
+- Fix for loggers being out of range. [Neil Cook]
 - Merge pull request #345 from njcuk9999/neil. [Neil Cook]
 
   Neil - confirmed tested on H4RG files
@@ -5746,6 +5808,10 @@ Changelog
 - Updated recipes main end script (to allow piping of logging into p -
   thus accessible outside via ll['p']['LOGGING_ERROR'] for example.
   [Neil Cook]
+
+
+0.253 (2018-06-22)
+------------------
 - Cal_WAVE_NEW_E2DS_spirou.py: first version (untested) [melissa-hobson]
 - Merge pull request #344 from njcuk9999/master. [melissa-hobson]
 
