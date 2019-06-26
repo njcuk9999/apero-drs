@@ -686,7 +686,7 @@ def _display_initial_parameterisation(p):
     wmsgs += TextEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
     wmsgs += TextEntry('\n\tDRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**p))
     # add config sources
-    for source in p['DRS_CONFIG']:
+    for source in np.sort(p['DRS_CONFIG']):
         wmsgs += TextEntry('\n\tDRS_CONFIG={0}'.format(source))
     # add others
     wmsgs += TextEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
