@@ -12,9 +12,9 @@ Created on 2019-03-23 at 13:01
 from __future__ import division
 import numpy as np
 
-from terrapipe.core import constants
 from terrapipe import core
 from terrapipe import locale
+from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
