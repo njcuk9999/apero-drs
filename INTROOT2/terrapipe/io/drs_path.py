@@ -121,9 +121,11 @@ def get_nightname(params, filepath, root=None):
 def group_files_by_time(params, times, time_thres, time_unit='hours'):
     func_name = __NAME__ + '.group_files_by_time()'
     # make sure time units are correct
-    if isinstance(1.0 * time_unit, uu.UnitBase):
+    cond1 = not isinstance(time_unit, str)
+    cond2 = isinstance(time_thres, uu.Quantity)
+    if cond1 or cond2:
         try:
-            if isinstance(time_thres, uu.Quantity):
+            if cond2:
                 time_thres = time_thres.to(uu.day)
             else:
                 time_thres = (time_thres * time_unit).to(uu.day)
