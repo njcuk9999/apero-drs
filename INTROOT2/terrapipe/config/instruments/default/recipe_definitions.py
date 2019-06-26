@@ -1,4 +1,4 @@
-from terrapipe import constants
+from terrapipe.constants import param_functions
 from terrapipe.config import drs_recipe
 from terrapipe.locale import drs_text
 
@@ -10,7 +10,7 @@ from . import file_definitions as sf
 __NAME__ = 'config.core.default.recipe_definitions.py'
 __INSTRUMENT__ = None
 # Get constants
-Constants = constants.load(__INSTRUMENT__)
+Constants = param_functions.load_config(__INSTRUMENT__)
 # Get Help
 Help = drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author

@@ -11,7 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 
 from terrapipe import constants
-from terrapipe.constants.default import pseudo_const
+from terrapipe.config.instruments.default import pseudo_const
 from terrapipe.locale import drs_exceptions
 
 # =============================================================================

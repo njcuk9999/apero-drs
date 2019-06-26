@@ -1,5 +1,5 @@
 # This is the main config file
-from terrapipe.constants.core import constant_functions
+from terrapipe.constants import constant_functions
 
 # =============================================================================
 # Define variables

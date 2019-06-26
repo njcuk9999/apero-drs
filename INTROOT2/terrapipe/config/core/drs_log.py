@@ -19,6 +19,7 @@ import os
 import sys
 from time import sleep
 
+from terrapipe.config.instruments.default import pseudo_const
 from terrapipe import constants
 from terrapipe.locale import drs_text
 from terrapipe.locale import drs_exceptions
@@ -55,7 +56,7 @@ HelpText = drs_text.HelpDict
 # get the default language
 DEFAULT_LANGUAGE = drs_text.DEFAULT_LANGUAGE
 # Get the Color dict
-Color = constants.Colors
+Color = pseudo_const.Colors
 # define log format
 LOGFMT = Constants['DRS_LOG_FORMAT']
 

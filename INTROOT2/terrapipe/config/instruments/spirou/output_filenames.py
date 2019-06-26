@@ -13,7 +13,7 @@ import os
 
 from terrapipe import constants
 from terrapipe import config
-from terrapipe.config.core.default import output_filenames
+from terrapipe.config.instruments.default import output_filenames
 from terrapipe import locale
 
 

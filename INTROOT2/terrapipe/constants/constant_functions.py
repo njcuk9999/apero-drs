@@ -12,11 +12,11 @@ Created on 2019-01-17 at 14:09
 import numpy as np
 import os
 import sys
+import traceback
 import importlib
 import string
 import warnings
 
-from terrapipe.locale import drs_text
 from terrapipe.locale import drs_exceptions
 
 
@@ -209,10 +209,12 @@ def import_module(modulepath, full=False):
         # return
         return mod
     except Exception as e:
+        string_trackback = traceback.format_exc()
         # report error
         emsg1 = 'Cannot import module {0} from {1}'.format(modfile, moddir)
         emsg2 = '\tError {0}: {1}'.format(type(e), e)
-        raise ConfigError([emsg1, emsg2])
+        emsg3 = '\n\n Traceback:\n\n' + str(string_trackback)
+        raise ConfigError([emsg1, emsg2, emsg3])
 
 
 def get_constants_from_file(filename):

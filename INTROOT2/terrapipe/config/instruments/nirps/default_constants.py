@@ -1,19 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
+# CODE NAME HERE
 
+# CODE DESCRIPTION HERE
 
-Created on 2019-01-17
+Created on 2019-01-18 at 13:46
 
 @author: cook
 """
-from terrapipe.constants.default.default_constants import *
 
-# TODO: Note: If variables are not showing up MUST CHECK __all__ definition
-# TODO:    in import * module
+# =============================================================================
+# Define functions
+# =============================================================================
 
-__NAME__ = 'terrapipe.config.instruments.nirps.default_constants'
+# Nothing to see here.
 
-# -----------------------------------------------------------------------------
-# NIRPS Constant definitions
-# -----------------------------------------------------------------------------
-
-
+# =============================================================================
+# End of code
+# =============================================================================
