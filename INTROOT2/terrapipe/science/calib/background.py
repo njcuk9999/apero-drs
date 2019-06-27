@@ -257,14 +257,11 @@ def correction(recipe, params, infile, image, header, return_map=False,
         # save debug file
         debug_file(recipe, params, infile, dimages)
         # ------------------------------------------------------------------
-        # get background file
-        params['BACKFILE'] = bkgrdfilename
-        params.set_source('BACKFILE', func_name)
         # if return map just return the bad pixel map
         if return_map:
-            return params, background_image_full
+            return bkgrdfile, background_image_full
         else:
-            return params, corrected_image
+            return bkgrdfile, corrected_image
 
 
 def debug_file(recipe, params, infile, dlist):

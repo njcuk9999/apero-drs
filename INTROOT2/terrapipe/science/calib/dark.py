@@ -269,14 +269,11 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
     WLOG(params, '', TextEntry('40-011-00011', args=wargs))
     corrected_image = image - (darkimage * nfiles)
     # -------------------------------------------------------------------------
-    # get the dark filename (from header)
-    params['DARKFILE'] = os.path.basename(use_file)
-    params.set_source('DARKFILE', func_name)
     # finally return datac
     if return_dark:
-        return params, corrected_image, darkimage
+        return use_file, corrected_image, darkimage
     else:
-        return params, corrected_image
+        return use_file, corrected_image
 
 
 # =============================================================================
