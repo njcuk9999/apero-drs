@@ -23,7 +23,8 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
            'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
            'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
-           'KW_DRS_DATE_NOW', 'KW_DRS_DATE']
+           'KW_DRS_DATE_NOW', 'KW_DRS_DATE', 'KW_WAVE_NBO', 'KW_WAVE_DEG',
+           'KW_WAVE_PARAM']
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
@@ -237,23 +238,48 @@ KW_BTOT = Keyword('KW_BTOT', key='', dtype=float, source=__NAME__)
 # -----------------------------------------------------------------------------
 # root for localisation header keys
 ROOT_DRS_LOC = Const('ROOT_DRS_LOC', value=None, dtype=str, source=__NAME__)
-
+# Mean background (as percentage)
 KW_LOC_BCKGRD = Keyword('KW_LOC_BCKGRD', key='', dtype=float, source=__NAME__)
+# Number of orders located
 KW_LOC_NBO = Keyword('KW_LOC_NBO', key='', dtype=int, source=__NAME__)
+# fit degree for order centers
 KW_LOC_DEG_C = Keyword('KW_LOC_DEG_C', key='', dtype=int, source=__NAME__)
+# fit degree for order widths
 KW_LOC_DEG_W = Keyword('KW_LOC_DEG_W', key='', dtype=int, source=__NAME__)
+# Maximum flux in order
 KW_LOC_MAXFLX = Keyword('KW_LOC_MAXFLX', key='', dtype=float, source=__NAME__)
+# Maximum number of removed points allowed for location fit
 KW_LOC_SMAXPTS_CTR = Keyword('KW_LOC_SMAXPTS_CTR', key='', dtype=int,
                              source=__NAME__)
+# Maximum number of removed points allowed for width fit
 KW_LOC_SMAXPTS_WID = Keyword('KW_LOC_SMAXPTS_WID', key='', dtype=int,
                              source=__NAME__)
+# Maximum rms allowed for location fit
 KW_LOC_RMS_CTR = Keyword('KW_LOC_RMS_CTR', key='', dtype=float, source=__NAME__)
+# Maximum rms allowed for width fit (formally KW_LOC_rms_fwhm)
 KW_LOC_RMS_WID = Keyword('KW_LOC_RMS_WID', key='', dtype=float, source=__NAME__)
+# Coeff center order
 KW_LOC_CTR_COEFF = Keyword('KW_LOC_CTR_COEFF', key='', dtype=int,
                            source=__NAME__)
+# Coeff width order
 KW_LOC_WID_COEFF = Keyword('KW_LOC_WID_COEFF', key='', dtype=int,
                            source=__NAME__)
 
+# -----------------------------------------------------------------------------
+# Define shape variables
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Define wave variables
+# -----------------------------------------------------------------------------
+# Number of orders in wave image
+KW_WAVE_NBO = Keyword('KW_WAVE_NBO', key='', dtype=int, source=__NAME__)
+
+# fit degree for wave solution
+KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='', dtype=int, source=__NAME__)
+
+# the prefix used to get the wave solution fit coefficients
+KW_WAVE_PARAM = Keyword('KW_WAVE_PARAM', key='', dtype=float, source=__NAME__)
 
 
 

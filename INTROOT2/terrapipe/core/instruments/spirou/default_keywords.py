@@ -329,3 +329,22 @@ KW_LOC_CTR_COEFF.set(key=root_loc + 'CTR', comment='Coeff center')
 KW_LOC_WID_COEFF = KW_LOC_WID_COEFF.copy(__NAME__)
 KW_LOC_WID_COEFF.set(key=root_loc + 'FW', comment='Coeff fwhm')
 
+# -----------------------------------------------------------------------------
+# Define shape variables
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Define wave variables
+# -----------------------------------------------------------------------------
+# Number of orders in wave image
+KW_WAVE_NBO = KW_WAVE_NBO.copy(__NAME__)
+KW_WAVE_NBO.set(key='TH_ORD_N', comment='nb orders in total')
+
+# fit degree for wave solution
+KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
+KW_WAVE_DEG.set(key='TH_LL_D', comment='degree of wave polyn fit')
+
+# the prefix used to get the wave solution fit coefficients
+KW_WAVE_PARAM = KW_WAVE_PARAM.copy(__NAME__)
+KW_WAVE_PARAM.set(key='TH_LC', comment='wave coefficients ll(x, order)')
+
