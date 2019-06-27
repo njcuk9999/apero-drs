@@ -415,5 +415,46 @@ QC_LOC_RMSMAX_WID.value = 500
 LOC_SAVE_SUPERIMP_FILE = LOC_SAVE_SUPERIMP_FILE.copy(__NAME__)
 LOC_SAVE_SUPERIMP_FILE.value = True
 
+# =============================================================================
+# CALIBRATION: SHAPE SETTINGS
+# =============================================================================
+#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#        only find those types define by 'filetype' but 'filetype' must
+#        be one of theses (strings separated by commas)
+ALLOWED_FP_TYPES = ALLOWED_FP_TYPES.copy(__NAME__)
+ALLOWED_FP_TYPES.value = 'FP_FP'
 
+#   Define the maximum time span to combine dark files over (in hours)
+FP_MASTER_MATCH_TIME = FP_MASTER_MATCH_TIME.copy(__NAME__)
+FP_MASTER_MATCH_TIME.value = 2
+
+#   Define the percentile at which the FPs are normalised when getting the
+#      fp master in shape master
+FP_MASTER_PERCENT_THRES = FP_MASTER_PERCENT_THRES.copy(__NAME__)
+FP_MASTER_PERCENT_THRES.value = 90.0
+
+#  Define the largest standard deviation allowed for the shift in
+#     x or y when doing the shape master fp linear transform
+SHAPE_QC_LTRANS_RES_THRES = SHAPE_QC_LTRANS_RES_THRES.copy(__NAME__)
+SHAPE_QC_LTRANS_RES_THRES.value = 0.1
+
+#  Define the percentile which defines a true FP peak [0-100]
+SHAPE_MASTER_VALIDFP_PERCENTILE = SHAPE_MASTER_VALIDFP_PERCENTILE.copy(__NAME__)
+SHAPE_MASTER_VALIDFP_PERCENTILE.value = 80
+
+#  Define the fractional flux an FP much have compared to its neighbours
+SHAPE_MASTER_VALIDFP_THRESHOLD = SHAPE_MASTER_VALIDFP_THRESHOLD.copy(__NAME__)
+SHAPE_MASTER_VALIDFP_THRESHOLD.value = 1.5
+
+#  Define the number of iterations used to get the linear transform params
+SHAPE_MASTER_LINTRANS_NITER = SHAPE_MASTER_LINTRANS_NITER.copy(__NAME__)
+SHAPE_MASTER_LINTRANS_NITER.value = 5
+
+#  Define the initial search box size (in pixels) around the fp peaks
+SHAPE_MASTER_FP_INI_BOXSIZE = SHAPE_MASTER_FP_INI_BOXSIZE.copy(__NAME__)
+SHAPE_MASTER_FP_INI_BOXSIZE.value = 11
+
+#  Define the small search box size (in pixels) around the fp peaks
+SHAPE_MASTER_FP_SMALL_BOXSIZE = SHAPE_MASTER_FP_SMALL_BOXSIZE.copy(__NAME__)
+SHAPE_MASTER_FP_SMALL_BOXSIZE.value = 2
 
