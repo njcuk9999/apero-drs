@@ -131,13 +131,14 @@ cal_loc = drs_recipe(__INSTRUMENT__)
 cal_pp = drs_recipe(__INSTRUMENT__)
 cal_slit = drs_recipe(__INSTRUMENT__)
 cal_shape = drs_recipe(__INSTRUMENT__)
+cal_shape_master = drs_recipe(__INSTRUMENT__)
 cal_wave = drs_recipe(__INSTRUMENT__)
 
 test = drs_recipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
-           cal_shape, cal_wave,
+           cal_shape, cal_shape_master, cal_wave,
            test]
 
 # =============================================================================
@@ -319,37 +320,41 @@ cal_loc.kwarg(**interactive)
 cal_loc.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
-# cal_SLIT_spirou
+# cal_shape_master_spirou
 # -----------------------------------------------------------------------------
-cal_slit.name = 'cal_SLIT_spirou.py'
-cal_slit.instrument = __INSTRUMENT__
-cal_slit.outputdir = 'reduced'
-cal_slit.inputdir = 'tmp'
-cal_slit.inputtype = 'pp'
-cal_slit.extension = 'fits'
-cal_slit.description = Help['SLIT_DESC']
-cal_slit.epilog = Help['SLIT_EXAMPLE']
-cal_slit.run_order = 4
-cal_slit.arg(pos=0, **directory)
-cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+', 
-             helpstr=Help['FILES_HELP'] + Help['SLIT_FILES_HELP'])
-cal_slit.kwarg(**add_cal)
-cal_slit.kwarg(**badfile)
-cal_slit.kwarg(**dobad)
-cal_slit.kwarg(**backsub)
-cal_slit.kwarg(default=True, **combine)
-cal_slit.kwarg(**darkfile)
-cal_slit.kwarg(**dodark)
-cal_slit.kwarg(**flipimage)
-cal_slit.kwarg(**fluxunits)
-cal_slit.kwarg(**plot)
-cal_slit.kwarg(**interactive)
-cal_slit.kwarg(**resize)
+cal_shape_master.name = 'cal_shape_master_spirou.py'
+cal_shape_master.instrument = __INSTRUMENT__
+cal_shape_master.outputdir = 'reduced'
+cal_shape_master.inputdir = 'tmp'
+cal_shape_master.inputtype = 'pp'
+cal_shape_master.extension = 'fits'
+cal_shape_master.description = Help['SHAPE_DESC']
+cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
+cal_shape_master.run_order = 4
+cal_shape_master.arg(pos=0, **directory)
+cal_shape_master.kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+                       nargs='+', filelogic='exclusive', required=True,
+                       helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
+cal_shape_master.kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                       nargs='+', filelogic='exclusive', required=True,
+                       helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
+cal_shape_master.kwarg(**add_cal)
+cal_shape_master.kwarg(**badfile)
+cal_shape_master.kwarg(**dobad)
+cal_shape_master.kwarg(**backsub)
+cal_shape_master.kwarg(default=True, **combine)
+cal_shape_master.kwarg(**darkfile)
+cal_shape_master.kwarg(**dodark)
+cal_shape_master.kwarg(**flipimage)
+cal_shape_master.kwarg(**fluxunits)
+cal_shape_master.kwarg(**plot)
+cal_shape_master.kwarg(**interactive)
+cal_shape_master.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_SHAPE_spirou
 # -----------------------------------------------------------------------------
-cal_shape.name = 'cal_SHAPE_spirou.py'
+cal_shape.name = 'cal_shape_spirou.py'
 cal_shape.instrument = __INSTRUMENT__
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
