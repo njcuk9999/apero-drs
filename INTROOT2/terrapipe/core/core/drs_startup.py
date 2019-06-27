@@ -358,6 +358,7 @@ def get_file_definition(name, instrument, kind='raw'):
     :returns: if found the DrsRecipe, else raises SystemExit
     :rtype: DrsFitsFile
     """
+    func_name = __NAME__ + '.get_file_definition()'
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -384,7 +385,7 @@ def get_file_definition(name, instrument, kind='raw'):
         all_files = []
 
     # try to locate this recipe
-    found_file = None, None
+    found_file = None
     for filet in all_files:
         if filet.name == name:
             found_file = filet
@@ -393,7 +394,8 @@ def get_file_definition(name, instrument, kind='raw'):
         empty = drs_file.DrsFitsFile('Empty')
         return empty
     if found_file is None:
-        WLOG(None, 'error', TextEntry('00-008-00011', args=[name]))
+        eargs = [name, modules[0], func_name]
+        WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
     # return
     return found_file
 
