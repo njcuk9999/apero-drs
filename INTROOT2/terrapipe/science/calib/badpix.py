@@ -252,7 +252,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     func_name = __NAME__ + '.locate_bad_pixels_full()'
     # log that we are looking for bad pixels
     WLOG(params, '', TextEntry('40-012-00002'))
-    # get parameters from p
+    # get parameters from params/kwargs
     filename = pcheck(params, 'BADPIX_FULL_FLAT', 'filename', kwargs, func_name)
     threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', 'threshold', kwargs,
                        func_name)
