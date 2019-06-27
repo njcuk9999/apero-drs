@@ -18,9 +18,9 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
-from terrapipe.io import drs_path
-from terrapipe.science.calib import dark
-
+from terrapipe.science.calib import localisation
+from terrapipe.science.calib import shape
+from terrapipe.science.calib import general
 
 # =============================================================================
 # Define variables
@@ -101,6 +101,71 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get files
+    hcfiles = params['INPUTS']['HCFILES'][1]
+    fpfiles = params['INPUTS']['FPFILES'][1]
+    # get list of filenames (for output)
+    rawhcfiles, rawfpfiles = [], []
+    for infile in hcfiles:
+        rawhcfiles.append(infile.basename)
+    for infile in fpfiles:
+        rawfpfiles.append(infile.basename)
+
+    # get combined hcfile
+    hcfile = drs_fits.combine(params, hcfiles, math='average')
+    # get combined fpfile
+    fpfile = drs_fits.combine(params, fpfiles, math='average')
+
+    # get the headers (should be the header of the first file in each)
+    hcheader = hcfile.header
+    fpheader = fpfile.header
+    # get calibrations for this data
+    drs_database.copy_calibrations(params, fpheader)
+    drs_database.copy_calibrations(params, hcheader)
+
+    # ------------------------------------------------------------------
+    # Correction of fp file
+    # ------------------------------------------------------------------
+    # log process
+    WLOG(params, '', TextEntry('40-014-00001'))
+    # calibrate file
+    fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile)
+
+    # ------------------------------------------------------------------
+    # Correction of hc file
+    # ------------------------------------------------------------------
+    # log process
+    WLOG(params, '', TextEntry('40-014-00002'))
+    # calibrate file
+    hcprops, hcimage = general.calibrate_ppfile(params, recipe, hcfile)
+
+    # ----------------------------------------------------------------------
+    # Get all preprocessed fp files
+    # ----------------------------------------------------------------------
+    # get all "filetype" filenames
+    fargs = [fpprops['DPRTYPE'], params['ALLOWED_FP_TYPES']]
+    filenames = drs_fits.find_filetypes(params, *fargs)
+    # convert to numpy array
+    filenames = np.array(filenames)
+
+    # ----------------------------------------------------------------------
+    # Get all fp file properties
+    # ----------------------------------------------------------------------
+    fp_table = shape.construct_fp_table(params, filenames)
+
+    # ----------------------------------------------------------------------
+    # match files by date and median to produce master fp
+    # ----------------------------------------------------------------------
+    cargs = [params, recipe, fpprops['DPRTYPE'], fp_table]
+    fpcube = shape.construct_master_fp(*cargs)
+
+    # log process (master construction complete + number of groups added)
+    wargs = [len(fpcube)]
+    WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
+    # sum the cube to make fp data
+    master_fp = np.sum(fpcube, axis=0)
+
+
 
     # ----------------------------------------------------------------------
     # End of main code
