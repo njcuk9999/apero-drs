@@ -25,6 +25,10 @@ nanpad = general.nanpad
 
 nanpolyfit = general.nanpolyfit
 
+fit2dpoly = general.fit2dpoly
+
+linear_minimization = general.linear_minimization
+
 # =============================================================================
 # End of code
 # =============================================================================
