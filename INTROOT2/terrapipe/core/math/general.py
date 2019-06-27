@@ -10,14 +10,28 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import numpy as np
+import matplotlib.pyplot as plt
+from astropy.io import fits
+from astropy.table import Table
+from astropy import units as u
+from tqdm import tqdm
 import warnings
 
+from terrapipe.core import constants
 
 # =============================================================================
 # Define variables
 # =============================================================================
-
-# -----------------------------------------------------------------------------
+__NAME__ = 'core.math.general.py'
+__INSTRUMENT__ = None
+# Get constants
+Constants = constants.load(__INSTRUMENT__)
+PConstants = constants.pload(__INSTRUMENT__)
+# Get version and author
+__version__ = Constants['DRS_VERSION']
+__author__ = Constants['AUTHORS']
+__date__ = Constants['DRS_DATE']
+__release__ = Constants['DRS_RELEASE']
 
 
 # =============================================================================
@@ -86,6 +100,82 @@ def calculate_polyvals(coeffs, dim):
     # return fits
     return yfits
 
+
+def fit2dpoly(x, y, z):
+    # fit a 2nd order polynomial in 2d over x/y/z pixel points
+    ones = np.ones_like(x)
+    a = np.array([ones, x, y, x**2, y**2, x*y]).T
+    b = z.flatten()
+    # perform a least squares fit on a and b
+    coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
+    # return the coefficients
+    return coeff
+
+
+# TODO: Required commenting and cleaning up
+def linear_minimization(vector, sample):
+    func_name = __NAME__ + '.linear_minimization()'
+
+    vector = np.array(vector)
+    sample = np.array(sample)
+    sz_sample = sample.shape
+    sz_vector = vector.shape
+
+    if sz_vector[0] == sz_sample[0]:
+        case = 2
+    elif sz_vector[0] == sz_sample[1]:
+        case = 1
+    else:
+        emsg = ('Neither vector[0]==sample[0] nor vector[0]==sample[1] '
+                '(function = {0})')
+        raise ValueError(emsg.format(func_name))
+
+    # vector of N elements
+    # sample: matrix N * M each M column is adjusted in amplitude to minimize
+    # the chi2 according to the input vector
+    # output: vector of length M gives the amplitude of each column
+
+    if case == 1:
+        # set up storage
+        mm = np.zeros([sz_sample[0], sz_sample[0]])
+        v = np.zeros(sz_sample[0])
+        for i in range(sz_sample[0]):
+            for j in range(i, sz_sample[0]):
+                mm[i, j] = np.nansum(sample[i, :] * sample[j, :])
+                mm[j, i] = mm[i, j]
+            v[i] = np.nansum(vector * sample[i, :])
+
+        if np.linalg.det(mm) == 0:
+            amps = np.zeros(sz_sample[0]) + np.nan
+            recon = np.zeros_like(v)
+            return amps, recon
+
+        amps = np.matmul(np.linalg.inv(mm), v)
+        recon = np.zeros(sz_sample[1])
+        for i in range(sz_sample[0]):
+            recon += amps[i] * sample[i, :]
+        return amps, recon
+
+    if case == 2:
+        # set up storage
+        mm = np.zeros([sz_sample[1], sz_sample[1]])
+        v = np.zeros(sz_sample[1])
+        for i in range(sz_sample[1]):
+            for j in range(i, sz_sample[1]):
+                mm[i, j] = np.nansum(sample[:, i] * sample[:, j])
+                mm[j, i] = mm[i, j]
+            v[i] = np.nansum(vector * sample[:, i])
+
+        if np.linalg.det(mm) == 0:
+            amps = np.zeros(sz_sample[1]) + np.nan
+            recon = np.zeros_like(v)
+            return amps, recon
+
+        amps = np.matmul(np.linalg.inv(mm), v)
+        recon = np.zeros(sz_sample[0])
+        for i in range(sz_sample[1]):
+            recon += amps[i] * sample[:, i]
+        return amps, recon
 
 
 # =============================================================================
