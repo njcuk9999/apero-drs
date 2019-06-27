@@ -23,6 +23,12 @@ __NAME__ = 'config.instruments.spirou.default_constants.py'
 DATA_ENGINEERING = DATA_ENGINEERING.copy(__NAME__)
 DATA_ENGINEERING.value = './data/spirou/engineering/'
 
+# Define whether to force wave solution from calibration database (instead of
+#    using header wave solution if available)
+CALIB_DB_FORCE_WAVESOL = CALIB_DB_FORCE_WAVESOL.copy(__NAME__)
+CALIB_DB_FORCE_WAVESOL.value = False
+
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
@@ -457,4 +463,16 @@ SHAPE_MASTER_FP_INI_BOXSIZE.value = 11
 #  Define the small search box size (in pixels) around the fp peaks
 SHAPE_MASTER_FP_SMALL_BOXSIZE = SHAPE_MASTER_FP_SMALL_BOXSIZE.copy(__NAME__)
 SHAPE_MASTER_FP_SMALL_BOXSIZE.value = 2
+
+#  Define the minimum number of FP files in a group to mean group is valid
+SHAPE_FP_MASTER_MIN_IN_GROUP = SHAPE_FP_MASTER_MIN_IN_GROUP.copy(__NAME__)
+SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
+
+#  Define which fiber should be used for fiber-dependent calibrations in
+#     shape master
+SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
+SHAPE_MASTER_FIBER.value = 'AB'
+
+
+
 

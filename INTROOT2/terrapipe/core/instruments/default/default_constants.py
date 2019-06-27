@@ -5,9 +5,11 @@ from terrapipe.core.constants import constant_functions
 # Define variables
 # =============================================================================
 # all definition
-__all__ = [# preprocessing constants
+__all__ = [# general
+           'DATA_ENGINEERING','CALIB_DB_FORCE_WAVESOL',
+           # preprocessing constants
            'PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
-           'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM', 'DATA_ENGINEERING',
+           'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM',
            'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
            'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
            'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
@@ -57,7 +59,8 @@ __all__ = [# preprocessing constants
            'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
            'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
            'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
-           'SHAPE_MASTER_FP_SMALL_BOXSIZE',
+           'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
+           'SHAPE_MASTER_FIBER',
 
            ]
 
@@ -73,6 +76,12 @@ Const = constant_functions.Const
 # Define the data engineering path
 DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
                          source=__NAME__)
+
+# Define whether to force wave solution from calibration database (instead of
+#    using header wave solution if available)
+CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
+                               dtype=bool, source=__NAME__)
+
 
 # =============================================================================
 # COMMON IMAGE SETTINGS
@@ -498,7 +507,12 @@ SHAPE_MASTER_FP_SMALL_BOXSIZE = Const('SHAPE_MASTER_FP_SMALL_BOXSIZE',
                                       value=None, dtype=int, minimum=1,
                                       source=__NAME__)
 
+#  Define the minimum number of FP files in a group to mean group is valid
+SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
+                                     dtype=int, minimum=1, source=__NAME__)
 
 
-
-
+#  Define which fiber should be used for fiber-dependent calibrations in
+#     shape master
+SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
+                           source=__NAME__)
