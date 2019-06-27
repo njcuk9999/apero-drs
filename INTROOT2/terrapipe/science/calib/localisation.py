@@ -11,6 +11,7 @@ Created on 2019-05-15 at 13:48
 """
 from __future__ import division
 import numpy as np
+import os
 import warnings
 
 from terrapipe import core
@@ -19,6 +20,8 @@ from terrapipe import locale
 from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
+from terrapipe.core.core import drs_database
+from terrapipe.io import drs_fits
 
 
 # =============================================================================
@@ -424,6 +427,56 @@ def image_superimp(image, coeffs):
     newimage[fityarray, fitxarray] = 0
     # return newimage
     return newimage
+
+
+def get_coefficients(params, recipe, header, **kwargs):
+    func_name = __NAME__ + '.get_coefficients()'
+    # get parameters from params/kwargs
+    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get calibration key
+    key = 'LOC_{0}'.format(fiber)
+    filetype = 'LOC_LOCO_{0}'.format(fiber)
+    # get the badpix entries
+    locoentries = drs_database.get_key_from_db(params, key, cdb, header,
+                                                 n_ent=1)
+    # get badpix filename
+    locofilename = locoentries[filecol][0]
+    locofilepath = os.path.join(params['DRS_CALIB_DB'], locofilename)
+    # -------------------------------------------------------------------------
+    # get loco file instance
+    locofile = core.get_file_definition(filetype, params['INSTRUMENT'],
+                                        kind='red')
+    # construct new infile instance and read data/header
+    locofile = locofile.newcopy(filename=locofilepath, recipe=recipe)
+    locofile.read()
+    # -------------------------------------------------------------------------
+    # extract keys from header
+    nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)
+    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int)
+    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int)
+    # extract coefficients from header
+    cent_coeffs = locofile.read_header_key_2d_list('KW_LOC_CTR_COEFF',
+                                                   dim1=nbo, dim2=deg_c)
+    wid_coeffs = locofile.read_header_key_2d_list('KW_LOC_WID_COEFF',
+                                                  dim1=nbo, dim2=deg_w)
+    # -------------------------------------------------------------------------
+    # store localisation properties in parameter dictionary
+    lprops = ParamDict()
+    lprops['LOCOFILE'] = locofilepath
+    lprops['NBO'] = nbo
+    lprops['DEG_C'] = deg_c
+    lprops['DEG_W'] = deg_w
+    # set sources
+    lprops.set_sources(['LOCOFILE', 'NBO', 'DEG_C', 'DEG_W'], func_name)
+    # -------------------------------------------------------------------------
+    # return the coefficients and properties
+    return cent_coeffs, wid_coeffs, lprops
+
+
 
 
 # =============================================================================
