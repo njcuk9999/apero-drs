@@ -291,118 +291,173 @@ out_file.addset(out_loc_loco_c)
 out_loc_loco_2_ab = drs_finput('LOC_FWHM_AB', KW_OUTPUT='LOC_FWHM_AB',
                                fiber='AB', ext='_fwhm-order_AB.fits',
                                outfunc=out.calib_file)
+out_file.addset(out_loc_loco_2_ab)
 out_loc_loco_2c = drs_finput('LOC_FWHM_C', KW_OUTPUT='LOC_FWHM_C',
                              fiber='C', ext='_fwhm-order_C.fits',
                              outfunc=out.calib_file)
+out_file.addset(out_loc_loco_2c)
 out_loc_loco_3_ab = drs_finput('LOC_SUP_AB', KW_OUTPUT='LOC_SUP_AB',
                               fiber='AB', ext='_with-order_AB.fits',
                               outfunc=out.calib_file)
+out_file.addset(out_loc_loco_3_ab)
 out_loc_loco_3_c = drs_finput('LOC_SUP_C', KW_OUTPUT='LOC_SUP_C',
                               fiber='C', ext='_with-order_C.fits',
                               outfunc=out.calib_file)
+out_file.addset(out_loc_loco_3_c)
 
 # -----------------------------------------------------------------------------
 # slit
-out_slit_tilt = drs_finput('SLIT_TILT', KW_OUTPUT='SLIT_TILT')
 out_silt_shape = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
+out_file.addset(out_silt_shape)
 # -----------------------------------------------------------------------------
 # flat
 out_ff_blaze_ab = drs_finput('FF_BLAZE_AB', KW_OUTPUT='FF_BLAZE_AB', fiber='AB')
+out_file.addset(out_ff_blaze_ab)
 out_ff_blaze_a = drs_finput('FF_BLAZE_A', KW_OUTPUT='FF_BLAZE_A', fiber='A')
+out_file.addset(out_ff_blaze_a)
 out_ff_blaze_b = drs_finput('FF_BLAZE_B', KW_OUTPUT='FF_BLAZE_B', fiber='B')
+out_file.addset(out_ff_blaze_b)
 out_ff_blaze_c = drs_finput('FF_BLAZE_C', KW_OUTPUT='FF_BLAZE_C', fiber='C')
+out_file.addset(out_ff_blaze_c)
 out_ff_flat_ab = drs_finput('FF_FLAT_AB', KW_OUTPUT='FF_FLAT_AB', fiber='AB')
+out_file.addset(out_ff_flat_ab)
 out_ff_flat_a = drs_finput('FF_FLAT_A', KW_OUTPUT='FF_FLAT_A', fiber='A')
+out_file.addset(out_ff_flat_a)
 out_ff_flat_b = drs_finput('FF_FLAT_B', KW_OUTPUT='FF_FLAT_B', fiber='B')
+out_file.addset(out_ff_flat_b)
 out_ff_flat_c = drs_finput('FF_FLAT_C', KW_OUTPUT='FF_FLAT_C', fiber='C')
 # -----------------------------------------------------------------------------
 # extract
 out_ext_e2ds_ab = drs_finput('EXTRACT_E2DS_AB', KW_OUTPUT='EXT_E2DS_AB',
                              fiber='AB')
+out_file.addset(out_ext_e2ds_ab)
 out_ext_e2ds_a = drs_finput('EXTRACT_E2DS_A', KW_OUTPUT='EXT_E2DS_A',
                             fiber='A')
+out_file.addset(out_ext_e2ds_a)
 out_ext_e2ds_b = drs_finput('EXTRACT_E2DS_B', KW_OUTPUT='EXT_E2DS_B',
                             fiber='B')
+out_file.addset(out_ext_e2ds_b)
 out_ext_e2ds_c = drs_finput('EXTRACT_E2DS_C', KW_OUTPUT='EXT_E2DS_C',
                             fiber='C')
+out_file.addset(out_ext_e2ds_c)
 out_ext_e2dsff_ab = drs_finput('EXTRACT_E2DS_FF_AB', KW_OUTPUT='EXT_E2DS_FF_AB',
                                fiber='AB')
+out_file.addset(out_ext_e2dsff_ab)
 out_ext_e2dsff_a = drs_finput('EXTRACT_E2DS_FF_A', KW_OUTPUT='EXT_E2DS_FF_A',
                               fiber='A')
+out_file.addset(out_ext_e2dsff_a)
 out_ext_e2dsff_b = drs_finput('EXTRACT_E2DS_FF_B', KW_OUTPUT='EXT_E2DS_FF_B',
                               fiber='B')
+out_file.addset(out_ext_e2dsff_b)
 out_ext_e2dsff_c = drs_finput('EXTRACT_E2DS_FF_C', KW_OUTPUT='EXT_E2DS_FF_C',
                               fiber='C')
+out_file.addset(out_ext_e2dsff_c)
 out_ext_e2dsll_ab = drs_finput('EXTRACT_E2DS_LL_AB', KW_OUTPUT='EXT_E2DS_LL_AB',
                                fiber='AB')
+out_file.addset(out_ext_e2dsll_ab)
 out_ext_e2dsll_a = drs_finput('EXTRACT_E2DS_LL_A', KW_OUTPUT='EXT_E2DS_LL_A',
                               fiber='A')
+out_file.addset(out_ext_e2dsll_a)
 out_ext_e2dsll_b = drs_finput('EXTRACT_E2DS_LL_B', KW_OUTPUT='EXT_E2DS_LL_B',
                               fiber='B')
+out_file.addset(out_ext_e2dsll_b)
 out_ext_e2dsll_c = drs_finput('EXTRACT_E2DS_LL_C', KW_OUTPUT='EXT_E2DS_LL_C',
                               fiber='C')
+out_file.addset(out_ext_e2dsll_c)
 out_ext_loco_ab = drs_finput('EXTRACT_LOCO_AB', KW_OUTPUT='EXT_LOCO_AB',
                              fiber='AB')
+out_file.addset(out_ext_loco_ab)
 out_ext_loco_a = drs_finput('EXTRACT_LOCO_A', KW_OUTPUT='EXT_LOCO_A',
                             fiber='A')
+out_file.addset(out_ext_loco_a)
 out_ext_loco_b = drs_finput('EXTRACT_LOCO_B', KW_OUTPUT='EXT_LOCO_B',
                             fiber='B')
+out_file.addset(out_ext_loco_b)
 out_ext_loco_c = drs_finput('EXTRACT_LOCO_C', KW_OUTPUT='EXT_LOCO_C',
                             fiber='C')
+out_file.addset(out_ext_loco_c)
 out_ext_s1d_ab = drs_finput('EXTRACT_S1D_AB', KW_OUTPUT='EXT_S1D_AB',
                             fiber='AB')
+out_file.addset(out_ext_s1d_ab)
 out_ext_s1d_a = drs_finput('EXTRACT_S1D_A', KW_OUTPUT='EXT_S1D_A',
                            fiber='A')
+out_file.addset(out_ext_s1d_a)
 out_ext_s1d_b = drs_finput('EXTRACT_S1D_B', KW_OUTPUT='EXT_S1D_B',
                            fiber='B')
+out_file.addset(out_ext_s1d_b)
 out_ext_s1d_c = drs_finput('EXTRACT_S1D_C', KW_OUTPUT='EXT_S1D_C',
                            fiber='C')
 # -----------------------------------------------------------------------------
 # wave
 out_wave_ab = drs_finput('WAVE_AB', fiber='AB', KW_OUTPUT='WAVE_SOL_AB')
+out_file.addset(out_wave_ab)
 out_wave_a = drs_finput('WAVE_A', fiber='A', KW_OUTPUT='WAVE_SOL_A')
+out_file.addset(out_wave_a)
 out_wave_b = drs_finput('WAVE_B', fiber='B', KW_OUTPUT='WAVE_SOL_B')
+out_file.addset(out_wave_b)
 out_wave_c = drs_finput('WAVE_C', fiber='C', KW_OUTPUT='WAVE_SOL_C')
+out_file.addset(out_wave_c)
 out_wave_fp_ab = drs_finput('WAVE_FP_AB', fiber='AB',
                             KW_OUTPUT='WAVE_FP_SOL_AB')
+out_file.addset(out_wave_fp_ab)
 out_wave_fp_a = drs_finput('WAVE_FP_A', fiber='A',
                            KW_OUTPUT='WAVE_FP_SOL_A')
+out_file.addset(out_wave_fp_a)
 out_wave_fp_b = drs_finput('WAVE_FP_B', fiber='B',
                            KW_OUTPUT='WAVE_FP_SOL_B')
+out_file.addset(out_wave_fp_b)
 out_wave_fp_c = drs_finput('WAVE_FP_C', fiber='C',
                            KW_OUTPUT='WAVE_FP_SOL_C')
+out_file.addset(out_wave_fp_c)
 out_wave_ea_ab = drs_finput('WAVE_EA_AB', fiber='AB',
                             KW_OUTPUT='WAVE_SOL_EA_AB')
+out_file.addset(out_wave_ea_ab)
 out_wave_ea_a = drs_finput('WAVE_EA_A', fiber='A',
                            KW_OUTPUT='WAVE_SOL_EA_A')
+out_file.addset(out_wave_ea_a)
 out_wave_ea_b = drs_finput('WAVE_EA_B', fiber='B',
                            KW_OUTPUT='WAVE_SOL_EA_B')
+out_file.addset(out_wave_ea_b)
 out_wave_ea_c = drs_finput('WAVE_EA_C', fiber='C',
                            KW_OUTPUT='WAVE_SOL_EA_C')
+out_file.addset(out_wave_ea_c)
 out_wave_fp_ea_ab = drs_finput('WAVE_FP_EA_AB', fiber='AB',
                                KW_OUTPUT='WAVE_SOL_EA_AB')
+out_file.addset(out_wave_fp_ea_ab)
 out_wave_fp_ea_a = drs_finput('WAVE_FP_EA_A', fiber='A',
                               KW_OUTPUT='WAVE_SOL_EA_A')
+out_file.addset(out_wave_fp_ea_a)
 out_wave_fp_ea_b = drs_finput('WAVE_FP_EA_B', fiber='B',
                               KW_OUTPUT='WAVE_SOL_EA_B')
+out_file.addset(out_wave_fp_ea_b)
 out_wave_fp_ea_c = drs_finput('WAVE_FP_EA_C', fiber='C',
                               KW_OUTPUT='WAVE_SOL_EA_C')
+out_file.addset(out_wave_fp_ea_c)
 out_wave_e2ds_ab = drs_finput('WAVE_E2DS_COPY_AB', fiber='AB',
                               KW_OUTPUT='WAVE_E2DSCOPY_AB')
+out_file.addset(out_wave_e2ds_ab)
 out_wave_e2ds_a = drs_finput('WAVE_E2DS_COPY_A', fiber='A',
                              KW_OUTPUT='WAVE_E2DSCOPY_A')
+out_file.addset(out_wave_e2ds_a)
 out_wave_e2ds_b = drs_finput('WAVE_E2DS_COPY_B', fiber='B',
                              KW_OUTPUT='WAVE_E2DSCOPY_B')
+out_file.addset(out_wave_e2ds_b)
 out_wave_e2ds_c = drs_finput('WAVE_E2DS_COPY_C', fiber='C',
                              KW_OUTPUT='WAVE_E2DSCOPY_C')
+out_file.addset(out_wave_e2ds_c)
 out_wave_res_ab = drs_finput('WAVE_RES_EA_AB', fiber='AB',
                              KW_OUTPUT='WAVE_RES_AB')
+out_file.addset(out_wave_res_ab)
 out_wave_res_a = drs_finput('WAVE_RES_EA_A', fiber='A',
                             KW_OUTPUT='WAVE_RES_A')
+out_file.addset(out_wave_res_a)
 out_wave_res_b = drs_finput('WAVE_RES_EA_B', fiber='B',
                             KW_OUTPUT='WAVE_RES_B')
+out_file.addset(out_wave_res_b)
 out_wave_res_c = drs_finput('WAVE_RES_EA_C', fiber='C',
                             KW_OUTPUT='WAVE_RES_C')
+out_file.addset(out_wave_res_c)
+
 # -----------------------------------------------------------------------------
 # drift
 out_drift_raw_ab = drs_finput('DRIFT_RAW_AB', KW_OUTPUT='DRIFT_RAW_AB',
