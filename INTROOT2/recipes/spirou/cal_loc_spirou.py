@@ -19,10 +19,7 @@ from terrapipe.core import math
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
-from terrapipe.io import drs_image
-from terrapipe.science.calib import dark
-from terrapipe.science.calib import badpix
-from terrapipe.science.calib import background
+from terrapipe.science.calib import general
 from terrapipe.science.calib import localisation
 
 
@@ -142,30 +139,26 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
-        # get data from file instance
-        image = np.array(infile.data)
+        # get header from file instance
         header = infile.header
         # get calibrations for this data
         drs_database.copy_calibrations(params, header)
+
         # ------------------------------------------------------------------
-        # Get basic image properties
+        # Correction of file
         # ------------------------------------------------------------------
-        # get image readout noise
-        sigdet = infile.get_key('KW_RDNOISE')
-        # get expsoure time
-        exptime = infile.get_key('KW_EXPTIME')
-        # get gain
-        gain = infile.get_key('KW_GAIN')
-        # get data type
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        props, image = general.calibrate_ppfile(params, recipe, infile)
+
         # ------------------------------------------------------------------
-        # identify fiber type
-        if dprtype == 'FLAT_DARK':
+        # Identify fiber type
+        # ------------------------------------------------------------------
+        # identify fiber type based on data type
+        if props['DPRTYPE'] == 'FLAT_DARK':
             params['FIBER'] = 'AB'
-        elif dprtype == 'DARK_FLAT':
+        elif props['DPRTYPE'] == 'DARK_FLAT':
             params['FIBER'] = 'C'
         else:
-            eargs = [dprtype, recipe.name, 'FLAT_DARK or DARK_FLAT',
+            eargs = [props['DPRTYPE'], recipe.name, 'FLAT_DARK or DARK_FLAT',
                      infile.basename]
             WLOG(params, 'error', TextEntry('00-013-00001', args=eargs))
             params['FIBER'] = None
@@ -174,62 +167,15 @@ def __main__(recipe, params):
         params = PConstants.FIBER_SETTINGS(params)
 
         # ------------------------------------------------------------------
-        # Correction of DARK
-        # ------------------------------------------------------------------
-        # image 1 is corrected for dark
-        params, image1 = dark.correction(params, image, header, len(rawfiles))
-
-        # ------------------------------------------------------------------
-        # Flip images
-        # ------------------------------------------------------------------
-        # image 2 is flipped (if required)
-        if params['INPUT_FLIP_IMAGE']:
-            # flip flat
-            image2 = drs_image.flip_image(params, image1)
-        else:
-            image2 = np.array(image1)
-
-        # ------------------------------------------------------------------
-        #  Convert ADU/s to electrons
-        # ------------------------------------------------------------------
-        image2 = drs_image.convert_to_e(params, image2, gain=gain,
-                                        exptime=exptime)
-
-        # ------------------------------------------------------------------
-        # Resize image
-        # ------------------------------------------------------------------
-        # image 2 is resized (if required)
-        if params['INPUT_RESIZE_IMAGE']:
-            # get resize size
-            sargs = dict(xlow=params['IMAGE_X_LOW'],
-                         xhigh=params['IMAGE_X_HIGH'],
-                         ylow=params['IMAGE_Y_LOW'],
-                         yhigh=params['IMAGE_Y_HIGH'])
-            # resize flat
-            image2 = drs_image.resize(params, image2, **sargs)
-
-        # ------------------------------------------------------------------
-        # Correct for the BADPIX mask (set all bad pixels to NaNs)
-        # ------------------------------------------------------------------
-        # image 3 is corrected for bad pixels
-        params, image3 = badpix.correction(params, image2, header)
-
-        # ------------------------------------------------------------------
-        # Background computation
-        # ------------------------------------------------------------------
-        # image 4 is corrected for background
-        params, image4 = background.correction(recipe, params, infile,
-                                               image3, header)
-
-        # ------------------------------------------------------------------
         # Construct image order_profile
         # ------------------------------------------------------------------
-        order_profile = localisation.calculate_order_profile(params, image4)
+        order_profile = localisation.calculate_order_profile(params, image)
 
         # ------------------------------------------------------------------
         # Localization of orders on central column
         # ------------------------------------------------------------------
-        largs = [order_profile, sigdet]
+        # find and fit localisation
+        largs = [order_profile, props['SIGDET']]
         lout = localisation.find_and_fit_localisation(params, *largs)
         # get parameters from lout
         cent_0, cent_coeffs, cent_rms, cent_max_ptp = lout[:4]
@@ -242,8 +188,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values
         # ------------------------------------------------------------------
-        center_fits = math.calculate_polyvals(cent_coeffs, image4.shape[1])
-        width_fits = math.calculate_polyvals(wid_coeffs, image4.shape[1])
+        center_fits = math.calculate_polyvals(cent_coeffs, image.shape[1])
+        width_fits = math.calculate_polyvals(wid_coeffs, image.shape[1])
 
         # ------------------------------------------------------------------
         # Plot the image (ready for fit points to be overplotted later)
@@ -252,7 +198,7 @@ def __main__(recipe, params):
         if params['DRS_PLOT'] > 0:
             # get saturation threshold
             loc_sat_thres = pcheck(params, 'LOC_SAT_THRES', func=mainname)
-            sat_thres = loc_sat_thres * gain * num_files
+            sat_thres = loc_sat_thres * props['GAIN'] * num_files
             # plot image above saturation threshold
             # TODO: Add sPlt.locplot_im_sat_threshold(p, loc, data2, sat_thres)
 
@@ -419,9 +365,9 @@ def __main__(recipe, params):
             hfiles = [infile.basename]
         loco1file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
         # add the calibration files use
-        loco1file.add_hkey('KW_CDBDARK', value=params['DARKFILE'])
-        loco1file.add_hkey('KW_CDBBAD', value=params['BADPFILE'])
-        loco1file.add_hkey('KW_CDBBACK', value=params['BACKFILE'])
+        loco1file.add_hkey('KW_CDBDARK', value=props['DARKFILE'])
+        loco1file.add_hkey('KW_CDBBAD', value=props['BADPFILE'])
+        loco1file.add_hkey('KW_CDBBACK', value=props['BACKFILE'])
         # add localisation parameters
         loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
         loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)
@@ -475,7 +421,7 @@ def __main__(recipe, params):
         if params['LOC_SAVE_SUPERIMP_FILE']:
             # --------------------------------------------------------------
             # super impose zeros over the fit in the image
-            image5 = localisation.image_superimp(image4, cent_coeffs)
+            image5 = localisation.image_superimp(image, cent_coeffs)
             # --------------------------------------------------------------
             if params['FIBER'] == 'AB':
                 loco3file = LOCO3_AB.newcopy(recipe=recipe)
