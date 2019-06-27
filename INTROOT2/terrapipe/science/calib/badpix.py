@@ -285,7 +285,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     return mask, badpix_stats
 
 
-def correction(params, image, header, return_map=False):
+def correction(params, image=None, header=None, return_map=False):
     """
     Corrects "image" for "BADPIX" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
@@ -310,6 +310,12 @@ def correction(params, image, header, return_map=False):
               set to zeros or the bad pixel map (if return_map = True)
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
+    # deal with no header
+    if header is None:
+        WLOG(params, 'error', TextEntry('00-012-00002', args=[func_name]))
+    # deal with no image (when return map is False)
+    if (not return_map) and (image is None):
+        WLOG(params, 'error', TextEntry('00-012-00003', args=[func_name]))
     # -------------------------------------------------------------------------
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
@@ -330,12 +336,9 @@ def correction(params, image, header, return_map=False):
     # create mask from badpixmask
     mask = np.array(badpiximage, dtype=bool)
     # -------------------------------------------------------------------------
-    # get badpixel file
-    params['BADPFILE'] = badpixfilename
-    params.set_source('BADPFILE', func_name)
     # if return map just return the bad pixel map
     if return_map:
-        return params, mask
+        return badpixfile, mask
     # else put NaNs into the image
     else:
         # log that we are setting background pixels to NaN
@@ -344,7 +347,7 @@ def correction(params, image, header, return_map=False):
         corrected_image = np.array(image)
         corrected_image[mask] = np.nan
         # finally return corrected_image
-        return params, corrected_image
+        return badpixfile, corrected_image
 
 
 # =============================================================================
