@@ -76,7 +76,7 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
         header = infile.header
     # Get basic image properties
     sigdet = infile.get_key('KW_RDNOISE')
-    exptime = infile.get_key('KW_EXPTIOME')
+    exptime = infile.get_key('KW_EXPTIME')
     gain = infile.get_key('KW_GAIN')
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
 
@@ -110,6 +110,10 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
                      ylow=params['IMAGE_Y_LOW'], yhigh=params['IMAGE_Y_HIGH'])
         # resize flat
         image2 = drs_image.resize(params, image2, **sargs)
+        # print that image has been resize
+        wargs = [dprtype, image1.shape, image2.shape]
+        WLOG(params, '', TextEntry('40-014-00013', args=wargs))
+
     # ----------------------------------------------------------------------
     # image 3 is corrected for bad pixels
     # ----------------------------------------------------------------------
@@ -131,14 +135,21 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # image 4 may need to normalise by a percentile
     # ----------------------------------------------------------------------
     if n_percentile is not None:
+        # log that we are normalising
+        WLOG(params, '', TextEntry('40-014-00014', args=[n_percentile]))
+        # normalise by nanpercentile
         image4 = image4 / np.nanpercentile(image4, n_percentile)
 
     # ----------------------------------------------------------------------
     # image 5 is cleaned from hot pixels
     # ----------------------------------------------------------------------
     if cleanhotpix:
+        # log progress
+        WLOG(params, '', TextEntry('40-014-00012'))
+        # get bad pixel mask
         _, badpixmask = badpix.correction(params, header=header,
                                           return_map=True)
+        # clean hot pixels
         image5 = drs_image.clean_hotpix(image4, badpixmask)
     else:
         image5 = np.array(image4)
