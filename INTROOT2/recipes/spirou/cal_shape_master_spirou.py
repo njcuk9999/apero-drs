@@ -18,9 +18,11 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
-from terrapipe.science.calib import localisation
-from terrapipe.science.calib import shape
 from terrapipe.science.calib import general
+from terrapipe.science.calib import localisation
+from terrapipe.science.calib import wave
+from terrapipe.science.calib import shape
+
 
 # =============================================================================
 # Define variables
@@ -41,6 +43,8 @@ TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
 DARK_MASTER_FILE = file_definitions.out_dark_master
+# alias pcheck
+pcheck = core.pcheck
 
 
 # =============================================================================
@@ -111,6 +115,10 @@ def __main__(recipe, params):
     for infile in fpfiles:
         rawfpfiles.append(infile.basename)
 
+    # set fiber we should use
+    params['FIBER'] = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
+    params.set_source('FIBER', mainname)
+
     # get combined hcfile
     hcfile = drs_fits.combine(params, hcfiles, math='average')
     # get combined fpfile
@@ -127,7 +135,7 @@ def __main__(recipe, params):
     # Correction of fp file
     # ------------------------------------------------------------------
     # log process
-    WLOG(params, '', TextEntry('40-014-00001'))
+    WLOG(params, 'info', TextEntry('40-014-00001'))
     # calibrate file
     fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile)
 
@@ -135,7 +143,7 @@ def __main__(recipe, params):
     # Correction of hc file
     # ------------------------------------------------------------------
     # log process
-    WLOG(params, '', TextEntry('40-014-00002'))
+    WLOG(params, 'info', TextEntry('40-014-00002'))
     # calibrate file
     hcprops, hcimage = general.calibrate_ppfile(params, recipe, hcfile)
 
@@ -156,8 +164,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # match files by date and median to produce master fp
     # ----------------------------------------------------------------------
-    cargs = [params, recipe, fpprops['DPRTYPE'], fp_table]
-    fpcube = shape.construct_master_fp(*cargs)
+    cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
+    fpcube, fp_table = shape.construct_master_fp(*cargs)
 
     # log process (master construction complete + number of groups added)
     wargs = [len(fpcube)]
@@ -165,7 +173,63 @@ def __main__(recipe, params):
     # sum the cube to make fp data
     master_fp = np.sum(fpcube, axis=0)
 
+    # ----------------------------------------------------------------------
+    # Get localisation coefficients for fp file
+    # ----------------------------------------------------------------------
+    gargs = [params, recipe, fpheader]
+    cent_coeffs, wid_coeffs, lprops = localisation.get_coefficients(*gargs)
 
+    # ----------------------------------------------------------------------
+    # Get wave coefficients from master wavefile
+    # ----------------------------------------------------------------------
+    # get master wave filename
+    mwavefile = wave.get_masterwave_filename(params)
+    # get master wave map
+    wavemap, wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
+
+    # ----------------------------------------------------------------------
+    # Calculate dx shape map
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Calculate dy shape map
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Need to straighten the dxmap
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Need to straighten the hc data and fp data for debug
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Plotting
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Writing DXMAP to file
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Writing DYMAP to file
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Writing Master FP to file
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Writing DEBUG files
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Move to calibDB and update calibDB
+    # ----------------------------------------------------------------------
 
     # ----------------------------------------------------------------------
     # End of main code
