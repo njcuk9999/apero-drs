@@ -103,10 +103,6 @@ shapefile = dict(name='--shapefile', dtype='file', default='None',
                  files=[sf.out_silt_shape],
                  helpstr=Help['SHAPEFILE_HELP'])
 # -----------------------------------------------------------------------------
-tiltfile = dict(name='--tiltfile', dtype='file', default='None',
-                files=[sf.out_slit_tilt],
-                helpstr=Help['TILTFILE_HELP'])
-# -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
                 files=[sf.out_wave_ab, sf.out_wave_a,
                        sf.out_wave_b, sf.out_wave_c],
@@ -412,7 +408,6 @@ cal_ff.kwarg(**plot)
 cal_ff.kwarg(**interactive)
 cal_ff.kwarg(**resize)
 cal_ff.kwarg(**shapefile)
-cal_ff.kwarg(**tiltfile)
 
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
@@ -445,7 +440,6 @@ cal_extract.kwarg(**plot)
 cal_extract.kwarg(**interactive)
 cal_extract.kwarg(**resize)
 cal_extract.kwarg(**shapefile)
-cal_extract.kwarg(**tiltfile)
 
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
