@@ -2,6 +2,52 @@ Changelog
 =========
 
 
+0.5.028 (2019-06-27)
+--------------------
+- Science.calib.shape.py - fix construct_master_fp (add fp_table
+  results) + place holder for calculate_dxmap. [Neil Cook]
+- Science.calib.localisation.py - add get_coefficients function. [Neil
+  Cook]
+- Science.calib.general.py - add logging to various steps of
+  calibrate_ppfile. [Neil Cook]
+- Science.calib.badpix.py - fix a comment. [Neil Cook]
+- Science.calib.wave.py - first commit add get_masterwave_filename and
+  get_wavesolution functions. [Neil Cook]
+- Update language database. [Neil Cook]
+- File_definitions.py - add more files to out_file file set. [Neil Cook]
+- Recipe_definitions.py - remove instances of tilt file. [Neil Cook]
+- Add default constants/keywords for shape_master. [Neil Cook]
+- Drs_startup.py - fix error reporting in get_file_definition and fix
+  found_file when file not found. [Neil Cook]
+- Drs_file.py - fix the way keys are read in read/read1d and read2d
+  keys. [Neil Cook]
+- Cal_shape_master_spirou.py - add plan for rest of code add
+  localisation and wave files. [Neil Cook]
+- Science.calib.shape.py - first commit add fp_master functions -
+  construct_fp_table, construct_master_fp, get_linear_transform_params,
+  ea_transform, _max_neighbour_mask and _xy_acc_peak. [Neil Cook]
+- Science.calib.general.py - first commit add calibrate_ppfile function.
+  [Neil Cook]
+- Science.calib.background/badpix/dark - change the return of calib
+  correction functions - now returns fileused + corrected image. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Drs_image.py - add clean_hotpix function. [Neil Cook]
+- Core.math.py - add fit2dpoly, linear_minimization functions. [Neil
+  Cook]
+- Recipe_definitions.py - add cal_shape_master and remove cal_slit.
+  [Neil Cook]
+- Default_constants.py - add shape master (fp_master) constant
+  definitions. [Neil Cook]
+- Cal_shape_master_spirou.py - add master fp generation (untested) [Neil
+  Cook]
+- Cal_loc_spirou.py - update cal_loc with changes to how we calibrate
+  ppfiles. [Neil Cook]
+- Cal_shape_master_spirou.py - first commit (placeholder that needs
+  filling) [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.027 (2019-06-26)
 --------------------
 - Drs_path.py - make sure night_name does not start with a separator in
