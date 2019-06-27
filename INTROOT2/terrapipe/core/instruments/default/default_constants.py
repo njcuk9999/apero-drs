@@ -52,6 +52,13 @@ __all__ = [# preprocessing constants
            'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
            'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
            'LOC_ORDER_CURVE_DROP',
+           # shape constants
+           'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
+           'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
+           'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
+           'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
+           'SHAPE_MASTER_FP_SMALL_BOXSIZE',
+
            ]
 
 # set name
@@ -442,4 +449,56 @@ QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID' ,value=None, dtype=float,
 #   Option for archiving the location image
 LOC_SAVE_SUPERIMP_FILE =  Const('LOC_SAVE_SUPERIMP_FILE', value=None,
                                 dtype=bool, source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: SHAPE SETTINGS
+# =============================================================================
+#    Define the allowed DPRTYPES for finding files for SHAPE_MASTER will
+#        only find those types define by 'filetype' but 'filetype' must
+#        be one of theses (strings separated by commas)
+ALLOWED_FP_TYPES = Const('ALLOWED_FP_TYPES', value=None, dtype=str,
+                         source=__NAME__)
+
+#   Define the maximum time span to combine fp files over (in hours)
+FP_MASTER_MATCH_TIME = Const('FP_MASTER_MATCH_TIME', value=None,
+                             dtype=float, source=__NAME__)
+
+#   Define the percentile at which the FPs are normalised when getting the
+#      fp master in shape master
+FP_MASTER_PERCENT_THRES = Const('FP_MASTER_PERCENT_THRES', value=None,
+                                dtype=float, minimum=0, maximum=100,
+                                source=__NAME__)
+
+#  Define the largest standard deviation allowed for the shift in
+#     x or y when doing the shape master fp linear transform
+SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
+                                  dtype=float,  source=__NAME__)
+
+
+#  Define the percentile which defines a true FP peak [0-100]
+SHAPE_MASTER_VALIDFP_PERCENTILE = Const('SHAPE_MASTER_VALIDFP_PERCENTILE',
+                                        value=None, dtype=float, minimum=0,
+                                        maximum=100, source=__NAME__)
+
+#  Define the fractional flux an FP much have compared to its neighbours
+SHAPE_MASTER_VALIDFP_THRESHOLD = Const('SHAPE_MASTER_VALIDFP_THRESHOLD',
+                                       value=None, dtype=float, minimum=0,
+                                       source=__NAME__)
+
+#  Define the number of iterations used to get the linear transform params
+SHAPE_MASTER_LINTRANS_NITER = Const('SHAPE_MASTER_LINTRANS_NITER', value=None,
+                                    dtype=int, minimum=1, source=__NAME__)
+
+#  Define the initial search box size (in pixels) around the fp peaks
+SHAPE_MASTER_FP_INI_BOXSIZE = Const('SHAPE_MASTER_FP_INI_BOXSIZE', value=None,
+                                    dtype=int, minimum=1, source=__NAME__)
+
+#  Define the small search box size (in pixels) around the fp peaks
+SHAPE_MASTER_FP_SMALL_BOXSIZE = Const('SHAPE_MASTER_FP_SMALL_BOXSIZE',
+                                      value=None, dtype=int, minimum=1,
+                                      source=__NAME__)
+
+
+
+
 
