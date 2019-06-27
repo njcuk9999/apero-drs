@@ -1043,18 +1043,8 @@ class DrsFitsFile(DrsInputFile):
         self.check_recipe()
         # check that data is read
         self.check_read()
-        # get drs parameters
-        drs_params = self.recipe.drs_params
-        # need to check drs_params for key (if key is not in header)
-        if (key not in self.header) and (key in drs_params):
-            # see if we have key store
-            if len(drs_params[key]) == 3:
-                drskey = drs_params[key][0]
-            # if we dont assume we have a string
-            else:
-                drskey = drs_params[key]
-        else:
-            drskey = str(key)
+        # check key is valid
+        drskey = self._check_key(key)
         # if we have a default key try to get key else use default value
         if has_default:
             value = self.header.get(drskey, default)
@@ -1152,12 +1142,14 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.read_header_key_1d_list()'
         # check that data is read
         self.check_read()
+        # check key is valid
+        drskey = self._check_key(key)
         # create 2d list
         values = np.zeros(dim1, dtype=dtype)
         # loop around the 2D array
         for it in range(dim1):
             # construct the key name
-            keyname = '{0}{1}'.format(key, it)
+            keyname = '{0}{1}'.format(drskey, it)
             # try to get the values
             try:
                 # set the value
@@ -1191,6 +1183,8 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.read_key_2d_list()'
         # check that data is read
         self.check_read()
+        # check key is valid
+        drskey = self._check_key(key)
         # create 2d list
         values = np.zeros((dim1, dim2), dtype=dtype)
         # loop around the 2D array
@@ -1198,7 +1192,7 @@ class DrsFitsFile(DrsInputFile):
         for it in range(dim1):
             for jt in range(dim2):
                 # construct the key name
-                keyname = '{0}{1}'.format(key, it * dim2 + jt)
+                keyname = '{0}{1}'.format(drskey, it * dim2 + jt)
                 # try to get the values
                 try:
                     # set the value
@@ -1208,6 +1202,22 @@ class DrsFitsFile(DrsInputFile):
                     self.__error__(TextEntry('09-000-00009', args=eargs))
         # return values
         return values
+
+    def _check_key(self, key):
+        # get drs parameters
+        drs_params = self.recipe.drs_params
+        # need to check drs_params for key (if key is not in header)
+        if (key not in self.header) and (key in drs_params):
+            store = drs_params[key]
+            # see if we have key store
+            if isinstance(store, list) and len(store) == 3:
+                drskey = store[0]
+            # if we dont assume we have a string
+            else:
+                drskey = store
+        else:
+            drskey = str(key)
+        return drskey
 
     def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None,
                            allkeys=False):
