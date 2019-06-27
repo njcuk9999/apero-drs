@@ -88,7 +88,7 @@ def construct_fp_table(params, filenames):
     return fp_table
 
 
-def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
+def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
     # get constants from params/kwargs
     time_thres = pcheck(params, 'FP_MASTER_MATCH_TIME', 'time_thres', kwargs,
@@ -97,6 +97,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
                            kwargs, func_name)
     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
                     func_name)
+    min_num = pcheck(params, 'SHAPE_FP_MASTER_MIN_IN_GROUP', 'min_num', kwargs,
+                     func_name)
 
     # get col data from dark_table
     filenames = fp_table['FILENAME']
@@ -109,10 +111,6 @@ def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
     WLOG(params, '', TextEntry('40-014-00004', args=[time_thres]))
     # match files by time
     matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
-    # get the most recent position
-    lastpos = np.argmax(fp_times)
-    # load up the most recent dark
-    image_ref, hdr_ref = drs_fits.read(params, filenames[lastpos], gethdr=True)
 
     # ----------------------------------------------------------------------
     # Read individual files and sum groups
@@ -122,7 +120,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of dark cube
-    fp_cube, transforms_list = [], []
+    fp_cube, transforms_list, fp_dprtypes = [], [], []
+    fp_darkfiles, fp_badpfiles, fp_backfiles =  [], [], []
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
@@ -131,7 +130,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
         # find all files for this group
         fp_ids = filenames[matched_id == group_num]
         # only combine if 3 or more images were taken
-        if len(fp_ids) >= 3:
+        if len(fp_ids) >= min_num:
             # load this groups files into a cube
             cube = []
             for f_it, filename in enumerate(fp_ids):
@@ -146,8 +145,14 @@ def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
                 fpfile_it.read()
                 # get and correct file
                 cargs = [params, recipe, fpfile_it]
-                ckwargs = dict(n_percentile=percent_thres)
-                params, image_it = general.calibrate_ppfile(*cargs, **ckwargs)
+                ckwargs = dict(n_percentile=percent_thres,
+                               correctback=False)
+                props_it, image_it = general.calibrate_ppfile(*cargs, **ckwargs)
+                # extract properties and add to lists
+                fp_dprtypes.append(props_it['DPRTYPE'])
+                fp_darkfiles.append(os.path.basename(props_it['DARKFILE']))
+                fp_badpfiles.append(os.path.basename(props_it['BADPFILE']))
+                fp_backfiles.append(os.path.basename(props_it['BACKFILE']))
                 # append to cube
                 cube.append(image_it)
             # log process
@@ -178,10 +183,25 @@ def construct_master_fp(params, recipe, dprtype, fp_table, **kwargs):
             fp_cube.append(groupfp)
             for filename in fp_ids:
                 transforms_list.append(transforms)
+        else:
+            WLOG(params, '', TextEntry('', args=[g_it + 1, min_num]))
+    # ----------------------------------------------------------------------
     # convert fp cube to array
     fp_cube = np.array(fp_cube)
+    # convert transform_list to array
+    tarrary = np.array(transforms_list)
+    # ----------------------------------------------------------------------
+    # add columns to fp_table
+    colnames = ['DPRTYPE', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'GROUPID',
+                'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
+    values = [fp_dprtypes, fp_darkfiles, fp_badpfiles, fp_backfiles,
+              matched_id, tarrary[:, 0], tarrary[:, 1], tarrary[:, 2],
+              tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
+    for c_it, col in enumerate(colnames):
+        fp_table[col] = values[c_it]
+    # ----------------------------------------------------------------------
     # return fp_cube
-    return fp_cube, np.array(transforms_list)
+    return fp_cube, fp_table
 
 
 def get_linear_transform_params(params, image1, image2, **kwargs):
@@ -422,6 +442,13 @@ def ea_transform(params, image, lin_transform_vect=None,
         out_image[out_weight < 0.5] = np.nan
     # return transformed image
     return out_image
+
+
+def calculate_dxmap(params, ):
+
+
+
+    return dxmap
 
 
 # =============================================================================
