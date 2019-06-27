@@ -12,9 +12,12 @@ Created on 2019-03-21 at 14:28
 
 from __future__ import division
 import numpy as np
+from scipy import signal
+import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
+from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe import locale
 
@@ -212,6 +215,68 @@ def convert_to_adu(params, image, **kwargs):
     # return corrected image
     return newimage
 
+
+def clean_hotpix(image, badpix):
+    # Cleans an image by finding pixels that are high-sigma (positive or negative)
+    # outliers compared to their immediate neighbours. Bad pixels are
+    # interpolated with a 2D surface fit by using valid pixels within the
+    # 3x3 pixel box centered on the bad pix.
+    #
+    # Pixels in big clusters of bad pix (more than 3 bad neighbours)
+    # are left as is
+    image_rms_measurement = np.array(image)
+    # First we construct a 'flattened' image
+    # We perform a low-pass filter along the x axis
+    # filtering the image so that only pixel-to-pixel structures
+    # remain. This is use to find big outliers in RMS.
+    # First we apply a median filtering, which removes big outliers
+    # and then we smooth the image to avoid big regions filled with zeros.
+    # Regions filled with zeros in the low-pass image happen when the local
+    # median is equal to the pixel value in the input image.
+    #
+    # We apply a 5-pix median boxcar in X and a 5-pix boxcar smoothing
+    # in x. This blurs along the dispersion over a scale of ~7 pixels.
+    box = np.ones([1, 5])
+    box /= np.nansum(box)
+    low_pass = signal.medfilt(image_rms_measurement, [1, 5])
+    low_pass = signal.convolve2d(low_pass, box, mode='same')
+    # residual image showing pixel-to-pixel noise
+    # the image is now centered on zero, so we can
+    # determine the RMS around a given pixel
+    image_rms_measurement -= low_pass
+    # smooth the abs(image) with a 3x3 kernel
+    rms = signal.medfilt(np.abs(image_rms_measurement), [3, 3])
+    # the RMS cannot be arbitrarily small, so  we set
+    # a lower limit to the local RMS at 0.5x the median
+    # rms
+    with warnings.catch_warnings(record=True) as _:
+        rms[rms < (0.5 * np.nanmedian(rms))] = 0.5 * np.nanmedian(rms)
+        # determining a proxy of N sigma
+        nsig = image_rms_measurement / rms
+        bad = np.array((np.abs(nsig) > 10), dtype=bool)
+    # known bad pixels are also considered bad even if they are
+    # within the +-N sigma rejection
+    badpix = badpix | bad | ~np.isfinite(image)
+    # find the pixel locations where we have bad pixels
+    x, y = np.where(badpix)
+    # centering on zero
+    yy, xx = np.indices([3, 3]) - 1
+    # copy the original iamge
+    image1 = np.array(image)
+    # correcting bad pixels with a 2D fit to valid neighbours
+    for i in range(len(x)):
+        keep = ~badpix[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
+        if np.nansum(keep) < 6:
+            continue
+        box = image[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
+        # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
+        # corresponds to the bad pixel, then the first coefficient
+        # of the fit (its zero point) corresponds to the value that
+        # must be given to the pixel
+        coeff = math.fit2dpoly(xx[keep], yy[keep], box[keep])
+        image1[x[i], y[i]] = coeff[0]
+    # return the cleaned image
+    return image1
 
 
 
