@@ -181,10 +181,21 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                                    lin_transform_vect=transforms)
             # append to cube
             fp_cube.append(groupfp)
+            # append transforms to list
             for filename in fp_ids:
                 transforms_list.append(transforms)
         else:
-            WLOG(params, '', TextEntry('', args=[g_it + 1, min_num]))
+            eargs = [g_it + 1, min_num]
+            WLOG(params, '', TextEntry('40-014-00015', args=eargs))
+            # add blank properties
+            fp_dprtypes.append('')
+            fp_darkfiles.append('')
+            fp_badpfiles.append('')
+            fp_backfiles.append('')
+            # append transforms to list
+            for filename in fp_ids:
+                transforms_list.append([np.nan]*6)
+
     # ----------------------------------------------------------------------
     # convert fp cube to array
     fp_cube = np.array(fp_cube)
