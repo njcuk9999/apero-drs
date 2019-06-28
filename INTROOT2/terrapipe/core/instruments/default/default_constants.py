@@ -511,8 +511,49 @@ SHAPE_MASTER_FP_SMALL_BOXSIZE = Const('SHAPE_MASTER_FP_SMALL_BOXSIZE',
 SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
                                      dtype=int, minimum=1, source=__NAME__)
 
-
 #  Define which fiber should be used for fiber-dependent calibrations in
 #     shape master
 SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
                            source=__NAME__)
+
+# The number of iterations to run the shape finding out to
+SHAPE_NUM_ITERATIONS = Const('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
+                             minimum=1, source=__NAME__)
+
+# width of the ABC fibers (in pixels)
+SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=int,
+                          minimum=1, source=__NAME__)
+
+# number of sections per order to split the order into
+SHAPE_NSECTIONS = Const('SHAPE_NSECTIONS', value=None, dtype=int,
+                        minimum=1, source=__NAME__)
+
+# the range of angles (in degrees) for the first iteration (large)
+# and subsequent iterations (small)
+SHAPE_LARGE_ANGLE_MIN = Const('SHAPE_LARGE_ANGLE_MIN', value=None,
+                              dtype=float, source=__NAME__)
+SHAPE_LARGE_ANGLE_MAX = Const('SHAPE_LARGE_ANGLE_MAX', value=None,
+                              dtype=float, source=__NAME__)
+SHAPE_SMALL_ANGLE_MIN = Const('SHAPE_SMALL_ANGLE_MIN', value=None,
+                              dtype=float, source=__NAME__)
+SHAPE_SMALL_ANGLE_MAX = Const('SHAPE_SMALL_ANGLE_MAX', value=None,
+                              dtype=float, source=__NAME__)
+
+# max sigma clip (in sigma) on points within a section
+SHAPE_SIGMACLIP_MAX = Const('SHAPE_SIGMACLIP_MAX', value=None, dtype=float,
+                            minimum=0.0, source=__NAME__)
+
+# the size of the median filter to apply along the order (in pixels)
+SHAPE_MEDIAN_FILTER_SIZE = Const('SHAPE_MEDIAN_FILTER_SIZE', value=None,
+                                 dtype=float, minimum=0.0, source=__NAME__)
+
+
+SHAPE_MIN_GOOD_CORRELATION
+
+SHAPE_SHORT_DX_MEDFILT_WID
+
+SHAPE_LONG_DX_MEDFILT_WID
+
+SHAPE_QC_DXMAP_STD
+
+SHAPE_PLOT_PER_ORDER
