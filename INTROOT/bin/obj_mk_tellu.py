@@ -186,6 +186,18 @@ def main(night_name=None, files=None):
         # get image
         sp, shdr, _, _ = spirouImage.ReadImage(p, filename)
 
+        # ------------------------------------------------------------------
+        # check that file has valid DPRTYPE
+        # ------------------------------------------------------------------
+        # get FP_FP DPRTYPE
+        p = spirouImage.ReadParam(p, shdr, 'KW_DPRTYPE', 'DPRTYPE', dtype=str)
+        # if dprtype is incorrect skip
+        if p['DPRTYPE'] not in p['ALLOWED_TELLURIC_DPRTYPES']:
+            wmsg1 = 'Skipping file (DPRTYPE incorrect)'
+            wmsg2 = '\t DPRTYPE = {0}'.format(p['DPRTYPE'])
+            WLOG(p, 'warning', [wmsg1, wmsg2])
+            continue
+
         # get blaze
         p, blaze = spirouImage.ReadBlazeFile(p, shdr)
 
@@ -316,6 +328,18 @@ def main(night_name=None, files=None):
         # set passed variable and fail message list
         passed, fail_msg = True, []
         qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+        # ----------------------------------------------------------------------
+        # if array is completely NaNs it shouldn't pass
+        if np.sum(np.isfinite(transmission_map)) == 0:
+            fail_msg.append('transmission map is all NaNs')
+            passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append('NaN')
+        qc_names.append('image')
+        qc_logic.append('image is all NaN')
         # ----------------------------------------------------------------------
         # get SNR for each order from header
         nbo = loc['DATA'].shape[0]

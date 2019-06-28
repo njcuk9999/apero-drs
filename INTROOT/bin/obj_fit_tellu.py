@@ -214,6 +214,17 @@ def main(night_name=None, files=None):
         # save to file for later use
         np.save(abso_save_file, abso)
 
+    # filter out rows of all NaNs
+    # TODO: Why are we getting all NaN e2ds files?
+    abso_filtered = []
+    for row in range(len(abso)):
+        if np.sum(np.isnan(abso[row])) != len(abso[row]):
+            abso_filtered.append(abso[row])
+        else:
+            wargs = [trans_files[row]]
+            WLOG(p, '', 'Removing trans file {0} (all NaN)'.format(*wargs))
+    abso = np.array(abso_filtered)
+
     # log the absorption cube
     with warnings.catch_warnings(record=True) as w:
         log_abso = np.log(abso)
@@ -302,6 +313,18 @@ def main(night_name=None, files=None):
         # normalise with blaze function
         loc['SP'] = tdata / loc['NBLAZE']
         loc.set_source('SP', main_name)
+
+        # ------------------------------------------------------------------
+        # check that file has valid DPRTYPE
+        # ------------------------------------------------------------------
+        # get FP_FP DPRTYPE
+        p = spirouImage.ReadParam(p, thdr, 'KW_DPRTYPE', 'DPRTYPE', dtype=str)
+        # if dprtype is incorrect skip
+        if p['DPRTYPE'] not in p['ALLOWED_TELLURIC_DPRTYPES']:
+            wmsg1 = 'Skipping file (DPRTYPE incorrect)'
+            wmsg2 = '\t DPRTYPE = {0}'.format(p['DPRTYPE'])
+            WLOG(p, 'warning', [wmsg1, wmsg2])
+            continue
 
         # ------------------------------------------------------------------
         # Set storage
