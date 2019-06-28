@@ -765,7 +765,7 @@ def correction_thermal2(p, image, hdr, fiber, flat=None):
     envelope_percent = p['THERMAL_ENVELOPE_PERCENTILE']
     torder = p['THERMAL_ORDER']
     th_red_limit = p['THERMAL_RED_LIMIT']
-    th_blue_limit = p['THERMAL_RED_LIMIT']
+    th_blue_limit = p['THERMAL_BLUE_LIMIT']
     # get the shape
     dim1, dim2 = image.shape
     # ----------------------------------------------------------------------
