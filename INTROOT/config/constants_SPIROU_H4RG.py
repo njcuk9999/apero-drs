@@ -268,7 +268,7 @@ THERMAL_BGND_FILTER_WID = 101
 THERMAL_RED_LIMIT = 2500
 
 # define thermal blue limit (in nm)
-THERMAL_BLUE_LIMIT = 24580
+THERMAL_BLUE_LIMIT = 2450
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = 48
@@ -1345,6 +1345,9 @@ tellu_fit_log_limit = -0.5
 # Defines the order to plot the reconstructed absorption for
 #    Note this can be a number or 'all' to display all orders
 tellu_fit_recon_plt_order = 33    # 'all'    # 33
+
+# define allowed dprtypes from fit tellu and make tellu
+ALLOWED_TELLURIC_DPRTYPES = ['OBJ_DARK', 'OBJ_FP']
 
 # -----------------------------------------------------------------------------
 #  New make telluric parameter
