@@ -473,6 +473,144 @@ SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
 SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
 SHAPE_MASTER_FIBER.value = 'AB'
 
+# The number of iterations to run the shape finding out to
+SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
+SHAPE_NUM_ITERATIONS.value = 4
 
+# total width of the order (combined fibers) in pixels
+SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
+SHAPE_ORDER_WIDTH.value = 60
 
+# number of sections per order to split the order into
+SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)
+SHAPE_NSECTIONS.value = 32
+
+# the range of angles (in degrees) for the first iteration (large)
+# and subsequent iterations (small)
+SHAPE_LARGE_ANGLE_MIN = SHAPE_LARGE_ANGLE_MIN.copy(__NAME__)
+SHAPE_LARGE_ANGLE_MIN.value = -12.0
+
+SHAPE_LARGE_ANGLE_MAX = SHAPE_LARGE_ANGLE_MAX.copy(__NAME__)
+SHAPE_LARGE_ANGLE_MAX.value = 0.0
+
+SHAPE_SMALL_ANGLE_MIN = SHAPE_SMALL_ANGLE_MIN.copy(__NAME__)
+SHAPE_SMALL_ANGLE_MIN.vaule = -1.0
+
+SHAPE_SMALL_ANGLE_MAX = SHAPE_SMALL_ANGLE_MAX.copy(__NAME__)
+SHAPE_SMALL_ANGLE_MAX.value = 1.0
+
+# max sigma clip (in sigma) on points within a section
+SHAPE_SIGMACLIP_MAX = SHAPE_SIGMACLIP_MAX.copy(__NAME__)
+SHAPE_SIGMACLIP_MAX.value = 4
+
+# the size of the median filter to apply along the order (in pixels)
+SHAPE_MEDIAN_FILTER_SIZE = SHAPE_MEDIAN_FILTER_SIZE.copy(__NAME__)
+SHAPE_MEDIAN_FILTER_SIZE.value = 51
+
+# The minimum value for the cross-correlation to be deemed good
+SHAPE_MIN_GOOD_CORRELATION = SHAPE_MIN_GOOD_CORRELATION.copy(__NAME__)
+SHAPE_MIN_GOOD_CORRELATION.value = 0.3
+
+# Define the first pass (short) median filter width for dx
+SHAPE_SHORT_DX_MEDFILT_WID = SHAPE_SHORT_DX_MEDFILT_WID.copy(__NAME__)
+SHAPE_SHORT_DX_MEDFILT_WID.value = 9
+
+# Define the second pass (long) median filter width for dx.
+#    Used to fill NaN positions in dx that are not covered by short pass
+SHAPE_LONG_DX_MEDFILT_WID = SHAPE_LONG_DX_MEDFILT_WID.copy(__NAME__)
+SHAPE_LONG_DX_MEDFILT_WID.value = 9
+
+#  Defines the largest allowed standard deviation for a given
+#    per-order and per-x-pixel shift of the FP peaks
+SHAPE_QC_DXMAP_STD = SHAPE_QC_DXMAP_STD.copy(__NAME__)
+SHAPE_QC_DXMAP_STD.value = 5
+
+#  Defines whether to plot the debug plot per order (this creates many plots)
+SHAPE_PLOT_PER_ORDER = SHAPE_PLOT_PER_ORDER.copy(__NAME__)
+SHAPE_PLOT_PER_ORDER.value = False
+
+# defines the shape offset xoffset (before and after) fp peaks
+SHAPEOFFSET_XOFFSET = SHAPEOFFSET_XOFFSET.copy(__NAME__)
+SHAPEOFFSET_XOFFSET.value = 30
+
+# defines the bottom percentile for fp peak
+SHAPEOFFSET_BOTTOM_PERCENTILE = SHAPEOFFSET_BOTTOM_PERCENTILE.copy(__NAME__)
+SHAPEOFFSET_BOTTOM_PERCENTILE.value = 10
+
+# defines the top percentile for fp peak
+SHAPEOFFSET_TOP_PERCENTILE = SHAPEOFFSET_TOP_PERCENTILE.copy(__NAME__)
+SHAPEOFFSET_TOP_PERCENTILE.value = 95
+
+# defines the floor below which top values should be set to        
+#   this fraction away from the max top value
+SHAPEOFFSET_TOP_FLOOR_FRAC = SHAPEOFFSET_TOP_FLOOR_FRAC.copy(__NAME__)
+SHAPEOFFSET_TOP_FLOOR_FRAC.value = 0.1
+
+# define the median filter to apply to the hc (high pass filter)
+SHAPEOFFSET_MED_FILTER_WIDTH = SHAPEOFFSET_MED_FILTER_WIDTH.copy(__NAME__)
+SHAPEOFFSET_MED_FILTER_WIDTH.value = 15
+
+# Maximum number of FP (larger than expected number                
+#      (~10000 to ~25000)
+SHAPEOFFSET_FPINDEX_MAX = SHAPEOFFSET_FPINDEX_MAX.copy(__NAME__)
+SHAPEOFFSET_FPINDEX_MAX.value = 30000
+
+# Define the valid length of a FP peak
+SHAPEOFFSET_VALID_FP_LENGTH = SHAPEOFFSET_VALID_FP_LENGTH.copy(__NAME__)
+SHAPEOFFSET_VALID_FP_LENGTH.value = 5
+
+# Define the maximum allowed offset (in nm) that we allow for      
+#     the detector)
+SHAPEOFFSET_DRIFT_MARGIN = SHAPEOFFSET_DRIFT_MARGIN.copy(__NAME__)
+SHAPEOFFSET_DRIFT_MARGIN.value = 20
+
+# Define the number of iterations to do for the wave_fp            
+#     inversion trick
+SHAPEOFFSET_WAVEFP_INV_IT = SHAPEOFFSET_WAVEFP_INV_IT.copy(__NAME__)
+SHAPEOFFSET_WAVEFP_INV_IT.value = 5
+
+# Define the border in pixels at the edge of the detector
+SHAPEOFFSET_MASK_BORDER = SHAPEOFFSET_MASK_BORDER.copy(__NAME__)
+SHAPEOFFSET_MASK_BORDER.value = 30
+
+# Define the minimum maxpeak value as a fraction of the            
+#    maximum maxpeak
+SHAPEOFFSET_MIN_MAXPEAK_FRAC = SHAPEOFFSET_MIN_MAXPEAK_FRAC.copy(__NAME__)
+SHAPEOFFSET_MIN_MAXPEAK_FRAC.value = 0.4
+
+# Define the width of the FP mask (+/- the center)
+SHAPEOFFSET_MASK_PIXWIDTH = SHAPEOFFSET_MASK_PIXWIDTH.copy(__NAME__)
+SHAPEOFFSET_MASK_PIXWIDTH.value = 3
+
+# Define the width of the FP to extract (+/- the center)
+SHAPEOFFSET_MASK_EXTWIDTH = SHAPEOFFSET_MASK_EXTWIDTH.copy(__NAME__)
+SHAPEOFFSET_MASK_EXTWIDTH.value = 5
+
+# Define the most deviant peaks - percentile from [min to max]
+SHAPEOFFSET_DEVIANT_PMIN = SHAPEOFFSET_DEVIANT_PMIN.copy(__NAME__)
+SHAPEOFFSET_DEVIANT_PMIN.value = 5
+
+SHAPEOFFSET_DEVIANT_PMAX = SHAPEOFFSET_DEVIANT_PMAX.copy(__NAME__)
+SHAPEOFFSET_DEVIANT_PMAX.value = 95
+
+# Define the maximum error in FP order assignment                  
+#    we assume that the error in FP order assignment could range
+#    from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
+#    tested to date
+SHAPEOFFSET_FPMAX_NUM_ERROR = SHAPEOFFSET_FPMAX_NUM_ERROR.copy(__NAME__)
+SHAPEOFFSET_FPMAX_NUM_ERROR.value = 50
+
+# The number of sigmas that the HC spectrum is allowed to be       
+#     away from the predicted (from FP) position
+SHAPEOFFSET_FIT_HC_SIGMA = SHAPEOFFSET_FIT_HC_SIGMA.copy(__NAME__)
+SHAPEOFFSET_FIT_HC_SIGMA.value = 3
+
+# Define the maximum allowed maximum absolute deviation away       
+#     from the error fit
+SHAPEOFFSET_MAXDEV_THRESHOLD = SHAPEOFFSET_MAXDEV_THRESHOLD.copy(__NAME__)
+SHAPEOFFSET_MAXDEV_THRESHOLD.value = 5
+
+# very low thresholding values tend to clip valid points
+SHAPEOFFSET_ABSDEV_THRESHOLD = SHAPEOFFSET_ABSDEV_THRESHOLD.copy(__NAME__)
+SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 
