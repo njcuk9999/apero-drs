@@ -60,7 +60,23 @@ __all__ = [# general
            'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
            'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
            'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
-           'SHAPE_MASTER_FIBER',
+           'SHAPE_MASTER_FIBER', 'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
+           'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX',
+           'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
+           'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
+           'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
+           'SHAPE_SHORT_DX_MEDFILT_WID', 'SHAPE_LONG_DX_MEDFILT_WID',
+           'SHAPE_QC_DXMAP_STD', 'SHAPE_PLOT_PER_ORDER',
+           'SHAPEOFFSET_XOFFSET', 'SHAPEOFFSET_BOTTOM_PERCENTILE',
+           'SHAPEOFFSET_TOP_PERCENTILE', 'SHAPEOFFSET_TOP_FLOOR_FRAC',
+           'SHAPEOFFSET_MED_FILTER_WIDTH', 'SHAPEOFFSET_FPINDEX_MAX',
+           'SHAPEOFFSET_VALID_FP_LENGTH', 'SHAPEOFFSET_DRIFT_MARGIN',
+           'SHAPEOFFSET_WAVEFP_INV_IT', 'SHAPEOFFSET_MASK_BORDER',
+           'SHAPEOFFSET_MIN_MAXPEAK_FRAC', 'SHAPEOFFSET_MASK_PIXWIDTH',
+           'SHAPEOFFSET_MASK_EXTWIDTH', 'SHAPEOFFSET_DEVIANT_PMIN',
+           'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
+           'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
+           'SHAPEOFFSET_ABSDEV_THRESHOLD',
 
            ]
 
@@ -547,13 +563,111 @@ SHAPE_SIGMACLIP_MAX = Const('SHAPE_SIGMACLIP_MAX', value=None, dtype=float,
 SHAPE_MEDIAN_FILTER_SIZE = Const('SHAPE_MEDIAN_FILTER_SIZE', value=None,
                                  dtype=float, minimum=0.0, source=__NAME__)
 
+# The minimum value for the cross-correlation to be deemed good
+SHAPE_MIN_GOOD_CORRELATION = Const('SHAPE_MIN_GOOD_CORRELATION', value=None,
+                                   dtype=float, minimum=0.0, source=__NAME__)
 
-SHAPE_MIN_GOOD_CORRELATION
+# Define the first pass (short) median filter width for dx
+SHAPE_SHORT_DX_MEDFILT_WID = Const('SHAPE_SHORT_DX_MEDFILT_WID', value=None,
+                                   dtype=int, source=__NAME__)
 
-SHAPE_SHORT_DX_MEDFILT_WID
+# Define the second pass (long) median filter width for dx.
+#    Used to fill NaN positions in dx that are not covered by short pass
+SHAPE_LONG_DX_MEDFILT_WID = Const('SHAPE_SHORT_DX_MEDFILT_WID', value=None,
+                                  dtype=int, source=__NAME__)
 
-SHAPE_LONG_DX_MEDFILT_WID
+#  Defines the largest allowed standard deviation for a given
+#    per-order and per-x-pixel shift of the FP peaks
+SHAPE_QC_DXMAP_STD = Const('SHAPE_QC_DXMAP_STD', value=None, dtype=int,
+                           source=__NAME__)
 
-SHAPE_QC_DXMAP_STD
+#  Defines whether to plot the debug plot per order (this creates many plots)
+SHAPE_PLOT_PER_ORDER = Const('SHAPE_PLOT_PER_ORDER', value=None, dtype=bool,
+                             source=__NAME__)
 
-SHAPE_PLOT_PER_ORDER
+# defines the shape offset xoffset (before and after) fp peaks
+SHAPEOFFSET_XOFFSET = Const('SHAPEOFFSET_XOFFSET', value=None, dtype=int,
+                            source=__NAME__)
+
+# defines the bottom percentile for fp peak
+SHAPEOFFSET_BOTTOM_PERCENTILE = Const('SHAPEOFFSET_BOTTOM_PERCENTILE',
+                                      value=None, dtype=float, source=__NAME__)
+
+# defines the top percentile for fp peak
+SHAPEOFFSET_TOP_PERCENTILE = Const('SHAPEOFFSET_TOP_PERCENTILE', value=None,
+                                   dtype=float, source=__NAME__)
+
+# defines the floor below which top values should be set to
+#   this fraction away from the max top value
+SHAPEOFFSET_TOP_FLOOR_FRAC = Const('SHAPEOFFSET_TOP_FLOOR_FRAC', value=None,
+                                   dtype=float, source=__NAME__)
+
+# define the median filter to apply to the hc (high pass filter)]
+SHAPEOFFSET_MED_FILTER_WIDTH = Const('SHAPEOFFSET_MED_FILTER_WIDTH',
+                                     value=None, dtype=int, source=__NAME__)
+
+# Maximum number of FP (larger than expected number
+#      (~10000 to ~25000)
+SHAPEOFFSET_FPINDEX_MAX = Const('SHAPEOFFSET_FPINDEX_MAX', value=None,
+                                dtype=int, source=__NAME__,
+                                minimum=10000, maximum=25000)
+
+# Define the valid length of a FP peak
+SHAPEOFFSET_VALID_FP_LENGTH = Const('SHAPEOFFSET_VALID_FP_LENGTH', value=None,
+                                    dtype=int, source=__NAME__)
+
+# Define the maximum allowed offset (in nm) that we allow for
+#     the detector)
+SHAPEOFFSET_DRIFT_MARGIN = Const('SHAPEOFFSET_DRIFT_MARGIN', value=None,
+                                 dtype=float, source=__NAME__)
+
+# Define the number of iterations to do for the wave_fp
+#     inversion trick
+SHAPEOFFSET_WAVEFP_INV_IT = Const('SHAPEOFFSET_WAVEFP_INV_IT',
+                                         value=None, dtype=int, source=__NAME__)
+
+# Define the border in pixels at the edge of the detector
+SHAPEOFFSET_MASK_BORDER = Const('SHAPEOFFSET_MASK_BORDER', value=None,
+                                dtype=int, source=__NAME__)
+
+# Define the minimum maxpeak value as a fraction of the
+#    maximum maxpeak
+SHAPEOFFSET_MIN_MAXPEAK_FRAC = Const('SHAPEOFFSET_MIN_MAXPEAK_FRAC', value=None,
+                                     dtype=float, source=__NAME__)
+
+# Define the width of the FP mask (+/- the center)
+SHAPEOFFSET_MASK_PIXWIDTH = Const('SHAPEOFFSET_MASK_PIXWIDTH', value=None,
+                                  dtype=int, source=__NAME__)
+
+# Define the width of the FP to extract (+/- the center)
+SHAPEOFFSET_MASK_EXTWIDTH = Const('SHAPEOFFSET_MASK_EXTWIDTH', value=None,
+                                  dtype=int, source=__NAME__)
+
+# Define the most deviant peaks - percentile from [min to max]
+SHAPEOFFSET_DEVIANT_PMIN = Const('SHAPEOFFSET_DEVIANT_PMIN', value=None,
+                                 dtype=float, minimum=0, maximum=100,
+                                 source=__NAME__)
+SHAPEOFFSET_DEVIANT_PMAX = Const('SHAPEOFFSET_DEVIANT_PMAX', value=None,
+                                 dtype=float, minimum=0, maximum=100,
+                                 source=__NAME__)
+
+# Define the maximum error in FP order assignment
+#    we assume that the error in FP order assignment could range
+#    from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
+#    tested to date
+SHAPEOFFSET_FPMAX_NUM_ERROR = Const('SHAPEOFFSET_FPMAX_NUM_ERROR', value=None,
+                                    dtype=int, source=__NAME__)
+
+# The number of sigmas that the HC spectrum is allowed to be
+#     away from the predicted (from FP) position
+SHAPEOFFSET_FIT_HC_SIGMA = Const('SHAPEOFFSET_FIT_HC_SIGMA', value=None,
+                                 dtype=float, source=__NAME__)
+
+# Define the maximum allowed maximum absolute deviation away
+#     from the error fit
+SHAPEOFFSET_MAXDEV_THRESHOLD = Const('SHAPEOFFSET_MAXDEV_THRESHOLD', value=None,
+                                     dtype=float, source=__NAME__)
+
+# very low thresholding values tend to clip valid points
+SHAPEOFFSET_ABSDEV_THRESHOLD = Const('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
+                                     dtype=float, source=__NAME__)
