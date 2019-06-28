@@ -470,11 +470,14 @@ def get_coefficients(params, recipe, header, **kwargs):
     lprops['NBO'] = nbo
     lprops['DEG_C'] = deg_c
     lprops['DEG_W'] = deg_w
+    lprops['CENT_COEFFS'] = cent_coeffs
+    lprops['WID_COEFFS'] = wid_coeffs
     # set sources
-    lprops.set_sources(['LOCOFILE', 'NBO', 'DEG_C', 'DEG_W'], func_name)
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'NBO', 'DEG_C', 'DEG_W']
+    lprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
-    return cent_coeffs, wid_coeffs, lprops
+    return lprops
 
 
 

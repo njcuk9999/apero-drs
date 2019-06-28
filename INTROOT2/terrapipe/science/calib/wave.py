@@ -224,13 +224,14 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     wprops['NBO'] = nbo
     wprops['DEG'] = deg
     wprops['COEFFS'] = wave_coeffs
+    wprops['WAVEMAP'] = wavemap
     # set the source
-    keys = ['WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
     # return the map and properties
-    return wavemap, wprops
+    return wprops
 
 
 
