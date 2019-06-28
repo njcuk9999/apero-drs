@@ -64,13 +64,13 @@ def main(runfile=None):
     # ----------------------------------------------------------------------
     WLOG(p, 'info', 'Finding all raw files')
     rawtable, rawpath = spirouReprocess.FindRawFiles(p)
-    WLOG(p, 'info', 'Finding all pp files')
-    tmptable, tmppath = spirouReprocess.FindTmpFiles(p)
-    WLOG(p, 'info', 'Finding all reduced files')
-    redtable, redpath = spirouReprocess.FindRedFiles(p)
+    # WLOG(p, 'info', 'Finding all pp files')
+    # tmptable, tmppath = spirouReprocess.FindTmpFiles(p)
+    # WLOG(p, 'info', 'Finding all reduced files')
+    # redtable, redpath = spirouReprocess.FindRedFiles(p)
     # store in lists
-    tables = [rawtable, tmptable, redtable]
-    paths = [rawpath, tmppath, redpath]
+    tables = [rawtable]   # , tmptable, redtable]
+    paths = [rawpath]  # , tmppath, redpath]
 
     # ----------------------------------------------------------------------
     # Generate run list
