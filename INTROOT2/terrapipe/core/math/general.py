@@ -10,11 +10,7 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
+from scipy.interpolate import InterpolatedUnivariateSpline
 import warnings
 
 from terrapipe.core import constants
@@ -112,6 +108,16 @@ def fit2dpoly(x, y, z):
     return coeff
 
 
+def fwhm(sigma=1.0):
+    """
+    Get the Full-width-half-maximum value from the sigma value (~2.3548)
+
+    :param sigma: float, the sigma, default value is 1.0 (normalised gaussian)
+    :return: 2 * sqrt(2 * log(2)) * sigma = 2.3548200450309493 * sigma
+    """
+    return 2 * np.sqrt(2 * np.log(2)) * sigma
+
+
 # TODO: Required commenting and cleaning up
 def linear_minimization(vector, sample):
     func_name = __NAME__ + '.linear_minimization()'
@@ -176,6 +182,225 @@ def linear_minimization(vector, sample):
         for i in range(sz_sample[1]):
             recon += amps[i] * sample[:, i]
         return amps, recon
+
+
+def iuv_spline(x, y, **kwargs):
+    # check whether weights are set
+    w = kwargs.get('w', None)
+    # copy x and y
+    x, y = np.array(x), np.array(y)
+    # find all NaN values
+    nanmask = ~np.isfinite(y)
+
+    if np.sum(~nanmask) < 2:
+        y = np.zeros_like(x)
+    else:
+        # replace all NaN's with linear interpolation
+        badspline = InterpolatedUnivariateSpline(x[~nanmask], y[~nanmask],
+                                                 k=1, ext=1)
+        y[nanmask] = badspline(x[nanmask])
+    # return spline
+    return InterpolatedUnivariateSpline(x, y, **kwargs)
+
+
+def median_filter_ea(vector, width):
+    """
+    Median filter array "vector" by a box of width "width"
+    Note: uses nanmedian to median the boxes
+
+    :param vector: numpy array (1D): the vector to median filter
+    :param width: int, the size of the median box to apply
+
+    :return vector2: numpy array (1D): same size as "vector" except the pixel
+                     value is that of the median of box +/- width//2 of each
+                     pixel
+    """
+    # construct an output vector filled with NaNs
+    vector2 = np.zeros_like(vector) + np.nan
+    # loop around pixel in vector
+    for ix in range(len(vector)):
+        # define a start and end of our median box
+        start = ix - width // 2
+        end = ix + width // 2
+        # deal with boundaries
+        if start < 0:
+            start = 0
+        if end > len(vector) - 1:
+            end = len(vector) - 1
+        # set the value of the new pixel equal to the median of the box of
+        #   the original vector (and deal with NaNs)
+        with warnings.catch_warnings(record=True) as _:
+            vector2[ix] = np.nanmedian(vector[start:end])
+    # return new vector
+    return vector2
+
+
+# =============================================================================
+# Gaussian function
+# =============================================================================
+def gaussian_function_nn(x, a):
+    """
+    Generate a Gaussian and return its derivaties
+
+    translated from IDL'S gaussfit function
+    parts of the comments from the IDL version of the code:
+
+    # NAME:
+    #   GAUSS_FUNCT
+    #
+    # PURPOSE:
+    #   EVALUATE THE SUM OF A GAUSSIAN AND A 2ND ORDER POLYNOMIAL
+    #   AND OPTIONALLY RETURN THE VALUE OF IT'S PARTIAL DERIVATIVES.
+    #   NORMALLY, THIS FUNCTION IS USED BY CURVEFIT TO FIT THE
+    #   SUM OF A LINE AND A VARYING BACKGROUND TO ACTUAL DATA.
+    #
+    # CATEGORY:
+    #   E2 - CURVE AND SURFACE FITTING.
+    # CALLING SEQUENCE:
+    #   FUNCT,X,A,F,PDER
+    # INPUTS:
+    #   X = VALUES OF INDEPENDENT VARIABLE.
+    #   A = PARAMETERS OF EQUATION DESCRIBED BELOW.
+    # OUTPUTS:
+    #   F = VALUE OF FUNCTION AT EACH X(I).
+    #   PDER = matrix with the partial derivatives for function fitting
+    #
+    # PROCEDURE:
+    #   F = A(0)*EXP(-Z^2/2) + A(3) + A(4)*X + A(5)*X^2
+    #   Z = (X-A(1))/A(2)
+    #   Elements beyond A(2) are optional.
+
+
+    :param x: numpy array (1D), values of the independent variable
+    :param a: list, parameters of equation described above (in F and Z)
+
+    :return fout: numpy array (1D), the gaussian fit
+    :return pder: numpy array (1D), the gaussian fit derivatives
+    """
+    # get the dimensions
+    n, nx = len(a), len(x)
+    # work out gaussian
+    z = (x - a[1]) / a[2]
+    ez = np.exp(-z ** 2 / 2.0)
+    # deal with options
+    if n == 3:
+        fout = a[0] * ez
+    elif n == 4:
+        fout = (a[0] * ez) + a[3]
+    elif n == 5:
+        fout = (a[0] * ez) + a[3] + (a[4] * x)
+    elif n == 5:
+        fout = (a[0] * ez) + a[3] + (a[4] * x) + (a[5] * x ** 2)
+    else:
+        emsg = 'Dimensions of "a" not supposed. len(a) must be 3, 4, 5 or 6'
+        raise ValueError(emsg)
+    # work out derivatives
+    pder = np.zeros([nx, n])
+    pder[:, 0] = ez  # compute partials
+    pder[:, 1] = a[0] * ez * z / a[2]
+    pder[:, 2] = pder[:, 1] * z
+    if n > 3:
+        pder[:, 3] = 1.0
+    if n > 4:
+        pder[:, 4] = x
+    if n > 5:
+        pder[:, 5] = x ** 2
+    # return fout and pder
+    return fout, pder
+
+
+def gauss_fit_nn(xpix, ypix, nn):
+    """
+    fits a Gaussian function to xpix and ypix without prior knowledge of
+    parameters
+
+    The gaussians are expected to have their peaks within the min/max range
+    of xpix and are expected to be reasonably close to Nyquist-sampled
+    nn must be an INT in the range between 3 and 6
+
+    :param xpix: numpy array (1D), the x position values (dependent values)
+    :param ypix: numpy array (1D), the y position values (fit values)
+    :param nn: int, fit mode:
+
+        nn=3 -> the Gaussian has a floor of 0, the output will have 3 elements
+        nn=4 -> the Gaussian has a floor that is non-zero
+        nn=5 -> the Gaussian has a slope
+        nn=6 -> the Guassian has a 2nd order polynomial floor
+
+    :return stats: list, depending on nn
+
+        nn=3 -> [amplitude , center of peak, amplitude of peak]
+        nn=4 -> [amplitude , center of peak, amplitude of peak, dc level]
+        nn=5 -> [amplitude , center of peak, amplitude of peak, dc level,
+                 slope]
+        nn=6 -> [amplitude , center of peak, amplitude of peak, dc level,
+                 slope, 2nd order term]
+
+    :return gfit: numpy array (1D), the fitted gaussian
+    """
+    func_name = __NAME__ + '.gauss_fit_slope()'
+    # we guess that the Gaussian is close to Nyquist and has a
+    # 2 PIX FWHM and therefore 2/2.54 e-width
+    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / fwhm()
+
+    if nn == 3:
+        # only amp, cen and ew
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess]
+    elif nn == 4:
+        # only amp, cen, ew, dc offset
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix)]
+    elif nn == 5:
+        # only amp, cen, ew, dc offset, slope
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix), 0]
+    elif nn == 6:
+        # only amp, cen, ew, dc offset, slope, curvature
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix), 0, 0]
+    else:
+        emsg = 'nn must be 3, 4, 5 or 6 only. ({0})'
+        raise ValueError(emsg.format(func_name))
+    # copy the ypix (rediual from previous)
+    residu_prev = np.array(ypix)
+    # fit a gaussian (with nn options)
+    gfit, pder = gaussian_function_nn(xpix, a0)
+    # set the RMS and number of iterations
+    rms = 99
+    n_it = 0
+    # loops for 20 iterations MAX or an RMS with an RMS change in residual
+    #     smaller than 1e-6 of peak
+    while (rms > 1e-6) & (n_it <= 20):
+        # calculate fit
+        gfit, pder = gaussian_function_nn(xpix, a0)
+        # work out residuals
+        residu = ypix - gfit
+        # work out amplitudes and residual fit
+        amps, fit = linear_minimization(residu, pder)
+
+        # add to the amplitudes
+        a0 += amps
+        # recalculate rms
+        rdiff = np.nanmax(ypix) - np.nanmin(ypix)
+        # check for nans
+        if np.sum(np.isfinite(residu)) == 0:
+            rms = np.nan
+        else:
+            rms = np.nanstd(residu - residu_prev) / rdiff
+        # set the previous residual to the new one
+        residu_prev = np.array(residu)
+        # add to iteration
+        n_it += 1
+    # return a0 and gfit
+    return a0, gfit
+
+
+def gauss_fit_s(x, a, x0, sigma, zp, slope):
+    gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
+    # TODO: Question: Changed from (x - np.mean(x))
+    correction = (x - x0) * slope
+    return gauss + correction
 
 
 # =============================================================================
