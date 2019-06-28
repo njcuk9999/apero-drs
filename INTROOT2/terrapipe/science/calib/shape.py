@@ -455,7 +455,38 @@ def ea_transform(params, image, lin_transform_vect=None,
     return out_image
 
 
-def calculate_dxmap(params, ):
+def calculate_dxmap(params, **kwargs):
+
+    func_name = __NAME__ + '.calculate_dxmap()'
+    # get parameters from params/kwargs
+    nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
+                     func_name)
+    width = pcheck(params, 'SHAPE_ORDER_WIDTH', 'width', kwargs, func_name)
+    nsections = pcheck(params, 'SHAPE_NSECTIONS', 'nsections', kwargs,
+                       func_name)
+    large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
+                                'large_angle_min', kwargs, func_name)
+    large_angle_max = pcheck(params, 'SHAPE_LARGE_ANGLE_MAX',
+                                'large_angle_max', kwargs, func_name)
+    large_angle_range = [large_angle_min, large_angle_max]
+    small_angle_min = pcheck(params, 'SHAPE_SMALL_ANGLE_MIN',
+                                'small_angle_min', kwargs, func_name)
+    small_angle_max = pcheck(params, 'SHAPE_SMALL_ANGLE_MAX',
+                                'small_angle_max', kwargs, func_name)
+    small_angle_range = [small_angle_min, small_angle_max]
+    sigclipmax = pcheck(params, 'SHAPE_SIGMACLIP_MAX', 'sigclipmax',
+                        kwargs, func_name)
+    med_filter_size = pcheck(params, 'SHAPE_MEDIAN_FILTER_SIZE',
+                             'med_filter_size', kwargs, func_name)
+    min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
+                           'min_good_corr', kwargs, func_name)
+    short_medfilt_width = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
+                                 'short_medfilt_width', kwargs, func_name)
+    long_medfilt_width = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
+                                'long_medfilt_width', kwargs, func_name)
+    std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
+    plot_on = pcheck(params, 'SHAPE_PLOT_PER_ORDER', 'plot_on',
+                     kwargs, func_name)
 
 
 
