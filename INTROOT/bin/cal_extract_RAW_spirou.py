@@ -509,7 +509,19 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ----------------------------------------------------------------------
         passed, fail_msg = True, []
         qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
-
+        # ----------------------------------------------------------------------
+        # if array is completely NaNs it shouldn't pass
+        if np.sum(np.isfinite(loc['E2DS'])) == 0:
+            fail_msg.append('E2DS image is all NaNs')
+            passed = False
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append('NaN')
+        qc_names.append('image')
+        qc_logic.append('image is all NaN')
+        # ----------------------------------------------------------------------
         # saturation check: check that the max_signal is lower than
         # qc_max_signal
         max_qcflux = p['QC_MAX_SIGNAL'] * p['NBFRAMES']
