@@ -17,9 +17,17 @@ from . import general
 
 calculate_polyvals = general.calculate_polyvals
 
+gauss_fit_nn = general.gauss_fit_nn
+
+gaussian_function_nn =  general.gaussian_function_nn
+
+iuv_spline = general.iuv_spline
+
 killnan = general.killnan
 
 measure_box_min_max = general.measure_box_min_max
+
+median_filter_ea = general.median_filter_ea
 
 nanpad = general.nanpad
 
