@@ -176,8 +176,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    gargs = [params, recipe, fpheader]
-    cent_coeffs, wid_coeffs, lprops = localisation.get_coefficients(*gargs)
+    lprops = localisation.get_coefficients(params, recipe, fpheader)
 
     # ----------------------------------------------------------------------
     # Get wave coefficients from master wavefile
@@ -185,12 +184,12 @@ def __main__(recipe, params):
     # get master wave filename
     mwavefile = wave.get_masterwave_filename(params)
     # get master wave map
-    wavemap, wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
+    wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    dxmap = shape.calculate_dxmap(params)
+    dxmap = shape.calculate_dxmap(params, hcimage, master_fp, wprops, lprops)
 
 
     # ----------------------------------------------------------------------
