@@ -28,7 +28,7 @@ from terrapipe.core.core import drs_file
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_table
-from terrapipe.io import drs_image
+from terrapipe.io import drs_data
 from . import general
 
 # =============================================================================
@@ -53,6 +53,7 @@ TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
+
 
 # =============================================================================
 # Define user functions
@@ -125,7 +126,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     u_groups = np.unique(matched_id)
     # storage of dark cube
     fp_cube, transforms_list, fp_dprtypes = [], [], []
-    fp_darkfiles, fp_badpfiles, fp_backfiles =  [], [], []
+    fp_darkfiles, fp_badpfiles, fp_backfiles = [], [], []
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
@@ -186,7 +187,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # append to cube
             fp_cube.append(groupfp)
             # append transforms to list
-            for filename in fp_ids:
+            for _ in fp_ids:
                 transforms_list.append(transforms)
         else:
             eargs = [g_it + 1, min_num]
@@ -197,8 +198,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             fp_badpfiles.append('')
             fp_backfiles.append('')
             # append transforms to list
-            for filename in fp_ids:
-                transforms_list.append([np.nan]*6)
+            for _ in fp_ids:
+                transforms_list.append([np.nan] * 6)
 
     # ----------------------------------------------------------------------
     # convert fp cube to array
@@ -220,7 +221,6 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
 
 
 def get_linear_transform_params(params, image1, image2, **kwargs):
-
     func_name = __NAME__ + '.get_linear_transform_params()'
     # get parameters from params/kwargs
     maxn_percent = pcheck(params, 'SHAPE_MASTER_VALIDFP_PERCENTILE',
@@ -287,8 +287,8 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
         # peaks cannot be at the edges of the image
         mask1[:wdd + 1, :] = False
         mask1[:, :wdd + 1] = False
-        mask1[-wdd -1:, :] = False
-        mask1[:, -wdd -1:] = False
+        mask1[-wdd - 1:, :] = False
+        mask1[:, -wdd - 1:] = False
         # get the positions of the x and y peaks (based on mask1)
         ypeak1, xpeak1 = np.where(mask1)
         # fill map_dxdy with the mean of the wdd box
@@ -357,7 +357,6 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
         d_transform = [dx0, dy0, ampsx[1], ampsx[2], ampsy[1], ampsy[2]]
         # propagate to linear transform vector
         lin_transform_vect -= d_transform
-        ltv = np.array(lin_transform_vect)
 
         # print out per iteration values
         # set up arguments
@@ -460,7 +459,6 @@ def ea_transform(params, image, lin_transform_vect=None,
 
 
 def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
-
     func_name = __NAME__ + '.calculate_dxmap()'
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
@@ -469,14 +467,14 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     nsections = pcheck(params, 'SHAPE_NSECTIONS', 'nsections', kwargs,
                        func_name)
     large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
-                                'large_angle_min', kwargs, func_name)
+                             'large_angle_min', kwargs, func_name)
     large_angle_max = pcheck(params, 'SHAPE_LARGE_ANGLE_MAX',
-                                'large_angle_max', kwargs, func_name)
+                             'large_angle_max', kwargs, func_name)
     large_angle_range = [large_angle_min, large_angle_max]
     small_angle_min = pcheck(params, 'SHAPE_SMALL_ANGLE_MIN',
-                                'small_angle_min', kwargs, func_name)
+                             'small_angle_min', kwargs, func_name)
     small_angle_max = pcheck(params, 'SHAPE_SMALL_ANGLE_MAX',
-                                'small_angle_max', kwargs, func_name)
+                             'small_angle_max', kwargs, func_name)
     small_angle_range = [small_angle_min, small_angle_max]
     sigclipmax = pcheck(params, 'SHAPE_SIGMACLIP_MAX', 'sigclipmax',
                         kwargs, func_name)
@@ -495,6 +493,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
+    poly_wave_ref = wprops['COEFFS']
+    une_lines, une_amps = drs_data.load_linelist(params)
+    poly_cavity = drs_data.load_cavity_file(params)
     # get the dimensions
     dim1, dim2 = fpdata.shape
     # -------------------------------------------------------------------------
@@ -509,7 +510,6 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     map_orders = np.zeros_like(fpdata) - 1
     order_overlap = np.zeros_like(fpdata)
     slope_all_ord = np.zeros((nbo, dim2))
-    corr_dx_from_fp = np.zeros((nbo, dim2))
     corr_dx_from_fp = np.zeros((nbo, dim2))
     xpeak2 = [[]] * nbo
     peakval2 = [[]] * nbo
@@ -539,8 +539,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
         if np.sum(master_dxmap != 0) != 0:
-            hcdata2 = ea_transform(hcdata, dxmap=master_dxmap)
-            fpdata2 = ea_transform(fpdata, dxmap=master_dxmap)
+            hcdata2 = ea_transform(params, hcdata, dxmap=master_dxmap)
+            fpdata2 = ea_transform(params, fpdata, dxmap=master_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -555,7 +555,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
         xsec_arr_i, ccor_arr_i = [], []
         ddx_arr_i, dx_arr_i = [], []
-        dypix_arr_i,  cckeep_arr_i = [], []
+        dypix_arr_i, cckeep_arr_i = [], []
 
         # storage for loc2
         loc2s = []
@@ -565,10 +565,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         # loop around orders
         for order_num in range(nbo):
             # -----------------------------------------------------------------
-            # Log progress
-            wmsg = 'Banana iteration: {0}/{1}: Order {2}/{3} '
+            # Log progress banana iteration {0} of {1} order {2} of {3}
             wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '', TextEntry('40-014-00016', args=wargs))
             # -----------------------------------------------------------------
             # defining a ribbon that will contain the straightened order
             ribbon_hc = np.zeros([width, dim2])
@@ -576,13 +575,19 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             # get the widths
             widths = np.arange(width) - width / 2.0
             # get all bottoms and tops
-            bottoms = ypix[order_num] - width/ 2 - 2
-            tops = ypix[order_num] + width/ 2 + 2
+            bottoms = ypix[order_num] - width / 2 - 2
+            tops = ypix[order_num] + width / 2 + 2
             # splitting the original image onto the ribbon
             for ix in range(dim2):
                 # define bottom and top that encompasses all 3 fibers
                 bottom = int(bottoms[ix])
                 top = int(tops[ix])
+                # deal with bottom and top being out of bounds
+                if bottom < 0:
+                    bottom = 0
+                if top > dim1:
+                    top = dim1
+                # get the x pixels for range
                 sx = np.arange(bottom, top)
                 # calculate spline interpolation and ribbon values
                 if bottom > 0:
@@ -607,9 +612,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
-            wmsg = '\tRange slope exploration: {0:.3f} -> {1:.3f} deg'
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '40-014-00017', TextEntry('', args=wargs))
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
@@ -626,7 +630,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 # interpolate new slope-ed ribbon
                 for iw in range(width):
                     # get the ddx value
-                    ddx = (iw - width/2.0) * slope
+                    ddx = (iw - width / 2.0) * slope
                     # get the spline
                     spline = math.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
                     # calculate the new ribbon values
@@ -637,8 +641,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 for nsection in range(nsections):
                     # sum of integral of derivatives == RV content.
                     # This should be maximal when the angle is right
-                    start = nsection * dim2//nsections
-                    end = (nsection + 1) * dim2//nsections
+                    start = nsection * dim2 // nsections
+                    end = (nsection + 1) * dim2 // nsections
                     grad = np.gradient(profile[start:end])
                     rvcontent[islope, nsection] = np.nansum(grad ** 2)
             # -------------------------------------------------------------
@@ -664,7 +668,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             # work out the median slope
             dxdiff = dxsection[1:] - dxsection[:-1]
             xdiff = xsection[1:] - xsection[:-1]
-            medslope = np.nanmedian(dxdiff/xdiff)
+            medslope = np.nanmedian(dxdiff / xdiff)
             # work out the residual of dxsection (based on median slope)
             residual = dxsection - (medslope * xsection)
             residual = residual - np.nanmedian(residual)
@@ -696,9 +700,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             # log slope at center
             s_xpix = dim2 // 2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
-            wmsg = '\tSlope at pixel {0}: {1:.5f} deg'
             wargs = [s_xpix, s_ypix]
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '', TextEntry('40-014-00018', args=wargs))
             # get slope for full range
             slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim2))
             # -------------------------------------------------------------
@@ -713,11 +716,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             loc2 = ParamDict()
             if params['DRS_PLOT'] and params['DRS_DEBUG'] >= 2:
                 # add temp keys for debug plot
-                loc2['NUMBER_ORDERS'] = loc['NUMBER_ORDERS']
-                loc2['HCDATA'] = loc['HCDATA']
-                loc2['SLOPE_DEG'] = np.rad2deg(np.arctan(dxsection))
-                loc2['SLOPE'] = np.rad2deg(np.arctan(slope_all_ord[order_num]))
-                loc2['S_KEEP'] = np.array(keep)
+                slope_deg = np.rad2deg(np.arctan(dxsection))
+                slope = np.rad2deg(np.arctan(slope_all_ord[order_num]))
+                s_keep = np.array(keep)
 
             # -------------------------------------------------------------
             # correct for the slope the ribbons and look for the
@@ -725,7 +726,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             yfit = np.polyval(coeffs, xpix)
             for iw in range(width):
                 # get the x shift
-                ddx = (iw - width/2.0) * yfit
+                ddx = (iw - width / 2.0) * yfit
                 # calculate the spline at this width
                 spline_fp = math.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
                 # push spline values with shift into ribbon2
@@ -736,7 +737,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             ribbon_hc2 = np.array(ribbon_hc)
             for iw in range(width):
                 # get the x shift
-                ddx = (iw - width/2.0) * yfit
+                ddx = (iw - width / 2.0) * yfit
                 # calculate the spline at this width
                 spline_hc = math.iuv_spline(xpix, ribbon_hc[iw, :], ext=1)
                 # push spline values with shift into ribbon2
@@ -747,8 +748,17 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             sp_fp = np.nanmedian(ribbon_fp2, axis=0)
             sp_hc = np.nanmedian(ribbon_hc2, axis=0)
 
-            loc = _get_offset_sp(params, loc, sp_fp, sp_hc, order_num)
-            corr_dx_from_fp[order_num] = loc['CORR_DX_FROM_FP'][order_num]
+            pargs = [params, sp_fp, sp_hc, order_num, hcdata,
+                     poly_wave_ref, une_lines, poly_cavity]
+            out = _get_offset_sp(*pargs)
+            # get and save offest outputs into lists
+            corr_dx_from_fp[order_num] = out[0]
+            xpeak2[order_num] = out[1]
+            peakval2[order_num] = out[2]
+            ewval2[order_num] = out[3]
+            ewval2[order_num] = out[4]
+            err_pix[order_num] = out[5]
+            good_mask[order_num] = out[6]
 
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
@@ -852,11 +862,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         # loop around orders
         for order_num in range(nbo):
             # -------------------------------------------------------------
-            # log process
-            wmsg = ('Update of the big dx map after filtering of pre-order '
-                    'dx: {0}/{1}')
+            # log process (updating big dx map)
             wargs = [order_num + 1, nbo]
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '', TextEntry('40-014-00021', args=wargs))
             # -------------------------------------------------------------
             # spline everything onto the master DX map
             #    ext=3 forces that out-of-range values are set to boundary
@@ -885,10 +893,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             good_ccor_mask = np.zeros(len(keep), dtype=bool)
             good_ccor_mask[start_good_ccor:end_good_ccor] = True
 
-            # log start and end points
-            wmsg = '\tData along slice. Start={0} End={1}'
+            # log start and end points along slice
             wargs = [start_good_ccor, end_good_ccor]
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '', TextEntry('40-014-00022', args=wargs))
 
             # -------------------------------------------------------------
             # for all field positions along the order, we determine the
@@ -902,7 +909,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 # get dx0 with slope factor added
                 dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope
                 # get the ypix at this value
-                widthrange = np.arange(-width//2, width//2)
+                widthrange = np.arange(-width // 2, width // 2)
                 ypix2 = int(ypix[order_num, ix]) + widthrange
                 # get the ddx
                 ddx = spline(widths - fracs[ix])
@@ -913,13 +920,13 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 # do not want overlap between orders and a gap of 1 pixel
                 ypix0 = ypix[order_num, ix]
                 # identify the upper bound of order
-                if order_num != (nbo-1):
+                if order_num != (nbo - 1):
                     ypixa = ypix[order_num + 1, ix]
                     upper_ylimit_overlap = ypix0 + 0.5 * (ypixa - ypix0) - 1
                 else:
                     upper_ylimit_overlap = dim1 - 1
                 # identify the lower bound of order
-                if order_num !=0:
+                if order_num != 0:
                     ypixb = ypix[order_num - 1, ix]
                     lower_ylimit_overlap = ypix0 - 0.5 * (ypix0 - ypixb) + 1
                 else:
@@ -957,12 +964,10 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                     # return here if QC not met
                     if dxmap_std > std_qc:
                         # add DXMAP to loc
-                        loc['DXMAP'] = None
-                        loc['MAXDXMAPSTD'] = dxmap_std
-                        loc['MAXDXMAPINFO'] = [order_num, ix]
-                        keys = ['DXMAP', 'MAXDXMAPSTD', 'MAXDXMAPINFO']
-                        loc.set_sources(keys, func_name)
-                        return loc
+                        dxmap = None
+                        max_dxmap_std = dxmap_std
+                        max_dxmap_info = [order_num, ix, std_qc]
+                        return dxmap, max_dxmap_std, max_dxmap_info
 
             # -----------------------------------------------------------------
             if params['DRS_PLOT'] and (params['DRS_DEBUG'] >= 2) and plot_on:
@@ -970,7 +975,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 pass
                 # # plot angle and offset plot for each order
                 # sPlt.plt.ioff()
-                # sPlt.slit_shape_angle_plot(p, loc2s[order_num], bnum=banana_num,
+                # sPlt.slit_shape_angle_plot(p, loc2s[order_num],
+                #                            bnum=banana_num,
                 #                            order=order_num)
                 # sPlt.slit_shape_offset_plot(p, loc, bnum=banana_num,
                 #                             order=order_num)
@@ -992,7 +998,33 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
 
-    return master_dxmap
+    # save qc
+    max_dxmap_std = np.max(dxmap_stds)
+    max_dxmap_info = [None, None]
+    # return parameters
+    return master_dxmap, max_dxmap_std, max_dxmap_info
+
+
+def calculate_dymap(params, fpdata, **kwargs):
+
+    func_name = __NAME__ + '.calculate_dymap()'
+    # get properties from property dictionaries
+    fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
+
+
+    # get the dimensions
+    dim1, dim2 = fpdata.shape
+
+    # make fibers a list
+    fibers = list(map(lambda x: x.strip(), fibers.split(',')))
+
+    # x indices in the initial image
+    xpix = np.arange(dim2)
+
+
+    for fiber in fibers:
+        # TODO: Finish this
+        pass
 
 
 # =============================================================================
@@ -1064,14 +1096,16 @@ def _xy_acc_peak(xpeak, ypeak, im):
     x1 = -0.5 * mx / ax + xpeak
     y1 = -0.5 * my / ay + ypeak
 
-    return x1,y1
+    return x1, y1
 
 
-def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
-
+def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
+                   poly_wave_ref, une_lines, poly_cavity,
+                   **kwargs):
     func_name = __NAME__ + '._get_offset_sp'
     # get constants from params/kwargs
-    xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs, func_name)
+    xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
+                     func_name)
     bottom_fp_percentile = pcheck(params, 'SHAPEOFFSET_BOTTOM_PERCENTILE',
                                   'bottom_fp_percentile', kwargs, func_name)
     top_fp_percentile = pcheck(params, 'SHAPEOFFSET_TOP_PERCENTILE',
@@ -1112,10 +1146,7 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
 
     # -------------------------------------------------------------------------
     # get data from loc
-    dim1, dim2 = np.shape(loc['HCDATA1'])
-    poly_wave_ref = loc['MASTERWAVEP']
-    une_lines = loc['LL_LINE']
-    poly_cavity = loc['CAVITY_LEN_COEFFS']
+    dim1, dim2 = hcdata.shape
     # -------------------------------------------------------------------------
     # define storage for the bottom and top values of the FPs
     bottom = np.zeros_like(sp_fp)
@@ -1152,7 +1183,7 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
     # The HC spectrum is high-passed. We are just interested to know if
     # a given expected line from the catalog falls at the position of a
     # >3-sigma peak relative to the continuum
-    sp_hc = sp_hc - math.medfilt(sp_hc, med_filter_wid)
+    sp_hc = sp_hc - medfilt(sp_hc, med_filter_wid)
     # normalise HC to its absolute deviation
     norm = np.nanmedian(np.abs(sp_hc[sp_hc != 0]))
     sp_hc = sp_hc / norm
@@ -1173,7 +1204,7 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
     xdomain = np.linspace(0, dim2, 3).astype(int)
     wave_start_med_end = np.polyval(poly_wave_ref[order_num][::-1], xdomain)
     # get the wavelengths for the fp
-    wave_fp = np.polyval(poly_cavity, wave_start_med_end[1]) * 2/fpindex
+    wave_fp = np.polyval(poly_cavity, wave_start_med_end[1]) * 2 / fpindex
     # -------------------------------------------------------------------------
     # we give a 20 nm marging on either side... who knows, maybe SPIRou
     #    has drifted
@@ -1228,8 +1259,8 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
         mask2 = np.ones_like(yy).astype(int)
         mask2[mask_extwidth:] = 0
         # find the minima of the fp's in this mask
-        y0 = np.argmin(yy/np.max(yy) + mask1)
-        y1 = np.argmin(yy/np.max(yy) + mask2)
+        y0 = np.argmin(yy / np.max(yy) + mask1)
+        y1 = np.argmin(yy / np.max(yy) + mask2)
         # re-set xx and yy
         xx = np.array(xx[y0:y1 + 1]).astype(float)
         yy = np.array(yy[y0:y1 + 1]).astype(float)
@@ -1237,9 +1268,10 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
         # the FP must be at least 5 pixels long to be valid
         if len(xx) > valid_fp_length:
             # set up the guess: amp, x0, w, zp
-            guess = [np.max(yy) - np.min(yy),  xx[np.argmax(yy)],
-                     1, np.min(yy), 0]
+            guess = (float(np.max(yy) - np.min(yy)),
+                     float(xx[np.argmax(yy)]), 1.0, float(np.min(yy)), 0.0)
             # try to fit a gaussian
+            # noinspection PyBroadException
             try:
                 coeffs, _ = curve_fit(math.gauss_fit_s, xx, yy, p0=guess)
                 goodfit = True
@@ -1282,9 +1314,9 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
         # find the integer number of the peak
         ipeak[it] = ipeak[it - 1] + np.round(dx / dx_est)
         # if we have a unexpected deviation log it
-        if np.round(dx/dx_est) != 1:
-            wmsg = '\t\tdx = {0:.5f} dx/dx_est = {1:.5f} estimate = {2:.5f}'
-            wargs = [dx, dx/dx_est, dx_est]
+        if np.round(dx / dx_est) != 1:
+            wmsg = '\t\tdx={0:.5f} dx/dx_est={1:.5f} est={2:.5f}'
+            wargs = [dx, dx / dx_est, dx_est]
             WLOG(params, '', wmsg.format(*wargs))
     # -------------------------------------------------------------------------
     # Trusting the wavelength solution this is the wavelength of FP peaks
@@ -1302,6 +1334,8 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
     # loop around estimates
     fpstart = fp_peak0_est - fpindex[0] - fp_max_num_error
     fpend = fp_peak0_est - fpindex[0] + fp_max_num_error
+    # empty value
+    xpos_predict_int, zp = None, None
     # loop from fpstart to fpend
     for zp in range(fpstart, fpend):
         # we take a trial solution between wave (from the theoretical FP
@@ -1325,9 +1359,8 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
             max_good, best_zp = frac_good, zp
     # -------------------------------------------------------------------------
     # log the predicted vs measured FP peak
-    wmsg = '\tPredicted FP peak #: {0}   Measured FP peak #: {1}'
     wargs = [fp_peak0_est, fpindex[best_zp]]
-    WLOG(params, '', wmsg.format(*wargs))
+    WLOG(params, '', TextEntry('40-014-00019', args=wargs))
     # -------------------------------------------------------------------------
     # we find teh actual wavelength of our IDed peaks
     wave_xpeak2 = wave_fp[best_zp - ipeak]
@@ -1353,12 +1386,14 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
         if absdev < absdev_threshold:
             absdev = absdev_threshold
         # get the max median asbolute deviation
-        maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
+        maxabsdev = np.nanmax(np.abs(dev[good] / absdev))
         # iterate the good mask
         good &= np.abs(dev / absdev) < maxdev_threshold
     # -------------------------------------------------------------------------
     # then we perform a thresholding with a 5th order polynomial
     maxabsdev = np.inf
+    # temp empty values
+    fit_err_xpix, dev, absdev = None, None, None
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
@@ -1371,9 +1406,9 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
         if absdev < absdev_threshold:
             absdev = absdev_threshold
         # get the max median asbolute deviation
-        maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
+        maxabsdev = np.nanmax(np.abs(dev[good] / absdev))
         # iterate the good mask
-        good &= np.abs(dev/absdev)  < maxdev_threshold
+        good &= np.abs(dev / absdev) < maxdev_threshold
     # -------------------------------------------------------------------------
     # this relation is the (sigma-clipped) fit between the xpix error
     #    and xpix along the order. The corresponding correction vector will
@@ -1386,30 +1421,13 @@ def _get_offset_sp(params, loc, sp_fp, sp_hc, order_num, **kwargs):
     std_corr = np.std(corr_err_xpix[xpos_predict_int])
     corr_med = np.nanmedian(corr_err_xpix[xpos_predict_int])
     cent_fit = math.nanpolyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
-    num_fp_cent = np.polyval(cent_fit, dim2//2)
+    num_fp_cent = np.polyval(cent_fit, dim2 // 2)
     # log the statistics
     wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
-    wmsg1 = '\t\tstddev pixel error relative to fit: {0:.5f} pix'.format(*wargs)
-    wmsg2 = '\t\tabsdev pixel error relative to fit: {1:.5f} pix'.format(*wargs)
-    wmsg3 = ('\t\tmedian pixel error relative to zero: {2:.5f} '
-             'pix'.format(*wargs))
-    wmsg4 = '\t\tstddev applied correction: {3:.5f} pix'.format(*wargs)
-    wmsg5 = '\t\tmed applied correction: {4:.5f} pix'.format(*wargs)
-    wmsg6 = '\t\tNth FP peak at center of order: {5:.5f}'.format(*wargs)
-    WLOG(params, '', [wmsg1, wmsg2, wmsg3, wmsg4, wmsg5, wmsg6])
-    # -------------------------------------------------------------------------
-    # save to loc
-    loc['CORR_DX_FROM_FP'][order_num] = corr_err_xpix
-    loc['XPEAK2'][order_num] = xpeak2
-    loc['PEAKVAL2'][order_num] = peakval2
-    loc['EWVAL2'][order_num] = ewval2
-    loc['ERR_PIX'][order_num] = err_pix
-    loc['GOOD_MASK'][order_num] = good
+    WLOG(params, '', TextEntry('40-014-00020', args=wargs))
     # -------------------------------------------------------------------------
     # return loc
-    return loc
-
-
+    return corr_err_xpix, xpeak2, peakval2, ewval2, err_pix, good
 
 # =============================================================================
 # End of code
