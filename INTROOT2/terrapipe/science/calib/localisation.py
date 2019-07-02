@@ -456,18 +456,20 @@ def get_coefficients(params, recipe, header, **kwargs):
     # -------------------------------------------------------------------------
     # extract keys from header
     nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)
-    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int)
-    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int)
+    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int) + 1
+    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int) + 1
+    nset = params['FIBER_MAX_NUM_ORDERS_{0}'.format(fiber)]
     # extract coefficients from header
     cent_coeffs = locofile.read_header_key_2d_list('KW_LOC_CTR_COEFF',
                                                    dim1=nbo, dim2=deg_c)
     wid_coeffs = locofile.read_header_key_2d_list('KW_LOC_WID_COEFF',
                                                   dim1=nbo, dim2=deg_w)
+
     # -------------------------------------------------------------------------
     # store localisation properties in parameter dictionary
     lprops = ParamDict()
     lprops['LOCOFILE'] = locofilepath
-    lprops['NBO'] = nbo
+    lprops['NBO'] = nbo / nset
     lprops['DEG_C'] = deg_c
     lprops['DEG_W'] = deg_w
     lprops['CENT_COEFFS'] = cent_coeffs
