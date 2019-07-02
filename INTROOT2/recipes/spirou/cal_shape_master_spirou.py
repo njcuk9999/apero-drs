@@ -189,12 +189,20 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    dxmap = shape.calculate_dxmap(params, hcimage, master_fp, wprops, lprops)
-
+    dout = shape.calculate_dxmap(params, hcimage, master_fp, wprops, lprops)
+    dxmap, max_dxmap_std, max_dxmap_info = dout
+    # if dxmap is None we shouldn't continue as quality control have failed
+    if dxmap is None:
+        fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
+                 max_dxmap_info[2]]
+        WLOG(params, 'warning', TextEntry('10-014-00003', args=fargs))
+        # return a copy of locally defined variables in the memory
+        return dict(locals())
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
+    dymap = shape.calculate_dymap(params)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap
