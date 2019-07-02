@@ -18,6 +18,10 @@ __all__ = [# general
            'IMAGE_X_LOW', 'IMAGE_X_HIGH',
            'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
            'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
+           # general calib constants
+           'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT',
+           'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
+           'CAVITY_LENGTH_FILE_WAVECOL',
            # qc constants
            'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
            'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -76,8 +80,10 @@ __all__ = [# general
            'SHAPEOFFSET_MASK_EXTWIDTH', 'SHAPEOFFSET_DEVIANT_PMIN',
            'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
            'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
-           'SHAPEOFFSET_ABSDEV_THRESHOLD',
-
+           'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
+           # wave constants
+           'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
+           'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
            ]
 
 # set name
@@ -97,7 +103,6 @@ DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
 #    using header wave solution if available)
 CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
                                dtype=bool, source=__NAME__)
-
 
 # =============================================================================
 # COMMON IMAGE SETTINGS
@@ -124,6 +129,31 @@ IMAGE_Y_LOW = Const('IMAGE_Y_LOW', value=None, dtype=int, minimum=0,
                     source=__NAME__)
 IMAGE_Y_HIGH = Const('IMAGE_Y_HIGH', value=None, dtype=int, minimum=0,
                      source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: GENERAL SETTINGS
+# =============================================================================
+# Define the cavity length file (located in the DRS_CALIB_DATA directory)
+CAVITY_LENGTH_FILE = Const('CAVITY_LENGTH_FILE', value=None, dtype=str,
+                           source=__NAME__)
+
+# Define the cavity length file format (must be astropy.table format)
+CAVITY_LENGTH_FILE_FMT = Const('CAVITY_LENGTH_FILE_FMT', value=None,
+                               dtype=str, source=__NAME__)
+
+# Define the cavity length file column names (must be separated by commas
+#   and must be equal to the number of columns in file)
+CAVITY_LENGTH_FILE_COLS = Const('CAVITY_LENGTH_FILE_COLS', value=None,
+                                dtype=str, source=__NAME__)
+
+# Define the cavity length file row the data starts
+CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
+                                 dtype=str, source=__NAME__)
+
+# Define coefficent column
+#    Must be in CAVITY_LENGTH_FILE_COLS
+CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
+                                   dtype=str, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
@@ -671,3 +701,35 @@ SHAPEOFFSET_MAXDEV_THRESHOLD = Const('SHAPEOFFSET_MAXDEV_THRESHOLD', value=None,
 # very low thresholding values tend to clip valid points
 SHAPEOFFSET_ABSDEV_THRESHOLD = Const('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
                                      dtype=float, source=__NAME__)
+
+# define the names of the unique fibers (i.e. not AB) for use in
+#     getting the localisation coefficients for dymap
+SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
+                            source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: WAVE SETTINGS
+# =============================================================================
+# Define the line list file (located in the DRS_WAVE_DATA directory)
+WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
+                           source=__NAME__)
+
+# Define the line list file format (must be astropy.table format)
+WAVE_LINELIST_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
+                          source=__NAME__)
+
+# Define the line list file column names (must be separated by commas
+#   and must be equal to the number of columns in file)
+WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
+                           source=__NAME__)
+
+# Define the line list file row the data starts
+WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=str,
+                            source=__NAME__)
+
+# Define the line list file wavelength column and amplitude column
+#    Must be in WAVE_LINELIST_COLS
+WAVE_LINELIST_WAVECOL = Const('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
+                              source=__NAME__)
+WAVE_LINELIST_AMPCOL = Const('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
+                             source=__NAME__)

@@ -57,6 +57,32 @@ IMAGE_Y_HIGH.value = 3350
 
 
 # =============================================================================
+# CALIBRATION: GENERAL SETTINGS
+# =============================================================================
+# Define the cavity length file (located in the DRS_CALIB_DATA directory)
+CAVITY_LENGTH_FILE = CAVITY_LENGTH_FILE.copy(__NAME__)
+CAVITY_LENGTH_FILE.value = 'cavity_length.dat'
+
+# Define the cavity length file format (must be astropy.table format)
+CAVITY_LENGTH_FILE_FMT = CAVITY_LENGTH_FILE_FMT.copy(__NAME__)
+CAVITY_LENGTH_FILE_FMT.value = 'ascii'
+
+# Define the cavity length file column names (must be separated by commas
+#   and must be equal to the number of columns in file)
+CAVITY_LENGTH_FILE_COLS = CAVITY_LENGTH_FILE_COLS.copy(__NAME__)
+CAVITY_LENGTH_FILE_COLS.value = 'NTH_ORDER, WAVELENGTH_COEFF'
+
+# Define the cavity length file row the data starts
+CAVITY_LENGTH_FILE_START = CAVITY_LENGTH_FILE_START.copy(__NAME__)
+CAVITY_LENGTH_FILE_START.value = 0
+
+# Define coefficent column
+#    Must be in CAVITY_LENGTH_FILE_COLS
+CAVITY_LENGTH_FILE_WAVECOL = CAVITY_LENGTH_FILE_WAVECOL.copy(__NAME__)
+CAVITY_LENGTH_FILE_WAVECOL.value = 'WAVELENGTH_COEFF'
+
+
+# =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
 # Note new fiber settings musts also be added to pseudo_const
@@ -614,3 +640,35 @@ SHAPEOFFSET_MAXDEV_THRESHOLD.value = 5
 SHAPEOFFSET_ABSDEV_THRESHOLD = SHAPEOFFSET_ABSDEV_THRESHOLD.copy(__NAME__)
 SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 
+# define the names of the unique fibers (i.e. not AB) for use in
+#     getting the localisation coefficients for dymap
+SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
+SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
+
+
+# =============================================================================
+# CALIBRATION: WAVE SETTINGS
+# =============================================================================
+# Define the line list file (located in the DRS_WAVE_DATA directory)
+WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
+WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'    # 'catalogue_ThAr.dat'
+
+# Define the line list file format (must be astropy.table format)
+WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
+WAVE_LINELIST_FMT.value = 'ascii.tab'
+
+# Define the line list file column names (must be separated by commas
+#   and must be equal to the number of columns in file)
+WAVE_LINELIST_COLS = WAVE_LINELIST_COLS.copy(__NAME__)
+WAVE_LINELIST_COLS.value = 'll, amp, kind'
+
+# Define the line list file row the data starts
+WAVE_LINELIST_START = WAVE_LINELIST_START.copy(__NAME__)
+WAVE_LINELIST_START.value = 0
+
+# Define the line list file wavelength column and amplitude column
+#    Must be in WAVE_LINELIST_COLS
+WAVE_LINELIST_WAVECOL = WAVE_LINELIST_WAVECOL.copy(__NAME__)
+WAVE_LINELIST_WAVECOL.value = 'll'
+WAVE_LINELIST_AMPCOL = WAVE_LINELIST_AMPCOL.copy(__NAME__)
+WAVE_LINELIST_AMPCOL.value = 'amp'
