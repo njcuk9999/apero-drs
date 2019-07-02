@@ -18,6 +18,7 @@ from terrapipe import core
 from terrapipe import locale
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_data
 
 # =============================================================================
 # Define variables
@@ -54,7 +55,7 @@ def get_hot_pixels(params):
     :rtype: tuple[np.ndarray, np.ndarray]
     """
     # get full badpixel file
-    full_badpix = get_full_flat(params)
+    full_badpix = drs_data.load_full_flat_pp(params)
     # get shape of full badpixel file
     dim1, dim2 = full_badpix.shape
 
@@ -103,8 +104,6 @@ def get_full_flat(params):
     """
     # get filename from parameters
     filename = params['PP_FULL_FLAT']
-    # get the drs package name from parameters
-    package = params['DRS_PACKAGE']
     # get the engineering data path from parameters
     relfolder = params['DATA_ENGINEERING']
     # construct the data directory
