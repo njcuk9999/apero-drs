@@ -21,9 +21,8 @@ from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
-from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
-
+from terrapipe.io import drs_data
 
 # =============================================================================
 # Define variables
@@ -253,23 +252,10 @@ def locate_bad_pixels_full(params, image, **kwargs):
     # log that we are looking for bad pixels
     WLOG(params, '', TextEntry('40-012-00002'))
     # get parameters from params/kwargs
-    filename = pcheck(params, 'BADPIX_FULL_FLAT', 'filename', kwargs, func_name)
     threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', 'threshold', kwargs,
                        func_name)
-    # get package/folder specific paths
-    package = params['DRS_PACKAGE']
-    relfolder = pcheck(params, 'DRS_BADPIX_DATA', 'directory', kwargs,
-                       func_name)
-    # construct filepath
-    datadir = drs_path.get_relative_folder(params, package, relfolder)
-    absfilename = os.path.join(datadir, filename)
-    # check that filepath exists and log an error if it was not found
-    if not os.path.exists(absfilename):
-        eargs = [filename, datadir]
-        WLOG(params, 'error', TextEntry('00-012-00001', args=eargs))
-    # read image
-    WLOG(params, '', TextEntry('40-012-00003', args=[absfilename]))
-    mdata = drs_fits.read(params, absfilename)
+    # get full flat
+    mdata = drs_data.load_full_flat_badpix(params, **kwargs)
     # check if the shape of the image and the full flat match
     if image.shape != mdata.shape:
         eargs = [mdata.shape, image.shape, func_name]
