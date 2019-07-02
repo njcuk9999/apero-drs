@@ -114,3 +114,11 @@ CALIB_DB_MATCH.value = 'closest'
 #  where the bad pixel data are stored
 DRS_BADPIX_DATA = DRS_BADPIX_DATA.copy(__NAME__)
 DRS_BADPIX_DATA.value = './data/spirou/engineering/'
+
+# where the calibration data are stored
+DRS_CALIB_DATA = DRS_CALIB_DATA.copy(__NAME__)
+DRS_CALIB_DATA = './data/spirou/calib/'
+
+# where the wave data are stored
+DRS_WAVE_DATA = DRS_WAVE_DATA.copy(__NAME__)
+DRS_WAVE_DATA.value = './data/spirou/calib/'

@@ -16,8 +16,9 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
            'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
            'DRS_BADPIX_DATA', 'CALIB_DB_MATCH', 'DRS_MOD_DATA_PATH',
-           'DRS_MOD_INSTRUMENT_CONFIG', 'DRS_MOD_CORE_CONFIG',
-           'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME', 'DRS_LOG_FORMAT']
+           'DRS_MOD_INSTRUMENT_CONFIG', 'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
+           'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME', 'DRS_LOG_FORMAT',
+           'DRS_CALIB_DATA',]
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_config'
@@ -144,6 +145,12 @@ DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
 
 #  where the bad pixel data are stored
 DRS_BADPIX_DATA = Const('DRS_BADPIX_DATA', dtype=str, source=__NAME__)
+
+# where the calibration data are stored
+DRS_CALIB_DATA = Const('DRS_CALIB_DATA', dtype=str, source=__NAME__)
+
+# where the wave data are stored
+DRS_WAVE_DATA = Const('DRS_WAVE_DATA', dtype=str, source=__NAME__)
 
 
 # =============================================================================
