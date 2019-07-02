@@ -194,6 +194,8 @@ def iuv_spline(x, y, **kwargs):
 
     if np.sum(~nanmask) < 2:
         y = np.zeros_like(x)
+    elif np.sum(nanmask) == 0:
+        pass
     else:
         # replace all NaN's with linear interpolation
         badspline = InterpolatedUnivariateSpline(x[~nanmask], y[~nanmask],
