@@ -189,6 +189,30 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     return props, image5
 
 
+def add_calibs_to_header(outfile, props):
+
+    # define property keys (must be in calibrate_ppfile function)
+    propkeys = ['DARKFILE', 'BADPFILE', 'BACKFILE', 'FLIPPED', 'CONVERT_E',
+                'RESIZED']
+    # define the header keywords to use for each
+    headerkeys = ['KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_C_FLIP',
+                  'KW_C_CVRTE', 'KW_C_RESIZE']
+
+    # loop around property keys
+    for it in range(len(propkeys)):
+        # get header key
+        hkey = headerkeys[it]
+        # get property key
+        pkey = propkeys[it]
+        # add header key
+        if pkey in props:
+            outfile.add_hkey(hkey, value=str(props[pkey]))
+    # return outfile
+    return outfile
+
+
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
