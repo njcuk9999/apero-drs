@@ -290,7 +290,7 @@ def use_barycorrpy(p, t, **kwargs):
     # end wait for parallelisation
     spirouFITS.close_fits_lock_file(p, lock, lfile, lfilename)
     # convert JDUTC to BJDTDB
-    bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t, **bkwargs)
+    bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(jdutc, **bkwargs)
 
     if return_all:
         out = [bresults1[0] / 1000.0, bresults2[0],
