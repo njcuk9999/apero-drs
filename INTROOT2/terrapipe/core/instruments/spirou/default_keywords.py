@@ -192,6 +192,13 @@ KW_CDBBLAZE.set(key='CDBBLAZE', comment='The calibration BLAZE file used')
 KW_CDBWAVE = KW_CDBWAVE.copy(__NAME__)
 KW_CDBWAVE.set(key='CDBWAVE', comment='The calibration WAVE file used')
 
+# additional properties of calibration
+KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
+KW_C_FLIP.set(key='CAL_FLIP', comment='Whether the image was flipped from pp')
+KW_C_CVRTE = KW_C_CVRTE.copy(__NAME__)
+KW_C_CVRTE.set(key='CAL_TOE', comment='Whether the flux was converted to e-')
+KW_C_RESIZE = KW_C_RESIZE.copy(__NAME__)
+KW_C_RESIZE.set(key='CAL_SIZE', comment='Whether the image was resized from pp')
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords

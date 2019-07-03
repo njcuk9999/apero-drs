@@ -304,6 +304,24 @@ out_loc_loco_3_c = drs_finput('LOC_SUP_C', KW_OUTPUT='LOC_SUP_C',
                               fiber='C', ext='_with-order_C.fits',
                               outfunc=out.calib_file)
 out_file.addset(out_loc_loco_3_c)
+# -----------------------------------------------------------------------------
+out_shape_dxmap = drs_finput('SHAPE_X', KW_OUTPUT='SHAPE_X')
+
+out_shape_dymap = drs_finput('SHAPE_Y', KW_OUTPUT='SLIT_SHAPE')
+
+out_shape_fpmaster = drs_finput('MASTER_FP', KW_OUTPUT='SLIT_SHAPE')
+
+out_shape_debug_ifp = drs_finput('SHAPE_IN_FP', KW_OUTPUT='SLIT_SHAPE')
+
+out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP', KW_OUTPUT='SLIT_SHAPE')
+
+out_shape_debug_ihc = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
+
+out_shape_debug_ohc = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
+
+out_shape_debug_bdx = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
+
+
 
 # -----------------------------------------------------------------------------
 # slit

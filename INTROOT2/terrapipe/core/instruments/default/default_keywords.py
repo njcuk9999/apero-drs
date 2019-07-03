@@ -24,7 +24,7 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
            'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
            'KW_DRS_DATE_NOW', 'KW_DRS_DATE', 'KW_WAVE_NBO', 'KW_WAVE_DEG',
-           'KW_WAVE_PARAM']
+           'KW_WAVE_PARAM', 'KW_C_FLIP', 'KW_C_CVRTE', 'KW_C_RESIZE']
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
@@ -166,6 +166,10 @@ KW_CDBFLAT = Keyword('KW_CDBFLAT', key='', dtype=str, source=__NAME__)
 KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__)
 KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__)
 
+# additional properties of calibration
+KW_C_FLIP = Keyword('KW_C_FLIP', key='', dtype=str, source=__NAME__)
+KW_C_CVRTE = Keyword('KW_C_CVRTE', key='', dtype=str, source=__NAME__)
+KW_C_RESIZE = Keyword('KW_C_RESIZE', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords

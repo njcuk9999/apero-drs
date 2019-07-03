@@ -81,6 +81,7 @@ __all__ = [# general
            'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
            'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
            'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
+           'SHAPE_DEBUG_OUTPUTS',
            # wave constants
            'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
            'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
@@ -591,7 +592,7 @@ SHAPE_SIGMACLIP_MAX = Const('SHAPE_SIGMACLIP_MAX', value=None, dtype=float,
 
 # the size of the median filter to apply along the order (in pixels)
 SHAPE_MEDIAN_FILTER_SIZE = Const('SHAPE_MEDIAN_FILTER_SIZE', value=None,
-                                 dtype=float, minimum=0.0, source=__NAME__)
+                                 dtype=int, minimum=0, source=__NAME__)
 
 # The minimum value for the cross-correlation to be deemed good
 SHAPE_MIN_GOOD_CORRELATION = Const('SHAPE_MIN_GOOD_CORRELATION', value=None,
@@ -705,6 +706,10 @@ SHAPEOFFSET_ABSDEV_THRESHOLD = Const('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
 # define the names of the unique fibers (i.e. not AB) for use in
 #     getting the localisation coefficients for dymap
 SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
+                            source=__NAME__)
+
+#  Define whether to output debug (sanity check) files
+SHAPE_DEBUG_OUTPUTS = Const('SHAPE_DEBUG_OUTPUTS', value=None, dtype=bool,
                             source=__NAME__)
 
 # =============================================================================

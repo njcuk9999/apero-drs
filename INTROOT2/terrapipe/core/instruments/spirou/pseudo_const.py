@@ -9,6 +9,7 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+import numpy as np
 
 from terrapipe.core import constants
 from terrapipe.core.instruments.default import pseudo_const
@@ -84,6 +85,13 @@ class PseudoConstants(DefaultConstants):
     # FIBER SETTINGS
     # =========================================================================
     def FIBER_SETTINGS(self, params, fiber=None):
+        """
+        Get the fiber settings
+
+        :param params:
+        :param fiber:
+        :return:
+        """
         source = __NAME__ + '.FIBER_SETTINGS()'
         # get fiber type
         if fiber is None:
@@ -106,6 +114,61 @@ class PseudoConstants(DefaultConstants):
         # return params
         return params
 
+
+    def FIBER_LOC_TYPES(self, fiber):
+        """
+        For localisation only AB and C loco files exist thus need to
+        use AB for AB or A or B fibers and use C for the C fiber
+        note only having AB and C files also affects FIBER_LOC_COEFF_EXT
+
+        :param fiber:
+        :return:
+        """
+        if fiber in ['AB', 'A', 'B']:
+            return 'AB'
+        else:
+            return 'C'
+
+
+    def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
+        """
+        Extract the localisation coefficients based on how they are stored
+        for spirou we have either AB,A,B of size 98 orders or C of size 49
+        orders. For AB we merge the A and B, for A and B we take alternating
+        orders, for C we take all. Note only have AB and C files also affects
+        FIBER_LOC_TYPES
+
+        :param props:
+        :param fiber:
+        :return:
+        """
+
+        # for AB we need to merge the A and B components
+        if fiber == 'AB':
+            # get shape
+            nbo, ncoeff = coeffs.shape
+            # set up acc
+            acc = np.zeros([int(nbo / 2), ncoeff])
+            # get sum of 0 to step pixels
+            cosum = np.array(coeffs[0:nbo:2, :])
+            # add the sum of 1 to step
+            cosum = cosum + coeffs[1:nbo:2, :]
+            # overwrite values into coeffs array
+            acc[0:int(nbo / 2), :] = (1 / 2) * cosum
+        # for A we only need the A components
+        elif fiber == 'A':
+            acc = coeffs[:-1:2]
+            nbo = coeffs.shape[0] // 2
+        # for B we only need the B components
+        elif fiber == 'B':
+            acc = coeffs[1::2]
+            nbo = coeffs.shape[0] // 2
+        # for C we take all of them (as there are only the C components)
+        else:
+            acc = coeffs
+            nbo = coeffs.shape[0]
+
+        return acc, nbo
 
 
 # =============================================================================
