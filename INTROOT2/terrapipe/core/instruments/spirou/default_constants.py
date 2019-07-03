@@ -520,7 +520,7 @@ SHAPE_LARGE_ANGLE_MAX = SHAPE_LARGE_ANGLE_MAX.copy(__NAME__)
 SHAPE_LARGE_ANGLE_MAX.value = 0.0
 
 SHAPE_SMALL_ANGLE_MIN = SHAPE_SMALL_ANGLE_MIN.copy(__NAME__)
-SHAPE_SMALL_ANGLE_MIN.vaule = -1.0
+SHAPE_SMALL_ANGLE_MIN.value = -1.0
 
 SHAPE_SMALL_ANGLE_MAX = SHAPE_SMALL_ANGLE_MAX.copy(__NAME__)
 SHAPE_SMALL_ANGLE_MAX.value = 1.0
@@ -645,6 +645,9 @@ SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
 SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 
+#  Define whether to output debug (sanity check) files
+SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
+SHAPE_DEBUG_OUTPUTS.value = True
 
 # =============================================================================
 # CALIBRATION: WAVE SETTINGS
