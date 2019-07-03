@@ -200,7 +200,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
     # extract cofficients from header
     wave_coeffs = wavefile.read_header_key_2d_list('KW_WAVE_PARAM',
-                                                   dim1=nbo, dim2=deg)
+                                                   dim1=nbo, dim2=deg + 1)
     # -------------------------------------------------------------------------
     # if wavemap is unset create it from wave coefficients
     if wavemap is None:
