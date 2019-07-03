@@ -30,6 +30,7 @@ from terrapipe.io import drs_fits
 from terrapipe.io import drs_table
 from terrapipe.io import drs_data
 from . import general
+from . import localisation
 
 # =============================================================================
 # Define variables
@@ -498,6 +499,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     poly_cavity = drs_data.load_cavity_file(params)
     # get the dimensions
     dim1, dim2 = fpdata.shape
+
     # -------------------------------------------------------------------------
     # define storage for plotting
     slope_deg_arr, slope_arr, skeep_arr = [], [], []
@@ -613,7 +615,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
-            WLOG(params, '40-014-00017', TextEntry('', args=wargs))
+            WLOG(params, '', TextEntry('40-014-00017', args=wargs))
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
@@ -756,9 +758,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             xpeak2[order_num] = out[1]
             peakval2[order_num] = out[2]
             ewval2[order_num] = out[3]
-            ewval2[order_num] = out[4]
-            err_pix[order_num] = out[5]
-            good_mask[order_num] = out[6]
+            err_pix[order_num] = out[4]
+            good_mask[order_num] = out[5]
 
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
@@ -967,7 +968,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        return dxmap, max_dxmap_std, max_dxmap_info
+                        # return dxmap, max_dxmap_std, max_dxmap_info
 
             # -----------------------------------------------------------------
             if params['DRS_PLOT'] and (params['DRS_DEBUG'] >= 2) and plot_on:
@@ -1005,26 +1006,69 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     return master_dxmap, max_dxmap_std, max_dxmap_info
 
 
-def calculate_dymap(params, fpdata, **kwargs):
+def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
 
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
-
-
     # get the dimensions
-    dim1, dim2 = fpdata.shape
-
+    dim1, dim2 = fpimage.shape
     # make fibers a list
     fibers = list(map(lambda x: x.strip(), fibers.split(',')))
-
     # x indices in the initial image
     xpix = np.arange(dim2)
-
-
+    # ----------------------------------------------------------------------
+    # get localisation parameters for each fiber
+    accs, nbo = dict(), 0
+    # loop around fiber
     for fiber in fibers:
-        # TODO: Finish this
-        pass
+        # log progress
+        WLOG(params, '', TextEntry('40-014-00024', args=[fiber]))
+        # get coefficients
+        lprops = localisation.get_coefficients(params, recipe, fpheader,
+                                               fiber=fiber, merge=True)
+        # update nbo
+        nbo = lprops['NBO']
+        # add to array
+        accs[fiber] = lprops['CENT_COEFFS']
+    # number of fibers
+    nfibers = len(fibers)
+    # ----------------------------------------------------------------------
+    # looping through x pixels
+    # We take each column and determine where abc fibers fall relative
+    # to the central pixel in x (normally, that's 4088/2) along the y axis.
+    # This difference in position gives a dy that need to be applied to
+    # straighten the orders
+
+    # Once we have determined this for all abc fibers and all orders, we
+    # fit a Nth order polynomial to the dy versus y relation along the
+    # column, and apply a spline to straighten the order.
+    y0 = np.zeros((nbo * nfibers, dim2))
+    # log progress
+    WLOG(params, '', TextEntry('40-014-00023'))
+    # set a master dy map
+    master_dymap = np.zeros_like(fpimage)
+    # loop around orders and get polynomial values for fibers A, B and C
+    for order_num in range(nbo):
+        iord = order_num * nfibers
+        # loop around the fibers and calculate the y positions using each
+        #   fibers coefficients (for each order)
+        for f_it, fiber in enumerate(accs.keys()):
+            # get this order + fibers coefficients
+            acco = accs[fiber][order_num, :][::-1]
+            # work out this order + fibers y values: polynomial(x position)
+            y0[iord + f_it, :] = np.polyval(acco, xpix)
+    # loop around each x pixel (columns)
+    for ix in range(dim2):
+        # dy for all orders and all fibers
+        dy = y0[:, ix] - y0[:, dim2 // 2]
+        # fitting the dy to the position of the order
+        yfit = math.nanpolyfit(y0[:, ix], dy, 3)
+        ypix = np.arange(dim1)
+        # add to the master dy map
+        master_dymap[:, ix] = np.polyval(yfit, ypix)
+    # return dymap
+    return master_dymap
 
 
 # =============================================================================
@@ -1428,6 +1472,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     # -------------------------------------------------------------------------
     # return loc
     return corr_err_xpix, xpeak2, peakval2, ewval2, err_pix, good
+
 
 # =============================================================================
 # End of code
