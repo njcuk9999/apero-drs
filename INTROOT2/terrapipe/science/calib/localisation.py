@@ -431,15 +431,20 @@ def image_superimp(image, coeffs):
 
 def get_coefficients(params, recipe, header, **kwargs):
     func_name = __NAME__ + '.get_coefficients()'
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # get parameters from params/kwargs
     fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
+    merge = kwargs.get('merge', False)
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
     filecol = cdb.file_col
+    # deal with fibers that we don't have
+    usefiber = pconst.FIBER_LOC_TYPES(fiber)
     # get calibration key
-    key = 'LOC_{0}'.format(fiber)
-    filetype = 'LOC_LOCO_{0}'.format(fiber)
+    key = 'LOC_{0}'.format(usefiber)
+    filetype = 'LOC_LOCO_{0}'.format(usefiber)
     # get the badpix entries
     locoentries = drs_database.get_key_from_db(params, key, cdb, header,
                                                  n_ent=1)
@@ -458,24 +463,31 @@ def get_coefficients(params, recipe, header, **kwargs):
     nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)
     deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int) + 1
     deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int) + 1
-    nset = params['FIBER_MAX_NUM_ORDERS_{0}'.format(fiber)]
+    nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
     # extract coefficients from header
     cent_coeffs = locofile.read_header_key_2d_list('KW_LOC_CTR_COEFF',
                                                    dim1=nbo, dim2=deg_c)
     wid_coeffs = locofile.read_header_key_2d_list('KW_LOC_WID_COEFF',
                                                   dim1=nbo, dim2=deg_w)
-
+    # merge or extract individual coeffs
+    if merge:
+        cent_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(cent_coeffs, fiber)
+        wid_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(wid_coeffs, fiber)
+        nset = 1
     # -------------------------------------------------------------------------
     # store localisation properties in parameter dictionary
     lprops = ParamDict()
     lprops['LOCOFILE'] = locofilepath
-    lprops['NBO'] = nbo / nset
-    lprops['DEG_C'] = deg_c
-    lprops['DEG_W'] = deg_w
+    lprops['NBO'] = int(nbo // nset)
+    lprops['DEG_C'] = int(deg_c)
+    lprops['DEG_W'] = int(deg_w)
     lprops['CENT_COEFFS'] = cent_coeffs
     lprops['WID_COEFFS'] = wid_coeffs
+    lprops['MERGED'] = merge
+    lprops['NSET'] = nset
     # set sources
-    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'NBO', 'DEG_C', 'DEG_W']
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'NBO', 'DEG_C', 'DEG_W',
+            'MERGED', 'NSET']
     lprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
