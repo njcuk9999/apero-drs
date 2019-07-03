@@ -42,7 +42,14 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
-DARK_MASTER_FILE = file_definitions.out_dark_master
+FPMASTER_FILE = file_definitions.out_shape_fpmaster
+DXMAP_FILE = file_definitions.out_shape_dxmap
+DYMAP_FILE = file_definitions.out_shape_dymap
+SHAPE_IN_FP_FILE = file_definitions.out_shape_debug_ifp
+SHAPE_IN_HC_FILE = file_definitions.out_shape_debug_ihc
+SHAPE_OUT_FP_FILE = file_definitions.out_shape_debug_ofp
+SHAPE_OUT_HC_FILE = file_definitions.out_shape_debug_ohc
+SHAPE_BDXMAP_FILE = file_definitions.out_shape_debug_bdx
 # alias pcheck
 pcheck = core.pcheck
 
@@ -202,49 +209,215 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params)
+    dymap = shape.calculate_dymap(params, recipe, fpimage, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap
     # ----------------------------------------------------------------------
+    # copy it first
+    dxmap0 = np.array(dymap)
+    # straighten dxmap
+    dymap = shape.ea_transform(params, dxmap, dymap=dymap)
 
     # ----------------------------------------------------------------------
     # Need to straighten the hc data and fp data for debug
     # ----------------------------------------------------------------------
+    # log progress (applying transforms)
+    WLOG(params, '', TextEntry('40-014-00025'))
+    # apply the dxmap and dymap
+    hcimage2 = shape.ea_transform(params, hcimage, dxmap=dxmap, dymap=dymap)
+    fpimage2 = shape.ea_transform(params, fpimage, dxmap=dxmap, dymap=dymap)
 
     # ----------------------------------------------------------------------
     # Plotting
     # ----------------------------------------------------------------------
+    if params['DRS_PLOT'] > 0:
+        # TODO fill in
+        # # plots setup: start interactive plot
+        # sPlt.start_interactive_session(p)
+        # # plot the shape process for one order
+        # sPlt.slit_shape_angle_plot(p, loc)
+        # # end interactive section
+        # sPlt.end_interactive_session(p)
+        pass
 
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Quality control
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # TODO: Decide on some extra quality control?
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        params['QC'] = 1
+        params.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        params['QC'] = 0
+        params.set_source('QC', __NAME__ + '/main()')
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # Writing DXMAP to file
     # ----------------------------------------------------------------------
+    # define outfile
+    outfile1 = DXMAP_FILE.newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile1.construct_filename(params, infile=fpfile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from input file
+    outfile1.copy_original_keys(fpfile)
+    # add version
+    outfile1.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile1.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile1.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile1.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    outfile1.add_hkey('KW_OUTPUT', value=outfile1.name)
+    # add input files (and deal with combining or not combining)
+    outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles, dim1name='hcfiles')
+    outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles, dim1name='fpfiles')
+    # add the calibration files use
+    outfile1 = general.add_calibs_to_header(outfile1, fpprops)
+    # add qc parameters
+    outfile1.add_qckeys(qc_params)
+    # copy data
+    outfile1.data = dxmap
+    # ------------------------------------------------------------------
+    # log that we are saving dxmap to file
+    WLOG(params, '', TextEntry('40-014-00026', args=[outfile1.filename]))
+    # write image to file
+    outfile1.write_multi(datalist=[fp_table])
 
     # ----------------------------------------------------------------------
     # Writing DYMAP to file
     # ----------------------------------------------------------------------
+    # define outfile
+    outfile2 = DYMAP_FILE.newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile2.construct_filename(params, infile=fpfile)
+    # copy header from outfile1
+    outfile2.copy_hdict(outfile1)
+    # copy data
+    outfile2.data = dymap
+    # log that we are saving dymap to file
+    WLOG(params, '', TextEntry('40-014-00027', args=[outfile2.filename]))
+    # write image to file
+    outfile2.write_multi(datalist=[fp_table])
 
     # ----------------------------------------------------------------------
     # Writing Master FP to file
     # ----------------------------------------------------------------------
+    # define outfile
+    outfile3 = FPMASTER_FILE.newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile3.construct_filename(params, infile=fpfile)
+    # copy header from outfile1
+    outfile3.copy_hdict(outfile1)
+    # copy data
+    outfile3.data = master_fp
+    # log that we are saving master_fp to file
+    WLOG(params, '', TextEntry('40-014-00028', args=[outfile3.filename]))
+    # write image to file
+    outfile3.write_multi(datalist=[fp_table])
 
     # ----------------------------------------------------------------------
     # Writing DEBUG files
     # ----------------------------------------------------------------------
+    if params['SHAPE_DEBUG_OUTPUTS']:
+        # log progress (writing debug outputs)
+        WLOG(params, '', TextEntry('40-014-00029'))
+        # ------------------------------------------------------------------
+        # deal with the unstraighted dxmap
+        # ------------------------------------------------------------------
+        debugfile0 = SHAPE_BDXMAP_FILE.newcopy(recipe=recipe)
+        debugfile0.construct_filename(params, infile=fpfile)
+        debugfile0.copy_hdict(outfile1)
+        debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        debugfile0.data = dxmap0
+        debugfile0.write_multi(datalist=[fp_table])
+        # ------------------------------------------------------------------
+        # for the fp files take the header from outfile1
+        # ------------------------------------------------------------------
+        # in file
+        debugfile1 = SHAPE_IN_FP_FILE.newcopy(recipe=recipe)
+        debugfile1.construct_filename(params, infile=fpfile)
+        debugfile1.copy_hdict(outfile1)
+        debugfile1.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        debugfile1.data = fpimage
+        debugfile1.write_multi(datalist=[fp_table])
+        # out file
+        debugfile2 = SHAPE_OUT_FP_FILE.newcopy(recipe=recipe)
+        debugfile2.construct_filename(params, infile=fpfile)
+        debugfile2.copy_hdict(outfile1)
+        debugfile2.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        debugfile2.data = fpimage2
+        debugfile2.write_multi(datalist=[fp_table])
+        # ------------------------------------------------------------------
+        # for hc files copy over the fp parameters with the hc parameters
+        # ------------------------------------------------------------------
+        # in file
+        debugfile3 = SHAPE_IN_HC_FILE.newcopy(recipe=recipe)
+        debugfile3.construct_filename(params, infile=hcfile)
+        debugfile3.copy_original_keys(hcfile)
+        # add version
+        debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+        # add process id
+        debugfile3.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
+        # add input files (and deal with combining or not combining)
+        debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                             dim1name='hcfiles')
+        debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
+                             dim1name='fpfiles')
+        # add the calibration files use
+        debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
+        # add qc parameters
+        debugfile3.add_qckeys(qc_params)
+        # add data
+        debugfile3.data = hcimage
+        debugfile3.write_multi(datalist=[fp_table])
+        # out file
+        debugfile4 = SHAPE_OUT_HC_FILE.newcopy(recipe=recipe)
+        debugfile4.construct_filename(params, infile=hcfile)
+        debugfile4.copy_hdict(debugfile4)
+        debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
+        debugfile4.data = hcimage2
+        debugfile4.write_multi(datalist=[fp_table])
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
+    if params['QC']:
+        # add dxmap
+        drs_database.add_file(params, outfile1)
+        # add dymap
+        drs_database.add_file(params, outfile2)
+        # add master fp file
+        drs_database.add_file(params, outfile3)
 
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
     return dict(locals())
-
 
 
 # =============================================================================
