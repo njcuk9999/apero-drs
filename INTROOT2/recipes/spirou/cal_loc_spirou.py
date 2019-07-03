@@ -365,9 +365,7 @@ def __main__(recipe, params):
             hfiles = [infile.basename]
         loco1file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
         # add the calibration files use
-        loco1file.add_hkey('KW_CDBDARK', value=props['DARKFILE'])
-        loco1file.add_hkey('KW_CDBBAD', value=props['BADPFILE'])
-        loco1file.add_hkey('KW_CDBBACK', value=props['BACKFILE'])
+        loco1file = general.add_calibs_to_header(loco1file, props)
         # add localisation parameters
         loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
         loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)
