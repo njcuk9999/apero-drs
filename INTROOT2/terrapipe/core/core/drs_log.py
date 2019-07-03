@@ -520,10 +520,10 @@ def find_param(params, key, name=None, kwargs=None, func=None):
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
         value = None
-    elif key in params:
-        value = params[key]
-    else:
+    elif key.upper() in rkwargs:
         value = rkwargs[key.upper()]
+    else:
+        value = params[key]
 
     # set value
     return value
