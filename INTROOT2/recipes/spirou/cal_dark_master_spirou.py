@@ -177,7 +177,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # copy data
     outfile.data = master_dark
-    # log that we are saving rotated image
+    # log that we are saving master dark to file
     WLOG(params, '', TextEntry('40-011-10006', args=[outfile.filename]))
     # write data and header list to file
     outfile.write_multi(data_list=[dark_table])
