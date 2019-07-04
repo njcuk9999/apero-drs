@@ -461,14 +461,14 @@ def get_coefficients(params, recipe, header, **kwargs):
     # -------------------------------------------------------------------------
     # extract keys from header
     nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)
-    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int) + 1
-    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int) + 1
+    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int)
+    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int)
     nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
     # extract coefficients from header
     cent_coeffs = locofile.read_header_key_2d_list('KW_LOC_CTR_COEFF',
-                                                   dim1=nbo, dim2=deg_c)
+                                                   dim1=nbo, dim2=deg_c + 1)
     wid_coeffs = locofile.read_header_key_2d_list('KW_LOC_WID_COEFF',
-                                                  dim1=nbo, dim2=deg_w)
+                                                  dim1=nbo, dim2=deg_w + 1)
     # merge or extract individual coeffs
     if merge:
         cent_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(cent_coeffs, fiber)
