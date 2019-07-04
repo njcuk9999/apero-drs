@@ -67,7 +67,7 @@ pcheck = core.pcheck
 # Everything else is controlled from recipe_definition
 def main(directory=None, files=None, **kwargs):
     """
-    Main function for cal_dark_spirou.py
+    Main function for cal_loc_spirou.py
 
     :param directory: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -124,7 +124,7 @@ def __main__(recipe, params):
     # combine input images if required
     if params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='average')]
+        infiles = [drs_fits.combine(params, infiles, math='sum')]
         combine = True
     else:
         combine = False
