@@ -42,6 +42,10 @@ def general_file(params, **kwargs):
     return output_filenames.general_file(params, **kwargs)
 
 
+def debug_file(params, **kwargs):
+    return output_filenames.debug_file(params, **kwargs)
+
+
 def calib_file(params, **kwargs):
     func_name = __NAME__ + '.general_file()'
     # get parameters from keyword arguments

@@ -305,23 +305,57 @@ out_loc_loco_3_c = drs_finput('LOC_SUP_C', KW_OUTPUT='LOC_SUP_C',
                               outfunc=out.calib_file)
 out_file.addset(out_loc_loco_3_c)
 # -----------------------------------------------------------------------------
-out_shape_dxmap = drs_finput('SHAPE_X', KW_OUTPUT='SHAPE_X')
+# shape master
+out_shape_dxmap = drs_finput('SHAPE_X', KW_OUTPUT='SHAPE_X',
+                             ext='_shapex.fits',
+                             outfunc=out.calib_file,
+                             dbname='calibration', dbkey='SHAPEX')
+out_file.addset(out_shape_dxmap)
 
-out_shape_dymap = drs_finput('SHAPE_Y', KW_OUTPUT='SLIT_SHAPE')
-
-out_shape_fpmaster = drs_finput('MASTER_FP', KW_OUTPUT='SLIT_SHAPE')
-
-out_shape_debug_ifp = drs_finput('SHAPE_IN_FP', KW_OUTPUT='SLIT_SHAPE')
-
-out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP', KW_OUTPUT='SLIT_SHAPE')
-
-out_shape_debug_ihc = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
-
-out_shape_debug_ohc = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
-
-out_shape_debug_bdx = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
-
-
+out_shape_dymap = drs_finput('SHAPE_Y', KW_OUTPUT='SHAPE_Y',
+                             ext='_shapey.fits',
+                             outfunc=out.calib_file,
+                             dbname='calibration', dbkey='SHAPEY')
+out_file.addset(out_shape_dymap)
+out_shape_fpmaster = drs_finput('MASTER_FP', KW_OUTPUT='MASTER_FP',
+                                ext='_fpmaster.fits',
+                                outfunc=out.calib_file,
+                                dbname='calibration', dbkey='FPMASTER')
+out_file.addset(out_shape_fpmaster)
+out_shape_debug_ifp = drs_finput('SHAPE_IN_FP', KW_OUTPUT='SHAPE_IN_FP',
+                                 ext='_shape_in_fp.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shape_debug_ifp)
+out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP', KW_OUTPUT='SHAPE_OUT_FP',
+                                 ext='_shape_out_fp.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shape_debug_ofp)
+out_shape_debug_ihc = drs_finput('SHAPE_IN_HC', KW_OUTPUT='SHAPE_IN_HC',
+                                 ext='_shape_out_fp.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shape_debug_ihc)
+out_shape_debug_ohc = drs_finput('SHAPE_OUT_HC', KW_OUTPUT='SHAPE_OUT_HC',
+                                 ext='_shape_out_hc.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shape_debug_ohc)
+out_shape_debug_bdx = drs_finput('SHAPE_BDX', KW_OUTPUT='SHAPE_BDX',
+                                 ext='_shape_out_bdx.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shape_debug_bdx)
+# -----------------------------------------------------------------------------
+# shape local
+out_shape_local = drs_finput('SHAPEL', KW_OUTPUT='SHAPEL',
+                             ext='_shapel.fits',
+                             outfunc=out.calib_file,
+                             dbname='calibration', dbkey='SHAPEL')
+out_shapel_debug_ifp = drs_finput('SHAPEL_IN_FP', KW_OUTPUT='SHAPEL_IN_FP',
+                                 ext='_shapel_in_fp.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shapel_debug_ifp)
+out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP', KW_OUTPUT='SHAPEL_OUT_FP',
+                                 ext='_shapel_out_fp.fits',
+                                 outfunc=out.debug_file)
+out_file.addset(out_shapel_debug_ofp)
 
 # -----------------------------------------------------------------------------
 # slit

@@ -360,9 +360,7 @@ cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
 cal_shape.run_order = 4
 cal_shape.arg(pos=0, **directory)
-cal_shape.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1', 
-              helpstr=Help['SHAPE_HCFILES_HELP'])
-cal_shape.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+', 
+cal_shape.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
               helpstr=Help['SHAPE_FPFILES_HELP'])
 cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
