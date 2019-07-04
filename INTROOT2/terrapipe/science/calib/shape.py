@@ -23,6 +23,7 @@ from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.core import math
+from terrapipe.core.core import drs_database
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.io import drs_path
@@ -563,14 +564,14 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         loc2s = []
         # get dx array (NaN)
         dx = np.zeros((nbo, width)) + np.nan
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # loop around orders
         for order_num in range(nbo):
-            # -----------------------------------------------------------------
+            # --------------------------------------------------------------
             # Log progress banana iteration {0} of {1} order {2} of {3}
             wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
             WLOG(params, '', TextEntry('40-014-00016', args=wargs))
-            # -----------------------------------------------------------------
+            # --------------------------------------------------------------
             # defining a ribbon that will contain the straightened order
             ribbon_hc = np.zeros([width, dim2])
             ribbon_fp = np.zeros([width, dim2])
@@ -1030,7 +1031,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
         # update nbo
         nbo = lprops['NBO']
         # add to array
-        accs[fiber] = lprops['CENT_COEFFS']
+        accs[fiber] = np.array(lprops['CENT_COEFFS'])
     # number of fibers
     nfibers = len(fibers)
     # ----------------------------------------------------------------------
@@ -1069,6 +1070,72 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
         master_dymap[:, ix] = np.polyval(yfit, ypix)
     # return dymap
     return master_dymap
+
+
+def get_master_fp(params, header):
+    # -------------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get the badpix entries
+    fpmaster_entries = drs_database.get_key_from_db(params, 'FPMASTER', cdb,
+                                                    header, n_ent=1)
+    # get badpix filename
+    fpmaster_filename = fpmaster_entries[filecol][0]
+    fpmaster_file = os.path.join(params['DRS_CALIB_DB'], fpmaster_filename)
+    # -------------------------------------------------------------------------
+    # get bad pixel file
+    fpmaster_image = drs_fits.read(params, fpmaster_file)
+
+    # log which fpmaster file we are using
+    WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))
+    # return the master image
+    return fpmaster_file, fpmaster_image
+
+
+def get_shapex(params, header):
+    # -------------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get the badpix entries
+    shapex_entries = drs_database.get_key_from_db(params, 'SHAPEX', cdb,
+                                                    header, n_ent=1)
+    # get badpix filename
+    shapex_filename = shapex_entries[filecol][0]
+    shapex_file = os.path.join(params['DRS_CALIB_DB'], shapex_filename)
+    # -------------------------------------------------------------------------
+    # get bad pixel file
+    dxmap = drs_fits.read(params, shapex_file)
+
+    # log which fpmaster file we are using
+    WLOG(params, '', TextEntry('40-014-00031', args=[shapex_file]))
+    # return the master image
+    return shapex_filename, dxmap
+
+
+def get_shapey(params, header):
+    # -------------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get the badpix entries
+    shapey_entries = drs_database.get_key_from_db(params, 'SHAPEY', cdb,
+                                                    header, n_ent=1)
+    # get badpix filename
+    shapey_filename = shapey_entries[filecol][0]
+    shapey_file = os.path.join(params['DRS_CALIB_DB'], shapey_filename)
+    # -------------------------------------------------------------------------
+    # get bad pixel file
+    dymap = drs_fits.read(params, shapey_file)
+
+    # log which fpmaster file we are using
+    WLOG(params, '', TextEntry('40-014-00032', args=[shapey_file]))
+    # return the master image
+    return shapey_filename, dymap
 
 
 # =============================================================================
