@@ -11,12 +11,6 @@ Created on 2019-06-27 at 10:48
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
 
 from terrapipe import core
 from terrapipe import locale
@@ -79,6 +73,10 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     exptime = infile.get_key('KW_EXPTIME')
     gain = infile.get_key('KW_GAIN')
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+
+
+    # log that we are calibrating a file
+    WLOG(params, 'info', TextEntry('40-014-00038', args=[infile.filename]))
 
     # ----------------------------------------------------------------------
     # image 1 is corrected for dark
