@@ -23,7 +23,6 @@ from terrapipe.science.calib import localisation
 from terrapipe.science.calib import wave
 from terrapipe.science.calib import shape
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -65,15 +64,16 @@ pcheck = core.pcheck
 # Everything else is controlled from recipe_definition
 def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     """
-    Main function for cal_badpix_spirou.py
+    Main function for cal_shape_master_spirou.py
 
     :param directory: string, the night name sub-directory
-    :param flatfiles: list of strings or string, the list of flat files
-    :param darkfiles: list of strings or string, the list of dark files
+    :param hcfiles: list of strings or string, the list of hc files
+    :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
     :type directory: str
-    :type files: list[str]
+    :type hcfiles: list[str]
+    :type fpfiles: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -209,7 +209,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params, recipe, fpimage, fpheader)
+    dymap = shape.calculate_dymap(params, recipe, master_fp, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap
@@ -217,7 +217,7 @@ def __main__(recipe, params):
     # copy it first
     dxmap0 = np.array(dymap)
     # straighten dxmap
-    dymap = shape.ea_transform(params, dxmap, dymap=dymap)
+    dxmap = shape.ea_transform(params, dxmap, dymap=dymap)
 
     # ----------------------------------------------------------------------
     # Need to straighten the hc data and fp data for debug
@@ -301,7 +301,7 @@ def __main__(recipe, params):
     # log that we are saving dxmap to file
     WLOG(params, '', TextEntry('40-014-00026', args=[outfile1.filename]))
     # write image to file
-    outfile1.write_multi(datalist=[fp_table])
+    outfile1.write_multi(data_list=[fp_table])
 
     # ----------------------------------------------------------------------
     # Writing DYMAP to file
@@ -317,7 +317,7 @@ def __main__(recipe, params):
     # log that we are saving dymap to file
     WLOG(params, '', TextEntry('40-014-00027', args=[outfile2.filename]))
     # write image to file
-    outfile2.write_multi(datalist=[fp_table])
+    outfile2.write_multi(data_list=[fp_table])
 
     # ----------------------------------------------------------------------
     # Writing Master FP to file
@@ -333,7 +333,7 @@ def __main__(recipe, params):
     # log that we are saving master_fp to file
     WLOG(params, '', TextEntry('40-014-00028', args=[outfile3.filename]))
     # write image to file
-    outfile3.write_multi(datalist=[fp_table])
+    outfile3.write_multi(data_list=[fp_table])
 
     # ----------------------------------------------------------------------
     # Writing DEBUG files
@@ -349,7 +349,7 @@ def __main__(recipe, params):
         debugfile0.copy_hdict(outfile1)
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         debugfile0.data = dxmap0
-        debugfile0.write_multi(datalist=[fp_table])
+        debugfile0.write_multi(data_list=[fp_table])
         # ------------------------------------------------------------------
         # for the fp files take the header from outfile1
         # ------------------------------------------------------------------
@@ -357,16 +357,16 @@ def __main__(recipe, params):
         debugfile1 = SHAPE_IN_FP_FILE.newcopy(recipe=recipe)
         debugfile1.construct_filename(params, infile=fpfile)
         debugfile1.copy_hdict(outfile1)
-        debugfile1.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
-        debugfile1.write_multi(datalist=[fp_table])
+        debugfile1.write_multi(data_list=[fp_table])
         # out file
         debugfile2 = SHAPE_OUT_FP_FILE.newcopy(recipe=recipe)
         debugfile2.construct_filename(params, infile=fpfile)
         debugfile2.copy_hdict(outfile1)
-        debugfile2.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = fpimage2
-        debugfile2.write_multi(datalist=[fp_table])
+        debugfile2.write_multi(data_list=[fp_table])
         # ------------------------------------------------------------------
         # for hc files copy over the fp parameters with the hc parameters
         # ------------------------------------------------------------------
@@ -385,23 +385,23 @@ def __main__(recipe, params):
         debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
         # add input files (and deal with combining or not combining)
         debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
-                             dim1name='hcfiles')
+                               dim1name='hcfiles')
         debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
-                             dim1name='fpfiles')
+                               dim1name='fpfiles')
         # add the calibration files use
         debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
         # add qc parameters
         debugfile3.add_qckeys(qc_params)
         # add data
         debugfile3.data = hcimage
-        debugfile3.write_multi(datalist=[fp_table])
+        debugfile3.write_multi(data_list=[fp_table])
         # out file
         debugfile4 = SHAPE_OUT_HC_FILE.newcopy(recipe=recipe)
         debugfile4.construct_filename(params, infile=hcfile)
         debugfile4.copy_hdict(debugfile4)
         debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
         debugfile4.data = hcimage2
-        debugfile4.write_multi(datalist=[fp_table])
+        debugfile4.write_multi(data_list=[fp_table])
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
