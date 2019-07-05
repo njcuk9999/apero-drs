@@ -14,6 +14,7 @@ __all__ = [# general
            'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
            'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
            # image constants
+           'FIBER_TYPES',
            'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
            'IMAGE_X_LOW', 'IMAGE_X_HIGH',
            'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
@@ -108,6 +109,9 @@ CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Define the fibers
+FIBER_TYPES = Const('FIBER_TYPES', dtype=str, value=None, source=__NAME__)
+
 # Defines whether to by default combine images that are inputted at the same
 #   time
 INPUT_COMBINE_IMAGES = Const('INPUT_COMBINE_IMAGES', dtype=bool, value=True,
