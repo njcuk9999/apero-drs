@@ -356,6 +356,7 @@ class DrsFitsFile(DrsInputFile):
         self.header = kwargs.get('header', None)
         self.index = kwargs.get('index', None)
         # set additional attributes
+        self.numfiles = kwargs.get('numfiles', 0)
         self.shape = kwargs.get('shape', None)
         self.hdict = kwargs.get('hdict', drs_fits.Header())
         self.output_dict = kwargs.get('output_dict', OrderedDict())
@@ -363,6 +364,7 @@ class DrsFitsFile(DrsInputFile):
         self.dtype = kwargs.get('dtype', None)
         self.data_array = None
         self.header_array = None
+
 
     def get_header_keys(self, kwargs):
         # add values to the header
@@ -413,6 +415,8 @@ class DrsFitsFile(DrsInputFile):
         kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
         kwargs['datatype'] = kwargs.get('datatype', self.datatype)
         kwargs['dtype'] = kwargs.get('dtype', self.dtype)
+        kwargs['shape'] = kwargs.get('shape', self.shape)
+        kwargs['numfiles'] = kwargs.get('numfiles', self.numfiles)
         for key in self.required_header_keys:
             kwargs[key] = self.required_header_keys[key]
         self.get_header_keys(kwargs)
@@ -478,8 +482,10 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         nkwargs['dbname'] = kwargs.get('dbname', self.dbname)
         nkwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
-        nkwargs['datatype'] = kwargs.get('datatype', self.datatype)
-        nkwargs['dtype'] = kwargs.get('dtype', self.dtype)
+        nkwargs['datatype'] = kwargs.get('datatype', drsfile.datatype)
+        nkwargs['dtype'] = kwargs.get('dtype', drsfile.dtype)
+        nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
+        nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
 
@@ -781,6 +787,8 @@ class DrsFitsFile(DrsInputFile):
 
         self.data = out[0]
         self.header = drs_fits.Header.from_fits_header(out[1])
+        # set number of data sets to 1
+        self.numfiles = 1
         # set the shape
         if self.data is not None:
             self.shape = self.data.shape
@@ -793,6 +801,8 @@ class DrsFitsFile(DrsInputFile):
         params = self.recipe.drs_params
         # get data
         data = drs_fits.read(params, self.filename, ext=ext)
+        # set number of data sets to 1
+        self.numfiles = 1
         # assign to object
         self.data = data
 
@@ -833,6 +843,8 @@ class DrsFitsFile(DrsInputFile):
         self.data = out[0][0]
         self.header = drs_fits.Header.from_fits_header(out[1][0])
         self.data_array = out[0]
+        # set number of data sets to 1
+        self.numfiles = 1
         # append headers (as copy)
         self.header_array = []
         for header in out[1]:
@@ -959,7 +971,7 @@ class DrsFitsFile(DrsInputFile):
         # check that data is read
         self.check_read()
         # set new data to this files data
-        data = self.data
+        data = np.array(self.data)
         # --------------------------------------------------------------------
         # combine data
         for infile in infiles:
