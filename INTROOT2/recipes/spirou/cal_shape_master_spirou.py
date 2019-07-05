@@ -127,9 +127,9 @@ def __main__(recipe, params):
     params.set_source('FIBER', mainname)
 
     # get combined hcfile
-    hcfile = drs_fits.combine(params, hcfiles, math='average')
+    hcfile = drs_fits.combine(params, hcfiles, math='sum')
     # get combined fpfile
-    fpfile = drs_fits.combine(params, fpfiles, math='average')
+    fpfile = drs_fits.combine(params, fpfiles, math='sum')
 
     # get the headers (should be the header of the first file in each)
     hcheader = hcfile.header
@@ -144,7 +144,8 @@ def __main__(recipe, params):
     # log process
     WLOG(params, 'info', TextEntry('40-014-00001'))
     # calibrate file
-    fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile)
+    fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile,
+                                                correctback=False)
 
     # ------------------------------------------------------------------
     # Correction of hc file
@@ -152,7 +153,8 @@ def __main__(recipe, params):
     # log process
     WLOG(params, 'info', TextEntry('40-014-00002'))
     # calibrate file
-    hcprops, hcimage = general.calibrate_ppfile(params, recipe, hcfile)
+    hcprops, hcimage = general.calibrate_ppfile(params, recipe, hcfile,
+                                                correctback=False)
 
     # ----------------------------------------------------------------------
     # Get all preprocessed fp files
@@ -215,7 +217,7 @@ def __main__(recipe, params):
     # Need to straighten the dxmap
     # ----------------------------------------------------------------------
     # copy it first
-    dxmap0 = np.array(dymap)
+    dxmap0 = np.array(dxmap)
     # straighten dxmap
     dxmap = shape.ea_transform(params, dxmap, dymap=dymap)
 
