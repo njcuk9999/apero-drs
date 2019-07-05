@@ -358,10 +358,6 @@ out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP', KW_OUTPUT='SHAPEL_OUT_FP',
 out_file.addset(out_shapel_debug_ofp)
 
 # -----------------------------------------------------------------------------
-# slit
-out_silt_shape = drs_finput('SLIT_SHAPE', KW_OUTPUT='SLIT_SHAPE')
-out_file.addset(out_silt_shape)
-# -----------------------------------------------------------------------------
 # flat
 out_ff_blaze_ab = drs_finput('FF_BLAZE_AB', KW_OUTPUT='FF_BLAZE_AB', fiber='AB')
 out_file.addset(out_ff_blaze_ab)
