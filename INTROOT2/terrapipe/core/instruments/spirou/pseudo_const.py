@@ -157,11 +157,11 @@ class PseudoConstants(DefaultConstants):
             acc[0:int(nbo / 2), :] = (1 / 2) * cosum
         # for A we only need the A components
         elif fiber == 'A':
-            acc = coeffs[:-1:2]
+            acc = coeffs[1::2]
             nbo = coeffs.shape[0] // 2
         # for B we only need the B components
         elif fiber == 'B':
-            acc = coeffs[1::2]
+            acc = coeffs[:-1:2]
             nbo = coeffs.shape[0] // 2
         # for C we take all of them (as there are only the C components)
         else:
