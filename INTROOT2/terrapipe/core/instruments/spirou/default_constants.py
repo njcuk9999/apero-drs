@@ -32,6 +32,10 @@ CALIB_DB_FORCE_WAVESOL.value = False
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Define the fibers
+FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
+FIBER_TYPES = 'AB, A, B, C'
+
 # Defines whether to by default combine images that are inputted at the same
 #   time
 INPUT_COMBINE_IMAGES = INPUT_COMBINE_IMAGES.copy(__NAME__)
