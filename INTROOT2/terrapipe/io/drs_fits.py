@@ -585,6 +585,8 @@ def combine(params, infiles, math='average', same_type=True):
                 WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
     # make new infile using math
     outfile = infiles[0].combine(infiles[1:], math, same_type)
+    # update the number of files
+    outfile.numfiles = len(infiles)
     # return combined infile
     return outfile
 
