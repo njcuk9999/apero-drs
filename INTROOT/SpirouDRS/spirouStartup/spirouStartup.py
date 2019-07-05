@@ -488,6 +488,9 @@ def multi_file_setup(p, files=None, log=True, skipcheck=False):
         else:
             wmsg = 'Now processing Image(s) TYPE {0} with {1} recipe'
         WLOG(p, 'info', wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+
+    # make sure files are unique
+    locations = list(np.unique(locations))
     # return p
     return p, locations
 
