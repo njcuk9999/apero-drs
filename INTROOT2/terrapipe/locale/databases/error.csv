@@ -626,7 +626,7 @@
 "40-014-00035","ALL","prints that the QC failed because XRES was too high","{0} = x residual value; {1} = residual limit","x-residuals too high {0} > {1}","",""
 "40-014-00036","ALL","prints that the QC failed because YRES was too high","{0} = y residual value; {1} = residual limit","y-residuals too high {0} > {1}","",""
 "40-014-00037","ALL","prints that we are writing the shape transforms to file","{0}= filename","Saving shape transforms in file: {0}","",""
-"40-014-00038","ALL","","","","",""
+"40-014-00038","ALL","prints that we are calibration a pp file","{0} = filename","Calibrating file: {0}","",""
 "40-014-00039","ALL","","","","",""
 "","","","","","",""
 "","","","","","",""
