@@ -55,7 +55,7 @@ PLOT_PER_ORDER = False
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, hcfile=None, fpfile=None):
+def main(night_name=None, hcfile=None, fpfiles=None):
     """
     cal_SLIT_spirou.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -77,21 +77,22 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    if hcfile is None or fpfile is None:
-        names, types = ['hcfile', 'fpfile'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names)
+    if hcfile is None or fpfiles is None:
+        names, types = ['hcfile', 'fpfiles'], [str, str]
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
+                                                        last_multi=True)
     else:
-        customargs = dict(hcfile=hcfile, fpfile=fpfile)
+        customargs = dict(hcfile=hcfile, fpfile=fpfiles)
 
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='fpfile')
+                                    mainfitsfile='fpfiles')
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, hcfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['HCFILE'])
-    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['FPFILE'])
+    p, fpfitsfiles = spirouStartup.MultiFileSetup(p, files=p['FPFILES'])
     # set fiber (it doesn't matter with the 2D image but we need this to get
     # the lamp type for FPFILES and HCFILES, AB == C
     p['FIBER'] = 'AB'
@@ -113,7 +114,10 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # Read FP and HC files
     # ----------------------------------------------------------------------
     # read input fp and hc data
-    fpdata, fphdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
+    rkwargs = dict(filename=fpfitsfiles[0], filenames=fpfitsfiles[1:],
+                   framemath='add')
+    p, fpdata, fphdr = spirouImage.ReadImageAndCombine(p, **rkwargs)
+
     hcdata, hchdr, _, _ = spirouImage.ReadImage(p, hcfitsfilename)
 
     # add data and hdr to loc
@@ -161,7 +165,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # Correction of reference FP
     # ----------------------------------------------------------------------
     # set the number of frames
-    p['NBFRAMES'] = 1
+    p['NBFRAMES'] = len(fpfitsfiles)
     p.set_source('NBFRAMES', __NAME__ + '.main()')
     # Correction of DARK
     p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
@@ -222,7 +226,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     # log progress
     WLOG(p, '', 'Cleaning HC hot pixels')
     # correct hot pixels
-    fpdata1 = spirouEXTOR.CleanHotpix(hcdata1, badpixmask)
+    hcdata1 = spirouEXTOR.CleanHotpix(hcdata1, badpixmask)
     # add to loc
     loc['HCDATA1'] = hcdata1
     loc.set_source('HCDATA1', __NAME__ + '.main()')
@@ -290,10 +294,10 @@ def main(night_name=None, hcfile=None, fpfile=None):
     wmsg2 = '\tAdding {0} group images to form FP master image'
     WLOG(p, 'info', [wmsg1, wmsg2.format(len(fpcube))])
     # sum the cube to make fp data
-    fpdata1 = np.sum(fpcube, axis=0)
+    masterfp = np.sum(fpcube, axis=0)
     # add to loc
-    loc['FPDATA1'] = fpdata1
-    loc.set_source('FPDATA1', __NAME__ + '.main()')
+    loc['MASTERFP'] = masterfp
+    loc.set_source('MASTERFP', __NAME__ + '.main()')
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -529,7 +533,7 @@ def main(night_name=None, hcfile=None, fpfile=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
     # write tilt file to file
-    p = spirouImage.WriteImageTable(p, fpmasterfits, image=fpdata1,
+    p = spirouImage.WriteImageTable(p, fpmasterfits, image=masterfp,
                                     table=fptable, hdict=hdict)
 
     # ------------------------------------------------------------------
