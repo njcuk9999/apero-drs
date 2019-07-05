@@ -2389,7 +2389,7 @@ def get_x_shape_map(p, loc):
     plot_on = p.get(p['PLOT_PER_ORDER'], False)
     # get data from loc
     hcdata1 = np.array(loc['HCDATA1'])
-    fpdata1 = np.array(loc['FPDATA1'])
+    fpdata1 = np.array(loc['MASTERFP'])
     nbo = loc['NUMBER_ORDERS'] // 2
     acc = loc['ACC']
 
@@ -2916,7 +2916,7 @@ def get_y_shape_map(p, loc, hdr):
     func_name = __NAME__ + '.get_y_shape_map()'
     # get data from loc
     nbo = loc['NUMBER_ORDERS'] // 2
-    dim1, dim2 = loc['FPDATA1'].shape
+    dim1, dim2 = loc['MASTERFP'].shape
 
     # x indices in the initial image
     xpix = np.arange(dim2)
@@ -2977,7 +2977,8 @@ def get_y_shape_map(p, loc, hdr):
     # to the central pixel in x (normally, that's 4088/2) along the y axis.
     # This difference in position gives a dy that need to be applied to
     # straighten the orders
-
+    # TODO: Remove
+    case = 2
     # Once we have determined this for all abc fibers and all orders, we
     # fit a Nth order polynomial to the dy versus y relation along the
     # column, and apply a spline to straighten the order.
@@ -2991,9 +2992,41 @@ def get_y_shape_map(p, loc, hdr):
     # loop around orders and get polynomial values for fibers A, B and C
     for order_num in range(nbo):
         iord = order_num * 3
-        y0[iord, :] = np.polyval(pos_a[order_num, :][::-1], xpix)
-        y0[iord + 1, :] = np.polyval(pos_b[order_num, :][::-1], xpix)
-        y0[iord + 2, :] = np.polyval(pos_c[order_num, :][::-1], xpix)
+        # get the poly fits
+        ya = np.polyval(pos_a[order_num, :][::-1], xpix)
+        yb = np.polyval(pos_b[order_num, :][::-1], xpix)
+        yc = np.polyval(pos_c[order_num, :][::-1], xpix)
+        # TODO: Decide between which case to use (or how to fix this)
+        if case == 1:
+            # find the out of bounds pixels
+            bad_a = (ya < 0) | (ya > dim2)
+            bad_b = (yb < 0) | (yb > dim2)
+            bad_c = (yc < 0) | (yc > dim2)
+            # set bad pixels to NaN
+            ya[bad_a] = np.nan
+            yb[bad_b] = np.nan
+            yc[bad_c] = np.nan
+        elif case == 2:
+            # find the out of lower bounds pixels
+            ylow_a = ya < 0
+            ylow_b = yb < 0
+            ylow_c = yc < 0
+            # set bad pixels to lower bound
+            ya[ylow_a] = 0.0
+            yb[ylow_b] = 0.0
+            yc[ylow_c] = 0.0
+            # find the out of high bounds pixels
+            yhigh_a = ya > dim2
+            yhigh_b = yb > dim2
+            yhigh_c = yc > dim2
+            # set bad pixels to higher bound
+            ya[yhigh_a] = dim2
+            yb[yhigh_b] = dim2
+            yc[yhigh_c] = dim2
+        # add to y0
+        y0[iord, :] = ya
+        y0[iord + 1, :] = yb
+        y0[iord + 2, :] = yc
     # loop around each x pixel (columns)
     for ix in range(dim2):
         # dy for all orders and all fibers
