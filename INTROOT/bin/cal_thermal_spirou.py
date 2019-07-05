@@ -69,6 +69,8 @@ def main(night_name=None, files=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name, files)
     p = spirouStartup.InitialFileSetup(p)
+    # get the night name
+    night_name = p['ARG_NIGHT_NAME']
     # ----------------------------------------------------------------------
     # get the e2ds filenames (uses ARG_FILE_NAMES by default)
     exists = False
