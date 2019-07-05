@@ -547,6 +547,11 @@ class ParamDict(CaseInsensitiveDict):
         # return string
         return return_string + '\n'
 
+    def listp(self, key, separator=','):
+        if key in self.keys():
+            return _map_listparameter(self.__getitem__(key),
+                                      separator=separator)
+
 
 # =============================================================================
 # Define functions
@@ -1041,6 +1046,14 @@ def _string_repr_list(key, values, source, fmt):
     if len(str_value) > 40:
         str_value = str_value[:40] + '...'
     return [fmt.format(key, str_value, source)]
+
+
+def _map_listparameter(value, separator=','):
+    # first split by separator
+    listparameter = value.split(separator)
+    # return the stripped down values
+    return list(map(lambda x: x.strip(), listparameter))
+
 
 # =============================================================================
 # Start of code
