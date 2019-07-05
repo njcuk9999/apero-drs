@@ -200,7 +200,7 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
     # TODO: check whether we have bad pixel file set from input arguments
 
     # get the dark entries
-    darkentries = drs_database.get_key_from_db(params, 'DARK', cdb, header,
+    darkentries = drs_database.get_key_from_db(params, 'DARKM', cdb, header,
                                                n_ent=1, required=False)
     # get the sky entries
     skyentries = drs_database.get_key_from_db(params, 'SKYDARK', cdb, header,
@@ -237,13 +237,13 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
         if pos == 0:
             use_file, use_type = str(skydarkfile), 'SKY'
         else:
-            use_file, use_type = str(darkfile),  'DARK'
+            use_file, use_type = str(darkfile),  'DARKM'
     # else if we only have sky
     elif use_sky and cond1:
         use_file, use_type = str(skydarkfile), 'SKY'
     # else if only have a dark
     elif cond2:
-        use_file, use_type = str(darkfile), 'DARK'
+        use_file, use_type = str(darkfile), 'DARKM'
     # else we don't have either --> error
     else:
         # deal with extra constrain on file from "closer/older"
