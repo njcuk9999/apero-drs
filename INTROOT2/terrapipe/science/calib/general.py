@@ -73,7 +73,7 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     exptime = infile.get_key('KW_EXPTIME')
     gain = infile.get_key('KW_GAIN')
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
-
+    nfiles = infile.numfiles
 
     # log that we are calibrating a file
     WLOG(params, 'info', TextEntry('40-014-00038', args=[infile.filename]))
@@ -82,7 +82,7 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # image 1 is corrected for dark
     # ----------------------------------------------------------------------
     if correctdark:
-        darkfile, image1 = dark.correction(params, image, header)
+        darkfile, image1 = dark.correction(params, image, header, nfiles=nfiles)
     else:
         image1 = np.array(image)
         darkfile = 'None'
