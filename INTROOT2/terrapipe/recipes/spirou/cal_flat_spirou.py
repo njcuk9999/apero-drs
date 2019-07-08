@@ -18,7 +18,7 @@ from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import general
-
+from terrapipe.science.calib import shape
 
 # =============================================================================
 # Define variables
@@ -38,8 +38,8 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
-DARK_FILE = file_definitions.out_dark
-SKY_FILE = file_definitions.out_sky
+FLAT_FILE = file_definitions.out_ff_flat
+BLAZE_FILE = file_definitions.out_ff_blaze
 
 
 # =============================================================================
@@ -131,6 +131,15 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         props, image = general.calibrate_ppfile(params, recipe, infile)
 
+        # ------------------------------------------------------------------
+        # Load shape components
+        # ------------------------------------------------------------------
+        shapexfile, shapex = shape.get_shapex(params, header)
+        shapeyfile, shapey = shape.get_shapey(params, header)
+        shapelocalfile, shapelocal = shape.get_shapelocal(params, header)
+
+
+        # TODO: Need to finish this code
 
     # ----------------------------------------------------------------------
     # End of main code
