@@ -86,8 +86,7 @@ badfile = dict(name='--badpixfile', dtype='file', default='None',
                helpstr=Help['BADFILE_HELP'])
 # -----------------------------------------------------------------------------
 blazefile = dict(name='--blazefile', dtype='file', default='None',
-                 files=[sf.out_ff_blaze_ab, sf.out_ff_blaze_a,
-                        sf.out_ff_blaze_b, sf.out_ff_blaze_c],
+                 files=[sf.out_ff_blaze],
                  helpstr=Help['BLAZEFILE_HELP'])
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
@@ -95,18 +94,17 @@ darkfile = dict(name='--darkfile', dtype='file', default='None',
                 helpstr=Help['DARKFILE_HELP'])
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
-                files=[sf.out_ff_flat_ab, sf.out_ff_flat_a,
-                       sf.out_ff_flat_b, sf.out_ff_flat_c],
+                files=[sf.out_ff_flat],
                 helpstr=Help['FLATFILE_HELP'])
 # -----------------------------------------------------------------------------
-shapefile = dict(name='--shapefile', dtype='file', default='None',
-                 files=[sf.out_silt_shape],
-                 helpstr=Help['SHAPEFILE_HELP'])
+# shapefile = dict(name='--shapefile', dtype='file', default='None',
+#                  files=[sf.out_silt_shape],
+#                  helpstr=Help['SHAPEFILE_HELP'])
 # -----------------------------------------------------------------------------
-wavefile = dict(name='--wavefile', dtype='file', default='None',
-                files=[sf.out_wave_ab, sf.out_wave_a,
-                       sf.out_wave_b, sf.out_wave_c],
-                helpstr=Help['WAVEFILE_HELP'])
+# wavefile = dict(name='--wavefile', dtype='file', default='None',
+#                 files=[sf.out_wave_ab, sf.out_wave_a,
+#                        sf.out_wave_b, sf.out_wave_c],
+#                 helpstr=Help['WAVEFILE_HELP'])
 
 # =============================================================================
 # List of usable recipes
@@ -405,7 +403,6 @@ cal_ff.kwarg(**fluxunits)
 cal_ff.kwarg(**plot)
 cal_ff.kwarg(**interactive)
 cal_ff.kwarg(**resize)
-cal_ff.kwarg(**shapefile)
 
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
@@ -437,37 +434,35 @@ cal_extract.kwarg(**fluxunits)
 cal_extract.kwarg(**plot)
 cal_extract.kwarg(**interactive)
 cal_extract.kwarg(**resize)
-cal_extract.kwarg(**shapefile)
 
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
 # -----------------------------------------------------------------------------
-cal_hc.name = 'cal_HC_E2DS_spirou.py'
-cal_hc.instrument = __INSTRUMENT__
-cal_hc.outputdir = 'reduced'
-cal_hc.inputdir = 'reduced'
-cal_hc.inputtype = 'e2ds'
-cal_hc.extension = 'fits'
-cal_hc.description = Help['HC_E2DS_DESC']
-cal_hc.epilog = Help['HC_E2DS_EXAMPLE']
-cal_hc.run_order = 7
-# setup custom files (add a required keyword in the header to each file)
-#    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
-cal_hc_files1 = [sf.out_ext_e2ds_ab, sf.out_ext_e2ds_c,
-                 sf.out_ext_e2dsff_ab, sf.out_ext_e2dsff_c]
-cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
-cal_hc_files2 = drs_file.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
-# set up arguments
-cal_hc.arg(pos=0, **directory)
-cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
-           filelogic='exclusive', limit=1,
-           helpstr=Help['FILES_HELP'] + Help['HC_E2DS_FILES_HELP'])
-cal_hc.kwarg(**add_cal)
-cal_hc.kwarg(**plot)
-cal_hc.kwarg(**interactive)
-cal_hc.kwarg(**blazefile)
-cal_hc.kwarg(**flatfile)
-cal_hc.kwarg(**wavefile)
+# cal_hc.name = 'cal_HC_E2DS_spirou.py'
+# cal_hc.instrument = __INSTRUMENT__
+# cal_hc.outputdir = 'reduced'
+# cal_hc.inputdir = 'reduced'
+# cal_hc.inputtype = 'e2ds'
+# cal_hc.extension = 'fits'
+# cal_hc.description = Help['HC_E2DS_DESC']
+# cal_hc.epilog = Help['HC_E2DS_EXAMPLE']
+# cal_hc.run_order = 7
+# # setup custom files (add a required keyword in the header to each file)
+# #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
+# cal_hc_files1 = [sf.out_ext_e2ds,  sf.out_ext_e2dsff]
+# cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
+# cal_hc_files2 = drs_file.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
+# # set up arguments
+# cal_hc.arg(pos=0, **directory)
+# cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
+#            filelogic='exclusive', limit=1,
+#            helpstr=Help['FILES_HELP'] + Help['HC_E2DS_FILES_HELP'])
+# cal_hc.kwarg(**add_cal)
+# cal_hc.kwarg(**plot)
+# cal_hc.kwarg(**interactive)
+# cal_hc.kwarg(**blazefile)
+# cal_hc.kwarg(**flatfile)
+# cal_hc.kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
