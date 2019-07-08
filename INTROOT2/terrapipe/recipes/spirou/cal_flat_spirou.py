@@ -17,8 +17,12 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_image
 from terrapipe.science.calib import general
+from terrapipe.science.calib import localisation
 from terrapipe.science.calib import shape
+from terrapipe.science.calib import wave
+from terrapipe.science import extract
 
 # =============================================================================
 # Define variables
@@ -40,6 +44,7 @@ TextDict = locale.drs_text.TextDict
 # Define the output files
 FLAT_FILE = file_definitions.out_ff_flat
 BLAZE_FILE = file_definitions.out_ff_blaze
+ORDERP_SFILE = file_definitions.out_orderp_straight
 
 
 # =============================================================================
@@ -125,11 +130,8 @@ def __main__(recipe, params):
         header = infile.header
         # get calibrations for this data
         drs_database.copy_calibrations(params, header)
-
-        # ------------------------------------------------------------------
-        # Correction of file
-        # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile)
+        # get the fiber types needed
+        fibertypes = drs_image.get_fiber_types(params)
 
         # ------------------------------------------------------------------
         # Load shape components
@@ -137,6 +139,61 @@ def __main__(recipe, params):
         shapexfile, shapex = shape.get_shapex(params, header)
         shapeyfile, shapey = shape.get_shapey(params, header)
         shapelocalfile, shapelocal = shape.get_shapelocal(params, header)
+
+        # ------------------------------------------------------------------
+        # Correction of file
+        # ------------------------------------------------------------------
+        props, image = general.calibrate_ppfile(params, recipe, infile)
+
+        # ------------------------------------------------------------------
+        # Load and straighten order profiles
+        # ------------------------------------------------------------------
+        # storage for order profiles
+        orderprofiles = dict()
+        # loop around fibers
+        for fiber in fibertypes:
+            # construct order profile file
+            orderpsfile = ORDERP_SFILE.newcopy(recipe=recipe, fiber=fiber)
+            orderpsfile.construct_filename(params, infile=infile)
+            # check if temporary file exists
+            if orderpsfile.file_exists():
+                # load the numpy temporary file
+                orderpsfile.read(params)
+                # push data into orderp
+                orderp = orderpsfile.data
+            # load the order profile
+            else:
+                # load using localisation load order profile function
+                orderp = localisation.load_orderp(params, header, fiber=fiber)
+                # push into orderpsfile
+                orderpsfile.data = orderp
+                # save for use later
+                orderpsfile.write(params)
+            # straighten orders
+            orderp = shape.ea_transform(params, orderp, shapelocal,
+                                        dxmap=shapex, dymap=shapey)
+            # store in storage dictionary
+            orderprofiles[fiber] = orderp
+
+        # ------------------------------------------------------------------
+        # Apply shape transformations
+        # ------------------------------------------------------------------
+        image2 = shape.ea_transform(params, image, shapelocal, dxmap=shapex,
+                                    dymap=shapey)
+
+        # ------------------------------------------------------------------
+        # Fiber loop
+        # ------------------------------------------------------------------
+        fibertypes = drs_image.get_fiber_types(params)
+
+        # loop around fiber types
+        for fiber in fibertypes:
+            # load wavelength solution
+            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+
+            # extract spectrum
+
+            eprops = extract.
 
 
         # TODO: Need to finish this code

@@ -14,8 +14,13 @@ from __future__ import division
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_image
+from terrapipe.science.calib import general
+from terrapipe.science.calib import shape
+from terrapipe.science.calib import wave
 
 
 # =============================================================================
@@ -116,16 +121,9 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
-        # print file iteration progress
-        core.file_processing_update(params, it, num_files)
-        # ge this iterations file
-        infile = infiles[it]
-
-
         # TODO: Need to finish this code (after cal_flat)
 
-
-
+        pass
 
     # ----------------------------------------------------------------------
     # End of main code
