@@ -26,6 +26,7 @@ from terrapipe.core import math
 from terrapipe.core.core import drs_database
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
+from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_table
@@ -1008,7 +1009,6 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
 
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
-
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
@@ -1091,9 +1091,11 @@ def get_master_fp(params, header):
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
     filecol = cdb.file_col
+    # get key
+    key = file_definitions.out_shape_fpmaster.dbkey
     # get the badpix entries
-    fpmaster_entries = drs_database.get_key_from_db(params, 'FPMASTER', cdb,
-                                                    header, n_ent=1)
+    fpmaster_entries = drs_database.get_key_from_db(params, key, cdb, header,
+                                                    n_ent=1)
     # get badpix filename
     fpmaster_filename = fpmaster_entries[filecol][0]
     fpmaster_file = os.path.join(params['DRS_CALIB_DB'], fpmaster_filename)
@@ -1113,9 +1115,11 @@ def get_shapex(params, header):
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
     filecol = cdb.file_col
+    # get key
+    key = file_definitions.out_shape_dxmap.dbkey
     # get the badpix entries
-    shapex_entries = drs_database.get_key_from_db(params, 'SHAPEX', cdb,
-                                                    header, n_ent=1)
+    shapex_entries = drs_database.get_key_from_db(params, key, cdb, header,
+                                                  n_ent=1)
     # get badpix filename
     shapex_filename = shapex_entries[filecol][0]
     shapex_file = os.path.join(params['DRS_CALIB_DB'], shapex_filename)
@@ -1135,9 +1139,35 @@ def get_shapey(params, header):
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
     filecol = cdb.file_col
+    # get key
+    key = file_definitions.out_shape_dymap.dbkey
     # get the badpix entries
-    shapey_entries = drs_database.get_key_from_db(params, 'SHAPEY', cdb,
-                                                    header, n_ent=1)
+    shapey_entries = drs_database.get_key_from_db(params, key, cdb, header,
+                                                  n_ent=1)
+    # get badpix filename
+    shapey_filename = shapey_entries[filecol][0]
+    shapey_file = os.path.join(params['DRS_CALIB_DB'], shapey_filename)
+    # -------------------------------------------------------------------------
+    # get bad pixel file
+    dymap = drs_fits.read(params, shapey_file)
+
+    # log which fpmaster file we are using
+    WLOG(params, '', TextEntry('40-014-00032', args=[shapey_file]))
+    # return the master image
+    return shapey_filename, dymap
+
+
+def get_shapelocal(params, header):
+    # -------------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get key
+    key = file_definitions.out_shape_local.dbkey
+    # get the badpix entries
+    shapey_entries = drs_database.get_key_from_db(params, key, cdb, header,
+                                                  n_ent=1)
     # get badpix filename
     shapey_filename = shapey_entries[filecol][0]
     shapey_file = os.path.join(params['DRS_CALIB_DB'], shapey_filename)
