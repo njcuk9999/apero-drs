@@ -79,6 +79,7 @@ class DrsInputFile:
         self.header = kwargs.get('header', None)
         self.fileset = kwargs.get('fileset', [])
         self.indextable = kwargs.get('index', None)
+        self.outfunc = kwargs.get('outfunc', None)
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
 
@@ -105,6 +106,13 @@ class DrsInputFile:
             func = self.__repr__()
             eargs = [func, func + '.set_filename()']
             self.__error__(TextEntry('00-001-00002', args=eargs))
+
+    def file_exists(self):
+        found = False
+        if self.filename is not None:
+            if isinstance(self.filename, str):
+                found = os.path.exists(self.filename)
+        return found
 
     def set_recipe(self, recipe):
         """
@@ -313,6 +321,23 @@ class DrsInputFile:
     def check_file_header(self, quiet=False):
         return True, TextEntry('')
 
+    # -------------------------------------------------------------------------
+    # user functions
+    # -------------------------------------------------------------------------
+    def construct_filename(self, params, **kwargs):
+        func_name = __NAME__ + '.construct_filename()'
+        # set outfile from self
+        kwargs['outfile'] = self
+        kwargs['func'] = func_name
+        # if we have a function use it
+        if self.outfunc is not None:
+            abspath = self.outfunc(params, **kwargs)
+            self.filename = abspath
+            self.basename = os.path.basename(abspath)
+        # else raise an error
+        else:
+            WLOG(params, 'error', TextEntry('00-008-00004'))
+
 
 class DrsFitsFile(DrsInputFile):
     def __init__(self, name, **kwargs):
@@ -372,7 +397,6 @@ class DrsFitsFile(DrsInputFile):
         # update parameters based on all inputs
         if self.fiber is not None:
             self.get_dbkey()
-
 
     def get_header_keys(self, kwargs):
         # add values to the header
@@ -961,20 +985,6 @@ class DrsFitsFile(DrsInputFile):
                 self.output_dict[key] = str(self.hdict[key])
             else:
                 self.output_dict[key] = '--'
-
-    def construct_filename(self, params, **kwargs):
-        func_name = __NAME__ + '.construct_filename()'
-        # set outfile from self
-        kwargs['outfile'] = self
-        kwargs['func'] = func_name
-        # if we have a function use it
-        if self.outfunc is not None:
-            abspath = self.outfunc(params, **kwargs)
-            self.filename = abspath
-            self.basename = os.path.basename(abspath)
-        # else raise an error
-        else:
-            WLOG(params, 'error', TextEntry('00-008-00004'))
 
     def combine(self, infiles, math='sum', same_type=True):
         func_name = __NAME__ + '.DrsFitsFile.combine()'
@@ -1647,6 +1657,86 @@ class DrsFitsFile(DrsInputFile):
             self.dbkey = self.dbkey.upper()
         # return dbkey
         return self.dbkey
+
+
+class DrsNpyFile(DrsInputFile):
+    def __init__(self, name, **kwargs):
+        """
+        Create a DRS Fits File Input object
+
+        :param name: string, the name of the DRS input file
+
+        :param kwargs: currently allowed kwargs are:
+
+            - ext: string or None, the extension for the DRS input file
+                   (without the '.' i.e. A.txt  ext='txt'). This will be
+                   checked if used in a DrsArgument is not None.
+
+            - fiber: string or None, the fiber of the Fits File.
+
+            - KW_{str}: string, any keywordstore variable name currently
+                        defined in spirouKeywords.py. If used in DrsArgument
+                        the HEADER of this fits file must have the value
+                        of this KW_{str} to be a valid argument.
+
+            - KW_OUTPUT: this will set the output type for this file (i.e.
+                         file.outtag
+        """
+        # define a name
+        self.name = name
+        # get super init
+        DrsInputFile.__init__(self, name, **kwargs)
+        # if ext in kwargs then we have a file extension to check
+        self.filetype = kwargs.get('filetype', '.fits')
+        self.inext = kwargs.get('inext', '.fits')
+        # get fiber type (if set)
+        self.fibers = kwargs.get('fibers', None)
+        self.fiber = kwargs.get('fiber', None)
+        # get tag
+        self.outfunc = kwargs.get('outfunc', None)
+        self.outtag = kwargs.get('KW_OUTPUT', 'UNKNOWN')
+        self.dbname = kwargs.get('dbname', None)
+        self.dbkey = kwargs.get('dbkey', None)
+        # set empty fits file storage
+        self.data = kwargs.get('data', None)
+        self.filename = kwargs.get('filename', None)
+
+    def read(self, params):
+        func_name = __NAME__ + '.DrsNpyFile.read()'
+        # if filename is set
+        if self.filename is not None:
+            try:
+                # log progress (read file)
+                wargs = [self.filename]
+                WLOG(params, '', TextEntry('40-013-00023', args=wargs))
+                # read file
+                self.data = np.load(self.filename)
+            except Exception as e:
+                eargs = [type(e), e, self.filename, func_name]
+                WLOG(params, 'error', TextEntry('', args=eargs))
+        # cause error if file name is not set
+        else:
+            WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
+
+    def write(self, params):
+        func_name = __NAME__ + '.DrsNpyFile.read()'
+
+        if self.filename is None:
+            WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
+        if self.data is not None:
+            try:
+                # log progress (saving to file)
+                wargs = [self.filename]
+                WLOG(params, '', TextEntry('40-013-00024', args=wargs))
+                # save to file
+                np.save(self.filename, self.data)
+            except Exception as e:
+                eargs = [type(e), e, self.filename, func_name]
+                WLOG(params, 'error', TextEntry('00-008-00015', args=eargs))
+        else:
+            eargs = [self.filename, func_name]
+            WLOG(params, 'error', TextEntry('00-008-00014', args=eargs))
+
 
 # =============================================================================
 # User functions
