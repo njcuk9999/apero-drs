@@ -42,16 +42,10 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
-ORDERP_AB = file_definitions.out_loc_orderp_ab
-ORDERP_C = file_definitions.out_loc_orderp_c
-
-LOCO1_AB = file_definitions.out_loc_loco_ab
-LOCO1_C =file_definitions.out_loc_loco_c
-LOCO2_AB = file_definitions.out_loc_loco_2_ab
-LOCO2_C = file_definitions.out_loc_loco_2c
-LOCO3_AB = file_definitions.out_loc_loco_3_ab
-LOCO3_C = file_definitions.out_loc_loco_3_c
-
+ORDERP_FILE = file_definitions.out_loc_orderp
+LOCO_FILE = file_definitions.out_loc_loco
+FWHM_FILE = file_definitions.out_loc_fwhm
+SUP_FILE = file_definitions.out_loc_sup
 # alias pcheck
 pcheck = core.pcheck
 
@@ -310,10 +304,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Write image order_profile to file
         # ------------------------------------------------------------------
-        if params['FIBER'] == 'AB':
-            orderpfile = ORDERP_AB.newcopy(recipe=recipe)
-        else:
-            orderpfile = ORDERP_C.newcopy(recipe=recipe)
+        orderpfile = ORDERP_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
         # construct the filename from file instance
         orderpfile.construct_filename(params, infile=infile)
         # define header keys for output file
@@ -344,10 +335,7 @@ def __main__(recipe, params):
         # Save and record of image of localization with order center
         #     and keywords
         # ------------------------------------------------------------------
-        if params['FIBER'] == 'AB':
-            loco1file = LOCO1_AB.newcopy(recipe=recipe)
-        else:
-            loco1file = LOCO1_C.newcopy(recipe=recipe)
+        loco1file = LOCO_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
         # construct the filename from file instance
         loco1file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -395,10 +383,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save and record of image of sigma
         # ------------------------------------------------------------------
-        if params['FIBER'] == 'AB':
-            loco2file = LOCO2_AB.newcopy(recipe=recipe)
-        else:
-            loco2file = LOCO2_C.newcopy(recipe=recipe)
+        loco2file = FWHM_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
         # construct the filename from file instance
         loco2file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -421,10 +406,7 @@ def __main__(recipe, params):
             # super impose zeros over the fit in the image
             image5 = localisation.image_superimp(image, cent_coeffs)
             # --------------------------------------------------------------
-            if params['FIBER'] == 'AB':
-                loco3file = LOCO3_AB.newcopy(recipe=recipe)
-            else:
-                loco3file = LOCO3_C.newcopy(recipe=recipe)
+            loco3file = SUP_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
             # construct the filename from file instance
             loco3file.construct_filename(params, infile=infile)
             # --------------------------------------------------------------
