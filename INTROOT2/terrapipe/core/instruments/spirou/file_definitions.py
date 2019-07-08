@@ -35,6 +35,7 @@ __release__ = Constants['DRS_RELEASE']
 # =============================================================================
 drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
+drs_ninput = drs_file.DrsNpyFile
 
 # =============================================================================
 # Raw Files
@@ -428,6 +429,13 @@ out_ff_flat = drs_finput('FF_FLAT', KW_OUTPUT='FF_FLAT',
                          fileext='.fits',
                          suffix='_flat',
                          dbname='calibration', dbkey='FLAT')
+
+out_orderp_straight = drs_ninput('ORDERP_STRAIGHT', KW_OUTPUT='ORDERP_STRAIGHT',
+                                 fibers=['AB', 'A', 'B', 'C'],
+                                 fileext='.npy',
+                                 suffix='orderp',
+                                 outfunc=out.npy_file)
+
 # add flat outputs to output fileset
 out_file.addset(out_ff_blaze)
 out_file.addset(out_ff_flat)
