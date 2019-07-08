@@ -442,21 +442,22 @@ def get_coefficients(params, recipe, header, **kwargs):
     filecol = cdb.file_col
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
+    # -------------------------------------------------------------------------
+    # get loco file instance
+    locofile = core.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
+                                        kind='red')
     # get calibration key
-    key = 'LOC_{0}'.format(usefiber)
-    filetype = 'LOC_LOCO_{0}'.format(usefiber)
+    key = locofile.get_dbkey(func=func_name, fiber=usefiber)
     # get the badpix entries
     locoentries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                 n_ent=1)
+                                               n_ent=1)
     # get badpix filename
     locofilename = locoentries[filecol][0]
     locofilepath = os.path.join(params['DRS_CALIB_DB'], locofilename)
-    # -------------------------------------------------------------------------
-    # get loco file instance
-    locofile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                        kind='red')
+
     # construct new infile instance and read data/header
-    locofile = locofile.newcopy(filename=locofilepath, recipe=recipe)
+    locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,
+                                fiber=usefiber)
     locofile.read()
     # -------------------------------------------------------------------------
     # extract keys from header
