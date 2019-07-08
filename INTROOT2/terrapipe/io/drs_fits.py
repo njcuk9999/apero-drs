@@ -53,6 +53,7 @@ else:
 # =============================================================================
 # Define classes
 # =============================================================================
+# noinspection PyCompatibility
 class Header(fits.Header):
     """
     Wrapper class for fits headers that allows us to add functionality.
@@ -117,7 +118,8 @@ class Header(fits.Header):
 # =============================================================================
 # Define read functions
 # =============================================================================
-def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
+def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0,
+         func=None):
     """
     The drs fits file read function
 
@@ -127,6 +129,7 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
     :param gethdr: bool, whether to return header from "ext"
     :param fmt: str, format of data (either 'fits-image' or 'fits-table'
     :param ext: int, the extension to open
+    :param func: str, function name of calling function (input function)
 
     :type params: ParamDict
     :type filename: str
@@ -134,6 +137,7 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
     :type gethdr: bool
     :type fmt: str
     :type ext: int
+    :type func: str
 
     :returns: if getdata and gethdr: returns data, header, if getdata return
               data, if gethdr returns header.
@@ -141,7 +145,10 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0):
               header, if fmt 'fits-table' returns astropy.table for data and
               dictionary for header
     """
-    func_name = __NAME__ + '.read()'
+    if func is None:
+        func_name = __NAME__ + '.read()'
+    else:
+        func_name = '{0} and {1}'.format(func, __NAME__ + '.read()')
     # define allowed values of 'fmt'
     allowed_formats = ['fits-image', 'fits-table', 'fits-multi']
     # -------------------------------------------------------------------------
@@ -194,7 +201,6 @@ def read_header(params, filename, ext=0):
 
 
 def _read_fitsmulti(params, filename, getdata, gethdr):
-
     func_name = __NAME__ + '._read_fitsmulti()'
     # attempt to open hdu of fits file
     try:
@@ -216,23 +222,25 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
     # -------------------------------------------------------------------------
     # else get the data and header based on how many extnesions there are
     else:
-        data, header = [], []
+        dataarr, headerarr = [], []
         for it in range(n_ext):
             # append header
             try:
-                header.append(hdulist[it].header)
+                headerarr.append(hdulist[it].header)
             except Exception as e:
                 eargs = [os.path.basename(filename), it, type(e), e, func_name]
                 WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
             # append data
             try:
                 if isinstance(hdulist[it].data, fits.BinTableHDU):
-                    data.append(Table.read(hdulist[it].data))
+                    dataarr.append(Table.read(hdulist[it].data))
                 else:
-                    data.append(hdulist[it].data)
+                    dataarr.append(hdulist[it].data)
             except Exception as e:
                 eargs = [os.path.basename(filename), it, type(e), e, func_name]
                 WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+        data = list(dataarr)
+        header = list(headerarr)
     # -------------------------------------------------------------------------
     # return data and/or header
     if getdata and gethdr:
@@ -598,6 +606,8 @@ def header_time(params, hdr, out_fmt='mjd', func=None, name=None):
     :param params:
     :param hdr:
     :param out_fmt:
+    :param func: str, input function name
+    :param name:
 
     :type params: ParamDict
     :type hdr: Header
@@ -643,7 +653,7 @@ def header_time(params, hdr, out_fmt='mjd', func=None, name=None):
         return float(acqtime.mjd)
     elif out_fmt == 'jd':
         return float(acqtime.jd)
-    elif out_fmt == 'iso' or out_fmt=='human':
+    elif out_fmt == 'iso' or out_fmt == 'human':
         return acqtime.iso
     elif out_fmt == 'unix':
         return float(acqtime.unix)
@@ -683,13 +693,13 @@ def deal_with_bad_header(p, hdu, filename):
         try:
             datastore.append(hdu[it].data)
             headerstore.append(hdu[it].header)
-        except:
+        except Exception as _:
             cond = False
         # iterate
         it += 1
     # print message
     if len(datastore) > 0:
-        dargs = [it-1, filename]
+        dargs = [it - 1, filename]
         WLOG(p, 'warning', TextEntry('10-001-00001', args=dargs))
     # find the first one that contains equal shaped array
     valid = []
