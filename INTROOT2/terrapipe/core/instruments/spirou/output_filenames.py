@@ -39,36 +39,47 @@ TextEntry = locale.drs_text.TextEntry
 # Define functions
 # =============================================================================
 def general_file(params, **kwargs):
+    func_name = __NAME__ + '.general_file()'
+    func = kwargs.get('func', None)
+    if func is None:
+        func = func_name
+    else:
+        func = '{0} and {1}'.format(func, func_name)
+    # update keywords func name
+    kwargs['func'] = func
     return output_filenames.general_file(params, **kwargs)
 
 
 def debug_file(params, **kwargs):
+    func_name = __NAME__ + '.debug_file()'
+    func = kwargs.get('func', None)
+    if func is None:
+        func = func_name
+    else:
+        func = '{0} and {1}'.format(func, func_name)
+    # update keywords func name
+    kwargs['func'] = func
     return output_filenames.debug_file(params, **kwargs)
 
 
 def calib_file(params, **kwargs):
-    func_name = __NAME__ + '.general_file()'
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
+    func_name = __NAME__ + '.calib_file()'
+    func = kwargs.get('func', None)
+    if func is None:
+        func = func_name
+    else:
+        func = '{0} and {1}'.format(func, func_name)
+    # get output file
     outfile = kwargs.get('outfile', None)
-    # deal with kwargs that are required
-    if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
+    # get prefix
     if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
-    # construct out filename
-    outfilename = infile.basename.replace(outfile.inext, outfile.ext)
-    # add calibration prefix
-    outfilename = _calibration_prefix(params) + outfilename
-    # get output path from params
-    outpath = params['OUTPATH']
-    # get output night name from params
-    outdirectory = params['NIGHTNAME']
-    # construct absolute path
-    abspath = os.path.join(outpath, outdirectory, outfilename)
-    # return absolute path
-    return abspath
-
+        prefix = _calibration_prefix(params)
+    else:
+        prefix = _calibration_prefix(params) + outfile.prefix
+    # update keywords func name
+    kwargs['func'] = func
+    # return general file with prefix updated
+    return output_filenames.general_file(params, prefix=prefix, **kwargs)
 
 
 # =============================================================================
