@@ -64,7 +64,9 @@ class DrsInputFile:
         # define a name
         self.name = name
         # define the extension
-        self.ext = kwargs.get('ext', None)
+        self.filetype = kwargs.get('filetype', '')
+        self.suffix = kwargs.get('suffix', '')
+        self.prefix = kwargs.get('prefix', '')
         # allow instance to be associated with a recipe
         self.recipe = kwargs.get('recipe', None)
         # set empty file attributes
@@ -75,8 +77,8 @@ class DrsInputFile:
         self.directory = kwargs.get('directory', None)
         self.data = kwargs.get('data', None)
         self.header = kwargs.get('header', None)
-        self.index = kwargs.get('index', None)
         self.fileset = kwargs.get('fileset', [])
+        self.indextable = kwargs.get('index', None)
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
 
@@ -118,7 +120,9 @@ class DrsInputFile:
     def newcopy(self, **kwargs):
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
-        kwargs['ext'] = kwargs.get('ext', self.ext)
+        kwargs['filetype'] = kwargs.get('filetype', self.filetype)
+        kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['prefix'] = kwargs.get('prefix', self.prefix)
         kwargs['recipe'] = kwargs.get('recipe', self.recipe)
         kwargs['filename'] = kwargs.get('filename', self.filename)
         kwargs['path'] = kwargs.get('path', self.path)
@@ -290,14 +294,14 @@ class DrsInputFile:
         return cond, emsg
 
     def check_file_extension(self, quiet=False):
-        if self.ext is None:
+        if self.filetype is None:
             msg = TextEntry('09-000-00003', args=[self.basename])
             cond = True
-        elif self.filename.endswith(self.ext):
-            msg = TextEntry('09-000-00004', args=[self.basename, self.ext])
+        elif self.filename.endswith(self.filetype):
+            msg = TextEntry('09-000-00004', args=[self.basename, self.filetype])
             cond = True
         else:
-            msg = TextEntry('09-000-00005', args=[self.basename, self.ext])
+            msg = TextEntry('09-000-00005', args=[self.basename, self.filetype])
             cond = False
         # deal with printout and return
         if (not cond) and (not quiet):
@@ -338,9 +342,10 @@ class DrsFitsFile(DrsInputFile):
         # get super init
         DrsInputFile.__init__(self, name, **kwargs)
         # if ext in kwargs then we have a file extension to check
-        self.ext = kwargs.get('ext', '.fits')
+        self.filetype = kwargs.get('filetype', '.fits')
         self.inext = kwargs.get('inext', '.fits')
         # get fiber type (if set)
+        self.fibers = kwargs.get('fibers', None)
         self.fiber = kwargs.get('fiber', None)
         # get tag
         self.outfunc = kwargs.get('outfunc', None)
@@ -354,7 +359,7 @@ class DrsFitsFile(DrsInputFile):
         # set empty fits file storage
         self.data = kwargs.get('data', None)
         self.header = kwargs.get('header', None)
-        self.index = kwargs.get('index', None)
+        self.indextable = kwargs.get('index', None)
         # set additional attributes
         self.numfiles = kwargs.get('numfiles', 0)
         self.shape = kwargs.get('shape', None)
@@ -364,6 +369,9 @@ class DrsFitsFile(DrsInputFile):
         self.dtype = kwargs.get('dtype', None)
         self.data_array = None
         self.header_array = None
+        # update parameters based on all inputs
+        if self.fiber is not None:
+            self.get_dbkey()
 
 
     def get_header_keys(self, kwargs):
@@ -397,7 +405,9 @@ class DrsFitsFile(DrsInputFile):
         """
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
-        kwargs['ext'] = kwargs.get('ext', self.ext)
+        kwargs['filetype'] = kwargs.get('filetype', self.filetype)
+        kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['prefix'] = kwargs.get('prefix', self.prefix)
         kwargs['recipe'] = kwargs.get('recipe', self.recipe)
         kwargs['filename'] = kwargs.get('filename', self.filename)
         kwargs['path'] = kwargs.get('path', self.path)
@@ -407,8 +417,9 @@ class DrsFitsFile(DrsInputFile):
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
-        kwargs['check_ext'] = kwargs.get('check_ext', self.ext)
+        kwargs['check_ext'] = kwargs.get('check_ext', self.filetype)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
+        kwargs['fibers'] = kwargs.get('fibers', self.fibers)
         kwargs['outtag'] = kwargs.get('KW_OUTPUT', self.outtag)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         kwargs['dbname'] = kwargs.get('dbname', self.dbname)
@@ -465,8 +476,12 @@ class DrsFitsFile(DrsInputFile):
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
+        nkwargs['filetype'] = kwargs.get('filetype', self.filetype)
+        nkwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        nkwargs['prefix'] = kwargs.get('prefix', self.prefix)
         nkwargs['recipe'] = kwargs.get('recipe', self.recipe)
         nkwargs['fiber'] = kwargs.get('fiber', self.fiber)
+        nkwargs['fibers'] = kwargs.get('fibers', self.fibers)
         nkwargs['rkeys'] = kwargs.get('rkeys', self.required_header_keys)
         nkwargs['filename'] = kwargs.get('filename', drsfile.filename)
         nkwargs['path'] = kwargs.get('path', drsfile.path)
@@ -513,10 +528,10 @@ class DrsFitsFile(DrsInputFile):
         # if 1, 2 and 3 pass return True
         return True, None
 
-    def has_correct_extension(self, filename=None, ext=None, argname=None):
+    def has_correct_extension(self, filename=None, filetype=None, argname=None):
         # deal with no input extension
-        if ext is None:
-            ext = self.ext
+        if filetype is None:
+            filetype = self.filetype
         # deal with no input filename
         if filename is None:
             filename = self.filename
@@ -534,14 +549,14 @@ class DrsFitsFile(DrsInputFile):
         params = self.recipe.drs_params
         # -----------------------------------------------------------------
         # check extension
-        if ext is None:
+        if filetype is None:
             msg = TextEntry('09-000-00003', args=[basename])
             cond = True
-        elif filename.endswith(ext):
-            msg = TextEntry('09-000-00004', args=[basename, ext])
+        elif filename.endswith(filetype):
+            msg = TextEntry('09-000-00004', args=[basename, filetype])
             cond = True
         else:
-            msg = TextEntry('09-000-00005', args=[basename, ext])
+            msg = TextEntry('09-000-00005', args=[basename, filetype])
             cond = False
         # if valid return True and no error
         if cond:
@@ -551,7 +566,7 @@ class DrsFitsFile(DrsInputFile):
             return True, msg
         # if False generate error and return it
         else:
-            emsg = TextEntry('09-001-00006', args=[argname, ext])
+            emsg = TextEntry('09-001-00006', args=[argname, filetype])
             return False, emsg
 
     def hkeys_exist(self, header=None, filename=None, argname=None):
@@ -664,7 +679,6 @@ class DrsFitsFile(DrsInputFile):
         :param quiet:
         :param argname: string, the name of the argument we are checking
                         (for error and debug messages)
-        :param debug: bool, if True prints a debug message
 
         :return:
         """
@@ -949,8 +963,10 @@ class DrsFitsFile(DrsInputFile):
                 self.output_dict[key] = '--'
 
     def construct_filename(self, params, **kwargs):
+        func_name = __NAME__ + '.construct_filename()'
         # set outfile from self
         kwargs['outfile'] = self
+        kwargs['func'] = func_name
         # if we have a function use it
         if self.outfunc is not None:
             abspath = self.outfunc(params, **kwargs)
@@ -1006,8 +1022,12 @@ class DrsFitsFile(DrsInputFile):
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = self.name
+        nkwargs['filetype'] = self.filetype
+        nkwargs['suffix'] = self.suffix
+        nkwargs['prefix'] = self.prefix
         nkwargs['recipe'] = self.recipe
         nkwargs['fiber'] = self.fiber
+        nkwargs['fibers'] = self.fibers
         nkwargs['rkeys'] = self.required_header_keys
         nkwargs['filename'] = self.filename
         nkwargs['path'] = self.path
@@ -1301,14 +1321,14 @@ class DrsFitsFile(DrsInputFile):
 
             DrsFile.hdict is updated with hdict[key] = (value, comment)
 
-        :param kwstore: list, keyword list (defined in spirouKeywords.py)
-                        must be in form [string, value, string]
+        :param key: string or None, if kwstore not defined this is the key to
+                    set in hdict[key] = (value, comment)
+
+        :param keyword:
 
         :param value: object or None, if any python object (other than None)
                       will set the value of hdict[key] to (value, comment)
 
-        :param key: string or None, if kwstore not defined this is the key to
-                    set in hdict[key] = (value, comment)
         :param comment: string or None, if kwstore not define this is the
                         comment to set in hdict[key] = (value, comment)
         :return:
@@ -1377,7 +1397,7 @@ class DrsFitsFile(DrsInputFile):
                 self.__error__(TextEntry('00-001-00010', args=[func_name]))
             # loop around entries
             for k_it, kwstore in enumerate(kwstores):
-                self.add_hkey(kwstore=kwstore, value=values[k_it])
+                self.add_hkey(key=kwstore, value=values[k_it])
         # else we assume keys and comments
         else:
             if not isinstance(keys, list):
@@ -1601,6 +1621,32 @@ class DrsFitsFile(DrsInputFile):
     def copy_hdict(self, drsfile):
         self.hdict = drsfile.hdict
 
+    # -------------------------------------------------------------------------
+    # database methods (dbkey
+    # -------------------------------------------------------------------------
+    def get_dbkey(self, **kwargs):
+        func_name = __NAME__ + '.DrsFitsFile.get_dbkey()'
+        func_name = kwargs.get('func', func_name)
+        # update fiber if needed
+        self.fiber = kwargs.get('fiber', self.fiber)
+        # get parameters for error message
+        if self.recipe is not None:
+            params = self.recipe.drs_params
+        else:
+            params = None
+        # deal with fiber being required but still unset
+        if self.fibers is not None and self.fiber is None:
+            eargs = [self, func_name]
+            WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
+        # add fiber name to dbkey
+        if self.fibers is not None:
+            if not self.dbkey.endswith('_' + self.fiber):
+                self.dbkey = '{0}_{1}'.format(self.dbkey, self.fiber)
+        # make dbkey uppdercase
+        if self.dbkey is not None:
+            self.dbkey = self.dbkey.upper()
+        # return dbkey
+        return self.dbkey
 
 # =============================================================================
 # User functions
