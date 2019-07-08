@@ -77,6 +77,26 @@ def general_file(params, **kwargs):
     return abspath
 
 
+def npy_file(params, **kwargs):
+    func_name = __NAME__ + '.npy_file()'
+    func = kwargs.get('func', None)
+    if func is None:
+        func = func_name
+    else:
+        func = '{0} and {1}'.format(func, func_name)
+    # get out file and report error if not set
+    outfile = kwargs.get('outfile', None)
+    if outfile is None:
+        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
+    # make sure filetype is .npy
+    inext = outfile.filetype
+    if '.npy' not in inext:
+        WLOG(params, 'error', TextEntry('00-001-00033'))
+    # update keywords func name
+    kwargs['func'] = func
+    return general_file(params, **kwargs)
+
+
 def debug_file(params, **kwargs):
     func_name = __NAME__ + '.debug_back()'
     func = kwargs.get('func', None)
@@ -94,6 +114,9 @@ def debug_file(params, **kwargs):
         prefix = 'DEBUG_'
     # return absolute path
     return general_file(params, prefix=prefix, **kwargs)
+
+
+
 
 
 # =============================================================================
