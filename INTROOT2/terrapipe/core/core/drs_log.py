@@ -500,7 +500,16 @@ wlog = Logger()
 # =============================================================================
 # Define function
 # =============================================================================
-def find_param(params, key, name=None, kwargs=None, func=None):
+def find_param(params=None, key=None, name=None, kwargs=None, func=None,
+               mapf=None):
+    # deal with params being None
+    if params is None:
+        params = ParamDict()
+    # deal with key being None
+    if key is None and name is None:
+        wlog(params, 'error', TextEntry('00-003-00004'))
+    elif key is None:
+        key = 'Not set'
     # deal with no kwargs
     if kwargs is None:
         rkwargs = dict()
@@ -514,20 +523,24 @@ def find_param(params, key, name=None, kwargs=None, func=None):
         func = 'UNKNOWN'
     # deal with no name
     if name is None:
-        name = key
+        name = key.upper()
+    else:
+        name = name.upper()
     # deal with key not found in params
-    if (key not in params) and (key.upper() not in rkwargs):
+    if (key not in params) and (name not in rkwargs):
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
         value = None
-    elif key.upper() in rkwargs:
-        value = rkwargs[key.upper()]
+    elif name in rkwargs:
+        value = rkwargs[name]
+    elif mapf == 'list':
+        value = params.listp(key)
+    elif mapf == 'dict':
+        value = params.dictp(key)
     else:
         value = params[key]
-
     # set value
     return value
-
 
 
 def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
