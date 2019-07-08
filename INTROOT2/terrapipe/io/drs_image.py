@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Functions for dealing with drs images
 
 Created on 2019-03-21 at 14:28
 
@@ -279,6 +277,32 @@ def clean_hotpix(image, badpix):
     return image1
 
 
+def get_fiber_types(params, **kwargs):
+    func_name = __NAME__ + '.get_fiber_type()'
+    # get parameter list from params/kwargs
+    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
+    validfibertypes = params.listp('FIBER_TYPES')
+    # deal with fiber types from kwargs
+    fibertypes = kwargs.get('fibertypes', None)
+
+    # if fiber types is defined then return it (assuming user knows best)
+    if fibertypes is not None:
+        return fibertypes
+
+    # deal with no "FIBER" in "INPUTS"
+    if "FIBER" not in params['INPUTS']:
+        return validfibertypes
+
+    # get fiber from inputs
+    if fiber is None:
+        fiber = str(params['INPUTS']['FIBER'])
+
+    # deal with input from command line (via params['INPUTS'])
+    if fiber in validfibertypes:
+        return [fiber]
+    else:
+        eargs = [fiber, ', '.join(validfibertypes), func_name]
+        WLOG(params, 'error', TextEntry('09-001-00030', args=eargs))
 
 
 # =============================================================================
