@@ -1290,7 +1290,7 @@ class DrsRecipe(object):
                 tmp_file.directory = directory
                 tmp_file.inputdir = input_dir
                 # make a header from index data table
-                tmp_file.index = _make_dict_from_table(indexdata[mask][v_it])
+                tmp_file.indextable = _make_dict_from_table(indexdata[mask][v_it])
                 # append to list
                 valid_entries.append(tmp_file)
             valid_files += valid_entries
@@ -1881,10 +1881,10 @@ def _get_file_groups(recipe, arg):
     # loop around files in arg and get lists of parameters
     for value in arg.value:
         directories.append(value.directory)
-        filenames.append(value.index['FILENAME'])
-        exp_nums.append(value.index[params['KW_CMPLTEXP'][0]])
-        nexps.append(value.index[params['KW_NEXP'][0]])
-        dates.append(value.index[params['KW_ACQTIME'][0]])
+        filenames.append(value.indextable['FILENAME'])
+        exp_nums.append(value.indextable[params['KW_CMPLTEXP'][0]])
+        nexps.append(value.indextable[params['KW_NEXP'][0]])
+        dates.append(value.indextable[params['KW_ACQTIME'][0]])
         # deal with separating out files by logic
         #   i..e if "exclusive" need to separate by value.name
         #        else we don't need to so set to "FILE"
