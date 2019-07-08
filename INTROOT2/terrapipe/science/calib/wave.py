@@ -112,7 +112,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     if infile is not None:
         if isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
-            WLOG(params, 'error', TextEntry('00-0017-00001', args=eargs))
+            WLOG(params, 'error', TextEntry('00-017-00001', args=eargs))
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:

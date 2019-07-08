@@ -1086,99 +1086,47 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
 
 
 def get_master_fp(params, header):
-    # -------------------------------------------------------------------------
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
     # get key
     key = file_definitions.out_shape_fpmaster.dbkey
-    # get the badpix entries
-    fpmaster_entries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                    n_ent=1)
-    # get badpix filename
-    fpmaster_filename = fpmaster_entries[filecol][0]
-    fpmaster_file = os.path.join(params['DRS_CALIB_DB'], fpmaster_filename)
-    # -------------------------------------------------------------------------
-    # get bad pixel file
-    fpmaster_image = drs_fits.read(params, fpmaster_file)
-
+    # load calib file
+    fpmaster, fpmaster_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))
     # return the master image
-    return fpmaster_file, fpmaster_image
+    return fpmaster_file, fpmaster
 
 
 def get_shapex(params, header):
-    # -------------------------------------------------------------------------
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
     # get key
     key = file_definitions.out_shape_dxmap.dbkey
-    # get the badpix entries
-    shapex_entries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                  n_ent=1)
-    # get badpix filename
-    shapex_filename = shapex_entries[filecol][0]
-    shapex_file = os.path.join(params['DRS_CALIB_DB'], shapex_filename)
-    # -------------------------------------------------------------------------
-    # get bad pixel file
-    dxmap = drs_fits.read(params, shapex_file)
-
+    # load calib file
+    dxmap, shapex_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00031', args=[shapex_file]))
     # return the master image
-    return shapex_filename, dxmap
+    return shapex_file, dxmap
 
 
 def get_shapey(params, header):
-    # -------------------------------------------------------------------------
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
     # get key
     key = file_definitions.out_shape_dymap.dbkey
-    # get the badpix entries
-    shapey_entries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                  n_ent=1)
-    # get badpix filename
-    shapey_filename = shapey_entries[filecol][0]
-    shapey_file = os.path.join(params['DRS_CALIB_DB'], shapey_filename)
-    # -------------------------------------------------------------------------
-    # get bad pixel file
-    dymap = drs_fits.read(params, shapey_file)
-
+    # load calib file
+    dymap, shapey_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00032', args=[shapey_file]))
     # return the master image
-    return shapey_filename, dymap
+    return shapey_file, dymap
 
 
 def get_shapelocal(params, header):
-    # -------------------------------------------------------------------------
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
     # get key
     key = file_definitions.out_shape_local.dbkey
-    # get the badpix entries
-    shapey_entries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                  n_ent=1)
-    # get badpix filename
-    shapey_filename = shapey_entries[filecol][0]
-    shapey_file = os.path.join(params['DRS_CALIB_DB'], shapey_filename)
-    # -------------------------------------------------------------------------
-    # get bad pixel file
-    dymap = drs_fits.read(params, shapey_file)
-
+    # load calib file
+    shapel, shapel_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00032', args=[shapey_file]))
+    WLOG(params, '', TextEntry('40-014-00039', args=[shapel_file]))
     # return the master image
-    return shapey_filename, dymap
+    return shapel_file, shapel
 
 
 # =============================================================================
