@@ -343,7 +343,7 @@ def get_local_variables(*args):
     return output_dict
 
 
-def get_file_definition(name, instrument, kind='raw'):
+def get_file_definition(name, instrument, kind='raw', return_all=False):
     """
     Finds a given recipe in the instruments definitions
 
@@ -379,25 +379,28 @@ def get_file_definition(name, instrument, kind='raw'):
         all_files = mod.raw_file.fileset
     elif kind == 'tmp':
         all_files = mod.pp_file.fileset
-    elif kind == 'red':
+    elif kind.startswith('red'):
         all_files = mod.out_file.fileset
     else:
         all_files = []
 
     # try to locate this recipe
-    found_file = None
+    found_files = []
     for filet in all_files:
-        if filet.name == name:
-            found_file = filet
+        if name.upper() in filet.name:
+            found_files.append(filet)
 
-    if instrument is None and found_file is None:
+    if instrument is None and len(found_files) == 0:
         empty = drs_file.DrsFitsFile('Empty')
         return empty
-    if found_file is None:
+    if len(found_files) == 0:
         eargs = [name, modules[0], func_name]
         WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
-    # return
-    return found_file
+
+    if return_all:
+        return found_files
+    else:
+        return found_files[-1]
 
 
 def file_processing_update(params, it, num_files):
