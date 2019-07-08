@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+General calibration functions in here only
 
 Created on 2019-06-27 at 10:48
 
 @author: cook
 """
-
+from __future__ import division
 import numpy as np
+import os
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core.core import drs_database
+from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
+from terrapipe.io import drs_table
 from . import dark
 from . import badpix
 from . import background
@@ -208,6 +210,75 @@ def add_calibs_to_header(outfile, props):
     # return outfile
     return outfile
 
+
+def load_calib_file(params, key, header, **kwargs):
+    func_name = kwargs.get('func', __NAME__ + '.load_calib_file()')
+
+    # get keys from kwargs
+    n_entries = kwargs.get('n_entries', 1)
+    ext = kwargs.get('ext', 0)
+    # ----------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get the badpix entries
+    entries = drs_database.get_key_from_db(params, key, cdb, header,
+                                           n_ent=n_entries)
+    # storage
+    images, abspaths = [], []
+    # loop around entries
+    for entry in entries:
+        # get badpix filename
+        filename = entries[filecol][0]
+        abspath = os.path.join(params['DRS_CALIB_DB'], filename)
+        # ------------------------------------------------------------------
+        # get calib fits file
+        image = drs_fits.read(params, abspath, ext=ext)
+        # ------------------------------------------------------------------
+        # append to storage
+        images.append(image)
+        abspaths.append(abspath)
+
+    # deal with if n_entries is 1 (just return file not list)
+    if n_entries == 1:
+        return images[0], abspaths[0]
+    else:
+        return images, abspaths
+
+
+def load_calib_table(params, key, header, **kwargs):
+    # get keys from kwargs
+    n_entries = kwargs.get('n_entries', 1)
+    fmt = kwargs.get('fmt', 'fits')
+    # ----------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # get the badpix entries
+    entries = drs_database.get_key_from_db(params, key, cdb, header,
+                                           n_ent=n_entries)
+    # storage
+    images, abspaths = [], []
+    # loop around entries
+    for entry in entries:
+        # get badpix filename
+        filename = entries[filecol][0]
+        abspath = os.path.join(params['DRS_CALIB_DB'], filename)
+        # ------------------------------------------------------------------
+        # get calib fits file
+        image = drs_table.read_table(params, abspath, fmt=fmt)
+        # ------------------------------------------------------------------
+        # append to storage
+        images.append(image)
+        abspaths.append(abspath)
+
+    # deal with if n_entries is 1 (just return file not list)
+    if n_entries == 1:
+        return images[0], abspaths[0]
+    else:
+        return images, abspaths
 
 
 
