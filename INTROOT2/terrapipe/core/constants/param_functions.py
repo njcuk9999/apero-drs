@@ -552,6 +552,10 @@ class ParamDict(CaseInsensitiveDict):
             return _map_listparameter(self.__getitem__(key),
                                       separator=separator)
 
+    def dictp(self, key):
+        if key in self.keys():
+            return _map_dictparameter(self.__getitem__(key))
+
 
 # =============================================================================
 # Define functions
@@ -1049,10 +1053,39 @@ def _string_repr_list(key, values, source, fmt):
 
 
 def _map_listparameter(value, separator=','):
-    # first split by separator
-    listparameter = value.split(separator)
-    # return the stripped down values
-    return list(map(lambda x: x.strip(), listparameter))
+
+    func_name = __NAME__ + '._map_listparameter()'
+
+    try:
+        rawvalue = eval(value)
+        if isinstance(rawvalue, list):
+            return list(rawvalue)
+    except Exception as e:
+        pass
+
+    try:
+        # first split by separator
+        listparameter = value.split(separator)
+        # return the stripped down values
+        return list(map(lambda x: x.strip(), listparameter))
+    except Exception as e:
+        eargs = [value, type(e), e, func_name]
+        error = ('Parameter \'{0}\' can not be converted to a list.' 
+                 '\n\t Error {1}: {2}. \n\t function = {3}')
+        BLOG(message=error.format(eargs), level='error')
+
+
+def _map_dictparameter(value):
+    func_name = __NAME__ + '._map_dictparameter()'
+    try:
+        rawvalue = eval(value)
+        if isinstance(rawvalue, dict):
+            return dict(rawvalue)
+    except Exception as e:
+        eargs = [value, type(e), e, func_name]
+        error = ('Parameter \'{0}\' can not be converted to a dictionary.' 
+                 '\n\t Error {1}: {2}. \n\t function = {3}')
+        BLOG(message=error.format(eargs), level='error')
 
 
 # =============================================================================
