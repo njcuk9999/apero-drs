@@ -296,7 +296,7 @@ def add_file(params, outfile, night=None):
     dbname = _get_dbname(params, outfile)
     # ------------------------------------------------------------------
     # get database key (if it exists)
-    dbkey = _get_dbkey(params, outfile)
+    dbkey = get_dbkey(params, outfile)
     # ------------------------------------------------------------------
     # test database name
     outpath = _get_outpath(params, dbname, outfile)
@@ -475,15 +475,17 @@ def update_telludb(params, dbname, dbkey, outfile, night=None):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _get_dbkey(params, outfile):
-    func_name = __NAME__ + '._get_dbkey()'
+def get_dbkey(params, outfile):
+    func_name = __NAME__ + '.get_dbkey()'
     # get database key (if it exists)
     if hasattr(outfile, 'dbkey'):
-        dbkey = outfile.dbkey.upper()
+        dbkey = outfile.get_dbkey()
     else:
         eargs = [outfile.name, func_name]
         WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
         dbkey = ''
+
+    # return dbkey
     return dbkey
 
 
