@@ -12,14 +12,13 @@ Created on 2019-07-02 at 09:24
 from __future__ import division
 import numpy as np
 import os
-import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
-from terrapipe.core.core import drs_database
+
 from . import drs_path
 from . import drs_fits
 from . import drs_table
@@ -160,9 +159,9 @@ def load_full_flat_badpix(params, **kwargs):
 def load_full_flat_pp(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
-    relfolder = pcheck(params, 'PP_FULL_FLAT', 'directory', kwargs,
+    relfolder = pcheck(params, 'DATA_ENGINEERING', 'directory', kwargs,
                        func_name)
-    filename = pcheck(params, 'DATA_ENGINEERING', 'filename', kwargs,
+    filename = pcheck(params, 'PP_FULL_FLAT', 'filename', kwargs,
                       func_name)
     # return image
     try:
