@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+drs data
 
-# CODE DESCRIPTION HERE
+
+Used to load data files from the ./data/ directory only
 
 Created on 2019-07-02 at 09:24
 
@@ -18,7 +19,6 @@ from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
-
 from . import drs_path
 from . import drs_fits
 from . import drs_table
@@ -93,7 +93,7 @@ def load_linelist(params, **kwargs):
         return ll, amp
     except LoadException:
         eargs = [filename, relfolder]
-        WLOG(params, 'error', TextEntry('00-0017-00002', args=eargs))
+        WLOG(params, 'error', TextEntry('00-017-00002', args=eargs))
 
 
 def load_cavity_file(params, **kwargs):
