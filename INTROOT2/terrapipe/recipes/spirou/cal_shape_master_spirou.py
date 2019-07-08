@@ -138,6 +138,19 @@ def __main__(recipe, params):
     drs_database.copy_calibrations(params, fpheader)
     drs_database.copy_calibrations(params, hcheader)
 
+    # ----------------------------------------------------------------------
+    # Get localisation coefficients for fp file
+    # ----------------------------------------------------------------------
+    lprops = localisation.get_coefficients(params, recipe, fpheader)
+
+    # ----------------------------------------------------------------------
+    # Get wave coefficients from master wavefile
+    # ----------------------------------------------------------------------
+    # get master wave filename
+    mwavefile = wave.get_masterwave_filename(params)
+    # get master wave map
+    wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
+
     # ------------------------------------------------------------------
     # Correction of fp file
     # ------------------------------------------------------------------
@@ -181,19 +194,6 @@ def __main__(recipe, params):
     WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
     # sum the cube to make fp data
     master_fp = np.sum(fpcube, axis=0)
-
-    # ----------------------------------------------------------------------
-    # Get localisation coefficients for fp file
-    # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, recipe, fpheader)
-
-    # ----------------------------------------------------------------------
-    # Get wave coefficients from master wavefile
-    # ----------------------------------------------------------------------
-    # get master wave filename
-    mwavefile = wave.get_masterwave_filename(params)
-    # get master wave map
-    wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map

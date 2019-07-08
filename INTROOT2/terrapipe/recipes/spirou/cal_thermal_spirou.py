@@ -10,13 +10,16 @@ Created on 2019-07-05 at 16:46
 @author: cook
 """
 from __future__ import division
+import os
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.recipes.spirou import cal_extract_spirou
+
 
 # =============================================================================
 # Define variables
@@ -36,10 +39,7 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
-EXT_E2DS_AB_FILE = file_definitions.out_ext_e2ds_ab
-EXT_E2DS_A_FILE = file_definitions.out_ext_e2ds_a
-EXT_E2DS_B_FILE = file_definitions.out_ext_e2ds_b
-EXT_E2DS_C_FILE = file_definitions.out_ext_e2ds_c
+THERMAL_E2DS_FILE = file_definitions.out_thermal_e2ds
 
 
 # =============================================================================
@@ -98,6 +98,8 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get nightname
+    nightname = params['INPUTS']['DIRECTORY']
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # get list of filenames (for output)
@@ -129,42 +131,50 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get the output filename (to pipe into cal_extract
         # ------------------------------------------------------------------
+        # set up the exists command
+        exists = False
+        # set up storage
+        thermal_files = dict()
+        # loop around fiber types
         for fiber in fiber_types:
-
-            if fiber == 'AB':
-                e2dsfile = EXT_E2DS_AB_FILE.newcopy(recipe=recipe)
-            elif fiber == 'A':
-                e2dsfile = EXT_E2DS_A_FILE.newcopy(recipe=recipe)
-            elif fiber == 'B':
-                e2dsfile = EXT_E2DS_B_FILE.newcopy(recipe=)
+            # get thermal file instance
+            thermal_file = THERMAL_E2DS_FILE.newcopy(recipe=recipe, fiber=fiber)
+            # construct the filename from file instance
+            thermal_file.construct_filename(params, infile=infile)
+            # check whether e2ds file exists
+            if os.path.exists(thermal_file.filename):
+                exists = exists and True
             else:
-
-
-
-
-            exists = False
+                exists = exists and False
+            # append to storage
+            thermal_files[fiber] = thermal_file
 
         # ------------------------------------------------------------------
         # extract the dark (AB, A, B and C) or read dark e2ds header
         # ------------------------------------------------------------------
         if params['THERMAL_ALWAYS_EXTRACT'] or (not exists):
             # pipe into cal_extract
-            llout = cal_extract_spirou.main(night_name, files)
+            llout = cal_extract_spirou.main(nightname, [infile.basename])
             # get qc
             passed = llout['p']['QC']
             # get hdr
             hdr = llout['hdr']
         # else we just need to read the header of the output file
         else:
-            pass
+            # read file header and push into outputs
+            infile.read()
+            # get quality control parameters
+            passed = infile.header['KW_DRS_QC']
 
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
-
-
-
-
+        # loop around fiber types
+        for fiber in fiber_types:
+            # construct out file
+            outfile = thermal_files[fiber]
+            # add output from thermal files
+            drs_database.add_file(params, outfile)
 
     # ----------------------------------------------------------------------
     # End of main code
