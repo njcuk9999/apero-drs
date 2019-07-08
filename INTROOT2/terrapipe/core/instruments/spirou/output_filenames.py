@@ -62,6 +62,18 @@ def debug_file(params, **kwargs):
     return output_filenames.debug_file(params, **kwargs)
 
 
+def npy_file(params, **kwargs):
+    func_name = __NAME__ + '.npy_file()'
+    func = kwargs.get('func', None)
+    if func is None:
+        func = func_name
+    else:
+        func = '{0} and {1}'.format(func, func_name)
+    # update keywords func name
+    kwargs['func'] = func
+    return output_filenames.debug_file(params, **kwargs)
+
+
 def calib_file(params, **kwargs):
     func_name = __NAME__ + '.calib_file()'
     func = kwargs.get('func', None)
