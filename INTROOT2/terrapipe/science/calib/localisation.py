@@ -21,8 +21,8 @@ from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
-from terrapipe.io import drs_fits
-
+from terrapipe.core.instruments.spirou import file_definitions
+from . import general
 
 # =============================================================================
 # Define variables
@@ -477,24 +477,36 @@ def get_coefficients(params, recipe, header, **kwargs):
         nset = 1
     # -------------------------------------------------------------------------
     # store localisation properties in parameter dictionary
-    lprops = ParamDict()
-    lprops['LOCOFILE'] = locofilepath
-    lprops['NBO'] = int(nbo // nset)
-    lprops['DEG_C'] = int(deg_c)
-    lprops['DEG_W'] = int(deg_w)
-    lprops['CENT_COEFFS'] = cent_coeffs
-    lprops['WID_COEFFS'] = wid_coeffs
-    lprops['MERGED'] = merge
-    lprops['NSET'] = nset
+    props = ParamDict()
+    props['LOCOFILE'] = locofilepath
+    props['NBO'] = int(nbo // nset)
+    props['DEG_C'] = int(deg_c)
+    props['DEG_W'] = int(deg_w)
+    props['CENT_COEFFS'] = cent_coeffs
+    props['WID_COEFFS'] = wid_coeffs
+    props['MERGED'] = merge
+    props['NSET'] = nset
     # set sources
     keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'NBO', 'DEG_C', 'DEG_W',
             'MERGED', 'NSET']
-    lprops.set_sources(keys, func_name)
+    props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
-    return lprops
+    return props
 
 
+def load_orderp(params, header, fiber=None):
+    # get fiber if None
+    if fiber is None:
+        fiber = params['FIBER']
+    # get key
+    key = file_definitions.out_loc_orderp.get_dbkey(fiber=fiber)
+    # load calib file
+    orderp, orderp_file = general.load_calib_file(params, key, header)
+    # log which fpmaster file we are using
+    WLOG(params, '', TextEntry('40-013-00022', args=[orderp_file]))
+    # return the master image
+    return orderp_file, orderp
 
 
 # =============================================================================
