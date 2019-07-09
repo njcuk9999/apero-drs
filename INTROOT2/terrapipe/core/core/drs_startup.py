@@ -387,7 +387,9 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
     # try to locate this recipe
     found_files = []
     for filet in all_files:
-        if name.upper() in filet.name:
+        if name.upper() in filet.name and return_all:
+            found_files.append(filet)
+        elif name == filet.name:
             found_files.append(filet)
 
     if instrument is None and len(found_files) == 0:
