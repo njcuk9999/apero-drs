@@ -60,9 +60,11 @@ def general_file(params, **kwargs):
     prefix = kwargs.get('prefix', outfile.prefix)
     suffix = kwargs.get('suffix', outfile.suffix)
     # construct out filename
-    inext = outfile.filetype
+    inext = infile.filetype
+    outext = outfile.filetype
     outfilename = get_outfilename(params, infile.basename, prefix=prefix,
-                                  suffix=suffix, inext=inext, fiber=fiber)
+                                  suffix=suffix, inext=inext, outext=outext,
+                                  fiber=fiber)
     # deal with no given path (default)
     if path is None:
         # get output path from params
@@ -89,9 +91,9 @@ def npy_file(params, **kwargs):
     if outfile is None:
         WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
     # make sure filetype is .npy
-    inext = outfile.filetype
-    if '.npy' not in inext:
-        WLOG(params, 'error', TextEntry('00-001-00033'))
+    filetype = outfile.filetype
+    if '.npy' not in filetype:
+        WLOG(params, 'error', TextEntry('00-001-00033', args=[filetype]))
     # update keywords func name
     kwargs['func'] = func
     return general_file(params, **kwargs)
