@@ -310,7 +310,7 @@ out_file.addset(out_dark_master)
 # -----------------------------------------------------------------------------
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
-                        fileext='.fits',
+                        filetype='.fits',
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
@@ -324,24 +324,24 @@ out_file.addset(out_backmap)
 # localisation
 out_loc_orderp = drs_finput('LOC_ORDERP', KW_OUTPUT='LOC_ORDERP',
                             fibers=['AB', 'A', 'B', 'C'],
-                            fileext='.fits',
+                            filetype='.fits',
                             suffix='_order_profile.fits',
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', KW_OUTPUT='LOC_LOCO',
                           fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
+                          filetype='.fits',
                           suffix='_loco',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='LOC')
 out_loc_fwhm = drs_finput('LOC_FWHM', KW_OUTPUT='LOC_FWHM',
                           fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
+                          filetype='.fits',
                           suffix='_fwhm-order',
                           outfunc=out.calib_file)
 out_loc_sup = drs_finput('LOC_SUP', KW_OUTPUT='LOC_SUP',
                          fibers=['AB', 'A', 'B', 'C'],
-                         fileext='.fits',
+                         filetype='.fits',
                          suffix='_with-order',
                          outfunc=out.calib_file)
 # add localisation outputs to output fileset
@@ -353,38 +353,38 @@ out_file.addset(out_loc_sup)
 # -----------------------------------------------------------------------------
 # shape master
 out_shape_dxmap = drs_finput('SHAPE_X', KW_OUTPUT='SHAPE_X',
-                             fileext='.fits',
+                             filetype='.fits',
                              suffix='_shapex',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='SHAPEX')
 out_shape_dymap = drs_finput('SHAPE_Y', KW_OUTPUT='SHAPE_Y',
-                             fileext='.fits',
+                             filetype='.fits',
                              suffix='_shapey',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='SHAPEY')
 out_shape_fpmaster = drs_finput('MASTER_FP', KW_OUTPUT='MASTER_FP',
-                                fileext='.fits',
+                                filetype='.fits',
                                 suffix='_fpmaster',
                                 outfunc=out.calib_file,
                                 dbname='calibration', dbkey='FPMASTER')
 out_shape_debug_ifp = drs_finput('SHAPE_IN_FP', KW_OUTPUT='SHAPE_IN_FP',
-                                 fileext='.fits',
+                                 filetype='.fits',
                                  suffix='_shape_in_fp',
                                  outfunc=out.debug_file)
 out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP', KW_OUTPUT='SHAPE_OUT_FP',
-                                 fileext='.fits',
+                                 filetype='.fits',
                                  suffix='_shape_out_fp',
                                  outfunc=out.debug_file)
 out_shape_debug_ihc = drs_finput('SHAPE_IN_HC', KW_OUTPUT='SHAPE_IN_HC',
-                                 fileext='.fits',
+                                 filetype='.fits',
                                  suffix='_shape_out_fp',
                                  outfunc=out.debug_file)
 out_shape_debug_ohc = drs_finput('SHAPE_OUT_HC', KW_OUTPUT='SHAPE_OUT_HC',
-                                 fileext='.fits',
+                                 filetype='.fits',
                                  suffix='_shape_out_hc',
                                  outfunc=out.debug_file)
 out_shape_debug_bdx = drs_finput('SHAPE_BDX', KW_OUTPUT='SHAPE_BDX',
-                                 fileext='.fits',
+                                 filetype='.fits',
                                  suffix='_shape_out_bdx',
                                  outfunc=out.debug_file)
 # add shape master outputs to output fileset
@@ -399,17 +399,17 @@ out_file.addset(out_shape_debug_bdx)
 # -----------------------------------------------------------------------------
 # shape local
 out_shape_local = drs_finput('SHAPEL', KW_OUTPUT='SHAPEL',
-                             fileext='.fits',
+                             filetype='.fits',
                              suffix='_shapel',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='SHAPEL')
 out_shapel_debug_ifp = drs_finput('SHAPEL_IN_FP', KW_OUTPUT='SHAPEL_IN_FP',
-                                  fileext='.fits',
+                                  filetype='.fits',
                                   suffix='_shapel_in_fp.fits',
                                   outfunc=out.debug_file)
 
 out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP', KW_OUTPUT='SHAPEL_OUT_FP',
-                                  fileext='.fits',
+                                  filetype='.fits',
                                   suffix='_shapel_out_fp.fits',
                                   outfunc=out.debug_file)
 # add shape local outputs to output fileset
@@ -421,19 +421,21 @@ out_file.addset(out_shapel_debug_ofp)
 # flat
 out_ff_blaze = drs_finput('FF_BLAZE', KW_OUTPUT='FF_BLAZE',
                           fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
+                          filetype='.fits',
                           suffix='_blaze',
-                          dbname='calibration', dbkey='BLAZE')
+                          dbname='calibration', dbkey='BLAZE',
+                          outfunc=out.calib_file)
 out_ff_flat = drs_finput('FF_FLAT', KW_OUTPUT='FF_FLAT',
                          fibers=['AB', 'A', 'B', 'C'],
-                         fileext='.fits',
+                         filetype='.fits',
                          suffix='_flat',
-                         dbname='calibration', dbkey='FLAT')
+                         dbname='calibration', dbkey='FLAT',
+                         outfunc=out.calib_file)
 
 out_orderp_straight = drs_ninput('ORDERP_STRAIGHT', KW_OUTPUT='ORDERP_STRAIGHT',
                                  fibers=['AB', 'A', 'B', 'C'],
-                                 fileext='.npy',
-                                 suffix='orderp',
+                                 filetype='.npy',
+                                 suffix='_orderp',
                                  outfunc=out.npy_file)
 
 # add flat outputs to output fileset
@@ -444,24 +446,24 @@ out_file.addset(out_ff_flat)
 # extract
 out_ext_e2ds = drs_finput('EXTRACT_E2DS', KW_OUTPUT='EXT_E2DS',
                           fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
-                          suffix='_e2ds')
+                          filetype='.fits',
+                          suffix='_e2ds', outfunc=out.general_file)
 out_ext_e2dsff = drs_finput('EXTRACT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
                             fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
-                          suffix='_e2dsff')
+                          filetype='.fits',
+                          suffix='_e2dsff', outfunc=out.general_file)
 out_ext_e2dsll = drs_finput('EXTRACT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
                             fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
-                          suffix='_e2dsll')
+                            filetype='.fits',
+                            suffix='_e2dsll', outfunc=out.debug_file)
 out_ext_loco = drs_finput('EXTRACT_LOCO_AB', KW_OUTPUT='EXT_LOCO',
                           fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
-                          suffix='_e2dsloco')
+                          filetype='.fits',
+                          suffix='_e2dsloco', outfunc=out.debug_file)
 out_ext_s1d = drs_finput('EXTRACT_S1D_AB', KW_OUTPUT='EXT_S1D',
                          fibers=['AB', 'A', 'B', 'C'],
-                          fileext='.fits',
-                          suffix='s1d')
+                          filetype='.fits',
+                          suffix='s1d', outfunc=out.general_file)
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
 out_file.addset(out_ext_e2dsff)
@@ -474,17 +476,22 @@ out_file.addset(out_ext_s1d)
 out_thermal_e2ds = drs_finput('THERMAL_E2DS_AB',
                               KW_OUTPUT='THERMAL_E2DS',
                               fibers=['AB', 'A', 'B', 'C'],
-                              fileext='.fits',
+                              filetype='.fits',
                               suffix='_e2ds',
-                              dbname='calibration', dbkey='THERMAL')
+                              dbname='calibration', dbkey='THERMAL',
+                              outfunc=out.calib_file)
 # add thermal outputs to output fileset
 out_file.addset(out_thermal_e2ds)
 
 # -----------------------------------------------------------------------------
 # TODO: fill in definitions
 # wave
-# out_wave = drs_finput('WAVE_SOL', KW_OUTPUT='WAVE_SOL',
-#                       fibers=['AB', 'A', 'B', 'C'])
+out_wave = drs_finput('WAVE', KW_OUTPUT='WAVE_SOL',
+                      fibers=['AB', 'A', 'B', 'C'],
+                      filetype='.fits',
+                      suffix='_wave',
+                      dbname='calibration', dbkey='WAVE',
+                      outfunc=out.calib_file)
 # out_wave_fp = drs_finput('WAVE_FP',
 #                          fibers=['AB', 'A', 'B', 'C'],
 #                          KW_OUTPUT='WAVE_FP')
@@ -497,7 +504,7 @@ out_file.addset(out_thermal_e2ds)
 # out_wave_res = drs_finput('WAVE_RES_EA', fibers=['AB', 'A', 'B', 'C'],
 #                           KW_OUTPUT='WAVE_RES_EA')
 # # add wave outputs to output fileset
-# out_file.addset(out_wave)
+out_file.addset(out_wave)
 # out_file.addset(out_wave_fp)
 # out_file.addset(out_wave_ea)
 # out_file.addset(out_wave_fp_ea)
