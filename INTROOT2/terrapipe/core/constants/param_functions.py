@@ -547,15 +547,23 @@ class ParamDict(CaseInsensitiveDict):
         # return string
         return return_string + '\n'
 
-    def listp(self, key, separator=','):
+    def listp(self, key, separator=',', dtype=None):
         if key in self.keys():
             return _map_listparameter(self.__getitem__(key),
-                                      separator=separator)
+                                      separator=separator, dtype=dtype)
+        else:
+            emsg = ('Config Error: Parameter "{0}" not found in parameter '
+                    'dictionary (via listp)')
+            raise ConfigError(emsg.format(key), level='error')
 
-    def dictp(self, key):
+
+    def dictp(self, key, dtype=None):
         if key in self.keys():
-            return _map_dictparameter(self.__getitem__(key))
-
+            return _map_dictparameter(self.__getitem__(key), dtype=dtype)
+        else:
+            emsg = ('Config Error: Parameter "{0}" not found in parameter '
+                    'dictionary (via dictp)')
+            raise ConfigError(emsg.format(key), level='error')
 
 # =============================================================================
 # Define functions
@@ -1052,7 +1060,7 @@ def _string_repr_list(key, values, source, fmt):
     return [fmt.format(key, str_value, source)]
 
 
-def _map_listparameter(value, separator=','):
+def _map_listparameter(value, separator=',', dtype=None):
 
     func_name = __NAME__ + '._map_listparameter()'
 
@@ -1066,8 +1074,12 @@ def _map_listparameter(value, separator=','):
     try:
         # first split by separator
         listparameter = value.split(separator)
+
         # return the stripped down values
-        return list(map(lambda x: x.strip(), listparameter))
+        if dtype is not None and isinstance(dtype, type):
+            return list(map(lambda x: dtype(x.strip()), listparameter))
+        else:
+            return list(map(lambda x: x.strip(), listparameter))
     except Exception as e:
         eargs = [value, type(e), e, func_name]
         error = ('Parameter \'{0}\' can not be converted to a list.' 
@@ -1075,12 +1087,18 @@ def _map_listparameter(value, separator=','):
         BLOG(message=error.format(eargs), level='error')
 
 
-def _map_dictparameter(value):
+def _map_dictparameter(value, dtype=None):
     func_name = __NAME__ + '._map_dictparameter()'
     try:
         rawvalue = eval(value)
         if isinstance(rawvalue, dict):
-            return dict(rawvalue)
+            returndict = dict()
+            for key in rawvalue.keys():
+                if dtype is not None and isinstance(dtype, type):
+                    returndict[key] = dtype(rawvalue[key])
+                else:
+                    returndict[key] = rawvalue[key]
+            return returndict
     except Exception as e:
         eargs = [value, type(e), e, func_name]
         error = ('Parameter \'{0}\' can not be converted to a dictionary.' 
