@@ -501,7 +501,7 @@ wlog = Logger()
 # Define function
 # =============================================================================
 def find_param(params=None, key=None, name=None, kwargs=None, func=None,
-               mapf=None):
+               mapf=None, dtype=None):
     # deal with params being None
     if params is None:
         params = ParamDict()
@@ -534,9 +534,9 @@ def find_param(params=None, key=None, name=None, kwargs=None, func=None,
     elif name in rkwargs:
         value = rkwargs[name]
     elif mapf == 'list':
-        value = params.listp(key)
+        value = params.listp(key, dtype=dtype)
     elif mapf == 'dict':
-        value = params.dictp(key)
+        value = params.dictp(key, dtype=dtype)
     else:
         value = params[key]
     # set value
