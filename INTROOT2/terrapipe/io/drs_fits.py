@@ -713,6 +713,38 @@ def deal_with_bad_header(p, hdu, filename):
     return datastore, headerstore
 
 
+def check_dtype_for_header(value):
+    # if value is a string check if it is a path if it is remove path
+    #   and leave base file
+    if isinstance(value, str):
+        if os.path.isfile(value):
+            newvalue = os.path.basename(value)
+        elif os.path.isdir(value):
+            newvalue = os.path.dirname(value)
+        else:
+            newvalue = str(value)
+    # if value is a bool then we need to true it to a int (1 or 0)
+    elif isinstance(value, bool):
+        if value:
+            newvalue = 1
+        else:
+            newvalue = 0
+    # if value is a float need to check for NaN
+    elif isinstance(value, float):
+        if np.isnan(value):
+            newvalue = 'NaN'
+        else:
+            newvalue = float(value)
+    # if value is a int do nothing
+    elif isinstance(value, int):
+        newvalue = int(value)
+    # else convert to string to be safe
+    else:
+        newvalue = str(value)
+    # return new value
+    return newvalue
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
