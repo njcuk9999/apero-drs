@@ -103,10 +103,16 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
                    func_name)
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # deal with fibers that we don't have
+    usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
+    # get file definition
+    out_wave = core.get_file_definition('WAVE', params['INSTRUMENT'],
+                                        kind='red')
     # get calibration key
-    key = 'WAVE_{0}'.format(fiber)
-    filetype = 'WAVE_{0}'.format(fiber)
+    key = out_wave.get_dbkey(fiber=usefiber)
     # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
@@ -130,11 +136,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     # ------------------------------------------------------------------------
     # if filename is defined get wave file from this file
     if filename is not None:
-        # get loco file instance
-        wavefile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                            kind='red')
         # construct new infile instance and read data/header
-        wavefile = wavefile.newcopy(filename=filename, recipe=recipe)
+        wavefile = out_wave.newcopy(filename=filename, recipe=recipe,
+                                    fiber=usefiber)
         wavefile.read()
         # get wave map
         wavemap = np.array(wavefile.data)
@@ -155,11 +159,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
         # get badpix filename
         wavefilename = waveentries[filecol][0]
         wavefilepath = os.path.join(params['DRS_CALIB_DB'], wavefilename)
-        # get wave file instance
-        wavefile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                            kind='red')
         # construct new infile instance and read data/header
-        wavefile = wavefile.newcopy(filename=wavefilepath, recipe=recipe)
+        wavefile = out_wave.newcopy(filename=wavefilepath, recipe=recipe,
+                                    fiber=usefiber)
         wavefile.read()
         # get wave map
         wavemap = np.array(wavefile.data)

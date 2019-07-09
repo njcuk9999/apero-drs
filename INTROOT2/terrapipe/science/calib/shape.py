@@ -26,7 +26,6 @@ from terrapipe.core import math
 from terrapipe.core.core import drs_database
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
-from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_table
@@ -1086,8 +1085,11 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
 
 
 def get_master_fp(params, header):
+    # get file definition
+    out_fpmaster = core.get_file_definition('MASTER_FP', params['INSTRUMENT'],
+                                            kind='red')
     # get key
-    key = file_definitions.out_shape_fpmaster.dbkey
+    key = out_fpmaster.dbkey
     # load calib file
     fpmaster, fpmaster_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
@@ -1097,8 +1099,11 @@ def get_master_fp(params, header):
 
 
 def get_shapex(params, header):
+    # get file definition
+    out_shape_dxmap = core.get_file_definition('SHAPE_X', params['INSTRUMENT'],
+                                               kind='red')
     # get key
-    key = file_definitions.out_shape_dxmap.dbkey
+    key = out_shape_dxmap.dbkey
     # load calib file
     dxmap, shapex_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
@@ -1108,8 +1113,11 @@ def get_shapex(params, header):
 
 
 def get_shapey(params, header):
+    # get file definition
+    out_shape_dymap = core.get_file_definition('SHAPE_Y', params['INSTRUMENT'],
+                                               kind='red')
     # get key
-    key = file_definitions.out_shape_dymap.dbkey
+    key = out_shape_dymap.dbkey
     # load calib file
     dymap, shapey_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
@@ -1119,8 +1127,11 @@ def get_shapey(params, header):
 
 
 def get_shapelocal(params, header):
+    # get file definition
+    out_shape_local = core.get_file_definition('SHAPEL', params['INSTRUMENT'],
+                                               kind='red')
     # get key
-    key = file_definitions.out_shape_local.dbkey
+    key = out_shape_local.dbkey
     # load calib file
     shapel, shapel_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
