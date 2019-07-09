@@ -71,7 +71,7 @@ def npy_file(params, **kwargs):
         func = '{0} and {1}'.format(func, func_name)
     # update keywords func name
     kwargs['func'] = func
-    return output_filenames.debug_file(params, **kwargs)
+    return output_filenames.npy_file(params, **kwargs)
 
 
 def calib_file(params, **kwargs):
