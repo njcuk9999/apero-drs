@@ -239,7 +239,11 @@ def __main__(recipe, params):
         # add output tag
         outfile.add_hkey('KW_OUTPUT', value=outfile.name)
         # add input files (and deal with combining or not combining)
-        outfile.add_hkey_1d('KW_INFILE1', values=rawfiles,
+        if combine:
+            hfiles = rawfiles
+        else:
+            hfiles = [infile.basename]
+        outfile.add_hkey_1d('KW_INFILE1', values=hfiles,
                              dim1name='hcfiles')
         # add the calibration files use
         outfile = general.add_calibs_to_header(outfile, props)

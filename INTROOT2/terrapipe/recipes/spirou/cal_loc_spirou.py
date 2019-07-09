@@ -304,6 +304,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Write image order_profile to file
         # ------------------------------------------------------------------
+        # get a new copy to the order profile
         orderpfile = ORDERP_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
         # construct the filename from file instance
         orderpfile.construct_filename(params, infile=infile)
@@ -312,6 +313,9 @@ def __main__(recipe, params):
         orderpfile.copy_original_keys(infile)
         # add version
         orderpfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        orderpfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        orderpfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
         # add process id
         orderpfile.add_hkey('KW_PID', value=params['PID'])
         # add output tag
@@ -321,7 +325,7 @@ def __main__(recipe, params):
             hfiles = rawfiles
         else:
             hfiles = [infile.basename]
-        orderpfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
+        orderpfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
         # add qc parameters
         orderpfile.add_qckeys(qc_params)
         # copy data
