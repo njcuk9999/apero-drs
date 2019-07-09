@@ -117,7 +117,7 @@ def __main__(recipe, params):
     num_files = len(infiles)
 
     # get the fiber types from a list parameter
-    fiber_types = params.listp('FIBER_TYPE')
+    fiber_types = params.listp('FIBER_TYPE', dtype=str)
 
     # ----------------------------------------------------------------------
     # Loop around input files

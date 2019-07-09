@@ -266,6 +266,9 @@ def __main__(recipe, params):
         outfile.copy_original_keys(infile)
         # add version
         outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
         # add process id
         outfile.add_hkey('KW_PID', value=params['PID'])
         # add output tag

@@ -244,6 +244,9 @@ def __main__(recipe, params):
         badpixfile.copy_original_keys(flatfile)
         # add version
         badpixfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        badpixfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        badpixfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
         # add process id
         badpixfile.add_hkey('KW_PID', value=params['PID'])
         # add output tag
@@ -276,7 +279,6 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
         # write image to file
         badpixfile.write()
-
         # ----------------------------------------------------------------------
         # Save background map file
         # ----------------------------------------------------------------------
@@ -284,26 +286,8 @@ def __main__(recipe, params):
         # construct the filename from file instance
         backmapfile.construct_filename(params, infile=flatfile)
         # ------------------------------------------------------------------
-        # define header keys for output file
-        # copy keys from input file
-        backmapfile.copy_original_keys(flatfile)
-        # add version
-        backmapfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add process id
-        backmapfile.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        backmapfile.add_hkey('KW_OUTPUT', value=backmapfile.name)
-        # add input files (and deal with combining or not combining)
-        if combine:
-            hfiles1, hfiles2 = rawflatfiles, rawdarkfiles
-        else:
-            hfiles1, hfiles2 = [flatfile.basename], [darkfile.basename]
-        badpixfile.add_hkey_1d('KW_INFILE1', values=hfiles1,
-                               dim1name='flatfile')
-        badpixfile.add_hkey_1d('KW_INFILE2', values=hfiles2,
-                               dim1name='darkfile')
-        # add qc parameters
-        backmapfile.add_qckeys(qc_params)
+        # define header keys for output file (copy of badpixfile)
+        backmapfile.copy_hdict(badpixfile)
         # write to file
         backmap = np.array(backmap, dtype=int)
         # copy data
