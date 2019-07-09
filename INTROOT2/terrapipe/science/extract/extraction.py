@@ -11,7 +11,7 @@ Created on 2019-07-08 at 16:32
 """
 from __future__ import division
 import numpy as np
-import os
+from scipy import signal
 import warnings
 
 from terrapipe import core
@@ -20,7 +20,7 @@ from terrapipe import locale
 from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
-
+from terrapipe.io import drs_image
 
 # =============================================================================
 # Define variables
@@ -49,74 +49,158 @@ pcheck = core.pcheck
 # =============================================================================
 # Define extraction functions
 # =============================================================================
-def extraction_twod(params, image, orderp, pos, **kwargs):
-
+def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
+                    **kwargs):
     func_name = __NAME__ + '.extraction_twod()'
-
+    # ----------------------------------------------------------------------
     # get number of orders from params/kwargs
-    start_order = pcheck(params, 'START_ORDER', 'start', kwargs, func_name)
-    end_order = pcheck(params, 'END_ORDER', 'end', kwargs, func_name)
-    range1 = pcheck(params, 'EXT_RANGE1', 'range1', kwargs, func_name)
-    range2 = pcheck(params, 'EXT_RANGE2', 'range2', kwargs, func_name)
-    skip_orders = pcheck(params, 'SKIP_ORDERS', 'skip', kwargs, func_name,
-                         mapf='list')
-    sigdet = pcheck(params, 'SIGDET', 'sigdet', kwargs, func_name)
-    gain = pcheck(params, 'GAIN', 'gain', kwargs, func_name)
+    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
+    start_order = pcheck(params, 'EXT_START_ORDER', 'start', kwargs, func_name)
+    end_order = pcheck(params, 'EXT_END_ORDER', 'end', kwargs, func_name)
+    range1 = pcheck(params, 'EXT_RANGE1', 'range1', kwargs, func_name,
+                    mapf='dict', dtype=float)
+    range2 = pcheck(params, 'EXT_RANGE2', 'range2', kwargs, func_name,
+                    mapf='dict', dtype=float)
+    skip_orders = pcheck(params, 'EXT_SKIP_ORDERS', 'skip', kwargs, func_name,
+                         mapf='list', dtype=int)
+    sigdet = pcheck(props, 'SIGDET', 'sigdet', kwargs, func_name)
+    gain = pcheck(props, 'GAIN', 'gain', kwargs, func_name)
     cosmic = pcheck(params, 'EXT_COSMIC_CORRETION', 'cosmic', kwargs, func_name)
     cosmic_sigcut = pcheck(params, 'EXT_COSMIC_SIGCUT', 'cosmic_sigcuit',
                            kwargs, func_name)
     cosmic_thres = pcheck(params, 'EXT_COSMIC_THRESHOLD', 'cosmic_thres',
-                           kwargs, func_name)
-
-    blaze_size = pcheck(params, 'EXT_BLAZE_HALF_WINDOW')
-
+                          kwargs, func_name)
+    blaze_size = pcheck(params, 'FF_BLAZE_HALF_WINDOW', 'blaze_size',
+                        kwargs, func_name)
+    blaze_cut = pcheck(params, 'FF_BLAZE_THRESHOLD', 'blaze_cut', kwargs,
+                       func_name)
+    blaze_deg = pcheck(params, 'FF_BLAZE_DEGREE', 'blaze_deg', kwargs,
+                       func_name)
+    qc_ext_flux_max = pcheck(params, 'QC_EXT_FLUX_MAX', 'qc_ext_flux_max',
+                             kwargs, func_name)
+    # ----------------------------------------------------------------------
+    # deal with ranges
+    range1 = _get_range(params, range1, fiber, keys=['EXT_RANGE1', 'range1'])
+    range2 = _get_range(params, range2, fiber, keys=['EXT_RANGE2', 'range2'])
+    # ----------------------------------------------------------------------
+    # calculate saturation level
+    sat_level = qc_ext_flux_max * nframes
+    # ----------------------------------------------------------------------
+    # if we are dealing with a flat extraction we don't want to correct for
+    #    cosmics
+    if kind == 'flat':
+        cosmic = False
+    # ----------------------------------------------------------------------
     # get shame of image and number of orders
-    dim1, dim2 = image.shape
+    dim1, dim2 = simage.shape
     nbo = pos.shape[0]
-
     # check that orderp is same dimensions as image
-    if image.shape != orderp.shape:
-        eargs = [image.shape, orderp.shape]
+    if simage.shape != orderp.shape:
+        eargs = [simage.shape, orderp.shape]
         WLOG(params, 'error', TextEntry('00-016-00006', args=eargs))
-
-    # construct order
+    # ----------------------------------------------------------------------
+    # deal with start order being None
+    if start_order is None:
+        start_order = 0
+    if end_order is None:
+        end_order = nbo - 1
+    # construct valid order (only skip if flat)
     valid_orders = _valid_orders(params, start_order, end_order, skip_orders)
-
+    # ----------------------------------------------------------------------
     # storage for all orders
-    e2ds = np.zeros([nbo])
+    e2ds = np.zeros([nbo, dim2]) * np.nan
     e2dsll = []
     cpt = np.repeat([np.nan], nbo)
-
+    snr = np.repeat([np.nan], nbo)
+    flat = np.zeros([nbo, dim2]) * np.nan
+    blaze = np.zeros([nbo, dim2]) * np.nan
+    rms = np.repeat([np.nan], nbo)
+    fluxval = np.repeat([np.nan], nbo)
     # loop around orders
-    for order_num in range(len(nbo)):
+    for order_num in range(nbo):
+        # ------------------------------------------------------------------
         # skip this order fill in with NaNs
         if order_num not in valid_orders:
+            # set all values to NaN
             e2dsi = np.repeat([np.nan], dim2)
-            e2dslli = np.zeros((range1+range2, dim2)) * np.nan
+            e2dslli = np.zeros((int(range1+range2), dim2)) * np.nan
             cpti = np.nan
-        # else extract
+            snri = np.nan
+            fluxi = np.repeat([np.nan], dim2)
+            flati = np.repeat([np.nan], dim2)
+            blazei = np.repeat([np.nan], dim2)
+            rmsi = np.nan
+            # --------------------------------------------------------------
+            # log that we skipped this order
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-0016-00001', args=wargs))
+        # ------------------------------------------------------------------
+        # else extract order by order
         else:
             # get the coefficients for this order
             opos = pos[order_num]
-            # extract
-            e2dsi, e2dslli, cpti = extraction(image, orderp, opos, range1,
+            # extract 1D for this order
+            e2dsi, e2dslli, cpti = extraction(simage, orderp, opos, range1,
                                               range2, sigdet, gain, cosmic,
                                               cosmic_sigcut, cosmic_thres)
-
-            # TODO: continue here
-            snr = calculate_snr()
-
-        # append to array
+            # --------------------------------------------------------------
+            # calculate the signal to noise ratio
+            snri, fluxi = calculate_snr(e2dsi, blaze_size, range1, range2,
+                                        sigdet)
+            # --------------------------------------------------------------
+            # if kind is flat remove low blaze edges, calculate blaze and flat
+            if kind == 'flat':
+                out = calculate_blaze_flat(e2dsi, fluxi, blaze_cut, blaze_deg)
+                e2dsi, flati, blazei, rmsi = out
+                # log process (for fiber # and order # S/N = , FF rms = )
+                wargs = [fiber, order_num, snri, rmsi]
+                WLOG(params, '', TextEntry('40-015-00001', args=wargs))
+            # --------------------------------------------------------------
+            # else just set to NaNs and log SNR/cosmics
+            else:
+                # get flat/blaze/rms to NaN
+                flati = np.repeat([np.nan], dim2)
+                blazei = np.repeat([np.nan], dim2)
+                rmsi = np.nan
+                # log process (for fiber # and order # S/N = , cosmics = )
+                if cosmic:
+                    wargs = [fiber, order_num, snri, cpti]
+                    WLOG(params, '', TextEntry('40-016-00001', args=wargs))
+                else:
+                    wargs = [fiber, order_num, snri]
+                    WLOG(params, '', TextEntry('40-016-00002', args=wargs))
+        # ------------------------------------------------------------------
+        # Check saturation limit
+        # ------------------------------------------------------------------
+        # get flux level
+        fluxval_i = (fluxi / gain) / (range1 + range2)
+        # if larger than limit warn the user
+        if fluxval_i > sat_level:
+            # log message (SATURATION LEVEL REACHED)
+            wargs = [fiber, order_num, fluxval_i, sat_level]
+            WLOG(params, 'warning', TextEntry('10-0016-00002', args=wargs))
+        # ------------------------------------------------------------------
+        # append to arrays
         e2ds[order_num] = e2dsi
         e2dsll.append(e2dslli)
         cpt[order_num] = cpti
-
+        snr[order_num] = snri
+        flat[order_num] = flati
+        blaze[order_num] = blazei
+        rms[order_num] = rmsi
+        fluxval[order_num] = fluxval_i
+    # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
     props = ParamDict()
-
     props['E2DS'] = e2ds
-    props['E2DSLL'] = e2dsll
+    props['E2DSLL'] = np.vstack(e2dsll)
+    props['SNR'] = snr
     props['N_COSMIC'] = cpt
+    props['RMS'] = rms
+    props['FLAT'] = flat
+    props['BLAZE'] = blaze
+    props['FLUX_VAL'] = fluxval
+    # add setup properties
     props['START_ORDER'] = start_order
     props['END_ORDER'] = end_order
     props['RANGE1'] = range1
@@ -127,12 +211,23 @@ def extraction_twod(params, image, orderp, pos, **kwargs):
     props['COSMIC'] = cosmic
     props['COSMIC_SIGCUT'] = cosmic_sigcut
     props['COSMIC_THRESHOLD'] = cosmic_thres
-
-
+    props['BLAZE_SIZE'] = blaze_size
+    props['BLAZE_CUT'] = blaze_cut
+    props['BLAZE_DEG'] = blaze_deg
+    props['SAT_QC'] = qc_ext_flux_max
+    props['SAT_LEVEL'] = sat_level
+    # add source
+    keys = ['E2DS', 'E2DSLL', 'SNR', 'N_COSMIC', 'RMS', 'FLAT', 'BLAZE',
+            'FLUX_VAL',
+            'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
+            'GAIN', 'SIGDET', 'COSMIC', 'COSMIC_SIGCUT', 'COSMIC_THRESHOLD',
+            'BLAZE_SIZE', 'BLAZE_CUT', 'BLAZE_DEG', 'SAT_QC', 'SAT_LEVEL']
+    props.set_sources(keys, func_name)
+    # return property parameter dictionary
     return props
 
 
-def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic,
+def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
                cosmic_sigcut=0.25, cosmic_thres=5):
     """
     Extract order using tilt and weight (sigdet and badpix) and cosmic
@@ -156,8 +251,9 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic,
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
 
+    :param cosmic: bool, if True do cosmic correct else do not
     :param cosmic_sigcut: float, the sigma cut for cosmic rays
-    :param cosmic_threshold: int, the number of allowed cosmic rays per corr
+    :param cosmic_thres: int, the number of allowed cosmic rays per corr
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -242,7 +338,69 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic,
     return spe, spelong, cpt
 
 
-def calculate_snr()
+def calculate_snr(e2ds, blaze_width, r1, r2, sigdet):
+    # get the central pixel position
+    cent_pos = int(len(e2ds) / 2)
+    # get the blaze window size
+    blaze_lower = cent_pos - blaze_width
+    blaze_upper = cent_pos + blaze_width
+    # get the average flux in the blaze window
+    flux = np.nansum(e2ds[blaze_lower:blaze_upper] / (2 * blaze_width))
+    # calculate the noise
+    noise = sigdet * np.sqrt(r1 + r2)
+    # calculate the snr ratio = flux / sqrt(flux + noise**2)
+    snr = flux / np.sqrt(flux + noise ** 2)
+    # return snr
+    return snr, flux
+
+
+def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
+    # ----------------------------------------------------------------------
+    # remove edge of orders at low S/N
+    # ----------------------------------------------------------------------
+    with warnings.catch_warnings(record=True) as _:
+        blazemask = e2ds < (flux / blaze_cut)
+        e2ds[blazemask] = np.nan
+    # ----------------------------------------------------------------------
+    # measure the blaze (with polynomial fit)
+    # ----------------------------------------------------------------------
+    # get x position values
+    xpix = np.arange(len(e2ds))
+    # find all good pixels
+    good = np.isfinite(e2ds)
+    # do poly fit on good values
+    coeffs = math.nanpolyfit(xpix[good], e2ds[good], deg=blaze_deg)
+    # fit all positions based on these fit coefficients
+    blaze = np.polyval(coeffs, xpix)
+    # blaze is not usable outside mask range to do this we convole with a
+    #   width=1 tophat (this will remove any cluster of pixels that has 2 or
+    #   less points and is surrounded by NaN values
+    # find minimum/maximum position of convolved blaze
+    nanxpix = np.array(xpix).astype(float)
+    nanxpix[~good] = np.nan
+    minpos, maxpos = np.nanargmin(nanxpix), np.nanargmax(nanxpix)
+
+    # TODO: need a way to remove cluster of pixels that are outliers above
+    # TODO:    the cut off (blaze mask region)
+
+    # set these bad values to NaN
+    blaze[:minpos] = np.nan
+    blaze[maxpos:] = np.nan
+
+    # ----------------------------------------------------------------------
+    #  calcaulte the flat
+    # ----------------------------------------------------------------------
+    with warnings.catch_warnings(record=True) as _:
+        flat = e2ds / blaze
+
+    # ----------------------------------------------------------------------
+    # calculate the rms
+    # ----------------------------------------------------------------------
+    rms = np.nanstd(flat)
+
+    # ----------------------------------------------------------------------
+    # return values
+    return e2ds, flat, blaze, rms
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
@@ -323,8 +481,8 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
         eargs = [start_order, end_order, func_name]
         WLOG(params, 'error', TextEntry('00-016-00004', args=eargs))
     # deal with skip orders
-    if skip_orders is None or skip_orders.upper() == 'NONE':
-       skip_orders = []
+    if not isinstance(skip_orders, list):
+        skip_orders = []
     else:
         try:
             skip_orders = np.array(skip_orders).astype(float).astype(int)
@@ -335,12 +493,35 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
     valid_orders = []
     # loop around orders
     for order_num in range(start_order, end_order + 1):
-        if order_num in skip_orders:
+        if (order_num in skip_orders):
             continue
         else:
             valid_orders.append(order_num)
     # return valid orders
     return valid_orders
+
+
+def _get_range(params, rangedict, fiber, keys):
+    func_name = __NAME__ + '._get_range()'
+
+    if not isinstance(rangedict, dict):
+        eargs = [keys[0], keys[1], func_name]
+        WLOG(params, 'error', TextEntry('00-016-00007', arg=eargs))
+    # deal with fiber not being in range dictionary
+    if fiber not in rangedict:
+        # log that range1 had invalid fiber type
+        eargs = [fiber, rangedict, keys[0], keys[1], func_name]
+        WLOG(params, 'error', TextEntry('00-016-00008', args=eargs))
+    else:
+        try:
+            # return range value
+            return float(rangedict[fiber])
+        except ValueError as _:
+            eargs = [fiber, rangedict, keys[0], keys[1], func_name]
+            WLOG(params, 'error', TextEntry('00-016-00009', args=eargs))
+        except Exception as e:
+            eargs = [fiber, rangedict, type(e), e, keys[0], keys[1], func_name]
+            WLOG(params, 'error', TextEntry('00-016-00010', args=eargs))
 
 
 # =============================================================================
