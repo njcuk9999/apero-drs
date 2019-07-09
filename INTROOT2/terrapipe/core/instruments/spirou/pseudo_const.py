@@ -130,6 +130,21 @@ class PseudoConstants(DefaultConstants):
             return 'C'
 
 
+    def FIBER_WAVE_TYPES(self, fiber):
+        """
+        For wave only AB and C loco files exist thus need to
+        use AB for AB or A or B fibers and use C for the C fiber
+        note only having AB and C files
+
+        :param fiber:
+        :return:
+        """
+        if fiber in ['AB', 'A', 'B']:
+            return 'AB'
+        else:
+            return 'C'
+
+
     def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
         """
         Extract the localisation coefficients based on how they are stored
