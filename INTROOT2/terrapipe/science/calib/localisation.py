@@ -21,7 +21,6 @@ from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
-from terrapipe.core.instruments.spirou import file_definitions
 from . import general
 
 # =============================================================================
@@ -499,8 +498,15 @@ def load_orderp(params, header, fiber=None):
     # get fiber if None
     if fiber is None:
         fiber = params['FIBER']
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # deal with fibers that we don't have
+    usefiber = pconst.FIBER_LOC_TYPES(fiber)
+    # get file definition
+    out_loc_orderp = core.get_file_definition('LOC_ORDERP',
+                                               params['INSTRUMENT'], kind='red')
     # get key
-    key = file_definitions.out_loc_orderp.get_dbkey(fiber=fiber)
+    key = out_loc_orderp.get_dbkey(fiber=usefiber)
     # load calib file
     orderp, orderp_file = general.load_calib_file(params, key, header)
     # log which fpmaster file we are using
