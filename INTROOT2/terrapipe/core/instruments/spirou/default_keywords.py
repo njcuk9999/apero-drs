@@ -341,6 +341,61 @@ KW_LOC_WID_COEFF.set(key=root_loc + 'FW', comment='Coeff fwhm')
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
+# Define extraction variables
+# -----------------------------------------------------------------------------
+# SNR calculated in extraction process (per order)
+KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
+KW_EXT_SNR.set(key='EXTSN', comment='Extract: S_N order center')
+
+# the start order for extraction
+KW_EXT_START = KW_EXT_START.copy(__NAME__)
+KW_EXT_START.set(key='EXTSTART', comment='Extract: Start order for extraction')
+
+# the end order for extraction
+KW_EXT_END = KW_EXT_END.copy(__NAME__)
+KW_EXT_END.set(key='EXTEND', comment='Extract: End order for extraction')
+
+# the upper bound for extraction of order
+KW_EXT_RANGE1 = KW_EXT_RANGE1.copy(__NAME__)
+KW_EXT_RANGE1.set(key='EXTR1', comment='Extract: width1 for order extraction')
+
+# the lower bound for extraction of order
+KW_EXT_RANGE2 = KW_EXT_RANGE2.copy(__NAME__)
+KW_EXT_RANGE2.set(key='EXTR2', comment='Extract: width2 for order extraction')
+
+# whether cosmics where rejected
+KW_COSMIC = KW_COSMIC.copy(__NAME__)
+KW_COSMIC.set(key='EXTCOS', comment='Extract: Whether cosmics were rejected')
+
+# the blaze with used
+KW_BLAZE_WID = KW_BLAZE_WID.copy(__NAME__)
+KW_BLAZE_WID.set(key='BLAZEWID', comment='Extract: Blaze width used')
+
+# the blaze cut used
+KW_BLAZE_CUT = KW_BLAZE_CUT.copy(__NAME__)
+KW_BLAZE_CUT.set(key='BLAZECUT', comment='Extract: Blaze cut used')
+
+# the blaze degree used (to fit)
+KW_BLAZE_DEG = KW_BLAZE_DEG.copy(__NAME__)
+KW_BLAZE_DEG.set(key='BLAZEDEG', comment='Extract: Blaze fit degree used')
+
+# the cosmic cut criteria
+KW_COSMIC_CUT = KW_COSMIC_CUT.copy(__NAME__)
+KW_COSMIC_CUT.set(key='EXTCCUT', comment='Extract: cosmic cut criteria used')
+
+# the cosmic threshold used
+KW_COSMIC_THRES = KW_COSMIC_THRES.copy(__NAME__)
+KW_COSMIC_THRES.set(key='EXTCTHRE', comment='Extract: cosmic cut thres used')
+
+# the saturation QC limit
+KW_SAT_QC = KW_SAT_QC.copy(__NAME__)
+KW_SAT_QC.set(key='EXTSATQC', comment='Extract: saturation limit criteria')
+
+# the max saturation level
+KW_SAT_LEVEL = KW_SAT_LEVEL.copy(__NAME__)
+KW_SAT_LEVEL.set(key='EXTSMAX', comment='Extract: maximum saturation level')
+
+# -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
 # Number of orders in wave image
