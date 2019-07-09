@@ -280,20 +280,26 @@ def clean_hotpix(image, badpix):
 def get_fiber_types(params, **kwargs):
     func_name = __NAME__ + '.get_fiber_type()'
     # get parameter list from params/kwargs
-    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
-    validfibertypes = params.listp('FIBER_TYPES')
+    validfibertypes = params.listp('FIBER_TYPES', dtype=str)
     # deal with fiber types from kwargs
     fibertypes = kwargs.get('fibertypes', None)
+    # get fiber
+    if 'fiber' in kwargs:
+        fiber = kwargs['fiber']
+    elif 'FIBER' in params:
+        fiber = params['FIBER']
+    else:
+        fiber = None
 
     # if fiber types is defined then return it (assuming user knows best)
     if fibertypes is not None:
         return fibertypes
 
     # deal with no "FIBER" in "INPUTS"
-    if "FIBER" not in params['INPUTS']:
+    if "FIBER" not in params['INPUTS'] and fiber is None:
         return validfibertypes
 
-    # get fiber from inputs
+    # get fiber from inputs (now that we know it is there)
     if fiber is None:
         fiber = str(params['INPUTS']['FIBER'])
 
