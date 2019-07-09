@@ -48,7 +48,7 @@ pcheck = core.pcheck
 
 
 # =============================================================================
-# Define functions
+# Define user functions
 # =============================================================================
 def calibrate_ppfile(params, recipe, infile, **kwargs):
 
@@ -197,7 +197,6 @@ def add_calibs_to_header(outfile, props):
     # define the header keywords to use for each
     headerkeys = ['KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_C_FLIP',
                   'KW_C_CVRTE', 'KW_C_RESIZE']
-
     # loop around property keys
     for it in range(len(propkeys)):
         # get header key
@@ -206,7 +205,12 @@ def add_calibs_to_header(outfile, props):
         pkey = propkeys[it]
         # add header key
         if pkey in props:
-            outfile.add_hkey(hkey, value=str(props[pkey]))
+            # get value
+            value = props[pkey]
+            # check if path
+            value = drs_fits.check_dtype_for_header(value)
+            # push to header
+            outfile.add_hkey(hkey, value=value)
     # return outfile
     return outfile
 
@@ -279,7 +283,6 @@ def load_calib_table(params, key, header, **kwargs):
         return images[0], abspaths[0]
     else:
         return images, abspaths
-
 
 
 # =============================================================================
