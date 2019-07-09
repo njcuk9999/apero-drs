@@ -67,6 +67,9 @@ class DrsInputFile:
         self.filetype = kwargs.get('filetype', '')
         self.suffix = kwargs.get('suffix', '')
         self.prefix = kwargs.get('prefix', '')
+        # get fiber type (if set)
+        self.fibers = kwargs.get('fibers', None)
+        self.fiber = kwargs.get('fiber', None)
         # allow instance to be associated with a recipe
         self.recipe = kwargs.get('recipe', None)
         # set empty file attributes
@@ -131,6 +134,8 @@ class DrsInputFile:
         kwargs['filetype'] = kwargs.get('filetype', self.filetype)
         kwargs['suffix'] = kwargs.get('suffix', self.suffix)
         kwargs['prefix'] = kwargs.get('prefix', self.prefix)
+        kwargs['fiber'] = kwargs.get('fiber', self.fiber)
+        kwargs['fibers'] = kwargs.get('fibers', self.fibers)
         kwargs['recipe'] = kwargs.get('recipe', self.recipe)
         kwargs['filename'] = kwargs.get('filename', self.filename)
         kwargs['path'] = kwargs.get('path', self.path)
@@ -140,6 +145,8 @@ class DrsInputFile:
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        kwargs['indextable'] = kwargs.get('indextable', self.indextable)
+        kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         # return new instance
         return DrsInputFile(name, **kwargs)
 
@@ -336,7 +343,8 @@ class DrsInputFile:
             self.basename = os.path.basename(abspath)
         # else raise an error
         else:
-            WLOG(params, 'error', TextEntry('00-008-00004'))
+            eargs = [self.name, func_name]
+            WLOG(params, 'error', TextEntry('00-008-00004', args=eargs))
 
 
 class DrsFitsFile(DrsInputFile):
@@ -376,6 +384,7 @@ class DrsFitsFile(DrsInputFile):
         self.outfunc = kwargs.get('outfunc', None)
         self.outtag = kwargs.get('KW_OUTPUT', 'UNKNOWN')
         self.dbname = kwargs.get('dbname', None)
+        self.raw_dbkey = kwargs.get('dbkey', None)
         self.dbkey = kwargs.get('dbkey', None)
         # add header
         self.required_header_keys = kwargs.get('rkeys', dict())
@@ -1637,6 +1646,9 @@ class DrsFitsFile(DrsInputFile):
     def get_dbkey(self, **kwargs):
         func_name = __NAME__ + '.DrsFitsFile.get_dbkey()'
         func_name = kwargs.get('func', func_name)
+        # deal with dbkey not set
+        if self.raw_dbkey is None or self.dbkey is None:
+            return None
         # update fiber if needed
         self.fiber = kwargs.get('fiber', self.fiber)
         # get parameters for error message
@@ -1650,8 +1662,10 @@ class DrsFitsFile(DrsInputFile):
             WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
         # add fiber name to dbkey
         if self.fibers is not None:
-            if not self.dbkey.endswith('_' + self.fiber):
-                self.dbkey = '{0}_{1}'.format(self.dbkey, self.fiber)
+            if not self.raw_dbkey.endswith('_' + self.fiber):
+                self.dbkey = '{0}_{1}'.format(self.raw_dbkey, self.fiber)
+        else:
+            self.dbkey = str(self.raw_dbkey)
         # make dbkey uppdercase
         if self.dbkey is not None:
             self.dbkey = self.dbkey.upper()
@@ -1736,6 +1750,57 @@ class DrsNpyFile(DrsInputFile):
         else:
             eargs = [self.filename, func_name]
             WLOG(params, 'error', TextEntry('00-008-00014', args=eargs))
+
+    def string_output(self):
+        """
+        String output for DrsFitsFile. If fiber is not None this also
+        contains the fiber type
+
+        i.e. DrsFitsFile[{name}_{fiber}] or DrsFitsFile[{name}]
+        :return string: str, the string to print
+        """
+        if self.fiber is None:
+            return 'DrsNpyFile[{0}]'.format(self.name)
+        else:
+            return 'DrsNpyFile[{0}_{1}]'.format(self.name, self.fiber)
+
+    def __str__(self):
+        """
+        Defines the str(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
+        return self.string_output()
+
+    def __repr__(self):
+        """
+        Defines the print(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
+        return self.string_output()
+
+    def newcopy(self, **kwargs):
+        # copy this instances values (if not overwritten)
+        name = kwargs.get('name', self.name)
+        kwargs['filetype'] = kwargs.get('filetype', self.filetype)
+        kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['prefix'] = kwargs.get('prefix', self.prefix)
+        kwargs['fiber'] = kwargs.get('fiber', self.fiber)
+        kwargs['fibers'] = kwargs.get('fibers', self.fibers)
+        kwargs['recipe'] = kwargs.get('recipe', self.recipe)
+        kwargs['filename'] = kwargs.get('filename', self.filename)
+        kwargs['path'] = kwargs.get('path', self.path)
+        kwargs['basename'] = kwargs.get('basename', self.basename)
+        kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
+        kwargs['directory'] = kwargs.get('directory', self.directory)
+        kwargs['data'] = kwargs.get('data', self.data)
+        kwargs['header'] = kwargs.get('header', self.header)
+        kwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        kwargs['indextable'] = kwargs.get('indextable', self.indextable)
+        kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
+        # return new instance
+        return DrsNpyFile(name, **kwargs)
 
 
 # =============================================================================
