@@ -51,11 +51,6 @@ combine = dict(name='--combine', dtype='bool',
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=Help['DODARK_HELP'])
 # -----------------------------------------------------------------------------
-# Must set default_ref per recipe!!
-extractmethod = dict(name='--extractmethod', dtype='options',
-                     helpstr=Help['EXTRACT_METHOD_HELP'],
-                     options=['1', '2', '3a', '3b', '3c', '3d', '4a', '4b'])
-# -----------------------------------------------------------------------------
 extfiber = dict(name='--extfiber', dtype='options', default='ALL',
                 helpstr=Help['EXTFIBER_HELP'],
                 options=['ALL', 'AB', 'A', 'B', 'C'],
@@ -376,7 +371,7 @@ cal_shape.kwarg(**resize)
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_spirou
 # -----------------------------------------------------------------------------
-cal_ff.name = 'cal_FF_RAW_spirou.py'
+cal_ff.name = 'cal_flat_spirou.py'
 cal_ff.instrument = __INSTRUMENT__
 cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
@@ -396,7 +391,6 @@ cal_ff.kwarg(**backsub)
 cal_ff.kwarg(default=True, **combine)
 cal_ff.kwarg(**darkfile)
 cal_ff.kwarg(**dodark)
-cal_ff.kwarg(default_ref='IC_FF_EXTRACT_TYPE', **extractmethod)
 cal_ff.kwarg(**extfiber)
 cal_ff.kwarg(**flipimage)
 cal_ff.kwarg(**fluxunits)
@@ -407,7 +401,7 @@ cal_ff.kwarg(**resize)
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
 # -----------------------------------------------------------------------------
-cal_extract.name = 'cal_extract_RAW_spirou.py'
+cal_extract.name = 'cal_extract_spirou.py'
 cal_extract.instrument = __INSTRUMENT__
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
@@ -427,7 +421,6 @@ cal_extract.kwarg(**backsub)
 cal_extract.kwarg(default=True, **combine)
 cal_extract.kwarg(**darkfile)
 cal_extract.kwarg(**dodark)
-cal_extract.kwarg(default_ref='IC_EXTRACT_TYPE', **extractmethod)
 cal_extract.kwarg(**extfiber)
 cal_extract.kwarg(**flipimage)
 cal_extract.kwarg(**fluxunits)
