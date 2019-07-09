@@ -34,7 +34,7 @@ CALIB_DB_FORCE_WAVESOL.value = False
 # =============================================================================
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
-FIBER_TYPES = 'AB, A, B, C'
+FIBER_TYPES.value = 'AB, A, B, C'
 
 # Defines whether to by default combine images that are inputted at the same
 #   time
@@ -120,7 +120,7 @@ FIBER_MAX_NUM_ORDERS_C.value = 49
 FIBER_SET_NUM_FIBERS_AB = FIBER_SET_NUM_FIBERS_AB.copy(__NAME__)
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
 FIBER_SET_NUM_FIBERS_B = FIBER_SET_NUM_FIBERS_B.copy(__NAME__)
-FIBER_SET_NUM_FIBERS_C =FIBER_SET_NUM_FIBERS_C.copy(__NAME__)
+FIBER_SET_NUM_FIBERS_C = FIBER_SET_NUM_FIBERS_C.copy(__NAME__)
 # set values
 FIBER_SET_NUM_FIBERS_AB.value = 2
 FIBER_SET_NUM_FIBERS_A.value = 1
@@ -652,6 +652,75 @@ SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 #  Define whether to output debug (sanity check) files
 SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
 SHAPE_DEBUG_OUTPUTS.value = True
+
+
+# =============================================================================
+# CALIBRATION: FLAT SETTINGS
+# =============================================================================
+#    Half size blaze smoothing window
+FF_BLAZE_HALF_WINDOW = FF_BLAZE_HALF_WINDOW.copy(__NAME__)
+FF_BLAZE_HALF_WINDOW.value = 50
+
+# Minimum relative e2ds flux for the blaze computation
+FF_BLAZE_THRESHOLD = FF_BLAZE_THRESHOLD.copy(__NAME__)
+FF_BLAZE_THRESHOLD.value = 16.0
+
+#    The blaze polynomial fit degree
+FF_BLAZE_DEGREE = FF_BLAZE_DEGREE.copy(__NAME__)
+FF_BLAZE_DEGREE.value = 10
+
+#   Define the orders not to plot on the RMS plot should be a string
+#       containing a list of integers
+FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
+FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
+
+#   Maximum allowed RMS of flat field
+QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
+QC_FF_MAX_RMS.value = 0.05      # 0.14
+
+
+# =============================================================================
+# CALIBRATION: EXTRACTION SETTINGS
+# =============================================================================
+#    Start order of the extraction in cal_ff if None starts from 0
+EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
+EXT_START_ORDER.value = None
+
+#    End order of the extraction in cal_ff if None ends at last order
+EXT_END_ORDER = EXT_END_ORDER.copy(__NAME__)
+EXT_END_ORDER.value = None
+
+#   Half-zone extraction width left side (formally plage1)
+EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
+EXT_RANGE1.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+
+#   Half-zone extraction width right side (formally plage2)
+EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
+EXT_RANGE2.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+
+#   Define the orders to skip extraction on (will set all order values
+#      to NaN. If empty list no orders are skipped. Should be a string
+#      containing a valid python list
+EXT_SKIP_ORDERS = EXT_SKIP_ORDERS.copy(__NAME__)
+EXT_SKIP_ORDERS.value = '[]'
+
+#    Defines whether to run extraction with cosmic correction
+EXT_COSMIC_CORRETION = EXT_COSMIC_CORRETION.copy(__NAME__)
+EXT_COSMIC_CORRETION.value = True
+
+#    Define the percentage of flux above which we use to cut
+EXT_COSMIC_SIGCUT = EXT_COSMIC_SIGCUT.copy(__NAME__)
+EXT_COSMIC_SIGCUT.value = 0.25
+
+#    Defines the maximum number of iterations we use to check for cosmics
+#        (for each pixel)
+EXT_COSMIC_THRESHOLD = EXT_COSMIC_THRESHOLD.copy(__NAME__)
+EXT_COSMIC_THRESHOLD.value = 5
+
+#   Saturation level reached warning
+QC_EXT_FLUX_MAX = QC_EXT_FLUX_MAX.copy(__NAME__)
+QC_EXT_FLUX_MAX.value = 50000
+
 
 # =============================================================================
 # CALIBRATION: WAVE SETTINGS

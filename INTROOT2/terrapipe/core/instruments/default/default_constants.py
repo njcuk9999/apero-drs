@@ -5,88 +5,95 @@ from terrapipe.core.constants import constant_functions
 # Define variables
 # =============================================================================
 # all definition
-__all__ = [# general
-           'DATA_ENGINEERING','CALIB_DB_FORCE_WAVESOL',
-           # preprocessing constants
-           'PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
-           'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM',
-           'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
-           'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
-           'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
-           # image constants
-           'FIBER_TYPES',
-           'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
-           'IMAGE_X_LOW', 'IMAGE_X_HIGH',
-           'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
-           'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
-           # general calib constants
-           'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT',
-           'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
-           'CAVITY_LENGTH_FILE_WAVECOL',
-           # qc constants
-           'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
-           'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
-           'QC_LOC_MAXFIT_REMOVED_WID', 'QC_LOC_RMSMAX_CTR',
-           'QC_LOC_RMSMAX_WID',
-           # fiber constants
-           'FIBER_FIRST_ORDER_JUMP_AB', 'FIBER_FIRST_ORDER_JUMP_A',
-           'FIBER_FIRST_ORDER_JUMP_B', 'FIBER_FIRST_ORDER_JUMP_C',
-           'FIBER_MAX_NUM_ORDERS_AB', 'FIBER_MAX_NUM_ORDERS_A',
-           'FIBER_MAX_NUM_ORDERS_B', 'FIBER_MAX_NUM_ORDERS_C',
-           'FIBER_SET_NUM_FIBERS_AB', 'FIBER_SET_NUM_FIBERS_A',
-           'FIBER_SET_NUM_FIBERS_B', 'FIBER_SET_NUM_FIBERS_C',
-           # dark constants
-           'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
-           'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
-           'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
-           'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
-           'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
-           'DARK_MASTER_MATCH_TIME', 'DARK_MASTER_MED_SIZE',
-           # badpix constants
-           'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
-           'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
-           'BADPIX_NORM_PERCENTILE',
-           # bkgr constants
-           'BKGR_BOXSIZE', 'BKGR_PERCENTAGE', 'BKGR_MASK_CONVOLVE_SIZE',
-           'BKGR_N_BAD_NEIGHBOURS', 'BKGR_NO_SUBTRACTION', 'BKGR_KER_AMP',
-           'BKGR_KER_WX', 'BKGR_KER_WY', 'BKGR_KER_SIG',
-           # localisation constants
-           'LOC_ORDERP_BOX_SIZE', 'LOC_START_ROW_OFFSET', 'LOC_CENTRAL_COLUMN',
-           'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE',
-           'LOC_WIDTH_POLY_DEG', 'LOC_CENT_POLY_DEG', 'LOC_COLUMN_SEP_FITTING',
-           'LOC_EXT_WINDOW_SIZE', 'LOC_IMAGE_GAP', 'LOC_ORDER_WIDTH_MIN',
-           'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
-           'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
-           'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
-           'LOC_ORDER_CURVE_DROP',
-           # shape constants
-           'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
-           'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
-           'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
-           'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
-           'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
-           'SHAPE_MASTER_FIBER', 'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
-           'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX',
-           'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
-           'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
-           'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
-           'SHAPE_SHORT_DX_MEDFILT_WID', 'SHAPE_LONG_DX_MEDFILT_WID',
-           'SHAPE_QC_DXMAP_STD', 'SHAPE_PLOT_PER_ORDER',
-           'SHAPEOFFSET_XOFFSET', 'SHAPEOFFSET_BOTTOM_PERCENTILE',
-           'SHAPEOFFSET_TOP_PERCENTILE', 'SHAPEOFFSET_TOP_FLOOR_FRAC',
-           'SHAPEOFFSET_MED_FILTER_WIDTH', 'SHAPEOFFSET_FPINDEX_MAX',
-           'SHAPEOFFSET_VALID_FP_LENGTH', 'SHAPEOFFSET_DRIFT_MARGIN',
-           'SHAPEOFFSET_WAVEFP_INV_IT', 'SHAPEOFFSET_MASK_BORDER',
-           'SHAPEOFFSET_MIN_MAXPEAK_FRAC', 'SHAPEOFFSET_MASK_PIXWIDTH',
-           'SHAPEOFFSET_MASK_EXTWIDTH', 'SHAPEOFFSET_DEVIANT_PMIN',
-           'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
-           'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
-           'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
-           'SHAPE_DEBUG_OUTPUTS',
-           # wave constants
-           'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
-           'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
-           ]
+__all__ = [  # general
+    'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL',
+    # preprocessing constants
+    'PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
+    'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM',
+    'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
+    'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
+    'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+    # image constants
+    'FIBER_TYPES',
+    'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
+    'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+    'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+    'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
+    # general calib constants
+    'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT',
+    'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
+    'CAVITY_LENGTH_FILE_WAVECOL',
+    # qc constants
+    'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
+    'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
+    'QC_LOC_MAXFIT_REMOVED_WID', 'QC_LOC_RMSMAX_CTR',
+    'QC_LOC_RMSMAX_WID',
+    # fiber constants
+    'FIBER_FIRST_ORDER_JUMP_AB', 'FIBER_FIRST_ORDER_JUMP_A',
+    'FIBER_FIRST_ORDER_JUMP_B', 'FIBER_FIRST_ORDER_JUMP_C',
+    'FIBER_MAX_NUM_ORDERS_AB', 'FIBER_MAX_NUM_ORDERS_A',
+    'FIBER_MAX_NUM_ORDERS_B', 'FIBER_MAX_NUM_ORDERS_C',
+    'FIBER_SET_NUM_FIBERS_AB', 'FIBER_SET_NUM_FIBERS_A',
+    'FIBER_SET_NUM_FIBERS_B', 'FIBER_SET_NUM_FIBERS_C',
+    # dark constants
+    'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
+    'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
+    'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
+    'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
+    'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
+    'DARK_MASTER_MATCH_TIME', 'DARK_MASTER_MED_SIZE',
+    # badpix constants
+    'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
+    'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
+    'BADPIX_NORM_PERCENTILE',
+    # bkgr constants
+    'BKGR_BOXSIZE', 'BKGR_PERCENTAGE', 'BKGR_MASK_CONVOLVE_SIZE',
+    'BKGR_N_BAD_NEIGHBOURS', 'BKGR_NO_SUBTRACTION', 'BKGR_KER_AMP',
+    'BKGR_KER_WX', 'BKGR_KER_WY', 'BKGR_KER_SIG',
+    # localisation constants
+    'LOC_ORDERP_BOX_SIZE', 'LOC_START_ROW_OFFSET', 'LOC_CENTRAL_COLUMN',
+    'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE',
+    'LOC_WIDTH_POLY_DEG', 'LOC_CENT_POLY_DEG', 'LOC_COLUMN_SEP_FITTING',
+    'LOC_EXT_WINDOW_SIZE', 'LOC_IMAGE_GAP', 'LOC_ORDER_WIDTH_MIN',
+    'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
+    'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
+    'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
+    'LOC_ORDER_CURVE_DROP',
+    # shape constants
+    'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
+    'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
+    'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
+    'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
+    'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
+    'SHAPE_MASTER_FIBER', 'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
+    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX',
+    'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
+    'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
+    'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
+    'SHAPE_SHORT_DX_MEDFILT_WID', 'SHAPE_LONG_DX_MEDFILT_WID',
+    'SHAPE_QC_DXMAP_STD', 'SHAPE_PLOT_PER_ORDER',
+    'SHAPEOFFSET_XOFFSET', 'SHAPEOFFSET_BOTTOM_PERCENTILE',
+    'SHAPEOFFSET_TOP_PERCENTILE', 'SHAPEOFFSET_TOP_FLOOR_FRAC',
+    'SHAPEOFFSET_MED_FILTER_WIDTH', 'SHAPEOFFSET_FPINDEX_MAX',
+    'SHAPEOFFSET_VALID_FP_LENGTH', 'SHAPEOFFSET_DRIFT_MARGIN',
+    'SHAPEOFFSET_WAVEFP_INV_IT', 'SHAPEOFFSET_MASK_BORDER',
+    'SHAPEOFFSET_MIN_MAXPEAK_FRAC', 'SHAPEOFFSET_MASK_PIXWIDTH',
+    'SHAPEOFFSET_MASK_EXTWIDTH', 'SHAPEOFFSET_DEVIANT_PMIN',
+    'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
+    'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
+    'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
+    'SHAPE_DEBUG_OUTPUTS',
+    # flat constants
+    'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
+    'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS',
+    # extract constants
+    'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
+    'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
+    'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX',
+    # wave constants
+    'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
+    'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
+]
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_constants'
@@ -187,12 +194,11 @@ FIBER_MAX_NUM_ORDERS_C = Const('FIBER_MAX_NUM_ORDERS_C', value=None,
 FIBER_SET_NUM_FIBERS_AB = Const('FIBER_SET_NUM_FIBERS_AB', value=None,
                                 dtype=int, minimum=1, source=__NAME__)
 FIBER_SET_NUM_FIBERS_A = Const('FIBER_SET_NUM_FIBERS_A', value=None,
-                                dtype=int, minimum=1, source=__NAME__)
+                               dtype=int, minimum=1, source=__NAME__)
 FIBER_SET_NUM_FIBERS_B = Const('FIBER_SET_NUM_FIBERS_B', value=None,
-                                dtype=int, minimum=1, source=__NAME__)
+                               dtype=int, minimum=1, source=__NAME__)
 FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
-                                dtype=int, minimum=1, source=__NAME__)
-
+                               dtype=int, minimum=1, source=__NAME__)
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -400,7 +406,6 @@ BKGR_KER_WY = Const('BKGR_KER_WY', value=None, dtype=int, source=__NAME__)
 #        Do NOT make it a -10 to +10 sigma gaussian!
 BKGR_KER_SIG = Const('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__)
 
-
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
@@ -408,8 +413,6 @@ BKGR_KER_SIG = Const('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__)
 #     (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = Const('LOC_ORDERP_BOX_SIZE', value=None, dtype=int,
                             source=__NAME__)
-
-
 
 #   row number of image to start localisation processing at
 LOC_START_ROW_OFFSET = Const('LOC_START_ROW_OFFSET', value=None, dtype=int,
@@ -499,16 +502,16 @@ QC_LOC_MAXFIT_REMOVED_WID = Const('QC_LOC_MAXFIT_REMOVED_WID', value=None,
                                   dtype=int, source=__NAME__, minimum=0)
 
 #   Maximum rms allowed in fitting location
-QC_LOC_RMSMAX_CTR = Const('QC_LOC_RMSMAX_CTR' ,value=None, dtype=float,
+QC_LOC_RMSMAX_CTR = Const('QC_LOC_RMSMAX_CTR', value=None, dtype=float,
                           source=__NAME__, minimum=0.0)
 
 #   Maximum rms allowed in fitting width
-QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID' ,value=None, dtype=float,
+QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID', value=None, dtype=float,
                           source=__NAME__, minimum=0.0)
 
 #   Option for archiving the location image
-LOC_SAVE_SUPERIMP_FILE =  Const('LOC_SAVE_SUPERIMP_FILE', value=None,
-                                dtype=bool, source=__NAME__)
+LOC_SAVE_SUPERIMP_FILE = Const('LOC_SAVE_SUPERIMP_FILE', value=None,
+                               dtype=bool, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
@@ -532,8 +535,7 @@ FP_MASTER_PERCENT_THRES = Const('FP_MASTER_PERCENT_THRES', value=None,
 #  Define the largest standard deviation allowed for the shift in
 #     x or y when doing the shape master fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
-                                  dtype=float,  source=__NAME__)
-
+                                  dtype=float, source=__NAME__)
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_MASTER_VALIDFP_PERCENTILE = Const('SHAPE_MASTER_VALIDFP_PERCENTILE',
@@ -659,7 +661,7 @@ SHAPEOFFSET_DRIFT_MARGIN = Const('SHAPEOFFSET_DRIFT_MARGIN', value=None,
 # Define the number of iterations to do for the wave_fp
 #     inversion trick
 SHAPEOFFSET_WAVEFP_INV_IT = Const('SHAPEOFFSET_WAVEFP_INV_IT',
-                                         value=None, dtype=int, source=__NAME__)
+                                  value=None, dtype=int, source=__NAME__)
 
 # Define the border in pixels at the edge of the detector
 SHAPEOFFSET_MASK_BORDER = Const('SHAPEOFFSET_MASK_BORDER', value=None,
@@ -715,6 +717,69 @@ SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
 #  Define whether to output debug (sanity check) files
 SHAPE_DEBUG_OUTPUTS = Const('SHAPE_DEBUG_OUTPUTS', value=None, dtype=bool,
                             source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: FLAT SETTINGS
+# =============================================================================
+#    Half size blaze smoothing window
+FF_BLAZE_HALF_WINDOW = Const('FF_BLAZE_HALF_WINDOW', value=None, dtype=int,
+                             source=__NAME__)
+
+# Minimum relative e2ds flux for the blaze computation
+FF_BLAZE_THRESHOLD = Const('FF_BLAZE_THRESHOLD', value=None, dtype=float,
+                           source=__NAME__)
+
+#    The blaze polynomial fit degree
+FF_BLAZE_DEGREE = Const('FF_BLAZE_DEGREE', value=None, dtype=int,
+                        source=__NAME__)
+
+#   Define the orders not to plot on the RMS plot should be a string
+#       containing a list of integers
+FF_RMS_SKIP_ORDERS = Const('FF_RMS_SKIP_ORDERS', value=None, dtype=str,
+                           source=__NAME__)
+
+#   Maximum allowed RMS of flat field
+QC_FF_MAX_RMS = Const('QC_FF_MAX_RMS', value=None, dtype=float, source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: EXTRACTION SETTINGS
+# =============================================================================
+#    Start order of the extraction in cal_ff if None starts from 0
+EXT_START_ORDER = Const('EXT_START_ORDER', value=None, dtype=None,
+                        source=__NAME__)
+
+#    End order of the extraction in cal_ff if None ends at last order
+EXT_END_ORDER = Const('EXT_END_ORDER', value=None, dtype=None,
+                      source=__NAME__)
+
+#   Half-zone extraction width left side (formally plage1)
+EXT_RANGE1 = Const('EXT_RANGE1', value=None, dtype=str, source=__NAME__)
+
+#   Half-zone extraction width right side (formally plage2)
+EXT_RANGE2 = Const('EXT_RANGE2', value=None, dtype=str, source=__NAME__)
+
+#   Define the orders to skip extraction on (will set all order values
+#      to NaN. If None no orders are skipped. If Not None should be a
+#      string (valid python list)
+EXT_SKIP_ORDERS = Const('EXT_SKIP_ORDERS', value=None, dtype=str,
+                        source=__NAME__)
+
+#    Defines whether to run extraction with cosmic correction
+EXT_COSMIC_CORRETION = Const('EXT_COSMIC_CORRETION', value=None, dtype=bool,
+                             source=__NAME__)
+
+#    Define the percentage of flux above which we use to cut
+EXT_COSMIC_SIGCUT = Const('EXT_COSMIC_SIGCUT', value=None, dtype=float,
+                          source=__NAME__)
+
+#    Defines the maximum number of iterations we use to check for cosmics
+#        (for each pixel)
+EXT_COSMIC_THRESHOLD = Const('EXT_COSMIC_THRESHOLD', value=None, dtype=int,
+                             source=__NAME__)
+
+#   Saturation level reached warning
+QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
+                        source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: WAVE SETTINGS

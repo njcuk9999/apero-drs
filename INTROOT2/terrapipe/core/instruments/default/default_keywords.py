@@ -23,8 +23,18 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
            'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
            'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
-           'KW_DRS_DATE_NOW', 'KW_DRS_DATE', 'KW_WAVE_NBO', 'KW_WAVE_DEG',
-           'KW_WAVE_PARAM', 'KW_C_FLIP', 'KW_C_CVRTE', 'KW_C_RESIZE']
+           'KW_DRS_DATE_NOW', 'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
+           'KW_C_RESIZE',
+           # flat values
+           'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG',
+           # extraction values
+           'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END', 'KW_EXT_RANGE1',
+           'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT', 'KW_COSMIC_THRES',
+           'KW_SAT_QC', 'KW_SAT_LEVEL',
+           # wave values
+           'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVE_PARAM',
+           ]
+
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
 # Constants definition
@@ -272,6 +282,50 @@ KW_LOC_WID_COEFF = Keyword('KW_LOC_WID_COEFF', key='', dtype=int,
 # -----------------------------------------------------------------------------
 # Define shape variables
 # -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# Define extraction variables
+# -----------------------------------------------------------------------------
+# SNR calculated in extraction process (per order)
+KW_EXT_SNR = Keyword('KW_EXT_SNR', key='', dtype=float, source=__NAME__)
+
+# the start order for extraction
+KW_EXT_START = Keyword('KW_EXT_START', key='', dtype=int, source=__NAME__)
+
+# the end order for extraction
+KW_EXT_END = Keyword('KW_EXT_END', key='', dtype=int, source=__NAME__)
+
+# the upper bound for extraction of order
+KW_EXT_RANGE1 = Keyword('KW_EXT_RANGE1', key='', dtype=int, source=__NAME__)
+
+# the lower bound for extraction of order
+KW_EXT_RANGE2 = Keyword('KW_EXT_RANGE2', key='', dtype=int, source=__NAME__)
+
+# whether cosmics where rejected
+KW_COSMIC = Keyword('KW_COSMIC', key='', dtype=int, source=__NAME__)
+
+# the cosmic cut criteria
+KW_COSMIC_CUT = Keyword('KW_COSMIC_CUT', key='', dtype=float, source=__NAME__)
+
+# the cosmic threshold used
+KW_COSMIC_THRES = Keyword('KW_COSMIC_THRES', key='', dtype=float,
+                          source=__NAME__)
+
+# the blaze with used
+KW_BLAZE_WID = Keyword('KW_BLAZE_WID', key='', dtype=float, source=__NAME__)
+
+# the blaze cut used
+KW_BLAZE_CUT = Keyword('KW_BLAZE_CUT', key='', dtype=float, source=__NAME__)
+
+# the blaze degree used (to fit)
+KW_BLAZE_DEG = Keyword('KW_BLAZE_DEG', key='', dtype=int, source=__NAME__)
+
+# the saturation QC limit
+KW_SAT_QC = Keyword('KW_SAT_QC', key='', dtype=int, source=__NAME__)
+
+# the max saturation level
+KW_SAT_LEVEL = Keyword('KW_SAT_LEVEL', key='', dtype=int, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define wave variables
