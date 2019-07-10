@@ -18,10 +18,13 @@ from terrapipe.locale import drs_exceptions
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'default.pseudo_const'
+__NAME__ = 'instruments.default.pseudo_const'
 # get error
 ConfigError = drs_exceptions.ConfigError
-
+# get not implemented error
+NOT_IMPLEMENTED = ('Definition Error: Must be overrided in instrument '
+                   'pseudo_const not {0} \n\t i.e. in terrapipe.core.'
+                   'instruments.spirou.pseudoconst.py \n\t method = {1}')
 
 # =============================================================================
 # Define Constants class (pseudo constants)
@@ -541,6 +544,19 @@ class PseudoConstants:
         # return params
         return params
 
+    def FIBER_LOC_TYPES(self, fiber):
+        return fiber
+
+    def FIBER_WAVE_TYPES(self, fiber):
+        return fiber
+
+    def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
+        func_name = 'FIBER_LOC_COEFF_EXT'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_DATA_TYPE(self, dprtype, fiber):
+        func_name = 'FIBER_DATA_TYPE'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================
     # PLOT SETTINGS
