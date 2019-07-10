@@ -171,17 +171,19 @@ def __main__(recipe, params):
             # push fiber into params
             params['FIBER'] = fiber
             params.set_source('FIBER', mainname)
-            # load wavelength solution for this fiber
-            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+            # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
                                                    fiber=fiber, merge=True)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
+            # --------------------------------------------------------------
             # get the number of frames used
             nframes = infile.numfiles
+            # --------------------------------------------------------------
             # get the order profile for this fiber
             orderp = orderprofiles[fiber]
+            # --------------------------------------------------------------
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
                                        props, kind='flat')

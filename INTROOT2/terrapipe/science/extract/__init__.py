@@ -21,6 +21,8 @@ extract2d = extraction.extraction_twod
 
 order_profiles = general.order_profiles
 
+thermal_correction = general.thermal_correction
+
 # =============================================================================
 # End of code
 # =============================================================================
