@@ -11,16 +11,14 @@ Created on 2019-07-08 at 16:32
 """
 from __future__ import division
 import numpy as np
-from scipy import signal
 import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
-from terrapipe.io import drs_image
+from terrapipe.science.calib import flat_blaze
 
 # =============================================================================
 # Define variables
@@ -50,7 +48,7 @@ pcheck = core.pcheck
 # Define extraction functions
 # =============================================================================
 def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
-                    **kwargs):
+                    inflat=None, inblaze=None, **kwargs):
     func_name = __NAME__ + '.extraction_twod()'
     # ----------------------------------------------------------------------
     # get number of orders from params/kwargs
@@ -150,8 +148,9 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # --------------------------------------------------------------
             # if kind is flat remove low blaze edges, calculate blaze and flat
             if kind == 'flat':
-                out = calculate_blaze_flat(e2dsi, fluxi, blaze_cut, blaze_deg)
-                e2dsi, flati, blazei, rmsi = out
+                fargs = [e2dsi, fluxi, blaze_cut, blaze_deg]
+                fout = flat_blaze.calculate_blaze_flat(*fargs)
+                e2dsi, flati, blazei, rmsi = fout
                 # log process (for fiber # and order # S/N = , FF rms = )
                 wargs = [fiber, order_num, snri, rmsi]
                 WLOG(params, '', TextEntry('40-015-00001', args=wargs))
@@ -197,9 +196,19 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['SNR'] = snr
     props['N_COSMIC'] = cpt
     props['RMS'] = rms
-    props['FLAT'] = flat
-    props['BLAZE'] = blaze
     props['FLUX_VAL'] = fluxval
+    # deal with adding the flat and making e2dsff
+    if inflat is None:
+        props['FLAT'] = flat
+        props['E2DSFF'] = np.zeros([nbo, dim2]) * np.nan
+    else:
+        props['FLAT'] = inflat
+        props['E2DSFF'] = e2ds / inflat
+    # deal with adding the blaze
+    if inblaze is None:
+        props['BLAZE'] = blaze
+    else:
+        props['BLAZE'] = inblaze
     # add setup properties
     props['START_ORDER'] = start_order
     props['END_ORDER'] = end_order
@@ -217,8 +226,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['SAT_QC'] = qc_ext_flux_max
     props['SAT_LEVEL'] = sat_level
     # add source
-    keys = ['E2DS', 'E2DSLL', 'SNR', 'N_COSMIC', 'RMS', 'FLAT', 'BLAZE',
-            'FLUX_VAL',
+    keys = ['E2DS', 'E2DSFF', 'E2DSLL', 'SNR', 'N_COSMIC', 'RMS',
+            'FLAT', 'BLAZE', 'FLUX_VAL',
             'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
             'GAIN', 'SIGDET', 'COSMIC', 'COSMIC_SIGCUT', 'COSMIC_THRESHOLD',
             'BLAZE_SIZE', 'BLAZE_CUT', 'BLAZE_DEG', 'SAT_QC', 'SAT_LEVEL']
@@ -352,55 +361,6 @@ def calculate_snr(e2ds, blaze_width, r1, r2, sigdet):
     snr = flux / np.sqrt(flux + noise ** 2)
     # return snr
     return snr, flux
-
-
-def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
-    # ----------------------------------------------------------------------
-    # remove edge of orders at low S/N
-    # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as _:
-        blazemask = e2ds < (flux / blaze_cut)
-        e2ds[blazemask] = np.nan
-    # ----------------------------------------------------------------------
-    # measure the blaze (with polynomial fit)
-    # ----------------------------------------------------------------------
-    # get x position values
-    xpix = np.arange(len(e2ds))
-    # find all good pixels
-    good = np.isfinite(e2ds)
-    # do poly fit on good values
-    coeffs = math.nanpolyfit(xpix[good], e2ds[good], deg=blaze_deg)
-    # fit all positions based on these fit coefficients
-    blaze = np.polyval(coeffs, xpix)
-    # blaze is not usable outside mask range to do this we convole with a
-    #   width=1 tophat (this will remove any cluster of pixels that has 2 or
-    #   less points and is surrounded by NaN values
-    # find minimum/maximum position of convolved blaze
-    nanxpix = np.array(xpix).astype(float)
-    nanxpix[~good] = np.nan
-    minpos, maxpos = np.nanargmin(nanxpix), np.nanargmax(nanxpix)
-
-    # TODO: need a way to remove cluster of pixels that are outliers above
-    # TODO:    the cut off (blaze mask region)
-
-    # set these bad values to NaN
-    blaze[:minpos] = np.nan
-    blaze[maxpos:] = np.nan
-
-    # ----------------------------------------------------------------------
-    #  calcaulte the flat
-    # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as _:
-        flat = e2ds / blaze
-
-    # ----------------------------------------------------------------------
-    # calculate the rms
-    # ----------------------------------------------------------------------
-    rms = np.nanstd(flat)
-
-    # ----------------------------------------------------------------------
-    # return values
-    return e2ds, flat, blaze, rms
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
