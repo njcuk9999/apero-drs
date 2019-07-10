@@ -158,7 +158,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
 
 def get_thermal(params, header, fiber=None, filename=None):
 
-
+    # TODO: Write thermal stuff
 
     return filename, thermal
 
@@ -190,6 +190,9 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
     red_limit = kwargs.get('red_limt', None)
     blue_limit = kwargs.get('blue_limit', None)
     thermal_file = kwargs.get('thermal_file', None)
+
+
+    # TODO: Write thermal stuff
 
 
     return 1

@@ -205,6 +205,7 @@ def __main__(recipe, params):
                                                 header, fiber=fiber)
             # --------------------------------------------------------------
             # create 1d spectra (s1d)
+            # TODO: write s1d stuff
 
             # --------------------------------------------------------------
             # Plots
