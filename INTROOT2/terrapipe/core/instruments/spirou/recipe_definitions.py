@@ -51,9 +51,9 @@ combine = dict(name='--combine', dtype='bool',
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=Help['DODARK_HELP'])
 # -----------------------------------------------------------------------------
-extfiber = dict(name='--extfiber', dtype='options', default='ALL',
+fiber = dict(name='--fiber', dtype='options', default='ALL',
                 helpstr=Help['EXTFIBER_HELP'],
-                options=['ALL', 'AB', 'A', 'B', 'C'],
+                options=['AB', 'A', 'B', 'C'],
                 default_ref='INPUT_FLIP_IMAGE')
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
@@ -391,7 +391,7 @@ cal_ff.kwarg(**backsub)
 cal_ff.kwarg(default=True, **combine)
 cal_ff.kwarg(**darkfile)
 cal_ff.kwarg(**dodark)
-cal_ff.kwarg(**extfiber)
+cal_ff.kwarg(**fiber)
 cal_ff.kwarg(**flipimage)
 cal_ff.kwarg(**fluxunits)
 cal_ff.kwarg(**plot)
@@ -421,7 +421,7 @@ cal_extract.kwarg(**backsub)
 cal_extract.kwarg(default=True, **combine)
 cal_extract.kwarg(**darkfile)
 cal_extract.kwarg(**dodark)
-cal_extract.kwarg(**extfiber)
+cal_extract.kwarg(**fiber)
 cal_extract.kwarg(**flipimage)
 cal_extract.kwarg(**fluxunits)
 cal_extract.kwarg(**plot)
