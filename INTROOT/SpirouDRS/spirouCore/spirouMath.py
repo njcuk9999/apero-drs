@@ -617,6 +617,7 @@ def killnan(vect, val=0):
     vect[mask] = val
     return vect
 
+
 def nanpolyfit(x, y, deg, **kwargs):
     # find the NaNs
     nanmask = np.isfinite(y) & np.isfinite(x)
