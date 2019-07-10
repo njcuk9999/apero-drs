@@ -40,7 +40,6 @@ class PseudoConstants(DefaultConstants):
     # OVERWRITE PSEUDO-CONSTANTS from constants.default.pseudo_const.py here
     # -------------------------------------------------------------------------
 
-
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
@@ -80,7 +79,6 @@ class PseudoConstants(DefaultConstants):
                 '']
         return logo
 
-
     # =========================================================================
     # FIBER SETTINGS
     # =========================================================================
@@ -114,7 +112,6 @@ class PseudoConstants(DefaultConstants):
         # return params
         return params
 
-
     def FIBER_LOC_TYPES(self, fiber):
         """
         For localisation only AB and C loco files exist thus need to
@@ -129,7 +126,6 @@ class PseudoConstants(DefaultConstants):
         else:
             return 'C'
 
-
     def FIBER_WAVE_TYPES(self, fiber):
         """
         For wave only AB and C loco files exist thus need to
@@ -143,7 +139,6 @@ class PseudoConstants(DefaultConstants):
             return 'AB'
         else:
             return 'C'
-
 
     def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
         """
@@ -184,6 +179,24 @@ class PseudoConstants(DefaultConstants):
             nbo = coeffs.shape[0]
 
         return acc, nbo
+
+    def FIBER_DATA_TYPE(self, dprtype, fiber):
+        """
+        Return the data type from a DPRTYPE
+
+        i.e. for OBJ_FP   fiber = 'A'  --> 'OBJ'
+             for OBJ_FP   fiber = 'C'  --> 'FP'
+
+        :param dprtype: str, the DPRTYPE (data type {AB}_{C})
+        :param fiber: str, the current fiber (i.e. AB, A, B or C)
+
+        :return:
+        """
+        if fiber in ['AB', 'A', 'B']:
+            return dprtype.split('_')[0]
+        else:
+            return dprtype.split('_')[1]
+
 
 
 # =============================================================================
