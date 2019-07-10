@@ -462,7 +462,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
-                                     dim1name='fpfile', values=p['FPFILE'])
+                                     dim1name='fpfile', values=p['FPFILES'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
@@ -495,7 +495,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
-                                     dim1name='fpfile', values=p['FPFILE'])
+                                     dim1name='fpfile', values=p['FPFILES'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)
@@ -528,7 +528,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE1'],
                                      dim1name='hcfile', values=p['HCFILE'])
     hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILE2'],
-                                     dim1name='fpfile', values=p['FPFILE'])
+                                     dim1name='fpfile', values=p['FPFILES'])
     # add qc parameters
     hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     hdict = spirouImage.AddQCKeys(p, hdict, qc_params)

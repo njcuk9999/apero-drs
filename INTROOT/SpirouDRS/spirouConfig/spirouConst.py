@@ -1045,7 +1045,7 @@ def SLIT_XSHAPE_FILE(p, filename=None, **kwargs):
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     if filename is None:
-        shapefn = p['FPFILE']
+        shapefn = p['FPFILES'][0]
     else:
         shapefn = filename
 
@@ -1080,7 +1080,7 @@ def SLIT_YSHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILE'].replace('.fits', '_shapey.fits')
+    shapefn = p['FPFILES'][0].replace('.fits', '_shapey.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1094,7 +1094,7 @@ def SLIT_MASTER_FP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['FPFILE'].replace('.fits', '_fpmaster.fits')
+    shapefn = p['FPFILES'][0].replace('.fits', '_fpmaster.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
@@ -1110,7 +1110,7 @@ def SLIT_SHAPE_IN_FP_FILE(p, filename=None):
     reduced_dir = p['REDUCED_DIR']
     # get filename
     if filename is None:
-        oldfilename = p['FPFILE']
+        oldfilename = p['FPFILES'][0]
     else:
         oldfilename = filename
     # construct prefix
@@ -1131,7 +1131,7 @@ def SLIT_SHAPE_OUT_FP_FILE(p, filename=None):
     reduced_dir = p['REDUCED_DIR']
     # get filename
     if filename is None:
-        oldfilename = p['FPFILE']
+        oldfilename = p['FPFILES'][0]
     else:
         oldfilename = filename
     # construct prefix
@@ -1187,7 +1187,7 @@ def SLIT_SHAPE_BDXMAP_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['FPFILE']
+    oldfilename = p['FPFILES'][0]
     # construct prefix
     prefix = 'SHAPE-DEBUG-BENT-DXMAP_'
     # construct new filename and full path
