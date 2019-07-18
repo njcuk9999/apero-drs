@@ -304,7 +304,9 @@ def get_fiber_types(params, **kwargs):
         fiber = str(params['INPUTS']['FIBER'])
 
     # deal with input from command line (via params['INPUTS'])
-    if fiber in validfibertypes:
+    if fiber.upper() == 'ALL':
+        return validfibertypes
+    elif fiber in validfibertypes:
         return [fiber]
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
