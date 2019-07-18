@@ -53,8 +53,17 @@ def get_masterwave_filename(params, **kwargs):
     func_name = __NAME__ + '.get_masterwave_filename()'
     # get parameters from params/kwargs
     fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
-    # define the master wave key
-    key = 'WAVEM_{0}'.format(fiber)
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # deal with fibers that we don't have
+    usefiber = pconst.FIBER_WAVE_TYPES(fiber)
+    # ------------------------------------------------------------------------
+    # get file definition
+    out_wave = core.get_file_definition('WAVEM', params['INSTRUMENT'],
+                                        kind='red')
+    # get calibration key
+    key = out_wave.get_dbkey(fiber=usefiber)
+    # ------------------------------------------------------------------------
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
