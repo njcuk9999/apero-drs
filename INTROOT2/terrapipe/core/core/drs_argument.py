@@ -796,6 +796,9 @@ class _SetProgram(argparse.Action):
             strvalue =  values[0]
         else:
             strvalue = str(values)
+        # debug message: setting program to: "strvalue"
+        dmsg = TextEntry('90-001-00031', args=[strvalue])
+        WLOG(self.recipe.drs_params, 'debug', dmsg)
 
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['DRS_USER_PROGRAM'] = strvalue
@@ -808,8 +811,6 @@ class _SetProgram(argparse.Action):
         self.recipe = parser.recipe
         # display version
         self._set_program(values)
-        # quit after call
-        parser.exit()
 
 
 # =============================================================================
@@ -1433,7 +1434,7 @@ def set_program(p):
     props['name'] = '--program'
     props['altnames'] = ['--p']
     props['action'] = _SetProgram
-    props['nargs'] = 0
+    props['nargs'] = 1
     props['help'] = htext['INFO_HELP']
     return props
 
