@@ -75,8 +75,8 @@ class Logger:
         # save the parameter dictionary for access to constants
         if paramdict is not None:
             self.pin = paramdict
-            self.instrument = paramdict['INSTRUMENT']
-            self.language = paramdict['LANGUAGE']
+            self.instrument = paramdict.get('INSTRUMENT', None)
+            self.language = paramdict.get('LANGUAGE', 'ENG')
         elif instrument is not None:
             self.pin = constants.load(instrument)
             self.instrument = instrument
@@ -203,9 +203,14 @@ class Logger:
         if option is not None:
             option = option
         elif 'RECIPE' in params:
-            option = params['RECIPE']
+            option = params.get('RECIPE', '')
         else:
             option = ''
+        # overwrite these with DRS_USER_PROGRAM (if not None)
+        userprogram = params.get('DRS_USER_PROGRAM', None)
+        if userprogram not in [None, 'None']:
+            option = userprogram
+
         # ---------------------------------------------------------------------
         # if key is '' then set it to all
         if len(key) == 0:
@@ -501,10 +506,15 @@ wlog = Logger()
 # Define function
 # =============================================================================
 def find_param(params=None, key=None, name=None, kwargs=None, func=None,
-               mapf=None, dtype=None):
+               mapf=None, dtype=None, paramdict=None):
     # deal with params being None
     if params is None:
         params = ParamDict()
+    # deal with dictionary being None
+    if paramdict is None:
+        paramdict = params
+    else:
+        paramdict = ParamDict(paramdict)
     # deal with key being None
     if key is None and name is None:
         wlog(params, 'error', TextEntry('00-003-00004'))
@@ -526,24 +536,31 @@ def find_param(params=None, key=None, name=None, kwargs=None, func=None,
         name = key.upper()
     else:
         name = name.upper()
+
+    # deal with None in rkwargs (take it as being unset)
+    if name in rkwargs:
+        if rkwargs[name] is None:
+            del rkwargs[name]
+
     # deal with key not found in params
-    if (key not in params) and (name not in rkwargs):
+    if (key not in paramdict) and (name not in rkwargs):
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
         value = None
     elif name in rkwargs:
         value = rkwargs[name]
     elif mapf == 'list':
-        value = params.listp(key, dtype=dtype)
+        value = paramdict.listp(key, dtype=dtype)
     elif mapf == 'dict':
-        value = params.dictp(key, dtype=dtype)
+        value = paramdict.dictp(key, dtype=dtype)
     else:
-        value = params[key]
+        value = paramdict[key]
     # set value
     return value
 
 
-def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
+def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
+                   colour):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -553,7 +570,7 @@ def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
         HH:MM:SS.S - CODE |option|message
 
     :param logobj: logger instance, the logger object (for pconstant)
-    :param p: ParamDict, the constants file passed from call
+    :param params: ParamDict, the constants file passed from call
     :param message: string, the message of the printed output
     :param key: string, the CODE key for the printed output
     :param human_time: string, the human time for the printed output
@@ -586,14 +603,14 @@ def printlogandcmd(logobj, p, message, key, human_time, option, wrap, colour):
             for new_message in new_messages:
                 cmdargs = [human_time, code, option, new_message]
                 cmd = '{0} - {1} |{2}|{3}'.format(*cmdargs)
-                printlog(logobj, p, cmd, key, colour)
+                printlog(logobj, params, cmd, key, colour)
         else:
             cmdargs = [human_time, code, option, mess]
             cmd = '{0} - {1} |{2}|{3}'.format(*cmdargs)
-            printlog(logobj, p, cmd, key, colour)
+            printlog(logobj, params, cmd, key, colour)
 
 
-def debug_start(logobj, p, raise_exception):
+def debug_start(logobj, params, raise_exception):
     """
     Initiate debugger (for DEBUG mode) - will start when an error is raised
     if 'DRS_DEBUG' is set to True or 1 (in config.py)
@@ -618,7 +635,7 @@ def debug_start(logobj, p, raise_exception):
     text = logobj.textdict
     # get colour
     clevels = logobj.pconstant.COLOUREDLEVELS()
-    addcolour = p['DRS_COLOURED_LOG']
+    addcolour = params.get('DRS_COLOURED_LOG', True)
 
     nocol = Color.ENDC
     if addcolour:
@@ -648,7 +665,7 @@ def debug_start(logobj, p, raise_exception):
             print(cc + '\n\nCode Exited' + nocol)
             # logobj.pconstant.EXIT(p)(errorstring)
             if raise_exception:
-                logobj.pconstant.EXIT(p)()
+                logobj.pconstant.EXIT(params)()
         elif '2' in uinput.upper():
             print(cc + text['00-005-00009'] + nocol)
 
@@ -657,12 +674,12 @@ def debug_start(logobj, p, raise_exception):
 
             print(cc + text['00-005-00010'] + nocol)
             if raise_exception:
-                logobj.pconstant.EXIT(p)()
+                logobj.pconstant.EXIT(params)()
         elif raise_exception:
-            logobj.pconstant.EXIT(p)()
+            logobj.pconstant.EXIT(params)()
     except:
         if raise_exception:
-            logobj.pconstant.EXIT(p)()
+            logobj.pconstant.EXIT(params)()
 
 
 def warninglogger(p, w, funcname=None):
@@ -794,13 +811,13 @@ def correct_level(logobj, key, level):
     return thislevel >= outlevel
 
 
-def printlog(logobj, p, message, key='all', colour=None):
+def printlog(logobj, params, message, key='all', colour=None):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
     is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
 
     :param logobj: logger instance, the logger object (for pconstant)
-    :param p: ParamDict, the constants file passed in call
+    :param params: ParamDict, the constants file passed in call
     :param message: string, the formatted log line to write to stdout
     :param key: string, either "error" or "warning" or "info" or "graph" or
                 "all", this gives a character code in output
@@ -813,7 +830,8 @@ def printlog(logobj, p, message, key='all', colour=None):
     """
     func_name = __NAME__ + '.printlog()'
     # get the colours for the "key"
-    c1, c2 = printcolour(logobj, p, key, func_name=func_name, colour=colour)
+    c1, c2 = printcolour(logobj, params, key, func_name=func_name,
+                         colour=colour)
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
@@ -846,7 +864,7 @@ def textwrap(input_string, length):
     return new_string2
 
 
-def printcolour(logobj, p, key='all', func_name=None, colour=None):
+def printcolour(logobj, params, key='all', func_name=None, colour=None):
     """
     Get the print colour (start and end) based on "key".
     This should be used as follows:
@@ -854,7 +872,7 @@ def printcolour(logobj, p, key='all', func_name=None, colour=None):
         >> print(c1 + message + c2)
 
     :param logobj: logger instance, the logger object (for pconstant)
-    :param p: ParamDict, the constants file passed in call
+    :param params: ParamDict, the constants file passed in call
     :param key: string, either "error" or "warning" or "info" or "graph" or
                 "all", this gives a character code in output
     :param func_name: string or None, if not None then defines the function to
@@ -874,15 +892,15 @@ def printcolour(logobj, p, key='all', func_name=None, colour=None):
     if func_name is None:
         func_name = __NAME__ + '.printcolour()'
     # get out level key
-    level = p.get('PRINT_LEVEL', 'all')
+    level = params.get('PRINT_LEVEL', 'all')
     # deal with overriding coloured text
     if colour is not None:
-        colour1, colour2 = override_colour(p, colour)
+        colour1, colour2 = override_colour(params, colour)
         if colour1 is not None:
             return colour1, colour2
     # get the colours
-    clevels = logobj.pconstant.COLOUREDLEVELS(p)
-    addcolour = p['DRS_COLOURED_LOG']
+    clevels = logobj.pconstant.COLOUREDLEVELS(params)
+    addcolour = params.get('DRS_COLOURED_LOG', True)
     nocol = Color.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
@@ -902,11 +920,11 @@ def printcolour(logobj, p, key='all', func_name=None, colour=None):
     return colour1, colour2
 
 
-def override_colour(p, colour):
+def override_colour(params, colour):
     """
     Override the colour with the themed colours
 
-    :param p: ParamDict, the constants file passed in call
+    :param params: ParamDict, the constants file passed in call
     :param colour: string, colour of the message wanted (overrides default)
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
@@ -922,10 +940,10 @@ def override_colour(p, colour):
     # get the colour codes
     codes = Color
     # get theme
-    if 'THEME' not in p:
+    if 'THEME' not in params:
         theme = 'DARK'
     else:
-        theme = p['THEME']
+        theme = params['THEME']
     # get colour 1
     if theme == 'DARK':
         # find colour 1 in colour
@@ -974,12 +992,12 @@ def override_colour(p, colour):
     return colour1, colour2
 
 
-def writelog(logobj, p, message, key, logfilepath):
+def writelog(logobj, params, message, key, logfilepath):
     """
     write message to log file (if level is correct - set by LOG_LEVEL)
 
     :param logobj: logger instance, the logger object (for pconstant)
-    :param p: ParamDict, the constants file passed in call
+    :param params: ParamDict, the constants file passed in call
     :param message: string, message to write to log file
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
@@ -991,7 +1009,7 @@ def writelog(logobj, p, message, key, logfilepath):
     func_name = __NAME__ + '.writelog()'
     # -------------------------------------------------------------------------
     # get out level key
-    level = p.get('LOG_LEVEL', 'all')
+    level = params.get('LOG_LEVEL', 'all')
     # if this level is less than out level then do not log
     if not correct_level(logobj, key, level):
         return 0
