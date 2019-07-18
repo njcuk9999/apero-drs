@@ -36,6 +36,9 @@ get_locals = drs_startup.get_local_variables
 # get a file defintion from a filetype name
 get_file_definition = drs_startup.get_file_definition
 
+# deal with copying input keyword arguments from one main to another
+copy_kwargs = drs_startup.copy_kwargs
+
 # Exit function
 end = drs_startup.exit_script
 
