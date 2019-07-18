@@ -1039,8 +1039,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     # to the central pixel in x (normally, that's 4088/2) along the y axis.
     # This difference in position gives a dy that need to be applied to
     # straighten the orders
-    # TODO: Remove
-    case = 2
+
     # Once we have determined this for all abc fibers and all orders, we
     # fit a Nth order polynomial to the dy versus y relation along the
     # column, and apply a spline to straighten the order.
@@ -1059,16 +1058,6 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
             acco = accs[fiber][order_num, :][::-1]
             # get the poly values
             ypoly = np.polyval(acco, xpix)
-            # set values out of limits to nan
-            # TODO: Decide between which case to use (or how to fix this)
-            if case == 1:
-                bad = (ypoly < 0) | (ypoly > dim2)
-                ypoly[bad] = np.nan
-            elif case == 2:
-                ylow = ypoly < 0
-                ypoly[ylow] = 0.0
-                yhigh = ypoly > dim2
-                ypoly[yhigh] = dim2
             # work out this order + fibers y values: polynomial(x position)
             y0[iord + f_it, :] = ypoly
     # loop around each x pixel (columns)
