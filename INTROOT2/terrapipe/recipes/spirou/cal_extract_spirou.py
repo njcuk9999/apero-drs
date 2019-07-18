@@ -53,6 +53,7 @@ S1D_W_FILE = file_definitions.out_ext_s1d_w
 S1D_V_FILE = file_definitions.out_ext_s1d_v
 ORDERP_SFILE = file_definitions.out_orderp_straight
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -201,8 +202,8 @@ def __main__(recipe, params):
                                        props, inflat=flat, inblaze=blaze)
             # --------------------------------------------------------------
             # thermal correction of spectrum
-            eprops = extract.thermal_correction(params, recipe, props, eprops,
-                                                header, fiber=fiber)
+            eprops = extract.thermal_correction(params, recipe, header, props,
+                                                eprops, fiber=fiber)
             # --------------------------------------------------------------
             # create 1d spectra (s1d)
             # TODO: write s1d stuff
@@ -305,7 +306,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # add SNR parameters to header
             e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
-                                  dim1name='order')
+                                 dim1name='order')
             # add start and end extraction order used
             e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
             e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
