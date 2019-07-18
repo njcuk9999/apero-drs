@@ -314,14 +314,14 @@ class _CheckFiles(argparse.Action):
         skip = parser._has_special()
         if skip:
             return 0
-        if type(values) in [list, np.ndarray]:
+        elif type(values) in [list, np.ndarray]:
             files, types = [], []
             for value in values:
                 filelist, typelist = self._check_files(value, types, files)
                 files += filelist
                 types += typelist
         else:
-            filelist, typelist = self._check_files(values, [], [])
+            filelist, typelist = self._check_files([values], [], [])
             files, types = filelist, typelist
         # Add the attribute
         setattr(namespace, self.dest, [files, types])
@@ -778,6 +778,36 @@ class _DisplayInfo(argparse.Action):
         self.recipe = parser.recipe
         # display version
         self._display_info()
+        # quit after call
+        parser.exit()
+
+
+class _SetProgram(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def _set_program(self, values):
+
+        if isinstance(values, list):
+            strvalue =  values[0]
+        elif isinstance(values, np.ndarray):
+            strvalue =  values[0]
+        else:
+            strvalue = str(values)
+
+        # set DRS_DEBUG (must use the self version)
+        self.recipe.drs_params['DRS_USER_PROGRAM'] = strvalue
+
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        self.recipe = parser.recipe
+        # display version
+        self._set_program(values)
         # quit after call
         parser.exit()
 
@@ -1392,6 +1422,17 @@ def make_info(p):
     props['name'] = '--info'
     props['altnames'] = ['--usage']
     props['action'] = _DisplayInfo
+    props['nargs'] = 0
+    props['help'] = htext['INFO_HELP']
+    return props
+
+
+def set_program(p):
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    props = OrderedDict()
+    props['name'] = '--program'
+    props['altnames'] = ['--p']
+    props['action'] = _SetProgram
     props['nargs'] = 0
     props['help'] = htext['INFO_HELP']
     return props
