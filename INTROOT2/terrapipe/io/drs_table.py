@@ -309,6 +309,10 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
         eargs = [filename, func_name]
         WLOG(p, 'error', TextEntry('01-002-00011', args=eargs))
 
+    # remove data_start for fits files
+    if fmt in ['fits']:
+        del kwargs['data_start']
+
     # try to load file using astropy table
     try:
         table = Table.read(filename, format=fmt, **kwargs)
