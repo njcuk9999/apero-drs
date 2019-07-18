@@ -109,6 +109,8 @@ def load_cavity_file(params, **kwargs):
                        func_name)
     tablestart = pcheck(params, 'CAVITY_LENGTH_FILE_START', 'start', kwargs,
                         func_name)
+    wavecol = pcheck(params, 'CAVITY_LENGTH_FILE_WAVECOL', 'wavecol', kwargs,
+                     func_name)
 
     # split table columns
     tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
@@ -123,7 +125,7 @@ def load_cavity_file(params, **kwargs):
                                       func_name)
         WLOG(params, '', TextEntry('40-999-00001', args=outf))
         # push columns into numpy arrays and force to floats
-        coeff_values = np.array(table['WAVELENGTH_COEFF'], dtype=float)
+        coeff_values = np.array(table[wavecol], dtype=float)
         ncoeff = len(coeff_values)
         # reformat into well behaved array
         poly_cavity = np.zeros(ncoeff)
@@ -172,6 +174,27 @@ def load_full_flat_pp(params, **kwargs):
     except LoadException:
         eargs = [filename, relfolder]
         WLOG(params, 'error', TextEntry('00-010-00002', args=eargs))
+
+
+def load_tapas(params, **kwargs):
+    # get parameters from params/kwargs
+    func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
+    relfolder = pcheck(params, 'DATA_CORE', 'directory', kwargs,
+                       func_name)
+    filename = pcheck(params, 'TAPAS_FILE', 'filename', kwargs, func_name)
+
+    tablefmt = pcheck(params, 'TAPAS_FILE_FMT', 'fmt', kwargs, func_name)
+    # add back to kwargs
+    kwargs['fmt'] = tablefmt
+    # return image
+    try:
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                     func_name)
+        WLOG(params, '', TextEntry('40-999-00002', args=outf))
+        return table
+    except LoadException:
+        eargs = [filename, relfolder]
+        WLOG(params, 'error', TextEntry('00-010-00004', args=eargs))
 
 
 # =============================================================================
