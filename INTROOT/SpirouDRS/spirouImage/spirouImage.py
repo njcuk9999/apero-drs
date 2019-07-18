@@ -2977,12 +2977,11 @@ def get_y_shape_map(p, loc, hdr):
     # to the central pixel in x (normally, that's 4088/2) along the y axis.
     # This difference in position gives a dy that need to be applied to
     # straighten the orders
-    # TODO: Remove
-    case = 2
+
     # Once we have determined this for all abc fibers and all orders, we
     # fit a Nth order polynomial to the dy versus y relation along the
     # column, and apply a spline to straighten the order.
-    y0 = np.zeros((nbo * 3, dim2))
+    y0 = np.zeros((nbo * 3, dim2)) + np.nan
 
     # log progress
     WLOG(p, '', 'Creating DY map from localisation')
@@ -2996,33 +2995,6 @@ def get_y_shape_map(p, loc, hdr):
         ya = np.polyval(pos_a[order_num, :][::-1], xpix)
         yb = np.polyval(pos_b[order_num, :][::-1], xpix)
         yc = np.polyval(pos_c[order_num, :][::-1], xpix)
-        # TODO: Decide between which case to use (or how to fix this)
-        if case == 1:
-            # find the out of bounds pixels
-            bad_a = (ya < 0) | (ya > dim2)
-            bad_b = (yb < 0) | (yb > dim2)
-            bad_c = (yc < 0) | (yc > dim2)
-            # set bad pixels to NaN
-            ya[bad_a] = np.nan
-            yb[bad_b] = np.nan
-            yc[bad_c] = np.nan
-        elif case == 2:
-            # find the out of lower bounds pixels
-            ylow_a = ya < 0
-            ylow_b = yb < 0
-            ylow_c = yc < 0
-            # set bad pixels to lower bound
-            ya[ylow_a] = 0.0
-            yb[ylow_b] = 0.0
-            yc[ylow_c] = 0.0
-            # find the out of high bounds pixels
-            yhigh_a = ya > dim2
-            yhigh_b = yb > dim2
-            yhigh_c = yc > dim2
-            # set bad pixels to higher bound
-            ya[yhigh_a] = dim2
-            yb[yhigh_b] = dim2
-            yc[yhigh_c] = dim2
         # add to y0
         y0[iord, :] = ya
         y0[iord + 1, :] = yb
@@ -3036,6 +3008,7 @@ def get_y_shape_map(p, loc, hdr):
         ypix = np.arange(dim1)
         # add to the master dy map
         master_dymap[:, ix] = np.polyval(yfit, ypix)
+
     # add DXMAP to loc
     loc['DYMAP'] = master_dymap
     loc.set_source('DYMAP', func_name)
