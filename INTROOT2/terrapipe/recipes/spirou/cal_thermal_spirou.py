@@ -157,28 +157,36 @@ def __main__(recipe, params):
             # need to handle passing keywords from main
             kwargs = core.copy_kwargs(recipe, directory=nightname,
                                       files=[infile.basename])
+            # set the program name (shouldn't be cal_extract)
+            kwargs['program'] = 'thermal_extract'
             # pipe into cal_extract
             llout = cal_extract_spirou.main(**kwargs)
             # get qc
-            passed = llout['p']['QC']
-            # get hdr
-            hdr = llout['hdr']
+            passed = llout['params']['QC']
+            # get header
+            header = llout['header']
         # else we just need to read the header of the output file
         else:
             # read file header and push into outputs
             infile.read()
+            # get infile header
+            header = infile.header
             # get quality control parameters
-            passed = infile.header['KW_DRS_QC']
+            passed = header[params['KW_DRS_QC'][0]]
 
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
-        # loop around fiber types
-        for fiber in fiber_types:
-            # construct out file
-            outfile = thermal_files[fiber]
-            # add output from thermal files
-            drs_database.add_file(params, outfile)
+        if passed:
+            # loop around fiber types
+            for fiber in fiber_types:
+                # construct out file
+                outfile = thermal_files[fiber]
+                # add header to outfile
+                outfile.hdict = header
+                outfile.header = header
+                # add output from thermal files
+                drs_database.add_file(params, outfile)
 
     # ----------------------------------------------------------------------
     # End of main code
