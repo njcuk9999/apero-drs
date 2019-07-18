@@ -233,7 +233,7 @@ def __main__(recipe, params):
             if max_rms > params['QC_FF_MAX_RMS']:
                 # add failed message to fail message list
                 fargs = [fiber, max_rms, params['QC_FF_MAX_RMS']]
-                fail_msg.append(textdict[''].format(*fargs))
+                fail_msg.append(textdict['40-015-00008'].format(*fargs))
                 qc_pass.append(0)
             else:
                 qc_pass.append(1)
