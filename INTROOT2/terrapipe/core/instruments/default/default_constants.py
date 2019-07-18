@@ -5,8 +5,9 @@ from terrapipe.core.constants import constant_functions
 # Define variables
 # =============================================================================
 # all definition
-__all__ = [  # general
-    'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL',
+__all__ = [
+    # general
+    'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL', 'DATA_CORE',
     # preprocessing constants
     'PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
     'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM',
@@ -90,9 +91,16 @@ __all__ = [  # general
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
     'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX',
+    # thermal constants
+    'THERMAL_ALWAYS_EXTRACT', 'THERMAL_CORRETION_TYPE1',
+    'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
+    'THERMAL_FILTER_WID', 'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
+    'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
     # wave constants
     'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
+    # telluric constants
+    'TAPAS_FILE', 'TAPAS_FILE_FMT'
 ]
 
 # set name
@@ -107,6 +115,9 @@ Const = constant_functions.Const
 # Define the data engineering path
 DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
                          source=__NAME__)
+
+# Define core data path
+DATA_CORE = Const('DATA_CORE', value=None, dtype=str, source=__NAME__)
 
 # Define whether to force wave solution from calibration database (instead of
 #    using header wave solution if available)
@@ -162,8 +173,7 @@ CAVITY_LENGTH_FILE_COLS = Const('CAVITY_LENGTH_FILE_COLS', value=None,
 CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
                                  dtype=str, source=__NAME__)
 
-# Define coefficent column
-#    Must be in CAVITY_LENGTH_FILE_COLS
+# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
 CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
                                    dtype=str, source=__NAME__)
 
@@ -782,6 +792,49 @@ QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
                         source=__NAME__)
 
 # =============================================================================
+# CALIBRATION: THERMAL SETTINGS
+# =============================================================================
+# define whether to always extract thermals (i.e. overwrite existing files)
+THERMAL_ALWAYS_EXTRACT = Const('THERMAL_ALWAYS_EXTRACT', value=None,
+                               dtype=bool, source=__NAME__)
+
+# define DPRTYPEs we need to correct thermal background using
+#    telluric absorption (TAPAS)
+THERMAL_CORRETION_TYPE1 = Const('THERMAL_CORRETION_TYPE1', value=None,
+                                dtype=str, source=__NAME__)
+
+# define DPRTYPEs we need to correct thermal background using
+#     method 2
+THERMAL_CORRETION_TYPE2 = Const('THERMAL_CORRETION_TYPE2', value=None,
+                                dtype=str, source=__NAME__)
+
+# define the order to perform the thermal background scaling on
+THERMAL_ORDER = Const('THERMAL_ORDER', value=None, dtype=int, source=__NAME__)
+
+# width of the median filter used for the background
+THERMAL_FILTER_WID = Const('THERMAL_FILTER_WID', value=None, dtype=int,
+                           source=__NAME__)
+
+# define thermal red limit (in nm)
+THERMAL_RED_LIMIT = Const('THERMAL_RED_LIMIT', value=None, dtype=float,
+                          source=__NAME__)
+
+# define thermal blue limit (in nm)
+THERMAL_BLUE_LIMIT = Const('THERMAL_BLUE_LIMIT', value=None, dtype=float,
+                           source=__NAME__)
+
+# maximum tapas transmission to be considered completely opaque for the
+# purpose of background determination in order 49.
+THERMAL_THRES_TAPAS = Const('THERMAL_THRES_TAPAS', value=None, dtype=float,
+                            source=__NAME__)
+
+# define the percentile to measure the background for correction type 2
+THERMAL_ENVELOPE_PERCENTILE = Const('THERMAL_ENVELOPE_PERCENTILE', value=None,
+                                    dtype=float, source=__NAME__,
+                                    minimum=0, maximum=100)
+
+
+# =============================================================================
 # CALIBRATION: WAVE SETTINGS
 # =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
@@ -807,3 +860,12 @@ WAVE_LINELIST_WAVECOL = Const('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
                               source=__NAME__)
 WAVE_LINELIST_AMPCOL = Const('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
                              source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: TELLURIC SETTINGS
+# =============================================================================
+# Define the name of the tapas file to use
+TAPAS_FILE = Const('TAPAS_FILE', value=None, dtype=str, source=__NAME__)
+
+# Define the format (astropy format) of the tapas file "TAPAS_FILE"
+TAPAS_FILE_FMT = Const('TAPAS_FILE_FMT', value=None, dtype=str, source=__NAME__)

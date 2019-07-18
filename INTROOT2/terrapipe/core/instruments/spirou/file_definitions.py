@@ -456,24 +456,29 @@ out_ext_e2dsll = drs_finput('EXTRACT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
                             suffix='_e2dsll', outfunc=out.debug_file)
-out_ext_loco = drs_finput('EXTRACT_LOCO_AB', KW_OUTPUT='EXT_LOCO',
+out_ext_loco = drs_finput('EXTRACT_LOCO', KW_OUTPUT='EXT_LOCO',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
                           suffix='_e2dsloco', outfunc=out.debug_file)
-out_ext_s1d = drs_finput('EXTRACT_S1D_AB', KW_OUTPUT='EXT_S1D',
-                         fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
-                          suffix='s1d', outfunc=out.general_file)
+out_ext_s1d_w = drs_finput('EXTRACT_S1D_W', KW_OUTPUT='EXT_S1D_W',
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits',
+                           suffix='s1d', outfunc=out.general_file)
+out_ext_s1d_v = drs_finput('EXTRACT_S1D_V', KW_OUTPUT='EXT_S1D_V',
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits',
+                           suffix='s1d', outfunc=out.general_file)
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
 out_file.addset(out_ext_e2dsff)
 out_file.addset(out_ext_e2dsll)
 out_file.addset(out_ext_loco)
-out_file.addset(out_ext_s1d)
+out_file.addset(out_ext_s1d_w)
+out_file.addset(out_ext_s1d_v)
 
 # -----------------------------------------------------------------------------
 # thermal
-out_thermal_e2ds = drs_finput('THERMAL_E2DS_AB',
+out_thermal_e2ds = drs_finput('THERMAL_E2DS',
                               KW_OUTPUT='THERMAL_E2DS',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.fits',

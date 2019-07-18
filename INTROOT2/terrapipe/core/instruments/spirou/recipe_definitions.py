@@ -53,7 +53,7 @@ dodark = dict(name='--darkcorr', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
                 helpstr=Help['EXTFIBER_HELP'],
-                options=['AB', 'A', 'B', 'C'],
+                options=['ALL', 'AB', 'A', 'B', 'C'],
                 default_ref='INPUT_FLIP_IMAGE')
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
@@ -121,13 +121,14 @@ cal_pp = drs_recipe(__INSTRUMENT__)
 cal_slit = drs_recipe(__INSTRUMENT__)
 cal_shape = drs_recipe(__INSTRUMENT__)
 cal_shape_master = drs_recipe(__INSTRUMENT__)
+cal_thermal = drs_recipe(__INSTRUMENT__)
 cal_wave = drs_recipe(__INSTRUMENT__)
 
 test = drs_recipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
-           cal_shape, cal_shape_master, cal_wave,
+           cal_shape, cal_shape_master, cal_thermal, cal_wave,
            test]
 
 # =============================================================================
@@ -399,7 +400,38 @@ cal_ff.kwarg(**interactive)
 cal_ff.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
-# cal_extract_RAW_spirou
+# cal_thermal_spirou
+# -----------------------------------------------------------------------------
+cal_thermal.name = 'cal_thermal_spirou.py'
+cal_thermal.instrument = __INSTRUMENT__
+cal_thermal.outputdir = 'reduced'
+cal_thermal.inputdir = 'tmp'
+cal_thermal.inputtype = 'pp'
+cal_thermal.extension = 'fits'
+cal_thermal.description = Help['EXTRACT_DESC']
+cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
+cal_thermal.run_order = 6
+cal_thermal.arg(pos=0, **directory)
+cal_thermal.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
+                helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                limit=1)
+cal_thermal.kwarg(**add_cal)
+cal_thermal.kwarg(**badfile)
+cal_thermal.kwarg(**dobad)
+cal_thermal.kwarg(**backsub)
+cal_thermal.kwarg(default=True, **combine)
+cal_thermal.kwarg(**darkfile)
+cal_thermal.kwarg(**dodark)
+cal_thermal.kwarg(**fiber)
+cal_thermal.kwarg(**flipimage)
+cal_thermal.kwarg(**fluxunits)
+cal_thermal.kwarg(**plot)
+cal_thermal.kwarg(**interactive)
+cal_thermal.kwarg(**resize)
+
+
+# -----------------------------------------------------------------------------
+# cal_extract_spirou
 # -----------------------------------------------------------------------------
 cal_extract.name = 'cal_extract_spirou.py'
 cal_extract.instrument = __INSTRUMENT__

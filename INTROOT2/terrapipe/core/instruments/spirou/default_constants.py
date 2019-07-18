@@ -23,6 +23,10 @@ __NAME__ = 'config.instruments.spirou.default_constants.py'
 DATA_ENGINEERING = DATA_ENGINEERING.copy(__NAME__)
 DATA_ENGINEERING.value = './data/spirou/engineering/'
 
+# Define core data path
+DATA_CORE = DATA_CORE.copy(__NAME__)
+DATA_CORE.value = './data/core/'
+
 # Define whether to force wave solution from calibration database (instead of
 #    using header wave solution if available)
 CALIB_DB_FORCE_WAVESOL = CALIB_DB_FORCE_WAVESOL.copy(__NAME__)
@@ -80,8 +84,7 @@ CAVITY_LENGTH_FILE_COLS.value = 'NTH_ORDER, WAVELENGTH_COEFF'
 CAVITY_LENGTH_FILE_START = CAVITY_LENGTH_FILE_START.copy(__NAME__)
 CAVITY_LENGTH_FILE_START.value = 0
 
-# Define coefficent column
-#    Must be in CAVITY_LENGTH_FILE_COLS
+# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
 CAVITY_LENGTH_FILE_WAVECOL = CAVITY_LENGTH_FILE_WAVECOL.copy(__NAME__)
 CAVITY_LENGTH_FILE_WAVECOL.value = 'WAVELENGTH_COEFF'
 
@@ -721,6 +724,48 @@ EXT_COSMIC_THRESHOLD.value = 5
 QC_EXT_FLUX_MAX = QC_EXT_FLUX_MAX.copy(__NAME__)
 QC_EXT_FLUX_MAX.value = 50000
 
+# =============================================================================
+# CALIBRATION: THERMAL SETTINGS
+# =============================================================================
+# define whether to always extract thermals (i.e. overwrite existing files)
+THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
+THERMAL_ALWAYS_EXTRACT.value = True
+
+# define DPRTYPEs we need to correct thermal background using
+#    telluric absorption (TAPAS)  (must be a string list separated by a comma)
+THERMAL_CORRETION_TYPE1 = THERMAL_CORRETION_TYPE1.copy(__NAME__)
+THERMAL_CORRETION_TYPE1.value = 'OBJ'
+
+# define DPRTYPEs we need to correct thermal background using
+#     method 2 (must be a string list separated by a comma)
+THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
+THERMAL_CORRETION_TYPE2.value = 'FP, HC'
+
+# define the order to perform the thermal background scaling on
+THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
+THERMAL_ORDER.value = 48
+
+# width of the median filter used for the background
+THERMAL_FILTER_WID = THERMAL_FILTER_WID.copy(__NAME__)
+THERMAL_FILTER_WID.value = 101
+
+# define thermal red limit (in nm)
+THERMAL_RED_LIMIT = THERMAL_RED_LIMIT.copy(__NAME__)
+THERMAL_RED_LIMIT.value = 2500
+
+# define thermal blue limit (in nm)
+THERMAL_BLUE_LIMIT = THERMAL_BLUE_LIMIT.copy(__NAME__)
+THERMAL_BLUE_LIMIT.value = 2450
+
+# maximum tapas transmission to be considered completely opaque for the
+# purpose of background determination in order 49.
+THERMAL_THRES_TAPAS = THERMAL_THRES_TAPAS.copy(__NAME__)
+THERMAL_THRES_TAPAS.value = 0.010
+
+# define the percentile to measure the background for correction type 2
+THERMAL_ENVELOPE_PERCENTILE = THERMAL_ENVELOPE_PERCENTILE.copy(__NAME__)
+THERMAL_ENVELOPE_PERCENTILE.value = 10
+
 
 # =============================================================================
 # CALIBRATION: WAVE SETTINGS
@@ -748,3 +793,14 @@ WAVE_LINELIST_WAVECOL = WAVE_LINELIST_WAVECOL.copy(__NAME__)
 WAVE_LINELIST_WAVECOL.value = 'll'
 WAVE_LINELIST_AMPCOL = WAVE_LINELIST_AMPCOL.copy(__NAME__)
 WAVE_LINELIST_AMPCOL.value = 'amp'
+
+# =============================================================================
+# CALIBRATION: TELLURIC SETTINGS
+# =============================================================================
+# Define the name of the tapas file used
+TAPAS_FILE = TAPAS_FILE.copy(__NAME__)
+TAPAS_FILE.value = 'tapas_all_sp.fits.gz'
+
+# Define the format (astropy format) of the tapas file "TAPAS_FILE"
+TAPAS_FILE_FMT = TAPAS_FILE_FMT.copy(__NAME__)
+TAPAS_FILE_FMT.value = 'fits'
