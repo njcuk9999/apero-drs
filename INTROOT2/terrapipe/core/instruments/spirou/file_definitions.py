@@ -484,7 +484,7 @@ out_thermal_e2ds = drs_finput('THERMAL_E2DS',
                               filetype='.fits',
                               suffix='_e2ds',
                               dbname='calibration', dbkey='THERMAL',
-                              outfunc=out.calib_file)
+                              outfunc=out.general_file)
 # add thermal outputs to output fileset
 out_file.addset(out_thermal_e2ds)
 
@@ -497,6 +497,15 @@ out_wave = drs_finput('WAVE', KW_OUTPUT='WAVE_SOL',
                       suffix='_wave',
                       dbname='calibration', dbkey='WAVE',
                       outfunc=out.calib_file)
+
+# wave master
+out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits',
+                             suffix='_wavem',
+                             dbname='calibration', dbkey='WAVEM',
+                             outfunc=out.calib_file)
+
 # out_wave_fp = drs_finput('WAVE_FP',
 #                          fibers=['AB', 'A', 'B', 'C'],
 #                          KW_OUTPUT='WAVE_FP')
@@ -510,6 +519,7 @@ out_wave = drs_finput('WAVE', KW_OUTPUT='WAVE_SOL',
 #                           KW_OUTPUT='WAVE_RES_EA')
 # # add wave outputs to output fileset
 out_file.addset(out_wave)
+out_file.addset(out_wave_master)
 # out_file.addset(out_wave_fp)
 # out_file.addset(out_wave_ea)
 # out_file.addset(out_wave_fp_ea)
