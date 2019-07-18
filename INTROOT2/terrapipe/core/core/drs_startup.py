@@ -405,6 +405,74 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
         return found_files[-1]
 
 
+
+def copy_kwargs(recipe, **kwargs):
+    """
+    Copy kwargs from "recipe1" main to "recipe2" main
+
+    i.e. if we had recipe1.main(arg1, arg2, arg3) we want to produce
+    dict(arg1=arg1, arg2=arg2, arg3=arg3) for recipe 2
+
+    however we probably want to update some kwargs thus any other argument
+    will overwrite previous arguments
+
+    i.e. if call to recipe1 is: recipe1.main(arg1, arg2, arg3)
+
+         and call to this function is: copy_kwargs(recipe, arg2='test')
+
+         output is: dict(arg1=arg1, arg2='test', arg3=arg3)
+
+    :param recipe:
+    :param kwargs:
+    :return:
+    """
+    # get inputs for
+    inputs = recipe.drs_params['INPUTS']
+    # get recipe arguments/kwarg arguments
+    mainargs = recipe.args
+    mainkwargs = recipe.kwargs
+    # storage for output keyword arguments
+    outkwargs = dict()
+    # loop around arguments and decide where to get value from
+    for arg in mainargs:
+        # if in kwargs overwrite value with new value
+        if arg in kwargs:
+            outkwargs[arg] = kwargs[arg]
+        # else if it is in inputs use recipe.main value
+        elif arg.upper() in inputs:
+            # deal with files being a tuple of (str, DrsFile)
+            if mainargs[arg].dtype in ['file', 'files']:
+                value = inputs[arg][0]
+            else:
+                value = inputs[arg]
+            # deal with None values
+            if value == 'None':
+                value = None
+            # add to outkwargs
+            outkwargs[arg] = value
+    # loop around arguments and decide where to get value from
+    for kwarg in mainkwargs:
+        # if in kwargs overwrite value with new value
+        if kwarg in kwargs:
+            outkwargs[kwarg] = kwargs[kwarg]
+        # else if it is in inputs use recipe.main value
+        elif kwarg.upper() in inputs:
+            # deal with files being a tuple of (str, DrsFile)
+            if mainkwargs[kwarg].dtype in ['file', 'files']:
+                value = inputs[kwarg]
+                if type(value) in [list, np.ndarray]:
+                    value = value[0]
+            else:
+                value = inputs[kwarg]
+            # deal with None values
+            if value == 'None':
+                value = None
+            # add to outkwargs
+            outkwargs[kwarg] = value
+    # now return out keyword arguments
+    return outkwargs
+
+
 def file_processing_update(params, it, num_files):
     if it != 0:
         WLOG(params, '', params['DRS_HEADER'])
