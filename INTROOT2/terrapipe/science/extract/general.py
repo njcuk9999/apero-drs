@@ -191,7 +191,7 @@ def tcorrect1(params, image, header, fiber, wavemap, flat=None, **kwargs):
     tapas_thres = kwargs.get('tapas_thres', None)
     filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
-    red_limit = kwargs.get('red_limt', None)
+    red_limit = kwargs.get('red_limit', None)
     thermal_file = kwargs.get('thermal_file', None)
     tapas_file = kwargs.get('tapas_file', None)
     # ----------------------------------------------------------------------
