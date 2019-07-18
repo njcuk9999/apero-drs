@@ -239,7 +239,7 @@ class PseudoConstants:
 
         :return my_exit: function
         """
-        my_exit = params['DRS_LOG_EXIT_TYPE']
+        my_exit = params.get('DRS_LOG_EXIT_TYPE', 'sys')
         if my_exit == 'sys':
             return sys.exit
         elif my_exit == 'os':

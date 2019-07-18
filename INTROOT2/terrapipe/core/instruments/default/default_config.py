@@ -121,6 +121,11 @@ DRS_PACKAGE = Const('DRS_PACKAGE', value='terrapipe', dtype=str,
 DRS_USERENV = Const('DRS_USERENV', value='DRS_UCONFIG', dtype=str,
                     source=__NAME__)
 
+#   User-defined program name (overwrite logging program)
+DRS_USER_PROGRAM = Const('DRS_USER_PROGRAM', value=None, dtype=str,
+                         source=__NAME__)
+
+
 # =============================================================================
 # DRS INTERNAL PATHS
 # =============================================================================
