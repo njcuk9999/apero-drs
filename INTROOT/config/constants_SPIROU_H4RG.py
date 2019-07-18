@@ -254,7 +254,6 @@ THERMAL_CORRECTION_TYPE1 = ['OBJ']
 
 # define DPRTYPEs we need to correct thermal background using
 #     method 2
-# TODO: add method 2
 THERMAL_CORRECTION_TYPE2 = ['FP', 'HC']
 
 # maximum tapas transmission to be considered completely opaque for the
