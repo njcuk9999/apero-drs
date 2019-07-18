@@ -18,6 +18,7 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_image
 from terrapipe.recipes.spirou import cal_extract_spirou
 
 
@@ -117,7 +118,7 @@ def __main__(recipe, params):
     num_files = len(infiles)
 
     # get the fiber types from a list parameter
-    fiber_types = params.listp('FIBER_TYPE', dtype=str)
+    fiber_types = drs_image.get_fiber_types(params)
 
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -153,8 +154,11 @@ def __main__(recipe, params):
         # extract the dark (AB, A, B and C) or read dark e2ds header
         # ------------------------------------------------------------------
         if params['THERMAL_ALWAYS_EXTRACT'] or (not exists):
+            # need to handle passing keywords from main
+            kwargs = core.copy_kwargs(recipe, directory=nightname,
+                                      files=[infile.basename])
             # pipe into cal_extract
-            llout = cal_extract_spirou.main(nightname, [infile.basename])
+            llout = cal_extract_spirou.main(**kwargs)
             # get qc
             passed = llout['p']['QC']
             # get hdr
