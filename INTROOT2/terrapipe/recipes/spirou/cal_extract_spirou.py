@@ -240,27 +240,20 @@ def __main__(recipe, params):
             fail_msg, qc_values, qc_names = [], [], [],
             qc_logic, qc_pass = [], []
             textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-            # --------------------------------------------------------------
-            # check that rms values in required orders are below threshold
 
-            # get mask for removing certain values
-            remove_orders = params.listp('FF_RMS_SKIP_ORDERS', dtype=int)
-            remove_orders = np.array(remove_orders)
-            remove_mask = np.in1d(np.arange(len(eprops['RMS'])), remove_orders)
-            # apply max and calculate the maximum of the rms values
-            max_rms = np.nanmax(eprops['RMS'][~remove_mask])
-            # apply the quality control based on the maximum rms
-            if max_rms > params['QC_FF_MAX_RMS']:
+            # if array is completely NaNs it shouldn't pass
+            # --------------------------------------------------------------
+
+            if np.sum(np.isfinite(eprops['E2DS'])) == 0:
                 # add failed message to fail message list
-                fargs = [fiber, max_rms, params['QC_FF_MAX_RMS']]
-                fail_msg.append(textdict[''].format(*fargs))
+                fail_msg.append(textdict['40-016-00008'])
                 qc_pass.append(0)
             else:
                 qc_pass.append(1)
             # add to qc header lists
-            qc_values.append(max_rms)
-            qc_names.append('max_rms')
-            qc_logic.append('max_rms < {0:.2f}'.format(params['QC_FF_MAX_RMS']))
+            qc_values.append('NaN')
+            qc_names.append('image')
+            qc_logic.append('image is all NaN')
             # --------------------------------------------------------------
             # finally log the failed messages and set QC = 1 if we pass the
             # quality control QC = 0 if we fail quality control
