@@ -582,7 +582,7 @@ def _copy_db_file(params, dbname, inpath, outpath, lock=None,
             drs_lock.close_lock_file(params, lock, lockfile, lockpath)
         # log and raise error
         eargs = [dbname, inpath, outpath, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('', args=eargs))
+        WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
     except OSError as e:
         wargs = [dbname, outpath, type(e), e, func_name]
         WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
@@ -597,8 +597,8 @@ def _get_time(params, dbname, hdict=None, header=None, kind=None):
     elif header is not None:
         return drs_fits.header_time(params, header, out_fmt=kind)
     else:
-        eargs = [dbname, 'hdict or header', func_name]
-        WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
+        eargs = [dbname, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00039', args=eargs))
 
 
 def _read_lines_from_database(params, dbname):
