@@ -647,6 +647,10 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # make info functionality
         self._make_special(drs_argument.make_info, skip=True)
+        # ---------------------------------------------------------------------
+        # set program functionality
+        self._make_special(drs_argument.set_program, skip=False)
+
 
     def _make_special(self, function, skip=False):
         # make debug functionality
@@ -759,7 +763,9 @@ class DrsRecipe(object):
         if allfilelist is None:
             allfilelist = []
         # deal with non-lists
-        if type(files) not in [list, np.ndarray]:
+        if isinstance(files, str):
+            files = [files]
+        elif type(files) not in [list, np.ndarray]:
             files = [files]
         # loop around files
         all_files = []
