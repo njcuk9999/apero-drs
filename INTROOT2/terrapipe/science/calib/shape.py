@@ -1065,7 +1065,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
         # dy for all orders and all fibers
         dy = y0[:, ix] - y0[:, dim2 // 2]
         # fitting the dy to the position of the order
-        yfit = math.nanpolyfit(y0[:, ix], dy, 3)
+        yfit = math.nanpolyfit(y0[:, dim2 // 2], dy, 3)
         ypix = np.arange(dim1)
         # add to the master dy map
         master_dymap[:, ix] = np.polyval(yfit, ypix)
