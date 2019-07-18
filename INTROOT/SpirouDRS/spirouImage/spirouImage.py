@@ -3004,7 +3004,7 @@ def get_y_shape_map(p, loc, hdr):
         # dy for all orders and all fibers
         dy = y0[:, ix] - y0[:, dim2 // 2]
         # fitting the dy to the position of the order
-        yfit = nanpolyfit(y0[:, ix], dy, 3)
+        yfit = nanpolyfit(y0[:, dim2 // 2], dy, 3)
         ypix = np.arange(dim1)
         # add to the master dy map
         master_dymap[:, ix] = np.polyval(yfit, ypix)
