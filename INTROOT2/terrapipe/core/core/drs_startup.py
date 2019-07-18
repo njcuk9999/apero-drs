@@ -474,8 +474,7 @@ def copy_kwargs(recipe, **kwargs):
 
 
 def file_processing_update(params, it, num_files):
-    if it != 0:
-        WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['DRS_HEADER'])
     eargs = [it + 1, num_files]
     WLOG(params, '', TextEntry('40-001-00020', args=eargs))
     WLOG(params, '', params['DRS_HEADER'])
