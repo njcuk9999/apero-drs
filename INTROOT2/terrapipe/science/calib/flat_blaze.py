@@ -119,7 +119,7 @@ def get_blaze(params, header, fiber=None):
     if fiber is None:
         fiber = params['FIBER']
     # get file definition
-    out_shape_dymap = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
+    out_shape_dymap = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_dymap.get_dbkey(fiber=fiber)
