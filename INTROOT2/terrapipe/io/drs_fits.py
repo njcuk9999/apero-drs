@@ -363,12 +363,20 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
         header0 = header[0].to_fits_header()
     else:
         header0 = header[0]
-    hdu0 = fits.PrimaryHDU(data[0], header=header0)
+    # set up primary HDU (if data[0] == image then put this in the primary)
+    #   else if table then primary HDU should be empty
+    if datatype[0] == 'image':
+        hdu0 = fits.PrimaryHDU(data[0], header=header0)
+        start = 1
+    else:
+        hdu0 = fits.PrimaryHDU()
+        start = 0
+
     if dtype is not None:
         hdu0.scale(type=dtype[0], **SCALEARGS)
     # add all others afterwards
     hdus = [hdu0]
-    for it in range(1, len(data)):
+    for it in range(start, len(data)):
         if datatype[it] == 'image':
             fitstype = fits.ImageHDU
         elif datatype[it] == 'table':
