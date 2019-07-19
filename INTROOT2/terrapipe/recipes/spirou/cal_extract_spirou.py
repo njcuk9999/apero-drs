@@ -171,6 +171,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # loop around fiber types
         for fiber in fibertypes:
+            # log process: processing fiber
+            wargs = [fiber, ', '.join(fibertypes)]
+            WLOG(params, 'info', TextEntry('40-016-00014', args=wargs))
             # push fiber into params
             params['FIBER'] = fiber
             params.set_source('FIBER', mainname)
