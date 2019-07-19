@@ -131,7 +131,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
 
     corrtype1 = pcheck(params, 'THERMAL_CORRETION_TYPE1', 'corrtype1', kwargs,
                        func_name, mapf='list', dtype=str)
-    corrtype2 = pcheck(params, 'THERMAL_CORRETION_TYPE1', 'corrtype1', kwargs,
+    corrtype2 = pcheck(params, 'THERMAL_CORRETION_TYPE2', 'corrtype2', kwargs,
                        func_name, mapf='list', dtype=str)
 
     thermal_file = kwargs.get('thermal_file', None)
