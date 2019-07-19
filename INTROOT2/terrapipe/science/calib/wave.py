@@ -21,7 +21,6 @@ from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -209,8 +208,29 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     # extract keys from header
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
+
+    # get the wfp keys
+    wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
+                                         required=False)
+    wfp_fwhm = wavefile.read_header_key('KW_WFP_FWHM', dtype=float,
+                                        required=False)
+    wfp_contrast = wavefile.read_header_key('KW_WFP_CONTRAST', dtype=float,
+                                            required=False)
+    wfp_maxcpp = wavefile.read_header_key('KW_WFP_MAXCPP', dtype=float,
+                                          required=False)
+    wfp_mask = wavefile.read_header_key('KW_WFP_MASK', dtype=float,
+                                        required=False)
+    wfp_lines = wavefile.read_header_key('KW_WFP_LINES', dtype=float,
+                                         required=False)
+    wfp_target_rv = wavefile.read_header_key('KW_TARG_RV', dtype=float,
+                                             required=False)
+    wfp_width = wavefile.read_header_key('KW_WFP_WIDTH', dtype=float,
+                                         required=False)
+    wfp_step = wavefile.read_header_key('KW_WFP_STEP', dtype=float,
+                                        required=False)
+
     # extract cofficients from header
-    wave_coeffs = wavefile.read_header_key_2d_list('KW_WAVE_PARAM',
+    wave_coeffs = wavefile.read_header_key_2d_list('KW_WAVECOEFFS',
                                                    dim1=nbo, dim2=deg + 1)
     # -------------------------------------------------------------------------
     # if wavemap is unset create it from wave coefficients
@@ -236,16 +256,27 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     wprops['DEG'] = deg
     wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wavemap
+
+    # add the wfp keys
+    wprops['WFP_DRIFT'] = wfp_drift
+    wprops['WFP_FWHM'] = wfp_fwhm
+    wprops['WFP_CONTRAST'] = wfp_contrast
+    wprops['WFP_MAXCPP'] = wfp_maxcpp
+    wprops['WFP_MASK'] = wfp_mask
+    wprops['WFP_LINES'] = wfp_lines
+    wprops['WFP_TARG_RV'] = wfp_target_rv
+    wprops['WFP_WIDTH'] = wfp_width
+    wprops['WFP_STEP'] = wfp_step
+
     # set the source
-    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
+            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MAXCPP', 'WFP_MASK',
+            'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
     # return the map and properties
     return wprops
-
-
-
 
 
 # =============================================================================
