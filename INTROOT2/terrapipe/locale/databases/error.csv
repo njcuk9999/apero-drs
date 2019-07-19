@@ -704,6 +704,8 @@
 "40-016-00011","ALL","prints that we are extracting straightened image","None","Extracting straightened image","",""
 "40-016-00012","ALL","prints that we are correcting thermal","{0} = fiber type; {1} = mode","Correcting thermal for fiber type = {0} (mode={1})","",""
 "40-016-00013","ALL","prints that we are not correcting thermal","{0} = fiber type","Not correcting thermal for fiber type = {0}","",""
+"40-016-00014","ALL","prints the process which fiber we are processing now","{0} = fiber type; {1} = list of all fibers","Processing fiber {0} of [{1}]","",""
+"","","","","","",""
 "","","","","","",""
 "","","","","","",""
 "40-017-00000","ALL","Wave solution messages","None","","",""
