@@ -1200,7 +1200,7 @@ class DrsFitsFile(DrsInputFile):
         # loop around the 2D array
         for it in range(dim1):
             # construct the key name
-            keyname = '{0}{1}'.format(drskey, it)
+            keyname = test_for_formatting(drskey, it)
             # try to get the values
             try:
                 # set the value
@@ -1243,13 +1243,14 @@ class DrsFitsFile(DrsInputFile):
         for it in range(dim1):
             for jt in range(dim2):
                 # construct the key name
-                keyname = '{0}{1}'.format(drskey, it * dim2 + jt)
+                keyname = test_for_formatting(drskey, it * dim2 + jt)
                 # try to get the values
                 try:
                     # set the value
                     values[it][jt] = dtype(self.header[keyname])
                 except KeyError:
-                    eargs = [keyname, dim1, dim2, self.basename, func_name]
+                    eargs = [keyname, drskey, dim1, dim2, self.basename,
+                             func_name]
                     self.__error__(TextEntry('09-000-00009', args=eargs))
         # return values
         return values
@@ -1263,11 +1264,18 @@ class DrsFitsFile(DrsInputFile):
             # see if we have key store
             if isinstance(store, list) and len(store) == 3:
                 drskey = store[0]
+                source = 'store[0]'
             # if we dont assume we have a string
             else:
                 drskey = store
+                source = 'store'
         else:
             drskey = str(key)
+            source = 'input'
+        # debug log message
+        dargs = [key, drskey, source]
+        WLOG(drs_params, 'debug', TextEntry('90-008-00001', args=dargs))
+        # return drskey
         return drskey
 
     def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None,
@@ -1324,13 +1332,22 @@ class DrsFitsFile(DrsInputFile):
                 return False
             else:
                 return True
+
         # filter and create new header
         copy_cards = filter(__keep_card, fileheader.cards)
-        self.hdict = drs_fits.Header(copy_cards)
+
+        # deal with appending to a hidct that isn't empty
+        if self.hdict is None:
+            self.hdict = drs_fits.Header(copy_cards)
+        else:
+            for card in copy_cards:
+                self.hdict.append(card)
+
         # return True to show completed successfully
         return True
 
-    def add_hkey(self, key=None, keyword=None, value=None, comment=None):
+    def add_hkey(self, key=None, keyword=None, value=None, comment=None,
+                 fullpath=False):
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
         and key and comment are defined these are used instead.
@@ -1377,6 +1394,12 @@ class DrsFitsFile(DrsInputFile):
         # set the value to default value if value is None
         if value is None:
             value = dvalue
+
+        # deal with paths (should only contain filename for header)
+        if isinstance(value, str):
+            if os.path.isfile(value) and (not fullpath):
+                value = os.path.basename(value)
+
         # add to the hdict dictionary in form (value, comment)
         self.hdict[okey] = (value, comment)
 
