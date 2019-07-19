@@ -2,6 +2,286 @@ Changelog
 =========
 
 
+0.5.040 (2019-07-19)
+--------------------
+- Science.extract.general.py - add s1d funtionality and add log message
+  to thermal correction. [Neil Cook]
+- Science.calib.wave.py - get the wfp keys and store in wprops. [Neil
+  Cook]
+- Science.calib.localisation.py - return locofile instance with
+  localisation properties. [Neil Cook]
+- Science.calib.flat_blaze.py - correct blaze getting function (was set
+  to get flat) [Neil Cook]
+- Cal_extract_spirou.py - add s1d functionality. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - fix problem that table cannot be primary hdu (start from
+  ext=1 in these cases) [Neil Cook]
+- Core.instruments - add s1d constants. [Neil Cook]
+- Drs_file.py - fix hdict copying header cards, make sure header keys
+  only copy basename for paths, add key formating for 1d and 2d keys.
+  [Neil Cook]
+
+
+0.5.039 (2019-07-18)
+--------------------
+- Science.extract.general.py - fix typo "red_limt" --> "red_limit" [Neil
+  Cook]
+- Wave.py - make wave master use specific fibers and search for file
+  defintion. [Neil Cook]
+- Shape.py - correct program with shape finding (dymap y0[:, ix] -->
+  y0[:, dim2//2]) [Neil Cook]
+- Cal_thermal_spirou.py - add program name for when cal_thermal uses
+  cal_extract (thermal_extract), make sure header is added to outfile
+  before adding to calibDB. [Neil Cook]
+- Cal_flat_spirou.py - add textentry for qc fail message (missed before)
+  [Neil Cook]
+- Cal_extract_spirou.py - update QC should just check for NaN image.
+  [Neil Cook]
+- Drs_table.py - remove "data_start" for fits files (in read_table)
+  [Neil Cook]
+- File_definitions.py - add wavem file and correct thermal file (should
+  be a general_file not a calib_file) [Neil Cook]
+- Drs_startup.py - always plot the header line before file processing
+  message. [Neil Cook]
+- Drs_database.py - update the error when there is not hdict or header
+  present (must be one or the other) [Neil Cook]
+- Drs_argument.py - make debug message a text entry. [Neil Cook]
+- Update language database. [Neil Cook]
+- SpirouImage.py - fix the shape problem with dymap bending (fit y0 for
+  center pixel not ix'th pixel) [Neil Cook]
+- Data.core - add tapas_all_sp.fits. [Neil Cook]
+- Extract.general.py - continue to port thermal correction code. [Neil
+  Cook]
+- Shape.py - remove test cases for dymap generation (still
+  unfixed/unworking) [Neil Cook]
+- General.py - reorganise load_calib_file (no load_calib_table) [Neil
+  Cook]
+- Drs_image.py - allow fiber type "ALL" [Neil Cook]
+- Drs_data.py - add load_tapas. [Neil Cook]
+- Core.__init__.py - copy_kwargs alias. [Neil Cook]
+- Cal_extract/cal_thermal - continue work on porting from spirou drs.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments - add constanst for extraction (thermal mostly) [Neil
+  Cook]
+- Drs_startup.py - add copy_kwargs function. [Neil Cook]
+- Drs_recipe.py - add set_program special argument. [Neil Cook]
+- Drs_log.py - set default values for params. [Neil Cook]
+- Drs_argument.py - correct how to handle string instead of list for
+  files. [Neil Cook]
+- SpirouImage.py - remove test cases. [Neil Cook]
+- Constants_SPIROU_H4RG.py - correct comment. [Neil Cook]
+
+
+0.5.037 (2019-07-10)
+--------------------
+- Extraction/flat/blaze - continue work to port changes from spiroudrs.
+  [Neil Cook]
+- Extraction/flat/blaze - continue work to port changes from spiroudrs.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Recipe_definitions.py - change --extfiber to --fiber. [Neil Cook]
+- Pseudo_const.py - update constants (add FIBER_DATA_TYPE) [Neil Cook]
+- SpirouMath.py - pep8 change. [Neil Cook]
+- Cal_shape_master_spirou.py - fix problem FP file should be FPfiles.
+  [Neil Cook]
+- Science.extract.py - work on completing the extraction functions (for
+  cal_flat) [Neil Cook]
+- Science.calib.shape.py - fix getting the calibration files (don't want
+  to use file_definitons for specific instrument) [Neil Cook]
+- Science.calib.localisation.py - fix load_orderp. [Neil Cook]
+- Science.calib.general.py - check dtype in add_calibs_to_header. [Neil
+  Cook]
+- Cal_flat_spirou.py - continue porting over code from spiroudrs. [Neil
+  Cook]
+- Recipes.spirou.py - add missing keywords to header. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_image.py - fix get_fiber_types. [Neil Cook]
+- Drs_fits.py - add check_dtype_for_header function. [Neil Cook]
+- Recipe_definitions.py - remove extract method. [Neil Cook]
+- Pseudo_const.py - add FIBER_WAVE_TYPES. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - fix types in calls.
+  [Neil Cook]
+- Core.instruments..output_filenames.py - tweak npy_file. [Neil Cook]
+- Core.instruments.py - add cal_flat constants/keywords. [Neil Cook]
+- Drs_startup.py - make sure name == file.name if we aren't returning
+  all files. [Neil Cook]
+- Drs_log.py - add dtype to allow listp/dictp to test/convert elements
+  before returning. [Neil Cook]
+- Drs_file.py - fix NpyFile to overwrite needed functions of InputFile.
+  [Neil Cook]
+- Core.constants.param_function.py - modify params.listp and
+  params.dictp to add a dtype for list/dict elements. [Neil Cook]
+
+
+0.5.035 (2019-07-08)
+--------------------
+- Update language database. [Neil Cook]
+- Science.extraction.py - first commit (port from spiroudrs) [Neil Cook]
+- Science.calib.shape.py - change shape files to load from
+  general.load_calib_file. [Neil Cook]
+- Science.calib.localisation.py - add load_orderp. [Neil Cook]
+- Science.calib.general.py - add load_calib_file and load_calib_table.
+  [Neil Cook]
+- Cal_extract_spirou.py/cal_flat_spirou.py - start porting code. [Neil
+  Cook]
+- Drs_image.py - add function get_fiber_types. [Neil Cook]
+- Drs_data.py - change error code. [Neil Cook]
+- File_definitions.py - add drs_ninput and out_orderp_straight. [Neil
+  Cook]
+- Output_filenames.py - add npy_file. [Neil Cook]
+- Drs_log.py - allow find_param (pcheck) to get listp or dictp as well
+  as constant. [Neil Cook]
+- Drs_file.py - add DrsNpyFile and move some functionality to
+  DrsInputFit. [Neil Cook]
+- Param_functions.py - add _map_dictparameter and redefine
+  _map_listparameter. [Neil Cook]
+- Science.calib.shape.py - update how shape files are obtained from
+  calibDB (including new function get_shapelocal) [Neil Cook]
+- Science.calib.localisation.py - update how we get loco files from
+  calibDB. [Neil Cook]
+- Recipes.spirou.cal_loc_spirou.py - change outfile definiton (and how
+  we identify which fiber file is for) [Neil Cook]
+- Cal_extract/cal_flat -- continue porting functionality from spiroudrs.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_path.py - correct __NAME__ [Neil Cook]
+- Drs_fits.py - allow read function to take function name as argument +
+  correct pep8. [Neil Cook]
+- Drs_data.py - correct typoe in relfolder and filename for
+  load_full_flat_pp() [Neil Cook]
+- Recipe_defintions.py - update filetypes (no need to distiguish fiber
+  files) [Neil Cook]
+- File_defintions.py - update all filedefinitions with prefix, suffix,
+  filetype where needed. [Neil Cook]
+- Output_filenames.py - change how getting filenames work (now uses
+  prefix/suffix/filetype and deal with having a fiber defined) [Neil
+  Cook]
+- Drs_startup.py - allow get_file_definition to return all files found
+  (and name to be a string within drs file instance name) [Neil Cook]
+- Drs_recipe.py - change variable index --> indextable. [Neil Cook]
+- Drs_file.py - add suffix, prefix, fiber, fibers and rename ext
+  -->filetype, index --> indextable, add method get_dbkey (adding use
+  for fibers) [Neil Cook]
+- Drs_database.py - change how dbkey is obtained. [Neil Cook]
+
+
+0.5.034 (2019-07-05)
+--------------------
+- README.md - move from recipes to terrapipe.recipes. [Neil Cook]
+- README.md - move from recipes to terrapipe.recipes. [Neil Cook]
+- File_definitions.py - remove slit_shape. [Neil Cook]
+- Constants - add FIBER_TYPES. [Neil Cook]
+- Param_functions.py - add listp method (to turn a string list into a
+  list) [Neil Cook]
+- Cal_thermal_spirou.py - get the nightname from parameter dict. [Neil
+  Cook]
+- Science.calib.shape.py - test how to deal with out of bounds
+  coefficients in dymap [UNFINISHED + NOT WORKING] [Neil Cook]
+- Science.calib.general.py - get number of files (from DrsFitsFile
+  instance) and push this into dark correction (for average) [Neil Cook]
+- Science.calib.dark.py - DARK key should be DARKM. [Neil Cook]
+- Core.instruments.spirou.pseduo_const.py = flip A and B coefficients to
+  match spiroudrs. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_file.py - add and set numfiles constant (for use when combining
+  files to know how many files were combined) [Neil Cook]
+- Cal_shape_master_spirou.py [terrapipe] - sum files don't average them,
+  do not correct background (to make similar to spiroudrs code) and fix
+  typo for dxmap0. [Neil Cook]
+- SpirouStartup.py - only return unique files when returning multiple
+  files. [Neil Cook]
+- SpirouImage.py - fpdata1 --> masterfp, test how to deal with bounds in
+  dymap. [Neil Cook]
+- Cal_shape_master_spirou.py - change fpfile to fpfiles, set frames to
+  use all fp files, make fpdata1 not masterfp. [Neil Cook]
+- Science.calib.shape.py - add shape_local functions. [Neil Cook]
+- Science.calib.localisation.py - change where we add one to the
+  coefficient numbers. [Neil Cook]
+- Science.calib.general.py - add calibration log message. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py/rcipe_defintions - add
+  shape outputs/shape_local recipe definition. [Neil Cook]
+- Cal_shape_spirou.py - first commit - push over code from spiroudrs.
+  [Neil Cook]
+- Cal_shape_master_spirou.py - fix bugs with saving. [Neil Cook]
+- Cal_loc_spirou.py - change math from average to sum. [Neil Cook]
+
+
+0.5.032 (2019-07-03)
+--------------------
+- Science.calib.wave.py - correct bug in loading keys from wave header.
+  [Neil Cook]
+- Science.calib.shape.py - add dymap functionality + correct some dxmap
+  bugs. [Neil Cook]
+- Science.calib.localisation.py - correct get_coefficients function.
+  [Neil Cook]
+- Science.calib.general.py - add add_calibs_to_header function. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Constants - continue adding shape constants + add pseudo constant
+  functions. [Neil Cook]
+- Drs_log.py - find_param function: function call takes prescendence
+  over params[key] [Neil Cook]
+- Cal_shape_master_spirou.py - continue work on adding spiroudrs code
+  (file saving) [Neil Cook]
+- Cal_loc_spirou.py - change the way calibration files are added to
+  header. [Neil Cook]
+- Cal_dark_master_spirou.py - fix comment. [Neil Cook]
+- SpirouBERV.py - replace "t" with "jdutc" so all bjds returned. [Neil
+  Cook]
+- Calib.science.preprocessing.detector.py - move loading of full flat to
+  drs_data.py. [Neil Cook]
+- Calib.science.shape.py - continue to add functionality from SpirouDRS.
+  [Neil Cook]
+- Calib.science.localisation.py - fix getting localisation coefficients.
+  [Neil Cook]
+- Calib.science.badpix.py - move loading of full flat to drs_data.py.
+  [Neil Cook]
+- Core.math.general.py - fix when there are no NaNs (don't interpolate
+  linearly) [Neil Cook]
+- Drs_data.py - first commit: module to control loading of internal drs
+  data. [Neil Cook]
+- Update language database. [Neil Cook]
+- Add line lists and cavity length file. [Neil Cook]
+- Add to config parameters. [Neil Cook]
+- Cal_shape_master_spirou.py - add dxmap and start dymap conversion.
+  [Neil Cook]
+- Calib.science.shape.py - continue to add functionality from SpirouDRS.
+  [Neil Cook]
+- Localisation.py/wave.py - change output return (props only) [Neil
+  Cook]
+- Core.math.py - add fwhm, iuv_spline, median_filter_ea,
+  gaussian_function_nn, gauss_fit_nn, gauss_fit_s. [Neil Cook]
+- Default_constants.py - add shape constants. [Neil Cook]
+- Cal_shape_master_spirou.py - change the get_coefficients,
+  get_wavesolution. [Neil Cook]
+- Science.calib.shape.py - start adding constants for shape master
+  dxmap. [Neil Cook]
+- Default_constants.py - start adding constants for shape master dxmap.
+  [Neil Cook]
+- Cal_shape_master_spirou.py - placeholder for calculate_dxmap. [Neil
+  Cook]
+- Reprocess.py - do not scan tmp and reduced files. [Neil Cook]
+- Reprocess.py - pep8 - remove extra blank space. [Neil Cook]
+- SpirouBACK.py - correct typo th_blue_limit = p['THERMAL_RED_LIMIT']
+  --> th_blue_limit = p['THERMAL_BLUE_LIMIT'] [Neil Cook]
+- Constants_SPIROU_H4RG.py - correct typo THERMAL_BLUE_LIMIT = 24580 -->
+  THERMAL_BLUE_LIMIT = 2450 and add ALLOWED_TELLURIC_DPRTYPES. [Neil
+  Cook]
+- Obj_fit_tellu.py obj_mk_tellu.py - should only process files if
+  DPRTPYE is correct, QC should fail if transmission map is all NaNs.
+  [Neil Cook]
+- Cal_extract_RAW_spirou.py - QC should fail if file is all NaNs. [Neil
+  Cook]
+
+
+0.5.029 (2019-06-27)
+--------------------
+- Update date/version/changelog. [Neil Cook]
+- Science.calib.shape.py - fix rows missing from fp_table. [Neil Cook]
+
+
 0.5.028 (2019-06-27)
 --------------------
 - Science.calib.shape.py - fix construct_master_fp (add fp_table
@@ -5210,9 +5490,6 @@ Changelog
 - Integrate telluric recipes with test runs: fixes afer test runs.
   [njcuk9999]
 - Merge remote-tracking branch 'origin/neil' into neil. [njcuk9999]
-- Merge pull request #376 from njcuk9999/neil. [Neil Cook]
-
-  Neil
 
 
 0.2.069 (2018-07-18)
@@ -5238,6 +5515,13 @@ Changelog
 - Integrate telluric recipes with test runs: test run only. [njcuk9999]
 - Modified cal_extract to save wavefile name and wave file dates (for
   telluric) [njcuk9999]
+
+
+0.5.038 (2018-07-17)
+--------------------
+- Merge pull request #376 from njcuk9999/neil. [Neil Cook]
+
+  Neil
 - Update date/version/changelog. [njcuk9999]
 
 
@@ -5529,6 +5813,10 @@ Changelog
 0.2.060 (2018-07-05)
 --------------------
 - Fix and test of find_lines. [Neil Cook]
+
+
+0.5.033 (2018-07-04)
+--------------------
 - Merge pull request #372 from njcuk9999/neil. [Neil Cook]
 
   Neil
@@ -5623,6 +5911,10 @@ Changelog
 - Rebuilt pdf. [Neil Cook]
 - Updated date and version. [Neil Cook]
 - Updated date and version. [Neil Cook]
+
+
+0.5.031 (2018-06-29)
+--------------------
 - Merge pull request #366 from njcuk9999/neil. [Neil Cook]
 
   Neil - just document changes and some code clean up.
@@ -5638,6 +5930,10 @@ Changelog
 - Rebuild pdf. [Neil Cook]
 - Update version, date and module root definitions. [Neil Cook]
 - Update variable definitions. [Neil Cook]
+
+
+0.5.030 (2018-06-28)
+--------------------
 - Merge pull request #364 from njcuk9999/neil. [Neil Cook]
 
   Neil
