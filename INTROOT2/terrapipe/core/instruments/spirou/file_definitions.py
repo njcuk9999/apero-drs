@@ -463,11 +463,11 @@ out_ext_loco = drs_finput('EXTRACT_LOCO', KW_OUTPUT='EXT_LOCO',
 out_ext_s1d_w = drs_finput('EXTRACT_S1D_W', KW_OUTPUT='EXT_S1D_W',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits',
-                           suffix='s1d', outfunc=out.general_file)
+                           suffix='_s1d_w', outfunc=out.general_file)
 out_ext_s1d_v = drs_finput('EXTRACT_S1D_V', KW_OUTPUT='EXT_S1D_V',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits',
-                           suffix='s1d', outfunc=out.general_file)
+                           suffix='_s1d_v', outfunc=out.general_file)
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
 out_file.addset(out_ext_e2dsff)

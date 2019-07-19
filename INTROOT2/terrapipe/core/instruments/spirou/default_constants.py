@@ -724,6 +724,26 @@ EXT_COSMIC_THRESHOLD.value = 5
 QC_EXT_FLUX_MAX = QC_EXT_FLUX_MAX.copy(__NAME__)
 QC_EXT_FLUX_MAX.value = 50000
 
+# Define the start s1d wavelength (in nm)
+EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
+EXT_S1D_WAVESTART.value = 965
+
+# Define the end s1d wavelength (in nm)
+EXT_S1D_WAVEEND = EXT_S1D_WAVEEND.copy(__NAME__)
+EXT_S1D_WAVEEND.value = 2500
+
+#  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
+EXT_S1D_BIN_UWAVE = EXT_S1D_BIN_UWAVE.copy(__NAME__)
+EXT_S1D_BIN_UWAVE.value = 0.005
+
+#  Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
+EXT_S1D_BIN_UVELO = EXT_S1D_BIN_UVELO.copy(__NAME__)
+EXT_S1D_BIN_UVELO.value = 1.0
+
+#  Define the s1d smoothing kernel for the transition between orders in pixels
+EXT_S1D_EDGE_SMOOTH_SIZE = EXT_S1D_EDGE_SMOOTH_SIZE.copy(__NAME__)
+EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
+
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
@@ -804,3 +824,8 @@ TAPAS_FILE.value = 'tapas_all_sp.fits.gz'
 # Define the format (astropy format) of the tapas file "TAPAS_FILE"
 TAPAS_FILE_FMT = TAPAS_FILE_FMT.copy(__NAME__)
 TAPAS_FILE_FMT.value = 'fits'
+
+# Define level above which the blaze is high enough to accurately
+#    measure telluric
+TELLU_CUT_BLAZE_NORM = TELLU_CUT_BLAZE_NORM.copy(__NAME__)
+TELLU_CUT_BLAZE_NORM.value = 0.2
