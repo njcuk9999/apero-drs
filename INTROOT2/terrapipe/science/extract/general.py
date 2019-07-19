@@ -279,7 +279,7 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
     envelope_percent = kwargs.get('envelope', None)
     filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
-    red_limit = kwargs.get('red_limt', None)
+    red_limit = kwargs.get('red_limit', None)
     blue_limit = kwargs.get('blue_limit', None)
     thermal_file = kwargs.get('thermal_file', None)
     # get the shape
