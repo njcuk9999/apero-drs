@@ -27,7 +27,6 @@ from terrapipe.science.calib import shape
 from terrapipe.science.calib import wave
 from terrapipe.science import extract
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -197,6 +196,8 @@ def __main__(recipe, params):
             # get the order profile for this fiber
             orderp = orderprofiles[fiber]
             # --------------------------------------------------------------
+            # log progress: extracting image
+            WLOG(params, 'info', TextEntry('40-016-00011'))
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
                                        props, inflat=flat, inblaze=blaze)
@@ -205,8 +206,10 @@ def __main__(recipe, params):
             eprops = extract.thermal_correction(params, recipe, header, props,
                                                 eprops, fiber=fiber)
             # --------------------------------------------------------------
-            # create 1d spectra (s1d)
-            # TODO: write s1d stuff
+            # create 1d spectra (s1d) of the e2ds file
+            sargs = [wprops['WAVEMAP'], eprops['E2DSFF'], eprops['BLAZE']]
+            swprops = extract.e2ds_to_s1d(params, *sargs, wgrid='wave')
+            svprops = extract.e2ds_to_s1d(params, *sargs, wgrid='velocity')
 
             # --------------------------------------------------------------
             # Plots
@@ -310,12 +313,34 @@ def __main__(recipe, params):
             e2dsfile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
             e2dsfile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
             e2dsfile.add_hkey('KW_COSMIC_THRES',
-                               value=eprops['COSMIC_THRESHOLD'])
+                              value=eprops['COSMIC_THRESHOLD'])
             # add saturation parameters used
             e2dsfile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
             with warnings.catch_warnings(record=True) as _:
                 max_sat_level = np.nanmax(eprops['FLUX_VAL'])
             e2dsfile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
+            # --------------------------------------------------------------
+            # add loco parameters (using locofile)
+            locofile = lprops['LOCOOBJECT']
+            e2dsfile.copy_original_keys(locofile, root=params['ROOT_DRS_LOC'])
+            # --------------------------------------------------------------
+            # add wave parameters
+            e2dsfile.add_hkey('KW_WAVEFILE', value=wprops['WAVEFILE'])
+            e2dsfile.add_hkey('KW_WAVESOURCE', value=wprops['WAVESOURCE'])
+            e2dsfile.add_hkeys_2d('KW_WAVECOEFFS', values=wprops['COEFFS'],
+                                  dim1name='order', dim2name='coeffs')
+            # add wave fp parameters
+            e2dsfile.add_hkey('KW_WFP_FILE', value=wprops['WAVEFILE'])
+            e2dsfile.add_hkey('KW_WFP_DRIFT', value=wprops['WFP_DRIFT'])
+            e2dsfile.add_hkey('KW_WFP_FWHM', value=wprops['WFP_FWHM'])
+            e2dsfile.add_hkey('KW_WFP_CONTRAST', value=wprops['WFP_CONTRAST'])
+            e2dsfile.add_hkey('KW_WFP_MAXCPP', value=wprops['WFP_MAXCPP'])
+            e2dsfile.add_hkey('KW_WFP_MASK', value=wprops['WFP_MASK'])
+            e2dsfile.add_hkey('KW_WFP_LINES', value=wprops['WFP_LINES'])
+            e2dsfile.add_hkey('KW_WFP_TARG_RV', value=wprops['WFP_TARG_RV'])
+            e2dsfile.add_hkey('KW_WFP_WIDTH', value=wprops['WFP_WIDTH'])
+            e2dsfile.add_hkey('KW_WFP_STEP', value=wprops['WFP_STEP'])
+
             # --------------------------------------------------------------
             # copy data
             e2dsfile.data = eprops['E2DS']
@@ -334,7 +359,7 @@ def __main__(recipe, params):
             # construct the filename from file instance
             e2dsfffile.construct_filename(params, infile=infile)
             # copy header from e2dsff file
-            e2dsfffile.copy_hdict(e2dsfffile)
+            e2dsfffile.copy_hdict(e2dsfile)
             # copy data
             e2dsfffile.data = eprops['E2DSFF']
             # --------------------------------------------------------------
@@ -352,7 +377,7 @@ def __main__(recipe, params):
             # construct the filename from file instance
             e2dsllfile.construct_filename(params, infile=infile)
             # copy header from e2dsll file
-            e2dsllfile.copy_hdict(e2dsllfile)
+            e2dsllfile.copy_hdict(e2dsfile)
             # copy data
             e2dsllfile.data = eprops['E2DSFF']
             # --------------------------------------------------------------
@@ -365,11 +390,58 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Store S1D_W in file
             # --------------------------------------------------------------
+            # get a new copy of the e2dsll file
+            s1dwfile = S1D_W_FILE.newcopy(recipe=recipe, fiber=fiber)
+            # construct the filename from file instance
+            s1dwfile.construct_filename(params, infile=infile)
+            # copy header from e2dsll file
+            s1dwfile.copy_hdict(e2dsfile)
+            # add new header keys
+            s1dwfile.add_hkey('KW_S1D_WAVESTART', value=swprops['WAVESTART'])
+            s1dwfile.add_hkey('KW_S1D_WAVEEND', value=swprops['WAVEEND'])
+            s1dwfile.add_hkey('KW_S1D_KIND', value=swprops['WAVEKIND'])
+            s1dwfile.add_hkey('KW_S1D_BWAVE', value=swprops['BIN_WAVE'])
+            s1dwfile.add_hkey('KW_S1D_BVELO', value=swprops['BIN_VELO'])
+            s1dwfile.add_hkey('KW_S1D_SMOOTH', value=swprops['SMOOTH_SIZE'])
+            s1dwfile.add_hkey('KW_S1D_BLAZET', value=swprops['BLAZE_THRES'])
+            # copy data
+            s1dwfile.data = swprops['S1DTABLE']
+            # must change the datatype to 'table'
+            s1dwfile.datatype = 'table'
+            # --------------------------------------------------------------
+            # log that we are saving rotated image
+            wargs = ['wave', s1dwfile.filename]
+            WLOG(params, '', TextEntry('40-016-00010', args=wargs))
+            # write image to file
+            s1dwfile.write()
 
             # --------------------------------------------------------------
             # Store S1D_V in file
             # --------------------------------------------------------------
-
+            # get a new copy of the e2dsll file
+            s1dvfile = S1D_V_FILE.newcopy(recipe=recipe, fiber=fiber)
+            # construct the filename from file instance
+            s1dvfile.construct_filename(params, infile=infile)
+            # copy header from e2dsll file
+            s1dvfile.copy_hdict(e2dsfile)
+            # add new header keys
+            s1dvfile.add_hkey('KW_S1D_WAVESTART', value=svprops['WAVESTART'])
+            s1dvfile.add_hkey('KW_S1D_WAVEEND', value=svprops['WAVEEND'])
+            s1dvfile.add_hkey('KW_S1D_KIND', value=svprops['WAVEKIND'])
+            s1dvfile.add_hkey('KW_S1D_BWAVE', value=svprops['BIN_WAVE'])
+            s1dvfile.add_hkey('KW_S1D_BVELO', value=svprops['BIN_VELO'])
+            s1dvfile.add_hkey('KW_S1D_SMOOTH', value=svprops['SMOOTH_SIZE'])
+            s1dvfile.add_hkey('KW_S1D_BLAZET', value=svprops['BLAZE_THRES'])
+            # copy data
+            s1dvfile.data = svprops['S1DTABLE']
+            # must change the datatype to 'table'
+            s1dvfile.datatype = 'table'
+            # --------------------------------------------------------------
+            # log that we are saving rotated image
+            wargs = ['velocity', s1dvfile.filename]
+            WLOG(params, '', TextEntry('40-016-00010', args=wargs))
+            # write image to file
+            s1dvfile.write()
 
     # ----------------------------------------------------------------------
     # End of main code
