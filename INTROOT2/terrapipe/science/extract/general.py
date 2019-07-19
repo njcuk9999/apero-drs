@@ -12,6 +12,10 @@ Created on 2019-07-09 at 13:42
 from __future__ import division
 import numpy as np
 from scipy.signal import medfilt
+from astropy.table import Table
+from astropy import constants as cc
+from astropy import units as uu
+import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -47,6 +51,12 @@ TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
+# -----------------------------------------------------------------------------
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -148,12 +158,23 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                    thermal_file=thermal_file)
     # base thermal correction on fiber type
     if fibertype in corrtype1:
+        # log progress: doing thermal correction
+        wargs = [fibertype, 1]
+        WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
+        # do thermal correction
         thermalfile, e2ds = tcorrect1(params, e2ds, **tkwargs)
         _, e2dsff = tcorrect1(params, e2dsff, flat=flat, **tkwargs)
     elif fibertype in corrtype2:
+        # log progress: doing thermal correction
+        wargs = [fibertype, 1]
+        WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
+        # do thermal correction
         thermalfile, e2ds = tcorrect2(params, e2ds, **tkwargs)
         _, e2dsff = tcorrect2(params, e2dsff, flat=flat, **tkwargs)
     else:
+        # log that we are not correcting thermal
+        WLOG(params, 'info', TextEntry('40-016-00013', args=[fibertype]))
+
         thermalfile = 'None'
     # ----------------------------------------------------------------------
     # add / update eprops
@@ -319,6 +340,163 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
     # ----------------------------------------------------------------------
     # return p and corrected image
     return thermalfile, corrected_image
+
+
+def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
+
+    func_name = __NAME__ + '.e2ds_to_s1d()'
+    # get parameters from p
+    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
+                       func_name)
+    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs,
+                     func_name)
+    binwave = pcheck(params, 'EXT_S1D_BIN_UWAVE', 'binwave', kwargs,
+                     func_name)
+    binvelo = pcheck(params, 'EXT_S1D_BIN_UVELO', 'binvelo', kwargs,
+                     func_name)
+    smooth_size = pcheck(params, 'EXT_S1D_EDGE_SMOOTH_SIZE', 'smooth_size',
+                         kwargs, func_name)
+    blazethres = pcheck(params, 'TELLU_CUT_BLAZE_NORM', 'blazethres', kwargs,
+                        func_name)
+
+    # get size from e2ds
+    nord, npix = e2ds.shape
+
+    # log progress: calculating s1d (wavegrid)
+    WLOG(params, '', TextEntry('40-016-00009', args=[wgrid]))
+
+    # -------------------------------------------------------------------------
+    # Decide on output wavelength grid
+    # -------------------------------------------------------------------------
+    if wgrid == 'wave':
+        wavegrid = np.arange(wavestart, waveend + binwave/2.0, binwave)
+    else:
+        # work out number of wavelength points
+        flambda = np.log(waveend/wavestart)
+        nlambda = np.round((speed_of_light_kms / binvelo) * flambda)
+        # updating end wavelength slightly to have exactly 'step' km/s
+        waveend = np.exp(nlambda * (binvelo / speed_of_light_kms)) * wavestart
+        # get the wavegrid
+        index = np.arange(nlambda) / nlambda
+        wavegrid = wavestart * np.exp(index * np.log(waveend / wavestart))
+
+    # -------------------------------------------------------------------------
+    # define a smooth transition mask at the edges of the image
+    # this ensures that the s1d has no discontinuity when going from one order
+    # to the next. We define a scale for this mask
+    # smoothing scale
+    # -------------------------------------------------------------------------
+    # define a kernal that goes from -3 to +3 smooth_sizes of the mask
+    xker = np.arange(-smooth_size * 3, smooth_size * 3, 1)
+    ker = np.exp(-0.5*(xker / smooth_size)**2)
+    # set up the edge vector
+    edges = np.ones(npix, dtype=bool)
+    # set edges of the image to 0 so that  we get a sloping weight
+    edges[:int(3 * smooth_size)] = False
+    edges[-int(3 * smooth_size):] = False
+    # define the weighting for the edges (slopevector)
+    slopevector = np.zeros_like(blaze)
+    # for each order find the sloping weight vector
+    for order_num in range(nord):
+        # get the blaze for this order
+        oblaze = blaze[order_num]
+        # find the valid pixels
+        cond1 = np.isfinite(oblaze) & np.isfinite(e2ds[order_num])
+        with warnings.catch_warnings(record=True) as _:
+            cond2 = oblaze > (blazethres * np.nanmax(oblaze))
+        valid = cond1 & cond2 & edges
+        # convolve with the edge kernel
+        oweight = np.convolve(valid, ker, mode='same')
+        # normalise to the maximum
+        with warnings.catch_warnings(record=True) as _:
+            oweight = oweight - np.nanmin(oweight)
+            oweight = oweight / np.nanmax(oweight)
+        # append to sloping vector storage
+        slopevector[order_num] = oweight
+
+    # multiple the spectrum and blaze by the sloping vector
+    blaze = blaze * slopevector
+    e2ds = e2ds * slopevector
+
+    # -------------------------------------------------------------------------
+    # Perform a weighted mean of overlapping orders
+    # by performing a spline of both the blaze and the spectrum
+    # -------------------------------------------------------------------------
+    out_spec = np.zeros_like(wavegrid)
+    weight = np.zeros_like(wavegrid)
+    # loop around all orders
+    for order_num in range(nord):
+        # identify the valid pixels
+        valid = np.isfinite(e2ds[order_num]) & np.isfinite(blaze[order_num])
+        # if we have no valid points we need to skip
+        if np.sum(valid) == 0:
+            continue
+        # get this orders vectors
+        owave = wavemap[order_num, valid]
+        oe2ds = e2ds[order_num, valid]
+        oblaze = blaze[order_num, valid]
+        # create the splines for this order
+        spline_sp = math.iuv_spline(owave, oe2ds, k=5, ext=1)
+        spline_bl = math.iuv_spline(owave, oblaze, k=5, ext=1)
+        # can only spline in domain of the wave
+        useful_range = (wavegrid > np.nanmin(owave))
+        useful_range &= (wavegrid < np.nanmax(owave))
+        # get splines and add to outputs
+        weight[useful_range] += spline_bl(wavegrid[useful_range])
+        out_spec[useful_range] += spline_sp(wavegrid[useful_range])
+
+    # need to deal with zero weight --> set them to NaNs
+    zeroweights = weight == 0
+    weight[zeroweights] = np.nan
+
+    # debug plot
+    if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 0:
+        # TODO: Add plots
+        pass
+        # sPlt.ext_1d_spectrum_debug_plot(params, wavegrid, out_spec, weight, wgrid)
+
+    # work out the weighted spectrum
+    with warnings.catch_warnings(record=True) as _:
+        w_out_spec = out_spec / weight
+
+    # TODO: propagate errors
+    ew_out_spec = np.zeros_like((w_out_spec))
+
+    # construct the s1d table (for output)
+    s1dtable = Table()
+    s1dtable['wavelength'] = wavegrid
+    s1dtable['flux'] = w_out_spec
+    s1dtable['eflux'] = ew_out_spec
+    s1dtable['weight'] = weight
+
+    # set up return dictionary
+    props = ParamDict()
+    # add data
+    props['WAVEGRID'] = wavegrid
+    props['S1D'] = w_out_spec
+    props['S1D_ERROR'] = ew_out_spec
+    props['WEIGHT'] = weight
+    # add astropy table
+    props['S1DTABLE'] = s1dtable
+    # add constants
+    props['WAVESTART'] = wavestart
+    props['WAVEEND'] = waveend
+    props['WAVEKIND'] = wgrid
+    if wgrid == 'wave':
+        props['BIN_WAVE'] = binwave
+        props['BIN_VELO'] = 'None'
+    else:
+        props['BIN_WAVE'] = 'None'
+        props['BIN_VELO'] = binvelo
+    props['SMOOTH_SIZE'] = smooth_size
+    props['BLAZE_THRES'] = blazethres
+    # add source
+    keys = ['WAVEGRID', 'S1D', 'WEIGHT', 'S1D_ERROR', 'S1DTABLE',
+            'WAVESTART', 'WAVEEND', 'WAVEKIND', 'BIN_WAVE',
+            'BIN_VELO', 'SMOOTH_SIZE', 'BLAZE_THRES']
+    props.set_sources(keys, func_name)
+    # return properties
+    return props
 
 
 # =============================================================================
