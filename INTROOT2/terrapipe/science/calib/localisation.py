@@ -478,6 +478,7 @@ def get_coefficients(params, recipe, header, **kwargs):
     # store localisation properties in parameter dictionary
     props = ParamDict()
     props['LOCOFILE'] = locofilepath
+    props['LOCOOBJECT'] = locofile
     props['NBO'] = int(nbo // nset)
     props['DEG_C'] = int(deg_c)
     props['DEG_W'] = int(deg_w)
@@ -486,8 +487,8 @@ def get_coefficients(params, recipe, header, **kwargs):
     props['MERGED'] = merge
     props['NSET'] = nset
     # set sources
-    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'NBO', 'DEG_C', 'DEG_W',
-            'MERGED', 'NSET']
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'NBO',
+            'DEG_C', 'DEG_W', 'MERGED', 'NSET']
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
