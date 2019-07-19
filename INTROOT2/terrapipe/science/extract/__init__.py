@@ -23,6 +23,8 @@ order_profiles = general.order_profiles
 
 thermal_correction = general.thermal_correction
 
+e2ds_to_s1d = general.e2ds_to_s1d
+
 # =============================================================================
 # End of code
 # =============================================================================
