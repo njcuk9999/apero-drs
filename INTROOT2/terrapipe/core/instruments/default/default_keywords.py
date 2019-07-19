@@ -30,9 +30,15 @@ __all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            # extraction values
            'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END', 'KW_EXT_RANGE1',
            'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT', 'KW_COSMIC_THRES',
-           'KW_SAT_QC', 'KW_SAT_LEVEL',
+           'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART', 'KW_S1D_WAVEEND',
+           'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO', 'KW_S1D_SMOOTH',
+           'KW_S1D_BLAZET',
            # wave values
-           'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVE_PARAM',
+           'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE',
+           'KW_WAVESOURCE', 'KW_WAVECOEFFS', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
+           'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MAXCPP',
+           'KW_WFP_MASK', 'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
+           'KW_WFP_STEP',
            ]
 
 # set name
@@ -327,6 +333,28 @@ KW_SAT_QC = Keyword('KW_SAT_QC', key='', dtype=int, source=__NAME__)
 # the max saturation level
 KW_SAT_LEVEL = Keyword('KW_SAT_LEVEL', key='', dtype=int, source=__NAME__)
 
+# the wave starting point used for s1d
+KW_S1D_WAVESTART = Keyword('KW_S1D_WAVESTART', key='', dtype=float,
+                           source=__NAME__)
+
+# the wave end point used for s1d
+KW_S1D_WAVEEND = Keyword('KW_S1D_WAVEEND', key='', dtype=float, source=__NAME__)
+
+# the wave grid kind used for s1d (wave or velocity)
+KW_S1D_KIND = Keyword('KW_S1D_KIND', key='', dtype=str, source=__NAME__)
+
+# the bin size for wave grid kind=wave
+KW_S1D_BWAVE = Keyword('KW_S1D_BWAVE', key='', dtype=float, source=__NAME__)
+
+# the bin size for wave grid kind=velocity
+KW_S1D_BVELO = Keyword('KW_S1D_BVELO', key='', dtype=float, source=__NAME__)
+
+# the smooth size for the s1d
+KW_S1D_SMOOTH = Keyword('KW_S1D_SMOOTH', key='', dtype=float, source=__NAME__)
+
+# the blaze threshold used for the s1d
+KW_S1D_BLAZET = Keyword('KW_S1D_BLAZET', key='', dtype=float, source=__NAME__)
+
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
@@ -336,9 +364,42 @@ KW_WAVE_NBO = Keyword('KW_WAVE_NBO', key='', dtype=int, source=__NAME__)
 # fit degree for wave solution
 KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='', dtype=int, source=__NAME__)
 
-# the prefix used to get the wave solution fit coefficients
-KW_WAVE_PARAM = Keyword('KW_WAVE_PARAM', key='', dtype=float, source=__NAME__)
+# the wave file used
+KW_WAVEFILE = Keyword('KW_WAVEFILE', key='', dtype=str, source=__NAME__)
 
+# the wave source of the wave file used
+KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__)
 
+# the wave coefficients
+KW_WAVECOEFFS = Keyword('KW_WAVECOEFFS', key='', dtype=float, source=__NAME__)
 
+# Wavelength solution for fiber C that is is source of the WFP keys
+KW_WFP_FILE = Keyword('KW_WFP_FILE', key='', dtype=str, source=__NAME__)
 
+# drift of the FP file used for the wavelength solution
+KW_WFP_DRIFT = Keyword('KW_WFP_DRIFT', key='', dtype=float, source=__NAME__)
+
+# FWHM of the wave FP file CCF
+KW_WFP_FWHM = Keyword('KW_WFP_FWHM', key='', dtype=float, source=__NAME__)
+
+# Contrast of the wave FP file CCF
+KW_WFP_CONTRAST = Keyword('KW_WFP_CONTRAST', key='', dtype=float,
+                          source=__NAME__)
+
+# Max count/pixel of the wave FP file CCF
+KW_WFP_MAXCPP = Keyword('KW_WFP_MAXCPP', key='', dtype=float, source=__NAME__)
+
+# Mask for the wave FP file CCF
+KW_WFP_MASK = Keyword('KW_WFP_MASK', key='', dtype=float, source=__NAME__)
+
+# Number of lines for the wave FP file CCF
+KW_WFP_LINES = Keyword('KW_WFP_LINES', key='', dtype=float, source=__NAME__)
+
+# Target RV for the wave FP file CCF
+KW_WFP_TARG_RV = Keyword('KW_WFP_TARG_RV', key='', dtype=float, source=__NAME__)
+
+# Width for the wave FP file CCF
+KW_WFP_WIDTH = Keyword('KW_WFP_WIDTH', key='', dtype=float, source=__NAME__)
+
+# Step for the wave FP file CCF
+KW_WFP_STEP = Keyword('KW_WFP_STEP', key='', dtype=float, source=__NAME__)

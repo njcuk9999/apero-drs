@@ -151,9 +151,10 @@ KW_DRS_DATE = KW_DRS_DATE.copy(__NAME__)
 KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date')
 
 # root keys (for use below and in finding keys later)
+#     - must only be 2 characters long
 root_loc = 'LO'
 root_flat = 'FF'
-root_hc = 'LMP'
+root_hc = 'HC'
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
@@ -330,11 +331,11 @@ KW_LOC_RMS_WID.set(key=root_loc + 'RMSWID', comment='max rms width')
 
 # Coeff center order
 KW_LOC_CTR_COEFF = KW_LOC_CTR_COEFF.copy(__NAME__)
-KW_LOC_CTR_COEFF.set(key=root_loc + 'CTR', comment='Coeff center')
+KW_LOC_CTR_COEFF.set(key=root_loc + 'CE{0:04d}', comment='Coeff center')
 
 # Coeff width order
 KW_LOC_WID_COEFF = KW_LOC_WID_COEFF.copy(__NAME__)
-KW_LOC_WID_COEFF.set(key=root_loc + 'FW', comment='Coeff fwhm')
+KW_LOC_WID_COEFF.set(key=root_loc + 'FW{0:04d}', comment='Coeff fwhm')
 
 # -----------------------------------------------------------------------------
 # Define shape variables
@@ -345,7 +346,7 @@ KW_LOC_WID_COEFF.set(key=root_loc + 'FW', comment='Coeff fwhm')
 # -----------------------------------------------------------------------------
 # SNR calculated in extraction process (per order)
 KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
-KW_EXT_SNR.set(key='EXTSN', comment='Extract: S_N order center')
+KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')
 
 # the start order for extraction
 KW_EXT_START = KW_EXT_START.copy(__NAME__)
@@ -395,18 +396,98 @@ KW_SAT_QC.set(key='EXTSATQC', comment='Extract: saturation limit criteria')
 KW_SAT_LEVEL = KW_SAT_LEVEL.copy(__NAME__)
 KW_SAT_LEVEL.set(key='EXTSMAX', comment='Extract: maximum saturation level')
 
+# the wave starting point used for s1d
+KW_S1D_WAVESTART = KW_S1D_WAVESTART.copy(__NAME__)
+KW_S1D_WAVESTART.set(key='S1DWAVE0', comment='Initial wavelength for s1d [nm]')
+
+# the wave end point used for s1d
+KW_S1D_WAVEEND = KW_S1D_WAVEEND.copy(__NAME__)
+KW_S1D_WAVEEND.set(key='S1DWAVE1', comment='Final wavelength for s1d [nm]')
+
+
+# the wave grid kind used for s1d (wave or velocity)
+KW_S1D_KIND = KW_S1D_KIND.copy(__NAME__)
+KW_S1D_KIND.set(key='S1DWAVEK', comment='Wave grid kind for s1d')
+
+# the bin size for wave grid kind=wave
+KW_S1D_BWAVE = KW_S1D_BWAVE.copy(__NAME__)
+KW_S1D_BWAVE.set(key='S1DBWAVE',
+                 comment='Bin size for wave grid constant in wavelength')
+
+# the bin size for wave grid kind=velocity
+KW_S1D_BVELO = KW_S1D_BVELO.copy(__NAME__)
+KW_S1D_BVELO.set(key='S1DBVELO',
+                 comment='Bin size for wave grid constant in velocity')
+
+# the smooth size for the s1d
+KW_S1D_SMOOTH = KW_S1D_SMOOTH.copy(__NAME__)
+KW_S1D_SMOOTH.set(key='S1DSMOOT', comment='Smoothing scale for s1d edge mask')
+
+# the blaze threshold used for the s1d
+KW_S1D_BLAZET = KW_S1D_BLAZET.copy(__NAME__)
+KW_S1D_BLAZET.set(key='S1DBLAZT', comment='Blaze threshold for s1d')
+
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
 # Number of orders in wave image
 KW_WAVE_NBO = KW_WAVE_NBO.copy(__NAME__)
-KW_WAVE_NBO.set(key='TH_ORD_N', comment='nb orders in total')
+KW_WAVE_NBO.set(key='WAVEORDN', comment='nb orders in total')
 
 # fit degree for wave solution
 KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
-KW_WAVE_DEG.set(key='TH_LL_D', comment='degree of wave polyn fit')
+KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit')
 
-# the prefix used to get the wave solution fit coefficients
-KW_WAVE_PARAM = KW_WAVE_PARAM.copy(__NAME__)
-KW_WAVE_PARAM.set(key='TH_LC', comment='wave coefficients ll(x, order)')
+# the wave coefficients
+KW_WAVECOEFFS = KW_WAVECOEFFS.copy(__NAME__)
+KW_WAVECOEFFS.set(key='WAVE{0:04d}', comment='Wavelength coefficients')
 
+# the wave file used
+KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
+KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used')
+
+# the wave source of the wave file used
+KW_WAVESOURCE = KW_WAVESOURCE.copy(__NAME__)
+KW_WAVESOURCE.set(key='WAVESOUR', comment='Source of the wave solution used.')
+
+# Wavelength solution for fiber C that is is source of the WFP keys
+KW_WFP_FILE = KW_WFP_FILE.copy(__NAME__)
+KW_WFP_FILE.set(key='WFP_FILE', comment='WFP source file')
+
+# drift of the FP file used for the wavelength solution
+KW_WFP_DRIFT = KW_WFP_DRIFT.copy(__NAME__)
+KW_WFP_DRIFT.set(key='WFPDRIFT',
+                 comment='Wavelength sol absolute CCF FP Drift [km/s]')
+
+# FWHM of the wave FP file CCF
+KW_WFP_FWHM = KW_WFP_FWHM.copy(__NAME__)
+KW_WFP_FWHM.set(key='WFPFWHM', comment='FWHM of wave sol FP CCF [km/s]')
+
+# Contrast of the wave FP file CCF
+KW_WFP_CONTRAST = KW_WFP_CONTRAST.copy(__NAME__)
+KW_WFP_CONTRAST.set(key='WFPCONT', comment='wave sol FP Contrast of CCF (%)')
+
+# Max count/pixel of the wave FP file CCF
+KW_WFP_MAXCPP = KW_WFP_MAXCPP.copy(__NAME__)
+KW_WFP_MAXCPP.set(key='WFPMACPP',
+                  comment='wave sol FP max count/pixel of CCF (e-)')
+
+# Mask for the wave FP file CCF
+KW_WFP_MASK = KW_WFP_MASK.copy(__NAME__)
+KW_WFP_MASK.set(key='WFPMASK', comment='wave sol FP Mask filename')
+
+# Number of lines for the wave FP file CCF
+KW_WFP_LINES = KW_WFP_LINES.copy(__NAME__)
+KW_WFP_LINES.set(key='WFPLINE', comment='wave sol FP nbr of lines used')
+
+# Target RV for the wave FP file CCF
+KW_WFP_TARG_RV = KW_WFP_TARG_RV.copy(__NAME__)
+KW_WFP_TARG_RV.set(key='WFPTRV', comment='wave sol FP target RV [km/s]')
+
+# Width for the wave FP file CCF
+KW_WFP_WIDTH = KW_WFP_WIDTH.copy(__NAME__)
+KW_WFP_WIDTH.set(key='WFPWIDTH', comment='wave sol FP CCF width [km/s]')
+
+# Step for the wave FP file CCF
+KW_WFP_STEP = KW_WFP_STEP.copy(__NAME__)
+KW_WFP_STEP.set(key='WFPSTEP', comment='wave sol FP CCF step [km/s]')
