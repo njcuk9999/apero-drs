@@ -279,6 +279,27 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     return wprops
 
 
+def add_wave_keys(infile, props):
+    # add wave parameters
+    infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
+    infile.add_hkey('KW_WAVESOURCE', value=props['WAVESOURCE'])
+    infile.add_hkeys_2d('KW_WAVECOEFFS', values=props['COEFFS'],
+                        dim1name='order', dim2name='coeffs')
+    # add wave fp parameters
+    infile.add_hkey('KW_WFP_FILE', value=props['WAVEFILE'])
+    infile.add_hkey('KW_WFP_DRIFT', value=props['WFP_DRIFT'])
+    infile.add_hkey('KW_WFP_FWHM', value=props['WFP_FWHM'])
+    infile.add_hkey('KW_WFP_CONTRAST', value=props['WFP_CONTRAST'])
+    infile.add_hkey('KW_WFP_MAXCPP', value=props['WFP_MAXCPP'])
+    infile.add_hkey('KW_WFP_MASK', value=props['WFP_MASK'])
+    infile.add_hkey('KW_WFP_LINES', value=props['WFP_LINES'])
+    infile.add_hkey('KW_WFP_TARG_RV', value=props['WFP_TARG_RV'])
+    infile.add_hkey('KW_WFP_WIDTH', value=props['WFP_WIDTH'])
+    infile.add_hkey('KW_WFP_STEP', value=props['WFP_STEP'])
+    # return infile
+    return infile
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
