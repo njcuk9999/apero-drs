@@ -11,13 +11,16 @@ Created on 2019-07-23 at 09:29
 """
 from __future__ import division
 import numpy as np
+import os
 from astropy import units as uu
 from astropy.time import Time, TimeDelta
+from astropy.coordinates import SkyCoord
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_lock
 from . import bervest
 
 # =============================================================================
@@ -53,44 +56,24 @@ class BaryCorrpyException(Exception):
 
 class Property:
     def __init__(self, name=None, unit=None, headerkey=None, paramkey=None,
-                 outkey=None, default=None, dtype=None):
+                 outkey=None, default=None, datatype=None):
         self.name = name
         self.unit = unit
         self.hkey = headerkey
         self.pkey = paramkey
         self.default = default
         self.outkey = outkey
-        self.dtype = dtype
+        self.datatype = datatype
 
 
 # =============================================================================
 # Define user functions
 # =============================================================================
-# define input properties (the value expected to be inputed)
-inputs = dict()
-inputs['ra'] = Property(unit=uu.deg, headerkey='KW_OBJRA',
-                        outkey='KW_BERVRA')
-inputs['dec'] = Property(unit=uu.deg, headerkey='KW_OBJDEC',
-                         outkey='KW_BERVDEC')
-inputs['epoch'] = Property(dtype='decimalyear', headerkey='KW_OBJEQUIN',
-                           outkey='KW_BERVEPOCH')
-inputs['pmra'] = Property(unit=uu.mas/uu.yr, headerkey='KW_OBJRAPM',
-                           outkey='KW_BERVPMRA')
-inputs['pmde'] = Property(unit=uu.mas/uu.yr, headerkey='KW_OBJDECPM',
-                          outkey='KW_BERVPMDE')
-inputs['lat'] = Property(unit=uu.deg, paramkey='OBS_LAT',
-                          outkey='KW_BERVLAT')
-inputs['long'] = Property(unit=uu.deg, paramkey='OBS_LONG',
-                          outkey='KW_BERVLONG')
-inputs['alt'] = Property(unit=uu.deg, paramkey='OBS_ALT',
-                          outkey='KW_BERVALT')
-inputs['plx'] = Property(unit=uu.mas, outkey='KW_BERVPLX', default=0.0)
-
 # define the properties for barycorrpy
 mode1 = dict()
 mode1['ra'] = Property(name='ra', unit=uu.deg)
 mode1['dec'] = Property(name='dec', unit=uu.deg)
-mode1['epcoh'] = Property(name='epoch', dtype='jd')
+mode1['epcoh'] = Property(name='epoch', datatype='jd')
 mode1['pmra'] = Property(name='pmra', unit=uu.mas/uu.yr)
 mode1['pmde'] = Property(name='pmdec', unit=uu.mas/uu.yr)
 mode1['lat'] = Property(name='lat', unit=uu.deg)
@@ -120,28 +103,36 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
     kind = pcheck(params, 'EXT_BERV_KIND', 'kind', kwargs, func_name)
     # ----------------------------------------------------------------------
     # do not try to calculate berv for specific DPRTYPES
-    if dprtype not in dprtypes:
+    if (dprtype not in dprtypes) or (kind == 'None'):
         # all entries returns are empty
         return assign_properties()
     # ----------------------------------------------------------------------
+    # check if we already have berv (or bervest)
+    bprops = get_outputs(params, infile, header, props, kwargs)
+    # if we have berv already then just return these
+    if bprops is not None:
+        return assign_properties(**bprops)
+    # ----------------------------------------------------------------------
     # get required parameters
-    bprops = get_parameters(kind, props, kwargs, infile, header)
+    bprops = get_parameters(params, kind, props, kwargs, infile, header)
     # ----------------------------------------------------------------------
     # deal with setting up time
     # ----------------------------------------------------------------------
     bprops = get_times(params, bprops, infile, header, props, kwargs)
     # ----------------------------------------------------------------------
     # try to run barcorrpy
-    try:
-        # calculate berv/bjd
-        bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'], **bprops)
-        # calculate max berv
-        bervmax = np.max(np.abs(bervs))
-        # push into output parameters
-        return assign_properties(berv=bervs[0], bjd=bjds[0], bervmax=bervmax,
-                                 source='barycorrpy', props=bprops)
-    except BaryCorrpyException:
-        pass
+    if kind == 'barycorrpy':
+        try:
+            # calculate berv/bjd
+            bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'], **bprops)
+            # calculate max berv
+            bervmax = np.max(np.abs(bervs))
+            # push into output parameters
+            return assign_properties(berv=bervs[0], bjd=bjds[0],
+                                     bervmax=bervmax, source='barycorrpy',
+                                     props=bprops)
+        except BaryCorrpyException:
+            pass
     # ----------------------------------------------------------------------
     # calculate berv/bjd
     bervs, bjds = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
@@ -171,14 +162,23 @@ def use_barycorrpy(params, times, **kwargs):
         wargs = [estimate, func_name]
         WLOG(params, 'warning', TextEntry('10-0016-00003', args=wargs))
         raise BaryCorrpyException(tdict['10-0016-00003'].format(*wargs))
+    # must lock here (barcorrpy is not parallisable yet)
+    lpath = params['DRS_DATA_REDUC']
+    lfilename = os.path.join(lpath, 'barycorrpy')
+    lock, lockfile = drs_lock.check_lock_file(params, lfilename)
     # try to calculate bervs and bjds
     try:
         out1 = barycorrpy.get_BC_vel(JDUTC=times, zmeas=0.0, **bkwargs)
         out2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(times, **bkwargs)
     except Exception as e:
+        # unlock barycorrpy
+        drs_lock.close_lock_file(params, lock, lockfile, lfilename)
+        # log error
         wargs = [type(e), str(e), estimate, func_name]
         WLOG(params, 'warning', TextEntry('10-0016-00004', args=wargs))
         raise BaryCorrpyException(tdict['10-0016-00004'].format(*wargs))
+    # unlock barycorrpy
+    drs_lock.close_lock_file(params, lock, lockfile, lfilename)
     # return the bervs and bjds
     bervs = out1[0] / 1000.0
     bjds = out2[0]
@@ -213,7 +213,8 @@ def use_pyasl(params, times, **kwargs):
     return np.array(bervs), np.array(bjds)
 
 
-def add_berv_keys(infile, props):
+def add_berv_keys(params, infile, props):
+    inputs = get_inputs(params)
     # add berv/bjd/bervmax/source
     infile.add_hkey('KW_BERV', value=props['BERV'])
     infile.add_hkey('KW_BJD', value=props['BJD'])
@@ -258,9 +259,9 @@ def assign_properties(berv=None, bjd=None, bervmax=None, source=None,
         oprops['BERV_MAX'] = bervmax
     # assign source
     if source is None:
-        oprops['SOURCE'] = 'None'
+        oprops['BERV_SOURCE'] = 'None'
     else:
-        oprops['SOURCE'] = source
+        oprops['BERV_SOURCE'] = source
     # assign berv estimate
     if bervest is None:
         oprops['BERV_EST'] = np.nan
@@ -277,7 +278,7 @@ def assign_properties(berv=None, bjd=None, bervmax=None, source=None,
     else:
         oprops['BERV_MAX_EST'] = bervmaxest
     # add source
-    keys = ['BERV', 'BJD', 'BERV_MAX', 'SOURCE', 'BERV_EST', 'BJD_EST',
+    keys = ['BERV', 'BJD', 'BERV_MAX', 'BERV_SOURCE', 'BERV_EST', 'BJD_EST',
             'BERV_MAX_EST']
     oprops.set_sources(keys, func_name)
     # deal with current props (set value and source)
@@ -288,10 +289,98 @@ def assign_properties(berv=None, bjd=None, bervmax=None, source=None,
     return oprops
 
 
+def get_outputs(params, infile, header, props, kwargs):
+    found = False
+    # define storage
+    bprops = ParamDict()
+    # get the pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    berv_keys = pconst.BERV_OUTKEYS()
+    # loop around keys
+    for key in berv_keys:
+        inkey, outkey, kind, dtype = berv_keys[key]
+        # unset value
+        value, datatype = None, None
+        # get the value of the key from infile
+        if kind == 'header' and infile is not None:
+            if outkey in infile.header:
+                value = infile.header[outkey][0]
+                datatype = params.instance[outkey].datatype
+                found = True
+        # get the value of the key from header
+        if (kind == 'header') and (header is not None) and (value is None):
+            if outkey in infile.header:
+                value = infile.header[outkey][0]
+                datatype = params.instance[outkey].datatype
+                found = True
+        # get the value from props
+        if (value is None) and (key in props):
+            value = props[key]
+            datatype = dtype
+            found = True
+        # get the value from kwargs
+        if (value is None) and (key in kwargs):
+            value = kwargs[key]
+            datatype = dtype
+            found = True
+        # else set the value
+        if (value is None) and (key in params):
+            value = params[outkey]
+            datatype = dtype
+            found = True
+        # push values into props
+        if found:
+            bprops[inkey] = datatype(value)
+    # only return if we filled it
+    if len(bprops) == len(berv_keys):
+        return bprops
+    else:
+        return None
+
+
+def get_inputs(params):
+    func_name = __NAME__ + '.get_inputs()'
+    # set up storage
+    inputs = dict()
+    # get the pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # get berv keys
+    berv_keys = pconst.BERV_INKEYS()
+    # loop around keys
+    for key in berv_keys:
+        inkey, outkey, kind, default = berv_keys[key]
+        # find key in params
+        if (inkey not in params) and (default is None):
+            eargs = [inkey, key, func_name]
+            WLOG(params, 'error', TextEntry('00-016-00020', args=eargs))
+            units, datatype = None, None
+        elif (inkey not in params) and (default is not None):
+            datatype, units = None, None
+        else:
+            instance = params.instances[inkey]
+            # get properties
+            datatype = instance.datatype
+            units = instance.unit
+        # deal with kind
+        if kind == 'header':
+            headerkey = inkey
+            paramkey = None
+        else:
+            headerkey = None
+            paramkey = inkey
+        # append to inputs
+        inputs[key] = Property(unit=units, datatype=datatype,
+                               headerkey=headerkey, paramkey=paramkey,
+                               outkey=outkey, default=default)
+    # return inputs
+    return inputs
+
+
 def get_parameters(params, kind, props=None, kwargs=None, infile=None,
                    header=None):
     func_name = __NAME__ + '.get_parameters()'
     source_name = '{0} [{1}]'
+    inputs = get_inputs(params)
     # ----------------------------------------------------------------------
     if kind == 'barycorrpy':
         rparams = mode1
@@ -303,49 +392,34 @@ def get_parameters(params, kind, props=None, kwargs=None, infile=None,
     for param in inputs:
         gprops[param] = np.nan
         gprops.set_source(param, func_name)
+
     # ----------------------------------------------------------------------
-     # loop around each parameter to get into the format we require
+    # ra and dec have to be dealt with together
+    raw_ra, s_ra = get_raw_param(params, 'ra', inputs['ra'], infile, header,
+                                 props, kwargs)
+    raw_dec, s_dec = get_raw_param(params, 'dec', inputs['dec'], infile, header,
+                                   props, kwargs)
+    raw_coord = '{0} {1}'.format(raw_ra, raw_dec)
+    coords = SkyCoord(raw_coord, unit=(inputs['ra'].unit, inputs['dec'].unit))
+    # add to output
+    gprops['ra'] = coords.ra.value
+    gprops.set_source('ra', source_name.format(func_name, s_dec))
+    gprops['dec'] = coords.dec.value
+    gprops.set_source('dec', source_name.format(func_name, s_dec))
+
+    # ----------------------------------------------------------------------
+    # loop around each parameter to get into the format we require
     for param in rparams.keys():
+        # skip ra and dec
+        if param in ['ra', 'dec']:
+            continue
+        # ------------------------------------------------------------------
         # get require parameter instance
         rparam = rparams[param]
         inparam = inputs[param]
-        # ------------------------------------------------------------------
-        # get raw value from: 1. infile, 2. header, 3. props, 4. kwargs
-        # ------------------------------------------------------------------
-        # unset value
-        rawvalue, source = None, 'None'
-        # get value from infile
-        if (infile is not None) and (inparam.hkey is not None):
-            rawvalue = infile.get_key(inparam.hkey)
-            source = str(infile)
-        # if not get value from header
-        useheader = (inparam.hkey is not None) and (rawvalue is None)
-        if (header is not None) and useheader:
-            if inparam.hkey in header:
-                rawvalue = infile.get_key
-                source = 'header'
-        # if not get value from props
-        if (props is not None) and (rawvalue is None):
-            if param in props:
-                rawvalue = props[param]
-                source = 'props'
-        # if not get value from kwargs
-        if (kwargs is not None) and (rawvalue is None):
-            if param in kwargs:
-                rawvalue = kwargs[param]
-                source = 'kwargs'
-        # if not get value from params
-        if (params is not None) and (rawvalue is None):
-            if param in params:
-                rawvalue = params[param]
-                source = 'params'
-        # ------------------------------------------------------------------
-        # deal with value still being unset
-        if rawvalue is None and inparam.default is not None:
-            rawvalue = inparam.default
-        elif rawvalue is None:
-            eargs = [param, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00011', args=eargs))
+        # get the raw parameter value
+        rawvalue, source = get_raw_param(params, param, inparam, infile, header,
+                                         props, kwargs)
         # ------------------------------------------------------------------
         # apply units to values and convert to expected inputs
         # ------------------------------------------------------------------
@@ -367,32 +441,32 @@ def get_parameters(params, kind, props=None, kwargs=None, infile=None,
                 WLOG(params, 'error', TextEntry('00-016-00015', args=eargs))
                 value = None
         # ------------------------------------------------------------------
-        # case 2: have dtype
-        elif inparam.dtype is not None:
+        # case 2: have datatype
+        elif inparam.datatype is not None:
             # case 2a: is a time
-            if inparam in Time.FORMATS.keys():
+            if inparam.datatype in Time.FORMATS.keys():
                 # apply
                 try:
-                    unitvalue = Time(float(rawvalue), format=inparam.dtype)
+                    unitvalue = Time(float(rawvalue), format=inparam.datatype)
                 except Exception as e:
-                    eargs = [param, rawvalue, inparam.dtype, type(e), e,
+                    eargs = [param, rawvalue, inparam.datatype, type(e), e,
                              func_name]
                     WLOG(params, 'error', TextEntry('00-016-00013', args=eargs))
                     unitvalue = None
                 # convert:
                 try:
-                    value = getattr(unitvalue, rparam.dtype)
+                    value = getattr(unitvalue, rparam.datatype)
                 except Exception as e:
-                    eargs = [param, rawvalue, inparam.dtype, rparam.dtype,
+                    eargs = [param, rawvalue, inparam.datatype, rparam.datatype,
                              type(e), e, func_name]
                     WLOG(params, 'error', TextEntry('00-016-00016', args=eargs))
                     value = None
-            # case 2b: is another dtype
+            # case 2b: is another datatype
             else:
                 try:
-                    value = inparam.dtype(rawvalue)
+                    value = inparam.datatype(rawvalue)
                 except Exception as e:
-                    eargs = [param, rawvalue, inparam.dtype, type(e), e,
+                    eargs = [param, rawvalue, inparam.datatype, type(e), e,
                              func_name]
                     WLOG(params, 'error', TextEntry('00-016-00014', args=eargs))
                     value = None
@@ -404,31 +478,65 @@ def get_parameters(params, kind, props=None, kwargs=None, infile=None,
         # add to output props
         gprops[param] = value
         gprops.set_source(param, source_name.format(func_name, source))
+
+    # ----------------------------------------------------------------------
     # retyrb all gprops
     return gprops
+
+
+def get_raw_param(params, param, inparam, infile, header, props, kwargs):
+    func_name = __NAME__ + '.get_raw_param()'
+
+    # ------------------------------------------------------------------
+    # get raw value from: 1. infile, 2. header, 3. props, 4. kwargs
+    # ------------------------------------------------------------------
+    # unset value
+    rawvalue, source = None, 'None'
+    # get value from infile
+    if (infile is not None) and (inparam.hkey is not None):
+        rawvalue = infile.get_key(inparam.hkey)
+        source = str(infile)
+    # if not get value from header
+    useheader = (inparam.hkey is not None) and (rawvalue is None)
+    if (header is not None) and useheader:
+        if inparam.hkey in header:
+            rawvalue = header[params[inparam.hkey][0]]
+            source = 'header'
+    # if not get value from props
+    if (props is not None) and (rawvalue is None):
+        if param in props:
+            rawvalue = props[param]
+            source = 'props'
+    # if not get value from kwargs
+    if (kwargs is not None) and (rawvalue is None):
+        if param in kwargs:
+            rawvalue = kwargs[param]
+            source = 'kwargs'
+    # if not get value from params
+    if (params is not None) and (rawvalue is None):
+        if param in params:
+            rawvalue = params[param]
+            source = 'params'
+    # ------------------------------------------------------------------
+    # deal with value still being unset
+    if rawvalue is None and inparam.default is not None:
+        rawvalue = inparam.default
+    elif rawvalue is None:
+        eargs = [param, func_name]
+        WLOG(params, 'error', TextEntry('00-016-00011', args=eargs))
+    return rawvalue, source
 
 
 def get_times(params, bprops, infile, header, props, kwargs):
     func_name = __NAME__ + '.get_times()'
     # get parameters from params/kwargs
-    exptime = pcheck(params, 'EXPTIME', 'exptime', kwargs, func_name,
-                     paramdict=props)
-    exptime_units = pcheck(params, 'EXPTIME_UNITS', 'expunits', kwargs,
-                           func_name)
-    # convert units to astorpy units
-    if exptime_units == 's':
-        eunits = uu.s
-    elif exptime_units == 'min':
-        eunits = uu.min
-    elif exptime_units == 'hr':
-        eunits = uu.hr
-    elif exptime_units == 'day':
-        eunits = uu.day
+    if 'exptime' in kwargs:
+        exptime = kwargs['exptime']
+        exp_timeunit = uu.s
     else:
-        types = ['s', 'min', 'hr', 'day']
-        eargs = [exptime_units, ' or '.join(types), func_name]
-        WLOG(params, 'error', TextEntry('', args=eargs))
-        eunits = None
+        exp_timekey = params['KW_EXPTIME']
+        exp_timeunit = params.instances['KW_EXPTIME'].unit
+        exptime = pcheck(params, exp_timekey, func=func_name, paramdict=props)
     # ---------------------------------------------------------------------
     # deal with header
     if infile is not None:
@@ -441,7 +549,7 @@ def get_times(params, bprops, infile, header, props, kwargs):
     # get header time
     starttime = drs_fits.header_start_time(params, header, 'jd', func=func_name)
     # get the time after start of the observation
-    timedelta = TimeDelta(exptime * eunits) / 2.0
+    timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
     # calculate observation time
     obstime = starttime + timedelta
     # for the maximum peak to peak need an array of times
