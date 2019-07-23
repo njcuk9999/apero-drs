@@ -607,7 +607,7 @@ def combine(params, infiles, math='average', same_type=True):
     return outfile
 
 
-def header_time(params, hdr, out_fmt='mjd', func=None, name=None):
+def header_start_time(params, hdr, out_fmt='mjd', func=None, name=None):
     """
     Get acquisition time from header
 
