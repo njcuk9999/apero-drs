@@ -18,12 +18,9 @@ from . import param_functions
 # define name of script
 __NAME__ = 'constants.__init__.py'
 # define all functions
-__all__ = ['load', 'ParamDict', 'ArgumentError', 'ConfigError',
-           'ConfigWarning', 'gen_all']
-# get non-instrument constants (highest level)
-TopConstants = param_functions.load_config()
-# get non-instrument psuedo constants (highest level)
-TopPseudoConstants = param_functions.load_pconfig()
+__all__ = ['load', 'pload', 'ParamDict', 'ArgumentError', 'ConfigError',
+           'ConfigWarning', 'gen_all', 'getmodnames', 'import_module',
+           'get_filenames']
 
 # =============================================================================
 # Define functions
