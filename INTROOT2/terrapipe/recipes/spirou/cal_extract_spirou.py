@@ -167,6 +167,11 @@ def __main__(recipe, params):
                                     dymap=shapey)
 
         # ------------------------------------------------------------------
+        # Calculate Barycentric correction
+        # ------------------------------------------------------------------
+        bprops = extract.get_berv(params, infile, props)
+
+        # ------------------------------------------------------------------
         # Fiber loop
         # ------------------------------------------------------------------
         # loop around fiber types
@@ -327,23 +332,10 @@ def __main__(recipe, params):
             locofile = lprops['LOCOOBJECT']
             e2dsfile.copy_original_keys(locofile, root=params['ROOT_DRS_LOC'])
             # --------------------------------------------------------------
-            # add wave parameters
-            e2dsfile.add_hkey('KW_WAVEFILE', value=wprops['WAVEFILE'])
-            e2dsfile.add_hkey('KW_WAVESOURCE', value=wprops['WAVESOURCE'])
-            e2dsfile.add_hkeys_2d('KW_WAVECOEFFS', values=wprops['COEFFS'],
-                                  dim1name='order', dim2name='coeffs')
-            # add wave fp parameters
-            e2dsfile.add_hkey('KW_WFP_FILE', value=wprops['WAVEFILE'])
-            e2dsfile.add_hkey('KW_WFP_DRIFT', value=wprops['WFP_DRIFT'])
-            e2dsfile.add_hkey('KW_WFP_FWHM', value=wprops['WFP_FWHM'])
-            e2dsfile.add_hkey('KW_WFP_CONTRAST', value=wprops['WFP_CONTRAST'])
-            e2dsfile.add_hkey('KW_WFP_MAXCPP', value=wprops['WFP_MAXCPP'])
-            e2dsfile.add_hkey('KW_WFP_MASK', value=wprops['WFP_MASK'])
-            e2dsfile.add_hkey('KW_WFP_LINES', value=wprops['WFP_LINES'])
-            e2dsfile.add_hkey('KW_WFP_TARG_RV', value=wprops['WFP_TARG_RV'])
-            e2dsfile.add_hkey('KW_WFP_WIDTH', value=wprops['WFP_WIDTH'])
-            e2dsfile.add_hkey('KW_WFP_STEP', value=wprops['WFP_STEP'])
-
+            e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
+            # --------------------------------------------------------------
+            # add berv properties to header
+            e2dsfile = extract.add_berv_keys(e2dsfile, bprops)
             # --------------------------------------------------------------
             # copy data
             e2dsfile.data = eprops['E2DS']
@@ -353,7 +345,6 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-015-00007', args=wargs))
             # write image to file
             e2dsfile.write()
-
             # --------------------------------------------------------------
             # Store E2DSFF in file
             # --------------------------------------------------------------
@@ -382,7 +373,7 @@ def __main__(recipe, params):
             # copy header from e2dsll file
             e2dsllfile.copy_hdict(e2dsfile)
             # copy data
-            e2dsllfile.data = eprops['E2DSFF']
+            e2dsllfile.data = eprops['E2DSLL']
             # --------------------------------------------------------------
             # log that we are saving rotated image
             wargs = [e2dsllfile.filename]
@@ -400,13 +391,7 @@ def __main__(recipe, params):
             # copy header from e2dsll file
             s1dwfile.copy_hdict(e2dsfile)
             # add new header keys
-            s1dwfile.add_hkey('KW_S1D_WAVESTART', value=swprops['WAVESTART'])
-            s1dwfile.add_hkey('KW_S1D_WAVEEND', value=swprops['WAVEEND'])
-            s1dwfile.add_hkey('KW_S1D_KIND', value=swprops['WAVEKIND'])
-            s1dwfile.add_hkey('KW_S1D_BWAVE', value=swprops['BIN_WAVE'])
-            s1dwfile.add_hkey('KW_S1D_BVELO', value=swprops['BIN_VELO'])
-            s1dwfile.add_hkey('KW_S1D_SMOOTH', value=swprops['SMOOTH_SIZE'])
-            s1dwfile.add_hkey('KW_S1D_BLAZET', value=swprops['BLAZE_THRES'])
+            s1dwfile = extract.add_s1d_keys(s1dwfile, swprops)
             # copy data
             s1dwfile.data = swprops['S1DTABLE']
             # must change the datatype to 'table'
@@ -428,13 +413,7 @@ def __main__(recipe, params):
             # copy header from e2dsll file
             s1dvfile.copy_hdict(e2dsfile)
             # add new header keys
-            s1dvfile.add_hkey('KW_S1D_WAVESTART', value=svprops['WAVESTART'])
-            s1dvfile.add_hkey('KW_S1D_WAVEEND', value=svprops['WAVEEND'])
-            s1dvfile.add_hkey('KW_S1D_KIND', value=svprops['WAVEKIND'])
-            s1dvfile.add_hkey('KW_S1D_BWAVE', value=svprops['BIN_WAVE'])
-            s1dvfile.add_hkey('KW_S1D_BVELO', value=svprops['BIN_VELO'])
-            s1dvfile.add_hkey('KW_S1D_SMOOTH', value=svprops['SMOOTH_SIZE'])
-            s1dvfile.add_hkey('KW_S1D_BLAZET', value=svprops['BLAZE_THRES'])
+            s1dvfile = extract.add_s1d_keys(s1dvfile, svprops)
             # copy data
             s1dvfile.data = svprops['S1DTABLE']
             # must change the datatype to 'table'
