@@ -338,10 +338,10 @@ Changelog
   Cook]
 - SpirouStartup.py - remove unused import. [Neil Cook]
 - Update language database. [Neil Cook]
-- Drs_fits.py - integrate _get_time functionality into header_time.
+- Drs_fits.py - integrate _get_time functionality into header_start_time.
   [Neil Cook]
 - Pseudo_const.py - add back nirps logo. [Neil Cook]
-- Drs_database.py - update _get_time to use drs_fits.header_time. [Neil
+- Drs_database.py - update _get_time to use drs_fits.header_start_time. [Neil
   Cook]
 - Reorganize config and constants (now all in core sub-module) - update
   module order. [Neil Cook]
@@ -374,7 +374,7 @@ Changelog
 --------------------
 - Science.calib.dark.py - add dark master functionality. [Neil Cook]
 - Update language database. [Neil Cook]
-- Terrapipe.io - add find_filetypes, get_index_files and header_time
+- Terrapipe.io - add find_filetypes, get_index_files and header_start_time
   functions. [Neil Cook]
 - Constants - add dark master constant definitions. [Neil Cook]
 - Drs_startup.py - add function get_file_definition and update pid
