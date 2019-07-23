@@ -175,6 +175,7 @@ class ParamDict(CaseInsensitiveDict):
         :param kw: keyword arguments passed to dict
         """
         self.sources = CaseInsensitiveDict()
+        self.instances = CaseInsensitiveDict()
         super(ParamDict, self).__init__(*arg, **kw)
 
     def __getitem__(self, key):
@@ -194,7 +195,7 @@ class ParamDict(CaseInsensitiveDict):
                     'dictionary')
             raise ConfigError(emsg.format(key), level='error')
 
-    def __setitem__(self, key, value, source=None):
+    def __setitem__(self, key, value, source=None, instance=None):
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -206,9 +207,11 @@ class ParamDict(CaseInsensitiveDict):
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
+            self.instances[key] = instance
         # if we do have the key only set it if source is not None
         elif source is not None:
             self.sources[key] = source
+            self.instances[key] = instance
         # then do the normal dictionary setting
         super(ParamDict, self).__setitem__(key, value)
 
@@ -338,6 +341,17 @@ class ParamDict(CaseInsensitiveDict):
             # set source
             self.set_source(key, source)
 
+    def set_instance(self, key, instance):
+        # capitalise
+        key = _capitalise_key(key)
+        # only add if key is in main dictionary
+        if key in self.keys():
+            self.instances[key] = instance
+        else:
+            emsg1 = 'Instance cannot be added for key "{0}" '.format(key)
+            emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
+            raise ConfigError([emsg1, emsg2], level='error')
+
     def append_sources(self, keys, sources):
         """
         Adds list of keys sources (appends if exists)
@@ -418,6 +432,26 @@ class ParamDict(CaseInsensitiveDict):
         # else raise a Config Error
         else:
             emsg = 'No source set for key={0} in ParamDict'
+            raise ConfigError(emsg.format(key), level='error')
+
+    def get_instance(self, key):
+        """
+        Get a source from the parameter dictionary (must be set)
+
+        raises a ConfigError if key not found
+
+        :param key: string, the key to find (must be set)
+
+        :return source: string, the source of the parameter
+        """
+        # capitalise
+        key = _capitalise_key(key)
+        # if key in keys and sources then return source
+        if key in self.keys() and key in self.instances.keys():
+            return self.instances[key]
+        # else raise a Config Error
+        else:
+            emsg = 'No instance set for key={0} in ParamDict'
             raise ConfigError(emsg.format(key), level='error')
 
     def source_keys(self):
@@ -512,6 +546,7 @@ class ParamDict(CaseInsensitiveDict):
             value = values[k_it]
             pp[key] = type(value)(value)
             pp.set_source(key, self.sources[key])
+            pp.set_instance(key, self.instances[key])
         # return new param dict filled
         return pp
 
@@ -573,22 +608,29 @@ def load_config(instrument=None):
     modules = get_module_names(instrument)
     # get constants from modules
     try:
-        keys, values, sources = _load_from_module(modules, True)
+        keys, values, sources, instances = _load_from_module(modules, True)
     except ConfigError:
         sys.exit(1)
     params = ParamDict(zip(keys, values))
     # Set the source
     params.set_sources(keys=keys, sources=sources)
+    # add to params
+    for it in range(len(keys)):
+        # set instance (Const/Keyword instance)
+        params.set_instance(keys[it], instances[it])
     # get instrument user config files
     files = _get_file_names(params, instrument)
     # get constants from user config files
     try:
-        keys, values, sources = _load_from_file(files, modules)
+        keys, values, sources, instances  = _load_from_file(files, modules)
     except ConfigError:
         sys.exit(1)
     # add to params
     for it in range(len(keys)):
+        # set value
         params[keys[it]] = values[it]
+        # set instance (Const/Keyword instance)
+        params.set_instance(keys[it], instances[it])
     params.set_sources(keys=keys, sources=sources)
     # save sources to params
     params = _save_config_params(params)
@@ -914,7 +956,7 @@ def _get_relative_folder(package, folder):
 def _load_from_module(modules, quiet=False):
     func_name = __NAME__ + '._load_from_module()'
     # storage for returned values
-    keys, values, sources = [], [], []
+    keys, values, sources, instances = [], [], [], []
     # loop around modules
     for module in modules:
         # get a list of keys values
@@ -939,8 +981,9 @@ def _load_from_module(modules, quiet=False):
                 keys.append(key)
                 values.append(mvalue.true_value)
                 sources.append(mvalue.source)
+                instances.append(mvalue)
     # return keys
-    return keys, values, sources
+    return keys, values, sources, instances
 
 
 def _load_from_file(files, modules):
@@ -970,7 +1013,7 @@ def _load_from_file(files, modules):
     # Now need to test the values are correct
     # -------------------------------------------------------------------------
     # storage for returned values
-    keys, values, sources = [], [], []
+    keys, values, sources, instances = [], [], [], []
     # loop around modules
     for module in modules:
         # get a list of keys values
@@ -990,8 +1033,9 @@ def _load_from_file(files, modules):
                 keys.append(fkeys[jt])
                 values.append(value)
                 sources.append(fsources[jt])
+                instances.append(mvalue)
     # return keys values and sources
-    return keys, values, sources
+    return keys, values, sources, instances
 
 
 def _save_config_params(params,):
