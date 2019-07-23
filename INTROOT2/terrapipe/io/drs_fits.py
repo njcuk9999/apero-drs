@@ -635,8 +635,8 @@ def header_start_time(params, hdr, out_fmt='mjd', func=None, name=None):
         # ----------------------------------------------------------------------
     # get acqtime
     time_key = drs_log.find_param(params, 'KW_ACQTIME', func=func_name)[0]
-    timefmt = drs_log.find_param(params, 'KW_ACQTIME_FMT', func=func_name)
-    timetype = drs_log.find_param(params, 'KW_ACQTIME_DTYPE', func=func_name)
+    timefmt = params.instances['KW_ACQTIME'].datatype
+    timetype = params.instances['KW_ACQTIME'].dataformat
     # ----------------------------------------------------------------------
     # get values from header
     if time_key in hdr:
@@ -648,7 +648,7 @@ def header_start_time(params, hdr, out_fmt='mjd', func=None, name=None):
     # ----------------------------------------------------------------------
     # get astropy time
     try:
-        acqtime = Time(timetype(rawtime), format=timefmt)
+        acqtime = Time(rawtime, format=timefmt)
     except Exception as e:
         eargs = [dbname, rawtime, timefmt, timetype, type(e), e, func_name]
         WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
