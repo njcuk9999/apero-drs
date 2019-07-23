@@ -5,26 +5,33 @@ from terrapipe.core.constants import constant_functions
 # Define variables
 # -----------------------------------------------------------------------------
 # all definition
-__all__ = ['KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
+__all__ = [# input keys
+           'KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
            'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN', 'KW_OBJRAPM',
-           'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_OBSTYPE',
-           'KW_CCAS', 'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS',
-           'KW_MJDEND', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION', 'KW_PPVERSION',
-           'KW_DPRTYPE', 'KW_PID', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+           'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_UTC_OBS',
+           'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
+           'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_CMPLTEXP', 'KW_NEXP',
+           # general output keys
+           'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
+           'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
-           'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_UTC_OBS', 'KW_OUTPUT',
-           'KW_EXT_TYPE', 'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
-           'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
-           'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
-           'KW_BNILUM', 'KW_BTOT', 'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK',
+           'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
+           'KW_EXT_TYPE', 'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK',
            'KW_CDBORDP', 'KW_CDBLOCO', 'KW_CDBSHAPE', 'KW_CDBFLAT',
-           'KW_CDBBLAZE', 'KW_CDBWAVE', 'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
+           'KW_CDBBLAZE', 'KW_CDBWAVE', 'KW_DRS_DATE_NOW', 'KW_DRS_DATE',
+           'KW_C_FLIP', 'KW_C_CVRTE', 'KW_C_RESIZE',
+           # dark keys
+           'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
+           'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
+           'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
+           # bad pix keys
+           'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
+           'KW_BNILUM', 'KW_BTOT',
+           # loc keys
+           'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
            'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
            'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
            'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
-           'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
-           'KW_DRS_DATE_NOW', 'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
-           'KW_C_RESIZE',
            # flat values
            'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG',
            # extraction values
@@ -82,6 +89,9 @@ KW_GAIN = Keyword('KW_GAIN', key='', dtype=float, source=__NAME__)
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = Keyword('KW_EXPTIME', key='', dtype=float, source=__NAME__)
+# This is the units for the exposure time
+KW_EXPTIME_UNITS = Const('KW_EXPTIME_UNITS', value='s', dtype=str,
+                         options=['s', 'min', 'hr', 'day'])
 
 # define the observation type HEADER key
 KW_OBSTYPE = Keyword('KW_OBSTYPE', key='', dtype=str, source=__NAME__)
@@ -354,6 +364,7 @@ KW_S1D_SMOOTH = Keyword('KW_S1D_SMOOTH', key='', dtype=float, source=__NAME__)
 
 # the blaze threshold used for the s1d
 KW_S1D_BLAZET = Keyword('KW_S1D_BLAZET', key='', dtype=float, source=__NAME__)
+
 
 # -----------------------------------------------------------------------------
 # Define wave variables

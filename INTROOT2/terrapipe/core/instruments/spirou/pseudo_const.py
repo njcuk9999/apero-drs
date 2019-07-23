@@ -197,8 +197,50 @@ class PseudoConstants(DefaultConstants):
         else:
             return dprtype.split('_')[1]
 
+    # =========================================================================
+    # BERV_KEYS
+    # =========================================================================
+    def BERV_INKEYS(self):
 
+        # FORMAT:   [in_key, out_key, kind, default]
+        #
+        #    Where 'in_key' is the header key or param key to use
+        #    Where 'out_key' is the output header key to save to
+        #    Where 'kind' is 'header' or 'const'
+        #    Where default is the default value to assign
+        #
+        #    Must include ra and dec
+        inputs = dict()
+        inputs['ra'] = ['KW_OBJRA', 'KW_BERVRA', 'header', None]
+        inputs['dec'] = ['KW_OBJDEC','KW_BERVDEC', 'header', None]
+        inputs['epoch'] = ['KW_OBJEQUIN', 'KW_BERVEPOCH', 'header', None]
+        inputs['pmra'] = ['KW_OBJRAPM', 'KW_BERVPMRA', 'header', None]
+        inputs['pmde'] = ['KW_OBJDECPM', 'KW_BERVPMDE', 'header', None]
+        inputs['lat'] = ['OBS_LAT', 'KW_BERVLAT', 'const', None]
+        inputs['long'] = ['OBS_LONG', 'KW_BERVLONG', 'const', None]
+        inputs['alt'] = ['OBS_ALT', 'KW_BERVALT', 'const', None]
+        inputs['plx'] = ['KW_PLX', 'KW_BERVPLX', 'header', 0.0]
+        # return inputs
+        return inputs
 
+    def BERV_OUTKEYS(self):
+
+        # FORMAT:   [in_key, out_key, kind, dtype]
+        #
+        #    Where 'in_key' is the header key or param key to use
+        #    Where 'out_key' is the output header key to save to
+        #    Where 'kind' is 'header' or 'const'
+        #    Where dtype is the expected data type
+        outputs = dict()
+        outputs['berv'] = ['BERV', 'KW_BERV', 'header', float]
+        outputs['bjd'] = ['BJD', 'KW_BJD', 'header', float]
+        outputs['bervmax'] = ['BERV_MAX', 'KW_BERVMAX', 'header', float]
+        outputs['source'] = ['BERV_SOURCE', 'KW_BERVSOURCE', 'header', str]
+        outputs['bervest'] = ['BERV_EST', 'KW_BERV_EST', 'header', float]
+        outputs['bjdest'] = ['BJD_EST', 'KW_BJD_EST', 'header', float]
+        outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX', 'header', float]
+        # return outputs
+        return outputs
 # =============================================================================
 # End of code
 # =============================================================================

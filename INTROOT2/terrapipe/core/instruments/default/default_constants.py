@@ -93,6 +93,7 @@ __all__ = [
     'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX',
     'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND', 'EXT_S1D_BIN_UWAVE',
     'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
+    'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
     # thermal constants
     'THERMAL_ALWAYS_EXTRACT', 'THERMAL_CORRETION_TYPE1',
     'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
@@ -812,6 +813,18 @@ EXT_S1D_BIN_UVELO = Const('EXT_S1D_BIN_UVELO', value=None, dtype=float,
 #  Define the s1d smoothing kernel for the transition between orders in pixels
 EXT_S1D_EDGE_SMOOTH_SIZE = Const('EXT_S1D_EDGE_SMOOTH_SIZE', value=None,
                                  dtype=int, source=__NAME__, minimum=0)
+
+#    Define dprtypes to calculate berv for
+EXT_ALLOWED_BERV_DPRTYPES = Const('EXT_ALLOWED_BERV_DPRTYPES', value=None,
+                                  dtype=str, source=__NAME__)
+
+#    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
+EXT_BERV_KIND = Const('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
+                      options=['barycorrpy', 'estimate', 'None'])
+
+#    Define the accuracy of the estimate (for logging only) [m/s]
+EXT_BERV_EST_ACC = Const('EXT_BERV_EST_ACC', value=None, dtype=float,
+                         source=__NAME__)
 
 
 # =============================================================================

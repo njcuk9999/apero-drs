@@ -6,6 +6,7 @@ Created on 2019-01-17
 @author: cook
 """
 from terrapipe.core.instruments.default.default_keywords import *
+from astropy import units as uu
 
 # TODO: Note: If variables are not showing up MUST CHECK __all__ definition
 # TODO:    in import * module
@@ -16,26 +17,17 @@ __NAME__ = 'config.instruments.spirou.default_keywords.py'
 # Required header keys (main fits file)
 # -----------------------------------------------------------------------------
 # define the HEADER key for acquisition time
-#     Note must set the date format in KW_ACQTIME_FMT
+#     Note datatype must be a astropy.Time.format
+#     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
+#     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
+#     'jyear', 'byear_str', 'jyear_str'
 KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
-KW_ACQTIME.set(key='MJDATE')
-
-# the format of ACQTIME as required by astropy.time
-#  options are:
-#          "mjd": mean julian date
-#          "iso": YYYY-MM-DD HH:MM:SS.S
-#          "unix": seconds since 1970-01-01 00:00:00
-#          "jyear": year as a decimal number
-# Dev Note: This is a "Const" not a "Keyword"
-KW_ACQTIME_FMT = KW_ACQTIME_FMT.copy(__NAME__)
-KW_ACQTIME_FMT.value = 'mjd'
-# This is the dtype of the acqtime (i.e. str or float)
-KW_ACQTIME_DTYPE = KW_ACQTIME_DTYPE.copy(__NAME__)
-KW_ACQTIME_DTYPE.value = float
+KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float)
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
 KW_DATE_OBS.set(key='DATE-OBS')
+
 # define the observation time HEADER key
 KW_UTC_OBS = KW_UTC_OBS.copy(__NAME__)
 KW_UTC_OBS.set(key='UTC-OBS')
@@ -50,7 +42,7 @@ KW_GAIN.set(key='GAIN')
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='EXPTIME')
+KW_EXPTIME.set(key='EXPTIME', unit=uu.s)
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
@@ -90,11 +82,11 @@ KW_NEXP.set(key='NEXP')
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA')
+KW_OBJRA.set(key='OBJRA', unit='hms')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC')
+KW_OBJDEC.set(key='OBJDEC', unit='dms')
 
 # define the observation name
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
@@ -102,15 +94,15 @@ KW_OBJNAME.set(key='OBJNAME')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
-KW_OBJEQUIN.set(key='OBJEQUIN')
+KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear')
 
 # define the observation proper motion in ra HEADER key
 KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
-KW_OBJRAPM.set(key='OBJRAPM')
+KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec/uu.yr)
 
 # define the observation proper motion in dec HEADER key
 KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
-KW_OBJDECPM.set(key='OBJDECPM')
+KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec/uu.yr)
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)

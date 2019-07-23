@@ -18,7 +18,7 @@ __all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
            'DRS_BADPIX_DATA', 'CALIB_DB_MATCH', 'DRS_MOD_DATA_PATH',
            'DRS_MOD_INSTRUMENT_CONFIG', 'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
            'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME', 'DRS_LOG_FORMAT',
-           'DRS_CALIB_DATA',]
+           'DRS_CALIB_DATA', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT']
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_config'
@@ -103,11 +103,18 @@ LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
                  source=__NAME__)
 
 # =============================================================================
-# Instrument Constants
+# Instrument/Observatory Constants
 # =============================================================================
 # Instrument Name
 INSTRUMENT = Const('INSTRUMENT', value=None, dtype=str,
                    options=['None', 'SPIROU', 'NIRPS'], source=__NAME__)
+
+# Defines the longitude West is negative
+OBS_LONG = Const('OBS_LONG', value=None, dtype=float, source=__NAME__)
+#  Defines the latitude North (deg)
+OBS_LAT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__)
+#  Defines the CFHT altitude (m)
+OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__)
 
 # =============================================================================
 # DRS SETTINGS
