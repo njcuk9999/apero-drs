@@ -75,7 +75,7 @@ def construct_fp_table(params, filenames):
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # get keys from hdr
-        acqtime = drs_fits.header_time(params, hdr, 'mjd')
+        acqtime = drs_fits.header_start_time(params, hdr, 'mjd')
         exptime = hdr[params['KW_EXPTIME'][0]]
         ppversion = hdr[params['KW_PPVERSION'][0]]
         # append to lists
