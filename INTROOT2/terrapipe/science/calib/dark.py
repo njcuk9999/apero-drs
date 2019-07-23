@@ -295,7 +295,7 @@ def construct_dark_table(params, filenames):
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # get keys from hdr
-        acqtime = drs_fits.header_time(params, hdr, 'mjd')
+        acqtime = drs_fits.header_start_time(params, hdr, 'mjd')
         exptime = hdr[params['KW_EXPTIME'][0]]
         ppversion = hdr[params['KW_PPVERSION'][0]]
         wt_temp = hdr[params['KW_WEATHER_TOWER_TEMP'][0]]
