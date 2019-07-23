@@ -200,7 +200,7 @@
 "00-016-00017","ERROR","Means that we could not calculate the BERV estimate","{0} = jd time used; {1} = Error type; {2} = error message; {3} = function name","Could not calculate the BERV estimate for time={0}. \n\t Error {1}: {2} \n\t Function = {3}","",""
 "00-016-00018","ERROR","Means that the exposure time units were not valid","{0} = exp time unit asked for; {1} = allowed values; {2} = function name","Could not use units = '{0}' for exposure time conversion \n\t Must be either {1} \n\t Function = {2}","",""
 "00-016-00019","ERROR","Means that both 'header' and 'infile' were not defined","{0} = function name","'infile' or 'header' must be defined. \n\t Function = {0}","",""
-"00-016-00020","ERROR","","","","",""
+"00-016-00020","ERROR","Means that BERV_KEYS had key that was badly defined","{0} = input key; {1} = key name; {2} = function name","BERV_KEYS was badly defined. Input key = {0} (parameter = {1}) \n\t Function = {2}","",""
 "00-016-00021","ERROR","","","","",""
 "00-016-00022","ERROR","","","","",""
 "","","","","","",""
