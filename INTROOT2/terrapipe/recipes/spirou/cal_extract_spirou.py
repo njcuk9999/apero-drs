@@ -169,7 +169,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, props)
+        bprops = extract.get_berv(params, infile, header, props)
 
         # ------------------------------------------------------------------
         # Fiber loop
