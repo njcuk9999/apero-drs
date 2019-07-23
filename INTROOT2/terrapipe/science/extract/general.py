@@ -499,6 +499,17 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     return props
 
 
+def add_s1d_keys(infile, props):
+    infile.add_hkey('KW_S1D_WAVESTART', value=props['WAVESTART'])
+    infile.add_hkey('KW_S1D_WAVEEND', value=props['WAVEEND'])
+    infile.add_hkey('KW_S1D_KIND', value=props['WAVEKIND'])
+    infile.add_hkey('KW_S1D_BWAVE', value=props['BIN_WAVE'])
+    infile.add_hkey('KW_S1D_BVELO', value=props['BIN_VELO'])
+    infile.add_hkey('KW_S1D_SMOOTH', value=props['SMOOTH_SIZE'])
+    infile.add_hkey('KW_S1D_BLAZET', value=props['BLAZE_THRES'])
+    return infile
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
