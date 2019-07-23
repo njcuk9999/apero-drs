@@ -744,6 +744,18 @@ EXT_S1D_BIN_UVELO.value = 1.0
 EXT_S1D_EDGE_SMOOTH_SIZE = EXT_S1D_EDGE_SMOOTH_SIZE.copy(__NAME__)
 EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
 
+#    Define dprtypes to calculate berv for (should be a string list)
+EXT_ALLOWED_BERV_DPRTYPES = EXT_ALLOWED_BERV_DPRTYPES.copy(__NAME__)
+EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
+
+#    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
+EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
+EXT_BERV_KIND.value = 'barycorrpy'
+
+#    Define the accuracy of the estimate (for logging only) [m/s]
+EXT_BERV_EST_ACC = EXT_BERV_EST_ACC.copy(__NAME__)
+EXT_BERV_EST_ACC.value = 10.0
+
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================

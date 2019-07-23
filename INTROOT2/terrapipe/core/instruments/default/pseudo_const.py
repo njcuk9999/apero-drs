@@ -559,6 +559,29 @@ class PseudoConstants:
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================
+    # BERV_KEYS
+    # =========================================================================
+    def BERV_INKEYS(self):
+        # FORMAT:   [in_key, out_key, kind, default]
+        #
+        #    Where 'in_key' is the header key or param key to use
+        #    Where 'out_key' is the output header key to save to
+        #    Where 'kind' is 'header' or 'const'
+        #    Where default is the default value to assign
+        func_name = 'BERV_INKEYS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def BERV_OUTKEYS(self):
+        # FORMAT:   [in_key, out_key, kind, default]
+        #
+        #    Where 'in_key' is the header key or param key to use
+        #    Where 'out_key' is the output header key to save to
+        #    Where 'kind' is 'header' or 'const'
+        #    Where default is the default value to assign
+        func_name = 'BERV_OUTKEYS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    # =========================================================================
     # PLOT SETTINGS
     # =========================================================================
     def FONT_DICT(self, params):
