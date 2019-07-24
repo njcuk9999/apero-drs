@@ -292,6 +292,17 @@ class ParamDict(CaseInsensitiveDict):
             emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
             raise ConfigError([emsg1, emsg2], level='error')
 
+    def set_instance(self, key, instance):
+        # capitalise
+        key = _capitalise_key(key)
+        # only add if key is in main dictionary
+        if key in self.keys():
+            self.instances[key] = instance
+        else:
+            emsg1 = 'Instance cannot be added for key "{0}" '.format(key)
+            emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
+            raise ConfigError([emsg1, emsg2], level='error')
+
     def append_source(self, key, source):
         """
         Adds source to the source of key (appends if exists)
@@ -341,16 +352,36 @@ class ParamDict(CaseInsensitiveDict):
             # set source
             self.set_source(key, source)
 
-    def set_instance(self, key, instance):
-        # capitalise
-        key = _capitalise_key(key)
-        # only add if key is in main dictionary
-        if key in self.keys():
-            self.instances[key] = instance
-        else:
-            emsg1 = 'Instance cannot be added for key "{0}" '.format(key)
-            emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
-            raise ConfigError([emsg1, emsg2], level='error')
+    def set_instances(self, keys, instances):
+        """
+        Set a list of keys sources
+
+        raises a ConfigError if key not found
+
+        :param keys: list of strings, the list of keys to add sources for
+        :param sources: string or list of strings or dictionary of strings,
+                        the source or sources to add,
+                        if a dictionary source = sources[key] for key = keys[i]
+                        if list source = sources[i]  for keys[i]
+                        if string all sources with these keys will = source
+
+        :return None:
+        """
+        # loop around each key in keys
+        for k_it in range(len(keys)):
+            # assign the key from k_it
+            key = keys[k_it]
+            # capitalise
+            key = _capitalise_key(key)
+            # Get source for this iteration
+            if type(instances) == list:
+                instance = instances[k_it]
+            elif type(instances) == dict:
+                instance = instances[key]
+            else:
+                instance = instances
+            # set source
+            self.set_instance(key, instance)
 
     def append_sources(self, keys, sources):
         """
@@ -564,6 +595,9 @@ class ParamDict(CaseInsensitiveDict):
         for k_it, key in enumerate(keys):
             # get this iterations values
             value = values[k_it]
+            # deal with no source
+            if key not in self.sources:
+                self.sources[key] = 'None'
             # print value
             if type(value) in [list, np.ndarray]:
                 sargs = [key, list(value), self.sources[key], pfmt]
