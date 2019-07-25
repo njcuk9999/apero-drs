@@ -414,6 +414,13 @@ def ea_transform(params, image, lin_transform_vect=None,
     :rtype: np.ndarray
     """
     func_name = __NAME__ + '.ea_transform()'
+    # log progress (transforming dxmap, dymap, trans)
+    dxmapstr = int(dxmap is not None)
+    dymapstr = int(dymap is not None)
+    transstr = int(lin_transform_vect is not None)
+    wargs = [dxmapstr, dymapstr, transstr]
+    WLOG(params, '', TextEntry('40-014-00041', args=wargs))
+
     # check size of dx and dy map
     if dxmap is not None:
         if dxmap.shape != image.shape:
