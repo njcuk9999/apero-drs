@@ -81,6 +81,7 @@ mode1['lat'] = Property(name='lat', unit=uu.deg)
 mode1['long'] = Property(name='longi', unit=uu.deg)
 mode1['alt'] = Property(name='alt', unit=uu.deg)
 mode1['plx'] = Property(name='px', unit=uu.mas)
+mode1['rv'] = Property(name='rv', unit=uu.km/uu.s)
 
 # define the properties for pyastronomy measurement
 mode2 = dict()
@@ -96,6 +97,8 @@ mode2['alt'] = Property(name='obs_alt', unit=uu.deg)
 # =============================================================================
 def get_berv(params, infile=None, header=None, props=None, **kwargs):
     func_name = __NAME__ + '.get_berv()'
+    # log progress
+    WLOG(params, 'info', TextEntry('40-016-00017'))
     # get parameters from params and kwargs
     dprtype = pcheck(params, 'DPRTYPE', 'dprtype', kwargs, func_name,
                      paramdict=props)
@@ -105,6 +108,13 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
     # ----------------------------------------------------------------------
     # do not try to calculate berv for specific DPRTYPES
     if (dprtype not in dprtypes) or (kind == 'None'):
+        # log that we are skipping due to dprtype
+        WLOG(params, 'info', TextEntry('40-016-00018', args=[dprtype]))
+        # all entries returns are empty
+        return assign_properties()
+    if kind == 'None':
+        # log that we are skipping due to user
+        WLOG(params, 'info', TextEntry('40-016-00019'))
         # all entries returns are empty
         return assign_properties()
     # ----------------------------------------------------------------------
@@ -112,6 +122,9 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
     bprops = get_outputs(params, infile, header, props, kwargs)
     # if we have berv already then just return these
     if bprops is not None:
+        # log that we are skipping due to user
+        WLOG(params, 'info', TextEntry('40-016-00020'))
+        # return entries
         return assign_properties(**bprops)
     # ----------------------------------------------------------------------
     # get required parameters
@@ -124,23 +137,41 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
     # try to run barcorrpy
     if kind == 'barycorrpy':
         try:
+            # --------------------------------------------------------------
             # calculate berv/bjd
             bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'], **bprops)
+            # --------------------------------------------------------------
             # calculate max berv
             bervmax = np.max(np.abs(bervs))
+            # --------------------------------------------------------------
+            # calculate berv derivative (add 1 second)
+            deltat = (1*uu.s).to(uu.day).value
+            berv1, bjd1 = use_barycorrpy(params, bprops['OBS_TIME'] + deltat,
+                                         **bprops)
+            dberv = np.abs(berv1[0] - bervs[0])
+            # --------------------------------------------------------------
             # push into output parameters
             return assign_properties(berv=bervs[0], bjd=bjds[0],
                                      bervmax=bervmax, source='barycorrpy',
-                                     props=bprops)
+                                     props=bprops, dberv=dberv)
         except BaryCorrpyException:
             pass
+    # --------------------------------------------------------------
+    # if we are still here must use pyasl BERV estimate
     # ----------------------------------------------------------------------
     # calculate berv/bjd
     bervs, bjds = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
+    # --------------------------------------------------------------
     # calculate max berv
     bervmax = np.max(np.abs(bervs))
+    # --------------------------------------------------------------
+    # calculate berv derivative (add 1 second)
+    deltat = (1 * uu.s).to(uu.day).value
+    berv1, bjd1 = use_pyasl(params, bprops['OBS_TIME'] + deltat, **bprops)
+    dberv = np.abs(berv1[0] - bervs[0])
+    # --------------------------------------------------------------
     # push into output parameters
-    return assign_properties(bervest=bervs[0], bjdest=bjds[0],
+    return assign_properties(bervest=bervs[0], bjdest=bjds[0], dbervest=dberv,
                              bervmaxest=bervmax, source='pyasl', props=bprops)
 
 
@@ -158,7 +189,7 @@ def use_barycorrpy(params, times, **kwargs):
                    epoch=kwargs['epoch'], px=kwargs['plx'],
                    pmra=kwargs['pmra'], pmdec=kwargs['pmde'],
                    lat=kwargs['lat'], longi=kwargs['long'],
-                   alt=kwargs['alt'])
+                   alt=kwargs['alt'], rv=kwargs['rv'] * 1000)
     # try to import barycorrpy
     try:
         import barycorrpy
@@ -223,24 +254,32 @@ def add_berv_keys(params, infile, props):
     infile.add_hkey('KW_BERV', value=props['BERV'])
     infile.add_hkey('KW_BJD', value=props['BJD'])
     infile.add_hkey('KW_BERVMAX', value=props['BERV_MAX'])
+    infile.add_hkey('KW_DBERV', value=props['DBERV'])
     infile.add_hkey('KW_BERVSOURCE', value=props['BERV_SOURCE'])
     # add berv/bjd/bervmax estimate
     infile.add_hkey('KW_BERV_EST', value=props['BERV_EST'])
     infile.add_hkey('KW_BJD_EST', value=props['BJD_EST'])
     infile.add_hkey('KW_BERVMAX_EST', value=props['BERV_MAX_EST'])
+    infile.add_hkey('KW_DBERV_EST', value=props['DBERV_EST'])
     # add timings
     infile.add_hkey('KW_BERV_START', value=props['START_TIME'])
     infile.add_hkey('KW_BERV_EXP_TIME', value=props['EXP_TIME'])
     infile.add_hkey('KW_BERV_TIME_DELTA', value=props['TIME_DELTA'])
     infile.add_hkey('KW_BERV_OBSTIME', value=props['OBS_TIME'])
-    # set input source
-    infile.add_hkey('KW_BERV_POS_SOURCE', value=props['INPUTSOURCE'])
     # add input keys
     for param in inputs.keys():
         # get require parameter instance
         inparam = inputs[param]
         # add key to header
         infile.add_hkey(inparam.outkey, value=props[param])
+    # set input source
+    infile.add_hkey('KW_BERV_POS_SOURCE', value=props['INPUTSOURCE'])
+    # add gaia props
+    infile.add_hkey('KW_BERV_GAIA_GMAG', value=props['GMAG'])
+    infile.add_hkey('KW_BERV_GAIA_BPMAG', value=props['BPMAG'])
+    infile.add_hkey('KW_BERV_GAIA_RPMAG', value=props['RPMAG'])
+    infile.add_hkey('KW_BERV_GAIA_MAGLIM', value=props['GAIA_MAG_LIM'])
+    infile.add_hkey('KW_BERV_GAIA_PLXLIM', value=props['GAIA_PLX_LIM'])
     # return infile
     return infile
 
@@ -249,7 +288,8 @@ def add_berv_keys(params, infile, props):
 # Define worker functions
 # =============================================================================
 def assign_properties(berv=None, bjd=None, bervmax=None, source=None,
-                      bervest=None, bjdest=None, bervmaxest=None, props=None):
+                      bervest=None, bjdest=None, bervmaxest=None,
+                      dberv=None, dbervest=None, props=None):
     func_name = __NAME__ + '.assign_properties()'
     # set up storage
     oprops = ParamDict()
@@ -268,6 +308,11 @@ def assign_properties(berv=None, bjd=None, bervmax=None, source=None,
         oprops['BERV_MAX'] = np.nan
     else:
         oprops['BERV_MAX'] = bervmax
+    # assign dberv
+    if dberv is None:
+        oprops['DBERV'] = np.nan
+    else:
+        oprops['DBERV'] = dberv
     # assign source
     if source is None:
         oprops['BERV_SOURCE'] = 'None'
@@ -288,9 +333,14 @@ def assign_properties(berv=None, bjd=None, bervmax=None, source=None,
         oprops['BERV_MAX_EST'] = np.nan
     else:
         oprops['BERV_MAX_EST'] = bervmaxest
+    # assign dberv estimate
+    if dbervest is None:
+        oprops['DBERV_EST'] = np.nan
+    else:
+        oprops['DBERV_EST'] = dbervest
     # add source
     keys = ['BERV', 'BJD', 'BERV_MAX', 'BERV_SOURCE', 'BERV_EST', 'BJD_EST',
-            'BERV_MAX_EST']
+            'BERV_MAX_EST', 'DBERV', 'DBERV_EST']
     oprops.set_sources(keys, func_name)
     # deal with current props (set value and source)
     for prop in props:
@@ -562,7 +612,7 @@ def get_input_props_gaia(params, gprops, **kwargs):
                                             objname=objname, ra=ra, dec=dec)
         # deal with failure
         if not fail:
-            WLOG(params, 'info', TextEntry('40-016-00016', args=['gaiaid']))
+            WLOG(params, '', TextEntry('40-016-00016', args=['gaiaid']))
             return props
     # -----------------------------------------------------------------------
     # case 2: we have objname
@@ -572,7 +622,7 @@ def get_input_props_gaia(params, gprops, **kwargs):
                                             ra=ra, dec=dec)
         # deal with failure
         if not fail:
-            WLOG(params, 'info', TextEntry('40-016-00016', args=['objname']))
+            WLOG(params, '', TextEntry('40-016-00016', args=['objname']))
             return props
     # -----------------------------------------------------------------------
     # case 3: use ra and dec
@@ -580,10 +630,20 @@ def get_input_props_gaia(params, gprops, **kwargs):
     props, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec)
     # deal with failure
     if not fail:
-        WLOG(params, 'info', TextEntry('40-016-00016', args=['ra/dec']))
+        WLOG(params, '', TextEntry('40-016-00016', args=['ra/dec']))
         return props
     else:
-        WLOG(params, 'info', TextEntry('40-016-00016', args=['header']))
+        WLOG(params, '', TextEntry('40-016-00016', args=['header']))
+        # need to add parameters that are not defined
+        gprops['GMAG'] = np.nan
+        gprops['BPMAG'] = np.nan
+        gprops['RPMAG'] = np.nan
+        gprops['GAIA_MAG_LIM'] = np.nan
+        gprops['GAIA_PLX_LIM'] = np.nan
+        # set sources
+        keys = ['GMAG', 'BPMAG', 'RPMAG', 'GAIA_MAG_LIM', 'GAIA_PLX_LIM']
+        gprops.set_sources(keys, func_name)
+        # return gprops
         return gprops
 
 
