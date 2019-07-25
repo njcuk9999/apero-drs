@@ -73,7 +73,10 @@ def load_linelist(params, **kwargs):
                      func_name)
     ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', 'ampcol', kwargs,
                      func_name)
-
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
     # split table columns
     tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
     # add back to kwargs
@@ -111,7 +114,10 @@ def load_cavity_file(params, **kwargs):
                         func_name)
     wavecol = pcheck(params, 'CAVITY_LENGTH_FILE_WAVECOL', 'wavecol', kwargs,
                      func_name)
-
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
     # split table columns
     tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
     # add back to kwargs
@@ -147,6 +153,10 @@ def load_full_flat_badpix(params, **kwargs):
                        func_name)
     filename = pcheck(params, 'BADPIX_FULL_FLAT', 'filename', kwargs,
                       func_name)
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
     # return image
     try:
         image, outf = load_fits_file(params, filename, relfolder, kwargs,
@@ -165,6 +175,10 @@ def load_full_flat_pp(params, **kwargs):
                        func_name)
     filename = pcheck(params, 'PP_FULL_FLAT', 'filename', kwargs,
                       func_name)
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
     # return image
     try:
         image, outf = load_fits_file(params, filename, relfolder, kwargs,
@@ -184,6 +198,36 @@ def load_tapas(params, **kwargs):
     filename = pcheck(params, 'TAPAS_FILE', 'filename', kwargs, func_name)
 
     tablefmt = pcheck(params, 'TAPAS_FILE_FMT', 'fmt', kwargs, func_name)
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
+    # add back to kwargs
+    kwargs['fmt'] = tablefmt
+    # return image
+    try:
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                     func_name)
+        WLOG(params, '', TextEntry('40-999-00002', args=outf))
+        return table
+    except LoadException:
+        eargs = [filename, relfolder]
+        WLOG(params, 'error', TextEntry('00-010-00004', args=eargs))
+
+
+def load_object_list(params, **kwargs):
+    # get parameters from params/kwargs
+    func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
+    relfolder = pcheck(params, 'DATA_CORE', 'directory', kwargs,
+                       func_name)
+    filename = pcheck(params, 'OBJ_LIST_FILE', 'filename', kwargs, func_name)
+
+    tablefmt = pcheck(params, 'OBJ_LIST_FILE_FMT', 'fmt', kwargs, func_name)
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
+
     # add back to kwargs
     kwargs['fmt'] = tablefmt
     # return image
@@ -203,11 +247,9 @@ def load_tapas(params, **kwargs):
 def load_fits_file(params, filename, directory, kwargs, func_name):
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # get properties from params/jwargs
-    package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
-    # construct filepath
-    datadir = drs_path.get_relative_folder(params, package, directory)
-    absfilename = os.path.join(datadir, filename)
+    # construct filename
+    absfilename = construct_filename(params, filename, directory,
+                                     func=func_name, **kwargs)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(absfilename):
         eargs = [absfilename, func_name]
@@ -221,16 +263,13 @@ def load_fits_file(params, filename, directory, kwargs, func_name):
 def load_table_file(params, filename, directory, kwargs, func_name):
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # get properties from params/jwargs
-    package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
-
+    # construct filename
+    absfilename = construct_filename(params, filename, directory,
+                                     func=func_name, **kwargs)
+    # extra parameters
     fmt = kwargs.get('fmt', None)
     colnames = kwargs.get('colnames', None)
     datastart = kwargs.get('datastart', 0)
-
-    # construct filepath
-    datadir = drs_path.get_relative_folder(params, package, directory)
-    absfilename = os.path.join(datadir, filename)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(absfilename):
         eargs = [absfilename, func_name]
@@ -240,6 +279,17 @@ def load_table_file(params, filename, directory, kwargs, func_name):
                                  colnames=colnames, data_start=datastart)
     # return image
     return table, absfilename
+
+
+def construct_filename(params, filename, directory, **kwargs):
+    func_name = kwargs.get('func', __NAME__ + '.construct_filename()')
+    # get properties from params/jwargs
+    package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
+    # construct filepath
+    datadir = drs_path.get_relative_folder(params, package, directory)
+    absfilename = os.path.join(datadir, filename)
+    # return absolute path
+    return absfilename
 
 
 # =============================================================================
