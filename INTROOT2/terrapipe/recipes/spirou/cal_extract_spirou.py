@@ -155,7 +155,7 @@ def __main__(recipe, params):
         # Load and straighten order profiles
         # ------------------------------------------------------------------
         sargs = [infile, fibertypes, shapelocal, shapex, shapey, ORDERP_SFILE]
-        orderprofiles = extract.order_profiles(params, recipe, *sargs)
+        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
 
         # ------------------------------------------------------------------
         # Apply shape transformations
@@ -202,7 +202,8 @@ def __main__(recipe, params):
             nframes = infile.numfiles
             # --------------------------------------------------------------
             # get the order profile for this fiber
-            orderp = orderprofiles[fiber]
+            orderp = orderps[fiber]
+            orderpfile = orderpfiles[fiber]
             # --------------------------------------------------------------
             # log progress: extracting image
             WLOG(params, 'info', TextEntry('40-016-00011'))
@@ -305,6 +306,22 @@ def __main__(recipe, params):
             else:
                 hfiles = [infile.basename]
             e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+            # add the calibration files use
+            e2dsfile = general.add_calibs_to_header(e2dsfile, props)
+            # --------------------------------------------------------------
+            # add the other calibration files used
+            e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)
+            e2dsfile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
+            e2dsfile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
+            e2dsfile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
+            e2dsfile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
+            e2dsfile.add_hkey('KW_CDBFLAT', value=flat_file)
+            e2dsfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
+            e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
+            e2dsfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+            # additional calibration keys
+            e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
+            # --------------------------------------------------------------
             # add qc parameters
             e2dsfile.add_qckeys(qc_params)
             # --------------------------------------------------------------
