@@ -449,8 +449,15 @@ def nanpad(oimage):
 
 
 def nanpolyfit(x, y, deg, **kwargs):
-    # find the NaNs
-    nanmask = np.isfinite(y) & np.isfinite(x)
+    # check if there is a weight input in kwargs
+    if 'w' in kwargs:
+        # find the NaNs in x, y, w
+        nanmask = np.isfinite(y) & np.isfinite(x) & np.isfinite(kwargs['w'])
+        # mask the weight in kwargs
+        kwargs['w'] = kwargs['w'][nanmask]
+    else:
+        # find the NaNs in x and y
+        nanmask = np.isfinite(y) & np.isfinite(x)
     # return polyfit without the nans
     return np.polyfit(x[nanmask], y[nanmask], deg, **kwargs)
 
