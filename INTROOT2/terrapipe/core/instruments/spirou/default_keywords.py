@@ -82,15 +82,19 @@ KW_NEXP.set(key='NEXP')
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA', unit='hms')
+KW_OBJRA.set(key='OBJRA', unit=uu.hourangle)
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC', unit='dms')
+KW_OBJDEC.set(key='OBJDEC', unit=uu.deg)
 
 # define the observation name
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
 KW_OBJNAME.set(key='OBJNAME')
+
+# define the gaia id
+KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
+KW_GAIA_ID.set(key='GAIA_ID')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
@@ -119,6 +123,10 @@ KW_CASS_TEMP.set(key='SB_POL_T')
 # define the humidity HEADER key
 KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
 KW_HUMIDITY.set(key='RELHUMID')
+
+# define the parallax HEADER key
+KW_PLX = KW_PLX.copy(__NAME__)
+KW_PLX.set(key='OBJPLX', unit=uu.mas)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -418,6 +426,98 @@ KW_S1D_SMOOTH.set(key='S1DSMOOT', comment='Smoothing scale for s1d edge mask')
 # the blaze threshold used for the s1d
 KW_S1D_BLAZET = KW_S1D_BLAZET.copy(__NAME__)
 KW_S1D_BLAZET.set(key='S1DBLAZT', comment='Blaze threshold for s1d')
+
+# the Right Ascension used to calculate the BERV
+KW_BERVRA = KW_BERVRA.copy(__NAME__)
+KW_BERVRA.set(key='BC_RA', comment='Right Ascension used to calc. BERV')
+
+# the Declination used to calculate the BERV
+KW_BERVDEC = KW_BERVDEC.copy(__NAME__)
+KW_BERVDEC.set(key='BC_DEC', comment='Declination used to calc. BERV')
+
+# the Gaia ID used to identify KW_BERV_POS_SOURCE for BERV calculation
+KW_BERVGAIA_ID = KW_BERVGAIA_ID.copy(__NAME__)
+KW_BERVGAIA_ID.set(key='BC_GAIA', comment='The Gaia ID used for BERV params')
+
+# the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
+KW_BERVOBJNAME = KW_BERVOBJNAME.copy(__NAME__)
+KW_BERVOBJNAME.set(key='BC_OBJNM', comment='The OBJNAME used for BERV params')
+
+# the epoch (jd) used to calculate the BERV
+KW_BERVEPOCH = KW_BERVEPOCH.copy(__NAME__)
+KW_BERVEPOCH.set(key='BC_EPOCH', comment='Epoch [JD] used to calc. BERV')
+
+# the pmra [mas/yr] used to calculate the BERV
+KW_BERVPMRA = KW_BERVPMRA.copy(__NAME__)
+KW_BERVPMRA.set(key='BC_PMRA', comment='PMRA [mas/yr] used to calc. BERV')
+
+# the pmde [mas/yr] used to calculate the BERV
+KW_BERVPMDE = KW_BERVPMDE.copy(__NAME__)
+KW_BERVPMDE.set(key='BC_PMDE', comment='PMDE [mas/yr] used to calc. BERV')
+
+# the parallax [mas] used to calculate the BERV
+KW_BERVPLX = KW_BERVPLX.copy(__NAME__)
+KW_BERVPLX.set(key='BC_PLX', comment='PLX [mas] used to calc. BERV')
+
+# the source of the BERV star parameters (header or gaia)
+KW_BERV_POS_SOURCE = KW_BERV_POS_SOURCE.copy(__NAME__)
+KW_BERV_POS_SOURCE.set(key='BC_PSRCE', comment='Source of BERV star params')
+
+# the observatory latitude used to calculate the BERV
+KW_BERVLAT = KW_BERVLAT.copy(__NAME__)
+KW_BERVLAT.set(key='BC_LAT', comment='OBS Latitude [deg] used to calc. BERV')
+
+# the observatory longitude used to calculate the BERV
+KW_BERVLONG = KW_BERVLONG.copy(__NAME__)
+KW_BERVLONG.set(key='BC_LONG', comment='OBS Longitude [deg] used to calc. BERV')
+
+# the observatory altitude used to calculate the BERV
+KW_BERVALT = KW_BERVALT.copy(__NAME__)
+KW_BERVALT.set(key='BC_ALT', comment='OBS Altitude [m] used to calc. BERV')
+
+# the BERV calculated with KW_BERVSOURCE
+KW_BERV = KW_BERV.copy(__NAME__)
+KW_BERV.set(key='BERV', comment='Barycentric Velocity calc. in BERVSRCE [km/s]')
+
+# the Barycenter Julian date calculate with KW_BERVSOURCE
+KW_BJD = KW_BJD.copy(__NAME__)
+KW_BJD.set(key='BJD', comment='Barycentric Julian data calc. in BERVSRCE')
+
+# the maximum BERV found across 1 year (with KW_BERVSOURCE)
+KW_BERVMAX = KW_BERVMAX.copy(__NAME__)
+KW_BERVMAX.set(key='BERVMAX', comment='Max BERV 1 yr calc. in BERVSRCE [km/s]')
+
+# the source of the calculated BERV parameters
+KW_BERVSOURCE = KW_BERVSOURCE.copy(__NAME__)
+KW_BERVSOURCE.set(key='BERVSRCE', comment='How BERV was calculated')
+
+# the BERV calculated with the estimate
+KW_BERV_EST = KW_BERV_EST.copy(__NAME__)
+KW_BERV_EST.set(key='BERV_EST', comment='Barycentric Velocity estimate [km/s]')
+
+# the Barycenter Julian date calculated with the estimate
+KW_BJD_EST = KW_BJD_EST.copy(__NAME__)
+KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian data estimate')
+
+# the maximum BERV found across 1 year (calculated with estimate)
+KW_BERVMAX_EST = KW_BERVMAX_EST.copy(__NAME__)
+KW_BERVMAX_EST.set(key='BERVMAXE', comment='Max BERV 1 yr estimate [km/s]')
+
+# the start time of the observation used to calculate BERV (+KW_BERV_TIME_DELTA)
+KW_BERV_START = KW_BERV_START.copy(__NAME__)
+KW_BERV_START.set(key='BERVSTRT', comment='BERV Start of observation time [jd]')
+
+# the exposure time used to calculate observation midpoint
+KW_BERV_EXP_TIME = KW_BERV_EXP_TIME.copy(__NAME__)
+KW_BERV_EXP_TIME.set(key='BERVEXPT', comment='BERV Exptime used')
+
+# the time delta used (KW_BERV_START + this) [in days]
+KW_BERV_TIME_DELTA = KW_BERV_TIME_DELTA.copy(__NAME__)
+KW_BERV_TIME_DELTA.set(key='BERV_DT', comment='BERV Time delta used [days]')
+
+# the actual jd time used to calculate the BERV
+KW_BERV_OBSTIME = KW_BERV_OBSTIME.copy(__NAME__)
+KW_BERV_OBSTIME.set(key='BERVOBST', comment='BERV observation time used [days]')
 
 # -----------------------------------------------------------------------------
 # Define wave variables

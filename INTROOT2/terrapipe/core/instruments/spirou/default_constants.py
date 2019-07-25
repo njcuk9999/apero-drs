@@ -88,6 +88,29 @@ CAVITY_LENGTH_FILE_START.value = 0
 CAVITY_LENGTH_FILE_WAVECOL = CAVITY_LENGTH_FILE_WAVECOL.copy(__NAME__)
 CAVITY_LENGTH_FILE_WAVECOL.value = 'WAVELENGTH_COEFF'
 
+# Define the object list file name
+OBJ_LIST_FILE = OBJ_LIST_FILE.copy(__NAME__)
+OBJ_LIST_FILE.value = 'object_query_list.fits'
+
+# Define the object query list format
+OBJ_LIST_FILE_FMT = OBJ_LIST_FILE_FMT.copy(__NAME__)
+OBJ_LIST_FILE_FMT.value = 'fits'
+
+# Define the radius for crossmatching objects (in both lookup table and query)
+OBJ_LIST_CROSS_MATCH_RADIUS = OBJ_LIST_CROSS_MATCH_RADIUS.copy(__NAME__)
+OBJ_LIST_CROSS_MATCH_RADIUS.value = 60.0
+
+# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
+OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
+OBJ_LIST_GAIA_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
+
+# Define the TAP SIMBAD URL (for use in crossmatching OBJNAME via astroquery)
+OBJ_LIST_SIMBAD_URL = OBJ_LIST_SIMBAD_URL.copy(__NAME__)
+OBJ_LIST_SIMBAD_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
+
+# Define the gaia magnitude cut to use in the gaia query
+OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
+OBJ_LIST_GAIA_MAG_CUT.value = 16.0
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
