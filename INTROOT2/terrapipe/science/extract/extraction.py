@@ -131,7 +131,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # --------------------------------------------------------------
             # log that we skipped this order
             wargs = [order_num]
-            WLOG(params, 'warning', TextEntry('10-0016-00001', args=wargs))
+            WLOG(params, 'warning', TextEntry('10-016-00001', args=wargs))
         # ------------------------------------------------------------------
         # else extract order by order
         else:
@@ -177,7 +177,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
         if fluxval_i > sat_level:
             # log message (SATURATION LEVEL REACHED)
             wargs = [fiber, order_num, fluxval_i, sat_level]
-            WLOG(params, 'warning', TextEntry('10-0016-00002', args=wargs))
+            WLOG(params, 'warning', TextEntry('10-016-00002', args=wargs))
         # ------------------------------------------------------------------
         # append to arrays
         e2ds[order_num] = e2dsi
