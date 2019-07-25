@@ -12,16 +12,18 @@ __all__ = [# input keys
            'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
            'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_CMPLTEXP', 'KW_NEXP',
            'KW_PLX', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
-           'KW_GAIA_ID',
+           'KW_GAIA_ID', 'KW_INPUTRV',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
            'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
-           'KW_EXT_TYPE', 'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK',
-           'KW_CDBORDP', 'KW_CDBLOCO', 'KW_CDBSHAPE', 'KW_CDBFLAT',
-           'KW_CDBBLAZE', 'KW_CDBWAVE', 'KW_DRS_DATE_NOW', 'KW_DRS_DATE',
-           'KW_C_FLIP', 'KW_C_CVRTE', 'KW_C_RESIZE',
+           'KW_EXT_TYPE', 'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
+           'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
+           # calibration file header keys
+           'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
+           'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
+           'KW_CDBBLAZE',  'KW_CDBWAVE', 'KW_CDBTHERMAL',
            # dark keys
            'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -46,7 +48,9 @@ __all__ = [# input keys
            'KW_BERVMAX', 'KW_BERVSOURCE', 'KW_BERV_EST', 'KW_BJD_EST',
            'KW_BERVMAX_EST', 'KW_BERV_START', 'KW_BERV_EXP_TIME',
            'KW_BERV_TIME_DELTA', 'KW_BERV_OBSTIME', 'KW_BERVGAIA_ID',
-           'KW_BERVOBJNAME',
+           'KW_BERVOBJNAME', 'KW_BERVRV', 'KW_BERV_GAIA_GMAG',
+           'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_MAGLIM',
+           'KW_BERV_GAIA_PLXLIM', 'KW_DBERV', 'KW_DBERV_EST',
            # wave values
            'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE',
            'KW_WAVESOURCE', 'KW_WAVECOEFFS', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
@@ -164,6 +168,9 @@ KW_HUMIDITY = Keyword('KW_HUMIDITY', key='', dtype=float, source=__NAME__)
 # define the parallax HEADER key
 KW_PLX = Keyword('KW_PLX', key='', dtype=float, source=__NAME__)
 
+# define the rv HEADER key
+KW_INPUTRV = Keyword('KW_RV', key='', dtype=float, source=__NAME__)
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
@@ -200,15 +207,20 @@ KW_CDBBAD = Keyword('KW_CDBBAD', key='', dtype=str, source=__NAME__)
 KW_CDBBACK = Keyword('KW_CDBBACK', key='', dtype=str, source=__NAME__)
 KW_CDBORDP = Keyword('KW_CDBORDP', key='', dtype=str, source=__NAME__)
 KW_CDBLOCO = Keyword('KW_CDBLOCO', key='', dtype=str, source=__NAME__)
-KW_CDBSHAPE = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
+KW_CDBSHAPEL = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
+KW_CDBSHAPEDY = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
+KW_CDBSHAPEDX = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
 KW_CDBFLAT = Keyword('KW_CDBFLAT', key='', dtype=str, source=__NAME__)
 KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__)
 KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__)
+KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='', dtype=str, source=__NAME__)
+
 
 # additional properties of calibration
 KW_C_FLIP = Keyword('KW_C_FLIP', key='', dtype=str, source=__NAME__)
 KW_C_CVRTE = Keyword('KW_C_CVRTE', key='', dtype=str, source=__NAME__)
 KW_C_RESIZE = Keyword('KW_C_RESIZE', key='', dtype=str, source=__NAME__)
+KW_C_FTYPE = Keyword('KW_C_FTYPE', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
@@ -402,9 +414,32 @@ KW_BERVPMDE = Keyword('KW_BERVPMDE', key='', dtype=float, source=__NAME__)
 # the parallax [mas] used to calculate the BERV
 KW_BERVPLX = Keyword('KW_BERVPLX', key='', dtype=float, source=__NAME__)
 
+# the rv [km/s] used to calculate the BERV
+KW_BERVRV = Keyword('KW_BERVR', key='', dtype=float, source=__NAME__)
+
 # the source of the BERV star parameters (header or gaia)
 KW_BERV_POS_SOURCE = Keyword('KW_BERV_POS_SOURCE', key='', dtype=str,
                              source=__NAME__)
+
+# the Gaia G mag (if present) for the gaia query
+KW_BERV_GAIA_GMAG = Keyword('KW_BERV_GAIA_GMAG', key='', dtype=float,
+                            source=__NAME__)
+
+# the Gaia BP mag (if present) for the gaia query
+KW_BERV_GAIA_BPMAG = Keyword('KW_BERV_GAIA_BPMAG', key='', dtype=float,
+                             source=__NAME__)
+
+# the Gaia RP mag (if present) for the gaia query
+KW_BERV_GAIA_RPMAG = Keyword('KW_BERV_GAIA_RPMAG', key='', dtype=float,
+                             source=__NAME__)
+
+# the Gaia G mag limit used for the gaia query
+KW_BERV_GAIA_MAGLIM = Keyword('KW_BERV_GAIA_MAGLIM', key='', dtype=float,
+                              source=__NAME__)
+
+# the Gaia parallax limit used the gaia query
+KW_BERV_GAIA_PLXLIM = Keyword('KW_BERV_GAIA_PLXLIM', key='', dtype=float,
+                              source=__NAME__)
 
 # the observatory latitude used to calculate the BERV
 KW_BERVLAT = Keyword('KW_BERVLAT', key='', dtype=float, source=__NAME__)
@@ -424,6 +459,9 @@ KW_BJD = Keyword('KW_BJD', key='', dtype=float, source=__NAME__)
 # the maximum BERV found across 1 year (with KW_BERVSOURCE)
 KW_BERVMAX = Keyword('KW_BERVMAX', key='', dtype=float, source=__NAME__)
 
+# the derivative of the BERV (BERV at time + 1s - BERV)
+KW_DBERV = Keyword('KW_DBERV', key='', dtype=float, source=__NAME__)
+
 # the source of the calculated BERV parameters
 KW_BERVSOURCE = Keyword('KW_BERVSOURCE', key='', dtype=str, source=__NAME__)
 
@@ -435,6 +473,10 @@ KW_BJD_EST = Keyword('KW_BJD_EST', key='', dtype=float, source=__NAME__)
 
 # the maximum BERV found across 1 year (calculated with estimate)
 KW_BERVMAX_EST = Keyword('KW_BERVMAX_EST', key='', dtype=float, source=__NAME__)
+
+# the derivative of the BERV (BERV at time + 1s - BERV) calculated with
+#     estimate
+KW_DBERV_EST = Keyword('KW_DBERV_EST', key='', dtype=float, source=__NAME__)
 
 # the start time of the observation used to calculate BERV (+KW_BERV_TIME_DELTA)
 KW_BERV_START = Keyword('KW_BERV_START', key='', dtype=float, source=__NAME__)

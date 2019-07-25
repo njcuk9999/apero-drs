@@ -128,6 +128,10 @@ KW_HUMIDITY.set(key='RELHUMID')
 KW_PLX = KW_PLX.copy(__NAME__)
 KW_PLX.set(key='OBJPLX', unit=uu.mas)
 
+# define the rv HEADER key
+KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
+KW_INPUTRV.set(key='OBSRV', unit=uu.km/uu.s)
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
@@ -184,14 +188,20 @@ KW_CDBORDP = KW_CDBORDP.copy(__NAME__)
 KW_CDBORDP.set(key='CDBORDP', comment='The calibration ORDER_PROFILE file used')
 KW_CDBLOCO = KW_CDBLOCO.copy(__NAME__)
 KW_CDBLOCO.set(key='CDBLOCO', comment='The calibration LOC file used')
-KW_CDBSHAPE = KW_CDBSHAPE.copy(__NAME__)
-KW_CDBSHAPE.set(key='CDBSHAPE', comment='The calibration SHAPE file used')
+KW_CDBSHAPEL = KW_CDBSHAPEL.copy(__NAME__)
+KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The calibration SHAPEL file used')
+KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
+KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEDY = KW_CDBSHAPEDY.copy(__NAME__)
+KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The calibration SHAPE DX file used')
 KW_CDBFLAT = KW_CDBFLAT.copy(__NAME__)
 KW_CDBFLAT.set(key='CDBFLAT', comment='The calibration FLAT file used')
 KW_CDBBLAZE = KW_CDBBLAZE.copy(__NAME__)
 KW_CDBBLAZE.set(key='CDBBLAZE', comment='The calibration BLAZE file used')
 KW_CDBWAVE = KW_CDBWAVE.copy(__NAME__)
 KW_CDBWAVE.set(key='CDBWAVE', comment='The calibration WAVE file used')
+KW_CDBTHERMAL = KW_CDBTHERMAL.copy(__NAME__)
+KW_CDBTHERMAL.set(key='CDBTHERM', comment='The calibration THERMAL file used')
 
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
@@ -200,6 +210,8 @@ KW_C_CVRTE = KW_C_CVRTE.copy(__NAME__)
 KW_C_CVRTE.set(key='CAL_TOE', comment='Whether the flux was converted to e-')
 KW_C_RESIZE = KW_C_RESIZE.copy(__NAME__)
 KW_C_RESIZE.set(key='CAL_SIZE', comment='Whether the image was resized from pp')
+KW_C_FTYPE = KW_C_FTYPE.copy(__NAME__)
+KW_C_FTYPE.set(key='CAL_FTYP', comment='What this fiber was identified as')
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
@@ -459,9 +471,33 @@ KW_BERVPMDE.set(key='BC_PMDE', comment='PMDE [mas/yr] used to calc. BERV')
 KW_BERVPLX = KW_BERVPLX.copy(__NAME__)
 KW_BERVPLX.set(key='BC_PLX', comment='PLX [mas] used to calc. BERV')
 
+# the rv [km/s] used to calculate the BERV
+KW_BERVRV = KW_BERVRV.copy(__NAME__)
+KW_BERVRV.set(key='BC_RV', comment='RV [km/s] used to calc. BERV')
+
 # the source of the BERV star parameters (header or gaia)
 KW_BERV_POS_SOURCE = KW_BERV_POS_SOURCE.copy(__NAME__)
 KW_BERV_POS_SOURCE.set(key='BC_PSRCE', comment='Source of BERV star params')
+
+# the Gaia G mag (if present) for the gaia query
+KW_BERV_GAIA_GMAG = KW_BERV_GAIA_GMAG.copy(__NAME__)
+KW_BERV_GAIA_GMAG.set(key='BC_GMAG', comment='Gaia G mag for BERV calc.')
+
+# the Gaia BP mag (if present) for the gaia query
+KW_BERV_GAIA_BPMAG = KW_BERV_GAIA_BPMAG.copy(__NAME__)
+KW_BERV_GAIA_BPMAG.set(key='BC_BPMAG', comment='Gaia BP mag for BERV calc.')
+
+# the Gaia RP mag (if present) for the gaia query
+KW_BERV_GAIA_RPMAG = KW_BERV_GAIA_RPMAG.copy(__NAME__)
+KW_BERV_GAIA_RPMAG.set(key='BC_RPMAG', comment='Gaia RP mag for BERV calc.')
+
+# the Gaia G mag limit used for the gaia query
+KW_BERV_GAIA_MAGLIM = KW_BERV_GAIA_MAGLIM.copy(__NAME__)
+KW_BERV_GAIA_MAGLIM.set(key='BC_MAG_L', comment='Gaia mag lim for BERV calc.')
+
+# the Gaia parallax limit used the gaia query
+KW_BERV_GAIA_PLXLIM = KW_BERV_GAIA_PLXLIM.copy(__NAME__)
+KW_BERV_GAIA_PLXLIM.set(key='BC_PLX_L', comment='Gaia plx lim for BERV calc.')
 
 # the observatory latitude used to calculate the BERV
 KW_BERVLAT = KW_BERVLAT.copy(__NAME__)
@@ -487,6 +523,10 @@ KW_BJD.set(key='BJD', comment='Barycentric Julian data calc. in BERVSRCE')
 KW_BERVMAX = KW_BERVMAX.copy(__NAME__)
 KW_BERVMAX.set(key='BERVMAX', comment='Max BERV 1 yr calc. in BERVSRCE [km/s]')
 
+# the derivative of the BERV (BERV at time + 1s - BERV)
+KW_DBERV = KW_DBERV.copy(__NAME__)
+KW_DBERV.set(key='DBERV', comment='Deviation in BERV in BERVSRCE [km/s/s]')
+
 # the source of the calculated BERV parameters
 KW_BERVSOURCE = KW_BERVSOURCE.copy(__NAME__)
 KW_BERVSOURCE.set(key='BERVSRCE', comment='How BERV was calculated')
@@ -502,6 +542,11 @@ KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian data estimate')
 # the maximum BERV found across 1 year (calculated with estimate)
 KW_BERVMAX_EST = KW_BERVMAX_EST.copy(__NAME__)
 KW_BERVMAX_EST.set(key='BERVMAXE', comment='Max BERV 1 yr estimate [km/s]')
+
+# the derivative of the BERV (BERV at time + 1s - BERV)
+KW_DBERV_EST = KW_DBERV_EST.copy(__NAME__)
+KW_DBERV_EST.set(key='DBERVE',
+                 comment='Deviation in BERV estimate [km/s/s]')
 
 # the start time of the observation used to calculate BERV (+KW_BERV_TIME_DELTA)
 KW_BERV_START = KW_BERV_START.copy(__NAME__)

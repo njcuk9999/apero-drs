@@ -108,9 +108,17 @@ OBJ_LIST_GAIA_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
 OBJ_LIST_SIMBAD_URL = OBJ_LIST_SIMBAD_URL.copy(__NAME__)
 OBJ_LIST_SIMBAD_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
 
-# Define the gaia magnitude cut to use in the gaia query
+# Define the gaia magnitude cut (rp mag) to use in the gaia query
 OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
-OBJ_LIST_GAIA_MAG_CUT.value = 16.0
+OBJ_LIST_GAIA_MAG_CUT.value = 15.0
+
+# Define the gaia epoch to use in the gaia query
+OBJ_LIST_GAIA_EPOCH = OBJ_LIST_GAIA_EPOCH.copy(__NAME__)
+OBJ_LIST_GAIA_EPOCH.value = 2015.5
+
+# Define the gaia parallax limit for using gaia point
+OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
+OBJ_LIST_GAIA_PLX_LIM.value = 5
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS

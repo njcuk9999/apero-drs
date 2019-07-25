@@ -222,6 +222,7 @@ class PseudoConstants(DefaultConstants):
         inputs['long'] = ['OBS_LONG', 'KW_BERVLONG', 'const', None]
         inputs['alt'] = ['OBS_ALT', 'KW_BERVALT', 'const', None]
         inputs['plx'] = ['KW_PLX', 'KW_BERVPLX', 'header', 0.0]
+        inputs['rv'] = ['KW_RV', 'KW_BERVRV', 'header', np.nan]
         # return inputs
         return inputs
 
@@ -237,10 +238,12 @@ class PseudoConstants(DefaultConstants):
         outputs['berv'] = ['BERV', 'KW_BERV', 'header', float]
         outputs['bjd'] = ['BJD', 'KW_BJD', 'header', float]
         outputs['bervmax'] = ['BERV_MAX', 'KW_BERVMAX', 'header', float]
+        outputs['dberv'] = ['DBERV', 'KW_DBERV', 'header', float]
         outputs['source'] = ['BERV_SOURCE', 'KW_BERVSOURCE', 'header', str]
         outputs['bervest'] = ['BERV_EST', 'KW_BERV_EST', 'header', float]
         outputs['bjdest'] = ['BJD_EST', 'KW_BJD_EST', 'header', float]
         outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX', 'header', float]
+        outputs['dbervest'] = ['DBERV_EST', 'KW_DBERV_EST', 'header', float]
         # return outputs
         return outputs
 # =============================================================================
