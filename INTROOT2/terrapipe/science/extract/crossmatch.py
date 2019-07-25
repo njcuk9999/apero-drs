@@ -14,6 +14,7 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as uu
 from astropy.table import vstack, Table
+from astropy.time import Time
 import os
 import warnings
 
@@ -46,26 +47,32 @@ TextDict = locale.drs_text.TextDict
 pcheck = core.pcheck
 # master crossmatch query
 QUERY_MASTER = 'SELECT {0} FROM {1} WHERE {2}'
-QCOLS = ('ra as RA, dec as DEC, source_id as ID, parallax as PLX, '
-         'pmdec as PMDE, pmra as PMRA, radial_velocity as RV')
+QCOLS = ('ra as RA, dec as DEC, source_id as GAIAID, parallax as PLX, '
+         'pmdec as PMDE, pmra as PMRA, radial_velocity as RV, '
+         'phot_g_mean_mag as gmag, phot_bp_mean_mag as bpmag, '
+         'phot_rp_mean_mag as rpmag')
 QSOURCE = 'gaiadr2.gaia_source'
 QWHERE1 = 'source_id = {id}'
 QWHERE2 = ('1=CONTAINS(POINT(\'ICRS\', RA, DEC), CIRCLE(\'ICRS\', {ra}, '
           '{dec}, {radius}))')
 QWHERE3 = ('(parallax is not NULL) AND (pmdec is not NULL) AND '
            '(pmra is not NULL)')
-QWHERE4 = ('(phot_g_mean_mag < {0})')
+QWHERE4 = ('(phot_rp_mean_mag < {0})')
+QWHERE5 = ('(parallax > {0})')
 
 # =============================================================================
 # Define user functions
 # =============================================================================
 def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
     func_name = __NAME__ + '.get_props()'
+    # get paramters from params
+    mag_cut = pcheck(params, 'OBJ_LIST_GAIA_MAG_CUT', func_name)
+    parallax_cut = pcheck(params, 'OBJ_LIST_GAIA_PLX_LIM', func_name)
     # ----------------------------------------------------------------------
     # get lookuptablename
     lookuptablename = drs_data.load_object_list(params, return_filename=True)
     # set source
-    source = None
+    source, fail, row = None, True, None
     # ----------------------------------------------------------------------
     # lock look up and query
     lockfile, lockfilename = drs_lock.check_lock_file(params, lookuptablename)
@@ -92,21 +99,37 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
         # set source
         source = 'GAIA [QUERY]'
     else:
-        fail, row = False, None
+        fail = False
     # ----------------------------------------------------------------------
     # update props with row
     if not fail:
         # loop around properties
-        for prop in props:
-            if prop.lower() in row.colnames:
-                # update each properties
-                props[prop] = row[prop.lower()]
-                props.set_source(prop, '{0} [{1}]'.format(func_name, source))
+        for prop in row.colnames:
+            # update each properties
+            props[prop.upper()] = row[prop]
+            # set source
+            sourcename = '{0} [{1}]'.format(func_name, source)
+            props.set_source(prop.upper(), sourcename)
     # ----------------------------------------------------------------------
     # set the input source
     if source is not None:
         props['INPUTSOURCE'] = source
         props.set_source('INPUTSOURCE', func_name)
+    # ----------------------------------------------------------------------
+    # set the limits used
+    props['GAIA_MAG_LIM'] = mag_cut
+    props['GAIA_PLX_LIM'] = parallax_cut
+    props.set_sources(['GAIA_MAG_LIM', 'GAIA_PLX_LIM'], func_name)
+    # ----------------------------------------------------------------------
+    # deal with NaN values
+    unsetvalues = ['PMRA', 'PMDE', 'PLX', 'RV']
+    for unsetvalue in unsetvalues:
+        if np.isnan(props[unsetvalue]):
+            # debug log message
+            dargs = [unsetvalue, func_name]
+            WLOG(params, 'debug', TextEntry('90-016-00001', args=dargs))
+            # set to zero
+            props[unsetvalue] = 0.0
     # ----------------------------------------------------------------------
     # unlock look up and query
     drs_lock.close_lock_file(params, lockfile, lockfilename, lookuptablename)
@@ -150,7 +173,7 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
     # deal with having a gaia id
     if gaiaid is not None:
         # find rows in table with valid gaia id
-        mask = gaiaid == table['ID']
+        mask = gaiaid == table['GAIAID']
         # if we have entires use the first one
         if np.sum(mask) > 0:
             # set intable to True
@@ -224,6 +247,12 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
     url = pcheck(params, 'OBJ_LIST_GAIA_URL', 'url', kwargs, func_name)
     mag_cut = pcheck(params, 'OBJ_LIST_GAIA_MAG_CUT', 'mag_cut', kwargs,
                      func_name)
+    parallax_cut = pcheck(params, 'OBJ_LIST_GAIA_PLX_LIM', 'plx_lim', kwargs,
+                          func_name)
+    gaiaepoch = pcheck(params, 'OBJ_LIST_GAIA_EPOCH', 'gaia_epoch', kwargs,
+                       func_name)
+    # get gaia epoch
+    epoch = Time(gaiaepoch, format='decimalyear')
     # get radius in degress
     radius_degrees = (radius * uu.arcsec).to(uu.deg)
     # ------------------------------------------------------------------
@@ -238,10 +267,8 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
     # ------------------------------------------------------------------
     # create TAP query based on gaia id
     if (gaiaid is not None) and (query is None):
-        # mag cut
-        qwhere4 = QWHERE4.format(mag_cut)
         # set up where statement
-        where = '{0} AND {1}'.format(QWHERE1, QWHERE3, qwhere4)
+        where = '{0} AND {1}'.format(QWHERE1, QWHERE3)
         # pipe to query
         query = QUERY_MASTER.format(QCOLS, QSOURCE, where)
         # push in gaia id
@@ -261,8 +288,11 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
         WLOG(params, '', TextEntry('40-016-00015', args=['ra/dec']))
         # mag cut
         qwhere4 = QWHERE4.format(mag_cut)
+        # parallax cut
+        qwhere5 = QWHERE5.format(parallax_cut)
         # set up where statement
-        where = '{0} AND {1} AND {2}'.format(QWHERE2, QWHERE3, qwhere4)
+        wargs = [QWHERE2, QWHERE3, qwhere4, qwhere5]
+        where = '{0} AND {1} AND {2} AND {3}'.format(*wargs)
         # pipe to query
         query = QUERY_MASTER.format(QCOLS, QSOURCE, where)
         # push in ra/dec/radius
@@ -282,11 +312,6 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
             job = gaia.launch_job(query=query)
             # get gaia table
             table = job.get_results()
-            # add objname column
-            if objname is not None:
-                table['objname'] = objname
-            else:
-                table['objanme'] = ''
     except Exception as e:
         wargs = [url, query, type(e), e, func_name]
         WLOG(params, 'debug', TextEntry('10-016-00008', args=wargs))
@@ -299,8 +324,22 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
         WLOG(params, 'debug', TextEntry('10-016-00011', args=[func_name]))
         # return No row and True to fail
         return None, True
+    # ------------------------------------------------------------------
+    # Better format the table
+    # ------------------------------------------------------------------
+    # fill masked value for RV (other columns must be filled)
+    table['rv'].fill_value = 0.0
+    table = table.filled()
+    # add objname column
+    if objname is not None:
+        table['objname'] = [objname] * len(table)
+    else:
+        table['objanme'] = [''] * len(table)
+    # add epoch (in JD)
+    table['epoch'] = [epoch.jd] * len(table)
+    # ------------------------------------------------------------------
     # if we only have one row then we have found our value
-    elif len(table) == 1:
+    if len(table) == 1:
         return table[0], False
     # else crossmatch table with ra/dec (and keep closest)
     else:
