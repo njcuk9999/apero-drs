@@ -702,7 +702,7 @@
 "40-014-00038","ALL","prints that we are calibration a pp file","{0} = filename","Calibrating file: {0}","",""
 "40-014-00039","ALL","prints which shape local file we are using","{0} = filename","Reading night shape file: {0}","",""
 "40-014-00040","ALL","prints that we are loading the thermal file","{0} = filename","Reading thermal file: {0}","",""
-"","","","","","",""
+"40-014-00041","ALL","prints how we are transforming image","{0} = dx set/unset; {1} = dy set/unset; {2} = trans set/unset","\tTransforming (dxmap={0}, dymap={1}, trans={2})","",""
 "","","","","","",""
 "","","","","","",""
 "40-015-00000","ALL","Flat/Blaze messages","None","","",""
