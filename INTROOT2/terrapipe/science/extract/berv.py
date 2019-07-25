@@ -22,12 +22,13 @@ from terrapipe.core import constants
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_lock
 from . import bervest
+from . import crossmatch
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.extract.berv.py'
-__INSTRUMENT__ = 'SPIROU'
+__INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
@@ -73,7 +74,7 @@ class Property:
 mode1 = dict()
 mode1['ra'] = Property(name='ra', unit=uu.deg)
 mode1['dec'] = Property(name='dec', unit=uu.deg)
-mode1['epcoh'] = Property(name='epoch', datatype='jd')
+mode1['epoch'] = Property(name='epoch', datatype='jd')
 mode1['pmra'] = Property(name='pmra', unit=uu.mas/uu.yr)
 mode1['pmde'] = Property(name='pmdec', unit=uu.mas/uu.yr)
 mode1['lat'] = Property(name='lat', unit=uu.deg)
@@ -149,6 +150,9 @@ def use_barycorrpy(params, times, **kwargs):
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
     # get text dictionary
     tdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+
+    # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
+    kwargs = ParamDict(kwargs)
     # get args
     bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
                    epoch=kwargs['epoch'], px=kwargs['plx'],
@@ -160,8 +164,8 @@ def use_barycorrpy(params, times, **kwargs):
         import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
-        WLOG(params, 'warning', TextEntry('10-0016-00003', args=wargs))
-        raise BaryCorrpyException(tdict['10-0016-00003'].format(*wargs))
+        WLOG(params, 'warning', TextEntry('10-016-00003', args=wargs))
+        raise BaryCorrpyException(tdict['10-016-00003'].format(*wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
     lfilename = os.path.join(lpath, 'barycorrpy')
@@ -175,8 +179,8 @@ def use_barycorrpy(params, times, **kwargs):
         drs_lock.close_lock_file(params, lock, lockfile, lfilename)
         # log error
         wargs = [type(e), str(e), estimate, func_name]
-        WLOG(params, 'warning', TextEntry('10-0016-00004', args=wargs))
-        raise BaryCorrpyException(tdict['10-0016-00004'].format(*wargs))
+        WLOG(params, 'warning', TextEntry('10-016-00004', args=wargs))
+        raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
     # unlock barycorrpy
     drs_lock.close_lock_file(params, lock, lockfile, lfilename)
     # return the bervs and bjds
@@ -190,7 +194,7 @@ def use_pyasl(params, times, **kwargs):
     # get estimate accuracy
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
     # print warning that we are using estimate
-    WLOG(params, 'warning', TextEntry('10-0016-00005', args=[estimate]))
+    WLOG(params, 'warning', TextEntry('10-016-00005', args=[estimate]))
     # get args
     bkwargs = dict(ra2000=kwargs['ra'], dec2000=kwargs['dec'],
                    obs_long=kwargs['long'], obs_lat=kwargs['lat'],
@@ -218,18 +222,25 @@ def add_berv_keys(params, infile, props):
     # add berv/bjd/bervmax/source
     infile.add_hkey('KW_BERV', value=props['BERV'])
     infile.add_hkey('KW_BJD', value=props['BJD'])
-    infile.add_hkey('KW_BERVMAX', value=props['BERVMAX'])
-    infile.add_hkey('KW_BERVSOURCE', value=props['BERVSOURCE'])
+    infile.add_hkey('KW_BERVMAX', value=props['BERV_MAX'])
+    infile.add_hkey('KW_BERVSOURCE', value=props['BERV_SOURCE'])
     # add berv/bjd/bervmax estimate
     infile.add_hkey('KW_BERV_EST', value=props['BERV_EST'])
     infile.add_hkey('KW_BJD_EST', value=props['BJD_EST'])
-    infile.add_hkey('KW_BERVMAX_EST', value=props['BERVMAX_EST'])
+    infile.add_hkey('KW_BERVMAX_EST', value=props['BERV_MAX_EST'])
+    # add timings
+    infile.add_hkey('KW_BERV_START', value=props['START_TIME'])
+    infile.add_hkey('KW_BERV_EXP_TIME', value=props['EXP_TIME'])
+    infile.add_hkey('KW_BERV_TIME_DELTA', value=props['TIME_DELTA'])
+    infile.add_hkey('KW_BERV_OBSTIME', value=props['OBS_TIME'])
+    # set input source
+    infile.add_hkey('KW_BERV_POS_SOURCE', value=props['INPUTSOURCE'])
     # add input keys
     for param in inputs.keys():
         # get require parameter instance
         inparam = inputs[param]
         # add key to header
-        infile.add_hkey(inparam.outkey, value=props[inparam])
+        infile.add_hkey(inparam.outkey, value=props[param])
     # return infile
     return infile
 
@@ -379,7 +390,6 @@ def get_inputs(params):
 def get_parameters(params, kind, props=None, kwargs=None, infile=None,
                    header=None):
     func_name = __NAME__ + '.get_parameters()'
-    source_name = '{0} [{1}]'
     inputs = get_inputs(params)
     # ----------------------------------------------------------------------
     if kind == 'barycorrpy':
@@ -392,7 +402,22 @@ def get_parameters(params, kind, props=None, kwargs=None, infile=None,
     for param in inputs:
         gprops[param] = np.nan
         gprops.set_source(param, func_name)
+    # ----------------------------------------------------------------------
+    # first get parameters from header
+    gprops = get_header_input_props(params, gprops, rparams, inputs, infile,
+                                    header, props, kwargs)
+    # ----------------------------------------------------------------------
+    # update using gaia positions (from lookup table or gaia query)
+    gprops = get_input_props_gaia(params, gprops)
+    # ----------------------------------------------------------------------
+    # return all gprops
+    return gprops
 
+
+def get_header_input_props(params, gprops, rparams, inputs, infile, header,
+                           props, kwargs):
+    func_name = __NAME__ + '.use_header_input_props()'
+    source_name = '{0} [{1}]'
     # ----------------------------------------------------------------------
     # ra and dec have to be dealt with together
     raw_ra, s_ra = get_raw_param(params, 'ra', inputs['ra'], infile, header,
@@ -404,14 +429,23 @@ def get_parameters(params, kind, props=None, kwargs=None, infile=None,
     # add to output
     gprops['ra'] = coords.ra.value
     gprops.set_source('ra', source_name.format(func_name, s_dec))
+    gprops.set_instance('ra', coords.ra)
     gprops['dec'] = coords.dec.value
     gprops.set_source('dec', source_name.format(func_name, s_dec))
-
+    gprops.set_instance('dec', coords.dec)
+    # ----------------------------------------------------------------------
+    # deal with gaia id and objname
+    gprops['gaiaid'], s_id = get_raw_param(params, 'gaiaid', inputs['gaiaid'],
+                                           infile, header, props, kwargs)
+    gprops['objname'], s_obj = get_raw_param(params, 'objname',
+                                             inputs['objname'], infile, header,
+                                             props, kwargs)
+    gprops.set_sources(['gaiaid', 'objname'], [s_id, s_obj])
     # ----------------------------------------------------------------------
     # loop around each parameter to get into the format we require
     for param in rparams.keys():
         # skip ra and dec
-        if param in ['ra', 'dec']:
+        if param in ['ra', 'dec', 'gaiaid', 'objname']:
             continue
         # ------------------------------------------------------------------
         # get require parameter instance
@@ -473,15 +507,84 @@ def get_parameters(params, kind, props=None, kwargs=None, infile=None,
         # ------------------------------------------------------------------
         # case 3: keep as string
         else:
-            value = str(rawvalue)
+            value = rawvalue
         # ------------------------------------------------------------------
         # add to output props
-        gprops[param] = value
+        if hasattr(value, 'value'):
+            gprops[param] = value.value
+        else:
+            gprops[param] = value
+        # add source
         gprops.set_source(param, source_name.format(func_name, source))
-
-    # ----------------------------------------------------------------------
-    # retyrb all gprops
+        gprops.set_instance(param, inputs[param])
+    # set the input source
+    gprops['INPUTSOURCE'] = 'header'
+    gprops.set_source('INPUTSOURCE', func_name)
+    # return properties
     return gprops
+
+
+def get_input_props_gaia(params, gprops, **kwargs):
+    """
+    Takes a set of properties 'gprops' and checks for 'GAIAID', 'OBJNAME'
+    and 'RA'/'DEC' and tries to look in look-up table / query gaia to
+    get new parameters (for all parameters in 'gprops'
+
+    :param params: ParamDict, the constant parameter dictionary
+    :param gprops: ParmDict, the properties parameter dictionary
+    :param kwargs: keyword arguments
+
+    :type params: ParamDict
+    :type gprops: ParamDict
+
+    :keyword gaiaid: string, if defined uses this gaia id
+    :keyword objname: string, if defined uses this objname
+    :keyword ra: float, if defined uses this right ascension
+    :keyword dec: float, if defined uses this declination
+
+    :returns: the updated set of properties (ParamDict)
+    :rtype: ParamDict
+
+    """
+    func_name = __NAME__ + '.get_input_props_gaia()'
+    # get parameters from gprops/kwargs
+    gaia_id = pcheck(params, 'GAIAID', 'gaiaid', kwargs, func_name,
+                     paramdict=gprops)
+    objname = pcheck(params, 'OBJNAME', 'objname', kwargs, func_name,
+                     paramdict=gprops)
+    ra = pcheck(params, 'RA', 'ra', kwargs, func_name, paramdict=gprops)
+    dec = pcheck(params, 'DEC', 'dec', kwargs, func_name, paramdict=gprops)
+    # -----------------------------------------------------------------------
+    # case 1: we have gaia id
+    # -----------------------------------------------------------------------
+    if gaia_id is not None and gaia_id != 'None':
+        props, fail = crossmatch.get_params(params, gprops, gaiaid=gaia_id,
+                                            objname=objname, ra=ra, dec=dec)
+        # deal with failure
+        if not fail:
+            WLOG(params, 'info', TextEntry('40-016-00016', args=['gaiaid']))
+            return props
+    # -----------------------------------------------------------------------
+    # case 2: we have objname
+    # -----------------------------------------------------------------------
+    if gprops['OBJNAME'] is not None and gprops['OBJNAME'] != 'None':
+        props, fail = crossmatch.get_params(params, gprops, objname=objname,
+                                            ra=ra, dec=dec)
+        # deal with failure
+        if not fail:
+            WLOG(params, 'info', TextEntry('40-016-00016', args=['objname']))
+            return props
+    # -----------------------------------------------------------------------
+    # case 3: use ra and dec
+    # -----------------------------------------------------------------------
+    props, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec)
+    # deal with failure
+    if not fail:
+        WLOG(params, 'info', TextEntry('40-016-00016', args=['ra/dec']))
+        return props
+    else:
+        WLOG(params, 'info', TextEntry('40-016-00016', args=['header']))
+        return gprops
 
 
 def get_raw_param(params, param, inparam, infile, header, props, kwargs):
@@ -494,7 +597,7 @@ def get_raw_param(params, param, inparam, infile, header, props, kwargs):
     rawvalue, source = None, 'None'
     # get value from infile
     if (infile is not None) and (inparam.hkey is not None):
-        rawvalue = infile.get_key(inparam.hkey)
+        rawvalue = infile.get_key(inparam.hkey, required=False)
         source = str(infile)
     # if not get value from header
     useheader = (inparam.hkey is not None) and (rawvalue is None)
@@ -514,15 +617,21 @@ def get_raw_param(params, param, inparam, infile, header, props, kwargs):
             source = 'kwargs'
     # if not get value from params
     if (params is not None) and (rawvalue is None):
-        if param in params:
-            rawvalue = params[param]
+        if inparam.pkey in params:
+            rawvalue = params[inparam.pkey]
             source = 'params'
     # ------------------------------------------------------------------
     # deal with value still being unset
     if rawvalue is None and inparam.default is not None:
         rawvalue = inparam.default
+        source = 'default'
     elif rawvalue is None:
-        eargs = [param, func_name]
+        strparam = str(param)
+        if inparam.hkey is not None:
+            strparam += ' (hkey={0})'.format(inparam.hkey)
+        if inparam.pkey is not None:
+            strparam += ' (pkey={0})'.format(inparam.pkey)
+        eargs = [strparam, func_name]
         WLOG(params, 'error', TextEntry('00-016-00011', args=eargs))
     return rawvalue, source
 
@@ -534,7 +643,7 @@ def get_times(params, bprops, infile, header, props, kwargs):
         exptime = kwargs['exptime']
         exp_timeunit = uu.s
     else:
-        exp_timekey = params['KW_EXPTIME']
+        exp_timekey = params['KW_EXPTIME'][0]
         exp_timeunit = params.instances['KW_EXPTIME'].unit
         exptime = pcheck(params, exp_timekey, func=func_name, paramdict=props)
     # ---------------------------------------------------------------------
@@ -553,11 +662,16 @@ def get_times(params, bprops, infile, header, props, kwargs):
     # calculate observation time
     obstime = starttime + timedelta
     # for the maximum peak to peak need an array of times
-    times = obstime + np.arange(0, 365, 5.0/3.0)
+    times = obstime.jd + np.arange(0, 365, 5.0/3.0)
     # add to bprops
-    bprops['OBS_TIME'] = obstime
+    bprops['START_TIME'] = starttime
+    bprops['EXP_TIME'] = exptime
+    bprops['TIME_DELTA'] = timedelta.value
+    bprops['OBS_TIME'] = obstime.value
     bprops['OBS_TIMES'] = times
-    bprops.set_sources(['OBS_TIME', 'OBS_TIMES'], func_name)
+    # add source
+    keys = ['START_TIME', 'EXP_TIME', 'TIME_DELTA', 'OBS_TIME', 'OBS_TIMES']
+    bprops.set_sources(keys, func_name)
     # return bprops
     return bprops
 
