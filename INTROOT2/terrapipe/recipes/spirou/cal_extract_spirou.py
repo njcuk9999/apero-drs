@@ -335,7 +335,7 @@ def __main__(recipe, params):
             e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
             # --------------------------------------------------------------
             # add berv properties to header
-            e2dsfile = extract.add_berv_keys(e2dsfile, bprops)
+            e2dsfile = extract.add_berv_keys(params, e2dsfile, bprops)
             # --------------------------------------------------------------
             # copy data
             e2dsfile.data = eprops['E2DS']
