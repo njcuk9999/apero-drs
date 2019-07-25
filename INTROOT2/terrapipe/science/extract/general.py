@@ -69,6 +69,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     header = infile.header
     # storage for order profiles
     orderprofiles = dict()
+    orderprofilefiles = dict()
     # loop around fibers
     for fiber in fibertypes:
         # log progress (straightening orderp)
@@ -82,12 +83,14 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             orderpsfile.read(params)
             # push data into orderp
             orderp = orderpsfile.data
+            orderpfilename = orderpsfile.filename
         # load the order profile
         else:
             # load using localisation load order profile function
             out = localisation.load_orderp(params, header, fiber=fiber)
+            orderpfilename, orderp = out
             # straighten orders
-            orderp = shape.ea_transform(params, out[1], shapelocal,
+            orderp = shape.ea_transform(params, orderp, shapelocal,
                                         dxmap=shapex, dymap=shapey)
             # push into orderpsfile
             orderpsfile.data = orderp
@@ -95,8 +98,9 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             orderpsfile.write(params)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
+        orderprofilefiles[fiber] = orderpfilename
     # return order profiles
-    return orderprofiles
+    return orderprofiles, orderprofilefiles
 
 
 def thermal_correction(params, recipe, header, props=None, eprops=None,
@@ -148,29 +152,32 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
     # get the wave solution
     wavemap = wprops['WAVEMAP']
-
+    # ----------------------------------------------------------------------
+    # get thermal
+    thermalfile, thermal = get_thermal(params, header, fiber=fiber,
+                                       filename=thermal_file)
     # ----------------------------------------------------------------------
     # thermal correction kwargs
     tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
                    tapas_thres=tapas_thres, envelope=envelope,
                    filter_wid=filter_wid, torder=torder,
                    red_limit=red_limt, blue_limit=blue_limit,
-                   thermal_file=thermal_file)
+                   thermal=thermal)
     # base thermal correction on fiber type
     if fibertype in corrtype1:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
         WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
         # do thermal correction
-        thermalfile, e2ds = tcorrect1(params, e2ds, **tkwargs)
-        _, e2dsff = tcorrect1(params, e2dsff, flat=flat, **tkwargs)
+        e2ds = tcorrect1(params, e2ds, **tkwargs)
+        e2dsff = tcorrect1(params, e2dsff, flat=flat, **tkwargs)
     elif fibertype in corrtype2:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
         WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
         # do thermal correction
-        thermalfile, e2ds = tcorrect2(params, e2ds, **tkwargs)
-        _, e2dsff = tcorrect2(params, e2dsff, flat=flat, **tkwargs)
+        e2ds = tcorrect2(params, e2ds, **tkwargs)
+        e2dsff = tcorrect2(params, e2dsff, flat=flat, **tkwargs)
     else:
         # log that we are not correcting thermal
         WLOG(params, 'info', TextEntry('40-016-00013', args=[fibertype]))
@@ -202,23 +209,24 @@ def get_thermal(params, header, fiber=None, filename=None):
     thermal, thermal_file = general.load_calib_file(params, key, header,
                                                     filename=filename)
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00031', args=[thermal_file]))
+    WLOG(params, '', TextEntry('40-014-00040', args=[thermal_file]))
     # return the master image
     return thermal_file, thermal
 
 
-def tcorrect1(params, image, header, fiber, wavemap, flat=None, **kwargs):
+def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
+              **kwargs):
     # get parameters from skwargs
     tapas_thres = kwargs.get('tapas_thres', None)
     filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
     red_limit = kwargs.get('red_limit', None)
-    thermal_file = kwargs.get('thermal_file', None)
     tapas_file = kwargs.get('tapas_file', None)
     # ----------------------------------------------------------------------
-    # get thermal
-    thermalfile, thermal = get_thermal(params, header, fiber=fiber,
-                                       filename=thermal_file)
+    # deal with no thermal
+    if thermal is None:
+        # get thermal
+        _, thermal = get_thermal(params, header, fiber=fiber)
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
@@ -226,7 +234,7 @@ def tcorrect1(params, image, header, fiber, wavemap, flat=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if np.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
-        return thermalfile, image
+        return image
     # ----------------------------------------------------------------------
     # load tapas
     tapas = drs_data.load_tapas(params, filename=tapas_file)
@@ -247,7 +255,6 @@ def tcorrect1(params, image, header, fiber, wavemap, flat=None, **kwargs):
     torder_tapas = sptapas(wavemap[torder, wavemask])
     # find those pixels lower than threshold in tapas
     torder_mask[wavemask] = torder_tapas < tapas_thres
-
     # median filter the thermal (loop around orders)
     for order_num in range(thermal.shape[0]):
         thermal[order_num] = medfilt(thermal[order_num], filter_wid)
@@ -271,10 +278,11 @@ def tcorrect1(params, image, header, fiber, wavemap, flat=None, **kwargs):
     corrected_image = image - thermal
     # ----------------------------------------------------------------------
     # return p and corrected image
-    return thermalfile, corrected_image
+    return corrected_image
 
 
-def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
+def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
+              **kwargs):
 
     envelope_percent = kwargs.get('envelope', None)
     filter_wid = kwargs.get('filter_wid', None)
@@ -285,9 +293,10 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
     # get the shape
     dim1, dim2 = image.shape
     # ----------------------------------------------------------------------
-    # get thermal
-    thermalfile, thermal = get_thermal(params, header, fiber=fiber,
-                                       filename=thermal_file)
+    # deal with no thermal
+    if thermal is None:
+        # get thermal
+        _, thermal = get_thermal(params, header, fiber=fiber)
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
@@ -295,7 +304,7 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if np.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
-        return thermalfile, image
+        return image
     # ----------------------------------------------------------------------
     # set up an envelope to measure thermal background in image
     envelope = np.zeros(dim2)
@@ -312,7 +321,8 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
         # get the box for this pixel
         imagebox = image[torder, start:end]
         # get the envelope
-        envelope[x_it] = np.nanpercentile(imagebox, envelope_percent)
+        with warnings.catch_warnings(record=True) as _:
+            envelope[x_it] = np.nanpercentile(imagebox, envelope_percent)
     # ----------------------------------------------------------------------
     # median filter the thermal (loop around orders)
     for order_num in range(dim1):
@@ -339,7 +349,7 @@ def tcorrect2(params, image, header, fiber, wavemap, flat=None, **kwargs):
     corrected_image = image - thermal
     # ----------------------------------------------------------------------
     # return p and corrected image
-    return thermalfile, corrected_image
+    return corrected_image
 
 
 def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
