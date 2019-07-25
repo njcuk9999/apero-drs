@@ -326,6 +326,8 @@ def __main__(recipe, params):
         else:
             hfiles = [infile.basename]
         orderpfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+        # add the calibration files use
+        orderpfile = general.add_calibs_to_header(orderpfile, props)
         # add qc parameters
         orderpfile.add_qckeys(qc_params)
         # copy data
