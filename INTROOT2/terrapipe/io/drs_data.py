@@ -159,8 +159,7 @@ def load_full_flat_badpix(params, **kwargs):
         return construct_filename(params, filename, relfolder, func=func_name)
     # return image
     try:
-        image, outf = load_fits_file(params, filename, relfolder, kwargs,
-                                     func_name)
+        image, outf = load_fits_file(params, filename, relfolder, func_name)
         WLOG(params, '', TextEntry('40-012-00003', args=outf))
         return image
     except LoadException:
@@ -181,8 +180,7 @@ def load_full_flat_pp(params, **kwargs):
         return construct_filename(params, filename, relfolder, func=func_name)
     # return image
     try:
-        image, outf = load_fits_file(params, filename, relfolder, kwargs,
-                                     func_name)
+        image, outf = load_fits_file(params, filename, relfolder, func_name)
         WLOG(params, '', TextEntry('40-010-00011', args=outf))
         return image
     except LoadException:
@@ -234,22 +232,22 @@ def load_object_list(params, **kwargs):
     try:
         table, outf = load_table_file(params, filename, relfolder, kwargs,
                                      func_name)
-        WLOG(params, '', TextEntry('40-999-00002', args=outf))
+        WLOG(params, '', TextEntry('40-999-00003', args=outf))
         return table
     except LoadException:
         eargs = [filename, relfolder]
-        WLOG(params, 'error', TextEntry('00-010-00004', args=eargs))
+        WLOG(params, 'error', TextEntry('00-010-00005', args=eargs))
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-def load_fits_file(params, filename, directory, kwargs, func_name):
+def load_fits_file(params, filename, directory, func_name):
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # construct filename
     absfilename = construct_filename(params, filename, directory,
-                                     func=func_name, **kwargs)
+                                     func=func_name)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(absfilename):
         eargs = [absfilename, func_name]
@@ -265,7 +263,7 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # construct filename
     absfilename = construct_filename(params, filename, directory,
-                                     func=func_name, **kwargs)
+                                     func=func_name)
     # extra parameters
     fmt = kwargs.get('fmt', None)
     colnames = kwargs.get('colnames', None)
