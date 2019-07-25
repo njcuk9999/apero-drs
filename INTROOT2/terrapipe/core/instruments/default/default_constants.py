@@ -25,7 +25,7 @@ __all__ = [
     'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
     'CAVITY_LENGTH_FILE_WAVECOL', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
-    'OBJ_LIST_GAIA_MAG_CUT',
+    'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -205,6 +205,14 @@ OBJ_LIST_SIMBAD_URL = Const('OBJ_LIST_SIMBAD_URL', value=None, dtype=str,
 # Define the gaia magnitude cut to use in the gaia query
 OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
                               source=__NAME__, minimum=10.0, maximum=25.0)
+
+# Define the gaia epoch to use in the gaia query
+OBJ_LIST_GAIA_EPOCH = Const('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
+                            source=__NAME__, minimum=2000.0, maximum=2100.0)
+
+# Define the gaia parallax limit for using gaia point
+OBJ_LIST_GAIA_PLX_LIM = Const('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0)
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
