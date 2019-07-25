@@ -11,6 +11,8 @@ __all__ = [# input keys
            'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_UTC_OBS',
            'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
            'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_CMPLTEXP', 'KW_NEXP',
+           'KW_PLX', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
+           'KW_GAIA_ID',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
            'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -23,7 +25,6 @@ __all__ = [# input keys
            # dark keys
            'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
-           'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
            # bad pix keys
            'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
            'KW_BNILUM', 'KW_BTOT',
@@ -39,7 +40,13 @@ __all__ = [# input keys
            'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT', 'KW_COSMIC_THRES',
            'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART', 'KW_S1D_WAVEEND',
            'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO', 'KW_S1D_SMOOTH',
-           'KW_S1D_BLAZET',
+           'KW_S1D_BLAZET', 'KW_BERVRA', 'KW_BERVDEC', 'KW_BERVEPOCH',
+           'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX', 'KW_BERV_POS_SOURCE',
+           'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT', 'KW_BERV', 'KW_BJD',
+           'KW_BERVMAX', 'KW_BERVSOURCE', 'KW_BERV_EST', 'KW_BJD_EST',
+           'KW_BERVMAX_EST', 'KW_BERV_START', 'KW_BERV_EXP_TIME',
+           'KW_BERV_TIME_DELTA', 'KW_BERV_OBSTIME', 'KW_BERVGAIA_ID',
+           'KW_BERVOBJNAME',
            # wave values
            'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE',
            'KW_WAVESOURCE', 'KW_WAVECOEFFS', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
@@ -129,6 +136,9 @@ KW_OBJDEC = Keyword('KW_OBJDE', key='', dtype=float, source=__NAME__)
 # define the observation name
 KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__)
 
+# define the gaia id
+KW_GAIA_ID = Keyword('KW_GAIAID', key='', dtype=str, source=__NAME__)
+
 # define the observation equinox HEADER key
 KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='', dtype=float, source=__NAME__)
 
@@ -150,6 +160,9 @@ KW_CASS_TEMP = Keyword('KW_CASS_TEMP', key='', dtype=float, source=__NAME__)
 
 # define the humidity HEADER key
 KW_HUMIDITY = Keyword('KW_HUMIDITY', key='', dtype=float, source=__NAME__)
+
+# define the parallax HEADER key
+KW_PLX = Keyword('KW_PLX', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -365,6 +378,78 @@ KW_S1D_SMOOTH = Keyword('KW_S1D_SMOOTH', key='', dtype=float, source=__NAME__)
 # the blaze threshold used for the s1d
 KW_S1D_BLAZET = Keyword('KW_S1D_BLAZET', key='', dtype=float, source=__NAME__)
 
+# the Right Ascension used to calculate the BERV
+KW_BERVRA = Keyword('KW_BERVRA', key='', dtype=float, source=__NAME__)
+
+# the Declination used to calculate the BERV
+KW_BERVDEC = Keyword('KW_BERVDEC', key='', dtype=float, source=__NAME__)
+
+# the Gaia ID used to identify KW_BERV_POS_SOURCE for BERV calculation
+KW_BERVGAIA_ID = Keyword('KW_BERVGAIA_ID', key='', dtype=str, source=__NAME__)
+
+# the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
+KW_BERVOBJNAME = Keyword('KW_BERVOBJNAME', key='', dtype=str, source=__NAME__)
+
+# the epoch (jd) used to calculate the BERV
+KW_BERVEPOCH = Keyword('KW_BERVEPOCH', key='', dtype=float, source=__NAME__)
+
+# the pmra [mas/yr] used to calculate the BERV
+KW_BERVPMRA = Keyword('KW_BERVPMRA', key='', dtype=float, source=__NAME__)
+
+# the pmde [mas/yr] used to calculate the BERV
+KW_BERVPMDE = Keyword('KW_BERVPMDE', key='', dtype=float, source=__NAME__)
+
+# the parallax [mas] used to calculate the BERV
+KW_BERVPLX = Keyword('KW_BERVPLX', key='', dtype=float, source=__NAME__)
+
+# the source of the BERV star parameters (header or gaia)
+KW_BERV_POS_SOURCE = Keyword('KW_BERV_POS_SOURCE', key='', dtype=str,
+                             source=__NAME__)
+
+# the observatory latitude used to calculate the BERV
+KW_BERVLAT = Keyword('KW_BERVLAT', key='', dtype=float, source=__NAME__)
+
+# the observatory longitude used to calculate the BERV
+KW_BERVLONG = Keyword('KW_BERVLONG', key='', dtype=float, source=__NAME__)
+
+# the observatory altitude used to calculate the BERV
+KW_BERVALT = Keyword('KW_BERVALT', key='', dtype=float, source=__NAME__)
+
+# the BERV calculated with KW_BERVSOURCE
+KW_BERV = Keyword('KW_BERV', key='', dtype=float, source=__NAME__)
+
+# the Barycenter Julian date calculate with KW_BERVSOURCE
+KW_BJD = Keyword('KW_BJD', key='', dtype=float, source=__NAME__)
+
+# the maximum BERV found across 1 year (with KW_BERVSOURCE)
+KW_BERVMAX = Keyword('KW_BERVMAX', key='', dtype=float, source=__NAME__)
+
+# the source of the calculated BERV parameters
+KW_BERVSOURCE = Keyword('KW_BERVSOURCE', key='', dtype=str, source=__NAME__)
+
+# the BERV calculated with the estimate
+KW_BERV_EST = Keyword('KW_BERV_EST', key='', dtype=float, source=__NAME__)
+
+# the Barycenter Julian date calculated with the estimate
+KW_BJD_EST = Keyword('KW_BJD_EST', key='', dtype=float, source=__NAME__)
+
+# the maximum BERV found across 1 year (calculated with estimate)
+KW_BERVMAX_EST = Keyword('KW_BERVMAX_EST', key='', dtype=float, source=__NAME__)
+
+# the start time of the observation used to calculate BERV (+KW_BERV_TIME_DELTA)
+KW_BERV_START = Keyword('KW_BERV_START', key='', dtype=float, source=__NAME__)
+
+# the exposure time used to calculate observation midpoint
+KW_BERV_EXP_TIME = Keyword('KW_BERV_EXP_TIME', key='', dtype=float,
+                           source=__NAME__)
+
+# the time delta used (KW_BERV_START + this) [in days]
+KW_BERV_TIME_DELTA = Keyword('KW_BERV_TIME_DELTA', key='', dtype=float,
+                             source=__NAME__)
+
+# the actual jd time used to calculate the BERV
+KW_BERV_OBSTIME = Keyword('KW_BERV_OBSTIME', key='', dtype=float,
+                          source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define wave variables

@@ -23,9 +23,11 @@ INSTRUMENT.value = 'SPIROU'
 # Defines the longitude West is negative
 OBS_LONG = OBS_LONG.copy(__NAME__)
 OBS_LONG.value = -155.468876
+
 #  Defines the latitude North (deg)
 OBS_LAT = OBS_LAT.copy(__NAME__)
 OBS_LAT.value = 19.825252
+
 #  Defines the CFHT altitude (m)
 OBS_ALT = OBS_ALT.copy(__NAME__)
 OBS_ALT.value = 4204

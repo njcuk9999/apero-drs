@@ -211,6 +211,8 @@ class PseudoConstants(DefaultConstants):
         #
         #    Must include ra and dec
         inputs = dict()
+        inputs['gaiaid'] = ['KW_GAIA_ID', 'KW_BERVGAIA_ID', 'header', 'None']
+        inputs['objname'] = ['KW_OBJNAME', 'KW_BERVOBJNAME', 'header', 'None']
         inputs['ra'] = ['KW_OBJRA', 'KW_BERVRA', 'header', None]
         inputs['dec'] = ['KW_OBJDEC','KW_BERVDEC', 'header', None]
         inputs['epoch'] = ['KW_OBJEQUIN', 'KW_BERVEPOCH', 'header', None]

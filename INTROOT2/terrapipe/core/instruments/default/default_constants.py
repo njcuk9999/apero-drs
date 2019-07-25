@@ -23,7 +23,9 @@ __all__ = [
     # general calib constants
     'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT',
     'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
-    'CAVITY_LENGTH_FILE_WAVECOL',
+    'CAVITY_LENGTH_FILE_WAVECOL', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
+    'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
+    'OBJ_LIST_GAIA_MAG_CUT',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -179,6 +181,30 @@ CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
 # Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
 CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
                                    dtype=str, source=__NAME__)
+
+# Define the object list file name
+OBJ_LIST_FILE = Const('OBJ_LIST_FILE', value=None, dtype=str, source=__NAME__)
+
+# Define the object query list format
+OBJ_LIST_FILE_FMT = Const('OBJ_LIST_FILE_FMT', value=None, dtype=str,
+                          source=__NAME__)
+
+# Define the radius for crossmatching objects (in both lookup table and query)
+#   in arcseconds
+OBJ_LIST_CROSS_MATCH_RADIUS = Const('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
+                                    dtype=float, source=__NAME__, minimum=0.0)
+
+# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
+OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
+                          source=__NAME__)
+
+# Define the TAP SIMBAD URL (for use in crossmatching OBJNAME via astroquery)
+OBJ_LIST_SIMBAD_URL = Const('OBJ_LIST_SIMBAD_URL', value=None, dtype=str,
+                            source=__NAME__)
+
+# Define the gaia magnitude cut to use in the gaia query
+OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
+                              source=__NAME__, minimum=10.0, maximum=25.0)
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
