@@ -98,6 +98,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     :rtype: tuple[DrsRecipe, ParamDict]
     """
     func_name = __NAME__ + '.setup()'
+    # deal with unset instrument
+    if instrument == 'None':
+        instrument = None
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -267,8 +270,8 @@ def main_end_script(params, success, outputs='reduced', end=True):
     :return: the updated parameter dictionary
     :rtype: ParamDict
     """
-    # func_name = __NAME__ + '.main_end_script()'
-
+    func_name = __NAME__ + '.main_end_script()'
+    # get pconstants
     pconstant = constants.pload(params['INSTRUMENT'])
     # construct a lock file name
     opath = pconstant.INDEX_LOCK_FILENAME(params)
@@ -289,10 +292,14 @@ def main_end_script(params, success, outputs='reduced', end=True):
         # Must close lock file
         except SystemExit as e:
             drs_lock.close_lock_file(params, lock, lock_file, opath)
-            raise e
+            # log error
+            eargs = [type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
         except Exception as e:
             drs_lock.close_lock_file(params, lock, lock_file, opath)
-            raise e
+            # log error
+            eargs = [type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
     # -------------------------------------------------------------------------
     # log end message
     if end:
@@ -318,6 +325,21 @@ def main_end_script(params, success, outputs='reduced', end=True):
         drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
     # return p
+    return params
+
+
+def update_params(params, instrument):
+    # load instrument specific parameters
+    iparams = constants.load(instrument=instrument)
+    # copy parameters from instrument into main params
+    for iparam in iparams:
+        params[iparam] = iparams[iparam]
+        # set the source
+        params.set_source(iparam, iparams.sources[iparam])
+        # set the instance (if present)
+        if iparam in iparams.instances:
+            params.set_instance(iparam, iparams.instances[iparam])
+    # return main parameters
     return params
 
 
@@ -403,7 +425,6 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
         return found_files
     else:
         return found_files[-1]
-
 
 
 def copy_kwargs(recipe, **kwargs):
@@ -927,6 +948,9 @@ def _index_outputs(params):
     pconstant = constants.pload(params['INSTRUMENT'])
     # get index filename
     filename = pconstant.INDEX_OUTPUT_FILENAME()
+    # deal with outpath being unset
+    if params['OUTPATH'] is None:
+        return
     # get night name
     path = os.path.join(params['OUTPATH'], params['NIGHTNAME'])
     # get absolute path
