@@ -343,7 +343,7 @@ class DrsInputFile:
             self.basename = os.path.basename(abspath)
         # else raise an error
         else:
-            eargs = [self.name, func_name]
+            eargs = [self.__repr__(), func_name]
             WLOG(params, 'error', TextEntry('00-008-00004', args=eargs))
 
 
