@@ -36,6 +36,8 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 # Define the PP fileset for spirou
 PP_FILE = file_definitions.pp_file
+# Raw prefix
+RAW_PREFIX = file_definitions.raw_prefix
 
 
 # =============================================================================
@@ -207,7 +209,8 @@ def __main__(recipe, params):
         # Save rotated image
         # ------------------------------------------------------------------
         # get the output drs file
-        found, outfile = preprocessing.drs_outfile_id(params, recipe, PP_FILE)
+        oargs = [params, recipe, infile, PP_FILE, RAW_PREFIX]
+        found, outfile = preprocessing.drs_outfile_id(*oargs)
         # construct out filename
         outfile.construct_filename(params, infile=infile)
         # if we didn't find the output file we should log this error
