@@ -11,8 +11,22 @@ cal_loc_spirou.py TEST1/20180805 2295510f_pp.fits 2295511f_pp.fits 2295512f_pp.f
 
 cal_loc_spirou.py TEST1/20180805 2295515f_pp.fits 2295516f_pp.fits 2295517f_pp.fits 2295518f_pp.fits 2295519f_pp.fits
 
-cal_shape_master.py TEST1/20180805 -hcfiles 2295532c_pp.fits -fpfiles 2295525a_pp.fits 2295526a_pp.fits 2295527a_pp.fits 2295528a_pp.fits 2295529a_pp.fits
+cal_shape_master_spirou.py TEST1/20180805 -hcfiles 2295532c_pp.fits -fpfiles 2295525a_pp.fits 2295526a_pp.fits 2295527a_pp.fits 2295528a_pp.fits 2295529a_pp.fits
 
 # --------------------------------------------
 # night calibration
 # --------------------------------------------
+
+cal_badpix_spirou.py TEST1/20180805 -flatfiles 2295520f_pp.fits 2295521f_pp.fits 2295522f_pp.fits 2295523f_pp.fits 2295524f_pp.fits -darkfiles dark_dark_P5_003d_pp.fits
+
+cal_loc_spirou.py TEST1/20180805 2295510f_pp.fits 2295511f_pp.fits 2295512f_pp.fits 2295513f_pp.fits 2295514f_pp.fits
+
+cal_loc_spirou.py TEST1/20180805 2295515f_pp.fits 2295516f_pp.fits 2295517f_pp.fits 2295518f_pp.fits 2295519f_pp.fits
+
+cal_shape_spirou.py TEST1/20180805 2295525a_pp.fits 2295526a_pp.fits 2295527a_pp.fits 2295528a_pp.fits 2295529a_pp.fits
+
+cal_flat_spirou.py TEST1/20180805 2295520f_pp.fits 2295521f_pp.fits 2295522f_pp.fits 2295523f_pp.fits 2295524f_pp.fits
+
+cal_thermal_spirou.py TEST1/20180805 dark_dark_P5_003d_pp.fits
+
+cal_extract_spirou.py TEST1/20180805 *.fits --combine=False
