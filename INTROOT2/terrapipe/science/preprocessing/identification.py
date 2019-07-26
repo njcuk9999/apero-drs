@@ -82,7 +82,7 @@ def drs_infile_id(params, given_drs_file):
     return found, kind
 
 
-def drs_outfile_id(params, recipe, given_drs_file):
+def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     """
     Given a generic drs file (i.e. "pp_file") -- must have a fileset --
     identifies which sub-file (from fileset) this file is (based on the name
@@ -90,12 +90,14 @@ def drs_outfile_id(params, recipe, given_drs_file):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe related to this file
-    :param given_drs_file: DrsFitsFile, the drs file (with file set) to look
+    :param infile: DrsFitsFile, the input drs_file
+    :param drsfileset: DrsFitsFile, the drs file (with file set) to look
                            for sub-types
 
     :type params: ParamDict
     :type recipe: DrsRecipe
-    :type given_drs_file: DrsFitsFile
+    :type infile: DrsFitsFile
+    :type drsfileset: DrsFitsFile
 
     :returns: Whether we found the output file from give_drs_file list and
               if True returns the DrsFitsFile
@@ -103,23 +105,33 @@ def drs_outfile_id(params, recipe, given_drs_file):
     """
     func_name = __NAME__ + '.drs_outfile_id()'
     # check we have entries
-    if len(given_drs_file.fileset) == 0:
-        eargs = [given_drs_file.name, func_name]
+    if len(drsfileset.fileset) == 0:
+        eargs = [drsfileset.name, func_name]
         WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
     # get the associated files with this generic drs file
-    fileset = list(given_drs_file.fileset)
+    fileset = list(drsfileset.fileset)
     # set found to False
     found = False
-    kind = given_drs_file
+    kind, inname = None, 'not set'
     # loop around files
-    for drs_file in fileset:
+    for fileseti in fileset:
+        # remove prefix if not None
+        if prefix is not None:
+            inname = infile.name.split(prefix)[-1]
+        else:
+            inname = infile.name
         # check this file is valid
-        cond = drs_file.name == drs_file.name
+        cond = inname == fileseti.name
         # if True we have found our file
         if cond:
             found = True
-            kind = drs_file
+            kind = fileseti
             break
+    # deal with not being found
+    if kind is None:
+        eargs = [inname, '\n\t'.join(fileset), func_name]
+        WLOG(params, 'error', TextEntry('00-010-00006', args=eargs))
+
     # set the recipe if found
     if found:
         kind.recipe = recipe
