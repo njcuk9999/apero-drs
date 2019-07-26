@@ -18,17 +18,17 @@ __all__ = ['setup', 'end_main', 'end', 'wlog']
 # =============================================================================
 # Define functions
 # =============================================================================
-# Setup function
-setup = drs_startup.setup
+# deal with copying input keyword arguments from one main to another
+copy_kwargs = drs_startup.copy_kwargs
 
-# Run __main__ function
-run = drs_startup.run
-
-# file processing message
-file_processing_update = drs_startup.file_processing_update
+# Exit function
+end = drs_startup.exit_script
 
 # Ending main function
 end_main = drs_startup.main_end_script
+
+# file processing message
+file_processing_update = drs_startup.file_processing_update
 
 # get the local variables
 get_locals = drs_startup.get_local_variables
@@ -36,17 +36,20 @@ get_locals = drs_startup.get_local_variables
 # get a file defintion from a filetype name
 get_file_definition = drs_startup.get_file_definition
 
-# deal with copying input keyword arguments from one main to another
-copy_kwargs = drs_startup.copy_kwargs
+# param checking function
+pcheck = drs_log.find_param
 
-# Exit function
-end = drs_startup.exit_script
+# Run __main__ function
+run = drs_startup.run
+
+# Setup function
+setup = drs_startup.setup
+
+# update parameters for a new instrument
+update_params = drs_startup.update_params
 
 # The logging script
 wlog = drs_log.wlog
-
-# param checking function
-pcheck = drs_log.find_param
 
 
 # =============================================================================
