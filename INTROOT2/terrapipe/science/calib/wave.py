@@ -183,7 +183,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
         # get filetype from header (dprtype)
         filetype = header[params['KW_DPRTYPE'][0]]
         # get wave file instance
-        wavefile = core.get_file_definition(filetype, params['INSTRUMENT'])
+        wavefile = core.get_file_definition(filetype, params['INSTRUMENT'],
+                                            kind='red')
         # set wave file properties (using header)
         wavefile.recipe = recipe
         wavefile.header = header

@@ -146,7 +146,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 WLOG(params, 'info', TextEntry('40-014-00007', args=wargs))
                 # get infile from filetype
                 fpfile_it = core.get_file_definition(dprtype,
-                                                     params['INSTRUMENT'])
+                                                     params['INSTRUMENT'],
+                                                     kind='tmp')
                 # construct new infile instance
                 fpfile_it = fpfile_it.newcopy(filename=filename, recipe=recipe)
                 fpfile_it.read()

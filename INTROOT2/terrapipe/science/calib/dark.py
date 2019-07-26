@@ -413,8 +413,8 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
 
     # -------------------------------------------------------------------------
     # get infile from filetype
-    infile = core.get_file_definition(params['FILETYPE'],
-                                      params['INSTRUMENT'])
+    infile = core.get_file_definition(params['FILETYPE'], params['INSTRUMENT'],
+                                      kind='tmp')
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
     infile.read()
