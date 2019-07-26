@@ -165,6 +165,8 @@ class DrsRecipe(object):
         parser = DRSArgumentParser(self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
+        # get the drs params from recipe
+        drs_params = self.drs_params
         # deal with function call
         self._parse_args(fkwargs)
         # ---------------------------------------------------------------------
@@ -183,6 +185,7 @@ class DrsRecipe(object):
             rkwargs = self.kwargs[rarg].props
             # parse into parser
             parser.add_argument(*rname, **rkwargs)
+        # ---------------------------------------------------------------------
         # add special arguments
         for rarg in self.specialargs:
             # extract out name and kwargs from rarg
@@ -190,12 +193,28 @@ class DrsRecipe(object):
             rkwargs = self.specialargs[rarg].props
             # parse into parser
             parser.add_argument(*rname, **rkwargs)
+        # ---------------------------------------------------------------------
+        # test that sys.argv is a list
+        if not isinstance(sys.argv, list):
+            eargs = [sys.argv, type(sys.argv), func_name]
+            WLOG(drs_params, 'error', TextEntry('00-006-00013', args=eargs))
+        # ---------------------------------------------------------------------
         # get params
-        params = vars(parser.parse_args(args=self.str_arg_list))
+        try:
+            params = vars(parser.parse_args(args=self.str_arg_list))
+
+        except Exception as e:
+            eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
+            WLOG(drs_params, 'error', TextEntry('00-006-00014', args=eargs))
+            params = None
+        # ---------------------------------------------------------------------
+        # set the source for the params
         source = str(parser.source)
         strsource = '{0} [{1}]'.format(func_name, source)
+        # ---------------------------------------------------------------------
         # delete parser - no longer needed
         del parser
+        # ---------------------------------------------------------------------
         # update params
         self.input_params = ParamDict()
         for key in list(params.keys()):
