@@ -46,6 +46,7 @@ TextDict = locale.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
+
 # =============================================================================
 # Define classes
 # =============================================================================
@@ -72,7 +73,7 @@ def load_linelist(params, **kwargs):
     wavecol = pcheck(params, 'WAVE_LINELIST_WAVECOL', 'wavecol', kwargs,
                      func_name)
     ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', 'ampcol', kwargs,
-                     func_name)
+                    func_name)
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
@@ -205,7 +206,7 @@ def load_tapas(params, **kwargs):
     # return image
     try:
         table, outf = load_table_file(params, filename, relfolder, kwargs,
-                                     func_name)
+                                      func_name)
         WLOG(params, '', TextEntry('40-999-00002', args=outf))
         return table
     except LoadException:
@@ -231,7 +232,7 @@ def load_object_list(params, **kwargs):
     # return image
     try:
         table, outf = load_table_file(params, filename, relfolder, kwargs,
-                                     func_name)
+                                      func_name)
         WLOG(params, '', TextEntry('40-999-00003', args=outf))
         return table
     except LoadException:
@@ -279,8 +280,14 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     return table, absfilename
 
 
-def construct_filename(params, filename, directory, **kwargs):
+def construct_filename(params, filename=None, directory=None, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.construct_filename()')
+    # deal with no filename
+    if filename is None:
+        filename = ''
+    # deal with no directory
+    if directory is None:
+        directory = ''
     # get properties from params/jwargs
     package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
     # construct filepath
