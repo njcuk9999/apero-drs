@@ -5,20 +5,34 @@ from terrapipe.core.constants import constant_functions
 # Define variables
 # =============================================================================
 # all definition
-__all__ = ['DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG', 'DRS_ROOT',
-           'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB', 'DRS_TELLU_DB',
-           'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_VERSION', 'AUTHORS',
-           'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE', 'INSTRUMENT', 'DRS_PACKAGE',
-           'DRS_USERENV', 'DRS_USER_DEFAULT', 'DRS_PRINT_LEVEL',
-           'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
-           'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
-           'DRS_LOG_EXIT_TYPE', 'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
-           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
+__all__ = [# global settings
+           'DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG',
+           # path settings
+           'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
+           'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING',
+           # General properites
+           'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
+           # Instrument/Observatory Constants
+           'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
+           # DRS SETTINGS
+           'DRS_PACKAGE', 'DRS_USERENV',
+           # DRS INTERNAL PATHS
+           'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
+           'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA', 'DRS_BADPIX_DATA',
+           'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH', 'DRS_RESET_TELLUDB_PATH',
+           # DRS INDEXING SETTINGS
+           'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
+           # DATABASE SETTINGS
            'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
-           'DRS_BADPIX_DATA', 'CALIB_DB_MATCH', 'DRS_MOD_DATA_PATH',
-           'DRS_MOD_INSTRUMENT_CONFIG', 'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
-           'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME', 'DRS_LOG_FORMAT',
-           'DRS_CALIB_DATA', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT']
+           'CALIB_DB_MATCH',
+           # DISPLAY/LOGGING SETTINGS
+           'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
+           'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
+           'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT',
+           # PLOT SETTINGS
+           'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
+           'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
+            ]
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_config'
@@ -163,6 +177,12 @@ DRS_CALIB_DATA = Const('DRS_CALIB_DATA', dtype=str, source=__NAME__)
 
 # where the wave data are stored
 DRS_WAVE_DATA = Const('DRS_WAVE_DATA', dtype=str, source=__NAME__)
+
+# where the reset data are stored
+DRS_RESET_CALIBDB_PATH = Const('DRS_RESET_CALIBDB_PATH', dtype=str,
+                               source=__NAME__)
+DRS_RESET_TELLUDB_PATH = Const('DRS_RESET_TELLUDB_PATH', dtype=str,
+                               source=__NAME__)
 
 
 # =============================================================================

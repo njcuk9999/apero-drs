@@ -2,7 +2,7 @@ from terrapipe.core.constants import param_functions
 from terrapipe.core.core import drs_recipe
 from terrapipe.locale import drs_text
 
-from . import file_definitions as sf
+from terrapipe.core.instruments.default import file_definitions as sf
 
 # =============================================================================
 # Define variables
@@ -33,9 +33,10 @@ drs_recipe = drs_recipe.DrsRecipe
 # Below one must define all recipes and put into the "recipes" list
 test = drs_recipe(__INSTRUMENT__)
 drs_changelog = drs_recipe(__INSTRUMENT__)
+reset = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog]
+recipes = [test, drs_changelog, reset]
 
 # =============================================================================
 # Recipe definitions
@@ -93,10 +94,23 @@ test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
            files=[sf.pp_file], helpstr='test 2', required=True)
 
 # -----------------------------------------------------------------------------
-# drs_changelog.py
+# changelog.py
 # -----------------------------------------------------------------------------
 drs_changelog.name = 'drs_changelog.py'
 drs_changelog.instrument = __INSTRUMENT__
 drs_changelog.description = Help['CHANGELOG_DESCRIPTION']
 drs_changelog.arg(pos=0, name='preview', dtype='bool',
                   helpstr=Help['PREVIEW_HELP'])
+
+# -----------------------------------------------------------------------------
+# reset.py
+# -----------------------------------------------------------------------------
+reset.name = 'reset.py'
+reset.instrument = __INSTRUMENT__
+reset.description = Help['RESET_DESCRIPTION']
+reset.arg(pos=0, name='instrument', dtype='options',
+          helpstr=Help['RESET_INST_HELP'], options=['SPIROU', 'NIRPS'])
+reset.kwarg(name='-log', dtype='bool', default=True,
+            helpstr=Help['RESET_LOG_HELP'])
+reset.kwarg(name='-warn', dtype='bool', default=True,
+            helpstr=Help['RESET_WARN_HELP'])

@@ -134,3 +134,9 @@ DRS_CALIB_DATA.value = './data/spirou/calib/'
 # where the wave data are stored
 DRS_WAVE_DATA = DRS_WAVE_DATA.copy(__NAME__)
 DRS_WAVE_DATA.value = './data/spirou/calib/'
+
+# where the reset data are stored
+DRS_RESET_CALIBDB_PATH = DRS_RESET_CALIBDB_PATH.copy(__NAME__)
+DRS_RESET_CALIBDB_PATH.value = './data/spirou/reset/calibdb/'
+DRS_RESET_TELLUDB_PATH = DRS_RESET_TELLUDB_PATH.copy(__NAME__)
+DRS_RESET_TELLUDB_PATH.value = './data/spirou/reset/telludb/'

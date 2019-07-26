@@ -71,6 +71,8 @@ def general_file(params, **kwargs):
         outpath = params['OUTPATH']
         # get output night name from params
         outdirectory = params['NIGHTNAME']
+        # make sure night name folder exists (create it if not)
+        make_night_name(params, outdirectory, outpath)
         # construct absolute path
         abspath = os.path.join(outpath, outdirectory, outfilename)
     else:
@@ -118,9 +120,6 @@ def debug_file(params, **kwargs):
     return general_file(params, prefix=prefix, **kwargs)
 
 
-
-
-
 # =============================================================================
 # Define user functions
 # =============================================================================
@@ -152,6 +151,38 @@ def get_outfilename(params, infilename, prefix=None, suffix=None,
         outfilename = '{0}{1}'.format(outfilename, outext)
     # return filename
     return outfilename
+
+
+def make_night_name(params, nightname, path):
+    func_name = __NAME__ + '.make_night_name()'
+    # make full path
+    full_path = os.path.join(path, nightname)
+
+    rel_path = os.path.join(os.path.curdir, nightname)
+
+    # if full path exists then just return
+    if os.path.exists(full_path):
+        return
+    # else try to create it
+    else:
+        try:
+            # save current path
+            cwd = os.getcwd()
+            # change to path
+            os.chdir(path)
+            # attempt to make folders
+            os.makedirs(rel_path)
+            # change back to current path
+            os.chdir(cwd)
+        except Exception as e:
+            eargs = [rel_path, path, type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
+    # try to see if path exists one last time
+    if os.path.exists(full_path):
+        return
+    else:
+        eargs = [rel_path, path, func_name]
+        WLOG(params, 'error', TextEntry('09-002-00003', args=eargs))
 
 
 # =============================================================================
