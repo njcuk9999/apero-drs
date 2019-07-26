@@ -112,6 +112,11 @@ def __main__(recipe, params):
     # convert to numpy array
     filenames = np.array(filenames)
 
+    # deal with no files found
+    if len(filenames) == 0:
+        eargs = [params['INPATH']]
+        WLOG(params, 'error', TextEntry('09-011-00005', args=eargs))
+
     # ----------------------------------------------------------------------
     # Get all dark file properties
     # ----------------------------------------------------------------------
