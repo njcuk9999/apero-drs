@@ -152,7 +152,7 @@ def __main__(recipe, params):
         # Load and straighten order profiles
         # ------------------------------------------------------------------
         sargs = [infile, fibertypes, shapelocal, shapex, shapey, ORDERP_SFILE]
-        orderprofiles = extract.order_profiles(params, recipe, *sargs)
+        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
 
         # ------------------------------------------------------------------
         # Apply shape transformations
@@ -182,7 +182,8 @@ def __main__(recipe, params):
             nframes = infile.numfiles
             # --------------------------------------------------------------
             # get the order profile for this fiber
-            orderp = orderprofiles[fiber]
+            orderp = orderps[fiber]
+            orderpfile = orderpfiles[fiber]
             # --------------------------------------------------------------
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
@@ -284,6 +285,15 @@ def __main__(recipe, params):
                                   dim1name='file')
             # add qc parameters
             blazefile.add_qckeys(qc_params)
+            # add the calibration files use
+            blazefile = general.add_calibs_to_header(blazefile, props)
+            # --------------------------------------------------------------
+            # add the other calibration files used
+            blazefile.add_hkey('KW_CDBORDP', value=orderpfile)
+            blazefile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
+            blazefile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
+            blazefile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
+            blazefile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
             # --------------------------------------------------------------
             # add SNR parameters to header
             blazefile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
