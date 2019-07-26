@@ -76,7 +76,7 @@ def main(instrument=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, success)
+    params = core.end_main(params, success, outputs=None)
     # return a copy of locally defined variables in the memory
     return core.get_locals(dict(locals()), llmain)
 
@@ -92,6 +92,52 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
+    # load instrument settings
+    params = core.update_params(params, params['INPUTS']['INSTRUMENT'])
+    # get log and warn from inputs
+    log = params['INPUTS']['log']
+    warn = params['INPUTS']['warn']
+
+    # ----------------------------------------------------------------------
+    # Perform resets
+    # ----------------------------------------------------------------------
+    reset1, reset2, reset3 = True, True, True
+    reset4, reset5, reset6 = True, True, True
+
+    if warn:
+        reset1 = drs_reset.reset_confirmation(params, 'Tmp')
+    if reset1:
+        drs_reset.reset_tmp_folders(params, log)
+    else:
+        WLOG(params, '', 'Not resetting tmp folders.')
+    if warn:
+        reset2 = drs_reset.reset_confirmation(params, 'Reduced')
+    if reset2:
+        drs_reset.reset_reduced_folders(params, log)
+    else:
+        WLOG(params, '', 'Not resetting reduced folders.')
+    if warn:
+        reset3 = drs_reset.reset_confirmation(params, 'CalibDB')
+    if reset3:
+        drs_reset.reset_calibdb(params, log)
+    else:
+        WLOG(params, '', 'Not resetting CalibDB files.')
+    if warn:
+        reset4 = drs_reset.reset_confirmation(params, 'TelluDB')
+    if reset4:
+        drs_reset.reset_telludb(params, log)
+    else:
+        WLOG(params, '', 'Not resetting TelluDB files.')
+    if warn:
+        reset5 = drs_reset.reset_confirmation(params, 'Log')
+    if reset5:
+        drs_reset.reset_log(params)
+    if warn:
+        reset6 = drs_reset.reset_confirmation(params, 'Plot')
+    if reset6:
+        drs_reset.reset_plot(params)
+    else:
+        WLOG(params, '', 'Not resetting Log files.')
 
     # ----------------------------------------------------------------------
     # End of main code
@@ -106,7 +152,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    core.end(ll, has_plots=True)
+    core.end(ll, has_plots=False)
 
 # =============================================================================
 # End of code
