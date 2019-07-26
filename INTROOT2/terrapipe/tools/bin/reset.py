@@ -15,7 +15,7 @@ import numpy as np
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.tools.setup import drs_reset
+from terrapipe.tools.module.setup import drs_reset
 
 
 # =============================================================================
