@@ -106,24 +106,29 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
                       func_name, mapf='list', dtype=str)
     kind = pcheck(params, 'EXT_BERV_KIND', 'kind', kwargs, func_name)
     # ----------------------------------------------------------------------
+    # dprops
+    # TODO: add props for when we don't get them else where
+    dprops = get_default_props(params)
+    # ----------------------------------------------------------------------
     # do not try to calculate berv for specific DPRTYPES
-    if (dprtype not in dprtypes) or (kind == 'None'):
+    if (dprtype not in dprtypes):
         # log that we are skipping due to dprtype
-        WLOG(params, 'info', TextEntry('40-016-00018', args=[dprtype]))
+        WLOG(params, '', TextEntry('40-016-00018', args=[dprtype]))
         # all entries returns are empty
-        return assign_properties()
+        return assign_properties(props=dprops)
     if kind == 'None':
         # log that we are skipping due to user
-        WLOG(params, 'info', TextEntry('40-016-00019'))
+        WLOG(params, '', TextEntry('40-016-00019'))
         # all entries returns are empty
-        return assign_properties()
+        return assign_properties(props=dprops)
     # ----------------------------------------------------------------------
     # check if we already have berv (or bervest)
+    # TODO: need to also get props that we add (that aren't from inputs
     bprops = get_outputs(params, infile, header, props, kwargs)
     # if we have berv already then just return these
     if bprops is not None:
         # log that we are skipping due to user
-        WLOG(params, 'info', TextEntry('40-016-00020'))
+        WLOG(params, '', TextEntry('40-016-00020'))
         # return entries
         return assign_properties(**bprops)
     # ----------------------------------------------------------------------
