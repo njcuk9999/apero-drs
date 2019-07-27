@@ -168,9 +168,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # loop around fiber types
         for fiber in fibertypes:
-            # push fiber into params
-            params['FIBER'] = fiber
-            params.set_source('FIBER', mainname)
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
@@ -187,7 +184,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
-                                       props, kind='flat')
+                                       props, kind='flat', fiber=fiber)
 
             # --------------------------------------------------------------
             # Plots
