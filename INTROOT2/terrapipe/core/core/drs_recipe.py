@@ -296,7 +296,7 @@ class DrsRecipe(object):
             psource = '{0} [{1}]'.format(func_name, 'DRS_INTERACTIVE=False')
             self.drs_params.set_source('DRS_PLOT', psource)
 
-    def arg(self, name=None, **kwargs):
+    def set_arg(self, name=None, **kwargs):
         """
         Add an argument to the recipe
 
@@ -320,7 +320,7 @@ class DrsRecipe(object):
         # add to arg list
         self.args[name] = argument
 
-    def kwarg(self, name=None, **kwargs):
+    def set_kwarg(self, name=None, **kwargs):
         """
         Add a keyword argument to the recipe
 

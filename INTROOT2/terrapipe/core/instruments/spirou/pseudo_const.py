@@ -223,6 +223,20 @@ class PseudoConstants(DefaultConstants):
         inputs['alt'] = ['OBS_ALT', 'KW_BERVALT', 'const', None]
         inputs['plx'] = ['KW_PLX', 'KW_BERVPLX', 'header', 0.0]
         inputs['rv'] = ['KW_RV', 'KW_BERVRV', 'header', np.nan]
+
+        inputs['inputsource'] = ['KW_BERV_POS_SOURCE', 'KW_BERV_POS_SOURCE',
+                                 'header', 'None']
+        inputs['gmag'] = ['KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_GMAG', 'header',
+                          np.nan]
+        inputs['bpmag'] = ['KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_BPMAG', 'header',
+                           np.nan]
+        inputs['rpmag'] = ['KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_RPMAG', 'header',
+                           np.nan]
+        inputs['gaia_mag_lim'] = ['KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_MAGLIM',
+                                  'header', np.nan]
+        inputs['gaia_plx_lim'] = ['KW_BERV_GAIA_PLXLIM', 'KW_BERV_GAIA_PLXLIM',
+                                  'header', np.nan]
+
         # return inputs
         return inputs
 
@@ -244,6 +258,13 @@ class PseudoConstants(DefaultConstants):
         outputs['bjdest'] = ['BJD_EST', 'KW_BJD_EST', 'header', float]
         outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX', 'header', float]
         outputs['dbervest'] = ['DBERV_EST', 'KW_DBERV_EST', 'header', float]
+        outputs['start_time'] = ['START_TIME', 'KW_BERV_START', 'header', float]
+        outputs['exp_time'] = ['EXP_TIME', 'KW_BERV_EXP_TIME', 'header', float]
+        outputs['time_delta'] = ['TIME_DELTA', 'KW_BERV_TIME_DELTA', 'header',
+                                 float]
+        outputs['obs_time'] = ['OBS_TIME', 'KW_BERV_OBSTIME', 'header', float]
+
+
         # return outputs
         return outputs
 # =============================================================================
