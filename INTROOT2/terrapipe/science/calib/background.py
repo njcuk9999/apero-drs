@@ -151,6 +151,8 @@ def correction(recipe, params, infile, image, header, return_map=False,
     no_sub = pcheck(params, 'BKGR_NO_SUBTRACTION', 'no_sub', kwargs, func_name)
     width = pcheck(params, 'BKGR_BOXSIZE', 'width', kwargs, func_name)
     amp_ker = pcheck(params, 'BKGR_KER_AMP', 'amp_ker', kwargs, func_name)
+    # check kwargs for filename
+    filename = kwargs.get('filename', None)
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
@@ -175,15 +177,16 @@ def correction(recipe, params, infile, image, header, return_map=False,
         # correct the image for local background
         image1 = image - local_background_correction
         # --------------------------------------------------------------------
-
-        # TODO: check whether we have bad pixel file set from input arguments
-
-        # get background entries
-        bkgrdentries = drs_database.get_key_from_db(params, 'BKGRDMAP', cdb,
-                                                    header, n_ent=1)
-        # get background map filename
-        bkgrdfilename = bkgrdentries[filecol][0]
-        bkgrdfile = os.path.join(params['DRS_CALIB_DB'], bkgrdfilename)
+        # get filename
+        if filename is not None:
+            bkgrdfile = filename
+        else:
+            # get background entries
+            bkgrdentries = drs_database.get_key_from_db(params, 'BKGRDMAP', cdb,
+                                                        header, n_ent=1)
+            # get background map filename
+            bkgrdfilename = bkgrdentries[filecol][0]
+            bkgrdfile = os.path.join(params['DRS_CALIB_DB'], bkgrdfilename)
         # ------------------------------------------------------------------
         # log process
         WLOG(params, '', TextEntry('40-012-00009', args=[bkgrdfile]))

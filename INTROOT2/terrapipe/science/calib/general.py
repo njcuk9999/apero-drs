@@ -50,6 +50,58 @@ pcheck = core.pcheck
 # =============================================================================
 # Define user functions
 # =============================================================================
+def check_files(params, infile):
+    # get infile DPRTYPE and OBJNAME
+    dprtype = infile.get_key('KW_DPRTYPE', dtype=str, required=False)
+    objname = infile.get_key('KW_OBJNAME', dtype=str, required=False)
+    filename = infile.filename
+    # deal with unset value
+    if dprtype is None:
+        dprtype = 'None'
+    if objname is None:
+        objname = 'None'
+    # clean (capitalize and remove white spaces)
+    dprtype = clean_strings(dprtype)
+    objname = clean_strings(objname)
+    # get inputs
+    objname_inputs = params['INPUTS']['OBJNAME'].split(',')
+    dprtype_inputs = params['INPUTS']['DPRTYPE'].split(',')
+    # clean (capitalize and remove white spaces)
+    objname_inputs = clean_strings(objname_inputs)
+    dprtype_inputs = clean_strings(dprtype_inputs)
+    # ----------------------------------------------------------------------
+    # storage of outputs
+    skip = False
+    skip_conditions = [[], [], []]
+    # ----------------------------------------------------------------------
+    # deal with objname filter
+    if 'NONE' in objname_inputs:
+        skip = skip or False
+    # else check for objname in
+    elif objname in objname_inputs:
+        skip = skip or False
+    # else we skip
+    else:
+        skip = skip or True
+        skip_conditions[0].append('OBJNAME')
+        skip_conditions[2] = [objname, ' or '.join(objname_inputs), filename]
+    # ----------------------------------------------------------------------
+    # deal with objname filter
+    if 'NONE' in dprtype_inputs:
+        skip = skip or False
+    # else check for objname in
+    elif dprtype in dprtype_inputs:
+        skip = skip or False
+    # else we skip
+    else:
+        skip = skip or True
+        skip_conditions[0].append('DPRTYPE')
+        skip_conditions[1] = [dprtype, ' or '.join(dprtype_inputs), filename]
+    # ----------------------------------------------------------------------
+    # return the skip and conditions
+    return skip, skip_conditions
+
+
 def calibrate_ppfile(params, recipe, infile, **kwargs):
 
     func_name = __NAME__ + '.calibrate_file()'
@@ -64,6 +116,11 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     correctback = kwargs.get('correctback', True)
     cleanhotpix = kwargs.get('cleanhotpix', True)
     n_percentile = kwargs.get('n_percentile', None)
+
+    # get user input arguments
+    darkfile = get_input_files(params, 'DARKFILE', None)
+    badpixfile = get_input_files(params, 'BADPIXFILE', None)
+    backfile = get_input_files(params, 'BACKFILE', None)
 
     # get image and header
     if image is None:
@@ -84,7 +141,8 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # image 1 is corrected for dark
     # ----------------------------------------------------------------------
     if correctdark:
-        darkfile, image1 = dark.correction(params, image, header, nfiles=nfiles)
+        darkfile, image1 = dark.correction(params, image, header, nfiles=nfiles,
+                                           filename=darkfile)
     else:
         image1 = np.array(image)
         darkfile = 'None'
@@ -118,7 +176,8 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # image 3 is corrected for bad pixels
     # ----------------------------------------------------------------------
     if correctbad:
-        badpfile, image3 = badpix.correction(params, image2, header)
+        badpfile, image3 = badpix.correction(params, image2, header,
+                                             filename=badpixfile)
     else:
         image3 = np.array(image2)
         badpfile = 'None'
@@ -127,7 +186,8 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # ----------------------------------------------------------------------
     if correctback:
         bkgrdfile, image4 = background.correction(recipe, params, infile,
-                                                 image3, header)
+                                                  image3, header,
+                                                  filename=backfile)
     else:
         image4 = np.array(image3)
         bkgrdfile = 'None'
@@ -318,6 +378,34 @@ def load_calib_file_from_filename(params, filename, ext=None, fmt=None,
     # ------------------------------------------------------------------
     # return image and absolute path
     return image, abspath
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def clean_strings(strings):
+    if isinstance(strings, str):
+        return strings.strip().upper()
+    else:
+        outstrings = []
+        for string in strings:
+            outstrings.append(string.strip().upper())
+        return outstrings
+
+
+def get_input_files(params, inputkey, default=None):
+    # check for input key in inputs
+    if inputkey in params['INPUTS']:
+        value = params['INPUTS'][inputkey]
+        # if it is unset or 'None' then return the default
+        if value is None or value == 'None':
+            return default
+        # else return the value
+        else:
+            return value
+    # if we don't have the value return the default
+    else:
+        return default
 
 
 # =============================================================================

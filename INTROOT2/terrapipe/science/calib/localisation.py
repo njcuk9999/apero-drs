@@ -104,7 +104,7 @@ def calculate_order_profile(params, image, **kwargs):
     return newimage
 
 
-def find_and_fit_localisation(params, image, sigdet, **kwargs):
+def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
     # ----------------------------------------------------------------------
@@ -203,7 +203,7 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
     num_orders = np.min([max_num_orders, len(posc)])
     norm_num_orders = int(num_orders / num_fibers)
     # log the number of orders than have been detected
-    wargs = [params['FIBER'], norm_num_orders, num_fibers]
+    wargs = [fiber, norm_num_orders, num_fibers]
     WLOG(params, 'info', TextEntry('40-013-00006', args=wargs))
 
     # ----------------------------------------------------------------------
@@ -372,7 +372,7 @@ def find_and_fit_localisation(params, image, sigdet, **kwargs):
 
     # ----------------------------------------------------------------------
     # Log that the order geometry has been measured
-    wargs = [params['FIBER'], rorder_num]
+    wargs = [fiber, rorder_num]
     WLOG(params, 'info', TextEntry('40-013-00011', args=wargs))
     # get the mean rms values
     mean_rms_cent = np.nansum(cent_rms[:rorder_num]) * 1000 / rorder_num
@@ -428,32 +428,41 @@ def image_superimp(image, coeffs):
     return newimage
 
 
-def get_coefficients(params, recipe, header, **kwargs):
+def get_coefficients(params, recipe, header, fiber, **kwargs):
     func_name = __NAME__ + '.get_coefficients()'
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # get parameters from params/kwargs
-    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
     merge = kwargs.get('merge', False)
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
+    filename = kwargs.get('filename', None)
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'LOCOFILE', filename)
     # -------------------------------------------------------------------------
     # get loco file instance
     locofile = core.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
                                         kind='red')
-    # get calibration key
-    key = locofile.get_dbkey(func=func_name, fiber=usefiber)
-    # get the badpix entries
-    locoentries = drs_database.get_key_from_db(params, key, cdb, header,
-                                               n_ent=1)
-    # get badpix filename
-    locofilename = locoentries[filecol][0]
-    locofilepath = os.path.join(params['DRS_CALIB_DB'], locofilename)
+    # ------------------------------------------------------------------------
+    # get loco filename
+    if filename is not None:
+        locofilepath = filename
+    else:
+        # get calibDB
+        cdb = drs_database.get_full_database(params, 'calibration')
+        # get filename col
+        filecol = cdb.file_col
 
+        # get calibration key
+        key = locofile.get_dbkey(func=func_name, fiber=usefiber)
+        # get the badpix entries
+        locoentries = drs_database.get_key_from_db(params, key, cdb, header,
+                                                   n_ent=1)
+        # get badpix filename
+        locofilename = locoentries[filecol][0]
+        locofilepath = os.path.join(params['DRS_CALIB_DB'], locofilename)
+    # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,
                                 fiber=usefiber)
@@ -495,10 +504,7 @@ def get_coefficients(params, recipe, header, **kwargs):
     return props
 
 
-def load_orderp(params, header, fiber=None):
-    # get fiber if None
-    if fiber is None:
-        fiber = params['FIBER']
+def load_orderp(params, header, fiber, filename=None):
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # deal with fibers that we don't have
@@ -509,7 +515,8 @@ def load_orderp(params, header, fiber=None):
     # get key
     key = out_loc_orderp.get_dbkey(fiber=usefiber)
     # load calib file
-    orderp, orderp_file = general.load_calib_file(params, key, header)
+    orderp, orderp_file = general.load_calib_file(params, key, header,
+                                                  filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-013-00022', args=[orderp_file]))
     # return the master image
