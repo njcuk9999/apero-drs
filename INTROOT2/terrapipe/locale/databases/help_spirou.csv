@@ -52,3 +52,5 @@
 "DARK_MASTER_DESC","HELP","","None","Dark finding recipe for SPIRou @ CFHT","Recette Dark Find pour SPIRou @ CFHT ",""
 "DARK_MASTER_EXAMPLE","HELP","","None","cal_dark_master_spirou.py","cal_dark_master_spirou.py",""
 "DARK_MASTER_FILETYPE","HELP","","None","Current allowed types: DARK_DARK","Types actuellement autorisés: DARK_DARK ",""
+"OBJNAME_HELP","HELP","","None","Sets the object name to extract (filters input files)","",""
+"DPRTYPE_HELP","HELP","","None","Sets the DPRTYPE to extract (filters input files)","",""
