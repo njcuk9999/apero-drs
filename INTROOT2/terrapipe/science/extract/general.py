@@ -63,10 +63,16 @@ speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 # Define functions
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
-                   shapey, orderpfile):
+                   shapey, orderpfile, **kwargs):
 
     # get header from infile
     header = infile.header
+    # look for filename in kwargs
+    filename = kwargs.get('filename', None)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'ORDERPFILE', filename)
+    # ------------------------------------------------------------------------
     # storage for order profiles
     orderprofiles = dict()
     orderprofilefiles = dict()
@@ -78,7 +84,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         orderpsfile = orderpfile.newcopy(recipe=recipe, fiber=fiber)
         orderpsfile.construct_filename(params, infile=infile)
         # check if temporary file exists
-        if orderpsfile.file_exists():
+        if orderpsfile.file_exists() and (filename is None):
             # load the numpy temporary file
             orderpsfile.read(params)
             # push data into orderp
@@ -87,7 +93,8 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         # load the order profile
         else:
             # load using localisation load order profile function
-            out = localisation.load_orderp(params, header, fiber=fiber)
+            out = localisation.load_orderp(params, header, fiber=fiber,
+                                           filename=filename)
             orderpfilename, orderp = out
             # straighten orders
             orderp = shape.ea_transform(params, orderp, shapelocal,
@@ -104,7 +111,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
 
 
 def thermal_correction(params, recipe, header, props=None, eprops=None,
-                       **kwargs):
+                       fiber=None, **kwargs):
 
     func_name = __NAME__ + '.thermal_correction()'
     # deal with props = None
@@ -116,7 +123,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # get properties from parameter dictionaries / kwargs
     dprtype = pcheck(params, 'DPRTYPE', 'dprtype', kwargs, func_name,
                      paramdict=props)
-    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
     tapas_thres = pcheck(params, 'THERMAL_THRES_TAPAS', 'tapas_thres', kwargs,
                          func_name)
     envelope = pcheck(params, 'THERMAL_ENVELOPE_PERCENTILE', 'envelope',
@@ -147,22 +153,26 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
     # ----------------------------------------------------------------------
     # get master wave filename
-    mwavefile = wave.get_masterwave_filename(params)
+    mwavefile = wave.get_masterwave_filename(params, fiber)
     # get master wave map
     wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
     # get the wave solution
     wavemap = wprops['WAVEMAP']
     # ----------------------------------------------------------------------
-    # get thermal
-    thermalfile, thermal = get_thermal(params, header, fiber=fiber,
-                                       filename=thermal_file)
-    # ----------------------------------------------------------------------
-    # thermal correction kwargs
-    tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
-                   tapas_thres=tapas_thres, envelope=envelope,
-                   filter_wid=filter_wid, torder=torder,
-                   red_limit=red_limt, blue_limit=blue_limit,
-                   thermal=thermal)
+    # get thermal (only if in one of the correction lists)
+    if fibertype in list(corrtype1) + list(corrtype2):
+        thermalfile, thermal = get_thermal(params, header, fiber=fiber,
+                                           filename=thermal_file)
+        # ----------------------------------------------------------------------
+        # thermal correction kwargs
+        tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
+                       tapas_thres=tapas_thres, envelope=envelope,
+                       filter_wid=filter_wid, torder=torder,
+                       red_limit=red_limt, blue_limit=blue_limit,
+                       thermal=thermal)
+    else:
+        tkwargs = dict()
+        thermalfile = 'None'
     # base thermal correction on fiber type
     if fibertype in corrtype1:
         # log progress: doing thermal correction
@@ -196,10 +206,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     return eprops
 
 
-def get_thermal(params, header, fiber=None, filename=None):
-    # get fiber if None
-    if fiber is None:
-        fiber = params['FIBER']
+def get_thermal(params, header, fiber, filename=None):
     # get file definition
     out_thermal = core.get_file_definition('THERMAL_E2DS', params['INSTRUMENT'],
                                            kind='red')

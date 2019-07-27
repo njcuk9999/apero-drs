@@ -48,11 +48,10 @@ pcheck = core.pcheck
 # Define extraction functions
 # =============================================================================
 def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
-                    inflat=None, inblaze=None, **kwargs):
+                    inflat=None, inblaze=None, fiber=None, **kwargs):
     func_name = __NAME__ + '.extraction_twod()'
     # ----------------------------------------------------------------------
     # get number of orders from params/kwargs
-    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
     start_order = pcheck(params, 'EXT_START_ORDER', 'start', kwargs, func_name)
     end_order = pcheck(params, 'EXT_END_ORDER', 'end', kwargs, func_name)
     range1 = pcheck(params, 'EXT_RANGE1', 'range1', kwargs, func_name,
