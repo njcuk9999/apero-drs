@@ -286,8 +286,6 @@ def get_fiber_types(params, **kwargs):
     # get fiber
     if 'fiber' in kwargs:
         fiber = kwargs['fiber']
-    elif 'FIBER' in params:
-        fiber = params['FIBER']
     else:
         fiber = None
 
