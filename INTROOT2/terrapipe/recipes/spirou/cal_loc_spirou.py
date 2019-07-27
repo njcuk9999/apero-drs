@@ -148,17 +148,16 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # identify fiber type based on data type
         if props['DPRTYPE'] == 'FLAT_DARK':
-            params['FIBER'] = 'AB'
+            fiber = 'AB'
         elif props['DPRTYPE'] == 'DARK_FLAT':
-            params['FIBER'] = 'C'
+            fiber = 'C'
         else:
             eargs = [props['DPRTYPE'], recipe.name, 'FLAT_DARK or DARK_FLAT',
                      infile.basename]
             WLOG(params, 'error', TextEntry('00-013-00001', args=eargs))
-            params['FIBER'] = None
-        params.set_source('FIBER', mainname)
+            fiber = None
         # get fiber parameters
-        params = PConstants.FIBER_SETTINGS(params)
+        params = PConstants.FIBER_SETTINGS(params, fiber=fiber)
 
         # ------------------------------------------------------------------
         # Construct image order_profile
@@ -169,7 +168,7 @@ def __main__(recipe, params):
         # Localization of orders on central column
         # ------------------------------------------------------------------
         # find and fit localisation
-        largs = [order_profile, props['SIGDET']]
+        largs = [order_profile, props['SIGDET'], fiber]
         lout = localisation.find_and_fit_localisation(params, *largs)
         # get parameters from lout
         cent_0, cent_coeffs, cent_rms, cent_max_ptp = lout[:4]
@@ -305,7 +304,7 @@ def __main__(recipe, params):
         # Write image order_profile to file
         # ------------------------------------------------------------------
         # get a new copy to the order profile
-        orderpfile = ORDERP_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
+        orderpfile = ORDERP_FILE.newcopy(recipe=recipe, fiber=fiber)
         # construct the filename from file instance
         orderpfile.construct_filename(params, infile=infile)
         # define header keys for output file
@@ -341,7 +340,7 @@ def __main__(recipe, params):
         # Save and record of image of localization with order center
         #     and keywords
         # ------------------------------------------------------------------
-        loco1file = LOCO_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
+        loco1file = LOCO_FILE.newcopy(recipe=recipe, fiber=fiber)
         # construct the filename from file instance
         loco1file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -389,7 +388,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save and record of image of sigma
         # ------------------------------------------------------------------
-        loco2file = FWHM_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
+        loco2file = FWHM_FILE.newcopy(recipe=recipe, fiber=fiber)
         # construct the filename from file instance
         loco2file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -412,7 +411,7 @@ def __main__(recipe, params):
             # super impose zeros over the fit in the image
             image5 = localisation.image_superimp(image, cent_coeffs)
             # --------------------------------------------------------------
-            loco3file = SUP_FILE.newcopy(recipe=recipe, fiber=params['FIBER'])
+            loco3file = SUP_FILE.newcopy(recipe=recipe, fiber=fiber)
             # construct the filename from file instance
             loco3file.construct_filename(params, infile=infile)
             # --------------------------------------------------------------
