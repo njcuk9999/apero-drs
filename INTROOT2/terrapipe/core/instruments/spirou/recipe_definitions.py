@@ -5,7 +5,6 @@ from terrapipe.locale import drs_text
 
 from . import file_definitions as sf
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -52,9 +51,9 @@ dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=Help['DODARK_HELP'])
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
-                helpstr=Help['EXTFIBER_HELP'],
-                options=['ALL', 'AB', 'A', 'B', 'C'],
-                default_ref='INPUT_FLIP_IMAGE')
+             helpstr=Help['EXTFIBER_HELP'],
+             options=['ALL', 'AB', 'A', 'B', 'C'],
+             default_ref='INPUT_FLIP_IMAGE')
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
                  helpstr=Help['FLIPIMAGE_HELP'],
@@ -72,6 +71,12 @@ plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=Help['RESIZE_HELP'], default_ref='INPUT_RESIZE_IMAGE')
+# -----------------------------------------------------------------------------
+objname = dict(name='--objname', dtype=str, default='None',
+               helpstr=Help['OBJNAME_HELP'])
+# -----------------------------------------------------------------------------
+dprtype = dict(name='--dprtype', dtype=str, default='None',
+               helpstr=Help['DPRTYPE_HELP'])
 
 # =============================================================================
 # File option definitions
@@ -179,25 +184,24 @@ test.inputtype = 'pp'
 test.extension = 'fits'
 test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
-test.arg(pos=0, **directory)
-test.kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
-           files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
-           helpstr=Help['TEST_FILELIST1_HELP'], required=True)
-test.kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
-           files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
-           required=True)
-test.kwarg(**plot)
-test.kwarg(**interactive)
-test.kwarg(**add_cal)
-test.kwarg(**dobad)
-test.kwarg(**badfile)
-test.kwarg(default=False, **combine)
-test.kwarg(**dodark)
-test.kwarg(**darkfile)
-test.kwarg(**flipimage)
-test.kwarg(**fluxunits)
-test.kwarg(**resize)
-
+test.set_arg(pos=0, **directory)
+test.set_kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
+               files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
+               helpstr=Help['TEST_FILELIST1_HELP'], required=True)
+test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
+               files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
+               required=True)
+test.set_kwarg(**plot)
+test.set_kwarg(**interactive)
+test.set_kwarg(**add_cal)
+test.set_kwarg(**dobad)
+test.set_kwarg(**badfile)
+test.set_kwarg(default=False, **combine)
+test.set_kwarg(**dodark)
+test.set_kwarg(**darkfile)
+test.set_kwarg(**flipimage)
+test.set_kwarg(**fluxunits)
+test.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_preprocess_spirou
@@ -210,9 +214,9 @@ cal_pp.inputtype = 'raw'
 cal_pp.extension = 'fits'
 cal_pp.description = Help['PREPROCESS_DESC']
 cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
-cal_pp.arg(pos=0, **directory)
-cal_pp.arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
-           helpstr=Help['PREPROCESS_UFILES_HELP'])
+cal_pp.set_arg(pos=0, **directory)
+cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
+               helpstr=Help['PREPROCESS_UFILES_HELP'])
 
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
@@ -226,20 +230,20 @@ cal_badpix.extension = 'fits'
 cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
 cal_badpix.run_order = 1
-cal_badpix.arg(pos=0, **directory)
-cal_badpix.kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
-                 nargs='+', filelogic='exclusive', required=True,
-                 helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
-cal_badpix.kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
-                 nargs='+', filelogic='exclusive', required=True,
-                 helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
-cal_badpix.kwarg(**add_cal)
-cal_badpix.kwarg(default=True, **combine)
-cal_badpix.kwarg(**flipimage)
-cal_badpix.kwarg(**fluxunits)
-cal_badpix.kwarg(**plot)
-cal_badpix.kwarg(**interactive)
-cal_badpix.kwarg(**resize)
+cal_badpix.set_arg(pos=0, **directory)
+cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
+                     nargs='+', filelogic='exclusive', required=True,
+                     helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
+cal_badpix.set_kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
+                     nargs='+', filelogic='exclusive', required=True,
+                     helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
+cal_badpix.set_kwarg(**add_cal)
+cal_badpix.set_kwarg(default=True, **combine)
+cal_badpix.set_kwarg(**flipimage)
+cal_badpix.set_kwarg(**fluxunits)
+cal_badpix.set_kwarg(**plot)
+cal_badpix.set_kwarg(**interactive)
+cal_badpix.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_dark_spirou
@@ -253,13 +257,13 @@ cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
 cal_dark.run_order = 2
-cal_dark.arg(pos=0, **directory)
-cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
-             helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
-cal_dark.kwarg(**add_cal)
-cal_dark.kwarg(default=True, **combine)
-cal_dark.kwarg(**plot)
-cal_dark.kwarg(**interactive)
+cal_dark.set_arg(pos=0, **directory)
+cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
+                 helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
+cal_dark.set_kwarg(**add_cal)
+cal_dark.set_kwarg(default=True, **combine)
+cal_dark.set_kwarg(**plot)
+cal_dark.set_kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # cal_dark_master_spirou
@@ -273,12 +277,11 @@ cal_dark_master.extension = 'fits'
 cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
 cal_dark_master.run_order = 2
-cal_dark_master.kwarg(name='--filetype', dtype=str, default='DARK_DARK',
-                      helpstr=Help['DARK_MASTER_FILETYPE'])
-cal_dark_master.kwarg(**add_cal)
-cal_dark_master.kwarg(**plot)
-cal_dark_master.kwarg(**interactive)
-
+cal_dark_master.set_kwarg(name='--filetype', dtype=str, default='DARK_DARK',
+                          helpstr=Help['DARK_MASTER_FILETYPE'])
+cal_dark_master.set_kwarg(**add_cal)
+cal_dark_master.set_kwarg(**plot)
+cal_dark_master.set_kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
@@ -292,22 +295,22 @@ cal_loc.extension = 'fits'
 cal_loc.description = Help['LOC_DESC']
 cal_loc.epilog = Help['LOC_EXAMPLE']
 cal_loc.run_order = 3
-cal_loc.arg(pos=0, **directory)
-cal_loc.arg(name='files', dtype='files', filelogic='exclusive',
-            files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
-            helpstr=Help['FILES_HELP'] + Help['LOC_FILES_HELP'])
-cal_loc.kwarg(**add_cal)
-cal_loc.kwarg(**badfile)
-cal_loc.kwarg(**dobad)
-cal_loc.kwarg(**backsub)
-cal_loc.kwarg(default=True, **combine)
-cal_loc.kwarg(**darkfile)
-cal_loc.kwarg(**dodark)
-cal_loc.kwarg(**flipimage)
-cal_loc.kwarg(**fluxunits)
-cal_loc.kwarg(**plot)
-cal_loc.kwarg(**interactive)
-cal_loc.kwarg(**resize)
+cal_loc.set_arg(pos=0, **directory)
+cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
+                files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
+                helpstr=Help['FILES_HELP'] + Help['LOC_FILES_HELP'])
+cal_loc.set_kwarg(**add_cal)
+cal_loc.set_kwarg(**badfile)
+cal_loc.set_kwarg(**dobad)
+cal_loc.set_kwarg(**backsub)
+cal_loc.set_kwarg(default=True, **combine)
+cal_loc.set_kwarg(**darkfile)
+cal_loc.set_kwarg(**dodark)
+cal_loc.set_kwarg(**flipimage)
+cal_loc.set_kwarg(**fluxunits)
+cal_loc.set_kwarg(**plot)
+cal_loc.set_kwarg(**interactive)
+cal_loc.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_shape_master_spirou
@@ -321,25 +324,26 @@ cal_shape_master.extension = 'fits'
 cal_shape_master.description = Help['SHAPE_DESC']
 cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
 cal_shape_master.run_order = 4
-cal_shape_master.arg(pos=0, **directory)
-cal_shape_master.kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
-                       nargs='+', filelogic='exclusive', required=True,
-                       helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
-cal_shape_master.kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                       nargs='+', filelogic='exclusive', required=True,
-                       helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
-cal_shape_master.kwarg(**add_cal)
-cal_shape_master.kwarg(**badfile)
-cal_shape_master.kwarg(**dobad)
-cal_shape_master.kwarg(**backsub)
-cal_shape_master.kwarg(default=True, **combine)
-cal_shape_master.kwarg(**darkfile)
-cal_shape_master.kwarg(**dodark)
-cal_shape_master.kwarg(**flipimage)
-cal_shape_master.kwarg(**fluxunits)
-cal_shape_master.kwarg(**plot)
-cal_shape_master.kwarg(**interactive)
-cal_shape_master.kwarg(**resize)
+cal_shape_master.set_arg(pos=0, **directory)
+cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
+                           files=[sf.pp_hc1_hc1],
+                           nargs='+', filelogic='exclusive', required=True,
+                           helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
+cal_shape_master.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                           nargs='+', filelogic='exclusive', required=True,
+                           helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
+cal_shape_master.set_kwarg(**add_cal)
+cal_shape_master.set_kwarg(**badfile)
+cal_shape_master.set_kwarg(**dobad)
+cal_shape_master.set_kwarg(**backsub)
+cal_shape_master.set_kwarg(default=True, **combine)
+cal_shape_master.set_kwarg(**darkfile)
+cal_shape_master.set_kwarg(**dodark)
+cal_shape_master.set_kwarg(**flipimage)
+cal_shape_master.set_kwarg(**fluxunits)
+cal_shape_master.set_kwarg(**plot)
+cal_shape_master.set_kwarg(**interactive)
+cal_shape_master.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_SHAPE_spirou
@@ -353,21 +357,21 @@ cal_shape.extension = 'fits'
 cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
 cal_shape.run_order = 4
-cal_shape.arg(pos=0, **directory)
-cal_shape.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
-              helpstr=Help['SHAPE_FPFILES_HELP'])
-cal_shape.kwarg(**add_cal)
-cal_shape.kwarg(**badfile)
-cal_shape.kwarg(**dobad)
-cal_shape.kwarg(**backsub)
-cal_shape.kwarg(default=True, **combine)
-cal_shape.kwarg(**darkfile)
-cal_shape.kwarg(**dodark)
-cal_shape.kwarg(**flipimage)
-cal_shape.kwarg(**fluxunits)
-cal_shape.kwarg(**plot)
-cal_shape.kwarg(**interactive)
-cal_shape.kwarg(**resize)
+cal_shape.set_arg(pos=0, **directory)
+cal_shape.set_arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
+                  helpstr=Help['SHAPE_FPFILES_HELP'])
+cal_shape.set_kwarg(**add_cal)
+cal_shape.set_kwarg(**badfile)
+cal_shape.set_kwarg(**dobad)
+cal_shape.set_kwarg(**backsub)
+cal_shape.set_kwarg(default=True, **combine)
+cal_shape.set_kwarg(**darkfile)
+cal_shape.set_kwarg(**dodark)
+cal_shape.set_kwarg(**flipimage)
+cal_shape.set_kwarg(**fluxunits)
+cal_shape.set_kwarg(**plot)
+cal_shape.set_kwarg(**interactive)
+cal_shape.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_spirou
@@ -381,23 +385,24 @@ cal_ff.extension = 'fits'
 cal_ff.description = Help['FLAT_DESC']
 cal_ff.epilog = Help['FLAT_EXAMPLE']
 cal_ff.run_order = 5
-cal_ff.arg(pos=0, **directory)
-cal_ff.arg(name='files', dtype='files', filelogic='exclusive',
-           files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
-           helpstr=Help['FILES_HELP'] + Help['FLAT_FILES_HELP'])
-cal_ff.kwarg(**add_cal)
-cal_ff.kwarg(**badfile)
-cal_ff.kwarg(**dobad)
-cal_ff.kwarg(**backsub)
-cal_ff.kwarg(default=True, **combine)
-cal_ff.kwarg(**darkfile)
-cal_ff.kwarg(**dodark)
-cal_ff.kwarg(**fiber)
-cal_ff.kwarg(**flipimage)
-cal_ff.kwarg(**fluxunits)
-cal_ff.kwarg(**plot)
-cal_ff.kwarg(**interactive)
-cal_ff.kwarg(**resize)
+cal_ff.set_arg(pos=0, **directory)
+cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
+               files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark],
+               pos='1+',
+               helpstr=Help['FILES_HELP'] + Help['FLAT_FILES_HELP'])
+cal_ff.set_kwarg(**add_cal)
+cal_ff.set_kwarg(**badfile)
+cal_ff.set_kwarg(**dobad)
+cal_ff.set_kwarg(**backsub)
+cal_ff.set_kwarg(default=True, **combine)
+cal_ff.set_kwarg(**darkfile)
+cal_ff.set_kwarg(**dodark)
+cal_ff.set_kwarg(**fiber)
+cal_ff.set_kwarg(**flipimage)
+cal_ff.set_kwarg(**fluxunits)
+cal_ff.set_kwarg(**plot)
+cal_ff.set_kwarg(**interactive)
+cal_ff.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_thermal_spirou
@@ -411,24 +416,23 @@ cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
 cal_thermal.run_order = 6
-cal_thermal.arg(pos=0, **directory)
-cal_thermal.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
-                helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
-                limit=1)
-cal_thermal.kwarg(**add_cal)
-cal_thermal.kwarg(**badfile)
-cal_thermal.kwarg(**dobad)
-cal_thermal.kwarg(**backsub)
-cal_thermal.kwarg(default=True, **combine)
-cal_thermal.kwarg(**darkfile)
-cal_thermal.kwarg(**dodark)
-cal_thermal.kwarg(**fiber)
-cal_thermal.kwarg(**flipimage)
-cal_thermal.kwarg(**fluxunits)
-cal_thermal.kwarg(**plot)
-cal_thermal.kwarg(**interactive)
-cal_thermal.kwarg(**resize)
-
+cal_thermal.set_arg(pos=0, **directory)
+cal_thermal.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
+                    helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                    limit=1)
+cal_thermal.set_kwarg(**add_cal)
+cal_thermal.set_kwarg(**badfile)
+cal_thermal.set_kwarg(**dobad)
+cal_thermal.set_kwarg(**backsub)
+cal_thermal.set_kwarg(default=True, **combine)
+cal_thermal.set_kwarg(**darkfile)
+cal_thermal.set_kwarg(**dodark)
+cal_thermal.set_kwarg(**fiber)
+cal_thermal.set_kwarg(**flipimage)
+cal_thermal.set_kwarg(**fluxunits)
+cal_thermal.set_kwarg(**plot)
+cal_thermal.set_kwarg(**interactive)
+cal_thermal.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_extract_spirou
@@ -442,23 +446,25 @@ cal_extract.extension = 'fits'
 cal_extract.description = Help['EXTRACT_DESC']
 cal_extract.epilog = Help['EXTRACT_EXAMPLE']
 cal_extract.run_order = 6
-cal_extract.arg(pos=0, **directory)
-cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
-                helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
-                limit=1)
-cal_extract.kwarg(**add_cal)
-cal_extract.kwarg(**badfile)
-cal_extract.kwarg(**dobad)
-cal_extract.kwarg(**backsub)
-cal_extract.kwarg(default=True, **combine)
-cal_extract.kwarg(**darkfile)
-cal_extract.kwarg(**dodark)
-cal_extract.kwarg(**fiber)
-cal_extract.kwarg(**flipimage)
-cal_extract.kwarg(**fluxunits)
-cal_extract.kwarg(**plot)
-cal_extract.kwarg(**interactive)
-cal_extract.kwarg(**resize)
+cal_extract.set_arg(pos=0, **directory)
+cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
+                    helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                    limit=1)
+cal_extract.set_kwarg(**add_cal)
+cal_extract.set_kwarg(**badfile)
+cal_extract.set_kwarg(**dobad)
+cal_extract.set_kwarg(**backsub)
+cal_extract.set_kwarg(default=False, **combine)
+cal_extract.set_kwarg(**objname)
+cal_extract.set_kwarg(**dprtype)
+cal_extract.set_kwarg(**darkfile)
+cal_extract.set_kwarg(**dodark)
+cal_extract.set_kwarg(**fiber)
+cal_extract.set_kwarg(**flipimage)
+cal_extract.set_kwarg(**fluxunits)
+cal_extract.set_kwarg(**plot)
+cal_extract.set_kwarg(**interactive)
+cal_extract.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
