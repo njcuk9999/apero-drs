@@ -123,8 +123,7 @@ def __main__(recipe, params):
         rawfpfiles.append(infile.basename)
 
     # set fiber we should use
-    params['FIBER'] = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
-    params.set_source('FIBER', mainname)
+    fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
     # get combined hcfile
     hcfile = drs_fits.combine(params, hcfiles, math='sum')
@@ -141,13 +140,13 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, recipe, fpheader)
+    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber)
 
     # ----------------------------------------------------------------------
     # Get wave coefficients from master wavefile
     # ----------------------------------------------------------------------
     # get master wave filename
-    mwavefile = wave.get_masterwave_filename(params)
+    mwavefile = wave.get_masterwave_filename(params, fiber)
     # get master wave map
     wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
 
