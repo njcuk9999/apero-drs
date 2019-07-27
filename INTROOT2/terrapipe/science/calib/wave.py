@@ -20,6 +20,7 @@ from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
+from . import general
 
 # =============================================================================
 # Define variables
@@ -48,10 +49,8 @@ pcheck = core.pcheck
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_masterwave_filename(params, **kwargs):
+def get_masterwave_filename(params, fiber, **kwargs):
     func_name = __NAME__ + '.get_masterwave_filename()'
-    # get parameters from params/kwargs
-    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # deal with fibers that we don't have
@@ -77,7 +76,8 @@ def get_masterwave_filename(params, **kwargs):
     return abspath
 
 
-def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
+def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
+                     **kwargs):
     """
     Get the wavelength solution
 
@@ -98,8 +98,6 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
                    can be used instead of header
     :param kwargs: keyword arguments passed to function
 
-    :keyword fiber: str, the fiber name (if not set will look for this in
-                    parameter dictionary params['FIBER']
     :keyword force: bool, if True forces wave solution to come from calibDB
     :keyword filename: str or None, the filename to get wave solution from
                        this will overwrite all other options
@@ -108,7 +106,10 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     func_name = __NAME__ + '.get_wavesolution()'
     # get parameters from params/kwargs
     filename = kwargs.get('filename', None)
-    fiber = pcheck(params, 'FIBER', 'fiber', kwargs, func_name)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'WAVEFILE', filename)
+    # ------------------------------------------------------------------------
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
                    func_name)
     # get pseudo constants
@@ -136,9 +137,10 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
     if header is None:
         force = True
     else:
-        force = force or params['KW_WAVE_NBO'][0] not in header
-        force = force or params['KW_WAVE_DEG'][0] not in header
-        force = force or params['KW_CDBWAVE'][0] not in header
+        # force to calibDB if not in the header
+        force = force or (params['KW_WAVE_NBO'][0] not in header)
+        force = force or (params['KW_WAVE_DEG'][0] not in header)
+        force = force or (params['KW_CDBWAVE'][0] not in header)
     # ------------------------------------------------------------------------
     # Mode 1: wave filename defined
     # ------------------------------------------------------------------------
@@ -163,10 +165,17 @@ def get_wavesolution(params, recipe, header=None, infile=None, **kwargs):
         filecol = cdb.file_col
         # get the badpix entries
         waveentries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                   n_ent=1)
-        # get badpix filename
-        wavefilename = waveentries[filecol][0]
-        wavefilepath = os.path.join(params['DRS_CALIB_DB'], wavefilename)
+                                                   n_ent=1, required=False)
+        # if there are no wave entries use master wave file
+        if len(waveentries) == 0:
+            # log warning that no entries were found so using master
+            WLOG(params, 'warning', TextEntry('10-017-00001', args=[key]))
+            # get master path
+            wavefilepath = get_masterwave_filename(params, fiber=usefiber)
+        else:
+            # get badpix filename
+            wavefilename = waveentries[filecol][0]
+            wavefilepath = os.path.join(params['DRS_CALIB_DB'], wavefilename)
         # construct new infile instance and read data/header
         wavefile = out_wave.newcopy(filename=wavefilepath, recipe=recipe,
                                     fiber=usefiber)

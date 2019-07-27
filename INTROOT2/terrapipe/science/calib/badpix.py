@@ -271,7 +271,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     return mask, badpix_stats
 
 
-def correction(params, image=None, header=None, return_map=False):
+def correction(params, image=None, header=None, return_map=False, **kwargs):
     """
     Corrects "image" for "BADPIX" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
@@ -296,6 +296,8 @@ def correction(params, image=None, header=None, return_map=False):
               set to zeros or the bad pixel map (if return_map = True)
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
+    # check for filename in kwargs
+    filename = kwargs.get('filename', None)
     # deal with no header
     if header is None:
         WLOG(params, 'error', TextEntry('00-012-00002', args=[func_name]))
@@ -303,19 +305,20 @@ def correction(params, image=None, header=None, return_map=False):
     if (not return_map) and (image is None):
         WLOG(params, 'error', TextEntry('00-012-00003', args=[func_name]))
     # -------------------------------------------------------------------------
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
-
-    # TODO: check whether we have bad pixel file set from input arguments
-
-    # get the badpix entries
-    badpixentries = drs_database.get_key_from_db(params, 'BADPIX', cdb, header,
-                                                 n_ent=1)
-    # get badpix filename
-    badpixfilename = badpixentries[filecol][0]
-    badpixfile = os.path.join(params['DRS_CALIB_DB'], badpixfilename)
+    # get filename
+    if filename is not None:
+        badpixfile = filename
+    else:
+        # get calibDB
+        cdb = drs_database.get_full_database(params, 'calibration')
+        # get filename col
+        filecol = cdb.file_col
+        # get the badpix entries
+        badpixentries = drs_database.get_key_from_db(params, 'BADPIX', cdb,
+                                                     header, n_ent=1)
+        # get badpix filename
+        badpixfilename = badpixentries[filecol][0]
+        badpixfile = os.path.join(params['DRS_CALIB_DB'], badpixfilename)
     # -------------------------------------------------------------------------
     # get bad pixel file
     badpiximage = drs_fits.read(params, badpixfile)

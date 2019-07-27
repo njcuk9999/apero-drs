@@ -97,10 +97,7 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     return e2ds, flat, blaze, rms
 
 
-def get_flat(params, header, fiber=None):
-    # get fiber if None
-    if fiber is None:
-        fiber = params['FIBER']
+def get_flat(params, header, fiber):
     # get file definition
     out_shape_dymap = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
                                                kind='red')
@@ -114,10 +111,7 @@ def get_flat(params, header, fiber=None):
     return flat_file, flat
 
 
-def get_blaze(params, header, fiber=None):
-    # get fiber if None
-    if fiber is None:
-        fiber = params['FIBER']
+def get_blaze(params, header, fiber):
     # get file definition
     out_shape_dymap = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
                                                kind='red')

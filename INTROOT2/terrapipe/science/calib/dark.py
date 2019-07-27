@@ -183,84 +183,14 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
     :return darkimage: numpy array (2D), the dark
     """
     func_name = __NAME__ + '.correct_for_dark()'
-    # get constants from params/kwargs
-    use_sky = pcheck(params, 'USE_SKYDARK_CORRECTION', 'use_sky', kwargs,
-                     func_name)
-    skydark_only = pcheck(params, 'USE_SKYDARK_ONLY', 'skydark_only', kwargs,
-                          func_name)
-    comptype = pcheck(params, 'CALIB_DB_MATCH', 'comptype', kwargs, func_name)
-    # create the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # check kwargs for filename
+    filename = kwargs.get('filename', None)
     # -------------------------------------------------------------------------
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol, timecol = cdb.file_col, cdb.time_col
-
-    # TODO: check whether we have bad pixel file set from input arguments
-
-    # get the dark entries
-    darkentries = drs_database.get_key_from_db(params, 'DARKM', cdb, header,
-                                               n_ent=1, required=False)
-    # get the sky entries
-    skyentries = drs_database.get_key_from_db(params, 'SKYDARK', cdb, header,
-                                              n_ent=1, required=False)
-    # get the time used from header
-    usetime = drs_database.get_header_time(params, cdb, header)
-    # -------------------------------------------------------------------------
-    # try to read 'DARK' from cdb
-    if len(darkentries) > 0:
-        darkfilename = darkentries[filecol][0]
-        darkfile = os.path.join(params['DRS_CALIB_DB'], darkfilename)
-        darktime = darkentries[timecol][0]
+    # get filename
+    if filename is not None:
+        use_file, use_type = filename, 'user'
     else:
-        darkfile = None
-        darktime = None
-    # try to read 'SKYDARK' from cdb
-    if len(skyentries) > 0:
-        skydarkfilename = skyentries[filecol][0]
-        skydarkfile = os.path.join(params['DRS_CALIB_DB'], skydarkfilename)
-        skytime = skyentries[timecol][0]
-    else:
-        skydarkfile = None
-        skytime = None
-    # -------------------------------------------------------------------------
-    # load the correct dark image
-    # -------------------------------------------------------------------------
-    # setup logic used in multiple
-    cond1 = skydarkfile is not None
-    cond2 = darkfile is not None
-    # if we have both darkfile and skydarkfile use the closest
-    if use_sky and cond1 and cond2 and (not skydark_only):
-        # find closest to obs time
-        pos = np.argmin(abs(np.array([skytime, darktime]) - usetime))
-        if pos == 0:
-            use_file, use_type = str(skydarkfile), 'SKY'
-        else:
-            use_file, use_type = str(darkfile),  'DARKM'
-    # else if we only have sky
-    elif use_sky and cond1:
-        use_file, use_type = str(skydarkfile), 'SKY'
-    # else if only have a dark
-    elif cond2:
-        use_file, use_type = str(darkfile), 'DARKM'
-    # else we don't have either --> error
-    else:
-        # deal with extra constrain on file from "closer/older"
-        if comptype == 'older':
-            extstr = textdict['00-011-00004'].format(usetime)
-        else:
-            extstr = ''
-        # log error
-        eargs = [cdb.abspath, extstr, func_name]
-        if use_sky and (not skydark_only):
-            emsg1 = TextEntry('00-011-00001', args=eargs)
-        elif use_sky and skydark_only:
-            emsg1 = TextEntry('00-011-00003', args=eargs)
-        else:
-            emsg1 = TextEntry('00-011-00002', args=eargs)
-        WLOG(params, 'error', emsg1)
-        use_file, use_type = None, None
+        use_file, use_type = get_dark_file(params, header, **kwargs)
     # -------------------------------------------------------------------------
     # do dark using correct file
     darkimage, dhdr = drs_fits.read(params, use_file, gethdr=True)
@@ -421,6 +351,90 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # -------------------------------------------------------------------------
     # return master dark and the reference file
     return master_dark, infile
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def get_dark_file(params, header, **kwargs):
+    func_name = __NAME__ + '.get_dark_file()'
+    # get constants from params/kwargs
+    use_sky = pcheck(params, 'USE_SKYDARK_CORRECTION', 'use_sky', kwargs,
+                     func_name)
+    skydark_only = pcheck(params, 'USE_SKYDARK_ONLY', 'skydark_only', kwargs,
+                          func_name)
+    comptype = pcheck(params, 'CALIB_DB_MATCH', 'comptype', kwargs, func_name)
+    # create the text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol, timecol = cdb.file_col, cdb.time_col
+    # get the dark entries
+    darkentries = drs_database.get_key_from_db(params, 'DARKM', cdb, header,
+                                               n_ent=1, required=False)
+    # get the sky entries
+    skyentries = drs_database.get_key_from_db(params, 'SKYDARK', cdb, header,
+                                              n_ent=1, required=False)
+    # get the time used from header
+    usetime = drs_database.get_header_time(params, cdb, header)
+    # -------------------------------------------------------------------------
+    # try to read 'DARK' from cdb
+    if len(darkentries) > 0:
+        darkfilename = darkentries[filecol][0]
+        darkfile = os.path.join(params['DRS_CALIB_DB'], darkfilename)
+        darktime = darkentries[timecol][0]
+    else:
+        darkfile = None
+        darktime = None
+    # try to read 'SKYDARK' from cdb
+    if len(skyentries) > 0:
+        skydarkfilename = skyentries[filecol][0]
+        skydarkfile = os.path.join(params['DRS_CALIB_DB'], skydarkfilename)
+        skytime = skyentries[timecol][0]
+    else:
+        skydarkfile = None
+        skytime = None
+    # -------------------------------------------------------------------------
+    # load the correct dark image
+    # -------------------------------------------------------------------------
+    # setup logic used in multiple
+    cond1 = skydarkfile is not None
+    cond2 = darkfile is not None
+    # if we have both darkfile and skydarkfile use the closest
+    if use_sky and cond1 and cond2 and (not skydark_only):
+        # find closest to obs time
+        pos = np.argmin(abs(np.array([skytime, darktime]) - usetime))
+        if pos == 0:
+            use_file, use_type = str(skydarkfile), 'SKY'
+        else:
+            use_file, use_type = str(darkfile),  'DARKM'
+    # else if we only have sky
+    elif use_sky and cond1:
+        use_file, use_type = str(skydarkfile), 'SKY'
+    # else if only have a dark
+    elif cond2:
+        use_file, use_type = str(darkfile), 'DARKM'
+    # else we don't have either --> error
+    else:
+        # deal with extra constrain on file from "closer/older"
+        if comptype == 'older':
+            extstr = textdict['00-011-00004'].format(usetime)
+        else:
+            extstr = ''
+        # log error
+        eargs = [cdb.abspath, extstr, func_name]
+        if use_sky and (not skydark_only):
+            emsg1 = TextEntry('00-011-00001', args=eargs)
+        elif use_sky and skydark_only:
+            emsg1 = TextEntry('00-011-00003', args=eargs)
+        else:
+            emsg1 = TextEntry('00-011-00002', args=eargs)
+        WLOG(params, 'error', emsg1)
+        use_file, use_type = None, None
+
+    # return use_file and use_type
+    return use_file, use_type
 
 
 # =============================================================================
