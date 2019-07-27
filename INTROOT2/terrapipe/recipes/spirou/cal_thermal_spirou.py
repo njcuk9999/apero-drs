@@ -161,6 +161,9 @@ def __main__(recipe, params):
             kwargs['program'] = 'thermal_extract'
             # pipe into cal_extract
             llout = cal_extract_spirou.main(**kwargs)
+            # check success
+            if not llout['success']:
+                WLOG(params, 'error', TextEntry('09-016-00001'))
             # get qc
             passed = llout['params']['QC']
             # get header
