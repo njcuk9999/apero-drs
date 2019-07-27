@@ -82,7 +82,7 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     # FIBER SETTINGS
     # =========================================================================
-    def FIBER_SETTINGS(self, params, fiber=None):
+    def FIBER_SETTINGS(self, params, fiber):
         """
         Get the fiber settings
 
@@ -91,9 +91,6 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         source = __NAME__ + '.FIBER_SETTINGS()'
-        # get fiber type
-        if fiber is None:
-            fiber = params['FIBER']
         # list fiber keys
         keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
                 'FIBER_SET_NUM_FIBERS']
