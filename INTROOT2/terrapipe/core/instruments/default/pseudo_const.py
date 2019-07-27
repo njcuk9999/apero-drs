@@ -522,11 +522,8 @@ class PseudoConstants:
     # =========================================================================
     # FIBER SETTINGS
     # =========================================================================
-    def FIBER_SETTINGS(self, params, fiber=None):
+    def FIBER_SETTINGS(self, params, fiber):
         source = __NAME__ + '.FIBER_SETTINGS()'
-        # get fiber type
-        if fiber is None:
-            fiber = params['FIBER']
         # list fiber keys
         keys = []
         # loop around all fiber keys and add to params
