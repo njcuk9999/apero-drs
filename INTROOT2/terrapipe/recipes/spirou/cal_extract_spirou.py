@@ -133,6 +133,19 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
+        # ------------------------------------------------------------------
+        # deal with skipping files defined by inputs OBJNAME and DPRTYPE
+        skip, skip_conditions = general.check_files(params, infile)
+        if skip:
+            if 'DPRTYPE' in skip_conditions[0]:
+                wargs = skip_conditions[1]
+                WLOG(params, 'warning', TextEntry('10-016-00012', args=wargs))
+            if 'OBJNAME' in skip_conditions[0]:
+                wargs = skip_conditions[2]
+                WLOG(params, 'warning', TextEntry('10-016-00013', args=wargs))
+            # skip this file
+            continue
+        # ------------------------------------------------------------------
         # get header from file instance
         header = infile.header
         # get calibrations for this data
@@ -179,9 +192,6 @@ def __main__(recipe, params):
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]
             WLOG(params, 'info', TextEntry('40-016-00014', args=wargs))
-            # push fiber into params
-            params['FIBER'] = fiber
-            params.set_source('FIBER', mainname)
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
             wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
@@ -209,7 +219,8 @@ def __main__(recipe, params):
             WLOG(params, 'info', TextEntry('40-016-00011'))
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
-                                       props, inflat=flat, inblaze=blaze)
+                                       props, inflat=flat, inblaze=blaze,
+                                       fiber=fiber)
             # --------------------------------------------------------------
             # thermal correction of spectrum
             eprops = extract.thermal_correction(params, recipe, header, props,
@@ -252,10 +263,8 @@ def __main__(recipe, params):
             fail_msg, qc_values, qc_names = [], [], [],
             qc_logic, qc_pass = [], []
             textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-
-            # if array is completely NaNs it shouldn't pass
             # --------------------------------------------------------------
-
+            # if array is completely NaNs it shouldn't pass
             if np.sum(np.isfinite(eprops['E2DS'])) == 0:
                 # add failed message to fail message list
                 fail_msg.append(textdict['40-016-00008'])
