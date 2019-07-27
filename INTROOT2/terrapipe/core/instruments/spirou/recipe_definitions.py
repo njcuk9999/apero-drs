@@ -1,6 +1,5 @@
 from terrapipe.core import constants
 from terrapipe.core.core import drs_recipe
-from terrapipe.core.core import drs_file
 from terrapipe.locale import drs_text
 
 from . import file_definitions as sf
@@ -81,30 +80,50 @@ dprtype = dict(name='--dprtype', dtype=str, default='None',
 # =============================================================================
 # File option definitions
 # =============================================================================
-badfile = dict(name='--badpixfile', dtype='file', default='None',
-               files=[sf.out_badpix],
-               helpstr=Help['BADFILE_HELP'])
+backfile = dict(name='--backfile', dtype='file', default='None',
+                files=[sf.out_backmap], helpstr=Help['BACKFILE_HELP'])
 # -----------------------------------------------------------------------------
-blazefile = dict(name='--blazefile', dtype='file', default='None',
-                 files=[sf.out_ff_blaze],
-                 helpstr=Help['BLAZEFILE_HELP'])
+badfile = dict(name='--badpixfile', dtype='file', default='None',
+               files=[sf.out_badpix], helpstr=Help['BADFILE_HELP'])
+# -----------------------------------------------------------------------------
+# TODO: Need to add blaze
+# blazefile = dict(name='--blazefile', dtype='file', default='None',
+#                  files=[sf.out_ff_blaze], helpstr=Help['BLAZEFILE_HELP'])
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[sf.out_dark],
-                helpstr=Help['DARKFILE_HELP'])
+                files=[sf.out_dark], helpstr=Help['DARKFILE_HELP'])
 # -----------------------------------------------------------------------------
-flatfile = dict(name='--flatfile', dtype='file', default='None',
-                files=[sf.out_ff_flat],
-                helpstr=Help['FLATFILE_HELP'])
+# TODO: Need to add flat
+# flatfile = dict(name='--flatfile', dtype='file', default='None',
+#                 files=[sf.out_ff_flat], helpstr=Help['FLATFILE_HELP'])
 # -----------------------------------------------------------------------------
-# shapefile = dict(name='--shapefile', dtype='file', default='None',
-#                  files=[sf.out_silt_shape],
-#                  helpstr=Help['SHAPEFILE_HELP'])
+fpmaster = dict(name='--fpmaster', dtype='file', default='None',
+                files=[sf.out_shape_fpmaster],
+                helpstr=Help['FPMASTERFILE_HELP'])
 # -----------------------------------------------------------------------------
-# wavefile = dict(name='--wavefile', dtype='file', default='None',
-#                 files=[sf.out_wave_ab, sf.out_wave_a,
-#                        sf.out_wave_b, sf.out_wave_c],
-#                 helpstr=Help['WAVEFILE_HELP'])
+locofile = dict(name='--locofile', dtype='file', default='None',
+                files=[sf.out_loc_loco], helpstr=Help['LOCOFILE_HELP'])
+# -----------------------------------------------------------------------------
+orderpfile = dict(name='--orderpfile', dtype='file', default='None',
+                  files=[sf.out_loc_orderp], helpstr=Help['ORDERPFILE_HELP'])
+# -----------------------------------------------------------------------------
+shapexfile = dict(name='--shapex', dtype='file', default='None',
+                  files=[sf.out_shape_dxmap], helpstr=Help['SHAPEXFILE_HELP'])
+# -----------------------------------------------------------------------------
+shapeyfile = dict(name='--shapey', dtype='file', default='None',
+                  files=[sf.out_shape_dymap], helpstr=Help['SHAPEYFILE_HELP'])
+# -----------------------------------------------------------------------------
+shapelfile = dict(name='--shapel', dtype='file', default='None',
+                  files=[sf.out_shape_local], helpstr=Help['SHAPELFILE_HELP'])
+# -----------------------------------------------------------------------------
+# TODO: Need to add thermal
+# thermalfile = dict(name='--thermal', dtype='file', default='None',
+#                    files=[sf.out_thermal_e2ds],
+#                    helpstr=Help['THERMALFILE_HELP'])
+# -----------------------------------------------------------------------------
+wavefile = dict(name='--wavefile', dtype='file', default='None',
+                files=[sf.out_wave, sf.out_wave_master],
+                helpstr=Help['WAVEFILE_HELP'])
 
 # =============================================================================
 # List of usable recipes
@@ -341,6 +360,7 @@ cal_shape_master.set_kwarg(**darkfile)
 cal_shape_master.set_kwarg(**dodark)
 cal_shape_master.set_kwarg(**flipimage)
 cal_shape_master.set_kwarg(**fluxunits)
+cal_shape_master.set_kwarg(**locofile)
 cal_shape_master.set_kwarg(**plot)
 cal_shape_master.set_kwarg(**interactive)
 cal_shape_master.set_kwarg(**resize)
@@ -369,9 +389,12 @@ cal_shape.set_kwarg(**darkfile)
 cal_shape.set_kwarg(**dodark)
 cal_shape.set_kwarg(**flipimage)
 cal_shape.set_kwarg(**fluxunits)
+cal_shape.set_kwarg(**fpmaster)
 cal_shape.set_kwarg(**plot)
 cal_shape.set_kwarg(**interactive)
 cal_shape.set_kwarg(**resize)
+cal_shape.set_kwarg(**shapexfile)
+cal_shape.set_kwarg(**shapeyfile)
 
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_spirou
@@ -400,9 +423,14 @@ cal_ff.set_kwarg(**dodark)
 cal_ff.set_kwarg(**fiber)
 cal_ff.set_kwarg(**flipimage)
 cal_ff.set_kwarg(**fluxunits)
+cal_ff.set_kwarg(**locofile)
+cal_ff.set_kwarg(**orderpfile)
 cal_ff.set_kwarg(**plot)
 cal_ff.set_kwarg(**interactive)
 cal_ff.set_kwarg(**resize)
+cal_ff.set_kwarg(**shapexfile)
+cal_ff.set_kwarg(**shapeyfile)
+cal_ff.set_kwarg(**shapelfile)
 
 # -----------------------------------------------------------------------------
 # cal_thermal_spirou
@@ -430,9 +458,16 @@ cal_thermal.set_kwarg(**dodark)
 cal_thermal.set_kwarg(**fiber)
 cal_thermal.set_kwarg(**flipimage)
 cal_thermal.set_kwarg(**fluxunits)
+cal_thermal.set_kwarg(**locofile)
+cal_thermal.set_kwarg(**orderpfile)
 cal_thermal.set_kwarg(**plot)
 cal_thermal.set_kwarg(**interactive)
 cal_thermal.set_kwarg(**resize)
+cal_thermal.set_kwarg(**shapexfile)
+cal_thermal.set_kwarg(**shapeyfile)
+cal_thermal.set_kwarg(**shapelfile)
+cal_thermal.set_kwarg(**wavefile)
+
 
 # -----------------------------------------------------------------------------
 # cal_extract_spirou
@@ -462,9 +497,15 @@ cal_extract.set_kwarg(**dodark)
 cal_extract.set_kwarg(**fiber)
 cal_extract.set_kwarg(**flipimage)
 cal_extract.set_kwarg(**fluxunits)
+cal_extract.set_kwarg(**locofile)
+cal_extract.set_kwarg(**orderpfile)
 cal_extract.set_kwarg(**plot)
 cal_extract.set_kwarg(**interactive)
 cal_extract.set_kwarg(**resize)
+cal_extract.set_kwarg(**shapexfile)
+cal_extract.set_kwarg(**shapeyfile)
+cal_extract.set_kwarg(**shapelfile)
+cal_extract.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
