@@ -36,6 +36,13 @@ class PseudoConstants:
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
+    def VALID_RAW_FILES(self):
+        valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
+        return valid
+
+    # =========================================================================
+    # HEADER SETTINGS
+    # =========================================================================
     # noinspection PyPep8Naming
     def FORBIDDEN_COPY_KEYS(self):
         """
@@ -132,23 +139,26 @@ class PseudoConstants:
         # return output_keys
         return output_keys
 
+
+    # noinspection PyPep8Naming
+    def RAW_OUTPUT_KEYS(self):
+        # define selected keys
+        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
+                       'KW_OBJNAME', 'KW_OBSTYPE', 'KW_EXPTIME',
+                       'KW_DPRTYPE', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
+                       'KW_CMPLTEXP', 'KW_NEXP', 'KW_PPVERSION']
+        # return these keys
+        return output_keys
+
+
     # noinspection PyPep8Naming
     def RAW_OUTPUT_COLUMNS(self, p):
         func_name = __NAME__ + '.RAW_OUTPUT_COLUMNS()'
         # define selected keys
-        output_keys = [p['KW_DATE_OBS'][0],
-                       p['KW_UTC_OBS'][0],
-                       p['KW_ACQTIME'][0],
-                       p['KW_OBJNAME'][0],
-                       p['KW_OBSTYPE'][0],
-                       p['KW_EXPTIME'][0],
-                       p['KW_DPRTYPE'][0],
-                       p['KW_CCAS'][0],
-                       p['KW_CREF'][0],
-                       p['KW_CDEN'][0],
-                       p['KW_CMPLTEXP'][0],
-                       p['KW_NEXP'][0],
-                       p['KW_PPVERSION'][0]]
+        output_keys = []
+        # get the raw output keys and get value from p
+        for key in self.RAW_OUTPUT_KEYS():
+            output_keys.append(p[key][0])
         # check in master list
         masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
         for key in output_keys:

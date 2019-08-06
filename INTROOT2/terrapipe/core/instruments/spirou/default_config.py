@@ -87,6 +87,10 @@ DRS_DATA_WORKING.value = '/drs/spirou/data/tmp'
 DRS_DATA_PLOT = DRS_DATA_PLOT.copy(__NAME__)
 DRS_DATA_PLOT.value = '/drs/spirou/data/plot'
 
+#   Define the run directory
+DRS_DATA_RUN = DRS_DATA_RUN.copy(__NAME__)
+DRS_DATA_RUN.value = '/drs/spirou/data/run'
+
 
 # =============================================================================
 # DATABASE SETTINGS
