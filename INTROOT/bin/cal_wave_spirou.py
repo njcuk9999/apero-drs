@@ -251,6 +251,27 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     qc_values.append(np.min(wave_diff))
     qc_names.append('MIN WAVE DIFF HC')
     qc_logic.append('MIN WAVE DIFF < 0')
+    # ----------------------------------------------------------------------
+    # check the difference between consecutive pixels along an order is
+    # always positive
+    # loop through the orders
+    ord_check = np.zeros((loc['NBO']), dtype = bool)
+    for order in range(loc['NBO']):
+        oc = np.all(loc['WAVE_MAP2'][order, 1:] > loc['WAVE_MAP2'][order, :-1])
+        ord_check[order] = oc
+    ord_check[5] = False
+    if np.all(ord_check):
+        qc_pass.append(1)
+    else:
+        fmsg = 'Negative wavelength difference along an order'
+        fail_msg.append(fmsg)
+        passed = False
+        qc_pass.append(0)
+    # add to qc header lists
+    # vale: array of orders where it fails
+    qc_values.append(np.ndarray.tolist(np.where(~ord_check)[0]))
+    qc_names.append('WAVE DIFF ALONG ORDER HC')
+    qc_logic.append('WAVE DIFF ALONG ORDER < 0')
 
     # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
