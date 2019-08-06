@@ -872,3 +872,31 @@ TAPAS_FILE_FMT.value = 'fits'
 #    measure telluric
 TELLU_CUT_BLAZE_NORM = TELLU_CUT_BLAZE_NORM.copy(__NAME__)
 TELLU_CUT_BLAZE_NORM.value = 0.2
+
+# =============================================================================
+# TOOLS SETTINGS
+# =============================================================================
+# Key for use in run files
+REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
+REPROCESS_RUN_KEY.value = 'ID'
+
+# Define the night name column name for raw file table
+REPROCESS_NIGHTCOL = REPROCESS_NIGHTCOL.copy(__NAME__)
+REPROCESS_NIGHTCOL.value = '@@@NIGHTNAME'
+
+# Define the absolute file column name for raw file table
+REPROCESS_ABSFILECOL = REPROCESS_ABSFILECOL.copy(__NAME__)
+REPROCESS_ABSFILECOL.value = '@@@ABSFILE'
+
+# Define the modified file column name for raw file table
+REPROCESS_MODIFIEDCOL = REPROCESS_MODIFIEDCOL.copy(__NAME__)
+REPROCESS_MODIFIEDCOL.value = '@@@MODIFIED'
+
+# Define the sort column (from header keywords) for raw file table
+REPROCESS_SORTCOL_HDRKEY = REPROCESS_SORTCOL_HDRKEY.copy(__NAME__)
+REPROCESS_SORTCOL_HDRKEY.value = 'KW_ACQTIME'
+
+# Define the raw index filename
+REPROCESS_RAWINDEXFILE = REPROCESS_RAWINDEXFILE.copy(__NAME__)
+REPROCESS_RAWINDEXFILE.value = 'rawindex.fits'
+

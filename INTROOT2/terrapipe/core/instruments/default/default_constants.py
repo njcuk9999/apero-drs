@@ -105,8 +105,12 @@ __all__ = [
     'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
     # telluric constants
-    'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM'
-]
+    'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
+    # tool constants
+    'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
+    'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
+    'REPROCESS_RAWINDEXFILE'
+    ]
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_constants'
@@ -830,19 +834,19 @@ QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = Const('EXT_S1D_WAVESTART', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0)
+                          source=__NAME__, minimum=0.0)
 
 # Define the end s1d wavelength (in nm)
 EXT_S1D_WAVEEND = Const('EXT_S1D_WAVEEND', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0)
+                        source=__NAME__, minimum=0.0)
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 EXT_S1D_BIN_UWAVE = Const('EXT_S1D_BIN_UWAVE', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0)
+                          source=__NAME__, minimum=0.0)
 
 #  Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
 EXT_S1D_BIN_UVELO = Const('EXT_S1D_BIN_UVELO', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0)
+                          source=__NAME__, minimum=0.0)
 
 #  Define the s1d smoothing kernel for the transition between orders in pixels
 EXT_S1D_EDGE_SMOOTH_SIZE = Const('EXT_S1D_EDGE_SMOOTH_SIZE', value=None,
@@ -859,7 +863,6 @@ EXT_BERV_KIND = Const('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
 #    Define the accuracy of the estimate (for logging only) [m/s]
 EXT_BERV_EST_ACC = Const('EXT_BERV_EST_ACC', value=None, dtype=float,
                          source=__NAME__)
-
 
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
@@ -903,7 +906,6 @@ THERMAL_ENVELOPE_PERCENTILE = Const('THERMAL_ENVELOPE_PERCENTILE', value=None,
                                     dtype=float, source=__NAME__,
                                     minimum=0, maximum=100)
 
-
 # =============================================================================
 # CALIBRATION: WAVE SETTINGS
 # =============================================================================
@@ -945,3 +947,29 @@ TAPAS_FILE_FMT = Const('TAPAS_FILE_FMT', value=None, dtype=str, source=__NAME__)
 TELLU_CUT_BLAZE_NORM = Const('TELLU_CUT_BLAZE_NORM', value=None, dtype=float,
                              source=__NAME__)
 
+# =============================================================================
+# TOOLS SETTINGS
+# =============================================================================
+# Key for use in run files
+REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
+                          source=__NAME__)
+
+# Define the night name column name for raw file table
+REPROCESS_NIGHTCOL = Const('REPROCESS_NIGHTCOL', value=None, dtype=str,
+                           source=__NAME__)
+
+# Define the absolute file column name for raw file table
+REPROCESS_ABSFILECOL = Const('REPROCESS_ABSFILECOL', value=None, dtype=str,
+                             source=__NAME__)
+
+# Define the modified file column name for raw file table
+REPROCESS_MODIFIEDCOL = Const('REPROCESS_MODIFIEDCOL', value=None, dtype=str,
+                              source=__NAME__)
+
+# Define the sort column (from header keywords) for raw file table
+REPROCESS_SORTCOL_HDRKEY = Const('REPROCESS_SORTCOL_HDRKEY', value=None,
+                                 dtype=str, source=__NAME__)
+
+# Define the raw index filename
+REPROCESS_RAWINDEXFILE = Const('REPROCESS_RAWINDEXFILE', value=None, dtype=str,
+                               source=__NAME__)

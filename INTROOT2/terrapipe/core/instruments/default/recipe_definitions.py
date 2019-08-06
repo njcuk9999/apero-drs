@@ -34,9 +34,10 @@ drs_recipe = drs_recipe.DrsRecipe
 test = drs_recipe(__INSTRUMENT__)
 drs_changelog = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
+reprocess = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset]
+recipes = [test, drs_changelog, reset, reprocess]
 
 # =============================================================================
 # Recipe definitions
@@ -114,3 +115,17 @@ reset.set_kwarg(name='-log', dtype='bool', default=True,
                 helpstr=Help['RESET_LOG_HELP'])
 reset.set_kwarg(name='-warn', dtype='bool', default=True,
                 helpstr=Help['RESET_WARN_HELP'])
+
+# -----------------------------------------------------------------------------
+# reprocess.py
+# -----------------------------------------------------------------------------
+reprocess.name = 'reprocess.py'
+reprocess.instrument = __INSTRUMENT__
+reprocess.description = Help['REPROCESS_DESCRIPTION']
+reprocess.set_arg(pos=0, name='instrument', dtype='options',
+                  helpstr=Help['REPROCESS_INST_HELP'],
+                  options=['SPIROU', 'NIRPS'])
+reprocess.set_arg(pos=1, name='runfile', dtype=str,
+                  helpstr=Help['REPROCESS_RUNFILE_HELP'])
+reprocess.set_kwarg(name='--nightname', dtype=str, default='None',
+                    helpstr=Help['REPROCESS_NIGHTNAME_HELP'])
