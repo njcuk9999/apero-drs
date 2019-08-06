@@ -11,7 +11,6 @@ Created on 2019-01-19 at 12:02
 """
 import numpy as np
 from astropy.table import Table
-import importlib
 import argparse
 import os
 import sys
@@ -109,6 +108,8 @@ class DrsRecipe(object):
         self.required_args = []
         self.optional_args = []
         self.special_args = []
+        # set up the input validation (should be True to check arguments)
+        self.input_validation = True
         # get drs params
         self.get_drs_params()
         # make special arguments
@@ -144,7 +145,7 @@ class DrsRecipe(object):
         self.drs_params['OUTPUTS'] = ParamDict()
         self.drs_params.set_sources(['INPUTS', 'OUTPUTS'], func_name)
 
-    def recipe_setup(self, fkwargs):
+    def recipe_setup(self, fkwargs=None, inargs=None):
         """
         Interface between "recipe", inputs to function ("fkwargs") and argparse
         parser (inputs from command line)
@@ -162,13 +163,20 @@ class DrsRecipe(object):
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
-        parser = DRSArgumentParser(self, description=desc, epilog=epilog,
+        parser = DRSArgumentParser(recipe=self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
         # get the drs params from recipe
         drs_params = self.drs_params
-        # deal with function call
-        self._parse_args(fkwargs)
+        # ---------------------------------------------------------------------
+        # deal with args set
+        if inargs is not None:
+            oldargv = list(sys.argv)
+            sys.argv = list(inargs)
+        else:
+            # deal with function call
+            self._parse_args(fkwargs)
+            oldargv = None
         # ---------------------------------------------------------------------
         # add arguments from recipe
         for rarg in self.args:
@@ -214,6 +222,11 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # delete parser - no longer needed
         del parser
+        # ---------------------------------------------------------------------
+        # if args were set return params alone
+        if inargs is not None:
+            sys.argv = list(oldargv)
+            return params
         # ---------------------------------------------------------------------
         # update params
         self.input_params = ParamDict()
@@ -508,14 +521,33 @@ class DrsRecipe(object):
 
         :return:
         """
-
+        # ------------------------------------------------------------------
         # need to check if module is defined
         if self.module is None:
-            self.module = self._import_module()
+            self.module = self._import_module(quiet=True)
+        # ------------------------------------------------------------------
+        # next check in parameters for path to module
+        if (self.module is None) and (self.drs_params is not None):
+            params = self.drs_params
+            # check for parameters
+            cond1 = 'INSTRUMENT' in params
+            cond2 = 'INSTRUMENT_RECIPE_PATH' in params
+            cond3 = 'DEFAULT_RECIPE_PATH' in params
+            if cond1 and cond2 and cond3:
+                instrument = params['INSTRUMENT']
+                rpath = params['INSTRUMENT_RECIPE_PATH']
+                dpath = params['DEFAULT_RECIPE_PATH']
+                margs = [instrument, [self.name], rpath, dpath]
+                modules = constants.getmodnames(*margs, path=False)
+                # return module
+                self.module = self._import_module(modules[0], full=True,
+                                                  quiet=True)
+        # ------------------------------------------------------------------
+        # else make an error
         if self.module is None:
             emsg = TextEntry('00-000-00001', args=[self.name])
             WLOG(self.drs_params, 'error', emsg)
-
+        # ------------------------------------------------------------------
         # run main
         return self.module.main(**kwargs)
 
@@ -554,10 +586,13 @@ class DrsRecipe(object):
     # =========================================================================
     # Private Methods (Not to be used externally to spirouRecipe.py)
     # =========================================================================
-    def _import_module(self):
+    def _import_module(self, name=None, full=False, quiet=False):
+        # deal with no name
+        if name is None:
+            name = self.name
         # get local copy of module
         try:
-            return importlib.import_module(self.name)
+            return constants.import_module(name, full=full, quiet=quiet)
         except Exception:
             return None
 
