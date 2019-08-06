@@ -278,6 +278,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
     # create TAP query based on objname
     if (objname is not None) and (query is None):
         WLOG(params, '', TextEntry('40-016-00015', args=['objname']))
+        # TODO: Need to add objname search
         # TODO: First do crossmatch with simbad to get coords
         # TODO: Then do ra/dec crossmatch with gaia
         pass

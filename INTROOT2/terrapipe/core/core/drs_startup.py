@@ -1080,7 +1080,6 @@ def _save_index_file(p, istore, abspath):
         istore[icol] = np.array(istore[icol])[sortmask]
     # ------------------------------------------------------------------------
     # Make fits table and write fits table
-    # TODO: Need to move over reading of tables
     itable = drs_table.make_fits_table(istore)
     drs_table.write_fits_table(p, itable, abspath)
 
