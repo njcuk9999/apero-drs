@@ -182,7 +182,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     # get blaze
     # p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
-    p, blaze0 = spirouImage.ReadBlazeFile(p, hdr)
+    p, blaze0 = spirouImage.ReadBlazeFile(p, hdr,
+                                          filename='/home/mhobson/SPIRou_data/reduced/wavesol_1shape/19AQ02-Feb17_2375464f_pp_blaze_AB.fits')
 
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze

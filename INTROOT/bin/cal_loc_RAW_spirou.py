@@ -199,7 +199,7 @@ def main(night_name=None, files=None):
     # log progress
     WLOG(p, '', 'Searching order center on central column')
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
-    if p['DRS_DEBUG'] == 0 and p['DRS_PLOT']:
+    if p['DRS_DEBUG'] > 0 and p['DRS_PLOT']:
         sPlt.debug_locplot_min_ycc_loc_threshold(p, loc['YCC'])
     # find the central positions of the orders in the central
     posc_all = spirouLOCOR.FindPosCentCol(loc['YCC'], p['IC_LOCSEUIL'])

@@ -603,6 +603,21 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     qc_names.append('SIG1')
     qc_logic.append('SIG1 > {0:.2f}'.format(p['QC_HC_WAVE_SIGMA_MAX']))
     # ----------------------------------------------------------------------
+    # check the difference between consecutive orders is always positive
+    # get the differences
+    wave_diff = loc['LL_FINAL'][1:]-loc['LL_FINAL'][:-1]
+    if np.min(wave_diff) < 0:
+        fmsg = 'Negative wavelength difference between orders'
+        fail_msg.append(fmsg)
+        passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(np.min(wave_diff))
+    qc_names.append('MIN WAVE DIFF')
+    qc_logic.append('MIN WAVE DIFF < 0')
+    # ----------------------------------------------------------------------
     # check for infinites and NaNs in mean residuals from fit
     if ~np.isfinite(loc['X_MEAN_2']):
         # add failed message to the fail message list
