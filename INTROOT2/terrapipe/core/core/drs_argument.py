@@ -85,7 +85,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
             self.args = args
             self.source = self.recipe.name + '.main()'
         # overritten functionality
-        args, argv = self.parse_known_args(args, namespace)
+        args, argv = self.parse_known_args(self.args, namespace)
         if argv:
             msg = self.textdict['09-001-00002']
             self.error(msg.format(' '.join(argv)))
@@ -221,7 +221,11 @@ class _CheckDirectory(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_directory(self, value):
-
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return value
+        # ---------------------------------------------------------------------
         # get the argument name
         argname = self.dest
         # get the params from recipe
@@ -277,6 +281,16 @@ class _CheckFiles(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_files(self, value, current_typelist=None, current_filelist=None):
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            # if we have string return it in list form and one None
+            if isinstance(value, str):
+                return [value], [None]
+            # if we have a list return it and a set of Nones
+            else:
+                return value, [None] * len(value)
+        # ---------------------------------------------------------------------
         # check if "directory" is in namespace
         if self.directory is not None:
             directory = self.directory
@@ -314,7 +328,12 @@ class _CheckFiles(argparse.Action):
         skip = parser._has_special()
         if skip:
             return 0
+        elif isinstance(values, str):
+            filelist, typelist = self._check_files([values], [], [])
+            files, types = filelist, typelist
         elif type(values) in [list, np.ndarray]:
+            print('IS LIST value={0}'.format(values))
+
             files, types = [], []
             for value in values:
                 filelist, typelist = self._check_files(value, types, files)
@@ -334,6 +353,11 @@ class _CheckBool(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_bool(self, value):
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return value
+        # ---------------------------------------------------------------------
         # get parameters
         params = self.recipe.drs_params
         # get the argument name
@@ -395,6 +419,11 @@ class _CheckType(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
 
     def _check_type(self, value):
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return value
+        # ---------------------------------------------------------------------
         # get parameters
         params = self.recipe.drs_params
         # check that type matches
@@ -423,6 +452,11 @@ class _CheckType(argparse.Action):
 
     def _check_limits(self, values):
         func_name = __NAME__ + '_CheckType._check_limits()'
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return values
+        # ---------------------------------------------------------------------
         # get parameters
         params = self.recipe.drs_params
         # get the argument name
@@ -496,7 +530,6 @@ class _CheckType(argparse.Action):
         else:
             return values[0]
 
-
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
@@ -524,6 +557,11 @@ class _CheckOptions(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_options(self, value):
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return value
+        # ---------------------------------------------------------------------
         # get parameters
         params = self.recipe.drs_params
         # check options
