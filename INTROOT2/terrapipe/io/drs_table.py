@@ -310,7 +310,7 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
         WLOG(p, 'error', TextEntry('01-002-00011', args=eargs))
 
     # remove data_start for fits files
-    if fmt in ['fits']:
+    if (fmt in ['fits']) and ('data_start' in kwargs):
         del kwargs['data_start']
 
     # try to load file using astropy table
