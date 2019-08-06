@@ -109,7 +109,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     # Clean WLOG
     WLOG.clean_log(pid)
     # find recipe
-    recipe = _find_recipe(name, instrument)
+    recipe = find_recipe(name, instrument)
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
     # need to set debug mode now
@@ -1149,7 +1149,7 @@ def _assign_pid():
     return pid, humantime
 
 
-def _find_recipe(name='None', instrument='None'):
+def find_recipe(name='None', instrument='None'):
     """
     Finds a given recipe in the instruments definitions
 
