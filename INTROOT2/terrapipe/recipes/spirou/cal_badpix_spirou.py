@@ -168,7 +168,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
-        # TODO: fill in section
+        # TODO: fill in plot section
 
         # ------------------------------------------------------------------
         # Flip images
@@ -211,7 +211,7 @@ def __main__(recipe, params):
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
         textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # ------------------------------------------------------------------
-        # TODO: Needs doing
+        # TODO: Needs quality control doing
         # add to qc header lists
         qc_values.append('None')
         qc_names.append('None')

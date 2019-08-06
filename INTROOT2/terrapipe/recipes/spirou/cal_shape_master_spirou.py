@@ -233,7 +233,7 @@ def __main__(recipe, params):
     # Plotting
     # ----------------------------------------------------------------------
     if params['DRS_PLOT'] > 0:
-        # TODO fill in
+        # TODO fill in plot section
         # # plots setup: start interactive plot
         # sPlt.start_interactive_session(p)
         # # plot the shape process for one order

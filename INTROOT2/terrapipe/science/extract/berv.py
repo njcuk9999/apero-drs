@@ -119,7 +119,6 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
         return assign_properties(params)
     # ----------------------------------------------------------------------
     # check if we already have berv (or bervest)
-    # TODO: need to also get props that we add (that aren't from inputs
     bprops = get_outputs(params, infile, header, props, kwargs)
     # if we have berv already then just return these
     if bprops is not None:

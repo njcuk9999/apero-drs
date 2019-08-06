@@ -190,7 +190,7 @@ def __main__(recipe, params):
             # Plots
             # --------------------------------------------------------------
             if params['DRS_PLOT'] > 0:
-                # TODO fill in
+                # TODO fill in plot section
                 # # start interactive session if needed
                 # sPlt.start_interactive_session(p)
                 # # plot all orders or one order
