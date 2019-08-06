@@ -31,3 +31,7 @@
 "RESET_INST_HELP","HELP","","None","[STRING] The instrument to reset","",""
 "RESET_LOG_HELP","HELP","","None","[BOOLEAN] If True logs the reset else is quite","",""
 "RESET_WARN_HELP","HELP","","None","[BOOLEAN] If True asks for user to type 'YES' before each reset","",""
+"REPROCESS_DESCRIPTION","HELP","","None","Reprocess a night or all nights given some options","",""
+"REPROCESS_RUNFILE_HELP","HELP","","None","[STRING] The run file to use in reprocessing","",""
+"REPROCESS_NIGHTNAME_HELP","HELP","","None","[STRING] The 'night_name' or directory to reprocess","",""
+"REPROCESS_INST_HELP","HELP","","None","[STRING] The instrument to reprocess","",""
