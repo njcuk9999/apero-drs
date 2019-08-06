@@ -285,7 +285,7 @@ ic_min_amplitude = 10  # 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.17  # 0.18
+ic_locseuil = 0.15  #0.17  # 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
 ic_satseuil = 1000  # 64536
@@ -962,7 +962,7 @@ ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg_1 = 5  # 5  # 4
+ic_Littrow_fit_deg_1 = 8  # 5  # 4
 ic_Littrow_fit_deg_2 = 8  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
@@ -974,7 +974,7 @@ ic_Littrow_order_init_1 = 0
 ic_Littrow_order_init_2 = 1
 
 #  Define the order to end the Littrow fit at	            - [cal_HC, cal_wave]
-ic_Littrow_order_final_1 = 46
+ic_Littrow_order_final_1 = 47
 ic_Littrow_order_final_2 = 47
 
 #  Define orders to ignore in Littrow fit                   - [cal_HC, cal_wave]
@@ -995,7 +995,7 @@ ic_hc_n_ord_start_2 = 0  # 5  #0
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
-ic_hc_n_ord_final_2 = 46  # 40    #46
+ic_hc_n_ord_final_2 = 47  # 40    #46
 
 #  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
 #      Currently allowed modes are:
@@ -1025,7 +1025,7 @@ ic_fp_threshold = 0.3  # 0.2
 
 #  Define the initial value of FP effective cavity width            - [cal_wave]
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
-ic_fp_dopd0 = 2.44999e7  # 2.45e7
+ic_fp_dopd0 = 2.44962434814043e7    # 2.44999e7  # 2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
 #      the measured cavity width for each line
@@ -1143,6 +1143,51 @@ HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
 ic_wave_fp_cm_ind = -2
 # order to plot HC + fitted lines                                     - [cal_HC]
 ic_wave_ea_plot_order = 7
+# Select the HC wavelength solution mode                            - [cal_wave]
+#   Should be one of the following:
+#       0 - Etienne method
+WAVE_MODE_HC = 0
+# Select the FP wavelength solution mode                            - [cal_wave]
+#   Should be one of the following:
+#       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
+#       1 - following C Lovis (previously WAVE_NEW)
+WAVE_MODE_FP = 1
+#  Defines order from which the solution is calculated              - [cal_wave]
+WAVE_N_ORD_START = 0
+#  Defines order to which the solution is calculated                - [cal_wave]
+WAVE_N_ORD_FINAL = 47
+# Minimum blaze threshold to keep FP peaks                          - [cal_wave]
+WAVE_BLAZE_THRESH = 0.3
+# Minimum FP peaks pixel separation fraction diff. from median      - [cal_wave]
+WAVE_FP_XDIF_MIN = 0.75
+# Maximum FP peaks pixel separation fraction diff. from median      - [cal_wave]
+WAVE_FP_XDIF_MAX = 1.25
+# Minimum FP peaks wavelength separation fraction diff. from median - [cal_wave]
+WAVE_FP_LLDIF_MIN = 0.75
+# Maximum FP peaks wavelength separation fraction diff. from median - [cal_wave]
+WAVE_FP_LLDIF_MAX = 1.25
+# Maximum fract. wavelength offset between cross-matched FP peaks   - [cal_wave]
+WAVE_FP_LL_OFFSET = 0.25
+# Maximum DV to keep HC lines in combined (WAVE_NEW) solution       - [cal_wave]
+WAVE_DV_MAX = 0.25
+# Sigma-clip value for sigclip_polyfit                              - [cal_wave]
+WAVE_SIGCLIP = 7
+# Decide whether to refit the cavity width                          - [cal_wave]
+WAVE_UPDATE_CAVITY = False
+# Select the FP cavity fitting (WAVE_MODE_FP = 1 only)              - [cal_wave]
+#   Should be one of the following:
+#       0 - derive using the 1/m vs d fit from HC lines
+#       1 - derive using the ll vs d fit from HC lines
+WAVE_FP_CAVFIT_MODE = 1
+# First order for multi-order plot                                  - [cal_wave]
+WAVE_PLOT_MULTI_INIT = 20
+# Nuber of orders in multi-order plot                               - [cal_wave]
+WAVE_PLOT_MULTI_NBO = 5
+# Select the FP wavelength fitting (WAVE_MODE_FP = 1 only)          - [cal_wave]
+#   Should be one of the following:
+#       0 - use fit_1d_solution function
+#       1 - fit with sigma-clipping and mod 1 pixel correction
+WAVE_FP_LLFIT_MODE = 1
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters
