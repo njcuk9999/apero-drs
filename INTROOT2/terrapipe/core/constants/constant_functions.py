@@ -207,7 +207,7 @@ def generate_consts(modulepath):
     return new_keys, new_values
 
 
-def import_module(modulepath, full=False):
+def import_module(modulepath, full=False, quiet=False):
     # deal with getting module
     if full:
         modfile = modulepath
@@ -230,10 +230,15 @@ def import_module(modulepath, full=False):
     except Exception as e:
         string_trackback = traceback.format_exc()
         # report error
-        emsg1 = 'Cannot import module {0} from {1}'.format(modfile, moddir)
+        eargs = [modfile, moddir]
+        emsg1 = 'Cannot import module \'{0}\' from \'{1}\''.format(eargs)
         emsg2 = '\tError {0}: {1}'.format(type(e), e)
         emsg3 = '\n\n Traceback:\n\n' + str(string_trackback)
-        raise ConfigError([emsg1, emsg2, emsg3])
+        # deal with quiet return vs normal return
+        if quiet:
+            raise ValueError([emsg1, emsg2, emsg3])
+        else:
+            raise ConfigError([emsg1, emsg2, emsg3])
 
 
 def get_constants_from_file(filename):
