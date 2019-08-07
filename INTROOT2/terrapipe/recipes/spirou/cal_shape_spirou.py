@@ -40,11 +40,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-LOCAL_SHAPE_FILE = file_definitions.out_shape_local
-SHAPEL_IN_FP_FILE = file_definitions.out_shapel_debug_ifp
-SHAPEL_OUT_FP_FILE = file_definitions.out_shapel_debug_ofp
-
 # alias pcheck
 pcheck = core.pcheck
 
@@ -222,7 +217,7 @@ def __main__(recipe, params):
         # Writing shape to file
         # ------------------------------------------------------------------
         # define outfile
-        outfile = LOCAL_SHAPE_FILE.newcopy(recipe=recipe)
+        outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(recipe=recipe)
         # construct the filename from file instance
         outfile.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -264,14 +259,16 @@ def __main__(recipe, params):
             # log progress (writing debug outputs)
             WLOG(params, '', TextEntry('40-014-00029'))
             # in file
-            debugfile1 = SHAPEL_IN_FP_FILE.newcopy(recipe=recipe)
+            shapel_in_fp_file = recipe.outputs['SHAPEL_IN_FP_FILE']
+            debugfile1 = shapel_in_fp_file.newcopy(recipe=recipe)
             debugfile1.construct_filename(params, infile=infile)
             debugfile1.copy_hdict(outfile)
             debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
             debugfile1.data = image
             debugfile1.write()
             # out file
-            debugfile2 = SHAPEL_OUT_FP_FILE.newcopy(recipe=recipe)
+            shapel_out_fp_file = recipe.outputs['SHAPEL_OUT_FP_FILE']
+            debugfile2 = shapel_out_fp_file.newcopy(recipe=recipe)
             debugfile2.construct_filename(params, infile=infile)
             debugfile2.copy_hdict(outfile)
             debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)

@@ -41,11 +41,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-ORDERP_FILE = file_definitions.out_loc_orderp
-LOCO_FILE = file_definitions.out_loc_loco
-FWHM_FILE = file_definitions.out_loc_fwhm
-SUP_FILE = file_definitions.out_loc_sup
 # alias pcheck
 pcheck = core.pcheck
 
@@ -304,7 +299,8 @@ def __main__(recipe, params):
         # Write image order_profile to file
         # ------------------------------------------------------------------
         # get a new copy to the order profile
-        orderpfile = ORDERP_FILE.newcopy(recipe=recipe, fiber=fiber)
+        orderpfile = recipe.outputs['ORDERP_FILE'].newcopy(recipe=recipe,
+                                                           fiber=fiber)
         # construct the filename from file instance
         orderpfile.construct_filename(params, infile=infile)
         # define header keys for output file
@@ -340,7 +336,8 @@ def __main__(recipe, params):
         # Save and record of image of localization with order center
         #     and keywords
         # ------------------------------------------------------------------
-        loco1file = LOCO_FILE.newcopy(recipe=recipe, fiber=fiber)
+        loco1file = recipe.outputs['LOCO_FILE'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
         # construct the filename from file instance
         loco1file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -388,7 +385,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save and record of image of sigma
         # ------------------------------------------------------------------
-        loco2file = FWHM_FILE.newcopy(recipe=recipe, fiber=fiber)
+        loco2file = recipe.outputs['FWHM_FILE'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
         # construct the filename from file instance
         loco2file.construct_filename(params, infile=infile)
         # ------------------------------------------------------------------
@@ -411,7 +409,8 @@ def __main__(recipe, params):
             # super impose zeros over the fit in the image
             image5 = localisation.image_superimp(image, cent_coeffs)
             # --------------------------------------------------------------
-            loco3file = SUP_FILE.newcopy(recipe=recipe, fiber=fiber)
+            loco3file = recipe.outputs['SUP_FILE'].newcopy(recipe=recipe,
+                                                           fiber=fiber)
             # construct the filename from file instance
             loco3file.construct_filename(params, infile=infile)
             # --------------------------------------------------------------

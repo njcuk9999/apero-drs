@@ -39,9 +39,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-BADPIX = file_definitions.out_badpix
-BACKMAP = file_definitions.out_backmap
 
 
 # =============================================================================
@@ -235,7 +232,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Save bad pixel mask
         # ----------------------------------------------------------------------
-        badpixfile = BADPIX.newcopy(recipe=recipe)
+        badpixfile = recipe.outputs['BADPIX'].newcopy(recipe=recipe)
         # construct the filename from file instance
         badpixfile.construct_filename(params, infile=flatfile)
         # ------------------------------------------------------------------

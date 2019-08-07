@@ -39,9 +39,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-DARK_FILE = file_definitions.out_dark
-SKY_FILE = file_definitions.out_sky
 
 
 # =============================================================================
@@ -253,9 +250,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # define outfile
         if dprtype == 'DARK_DARK':
-            outfile = DARK_FILE.newcopy(recipe=recipe)
+            outfile = recipe.outputs['DARK_FILE'].newcopy(recipe=recipe)
         elif dprtype == 'SKY_DARK':
-            outfile = SKY_FILE.newcopy(recipe=recipe)
+            outfile = recipe.outputs['SKY_FILE'].newcopy(recipe=recipe)
         else:
             outfile = None
         # construct the filename from file instance
