@@ -257,7 +257,7 @@ def generate_run_list(params, table, path, runtable):
     if 'ALL' in rvalues:
         return generate_all(params, table, path)
     else:
-        return generate_ids(params, table, path, runtable)
+        return generate_ids(params, runtable)
 
 
 # =============================================================================
@@ -411,8 +411,10 @@ class Run:
         self.recipe.input_validation = True
         # set parameters
         self.nightname = self.kwargs['directory']
-        self.argstart = None
         self.kind = None
+        # sort out names
+        self.runname = 'RUN_{0}'.format(self.recipe.shortname)
+        self.skipname = 'SKIP_{0}'.format(self.recipe.shortname)
         # get properties
         self.get_recipe_kind()
 
@@ -462,7 +464,7 @@ class Run:
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def generate_ids(params, tables, paths, runtable):
+def generate_ids(params, runtable):
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
@@ -476,16 +478,48 @@ def generate_ids(params, tables, paths, runtable):
     for it, run_item in enumerate(runlist):
         # create run object
         run_object = Run(params, run_item, priority=keylist[it])
+        # deal with skip
+        skip = skip_run_object(params, run_object)
         # append to list
-        run_objects.append(run_object)
-    # check list files against tables and assign a group
-    run_objects = check_runlist(params, run_objects)
+        if not skip:
+            run_objects.append(run_object)
 
     # return run objects
     return run_objects
 
 
+def skip_run_object(params, runobj):
+
+    # check if the user wants to run this runobj (in run list)
+    if runobj.runname in params:
+        # if user has set the runname to True then we want to skip
+        if params[runobj.runname]:
+            return True
+
+    # check if the user wants to skip
+    if runobj.skipname in params:
+
+        # if master in skipname do not skip
+        if 'MASTER' in runobj.skipname:
+            return False
+
+        elif params[runobj.skipname]:
+
+            # TODO: skip goes here (check_skip equivalanet?)
+
+        else:
+            return True
+
+
+
 def check_runlist(params, runlist):
+
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+
+    # get mod list
+    modlist = pconst.MOD_LIST
+    skiplist = pconst.SKIP_LIST
     # ------------------------------------------------------------------
     # storage of outlist
     out_runlist = []
@@ -495,10 +529,10 @@ def check_runlist(params, runlist):
         check1 = False
         # ------------------------------------------------------------------
         # find run_item in MOD_LIST
-        for key in MOD_LIST:
+        for key in modlist:
             # get run_key
             runkey = 'RUN_{0}'.format(key)
-            rl_item = MOD_LIST[key][0]
+            rl_item = modlist[key][0]
             # check if recipe names agree
             cond1 = run_item.recipename == remove_py(rl_item.__NAME__)
             # check if key in params
@@ -516,13 +550,13 @@ def check_runlist(params, runlist):
         # check that we have files and if we want to skip them
         check2 = True
         # find run_item in MOD_LIST
-        for key in MOD_LIST:
+        for key in modlist:
             # get run_key
             runkey = 'SKIP_{0}'.format(key)
-            sl_item = SKIP_LIST[key][0]
-            sl_func = SKIP_LIST[key][1]
-            if len(SKIP_LIST[key]) == 3:
-                kwargs = SKIP_LIST[key][2]
+            sl_item = skiplist[key][0]
+            sl_func = skiplist[key][1]
+            if len(skiplist[key]) == 3:
+                kwargs = skiplist[key][2]
             else:
                 kwargs = dict()
             # check if recipe names agree
@@ -1038,7 +1072,7 @@ def generate_all(params, table, path):
             WLOG(params, '', wmsg.format(modname, remove_py(r_name)))
 
     # return run objects (via generate ids)
-    return generate_ids(params, table, path, runtable)
+    return generate_ids(params, runtable)
 
 
 def group_drs_files(params, drstable, **kwargs):
