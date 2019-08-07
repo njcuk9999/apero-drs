@@ -108,6 +108,7 @@ class DrsRecipe(object):
         self.required_args = []
         self.optional_args = []
         self.special_args = []
+        self.outputs = dict()
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
         # get drs params
@@ -354,6 +355,10 @@ class DrsRecipe(object):
         name = keywordargument.name
         # set to keyword argument
         self.kwargs[name] = keywordargument
+
+    def set_outputs(self, **kwargs):
+        for kwarg in kwargs:
+            self.outputs[kwarg] = kwargs[kwarg]
 
     def generate_runs_from_filelist(self, __files__, __filters__=None,
                                     **kwargs):
