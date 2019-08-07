@@ -44,13 +44,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-E2DS_FILE = file_definitions.out_ext_e2ds
-E2DSFF_FILE = file_definitions.out_ext_e2dsff
-E2DSLL_FILE = file_definitions.out_ext_e2dsll
-S1D_W_FILE = file_definitions.out_ext_s1d_w
-S1D_V_FILE = file_definitions.out_ext_s1d_v
-ORDERP_SFILE = file_definitions.out_orderp_straight
 
 
 # =============================================================================
@@ -167,7 +160,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, shapelocal, shapex, shapey, ORDERP_SFILE]
+        sargs = [infile, fibertypes, shapelocal, shapex, shapey,
+                 recipe.outputs['ORDERP_SFILE']]
         orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
 
         # ------------------------------------------------------------------
@@ -294,7 +288,8 @@ def __main__(recipe, params):
             # Store E2DS in file
             # --------------------------------------------------------------
             # get a new copy of the e2ds file
-            e2dsfile = E2DS_FILE.newcopy(recipe=recipe, fiber=fiber)
+            e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(recipe=recipe,
+                                                           fiber=fiber)
             # construct the filename from file instance
             e2dsfile.construct_filename(params, infile=infile)
             # define header keys for output file
@@ -375,7 +370,8 @@ def __main__(recipe, params):
             # Store E2DSFF in file
             # --------------------------------------------------------------
             # get a new copy of the e2dsff file
-            e2dsfffile = E2DSFF_FILE.newcopy(recipe=recipe, fiber=fiber)
+            e2dsfffile = recipe.outputs['E2DSFF_FILE'].newcopy(recipe=recipe,
+                                                               fiber=fiber)
             # construct the filename from file instance
             e2dsfffile.construct_filename(params, infile=infile)
             # copy header from e2dsff file
@@ -393,7 +389,8 @@ def __main__(recipe, params):
             # Store E2DSLL in file
             # --------------------------------------------------------------
             # get a new copy of the e2dsll file
-            e2dsllfile = E2DSLL_FILE.newcopy(recipe=recipe, fiber=fiber)
+            e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+                                                               fiber=fiber)
             # construct the filename from file instance
             e2dsllfile.construct_filename(params, infile=infile)
             # copy header from e2dsll file
@@ -411,7 +408,8 @@ def __main__(recipe, params):
             # Store S1D_W in file
             # --------------------------------------------------------------
             # get a new copy of the e2dsll file
-            s1dwfile = S1D_W_FILE.newcopy(recipe=recipe, fiber=fiber)
+            s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(recipe=recipe,
+                                                            fiber=fiber)
             # construct the filename from file instance
             s1dwfile.construct_filename(params, infile=infile)
             # copy header from e2dsll file
@@ -433,7 +431,8 @@ def __main__(recipe, params):
             # Store S1D_V in file
             # --------------------------------------------------------------
             # get a new copy of the e2dsll file
-            s1dvfile = S1D_V_FILE.newcopy(recipe=recipe, fiber=fiber)
+            s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(recipe=recipe,
+                                                            fiber=fiber)
             # construct the filename from file instance
             s1dvfile.construct_filename(params, infile=infile)
             # copy header from e2dsll file

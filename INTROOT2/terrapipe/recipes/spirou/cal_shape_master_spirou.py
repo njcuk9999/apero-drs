@@ -40,15 +40,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-FPMASTER_FILE = file_definitions.out_shape_fpmaster
-DXMAP_FILE = file_definitions.out_shape_dxmap
-DYMAP_FILE = file_definitions.out_shape_dymap
-SHAPE_IN_FP_FILE = file_definitions.out_shape_debug_ifp
-SHAPE_IN_HC_FILE = file_definitions.out_shape_debug_ihc
-SHAPE_OUT_FP_FILE = file_definitions.out_shape_debug_ofp
-SHAPE_OUT_HC_FILE = file_definitions.out_shape_debug_ohc
-SHAPE_BDXMAP_FILE = file_definitions.out_shape_debug_bdx
 # alias pcheck
 pcheck = core.pcheck
 
@@ -273,7 +264,7 @@ def __main__(recipe, params):
     # Writing DXMAP to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile1 = DXMAP_FILE.newcopy(recipe=recipe)
+    outfile1 = recipe.outputs['DXMAP_FILE'].newcopy(recipe=recipe)
     # construct the filename from file instance
     outfile1.construct_filename(params, infile=fpfile)
     # ------------------------------------------------------------------
@@ -308,7 +299,7 @@ def __main__(recipe, params):
     # Writing DYMAP to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile2 = DYMAP_FILE.newcopy(recipe=recipe)
+    outfile2 = recipe.outputs['DYMAP_FILE'].newcopy(recipe=recipe)
     # construct the filename from file instance
     outfile2.construct_filename(params, infile=fpfile)
     # copy header from outfile1
@@ -324,7 +315,7 @@ def __main__(recipe, params):
     # Writing Master FP to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile3 = FPMASTER_FILE.newcopy(recipe=recipe)
+    outfile3 = recipe.outputs['FPMASTER_FILE'].newcopy(recipe=recipe)
     # construct the filename from file instance
     outfile3.construct_filename(params, infile=fpfile)
     # copy header from outfile1
@@ -345,7 +336,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # deal with the unstraighted dxmap
         # ------------------------------------------------------------------
-        debugfile0 = SHAPE_BDXMAP_FILE.newcopy(recipe=recipe)
+        debugfile0 = recipe.outputs['SHAPE_BDXMAP_FILE'].newcopy(recipe=recipe)
         debugfile0.construct_filename(params, infile=fpfile)
         debugfile0.copy_hdict(outfile1)
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
@@ -355,14 +346,14 @@ def __main__(recipe, params):
         # for the fp files take the header from outfile1
         # ------------------------------------------------------------------
         # in file
-        debugfile1 = SHAPE_IN_FP_FILE.newcopy(recipe=recipe)
+        debugfile1 = recipe.outputs['SHAPE_IN_FP_FILE'].newcopy(recipe=recipe)
         debugfile1.construct_filename(params, infile=fpfile)
         debugfile1.copy_hdict(outfile1)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
         debugfile1.write_multi(data_list=[fp_table])
         # out file
-        debugfile2 = SHAPE_OUT_FP_FILE.newcopy(recipe=recipe)
+        debugfile2 = recipe.outputs['SHAPE_OUT_FP_FILE'].newcopy(recipe=recipe)
         debugfile2.construct_filename(params, infile=fpfile)
         debugfile2.copy_hdict(outfile1)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
@@ -372,7 +363,7 @@ def __main__(recipe, params):
         # for hc files copy over the fp parameters with the hc parameters
         # ------------------------------------------------------------------
         # in file
-        debugfile3 = SHAPE_IN_HC_FILE.newcopy(recipe=recipe)
+        debugfile3 = recipe.outputs['SHAPE_IN_HC_FILE'].newcopy(recipe=recipe)
         debugfile3.construct_filename(params, infile=hcfile)
         debugfile3.copy_original_keys(hcfile)
         # add version
@@ -397,7 +388,7 @@ def __main__(recipe, params):
         debugfile3.data = hcimage
         debugfile3.write_multi(data_list=[fp_table])
         # out file
-        debugfile4 = SHAPE_OUT_HC_FILE.newcopy(recipe=recipe)
+        debugfile4 = recipe.outputs['SHAPE_OUT_HC_FILE'].newcopy(recipe=recipe)
         debugfile4.construct_filename(params, infile=hcfile)
         debugfile4.copy_hdict(debugfile4)
         debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)

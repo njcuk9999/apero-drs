@@ -39,8 +39,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-THERMAL_E2DS_FILE = file_definitions.out_thermal_e2ds
 
 
 # =============================================================================

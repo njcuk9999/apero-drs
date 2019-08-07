@@ -44,10 +44,7 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # Define the output files
-FLAT_FILE = file_definitions.out_ff_flat
-BLAZE_FILE = file_definitions.out_ff_blaze
-E2DSLL_FILE = file_definitions.out_ext_e2dsll
-ORDERP_SFILE = file_definitions.out_orderp_straight
+
 
 
 # =============================================================================
@@ -151,7 +148,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, shapelocal, shapex, shapey, ORDERP_SFILE]
+        sargs = [infile, fibertypes, shapelocal, shapex, shapey,
+                 recipe.outputs['ORDERP_SFILE']]
         orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
 
         # ------------------------------------------------------------------
@@ -258,7 +256,8 @@ def __main__(recipe, params):
             # Store Blaze in file
             # --------------------------------------------------------------
             # get a new copy of the blaze file
-            blazefile = BLAZE_FILE.newcopy(recipe=recipe, fiber=fiber)
+            blazefile = recipe.outputs['BLAZE_FILE'].newcopy(recipe=recipe,
+                                                             fiber=fiber)
             # construct the filename from file instance
             blazefile.construct_filename(params, infile=infile)
             # define header keys for output file
@@ -329,7 +328,8 @@ def __main__(recipe, params):
             # Store Flat-field in file
             # --------------------------------------------------------------
             # get a new copy of the blaze file
-            flatfile = FLAT_FILE.newcopy(recipe=recipe, fiber=fiber)
+            flatfile = recipe.outputs['FLAT_FILE'].newcopy(recipe=recipe,
+                                                           fiber=fiber)
             # construct the filename from file instance
             flatfile.construct_filename(params, infile=infile)
             # copy header from blaze file
@@ -347,7 +347,8 @@ def __main__(recipe, params):
             # Store E2DSLL in file
             # --------------------------------------------------------------
             # get a new copy of the blaze file
-            e2dsllfile = E2DSLL_FILE.newcopy(recipe=recipe, fiber=fiber)
+            e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+                                                               fiber=fiber)
             # construct the filename from file instance
             e2dsllfile.construct_filename(params, infile=infile)
             # copy header from blaze file

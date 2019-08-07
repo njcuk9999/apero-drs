@@ -39,8 +39,6 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# Define the output files
-DARK_MASTER_FILE = file_definitions.out_dark_master
 
 
 # =============================================================================
@@ -161,7 +159,7 @@ def __main__(recipe, params):
     # Save master dark to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile = DARK_MASTER_FILE.newcopy(recipe=recipe)
+    outfile = recipe.outputs['DARK_MASTER_FILE'].newcopy(recipe=recipe)
     # construct the filename from file instance
     outfile.construct_filename(params, infile=reffile)
     # ------------------------------------------------------------------
