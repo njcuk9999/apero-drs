@@ -249,6 +249,7 @@ cal_badpix.extension = 'fits'
 cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
 cal_badpix.run_order = 1
+cal_badpix.set_outputs(BADPIX=sf.out_badpix, BACKMAP=sf.out_backmap)
 cal_badpix.set_arg(pos=0, **directory)
 cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
                      nargs='+', filelogic='exclusive', required=True,
@@ -276,6 +277,7 @@ cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
 cal_dark.run_order = 2
+cal_dark.set_outputs(DARK_FILE=sf.out_dark, SKY_FILE=sf.out_sky)
 cal_dark.set_arg(pos=0, **directory)
 cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
                  helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
@@ -296,6 +298,7 @@ cal_dark_master.extension = 'fits'
 cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
 cal_dark_master.run_order = 2
+cal_dark_master.set_outputs(DARK_MASTER_FILE=sf.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str, default='DARK_DARK',
                           helpstr=Help['DARK_MASTER_FILETYPE'])
 cal_dark_master.set_kwarg(**add_cal)
@@ -314,6 +317,10 @@ cal_loc.extension = 'fits'
 cal_loc.description = Help['LOC_DESC']
 cal_loc.epilog = Help['LOC_EXAMPLE']
 cal_loc.run_order = 3
+cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
+                    LOCO_FILE=sf.out_loc_loco,
+                    FWHM_FILE=sf.out_loc_fwhm,
+                    SUP_FILE=sf.out_loc_sup)
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                 files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
@@ -343,6 +350,14 @@ cal_shape_master.extension = 'fits'
 cal_shape_master.description = Help['SHAPE_DESC']
 cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
 cal_shape_master.run_order = 4
+cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
+                             DXMAP_FiLE=sf.out_shape_dxmap,
+                             DYMAP_FILE=sf.out_shape_dymap,
+                             SHAPE_IN_FP_FILE=sf.out_shape_debug_ifp,
+                             SHAPE_IN_HC_FILE =sf.out_shape_debug_ihc,
+                             SHAPE_OUT_FP_FILE=sf.out_shape_debug_ofp,
+                             SHAPE_OUT_HC_FILE=sf.out_shape_debug_ohc,
+                             SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx)
 cal_shape_master.set_arg(pos=0, **directory)
 cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
@@ -377,6 +392,9 @@ cal_shape.extension = 'fits'
 cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
 cal_shape.run_order = 4
+cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
+                      SHAPEL_IN_FP_FILE=sf.out_shapel_debug_ifp,
+                      SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp)
 cal_shape.set_arg(pos=0, **directory)
 cal_shape.set_arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
                   helpstr=Help['SHAPE_FPFILES_HELP'])
@@ -408,6 +426,10 @@ cal_ff.extension = 'fits'
 cal_ff.description = Help['FLAT_DESC']
 cal_ff.epilog = Help['FLAT_EXAMPLE']
 cal_ff.run_order = 5
+cal_ff.set_outputs(FLAT_FILE=sf.out_ff_flat,
+                   BLAZE_FILE=sf.out_ff_blaze,
+                   E2DSLL_FILE=sf.out_ext_e2dsll,
+                   ORDERP_SFILE=sf.out_orderp_straight)
 cal_ff.set_arg(pos=0, **directory)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
                files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark],
@@ -444,6 +466,7 @@ cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
 cal_thermal.run_order = 6
+cal_thermal.set_outputs(THERMAL_E2DS_FILE=sf.out_thermal_e2ds)
 cal_thermal.set_arg(pos=0, **directory)
 cal_thermal.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
@@ -468,7 +491,6 @@ cal_thermal.set_kwarg(**shapeyfile)
 cal_thermal.set_kwarg(**shapelfile)
 cal_thermal.set_kwarg(**wavefile)
 
-
 # -----------------------------------------------------------------------------
 # cal_extract_spirou
 # -----------------------------------------------------------------------------
@@ -481,6 +503,12 @@ cal_extract.extension = 'fits'
 cal_extract.description = Help['EXTRACT_DESC']
 cal_extract.epilog = Help['EXTRACT_EXAMPLE']
 cal_extract.run_order = 6
+cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
+                        E2DSFF_FILE=sf.out_ext_e2dsff,
+                        E2DSLL_FILE=sf.out_ext_e2dsll,
+                        S1D_W_FILE=sf.out_ext_s1d_w,
+                        S1D_V_FILE=sf.out_ext_s1d_v,
+                        ORDERP_SFILE=sf.out_orderp_straight)
 cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
