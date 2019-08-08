@@ -69,6 +69,9 @@ def general_file(params, **kwargs):
     if path is None:
         # get output path from params
         outpath = params['OUTPATH']
+        # check if outpath is set
+        if outpath is None:
+            WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
         # get output night name from params
         outdirectory = params['NIGHTNAME']
         # make sure night name folder exists (create it if not)

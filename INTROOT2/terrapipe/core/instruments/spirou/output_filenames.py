@@ -83,11 +83,13 @@ def calib_file(params, **kwargs):
         func = '{0} and {1}'.format(func, func_name)
     # get output file
     outfile = kwargs.get('outfile', None)
+    # get nightname
+    nightname = kwargs.get('nightname', None)
     # get prefix
     if outfile is None:
-        prefix = _calibration_prefix(params)
+        prefix = _calibration_prefix(params, nightname)
     else:
-        prefix = _calibration_prefix(params) + outfile.prefix
+        prefix = _calibration_prefix(params, nightname) + outfile.prefix
     # update keywords func name
     kwargs['func'] = func
     # return general file with prefix updated
@@ -97,7 +99,7 @@ def calib_file(params, **kwargs):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _calibration_prefix(params):
+def _calibration_prefix(params, nightname=None):
     """
     Define the calibration database file prefix (using arg_night_name)
 
@@ -109,7 +111,8 @@ def _calibration_prefix(params):
     :return calib_prefix: string the calibration database prefix to add to all
                           calibration database files
     """
-    nightname = params['NIGHTNAME']
+    if nightname is None:
+        nightname = params['NIGHTNAME']
     # remove separators
     calib_prefix = nightname.replace(os.sep, '_')
     # return calib_prefix
