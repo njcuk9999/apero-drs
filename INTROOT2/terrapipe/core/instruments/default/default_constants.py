@@ -14,6 +14,7 @@ __all__ = [
     'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
     'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+    'SKIP_DONE_PP',
     # image constants
     'FIBER_TYPES',
     'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
@@ -307,6 +308,10 @@ PP_CORRUPT_RMS_THRES = Const('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
 #       (in degrees counter-clockwise direction)
 RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', value=None, dtype=int,
                            minimum=0.0, maximum=360.0, source=__NAME__)
+
+# Define whether to skip preprocessed files that have already be processed
+SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
+                     source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
