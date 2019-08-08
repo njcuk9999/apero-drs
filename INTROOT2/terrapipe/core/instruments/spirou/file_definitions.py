@@ -176,7 +176,8 @@ raw_file.addset(raw_hc2_dark)
 # Preprocessed Files
 # =============================================================================
 # generic pp file
-pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp')
+pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
+                     outfunc=out.general_file)
 # -----------------------------------------------------------------------------
 # dark
 pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK',
