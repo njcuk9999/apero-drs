@@ -128,27 +128,29 @@ wavefile = dict(name='--wavefile', dtype='file', default='None',
 # =============================================================================
 # List of usable recipes
 # =============================================================================
-drs_recipe = drs_recipe.DrsRecipe
+DrsRecipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
-cal_badpix = drs_recipe(__INSTRUMENT__)
-cal_ccf = drs_recipe(__INSTRUMENT__)
-cal_dark = drs_recipe(__INSTRUMENT__)
-cal_dark_master = drs_recipe(__INSTRUMENT__)
-cal_drift1 = drs_recipe(__INSTRUMENT__)
-cal_drift2 = drs_recipe(__INSTRUMENT__)
-cal_extract = drs_recipe(__INSTRUMENT__)
-cal_ff = drs_recipe(__INSTRUMENT__)
-cal_hc = drs_recipe(__INSTRUMENT__)
-cal_loc = drs_recipe(__INSTRUMENT__)
-cal_pp = drs_recipe(__INSTRUMENT__)
-cal_slit = drs_recipe(__INSTRUMENT__)
-cal_shape = drs_recipe(__INSTRUMENT__)
-cal_shape_master = drs_recipe(__INSTRUMENT__)
-cal_thermal = drs_recipe(__INSTRUMENT__)
-cal_wave = drs_recipe(__INSTRUMENT__)
+#     must have filemod = correct file definitions
+cal_badpix = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_ccf = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_dark = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_dark_master = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_drift1 = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_drift2 = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_extract = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_ff = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_hc = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_loc = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_pp = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_slit = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_shape = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_shape_master = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_thermal = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_wave = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
-test = drs_recipe(__INSTRUMENT__)
+# TODO: remove later
+test = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
@@ -188,9 +190,9 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
 # -----------------------------------------------------------------------------
 # generic recipe
 # -----------------------------------------------------------------------------
-raw_recipe = drs_recipe(__INSTRUMENT__)
-pp_recipe = drs_recipe(__INSTRUMENT__)
-out_recipe = drs_recipe(__INSTRUMENT__)
+raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
+pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
+out_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
 # test.py
@@ -226,6 +228,7 @@ test.set_kwarg(**resize)
 # cal_preprocess_spirou
 # -----------------------------------------------------------------------------
 cal_pp.name = 'cal_preprocess_spirou.py'
+cal_pp.shortname = 'PREPROCESS'
 cal_pp.instrument = __INSTRUMENT__
 cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
@@ -233,14 +236,18 @@ cal_pp.inputtype = 'raw'
 cal_pp.extension = 'fits'
 cal_pp.description = Help['PREPROCESS_DESC']
 cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
+cal_pp.set_outputs(PP_FILE=sf.pp_file)
 cal_pp.set_arg(pos=0, **directory)
 cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
                helpstr=Help['PREPROCESS_UFILES_HELP'])
+cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
+                 helpstr=Help['PPSKIP_HELP'], default_ref='SKIP_DONE_PP')
 
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
 cal_badpix.name = 'cal_badpix_spirou.py'
+cal_badpix.shortname = 'BADPIX'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
@@ -248,7 +255,6 @@ cal_badpix.inputtype = 'pp'
 cal_badpix.extension = 'fits'
 cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
-cal_badpix.run_order = 1
 cal_badpix.set_outputs(BADPIX=sf.out_badpix, BACKMAP=sf.out_backmap)
 cal_badpix.set_arg(pos=0, **directory)
 cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
@@ -269,6 +275,7 @@ cal_badpix.set_kwarg(**resize)
 # cal_dark_spirou
 # -----------------------------------------------------------------------------
 cal_dark.name = 'cal_dark_spirou.py'
+cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
 cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
@@ -276,7 +283,6 @@ cal_dark.intputtype = 'pp'
 cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
-cal_dark.run_order = 2
 cal_dark.set_outputs(DARK_FILE=sf.out_dark, SKY_FILE=sf.out_sky)
 cal_dark.set_arg(pos=0, **directory)
 cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
@@ -290,6 +296,8 @@ cal_dark.set_kwarg(**interactive)
 # cal_dark_master_spirou
 # -----------------------------------------------------------------------------
 cal_dark_master.name = 'cal_dark_master_spirou.py'
+cal_dark_master.shortname = 'DARK_MASTER'
+cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
 cal_dark_master.outputdir = 'reduced'
 cal_dark_master.inputdir = 'tmp'
@@ -297,7 +305,6 @@ cal_dark_master.intputtype = 'pp'
 cal_dark_master.extension = 'fits'
 cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
-cal_dark_master.run_order = 2
 cal_dark_master.set_outputs(DARK_MASTER_FILE=sf.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str, default='DARK_DARK',
                           helpstr=Help['DARK_MASTER_FILETYPE'])
@@ -309,6 +316,7 @@ cal_dark_master.set_kwarg(**interactive)
 # cal_loc_RAW_spirou
 # -----------------------------------------------------------------------------
 cal_loc.name = 'cal_loc_spirou.py'
+cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
 cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'
@@ -316,7 +324,6 @@ cal_loc.inputtype = 'pp'
 cal_loc.extension = 'fits'
 cal_loc.description = Help['LOC_DESC']
 cal_loc.epilog = Help['LOC_EXAMPLE']
-cal_loc.run_order = 3
 cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     LOCO_FILE=sf.out_loc_loco,
                     FWHM_FILE=sf.out_loc_fwhm,
@@ -342,6 +349,8 @@ cal_loc.set_kwarg(**resize)
 # cal_shape_master_spirou
 # -----------------------------------------------------------------------------
 cal_shape_master.name = 'cal_shape_master_spirou.py'
+cal_shape_master.shortname = 'SHAPE_MASTER'
+cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
 cal_shape_master.outputdir = 'reduced'
 cal_shape_master.inputdir = 'tmp'
@@ -349,12 +358,11 @@ cal_shape_master.inputtype = 'pp'
 cal_shape_master.extension = 'fits'
 cal_shape_master.description = Help['SHAPE_DESC']
 cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
-cal_shape_master.run_order = 4
 cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
                              DXMAP_FiLE=sf.out_shape_dxmap,
                              DYMAP_FILE=sf.out_shape_dymap,
                              SHAPE_IN_FP_FILE=sf.out_shape_debug_ifp,
-                             SHAPE_IN_HC_FILE =sf.out_shape_debug_ihc,
+                             SHAPE_IN_HC_FILE=sf.out_shape_debug_ihc,
                              SHAPE_OUT_FP_FILE=sf.out_shape_debug_ofp,
                              SHAPE_OUT_HC_FILE=sf.out_shape_debug_ohc,
                              SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx)
@@ -384,6 +392,7 @@ cal_shape_master.set_kwarg(**resize)
 # cal_SHAPE_spirou
 # -----------------------------------------------------------------------------
 cal_shape.name = 'cal_shape_spirou.py'
+cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
@@ -391,7 +400,6 @@ cal_shape.inputtype = 'pp'
 cal_shape.extension = 'fits'
 cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
-cal_shape.run_order = 4
 cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
                       SHAPEL_IN_FP_FILE=sf.out_shapel_debug_ifp,
                       SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp)
@@ -418,6 +426,7 @@ cal_shape.set_kwarg(**shapeyfile)
 # cal_FF_RAW_spirou
 # -----------------------------------------------------------------------------
 cal_ff.name = 'cal_flat_spirou.py'
+cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
 cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
@@ -425,7 +434,6 @@ cal_ff.inputtype = 'pp'
 cal_ff.extension = 'fits'
 cal_ff.description = Help['FLAT_DESC']
 cal_ff.epilog = Help['FLAT_EXAMPLE']
-cal_ff.run_order = 5
 cal_ff.set_outputs(FLAT_FILE=sf.out_ff_flat,
                    BLAZE_FILE=sf.out_ff_blaze,
                    E2DSLL_FILE=sf.out_ext_e2dsll,
@@ -458,6 +466,7 @@ cal_ff.set_kwarg(**shapelfile)
 # cal_thermal_spirou
 # -----------------------------------------------------------------------------
 cal_thermal.name = 'cal_thermal_spirou.py'
+cal_thermal.shortname = 'THERMAL'
 cal_thermal.instrument = __INSTRUMENT__
 cal_thermal.outputdir = 'reduced'
 cal_thermal.inputdir = 'tmp'
@@ -465,10 +474,10 @@ cal_thermal.inputtype = 'pp'
 cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
-cal_thermal.run_order = 6
 cal_thermal.set_outputs(THERMAL_E2DS_FILE=sf.out_thermal_e2ds)
 cal_thermal.set_arg(pos=0, **directory)
-cal_thermal.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
+cal_thermal.set_arg(name='files', dtype='files', pos='1+',
+                    files=[sf.pp_dark_dark],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                     limit=1)
 cal_thermal.set_kwarg(**add_cal)
@@ -495,6 +504,7 @@ cal_thermal.set_kwarg(**wavefile)
 # cal_extract_spirou
 # -----------------------------------------------------------------------------
 cal_extract.name = 'cal_extract_spirou.py'
+cal_extract.shortname = 'EXTRACT'
 cal_extract.instrument = __INSTRUMENT__
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
@@ -502,7 +512,6 @@ cal_extract.inputtype = 'pp'
 cal_extract.extension = 'fits'
 cal_extract.description = Help['EXTRACT_DESC']
 cal_extract.epilog = Help['EXTRACT_EXAMPLE']
-cal_extract.run_order = 6
 cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         E2DSFF_FILE=sf.out_ext_e2dsff,
                         E2DSLL_FILE=sf.out_ext_e2dsll,
@@ -546,7 +555,6 @@ cal_extract.set_kwarg(**wavefile)
 # cal_hc.extension = 'fits'
 # cal_hc.description = Help['HC_E2DS_DESC']
 # cal_hc.epilog = Help['HC_E2DS_EXAMPLE']
-# cal_hc.run_order = 7
 # # setup custom files (add a required keyword in the header to each file)
 # #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
 # cal_hc_files1 = [sf.out_ext_e2ds,  sf.out_ext_e2dsff]
@@ -617,3 +625,101 @@ cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
 # -----------------------------------------------------------------------------
 # visu_E2DS_spirou
 # -----------------------------------------------------------------------------
+
+
+# =============================================================================
+# Run order
+# =============================================================================
+#
+#  These defines run sequences that can be used
+#     (recipes will be executed in ordered added)
+#
+#       To define a new sequence first construct a DrsRunSequence
+#       i.e.   run = drs_recipe.DrsRunSequence(name, instrument)
+#
+#       Then one must add recipes to a sequence
+#           recipes can be customised by:
+#           - name (shortname)
+#           - allowed files (the name of the file argument)
+#           - whether a file is in the master sequence (use master night only
+#             in cases where normally a recipe would use any night)
+#           - any header keyword reference (value must be set in run file)
+#             i.e. those starting with "KW_"
+#       i.e.
+#
+#       run.add(recipe, name='CUSTOM_RECIPE', master=True,
+#               files=[sf.file_defintion], KW_HEADER='RUN_FILE_VARIABLE')
+#
+#
+#   Example:
+#           # the below example creates a run called 'run'
+#           # it just extracts OBJ_FP files with OBJECT NAME listed in
+#           #  'SCIENCE_TARGETS' in the runfile
+#           # note as master=True it will only extract from the master night
+#
+#           run = drs_recipe.DrsRunSequence('run', __INSTRUMENT__)
+#           run.add(cal_extract, master=True, files=[sf.pp_obj_fp],
+#                   KW_OBJNAME='SCIENCE_TARGETS')
+#
+#
+#  Note: must add sequences to sequences list to be able to use!
+#
+# -----------------------------------------------------------------------------
+# full run (master + nights)
+# -----------------------------------------------------------------------------
+full_run = drs_recipe.DrsRunSequence('full_run', __INSTRUMENT__)
+# master run
+full_run.add(cal_pp, master=True)
+full_run.add(cal_dark_master, master=True)
+full_run.add(cal_badpix, master=True)
+full_run.add(cal_loc, files=[sf.pp_dark_flat], master=True)
+full_run.add(cal_loc, files=[sf.pp_flat_dark], master=True)
+full_run.add(cal_shape_master, master=True)
+# night runs
+full_run.add(cal_pp)
+full_run.add(cal_badpix)
+full_run.add(cal_loc, files=[sf.pp_dark_flat])
+full_run.add(cal_loc, files=[sf.pp_flat_dark])
+full_run.add(cal_shape)
+full_run.add(cal_ff, files=[sf.pp_flat_flat])
+full_run.add(cal_thermal)
+full_run.add(cal_wave)
+# extract
+full_run.add(cal_extract, name='EXTRACT_ALL',
+             files=[sf.pp_obj_dark, sf.pp_obj_fp])
+
+# -----------------------------------------------------------------------------
+# limited run (master + nights)
+# -----------------------------------------------------------------------------
+limited_run = drs_recipe.DrsRunSequence('limited_run', __INSTRUMENT__)
+# master run
+limited_run.add(cal_pp, master=True)
+limited_run.add(cal_dark_master, master=True)
+limited_run.add(cal_badpix, master=True)
+limited_run.add(cal_loc, files=[sf.pp_dark_flat], master=True)
+limited_run.add(cal_loc, files=[sf.pp_flat_dark], master=True)
+limited_run.add(cal_shape_master, master=True)
+# night runs
+limited_run.add(cal_pp)
+limited_run.add(cal_badpix)
+limited_run.add(cal_loc, files=[sf.pp_dark_flat])
+limited_run.add(cal_loc, files=[sf.pp_flat_dark])
+limited_run.add(cal_shape)
+limited_run.add(cal_ff, files=[sf.pp_flat_flat])
+limited_run.add(cal_thermal)
+limited_run.add(cal_wave)
+# extract tellurics
+limited_run.add(cal_extract, name='EXTRACT_TELLU',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp],
+                KW_OBJNAME='TELLURIC_TARGETS')
+# extract science
+limited_run.add(cal_extract, name='EXTRACT_OBJ',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp],
+                KW_OBJNAME='SCIENCE_TARGETS')
+
+
+# -----------------------------------------------------------------------------
+# sequences list
+# -----------------------------------------------------------------------------
+sequences = [full_run, limited_run]
+
