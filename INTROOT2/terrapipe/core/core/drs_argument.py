@@ -332,8 +332,6 @@ class _CheckFiles(argparse.Action):
             filelist, typelist = self._check_files([values], [], [])
             files, types = filelist, typelist
         elif type(values) in [list, np.ndarray]:
-            print('IS LIST value={0}'.format(values))
-
             files, types = [], []
             for value in values:
                 filelist, typelist = self._check_files(value, types, files)
