@@ -118,7 +118,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     quiet = _special_keys_present(recipe, quiet, fkwargs)
     # -------------------------------------------------------------------------
     # display
-    if not quiet:
+    if (not quiet) and ('instrument' not in recipe.args):
         # display title
         _display_drs_title(recipe.drs_params)
     # -------------------------------------------------------------------------
@@ -136,6 +136,35 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     # clear loading message
     TLOG(recipe.drs_params, '', '')
     # -------------------------------------------------------------------------
+    # need to deal with instrument set in input arguments
+    if 'INSTRUMENT' in recipe.drs_params['INPUTS']:
+        # update the instrument
+        recipe.instrument = recipe.drs_params['INPUTS']['INSTRUMENT']
+        # quietly load DRS parameters (for setup)
+        recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
+        # need to set debug mode now
+        recipe = _set_debug_from_input(recipe, fkwargs)
+        # do not need to display if we have special keywords
+        quiet = _special_keys_present(recipe, quiet, fkwargs)
+        # -------------------------------------------------------------------------
+        # display
+        if not quiet:
+            # display title
+            _display_drs_title(recipe.drs_params)
+        # -------------------------------------------------------------------------
+        # display loading message
+        TLOG(recipe.drs_params, '', 'Loading Arguments. Please wait...')
+        # -------------------------------------------------------------------------
+        # interface between "recipe", "fkwargs" and command line (via argparse)
+        recipe.recipe_setup(fkwargs)
+        # -------------------------------------------------------------------------
+        # deal with options from input_parameters
+        recipe.option_manager()
+        # -------------------------------------------------------------------------
+        # clear loading message
+        TLOG(recipe.drs_params, '', '')
+
+    # -------------------------------------------------------------------------
     # display
     if not quiet:
         # display initial parameterisation
@@ -147,7 +176,6 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         _display_system_info(recipe.drs_params)
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs)
-
     # -------------------------------------------------------------------------
     # update params in log
     WLOG.pin = recipe.drs_params
@@ -325,21 +353,6 @@ def main_end_script(params, success, outputs='reduced', end=True):
         drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
     # return p
-    return params
-
-
-def update_params(params, instrument):
-    # load instrument specific parameters
-    iparams = constants.load(instrument=instrument)
-    # copy parameters from instrument into main params
-    for iparam in iparams:
-        params[iparam] = iparams[iparam]
-        # set the source
-        params.set_source(iparam, iparams.sources[iparam])
-        # set the instance (if present)
-        if iparam in iparams.instances:
-            params.set_instance(iparam, iparams.instances[iparam])
-    # return main parameters
     return params
 
 
