@@ -10,6 +10,7 @@ Version 0.0.1
 """
 from __future__ import division
 import numpy as np
+import os
 
 from terrapipe import core
 from terrapipe import locale
@@ -34,8 +35,6 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
-# Define the PP fileset for spirou
-PP_FILE = file_definitions.pp_file
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 
@@ -90,6 +89,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get hot pixels for corruption check
     hotpixels = preprocessing.get_hot_pixels(params)
+    # get skip parmaeter
+    skip = params['SKIP_DONE_PP']
 
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -108,7 +109,6 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         file_instance = infiles[it]
-
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------
@@ -122,8 +122,27 @@ def __main__(recipe, params):
         else:
             eargs = [infile.filename]
             WLOG(params, 'info', TextEntry('40-010-00002', args=eargs))
+            continue
         # get data from file instance
         image = np.array(infile.data)
+
+        # ------------------------------------------------------------------
+        # Get out file and check skip
+        # ------------------------------------------------------------------
+        # get the output drs file
+        oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
+        found, outfile = preprocessing.drs_outfile_id(*oargs)
+        # construct out filename
+        outfile.construct_filename(params, infile=infile)
+        # if we didn't find the output file we should log this error
+        if not found:
+            eargs = [outfile.name]
+            WLOG(params, 'error', TextEntry('00-010-00003', args=eargs))
+        if skip:
+            if os.path.exists(outfile.filename):
+                wargs = [infile.filename]
+                WLOG(params, 'info', TextEntry('40-010-00012', args=wargs))
+                continue
 
         # ------------------------------------------------------------------
         # correct image
@@ -154,7 +173,7 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-010-00006', args=[snr_hotpix]))
         # get snr_threshold
         snr_threshold = params['PP_CORRUPT_SNR_HOTPIX']
-        #deal with printing corruption message
+        # deal with printing corruption message
         if snr_hotpix < snr_threshold:
             # add failed message to fail message list
             fargs = [snr_hotpix, snr_threshold, infile.filename]
@@ -208,16 +227,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save rotated image
         # ------------------------------------------------------------------
-        # get the output drs file
-        oargs = [params, recipe, infile, PP_FILE, RAW_PREFIX]
-        found, outfile = preprocessing.drs_outfile_id(*oargs)
-        # construct out filename
-        outfile.construct_filename(params, infile=infile)
-        # if we didn't find the output file we should log this error
-        if not found:
-            eargs = [outfile.name]
-            WLOG(params, 'error', TextEntry('00-010-00003', args=eargs))
-        # ------------------------------------------------------------------
         # define header keys for output file
         # copy keys from input file
         outfile.copy_original_keys(infile)
@@ -256,9 +265,6 @@ def __main__(recipe, params):
     # End of main code
     # ----------------------------------------------------------------------
     return dict(locals())
-
-
-
 
 
 # =============================================================================
