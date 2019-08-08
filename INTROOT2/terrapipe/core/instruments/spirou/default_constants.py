@@ -219,6 +219,10 @@ PP_CORRUPT_RMS_THRES.value = 0.15
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = -90
 
+# Define whether to skip preprocessed files that have already be processed
+SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
+SKIP_DONE_PP.value = False
+
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
 # =============================================================================
@@ -882,15 +886,15 @@ REPROCESS_RUN_KEY.value = 'ID'
 
 # Define the night name column name for raw file table
 REPROCESS_NIGHTCOL = REPROCESS_NIGHTCOL.copy(__NAME__)
-REPROCESS_NIGHTCOL.value = '@@@NIGHTNAME'
+REPROCESS_NIGHTCOL.value = '__NIGHTNAME'
 
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = REPROCESS_ABSFILECOL.copy(__NAME__)
-REPROCESS_ABSFILECOL.value = '@@@ABSFILE'
+REPROCESS_ABSFILECOL.value = '__ABSFILE'
 
 # Define the modified file column name for raw file table
 REPROCESS_MODIFIEDCOL = REPROCESS_MODIFIEDCOL.copy(__NAME__)
-REPROCESS_MODIFIEDCOL.value = '@@@MODIFIED'
+REPROCESS_MODIFIEDCOL.value = '__MODIFIED'
 
 # Define the sort column (from header keywords) for raw file table
 REPROCESS_SORTCOL_HDRKEY = REPROCESS_SORTCOL_HDRKEY.copy(__NAME__)
