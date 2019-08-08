@@ -45,9 +45,6 @@ run = drs_startup.run
 # Setup function
 setup = drs_startup.setup
 
-# update parameters for a new instrument
-update_params = drs_startup.update_params
-
 # The logging script
 wlog = drs_log.wlog
 

@@ -162,7 +162,6 @@ def flip_image(params, image, fliprows=True, flipcols=True):
         return image
 
 
-
 def convert_to_e(params, image, **kwargs):
     """
     Converts image from ADU/s into e-
