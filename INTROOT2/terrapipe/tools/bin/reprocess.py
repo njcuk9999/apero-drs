@@ -92,9 +92,6 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    # load instrument settings
-    params = core.update_params(params, params['INSTRUMENT'])
-
     # get run file from inputs
     runfile = params['INPUTS']['RUNFILE']
 
