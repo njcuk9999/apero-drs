@@ -258,6 +258,8 @@ def generate_run_list(params, table, path, runtable):
         # loop around sequences
         for sequence in sequences:
             # generate new runs for sequence
+            # TODO: Problem here
+
             newruns = generate_run_from_sequence(params, sequence, table, path)
             # update runtable with sequence generation
             runtable = update_run_table(params, sequence, runtable, rvalues,
@@ -325,7 +327,7 @@ def get_files(params, path, rpath, **kwargs):
         for filename in files:
             # --------------------------------------------------------------
             # get night name
-            ucpath = drs_path.get_uncommon_path(root, rpath)
+            ucpath = drs_path.get_uncommon_path(rpath, root)
             if ucpath is None:
                 eargs = [path, rpath, func_name]
                 WLOG(params, 'error', TextEntry('00-503-00003', args=eargs))
@@ -774,6 +776,8 @@ def check_for_sequences(params, rvalues, **kwargs):
     all_sequences = mod.sequences
     # get sequences names
     all_seqnames = list(map(lambda x: x.name, all_sequences))
+    # convert to uppercase
+    all_seqnames = list(map(lambda x: x.upper(), all_seqnames))
     # storage for found sequences
     sequences = []
     # loop around rvalues and add to sequence
@@ -791,12 +795,8 @@ def check_for_sequences(params, rvalues, **kwargs):
 
 
 def generate_run_from_sequence(params, sequence, table, path):
-
-    # get parameters from
-
-
     # get the sequence recipe list
-    srecipelist = sequence[1].sequence
+    srecipelist = sequence[2].sequence
     # storage for new runs to add
     newruns = []
     # loop around recipes in new list
@@ -816,10 +816,9 @@ def generate_run_from_sequence(params, sequence, table, path):
             value = srecipe.filters[key]
             # if this is in params set this value
             if value in params:
-                filters[key] = params[value]
+                filters[key] = params[value].split(',')
         # get runs for this recipe
-        sruns = srecipe.generate_runs(table, path, nightname=nightname,
-                                      filters=filters)
+        sruns = srecipe.generate_runs(params, table, filters=filters)
         # append runs to new runs list
         for srun in sruns:
             newruns.append(srun)
