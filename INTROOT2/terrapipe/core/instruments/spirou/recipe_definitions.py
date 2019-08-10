@@ -239,7 +239,7 @@ cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
 cal_pp.set_outputs(PP_FILE=sf.pp_file)
 cal_pp.set_arg(pos=0, **directory)
 cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
-               helpstr=Help['PREPROCESS_UFILES_HELP'])
+               helpstr=Help['PREPROCESS_UFILES_HELP'], limit=1)
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=Help['PPSKIP_HELP'], default_ref='SKIP_DONE_PP')
 

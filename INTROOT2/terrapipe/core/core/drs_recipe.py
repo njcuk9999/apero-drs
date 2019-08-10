@@ -1448,54 +1448,45 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # brute force approach
     runs = []
     # find first file argument
-    arg0, drsfiles0 = _find_first_filearg(runorder, argdict, kwargdict)
-    # ----------------------------------------------------------------------
-    # loop around drs files in first file argument
-    for drsfile in drsfiles0:
-        # condition to stop trying to match files
-        cond = True
-        # set used groups
-        usedgroups = dict()
-        # keep matching until condition met
-        while cond:
-            new_run = dict()
-            # get first group
-            nargs = [arg0, rundict[arg0][drsfile], usedgroups]
-            gtable0, usedgroups = _find_next_group(*nargs)
-            # check for grouptable unset --> skip
-            if gtable0 is None:
-                 break
-            # get night name for group
-            nightname = gtable0[night_col][0]
-            # get mean time for group
-            meantime = gtable0['MEANDATE'][0]
-
-            # _match_groups raises exception when finished so need a
-            #   try/except here to catch it
-            try:
-                # match files from grouptable0 to
-                for argname in runorder:
-                    # if we are dealing with the first argument we have this
-                    #   groups files (gtable0)
-                    if argname == arg0:
-                        new_run[argname] = list(gtable0[file_col])
-                    # if we are dealing with 'directory' set it from nightname
-                    elif argname == 'directory':
-                        new_run[argname] = nightname
-                    # if we are not dealing with a list of files just set value
-                    elif not isinstance(rundict[argname], OrderedDict):
-                        new_run[argname] = rundict[argname]
-                    # else we are dealing with another list and must find the
-                    #   best files (closetest in time) to add that match this
-                    #   group
-                    else:
-                        margs = [params, argname, rundict, nightname, meantime]
-                        new_run[argname] = _match_group(*margs)
-            # catch exception
-            except DrsRecipeException:
-                break
-            # finally add new_run to runs
-            runs.append(new_run)
+    fout = _find_first_filearg(runorder, argdict, kwargdict)
+    # if fout is None means we have no file arguments
+    if fout is None:
+        # get new run
+        new_run = _gen_run(params, rundict=rundict, runorder=runorder)
+        # finally add new_run to runs
+        runs.append(new_run)
+    else:
+        arg0, drsfiles0 = fout
+        # ----------------------------------------------------------------------
+        # loop around drs files in first file argument
+        for drsfile in drsfiles0:
+            # condition to stop trying to match files
+            cond = True
+            # set used groups
+            usedgroups = dict()
+            # keep matching until condition met
+            while cond:
+                # get first group
+                nargs = [arg0, rundict[arg0][drsfile], usedgroups]
+                gtable0, usedgroups = _find_next_group(*nargs)
+                # check for grouptable unset --> skip
+                if gtable0 is None:
+                     break
+                # get night name for group
+                nightname = gtable0[night_col][0]
+                # get mean time for group
+                meantime = gtable0['MEANDATE'][0]
+                # _match_groups raises exception when finished so need a
+                #   try/except here to catch it
+                try:
+                    new_run = _gen_run(params, rundict, runorder,
+                                       nightname, meantime, arg0,
+                                       gtable0, file_col)
+                # catch exception
+                except DrsRecipeException:
+                    break
+                # finally add new_run to runs
+                runs.append(new_run)
     # return runs
     return runs
 
@@ -1529,8 +1520,8 @@ def convert_to_command(self, runargs):
             if argname in kwargs:
                 # add to command
                 command += '--{0} {1} '.format(argname, value)
-        # append to out
-                outputs.append(command)
+            # append to out
+            outputs.append(command)
     # return outputs
     return outputs
 
@@ -1720,6 +1711,42 @@ def _get_runorder(recipe, argdict, kwargdict):
             rundict[rorder] = kwargdict[rorder]
     # return run order and run dictionary
     return runorder, rundict
+
+
+def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
+             arg0=None, gtable0=None, file_col=None):
+    new_run = dict()
+    # deal with unset values (not used)
+    if arg0 is None:
+        arg0 = ''
+    if gtable0 is None:
+        gtable0 = dict(filecol=None)
+    if file_col is None:
+        file_col = 'filecol'
+    if nightname is None:
+        nightname = params['NIGHTNAME']
+    if meantime is None:
+        meantime = 0.0
+    # match files from grouptable0 to
+    for argname in runorder:
+        # if we are dealing with the first argument we have this
+        #   groups files (gtable0)
+        if argname == arg0:
+            new_run[argname] = list(gtable0[file_col])
+        # if we are dealing with 'directory' set it from nightname
+        elif argname == 'directory':
+            new_run[argname] = nightname
+        # if we are not dealing with a list of files just set value
+        elif not isinstance(rundict[argname], OrderedDict):
+            new_run[argname] = rundict[argname]
+        # else we are dealing with another list and must find the
+        #   best files (closetest in time) to add that match this
+        #   group
+        else:
+            margs = [params, argname, rundict, nightname, meantime]
+            new_run[argname] = _match_group(*margs)
+    # return new_run
+    return new_run
 
 
 def _find_first_filearg(runorder, argdict, kwargdict):
