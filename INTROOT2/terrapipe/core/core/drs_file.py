@@ -377,6 +377,7 @@ class DrsFitsFile(DrsInputFile):
         # if ext in kwargs then we have a file extension to check
         self.filetype = kwargs.get('filetype', '.fits')
         self.inext = kwargs.get('inext', '.fits')
+        self.intype = kwargs.get('intype', None)
         # get fiber type (if set)
         self.fibers = kwargs.get('fibers', None)
         self.fiber = kwargs.get('fiber', None)
@@ -446,6 +447,7 @@ class DrsFitsFile(DrsInputFile):
         kwargs['path'] = kwargs.get('path', self.path)
         kwargs['basename'] = kwargs.get('basename', self.basename)
         kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
+        kwargs['intype'] = kwargs.get('intype', self.intype)
         kwargs['directory'] = kwargs.get('directory', self.directory)
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
@@ -520,6 +522,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['path'] = kwargs.get('path', drsfile.path)
         nkwargs['basename'] = kwargs.get('basename', drsfile.basename)
         nkwargs['inputdir'] = kwargs.get('inputdir', drsfile.inputdir)
+        nkwargs['intype'] = kwargs.get('intype', drsfile.intype)
         nkwargs['directory'] = kwargs.get('directory', drsfile.directory)
         nkwargs['data'] = kwargs.get('data', drsfile.data)
         nkwargs['header'] = kwargs.get('header', drsfile.header)
@@ -702,6 +705,122 @@ class DrsFitsFile(DrsInputFile):
             errors[key] = (found, argname, rvalue, value)
 
         return found, errors
+
+    # -------------------------------------------------------------------------
+    # table checking
+    # -------------------------------------------------------------------------
+    def get_infile(self, recipe, infilename, ext='.fits'):
+        # ------------------------------------------------------------------
+        # 1. need to assign an input type for our raw file
+        if self.intype is not None:
+            infile = self.intype.newcopy(recipe=recipe)
+        else:
+            infile = DrsFitsFile('DRS_RAW_TEMP')
+        # add values to infile
+        infile.filename = infilename
+        infile.basename = os.path.basename(infilename)
+        infile.filetype = ext
+        # return infile
+        return infile
+
+
+
+    def check_table_filename(self, params, recipe, infile):
+        """
+        Checks whether raw "filename" belongs to this DrsFile
+
+        :param filename:
+        :return:
+        """
+        func_name = __NAME__ + '.DrsFitsFile.check_table_filename()'
+        # ------------------------------------------------------------------
+        # deal with fibers
+        if self.fibers is None:
+            fibers = [None]
+        else:
+            fibers = self.fibers
+        # set initial value of out filename
+        outfilename = infile.filename
+        # loop around fibers
+        for fiber in fibers:
+            # 2. need to assign an output filename for out file
+            if self.outfunc is not None:
+                outfilename = self.outfunc(params, infile=infile, outfile=self,
+                                           fiber=fiber)
+            else:
+                eargs = [self.name, recipe.name, func_name]
+                WLOG(params, 'error', TextEntry('09-503-00009', args=eargs))
+                outfilename = None
+        # ------------------------------------------------------------------
+        # assume file is valid
+        valid = True
+        # ------------------------------------------------------------------
+        # check extension
+        if outfilename.endswith(self.filetype):
+            # remove extension to test suffix
+            filename = outfilename[:-len(self.filetype)]
+        else:
+            filename = None
+            valid = False
+        # ------------------------------------------------------------------
+        # check suffix (after extension removed)
+        if (self.suffix is not None) and (valid is True):
+            # if we have no fibers file should end with suffix
+            if self.fibers is None:
+                if not filename.endswith(self.suffix):
+                    valid = False
+            # if we have fibers then file should end with one of them and
+            # the suffix
+            else:
+                # have to set up a new valid that should be True if any
+                #  fiber is present
+                valid1 = False
+                # loop around fibers
+                for fiber in self.fibers:
+                    if filename.endswith('{0}_{1}'.format(self.suffix, fiber)):
+                        valid1 |= True
+                # put valid1 back into valid
+                valid &= valid1
+        # ------------------------------------------------------------------
+        # return valid (True if filename is valid False otherwise)
+        return valid, outfilename
+
+
+    def check_table_keys(self, filedict, rkeys=None):
+        """
+        Checks whether a dictionary contains the required key/value pairs
+        to belong to this DrsFile
+
+        :param table:
+        :return:
+        """
+        # get required keys
+        if rkeys is None:
+            rkeys = self.required_header_keys
+        # assume file is valid
+        valid = True
+        # loop around required keys
+        for key in rkeys:
+            # key needs to be in table
+            if key in filedict:
+                # get rvalue
+                rvalues = rkeys[key]
+                # check if rvalue is list
+                if isinstance(rvalues, str):
+                    rvalues = [rvalues]
+                # set up aux valid
+                valid1 = False
+                # loop around
+                for rvalue in rvalues:
+                    # if key is in file dictionary then we should check it
+                    if filedict[key] == rvalue:
+                        valid1 |= True
+                # modify valid value
+                valid &= valid1
+
+        # return valid
+        return valid
+
 
     # -------------------------------------------------------------------------
     # fits file checking (OLD)

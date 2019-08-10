@@ -10,7 +10,7 @@ Created on 2019-01-19 at 12:02
 @author: cook
 """
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, vstack
 import argparse
 import os
 import sys
@@ -55,6 +55,8 @@ INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # Get Classes from drs_argument
 DRSArgumentParser = drs_argument.DRSArgumentParser
 DrsArgument = drs_argument.DrsArgument
+# alias pcheck
+pcheck = drs_log.find_param
 
 
 # =============================================================================
@@ -485,15 +487,27 @@ class DrsRecipe(object):
     # =========================================================================
     # Reprocessing methods
     # =========================================================================
-    def generate_runs(self, table, path, nightname=None, filters=None):
-
-        # TODO: ------------------------------------------
-        # TODO: WORK NEEDED HERE
-        # TODO: ------------------------------------------
-
-        runs = []
-
-        return runs
+    def generate_runs(self, params, table,  filters=None):
+        # need to find files in table that match each argument
+        #    filedict is a dictionary of arguments each for
+        #    each drsfile (if filelogic=exclusive)
+        #       i.e. filedict[argname][drsfile]
+        #    else all drsfiles go to 'all'
+        #       i.e. filedict[argname]['all']
+        argdict = find_run_files(params, self, table, self.args,
+                                 filters=filters)
+        # same for keyword args but this time we need to check only if
+        #   keyword is required, else skip (don't add optionals)
+        kwargdict = find_run_files(params, self, table, self.kwargs,
+                                   filters=filters, check_required=True)
+        # now we have the file lists we need to group files and match where
+        #   there are more than one argument, we then add in the other
+        #   arguments and construct the runs
+        runargs = group_run_files(params, self, argdict, kwargdict)
+        # now we have the runargs we can convert to a runlist
+        runlist = convert_to_command(self, runargs)
+        # return the runlist
+        return runlist
 
     # =========================================================================
     # Private Methods (Not to be used externally to spirouRecipe.py)
@@ -1037,6 +1051,10 @@ class DrsRunSequence(object):
         return frecipe
 
 
+class DrsRecipeException(Exception):
+    pass
+
+
 # =============================================================================
 # Define file check functions
 # =============================================================================
@@ -1288,149 +1306,232 @@ def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
 # =============================================================================
 # Define run making functions
 # =============================================================================
-def _dir_file_filter(inputdir, infilelist):
-    """
-    Take an input directory "inputdir" and a file list "infilelist" and only
-    keep those files that are within "inputdir" also extract the sub-directory
-    tree for these files.
+def find_run_files(params, recipe, table, args, filters=None, **kwargs):
+    func_name = __NAME__ + '.find_run_files()'
+    # storage for valid files for each argument
+    filedict = OrderedDict()
+    # get constants from params
+    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col',
+                         kwargs, func_name)
+    check_required = kwargs.get('check_required', False)
+    # get filenames from table
+    files = table[absfile_col]
+    # loop around arguments
+    for argname in args:
+        # get arg instance
+        arg = args[argname]
+        # if check required see if parameter is required
+        if check_required:
+            if not arg.required:
+                continue
+        # make sure we are only dealing with dtype=files
+        if arg.dtype not in ['file', 'files']:
+            filedict[argname] = arg.default
+            continue
+        else:
+            # add sub-dictionary for each drs file
+            filedict[argname] = OrderedDict()
+        # get drs file instances
+        drsfiles = arg.files
+        # loop around drs files
+        for drsfile in drsfiles:
+            # define storage
+            if arg.filelogic == 'exclusive':
+                filedict[argname][drsfile.name] = []
+            else:
+                filedict[argname]['all'] = []
+            # list of valid files
+            valid_infiles = []
+            valid_outfiles = []
 
-    :param inputdir: string, the input directory (root drs directory)
-    :param infilelist: list of strings, the absolute paths of the files
+            # loop around files
+            for filename in files:
+                # get infile instance
+                infile = drsfile.get_infile(recipe, filename)
+                # check if filename is valid
+                out = drsfile.check_table_filename(params, recipe, infile)
+                valid, outfilename = out
+                # if still valid add to list
+                if valid:
+                    valid_infiles.append(infile)
+                    valid_outfiles.append(outfilename)
+                else:
+                    valid_infiles.append(None)
+                    valid_outfiles.append(None)
+            # add outfiles to table
+            table['OUT'] = valid_outfiles
+            # for the valid files we can now check infile headers
+            for it in range(len(table)):
+                # get infile
+                infile = valid_infiles[it]
+                # skip those that were invalid
+                if infile is None:
+                    continue
+                # get table dictionary
+                tabledict = dict(zip(table.colnames, table[it]))
+                # check whether tabledict means that file is valid for this
+                #   infile
+                valid1 = infile.check_table_keys(tabledict)
+                # check whether filters are found
+                valid2 = infile.check_table_keys(tabledict, rkeys=filters)
+                # if valid then add to filedict for this argnameand drs file
+                if valid1 and valid2:
+                    if arg.filelogic == 'exclusive':
+                        filedict[argname][drsfile.name].append(table[it])
+                    else:
+                        filedict[argname]['all'].append(table[it])
 
-    :return out_dict: dictionary, keys are the directory and values are the
-                      valid input files in that directory (base filenames)
-    """
+    outfiledict = OrderedDict()
+    # convert each appended table to a single table per file
+    for argname in filedict:
+        # deal with non-list arguments
+        if not isinstance(filedict[argname], OrderedDict):
+            outfiledict[argname] = filedict[argname]
+            continue
+        else:
+            # add sub dictionary
+            outfiledict[argname] = OrderedDict()
+        # loop around drs files
+        for name in filedict[argname]:
+            # get table list
+            tablelist = filedict[argname][name]
+            # deal with empty list
+            if len(tablelist) == 0:
+                # append a None
+                outfiledict[argname][name] = None
+            elif len(tablelist) == 1:
+                # append the single row
+                outfiledict[argname][name] = tablelist[0]
+            else:
+                # vstack all rows
+                outfiledict[argname][name] = vstack(tablelist)
+
+    # return filedict
+    return outfiledict
+
+
+def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
+    func_name = __NAME__ + '.group_run_files()'
+    # get parameters from params
+    file_col = pcheck(params, 'DRS_INDEX_FILENAME', 'filecol', kwargs,
+                     func_name)
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
+                       func_name)
+    # ----------------------------------------------------------------------
+    # first loop around arguments
+    for argname in argdict:
+        # get this arg
+        arg = argdict[argname]
+        # deal with other parameters
+        if not isinstance(arg, OrderedDict):
+            continue
+        # deal with files (should be in drs groups)
+        for name in argdict[argname]:
+            # assign individual group numbers / mean group date
+            argdict[argname][name] = _group_drs_files(params, arg[name])
+    # ----------------------------------------------------------------------
+    # second loop around keyword arguments
+    for kwargname in kwargdict:
+        # get this kwarg
+        kwarg = kwargdict[kwargname]
+        # deal with other parameters
+        if not isinstance(kwarg, OrderedDict):
+            continue
+        # deal with files (should be in drs groups)
+        for name in kwargdict[kwargname]:
+            # assign individual group numbers / mean group date
+            kwargdict[kwargname][name] = _group_drs_files(params, kwarg[name])
+    # ----------------------------------------------------------------------
+    # figure out arg/kwarg order
+    runorder, rundict = _get_runorder(recipe, argdict, kwargdict)
+    # ----------------------------------------------------------------------
+    # brute force approach
+    runs = []
+    # find first file argument
+    arg0, drsfiles0 = _find_first_filearg(runorder, argdict, kwargdict)
+    # ----------------------------------------------------------------------
+    # loop around drs files in first file argument
+    for drsfile in drsfiles0:
+        # condition to stop trying to match files
+        cond = True
+        # set used groups
+        usedgroups = dict()
+        # keep matching until condition met
+        while cond:
+            new_run = dict()
+            # get first group
+            nargs = [arg0, rundict[arg0][drsfile], usedgroups]
+            gtable0, usedgroups = _find_next_group(*nargs)
+            # check for grouptable unset --> skip
+            if gtable0 is None:
+                 break
+            # get night name for group
+            nightname = gtable0[night_col][0]
+            # get mean time for group
+            meantime = gtable0['MEANDATE'][0]
+
+            # _match_groups raises exception when finished so need a
+            #   try/except here to catch it
+            try:
+                # match files from grouptable0 to
+                for argname in runorder:
+                    # if we are dealing with the first argument we have this
+                    #   groups files (gtable0)
+                    if argname == arg0:
+                        new_run[argname] = list(gtable0[file_col])
+                    # if we are dealing with 'directory' set it from nightname
+                    elif argname == 'directory':
+                        new_run[argname] = nightname
+                    # if we are not dealing with a list of files just set value
+                    elif not isinstance(rundict[argname], OrderedDict):
+                        new_run[argname] = rundict[argname]
+                    # else we are dealing with another list and must find the
+                    #   best files (closetest in time) to add that match this
+                    #   group
+                    else:
+                        margs = [params, argname, rundict, nightname, meantime]
+                        new_run[argname] = _match_group(*margs)
+            # catch exception
+            except DrsRecipeException:
+                break
+            # finally add new_run to runs
+            runs.append(new_run)
+
+
+def convert_to_command(self, runargs):
+    # get args/kwargs from recipe
+    args = self.args
+    kwargs = self.kwargs
     # define storage
-    out_dict = OrderedDict()
-    # loop around files
-    for filename in infilelist:
-        # remove those filenames that do not contain inputdir
-        if inputdir not in filename:
-            continue
-        # for those that are left check that they exist
-        if not os.path.exists(filename):
-            continue
-        # for those that exist get the directory name
-        basename = os.path.basename(filename)
-        dirname = os.path.dirname(filename)
-        directory = dirname.split(inputdir)[-1]
-        # make sure directory does not start with a separator
-        while directory.startswith(os.sep):
-            directory = directory[1:]
-        # append outfilelist and outfdict
-        if directory not in out_dict:
-            out_dict[directory] = [basename]
-        else:
-            out_dict[directory].append(basename)
-    # return all outputs
-    return out_dict
+    outputs = []
+    # loop around arguement
+    for runarg in runargs:
+        # command first arg
+        command = '{0} '.format(self.name)
+        # get run order
+        runorder, _ = _get_runorder(self, runarg, runarg)
+        # loop around run order
+        for argname in runorder:
+            # get raw value
+            rawvalue = runarg[argname]
+            # deal with lists
+            if isinstance(rawvalue, list):
+                value = ' '.join(runarg[argname])
+            else:
+                value = str(rawvalue)
+            # deal with arguments
+            if argname in args:
+                # add to command
+                command += '{0} '.format(value)
+            # deal with keyword arguments
+            if argname in kwargs:
+                # add to command
+                command += '--{0} {1} '.format(argname, value)
+        # append to out
+                outputs.append(command)
+    # return outputs
+    return outputs
 
-
-def _get_index_files(recipe, inputdir, outudirlist):
-    """
-    From a list of directories "outudirlist" and an input directory root
-    "inputdir" find all the current "INDEX_FILE" files, if they don't exist
-    then put the entry to None
-
-    :param inputdir: string, the root input directory
-    :param outudirlist: list of strings, the unique directories (night name)
-
-    :return index_list: list of strings, the abs path to each index file. If
-                        index file does not exist value is None
-    """
-    # get params from recipe
-    params = recipe.drs_params
-    # storage for index list
-    index_list = []
-    # loop around directories
-    for directory in outudirlist:
-        # construct the link to the index file
-        abspath = os.path.join(inputdir, directory, INDEX_FILE)
-        # test whether it exists
-        if os.path.exists(abspath):
-            WLOG(params, 'debug', TextEntry('90-001-00025', args=[abspath]),
-                 wrap=False)
-            index_list.append(abspath)
-        else:
-            WLOG(params, 'debug', TextEntry('90-001-00026', args=[abspath]),
-                 wrap=False)
-            index_list.append(None)
-    # return index_list
-    return index_list
-
-
-def _get_index_data(p, index_file, directory):
-    """
-    Get the index data from "index_file" in directory "directory"
-
-    :param p: Parameter Dictionary (used for logging)
-    :param index_file: string, the index_file (absolute path)
-    :param directory: string, the directory (used for logging)
-    :return:
-    """
-    # deal with no directory
-    if index_file is None:
-        wargs = [directory, 'off_listing']
-        WLOG(p, 'warning', TextEntry('10-004-00002', args=wargs))
-        return None
-
-    # load index file
-    try:
-        indexdata = Table.read(index_file)
-    except Exception as e:
-        eargs = [[directory], type(e), e]
-        WLOG(p, 'error', TextEntry('00-009-00001', args=eargs))
-        indexdata = None
-    # return index data
-    return indexdata
-
-
-def _filter_index(p, index, filters=None):
-    """
-    Filters index by filters. Filters are expected to be in a dictionary format
-    in the form:
-        filters = {KEY1:[VALUE1, VALUE2], KEY2:[VALUE3]}
-
-        where KEY1 and KEY2 are string and must be in index.colnames (the
-        column values of index)
-
-        where VALUE1, VALUE2 and VALUE3 are the values allowed for each key
-
-    :param index: astropy.table, index table containing KEY1, KEY2, ... columns
-                  to be masked by filters
-    :param filters: dictionary, keys are columns in index, values are the
-                    values allowed for that column
-
-    :return index_masked: astropy.table, the masked index table (using filters)
-    """
-    # deal with no filters
-    if filters is None:
-        return index
-    # define mask
-    mask = np.ones(len(index), dtype=bool)
-    # loop around filter sets
-    for rkey in filters:
-        # get key and values from filter set
-        values = filters[rkey]
-        # if rkey is in params use this value
-        if rkey in p and 'KW_' in rkey.upper():
-            key = p[rkey][0]
-        else:
-            key = str(rkey)
-        # define a mask set
-        mask_set = np.zeros(len(index), dtype=bool)
-        # check we have key in index columns
-        if key in index.colnames:
-            # debug message
-            dargs = [key, ' or '.join(values)]
-            WLOG(p, 'debug', TextEntry('90-001-00027', args=dargs))
-            # loop around allowed values for filter
-            for value in values:
-                mask_set |= (index[key] == value)
-            # apply mask_set to full mask
-            mask &= mask_set
-    # finally apply mask to index
-    return index[mask]
 
 
 # =============================================================================
@@ -1498,311 +1599,223 @@ def _get_arg(recipe, argname):
     return arg
 
 
-def _get_exposure_set(nums, bad='skip'):
-    """
-    Take a set of number that are assumed to represent sequences and group
-    the by sequence set
-        i.e. if we have 1,2,3,4,1,2,3,1,1,1,2,3,4
+def _group_drs_files(params, drstable, **kwargs):
 
-        group as following: 1,2,2,2,3,3,3,4,5,6,6,6,6
-
-    :param nums: list of int/str, it integers will group the numbers
-                 else will ignore and set the group to -1 if bad="skip" or
-                 creates a new group if bad="new"
-    :param bad: string, either "skip" or "new" decides what to do if nums is
-                invalid, if "skip" sets the group to -1, if "new" creates a new
-                group (with just this num in)
-
-    :return sequence_num: list of int, the group number (starts at 1) bad values
-                          in "exp_nums" set to a value of -1 if bad="skip" or
-                     creates a new group if bad="new"
-    """
-    # set iterables
-    sequence, group = 1, 0
-    # set storage
-    group_numbers = []
-    # loop around exposure numbers
-    for num in nums:
-        # test that exp_num is an integer, if it is not then value is bad
-        if not str(num).isdigit():
-            # if bad="skip" set to group -1 and continue to next one
-            if bad == 'skip':
-                group_numbers.append(-1)
-            # else if bad="new" start new group
-            else:
-                group += 1
-                group_numbers.append(group)
-        else:
-            num = int(num)
-            # if number is less than or equal to n then set the
-            #    value of sequence to 1, also add one to the group number
-            #    --> we have a new group
-            if num <= sequence:
-                sequence, group = 1, group + 1
-            # if number is larger then we set sequence to this value
-            #    --> we are still in the same group
-            else:
-                sequence = num
-            group_numbers.append(group)
-    # return group number
-    return group_numbers
-
-
-def _get_file_groups(recipe, arg):
-    """
-
-    For a file argument of dtype "file"/"files" get the files/directories/
-    dtypes/exposure set numbers and dates for each file and group by
-    directory/dtype/exposure set
-
-    Must have populated arg.value with recipe.get_file_arg first
-
-    returns groups in format:
-
-    groups = [group_files, group_dir, group_dtype, group_exp_set, group_dates]
-
-    where group_files is the file set for each group
-    where group_dir is the group directory
-    where group_dtype is the group file data type
-    where group_exp_set is the group exposure sequence number
-    where group_dates is the date for each file in file set for
-
-    :param recipe: DrsRecipe instance
-    :param arg: DrsArgument instance for this DrsRecipe
-
-    :return groups, list of lists (see above)
-    """
-    # get parameters
-    params = recipe.drs_params
-    # get number of arguments
-    nargs = arg.props['nargs']
-    # storage
-    directories, filenames, dtypes = [], [], []
-    exp_nums, nexps, dates = [], [], []
-    # loop around files in arg and get lists of parameters
-    for value in arg.value:
-        directories.append(value.directory)
-        filenames.append(value.indextable['FILENAME'])
-        exp_nums.append(value.indextable[params['KW_CMPLTEXP'][0]])
-        nexps.append(value.indextable[params['KW_NEXP'][0]])
-        dates.append(value.indextable[params['KW_ACQTIME'][0]])
-        # deal with separating out files by logic
-        #   i..e if "exclusive" need to separate by value.name
-        #        else we don't need to so set to "FILE"
-        #        (i.e. all the same)
-        if arg.filelogic == 'exclusive':
-            dtypes.append(value.name)
-        else:
-            dtypes.append('FILE')
-    # -------------------------------------------------------------------------
-    # sort by dates (MJDATE)
-    sortmask = np.argsort(dates)
-    directories = np.array(directories)[sortmask]
-    filenames = np.array(filenames)[sortmask]
-    exp_nums = np.array(exp_nums)[sortmask]
-    # nexps = np.array(nexps)[sortmask]
-    dates = np.array(dates)[sortmask]
-    dtypes = np.array(dtypes)[sortmask]
-
-    # -------------------------------------------------------------------------
-    # group by directory
-    group_files, group_dir, group_dtype = [], [], []
-    group_exp_set, group_dates = [], []
-    for gdir in np.unique(directories):
-        # mask directories
-        dirmask = directories == gdir
-        # skip if empty
-        if np.sum(dirmask) == 0:
+    func_name = __NAME__ + '.group_drs_files()'
+    # get properties from params
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
+                       func_name)
+    seq_colname = pcheck(params, 'REPROCESS_SEQCOL', 'seq_col', kwargs,
+                         func_name)
+    time_colname = pcheck(params, 'REPROCESS_TIMECOL', 'time_col', kwargs,
+                          func_name)
+    # st up empty groups
+    groups = np.zeros(len(drstable))
+    # get the sequence column
+    sequence_col = drstable[seq_colname]
+    # start the group number at 1
+    group_number = 1
+    # set up night mask
+    valid = np.zeros(len(drstable), dtype=bool)
+    # by night name
+    for night in np.unique(drstable[night_col]):
+        # deal with just this night name
+        nightmask = drstable[night_col] == night
+        # deal with only one file in nightmask
+        if np.sum(nightmask) == 1:
+            groups[nightmask] = group_number
+            group_number += 1
+            valid |= nightmask
             continue
-        # ---------------------------------------------------------------------
-        # group by dtype
-        for gdtype in np.unique(dtypes):
-            # mask dypres
-            typemask = dtypes == gdtype
-            # skip if empty
-            if np.sum(dirmask & typemask) == 0:
-                continue
-            # -----------------------------------------------------------------
-            # group by exposure sets
-            #     i.e. if we have: 1,2,3,4,1,2,3,1,1,1,2,3,4
-            #      group as following: 1,2,2,2,3,3,3,4,5,6,6,6,6
-            if arg.limit == 1:
-                exp_sets = np.arange(1, len(exp_nums[dirmask & typemask]) + 1)
-            else:
-                exp_sets = _get_exposure_set(exp_nums[dirmask & typemask],
-                                             bad='new')
-            # -----------------------------------------------------------------
-            # group by exposure set
-            for gexp in np.unique(exp_sets):
-                # mask exposure set
-                expmask = exp_sets == gexp
-                # if we have no entries continue
-                if np.sum(expmask) == 0:
-                    continue
-                else:
-                    files = filenames[dirmask & typemask][expmask]
-                    gdate = dates[dirmask & typemask][expmask]
-                # deal with only allowing 1 file per set (dtype=file)
-                if nargs == 1:
-                    WLOG(params, 'debug', TextEntry('90-001-00028'))
-                    files = np.array([files[-1]])
-                    gdate = np.array([gdate[-1]])
-                # add to groups (only if we have more than one file)
-                if len(files) > 0:
-                    dgs = [len(files), '{0},{1},{2}'.format(gdir, gdtype, gexp)]
-                    WLOG(params, 'debug', TextEntry('90-001-00029', args=dgs))
-                    group_files.append(files)
-                    group_dir.append(gdir)
-                    group_dtype.append(gdtype)
-                    group_exp_set.append(gexp)
-                    group_dates.append(gdate)
-    # return groups
-    groups = [group_files, group_dir, group_dtype, group_exp_set, group_dates]
-    return groups
+        # set invalid sequence numbers to 1
+        sequence_mask = sequence_col == ''
+        sequence_col[sequence_mask] = 1
+        # get the sequence number
+        sequences = sequence_col[nightmask].astype(int)
+        indices = np.arange(len(sequences))
+        # get the raw groups
+        rawgroups = np.array(-(sequences - indices) + 1)
+
+        nightgroup = np.zeros(np.sum(nightmask))
+        # loop around the unique groups and assign group number
+        for rgroup in np.unique(rawgroups):
+            # get group mask
+            groupmask = rawgroups == rgroup
+            # push the group number into night group
+            nightgroup[groupmask] = group_number
+            # add to the group number
+            group_number += 1
+        # add the night group to the full group
+        groups[nightmask] = nightgroup
+        # add to the valid mask
+        valid |= nightmask
+
+    # add groups and valid to dict
+    drstable['GROUPS'] = groups
+    # mask by the valid mask
+    drstable = drstable[valid]
+
+    # now work out mean time for each group
+    # start of mean dates as zeros
+    meandate = np.zeros(len(drstable))
+    # get groups from table
+    groups = drstable['GROUPS']
+    # loop around each group and change the mean date for the files
+    for g_it in range(1, int(max(groups)) + 1):
+        # group mask
+        groupmask = (groups == g_it)
+        # group mean
+        groupmean = np.mean(drstable[time_colname][groupmask])
+        # save group mean
+        meandate[groupmask] = groupmean
+    # add meandate to drstable
+    drstable['MEANDATE'] = meandate
+    # return the group
+    return drstable
 
 
-def _match_multi_arg_lists(recipe, args, arg_list, directories, file_dates):
-    """
-    Match multiple argument lists so we have the same number of matches as
-    the argument which has the most files
-
-    Only used when we have more than one set of file arguments
-
-    Matches based on directory (Must match directory) then selects the closest
-    file to the argument which has the most "file sets"
-
-    :param recipe: DrsRecipe instance
-    :param args: list of strings, the "file"/"files" arguments in "arg_list"
-    :param arg_list: dictionary, the arg_list dictionary, contains the
-                     different permutations of runs in form:
-
-                     Arg1: [value1, value1, value2]
-                     Arg2: [file set 2a, file set 2b, file set 2c]
-                     Arg3: [file set 3a, file set 3b]
-
-                     where Arg1 is a "non-file" argument (dtype)
-                     where Arg2 and Arg3 are "file"/"files" argument (dtype)
-                     where "file set" is a basename filename, a string
-                         file in "directory"
-
-    :param directories: dictionary, same layout as arg_list but instead of
-                        "file set" we have "directory" for this file set
-    :param file_dates: dictionary, same layour as arg_list but instead of
-                        "file set" we have "date set" - a float date and time
-                        for each file (i.e. MJDATE or UNIX time)
-
-    :return arg_list: dictionary, updated "arg_list" from input. Now all
-                      "file"/"files" arguments should match in length. If any
-                      matches were not found a None will be in the place of
-                      a string filename.
-    :return number_of_runs: int, the number of runs found (i.e. the length
-                      of "file sets" in the largest "file"/"files" argument
-    """
-
-    params = recipe.drs_params
-    # push args into lists
-    files, dirs, dates = [], [], []
-    for file_arg in args:
-        files.append(arg_list[file_arg])
-        dirs.append(directories[file_arg])
-        dates.append(file_dates[file_arg])
-
-    # get the indices for args
-    iargs = np.arange(0, len(args), dtype=int)
-    # find largest list
-    largest, largest_it = None, 0
-    size = 0
-    for it, arg in enumerate(args):
-        if len(files[it]) > size:
-            size = len(files[it])
-            largest, largest_it = arg, it
-    # get the other args to match
-    other_index = list(iargs[:largest_it]) + list(iargs[largest_it + 1:])
-    # set up storage
-    new_files, new_dirs = dict(), dict()
-    # loop around other args
-    for it in other_index:
-        # set up storage
-        new_files[args[it]], new_dirs[args[it]] = [], []
-        # set up other arrays
-        other_dirs_arr = np.array(dirs[it])
-        other_dates_arr = np.array(dates[it])
-        # loop around the values in the largest argument
-        for jt in range(len(files[largest_it])):
-            # get this iterations values
-            dir_jt = dirs[largest_it][jt]
-            # can be a set of dates
-            if len(dates[largest_it][jt]) > 1:
-                date_jt = np.mean(dates[largest_it][jt])
-            else:
-                date_jt = dates[largest_it][jt]
-            # get all matching directories
-            dirmask = other_dirs_arr == dir_jt
-            # deal with no matching directories
-            if np.sum(dirmask) == 0:
-                dargs = [dir_jt, other_dirs_arr]
-                WLOG(params, 'debug', TextEntry('90-001-00030', args=dargs),
-                     wrap=False)
-                new_files[args[it]].append(None)
-                new_dirs[args[it]].append(None)
-                continue
-            # get files/dirs for mask (from lists of lists)
-            mask_files, mask_dirs = [], []
-            for kt in range(len(dirmask)):
-                if dirmask[kt]:
-                    mask_files.append(files[it][kt])
-                    mask_dirs.append(dirs[it][kt])
-            # if we have multiple files we want the closest in time
-            diff_value = []
-            for oda_i in other_dates_arr[dirmask]:
-                diff_value.append(np.mean(oda_i) - date_jt)
-            closest = np.argmin(abs(np.array(diff_value)))
-            # select this files set and dir as the correct one
-            # noinspection PyTypeChecker
-            new_files[args[it]].append(mask_files[closest])
-            # noinspection PyTypeChecker
-            new_dirs[args[it]].append(mask_dirs[closest])
-
-    # append back to arg_list
-    for file_arg in list(new_files.keys()):
-        arg_list[file_arg] = new_files[file_arg]
-        directories[file_arg] = new_dirs[file_arg]
-
-    # set arg_list directories to largest
-    arg_list['directory'] = directories[largest]
-    # set the number of runs
-    number_of_runs = len(directories[largest])
-
-    # return arg list and directories
-    return arg_list, number_of_runs
+def _get_runorder(recipe, argdict, kwargdict):
+    runorder = OrderedDict()
+    # get args/kwargs from recipe
+    args = recipe.args
+    kwargs = recipe.kwargs
+    # iterator for non-positional variables
+    it = 0
+    # loop around args
+    for argname in args.keys():
+        # must be in rundict keys
+        if argname not in argdict.keys():
+            continue
+        # get arg
+        arg = args[argname]
+        # get position or set it using iterator
+        if arg.pos is not None:
+            runorder[arg.pos] = argname
+        else:
+            runorder[1000 + it] = argname
+            it += 1
+    # loop around args
+    for kwargname in kwargs.keys():
+        # must be in rundict keys
+        if kwargname not in kwargdict.keys():
+            continue
+        # get arg
+        kwarg = kwargs[kwargname]
+        # get position or set it using iterator
+        if kwarg.pos is not None:
+            runorder[kwarg.pos] = kwargname
+        else:
+            runorder[1000 + it] = kwargname
+            it += 1
+    sortrunorder = np.argsort(list(runorder.keys()))
+    runorder = np.array(list(runorder.values()))[sortrunorder]
+    # merge argdict and kwargdict
+    rundict = dict()
+    for rorder in runorder:
+        if rorder in argdict:
+            rundict[rorder] = argdict[rorder]
+        else:
+            rundict[rorder] = kwargdict[rorder]
+    # return run order and run dictionary
+    return runorder, rundict
 
 
-def _make_dict_from_table(itable):
-    """
-    Make dictionary from table evaluating the values as float/integers or
-    strings
+def _find_first_filearg(runorder, argdict, kwargdict):
+    for argname in runorder:
+        if argname in argdict:
+            if isinstance(argdict[argname], OrderedDict):
+                return argname, argdict[argname]
+        elif argname in kwargdict:
+            if isinstance(kwargdict[argname], OrderedDict):
+                return argname, kwargdict[argname]
+    return None
 
-    :param itable: row of astropy.table - one and only one value
 
-    :return idict: dictionary, the dictionary equivalent of the itable row
-                   instance, where column names are the keys and this rows
-                   values are their values
-    """
-    ikeys = list(itable.colnames)
-    ivalues = []
-    # loop around values in list
-    for value in list(itable):
-        try:
-            # if '.' in string assume it is a float
-            if '.' in str(value):
-                ivalues.append(float(value))
-            # else assume it is an integer
-            else:
-                ivalues.append(int(value))
-        except ValueError:
-            # handle as string (striped of white spaces)
-            ivalues.append(str(value).strip(' '))
-    return dict(zip(ikeys, ivalues))
+def _find_next_group(argname, drstable, usedgroups):
+    # make sure argname is in usedgroups
+    if argname not in usedgroups:
+        usedgroups[argname] = []
+    # get group column from drstable
+    groups = np.array(drstable['GROUPS']).astype(int)
+    # get unique groups from groups
+    ugroups = np.unique(groups)
+    # loop around unique groups
+    for group in np.sort(ugroups):
+        # if used skip
+        if group in usedgroups[argname]:
+            continue
+        else:
+            # find rows in this group
+            mask = groups == group
+            # add group to used groups
+            usedgroups[argname].append(group)
+            # return masked table and usedgroups
+            return Table(drstable[mask]), usedgroups
+    # return None if all groups used
+    return None, usedgroups
+
+
+def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
+
+    func_name = __NAME__ + '._match_groups()'
+
+    # get parmaeters from params/kwargs
+    file_col = pcheck(params, 'DRS_INDEX_FILENAME', 'filecol', kwargs,
+                     func_name)
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
+                       func_name)
+    # get drsfiles
+    drsfiles1 = list(rundict[argname].keys())
+    # storage of valid groups [group number, drsfile, meandate]
+    valid_groups = []
+    # loop around drs files in argname
+    for drsfile in drsfiles1:
+        # get table
+        ftable1 = rundict[argname][drsfile]
+        # mask by night name
+        mask = ftable1[night_col] == nightname
+        # check that we have some files with this nightname
+        if np.sum(mask) == 0:
+            continue
+        # mask table
+        table = Table(ftable1[mask])
+        # get unique groups
+        ugroups = np.unique(table['GROUPS']).astype(int)
+        # loop around groups
+        for group in ugroups:
+            # mask group
+            groupmask = table['GROUPS'] == group
+            # get mean date
+            groumeandate = table['MEANDATE'][groupmask][0]
+            # store in valid_groups
+            valid_groups.append([group, drsfile, groumeandate])
+    # if we have no valid groups we cannot continue (time to stop)
+    if len(valid_groups) == 0:
+        raise DrsRecipeException('No valid groups')
+    # for all valid_groups find the one closest intime to meantime of first
+    #   argument
+    valid_groups = np.array(valid_groups)
+    # get mean times
+    meantimes1 = np.array(valid_groups[:, 2]).astype(float)
+    # ----------------------------------------------------------------------
+    # find position of closest in time
+    min_pos = int(np.argmin(abs(meantimes1 - meantime)))
+    # ----------------------------------------------------------------------
+    # get group for minpos
+    group_s = int(valid_groups[min_pos][0])
+    # get drsfile for minpos
+    drsfile_s = valid_groups[min_pos][1]
+    # get table for minpos
+    table_s = rundict[argname][drsfile_s]
+    # mask by group
+    mask_s = np.array(table_s['GROUPS']).astype(int) == group_s
+    # ----------------------------------------------------------------------
+    # make sure mask has entries
+    if np.sum(mask_s) == 0:
+        raise DrsRecipeException('No valid groups')
+    # ----------------------------------------------------------------------
+    # return files for min position
+    return list(table_s[file_col][mask_s])
 
 
 # =============================================================================
