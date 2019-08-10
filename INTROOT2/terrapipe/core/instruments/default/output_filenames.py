@@ -123,6 +123,17 @@ def debug_file(params, **kwargs):
     return general_file(params, prefix=prefix, **kwargs)
 
 
+def blank(params, **kwargs):
+    func_name = kwargs.get('func', __NAME__ + '.general_file()')
+    # get parameters from keyword arguments
+    infile = kwargs.get('infile', None)
+    # deal with kwargs that are required
+    if infile is None:
+        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
+    # return absolute path
+    return infile.filename
+
+
 # =============================================================================
 # Define user functions
 # =============================================================================

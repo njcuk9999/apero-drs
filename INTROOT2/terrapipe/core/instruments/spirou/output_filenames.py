@@ -96,6 +96,10 @@ def calib_file(params, **kwargs):
     return output_filenames.general_file(params, prefix=prefix, **kwargs)
 
 
+def blank(params, **kwargs):
+    return output_filenames.blank(params, **kwargs)
+
+
 # =============================================================================
 # Define worker functions
 # =============================================================================
