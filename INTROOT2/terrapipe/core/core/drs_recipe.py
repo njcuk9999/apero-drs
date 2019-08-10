@@ -1496,6 +1496,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 break
             # finally add new_run to runs
             runs.append(new_run)
+    # return runs
+    return runs
 
 
 def convert_to_command(self, runargs):
