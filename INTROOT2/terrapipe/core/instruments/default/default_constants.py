@@ -110,11 +110,11 @@ __all__ = [
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
-    'REPROCESS_RAWINDEXFILE'
+    'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
     ]
 
 # set name
-__NAME__ = 'terrapipe.constants.default.default_constants'
+__NAME__ = 'core.instruments.default.default_constants.py'
 
 # Constants class
 Const = constant_functions.Const
@@ -978,3 +978,11 @@ REPROCESS_SORTCOL_HDRKEY = Const('REPROCESS_SORTCOL_HDRKEY', value=None,
 # Define the raw index filename
 REPROCESS_RAWINDEXFILE = Const('REPROCESS_RAWINDEXFILE', value=None, dtype=str,
                                source=__NAME__)
+
+# define the sequence (1 of 5, 2 of 5 etc) col for raw file table
+REPROCESS_SEQCOL = Const('REPROCESS_SEQCOL', value=None, dtype=str,
+                         source=__NAME__)
+
+# define the time col for raw file table
+REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
+                          source=__NAME__)
