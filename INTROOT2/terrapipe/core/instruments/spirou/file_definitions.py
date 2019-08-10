@@ -177,133 +177,133 @@ raw_file.addset(raw_hc2_dark)
 # =============================================================================
 # generic pp file
 pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
-                     outfunc=out.general_file)
+                     outfunc=out.general_file, intype=raw_file)
 # -----------------------------------------------------------------------------
 # dark
 pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK',
                           filetype='.fits',
-                          suffix='_pp',
+                          suffix='_pp', intype=raw_dark_dark,
                           inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_dark)
 # -----------------------------------------------------------------------------
 # flat
 pp_flat_dark = drs_finput('FLAT_DARK', KW_DPRTYPE='FLAT_DARK',
                           filetype='.fits',
-                          suffix='_pp',
+                          suffix='_pp', intype=raw_flat_dark,
                           inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_flat_dark)
 
 pp_dark_flat = drs_finput('DARK_FLAT', KW_DPRTYPE='DARK_FLAT',
                           filetype='.fits',
-                          suffix='_pp',
+                          suffix='_pp', intype=raw_dark_flat,
                           inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_flat)
 
 pp_flat_flat = drs_finput('FLAT_FLAT', KW_DPRTYPE='FLAT_FLAT',
                           filetype='.fits',
-                          suffix='_pp',
+                          suffix='_pp', intype=raw_flat_flat,
                           inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_flat_flat)
 
 pp_flat_fp = drs_finput('FLAT_FP', KW_DPRTYPE='FLAT_FP',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_flat_fp,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_flat_fp)
 # -----------------------------------------------------------------------------
 # align
 pp_dark_fp = drs_finput('DARK_FP', KW_DPRTYPE='DARK_FP',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_dark_fp,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_fp)
 pp_fp_dark = drs_finput('FP_DARK', KW_DPRTYPE='FP_DARK',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_fp_dark,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_dark)
 pp_fp_flat = drs_finput('FP_FLAT', KW_DPRTYPE='FP_FLAT',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_fp_flat,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_flat)
 pp_fp_fp = drs_finput('FP_FP', KW_DPRTYPE='FP_FP',
                       filetype='.fits',
-                      suffix='_pp',
+                      suffix='_pp', intype=raw_fp_fp,
                       inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_fp)
 # -----------------------------------------------------------------------------
 #  object
 pp_obj_dark = drs_finput('OBJ_DARK', KW_DPRTYPE='OBJ_DARK',
                          filetype='.fits',
-                         suffix='_pp',
+                         suffix='_pp', intype=raw_obj_dark,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_dark)
 pp_obj_fp = drs_finput('OBJ_FP', KW_DPRTYPE='OBJ_FP',
                        filetype='.fits',
-                       suffix='_pp',
+                       suffix='_pp', intype=raw_obj_fp,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_fp)
 pp_obj_hc1 = drs_finput('OBJ_HC1', KW_DPRTYPE='OBJ_HCONE',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc1)
 pp_obj_hc2 = drs_finput('OBJ_HC2', KW_DPRTYPE='OBJ_HCTWO',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_obj_hc2,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc2)
 # -----------------------------------------------------------------------------
 #  comparison
 pp_dark_hc1 = drs_finput('DARK_HCONE', KW_DPRTYPE='DARK_HCONE',
                          filetype='.fits',
-                         suffix='_pp',
+                         suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_hc1)
 pp_dark_hc2 = drs_finput('DARK_HCTW0', KW_DPRTYPE='DARK_HCTW0',
                          filetype='.fits',
-                         suffix='_pp',
+                         suffix='_pp', intype=raw_dark_hc2,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_hc2)
 pp_fp_hc1 = drs_finput('FP_HCONE', KW_DPRTYPE='FP_HCONE',
                        filetype='.fits',
-                       suffix='_pp',
+                       suffix='_pp', intype=raw_fp_hc1,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_hc1)
 pp_fp_hc2 = drs_finput('FP_HCTWO', KW_DPRTYPE='FP_HCTWO',
                        filetype='.fits',
-                       suffix='_pp',
+                       suffix='_pp', intype=raw_fp_hc2,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_hc2)
 pp_hc1_fp = drs_finput('HCONE_FP', KW_DPRTYPE='HCONE_FP',
                        filetype='.fits',
-                       suffix='_pp',
+                       suffix='_pp', intype=raw_hc1_fp,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc1_fp)
 pp_hc2_fp = drs_finput('HCTWO_FP', KW_DPRTYPE='HCTWO_FP',
                        filetype='.fits',
-                       suffix='_pp',
+                       suffix='_pp', intype=raw_hc2_fp,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc2_fp)
 pp_hc1_hc1 = drs_finput('HCONE_HCONE', KW_DPRTYPE='HCONE_HCONE',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_hc1_hc1,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc1_hc1)
 pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', KW_DPRTYPE='HCTWO_HCTWO',
                         filetype='.fits',
-                        suffix='_pp',
+                        suffix='_pp', intype=raw_hc2_hc2,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc2_hc2)
 pp_hc1_dark = drs_finput('HCONE_DARK', KW_DPRTYPE='HCONE_DARK',
                          filetype='.fits',
-                         suffix='_pp',
+                         suffix='_pp', intype=raw_hc1_dark,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc1_dark)
 pp_hc2_dark = drs_finput('HCTWO_DARK', KW_DPRTYPE='HCTWO_DARK',
                          filetype='.fits',
-                         suffix='_pp',
+                         suffix='_pp', intype=raw_hc2_dark,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc2_dark)
 
@@ -311,7 +311,8 @@ pp_file.addset(pp_hc2_dark)
 # Reduced Files
 # =============================================================================
 # generic out file
-out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='')
+out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+                      intype=pp_file)
 # -----------------------------------------------------------------------------
 # dark out file
 out_dark = drs_finput('DARK', KW_OUTPUT='DARK',

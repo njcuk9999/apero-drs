@@ -10,7 +10,7 @@ from terrapipe.core.instruments.default.default_constants import *
 # TODO: Note: If variables are not showing up MUST CHECK __all__ definition
 # TODO:    in import * module
 
-__NAME__ = 'config.instruments.spirou.default_constants.py'
+__NAME__ = 'core.instruments.spirou.default_constants.py'
 
 # =============================================================================
 # Spirou Constant definitions
@@ -904,3 +904,10 @@ REPROCESS_SORTCOL_HDRKEY.value = 'KW_ACQTIME'
 REPROCESS_RAWINDEXFILE = REPROCESS_RAWINDEXFILE.copy(__NAME__)
 REPROCESS_RAWINDEXFILE.value = 'rawindex.fits'
 
+# define the sequence (1 of 5, 2 of 5 etc) col for raw file table
+REPROCESS_SEQCOL = REPROCESS_SEQCOL.copy(__NAME__)
+REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
+
+# define the time col for raw file table
+REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
+REPROCESS_TIMECOL.value = 'KW_ACQTIME'
