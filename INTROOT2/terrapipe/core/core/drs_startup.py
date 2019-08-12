@@ -1162,7 +1162,7 @@ def _assign_pid():
     return pid, humantime
 
 
-def find_recipe(name='None', instrument='None'):
+def find_recipe(name='None', instrument='None', mod=None):
     """
     Finds a given recipe in the instruments definitions
 
@@ -1188,10 +1188,11 @@ def find_recipe(name='None', instrument='None'):
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty
     # else we have a name and an instrument
-    margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
-    modules = constants.getmodnames(*margs, path=False)
-    # load module
-    mod = constants.import_module(modules[0], full=True)
+    if mod is None:
+        margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
+        modules = constants.getmodnames(*margs, path=False)
+        # load module
+        mod = constants.import_module(modules[0], full=True)
     # get a list of all recipes from modules
     all_recipes = mod.recipes
     # try to locate this recipe
