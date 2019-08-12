@@ -106,6 +106,15 @@ class Text:
 
 class TextDict(Text):
     def __init__(self, instrument, language):
+        """
+        Accessing the language database via loaded dictionary
+
+        :param instrument:
+        :param language:
+
+        :type instrument: str
+        :type language: str
+        """
         Text.__init__(self, instrument, language)
         self.name = 'TextDict'
         self.load_func = '_load_dict_error()'
