@@ -99,7 +99,7 @@ def __main__(recipe, params):
     # Deal with run file
     # ----------------------------------------------------------------------
     # deal with run file
-    params, runtable = drs_reprocess.runfile(params, runfile)
+    params, runtable = drs_reprocess.read_runfile(params, runfile)
     # reset sys.argv so it doesn't mess with recipes
     sys.argv = [__NAME__]
 
@@ -112,30 +112,33 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Deal with reset options
     # ----------------------------------------------------------------------
-    drs_reprocess.reset(params)
+    drs_reprocess.reset_files(params)
 
     # ----------------------------------------------------------------------
     # find all raw files
     # ----------------------------------------------------------------------
+    # get raw files
     rawtable, rawpath = drs_reprocess.find_raw_files(params)
 
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    runlist = drs_reprocess.generate_run_list(params, rawtable, rawpath,
-                                              runtable)
+    runlist = drs_reprocess.generate_run_list(params, rawtable, runtable)
 
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
+    outlist = drs_reprocess.process_run_list(params, runlist)
 
     # ----------------------------------------------------------------------
     # Print timing
     # ----------------------------------------------------------------------
+    drs_reprocess.display_timing(params, outlist)
 
     # ----------------------------------------------------------------------
     # Print out any errors
     # ----------------------------------------------------------------------
+    drs_reprocess.display_errors(params, outlist)
 
     # ----------------------------------------------------------------------
     # Send email about finishing
