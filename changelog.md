@@ -2,6 +2,233 @@ Changelog
 =========
 
 
+0.5.050 (2019-08-12)
+--------------------
+- Tools.reprocess - add processing (linear/parallel) functionality.
+  [Neil Cook]
+- Science.telluric.general.py - first commit - add get_whitelist and
+  get_blacklist functions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_text.py - first commit - add text reading functionality. [Neil
+  Cook]
+- Io.drs_data.py - add load_text_file functionality. [Neil Cook]
+- Data.spirou.tellu_*list.txt - add telluric black/white list. [Neil
+  Cook]
+- Core.instruments - add white/black list for tellurics (needed for
+  reprocessing) [Neil Cook]
+- Core.core.drs_startup.py - get recipe definitions module from call.
+  [Neil Cook]
+- Drs_recipe.py - changes to generate_runs. [Neil Cook]
+- Core.core.drs_file.py - outfile should just be the basename. [Neil
+  Cook]
+
+
+0.5.049 (2019-08-10)
+--------------------
+- Drs_reprocess.py - address new bugs. [Neil Cook]
+- Drs_reprocess.py - address new bugs. [Neil Cook]
+- Core.instruments - add outfunc=out.blank (and blank description) [Neil
+  Cook]
+- Drs_recipe.py - add return of runs. [Neil Cook]
+- Drs_reprocessing.py - update for continued work on reprocessing. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Core.instruments - add repreocessing constants. [Neil Cook]
+- Drs_file.py - add functionality for reprocessing. [Neil Cook]
+
+
+0.5.048 (2019-08-08)
+--------------------
+- Tools.reset.py - remove update_params and set __INSTRUMENT__ from
+  recipe update. [Neil Cook]
+- Reprocess.py/drs_reprocess.py - continue work on reprocessing
+  (unfinished) [Neil Cook]
+- Cal_preprocess_spirou.py - allow skipping of files if done and
+  --skip=True. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.__init__.py - remove update_params (now done in setup) [Neil
+  Cook]
+- Core.instruments.spirou.recipe_definitions.py - add file module to
+  DrsRecipe calls, add shortname and master to master recipes, add
+  section defining run sequences (run order + filters) [Neil Cook]
+- Core.instruments.spirou.py - add outfunc for pp_file. [Neil Cook]
+- Core.instruments.*.output_filenames.py - fix how _calibration_prefix
+  works and add an error if "outpath" is None. [Neil Cook]
+- Core.instruments.*.default_constants.py - add and update constants.
+  [Neil Cook]
+- Drs_startup.py - update parameters if instrument is in inputs (go from
+  no instrument to using an instrument) [Neil Cook]
+- Drs_recipe.py - add copy function to DrsRecipe add DrsRunSequence
+  class. [Neil Cook]
+- Drs_argument.py - remove debug print statement. [Neil Cook]
+
+
+0.5.047 (2019-08-07)
+--------------------
+- Drs_reprocess.py - add RUN and SKIP names (unfinished) [Neil Cook]
+- Add outfiles from recipe.outputs. [Neil Cook]
+- Recipe_definitions.py - add set_outputs and outputs to all recipes.
+  [Neil Cook]
+- Drs_recipe.py - add set_outputs method and outputs attribute (for
+  adding output file definitions to files) [Neil Cook]
+
+
+0.5.046 (2019-08-06)
+--------------------
+- Tools.bin - first commit of reprocessing (not finished) [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_table.py - fix problem with no data_start keyword in fmt='fits'
+  [Neil Cook]
+- Core.instruments - add in reprocessing constants. [Neil Cook]
+- Core.core.drs_startup.py - allow find_recipe not be non-private. [Neil
+  Cook]
+- Core.core.drs_recipe.py - add a way to skip checks (for getting arg
+  list from runlist) [Neil Cook]
+- Core.core.drs_argument.py - add a way to skip checks (for getting arg
+  list from runlist) [Neil Cook]
+- Core.constants.constant_functions.py - modify import_module to have
+  quiet mode. [Neil Cook]
+- Update todo statements (more specific) [Neil Cook]
+
+
+0.5.045 (2019-07-27)
+--------------------
+- Sciecne.extract.extraction.py - remove use of params['FIBER'] [Neil
+  Cook]
+- Sciecne.extract.berv.py - fix assign_properties. [Neil Cook]
+- Science.calib.* - add in the option to get filename from call and from
+  params['INPUTS'] [Neil Cook]
+- Cal_thermal_spirou.py - check if cal_extract (for the DARK_DARK)
+  failed before continuing. [Neil Cook]
+- Cal_shape_master_spirou.py - remove use of params['FIBER'] [Neil Cook]
+- Cal_loc_spirou.py - remove use of params['FIBER'] [Neil Cook]
+- Cal_flat_spirou.py - remove use of params['FIBER'] [Neil Cook]
+- Cal_extract_spirou.py - add options to skip on DPRTYPE and OBJNAME.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_image.py - remove use of params['FIBER'] [Neil Cook]
+- Recipe_definitions.py - add more options (calibration files) [Neil
+  Cook]
+- Pseduo_const.py - remove use of params['FIBER'] [Neil Cook]
+- File_definitions.py - add KW_OBSTYPE to raw files. [Neil Cook]
+- Pseudo_const.py - remove use of params['FIBER'] [Neil Cook]
+- Recipe_definition - replace kwarg --> set_kwarg and arg --> set_arg.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Berv.py - add things left to do. [Neil Cook]
+- Update example_run_list.txt. [Neil Cook]
+- Update example_run_list.txt. [Neil Cook]
+- Core.instruments.spirou.file_defintions.py - correct suffix for
+  out_shape_debug_ihc. [Neil Cook]
+- Cal_flat_spirou.py - correct order call. [Neil Cook]
+- Misc.update_wave_header.py - script to update master_wave header with
+  new keys. [Neil Cook]
+- Misc.example_run_list.txt - list of test codes to run (while
+  reprocessing script is being built) [Neil Cook]
+- Tools.bin - add reset code (formally cal_reset.py) [Neil Cook]
+- Identification.py - fix drs_outfile_id to find files with a different
+  prefix. [Neil Cook]
+- Science.calib - get_file_definition must specify kind (raw/tmp/red)
+  [Neil Cook]
+- Cal_preprocess_spirou.py - correct problems with drs_outfile_id. [Neil
+  Cook]
+- Cal_dark_master_spirou.py - deal with no dark files being found. [Neil
+  Cook]
+- Drs_data.py - construct_filename function all filename/directory name
+  to be unset. [Neil Cook]
+- Data.spirou.reset - update MASTER_WAVE.fits (new header keys) [Neil
+  Cook]
+- Core.__init__.py - add some new aliases and rearrange order. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Core.instruments - add reset functionality + small fixes to run codes.
+  [Neil Cook]
+- Core.core.drs_startup.py - pipe errors in main end script to WLOG
+  (were just raising) + add function update_params (to update param with
+  instrument params) [Neil Cook]
+- Core.core.drs_recipe.py - add exceptions for bad sys.argv and
+  misbehaving parsing to argparse. [Neil Cook]
+- Core.core.drs_file.py - fix error message (should be the drs file not
+  just the name) [Neil Cook]
+- Data.spirou.reset - add reset files for calibdb and telludb. [Neil
+  Cook]
+- Reorganisation of the tools folder. [Neil Cook]
+- Tools - update tools now have bin folder and dev folder (rest are
+  modules) [Neil Cook]
+- Science.calib.shape.py - add log for ea_transform. [Neil Cook]
+- Update language database. [Neil Cook]
+- Object_query_list.fits - first commit - the gaia query database (so we
+  don't have to query online every time) [Neil Cook]
+- Science.extract.general.py - fix problems with thermal. [Neil Cook]
+- Science.extract.crossmatch.py - correction to new berv functionality
+  including plx limit and mag limit. [Neil Cook]
+- Science.extract.berv.py - correction to new berv functionality
+  (including dberv and rv when present) [Neil Cook]
+- Cal_loc_spirou.py - add calibs to header. [Neil Cook]
+- Cal_extract_spirou.py - add rest of the cdb keywords. [Neil Cook]
+- Drs_data.py - correct problems with construct_filename and add unique
+  error message for obj_list function. [Neil Cook]
+- Core.math.general.py - apply fix #567 by @melissa-hobson. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.* - added calibration and extraction (berv) keyword
+  defintions. [Neil Cook]
+- SpirouMath.py - correct issue #567 (fix by @melissa-hobson) [Neil
+  Cook]
+
+
+0.5.043 (2019-07-25)
+--------------------
+- Science.extract.berv.py - add features to query gaia / lookup table.
+  [Neil Cook]
+- .gitignore - add .lock to ignore list. [Neil Cook]
+- Science.extract.crossmatch.py - first commit -- adding to query
+  gaia/lookup table. [Neil Cook]
+- Science.extract.extraction.py - change warning keys 0016 --> 016.
+  [Neil Cook]
+- Cal_extract_spirou.py - fix typo add_berv_keys requires params. [Neil
+  Cook]
+- Drs_data.py - add return file option to data functions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments - add obj_list constants (for gaia crossmatch) [Neil
+  Cook]
+- Param_functions.py - add set_instance and set_instances. [Neil Cook]
+
+
+0.5.042 (2019-07-23)
+--------------------
+- Science.extract.berv.py - continue work on adding berv calculation.
+  [Neil Cook]
+- Cal_extract_spirou.py - add header to get_berv. [Neil Cook]
+- Dsr_fits.py - use param.instances to get fmt and dtype for KW_ACQTIME.
+  [Neil Cook]
+- Core.constants - add instance dictionary (like source dictionary) for
+  ParamDict. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.* - add constants for berv. [Neil Cook]
+- Changelog.md: refractor header_time --> header_start_time. [Neil Cook]
+- Science.extract - add berv functionality. [Neil Cook]
+- Science.extract.wave.py - add function add_wave_keys. [Neil Cook]
+- Science.calib.dark/shape - refractor header_time-->header_start_time.
+  [Neil Cook]
+- Cal_extract_spirou.py - add berv stuff. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - rename header_time --> header_start_time. [Neil Cook]
+- Drs_database.py - rename header_time --> header_start_time. [Neil
+  Cook]
+
+
+0.5.041 (2019-07-19)
+--------------------
+- Science.extract.general.py - correct typo: red_limt --> red_limit.
+  [Neil Cook]
+- Science.extract.general.py - correct corrtype2 type:
+  THERMAL_CORRETION_TYPE1 --> THERMAL_CORRETION_TYPE2. [Neil Cook]
+- Cal_extract_spirou.py - print process of extraction fiber {0} of [{0}
+  {1} {2}] [Neil Cook]
+- Update language database. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.040 (2019-07-19)
 --------------------
 - Science.extract.general.py - add s1d funtionality and add log message
@@ -338,10 +565,10 @@ Changelog
   Cook]
 - SpirouStartup.py - remove unused import. [Neil Cook]
 - Update language database. [Neil Cook]
-- Drs_fits.py - integrate _get_time functionality into header_start_time.
+- Drs_fits.py - integrate _get_time functionality into header_time.
   [Neil Cook]
 - Pseudo_const.py - add back nirps logo. [Neil Cook]
-- Drs_database.py - update _get_time to use drs_fits.header_start_time. [Neil
+- Drs_database.py - update _get_time to use drs_fits.header_time. [Neil
   Cook]
 - Reorganize config and constants (now all in core sub-module) - update
   module order. [Neil Cook]
@@ -374,7 +601,7 @@ Changelog
 --------------------
 - Science.calib.dark.py - add dark master functionality. [Neil Cook]
 - Update language database. [Neil Cook]
-- Terrapipe.io - add find_filetypes, get_index_files and header_start_time
+- Terrapipe.io - add find_filetypes, get_index_files and header_time
   functions. [Neil Cook]
 - Constants - add dark master constant definitions. [Neil Cook]
 - Drs_startup.py - add function get_file_definition and update pid
