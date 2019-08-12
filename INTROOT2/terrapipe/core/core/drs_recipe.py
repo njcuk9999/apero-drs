@@ -487,7 +487,7 @@ class DrsRecipe(object):
     # =========================================================================
     # Reprocessing methods
     # =========================================================================
-    def generate_runs(self, params, table,  filters=None):
+    def generate_runs(self, params, table, filters=None):
         # need to find files in table that match each argument
         #    filedict is a dictionary of arguments each for
         #    each drsfile (if filelogic=exclusive)
@@ -1422,25 +1422,41 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     for argname in argdict:
         # get this arg
         arg = argdict[argname]
-        # deal with other parameters
-        if not isinstance(arg, OrderedDict):
+        # deal with other parameters (not 'files' or 'file')
+        if recipe.args[argname].dtype not in ['file', 'files']:
             continue
+        # get file limit
+        limit = recipe.args[argname].limit
         # deal with files (should be in drs groups)
         for name in argdict[argname]:
+            # check for None
+            if arg[name] is None:
+                continue
+            # copy row as table
+            intable = Table(arg[name])
             # assign individual group numbers / mean group date
-            argdict[argname][name] = _group_drs_files(params, arg[name])
+            gargs = [params, intable]
+            argdict[argname][name] = _group_drs_files(*gargs, limit=limit)
     # ----------------------------------------------------------------------
     # second loop around keyword arguments
     for kwargname in kwargdict:
         # get this kwarg
         kwarg = kwargdict[kwargname]
-        # deal with other parameters
-        if not isinstance(kwarg, OrderedDict):
+        # deal with other parameters (not 'files' or 'file')
+        if recipe.kwargs[kwargname].dtype not in ['file', 'files']:
             continue
+        # get file limit
+        limit = recipe.kwargs[kwargname].limit
         # deal with files (should be in drs groups)
         for name in kwargdict[kwargname]:
+            # check for None
+            if kwarg[name] is None:
+                continue
+            # copy row as table
+            intable = Table(kwarg[name])
             # assign individual group numbers / mean group date
-            kwargdict[kwargname][name] = _group_drs_files(params, kwarg[name])
+            gargs = [params, intable]
+            kwargdict[kwargname][name] = _group_drs_files(*gargs, limit=limit)
     # ----------------------------------------------------------------------
     # figure out arg/kwarg order
     runorder, rundict = _get_runorder(recipe, argdict, kwargdict)
@@ -1466,6 +1482,9 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
             usedgroups = dict()
             # keep matching until condition met
             while cond:
+                # check for None
+                if rundict[arg0][drsfile] is None:
+                    break
                 # get first group
                 nargs = [arg0, rundict[arg0][drsfile], usedgroups]
                 gtable0, usedgroups = _find_next_group(*nargs)
@@ -1519,9 +1538,9 @@ def convert_to_command(self, runargs):
             # deal with keyword arguments
             if argname in kwargs:
                 # add to command
-                command += '--{0} {1} '.format(argname, value)
-            # append to out
-            outputs.append(command)
+                command += '-{0} {1} '.format(argname, value)
+        # append to out (removing trailing white spaces)
+        outputs.append(command.strip())
     # return outputs
     return outputs
 
@@ -1602,12 +1621,19 @@ def _group_drs_files(params, drstable, **kwargs):
                          func_name)
     time_colname = pcheck(params, 'REPROCESS_TIMECOL', 'time_col', kwargs,
                           func_name)
+    limit = kwargs.get('limit', None)
+    # deal with limit unset
+    if limit is None:
+        limit = np.inf
+    # sort drstable by time column
+    sortmask = np.argsort(drstable[time_colname])
+    drstable = drstable[sortmask]
     # st up empty groups
     groups = np.zeros(len(drstable))
     # get the sequence column
     sequence_col = drstable[seq_colname]
     # start the group number at 1
-    group_number = 1
+    group_number = 0
     # set up night mask
     valid = np.zeros(len(drstable), dtype=bool)
     # by night name
@@ -1628,16 +1654,34 @@ def _group_drs_files(params, drstable, **kwargs):
         indices = np.arange(len(sequences))
         # get the raw groups
         rawgroups = np.array(-(sequences - indices) + 1)
-
+        # set up group mask
         nightgroup = np.zeros(np.sum(nightmask))
         # loop around the unique groups and assign group number
         for rgroup in np.unique(rawgroups):
+            # new group
+            group_number += 1
+            # set up sub group parameters
+            subgroupnumber, it = 0, 0
             # get group mask
             groupmask = rawgroups == rgroup
-            # push the group number into night group
-            nightgroup[groupmask] = group_number
-            # add to the group number
-            group_number += 1
+            # get positions
+            positions = np.where(groupmask)[0]
+            # deal with limit per group
+            if np.sum(groupmask) > limit:
+                # loop around all elements in group (using groupmask)
+                while it < np.sum(groupmask):
+                    # find how many are in this grup
+                    subgroupnumber = np.sum(nightgroup == group_number)
+                    # if we are above limit then start a new group
+                    if subgroupnumber >= limit:
+                        group_number += 1
+                    nightgroup[positions[it]] = group_number
+                    # iterate
+                    it += 1
+            else:
+                # push the group number into night group
+                nightgroup[groupmask] = group_number
+
         # add the night group to the full group
         groups[nightmask] = nightgroup
         # add to the valid mask
@@ -1732,7 +1776,7 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
         # if we are dealing with the first argument we have this
         #   groups files (gtable0)
         if argname == arg0:
-            new_run[argname] = list(gtable0[file_col])
+            new_run[argname] = list(gtable0['OUT'])
         # if we are dealing with 'directory' set it from nightname
         elif argname == 'directory':
             new_run[argname] = nightname
@@ -1844,7 +1888,7 @@ def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
         raise DrsRecipeException('No valid groups')
     # ----------------------------------------------------------------------
     # return files for min position
-    return list(table_s[file_col][mask_s])
+    return list(table_s['OUT'][mask_s])
 
 
 # =============================================================================
