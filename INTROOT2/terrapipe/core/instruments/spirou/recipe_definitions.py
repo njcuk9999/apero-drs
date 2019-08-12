@@ -683,7 +683,8 @@ full_run.add(cal_loc, files=[sf.pp_flat_dark])
 full_run.add(cal_shape)
 full_run.add(cal_ff, files=[sf.pp_flat_flat])
 full_run.add(cal_thermal)
-full_run.add(cal_wave)
+# TODO: Add in when wave written
+# # full_run.add(cal_wave)
 # extract
 full_run.add(cal_extract, name='EXTRACT_ALL',
              files=[sf.pp_obj_dark, sf.pp_obj_fp])
@@ -707,7 +708,8 @@ limited_run.add(cal_loc, files=[sf.pp_flat_dark])
 limited_run.add(cal_shape)
 limited_run.add(cal_ff, files=[sf.pp_flat_flat])
 limited_run.add(cal_thermal)
-limited_run.add(cal_wave)
+# TODO: Add in when wave written
+# # limited_run.add(cal_wave)
 # extract tellurics
 limited_run.add(cal_extract, name='EXTRACT_TELLU',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp],

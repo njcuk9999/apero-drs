@@ -107,6 +107,7 @@ __all__ = [
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
+    'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -950,6 +951,18 @@ TAPAS_FILE_FMT = Const('TAPAS_FILE_FMT', value=None, dtype=str, source=__NAME__)
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
 TELLU_CUT_BLAZE_NORM = Const('TELLU_CUT_BLAZE_NORM', value=None, dtype=float,
+                             source=__NAME__)
+
+# Define telluric black/white list directory
+TELLU_LIST_DIRECOTRY = Const('TELLU_LIST_DIRECTORY', value=None, dtype=str,
+                             source=__NAME__)
+
+# Define telluric white list name
+TELLU_WHITELIST_NAME = Const('TELLU_WHITELIST_NAME', value=None, dtype=str,
+                             source=__NAME__)
+
+# Define telluric black list name
+TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__)
 
 # =============================================================================
