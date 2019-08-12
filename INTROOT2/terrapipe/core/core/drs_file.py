@@ -783,7 +783,7 @@ class DrsFitsFile(DrsInputFile):
                 valid &= valid1
         # ------------------------------------------------------------------
         # return valid (True if filename is valid False otherwise)
-        return valid, outfilename
+        return valid, os.path.basename(outfilename)
 
 
     def check_table_keys(self, filedict, rkeys=None):
