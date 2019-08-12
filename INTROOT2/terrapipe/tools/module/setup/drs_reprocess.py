@@ -9,10 +9,14 @@ Created on 2019-08-06 at 11:57
 
 @author: cook
 """
+from __future__ import division
 import numpy as np
 import os
+import time
 from astropy.table import Table
 from collections import OrderedDict
+import multiprocessing
+from multiprocessing import Process, Manager, Event
 
 from terrapipe import core
 from terrapipe.core.core import drs_startup
@@ -22,7 +26,7 @@ from terrapipe.io import drs_table
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 from terrapipe.tools.module.setup import drs_reset
-
+from terrapipe.science import telluric
 
 # =============================================================================
 # Define variables
@@ -48,10 +52,90 @@ pcheck = core.pcheck
 
 
 # =============================================================================
+# Define classes
+# =============================================================================
+class Run:
+    def __init__(self, params, runstring, mod=None, priority=0):
+        self.params = params
+        self.runstring = runstring
+        self.priority = priority
+        # get args
+        self.args = runstring.split(' ')
+        # the first argument must be the recipe name
+        self.recipename = self.args[0]
+        # find the recipe
+        self.recipe = self.find_recipe(mod)
+        # import the recipe module
+        self.recipemod = self.recipe.main
+        # turn off the input validation
+        self.recipe.input_validation = False
+        # run parser with arguments
+        self.kwargs = self.recipe.recipe_setup(inargs=self.args)
+        # turn on the input validation
+        self.recipe.input_validation = True
+        # set parameters
+        self.kind = None
+        self.nightname = None
+        # sort out names
+        self.runname = 'RUN_{0}'.format(self.recipe.shortname)
+        self.skipname = 'SKIP_{0}'.format(self.recipe.shortname)
+        # get properties
+        self.get_recipe_kind()
+        self.get_night_name()
+
+    def find_recipe(self, mod=None):
+        # find the recipe definition
+        recipe = drs_startup.find_recipe(self.recipename,
+                                         self.params['INSTRUMENT'],
+                                         mod=mod)
+        # deal with an empty recipe return
+        if recipe.name == 'Empty':
+            eargs = [self.recipename]
+            WLOG(None, 'error', TextEntry('00-007-00001', args=eargs))
+        # else return
+        return recipe
+
+    def get_recipe_kind(self):
+        # the first argument must be the recipe name
+        self.recipename = self.args[0]
+        # make sure recipe does not have .py on the end
+        self.recipename = _remove_py(self.recipename)
+        # get recipe type (raw/tmp/reduced)
+        if self.recipe.inputdir == 'raw':
+            self.kind = 0
+        elif self.recipe.inputdir == 'tmp':
+            self.kind = 1
+        elif self.recipe.inputdir == 'reduced':
+            self.kind = 2
+        else:
+            emsg1 = ('RunList Error: Recipe = "{0}" invalid'
+                     ''.format(self.recipename))
+            emsg2 = '\t Line: {0} {1}'.format(self.priority, self.runstring)
+            WLOG(self.params, 'error', [emsg1, emsg2])
+            self.kind = -1
+
+    def get_night_name(self):
+        if 'directory' in self.recipe.args:
+            # get directory position
+            pos = self.recipe.args['directory'].pos
+            # set
+            self.nightname = self.args[pos]
+        else:
+            self.nightname = ''
+
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return 'Run[{0}]'.format(self.runstring)
+
+
+# =============================================================================
 # Define user functions
 # =============================================================================
-def runfile(params, runfile, **kwargs):
-    func_name = __NAME__ + '.runfile()'
+def read_runfile(params, runfile, **kwargs):
+    func_name = __NAME__ + '.read_runfile()'
     # ----------------------------------------------------------------------
     # get properties from params
     run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
@@ -134,14 +218,16 @@ def send_email(params, kind):
     # try to import yagmail
     try:
         import yagmail
-        YAG = yagmail.SMTP(params['EMAIL_ADDRESS'])
+        yag = yagmail.SMTP(params['EMAIL_ADDRESS'])
     except ImportError:
         WLOG(params, 'error', TextEntry('00-503-00001'))
-        YAG = None
+        yagmail = None
+        yag = yagmail
     except Exception as e:
         eargs = [type(e), e, func_name]
         WLOG(params, 'error', TextEntry('00-503-00002', args=eargs))
-        YAG = None
+        yagmail = None
+        yag = yagmail
     # ----------------------------------------------------------------------
     # deal with kind = start
     if kind == 'start':
@@ -169,10 +255,10 @@ def send_email(params, kind):
         return 0
     # ----------------------------------------------------------------------
     # send via YAG
-    YAG.send(to=receiver, subject=subject, contents=body)
+    yag.send(to=receiver, subject=subject, contents=body)
 
 
-def reset(params):
+def reset_files(params):
     """
     Resets based on reset parameters
 
@@ -225,10 +311,12 @@ def find_raw_files(params, **kwargs):
                             kwargs, func_name)
     itable_filecol = pcheck(params, 'DRS_INDEX_FILENAME', 'itable_filecol',
                             kwargs, func_name)
+    # print progress
+    WLOG(params, 'info', TextEntry('40-503-00010'))
     # get path
-    path, rpath = get_path_and_check(params, 'DRS_DATA_RAW')
+    path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
     # get files
-    gfout = get_files(params, path, rpath)
+    gfout = _get_files(params, path, rpath)
     nightnames, filelist, basenames, mod_times, kwargs = gfout
     # construct a table
     mastertable = Table()
@@ -248,32 +336,655 @@ def find_raw_files(params, **kwargs):
     return mastertable, rpath
 
 
-def generate_run_list(params, table, path, runtable):
+def generate_run_list(params, table, runtable):
+    # print progress: generating run list
+    WLOG(params, 'info', TextEntry('40-503-00011'))
+    # get recipe defintions module (for this instrument)
+    recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
-    rvalues = get_rvalues(runtable)
+    rvalues = _get_rvalues(runtable)
     # check if rvalues has a run sequence
-    sequences = check_for_sequences(params, rvalues)
+    sequencelist = _check_for_sequences(rvalues, recipemod)
     # if we have found sequences need to deal with them
-    if sequences is not None:
+    if sequencelist is not None:
         # loop around sequences
-        for sequence in sequences:
+        for sequence in sequencelist:
+            # log progress
+            WLOG(params, '', TextEntry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
-            # TODO: Problem here
-
-            newruns = generate_run_from_sequence(params, sequence, table)
+            newruns = _generate_run_from_sequence(params, sequence, table)
             # update runtable with sequence generation
-            runtable = update_run_table(params, sequence, runtable, rvalues,
-                                        newruns)
-            # need to update rvalues when runtable is updated (for new sequence)
-            rvalues = get_rvalues(runtable)
+            runtable = _update_run_table(sequence, runtable, newruns)
     # return Run instances for each runtable element
-    return generate_ids(params, runtable)
+    return generate_ids(params, runtable, recipemod)
+
+
+def process_run_list(params, runlist):
+    # get number of cores
+    cores = _get_cores(params)
+    # pipe to correct module
+    if cores == 1:
+        # log process: Running with 1 core
+        WLOG(params, 'info', TextEntry('40-503-00016'))
+        # run as linear process
+        rdict = _linear_process(params, runlist)
+    else:
+        # log process: Running with N cores
+        WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
+        # run as multiple processes
+        rdict = _multi_process(params, runlist, cores)
+    # convert to ParamDict and set all sources
+    odict = []
+    keys = np.sort(np.array(list(rdict.keys())))
+    for key in keys:
+        odict.append(ParamDict(rdict[key]))
+
+    # return the output array (dictionary with priority as key)
+    #    values is a parameter dictionary consisting of
+    #        RECIPE, NIGHT_NAME, ARGS, ERROR, WARNING, OUTPUTS
+    return rdict
+
+
+def display_timing(params, outlist):
+    WLOG(params, '', '')
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', 'Timings:')
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', '')
+    # loop around timings (non-errors only)
+    for key in outlist:
+        cond1 = len(outlist[key]['ERROR']) == 0
+        cond2 = outlist[key]['TIMING'] is not None
+        if cond1 and cond2:
+            wargs = [key, outlist[key]['TIMING']]
+            WLOG(params, '', TextEntry('40-503-00020', args=wargs))
+            WLOG(params, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
+                 wrap=False)
+
+def display_errors(params, outlist):
+    # log error title
+    WLOG(params, '', '')
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', 'Errors:')
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', '')
+    # loop around each entry of outlist and print any errors
+    for key in outlist:
+        if len(outlist[key]['ERROR']) > 0:
+            WLOG(params, '', '', colour='red')
+            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            WLOG(params, 'warning', TextEntry('40-503-00019', args=[key]),
+                 colour='red', wrap=False)
+            WLOG(params, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
+                 colour='red', wrap=False)
+            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            WLOG(params, '', '', colour='red')
+            WLOG(params, 'warning', outlist[key]['ERROR'], colour='red',
+                 wrap=False)
+            WLOG(params, '', '', colour='red')
+            WLOG.printmessage(params, outlist[key]['TRACEBACK'], colour='red')
+            WLOG(params, '', '', colour='red')
+            WLOG(params, '', params['DRS_HEADER'], colour='red')
+
+
+# =============================================================================
+# Define "from id" functions
+# =============================================================================
+def generate_ids(params, runtable, mod, **kwargs):
+    func_name = __NAME__ + '.generate_ids()'
+    # get keys from params
+    run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
+    # should just need to sort these
+    numbers = np.array(list(runtable.keys()))
+    commands = np.array(list(runtable.values()))
+    # sort by number
+    sortmask = np.argsort(numbers)
+    # get sorted run list
+    runlist = list(commands[sortmask])
+    keylist = list(numbers[sortmask])
+    # log progress: Validating ids
+    WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
+    # iterate through and make run objects
+    run_objects = []
+    for it, run_item in enumerate(runlist):
+        # get runid
+        runid = '{0}{1:05d}'.format(run_key, keylist[it])
+        # log process
+        wargs = [runid, it + 1, len(runlist)]
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', TextEntry('40-503-00004', args=wargs))
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', TextEntry('40-503-00013', args=[run_item]))
+        # create run object
+        run_object = Run(params, run_item, mod=mod, priority=keylist[it])
+        # deal with skip
+        skip, reason = skip_run_object(params, run_object)
+        # append to list
+        if not skip:
+            # log that we have validated run
+            wargs = [runid]
+            WLOG(params, '', TextEntry('40-503-00005', args=wargs))
+            # append to run_objects
+            run_objects.append(run_object)
+        # else log that we are skipping
+        else:
+            # log that we have skipped run
+            wargs = [runid, reason]
+            WLOG(params, '', TextEntry('40-503-00006', args=wargs),
+                 colour='yellow')
+    # return run objects
+    return run_objects
+
+
+def skip_run_object(params, runobj):
+
+    # create text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # get recipe and runstring
+    recipe = runobj.recipe
+    runstring = runobj.runstring
+
+    # ----------------------------------------------------------------------
+    # check if the user wants to run this runobj (in run list)
+    if runobj.runname in params:
+        # if user has set the runname to False then we want to skip
+        if not params[runobj.runname]:
+            return True, textdict['40-503-00007']
+    # ----------------------------------------------------------------------
+    # check if the user wants to skip
+    if runobj.skipname in params:
+        # if master in skipname do not skip
+        if 'MASTER' in runobj.skipname:
+            # debug log
+            dargs = [runobj.skipname]
+            WLOG(params, 'debug', TextEntry('90-503-00003', args=dargs))
+            # return False and no reason
+            return False, None
+        # else if user wants to skip
+        elif params[runobj.skipname]:
+            # deal with adding skip to recipes
+            if 'skip' in recipe.kwargs:
+                if '--skip' not in runstring:
+                    runobj.runstring = '{0} --skip=True'.format(runstring)
+                    # debug log
+                    WLOG(params, 'debug', TextEntry('90-503-00006'))
+                    return False, None
+                else:
+                    # debug log
+                    WLOG(params, 'debug', TextEntry('90-503-00007'))
+                    return False, None
+
+            # look for fits files in args
+            return _check_for_files(params, runobj)
+        else:
+            # debug log
+            dargs = [runobj.skipname]
+            WLOG(params, 'debug', TextEntry('90-503-00004', args=dargs))
+            # return False and no reason
+            return False, None
+    # ----------------------------------------------------------------------
+    else:
+        # debug log
+        dargs = [runobj.skipname]
+        WLOG(params, 'debug', TextEntry('90-503-00005', args=dargs))
+        # return False and no reason
+        return False, None
+
+
+def _get_paths(params, runobj, directory):
+    func_name = __NAME__ + '.get_paths()'
+
+    recipe = runobj.recipe
+    # ----------------------------------------------------------------------
+    # get the night name from directory position
+    nightname = runobj.args[directory.pos + 1]
+    # ----------------------------------------------------------------------
+    # get the input directory
+    if recipe.inputdir == 'raw':
+        inpath = os.path.join(params['DRS_DATA_RAW'], nightname)
+    elif recipe.inputdir == 'tmp':
+        inpath = os.path.join(params['DRS_DATA_WORKING'], nightname)
+    elif recipe.inputdir.startswith('red'):
+        inpath = os.path.join(params['DRS_DATA_REDUC'], nightname)
+    else:
+        eargs = [recipe.name, recipe.outputdir, func_name]
+        WLOG(params, 'error', TextEntry('09-503-00007', args=eargs))
+        inpath = None
+    # ----------------------------------------------------------------------
+    # check that path exist
+    if not os.path.exists(inpath):
+        try:
+            os.makedirs(inpath)
+        except Exception as e:
+            eargs = [recipe.name, runobj.runstring, inpath, type(e), e,
+                     func_name]
+            WLOG(params, 'error', TextEntry('09-503-00008', args=eargs))
+    # ----------------------------------------------------------------------
+    # get the output directory
+    if recipe.outputdir == 'raw':
+        outpath = os.path.join(params['DRS_DATA_RAW'], nightname)
+    elif recipe.outputdir == 'tmp':
+        outpath = os.path.join(params['DRS_DATA_WORKING'], nightname)
+    elif recipe.outputdir.startswith('red'):
+        outpath = os.path.join(params['DRS_DATA_REDUC'], nightname)
+    else:
+        eargs = [recipe.name, recipe.outputdir, func_name]
+        WLOG(params, 'error', TextEntry('09-503-00005', args=eargs))
+        outpath = None
+    # ----------------------------------------------------------------------
+    # check that path exist
+    if not os.path.exists(outpath):
+        try:
+            os.makedirs(outpath)
+        except Exception as e:
+            eargs = [recipe.name, runobj.runstring, outpath, type(e), e,
+                     func_name]
+            WLOG(params, 'error', TextEntry('09-503-00006', args=eargs))
+    # ----------------------------------------------------------------------
+    # return inpath and outpath
+    return inpath, outpath, nightname
+
+
+def _check_for_files(params, runobj):
+    # create text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # get fits files from args
+    files = []
+    for arg in runobj.args:
+        if arg.endswith('.fits'):
+            files.append(arg)
+    # set recipe
+    recipe = runobj.recipe
+    # get args and keyword args for recipe
+    args, kwargs = recipe.args, recipe.kwargs
+    # ----------------------------------------------------------------------
+    # if we don't have a directory argument we skip this test
+    if 'directory' not in args and 'directory' not in kwargs:
+        WLOG(params, 'debug', TextEntry('90-503-00002'))
+        return False, None
+    elif 'directory' in args:
+        directory = args['directory']
+    else:
+        directory = kwargs['directory']
+    # ----------------------------------------------------------------------
+    # get input and output paths
+    inpath, outpath, nightname = _get_paths(params, runobj, directory)
+    # ----------------------------------------------------------------------
+    # store outfiles (for debug)
+    outfiles = []
+    # ----------------------------------------------------------------------
+    # get in files
+    infiles = []
+    # loop around file names
+    for filename in files:
+        # ------------------------------------------------------------------
+        # make sure filename is a base filename
+        basename = os.path.basename(filename)
+        # make infile
+        if runobj.kind == 0:
+            infiledef = recipe.filemod.raw_file
+        elif runobj.kind == 1:
+            infiledef = recipe.filemod.pp_file
+        else:
+            infiledef = recipe.filemod.out_file
+        # ------------------------------------------------------------------
+        # add required properties to infile
+        infile = infiledef.newcopy(recipe=recipe)
+        infile.filename = os.path.join(inpath, filename)
+        infile.basename = basename
+        # append to infiles
+        infiles.append(infile)
+
+    # ----------------------------------------------------------------------
+    # for each file see if we have a file that exists
+    #   (if we do we skip and assume this recipe was completed)
+    for infile in infiles:
+        # ------------------------------------------------------------------
+        # loop around output files
+        for outputkey in recipe.outputs:
+            # get output
+            output = recipe.outputs[outputkey]
+            # add the infile type from output
+            infile.filetype = output.inext
+            # define outfile
+            outfile = output.newcopy(recipe=recipe)
+            # --------------------------------------------------------------
+            # check whether we need to add fibers
+            if output.fibers is not None:
+                # loop around fibers
+                for fiber in output.fibers:
+                    # construct file name
+                    outfile.construct_filename(params, infile=infile,
+                                               fiber=fiber, path=outpath,
+                                               nightname=nightname)
+                    # get outfilename absolute path
+                    outfilename = outfile.filename
+                    # if file is found return True
+                    if os.path.exists(outfilename):
+                        reason = textdict['40-503-00008'].format(outfilename)
+                        return True, reason
+                    else:
+                        outfiles.append(outfilename)
+            else:
+                # construct file name
+                outfile.construct_filename(params, infile=infile, path=outpath,
+                                           nightname=nightname)
+                # get outfilename absolute path
+                outfilename = outfile.filename
+                # if file is found return True
+                if os.path.exists(outfilename):
+                    reason = textdict['40-503-00008'].format(outfilename)
+                    return True, reason
+                else:
+                    outfiles.append(outfilename)
+    # ----------------------------------------------------------------------
+    # debug print
+    for outfile in outfiles:
+        WLOG(params, 'debug', TextEntry('90-503-00001', args=[outfile]))
+    # ----------------------------------------------------------------------
+    # if all tests are passed return False
+    return False, None
+
+
+def _remove_py(innames):
+    if isinstance(innames, str):
+        names = [innames]
+    else:
+        names = innames
+    outnames = []
+    for name in names:
+        while name.endswith('.py'):
+            name = name[:-3]
+        outnames.append(name)
+    if isinstance(innames, str):
+        return outnames[0]
+    else:
+        return outnames
+
+
+# =============================================================================
+# Define "from sequence" functions
+# =============================================================================
+def _check_for_sequences(rvalues, mod):
+    # find sequences
+    all_sequences = mod.sequences
+    # get sequences names
+    all_seqnames = list(map(lambda x: x.name, all_sequences))
+    # convert to uppercase
+    all_seqnames = list(map(lambda x: x.upper(), all_seqnames))
+    # storage for found sequences
+    sequencelist = []
+    # loop around rvalues and add to sequence
+    for rvalue in rvalues:
+        if rvalue in all_seqnames:
+            # find position of name
+            pos = all_seqnames.index(rvalue)
+            # append sequences
+            sequencelist.append([rvalue, all_sequences[pos]])
+    # deal with return of sequences (found/not found)
+    if len(sequencelist) == 0:
+        return None
+    else:
+        return sequencelist
+
+
+def _generate_run_from_sequence(params, sequence, table, **kwargs):
+
+    func_name = __NAME__ + '.generate_run_from_sequence()'
+    # get parameters from params/kwargs
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
+                       func_name)
+    # get the sequence recipe list
+    srecipelist = sequence[1].sequence
+    # storage for new runs to add
+    newruns = []
+    # loop around recipes in new list
+    for srecipe in srecipelist:
+        # print progress
+        WLOG(params, '', TextEntry('40-503-00012', args=[srecipe.name]))
+        # deal with nightname
+        if srecipe.master:
+            nightname = params['MASTER_NIGHT']
+            # mask table by nightname
+            mask = table[night_col] == nightname
+            ftable = Table(table[mask])
+        elif params['NIGHTNAME'] != '':
+            nightname = params['NIGHTNAME']
+            # mask table by nightname
+            mask = table[night_col] == nightname
+            ftable = Table(table[mask])
+        else:
+            ftable = Table(table)
+        # deal with filters
+        filters = _get_filters(params, srecipe)
+        # get runs for this recipe
+        sruns = srecipe.generate_runs(params, ftable, filters=filters)
+        # append runs to new runs list
+        for srun in sruns:
+            newruns.append(srun)
+    # return all new runs
+    return newruns
+
+
+def _update_run_table(sequence, runtable, newruns):
+    # define output runtable
+    outruntable = OrderedDict()
+    # new id number
+    idnumber = 0
+    # loop around runtable until we get to sequence
+    for idkey in runtable:
+        # if we have not found the id key
+        if runtable[idkey].upper() != sequence[0]:
+            # add run table row to out run table
+            outruntable[idnumber] = runtable[idkey]
+            # update id number
+            idnumber += 1
+        # else we have found where we need to insert rows
+        else:
+            for newrun in newruns:
+                # add run table row to out run table
+                outruntable[idnumber] = newrun
+                # update id number
+                idnumber += 1
+    # return out run table
+    return outruntable
+
+
+# =============================================================================
+# Define processing functions
+# =============================================================================
+def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
+                    event=None):
+    # get textdict
+    textdict = TextDict(params['instrument'], params['LANGUAGE'])
+    # deal with empty return_dict
+    if return_dict is None:
+        return_dict = dict()
+    # loop around runlist
+    for run_item in runlist:
+        # ------------------------------------------------------------------
+        # get the module
+        module = run_item.recipemod
+        # get the kwargs
+        kwargs = run_item.kwargs
+        # get the priority
+        priority = run_item.priority
+        # parameters to save
+        pp = dict()
+        pp['RECIPE'] = run_item.recipename
+        pp['NIGHT_NAME'] = run_item.nightname
+        pp['ARGS'] = kwargs
+        pp['RUNSTRING'] = run_item.runstring
+        # ------------------------------------------------------------------
+        # log what we are running
+        wmsg1 = 'ID{0:05d} | {1}'.format(priority, run_item.runstring)
+        # deal with a debug run
+        if params['DEBUG']:
+            # log which core is being used (only if using multiple cores)
+            if cores > 1:
+                wargs = ['', number, cores, run_item.nightname]
+                wmsg2 = '{0:7s} | core = {1}/{2} night = "{3}"'.format(*wargs)
+                # log message 1
+                WLOG(params, 'info', [wmsg1, wmsg2], colour='magenta',
+                     wrap=False)
+            else:
+                # log message 1
+                WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
+            # add default outputs
+            pp['ERROR'] = []
+            pp['WARNING'] = []
+            pp['OUTPUTS'] = dict()
+            pp['TIMING'] = None
+            # flag finished
+            finished = True
+        else:
+            # log message 1
+            WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
+            # start time
+            starttime = time.time()
+            # try to run the main function
+            # noinspection PyBroadException
+            try:
+                # ----------------------------------------------------------
+                # run main function of module
+                ll_item = module.main(**kwargs)
+                # ----------------------------------------------------------
+                # close all plotting
+                # TODO: deal with plotting
+                # # sPlt.closeall()
+                # keep only some parameters
+                pp['ERROR'] = list(ll_item['p']['LOGGER_ERROR'])
+                pp['WARNING'] = list(ll_item['p']['LOGGER_WARNING'])
+                pp['OUTPUTS'] = dict(ll_item['p']['OUTPUTS'])
+                pp['TRACEBACK'] = []
+                # flag finished
+                finished = True
+            # --------------------------------------------------------------
+            # Manage unexpected errors
+            except Exception as e:
+                # noinspection PyBroadException
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except Exception as _:
+                    string_traceback = ''
+                emsgs = [textdict['00-503-00004'].format(priority)]
+                for emsg in str(e).split('\n'):
+                    emsgs.append('\t' + emsg)
+                WLOG(params, 'warning', emsgs)
+                pp['ERROR'] = emsgs
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = str(string_traceback)
+                # flag not finished
+                finished = False
+            # --------------------------------------------------------------
+            # Manage expected errors
+            except SystemExit as e:
+                # noinspection PyBroadException
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except Exception as _:
+                    string_traceback = ''
+                emsgs = [textdict['00-503-00005'].format(priority)]
+                for emsg in str(e).split('\n'):
+                    emsgs.append('\t' + emsg)
+                WLOG(params, 'warning', emsgs)
+                pp['ERROR'] = emsgs
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = str(string_traceback)
+                # flag not finished
+                finished = False
+            # end time
+            endtime = time.time()
+            # add timing to pp
+            pp['TIMING'] = endtime - starttime
+        # ------------------------------------------------------------------
+        # if STOP_AT_EXCEPTION and not finished stop here
+        if params['STOP_AT_EXCEPTION'] and not finished:
+            if event is not None:
+                event.set()
+        # ------------------------------------------------------------------
+        # append to return dict
+        return_dict[priority] = pp
+    # return the output array
+    return return_dict
+
+
+def _multi_process(params, runlist, cores):
+    # first try to group tasks
+    grouplist = _group_tasks(runlist, cores)
+    # start process manager
+    manager = Manager()
+    event = Event()
+    return_dict = manager.dict()
+    # loop around groups
+    for g_it, group in enumerate(grouplist):
+        # skip if event is set
+        if event.is_set():
+            continue
+        # process storage
+        jobs = []
+        # log progress
+        _group_progress(params, g_it, grouplist)
+        # loop around sub groups (to be run at same time)
+        for r_it, runlist_group in enumerate(group):
+            # get args
+            args = [params, runlist_group, return_dict, r_it + 1, cores,
+                    event]
+            # get parallel process
+            process = Process(target=_linear_process, args=args)
+            process.start()
+            jobs.append(process)
+        # do not continue until finished
+        for proc in jobs:
+            proc.join()
+            if event.is_set():
+                _terminate_jobs(jobs)
+    # return return_dict
+    return dict(return_dict)
+
+
+def _terminate_jobs(jobs):
+    for job in jobs:
+        job.terminate()
 
 
 # =============================================================================
 # Define working functions
 # =============================================================================
-def get_path_and_check(params, key):
+def _get_recipe_module(params, **kwargs):
+    func_name = __NAME__ + '.get_recipe_module()'
+    # log progress: loading recipe module files
+    WLOG(params, '', TextEntry('40-503-00014'))
+    # get parameters from params/kwargs
+    instrument = pcheck(params, 'INSTRUMENT', 'instrument', kwargs, func_name)
+    instrument_path = pcheck(params, 'DRS_MOD_INSTRUMENT_CONFIG',
+                             'instrument_path', kwargs, func_name)
+    core_path = pcheck(params, 'DRS_MOD_CORE_CONFIG', 'core_path', kwargs,
+                       func_name)
+    # deal with no instrument
+    if instrument == 'None' or instrument is None:
+        ipath = core_path
+        instrument = None
+    else:
+        ipath = instrument_path
+    # else we have a name and an instrument
+    margs = [instrument, ['recipe_definitions.py'], ipath, core_path]
+    modules = constants.getmodnames(*margs, path=False)
+    # load module
+    mod = constants.import_module(modules[0], full=True)
+    # return module
+    return mod
+
+
+def _get_rvalues(runtable):
+    return list(map(lambda x: x.upper(), runtable.values()))
+
+
+def _get_path_and_check(params, key):
     # check key in params
     if key not in params:
         WLOG(params, 'error', '{0} not found in params'.format(key))
@@ -290,7 +1001,7 @@ def get_path_and_check(params, key):
         return path, rpath
 
 
-def get_files(params, path, rpath, **kwargs):
+def _get_files(params, path, rpath, **kwargs):
     func_name = __NAME__ + '.get_files()'
     # get properties from params
     absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col', kwargs,
@@ -397,453 +1108,120 @@ def get_files(params, path, rpath, **kwargs):
     return nightnames, filelist, basenames, mod_times, kwargs
 
 
-# =============================================================================
-# Define classes
-# =============================================================================
-class Run:
-    def __init__(self, params, runstring, priority=0):
-        self.params = params
-        self.runstring = runstring
-        self.priority = priority
-        # get args
-        self.args = runstring.split(' ')
-        # the first argument must be the recipe name
-        self.recipename = self.args[0]
-        # find the recipe
-        self.recipe = self.find_recipe()
-        # import the recipe module
-        self.recipemod = self.recipe.main
-        # turn off the input validation
-        self.recipe.input_validation = False
-        # run parser with arguments
-        self.kwargs = self.recipe.recipe_setup(inargs=self.args)
-        # turn on the input validation
-        self.recipe.input_validation = True
-        # set parameters
-        self.kind = None
-        # sort out names
-        self.runname = 'RUN_{0}'.format(self.recipe.shortname)
-        self.skipname = 'SKIP_{0}'.format(self.recipe.shortname)
-        # get properties
-        self.get_recipe_kind()
-
-    def find_recipe(self):
-        # find the recipe definition
-        recipe = drs_startup.find_recipe(self.recipename,
-                                         self.params['INSTRUMENT'])
-        # deal with an empty recipe return
-        if recipe.name == 'Empty':
-            eargs = [self.recipename]
-            WLOG(None, 'error', TextEntry('00-007-00001', args=eargs))
-        # else return
-        return recipe
-
-    def get_recipe_kind(self):
-        # the first argument must be the recipe name
-        self.recipename = self.args[0]
-        # make sure recipe does not have .py on the end
-        self.recipename = remove_py(self.recipename)
-        # get recipe type (raw/tmp/reduced)
-        if self.recipe.inputdir == 'raw':
-            self.kind = 0
-        elif self.recipe.inputdir == 'tmp':
-            self.kind = 1
-        elif self.recipe.inputdir == 'reduced':
-            self.kind = 2
-        else:
-            emsg1 = ('RunList Error: Recipe = "{0}" invalid'
-                     ''.format(self.recipename))
-            emsg2 = '\t Line: {0} {1}'.format(self.priority, self.runstring)
-            WLOG(self.params, 'error', [emsg1, emsg2])
-            self.kind = -1
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        return 'Run[{0}]'.format(self.runstring)
-
-
-# =============================================================================
-# Define "from id" functions
-# =============================================================================
-def generate_ids(params, runtable, **kwargs):
-    func_name = __NAME__ + '.generate_ids()'
-    # get keys from params
-    run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
-    # should just need to sort these
-    numbers = np.array(list(runtable.keys()))
-    commands = np.array(list(runtable.values()))
-    # sort by number
-    sortmask = np.argsort(numbers)
-    # get sorted run list
-    runlist = list(commands[sortmask])
-    keylist = list(numbers[sortmask])
-    # iterate through and make run objects
-    run_objects = []
-    for it, run_item in enumerate(runlist):
-        # get runid
-        runid = '{0}{1:05d}'.format(run_key, keylist[it])
-        # log process
-        wargs = [runid, it + 1, len(runlist), run_item]
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', TextEntry('40-503-00004', args=wargs))
-        WLOG(params, '', params['DRS_HEADER'])
-        # create run object
-        run_object = Run(params, run_item, priority=keylist[it])
-        # deal with skip
-        skip, reason = skip_run_object(params, run_object)
-        # append to list
-        if not skip:
-            # log that we have validated run
-            wargs = [runid]
-            WLOG(params, '', TextEntry('40-503-00005', args=wargs))
-            # append to run_objects
-            run_objects.append(run_object)
-        # else log that we are skipping
-        else:
-            # log that we have skipped run
-            wargs = [runid, reason]
-            WLOG(params, 'info', TextEntry('40-503-00006', args=wargs))
-    # return run objects
-    return run_objects
-
-
-def skip_run_object(params, runobj):
-
-    # create text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # get recipe and runstring
-    recipe = runobj.recipe
-    runstring = runobj.runstring
-
-    # ----------------------------------------------------------------------
-    # check if the user wants to run this runobj (in run list)
-    if runobj.runname in params:
-        # if user has set the runname to False then we want to skip
-        if not params[runobj.runname]:
-            return True, textdict['40-503-00007']
-    # ----------------------------------------------------------------------
-    # check if the user wants to skip
-    if runobj.skipname in params:
-        # if master in skipname do not skip
-        if 'MASTER' in runobj.skipname:
-            # debug log
-            dargs = [runobj.skipname]
-            WLOG(params, 'debug', TextEntry('90-503-00003', args=dargs))
-            # return False and no reason
-            return False, None
-        # else if user wants to skip
-        elif params[runobj.skipname]:
-            # deal with adding skip to recipes
-            if 'skip' in recipe.kwargs:
-                if '--skip' not in runstring:
-                    runobj.runstring = '{0} --skip=True'.format(runstring)
-                    # debug log
-                    WLOG(params, 'debug', TextEntry('90-503-00006'))
-                    return False, None
+def _get_filters(params, srecipe):
+    filters = dict()
+    # loop around recipe filters
+    for key in srecipe.filters:
+        # get value
+        value = srecipe.filters[key]
+        # if this is in params set this value
+        if value in params:
+            # get values from
+            user_filter = params[value]
+            # deal with unset value
+            if (user_filter is None) or (user_filter.upper() == 'NONE'):
+                if value == 'TELLURIC_TARGETS':
+                    wlist, wfilename = telluric.get_whitelist(params)
+                    filters[key] = list(wlist)
                 else:
-                    # debug log
-                    WLOG(params, 'debug', TextEntry('90-503-00007'))
-                    return False, None
-
-            # look for fits files in args
-            return check_for_files(params, runobj)
-        else:
-            # debug log
-            dargs = [runobj.skipname]
-            WLOG(params, 'debug', TextEntry('90-503-00004', args=dargs))
-            # return False and no reason
-            return False, None
-    # ----------------------------------------------------------------------
-    else:
-        # debug log
-        dargs = [runobj.skipname]
-        WLOG(params, 'debug', TextEntry('90-503-00005', args=dargs))
-        # return False and no reason
-        return False, None
-
-
-def get_paths(params, runobj, directory):
-    func_name = __NAME__ + '.get_paths()'
-
-    recipe = runobj.recipe
-    # ----------------------------------------------------------------------
-    # get the night name from directory position
-    nightname = runobj.args[directory.pos + 1]
-    # ----------------------------------------------------------------------
-    # get the input directory
-    if recipe.inputdir == 'raw':
-        inpath = os.path.join(params['DRS_DATA_RAW'], nightname)
-    elif recipe.inputdir == 'tmp':
-        inpath = os.path.join(params['DRS_DATA_WORKING'], nightname)
-    elif recipe.inputdir.startswith('red'):
-        inpath = os.path.join(params['DRS_DATA_REDUC'], nightname)
-    else:
-        eargs = [recipe.name, recipe.outputdir, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00007', args=eargs))
-        inpath = None
-    # ----------------------------------------------------------------------
-    # check that path exist
-    if not os.path.exists(inpath):
-        eargs = [recipe.name, runobj.runstring, inpath, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00008', args=eargs))
-    # ----------------------------------------------------------------------
-    # get the output directory
-    if recipe.outputdir == 'raw':
-        outpath = os.path.join(params['DRS_DATA_RAW'], nightname)
-    elif recipe.outputdir == 'tmp':
-        outpath = os.path.join(params['DRS_DATA_WORKING'], nightname)
-    elif recipe.outputdir.startswith('red'):
-        outpath = os.path.join(params['DRS_DATA_REDUC'], nightname)
-    else:
-        eargs = [recipe.name, recipe.outputdir, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00005', args=eargs))
-        outpath = None
-    # ----------------------------------------------------------------------
-    # check that path exist
-    if not os.path.exists(outpath):
-        eargs = [recipe.name, runobj.runstring, outpath, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00006', args=eargs))
-    # ----------------------------------------------------------------------
-    # return inpath and outpath
-    return inpath, outpath, nightname
-
-
-def check_for_files(params, runobj):
-    func_name = __NAME__ + '.check_for_files()'
-    # create text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # get fits files from args
-    files = []
-    for arg in runobj.args:
-        if arg.endswith('.fits'):
-            files.append(arg)
-    # set recipe
-    recipe = runobj.recipe
-    # get args and keyword args for recipe
-    args, kwargs = recipe.args, recipe.kwargs
-    # ----------------------------------------------------------------------
-    # if we don't have a directory argument we skip this test
-    if 'directory' not in args and 'directory' not in kwargs:
-        WLOG(params, 'debug', TextEntry('90-503-00002'))
-        return False, None
-    elif 'directory' in args:
-        directory = args['directory']
-    else:
-        directory = kwargs['directory']
-    # ----------------------------------------------------------------------
-    # get input and output paths
-    inpath, outpath, nightname = get_paths(params, runobj, directory)
-    # ----------------------------------------------------------------------
-    # store outfiles (for debug)
-    outfiles = []
-    # ----------------------------------------------------------------------
-    # get in files
-    infiles = []
-    # loop around file names
-    for filename in files:
-        # ------------------------------------------------------------------
-        # make sure filename is a base filename
-        basename = os.path.basename(filename)
-        # make infile
-        if runobj.kind == 0:
-            infiledef = recipe.filemod.raw_file
-        elif runobj.kind == 1:
-            infiledef = recipe.filemod.pp_file
-        else:
-            infiledef = recipe.filemod.out_file
-        # ------------------------------------------------------------------
-        # add required properties to infile
-        infile = infiledef.newcopy(recipe=recipe)
-        infile.filename = os.path.join(inpath, filename)
-        infile.basename = basename
-        # append to infiles
-        infiles.append(infile)
-
-    # ----------------------------------------------------------------------
-    # for each file see if we have a file that exists
-    #   (if we do we skip and assume this recipe was completed)
-    for infile in infiles:
-        # ------------------------------------------------------------------
-        # loop around output files
-        for outputkey in recipe.outputs:
-            # get output
-            output = recipe.outputs[outputkey]
-            # add the infile type from output
-            infile.filetype = output.inext
-            # define outfile
-            outfile = output.newcopy(recipe=recipe)
-            # --------------------------------------------------------------
-            # check whether we need to add fibers
-            if output.fibers is not None:
-                # loop around fibers
-                for fiber in output.fibers:
-                    # construct file name
-                    outfile.construct_filename(params, infile=infile,
-                                               fiber=fiber, path=outpath,
-                                               nightname=nightname)
-                    # get outfilename absolute path
-                    outfilename = outfile.filename
-                    # if file is found return True
-                    if os.path.exists(outfilename):
-                        reason = textdict['40-503-00008'].format(outfilename)
-                        return True, reason
-                    else:
-                        outfiles.append(outfilename)
+                    continue
+            elif isinstance(user_filter, str):
+                filters[key] = _split_string_list(user_filter)
             else:
-                # construct file name
-                outfile.construct_filename(params, infile=infile, path=outpath,
-                                           nightname=nightname)
-                # get outfilename absolute path
-                outfilename = outfile.filename
-                # if file is found return True
-                if os.path.exists(outfilename):
-                    reason = textdict['40-503-00008'].format(outfilename)
-                    return True, reason
-                else:
-                    outfiles.append(outfilename)
-    # ----------------------------------------------------------------------
-    # debug print
-    for outfile in outfiles:
-        WLOG(params, 'debug', TextEntry('90-503-00001', args=[outfile]))
-    # ----------------------------------------------------------------------
-    # if all tests are passed return False
-    return False, None
+                continue
+    # return filters
+    return filters
 
 
-def setup_paths(params, nightname):
-    """
-    setup PATHS required for out file function
-
-    :param params:
-    :param nightname:
-    :return:
-    """
-    params['ARG_NIGHT_NAME'] = nightname
-    params['REDUCED_DIR'] = os.path.join(params['DRS_DATA_REDUC'], nightname)
-    params['TMP_DIR'] = os.path.join(params['DRS_DATA_WORKING'], nightname)
-
-    return params
-
-
-def remove_py(innames):
-    if isinstance(innames, str):
-        names = [innames]
+def _split_string_list(string):
+    if ';' in string:
+        return string.split(';')
+    elif ',' in string:
+        return string.split(',')
     else:
-        names = innames
-    outnames = []
-    for name in names:
-        while name.endswith('.py'):
-            name = name[:-3]
-        outnames.append(name)
-    if isinstance(innames, str):
-        return outnames[0]
+        return string.split(' ')
+
+
+def _get_cores(params):
+    # get number of cores
+    if 'CORES' in params:
+        try:
+            cores = int(params['CORES'])
+        except ValueError as e:
+            eargs = [params['CORES'], type(e), e]
+            WLOG(params, 'error', TextEntry('00-503-00006', args=eargs))
+            cores = 1
+        except Exception as e:
+            eargs = [type(e), e]
+            WLOG(params, 'error', TextEntry('00-503-00007', args=eargs))
+            cores = 1
     else:
-        return outnames
+        cores = 1
+    # get number of cores on machine
+    cpus = multiprocessing.cpu_count()
+    # check that cores is valid
+    if cores < 1:
+        WLOG(params, 'error', TextEntry('00-503-00008', args=[cores]))
+    if cores >= cpus:
+        eargs = [cpus, cores]
+        WLOG(params, 'error', TextEntry('00-503-00009', args=eargs))
+    # return number of cores
+    return cores
 
 
-# =============================================================================
-# Define "from sequence" functions
-# =============================================================================
-def get_rvalues(runtable):
-    return list(map(lambda x: x.upper(), runtable.values()))
+def _group_progress(params, g_it, grouplist):
+    # get message
+    wargs = [' * ', g_it + 1, len(grouplist)]
+    # log
+    WLOG(params, 'info', '', colour='magenta')
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', TextEntry('40-503-00018', args=wargs),
+         colour='magenta')
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', '', colour='magenta')
 
 
-def check_for_sequences(params, rvalues, **kwargs):
-    func_name = __NAME__ + '.check_for_sequences()'
-    # get parameters from params/kwargs
-    instrument = pcheck(params, 'INSTRUMENT', 'instrument', kwargs, func_name)
-    instrument_path = pcheck(params, 'DRS_MOD_INSTRUMENT_CONFIG',
-                             'instrument_path', kwargs, func_name)
-    core_path = pcheck(params, 'DRS_MOD_CORE_CONFIG', 'core_path', kwargs,
-                       func_name)
+def _group_tasks(runlist, cores):
 
-    # deal with no instrument
-    if instrument == 'None' or instrument is None:
-        ipath = core_path
-        instrument = None
-    else:
-        ipath = instrument_path
+    # individual runs of the same recipe are independent of each other
 
-    # else we have a name and an instrument
-    margs = [instrument, ['recipe_definitions.py'], ipath, core_path]
-    modules = constants.getmodnames(*margs, path=False)
-    # load module
-    mod = constants.import_module(modules[0], full=True)
-
-    # find sequences
-    all_sequences = mod.sequences
-    # get sequences names
-    all_seqnames = list(map(lambda x: x.name, all_sequences))
-    # convert to uppercase
-    all_seqnames = list(map(lambda x: x.upper(), all_seqnames))
-    # storage for found sequences
-    sequences = []
-    # loop around rvalues and add to sequence
-    for rvalue in rvalues:
-        if rvalue in all_seqnames:
-            # find position of name
-            pos = all_seqnames.index(rvalue)
-            # append sequences
-            sequences.append([rvalue, pos, all_sequences[pos]])
-    # deal with return of sequences (found/not found)
-    if len(sequences) == 0:
-        return None
-    else:
-        return sequences
-
-
-def generate_run_from_sequence(params, sequence, table, **kwargs):
-
-    func_name = __NAME__ + '.generate_run_from_sequence()'
-    # get parameters from params/kwargs
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
-    # get the sequence recipe list
-    srecipelist = sequence[2].sequence
-    # storage for new runs to add
-    newruns = []
-    # loop around recipes in new list
-    for srecipe in srecipelist:
-        # deal with nightname
-        if srecipe.master:
-            nightname = params['MASTER_NIGHT']
-            # mask table by nightname
-            mask = table[night_col] == nightname
-            ftable = Table(table[mask])
-        elif params['NIGHTNAME'] != '':
-            nightname = params['NIGHTNAME']
-            # mask table by nightname
-            mask = table[night_col] == nightname
-            ftable = Table(table[mask])
+    # get all recipe names
+    recipenames = []
+    for it, run_item in enumerate(runlist):
+        recipenames.append(run_item.recipename)
+    # storage of groups
+    groups = dict()
+    group_number = 0
+    # loop around runlist
+    for it, run_item in enumerate(runlist):
+        # get recipe name
+        recipe = run_item.recipename
+        # if it is the first item must have a new group
+        if it == 0:
+            groups[group_number] = [run_item]
         else:
-            ftable = Table(table)
-        # deal with filters
-        filters = dict()
-        # loop around recipe filters
-        for key in srecipe.filters:
-            # get value
-            value = srecipe.filters[key]
-            # if this is in params set this value
-            if value in params:
-                filters[key] = params[value].split(',')
-        # get runs for this recipe
-        sruns = srecipe.generate_runs(params, ftable, filters=filters)
-        # append runs to new runs list
-        for srun in sruns:
-            newruns.append(srun)
-    # return all new runs
-    return newruns
+            if recipe == recipenames[it - 1]:
+                groups[group_number].append(run_item)
+            else:
+                group_number += 1
+                groups[group_number] = [run_item]
+    # now we have the groups we can push into the core sub-groups
+    out_groups = []
 
+    for groupkey in groups:
 
-def update_run_table(params, sequence, runtable, rvalues, newruns):
+        out_group = []
+        group = groups[groupkey]
 
-    # TODO: ------------------------------------------
-    # TODO: WORK NEEDED HERE
-    # TODO: ------------------------------------------
+        for it in range(cores):
+            sub_group = group[it::cores]
+            if len(sub_group) > 0:
+                out_group.append(sub_group)
 
-    return runtable
+        out_groups.append(out_group)
+    # return output groups
+    return out_groups
+
 
 # =============================================================================
 # Start of code
