@@ -22,6 +22,8 @@ from terrapipe.core.core import drs_file
 from . import drs_path
 from . import drs_fits
 from . import drs_table
+from . import drs_text
+
 
 # =============================================================================
 # Define variables
@@ -280,6 +282,23 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     return table, absfilename
 
 
+def load_text_file(params, filename, directory, kwargs, func_name):
+    # load text dict
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # construct filename
+    absfilename = construct_filename(params, filename, directory,
+                                     func=func_name)
+    # check that filepath exists and log an error if it was not found
+    if not os.path.exists(absfilename):
+        eargs = [absfilename, func_name]
+        raise LoadException(textdict['01-001-00022'].format(*eargs))
+    # load text as list
+    textlist = drs_text.load_text_file(params, absfilename, comments='#',
+                                       delimiter=' ')
+    # return image
+    return textlist, absfilename
+
+
 def construct_filename(params, filename=None, directory=None, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.construct_filename()')
     # deal with no filename
@@ -295,6 +314,7 @@ def construct_filename(params, filename=None, directory=None, **kwargs):
     absfilename = os.path.join(datadir, filename)
     # return absolute path
     return absfilename
+
 
 
 # =============================================================================
