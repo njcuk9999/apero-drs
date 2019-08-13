@@ -673,10 +673,11 @@ def load_config(instrument=None):
 
 
 def load_pconfig(instrument=None):
+    func_name = __NAME__ + '.load_pconfig()'
     # get instrument sub-package constants files
     modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
     # import module
-    mod = constant_functions.import_module(modules[0])
+    mod = constant_functions.import_module(func_name, modules[0])
     # check that we have class and import it
     if hasattr(mod, PSEUDO_CONST_CLASS):
         PsConst = getattr(mod, PSEUDO_CONST_CLASS)
@@ -801,7 +802,16 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         # get file path
         fpath = os.path.join(filepath, script)
         # append if path exists
+        found = True
         if not os.path.exists(fpath):
+            if not fpath.endswith('.py'):
+                fpath += '.py'
+                if not os.path.exists(fpath):
+                    found = False
+            else:
+                found = False
+        # deal with no file found
+        if not found:
             emsgs = ['DevError: Const mod path "{0}" does not exist.'
                      ''.format(mod),
                      '\tpath = {0}'.format(fpath),
