@@ -917,6 +917,12 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
             # --------------------------------------------------------------
             # Manage expected errors
             except SystemExit as e:
+                # noinspection PyBroadException
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except Exception as _:
+                    string_traceback = ''
                 emsgs = [textdict['00-503-00005'].format(priority)]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\t' + emsg)
@@ -925,7 +931,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 # expected error does not need traceback
-                pp['TRACEBACK'] = []
+                pp['TRACEBACK'] = str(string_traceback)
                 # flag not finished
                 finished = False
             # end time
