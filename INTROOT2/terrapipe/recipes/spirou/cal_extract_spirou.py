@@ -17,7 +17,6 @@ from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core.core import drs_database
-from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
 from terrapipe.science.calib import flat_blaze
