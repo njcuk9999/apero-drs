@@ -71,6 +71,9 @@ class Run:
         self.recipe.input_validation = False
         # run parser with arguments
         self.kwargs = self.recipe.recipe_setup(inargs=self.args)
+        # add argument to set program name
+        pargs = [self.recipe.shortname, int(self.priority)]
+        self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
         # deal with file arguments in kwargs (returned from recipe_setup as
         #    [filenames, file instances]
         self.filename_args()
@@ -100,7 +103,10 @@ class Run:
             kwarg = self.recipe.kwargs[kwargname]
             # only do this for arguments with filetype 'files' or 'file'
             if kwarg.dtype in ['files', 'file']:
-                self.kwargs[kwargname] = self.kwargs[kwargname][0]
+                if kwarg.required:
+                    self.kwargs[kwargname] = self.kwargs[kwargname][0]
+                else:
+                    del self.kwargs[kwargname]
 
     def find_recipe(self, mod=None):
         # find the recipe definition
@@ -393,15 +399,21 @@ def process_run_list(params, runlist):
         # run as multiple processes
         rdict = _multi_process(params, runlist, cores)
     # convert to ParamDict and set all sources
-    odict = []
+    odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
     for key in keys:
-        odict.append(ParamDict(rdict[key]))
+        odict[key] = ParamDict(rdict[key])
+
+    # see if we have any errors
+    errors = False
+    for key in keys:
+        if odict[key]['ERROR'] != 0:
+            errors = True
 
     # return the output array (dictionary with priority as key)
     #    values is a parameter dictionary consisting of
     #        RECIPE, NIGHT_NAME, ARGS, ERROR, WARNING, OUTPUTS
-    return rdict
+    return odict, errors
 
 
 def display_timing(params, outlist):
@@ -410,15 +422,18 @@ def display_timing(params, outlist):
     WLOG(params, '', 'Timings:')
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', '')
+    # sort outlist ids
+    keys = np.sort(list(outlist.keys()))
     # loop around timings (non-errors only)
-    for key in outlist:
+    for key in keys:
         cond1 = len(outlist[key]['ERROR']) == 0
         cond2 = outlist[key]['TIMING'] is not None
         if cond1 and cond2:
             wargs = [key, outlist[key]['TIMING']]
             WLOG(params, '', TextEntry('40-503-00020', args=wargs))
-            WLOG(params, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
+            WLOG(params, '', '\t\t{0}'.format(outlist[key]['RUNSTRING']),
                  wrap=False)
+
 
 def display_errors(params, outlist):
     # log error title
@@ -427,8 +442,10 @@ def display_errors(params, outlist):
     WLOG(params, '', 'Errors:')
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', '')
+    # sort outlist ids
+    keys = np.sort(list(outlist.keys()))
     # loop around each entry of outlist and print any errors
-    for key in outlist:
+    for key in keys:
         if len(outlist[key]['ERROR']) > 0:
             WLOG(params, '', '', colour='red')
             WLOG(params, '', params['DRS_HEADER'], colour='red')
@@ -872,9 +889,9 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 # TODO: deal with plotting
                 # # sPlt.closeall()
                 # keep only some parameters
-                pp['ERROR'] = list(ll_item['p']['LOGGER_ERROR'])
-                pp['WARNING'] = list(ll_item['p']['LOGGER_WARNING'])
-                pp['OUTPUTS'] = dict(ll_item['p']['OUTPUTS'])
+                pp['ERROR'] = list(ll_item['params']['LOGGER_ERROR'])
+                pp['WARNING'] = list(ll_item['params']['LOGGER_WARNING'])
+                pp['OUTPUTS'] = dict(ll_item['params']['OUTPUTS'])
                 pp['TRACEBACK'] = []
                 # flag finished
                 finished = True
@@ -900,12 +917,6 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
             # --------------------------------------------------------------
             # Manage expected errors
             except SystemExit as e:
-                # noinspection PyBroadException
-                try:
-                    import traceback
-                    string_traceback = traceback.format_exc()
-                except Exception as _:
-                    string_traceback = ''
                 emsgs = [textdict['00-503-00005'].format(priority)]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\t' + emsg)
@@ -913,7 +924,8 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
-                pp['TRACEBACK'] = str(string_traceback)
+                # expected error does not need traceback
+                pp['TRACEBACK'] = []
                 # flag not finished
                 finished = False
             # end time
