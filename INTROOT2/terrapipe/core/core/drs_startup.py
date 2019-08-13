@@ -408,7 +408,7 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
     margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
     modules = constants.getmodnames(*margs, path=False)
     # load module
-    mod = constants.import_module(modules[0], full=True)
+    mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
     if kind == 'raw':
         all_files = mod.raw_file.fileset
@@ -1177,6 +1177,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     :returns: if found the DrsRecipe, else raises SystemExit
     :rtype: DrsRecipe
     """
+    func_name = __NAME__ + '.find_recipe()'
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -1192,7 +1193,7 @@ def find_recipe(name='None', instrument='None', mod=None):
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
         modules = constants.getmodnames(*margs, path=False)
         # load module
-        mod = constants.import_module(modules[0], full=True)
+        mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
     all_recipes = mod.recipes
     # try to locate this recipe
