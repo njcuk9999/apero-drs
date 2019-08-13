@@ -16,7 +16,6 @@ from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core.core import drs_database
-from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
 from terrapipe.recipes.spirou import cal_extract_spirou
@@ -137,7 +136,8 @@ def __main__(recipe, params):
         # loop around fiber types
         for fiber in fiber_types:
             # get thermal file instance
-            thermal_file = THERMAL_E2DS_FILE.newcopy(recipe=recipe, fiber=fiber)
+            thermalfileinst = recipe.outputs['THERMAL_E2DS_FILE']
+            thermal_file = thermalfileinst.newcopy(recipe=recipe, fiber=fiber)
             # construct the filename from file instance
             thermal_file.construct_filename(params, infile=infile)
             # check whether e2ds file exists
