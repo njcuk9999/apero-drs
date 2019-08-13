@@ -376,21 +376,17 @@ class DrsRecipe(object):
         :return:
         """
         # ------------------------------------------------------------------
-        # need to check if module is defined
-        if self.module is None:
-            self.module = self._import_module(quiet=True)
-        # ------------------------------------------------------------------
         # next check in parameters for path to module
         if (self.module is None) and (self.drs_params is not None):
             params = self.drs_params
             # check for parameters
             cond1 = 'INSTRUMENT' in params
-            cond2 = 'INSTRUMENT_RECIPE_PATH' in params
-            cond3 = 'DEFAULT_RECIPE_PATH' in params
+            cond2 = 'DRS_INSTRUMENT_RECIPE_PATH' in params
+            cond3 = 'DRS_DEFAULT_RECIPE_PATH' in params
             if cond1 and cond2 and cond3:
                 instrument = params['INSTRUMENT']
-                rpath = params['INSTRUMENT_RECIPE_PATH']
-                dpath = params['DEFAULT_RECIPE_PATH']
+                rpath = params['DRS_INSTRUMENT_RECIPE_PATH']
+                dpath = params['DRS_DEFAULT_RECIPE_PATH']
                 margs = [instrument, [self.name], rpath, dpath]
                 modules = constants.getmodnames(*margs, path=False)
                 # return module
@@ -513,12 +509,16 @@ class DrsRecipe(object):
     # Private Methods (Not to be used externally to spirouRecipe.py)
     # =========================================================================
     def _import_module(self, name=None, full=False, quiet=False):
+        func_name = __NAME__ + '.DrsRecipe._import_module()'
         # deal with no name
         if name is None:
             name = self.name
+        if (name is None) or (name.upper() == 'UNKNOWN'):
+            return None
         # get local copy of module
         try:
-            return constants.import_module(name, full=full, quiet=quiet)
+            return constants.import_module(func_name, name, full=full,
+                                           quiet=quiet)
         except Exception:
             return None
 
@@ -1335,15 +1335,15 @@ def find_run_files(params, recipe, table, args, filters=None, **kwargs):
         drsfiles = arg.files
         # loop around drs files
         for drsfile in drsfiles:
-            # define storage
-            if arg.filelogic == 'exclusive':
+            # define storage (if not already defined)
+            cond1 = drsfile.name not in filedict[argname]
+            if cond1 and (arg.filelogic == 'exclusive'):
                 filedict[argname][drsfile.name] = []
-            else:
+            elif 'all' not in filedict[argname]:
                 filedict[argname]['all'] = []
             # list of valid files
             valid_infiles = []
             valid_outfiles = []
-
             # loop around files
             for filename in files:
                 # get infile instance
@@ -1372,6 +1372,8 @@ def find_run_files(params, recipe, table, args, filters=None, **kwargs):
                 # check whether tabledict means that file is valid for this
                 #   infile
                 valid1 = infile.check_table_keys(tabledict)
+
+
                 # check whether filters are found
                 valid2 = infile.check_table_keys(tabledict, rkeys=filters)
                 # if valid then add to filedict for this argnameand drs file
