@@ -279,7 +279,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Save background map file
         # ----------------------------------------------------------------------
-        backmapfile = BACKMAP.newcopy(recipe=recipe)
+        backmapfile = recipe.outputs['BACKMAP'].newcopy(recipe=recipe)
         # construct the filename from file instance
         backmapfile.construct_filename(params, infile=flatfile)
         # ------------------------------------------------------------------
