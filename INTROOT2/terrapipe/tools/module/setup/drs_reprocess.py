@@ -71,6 +71,9 @@ class Run:
         self.recipe.input_validation = False
         # run parser with arguments
         self.kwargs = self.recipe.recipe_setup(inargs=self.args)
+        # deal with file arguments in kwargs (returned from recipe_setup as
+        #    [filenames, file instances]
+        self.filename_args()
         # turn on the input validation
         self.recipe.input_validation = True
         # set parameters
@@ -82,6 +85,22 @@ class Run:
         # get properties
         self.get_recipe_kind()
         self.get_night_name()
+
+    def filename_args(self):
+        # loop around positional arguments
+        for argname in self.recipe.args:
+            # get arg instance
+            arg = self.recipe.args[argname]
+            # only do this for arguments with filetype 'files' or 'file'
+            if arg.dtype in ['files', 'file']:
+                self.kwargs[argname] = self.kwargs[argname][0]
+        # loop around optional arguments
+        for kwargname in self.recipe.kwargs:
+            # get arg instance
+            kwarg = self.recipe.kwargs[kwargname]
+            # only do this for arguments with filetype 'files' or 'file'
+            if kwarg.dtype in ['files', 'file']:
+                self.kwargs[kwargname] = self.kwargs[kwargname][0]
 
     def find_recipe(self, mod=None):
         # find the recipe definition
@@ -804,7 +823,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
     for run_item in runlist:
         # ------------------------------------------------------------------
         # get the module
-        module = run_item.recipemod
+        modulemain = run_item.recipemod
         # get the kwargs
         kwargs = run_item.kwargs
         # get the priority
@@ -847,7 +866,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
             try:
                 # ----------------------------------------------------------
                 # run main function of module
-                ll_item = module.main(**kwargs)
+                ll_item = modulemain(**kwargs)
                 # ----------------------------------------------------------
                 # close all plotting
                 # TODO: deal with plotting
@@ -975,7 +994,7 @@ def _get_recipe_module(params, **kwargs):
     margs = [instrument, ['recipe_definitions.py'], ipath, core_path]
     modules = constants.getmodnames(*margs, path=False)
     # load module
-    mod = constants.import_module(modules[0], full=True)
+    mod = constants.import_module(func_name, modules[0], full=True)
     # return module
     return mod
 
