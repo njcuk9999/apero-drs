@@ -13,6 +13,7 @@ import numpy as np
 import argparse
 import sys
 import os
+import copy
 from collections import OrderedDict
 
 from terrapipe.core.instruments.default import pseudo_const
@@ -853,7 +854,7 @@ class _SetProgram(argparse.Action):
 # Define Argument Class
 # =============================================================================
 class DrsArgument(object):
-    def __init__(self, name, kind, **kwargs):
+    def __init__(self, name=None, kind=None, **kwargs):
         """
         Create a DRS Argument object
 
@@ -899,7 +900,6 @@ class DrsArgument(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
         """
-
         # ----------------------------------------------
         # define class constants
         # ----------------------------------------------
@@ -909,11 +909,15 @@ class DrsArgument(object):
         # define allowed dtypes
         self.allowed_dtypes = ['files', 'file', 'directory', 'bool',
                                'options', 'switch', int, float, str, list]
-
         # ----------------------------------------------
         # Get text for default language/instrument
         text = TextDict(None, None)
 
+        # deal with no name or kind (placeholder for copy)
+        if name is None:
+            name = 'UnknownArg'
+        if kind is None:
+            kind = 'arg'
         # ----------------------------------------------
         # assign values from construction
         # ----------------------------------------------
@@ -1077,6 +1081,58 @@ class DrsArgument(object):
             raise ArgumentError(errorobj=errorobj)
         else:
             raise ArgumentError(message)
+
+    def copy(self, argument):
+        # get argument name
+        self.argname = str(argument.argname)
+        # get full name
+        self.name = str(argument.name)
+        # get kind
+        self.kind = str(argument.kind)
+        # special parameter (whether to skip other arguments)
+        self.skip = bool(argument.skip)
+        # get position
+        if argument.pos is None:
+            self.pos = None
+        else:
+            self.pos = str(argument.pos)
+        # add names from altnames
+        self.names = list(argument.names)
+        # get dtype
+        self.dtype = copy.deepcopy(argument.dtype)
+        # get options
+        if argument.options is None:
+            self.options = None
+        else:
+            self.options = list(argument.options)
+        # get help str
+        self.helpstr = copy.deepcopy(argument.helpstr)
+        # get files
+        self.files = []
+        for drsfile in argument.files:
+            # copy attributes from drsfile
+            newdrsfile = drsfile.completecopy(drsfile)
+            # append to files
+            self.files.append(newdrsfile)
+        # get limit
+        if argument.limit is None:
+            self.limit = None
+        else:
+            self.limit = int(argument.limit)
+        # get limits
+        self.minimum = copy.deepcopy(argument.minimum)
+        self.maximum = copy.deepcopy(argument.maximum)
+        # get file logic
+        self.filelogic = str(argument.filelogic)
+        # get default
+        self.default = copy.deepcopy(argument.default)
+        # get default_ref
+        self.default_ref = copy.deepcopy(argument.default_ref)
+        # get required
+        self.required = bool(argument.required)
+        # set empty
+        self.props = copy.deepcopy(argument.props)
+        self.value = copy.deepcopy(argument.value)
 
     def __str__(self):
         """
