@@ -14,6 +14,7 @@ from astropy import version as av
 from astropy.table import Table
 import os
 from collections import OrderedDict
+import copy
 
 from . import drs_log
 from terrapipe.core import constants
@@ -215,11 +216,12 @@ class DrsInputFile:
         self.fileset.append(drsfile)
 
     def copyother(self, drsfile, **kwargs):
-        # check recipe has been set
-        if 'recipe' not in kwargs:
-            self.check_recipe()
-        # check file has been read
-        drsfile.read()
+        # check file has been read (if 'read' not equal to False)
+        if kwargs.get('read', True):
+            # check recipe has been set
+            if 'recipe' not in kwargs:
+                self.check_recipe()
+            drsfile.read()
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -414,6 +416,7 @@ class DrsFitsFile(DrsInputFile):
             if 'KW_' in kwarg.upper():
                 self.required_header_keys[kwarg] = kwargs[kwarg]
 
+    # TODO: Merge/combine with completecopy and copyother
     def newcopy(self, **kwargs):
         """
         Make a new copy of this class (using all default parameters
@@ -437,37 +440,8 @@ class DrsFitsFile(DrsInputFile):
 
         :return:
         """
-        # copy this instances values (if not overwritten)
-        name = kwargs.get('name', self.name)
-        kwargs['filetype'] = kwargs.get('filetype', self.filetype)
-        kwargs['suffix'] = kwargs.get('suffix', self.suffix)
-        kwargs['prefix'] = kwargs.get('prefix', self.prefix)
-        kwargs['recipe'] = kwargs.get('recipe', self.recipe)
-        kwargs['filename'] = kwargs.get('filename', self.filename)
-        kwargs['path'] = kwargs.get('path', self.path)
-        kwargs['basename'] = kwargs.get('basename', self.basename)
-        kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
-        kwargs['intype'] = kwargs.get('intype', self.intype)
-        kwargs['directory'] = kwargs.get('directory', self.directory)
-        kwargs['data'] = kwargs.get('data', self.data)
-        kwargs['header'] = kwargs.get('header', self.header)
-        kwargs['fileset'] = kwargs.get('fileset', self.fileset)
-        kwargs['check_ext'] = kwargs.get('check_ext', self.filetype)
-        kwargs['fiber'] = kwargs.get('fiber', self.fiber)
-        kwargs['fibers'] = kwargs.get('fibers', self.fibers)
-        kwargs['outtag'] = kwargs.get('KW_OUTPUT', self.outtag)
-        kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
-        kwargs['dbname'] = kwargs.get('dbname', self.dbname)
-        kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
-        kwargs['datatype'] = kwargs.get('datatype', self.datatype)
-        kwargs['dtype'] = kwargs.get('dtype', self.dtype)
-        kwargs['shape'] = kwargs.get('shape', self.shape)
-        kwargs['numfiles'] = kwargs.get('numfiles', self.numfiles)
-        for key in self.required_header_keys:
-            kwargs[key] = self.required_header_keys[key]
-        self.get_header_keys(kwargs)
         # return new instance
-        return DrsFitsFile(name, **kwargs)
+        return self.completecopy(self)
 
     def string_output(self):
         """
@@ -502,12 +476,56 @@ class DrsFitsFile(DrsInputFile):
         """
         return self.string_output()
 
+    # TODO: Merge/combine with newcopy and copyother
+    def completecopy(self, drsfile):
+        """
+        Copies all attributes from one drsfile to another
+        :param drsfile:
+        :return:
+        """
+        # set empty file attributes
+        nkwargs = dict()
+        nkwargs['name'] = copy.deepcopy(drsfile.name)
+        nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
+        nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
+        nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
+        nkwargs['recipe'] = drsfile.recipe
+        nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
+        nkwargs['fibers'] = copy.deepcopy(drsfile.fibers)
+        nkwargs['rkeys'] = copy.deepcopy(drsfile.required_header_keys)
+        nkwargs['filename'] = copy.deepcopy(drsfile.filename)
+        nkwargs['path'] = copy.deepcopy(drsfile.path)
+        nkwargs['basename'] = copy.deepcopy(drsfile.basename)
+        nkwargs['inputdir'] = copy.deepcopy(drsfile.inputdir)
+        nkwargs['intype'] = copy.deepcopy(drsfile.intype)
+        nkwargs['directory'] = copy.deepcopy(drsfile.directory)
+        nkwargs['data'] = copy.deepcopy(drsfile.data)
+        nkwargs['header'] = copy.deepcopy(drsfile.header)
+        nkwargs['shape'] = copy.deepcopy(drsfile.shape)
+        nkwargs['hdict'] = copy.deepcopy(drsfile.hdict)
+        nkwargs['output_dict'] = copy.deepcopy(drsfile.output_dict)
+        nkwargs['fileset'] = copy.deepcopy(drsfile.fileset)
+        nkwargs['outfunc'] = copy.deepcopy(drsfile.outfunc)
+        nkwargs['dbname'] = copy.deepcopy(drsfile.dbname)
+        nkwargs['dbkey'] = copy.deepcopy(drsfile.dbkey)
+        nkwargs['datatype'] = copy.deepcopy(drsfile.datatype)
+        nkwargs['dtype'] = copy.deepcopy(drsfile.dtype)
+        nkwargs['shape'] = copy.deepcopy(drsfile.shape)
+        nkwargs['numfiles'] = copy.deepcopy(drsfile.numfiles)
+        for key in drsfile.required_header_keys:
+            nkwargs[key] = drsfile.required_header_keys[key]
+        self.get_header_keys(nkwargs)
+        # return new instance of DrsFitsFile
+        return DrsFitsFile(**nkwargs)
+
+    # TODO: Merge/combine with completecopy and copyother
     def copyother(self, drsfile, **kwargs):
-        # check recipe has been set
-        if 'recipe' not in kwargs:
-            self.check_recipe()
-        # check file has been read
-        drsfile.read()
+        # check file has been read (if 'read' not equal to False)
+        if kwargs.get('read', True):
+            # check recipe has been set
+            if 'recipe' not in kwargs:
+                self.check_recipe()
+            drsfile.read()
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -722,8 +740,6 @@ class DrsFitsFile(DrsInputFile):
         infile.filetype = ext
         # return infile
         return infile
-
-
 
     def check_table_filename(self, params, recipe, infile):
         """
