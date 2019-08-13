@@ -2,12 +2,12 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_recipe
 from terrapipe.locale import drs_text
 
-from . import file_definitions as sf
+from terrapipe.core.instruments.spirou import file_definitions as sf
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.instruments.spirou.recipe_definitions.py'
+__NAME__ = 'core.instruments.spirou.recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -228,7 +228,7 @@ test.set_kwarg(**resize)
 # cal_preprocess_spirou
 # -----------------------------------------------------------------------------
 cal_pp.name = 'cal_preprocess_spirou.py'
-cal_pp.shortname = 'PREPROCESS'
+cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
 cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
@@ -247,7 +247,7 @@ cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
 cal_badpix.name = 'cal_badpix_spirou.py'
-cal_badpix.shortname = 'BADPIX'
+cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
@@ -296,7 +296,7 @@ cal_dark.set_kwarg(**interactive)
 # cal_dark_master_spirou
 # -----------------------------------------------------------------------------
 cal_dark_master.name = 'cal_dark_master_spirou.py'
-cal_dark_master.shortname = 'DARK_MASTER'
+cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
 cal_dark_master.outputdir = 'reduced'
@@ -349,7 +349,7 @@ cal_loc.set_kwarg(**resize)
 # cal_shape_master_spirou
 # -----------------------------------------------------------------------------
 cal_shape_master.name = 'cal_shape_master_spirou.py'
-cal_shape_master.shortname = 'SHAPE_MASTER'
+cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
 cal_shape_master.outputdir = 'reduced'
@@ -466,7 +466,7 @@ cal_ff.set_kwarg(**shapelfile)
 # cal_thermal_spirou
 # -----------------------------------------------------------------------------
 cal_thermal.name = 'cal_thermal_spirou.py'
-cal_thermal.shortname = 'THERMAL'
+cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
 cal_thermal.outputdir = 'reduced'
 cal_thermal.inputdir = 'tmp'
@@ -504,7 +504,7 @@ cal_thermal.set_kwarg(**wavefile)
 # cal_extract_spirou
 # -----------------------------------------------------------------------------
 cal_extract.name = 'cal_extract_spirou.py'
-cal_extract.shortname = 'EXTRACT'
+cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
@@ -669,11 +669,11 @@ cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
 # -----------------------------------------------------------------------------
 full_run = drs_recipe.DrsRunSequence('full_run', __INSTRUMENT__)
 # master run
-full_run.add(cal_pp, master=True)
+full_run.add(cal_pp, name='PPM', master=True)
 full_run.add(cal_dark_master, master=True)
-full_run.add(cal_badpix, master=True)
-full_run.add(cal_loc, files=[sf.pp_dark_flat], master=True)
-full_run.add(cal_loc, files=[sf.pp_flat_dark], master=True)
+full_run.add(cal_badpix, name='BADM', master=True)
+full_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_run.add(cal_shape_master, master=True)
 # night runs
 full_run.add(cal_pp)
@@ -686,19 +686,18 @@ full_run.add(cal_thermal)
 # TODO: Add in when wave written
 # # full_run.add(cal_wave)
 # extract
-full_run.add(cal_extract, name='EXTRACT_ALL',
-             files=[sf.pp_obj_dark, sf.pp_obj_fp])
+full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
 # -----------------------------------------------------------------------------
 # limited run (master + nights)
 # -----------------------------------------------------------------------------
 limited_run = drs_recipe.DrsRunSequence('limited_run', __INSTRUMENT__)
 # master run
-limited_run.add(cal_pp, master=True)
+limited_run.add(cal_pp, name='PPM', master=True)
 limited_run.add(cal_dark_master, master=True)
-limited_run.add(cal_badpix, master=True)
-limited_run.add(cal_loc, files=[sf.pp_dark_flat], master=True)
-limited_run.add(cal_loc, files=[sf.pp_flat_dark], master=True)
+limited_run.add(cal_badpix, name='BADM', master=True)
+limited_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
 # night runs
 limited_run.add(cal_pp)
@@ -711,17 +710,23 @@ limited_run.add(cal_thermal)
 # TODO: Add in when wave written
 # # limited_run.add(cal_wave)
 # extract tellurics
-limited_run.add(cal_extract, name='EXTRACT_TELLU',
-                files=[sf.pp_obj_dark, sf.pp_obj_fp],
-                KW_OBJNAME='TELLURIC_TARGETS')
-# extract science
-limited_run.add(cal_extract, name='EXTRACT_OBJ',
-                files=[sf.pp_obj_dark, sf.pp_obj_fp],
-                KW_OBJNAME='SCIENCE_TARGETS')
+limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
+# extract science
+limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp])
+
+# -----------------------------------------------------------------------------
+# object run (extract )
+# -----------------------------------------------------------------------------
+science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
+# extract science
+science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run]
+sequences = [full_run, limited_run, science_run]
 
