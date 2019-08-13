@@ -128,17 +128,19 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
-    outlist = drs_reprocess.process_run_list(params, runlist)
+    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
 
     # ----------------------------------------------------------------------
     # Print timing
     # ----------------------------------------------------------------------
-    drs_reprocess.display_timing(params, outlist)
+    if not has_errors:
+        drs_reprocess.display_timing(params, outlist)
 
     # ----------------------------------------------------------------------
     # Print out any errors
     # ----------------------------------------------------------------------
-    drs_reprocess.display_errors(params, outlist)
+    if has_errors:
+        drs_reprocess.display_errors(params, outlist)
 
     # ----------------------------------------------------------------------
     # Send email about finishing
