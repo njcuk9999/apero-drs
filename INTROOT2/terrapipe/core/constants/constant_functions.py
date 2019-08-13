@@ -185,7 +185,9 @@ class Keyword(Const):
 # Define functions
 # =============================================================================
 def generate_consts(modulepath):
-    mod = import_module(modulepath)
+    func_name = __NAME__ + '.generate_consts()'
+    # import module
+    mod = import_module(func_name, modulepath)
     # get keys and values
     keys, values = list(mod.__dict__.keys()), list(mod.__dict__.values())
     # storage for all values
@@ -207,7 +209,7 @@ def generate_consts(modulepath):
     return new_keys, new_values
 
 
-def import_module(modulepath, full=False, quiet=False):
+def import_module(func, modulepath, full=False, quiet=False):
     # deal with getting module
     if full:
         modfile = modulepath
@@ -231,14 +233,15 @@ def import_module(modulepath, full=False, quiet=False):
         string_trackback = traceback.format_exc()
         # report error
         eargs = [modfile, moddir]
-        emsg1 = 'Cannot import module \'{0}\' from \'{1}\''.format(eargs)
-        emsg2 = '\tError {0}: {1}'.format(type(e), e)
-        emsg3 = '\n\n Traceback:\n\n' + str(string_trackback)
+        emsg1 = 'Cannot import module \'{0}\' from \'{1}\''.format(*eargs)
+        emsg2 = '\tFunction called from = {0}'.format(func)
+        emsg3 = '\tError {0}: {1}'.format(type(e), e)
+        emsg4 = '\n\n Traceback:\n\n' + str(string_trackback)
         # deal with quiet return vs normal return
         if quiet:
-            raise ValueError([emsg1, emsg2, emsg3])
+            raise ValueError([emsg1, emsg2, emsg3, emsg4])
         else:
-            raise ConfigError([emsg1, emsg2, emsg3])
+            raise ConfigError([emsg1, emsg2, emsg3, emsg4])
 
 
 def get_constants_from_file(filename):
