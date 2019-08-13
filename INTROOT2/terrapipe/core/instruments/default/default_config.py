@@ -18,8 +18,10 @@ __all__ = [# global settings
            'DRS_PACKAGE', 'DRS_USERENV',
            # DRS INTERNAL PATHS
            'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
-           'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA', 'DRS_BADPIX_DATA',
-           'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH', 'DRS_RESET_TELLUDB_PATH',
+           'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
+           'DRS_INSTRUMENT_RECIPE_PATH', 'DRS_DEFAULT_RECIPE_PATH',
+           'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
+           'DRS_RESET_TELLUDB_PATH',
            # DRS INDEXING SETTINGS
            'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
            # DATABASE SETTINGS
@@ -171,6 +173,14 @@ DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
 DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
                             value='./core/instruments/default',
                             source=__NAME__)
+
+# where the instrument recipes are stored
+DRS_INSTRUMENT_RECIPE_PATH = Const('DRS_INSTRUMENT_RECIPE_PATH', dtype=str,
+                                   value=None, source=__NAME__)
+
+# where the default recipes are stored
+DRS_DEFAULT_RECIPE_PATH = Const('DRS_DEFAULT_RECIPE_PATH', dtype=str,
+                                value='./recipes/', source=__NAME__)
 
 #  where the bad pixel data are stored
 DRS_BADPIX_DATA = Const('DRS_BADPIX_DATA', dtype=str, source=__NAME__)

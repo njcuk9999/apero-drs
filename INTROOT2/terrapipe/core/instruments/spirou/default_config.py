@@ -127,6 +127,10 @@ CALIB_DB_MATCH.value = 'closest'
 # =============================================================================
 # DRS INTERNAL PATHS
 # =============================================================================
+# where the instrument recipes are stored
+DRS_INSTRUMENT_RECIPE_PATH = DRS_INSTRUMENT_RECIPE_PATH.copy(__NAME__)
+DRS_INSTRUMENT_RECIPE_PATH.value = './recipes/'
+
 #  where the bad pixel data are stored
 DRS_BADPIX_DATA = DRS_BADPIX_DATA.copy(__NAME__)
 DRS_BADPIX_DATA.value = './data/spirou/engineering/'
