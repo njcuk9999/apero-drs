@@ -477,6 +477,15 @@ class Logger:
         # set the source
         self.pout[processid].set_source('LOGGER_FULL', func_name)
 
+    def printmessage(self, params, messages, colour=None):
+        # check whether message is string (if so make a list)
+        if isinstance(messages, str):
+            messages = [messages]
+        # loop around messages
+        for message in messages:
+            printlog(self, params, messages, key='all', colour=colour)
+
+
 class Printer():
     """Print things to stdout on one line dynamically"""
     def __init__(self, params, level, message):
