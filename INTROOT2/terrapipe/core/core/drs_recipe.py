@@ -16,6 +16,7 @@ import os
 import sys
 import glob
 from collections import OrderedDict
+import copy
 
 from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.core import constants
@@ -74,7 +75,7 @@ class DrsRecipe(object):
         self.instrument = instrument
         # name
         if name is None:
-            self.name = 'Unknown'
+            self.name = 'UnknownRecipe'
         elif name.strip().endswith('.py'):
             while name.endswith('.py'):
                 name = name[:-3]
@@ -456,10 +457,18 @@ class DrsRecipe(object):
         # recipe description/epilog
         self.description = recipe.description
         self.epilog = recipe.epilog
-        # define sets of arguments
-        self.args = OrderedDict(recipe.args)
-        self.kwargs = OrderedDict(recipe.kwargs)
-        self.specialargs = OrderedDict(recipe.specialargs)
+        # define sets of arguments (need to copy arguments)
+        self.args = OrderedDict()
+        for argname in recipe.args.keys():
+            self.args[argname] = DrsArgument()
+            self.args[argname].copy(recipe.args[argname])
+        self.kwargs = OrderedDict()
+        for kwargname in recipe.kwargs.keys():
+            self.kwargs[kwargname] = DrsArgument()
+            self.kwargs[kwargname].copy(recipe.kwargs[kwargname])
+        for sargname in recipe.specialargs.keys():
+            self.specialargs[sargname] = DrsArgument()
+            self.specialargs[sargname].copy(recipe.specialargs[sargname])
         # define arg list
         self.arg_list = list(recipe.arg_list)
         # get string arg list (may be None)
@@ -513,7 +522,7 @@ class DrsRecipe(object):
         # deal with no name
         if name is None:
             name = self.name
-        if (name is None) or (name.upper() == 'UNKNOWN'):
+        if (name is None) or (name.upper() == 'UNKNOWNRECIPE'):
             return None
         # get local copy of module
         try:
@@ -1038,15 +1047,57 @@ class DrsRunSequence(object):
         # return frecipe
         return frecipe
 
-    def update_files(self, frecipe, kwargs):
-        # update args
+    def update_files(self, frecipe, fargs):
+        # ------------------------------------------------------------------
+        # update args - loop around positional arguments
         for argname in frecipe.args:
-            if argname in kwargs:
-                frecipe.args[argname].files = kwargs[argname]
-        # update kwargs
+            # if positional argument in function args (fargs) then we can
+            #   update the value
+            if argname in fargs:
+                # get the value of each key
+                value = fargs[argname]
+                # if the value is None the frecipe arg should be set to None
+                if value is None:
+                    # set the value to None
+                    frecipe.args[argname].files = None
+                # if we have a file or files we need to copy them properly
+                elif argname in ['files', 'file']:
+                    # set up empty set
+                    frecipe.args[argname].files = []
+                    # loop around files
+                    for drsfile in value:
+                        # copy file
+                        drsfilecopy = drsfile.completecopy(drsfile)
+                        # append to new list
+                        frecipe.args[argname].files.append(drsfilecopy)
+                # else assume we can just copy normally
+                else:
+                    frecipe.args[argname] = copy.deepcopy(value)
+        # ------------------------------------------------------------------
+        # update kwargs - loop around positional arguments
         for kwargname in frecipe.kwargs:
-            if kwargname in kwargs:
-                frecipe.kwargs[kwargname].files = kwargs[kwargname]
+            # if positional argument in function args (fargs) then we can
+            #   update the value
+            if kwargname in fargs:
+                # get the value of each key
+                value = fargs[kwargname]
+                # if the value is None the frecipe arg should be set to None
+                if value is None:
+                    # set the value to None
+                    frecipe.kwargs[kwargname].files = None
+                # if we have a file or files we need to copy them properly
+                elif kwargname in ['files', 'file']:
+                    # set up empty set
+                    frecipe.kwargs[kwargname].files = []
+                    # loop around files
+                    for drsfile in value:
+                        # copy file
+                        drsfilecopy = drsfile.completecopy(drsfile)
+                        # append to new list
+                        frecipe.kwargs[kwargname].files.append(drsfilecopy)
+                # else assume we can just copy normally
+                else:
+                    frecipe.kwargs[kwargname] = copy.deepcopy(value)
         # return recipes
         return frecipe
 
@@ -1639,13 +1690,13 @@ def _group_drs_files(params, drstable, **kwargs):
     # set up night mask
     valid = np.zeros(len(drstable), dtype=bool)
     # by night name
-    for night in np.unique(drstable[night_col]):
+    for night in np.unique(list(drstable[night_col])):
         # deal with just this night name
         nightmask = drstable[night_col] == night
         # deal with only one file in nightmask
         if np.sum(nightmask) == 1:
-            groups[nightmask] = group_number
             group_number += 1
+            groups[nightmask] = group_number
             valid |= nightmask
             continue
         # set invalid sequence numbers to 1
