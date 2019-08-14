@@ -750,7 +750,7 @@
 "40-015-00005","ALL","prints that we are saving e2dsll to file","{0} = filename","Saving E2DSLL file: {0}","",""
 "40-015-00006","ALL","prints which flat dymap file we are using","{0} = filename","Reading flat dymap file: {0}","",""
 "40-015-00007","ALL","prints which blaze dymap file we are using","{0} = filename","Reading blaze dymap file: {0}","",""
-"40-015-00008","ALL","prints that ff_rms failed QC","{0} = max rms; {1} = qc limit for max rms","Max RMS was greater than expected. {0} > limit ({1})","",""
+"40-015-00008","ALL","prints that ff_rms failed QC","{0} = max rms; {1} = qc limit for max rms","Fiber {0}: Max RMS was greater than expected. {1} > limit ({2})","",""
 "","","","","","",""
 "","","","","","",""
 "40-016-00000","ALL","Extraction/BERV messages","None","","",""
