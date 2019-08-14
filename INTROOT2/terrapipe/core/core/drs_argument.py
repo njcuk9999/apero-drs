@@ -840,7 +840,6 @@ class _SetProgram(argparse.Action):
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['DRS_USER_PROGRAM'] = strvalue
 
-
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
         # noinspection PyProtectedMember

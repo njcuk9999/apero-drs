@@ -485,7 +485,15 @@ class DrsRecipe(object):
         self.required_args = list(recipe.required_args)
         self.optional_args = list(recipe.optional_args)
         self.special_args = list(recipe.special_args)
-        self.outputs = dict(recipe.outputs)
+        # deal with copying file outputs
+        if self.outputs is None:
+            self.outputs = None
+        else:
+            self.outputs = dict()
+            for output in recipe.outputs:
+                oldoutput = recipe.outputs[output]
+                newouput = oldoutput.completecopy(oldoutput)
+                self.outputs[output] = newouput
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
 
