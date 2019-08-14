@@ -483,7 +483,7 @@ class Logger:
             messages = [messages]
         # loop around messages
         for message in messages:
-            printlog(self, params, messages, key='all', colour=colour)
+            printlog(self, params, message, key='all', colour=colour)
 
 
 class Printer():

@@ -237,6 +237,43 @@ class DrsInputFile:
         # return new instance of DrsFitsFile
         return DrsInputFile(**nkwargs)
 
+    def completecopy(self, drsfile):
+        # set empty file attributes
+        nkwargs = dict()
+        nkwargs['name'] = copy.deepcopy(drsfile.name)
+        nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
+        nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
+        nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
+        nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
+        nkwargs['fibers'] = copy.deepcopy(drsfile.fibers)
+        nkwargs['recipe'] = copy.deepcopy(drsfile.recipe)
+        nkwargs['filename'] = copy.deepcopy(drsfile.filename)
+        nkwargs['path'] = copy.deepcopy(drsfile.path)
+        nkwargs['basename'] = copy.deepcopy(drsfile.basename)
+        nkwargs['inputdir'] = copy.deepcopy(drsfile.inputdir)
+        nkwargs['directory'] = copy.deepcopy(drsfile.directory)
+        nkwargs['data'] = copy.deepcopy(drsfile.data)
+        nkwargs['header'] = copy.deepcopy(drsfile.header)
+        # ------------------------------------------------------------------
+        if drsfile.fileset is None:
+            nkwargs['fileset'] = None
+        elif isinstance(drsfile.fileset, list):
+            # set up new file set storage
+            newfileset = []
+            # loop around file sets
+            for fileseti in drsfile.fileset:
+                newfileset.append(fileseti.completecopy(fileseti))
+            # append to nkwargs
+            nkwargs['fileset'] = newfileset
+
+        else:
+            nkwargs['fileset'] = drsfile.fileset
+        # ------------------------------------------------------------------
+        nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
+        nkwargs['outfunc'] = drsfile.outfunc
+        # return new instance
+        return DrsInputFile(**nkwargs)
+
     # -------------------------------------------------------------------------
     # file checking
     # -------------------------------------------------------------------------
@@ -440,8 +477,37 @@ class DrsFitsFile(DrsInputFile):
 
         :return:
         """
+        # copy this instances values (if not overwritten)
+        name = kwargs.get('name', self.name)
+        kwargs['filetype'] = kwargs.get('filetype', self.filetype)
+        kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['prefix'] = kwargs.get('prefix', self.prefix)
+        kwargs['recipe'] = kwargs.get('recipe', self.recipe)
+        kwargs['filename'] = kwargs.get('filename', self.filename)
+        kwargs['path'] = kwargs.get('path', self.path)
+        kwargs['basename'] = kwargs.get('basename', self.basename)
+        kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
+        kwargs['intype'] = kwargs.get('intype', self.intype)
+        kwargs['directory'] = kwargs.get('directory', self.directory)
+        kwargs['data'] = kwargs.get('data', self.data)
+        kwargs['header'] = kwargs.get('header', self.header)
+        kwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        kwargs['check_ext'] = kwargs.get('check_ext', self.filetype)
+        kwargs['fiber'] = kwargs.get('fiber', self.fiber)
+        kwargs['fibers'] = kwargs.get('fibers', self.fibers)
+        kwargs['outtag'] = kwargs.get('KW_OUTPUT', self.outtag)
+        kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
+        kwargs['dbname'] = kwargs.get('dbname', self.dbname)
+        kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
+        kwargs['datatype'] = kwargs.get('datatype', self.datatype)
+        kwargs['dtype'] = kwargs.get('dtype', self.dtype)
+        kwargs['shape'] = kwargs.get('shape', self.shape)
+        kwargs['numfiles'] = kwargs.get('numfiles', self.numfiles)
+        for key in self.required_header_keys:
+            kwargs[key] = self.required_header_keys[key]
+        self.get_header_keys(kwargs)
         # return new instance
-        return self.completecopy(self)
+        return DrsFitsFile(name, **kwargs)
 
     def string_output(self):
         """
@@ -504,8 +570,22 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['shape'] = copy.deepcopy(drsfile.shape)
         nkwargs['hdict'] = copy.deepcopy(drsfile.hdict)
         nkwargs['output_dict'] = copy.deepcopy(drsfile.output_dict)
-        nkwargs['fileset'] = copy.deepcopy(drsfile.fileset)
-        nkwargs['outfunc'] = copy.deepcopy(drsfile.outfunc)
+        # ------------------------------------------------------------------
+        if drsfile.fileset is None:
+            nkwargs['fileset'] = None
+        elif isinstance(drsfile.fileset, list):
+            # set up new file set storage
+            newfileset = []
+            # loop around file sets
+            for fileseti in drsfile.fileset:
+                newfileset.append(fileseti.completecopy(fileseti))
+            # append to nkwargs
+            nkwargs['fileset'] = newfileset
+
+        else:
+            nkwargs['fileset'] = drsfile.fileset
+        # ------------------------------------------------------------------
+        nkwargs['outfunc'] = drsfile.outfunc
         nkwargs['dbname'] = copy.deepcopy(drsfile.dbname)
         nkwargs['dbkey'] = copy.deepcopy(drsfile.dbkey)
         nkwargs['datatype'] = copy.deepcopy(drsfile.datatype)
@@ -1959,6 +2039,44 @@ class DrsNpyFile(DrsInputFile):
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         # return new instance
         return DrsNpyFile(name, **kwargs)
+
+    def completecopy(self, drsfile):
+        # set empty file attributes
+        nkwargs = dict()
+        nkwargs['name'] = copy.deepcopy(drsfile.name)
+        nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
+        nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
+        nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
+        nkwargs['recipe'] = drsfile.recipe
+        nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
+        nkwargs['fibers'] = copy.deepcopy(drsfile.fibers)
+        nkwargs['filename'] = copy.deepcopy(drsfile.filename)
+        nkwargs['path'] = copy.deepcopy(drsfile.path)
+        nkwargs['basename'] = copy.deepcopy(drsfile.basename)
+        nkwargs['inputdir'] = copy.deepcopy(drsfile.inputdir)
+        nkwargs['directory'] = copy.deepcopy(drsfile.directory)
+        nkwargs['data'] = copy.deepcopy(drsfile.data)
+        nkwargs['header'] = copy.deepcopy(drsfile.header)
+        # ------------------------------------------------------------------
+        if drsfile.fileset is None:
+            nkwargs['fileset'] = None
+        elif isinstance(drsfile.fileset, list):
+            # set up new file set storage
+            newfileset = []
+            # loop around file sets
+            for fileseti in drsfile.fileset:
+                newfileset.append(fileseti.completecopy(fileseti))
+            # append to nkwargs
+            nkwargs['fileset'] = newfileset
+
+        else:
+            nkwargs['fileset'] = drsfile.fileset
+        # ------------------------------------------------------------------
+        nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
+        nkwargs['outfunc'] = drsfile.outfunc
+        # return new instance of DrsFitsFile
+        return DrsFitsFile(**nkwargs)
+
 
 
 # =============================================================================

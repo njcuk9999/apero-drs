@@ -298,6 +298,8 @@ def debug_file(recipe, params, infile, dlist):
     debug_back.add_hkey(key=kws7)
     # add primage data to debug_back file
     debug_back.data = dlist[0]
+    # print progress: saving file
+    WLOG(params, '', TextEntry('40-013-00025', args=debug_back.filename))
     # write multiple to file
     debug_back.write_multi(data_list=dlist[1:])
 
