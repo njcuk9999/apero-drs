@@ -24,6 +24,10 @@ __NAME__ = 'config.instruments.spirou.default_keywords.py'
 KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
 KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float)
 
+# define the MJ end date HEADER key
+KW_MJDEND = KW_MJDEND.copy(__NAME__)
+KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float)
+
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
 KW_DATE_OBS.set(key='DATE-OBS')
@@ -63,11 +67,6 @@ KW_CDEN.set(key='SBCDEN_P')
 # define polarisation HEADER key
 KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
 KW_CMMTSEQ.set(key='CMMTSEQ')
-
-
-# define the MJ end date HEADER key
-KW_MJDEND = KW_MJDEND.copy(__NAME__)
-KW_MJDEND.set(key='MJDEND')
 
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
@@ -164,6 +163,16 @@ root_hc = 'HC'
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
 KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
 
+# Define the mid exposure time
+KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
+KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
+                    datatype = 'mjd', dataformat = float)
+
+# Define the method by which the MJD was calculated
+KW_MID_OBS_TIME_METHOD = KW_MID_OBS_TIME_METHOD.copy(__NAME__)
+KW_MID_OBS_TIME_METHOD.set(key='MJDMIDMD',
+                           comment='Mid Observation time calc method')
+
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
@@ -235,6 +244,16 @@ KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
 KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='All quality control passed')
 KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
 KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='All quality control passed')
+
+# -----------------------------------------------------------------------------
+# Define preprocessing variables
+# -----------------------------------------------------------------------------
+# The shift in pixels so that image is at same location as engineering flat
+KW_PPSHIFTX = KW_PPSHIFTX.copy(__NAME__)
+KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
+
+KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
+KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -548,21 +567,14 @@ KW_DBERV_EST = KW_DBERV_EST.copy(__NAME__)
 KW_DBERV_EST.set(key='DBERVE',
                  comment='Deviation in BERV estimate [km/s/s]')
 
-# the start time of the observation used to calculate BERV (+KW_BERV_TIME_DELTA)
-KW_BERV_START = KW_BERV_START.copy(__NAME__)
-KW_BERV_START.set(key='BERVSTRT', comment='BERV Start of observation time [jd]')
-
-# the exposure time used to calculate observation midpoint
-KW_BERV_EXP_TIME = KW_BERV_EXP_TIME.copy(__NAME__)
-KW_BERV_EXP_TIME.set(key='BERVEXPT', comment='BERV Exptime used')
-
-# the time delta used (KW_BERV_START + this) [in days]
-KW_BERV_TIME_DELTA = KW_BERV_TIME_DELTA.copy(__NAME__)
-KW_BERV_TIME_DELTA.set(key='BERV_DT', comment='BERV Time delta used [days]')
-
 # the actual jd time used to calculate the BERV
 KW_BERV_OBSTIME = KW_BERV_OBSTIME.copy(__NAME__)
 KW_BERV_OBSTIME.set(key='BERVOBST', comment='BERV observation time used [days]')
+
+# the method used to obtain the berv obs time
+KW_BERV_OBSTIME_METHOD = KW_BERV_OBSTIME_METHOD.copy(__NAME__)
+KW_BERV_OBSTIME_METHOD.set(key='BERVOBSM',
+                           comment='BERV method used to calc observation time')
 
 # -----------------------------------------------------------------------------
 # Define wave variables

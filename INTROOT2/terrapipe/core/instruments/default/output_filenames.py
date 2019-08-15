@@ -140,6 +140,7 @@ def blank(params, **kwargs):
 def get_outfilename(params, infilename, prefix=None, suffix=None,
                     inext=None, outext=None, fiber=None):
     func_name = __NAME__ + '.get_outfilename()'
+
     # deal with fiber
     if fiber is not None:
         suffix = '{0}_{1}'.format(suffix, fiber.upper())
@@ -160,8 +161,9 @@ def get_outfilename(params, infilename, prefix=None, suffix=None,
         outfilename = '{0}{1}'.format(outfilename, suffix)
     # add back extention or add new one
     if outext is None:
-        outfilename = '{0}{1}'.format(outfilename, inext)
-    else:
+        if not suffix.endswith(inext):
+            outfilename = '{0}{1}'.format(outfilename, inext)
+    elif not suffix.endswith(outext):
         outfilename = '{0}{1}'.format(outfilename, outext)
     # return filename
     return outfilename
