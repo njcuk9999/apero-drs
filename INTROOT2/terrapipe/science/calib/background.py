@@ -49,8 +49,6 @@ TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
-# Define output files
-DEBUG_BACK = file_definitions.debug_back
 
 
 # =============================================================================
@@ -269,7 +267,7 @@ def correction(recipe, params, infile, image, header, return_map=False,
 
 def debug_file(recipe, params, infile, dlist):
     # debug output
-    debug_back = DEBUG_BACK.newcopy(recipe=recipe)
+    debug_back = recipe.outputs['DEBUG_BACK'].newcopy(recipe=recipe)
     # construct the filename from file instance
     debug_back.construct_filename(params, infile=infile)
     # copy keys from input file
