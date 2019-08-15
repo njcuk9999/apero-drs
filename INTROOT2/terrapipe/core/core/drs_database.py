@@ -593,9 +593,10 @@ def _get_time(params, dbname, hdict=None, header=None, kind=None):
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
-        return drs_fits.header_start_time(params, hdict, out_fmt=kind)
+        t, m = drs_fits.get_mid_obs_time(params, hdict, out_fmt=kind)
     elif header is not None:
-        return drs_fits.header_start_time(params, header, out_fmt=kind)
+        t, m = drs_fits.get_mid_obs_time(params, header, out_fmt=kind)
+        return t
     else:
         eargs = [dbname, func_name]
         WLOG(params, 'error', TextEntry('00-001-00039', args=eargs))
