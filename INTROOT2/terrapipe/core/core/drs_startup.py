@@ -1470,11 +1470,25 @@ def _sort_version(messages=None):
 def _make_dirs(params, path):
     # first check if path already exists
     if os.path.exists(path):
+        # return
+        return
+    # need lock file
+    lock, lockfilename = drs_lock.check_lock_file(params, path)
+    # first check if path already exists
+    if os.path.exists(path):
+        # close the lock file
+        drs_lock.close_lock_file(params, lock, lockfilename, path)
+        # return
         return
     # if path doesn't exist try to make it
     try:
         os.makedirs(path)
+        # close the lock file
+        drs_lock.close_lock_file(params, lock, lockfilename, path)
     except Exception as e:
+        # close the lock file
+        drs_lock.close_lock_file(params, lock, lockfilename, path)
+        # log error
         string_trackback = traceback.format_exc()
         emsg = TextEntry('01-000-00001', args=[path, type(e)])
         emsg += '\n\n' + TextEntry(string_trackback)
