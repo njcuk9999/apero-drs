@@ -593,12 +593,12 @@ def get_input_props_gaia(params, gprops, **kwargs):
     """
     func_name = __NAME__ + '.get_input_props_gaia()'
     # get parameters from gprops/kwargs
-    gaia_id = pcheck(params, 'GAIAID', 'gaiaid', kwargs, func_name,
+    gaia_id = pcheck(params, 'gaiaid', 'gaiaid', kwargs, func_name,
                      paramdict=gprops)
-    objname = pcheck(params, 'OBJNAME', 'objname', kwargs, func_name,
+    objname = pcheck(params, 'objname', 'objname', kwargs, func_name,
                      paramdict=gprops)
-    ra = pcheck(params, 'RA', 'ra', kwargs, func_name, paramdict=gprops)
-    dec = pcheck(params, 'DEC', 'dec', kwargs, func_name, paramdict=gprops)
+    ra = pcheck(params, 'ra', 'ra', kwargs, func_name, paramdict=gprops)
+    dec = pcheck(params, 'dec', 'dec', kwargs, func_name, paramdict=gprops)
     # -----------------------------------------------------------------------
     # case 1: we have gaia id
     # -----------------------------------------------------------------------
@@ -612,7 +612,7 @@ def get_input_props_gaia(params, gprops, **kwargs):
     # -----------------------------------------------------------------------
     # case 2: we have objname
     # -----------------------------------------------------------------------
-    if gprops['OBJNAME'] is not None and gprops['OBJNAME'] != 'None':
+    if gprops['objname'] is not None and gprops['objname'] != 'None':
         props, fail = crossmatch.get_params(params, gprops, objname=objname,
                                             ra=ra, dec=dec)
         # deal with failure
@@ -699,7 +699,7 @@ def get_times(params, bprops, infile, header):
     # for the maximum peak to peak need an array of times
     times = obstime.jd + np.arange(0, 365, 5.0/3.0)
     # add to bprops
-    bprops['OBS_TIME'] = obstime.value
+    bprops['OBS_TIME'] = obstime.jd
     bprops['OBS_TIME_METHOD'] = method
     bprops['OBS_TIMES'] = times
     # add source
