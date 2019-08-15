@@ -255,13 +255,9 @@ class PseudoConstants(DefaultConstants):
         outputs['bjdest'] = ['BJD_EST', 'KW_BJD_EST', 'header', float]
         outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX', 'header', float]
         outputs['dbervest'] = ['DBERV_EST', 'KW_DBERV_EST', 'header', float]
-        outputs['start_time'] = ['START_TIME', 'KW_BERV_START', 'header', float]
-        outputs['exp_time'] = ['EXP_TIME', 'KW_BERV_EXP_TIME', 'header', float]
-        outputs['time_delta'] = ['TIME_DELTA', 'KW_BERV_TIME_DELTA', 'header',
-                                 float]
         outputs['obs_time'] = ['OBS_TIME', 'KW_BERV_OBSTIME', 'header', float]
-
-
+        outputs['obs_time_method'] = ['OBS_TIME_METHOD',
+                                      'KW_BERV_OBSTIME_METHOD', 'header', str]
         # return outputs
         return outputs
 # =============================================================================

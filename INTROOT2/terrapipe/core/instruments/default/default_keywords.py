@@ -6,24 +6,26 @@ from terrapipe.core.constants import constant_functions
 # -----------------------------------------------------------------------------
 # all definition
 __all__ = [# input keys
-           'KW_ACQTIME', 'KW_ACQTIME_FMT', 'KW_ACQTIME_DTYPE', 'KW_OBJRA',
-           'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN', 'KW_OBJRAPM',
-           'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME', 'KW_UTC_OBS',
-           'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
-           'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_CMPLTEXP', 'KW_NEXP',
-           'KW_PLX', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY',
-           'KW_GAIA_ID', 'KW_INPUTRV',
+           'KW_ACQTIME', 'KW_OBJRA', 'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN',
+           'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
+           'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS',
+           'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
+           'KW_CMPLTEXP', 'KW_NEXP', 'KW_PLX', 'KW_WEATHER_TOWER_TEMP',
+           'KW_CASS_TEMP', 'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
-           'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+           'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
            'KW_EXT_TYPE', 'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
            'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
+           'KW_MID_OBS_TIME_METHOD',
            # calibration file header keys
            'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
            'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
            'KW_CDBBLAZE',  'KW_CDBWAVE', 'KW_CDBTHERMAL',
+           # preprocess keys
+           'KW_PPSHIFTX', 'KW_PPSHIFTY',
            # dark keys
            'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -46,8 +48,8 @@ __all__ = [# input keys
            'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX', 'KW_BERV_POS_SOURCE',
            'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT', 'KW_BERV', 'KW_BJD',
            'KW_BERVMAX', 'KW_BERVSOURCE', 'KW_BERV_EST', 'KW_BJD_EST',
-           'KW_BERVMAX_EST', 'KW_BERV_START', 'KW_BERV_EXP_TIME',
-           'KW_BERV_TIME_DELTA', 'KW_BERV_OBSTIME', 'KW_BERVGAIA_ID',
+           'KW_BERVMAX_EST', 'KW_BERV_OBSTIME_METHOD', 'KW_BERV_OBSTIME',
+           'KW_BERVGAIA_ID',
            'KW_BERVOBJNAME', 'KW_BERVRV', 'KW_BERV_GAIA_GMAG',
            'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_MAGLIM',
            'KW_BERV_GAIA_PLXLIM', 'KW_DBERV', 'KW_DBERV_EST',
@@ -71,8 +73,10 @@ Keyword = constant_functions.Keyword
 # -----------------------------------------------------------------------------
 # define the HEADER key for acquisition time
 #     Note must set the date format in KW_ACQTIME_FMT
-KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, comment='',
-                     source=__NAME__)
+KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, source=__NAME__)
+
+# define the MJ end date HEADER key
+KW_MJDEND = Keyword('KW_MJEND', key='', value=None, source=__NAME__)
 
 # the format of ACQTIME as required by astropy.time
 #  options are:
@@ -80,11 +84,11 @@ KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, comment='',
 #          "iso": YYYY-MM-DD HH:MM:SS.S
 #          "unix": seconds since 1970-01-01 00:00:00
 #          "jyear": year as a decimal number
-KW_ACQTIME_FMT = Const('KW_ACQTIME_FMT', value='mjd', dtype=str,
+KW_MJDEND_FMT = Const('KW_ACQTIME_FMT', value='mjd', dtype=str,
                        options=['mjd', 'iso', 'unix', 'jyear'],
                        source=__NAME__)
 # This is the dtype of the acqtime (i.e. str or float)
-KW_ACQTIME_DTYPE = Const('KW_ACQTIME_FMT', value=float, dtype=None,
+KW_MJDEND_DTYPE = Const('KW_ACQTIME_FMT', value=float, dtype=None,
                          options=[float, str], source=__NAME__)
 
 # define the observation date HEADER key
@@ -118,9 +122,6 @@ KW_CDEN = Keyword('KW_CDEN', key='', dtype=str, source=__NAME__)
 
 # define polarisation HEADER key
 KW_CMMTSEQ = Keyword('KW_CMMTSEQ', key='', dtype=str, source=__NAME__)
-
-# define the MJ end date HEADER key
-KW_MJDEND = Keyword('KW_MJEND', key='', dtype=float, source=__NAME__)
 
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = Keyword('KW_CMPLTEXP', key='', dtype=int, source=__NAME__)
@@ -191,6 +192,13 @@ KW_DRS_DATE = Keyword('KW_DRS_DATE', key='', dtype=str, source=__NAME__)
 # Define the key to get the data fits file type
 KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
 
+# Define the mid exposure time
+KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__)
+
+# Define the method by which the MJD was calculated
+KW_MID_OBS_TIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
+                                 source=__NAME__)
+
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
@@ -239,6 +247,13 @@ KW_DRS_QC_VAL = Keyword('KW_DRS_QC_VAL', key='', dtype=str, source=__NAME__)
 KW_DRS_QC_NAME = Keyword('KW_DRS_QC_NAME', key='', dtype=str, source=__NAME__)
 KW_DRS_QC_LOGIC = Keyword('KW_DRS_QC_LOGIC', key='', dtype=str, source=__NAME__)
 KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define preprocessing variables
+# -----------------------------------------------------------------------------
+# The shift in pixels so that image is at same location as engineering flat
+KW_PPSHIFTX =Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__)
+KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -492,6 +507,10 @@ KW_BERV_TIME_DELTA = Keyword('KW_BERV_TIME_DELTA', key='', dtype=float,
 # the actual jd time used to calculate the BERV
 KW_BERV_OBSTIME = Keyword('KW_BERV_OBSTIME', key='', dtype=float,
                           source=__NAME__)
+
+# the method used to obtain the berv obs time
+KW_BERV_OBSTIME_METHOD = Keyword('KW_BERV_OBSTIME_METHOD', key='', dtype=str,
+                                 source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define wave variables
