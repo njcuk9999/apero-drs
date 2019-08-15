@@ -327,7 +327,8 @@ cal_loc.epilog = Help['LOC_EXAMPLE']
 cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     LOCO_FILE=sf.out_loc_loco,
                     FWHM_FILE=sf.out_loc_fwhm,
-                    SUP_FILE=sf.out_loc_sup)
+                    SUP_FILE=sf.out_loc_sup,
+                    DEBUG_BACK=sf.debug_back)
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                 files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
@@ -365,7 +366,8 @@ cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
                              SHAPE_IN_HC_FILE=sf.out_shape_debug_ihc,
                              SHAPE_OUT_FP_FILE=sf.out_shape_debug_ofp,
                              SHAPE_OUT_HC_FILE=sf.out_shape_debug_ohc,
-                             SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx)
+                             SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx,
+                             DEBUG_BACK=sf.debug_back)
 cal_shape_master.set_arg(pos=0, **directory)
 cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
@@ -402,7 +404,8 @@ cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
 cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
                       SHAPEL_IN_FP_FILE=sf.out_shapel_debug_ifp,
-                      SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp)
+                      SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp,
+                      DEBUG_BACK=sf.debug_back)
 cal_shape.set_arg(pos=0, **directory)
 cal_shape.set_arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
                   helpstr=Help['SHAPE_FPFILES_HELP'])
@@ -437,7 +440,8 @@ cal_ff.epilog = Help['FLAT_EXAMPLE']
 cal_ff.set_outputs(FLAT_FILE=sf.out_ff_flat,
                    BLAZE_FILE=sf.out_ff_blaze,
                    E2DSLL_FILE=sf.out_ext_e2dsll,
-                   ORDERP_SFILE=sf.out_orderp_straight)
+                   ORDERP_SFILE=sf.out_orderp_straight,
+                   DEBUG_BACK=sf.debug_back)
 cal_ff.set_arg(pos=0, **directory)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
                files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark],
@@ -517,7 +521,8 @@ cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         E2DSLL_FILE=sf.out_ext_e2dsll,
                         S1D_W_FILE=sf.out_ext_s1d_w,
                         S1D_V_FILE=sf.out_ext_s1d_v,
-                        ORDERP_SFILE=sf.out_orderp_straight)
+                        ORDERP_SFILE=sf.out_orderp_straight,
+                        DEBUG_BACK=sf.debug_back)
 cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
