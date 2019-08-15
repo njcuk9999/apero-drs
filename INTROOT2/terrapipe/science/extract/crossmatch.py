@@ -47,13 +47,13 @@ TextDict = locale.drs_text.TextDict
 pcheck = core.pcheck
 # master crossmatch query
 QUERY_MASTER = 'SELECT {0} FROM {1} WHERE {2}'
-QCOLS = ('ra as RA, dec as DEC, source_id as GAIAID, parallax as PLX, '
-         'pmdec as PMDE, pmra as PMRA, radial_velocity as RV, '
+QCOLS = ('ra as ra, dec as dec, source_id as gaiaid, parallax as plx, '
+         'pmdec as pmde, pmra as pmra, radial_velocity as rv, '
          'phot_g_mean_mag as gmag, phot_bp_mean_mag as bpmag, '
          'phot_rp_mean_mag as rpmag')
 QSOURCE = 'gaiadr2.gaia_source'
 QWHERE1 = 'source_id = {id}'
-QWHERE2 = ('1=CONTAINS(POINT(\'ICRS\', RA, DEC), CIRCLE(\'ICRS\', {ra}, '
+QWHERE2 = ('1=CONTAINS(POINT(\'ICRS\', ra, dec), CIRCLE(\'ICRS\', {ra}, '
           '{dec}, {radius}))')
 QWHERE3 = ('(parallax is not NULL) AND (pmdec is not NULL) AND '
            '(pmra is not NULL)')
@@ -80,6 +80,9 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
     if os.path.exists(lookuptablename):
         # load lookup table from file
         lookuptable = drs_data.load_object_list(params)
+        # make sure all columns are lower case
+        for col in lookuptable.colnames:
+            lookuptable[col].name = col.lower()
         # check if props are in lookup table
         # TODO: fix problem row is blank
         intable, row = inlookuptable(params, lookuptable, gaiaid, objname,
@@ -106,10 +109,10 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
         # loop around properties
         for prop in row.colnames:
             # update each properties
-            props[prop.upper()] = row[prop]
+            props[prop] = row[prop]
             # set source
             sourcename = '{0} [{1}]'.format(func_name, source)
-            props.set_source(prop.upper(), sourcename)
+            props.set_source(prop, sourcename)
     # ----------------------------------------------------------------------
     # set the input source
     if source is not None:
@@ -143,6 +146,9 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
 # =============================================================================
 def updatelookuptable(params, lookuptable, lookuptablename, row):
     func_name = __NAME__ + '.updatelookuptable()'
+    # make sure all columns are lower case
+    for col in row.colnames:
+        row.columns[col].name = col.lower()
     # combine tables
     try:
         if os.path.exists(lookuptablename):
@@ -153,7 +159,7 @@ def updatelookuptable(params, lookuptable, lookuptablename, row):
             table = Table()
             with warnings.catch_warnings(record=True) as _:
                 for col in row.colnames:
-                    table[col.upper()] = [row[col]]
+                    table[col] = [row[col]]
         # save table to file
         table.write(lookuptablename, overwrite=True)
     except Exception as e:
@@ -173,7 +179,7 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
     # deal with having a gaia id
     if gaiaid is not None:
         # find rows in table with valid gaia id
-        mask = gaiaid == table['GAIAID']
+        mask = gaiaid == table['gaiaid']
         # if we have entires use the first one
         if np.sum(mask) > 0:
             # set intable to True
@@ -186,7 +192,7 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
     # deal with having objname
     if (objname is not None) and (not intable):
         # find rows in table with valid objname
-        mask = objname == table['OBJNAME']
+        mask = objname == table['objname']
         # if we have entires use the first one
         if np.sum(mask) > 0:
             # set intable to True
@@ -202,7 +208,8 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
         radius_degrees = (radius*uu.arcsec).to(uu.deg)
         # crossmatch table
         try:
-            mask, separation = crossmatch(ra, dec, table['RA'], table['DEC'],
+            # crossmatch
+            mask, separation = crossmatch(ra, dec, table['ra'], table['dec'],
                                           radius=radius_degrees)
             # if we have entires use the first one
             if np.sum(mask) > 0:
