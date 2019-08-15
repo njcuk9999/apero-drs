@@ -125,7 +125,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
         # if True we have found our file
         if cond:
             found = True
-            kind = fileseti
+            kind = fileseti.completecopy(fileseti)
             break
     # deal with not being found
     if kind is None:
