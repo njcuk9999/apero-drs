@@ -594,6 +594,7 @@ def _get_time(params, dbname, hdict=None, header=None, kind=None):
     # get raw time from hdict / header
     if hdict is not None:
         t, m = drs_fits.get_mid_obs_time(params, hdict, out_fmt=kind)
+        return t
     elif header is not None:
         t, m = drs_fits.get_mid_obs_time(params, header, out_fmt=kind)
         return t
