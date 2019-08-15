@@ -776,8 +776,18 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     newruns = []
     # loop around recipes in new list
     for srecipe in srecipelist:
+        # deal with skip
+        runname = 'RUN_{0}'.format(srecipe.shortname)
+        # skip if runname is not True
+        if runname in params:
+            if not params[runname]:
+                wargs = [srecipe.name, srecipe.shortname]
+                WLOG(params, '', TextEntry('40-503-00021', args=wargs),
+                     colour='yellow')
+                continue
         # print progress
-        WLOG(params, '', TextEntry('40-503-00012', args=[srecipe.name]))
+        wargs = [srecipe.name, srecipe.shortname]
+        WLOG(params, '', TextEntry('40-503-00012', args=wargs))
         # deal with nightname
         if srecipe.master:
             nightname = params['MASTER_NIGHT']
