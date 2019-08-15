@@ -17,7 +17,9 @@ from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.science import preprocessing
 from terrapipe.io import drs_image
+from terrapipe.io import drs_fits
 from terrapipe.core.instruments.spirou import file_definitions
+
 
 # =============================================================================
 # Define variables
@@ -114,6 +116,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # identify this iterations file type
         cond, infile = preprocessing.drs_infile_id(params, file_instance)
+
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
@@ -144,6 +147,21 @@ def __main__(recipe, params):
                 WLOG(params, 'info', TextEntry('40-010-00012', args=wargs))
                 continue
 
+        # ----------------------------------------------------------------------
+        # Check for pixel shift and/or corrupted files
+        # ----------------------------------------------------------------------
+        # get pass condition
+        cout = preprocessing.test_for_corrupt_files(params, image, hotpixels)
+        snr_hotpix, rms_list = cout[0], cout[1]
+        shiftdx, shiftdy = cout[2], cout[3]
+        # use dx/dy to shift the image back to where the engineering flat
+        #    is located
+        if shiftdx != 0 or shiftdy != 0:
+            # log process
+            WLOG(params, '', TextEntry('40-010-00013', args=[shiftdx, shiftdy]))
+            # shift image
+            image = np.roll(image, [shiftdy], axis=0)
+            image = np.roll(image, [shiftdx], axis=1)
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
@@ -164,10 +182,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        # ----------------------------------------------------------------------
-        # get pass condition
-        cout = preprocessing.test_for_corrupt_files(params, image, hotpixels)
-        snr_hotpix, rms_list = cout[0], cout[1:]
+
         # ----------------------------------------------------------------------
         # print out SNR hotpix value
         WLOG(params, '', TextEntry('40-010-00006', args=[snr_hotpix]))
@@ -219,6 +234,12 @@ def __main__(recipe, params):
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
         # ------------------------------------------------------------------
+        # calculate mid observation time
+        # ------------------------------------------------------------------
+        mout = drs_fits.get_mid_obs_time(params, infile.header)
+        mid_obs_time, mid_obs_method = mout
+
+        # ------------------------------------------------------------------
         # rotate image
         # ------------------------------------------------------------------
         # rotation to match HARPS orientation (expected by DRS)
@@ -244,6 +265,12 @@ def __main__(recipe, params):
         outfile.add_qckeys(qc_params)
         # add dprtype
         outfile.add_hkey('KW_DPRTYPE', value=outfile.name)
+        # add the shift that was used to correct the image
+        outfile.add_hkey('KW_PPSHIFTX', value=shiftdx)
+        outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
+        # add mid observation time
+        outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
+        outfile.add_hkey('KW_BERV_OBSTIME_METHOD', value=mid_obs_method)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image
