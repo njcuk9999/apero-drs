@@ -132,7 +132,7 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with setting up time
     # ----------------------------------------------------------------------
-    bprops = get_times(params, bprops, infile, header, props, kwargs)
+    bprops = get_times(params, bprops, infile, header)
     # ----------------------------------------------------------------------
     # try to run barcorrpy
     if kind == 'barycorrpy':
@@ -682,16 +682,8 @@ def get_raw_param(params, param, inparam, infile, header, props, kwargs):
     return rawvalue, source
 
 
-def get_times(params, bprops, infile, header, props, kwargs):
+def get_times(params, bprops, infile, header):
     func_name = __NAME__ + '.get_times()'
-    # get parameters from params/kwargs
-    if 'exptime' in kwargs:
-        exptime = kwargs['exptime']
-        exp_timeunit = uu.s
-    else:
-        exp_timekey = params['KW_EXPTIME'][0]
-        exp_timeunit = params.instances['KW_EXPTIME'].unit
-        exptime = pcheck(params, exp_timekey, func=func_name, paramdict=props)
     # ---------------------------------------------------------------------
     # deal with header
     if infile is not None:
@@ -700,23 +692,18 @@ def get_times(params, bprops, infile, header, props, kwargs):
         pass
     else:
         WLOG(params, 'error', TextEntry('00-016-00019', args=[func_name]))
-    # ----------------------------------------------------------------------
-    # get header time
-    starttime = drs_fits.header_start_time(params, header, 'jd', func=func_name)
-    # get the time after start of the observation
-    timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
-    # calculate observation time
-    obstime = starttime + timedelta
+    # ---------------------------------------------------------------------
+    # get obs_time
+    obstime, method = drs_fits.get_mid_obs_time(params, header, func=func_name)
+
     # for the maximum peak to peak need an array of times
     times = obstime.jd + np.arange(0, 365, 5.0/3.0)
     # add to bprops
-    bprops['START_TIME'] = starttime
-    bprops['EXP_TIME'] = exptime
-    bprops['TIME_DELTA'] = timedelta.value
     bprops['OBS_TIME'] = obstime.value
+    bprops['OBS_TIME_METHOD'] = method
     bprops['OBS_TIMES'] = times
     # add source
-    keys = ['START_TIME', 'EXP_TIME', 'TIME_DELTA', 'OBS_TIME', 'OBS_TIMES']
+    keys = ['OBS_TIME', 'OBS_TIMES', 'OBS_TIME_METHOD']
     bprops.set_sources(keys, func_name)
     # return bprops
     return bprops
