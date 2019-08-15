@@ -349,6 +349,13 @@ out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
 # add badpix outputs to output fileset
 out_file.addset(out_badpix)
 out_file.addset(out_backmap)
+
+# -----------------------------------------------------------------------------
+# background debug file
+debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
+                        filetype='.fits',
+                        suffix='background.fits', outfunc=out.debug_file)
+out_file.addset(debug_back)
 # -----------------------------------------------------------------------------
 # localisation
 out_loc_orderp = drs_finput('LOC_ORDERP', KW_OUTPUT='LOC_ORDERP',
