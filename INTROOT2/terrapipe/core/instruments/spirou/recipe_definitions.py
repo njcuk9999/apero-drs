@@ -730,8 +730,33 @@ science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
 science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
+
+
+# -----------------------------------------------------------------------------
+# hc run (extract )
+# -----------------------------------------------------------------------------
+hc_run = drs_recipe.DrsRunSequence('hc_run', __INSTRUMENT__)
+# master run
+hc_run.add(cal_pp, name='PPM', master=True)
+hc_run.add(cal_dark_master, master=True)
+hc_run.add(cal_badpix, name='BADM', master=True)
+hc_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+hc_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
+hc_run.add(cal_shape_master, master=True)
+# night runs
+hc_run.add(cal_pp)
+hc_run.add(cal_badpix)
+hc_run.add(cal_loc, files=[sf.pp_dark_flat])
+hc_run.add(cal_loc, files=[sf.pp_flat_dark])
+hc_run.add(cal_shape)
+hc_run.add(cal_ff, files=[sf.pp_flat_flat])
+hc_run.add(cal_thermal)
+# extract science
+hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
+
+
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run, science_run]
+sequences = [full_run, limited_run, science_run, hc_run]
 
