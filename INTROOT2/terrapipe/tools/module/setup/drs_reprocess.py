@@ -407,7 +407,7 @@ def process_run_list(params, runlist):
     # see if we have any errors
     errors = False
     for key in keys:
-        if odict[key]['ERROR'] != 0:
+        if len(odict[key]['ERROR']) != 0:
             errors = True
 
     # return the output array (dictionary with priority as key)
