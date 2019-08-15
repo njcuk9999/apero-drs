@@ -13,8 +13,9 @@ from __future__ import division
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from astropy import version as av
+from astropy import units as uu
 import os
 import warnings
 import traceback
@@ -40,6 +41,8 @@ __release__ = Constants['DRS_RELEASE']
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# alias pcheck
+pcheck = drs_log.find_param
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 # TODO: This should be changed for astropy -> 2.0.1
@@ -607,7 +610,7 @@ def combine(params, infiles, math='average', same_type=True):
     return outfile
 
 
-def header_start_time(params, hdr, out_fmt='mjd', func=None, name=None):
+def header_start_time(params, hdr, out_fmt=None, func=None, name=None):
     """
     Get acquisition time from header
 
@@ -667,6 +670,130 @@ def header_start_time(params, hdr, out_fmt='mjd', func=None, name=None):
         return float(acqtime.unix)
     elif out_fmt == 'decimalyear':
         return float(acqtime.decimalyear)
+    else:
+        kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
+        eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
+
+
+def header_end_time(params, hdr, out_fmt=None, func=None, name=None):
+    """
+    Get acquisition time from header
+
+    :param params:
+    :param hdr:
+    :param out_fmt:
+    :param func: str, input function name
+    :param name:
+
+    :type params: ParamDict
+    :type hdr: Header
+    :type out_fmt: str
+
+    :return:
+    """
+    if func is None:
+        func_name = __NAME__ + '.header_time()'
+    else:
+        func_name = func
+    # deal with no name
+    if name is None:
+        dbname = 'header_time'
+    else:
+        dbname = name
+    # ----------------------------------------------------------------------
+    # get acqtime
+    time_key = drs_log.find_param(params, 'KW_MJDEND', func=func_name)[0]
+    timefmt = params.instances['KW_MJDEND'].datatype
+    timetype = params.instances['KW_MJDEND'].dataformat
+    # ----------------------------------------------------------------------
+    # get values from header
+    if time_key in hdr:
+        rawtime = hdr[time_key]
+    else:
+        eargs = [dbname, 'hdict', time_key, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00028', args=eargs))
+        rawtime = None
+    # ----------------------------------------------------------------------
+    # get astropy time
+    try:
+        endtime = Time(rawtime, format=timefmt)
+    except Exception as e:
+        eargs = [dbname, rawtime, timefmt, timetype, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
+        endtime = None
+    # ----------------------------------------------------------------------
+    # return time in requested format
+    if out_fmt is None:
+        return endtime
+    elif out_fmt == 'mjd':
+        return float(endtime.mjd)
+    elif out_fmt == 'jd':
+        return float(endtime.jd)
+    elif out_fmt == 'iso' or out_fmt == 'human':
+        return endtime.iso
+    elif out_fmt == 'unix':
+        return float(endtime.unix)
+    elif out_fmt == 'decimalyear':
+        return float(endtime.decimalyear)
+    else:
+        kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
+        eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
+        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
+
+
+def get_mid_obs_time(params, header, out_fmt=None, **kwargs):
+    func_name = __NAME__ + '.get_mid_obs_time()'
+    dbname = 'header_time'
+    # get obs_time
+    outkey = params['KW_MID_OBS_TIME'][0]
+    # if we have the out key in header use it
+    if outkey in header:
+        # get format from params
+        timefmt = params.instances['KW_MID_OBS_TIME'].datatype
+        # get data type from params
+        timetype = params.instances['KW_MID_OBS_TIME'].dataformat
+        # get raw value from header
+        rawtime = header[outkey]
+        # get time object
+        obstime = Time(timetype(rawtime), format=timefmt)
+        # set the method for getting mid obs time
+        method = 'header'
+    # else calculate it from header keys
+    else:
+        func_name = __NAME__ + '.get_mid_obs_time()'
+        # get parameters from params/kwargs
+        if 'exptime' in kwargs:
+            exptime = kwargs['exptime']
+            exp_timeunit = uu.s
+        else:
+            exp_timekey = params['KW_EXPTIME'][0]
+            exp_timeunit = params.instances['KW_EXPTIME'].unit
+
+            exptime = header[exp_timekey]
+        # -------------------------------------------------------------------
+        # get header time
+        endtime = header_end_time(params, header, func=func_name)
+        # get the time after start of the observation
+        timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
+        # calculate observation time
+        obstime = endtime - timedelta
+        # set the method for getting mid obs time
+        method = 'mjdend-exp/2'
+    # -------------------------------------------------------------------
+    # return time in requested format
+    if out_fmt is None:
+        return obstime, method
+    elif out_fmt == 'mjd':
+        return float(obstime.mjd), method
+    elif out_fmt == 'jd':
+        return float(obstime.jd), method
+    elif out_fmt == 'iso' or out_fmt == 'human':
+        return obstime.iso, method
+    elif out_fmt == 'unix':
+        return float(obstime.unix), method
+    elif out_fmt == 'decimalyear':
+        return float(obstime.decimalyear), method
     else:
         kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
         eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
