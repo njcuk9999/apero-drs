@@ -861,6 +861,120 @@ WAVE_LINELIST_WAVECOL.value = 'll'
 WAVE_LINELIST_AMPCOL = WAVE_LINELIST_AMPCOL.copy(__NAME__)
 WAVE_LINELIST_AMPCOL.value = 'amp'
 
+# define whether to always extract HC/FP files in the wave code (even if they
+#    have already been extracted
+WAVE_ALWAYS_EXTRACT = WAVE_ALWAYS_EXTRACT.copy(__NAME__)
+WAVE_ALWAYS_EXTRACT.value = False
+
+# define the type of file to use for wave solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+WAVE_EXTRACT_TYPE = WAVE_EXTRACT_TYPE.copy(__NAME__)
+WAVE_EXTRACT_TYPE.value = 'E2DSFF'
+
+# define the fit degree for the wavelength solution
+WAVE_FIT_DEGREE = WAVE_FIT_DEGREE.copy(__NAME__)
+WAVE_FIT_DEGREE.value = 4
+
+# Define intercept and slope for a pixel shift
+WAVE_PIXEL_SHIFT_INTER = WAVE_PIXEL_SHIFT_INTER.copy(__NAME__)
+WAVE_PIXEL_SHIFT_INTER.value = 0.0    #  6.26637214e+00
+
+WAVE_PIXEL_SHIFT_SLOPE = WAVE_PIXEL_SHIFT_SLOPE.copy(__NAME__)
+WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    #  4.22131253e-04
+
+# Define the mode to calculate the hc wave solution
+#    Currently allowed options: 0
+WAVE_MODE_HC = WAVE_MODE_HC.copy(__NAME__)
+WAVE_MODE_HC.value = 0
+
+# Define the mode to calculate the hc wave solution
+#    Currently allowed options: 0, 1
+WAVE_MODE_FP = WAVE_MODE_FP.copy(__NAME__)
+WAVE_MODE_FP.value = 0
+
+# width of the box for fitting HC lines. Lines will be fitted from -W to +W,
+#     so a 2*W+1 window
+WAVE_HC_FITBOX_SIZE = WAVE_HC_FITBOX_SIZE.copy(__NAME__)
+WAVE_HC_FITBOX_SIZE.value = 6
+
+# number of sigma above local RMS for a line to be flagged as such
+WAVE_HC_FITBOX_SIGMA = WAVE_HC_FITBOX_SIGMA.copy(__NAME__)
+WAVE_HC_FITBOX_SIGMA.value = 2.0
+
+# the fit degree for the wave hc gaussian peaks fit
+WAVE_HC_FITBOX_GFIT_DEG = WAVE_HC_FITBOX_GFIT_DEG.copy(__NAME__)
+WAVE_HC_FITBOX_GFIT_DEG.value = 5
+
+# the RMS of line-fitted line must be between DEVMIN and DEVMAX of the peak
+#     value must be SNR>5 (or 1/SNR<0.2)
+WAVE_HC_FITBOX_RMS_DEVMIN = WAVE_HC_FITBOX_RMS_DEVMIN.copy(__NAME__)
+WAVE_HC_FITBOX_RMS_DEVMIN.value = 0.0
+WAVE_HC_FITBOX_RMS_DEVMAX = WAVE_HC_FITBOX_RMS_DEVMAX.copy(__NAME__)
+WAVE_HC_FITBOX_RMS_DEVMAX.value = 0.2
+
+# the e-width of the line expressed in pixels.
+WAVE_HC_FITBOX_EWMIN = WAVE_HC_FITBOX_EWMIN.copy(__NAME__)
+WAVE_HC_FITBOX_EWMIN.value = 0.7
+WAVE_HC_FITBOX_EWMAX = WAVE_HC_FITBOX_EWMAX.copy(__NAME__)
+WAVE_HC_FITBOX_EWMAX.value = 1.1
+
+# number of bright lines kept per order
+#     avoid >25 as it takes super long
+#     avoid <12 as some orders are ill-defined and we need >10 valid
+#         lines anyway
+#     20 is a good number, and I see no reason to change it
+WAVE_HC_NMAX_BRIGHT = WAVE_HC_NMAX_BRIGHT.copy(__NAME__)
+WAVE_HC_NMAX_BRIGHT.value = 20
+
+# Number of times to run the fit triplet algorithm
+WAVE_HC_NITER_FIT_TRIPLET = WAVE_HC_NITER_FIT_TRIPLET.copy(__NAME__)
+WAVE_HC_NITER_FIT_TRIPLET.value = 3
+
+# Maximum distance between catalog line and init guess line to accept
+#     line in m/s
+WAVE_HC_MAX_DV_CAT_GUESS = WAVE_HC_MAX_DV_CAT_GUESS.copy(__NAME__)
+WAVE_HC_MAX_DV_CAT_GUESS.value= 60000
+
+# The fit degree between triplets
+WAVE_HC_TFIT_DEG = WAVE_HC_TFIT_DEG.copy(__NAME__)
+WAVE_HC_TFIT_DEG.value = 2
+
+# Cut threshold for the triplet line fit [in km/s]
+WAVE_HC_TFIT_CUT_THRES = WAVE_HC_TFIT_CUT_THRES.copy(__NAME__)
+WAVE_HC_TFIT_CUT_THRES.value = 1.0
+
+# Minimum number of lines required per order
+WAVE_HC_TFIT_MINNUM_LINES = WAVE_HC_TFIT_MINNUM_LINES.copy(__NAME__)
+WAVE_HC_TFIT_MINNUM_LINES.value = 10
+
+# Minimum total number of lines required
+WAVE_HC_TFIT_MINTOT_LINES = WAVE_HC_TFIT_MINTOT_LINES.copy(__NAME__)
+WAVE_HC_TFIT_MINTOT_LINES.value = 200
+
+# this sets the order of the polynomial used to ensure continuity
+#     in the  xpix vs wave solutions by setting the first term = 12,
+#     we force that the zeroth element of the xpix of the wavelegnth
+#     grid is fitted with a 12th order polynomial as a function of
+#     order number (format = string list separated by commas
+WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
+WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
+
+# Number of times to loop through the sigma clip for triplet fit
+WAVE_HC_TFIT_SIGCLIP_NUM = WAVE_HC_TFIT_SIGCLIP_NUM.copy(__NAME__)
+WAVE_HC_TFIT_SIGCLIP_NUM.value = 20
+
+# Sigma clip threshold for triplet fit
+WAVE_HC_TFIT_SIGCLIP_THRES = WAVE_HC_TFIT_SIGCLIP_THRES.copy(__NAME__)
+WAVE_HC_TFIT_SIGCLIP_THRES.value = 3.5
+
+# Define the distance in m/s away from the center of dv hist points
+#     outside will be rejected [m/s]
+WAVE_HC_TFIT_DVCUT_ORDER = WAVE_HC_TFIT_DVCUT_ORDER.copy(__NAME__)
+WAVE_HC_TFIT_DVCUT_ORDER.value = 2000
+WAVE_HC_TFIT_DVCUT_ALL = WAVE_HC_TFIT_DVCUT_ALL.copy(__NAME__)
+WAVE_HC_TFIT_DVCUT_ALL.value = 5000
+
+
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
 # =============================================================================
