@@ -109,7 +109,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     # Clean WLOG
     WLOG.clean_log(pid)
     # find recipe
-    recipe = find_recipe(name, instrument)
+    recipe, recipemod = find_recipe(name, instrument)
+    # set recipemod
+    recipe.recipemod = recipemod
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
     # need to set debug mode now
@@ -163,7 +165,6 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         # -------------------------------------------------------------------------
         # clear loading message
         TLOG(recipe.drs_params, '', '')
-
     # -------------------------------------------------------------------------
     # display
     if not quiet:
@@ -198,6 +199,16 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
     if params['OUTPATH'] is not None and params['NIGHTNAME'] is not None:
         _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
+    # -------------------------------------------------------------------------
+    # deal with data passed from call to main function
+    if 'DATA_DICT' in fkwargs:
+        # log process: data being passed from call
+        iargs = [', '.join(list(fkwargs['DATA_DICT'].keys()))]
+        WLOG(params, 'info', TextEntry('40-001-00021', args=iargs))
+        # push into params
+        params['DATA_DICT'] = fkwargs['DATA_DICT']
+    else:
+        params['DATA_DICT'] = ParamDict()
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
@@ -440,7 +451,8 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
         return found_files[-1]
 
 
-def copy_kwargs(recipe, **kwargs):
+def copy_kwargs(params, recipe=None, recipename=None, recipemod=None,
+                **kwargs):
     """
     Copy kwargs from "recipe1" main to "recipe2" main
 
@@ -460,8 +472,14 @@ def copy_kwargs(recipe, **kwargs):
     :param kwargs:
     :return:
     """
+    func_name = __NAME__ + '.copy_kwargs()'
+    # deal with no recipe
+    if recipe is None and recipename is None:
+        WLOG(params, 'error', TextEntry('00-001-00040', args=func_name))
+    elif recipe is None:
+        recipe, _ = find_recipe(recipename, params['INSTRUMENT'], recipemod)
     # get inputs for
-    inputs = recipe.drs_params['INPUTS']
+    inputs = params['INPUTS']
     # get recipe arguments/kwarg arguments
     mainargs = recipe.args
     mainkwargs = recipe.kwargs
@@ -1187,7 +1205,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     # deal with no name or no instrument
     if name == 'None' or name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
-        return empty
+        return empty, None
     # else we have a name and an instrument
     if mod is None:
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
@@ -1208,11 +1226,11 @@ def find_recipe(name='None', instrument='None', mod=None):
 
     if instrument is None and found_recipe is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
-        return empty
+        return empty, None
     if found_recipe is None:
         WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
     # return
-    return found_recipe
+    return found_recipe, mod
 
 
 def _get_arg_strval(value):
