@@ -89,6 +89,8 @@ class DrsRecipe(object):
         self.master = False
         # shortname set to name initially
         self.shortname = str(self.name)
+        # save recipe module
+        self.recipemod = None
         # import module
         self.module = self._import_module()
         # output directory
