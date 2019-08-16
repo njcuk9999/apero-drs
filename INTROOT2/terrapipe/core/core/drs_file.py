@@ -15,6 +15,7 @@ from astropy.table import Table
 import os
 from collections import OrderedDict
 import copy
+import warnings
 
 from . import drs_log
 from terrapipe.core import constants
@@ -1223,7 +1224,9 @@ class DrsFitsFile(DrsInputFile):
         # set new data to this files data
         data = np.array(self.data)
         # --------------------------------------------------------------------
-        # combine data
+        # cube
+        datacube = [data]
+        # combine data into cube
         for infile in infiles:
             # check data is read for infile
             infile.check_read()
@@ -1231,26 +1234,43 @@ class DrsFitsFile(DrsInputFile):
             if (self.name != infile.name) and same_type:
                 eargs = [func_name]
                 WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
-            # if we want to sum the data
-            if math in ['sum', 'add', '+', 'average', 'mean']:
-                data += infile.data
-            # else if we want to subtract the data
-            elif math in ['subtract', '-']:
-                data -= infile.data
-            # else if we want to divide the data
-            elif math in ['divide', '/']:
-                data /= infile.data
-            # else if we want to multiple the data
-            elif math in ['multiply', 'times', '*']:
-                data *= infile.data
-            # else we have an error in math
-            else:
-                eargs = [math, available_math, func_name]
-                WLOG(params, 'error', TextEntry('', args=eargs))
+            # add to cube
+            datacube.append(infile.data)
+        # make datacube an numpy array
+        datacube = np.array(datacube)
         # --------------------------------------------------------------------
-        # if average/mean then divide by the number of files
-        if math in ['average', 'mean']:
-            data = data / (len(infiles) + 1)
+        # deal with math
+        # --------------------------------------------------------------------
+        # log what we are doing
+        WLOG(params, '', TextEntry('40-999-00004', args=[math]))
+        # if we want to sum the data
+        if math in ['sum', 'add', '+']:
+            with warnings.catch_warnings(record=True) as _:
+                data = np.nansum(datacube, axis=0)
+        # else if we want to subtract the data
+        elif math in ['subtract', '-']:
+            for im in range(1, len(datacube)):
+                data -= datacube[im]
+        # else if we want to divide the data
+        elif math in ['divide', '/']:
+            for im in range(1, len(datacube)):
+                data /= datacube[im]
+        # else if we want to multiple the data
+        elif math in ['multiple', 'times', '*']:
+            for im in range(1, len(datacube)):
+                data *= datacube[im]
+        # elif if mean/average
+        elif math in ['average', 'mean']:
+            with warnings.catch_warnings(record=True) as _:
+                data = np.nanmean(datacube, axis=0)
+        # elif if median
+        elif math in ['median', 'med']:
+            with warnings.catch_warnings(record=True) as _:
+                data = np.nanmedian(datacube, axis=0)
+        # else we have an error in math
+        else:
+            eargs = [math, available_math, func_name]
+            WLOG(params, 'error', TextEntry('', args=eargs))
         # --------------------------------------------------------------------
         # construct keys for new DrsFitsFile
         # set empty file attributes
@@ -2076,7 +2096,6 @@ class DrsNpyFile(DrsInputFile):
         nkwargs['outfunc'] = drsfile.outfunc
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
-
 
 
 # =============================================================================
