@@ -103,10 +103,15 @@ def __main__(recipe, params):
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
+    # deal with input data from function
+    if 'files' in params['DATA_DICT']:
+        infiles = params['DATA_DICT']['files']
+        rawfiles = params['DATA_DICT']['rawfiles']
+        combine = params['DATA_DICT']['combine']
     # combine input images if required
-    if params['INPUT_COMBINE_IMAGES']:
+    elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='average')]
+        infiles = [drs_fits.combine(params, infiles, math='median')]
         combine = True
     else:
         combine = False

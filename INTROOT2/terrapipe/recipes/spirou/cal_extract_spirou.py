@@ -38,6 +38,8 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# get param dict
+ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
@@ -107,10 +109,16 @@ def __main__(recipe, params):
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
+
+    # deal with input data from function
+    if 'files' in params['DATA_DICT']:
+        infiles = params['DATA_DICT']['files']
+        rawfiles = params['DATA_DICT']['rawfiles']
+        combine = params['DATA_DICT']['combine']
     # combine input images if required
-    if params['INPUT_COMBINE_IMAGES']:
+    elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='average')]
+        infiles = [drs_fits.combine(params, infiles, math='median')]
         combine = True
     else:
         combine = False
@@ -176,6 +184,9 @@ def __main__(recipe, params):
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, header, props)
+
+        # storage for return
+        e2dsoutputs = dict()
 
         # ------------------------------------------------------------------
         # Fiber loop
@@ -448,6 +459,18 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-016-00010', args=wargs))
             # write image to file
             s1dvfile.write()
+
+            # --------------------------------------------------------------
+            # add files to outputs
+            # --------------------------------------------------------------
+            ekeys = ['E2DS', 'E2DSFF']
+            efiles = [e2dsfile, e2dsfffile]
+            # loop around keys to add
+            for key, efile in zip(ekeys, efiles):
+                # construct output key
+                outkey = '{0}_{1}'.format(key, fiber)
+                # copy file to dictionary
+                e2dsoutputs[outkey] = efile.completecopy(efile)
 
     # ----------------------------------------------------------------------
     # End of main code
