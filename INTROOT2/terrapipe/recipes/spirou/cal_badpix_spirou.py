@@ -108,19 +108,26 @@ def __main__(recipe, params):
         rawflatfiles.append(infile.basename)
     for infile in darkfiles:
         rawdarkfiles.append(infile.basename)
-    # combine input flat images if required
-    if params['INPUT_COMBINE_IMAGES']:
+    # deal with input data from function
+    if 'flatfiles' in params['DATA_DICT']:
+        flatfiles = params['DATA_DICT']['flatfiles']
+        darkfiles = params['DATA_DICT']['darkfiles']
+        rawflatfiles = params['DATA_DICT']['rawflatfiles']
+        rawdarkfiles = params['DATA_DICT']['rawdarkfiles']
+        combine = params['DATA_DICT']['combine']
+    # combine input images if required
+    elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        flatfiles = [drs_fits.combine(params, flatfiles, math='average')]
+        flatfiles = [drs_fits.combine(params, flatfiles, math='median')]
         # get combined file
-        darkfiles = [drs_fits.combine(params, darkfiles, math='average')]
+        darkfiles = [drs_fits.combine(params, darkfiles, math='median')]
         combine = True
     else:
         combine = False
     # warn user if lengths differ
     if len(flatfiles) != len(darkfiles):
         wargs = [len(flatfiles), len(darkfiles)]
-        WLOG(params, 'warning', TextEntry('10-012-00001', args=wargs))
+        WLOG(params, 'error', TextEntry('10-012-00001', args=wargs))
         # get the number of files
         num_files = np.min([len(flatfiles), len(darkfiles)])
     else:

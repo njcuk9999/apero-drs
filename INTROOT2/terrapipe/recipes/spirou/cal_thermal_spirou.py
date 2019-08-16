@@ -16,9 +16,10 @@ from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core.core import drs_database
+from terrapipe.core.core import drs_startup
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
-from terrapipe.recipes.spirou import cal_extract_spirou
+from terrapipe.science.extract import other as extractother
 
 
 # =============================================================================
@@ -38,6 +39,8 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
+# define extraction code to use
+EXTRACT_NAME = 'cal_extract_spirou.py'
 
 
 # =============================================================================
@@ -104,19 +107,22 @@ def __main__(recipe, params):
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
+    # deal with input data from function
+    if 'files' in params['DATA_DICT']:
+        infiles = params['DATA_DICT']['files']
+        rawfiles = params['DATA_DICT']['rawfiles']
+        combine = params['DATA_DICT']['combine']
     # combine input images if required
-    if params['INPUT_COMBINE_IMAGES']:
+    elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='average')]
+        infiles = [drs_fits.combine(params, infiles, math='median')]
         combine = True
     else:
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
-
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -125,69 +131,25 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
-
         # ------------------------------------------------------------------
-        # Get the output filename (to pipe into cal_extract
+        # Get the thermal output e2ds filename and extract/read file
         # ------------------------------------------------------------------
-        # set up the exists command
-        exists = False
-        # set up storage
-        thermal_files = dict()
-        # loop around fiber types
-        for fiber in fiber_types:
-            # get thermal file instance
-            thermalfileinst = recipe.outputs['THERMAL_E2DS_FILE']
-            thermal_file = thermalfileinst.newcopy(recipe=recipe, fiber=fiber)
-            # construct the filename from file instance
-            thermal_file.construct_filename(params, infile=infile)
-            # check whether e2ds file exists
-            if os.path.exists(thermal_file.filename):
-                exists = exists and True
-            else:
-                exists = exists and False
-            # append to storage
-            thermal_files[fiber] = thermal_file
-
-        # ------------------------------------------------------------------
-        # extract the dark (AB, A, B and C) or read dark e2ds header
-        # ------------------------------------------------------------------
-        if params['THERMAL_ALWAYS_EXTRACT'] or (not exists):
-            # need to handle passing keywords from main
-            kwargs = core.copy_kwargs(recipe, directory=nightname,
-                                      files=[infile.basename])
-            # set the program name (shouldn't be cal_extract)
-            kwargs['program'] = 'thermal_extract'
-            # pipe into cal_extract
-            llout = cal_extract_spirou.main(**kwargs)
-            # check success
-            if not llout['success']:
-                WLOG(params, 'error', TextEntry('09-016-00001'))
-            # get qc
-            passed = llout['params']['QC']
-            # get header
-            header = llout['header']
-        # else we just need to read the header of the output file
-        else:
-            # read file header and push into outputs
-            infile.read()
-            # get infile header
-            header = infile.header
-            # get quality control parameters
-            passed = header[params['KW_DRS_QC'][0]]
+        eargs = [params, recipe, EXTRACT_NAME, infile]
+        out = extractother.extract_thermal_files(*eargs)
+        thermal_outputs, thermal_files = out
 
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
-        if passed:
-            # loop around fiber types
-            for fiber in fiber_types:
-                # construct out file
-                outfile = thermal_files[fiber]
-                # add header to outfile
-                outfile.hdict = header
-                outfile.header = header
-                # add output from thermal files
-                drs_database.add_file(params, outfile)
+        # loop around fiber types
+        for fiber in fiber_types:
+            # construct out file
+            outfile = thermal_files[fiber]
+            # add header to outfile
+            outfile.hdict = thermal_outputs[fiber].header
+            outfile.header = thermal_outputs[fiber].header
+            # add output from thermal files
+            drs_database.add_file(params, outfile)
 
     # ----------------------------------------------------------------------
     # End of main code
