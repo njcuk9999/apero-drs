@@ -550,37 +550,46 @@ cal_extract.set_kwarg(**shapelfile)
 cal_extract.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# cal_HC_E2DS_spirou
-# -----------------------------------------------------------------------------
-# cal_hc.name = 'cal_HC_E2DS_spirou.py'
-# cal_hc.instrument = __INSTRUMENT__
-# cal_hc.outputdir = 'reduced'
-# cal_hc.inputdir = 'reduced'
-# cal_hc.inputtype = 'e2ds'
-# cal_hc.extension = 'fits'
-# cal_hc.description = Help['HC_E2DS_DESC']
-# cal_hc.epilog = Help['HC_E2DS_EXAMPLE']
-# # setup custom files (add a required keyword in the header to each file)
-# #    in this case we require "KW_EXT_TYPE" = "HCONE_HCONE"
-# cal_hc_files1 = [sf.out_ext_e2ds,  sf.out_ext_e2dsff]
-# cal_hc_rkeys = dict(KW_EXT_TYPE='HCONE_HCONE')
-# cal_hc_files2 = drs_file.add_required_keywords(cal_hc_files1, cal_hc_rkeys)
-# # set up arguments
-# cal_hc.arg(pos=0, **directory)
-# cal_hc.arg(name='files', dtype='files', pos='1+', files=cal_hc_files2,
-#            filelogic='exclusive', limit=1,
-#            helpstr=Help['FILES_HELP'] + Help['HC_E2DS_FILES_HELP'])
-# cal_hc.kwarg(**add_cal)
-# cal_hc.kwarg(**plot)
-# cal_hc.kwarg(**interactive)
-# cal_hc.kwarg(**blazefile)
-# cal_hc.kwarg(**flatfile)
-# cal_hc.kwarg(**wavefile)
-
-# -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
 # -----------------------------------------------------------------------------
-cal_wave.name = 'cal_WAVE_E2DS_spirou.py'
+cal_wave.name = 'cal_wave_spirou.py'
+cal_wave.shortname = 'WAVE'
+cal_wave.instrument = __INSTRUMENT__
+cal_wave.outputdir = 'reduced'
+cal_wave.inputdir = 'tmp'
+cal_wave.inputtype = 'pp'
+cal_wave.extension = 'fits'
+cal_wave.description = Help['WAVE_DESC']
+cal_wave.epilog = Help['WAVE_EXAMPLE']
+cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
+                     WAVE_HCLL=sf.out_hcline)
+cal_wave.set_arg(pos=0, **directory)
+cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+                   nargs='+', filelogic='exclusive', required=True,
+                   helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+cal_wave.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                   nargs='+', filelogic='exclusive',
+                   helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+cal_wave.set_kwarg(**add_cal)
+cal_wave.set_kwarg(**badfile)
+cal_wave.set_kwarg(**dobad)
+cal_wave.set_kwarg(**backsub)
+cal_wave.set_kwarg(default=True, **combine)
+cal_wave.set_kwarg(**darkfile)
+cal_wave.set_kwarg(**dodark)
+cal_wave.set_kwarg(**fiber)
+cal_wave.set_kwarg(**flipimage)
+cal_wave.set_kwarg(**fluxunits)
+cal_wave.set_kwarg(**locofile)
+cal_wave.set_kwarg(**orderpfile)
+cal_wave.set_kwarg(**plot)
+cal_wave.set_kwarg(**interactive)
+cal_wave.set_kwarg(**resize)
+cal_wave.set_kwarg(**shapexfile)
+cal_wave.set_kwarg(**shapeyfile)
+cal_wave.set_kwarg(**shapelfile)
+cal_wave.set_kwarg(**wavefile)
+
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
