@@ -543,8 +543,6 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     # log number of lines removed for width
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
     WLOG(p, 'info', wmsg.format(np.nansum(~mask)))
-
-    print(len(loc['XPEAK_OLD']) - len(loc['XPEAK']))
     # log number of lines removed as double-fitted
     if len(loc['XPEAK_OLD']) > len(loc['XPEAK']):
         wmsg = 'Nb of double-fitted lines removed  = {0}'
