@@ -105,6 +105,17 @@ __all__ = [
     # wave constants
     'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
+    'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE', 'WAVE_FIT_DEGREE',
+    'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE', 'WAVE_MODE_HC',
+    'WAVE_MODE_FP', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
+    'WAVE_HC_FITBOX_GFIT_DEG', 'WAVE_HC_FITBOX_RMS_DEVMIN',
+    'WAVE_HC_FITBOX_RMS_DEVMAX', 'WAVE_HC_FITBOX_EWMIN', 'WAVE_HC_FITBOX_EWMAX',
+    'WAVE_HC_NMAX_BRIGHT', 'WAVE_HC_NITER_FIT_TRIPLET',
+    'WAVE_HC_MAX_DV_CAT_GUESS', 'WAVE_HC_TFIT_DEG', 'WAVE_HC_TFIT_CUT_THRES',
+    'WAVE_HC_TFIT_MINNUM_LINES', 'WAVE_HC_TFIT_MINTOT_LINES',
+    'WAVE_HC_TFIT_ORDER_FIT_CONT', 'WAVE_HC_TFIT_SIGCLIP_NUM',
+    'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
+    'WAVE_HC_TFIT_DVCUT_ALL',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
@@ -938,6 +949,117 @@ WAVE_LINELIST_WAVECOL = Const('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
                               source=__NAME__)
 WAVE_LINELIST_AMPCOL = Const('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
                              source=__NAME__)
+
+# define whether to always extract HC/FP files in the wave code (even if they
+#    have already been extracted
+WAVE_ALWAYS_EXTRACT = Const('WAVE_ALWAYS_EXTRACT', value=None, dtype=bool,
+                            source=__NAME__)
+
+# define the type of file to use for wave solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+WAVE_EXTRACT_TYPE = Const('WAVE_EXTRACT_TYPE', value=None, dtype=str,
+                          source=__NAME__, options=['E2DS', 'E2DSFF'])
+
+# define the fit degree for the wavelength solution
+WAVE_FIT_DEGREE = Const('WAVE_FIT_DEGREE', value=None, dtype=int,
+                        source=__NAME__)
+
+# Define intercept and slope for a pixel shift
+WAVE_PIXEL_SHIFT_INTER = Const('WAVE_PIXEL_SHIFT_INTER', value=None,
+                               dtype=float, source=__NAME__)
+WAVE_PIXEL_SHIFT_SLOPE = Const('WAVE_PIXEL_SHIFT_SLOPE', value=None,
+                               dtype=float, source=__NAME__)
+
+# Define the mode to calculate the hc wave solution
+WAVE_MODE_HC = Const('WAVE_MODE_HC', value=None, dtype=int, source=__NAME__,
+                     options=[0])
+
+# Define the mode to calculate the fp wave solution
+WAVE_MODE_FP = Const('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
+                     options=[0, 1])
+
+# width of the box for fitting HC lines. Lines will be fitted from -W to +W,
+#     so a 2*W+1 window
+WAVE_HC_FITBOX_SIZE = Const('WAVE_HC_FITBOX_SIZE', value=None, dtype=int,
+                            source=__NAME__)
+
+# number of sigma above local RMS for a line to be flagged as such
+WAVE_HC_FITBOX_SIGMA = Const('WAVE_HC_FITBOX_SIGMA', value=None, dtype=float,
+                             source=__NAME__)
+
+# the fit degree for the wave hc gaussian peaks fit
+WAVE_HC_FITBOX_GFIT_DEG = Const('WAVE_HC_FITBOX_GFIT_DEG', value=None,
+                                dtype=int, source=__NAME__)
+
+# the RMS of line-fitted line must be between DEVMIN and DEVMAX of the peak
+#     value must be SNR>5 (or 1/SNR<0.2)
+WAVE_HC_FITBOX_RMS_DEVMIN = Const('WAVE_HC_FITBOX_RMS_DEVMIN', value=None,
+                                  dtype=float, source=__NAME__, minimum=0.0)
+WAVE_HC_FITBOX_RMS_DEVMAX = Const('WAVE_HC_FITBOX_RMS_DEVMAX', value=None,
+                                  dtype=float, source=__NAME__, minimum=0.0)
+
+# the e-width of the line expressed in pixels.
+WAVE_HC_FITBOX_EWMIN = Const('WAVE_HC_FITBOX_EWMIN', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
+WAVE_HC_FITBOX_EWMAX = Const('WAVE_HC_FITBOX_EWMAX', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
+
+# number of bright lines kept per order
+#     avoid >25 as it takes super long
+#     avoid <12 as some orders are ill-defined and we need >10 valid
+#         lines anyway
+#     20 is a good number, and I see no reason to change it
+WAVE_HC_NMAX_BRIGHT = Const('WAVE_HC_NMAX_BRIGHT', value=None, dtype=int,
+                            source=__NAME__, minimum=10, maximum=30)
+
+# Number of times to run the fit triplet algorithm
+WAVE_HC_NITER_FIT_TRIPLET = Const('WAVE_HC_NITER_FIT_TRIPLET', value=None,
+                                  dtype=int, source=__NAME__, minimum=1)
+
+# Maximum distance between catalog line and init guess line to accept
+#     line in m/s
+WAVE_HC_MAX_DV_CAT_GUESS = Const('WAVE_HC_MAX_DV_CAT_GUESS', value=None,
+                                 dtype=float, source=__NAME__, minimum=0.0)
+
+# The fit degree between triplets
+WAVE_HC_TFIT_DEG = Const('WAVE_HC_TFIT_DEG', value=None, dtype=int,
+                         source=__NAME__, minimum=0)
+
+# Cut threshold for the triplet line fit [in km/s]
+WAVE_HC_TFIT_CUT_THRES = Const('WAVE_HC_TFIT_CUT_THRES', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0)
+
+# Minimum number of lines required per order
+WAVE_HC_TFIT_MINNUM_LINES = Const('WAVE_HC_TFIT_MINNUM_LINES', value=None,
+                                  dtype=int, source=__NAME__, minimum=0)
+
+# Minimum total number of lines required
+WAVE_HC_TFIT_MINTOT_LINES = Const('WAVE_HC_TFIT_MINTOT_LINES', value=None,
+                                  dtype=int, source=__NAME__, minimum=0)
+
+# this sets the order of the polynomial used to ensure continuity
+#     in the  xpix vs wave solutions by setting the first term = 12,
+#     we force that the zeroth element of the xpix of the wavelegnth
+#     grid is fitted with a 12th order polynomial as a function of
+#     order number (format = string list separated by commas
+WAVE_HC_TFIT_ORDER_FIT_CONT = Const('WAVE_HC_TFIT_ORDER_FIT_CONT', value=None,
+                                    dtype=str, source=__NAME__)
+
+# Number of times to loop through the sigma clip for triplet fit
+WAVE_HC_TFIT_SIGCLIP_NUM = Const('WAVE_HC_TFIT_SIGCLIP_NUM', value=None,
+                                 dtype=int, source=__NAME__, minimum=1)
+
+# Sigma clip threshold for triplet fit
+WAVE_HC_TFIT_SIGCLIP_THRES = Const('WAVE_HC_TFIT_SIGCLIP_THRES', value=None,
+                                   dtype=float, source=__NAME__, minimum=0.0)
+
+# Define the distance in m/s away from the center of dv hist points
+#     outside will be rejected [m/s]
+WAVE_HC_TFIT_DVCUT_ORDER = Const('WAVE_HC_TFIT_DVCUT_ORDER', value=None,
+                                 dtype=float, source=__NAME__, minimum=0.0)
+WAVE_HC_TFIT_DVCUT_ALL = Const('WAVE_HC_TFIT_DVCUT_ALL', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0)
+
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
