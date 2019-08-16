@@ -298,7 +298,8 @@ def get_fiber_types(params, **kwargs):
 
     # get fiber from inputs (now that we know it is there)
     if fiber is None:
-        fiber = str(params['INPUTS']['FIBER'])
+        if 'FIBER' in params['INPUTS']:
+            fiber = str(params['INPUTS']['FIBER'])
 
     # deal with input from command line (via params['INPUTS'])
     if fiber.upper() == 'ALL':
