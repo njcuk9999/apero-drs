@@ -534,6 +534,13 @@ out_wave = drs_finput('WAVE', KW_OUTPUT='WAVE_SOL',
                       dbname='calibration', dbkey='WAVE',
                       outfunc=out.calib_file)
 
+# hc initial linelist
+out_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
+                       fibers=['AB', 'A', 'B', 'C'],
+                       filetype='.dat',
+                       suffix='_linelist',
+                       outfunc=out.calib_file)
+
 # wave master
 out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
                              fibers=['AB', 'A', 'B', 'C'],
