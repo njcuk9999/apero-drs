@@ -110,15 +110,15 @@ class Run:
 
     def find_recipe(self, mod=None):
         # find the recipe definition
-        recipe = drs_startup.find_recipe(self.recipename,
-                                         self.params['INSTRUMENT'],
-                                         mod=mod)
+        recipe, mod = drs_startup.find_recipe(self.recipename,
+                                              self.params['INSTRUMENT'],
+                                              mod=mod)
         # deal with an empty recipe return
         if recipe.name == 'Empty':
             eargs = [self.recipename]
             WLOG(None, 'error', TextEntry('00-007-00001', args=eargs))
         # else return
-        return recipe
+        return recipe, mod
 
     def get_recipe_kind(self):
         # the first argument must be the recipe name
