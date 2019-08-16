@@ -111,18 +111,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # read and combine all HC files except the first (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    p, hcdata, hchdr = spirouImage.ReadImageAndCombine(*rargs)
+    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(*rargs)
     # read first file (fpfitsfilename)
-    fpdata, fphdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
+    fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
 
     # add data and hdr to loc
     loc = ParamDict()
-    loc['HCDATA'], loc['HCHDR'] = hcdata, hchdr
-    loc['FPDATA'], loc['FPHDR'] = fpdata, fphdr
+    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
+    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
     # set the source
-    sources = ['HCDATA', 'HCHDR']
+    sources = ['HCDATA', 'HCHDR', 'HCCDR']
     loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
-    sources = ['FPDATA', 'FPHDR']
+    sources = ['FPDATA', 'FPHDR', 'FPCDR']
     loc.set_sources(sources, 'spirouImage.ReadImage()')
 
     # ----------------------------------------------------------------------
@@ -1395,11 +1395,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     WLOG(p, '', wmsg.format(*wargs))
     # write solution to fitsfilename header
     # copy original keys
-    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'])
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_DATE'], value=p['DRS_DATE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_DATE_NOW'], value=p['DATE_NOW'])
     # set the input files
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBBLAZE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CDBWAVE'], value=loc['WAVEFILE'])
