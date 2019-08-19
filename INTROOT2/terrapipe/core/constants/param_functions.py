@@ -1151,7 +1151,7 @@ def _string_repr_list(key, values, source, fmt):
 def _map_listparameter(value, separator=',', dtype=None):
 
     func_name = __NAME__ + '._map_listparameter()'
-
+    # try evaulating as a list
     try:
         rawvalue = eval(value)
         if isinstance(rawvalue, list):
@@ -1159,6 +1159,11 @@ def _map_listparameter(value, separator=',', dtype=None):
     except Exception as e:
         pass
 
+    # deal with an empty value i.e. ''
+    if value == '':
+        return []
+
+    # try to return dtyped data
     try:
         # first split by separator
         listparameter = value.split(separator)
@@ -1177,6 +1182,10 @@ def _map_listparameter(value, separator=',', dtype=None):
 
 def _map_dictparameter(value, dtype=None):
     func_name = __NAME__ + '._map_dictparameter()'
+    # deal with an empty value i.e. ''
+    if value == '':
+        return []
+    # try evaulating as a dict
     try:
         rawvalue = eval(value)
         if isinstance(rawvalue, dict):
