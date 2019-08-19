@@ -883,12 +883,15 @@ WAVE_PIXEL_SHIFT_SLOPE = WAVE_PIXEL_SHIFT_SLOPE.copy(__NAME__)
 WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    #  4.22131253e-04
 
 # Define the mode to calculate the hc wave solution
-#    Currently allowed options: 0
+#   Should be one of the following:
+#       0 - Etienne method
 WAVE_MODE_HC = WAVE_MODE_HC.copy(__NAME__)
 WAVE_MODE_HC.value = 0
 
 # Define the mode to calculate the hc wave solution
-#    Currently allowed options: 0, 1
+#   Should be one of the following:
+#       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
+#       1 - following C Lovis (previously WAVE_NEW)
 WAVE_MODE_FP = WAVE_MODE_FP.copy(__NAME__)
 WAVE_MODE_FP.value = 0
 
@@ -974,6 +977,62 @@ WAVE_HC_TFIT_DVCUT_ORDER.value = 2000
 WAVE_HC_TFIT_DVCUT_ALL = WAVE_HC_TFIT_DVCUT_ALL.copy(__NAME__)
 WAVE_HC_TFIT_DVCUT_ALL.value = 5000
 
+# Define the resolution and line profile map size (y-axis by x-axis)
+WAVE_HC_RESMAP_SIZE = WAVE_HC_RESMAP_SIZE.copy(__NAME__)
+WAVE_HC_RESMAP_SIZE.value = '5, 4'
+
+# Define the maximum allowed deviation in the RMS line spread function
+WAVE_HC_RES_MAXDEV_THRES = WAVE_HC_RES_MAXDEV_THRES.copy(__NAME__)
+WAVE_HC_RES_MAXDEV_THRES.value = 8
+
+#  Defines echelle of first extracted order
+WAVE_HC_T_ORDER_START = WAVE_HC_T_ORDER_START.copy(__NAME__)
+WAVE_HC_T_ORDER_START.value = 79
+
+#  Defines order from which the solution is calculated
+WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
+WAVE_N_ORD_START.value = 0
+
+#  Defines order to which the solution is calculated
+WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
+WAVE_N_ORD_FINAL.value = 47
+
+# =============================================================================
+# CALIBRATION: WAVE LITTROW SETTINGS
+# =============================================================================
+#  Define the order to start the Littrow fit from
+WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
+WAVE_LITTROW_ORDER_INIT_1.value = 0
+WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
+WAVE_LITTROW_ORDER_INIT_2.value = 1
+
+#  Define the order to end the Littrow fit at
+WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
+WAVE_LITTROW_ORDER_FINAL_1.value = 47
+WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
+WAVE_LITTROW_ORDER_FINAL_2.value = 47
+
+#  Define orders to ignore in Littrow fit (should be a string list separated
+#      by commas
+WAVE_LITTROW_REMOVE_ORDERS = WAVE_LITTROW_REMOVE_ORDERS.copy(__NAME__)
+WAVE_LITTROW_REMOVE_ORDERS.value = ''
+
+#  Define the littrow cut steps
+WAVE_LITTROW_CUT_STEP_1 = WAVE_LITTROW_CUT_STEP_1.copy(__NAME__)
+WAVE_LITTROW_CUT_STEP_1.value = 250
+WAVE_LITTROW_CUT_STEP_2 = WAVE_LITTROW_CUT_STEP_2.copy(__NAME__)
+WAVE_LITTROW_CUT_STEP_2.value = 500
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+WAVE_LITTROW_FIG_DEG_1 = WAVE_LITTROW_FIG_DEG_1.copy(__NAME__)
+WAVE_LITTROW_FIG_DEG_1.value = 8  # 5  # 4
+WAVE_LITTROW_FIG_DEG_2 = WAVE_LITTROW_FIG_DEG_2.copy(__NAME__)
+WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
+
+#  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
+#      (fit along the orders)
+# TODO needs to be the same as ic_ll_degr_fit
+ic_Littrow_order_fit_deg = 4  # 5  # 4
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS

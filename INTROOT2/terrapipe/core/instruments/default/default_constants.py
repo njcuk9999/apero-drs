@@ -115,7 +115,11 @@ __all__ = [
     'WAVE_HC_TFIT_MINNUM_LINES', 'WAVE_HC_TFIT_MINTOT_LINES',
     'WAVE_HC_TFIT_ORDER_FIT_CONT', 'WAVE_HC_TFIT_SIGCLIP_NUM',
     'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
-    'WAVE_HC_TFIT_DVCUT_ALL',
+    'WAVE_HC_TFIT_DVCUT_ALL', 'WAVE_HC_RESMAP_SIZE', 'WAVE_HC_RES_MAXDEV_THRES',
+    'WAVE_HC_T_ORDER_START', 'WAVE_N_ORD_START', 'WAVE_N_ORD_FINAL',
+    # wave littrow parameters
+    'WAVE_LITTROW_ORDER_INIT_1', 'WAVE_LITTROW_ORDER_INIT_2',
+    'WAVE_LITTROW_ORDER_FINAL_1', 'WAVE_LITTROW_ORDER_FINAL_2',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
@@ -1060,6 +1064,60 @@ WAVE_HC_TFIT_DVCUT_ORDER = Const('WAVE_HC_TFIT_DVCUT_ORDER', value=None,
 WAVE_HC_TFIT_DVCUT_ALL = Const('WAVE_HC_TFIT_DVCUT_ALL', value=None,
                                dtype=float, source=__NAME__, minimum=0.0)
 
+# Define the resolution and line profile map size (y-axis by x-axis)
+WAVE_HC_RESMAP_SIZE = Const('WAVE_HC_RESMAP_SIZE', value=None, dtype=str,
+                            source=__NAME__)
+
+# Define the maximum allowed deviation in the RMS line spread function
+WAVE_HC_RES_MAXDEV_THRES = Const('WAVE_HC_RES_MAXDEV_THRES', value=None,
+                                 dtype=float, source=__NAME__)
+
+#  Defines echelle of first extracted order
+WAVE_HC_T_ORDER_START = Const('WAVE_HC_T_ORDER_START', value=None,
+                              dtype=int, source=__NAME__)
+
+#  Defines order from which the solution is calculated
+WAVE_N_ORD_START = Const('WAVE_N_ORD_START', value=None, dtype=int,
+                         source=__NAME__)
+
+#  Defines order to which the solution is calculated
+WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
+                         source=__NAME__)
+
+
+
+
+# =============================================================================
+# CALIBRATION: WAVE LITTROW SETTINGS
+# =============================================================================
+#  Define the order to start the Littrow fit from
+WAVE_LITTROW_ORDER_INIT_1 = Const('WAVE_LITTROW_ORDER_INIT_1', value=None,
+                                  dtype=int, source=__NAME__)
+WAVE_LITTROW_ORDER_INIT_2 = Const('WAVE_LITTROW_ORDER_INIT_2', value=None,
+                                  dtype=int, source=__NAME__)
+
+#  Define the order to end the Littrow fit at
+WAVE_LITTROW_ORDER_FINAL_1 = Const('WAVE_LITTROW_ORDER_FINAL_1', value=None,
+                                   dtype=int, source=__NAME__)
+WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
+                                   dtype=int, source=__NAME__)
+
+#  Define orders to ignore in Littrow fit (should be a string list separated
+#      by commas
+WAVE_LITTROW_REMOVE_ORDERS = Const('WAVE_LITTROW_REMOVE_ORDERS', value=None,
+                                   dtype=str, source=__NAME__)
+
+#  Define the littrow cut steps
+WAVE_LITTROW_CUT_STEP_1 = Const('WAVE_LITTROW_CUT_STEP_1', value=None,
+                                dtype=int, source=__NAME__)
+WAVE_LITTROW_CUT_STEP_2 = Const('WAVE_LITTROW_CUT_STEP_2', value=None,
+                                dtype=int, source=__NAME__)
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+WAVE_LITTROW_FIG_DEG_1 = Const('WAVE_LITTROW_FIG_DEG_1', value=None,
+                               dtype=int, source=__NAME__)
+WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
+                               dtype=int, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
