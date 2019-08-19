@@ -16,20 +16,14 @@ from astropy import units as uu
 import os
 import warnings
 import itertools
-from collections import OrderedDict
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
-from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouRV
 from SpirouDRS.spirouCore import spirouMath
 from SpirouDRS.spirouCore.spirouMath import nanpolyfit
 
-from . import spirouTHORCA
 
 # =============================================================================
 # Define variables
@@ -51,11 +45,10 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
+
 # =============================================================================
 # User functions
 # =============================================================================
-
-
 def do_hc_wavesol(p, loc):
     """
     Calculate the wavelength solution from the HC file
@@ -994,8 +987,6 @@ def generate_res_files(p, loc, hdict):
 # =============================================================================
 # Worker functions
 # =============================================================================
-
-
 def generate_wave_map(p, loc):
     func_name = __NAME__ + '.generate_wave_map()'
     # get constants from p
