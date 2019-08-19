@@ -11,6 +11,7 @@ Created on 2019-05-15 at 12:24
 """
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import curve_fit
 import warnings
 
 from terrapipe.core import constants
@@ -106,6 +107,18 @@ def fit2dpoly(x, y, z):
     coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
     # return the coefficients
     return coeff
+
+
+def fit_gauss_with_slope(x, y, guess, return_fit=False):
+    # produce curve_fit using gauss_fit_s function
+    with warnings.catch_warnings(record=True) as _:
+        popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
+    # if we want fit return it
+    if return_fit:
+        return popt, pcov, gauss_fit_s(x, *popt)
+    # else just return the coefficients and the covariance
+    else:
+        return popt, pcov
 
 
 def fwhm(sigma=1.0):
