@@ -60,7 +60,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_masterwave_filename(params, fiber, **kwargs):
+def get_masterwave_filename(params, fiber):
     func_name = __NAME__ + '.get_masterwave_filename()'
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
@@ -102,11 +102,12 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
 
     Otherwise wavelength solution will come from header
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
     :param recipe: DrsRecipe instance, the recipe instance used
     :param header: FitsHeader or None, the header to use
     :param infile: DrsFitsFile or None, the infile associated with the header
                    can be used instead of header
+    :param fiber: str, the fiber to get the wave solution for
     :param kwargs: keyword arguments passed to function
 
     :keyword force: bool, if True forces wave solution to come from calibDB
@@ -316,7 +317,6 @@ def add_wave_keys(infile, props):
 
 
 def check_wave_consistency(params, props, **kwargs):
-
     func_name = __NAME__ + '.check_wave_consistency()'
     # get constants from params/kwargs
     required_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'num_coeffs', kwargs,
@@ -360,7 +360,7 @@ def check_wave_consistency(params, props, **kwargs):
 # =============================================================================
 # Define wave solution functions
 # =============================================================================
-def hc_wavesol(params, recipe, iprops, hcfile, blaze, fiber, **kwargs):
+def hc_wavesol(params, recipe, iprops, hcfile, fiber, **kwargs):
     func_name = __NAME__ + '.hc_wavesol()'
     # get parameters from params / kwargs
     wave_mode_hc = pcheck(params, 'WAVE_MODE_HC', 'wave_mode_hc', kwargs,
@@ -378,15 +378,29 @@ def hc_wavesol(params, recipe, iprops, hcfile, blaze, fiber, **kwargs):
     # Create new wavelength solution (method 0, old cal_HC_E2DS_EA)
     # ----------------------------------------------------------------------
     if wave_mode_hc == 0:
-        return hc_wavesol1(params, recipe, iprops, hcfile, blaze, fiber,
-                           wavell, ampll)
+        llprops =  hc_wavesol_ea(params, recipe, iprops, hcfile, fiber,
+                                 wavell, ampll)
     else:
         # log that mode is not currently supported
         WLOG(params, 'error', TextEntry('09-017-00001', args=[wave_mode_hc]))
-        return 0
+        llprops = None
+    # ------------------------------------------------------------------
+    # LITTROW SECTION - common to all methods
+    # ------------------------------------------------------------------
+    # set up hc specific terms
+    start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_1')
+    end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_1')
+    wavell = llprops['LL_OUT_1']
+    # run littrow test
+    llprops = littrow(params, llprops, start, end, wavell, hcfile,
+                      iteration=1)
+    # ------------------------------------------------------------------
+    # return llprops
+    # ------------------------------------------------------------------
+    return llprops
 
 
-def hc_wavesol1(params, recipe, iprops, hcfile, fiber, blaze, wavell, ampll):
+def hc_wavesol_ea(params, recipe, iprops, hcfile, fiber, wavell, ampll):
     # ------------------------------------------------------------------
     # Find Gaussian Peaks in HC spectrum
     # ------------------------------------------------------------------
@@ -400,16 +414,15 @@ def hc_wavesol1(params, recipe, iprops, hcfile, fiber, blaze, wavell, ampll):
         # # start interactive plot
         # sPlt.start_interactive_session(p)
         pass
-
     # ------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
     # ------------------------------------------------------------------
-    llprops = fit_gaussian_triplets(params, llprops, iprops, wavell, ampll)
-
+    llprops = fit_gaussian_triplets(params, llprops, iprops, hcfile,
+                                    wavell, ampll)
     # ------------------------------------------------------------------
     # Generate Resolution map and line profiles
     # ------------------------------------------------------------------
-
+    llprops = generate_resolution_map(params, llprops, hcfile)
     # ------------------------------------------------------------------
     # End plotting session
     # ------------------------------------------------------------------
@@ -418,26 +431,70 @@ def hc_wavesol1(params, recipe, iprops, hcfile, fiber, blaze, wavell, ampll):
     if params['DRS_PLOT'] > 0:
         # sPlt.end_interactive_session(p)
         pass
-
     # ------------------------------------------------------------------
     # Set up all_lines storage
     # ------------------------------------------------------------------
-
+    llprops = all_line_storage(params, llprops)
     # ------------------------------------------------------------------
-    # Littrow test
+    # return llprops
     # ------------------------------------------------------------------
-
-    # ------------------------------------------------------------------
-    # extrapolate Littrow solution
-    # ------------------------------------------------------------------
-
-    # ------------------------------------------------------------------
-    # Plot littrow solution
-    # ------------------------------------------------------------------
+    return llprops
 
 
-def fp_wavesol():
+def fp_wavesol(params, hcfile, **kwargs):
+    func_name = __NAME__ + '.fp_wavesol()'
+    # get parameters from params / kwargs
+    wave_mode_fp = pcheck(params, 'WAVE_MODE_FP', 'wave_mode_fp', kwargs,
+                          func_name)
 
+    # ------------------------------------------------------------------
+    # Incorporate FP into solution
+    # ------------------------------------------------------------------
+    if wave_mode_fp == 0:
+        # ------------------------------------------------------------------
+        # Using the Bauer15 (WAVE_E2DS_EA) method:
+        # ------------------------------------------------------------------
+        llprops = fp_wavesol_bauer()
+    elif wave_mode_fp == 1:
+        # ------------------------------------------------------------------
+        # Using the C Lovis (WAVE_NEW_2) method:
+        # ------------------------------------------------------------------
+        llprops = fp_wavesol_lovis()
+    else:
+        # log that mode is not currently supported
+        WLOG(params, 'error', TextEntry('09-017-00003', args=[wave_mode_fp]))
+        llprops = None
+
+    # ----------------------------------------------------------------------
+    # LITTROW SECTION - common to all methods
+    # ----------------------------------------------------------------------
+    # set up hc specific terms
+    start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_2')
+    end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_2')
+    wavell = llprops['LL_OUT_1']
+    # run littrow test
+    llprops = littrow(params, llprops, start, end, wavell, hcfile,
+                      iteration=1)
+
+    # ------------------------------------------------------------------
+    # Join 0-47 and 47-49 solutions
+    # ------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # FP CCF COMPUTATION - common to all methods
+    # ----------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # return llprops
+    # ------------------------------------------------------------------
+    return llprops
+
+
+def fp_wavesol_bauer():
+    return 0
+
+
+def fp_wavesol_lovis():
     return 0
 
 
@@ -447,9 +504,9 @@ def fp_wavesol():
 def generate_shifted_wave_map(params, props, **kwargs):
     func_name = __NAME__ + '.generate_wave_map()'
     # get constants from p
-    pixel_shift_inter = pcheck(params,'WAVE_PIXEL_SHIFT_INTER', 'pixelshifti',
+    pixel_shift_inter = pcheck(params, 'WAVE_PIXEL_SHIFT_INTER', 'pixelshifti',
                                kwargs, func_name)
-    pixel_shift_slope = pcheck(params,'WAVE_PIXEL_SHIFT_SLOPE', 'pixelshifts',
+    pixel_shift_slope = pcheck(params, 'WAVE_PIXEL_SHIFT_SLOPE', 'pixelshifts',
                                kwargs, func_name)
     # get data from loc
     poly_wave_sol = props['COEFFS']
@@ -714,8 +771,13 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
     as we will trim some variables, we define them on each loop
     not 100% elegant, but who cares, it takes 5µs ...
 
-    :param p:
-    :param loc:
+    :param params:
+    :param llprops:
+    :param iprops:
+    :param hcfile:
+    :param wavell:
+    :param ampll:
+    :param kwargs:
     :return:
     """
     func_name = __NAME__ + '.fit_gaussian_triplets()'
@@ -858,7 +920,7 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
             dv_cen = histcenters[np.argmax(histval)]
             # define a mask to remove points away from center of histogram
             with warnings.catch_warnings(record=True) as _:
-                mask = (np.abs(dv-dv_cen) > dvcut_order) & good
+                mask = (np.abs(dv - dv_cen) > dvcut_order) & good
             # apply mask to dv and to brightest lines
             dv[mask] = np.nan
             brightest_lines[mask] = False
@@ -1142,10 +1204,602 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
 
     return llprops
 
+
+def generate_resolution_map(params, llprops, hcfile, **kwargs):
+    func_name = __NAME__ + '.generate_resolution_map()'
+
+    # get constants from params / kwargs
+    resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
+                         kwargs, func_name, mapf='list', dtype=int)
+    wsize = pcheck(params, 'WAVE_HC_FITBOX_SIZE', 'wsize', kwargs,
+                   func_name)
+    max_dev_thres = pcheck(params, 'WAVE_HC_RES_MAXDEV_THRES', 'max_dev_thres',
+                           kwargs, func_name)
+    # get image
+    hc_sp = np.array(hcfile.data)
+    xgau = np.array(llprops['XGAU_T'])
+    orders = np.array(llprops['ORD_T'])
+    gauss_rms_dev = np.array(llprops['GAUSS_RMS_DEV_T'])
+    wave_catalog = np.array(llprops['WAVE_CATALOG'])
+    wave_map2 = np.array(llprops['WAVE_MAP2'])
+    # get dimensions from image
+    nbo, nbpix = hc_sp.shape
+
+    # log progress
+    WLOG(params, '', TextEntry('40-017-00010'))
+
+    # storage of resolution map
+    resolution_map = np.zeros(resmap_size)
+    map_dvs = []
+    map_lines = []
+    map_params = []
+
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+
+    # determine the line spread function
+
+    # loop around the order bins
+    for order_num in range(0, nbo, bin_order):
+        # storage of map parameters
+        order_dvs = []
+        order_lines = []
+        order_params = []
+        # loop around the x position
+        for xpos in range(0, nbpix // bin_x):
+            # we verify that the line is well modelled by a gaussian
+            # fit. If the RMS to the fit is small enough, we include
+            # the line in the profile measurement
+            mask = gauss_rms_dev < 0.05
+            # the line must fall in the right part of the array
+            # in both X and cross-dispersed directions. The
+            # resolution is expected to change slightly
+            mask &= (orders // bin_order) == (order_num // bin_order)
+            mask &= (xgau // bin_x) == xpos
+            mask &= np.isfinite(wave_catalog)
+
+            # get the x centers for this bin
+            b_xgau = xgau[mask]
+            b_orders = orders[mask]
+            b_wave_catalog = wave_catalog[mask]
+
+            # set up storage for lines and dvs
+            all_lines = np.zeros((np.nansum(mask), 2 * wsize + 1))
+            all_dvs = np.zeros((np.nansum(mask), 2 * wsize + 1))
+
+            # set up base
+            base = np.zeros(2 * wsize + 1, dtype=bool)
+            base[0:3] = True
+            base[2 * wsize - 2: 2 * wsize + 1] = True
+
+            # loop around all good lines
+            # we express everything in velocity space rather than
+            # pixels. This allows us to merge all lines in a single
+            # profile and removes differences in pixel sampling and
+            # resolution.
+            for it in range(int(np.nansum(mask))):
+                # get limits
+                border = int(b_orders[it])
+                start = int(b_xgau[it] + 0.5) - wsize
+                end = int(b_xgau[it] + 0.5) + wsize + 1
+                # get line
+                line = np.array(hc_sp)[border, start:end]
+                # subtract median base and normalise line
+                line -= np.nanmedian(line[base])
+                line /= np.nansum(line)
+                # calculate velocity... express things in velocity
+                ratio = wave_map2[border, start:end] / b_wave_catalog[it]
+                dv = -speed_of_light * (ratio - 1)
+                # store line and dv
+                all_lines[it, :] = line
+                all_dvs[it, :] = dv
+
+            # flatten all lines and dvs
+            all_dvs = all_dvs.ravel()
+            all_lines = all_lines.ravel()
+            # define storage for keep mask
+            # keep = np.ones(len(all_dvs), dtype=bool)
+            # TODO New hack: Do not keep as hardcoded
+            keep = np.abs(all_lines) < 5
+
+            # set an initial maximum deviation
+            maxdev = np.inf
+            # set up the fix parameters and initial guess parameters
+            popt = np.zeros(5)
+            init_guess = [0.3, 0.0, 1.0, 0.0, 0.0]
+            # loop around until criteria met
+            n_it = 0
+
+            # fit the merged line profile and do some sigma-clipping
+            while maxdev > max_dev_thres:
+                # fit with a guassian with a slope
+                fargs = dict(x=all_dvs[keep], y=all_lines[keep],
+                             guess=init_guess)
+                # do curve fit on point
+                try:
+                    popt, pcov = math.fit_gauss_with_slope(**fargs)
+                except Exception as e:
+                    # log error: Resolution map curve_fit error
+                    eargs = [type(e), e, func_name]
+                    WLOG(params, 'error', TextEntry('09-017-00002', args=eargs))
+                # calculate residuals for full line list
+                res = all_lines - math.gauss_fit_s(all_dvs, *popt)
+                # calculate RMS of residuals
+                rms = res / np.nanmedian(np.abs(res))
+                # calculate max deviation
+                maxdev = np.nanmax(np.abs(rms[keep]))
+                # re-calculate the keep mask
+                keep[np.abs(rms) > max_dev_thres] = False
+                # increase value of iterator
+                n_it += 1
+            # calculate resolution
+            resolution = popt[2] * math.general.fwhm()
+            # store order criteria
+            order_dvs.append(all_dvs[keep])
+            order_lines.append(all_lines[keep])
+            order_params.append(popt)
+            # push resolution into resolution map
+            resolution1 = speed_of_light / resolution
+            resolution_map[order_num // bin_order, xpos] = resolution1
+            # log resolution output
+            wargs = [order_num, order_num + bin_order, np.nansum(mask), xpos,
+                     resolution,
+                     resolution1]
+            WLOG(params, '', TextEntry('40-017-00011', args=wargs))
+        # store criteria. All lines are kept for reference
+        map_dvs.append(order_dvs)
+        map_lines.append(order_lines)
+        map_params.append(order_params)
+
+    # push to llprops
+    llprops['RES_MAP_DVS'] = map_dvs
+    llprops['RES_MAP_LINES'] = map_lines
+    llprops['RES_MAP_PARAMS'] = map_params
+    llprops['RES_MAP'] = resolution_map
+    # set source
+    sources = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
+    llprops.set_sources(sources, func_name)
+
+    # print stats
+    wargs = [np.nanmean(resolution_map), np.nanmedian(resolution_map),
+             np.nanstd(resolution_map)]
+    WLOG(params, '', TextEntry('40-017-00012', args=wargs))
+
+    # map line profile map
+    if params['DRS_PLOT'] > 0:
+        # TODO: Add plotting
+        # sPlt.wave_ea_plot_line_profiles(p, loc)
+        pass
+
+    # return loc
+    return llprops
+
+
+def all_line_storage(params, llprops, **kwargs):
+    func_name = __NAME__ + '.all_line_storage()'
+    # initialise up all_lines storage
+    all_lines_1 = []
+    # get parameters from p
+    n_ord_start = pcheck(params, 'WAVE_N_ORD_START', 'n_ord_start', kwargs,
+                         func_name)
+    n_ord_final = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_ord_final', kwargs,
+                         func_name)
+
+    # get values from loc:
+    # line centers in pixels
+    xgau = np.array(llprops['XGAU_T'])
+    # distance from catalogue in km/s - used for sanity checks
+    dv = np.array(llprops['DV_T'])
+    # fitted polynomials per order
+    fit_per_order = np.array(llprops['POLY_WAVE_SOL'])
+    # equivalent width of fitted gaussians to each line (in pixels)
+    ew = np.array(llprops['EW_T'])
+    # amplitude  of fitted gaussians to each line
+    peak = np.array(llprops['PEAK_T'])
+    # catalogue line amplitude
+    amp_catalog = np.array(llprops['AMP_CATALOG'])
+    # catalogue line wavelength
+    wave_catalog = np.array(llprops['WAVE_CATALOG'])
+    # spectral order for each line
+    ord_t = np.array(llprops['ORD_T'])
+
+    # loop through orders
+    for iord in range(n_ord_start, n_ord_final):
+        # keep relevant lines
+        # -> right order
+        # -> finite dv
+        gg = (ord_t == iord) & (np.isfinite(dv))
+        # put lines into ALL_LINES structure
+        # reminder:
+        # gparams[0] = output wavelengths
+        # gparams[1] = output sigma(gauss fit width)
+        # gparams[2] = output amplitude(gauss fit)
+        # gparams[3] = difference in input / output wavelength
+        # gparams[4] = input amplitudes
+        # gparams[5] = output pixel positions
+        # gparams[6] = output pixel sigma width (gauss fit width in pixels)
+        # gparams[7] = output weights for the pixel position
+
+        # dummy array for weights
+        test = np.ones(np.shape(xgau[gg]), 'd') * 1e4
+        # get the final wavelength value for each peak in the order
+        output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
+        # convert the pixel equivalent width to wavelength units
+        xgau_ew_ini = xgau[gg] - ew[gg] / 2
+        xgau_ew_fin = xgau[gg] + ew[gg] / 2
+        ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
+        ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
+        ew_ll = ew_ll_fin - ew_ll_ini
+        # put all lines in the order into single array
+        gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
+                                      wave_catalog[gg] - output_wave_1,
+                                      amp_catalog[gg],
+                                      xgau[gg], ew[gg], test))
+        # append the array for the order into a list
+        all_lines_1.append(gau_params)
+    # add to loc
+    llprops['ALL_LINES_1'] = all_lines_1
+    llprops['LL_PARAM_1'] = np.array(fit_per_order)
+    llprops['LL_OUT_1'] = np.array(llprops['WAVE_MAP2'])
+    llprops.set_sources(['ALL_LINES_1', 'LL_PARAM_1'], func_name)
+
+    # For compatibility with already defined functions, I need to save
+    # here all_lines_2
+    llprops['ALL_LINES_2'] = list(all_lines_1)
+    llprops.set_source('ALL_LINES_2', func_name)
+
+    # return llprops
+    return llprops
+
+
+# =============================================================================
+# Define littorw worker functions
+# =============================================================================
+def littrow(params, llprops, start, end, wavell, infile, iteration=1,
+            **kwargs):
+    func_name = __NAME__ + '.littrow_test()'
+    # get parameters from params/kwargs
+    t_order_start = pcheck(params, 'WAVE_HC_T_ORDER_START', 't_order_start',
+                           kwargs, func_name)
+
+    # ------------------------------------------------------------------
+    # Littrow test
+    # ------------------------------------------------------------------
+    # calculate echelle orders
+    o_orders = np.arange(start, end)
+    echelle_order = t_order_start - o_orders
+
+    # Do Littrow check
+    ckwargs = dict(infile=infile, wavell=wavell[start:end, :],
+                   iteration=iteration, log=True)
+    llprops = calculate_littrow_sol(params, llprops, echelle_order, **ckwargs)
+    # ------------------------------------------------------------------
+    # Littrow test plot
+    # ------------------------------------------------------------------
+    # Plot wave solution littrow check
+    if params['DRS_PLOT'] > 0:
+        # TODO: Add plot
+        # plot littrow x pixels against fitted wavelength solution
+        # sPlt.wave_littrow_check_plot(p, loc, iteration=1)
+        pass
+    # ------------------------------------------------------------------
+    # extrapolate Littrow solution
+    # ------------------------------------------------------------------
+    ekwargs = dict(infile=infile, wavell=wavell, iteration=1)
+    llprops = extrapolate_littrow_sol(params, llprops, **ekwargs)
+
+    # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if params['DRS_PLOT'] > 0:
+        # TODO: Add plot
+        # plot littrow x pixels against fitted wavelength solution
+        # sPlt.wave_littrow_extrap_plot(p, loc, iteration=1)
+        pass
+
+    # ------------------------------------------------------------------
+    # return props
+    return llprops
+
+
+def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
+                          iteration=1, log=False, **kwargs):
+    """
+    Calculate the Littrow solution for this iteration for a set of cut points
+
+    Uses ALL_LINES_i  where i = iteration to calculate the littrow solutions
+    for defined cut points (given a cut_step and fit_deg of
+    IC_LITTROW_CUT_STEP_i and IC_LITTROW_FIT_DEG_i where i = iteration)
+
+    :param params: parameter dictionary, ParamDict containing constants
+
+    :param llprops: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ECHELLE_ORDERS: numpy array (1D), the echelle order numbers
+            HCDATA: numpy array (2D), the image data (used for shape)
+            ALL_LINES_i: list of numpy arrays, length = number of orders
+                         each numpy array contains gaussian parameters
+                         for each found line in that order
+
+            where i = iteration
+
+    :param echelle_order: numpy array (1D), the orders (labeled by echelle
+                          diffraction number not position)
+
+    :param wavell: numpy array (1D), the initial guess wavelengths for each line
+
+    :param infile: DrsFitsFile, drs fits file instance containing the data
+                   for the hc or file file (i.e. must have infile.data) -
+                   used only to work out the number of orders and number of
+                   pixels
+
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+    :param log: bool, if True will print a final log message on completion with
+                some stats
+
+    :return llprops: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                X_CUT_POINTS_i: numpy array (1D), the x pixel cut points
+                LITTROW_MEAN_i: list, the mean position of each cut point
+                LITTROW_SIG_i: list, the mean FWHM of each cut point
+                LITTROW_MINDEV_i: list, the minimum deviation of each cut point
+                LITTROW_MAXDEV_i: list, the maximum deviation of each cut point
+                LITTROW_PARAM_i: list of numpy arrays, the gaussian fit
+                                 coefficients of each cut point
+                LITTROW_XX_i: list, the order positions of each cut point
+                LITTROW_YY_i: list, the residual fit of each cut point
+
+                where i = iteration
+
+    ALL_LINES_i definition:
+        ALL_LINES_i[row] = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
+    """
+    func_name = __NAME__ + '.calculate_littrow_sol()'
+    # get parameters from params/kwrags
+    remove_orders = pcheck(params, 'WAVE_LITTROW_REMOVE_ORDERS',
+                           'remove_orders', kwargs, func_name)
+    # TODO: Fudge factor - Melissa will fix this :)
+    n_order_init = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_{0}'.format(1),
+                          'n_order_init', kwargs, func_name)
+    n_order_start = pcheck(params, 'WAVE_N_ORD_START', 'n_order_start', kwargs,
+                           func_name)
+    n_order_final = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_order_final', kwargs,
+                           func_name)
+    x_cut_step = pcheck(params, 'WAVE_LITTROW_CUT_STEP_{0}'.format(iteration),
+                        'x_cut_step', kwargs, func_name)
+    fit_degree = pcheck(params, 'WAVE_LITTROW_FIG_DEG_{0}'.format(iteration),
+                        'fit_degree', kwargs, func_name)
+    # get parameters from loc
+    torder = echelle_order
+    ll_out = wavell
+    # get the total number of orders to fit
+    num_orders = len(echelle_order)
+    # get dimensions from image
+    ydim, xdim = infile.data.shape
+    # ----------------------------------------------------------------------
+    # test if n_order_init is in remove_orders
+    if n_order_init in remove_orders:
+        # TODO: Fudge factor - Melissa will fix this
+        wargs = ['WAVE_LITTROW_ORDER_INIT_{0}'.format(1),
+                 params['WAVE_LITTROW_ORDER_INIT_{0}'.format(1)],
+                 "WAVE_LITTROW_REMOVE_ORDERS", func_name]
+        WLOG(params, 'error', TextEntry('00-017-00004', args=wargs))
+    # ----------------------------------------------------------------------
+    # test if n_order_init is in remove_orders
+    if n_order_final in remove_orders:
+        wargs = ["IC_HC_N_ORD_FINAL", params['IC_HC_N_ORD_FINAL'],
+                 "IC_LITTROW_REMOVE_ORDERS", func_name]
+        WLOG(params, 'error', TextEntry('00-017-00004', args=wargs))
+    # ----------------------------------------------------------------------
+    # check that all remove orders exist
+    for remove_order in remove_orders:
+        if remove_order not in np.arange(n_order_final):
+            wargs = [remove_order, 'IC_LITTROW_REMOVE_ORDERS', n_order_init,
+                     n_order_final, func_name]
+            WLOG(params, 'error', TextEntry('00-017-00005', args=wargs))
+    # ----------------------------------------------------------------------
+    # check to make sure we have some orders left
+    if len(np.unique(remove_orders)) == n_order_final - n_order_start:
+        # log littrow error
+        eargs = ['WAVE_LITTROW_REMOVE_ORDERS', func_name]
+        WLOG(params, 'error', TextEntry('00-017-00006', args=eargs))
+    # ----------------------------------------------------------------------
+    # deal with removing orders (via weighting stats)
+    rmask = np.ones(num_orders, dtype=bool)
+    if len(remove_orders) > 0:
+        rmask[np.array(remove_orders)] = False
+    # storage of results
+    keys = ['LITTROW_MEAN', 'LITTROW_SIG', 'LITTROW_MINDEV',
+            'LITTROW_MAXDEV', 'LITTROW_PARAM', 'LITTROW_XX', 'LITTROW_YY',
+            'LITTROW_INVORD', 'LITTROW_FRACLL', 'LITTROW_PARAM0',
+            'LITTROW_MINDEVORD', 'LITTROW_MAXDEVORD']
+    for key in keys:
+        nkey = key + '_{0}'.format(iteration)
+        llprops[nkey] = []
+        llprops.set_source(nkey, func_name)
+    # construct the Littrow cut points
+    x_cut_points = np.arange(x_cut_step, xdim - x_cut_step, x_cut_step)
+    # save to storage
+    llprops['X_CUT_POINTS_{0}'.format(iteration)] = x_cut_points
+    # get the echelle order values
+    # TODO check if mask needs resizing
+    orderpos = torder[rmask]
+    # get the inverse order number
+    inv_orderpos = 1.0 / orderpos
+    # loop around cut points and get littrow parameters and stats
+    for it in range(len(x_cut_points)):
+        # this iterations x cut point
+        x_cut_point = x_cut_points[it]
+        # get the fractional wavelength contrib. at each x cut point
+        ll_point = ll_out[:, x_cut_point][rmask]
+        ll_start_point = ll_out[n_order_init, x_cut_point]
+        frac_ll_point = ll_point / ll_start_point
+        # fit the inverse order numbers against the fractional
+        #    wavelength contrib.
+        coeffs = math.nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        coeffs0 = math.nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        # calculate the fit values
+        cfit = np.polyval(coeffs[::-1], inv_orderpos)
+        # calculate the residuals
+        res = cfit - frac_ll_point
+        # find the largest residual
+        largest = np.max(abs(res))
+        sigmaclip = abs(res) != largest
+        # remove the largest residual
+        inv_orderpos_s = inv_orderpos[sigmaclip]
+        frac_ll_point_s = frac_ll_point[sigmaclip]
+        # refit the inverse order numbers against the fractional
+        #    wavelength contrib. after sigma clip
+        coeffs = math.nanpolyfit(inv_orderpos_s, frac_ll_point_s, fit_degree)
+        coeffs = coeffs[::-1]
+        # calculate the fit values (for all values - including sigma clipped)
+        cfit = np.polyval(coeffs[::-1], inv_orderpos)
+        # calculate residuals (in km/s) between fit and original values
+        respix = speed_of_light * (cfit - frac_ll_point) / frac_ll_point
+        # calculate stats
+        mean = np.nansum(respix) / len(respix)
+        mean2 = np.nansum(respix ** 2) / len(respix)
+        rms = np.sqrt(mean2 - mean ** 2)
+        mindev = np.min(respix)
+        maxdev = np.max(respix)
+        mindev_ord = np.argmin(respix)
+        maxdev_ord = np.argmax(respix)
+        # add to storage
+        llprops['LITTROW_INVORD_{0}'.format(iteration)].append(inv_orderpos)
+        llprops['LITTROW_FRACLL_{0}'.format(iteration)].append(frac_ll_point)
+        llprops['LITTROW_MEAN_{0}'.format(iteration)].append(mean)
+        llprops['LITTROW_SIG_{0}'.format(iteration)].append(rms)
+        llprops['LITTROW_MINDEV_{0}'.format(iteration)].append(mindev)
+        llprops['LITTROW_MAXDEV_{0}'.format(iteration)].append(maxdev)
+        llprops['LITTROW_MINDEVORD_{0}'.format(iteration)].append(mindev_ord)
+        llprops['LITTROW_MAXDEVORD_{0}'.format(iteration)].append(maxdev_ord)
+        llprops['LITTROW_PARAM_{0}'.format(iteration)].append(coeffs)
+        llprops['LITTROW_PARAM0_{0}'.format(iteration)].append(coeffs0)
+        llprops['LITTROW_XX_{0}'.format(iteration)].append(orderpos)
+        llprops['LITTROW_YY_{0}'.format(iteration)].append(respix)
+        # if log then log output
+        if log:
+            # log: littrow check at X={0} mean/rms/min/max/frac
+            eargs = [x_cut_point, mean * 1000, rms * 1000, mindev * 1000,
+                     maxdev * 1000, mindev / rms, maxdev / rms]
+            WLOG(params, '', TextEntry('40-017-00013', args=eargs))
+    # return loc
+    return llprops
+
+
+def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
+                            **kwargs):
+    """
+    Extrapolate and fit the Littrow solution at defined points and return
+    the wavelengths, solutions, and cofficients of the littorw fits
+
+    :param params: parameter dictionary, ParamDict containing constants
+
+    :param llprops: parameter dictionary, ParamDict containing data
+
+    :param wavell: numpy array (1D), the initial guess wavelengths for each line
+
+    :param infile: DrsFitsFile, drs fits file instance containing the data
+                   for the hc or file file (i.e. must have infile.data) -
+                   used only to work out the number of orders and number of
+                   pixels
+
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+
+    :return llprops: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                LITTROW_EXTRAP_i: numpy array (2D),
+                                  size=([no. orders] by [no. cut points])
+                                  the wavelength values at each cut point for
+                                  each order
+                LITTROW_EXTRAP_SOL_i: numpy array (2D),
+                                  size=([no. orders] by [no. cut points])
+                                  the wavelength solution at each cut point for
+                                  each order
+                LITTROW_EXTRAP_PARAM_i: numy array (2D),
+                                  size=([no. orders] by [the fit degree +1])
+                                  the coefficients of the fits for each cut
+                                  point for each order
+
+                where i = iteration
+    """
+    func_name = __NAME__ + '.extrapolate_littrow_sol()'
+    # get parameters from p
+    fit_degree = pcheck(params, 'WAVE_LITTROW_EXT_ORDER_FIT_DEG', 'fig_degree',
+                        kwargs, func_name)
+    t_order_start = pcheck(params, 'WAVE_HC_T_ORDER_START', 't_order_start',
+                           kwargs, func_name)
+    ikey = 'WAVE_LITTROW_ORDER_INIT_{0}'
+    n_order_init = pcheck(params, ikey.format(iteration), 'n_order_init',
+                          kwargs, func_name)
+    # get parameters from llprop
+    litt_param = llprops['LITTROW_PARAM_{0}'.format(iteration)]
+    # get the dimensions of the data
+    ydim, xdim = infile.data.shape
+    # get the pixel positions
+    x_points = np.arange(xdim)
+    # construct the Littrow cut points (in pixels)
+    x_cut_points = llprops['X_CUT_POINTS_{0}'.format(iteration)]
+    # construct the Littrow cut points (in wavelength)
+    ll_cut_points = wavell[n_order_init][x_cut_points]
+    # set up storage
+    littrow_extrap = np.zeros((ydim, len(x_cut_points)), dtype=float)
+    littrow_extrap_sol = np.zeros_like(infile.data)
+    littrow_extrap_param = np.zeros((ydim, fit_degree + 1), dtype=float)
+    # calculate the echelle order position for this order
+    echelle_order_nums = t_order_start - np.arange(ydim)
+    # calculate the inverse echelle order nums
+    inv_echelle_order_nums = 1.0 / echelle_order_nums
+    # loop around the x cut points
+    for it in range(len(x_cut_points)):
+        # evaluate the fit for this x cut (fractional wavelength contrib.)
+        cfit = np.polyval(litt_param[it][::-1], inv_echelle_order_nums)
+        # evaluate littrow fit for x_cut_points on each order (in wavelength)
+        litt_extrap_o = cfit * ll_cut_points[it]
+        # add to storage
+        littrow_extrap[:, it] = litt_extrap_o
+    # loop around orders and extrapolate
+    for order_num in range(ydim):
+        # fit the littrow extrapolation
+        param = math.nanpolyfit(x_cut_points, littrow_extrap[order_num],
+                                fit_degree)[::-1]
+        # add to storage
+        littrow_extrap_param[order_num] = param
+        # evaluate the polynomial for all pixels in data
+        littrow_extrap_sol[order_num] = np.polyval(param[::-1], x_points)
+
+    # add to storage
+    llprops['LITTROW_EXTRAP_{0}'.format(iteration)] = littrow_extrap
+    llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)] = littrow_extrap_sol
+    llprops['LITTROW_EXTRAP_PARAM_{0}'.format(iteration)] = littrow_extrap_param
+
+    sources = ['LITTROW_EXTRAP_{0}'.format(iteration),
+               'LITTROW_EXTRAP_SOL_{0}'.format(iteration),
+               'LITTROW_EXTRAP_PARAM_{0}'.format(iteration)]
+    llprops.set_sources(sources, func_name)
+    # return loc
+    return llprops
+
+
 # =============================================================================
 # Define fp worker functions
 # =============================================================================
-
 
 
 # =============================================================================
