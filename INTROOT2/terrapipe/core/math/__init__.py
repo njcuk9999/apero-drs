@@ -17,6 +17,8 @@ from . import general
 
 calculate_polyvals = general.calculate_polyvals
 
+fit_gauss_with_slope = general.fit_gauss_with_slope
+
 gauss_fit_nn = general.gauss_fit_nn
 
 gaussian_function_nn =  general.gaussian_function_nn
