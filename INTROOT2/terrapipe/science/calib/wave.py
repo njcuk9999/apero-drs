@@ -209,7 +209,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         # set wave file properties (using header)
         wavefile.recipe = recipe
         wavefile.header = header
-        wavefile.filename = 'Unknown'
+        wavefile.filename = header[params['KW_WAVEFILE'][0]]
         wavefile.data = np.zeros((header['NAXIS2'], header['NAXIS1']))
         wavesource = 'header'
         # get wave map
@@ -299,6 +299,8 @@ def add_wave_keys(infile, props):
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
     infile.add_hkey('KW_WAVESOURCE', value=props['WAVESOURCE'])
+    infile.add_hkey('KW_WAVE_NBO', value=props['NBO'])
+    infile.add_hkey('KW_WAVE_DEG', value=props['DEG'])
     infile.add_hkeys_2d('KW_WAVECOEFFS', values=props['COEFFS'],
                         dim1name='order', dim2name='coeffs')
     # add wave fp parameters
@@ -360,11 +362,15 @@ def check_wave_consistency(params, props, **kwargs):
 # =============================================================================
 # Define wave solution functions
 # =============================================================================
-def hc_wavesol(params, recipe, iprops, hcfile, fiber, **kwargs):
+def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     func_name = __NAME__ + '.hc_wavesol()'
     # get parameters from params / kwargs
     wave_mode_hc = pcheck(params, 'WAVE_MODE_HC', 'wave_mode_hc', kwargs,
                           func_name)
+
+    # log the mode which is being used
+    WLOG(params, 'info', TextEntry('40-017-00014', args=[wave_mode_hc]))
+
     # ----------------------------------------------------------------------
     # Read UNe solution
     # ----------------------------------------------------------------------
@@ -378,33 +384,70 @@ def hc_wavesol(params, recipe, iprops, hcfile, fiber, **kwargs):
     # Create new wavelength solution (method 0, old cal_HC_E2DS_EA)
     # ----------------------------------------------------------------------
     if wave_mode_hc == 0:
-        llprops =  hc_wavesol_ea(params, recipe, iprops, hcfile, fiber,
+        llprops =  hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber,
                                  wavell, ampll)
     else:
         # log that mode is not currently supported
         WLOG(params, 'error', TextEntry('09-017-00001', args=[wave_mode_hc]))
         llprops = None
+    # ----------------------------------------------------------------------
+    # add mode to llprops
+    llprops['WAVE_MODE_HC'] = wave_mode_hc
+    llprops.set_source('WAVE_MODE_HC', func_name)
     # ------------------------------------------------------------------
     # LITTROW SECTION - common to all methods
     # ------------------------------------------------------------------
     # set up hc specific terms
     start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_1')
     end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_1')
-    wavell = llprops['LL_OUT_1']
+    wavell = llprops['LL_OUT_1'][start:end, :]
     # run littrow test
-    llprops = littrow(params, llprops, start, end, wavell, hcfile,
+    llprops = littrow(params, llprops, start, end, wavell, e2dsfile,
                       iteration=1)
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    wavefile.construct_filename(params, infile=e2dsfile)
+    # ----------------------------------------------------------------------
+    # set wprops values (expected for output)
+    wprops = ParamDict()
+    wprops['WAVEFILE'] = wavefile.filename
+    wprops['WAVESOURCE'] = recipe.name
+    wprops['COEFFS'] = llprops['POLY_WAVE_SOL']
+    wprops['WAVEMAP'] = llprops['WAVE_MAP2']
+    wprops['NBO'] = llprops['NBO']
+    wprops['DEG'] = llprops['WAVE_FIT_DEGREE']
+    wprops['NBPIX'] = llprops['NBPIX']
+    # FP values (set to None for HC)
+    wprops['WFP_DRIFT'] = None
+    wprops['WFP_FWHM'] = None
+    wprops['WFP_CONTRAST'] = None
+    wprops['WFP_MAXCPP'] = None
+    wprops['WFP_MASK'] = None
+    wprops['WFP_LINES'] = None
+    wprops['WFP_TARG_RV'] = None
+    wprops['WFP_WIDTH'] = None
+    wprops['WFP_STEP'] = None
+    # set the source
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'NBPIX',
+            'COEFFS',
+            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MAXCPP', 'WFP_MASK',
+            'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+    wprops.set_sources(keys, func_name)
+
     # ------------------------------------------------------------------
     # return llprops
     # ------------------------------------------------------------------
-    return llprops
+    return llprops, wprops
 
 
-def hc_wavesol_ea(params, recipe, iprops, hcfile, fiber, wavell, ampll):
+def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
     # ------------------------------------------------------------------
     # Find Gaussian Peaks in HC spectrum
     # ------------------------------------------------------------------
-    llprops = find_hc_gauss_peaks(params, recipe, hcfile, fiber)
+    llprops = find_hc_gauss_peaks(params, recipe, e2dsfile, fiber)
 
     # ------------------------------------------------------------------
     # Start plotting session
@@ -417,12 +460,11 @@ def hc_wavesol_ea(params, recipe, iprops, hcfile, fiber, wavell, ampll):
     # ------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
     # ------------------------------------------------------------------
-    llprops = fit_gaussian_triplets(params, llprops, iprops, hcfile,
-                                    wavell, ampll)
+    llprops = fit_gaussian_triplets(params, llprops, iprops, wavell, ampll)
     # ------------------------------------------------------------------
     # Generate Resolution map and line profiles
     # ------------------------------------------------------------------
-    llprops = generate_resolution_map(params, llprops, hcfile)
+    llprops = generate_resolution_map(params, llprops, e2dsfile)
     # ------------------------------------------------------------------
     # End plotting session
     # ------------------------------------------------------------------
@@ -441,7 +483,7 @@ def hc_wavesol_ea(params, recipe, iprops, hcfile, fiber, wavell, ampll):
     return llprops
 
 
-def fp_wavesol(params, hcfile, **kwargs):
+def fp_wavesol(params, e2dsfile, **kwargs):
     func_name = __NAME__ + '.fp_wavesol()'
     # get parameters from params / kwargs
     wave_mode_fp = pcheck(params, 'WAVE_MODE_FP', 'wave_mode_fp', kwargs,
@@ -473,8 +515,8 @@ def fp_wavesol(params, hcfile, **kwargs):
     end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_2')
     wavell = llprops['LL_OUT_1']
     # run littrow test
-    llprops = littrow(params, llprops, start, end, wavell, hcfile,
-                      iteration=1)
+    llprops = littrow(params, llprops, start, end, wavell, e2dsfile,
+                      iteration=2)
 
     # ------------------------------------------------------------------
     # Join 0-47 and 47-49 solutions
@@ -496,6 +538,235 @@ def fp_wavesol_bauer():
 
 def fp_wavesol_lovis():
     return 0
+
+
+# =============================================================================
+# Define hc aux functions
+# =============================================================================
+def hc_quality_control(params, hcprops, e2dsfile):
+    # set passed variable and fail message list
+    fail_msg = []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # --------------------------------------------------------------
+    # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
+    hc_wave_sigma = params['WAVE_HC_QC_SIGMA_MAX']
+    # find if sigma is greater than limit
+    if hcprops['SIG1'] > hc_wave_sigma:
+        fargs = [hcprops['SIG1'], hc_wave_sigma]
+        fail_msg.append(textdict['40-017-00015'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(hcprops['SIG1'])
+    qc_names.append('SIG1 HC')
+    qc_logic.append('SIG1 > {0:.2f}'.format(hc_wave_sigma))
+    # --------------------------------------------------------------
+    # check the difference between consecutive orders is always
+    #     positive
+    # get the differences
+    wave_diff = hcprops['WAVE_MAP2'][1:] - hcprops['WAVE_MAP2'][:-1]
+    if np.min(wave_diff) < 0:
+        fail_msg.append(textdict['40-017-00016'])
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(np.min(wave_diff))
+    qc_names.append('MIN WAVE DIFF HC')
+    qc_logic.append('MIN WAVE DIFF < 0')
+    # --------------------------------------------------------------
+    # check the difference between consecutive pixels along an
+    #     order is always positive
+    # loop through the orders
+    ord_check = np.zeros(e2dsfile.data.shape[0], dtype=bool)
+    for order in range(e2dsfile.data.shape[0]):
+        wave0 = hcprops['WAVE_MAP2'][order, :-1]
+        wave1 = hcprops['WAVE_MAP2'][order, 1:]
+        ord_check[order] = np.all(wave1 > wave0)
+    if np.all(ord_check):
+        qc_pass.append(1)
+        qc_values.append('None')
+    else:
+        fail_msg.append(textdict['40-017-00017'])
+        qc_pass.append(0)
+        badvalues = list(np.where(~ord_check)[0])
+        qc_values.append(','.join(list(badvalues)))
+    # add to qc header lists
+    qc_names.append('WAVE DIFF ALONG ORDER HC')
+    qc_logic.append('WAVE DIFF ALONG ORDER < 0')
+    # --------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    #     quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        params['QC'] = 1
+        params.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        params['QC'] = 0
+        params.set_source('QC', __NAME__ + '/main()')
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params
+    return qc_params
+
+
+def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
+    # calculate catalog-fit residuals in km/s
+    res_hc = []
+    sumres_hc = 0.0
+    sumres2_hc = 0.0
+    # loop around orders
+    for order in range(e2dsfile.data.shape[0]):
+        # get HC line wavelengths for the order
+        order_mask = hcprops['ORD_T'] == order
+        hc_x_ord = hcprops['XGAU_T'][order_mask]
+        hc_ll_ord = np.polyval(hcprops['POLY_WAVE_SOL'][order][::-1], hc_x_ord)
+        hc_ll_cat = hcprops['WAVE_CATALOG'][order_mask]
+        hc_ll_diff = hc_ll_ord - hc_ll_cat
+        res_hc.append(hc_ll_diff*speed_of_light/hc_ll_cat)
+        sumres_hc += np.nansum(res_hc[order])
+        sumres2_hc += np.nansum(res_hc[order] ** 2)
+    # get the total number of lines
+    total_lines_hc = len(np.concatenate(res_hc))
+    # get the final mean and varianace
+    final_mean_hc = sumres_hc/total_lines_hc
+    final_var_hc = (sumres2_hc/total_lines_hc) - (final_mean_hc ** 2)
+    # log global hc stats
+    wargs = [fiber, final_mean_hc * 1000.0, np.sqrt(final_var_hc) * 1000.0,
+              total_lines_hc, 1000.0 * np.sqrt(final_var_hc / total_lines_hc)]
+    WLOG(params, 'info', TextEntry('40-017-00018', args=wargs))
+
+
+def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
+                          rawhcfiles, qc_params, iwprops):
+
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    wavefile.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from input file
+    wavefile.copy_original_keys(infile)
+    # add version
+    wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add output tag
+    wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawhcfiles
+    else:
+        hfiles = [infile.basename]
+    wavefile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add initial wavelength solution used
+    wavefile.add_hkey('KW_INIT_WAVE', value=iwprops['WAVEFILE'])
+    # ------------------------------------------------------------------
+    # add the order num, fit degree and fit coefficients
+    wavefile.add_hkey('KW_WAVE_NBO', value=iwprops['NBO'])
+    wavefile.add_hkey('KW_WAVE_DEG', value=iwprops['DEG'])
+    wavefile.add_hkeys_2d('KW_WAVECOEFFS', values=llprops['POLY_WAVE_SOL'],
+                          dim1name='order', dim2name='coeffs')
+    # ------------------------------------------------------------------
+    # add constants used (for reproduction)
+    wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
+    wavefile.add_hkey('KW_WAVE_MODE_HC', value=llprops['WAVE_MODE_HC'])
+    wavefile.add_hkey('KW_WAVE_MODE_FP', value='None')
+    # - from find_hc_gauss_peaks
+    wavefile.add_hkey('KW_WAVE_HCG_WSIZE', value=llprops['HCG_WSIZE'])
+    wavefile.add_hkey('KW_WAVE_HCG_SIGPEAK', value=llprops['HCG_SIGPEAK'])
+    wavefile.add_hkey('KW_WAVE_HCG_GFITMODE', value=llprops['HCG_GFITMODE'])
+    wavefile.add_hkey('KW_WAVE_HCG_FB_RMSMIN',
+                      value=llprops['HCG_FITBOX_RMSMIN'])
+    wavefile.add_hkey('KW_WAVE_HCG_FB_RMSMAX',
+                      value=llprops['HCG_FITBOX_RMSMAX'])
+    wavefile.add_hkey('KW_WAVE_HCG_EWMIN', value=llprops['HCG_EWMIN'])
+    wavefile.add_hkey('KW_WAVE_HCG_EWMAX', value=llprops['HCG_EWMAX'])
+    # - from load_hc_init_linelist
+    wavefile.add_hkey('KW_WAVE_HCLL_FILE', value=llprops['HCLLBASENAME'])
+    # - from fit_gaussian_triplets
+    wavefile.add_hkey('KW_WAVE_TRP_NBRIGHT', value=llprops['NMAX_BRIGHT'])
+    wavefile.add_hkey('KW_WAVE_TRP_NITER', value=llprops['N_ITER'])
+    wavefile.add_hkey('KW_WAVE_TRP_CATGDIST', value=llprops['CAT_GUESS_DIST'])
+    wavefile.add_hkey('KW_WAVE_TRP_FITDEG', value=llprops['TRIPLET_DEG'])
+    wavefile.add_hkey('KW_WAVE_TRP_MIN_NLINES', value=llprops['MIN_NUM_LINES'])
+    wavefile.add_hkey('KW_WAVE_TRP_TOT_NLINES', value=llprops['MIN_TOT_LINES'])
+    wavefile.add_hkey_1d('KW_WAVE_TRP_ORDER_FITCONT',
+                       values=llprops['ORDER_FIT_CONT'], dim1name='fit')
+    wavefile.add_hkey('KW_WAVE_TRP_SCLIPNUM', value=llprops['SIGMA_CLIP_NUM'])
+    wavefile.add_hkey('KW_WAVE_TRP_SCLIPTHRES',
+                      value=llprops['SIGMA_CLIP_THRES'])
+    wavefile.add_hkey('KW_WAVE_TRP_DVCUTORD', value=llprops['DVCUT_ORDER'])
+    wavefile.add_hkey('KW_WAVE_TRP_DVCUTALL', value=llprops['DVCUT_ALL'])
+    # - from generate res map
+    wavefile.add_hkey_1d('KW_WAVE_RES_MAPSIZE', dim1name='dim',
+                         values=llprops['RES_MAP_SIZE'])
+    wavefile.add_hkey('KW_WAVE_RES_WSIZE', value=llprops['RES_WSIZE'])
+    wavefile.add_hkey('KW_WAVE_RES_MAXDEVTHRES', value=llprops['MAX_DEV_THRES'])
+    # - from littrow
+    wavefile.add_hkey('KW_WAVE_LIT_START_1', value=llprops['LITTROW_START_1'])
+    wavefile.add_hkey('KW_WAVE_LIT_END_1', value=llprops['LITTROW_END_1'])
+    wavefile.add_hkey('KW_WAVE_ECHELLE_START', value=llprops['T_ORDER_START'])
+    # - from calculate littrow solution
+    wavefile.add_hkey_1d('KW_WAVE_LIT_RORDERS', dim1name='rorder',
+                         values=llprops['LITTROW_REMOVE_ORDERS'])
+    wavefile.add_hkey('KW_WAVE_LIT_ORDER_INIT_1',
+                      value=llprops['LITTROW_ORDER_INIT_1'])
+    wavefile.add_hkey('KW_WAVE_LIT_ORDER_START_1',
+                      value=llprops['LITTROW_ORDER_START_1'])
+    wavefile.add_hkey('KW_WAVE_LIT_ORDER_END_1',
+                      value=llprops['LITTROW_ORDER_END_1'])
+    wavefile.add_hkey('KW_WAVE_LITT_XCUTSTEP_1',
+                      value=llprops['LITTROW_X_CUT_STEP_1'])
+    wavefile.add_hkey('KW_WAVE_LITT_FITDEG_1',
+                      value=llprops['LITTROW_FIT_DEG_1'])
+    # - from extrapolate littrow solution
+    wavefile.add_hkey('KW_WAVE_LITT_EXT_FITDEG_1',
+                      value=llprops['LITTROW_EXT_FITDEG_1'])
+    wavefile.add_hkey('KW_WAVE_LITT_EXT_ORD_START_1',
+                      value=llprops['LITTROW_EXT_ORD_START_1'])
+    # add qc parameters
+    wavefile.add_qckeys(qc_params)
+    # copy data
+    wavefile.data = llprops['WAVE_MAP2']
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, wavefile.filename]
+    WLOG(params, '', TextEntry('40-017-00019', args=wargs))
+    # write image to file
+    wavefile.write()
+    # ------------------------------------------------------------------
+    # return hc wavefile
+    return wavefile
+
+
+def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    resfile = recipe.outputs['WAVE_HCRES'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    resfile.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from wavefile
+    resfile.copy_hdict(wavefile)
+    # ------------------------------------------------------------------
+    datalist, headerlist = generate_res_files(params, llprops, resfile)
+    # ------------------------------------------------------------------
+    # set data to an empty list
+    resfile.data = []
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, resfile.filename]
+    WLOG(params, '', TextEntry('40-017-00020', args=wargs))
+    # write image to file
+    resfile.write_multi(data_list=datalist, header_list=headerlist)
 
 
 # =============================================================================
@@ -530,13 +801,13 @@ def generate_shifted_wave_map(params, props, **kwargs):
     return props
 
 
-def find_hc_gauss_peaks(params, recipe, hcfile, fiber, **kwargs):
+def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
     """
     Find the first guess at the guass peaks in the HC image
 
     :param params:
     :param recipe:
-    :param hcfile:
+    :param e2dsfile:
     :param fiber:
     :param kwargs:
     :return:
@@ -559,143 +830,159 @@ def find_hc_gauss_peaks(params, recipe, hcfile, fiber, **kwargs):
                     func_name)
     filefmt = pcheck(params, 'WAVE_HCLL_FILE_FMT', 'filefmt', kwargs, func_name)
     # get image
-    hc_sp = hcfile.data
+    hc_sp = e2dsfile.data
     # get dimensions from image
-    nbo, nbpix = hcfile.data.shape
+    nbo, nbpix = e2dsfile.data.shape
     # print process
     WLOG(params, '', TextEntry('40-017-00003'))
     # get initial line list
-    llprops, exists = load_hc_init_linelist(params, recipe, hcfile, fiber)
-    # if we have an initial line list return here
-    if exists:
-        return llprops
-    # ------------------------------------------------------------------------
-    # else we need to populate llprops
-    # ------------------------------------------------------------------------
-    # set the first "previous peak" to -1
-    xprev = -1
-    # loop around orders
-    for order_num in range(nbo):
-        # print progress for user: processing order N of M
-        wargs = [order_num, nbo - 1]
-        WLOG(params, '', TextEntry('40-017-00004', args=wargs))
-        # set number of peaks found
-        npeaks = 0
-        # extract this orders spectrum
-        hc_sp_order = np.array(hc_sp[order_num, :])
-        # loop around boxes in each order 1/3rd of wsize at a time
-        bstart, bend = wsize * 2, hc_sp.shape[1] - wsize * 2 - 1
-        bstep = wsize // 3
-        for indmax in range(bstart, bend, bstep):
-            # get this iterations start and end
-            istart, iend = indmax - wsize, indmax + wsize
-            # get the pixels for this iteration
-            xpix = np.arange(istart, iend, 1)
-            # get the spectrum at these points
-            segment = np.array(hc_sp_order[istart:iend])
-            # check there are not too many nans in segment:
-            # if total not-nans is smaller than gaussian params +1
-            if np.sum(~np.isnan(segment)) < gfitmode + 1:
-                # continue to next segment
-                continue
-            # calculate the RMS
-            rms = np.nanmedian(np.abs(segment[1:] - segment[:-1]))
-            # find the peak pixel value
-            peak = np.nanmax(segment) - np.nanmedian(segment)
-            # -----------------------------------------------------------------
-            # keep only peaks that are well behaved:
-            # RMS not zero
-            keep = rms != 0
-            # peak not zero
-            keep &= peak != 0
-            # peak at least a few sigma from RMS
-            with warnings.catch_warnings(record=True) as _:
-                keep &= (peak / rms > sigma_peak)
-            # -----------------------------------------------------------------
-            # position of peak within segement - it needs to be close enough
-            #   to the center of the segment if it is at the edge we'll catch
-            #   it in the following iteration
-            imax = np.argmax(segment) - wsize
-            # keep only if close enough to the center
-            keep &= np.abs(imax) < wsize // 3
-            # -----------------------------------------------------------------
-            # if keep is still True we have a good peak worth fitting
-            #    a Gaussian
-            if keep:
-                # fit a gaussian with a slope
-                gargs = [xpix, segment, gfitmode]
-                popt_left, g2 = math.gauss_fit_nn(*gargs)
-                # residual of the fit normalized by peak value similar to
-                #    an 1/SNR value
-                gauss_rms_dev0 = np.std(segment - g2) / popt_left[0]
-                # all values that will be added (if keep_peak=True) to the
-                #    vector of all line parameters
-                zp0 = popt_left[3]
-                slope0 = popt_left[4]
-                ew0 = popt_left[2]
-                xgau0 = popt_left[1]
-                peak0 = popt_left[0]
-                # test whether we will add peak to our master list of peak
-                keep_peak = gauss_rms_dev0 > gauss_rms_dev_min
-                keep_peak &= gauss_rms_dev0 < gauss_rms_dev_max
-                keep_peak &= ew0 > ew_min
-                keep_peak &= ew0 < ew_max
-                # must be > 1 pix from previous peak
-                keep_peak &= np.abs(xgau0 - xprev) > 1
-                # if all if fine, we keep the value of the fit
-                if keep_peak:
-                    # update number of peaks
-                    npeaks += 1
-                    # update the value of previous peak
-                    xprev = xgau0
-                    # append values
-                    llprops['ZP_INI'].append(zp0)
-                    llprops['SLOPE_INI'].append(slope0)
-                    llprops['EW_INI'].append(ew0)
-                    llprops['XGAU_INI'].append(xgau0)
-                    llprops['PEAK_INI'].append(peak0)
-                    llprops['ORD_INI'].append(order_num)
-                    llprops['GAUSS_RMS_DEV_INI'].append(gauss_rms_dev0)
-                    # add values for plotting
-                    llprops['XPIX_INI'].append(xpix)
-        # display the number of peaks found
-        WLOG(params, '', TextEntry('40-017-00005', args=[npeaks]))
+    llprops, exists = load_hc_init_linelist(params, recipe, e2dsfile, fiber)
+    # if we dont have line list need to generate it
+    if not exists:
+        # ------------------------------------------------------------------
+        # else we need to populate llprops
+        # ------------------------------------------------------------------
+        # set the first "previous peak" to -1
+        xprev = -1
+        # loop around orders
+        for order_num in range(nbo):
+            # print progress for user: processing order N of M
+            wargs = [order_num, nbo - 1]
+            WLOG(params, '', TextEntry('40-017-00004', args=wargs))
+            # set number of peaks found
+            npeaks = 0
+            # extract this orders spectrum
+            hc_sp_order = np.array(hc_sp[order_num, :])
+            # loop around boxes in each order 1/3rd of wsize at a time
+            bstart, bend = wsize * 2, hc_sp.shape[1] - wsize * 2 - 1
+            bstep = wsize // 3
+            for indmax in range(bstart, bend, bstep):
+                # get this iterations start and end
+                istart, iend = indmax - wsize, indmax + wsize
+                # get the pixels for this iteration
+                xpix = np.arange(istart, iend, 1)
+                # get the spectrum at these points
+                segment = np.array(hc_sp_order[istart:iend])
+                # check there are not too many nans in segment:
+                # if total not-nans is smaller than gaussian params +1
+                if np.sum(~np.isnan(segment)) < gfitmode + 1:
+                    # continue to next segment
+                    continue
+                # calculate the RMS
+                rms = np.nanmedian(np.abs(segment[1:] - segment[:-1]))
+                # find the peak pixel value
+                peak = np.nanmax(segment) - np.nanmedian(segment)
+                # ----------------------------------------------------------
+                # keep only peaks that are well behaved:
+                # RMS not zero
+                keep = rms != 0
+                # peak not zero
+                keep &= peak != 0
+                # peak at least a few sigma from RMS
+                with warnings.catch_warnings(record=True) as _:
+                    keep &= (peak / rms > sigma_peak)
+                # ----------------------------------------------------------
+                # position of peak within segement - it needs to be close
+                #   enough to the center of the segment if it is at the edge
+                #   we'll catch it in the following iteration
+                imax = np.argmax(segment) - wsize
+                # keep only if close enough to the center
+                keep &= np.abs(imax) < wsize // 3
+                # ----------------------------------------------------------
+                # if keep is still True we have a good peak worth fitting
+                #    a Gaussian
+                if keep:
+                    # fit a gaussian with a slope
+                    gargs = [xpix, segment, gfitmode]
+                    popt_left, g2 = math.gauss_fit_nn(*gargs)
+                    # residual of the fit normalized by peak value similar to
+                    #    an 1/SNR value
+                    gauss_rms_dev0 = np.std(segment - g2) / popt_left[0]
+                    # all values that will be added (if keep_peak=True) to the
+                    #    vector of all line parameters
+                    zp0 = popt_left[3]
+                    slope0 = popt_left[4]
+                    ew0 = popt_left[2]
+                    xgau0 = popt_left[1]
+                    peak0 = popt_left[0]
+                    # test whether we will add peak to our master list of peak
+                    keep_peak = gauss_rms_dev0 > gauss_rms_dev_min
+                    keep_peak &= gauss_rms_dev0 < gauss_rms_dev_max
+                    keep_peak &= ew0 > ew_min
+                    keep_peak &= ew0 < ew_max
+                    # must be > 1 pix from previous peak
+                    keep_peak &= np.abs(xgau0 - xprev) > 1
+                    # if all if fine, we keep the value of the fit
+                    if keep_peak:
+                        # update number of peaks
+                        npeaks += 1
+                        # update the value of previous peak
+                        xprev = xgau0
+                        # append values
+                        llprops['ZP_INI'].append(zp0)
+                        llprops['SLOPE_INI'].append(slope0)
+                        llprops['EW_INI'].append(ew0)
+                        llprops['XGAU_INI'].append(xgau0)
+                        llprops['PEAK_INI'].append(peak0)
+                        llprops['ORD_INI'].append(order_num)
+                        llprops['GAUSS_RMS_DEV_INI'].append(gauss_rms_dev0)
+                        # add values for plotting
+                        llprops['XPIX_INI'].append(xpix)
+            # display the number of peaks found
+            WLOG(params, '', TextEntry('40-017-00005', args=[npeaks]))
 
-        # debug plot
-        if params['DRS_PLOT'] and params['DRS_DEBUG'] == 2:
-            # TODO: Add plot later
-            # if p['HC_EA_PLOT_PER_ORDER']:
-            #     sPlt.wave_ea_plot_per_order_hcguess(p, loc, order_num)
+            # debug plot
+            if params['DRS_PLOT'] and params['DRS_DEBUG'] == 2:
+                # TODO: Add plot later
+                # if p['HC_EA_PLOT_PER_ORDER']:
+                #     sPlt.wave_ea_plot_per_order_hcguess(p, loc, order_num)
+                pass
+        # ------------------------------------------------------------------
+        # construct column names/values
+        columnnames, columnvalues = llprops['HCLLCOLUMNS'], []
+        for colname in columnnames:
+            columnvalues.append(llprops[colname])
+        # construct table
+        ini_table = drs_table.make_table(params, columnnames, columnvalues)
+        # log that we are saving hc line-list to file
+        wargs = [llprops['HCLLBASENAME']]
+        WLOG(params, '', TextEntry('40-017-00006', args=wargs))
+        # save the table to file
+        drs_table.write_table(params, ini_table, llprops['HCLLFILENAME'],
+                              fmt=filefmt)
+        # plot all orders w/fitted gaussians
+        if params['DRS_PLOT'] > 0:
+            # TODO: Add plotting
+            # sPlt.wave_ea_plot_allorder_hcguess(p, loc)
             pass
-    # ------------------------------------------------------------------
-    # construct column names/values
-    columnnames, columnvalues = llprops['COLUMNS'], []
-    for colname in columnnames:
-        columnvalues.append(llprops[colname])
-    # construct table
-    ini_table = drs_table.make_table(params, columnnames, columnvalues)
-    # log that we are saving hc line-list to file
-    WLOG(params, '', TextEntry('40-017-00006', args=llprops['BASENAME']))
-    # save the table to file
-    drs_table.write_table(params, ini_table, llprops['FILENAME'], fmt=filefmt)
-    # plot all orders w/fitted gaussians
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plotting
-        # sPlt.wave_ea_plot_allorder_hcguess(p, loc)
-        pass
+    # ----------------------------------------------------------------------
+    # add constants to llprops
+    llprops['NBO'] = nbo
+    llprops['NBPIX'] = nbpix
+    llprops['HCG_WSIZE'] = wsize
+    llprops['HCG_SIGPEAK'] = sigma_peak
+    llprops['HCG_GFITMODE'] = gfitmode
+    llprops['HCG_FITBOX_RMSMIN'] = gauss_rms_dev_min
+    llprops['HCG_FITBOX_RMSMAX'] = gauss_rms_dev_max
+    llprops['HCG_EWMIN'] = ew_min
+    llprops['HCG_EWMAX'] = ew_max
+    # set sources
+    keys = ['NBO', 'NBPIX', 'HCG_WSIZE', 'HCG_SIGPEAK', 'HCG_GFITMODE',
+            'HCG_FITBOX_RMSMIN', 'HCG_FITBOX_RMSMAX', 'HCG_EWMIN', 'HCG_EWMAX']
+    llprops.set_sources(keys, func_name)
     # ------------------------------------------------------------------
     # return lprops
     return llprops
 
 
-def load_hc_init_linelist(params, recipe, hcfile, fiber, **kwargs):
+def load_hc_init_linelist(params, recipe, e2dsfile, fiber, **kwargs):
     """
     Load the initial guess at the gaussian positions (if file already exists)
     else the llprops returned in an empty placeholder waiting to be filled
 
     :param params:
     :param recipe:
-    :param hcfile:
+    :param e2dsfile:
     :param fiber:
     :param kwargs:
     :return:
@@ -706,7 +993,7 @@ def load_hc_init_linelist(params, recipe, hcfile, fiber, **kwargs):
 
     # construct hcll file
     hcllfile = recipe.outputs['WAVE_HCLL'].newcopy(recipe=recipe)
-    hcllfile.construct_filename(params, infile=hcfile, fiber=fiber)
+    hcllfile.construct_filename(params, infile=e2dsfile, fiber=fiber)
     # get filename
     hcllfilename = hcllfile.filename
     # define columns for hc line list
@@ -718,7 +1005,7 @@ def load_hc_init_linelist(params, recipe, hcfile, fiber, **kwargs):
     if os.path.exists(hcllfile.filename):
         # read table
         initable = drs_table.read_table(params, hcllfilename, fmt=filefmt,
-                                        columns=columns)
+                                        colnames=columns)
         # push values into llprops
         for col in columns:
             llprops[col] = np.array(initable[col])
@@ -738,10 +1025,12 @@ def load_hc_init_linelist(params, recipe, hcfile, fiber, **kwargs):
         # set exists
         exists = False
     # add filename to llprops
-    llprops['FILENAME'] = hcllfile.filename
-    llprops['BASENAME'] = hcllfile.basename
-    llprops['COLUMNS'] = columns
-    llprops.set_sources(['FILENAME', 'BASENAME', 'COLUMNS'], func_name)
+    llprops['HCLLFILENAME'] = hcllfile.filename
+    llprops['HCLLBASENAME'] = hcllfile.basename
+    llprops['HCLLCOLUMNS'] = columns
+    # set source
+    keys = ['HCLLFILENAME', 'HCLLBASENAME', 'HCLLCOLUMNS']
+    llprops.set_sources(keys, func_name)
     # add additional properties (for plotting)
     llprops['XPIX_INI'] = []
     llprops['G2_INI'] = []
@@ -750,8 +1039,7 @@ def load_hc_init_linelist(params, recipe, hcfile, fiber, **kwargs):
     return llprops, exists
 
 
-def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
-                          **kwargs):
+def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
     """
     Fits the Gaussian peaks with sigma clipping
 
@@ -774,7 +1062,6 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
     :param params:
     :param llprops:
     :param iprops:
-    :param hcfile:
     :param wavell:
     :param ampll:
     :param kwargs:
@@ -807,13 +1094,10 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
                          kwargs, func_name)
     dvcut_all = pcheck(params, 'WAVE_HC_TFIT_DVCUT_ALL', 'dvcut_all',
                        kwargs, func_name)
-
     # get poly_wave_sol from iprops
     poly_wave_sol = iprops['COEFFS']
-    # get hc image
-    hcimage = hcfile.data
     # get dimensions
-    nbo, nbpix = hcimage.shape
+    nbo, nbpix = llprops['NBO'], llprops['NBPIX']
 
     # set up storage
     wave_catalog = []
@@ -909,7 +1193,7 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
         # ------------------------------------------------------------------
         # width in dv [km/s] - though used for number of bins?
         # TODO: Question: Why km/s --> number
-        nbins = 2 * cat_guess_dist // 1000
+        nbins = 2 * int(cat_guess_dist) // 1000
         # loop around all order
         for order_num in set(orders):
             # get the good pixels in this order
@@ -1162,7 +1446,7 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
         # ------------------------------------------------------------------
         xpix = np.arange(nbpix)
         wave_map2 = np.zeros((nbo, nbpix))
-        poly_wave_sol = np.zeros_like(llprops['WAVEPARAMS'])
+        poly_wave_sol = np.zeros_like(iprops['COEFFS'])
 
         # loop around the orders
         for order_num in range(nbo):
@@ -1184,28 +1468,52 @@ def fit_gaussian_triplets(params, llprops, iprops, hcfile, wavell, ampll,
             # add to wave_map2
             wcoeffs = poly_wave_sol[order_num, :][::-1]
             wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
-    # save parameters to loc
+    # save parameters to llprops
     llprops['WAVE_CATALOG'] = wave_catalog
     llprops['AMP_CATALOG'] = amp_catalog
     llprops['SIG'] = sig
     llprops['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
     llprops['POLY_WAVE_SOL'] = poly_wave_sol
     llprops['WAVE_MAP2'] = wave_map2
-
     llprops['XGAU_T'] = xgau
     llprops['ORD_T'] = orders
     llprops['GAUSS_RMS_DEV_T'] = gauss_rms_dev
     llprops['DV_T'] = dv
     llprops['EW_T'] = ew
     llprops['PEAK_T'] = peak2
-
     llprops['LIN_MOD_SLICE'] = lin_mod_slice
     llprops['RECON0'] = recon0
-
+    # set sources
+    keys = ['WAVE_CATALOG', 'AMP_CATALOG', 'SIG', 'SIG1', 'POLY_WAVE_SOL',
+            'WAVE_MAP2', 'XGAU_T', 'ORD_T', 'GAUSS_RMS_DEV_T', 'DV_T',
+            'EW_T', 'PEAK_T', 'LIN_MOD_SLICE', 'RECON0']
+    llprops.set_sources(keys, func_name)
+    # save constants to llprops (required for reproduction)
+    llprops['WAVE_FIT_DEGREE'] = iprops['DEG']
+    llprops['NMAX_BRIGHT'] = nmax_bright
+    llprops['N_ITER'] = n_iterations
+    llprops['CAT_GUESS_DIST'] = cat_guess_dist
+    llprops['TRIPLET_DEG'] = triplet_deg
+    llprops['CUT_FIT_THRES'] = cut_fit_threshold
+    llprops['MIN_NUM_LINES'] = min_num_lines
+    llprops['MIN_TOT_LINES'] = min_tot_num_lines
+    llprops['ORDER_FIT_CONT'] = order_fit_cont
+    llprops['SIGMA_CLIP_NUM'] = sigma_clip_num
+    llprops['SIGMA_CLIP_THRES'] = sigma_clip_thres
+    llprops['DVCUT_ORDER'] = dvcut_order
+    llprops['DVCUT_ALL'] = dvcut_all
+    llprops['INIT_WAVEFILE'] = iprops['WAVEFILE']
+    # set sources
+    keys = ['WAVE_FIT_DEGREE', 'NMAX_BRIGHT', 'N_ITER', 'CAT_GUESS_DIST',
+            'TRIPLET_DEG', 'CUT_FIT_THRES', 'MIN_NUM_LINES', 'MIN_TOT_LINES',
+            'ORDER_FIT_CONT', 'SIGMA_CLIP_NUM', 'SIGMA_CLIP_THRES',
+            'DVCUT_ORDER', 'DVCUT_ALL', 'INIT_WAVEFILE']
+    llprops.set_sources(keys, func_name)
+    # return llprops
     return llprops
 
 
-def generate_resolution_map(params, llprops, hcfile, **kwargs):
+def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
     func_name = __NAME__ + '.generate_resolution_map()'
 
     # get constants from params / kwargs
@@ -1216,7 +1524,7 @@ def generate_resolution_map(params, llprops, hcfile, **kwargs):
     max_dev_thres = pcheck(params, 'WAVE_HC_RES_MAXDEV_THRES', 'max_dev_thres',
                            kwargs, func_name)
     # get image
-    hc_sp = np.array(hcfile.data)
+    hc_sp = np.array(e2dsfile.data)
     xgau = np.array(llprops['XGAU_T'])
     orders = np.array(llprops['ORD_T'])
     gauss_rms_dev = np.array(llprops['GAUSS_RMS_DEV_T'])
@@ -1358,8 +1666,15 @@ def generate_resolution_map(params, llprops, hcfile, **kwargs):
     llprops['RES_MAP_PARAMS'] = map_params
     llprops['RES_MAP'] = resolution_map
     # set source
-    sources = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
-    llprops.set_sources(sources, func_name)
+    keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
+    llprops.set_sources(keys, func_name)
+
+    # add constants to llprops
+    llprops['RES_MAP_SIZE'] = resmap_size
+    llprops['RES_WSIZE'] = wsize
+    llprops['MAX_DEV_THRES'] = max_dev_thres
+    keys = ['RES_MAP_SIZE', 'RES_WSIZE', 'MAX_DEV_THRES']
+    llprops.set_sources(keys, func_name)
 
     # print stats
     wargs = [np.nanmean(resolution_map), np.nanmedian(resolution_map),
@@ -1442,7 +1757,9 @@ def all_line_storage(params, llprops, **kwargs):
     llprops['ALL_LINES_1'] = all_lines_1
     llprops['LL_PARAM_1'] = np.array(fit_per_order)
     llprops['LL_OUT_1'] = np.array(llprops['WAVE_MAP2'])
-    llprops.set_sources(['ALL_LINES_1', 'LL_PARAM_1'], func_name)
+    # set sources
+    keys = ['ALL_LINES_1', 'LL_PARAM_1', 'LL_OUT_1']
+    llprops.set_sources(keys, func_name)
 
     # For compatibility with already defined functions, I need to save
     # here all_lines_2
@@ -1453,8 +1770,65 @@ def all_line_storage(params, llprops, **kwargs):
     return llprops
 
 
+def generate_res_files(params, llprops, outfile, **kwargs):
+
+    func_name = __NAME__ + '.generate_res_files()'
+    # get constants from p
+    resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
+                         kwargs, func_name, mapf='list', dtype=int)
+    # get data from loc
+    map_dvs = np.array(llprops['RES_MAP_DVS'])
+    map_lines = np.array(llprops['RES_MAP_LINES'])
+    map_params = np.array(llprops['RES_MAP_PARAMS'])
+    resolution_map = np.array(llprops['RES_MAP'])
+    # get dimensions
+    nbo, nbpix = llprops['NBO'], llprops['NBPIX']
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+    # get ranges of values
+    order_range = np.arange(0, nbo, bin_order)
+    x_range = np.arange(0, nbpix // bin_x)
+    # loop around the order bins
+    resdata, hdicts = [], []
+    for order_num in order_range:
+        # loop around the x position
+        for xpos in x_range:
+            # set up tmp file
+            tmpfile = outfile.completecopy(outfile)
+            # get the correct data
+            all_dvs = map_dvs[order_num // bin_order][xpos]
+            all_lines = map_lines[order_num // bin_order][xpos]
+            gparams = map_params[order_num // bin_order][xpos]
+            resolution = resolution_map[order_num // bin_order][xpos]
+            # get start and end order
+            start_order = order_num
+            end_order = start_order + bin_order - 1
+            # generate header keywordstores
+            kw_startorder = ['ORDSTART', '', 'First order covered in res map']
+            kw_endorder = ['ORDEND', '', 'Last order covered in res map']
+            kw_region = ['REGION', '', 'Region along x-axis in res map']
+            largs = [order_num, order_num + bin_order - 1, xpos]
+            comment = 'Resolution: order={0}-{1} r={2}'
+            kw_res = ['RESOL', '', comment.format(*largs)]
+            comment = 'Gaussian params: order={0}-{1} r={2}'
+            kw_params = ['GPARAMS', '', comment.format(*largs)]
+            # add keys to headed
+            tmpfile.add_hkey(kw_startorder, value=start_order)
+            tmpfile.add_hkey(kw_endorder, value=end_order)
+            tmpfile.add_hkey(kw_region, value=xpos)
+            tmpfile.add_hkey(kw_res, value=resolution)
+            tmpfile.add_hkey_1d(kw_params, dim1name='coeff', values=gparams)
+            # append this hdict to hicts
+            hdicts.append(tmpfile.hdict.to_fits_header())
+            # push data into correct columns
+            resdata.append(np.array(list(zip(all_dvs, all_lines))))
+    # return data list and header list
+    return resdata, hdicts
+
+
 # =============================================================================
-# Define littorw worker functions
+# Define littrow worker functions
 # =============================================================================
 def littrow(params, llprops, start, end, wavell, infile, iteration=1,
             **kwargs):
@@ -1471,8 +1845,7 @@ def littrow(params, llprops, start, end, wavell, infile, iteration=1,
     echelle_order = t_order_start - o_orders
 
     # Do Littrow check
-    ckwargs = dict(infile=infile, wavell=wavell[start:end, :],
-                   iteration=iteration, log=True)
+    ckwargs = dict(infile=infile, wavell=wavell, iteration=iteration, log=True)
     llprops = calculate_littrow_sol(params, llprops, echelle_order, **ckwargs)
     # ------------------------------------------------------------------
     # Littrow test plot
@@ -1497,6 +1870,16 @@ def littrow(params, llprops, start, end, wavell, infile, iteration=1,
         # plot littrow x pixels against fitted wavelength solution
         # sPlt.wave_littrow_extrap_plot(p, loc, iteration=1)
         pass
+
+    # ------------------------------------------------------------------
+    # add parameters to llprops
+    llprops['LITTROW_START_{0}'.format(iteration)] = start
+    llprops['LITTROW_END_{0}'.format(iteration)] = end
+    llprops['T_ORDER_START'] = t_order_start
+    # add source
+    keys = ['LITTROW_START_{0}'.format(iteration),
+            'LITTROW_END_{0}'.format(iteration), 'T_ORDER_START']
+    llprops.set_sources(keys, func_name)
 
     # ------------------------------------------------------------------
     # return props
@@ -1571,7 +1954,8 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     func_name = __NAME__ + '.calculate_littrow_sol()'
     # get parameters from params/kwrags
     remove_orders = pcheck(params, 'WAVE_LITTROW_REMOVE_ORDERS',
-                           'remove_orders', kwargs, func_name)
+                           'remove_orders', kwargs, func_name, mapf='list',
+                           dtype=int)
     # TODO: Fudge factor - Melissa will fix this :)
     n_order_init = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_{0}'.format(1),
                           'n_order_init', kwargs, func_name)
@@ -1635,6 +2019,7 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     x_cut_points = np.arange(x_cut_step, xdim - x_cut_step, x_cut_step)
     # save to storage
     llprops['X_CUT_POINTS_{0}'.format(iteration)] = x_cut_points
+    llprops.set_source('X_CUT_POINTS_{0}'.format(iteration), func_name)
     # get the echelle order values
     # TODO check if mask needs resizing
     orderpos = torder[rmask]
@@ -1697,6 +2082,23 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
             eargs = [x_cut_point, mean * 1000, rms * 1000, mindev * 1000,
                      maxdev * 1000, mindev / rms, maxdev / rms]
             WLOG(params, '', TextEntry('40-017-00013', args=eargs))
+
+    # add constants
+    llprops['LITTROW_REMOVE_ORDERS'] = remove_orders
+    llprops['LITTROW_ORDER_INIT_{0}'.format(iteration)] = n_order_init
+    llprops['LITTROW_ORDER_START_{0}'.format(iteration)] = n_order_start
+    llprops['LITTROW_ORDER_END_{0}'.format(iteration)] = n_order_final
+    llprops['LITTROW_X_CUT_STEP_{0}'.format(iteration)] = x_cut_step
+    llprops['LITTROW_FIT_DEG_{0}'.format(iteration)] = fit_degree
+    # set sources
+    keys = ['LITTROW_REMOVE_ORDERS',
+            'LITTROW_ORDER_INIT_{0}'.format(iteration),
+            'LITTROW_ORDER_START_{0}'.format(iteration),
+            'LITTROW_ORDER_END_{0}'.format(iteration),
+            'LITTROW_X_CUT_STEP_{0}'.format(iteration),
+            'LITTROW_FIT_DEG_{0}'.format(iteration)]
+    llprops.set_sources(keys, func_name)
+
     # return loc
     return llprops
 
@@ -1793,6 +2195,15 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
                'LITTROW_EXTRAP_SOL_{0}'.format(iteration),
                'LITTROW_EXTRAP_PARAM_{0}'.format(iteration)]
     llprops.set_sources(sources, func_name)
+
+    # add constants
+    llprops['LITTROW_EXT_FITDEG_{0}'.format(iteration)] = fit_degree
+    llprops['LITTROW_EXT_ORD_START_{0}'.format(iteration)] = n_order_init
+    # set source
+    keys = ['LITTROW_EXT_FITDEG_{0}'.format(iteration),
+            'LITTROW_EXT_ORD_START_{0}'.format(iteration)]
+    llprops.set_sources(keys, func_name)
+
     # return loc
     return llprops
 

@@ -10,8 +10,6 @@ Created on 2019-08-16 at 09:23
 @author: cook
 """
 from __future__ import division
-import numpy as np
-import os
 
 from terrapipe import core
 from terrapipe import locale
@@ -176,13 +174,11 @@ def __main__(recipe, params):
         # Loop around fibers
         # ------------------------------------------------------------------
         for fiber in fiber_types:
-
             # get hc and fp outputs
             hc_e2ds_file = hc_outputs[fiber]
             fp_e2ds_file = fp_outputs[fiber]
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.header
-
             # --------------------------------------------------------------
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
@@ -193,23 +189,48 @@ def __main__(recipe, params):
             # check that wave parameters are consistent with required number
             #   of parameters (from constants)
             iwprops = wave.check_wave_consistency(params, iwprops)
-
             # --------------------------------------------------------------
             # HC wavelength solution
             # --------------------------------------------------------------
-            hcprops = wave.hc_wavesol(params, recipe, iwprops, hcfile, fiber)
-
+            hcprops, wprops = wave.hc_wavesol(params, recipe, iwprops,
+                                              hc_e2ds_file, fiber)
             # --------------------------------------------------------------
             # HC quality control
             # --------------------------------------------------------------
-
+            qc_params = wave.hc_quality_control(params, hcprops, hc_e2ds_file)
             # --------------------------------------------------------------
-            # HC filesave
+            # log the global stats
             # --------------------------------------------------------------
+            wave.hc_log_global_stats(params, hcprops, hc_e2ds_file, fiber)
+            # --------------------------------------------------------------
+            # write HC wavelength solution to file
+            # --------------------------------------------------------------
+            hcargs = [hcprops, hc_e2ds_file, fiber, combine, rawhcfiles,
+                      qc_params, iwprops]
+            hcwavefile = wave.hc_write_wavesolution(params, recipe, *hcargs)
+            # --------------------------------------------------------------
+            # write resolution and line profiles to file
+            # --------------------------------------------------------------
+            hcargs = [hcprops, hc_e2ds_file, hcwavefile, fiber]
+            wave.hc_write_resmap(params, recipe, *hcargs)
 
             # --------------------------------------------------------------
             # Update calibDB with HC solution
             # --------------------------------------------------------------
+            if params['QC']:
+                # copy the hc wave solution file to the calibDB
+                drs_database.add_file(params, hcwavefile)
+
+            # --------------------------------------------------------------
+            # Update header of current file with HC solution
+            # --------------------------------------------------------------
+            if params['QC']:
+                # create copy of infile
+                hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
+                # update wave solution
+                hc_update = wave.add_wave_keys(hc_update, wprops)
+                # write hc update
+                hc_update.write()
 
             # --------------------------------------------------------------
             # FP wavelength solution
@@ -237,11 +258,11 @@ def __main__(recipe, params):
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message if in debug mode
+    core.end(ll, has_plots=True)
 
 # =============================================================================
 # End of code
