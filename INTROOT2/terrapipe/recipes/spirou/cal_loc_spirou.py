@@ -287,7 +287,7 @@ def __main__(recipe, params):
         qc_logic.append('rorder_num != {0}'.format(required_norders))
         # ------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
-        # quality control QC = 0 if we fail quality control
+        #    quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
             WLOG(params, 'info', TextEntry('40-005-10001'))
             params['QC'] = 1
