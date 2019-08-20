@@ -1124,7 +1124,7 @@ class DrsFitsFile(DrsInputFile):
         for key in self.hdict:
             self.header[key] = (self.hdict[key], self.hdict.comments[key])
 
-    def write(self, dtype=None):
+    def write(self):
         func_name = __NAME__ + '.DrsFitsFile.write()'
         # get params
         params = self.recipe.drs_params
@@ -1688,7 +1688,7 @@ class DrsFitsFile(DrsInputFile):
                 self.add_hkey(key=keys[k_it], value=values[k_it],
                               comment=comments[k_it])
 
-    def add_hkey_1d(self, kwstore=None, values=None, key=None,
+    def add_hkey_1d(self, key=None, values=None, keyword=None,
                     comment=None, dim1name=None):
         """
         Add a new 1d list to key using the "kwstore"[0] or "key" as prefix
@@ -1698,14 +1698,14 @@ class DrsFitsFile(DrsInputFile):
         and pushes it into DrsFile.hdict in form:
             hdict[keyword] = (value, comment)
 
-        :param kwstore: list, keyword list (defined in spirouKeywords.py)
-                        must be in form [string, value, string]
+        :param key: string or None, if kwstore not defined this is the key to
+                    set in hdict[key] = (value, comment)
         :param values: numpy array or 1D list of keys or None
                        if numpy array or 1D list will create a set of keys
                        in form keyword = kwstore + row number
                       where row number is the position in values
                       with value = values[row number][column number]
-        :param key: string, if kwstore is None uses key and comment in form
+        :param keyword: string, if kwstore is None uses key and comment in form
                    keyword = key + row number
         :param comment: string, the comment to go into the header
                         hdict[keyword] = (value, comment)
@@ -1718,7 +1718,7 @@ class DrsFitsFile(DrsInputFile):
         """
         func_name = __NAME__ + '.DrsFitsFile.add_header_key_1d_list()'
         # deal with no keywordstore
-        if (kwstore is None) and (key is None or comment is None):
+        if (key is None) and (keyword is None or comment is None):
             self.__error__(TextEntry('00-001-00014', args=[func_name]))
         # deal with no dim1name
         if dim1name is None:
@@ -1726,14 +1726,24 @@ class DrsFitsFile(DrsInputFile):
         # check for kwstore in params
         self.check_recipe()
         params = self.recipe.drs_params
-        # check for kwstore in params
-        if kwstore in params:
-            kwstore = params[kwstore]
+        # if key is set use it (it should be from parameter dictionary
+        if key is not None:
+            if isinstance(key, str) and (key in params):
+                kwstore = params[key]
+            elif isinstance(key, list):
+                kwstore = list(key)
+            else:
+                eargs = [key, func_name]
+                self.__error__(TextEntry('00-001-00008', args=eargs))
+                kwstore = None
+        else:
+            kwstore = [keyword, None, comment]
+
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
-            key, dvalue, comment = self.get_keywordstore(kwstore, func_name)
+            okey, dvalue, comment = self.get_keywordstore(kwstore, func_name)
         else:
-            key, dvalue, comment = key, None, comment
+            okey, dvalue, comment = keyword, None, comment
         # set the value to default value if value is None
         if values is None:
             values = [dvalue]
@@ -1744,7 +1754,7 @@ class DrsFitsFile(DrsInputFile):
         # loop around the 1D array
         for it in range(dim1):
             # construct the key name
-            keyname = test_for_formatting(key, it)
+            keyname = test_for_formatting(okey, it)
             # get the value
             value = values[it]
             # construct the comment name
