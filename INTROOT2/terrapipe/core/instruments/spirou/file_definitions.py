@@ -526,20 +526,35 @@ out_file.addset(out_thermal_e2ds)
 
 # -----------------------------------------------------------------------------
 # TODO: fill in definitions
-# wave
-out_wave = drs_finput('WAVE', KW_OUTPUT='WAVE_SOL',
-                      fibers=['AB', 'A', 'B', 'C'],
-                      filetype='.fits',
-                      suffix='_wave',
-                      dbname='calibration', dbkey='WAVE',
-                      outfunc=out.calib_file)
+# wave solution using hc only
+out_wave_hc = drs_finput('WAVE', KW_OUTPUT='WAVE_HC_SOL',
+                         fibers=['AB', 'A', 'B', 'C'],
+                         filetype='.fits',
+                         suffix='_wave_hc',
+                         dbname='calibration', dbkey='WAVE',
+                         outfunc=out.calib_file)
+
+# wave solution using hc + fp
+out_wave_fp = drs_finput('WAVE', KW_OUTPUT='WAVE_FP_SOL',
+                         fibers=['AB', 'A', 'B', 'C'],
+                         filetype='.fits',
+                         suffix='_wave_fp',
+                         dbname='calibration', dbkey='WAVE',
+                         outfunc=out.calib_file)
 
 # hc initial linelist
-out_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
-                       fibers=['AB', 'A', 'B', 'C'],
-                       filetype='.dat',
-                       suffix='_linelist',
-                       outfunc=out.calib_file)
+out_wave_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
+                            fibers=['AB', 'A', 'B', 'C'],
+                            filetype='.dat',
+                            suffix='_linelist',
+                            outfunc=out.calib_file)
+
+# hc resolution map
+out_wave_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
+                            fibers=['AB', 'A', 'B', 'C'],
+                            filetype='.fits',
+                            suffix='_waveres',
+                            outfunc=out.calib_file)
 
 # wave master
 out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
@@ -549,25 +564,12 @@ out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
                              dbname='calibration', dbkey='WAVEM',
                              outfunc=out.calib_file)
 
-# out_wave_fp = drs_finput('WAVE_FP',
-#                          fibers=['AB', 'A', 'B', 'C'],
-#                          KW_OUTPUT='WAVE_FP')
-# out_wave_ea = drs_finput('WAVE_EA', fibers=['AB', 'A', 'B', 'C'],
-#                          KW_OUTPUT='WAVE_EA')
-# out_wave_fp_ea = drs_finput('WAVE_FP_EA', fibers=['AB', 'A', 'B', 'C'],
-#                             KW_OUTPUT='WAVE_FP_EA')
-# out_wave_e2ds = drs_finput('WAVE_E2DS_COPY', fibers=['AB', 'A', 'B', 'C'],
-#                            KW_OUTPUT='WAVE_E2DS_COPY')
-# out_wave_res = drs_finput('WAVE_RES_EA', fibers=['AB', 'A', 'B', 'C'],
-#                           KW_OUTPUT='WAVE_RES_EA')
 # # add wave outputs to output fileset
-out_file.addset(out_wave)
+out_file.addset(out_wave_hc)
+out_file.addset(out_wave_hcline)
+out_file.addset(out_wave_hcres)
+out_file.addset(out_wave_fp)
 out_file.addset(out_wave_master)
-# out_file.addset(out_wave_fp)
-# out_file.addset(out_wave_ea)
-# out_file.addset(out_wave_fp_ea)
-# out_file.addset(out_wave_e2ds)
-# out_file.addset(out_wave_res)
 
 # -----------------------------------------------------------------------------
 # TODO: fill in definitions
