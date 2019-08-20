@@ -122,7 +122,7 @@ shapelfile = dict(name='--shapel', dtype='file', default='None',
 #                    helpstr=Help['THERMALFILE_HELP'])
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
-                files=[sf.out_wave, sf.out_wave_master],
+                files=[sf.out_wave_hc, sf.out_wave_fp, sf.out_wave_master],
                 helpstr=Help['WAVEFILE_HELP'])
 
 # =============================================================================
@@ -562,7 +562,10 @@ cal_wave.extension = 'fits'
 cal_wave.description = Help['WAVE_DESC']
 cal_wave.epilog = Help['WAVE_EXAMPLE']
 cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
-                     WAVE_HCLL=sf.out_hcline)
+                     WAVE_HCLL=sf.out_wave_hcline,
+                     WAVE_HCRES=sf.out_wave_hcres,
+                     WAVE_HCMAP=sf.out_wave_hc,
+                     WAVE_FPMAP=sf.out_wave_fp)
 cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
