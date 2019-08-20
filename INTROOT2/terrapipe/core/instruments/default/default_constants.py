@@ -109,7 +109,8 @@ __all__ = [
     'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE', 'WAVE_MODE_HC',
     'WAVE_MODE_FP', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
     'WAVE_HC_FITBOX_GFIT_DEG', 'WAVE_HC_FITBOX_RMS_DEVMIN',
-    'WAVE_HC_FITBOX_RMS_DEVMAX', 'WAVE_HC_FITBOX_EWMIN', 'WAVE_HC_FITBOX_EWMAX',
+    'WAVE_HC_FITBOX_RMS_DEVMAX', 'WAVE_HC_FITBOX_EWMIN',
+    'WAVE_HC_FITBOX_EWMAX', 'WAVE_HCLL_FILE_FMT',
     'WAVE_HC_NMAX_BRIGHT', 'WAVE_HC_NITER_FIT_TRIPLET',
     'WAVE_HC_MAX_DV_CAT_GUESS', 'WAVE_HC_TFIT_DEG', 'WAVE_HC_TFIT_CUT_THRES',
     'WAVE_HC_TFIT_MINNUM_LINES', 'WAVE_HC_TFIT_MINTOT_LINES',
@@ -117,9 +118,13 @@ __all__ = [
     'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
     'WAVE_HC_TFIT_DVCUT_ALL', 'WAVE_HC_RESMAP_SIZE', 'WAVE_HC_RES_MAXDEV_THRES',
     'WAVE_HC_T_ORDER_START', 'WAVE_N_ORD_START', 'WAVE_N_ORD_FINAL',
+    'WAVE_HC_QC_SIGMA_MAX',
     # wave littrow parameters
     'WAVE_LITTROW_ORDER_INIT_1', 'WAVE_LITTROW_ORDER_INIT_2',
     'WAVE_LITTROW_ORDER_FINAL_1', 'WAVE_LITTROW_ORDER_FINAL_2',
+    'WAVE_LITTROW_REMOVE_ORDERS', 'WAVE_LITTROW_CUT_STEP_1',
+    'WAVE_LITTROW_CUT_STEP_2', 'WAVE_LITTROW_FIG_DEG_1',
+    'WAVE_LITTROW_FIG_DEG_2', 'WAVE_LITTROW_EXT_ORDER_FIT_DEG',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
@@ -1008,6 +1013,10 @@ WAVE_HC_FITBOX_EWMIN = Const('WAVE_HC_FITBOX_EWMIN', value=None, dtype=float,
 WAVE_HC_FITBOX_EWMAX = Const('WAVE_HC_FITBOX_EWMAX', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
 
+# define the file type for saving the initial guess at the hc peak list
+WAVE_HCLL_FILE_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
+                          source=__NAME__)
+
 # number of bright lines kept per order
 #     avoid >25 as it takes super long
 #     avoid <12 as some orders are ill-defined and we need >10 valid
@@ -1023,7 +1032,7 @@ WAVE_HC_NITER_FIT_TRIPLET = Const('WAVE_HC_NITER_FIT_TRIPLET', value=None,
 # Maximum distance between catalog line and init guess line to accept
 #     line in m/s
 WAVE_HC_MAX_DV_CAT_GUESS = Const('WAVE_HC_MAX_DV_CAT_GUESS', value=None,
-                                 dtype=float, source=__NAME__, minimum=0.0)
+                                 dtype=int, source=__NAME__, minimum=0.0)
 
 # The fit degree between triplets
 WAVE_HC_TFIT_DEG = Const('WAVE_HC_TFIT_DEG', value=None, dtype=int,
@@ -1084,7 +1093,9 @@ WAVE_N_ORD_START = Const('WAVE_N_ORD_START', value=None, dtype=int,
 WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
                          source=__NAME__)
 
-
+# quality control criteria if sigma greater than this many sigma fails
+WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
 
 
 # =============================================================================
@@ -1118,6 +1129,11 @@ WAVE_LITTROW_FIG_DEG_1 = Const('WAVE_LITTROW_FIG_DEG_1', value=None,
                                dtype=int, source=__NAME__)
 WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
                                dtype=int, source=__NAME__)
+
+#  Define the order fit for the Littrow solution (fit along the orders)
+# TODO needs to be the same as ic_ll_degr_fit
+WAVE_LITTROW_EXT_ORDER_FIT_DEG = Const('WAVE_LITTROW_EXT_ORDER_FIT_DEG',
+                                       value=None, dtype=int, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS

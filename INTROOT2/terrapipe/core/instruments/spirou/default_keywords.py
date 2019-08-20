@@ -587,10 +587,6 @@ KW_WAVE_NBO.set(key='WAVEORDN', comment='nb orders in total')
 KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
 KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit')
 
-# the wave coefficients
-KW_WAVECOEFFS = KW_WAVECOEFFS.copy(__NAME__)
-KW_WAVECOEFFS.set(key='WAVE{0:04d}', comment='Wavelength coefficients')
-
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used')
@@ -599,6 +595,185 @@ KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used')
 KW_WAVESOURCE = KW_WAVESOURCE.copy(__NAME__)
 KW_WAVESOURCE.set(key='WAVESOUR', comment='Source of the wave solution used.')
 
+# the wave coefficients
+KW_WAVECOEFFS = KW_WAVECOEFFS.copy(__NAME__)
+KW_WAVECOEFFS.set(key='WAVE{0:04d}', comment='Wavelength coefficients')
+
+# the initial wave file used for wave solution
+KW_INIT_WAVE = KW_INIT_WAVE.copy(__NAME__)
+KW_INIT_WAVE.set(key='WAVEINIT', comment='Initial wavelength solution used')
+
+# -----------------------------------------------------------------------------
+# the fit degree for wave solution used
+KW_WAVE_FITDEG = KW_WAVE_FITDEG.copy(__NAME__)
+KW_WAVE_FITDEG.set(key='WAVE_DEG', comment='fit degree used for wave sol')
+
+# the mode used to calculate the hc wave solution
+KW_WAVE_MODE_HC = KW_WAVE_MODE_HC.copy(__NAME__)
+KW_WAVE_MODE_HC.set(key='WAVHCMOD', comment='mode used to calc hc wave sol')
+
+# the mode used to calculate the fp wave solution
+KW_WAVE_MODE_FP = KW_WAVE_MODE_FP.copy(__NAME__)
+KW_WAVE_MODE_FP.set(key='WAVFPMOD', comment='mode used to calc fp wave sol')
+
+
+# the echelle number of the first order used
+KW_WAVE_ECHELLE_START = KW_WAVE_ECHELLE_START.copy(__NAME__)
+KW_WAVE_ECHELLE_START.set(key='WAV_ECH0', comment='Echelle no. of first order')
+
+# the width of the box for fitting hc lines used
+KW_WAVE_HCG_WSIZE = KW_WAVE_HCG_WSIZE.copy(__NAME__)
+KW_WAVE_HCG_WSIZE.set(key='WAVHGSIZ', comment='HC Gauss peak fit box width')
+
+# the sigma above local rms for fitting hc lines used
+KW_WAVE_HCG_SIGPEAK = KW_WAVE_HCG_SIGPEAK.copy(__NAME__)
+KW_WAVE_HCG_SIGPEAK.set(key='WAVHGSPK',
+                        comment='HC Gauss peak fit rms sig peak')
+
+# the fit degree for the gaussian peak fitting used
+KW_WAVE_HCG_GFITMODE = KW_WAVE_HCG_GFITMODE.copy(__NAME__)
+KW_WAVE_HCG_GFITMODE.set(key='WAVHGGFM',
+                         comment='HC Gauss peak fit, fit degree')
+
+# the min rms for gaussian peak fitting used
+KW_WAVE_HCG_FB_RMSMIN = KW_WAVE_HCG_FB_RMSMIN.copy(__NAME__)
+KW_WAVE_HCG_FB_RMSMIN.set(key='WAVHGRMN',
+                          comment='HC Gauss peak fit, min rms for peak')
+
+# the max rms for gaussian peak fitting used
+KW_WAVE_HCG_FB_RMSMAX = KW_WAVE_HCG_FB_RMSMAX.copy(__NAME__)
+KW_WAVE_HCG_FB_RMSMAX.set(key='WAVHGRMX',
+                          comment='HC Gauss peak fit, max rms for peak')
+
+# the min e-width of the line for gaussian peak fitting used
+KW_WAVE_HCG_EWMIN = KW_WAVE_HCG_EWMIN.copy(__NAME__)
+KW_WAVE_HCG_EWMIN.set(key='WAVHGEW0', comment='HC Gauss peak fit, e-width min')
+
+# the min e-width of the line for gaussian peak fitting used
+KW_WAVE_HCG_EWMAX = KW_WAVE_HCG_EWMAX.copy(__NAME__)
+KW_WAVE_HCG_EWMAX.set(key='WAVHGEW1', comment='HC Gauss peak fit, e-width max')
+
+# the filename for the HC line list generated
+KW_WAVE_HCLL_FILE = KW_WAVE_HCLL_FILE.copy(__NAME__)
+KW_WAVE_HCLL_FILE.set(key='WAVEHCLL', comment='HC line list file generated')
+
+# the number of bright lines to used in triplet fit
+KW_WAVE_TRP_NBRIGHT = KW_WAVE_TRP_NBRIGHT.copy(__NAME__)
+KW_WAVE_TRP_NBRIGHT.set(key='WAVTNBRI',
+                        comment='Triplet fit - no. bright lines used')
+
+# the number of iterations done in triplet fit
+KW_WAVE_TRP_NITER = KW_WAVE_TRP_NITER.copy(__NAME__)
+KW_WAVE_TRP_NITER.set(key='WAVTNITR',
+                      comment='Triplet fit - no. iterations used')
+
+# the max distance between catalog line and initial guess line in triplet fit
+KW_WAVE_TRP_CATGDIST = KW_WAVE_TRP_CATGDIST.copy(__NAME__)
+KW_WAVE_TRP_CATGDIST.set(key='WAVTCATD',
+                         comment='Triplet fit - max dist btwn line cat & guess')
+
+# the fit degree for triplet fit
+KW_WAVE_TRP_FITDEG = KW_WAVE_TRP_FITDEG.copy(__NAME__)
+KW_WAVE_TRP_FITDEG.set(key='WAVTFDEG', comment='Triplet fit - fit degree')
+
+# the minimum number of lines required per order in triplet fit
+KW_WAVE_TRP_MIN_NLINES = KW_WAVE_TRP_MIN_NLINES.copy(__NAME__)
+KW_WAVE_TRP_MIN_NLINES.set(key='WAVTMINL',
+                           comment='Triplet fit - min no. lines req. per order')
+
+# the total number of lines required in triplet fit
+KW_WAVE_TRP_TOT_NLINES = KW_WAVE_TRP_TOT_NLINES.copy(__NAME__)
+KW_WAVE_TRP_TOT_NLINES.set(key='WAVTTOTL',
+                           comment='Triplet fit - total no. lines required')
+
+# the degree(s) of fit to ensure continuity in triplet fit
+KW_WAVE_TRP_ORDER_FITCONT = KW_WAVE_TRP_ORDER_FITCONT.copy(__NAME__)
+KW_WAVE_TRP_ORDER_FITCONT.set(key='WAVTO{0:03d}',
+                              comment='Triplet fit - order continuity fit')
+
+# the iteration number for sigma clip in triplet fit
+KW_WAVE_TRP_SCLIPNUM = KW_WAVE_TRP_SCLIPNUM.copy(__NAME__)
+KW_WAVE_TRP_SCLIPNUM.set(key='WAVT_SCN',
+                         comment='Triplet fit - iter no. for sig clip')
+
+# the sigma clip threshold in triplet fit
+KW_WAVE_TRP_SCLIPTHRES = KW_WAVE_TRP_SCLIPTHRES.copy(__NAME__)
+KW_WAVE_TRP_SCLIPTHRES.set(key='WAVT_SCT',
+                           comment='Triplet fit - sig clip threshold')
+
+# the distance away in dv to reject order triplet in triplet fit
+KW_WAVE_TRP_DVCUTORD = KW_WAVE_TRP_DVCUTORD.copy(__NAME__)
+KW_WAVE_TRP_DVCUTORD.set(key='WAVT_DVO',
+                         comment='Triplet fit - dist in dv per order to reject')
+
+# the distance away in dv to reject all triplet in triplet fit
+KW_WAVE_TRP_DVCUTALL = KW_WAVE_TRP_DVCUTALL.copy(__NAME__)
+KW_WAVE_TRP_DVCUTALL.set(key='WAVT_DVA',
+                         comment='Triplet fit - dist in dv all to reject')
+
+# the wave resolution map dimensions
+KW_WAVE_RES_MAPSIZE = KW_WAVE_RES_MAPSIZE.copy(__NAME__)
+KW_WAVE_RES_MAPSIZE.set(key='WAVRE{0:03d}',
+                        comment='Wave res map - map dimensions')
+
+# the width of the box for wave resolution map
+KW_WAVE_RES_WSIZE = KW_WAVE_RES_WSIZE.copy(__NAME__)
+KW_WAVE_RES_WSIZE.set(key='WAVRSIZE',
+                      comment='Wave res map - width of box')
+
+# the max deviation in rms allowed in wave resolution map
+KW_WAVE_RES_MAXDEVTHRES = KW_WAVE_RES_MAXDEVTHRES.copy(__NAME__)
+KW_WAVE_RES_MAXDEVTHRES.set(key='WAVRDEV',
+                            comment='Wave res map - max dev in rms allowed')
+
+# the littrow start order used for HC
+KW_WAVE_LIT_START_1 = KW_WAVE_LIT_START_1.copy(__NAME__)
+KW_WAVE_LIT_START_1.set(key='WAVL1_ST', comment='Littrow HC - start value')
+
+# the littrow end order used for HC
+KW_WAVE_LIT_END_1 = KW_WAVE_LIT_END_1.copy(__NAME__)
+KW_WAVE_LIT_END_1.set(key='WAVL1_EN', comment='Littrow HC - end value')
+
+# the orders removed from the littrow test
+KW_WAVE_LIT_RORDERS = KW_WAVE_LIT_RORDERS.copy(__NAME__)
+KW_WAVE_LIT_RORDERS.set(key='WAVLR{0:03d}', comment='Littrow - removed orders')
+
+# the littrow order initial value used for HC
+KW_WAVE_LIT_ORDER_INIT_1 = KW_WAVE_LIT_ORDER_INIT_1.copy(__NAME__)
+KW_WAVE_LIT_ORDER_INIT_1.set(key='WAVL1OIN',
+                             comment='Littrow HC - order init value')
+
+# the littrow order start value used for HC
+KW_WAVE_LIT_ORDER_START_1 = KW_WAVE_LIT_ORDER_START_1.copy(__NAME__)
+KW_WAVE_LIT_ORDER_START_1.set(key='WAVL1OST',
+                              comment='Littrow HC - order start value')
+
+# the littrow order end value used for HC
+KW_WAVE_LIT_ORDER_END_1 = KW_WAVE_LIT_ORDER_END_1.copy(__NAME__)
+KW_WAVE_LIT_ORDER_END_1.set(key='WAVL1OEN',
+                            comment='Littrow HC - order end value')
+
+# the littrow x cut step value used for HC
+KW_WAVE_LITT_XCUTSTEP_1 = KW_WAVE_LITT_XCUTSTEP_1.copy(__NAME__)
+KW_WAVE_LITT_XCUTSTEP_1.set(key='WAVL1XCT',
+                            comment='Littrow HC - x cut step value')
+
+# the littrow fit degree value used for HC
+KW_WAVE_LITT_FITDEG_1 = KW_WAVE_LITT_FITDEG_1.copy(__NAME__)
+KW_WAVE_LITT_FITDEG_1.set(key='WAVL1FDG',
+                          comment='Littrow HC - littrow fit degree')
+
+# the littrow extrapolation fit degree value used for HC
+KW_WAVE_LITT_EXT_FITDEG_1 = KW_WAVE_LITT_EXT_FITDEG_1.copy(__NAME__)
+KW_WAVE_LITT_EXT_FITDEG_1.set(key='WAVL1EDG',
+                              comment='Littrow HC - extrapolation fit degree')
+
+# the littrow extrapolation start order value used for HC
+KW_WAVE_LITT_EXT_ORD_START_1 = KW_WAVE_LITT_EXT_ORD_START_1.copy(__NAME__)
+KW_WAVE_LITT_EXT_ORD_START_1.set(key='WAVL1EST',
+                                 comment='Littrow HC - extrap start order')
+
+# -----------------------------------------------------------------------------
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = KW_WFP_FILE.copy(__NAME__)
 KW_WFP_FILE.set(key='WFP_FILE', comment='WFP source file')

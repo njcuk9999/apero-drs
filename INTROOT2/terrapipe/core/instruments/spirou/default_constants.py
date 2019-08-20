@@ -921,6 +921,10 @@ WAVE_HC_FITBOX_EWMIN.value = 0.7
 WAVE_HC_FITBOX_EWMAX = WAVE_HC_FITBOX_EWMAX.copy(__NAME__)
 WAVE_HC_FITBOX_EWMAX.value = 1.1
 
+# define the file type for saving the initial guess at the hc peak list
+WAVE_HCLL_FILE_FMT = WAVE_HCLL_FILE_FMT.copy(__NAME__)
+WAVE_HCLL_FILE_FMT.value = 'ascii.rst'
+
 # number of bright lines kept per order
 #     avoid >25 as it takes super long
 #     avoid <12 as some orders are ill-defined and we need >10 valid
@@ -958,7 +962,7 @@ WAVE_HC_TFIT_MINTOT_LINES.value = 200
 #     in the  xpix vs wave solutions by setting the first term = 12,
 #     we force that the zeroth element of the xpix of the wavelegnth
 #     grid is fitted with a 12th order polynomial as a function of
-#     order number (format = string list separated by commas
+#     order number (format = string list separated by commas)
 WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
 WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
 
@@ -985,7 +989,7 @@ WAVE_HC_RESMAP_SIZE.value = '5, 4'
 WAVE_HC_RES_MAXDEV_THRES = WAVE_HC_RES_MAXDEV_THRES.copy(__NAME__)
 WAVE_HC_RES_MAXDEV_THRES.value = 8
 
-#  Defines echelle of first extracted order
+#  Defines echelle number of first extracted order
 WAVE_HC_T_ORDER_START = WAVE_HC_T_ORDER_START.copy(__NAME__)
 WAVE_HC_T_ORDER_START.value = 79
 
@@ -996,6 +1000,11 @@ WAVE_N_ORD_START.value = 0
 #  Defines order to which the solution is calculated
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
 WAVE_N_ORD_FINAL.value = 47
+
+# quality control criteria if sigma greater than this many sigma fails
+WAVE_HC_QC_SIGMA_MAX = WAVE_HC_QC_SIGMA_MAX.copy(__NAME__)
+WAVE_HC_QC_SIGMA_MAX.value = 8
+
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
@@ -1029,10 +1038,11 @@ WAVE_LITTROW_FIG_DEG_1.value = 8  # 5  # 4
 WAVE_LITTROW_FIG_DEG_2 = WAVE_LITTROW_FIG_DEG_2.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 
-#  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
-#      (fit along the orders)
+#  Define the order fit for the Littrow solution (fit along the orders)
 # TODO needs to be the same as ic_ll_degr_fit
-ic_Littrow_order_fit_deg = 4  # 5  # 4
+WAVE_LITTROW_EXT_ORDER_FIT_DEG = WAVE_LITTROW_EXT_ORDER_FIT_DEG.copy(__NAME__)
+WAVE_LITTROW_EXT_ORDER_FIT_DEG.value = 4  # 5  # 4
+
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS

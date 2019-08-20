@@ -58,7 +58,24 @@ __all__ = [# input keys
            'KW_WAVESOURCE', 'KW_WAVECOEFFS', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
            'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MAXCPP',
            'KW_WFP_MASK', 'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
-           'KW_WFP_STEP',
+           'KW_WFP_STEP', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
+           'KW_WAVE_MODE_FP', 'KW_WAVE_ECHELLE_START', 'KW_WAVE_HCG_WSIZE',
+           'KW_WAVE_HCG_SIGPEAK', 'KW_WAVE_HCG_GFITMODE',
+           'KW_WAVE_HCG_FB_RMSMIN', 'KW_WAVE_HCG_FB_RMSMAX',
+           'KW_WAVE_HCG_EWMIN', 'KW_WAVE_HCG_EWMAX', 'KW_WAVE_HCLL_FILE',
+           'KW_WAVE_TRP_NBRIGHT', 'KW_WAVE_TRP_NITER', 'KW_WAVE_TRP_CATGDIST',
+           'KW_WAVE_TRP_FITDEG', 'KW_WAVE_TRP_MIN_NLINES',
+           'KW_WAVE_TRP_TOT_NLINES', 'KW_WAVE_TRP_ORDER_FITCONT',
+           'KW_WAVE_TRP_SCLIPNUM', 'KW_WAVE_TRP_SCLIPTHRES',
+           'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
+           'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
+           'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE',
+           # wave littrow values
+           'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
+           'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
+           'KW_WAVE_LIT_ORDER_END_1', 'KW_WAVE_LITT_XCUTSTEP_1',
+           'KW_WAVE_LITT_FITDEG_1', 'KW_WAVE_LITT_EXT_FITDEG_1',
+           'KW_WAVE_LITT_EXT_ORD_START_1',
            ]
 
 # set name
@@ -530,6 +547,152 @@ KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__)
 # the wave coefficients
 KW_WAVECOEFFS = Keyword('KW_WAVECOEFFS', key='', dtype=float, source=__NAME__)
 
+# the initial wave file used for wave solution
+KW_INIT_WAVE = Keyword('KW_INIT_WAVE', key='', dtype=str, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# the fit degree for wave solution used
+KW_WAVE_FITDEG = Keyword('KW_WAVE_FITDEG', key='', dtype=int, source=__NAME__)
+
+# the mode used to calculate the hc wave solution
+KW_WAVE_MODE_HC = Keyword('KW_WAVE_MODE_HC', key='', dtype=str, source=__NAME__)
+
+# the mode used to calculate the fp wave solution
+KW_WAVE_MODE_FP = Keyword('KW_WAVE_MODE_FP', key='', dtype=str, source=__NAME__)
+
+# the echelle number of the first order used
+KW_WAVE_ECHELLE_START = Keyword('KW_WAVE_ECHELLE_START', key='', dtype=int,
+                                source=__NAME__)
+
+# the width of the box for fitting hc lines used
+KW_WAVE_HCG_WSIZE = Keyword('KW_WAVE_HCG_WSIZE', key='', dtype=int,
+                            source=__NAME__)
+
+# the sigma above local rms for fitting hc lines used
+KW_WAVE_HCG_SIGPEAK = Keyword('KW_WAVE_HCG_SIGPEAK', key='', dtype=float,
+                              source=__NAME__)
+
+# the fit degree for the gaussian peak fitting used
+KW_WAVE_HCG_GFITMODE = Keyword('KW_WAVE_HCG_GFITMODE', key='', dtype=int,
+                               source=__NAME__)
+
+# the min rms for gaussian peak fitting used
+KW_WAVE_HCG_FB_RMSMIN = Keyword('KW_WAVE_HCG_FB_RMSMIN', key='', dtype=float,
+                                source=__NAME__)
+
+# the max rms for gaussian peak fitting used
+KW_WAVE_HCG_FB_RMSMAX = Keyword('KW_WAVE_HCG_FB_RMSMAX', key='', dtype=float,
+                                source=__NAME__)
+
+# the min e-width of the line for gaussian peak fitting used
+KW_WAVE_HCG_EWMIN = Keyword('KW_WAVE_HCG_EWMIN', key='', dtype=float,
+                            source=__NAME__)
+
+# the min e-width of the line for gaussian peak fitting used
+KW_WAVE_HCG_EWMAX = Keyword('KW_WAVE_HCG_EWMAX', key='', dtype=float,
+                            source=__NAME__)
+
+# the filename for the HC line list generated
+KW_WAVE_HCLL_FILE = Keyword('KW_WAVE_HCLL_FILE', key='', dtype=str,
+                            source=__NAME__)
+
+# the number of bright lines to used in triplet fit
+KW_WAVE_TRP_NBRIGHT = Keyword('KW_WAVE_TRP_NBRIGHT', key='', dtype=int,
+                              source=__NAME__)
+
+# the number of iterations done in triplet fit
+KW_WAVE_TRP_NITER = Keyword('KW_WAVE_TRP_NITER', key='', dtype=float,
+                            source=__NAME__)
+
+# the max distance between catalog line and initial guess line in triplet fit
+KW_WAVE_TRP_CATGDIST = Keyword('KW_WAVE_TRP_CATGDIST', key='', dtype=float,
+                               source=__NAME__)
+
+# the fit degree for triplet fit
+KW_WAVE_TRP_FITDEG = Keyword('KW_WAVE_TRP_FITDEG', key='', dtype=int,
+                             source=__NAME__)
+
+# the minimum number of lines required per order in triplet fit
+KW_WAVE_TRP_MIN_NLINES = Keyword('KW_WAVE_TRP_MIN_NLINES', key='', dtype=int,
+                                 source=__NAME__)
+
+# the total number of lines required in triplet fit
+KW_WAVE_TRP_TOT_NLINES = Keyword('KW_WAVE_TRP_TOT_NLINES', key='', dtype=int,
+                                 source=__NAME__)
+
+# the degree(s) of fit to ensure continuity in triplet fit
+KW_WAVE_TRP_ORDER_FITCONT = Keyword('KW_WAVE_TRP_ORDER_FITCONT', key='',
+                                    dtype=float, source=__NAME__)
+
+# the iteration number for sigma clip in triplet fit
+KW_WAVE_TRP_SCLIPNUM = Keyword('KW_WAVE_TRP_SCLIPNUM', key='', dtype=float,
+                               source=__NAME__)
+
+# the sigma clip threshold in triplet fit
+KW_WAVE_TRP_SCLIPTHRES = Keyword('KW_WAVE_TRP_SCLIPTHRES', key='', dtype=float,
+                                 source=__NAME__)
+
+# the distance away in dv to reject order triplet in triplet fit
+KW_WAVE_TRP_DVCUTORD = Keyword('KW_WAVE_TRP_DVCUTORD', key='', dtype=float,
+                               source=__NAME__)
+
+# the distance away in dv to reject all triplet in triplet fit
+KW_WAVE_TRP_DVCUTALL = Keyword('KW_WAVE_TRP_DVCUTALL', key='', dtype=float,
+                               source=__NAME__)
+
+# the wave resolution map dimensions
+KW_WAVE_RES_MAPSIZE = Keyword('KW_WAVE_RES_MAPSIZE', key='', dtype=int,
+                              source=__NAME__)
+
+# the width of the box for wave resolution map
+KW_WAVE_RES_WSIZE = Keyword('KW_WAVE_RES_WSIZE', key='', dtype=float,
+                            source=__NAME__)
+
+# the max deviation in rms allowed in wave resolution map
+KW_WAVE_RES_MAXDEVTHRES = Keyword('KW_WAVE_RES_MAXDEVTHRES', key='',
+                                  dtype=float, source=__NAME__)
+
+# the littrow start order used for HC
+KW_WAVE_LIT_START_1 = Keyword('KW_WAVE_LIT_START_1', key='', dtype=int,
+                              source=__NAME__)
+
+# the littrow end order used for HC
+KW_WAVE_LIT_END_1 = Keyword('KW_WAVE_LIT_END_1', key='', dtype=float,
+                            source=__NAME__)
+
+# the orders removed from the littrow test
+KW_WAVE_LIT_RORDERS = Keyword('KW_WAVE_LIT_RORDERS', key='', dtype=float,
+                              source=__NAME__)
+
+# the littrow order initial value used for HC
+KW_WAVE_LIT_ORDER_INIT_1 = Keyword('KW_WAVE_LIT_ORDER_INIT_1', key='',
+                                   dtype=int, source=__NAME__)
+
+# the littrow order start value used for HC
+KW_WAVE_LIT_ORDER_START_1 = Keyword('KW_WAVE_LIT_ORDER_START_1', key='',
+                                    dtype=int, source=__NAME__)
+
+# the littrow order end value used for HC
+KW_WAVE_LIT_ORDER_END_1 = Keyword('KW_WAVE_LIT_ORDER_END_1', key='',
+                                  dtype=int, source=__NAME__)
+
+# the littrow x cut step value used for HC
+KW_WAVE_LITT_XCUTSTEP_1 = Keyword('KW_WAVE_LITT_XCUTSTEP_1', key='',
+                                  dtype=int, source=__NAME__)
+
+# the littrow fit degree value used for HC
+KW_WAVE_LITT_FITDEG_1 = Keyword('KW_WAVE_LITT_FITDEG_1', key='', dtype=int,
+                                source=__NAME__)
+
+# the littrow extrapolation fit degree value used for HC
+KW_WAVE_LITT_EXT_FITDEG_1 = Keyword('KW_WAVE_LITT_EXT_FITDEG_1', key='',
+                                    dtype=int, source=__NAME__)
+
+# the littrow extrapolation start order value used for HC
+KW_WAVE_LITT_EXT_ORD_START_1 = Keyword('KW_WAVE_LITT_EXT_ORD_START_1', key='',
+                                       dtype=int, source=__NAME__)
+
+# -----------------------------------------------------------------------------
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = Keyword('KW_WFP_FILE', key='', dtype=str, source=__NAME__)
 
