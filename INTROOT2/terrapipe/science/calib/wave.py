@@ -16,6 +16,7 @@ import itertools
 import numpy as np
 import os
 import warnings
+import copy
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -26,6 +27,7 @@ from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.io import drs_data
 from terrapipe.io import drs_table
+from terrapipe.science import rv
 from . import general
 
 # =============================================================================
@@ -400,7 +402,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     # set up hc specific terms
     start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_1')
     end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_1')
-    wavell = llprops['LL_OUT_1'][start:end, :]
+    wavell = llprops['LL_OUT_1']
     # run littrow test
     llprops = littrow(params, llprops, start, end, wavell, e2dsfile,
                       iteration=1)
@@ -483,25 +485,39 @@ def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
     return llprops
 
 
-def fp_wavesol(params, e2dsfile, **kwargs):
+def fp_wavesol(params, fpe2dsfile, hcprops, wprops, fiber, **kwargs):
     func_name = __NAME__ + '.fp_wavesol()'
     # get parameters from params / kwargs
     wave_mode_fp = pcheck(params, 'WAVE_MODE_FP', 'wave_mode_fp', kwargs,
                           func_name)
+    # ----------------------------------------------------------------------
+    # deep copy hcprops into llprops
+    llprops = ParamDict()
+    for key in hcprops.keys():
+        llprops[key] = copy.deepcopy(hcprops[key])
+        llprops.set_source(key, hcprops.sources[key])
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Incorporate FP into solution
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     if wave_mode_fp == 0:
         # ------------------------------------------------------------------
         # Using the Bauer15 (WAVE_E2DS_EA) method:
         # ------------------------------------------------------------------
-        llprops = fp_wavesol_bauer()
+        # log progress
+        wargs = [wave_mode_fp, 'Bauer 2015']
+        WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
+        # calculate wave solution
+        llprops = fp_wavesol_bauer(params, llprops, fpe2dsfile)
     elif wave_mode_fp == 1:
         # ------------------------------------------------------------------
         # Using the C Lovis (WAVE_NEW_2) method:
         # ------------------------------------------------------------------
-        llprops = fp_wavesol_lovis()
+        # log progress
+        wargs = [wave_mode_fp, 'Lovis Method']
+        WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
+        # calculate wave solution
+        llprops = fp_wavesol_lovis(params, llprops)
     else:
         # log that mode is not currently supported
         WLOG(params, 'error', TextEntry('09-017-00003', args=[wave_mode_fp]))
@@ -513,9 +529,13 @@ def fp_wavesol(params, e2dsfile, **kwargs):
     # set up hc specific terms
     start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_2')
     end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_2')
-    wavell = llprops['LL_OUT_1']
+    # Copy LL_OUT_1 and LL_PARAM_1 into new constants (for FP integration)
+    llprops['LTTROW_EXTRAP_SOL_1'] = np.array(llprops['LL_OUT_1'])
+    llprops['LITTORW_EXTRAP_PARAM_1'] = np.array(llprops['LL_PARAM_1'])
+    # set wavell
+    wavell = llprops['LL_OUT_2']
     # run littrow test
-    llprops = littrow(params, llprops, start, end, wavell, e2dsfile,
+    llprops = littrow(params, llprops, start, end, wavell, fpe2dsfile,
                       iteration=2)
 
     # ------------------------------------------------------------------
@@ -532,11 +552,83 @@ def fp_wavesol(params, e2dsfile, **kwargs):
     return llprops
 
 
-def fp_wavesol_bauer():
-    return 0
+def fp_wavesol_bauer(params, llprops, fpe2dsfile, fiber, **kwargs):
+
+    func_name = __NAME__ + '.fp_wavesol_bauer()'
+    # get parameters from params/kwargs
+    # TODO: Is this the same as WAVE_HC_N_ORD_START or WAVE_FP_N_ORD_START
+    # TODO:   Or another different one???
+    start = pcheck(params, 'WAVE_HC_N_ORD_START')
+    # TODO: Is this the same as WAVE_HC_N_ORD_FINAL or WAVE_FP_N_ORD_FINAL
+    # TODO:   Or another different one???
+    end = pcheck(params, 'WAVE_HC_N_ORD_FINAL')
+
+    # Log the file we are using
+    wargs = [fpe2dsfile.filename]
+    WLOG(params, '', TextEntry('40-017-00022', args=wargs))
+
+    # ------------------------------------------------------------------
+    # Get the FP solution
+    # ------------------------------------------------------------------
+    llprops = fp_wavelength_sol_new(params, llprops)
+    # ------------------------------------------------------------------
+    # FP solution plots
+    # ------------------------------------------------------------------
+    if params['DRS_PLOT'] > 0:
+        # TODO: Add plots
+        # # Plot the FP extracted spectrum against wavelength solution
+        # sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
+        # # Plot the measured FP cavity width offset against line number
+        # sPlt.wave_local_width_offset_plot(p, loc)
+        # # Plot the FP line wavelength residuals
+        # sPlt.wave_fp_wavelength_residuals(p, loc)
+        pass
+
+    # ------------------------------------------------------------------
+    # Create new wavelength solution
+    # ------------------------------------------------------------------
+    # get wavelengths for 1d fit
+    wavell = llprops['LITTROW_EXTRAP_SOL_1'][start:end]
+    # fit the 1d solution
+    llprops = fit_1d_solution(params, llprops, wavell, start, end, fiber,
+                              iteration=2)
 
 
-def fp_wavesol_lovis():
+
+    # ------------------------------------------------------------------
+    return llprops
+
+
+def fp_wavesol_lovis(params, llprops, fpe2dsfile):
+
+    # Log the file we are using
+    wargs = [fpe2dsfile.filename]
+    WLOG(params, '', TextEntry('40-017-00022', args=wargs))
+
+    # TODO: Work here
+
+
+
+
+
+    # ------------------------------------------------------------------
+    # Multi-order HC lines plot
+    # ------------------------------------------------------------------
+    if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 0:
+        # TODO: Add plots
+        # # check the orders to be plotted are sensible
+        # if p['WAVE_PLOT_MULTI_INIT'] >= p['WAVE_N_ORD_FINAL']:
+        #     wmsg = 'First order for multi-order plot, {0}, higher than ' \
+        #            'final wavelength solution order {1}; no plot created'
+        #     WLOG(p, 'warning', wmsg.format(p['WAVE_PLOT_MULTI_INIT'],
+        #                                    p['WAVE_N_ORD_FINAL']))
+        # else:
+        #     sPlt.wave_plot_multi_order(p, hc_ll_test, hc_ord_test,
+        #                                loc['LL_OUT_2'], loc['HCDATA'])
+        pass
+
+    # # TODO test linmin fitting
+
     return 0
 
 
@@ -1696,9 +1788,9 @@ def all_line_storage(params, llprops, **kwargs):
     # initialise up all_lines storage
     all_lines_1 = []
     # get parameters from p
-    n_ord_start = pcheck(params, 'WAVE_N_ORD_START', 'n_ord_start', kwargs,
+    n_ord_start = pcheck(params, 'WAVE_HC_N_ORD_START', 'n_ord_start', kwargs,
                          func_name)
-    n_ord_final = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_ord_final', kwargs,
+    n_ord_final = pcheck(params, 'WAVE_HC_N_ORD_FINAL', 'n_ord_final', kwargs,
                          func_name)
 
     # get values from loc:
@@ -1845,7 +1937,8 @@ def littrow(params, llprops, start, end, wavell, infile, iteration=1,
     echelle_order = t_order_start - o_orders
 
     # Do Littrow check
-    ckwargs = dict(infile=infile, wavell=wavell, iteration=iteration, log=True)
+    ckwargs = dict(infile=infile, wavell=wavell[start:end, :],
+                   iteration=iteration, log=True)
     llprops = calculate_littrow_sol(params, llprops, echelle_order, **ckwargs)
     # ------------------------------------------------------------------
     # Littrow test plot
@@ -1959,10 +2052,10 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     # TODO: Fudge factor - Melissa will fix this :)
     n_order_init = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_{0}'.format(1),
                           'n_order_init', kwargs, func_name)
-    n_order_start = pcheck(params, 'WAVE_N_ORD_START', 'n_order_start', kwargs,
-                           func_name)
-    n_order_final = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_order_final', kwargs,
-                           func_name)
+    n_order_start = pcheck(params, 'WAVE_HC_N_ORD_START', 'n_order_start',
+                           kwargs, func_name)
+    n_order_final = pcheck(params, 'WAVE_HC_N_ORD_FINAL', 'n_order_final',
+                           kwargs, func_name)
     x_cut_step = pcheck(params, 'WAVE_LITTROW_CUT_STEP_{0}'.format(iteration),
                         'x_cut_step', kwargs, func_name)
     fit_degree = pcheck(params, 'WAVE_LITTROW_FIG_DEG_{0}'.format(iteration),
@@ -2211,6 +2304,740 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
 # =============================================================================
 # Define fp worker functions
 # =============================================================================
+def fp_wavelength_sol_new(params, llprops, blaze, **kwargs):
+    """
+    Derives the FP line wavelengths from the first solution
+    Follows the Bauer et al 2015 procedure
+
+    :param p: parameter dictionary, ParamDict containing constants
+
+    :param llprops: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            FPDATA: the FP e2ds data
+            LITTROW_EXTRAP_SOL_1: the wavelength solution derived from the HC
+                                  and Littrow-constrained
+            LL_PARAM_1: the parameters of the wavelength solution
+            ALL_LINES_2: list of numpy arrays, length = number of orders
+                       each numpy array contains gaussian parameters
+                       for each found line in that order
+            BLAZE: numpy array (2D), the blaze data
+
+    :return llprops: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                FP_LL_POS: numpy array, the initial wavelengths of the FP lines
+                FP_XX_POS: numpy array, the pixel positions of the FP lines
+                FP_M: numpy array, the FP line numbers
+                FP_DOPD_T: numpy array, the measured cavity width for each line
+                FP_AMPL: numpy array, the FP line amplitudes
+                FP_LL_POS_NEW: numpy array, the corrected wavelengths of the
+                               FP lines
+                ALL_LINES_2: list of numpy arrays, length = number of orders
+                             each numpy array contains gaussian parameters
+                             for each found line in that order
+
+    """
+    func_name = __NAME__ + '.fp_wavelength_sol_new()'
+    # get parameters from params/kwargs
+    dopd0 = pcheck(params, 'WAVE_FP_DOPD0', 'dopd0', kwargs, func_name)
+    fit_deg = pcheck(params, 'WAVE_FP_FIT_DEG', 'fit_deg', kwargs, func_name)
+    fp_large_jump = pcheck(params, 'WAVE_FP_LARGE_JUMP', 'fp_large_jump',
+                           kwargs, func_name)
+    n_ord_start_fp = pcheck(params, 'WAVE_FP_N_ORD_START', 'n_ord_start_fp',
+                            kwargs, func_name)
+    n_ord_final_fp = pcheck(params, 'WAVE_FP_N_ORD_FINAL', 'n_ord_final_fp',
+                            kwargs, func_name)
+    cm_ind = pcheck(params, 'WAVE_FP_CM_IND', 'cm_ind', kwargs, func_name)
+    # find FP lines
+    llprops = find_fp_lines_new(params, llprops)
+    # get all_lines_2 from llprops
+    all_lines_2 = llprops['ALL_LINES_2']
+    # set up storage
+    llpos_all, xxpos_all, ampl_all = [], [], []
+    m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
+    ll_prev, m_prev = np.array([]), np.array([])
+    # ----------------------------------------------------------------------
+    # loop through the orders from red to blue
+    for order_num in range(n_ord_final_fp, n_ord_start_fp - 1, -1):
+        # select the lines in the order
+        gg = llprops['ORDPEAK'] == order_num
+        # store the initial wavelengths of the lines
+        ctmp = llprops['LITTROW_EXTRAP_PARAM_1'][order_num][::-1]
+        xtmp = llprops['XPEAK'][gg]
+        # floc['llpos'] = np.polynomial.chebyshev.chebval(xtmp, ctmp[::-1])
+        llpos = np.polyval(ctmp, xtmp)
+        # store the pixel positions of the lines
+        xxpos = llprops['XPEAK'][gg]
+        # get the median pixel difference between successive lines
+        #    (to check for gaps)
+        xxpos_diff_med = np.nanmedian(xxpos[1:] - xxpos[:-1])
+        # store the amplitudes of the lines
+        ampl = llprops['AMPPEAK'][gg]
+        # store the values of the blaze at the pixel positions of the lines
+        weight_bl = np.zeros_like(llpos)
+        # get and normalize blaze for the order
+        nblaze = blaze[order_num] / np.nanmax(blaze[order_num])
+        for it in range(1, len(llpos)):
+            weight_bl[it] = nblaze[int(np.round(xxpos[it]))]
+        # store the order numbers
+        order_rec = llprops['ORDPEAK'][gg]
+        # set up storage for line numbers
+        mpeak = np.zeros_like(llpos)
+        # line number for the last (reddest) line of the order (by FP equation)
+        mpeak[-1] = int(dopd0 / llpos[-1])
+        # calculate successive line numbers
+        for it in range(len(llpos) - 2, -1, -1):
+            # check for gap in x positions
+            flocdiff = xxpos[it + 1] - xxpos[it]
+            lowcond = xxpos_diff_med - (0.25 * xxpos_diff_med)
+            highcond = xxpos_diff_med + (0.25 * xxpos_diff_med)
+            if lowcond < flocdiff < highcond:
+                # no gap: add 1 to line number of previous line
+                mpeak[it] = mpeak[it + 1] + 1
+            # if there is a gap, fix it
+            else:
+                # get line x positions
+                flocx0 = xxpos[it]
+                flocx1 = xxpos[it + 1]
+                # get line wavelengths
+                floc0 = llpos[it]
+                floc1 = llpos[it + 1]
+                # estimate the number of peaks missed
+                m_offset = int(np.round((flocx1 - flocx0) / xxpos_diff_med))
+                # add to m of previous peak
+                mpeak[it] = mpeak[it + 1] + m_offset
+                # verify there's no dopd jump, fix if present
+                dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
+                dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
+                # do loops to check jumps
+                if dopd_1 - dopd_2 > fp_large_jump:
+                    while (dopd_1 - dopd_2) > fp_large_jump:
+                        mpeak[it] = mpeak[it] - 1
+                        dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
+                        dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
+                elif dopd_1 - dopd_2 < -fp_large_jump:
+                    while (dopd_1 - dopd_2) < -fp_large_jump:
+                        mpeak[it] = mpeak[it] + 1
+                        dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
+                        dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
+        # determination of observed effective cavity width
+        dopd_t = mpeak * llpos
+        # store m and d
+        m_fp = mpeak
+        dopd_t = dopd_t
+        # for orders other than the reddest, attempt to cross-match
+        if order_num != n_ord_final_fp:
+            # check for overlap
+            if llpos[cm_ind] > ll_prev[0]:
+                # find closest peak in overlap and get its m value
+                ind = np.abs(ll_prev - llpos[cm_ind]).argmin()
+                # the peak matching the reddest may not always be found!!
+                # define maximum permitted difference
+                llpos_diff_med = np.nanmedian(llpos[1:] - llpos[:-1])
+                # print(llpos_diff_med)
+                # print(abs(ll_prev[ind] - floc['llpos'][-1]))
+                # check if the difference is over the limit
+                if abs(ll_prev[ind] - llpos[-1]) > 1.5 * llpos_diff_med:
+                    # print('overlap line not matched')
+                    ll_diff = ll_prev[ind] - llpos[-1]
+                    ind2 = -2
+                    # loop over next reddest peak until they match
+                    while ll_diff > 1.5 * llpos_diff_med:
+                        # check there is still overlap
+                        if llpos[ind2] > ll_prev[0]:
+                            ind = np.abs(ll_prev - llpos[ind2]).argmin()
+                            ll_diff = ll_prev[ind] - llpos[ind2]
+                            ind2 -= 1
+                        else:
+                            break
+                m_match = m_prev[ind]
+                # save previous mpeak calculated
+                m_init = mpeak[cm_ind]
+                # recalculate m if there's an offset from cross_match
+                m_offset_c = m_match - m_init
+                if m_offset_c != 0:
+                    mpeak = mpeak + m_offset_c
+                    # print note for dev if different
+                    wargs = [order_num, m_match - m_init]
+                    WLOG(params, 'debug', TextEntry('90-017-00001', args=wargs))
+                    # recalculate observed effective cavity width
+                    dopd_t = mpeak * llpos
+                    # store new m and d
+                    m_fp = mpeak
+                    dopd_t = dopd_t
+            else:
+                # log that no overlap for order
+                wargs = [order_num]
+                WLOG(params, 'warning', TextEntry('10-017-00008', args=wargs))
+                # save previous mpeak calculated
+                m_init = mpeak[cm_ind]
+                m_test = mpeak[cm_ind]
+                # get dopd for last line of current & first of last order
+                dopd_curr = (m_test * llpos[cm_ind] - dopd0) * 1.e-3
+                dopd_prev = (m_prev[0] * ll_prev[0] - dopd0) * 1.e-3
+                # do loops to check jumps
+                if dopd_curr - dopd_prev > fp_large_jump:
+                    while (dopd_curr - dopd_prev) > fp_large_jump:
+                        m_test = m_test - 1
+                        dopd_curr = (m_test * llpos[cm_ind] - dopd0)
+                        dopd_curr = dopd_curr * 1.e-3
+                elif dopd_curr - dopd_prev < -fp_large_jump:
+                    while (dopd_curr - dopd_prev) < -fp_large_jump:
+                        m_test = m_test + 1
+                        dopd_curr = (m_test * llpos[cm_ind] - dopd0)
+                        dopd_curr = dopd_curr * 1.e-3
+                # recalculate m if there's an offset from cross_match
+                m_offset_c = m_test - m_init
+                if m_offset_c != 0:
+                    mpeak = mpeak + m_offset_c
+                    # print note for dev if different
+                    # print note for dev if different
+                    wargs = [order_num, mpeak[cm_ind] - m_init]
+                    WLOG(params, 'debug', TextEntry('90-017-00001', args=wargs))
+                    # recalculate observed effective cavity width
+                    dopd_t = mpeak * llpos
+                    # store new m and d
+                    m_fp = mpeak
+                    dopd_t = dopd_t
+
+        # add to storage
+        llpos_all += list(llpos)
+        xxpos_all += list(xxpos)
+        ampl_all += list(ampl)
+        m_fp_all += list(m_fp)
+        weight_bl_all += list(weight_bl)
+        order_rec_all += list(order_rec)
+        # difference in cavity width converted to microns
+        dopd_all += list((dopd_t - dopd0) * 1.e-3)
+        # save numpy arrays of current order to be previous in next loop
+        ll_prev = np.array(llpos)
+        m_prev = np.array(m_fp)
+    # ----------------------------------------------------------------------
+    # convert to numpy arrays
+    llpos_all = np.array(llpos_all)
+    xxpos_all = np.array(xxpos_all)
+    ampl_all = np.array(ampl_all)
+    m_fp_all = np.array(m_fp_all)
+    weight_bl_all = np.array(weight_bl_all)
+    order_rec_all = np.array(order_rec_all)
+    dopd_all = np.array(dopd_all)
+    # ----------------------------------------------------------------------
+    # fit a polynomial to line number v measured difference in cavity
+    #     width, weighted by blaze
+    with warnings.catch_warnings(record=True) as w:
+        coeffs = math.nanpolyfit(m_fp_all, dopd_all, fit_deg,
+                                 w=weight_bl_all)[::-1]
+    drs_log.warninglogger(params, w, funcname=func_name)
+    # get the values of the fitted cavity width difference
+    cfit = np.polyval(coeffs[::-1], m_fp_all)
+    # update line wavelengths using the new cavity width fit
+    newll = (dopd0 + cfit * 1000.) / m_fp_all
+    # ----------------------------------------------------------------------
+    # insert fp lines into all_lines2 (at the correct positions)
+    all_lines_2 = insert_fp_lines(params, newll, llpos_all, all_lines_2,
+                                  order_rec_all, xxpos_all, ampl_all)
+    # ----------------------------------------------------------------------
+    # add to loc
+    llprops['FP_LL_POS'] = llpos_all
+    llprops['FP_XX_POS'] = xxpos_all
+    llprops['FP_M'] = m_fp_all
+    llprops['FP_DOPD_OFFSET'] = dopd_all
+    llprops['FP_AMPL'] = ampl_all
+    llprops['FP_LL_POS_NEW'] = newll
+    llprops['ALL_LINES_2'] = all_lines_2
+    llprops['FP_DOPD_OFFSET_COEFF'] = coeffs
+    llprops['FP_DOPD_OFFSET_FIT'] = cfit
+    llprops['FP_ORD_REC'] = order_rec_all
+    # set sources
+    sources = ['FP_LL_POS', 'FP_XX_POS', 'FP_M', 'FP_DOPD_OFFSET',
+               'FP_AMPL', 'FP_LL_POS_NEW', 'ALL_LINES_2',
+               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT', 'FP_ORD_REC']
+    llprops.set_sources(sources, func_name)
+    # return llprops
+    return llprops
+
+
+def find_fp_lines_new(params, llprops, **kwargs):
+
+    func_name = __NAME__ + '.find_fp_lines_new()'
+    # get constants from params/kwargs
+    border = pcheck(params, 'WAVE_FP_BORDER_SIZE', 'border', kwargs,
+                    func_name)
+    size = pcheck(params, 'WAVE_FP_FPBOX_SIZE', 'size', kwargs, func_name)
+    siglimdict = pcheck(params, 'WAVE_FP_PEAK_SIG_LIM', 'siglimdict',
+                        kwargs, func_name, mapf='dict', dtype=float)
+    ipeakspace = pcheck(params, 'WAVE_FP_IPEAK_SPACING', 'ipeakspace',
+                        kwargs, func_name)
+    expwidth = pcheck(params, 'WAVE_FP_EXP_WIDTH', 'expwidth', kwargs,
+                      func_name)
+    cutwidth = pcheck(params, 'WAVE_FP_NORM_WIDTH_CUT', 'cutwidth',
+                      kwargs, func_name)
+    # get redefined variables (pipe inputs to llprops with correct names)
+    # set fpfile as ref file
+    llprops['SPEREF'] = llprops['FPDATA']
+    # set wavelength solution as the one from the HC lines
+    llprops['WAVE'] = llprops['LITTROW_EXTRAP_SOL_1']
+    # set lamp as FP
+    llprops['LAMP'] = 'fp'
+    # use rv module to get the position of FP peaks from reference file
+    #   first need to set all input parameters (via ckwargs)
+    ckwargs = dict(border=border, size=size, siglimdict=siglimdict,
+                  ipeakspace=ipeakspace)
+    # measure the positions of the FP peaks
+    llprops = rv.measure_fp_peaks(params, llprops, **ckwargs)
+    # use rv module to remove wide/spurious/doule-fitted peaks
+    #   first need to set all input parameters (via ckwargs)
+    ckwargs = dict(expwidth=expwidth, cutwidth=cutwidth,
+                   peak_spacing=ipeakspace)
+    # remove wide / double-fitted peaks
+    llprops = rv.remove_wide_peaks(params, llprops, **ckwargs)
+    # return loc
+    return llprops
+
+
+def insert_fp_lines(params, newll, llpos_all, all_lines_2, order_rec_all,
+                    xxpos_all, ampl_all, **kwargs):
+    func_name = __NAME__ + '.insert_fp_lines()'
+    # get constants from params/kwargs
+    n_ord_start_fp = pcheck(params, 'WAVE_FP_N_ORD_START', 'n_ord_start_fp',
+                            kwargs, func_name)
+    n_ord_final_fp = pcheck(params, 'WAVE_FP_N_ORD_FINAL', 'n_ord_final_fp',
+                            kwargs, func_name)
+    n_ord_start_hc = pcheck(params, 'WAVE_HC_N_ORD_START', 'n_ord_start_hc',
+                            kwargs, func_name)
+    n_ord_final_hc = pcheck(params, 'WAVE_HC_N_ORD_FINAL', 'n_ord_final_hc',
+                            kwargs, func_name)
+    # ----------------------------------------------------------------------
+    # insert FP lines into all_lines at the correct orders
+    # ----------------------------------------------------------------------
+    # define wavelength difference limit for keeping a line
+    fp_cut = 3*np.std(newll - llpos_all)
+    # define correct starting order number
+    start_order = min(n_ord_start_fp, n_ord_start_hc)
+    # define starting point for prepended zeroes
+    insert_count = 0
+    for order_num in range(n_ord_start_fp, n_ord_final_fp):
+        if order_num < n_ord_start_hc:
+            # prepend zeros to all_lines if FP solution is fitted for
+            #     bluer orders than HC was
+            all_lines_2.insert(insert_count, np.zeros((1, 8), dtype=float))
+            # add 1 to insertion counter for next order
+            insert_count += 1
+        elif order_num >= n_ord_final_hc:
+            # append zeros to all_lines if FP solution is fitted for
+            #     redder orders than HC was
+            all_lines_2.append(np.zeros((1, 8), dtype=float))
+        for it in range(len(order_rec_all)):
+            # find lines corresponding to order number
+            if order_rec_all[it] == order_num:
+                # check wavelength difference below limit
+                if abs(newll[it] - llpos_all[it]) < fp_cut:
+                    # put FP line data into an array
+                    # newdll = newll[it] - llpos_all[it]
+                    fp_line = np.array([newll[it], 0.0, 0.0, 0.0,
+                                        0.0, xxpos_all[it], 0.0, ampl_all[it]])
+                    fp_line = fp_line.reshape((1, 8))
+                    # append FP line data to all_lines
+                    torder = order_num - start_order
+                    tvalues = [all_lines_2[torder], fp_line]
+                    all_lines_2[torder] = np.concatenate(tvalues)
+    # return all lines 2
+    return all_lines_2
+
+
+def fit_1d_solution(params, llprops, wavell, start, end, fiber, iteration=0,
+                    **kwargs):
+
+    func_name = __NAME__ + '.fit_1d_solution()'
+
+    # get parameters from params/kwargs
+    errx_min = pcheck(params, 'WAVE_FP_ERRX_MIN', 'errx_min', kwargs, func_name)
+    fit_degree = pcheck(params, 'WAVE_FP_LL_DEGR_FIT', 'fit_degree', kwargs,
+                        func_name)
+    max_ll_fit_rms = pcheck(params, 'WAVE_FP_MAX_LLFIT_RMS', 'max_ll_fit_rms',
+                            kwargs, func_name)
+    t_order_start = pcheck(params, 'WAVE_HC_T_ORDER_START', 't_order_start',
+                           kwargs, func_name)
+    weight_thres = pcheck(params, 'WAVE_FP_WEIGHT_THRES', 'weight_thres',
+                          kwargs, func_name)
+
+    # get data from loc
+    all_lines = llprops['ALL_LINES_{0}'.format(iteration)]
+    # Get the number of orders
+    num_orders = wavell.shape[0]
+    # calculate echelle orders
+    o_orders = np.arange(start, end)
+    torder = t_order_start - o_orders
+
+    # ------------------------------------------------------------------
+    # fit 1d wavelength solution
+    # ------------------------------------------------------------------
+    # get maximum weight from errx_min
+    max_weight = 1.0 / errx_min ** 2
+    # -------------------------------------------------------------------------
+    # set up all storage
+    final_iter = []       # will fill [wmean, var, length]
+    final_param = []      # will fill the fit coefficients
+    final_details = []    # will fill [lines, x_fit, cfit, weight]
+    final_dxdl = []       # will fill the derivative of the fit coefficients
+    scale = []            # conversion factor to km/s
+    # set up global stats
+    sweight = 0.0
+    wsumres = 0.0
+    wsumres2 = 0.0
+    # loop around orders
+    for order_num in np.arange(num_orders):
+        # ---------------------------------------------------------------------
+        # get this orders parameters
+        weights = all_lines[order_num][:, 7]
+        diff_in_out = all_lines[order_num][:, 3]
+        centers = all_lines[order_num][:, 0]
+        pixelcenters = all_lines[order_num][:, 5]
+        # ---------------------------------------------------------------------
+        # only keep the lines that have postive weight
+        goodlinemask = weights > weight_thres
+        lines = centers[goodlinemask] + diff_in_out[goodlinemask]
+        x_fit = pixelcenters[goodlinemask]
+        # get the weights and modify by max_weight
+        weight = (weights[goodlinemask] * max_weight)
+        weight = weight / (weights[goodlinemask] + max_weight)
+        # ---------------------------------------------------------------------
+        # iteratively try to improve the fit
+        improve = 1
+        iter0, details = [], []
+        wmean, var = 0, 0
+        # sigma clip the largest rms until RMS < MAX_RMS
+        while improve:
+            # fit wavelength to pixel solution (with polynomial)
+            ww = np.sqrt(weight)
+            coeffs = math.nanpolyfit(lines, x_fit, fit_degree, w=ww)[::-1]
+            # calculate the fit
+            cfit = np.polyval(coeffs[::-1], lines)
+            # calculate the variance
+            res = cfit - x_fit
+            wsig = np.nansum(res**2 * weight) / np.nansum(weight)
+            wmean = (np.nansum(res * weight) / np.nansum(weight))
+            var = wsig - (wmean ** 2)
+            # append stats
+            iter0.append([np.array(wmean), np.array(var),
+                         np.array(coeffs)])
+            details.append([np.array(lines),  np.array(x_fit),
+                            np.array(cfit), np.array(weight)])
+            # check improve condition (RMS > MAX_RMS)
+            ll_fit_rms = abs(res) * np.sqrt(weight)
+            badrms = ll_fit_rms > max_ll_fit_rms
+            improve = np.nansum(badrms)
+            # set largest weighted residual to zero
+            largest = np.max(ll_fit_rms)
+            badpoints = ll_fit_rms == largest
+            weight[badpoints] = 0.0
+            # only keep the lines that have postive weight
+            goodmask = weight > 0.0
+            # check that we have points
+            if np.nansum(goodmask) == 0:
+                eargs = [order_num, max_ll_fit_rms]
+                WLOG(params, 'error', TextEntry('00-017-00007', args=eargs))
+            else:
+                lines = lines[goodmask]
+                x_fit = x_fit[goodmask]
+                weight = weight[goodmask]
+        # ---------------------------------------------------------------------
+        # log the fitted wave solution
+        wargs = [torder[order_num], t_order_start - torder[order_num],
+                 wavell[order_num][0], wavell[order_num][-1],
+                 wmean * 1000, np.sqrt(var) * 1000, len(iter0),
+                 len(details[0][1]), len(details[-1][1])]
+        WLOG(params, '', TextEntry('40-017-00023', args=wargs))
+        # ---------------------------------------------------------------------
+        # append to all storage
+        # ---------------------------------------------------------------------
+        # append the last wmean, var and number of lines
+        num_lines = len(details[-1][1])
+        final_iter.append([iter0[-1][0], iter0[-1][1], num_lines])
+        # append the last coefficients
+        final_param.append(iter0[-1][2])
+        # append the last details [lines, x_fit, cfit, weight]
+        final_details.append(np.array(details[-1]))
+        # append the derivative of the coefficients
+        poly = np.poly1d(iter0[-1][2][::-1])
+        dxdl = np.polyder(poly)(details[-1][0])
+        final_dxdl.append(dxdl)
+        # ---------------------------------------------------------------------
+        # global statistics
+        # ---------------------------------------------------------------------
+        # work out conversion factor
+        convert = speed_of_light / (dxdl * details[-1][0])
+        # get res1
+        res1 = details[-1][1] - details[-1][2]
+        # sum the weights (recursively)
+        sweight += np.nansum(details[-1][3])
+        # sum the weighted residuals in km/s
+        wsumres += np.nansum(res1 * convert * details[-1][3])
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.nansum(details[-1][3] * (res1 * convert) ** 2)
+        # store the conversion to km/s
+        scale.append(convert)
+    # convert to arrays
+    final_iter = np.array(final_iter)
+    final_param = np.array(final_param)
+    # calculate the final var and mean
+    final_mean = (wsumres / sweight)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the global stats
+    total_lines = np.nansum(final_iter[:, 2])
+    wargs = [fiber, final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+             total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
+    WLOG(params, 'info', TextEntry('40-017-00024', args=wargs))
+    # save outputs to loc
+    llprops['X_MEAN_{0}'.format(iteration)] = final_mean
+    llprops['X_VAR_{0}'.format(iteration)] = final_var
+    llprops['X_ITER_{0}'.format(iteration)] = final_iter
+    llprops['X_PARAM_{0}'.format(iteration)] = final_param
+    llprops['X_DETAILS_{0}'.format(iteration)] = final_details
+    llprops['SCALE_{0}'.format(iteration)] = scale
+    # set sources
+    keys = ['X_MEAN_{0}'.format(iteration), 'X_VAR_{0}'.format(iteration),
+            'X_ITER_{0}'.format(iteration), 'X_PARAM_{0}'.format(iteration),
+            'X_DETAILS_{0}'.format(iteration), 'SCALE_{0}'.format(iteration)]
+    llprops.set_sources(keys, func_name)
+
+    # ------------------------------------------------------------------
+    # invert 1d wavelength solution
+    # ------------------------------------------------------------------
+    # get data from loc
+    details = llprops['X_DETAILS_{0}'.format(iteration)]
+    iter0 = llprops['X_ITER_{0}'.format(iteration)]
+    # Get the number of orders
+    num_orders = wavell.shape[0]
+    # loop around orders
+    inv_details = []
+    inv_params = []
+    sweight = 0.0
+    wsumres = 0.0
+    wsumres2 = 0.0
+    # loop around orders
+    for order_num in np.arange(num_orders):
+        # get the lines and wavelength fit for this order
+        lines = details[order_num][0]
+        cfit = details[order_num][2]
+        wei = details[order_num][3]
+        # get the number of lines
+        num_lines = len(lines)
+        # set weights
+        weight = np.ones(num_lines, dtype=float)
+        # get fit coefficients
+        coeffs = math.nanpolyfit(cfit, lines, fit_degree, w=weight)[::-1]
+        # get the y values for the coefficients
+        icfit = np.polyval(coeffs[::-1], cfit)
+        # work out the residuals
+        res = icfit - lines
+        # work out the normalised res in km/s
+        nres = speed_of_light * (res / lines)
+        # append values to storage
+        inv_details.append([nres, wei])
+        inv_params.append(coeffs)
+        # ------------------------------------------------------------------
+        # invert parameters
+        # ------------------------------------------------------------------
+        # sum the weights (recursively)
+        sweight += np.nansum(wei)
+        # sum the weighted residuals in km/s
+        wsumres += np.nansum(nres * wei)
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.nansum(wei * nres ** 2)
+    # calculate the final var and mean
+    final_mean = (wsumres / sweight)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # ------------------------------------------------------------------
+    # log the inversion process
+    total_lines = np.nansum(iter0[:, 2])
+    wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+             1000.0 * np.sqrt(final_var / total_lines)]
+    WLOG(params, '', TextEntry('40-017-00025', args=wargs))
+    # ------------------------------------------------------------------
+    # save outputs to loc
+    llprops['LL_MEAN_{0}'.format(iteration)] = final_mean
+    llprops['LL_VAR_{0}'.format(iteration)] = final_var
+    llprops['LL_PARAM_{0}'.format(iteration)] = np.array(inv_params)
+    llprops['LL_DETAILS_{0}'.format(iteration)] = inv_details
+    # set the sources
+    keys = ['LL_MEAN_{0}'.format(iteration), 'LL_VAR_{0}'.format(iteration),
+            'LL_PARAM_{0}'.format(iteration),
+            'LL_DETAILS_{0}'.format(iteration)]
+    llprops.set_sources(keys, func_name)
+    # ------------------------------------------------------------------
+    # get the total number of orders to fit
+    num_orders = len(llprops['ALL_LINES_{0}'.format(iteration)])
+    # get the dimensions of the data
+    ydim, xdim = llprops['NBO'], llprops['NBPIX']
+    # get inv_params
+    inv_params = llprops['LL_PARAM_{0}'.format(iteration)]
+    # set pixel shift to zero, as doesn't apply here
+    pixel_shift_inter = 0
+    pixel_shift_slope = 0
+    # get new line list
+    ll_out = get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope,
+                                      inv_params, xdim, num_orders)
+    # get the first derivative of the line list
+    dll_out = get_dll_from_coefficients(inv_params, xdim, num_orders)
+    # find the central pixel value
+    centpix = ll_out.shape[1]//2
+    # get the mean pixel scale (in km/s/pixel) of the central pixel
+    norm = dll_out[:, centpix]/ll_out[:, centpix]
+    meanpixscale = speed_of_light * np.nansum(norm)/len(ll_out[:, centpix])
+    # get the total number of lines used
+    total_lines = int(np.nansum(llprops['X_ITER_2'][:, 2]))
+    # add to llprops
+    llprops['LL_OUT_{0}'.format(iteration)] = ll_out
+    llprops['DLL_OUT_{0}'.format(iteration)] = dll_out
+    llprops['TOTAL_LINES_{0}'.format(iteration)] = total_lines
+    # set sources
+    keys = ['LL_OUT_{0}'.format(iteration), 'DLL_OUT_{0}'.format(iteration),
+            'TOTAL_LINES_{0}'.format(iteration)]
+    llprops.set_sources(keys, func_name)
+    # log mean pixel scale at center
+    wargs = [fiber, meanpixscale]
+    WLOG(params, 'info', TextEntry('40-017-00026', args=wargs))
+    # ------------------------------------------------------------------
+    return llprops
+
+
+def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params,
+                             nx, nbo):
+    """
+    Use the coefficient matrix "params" to construct fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param pixel_shift_inter: float, the intercept of a linear pixel shift
+    :param pixel_shift_slope: float, the slope of a linear pixel shift
+
+    :param params: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+    """
+    # create x values
+    xfit = np.arange(nx) + pixel_shift_inter + (
+                pixel_shift_slope * np.arange(nx))
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        # (numpy needs them backwards)
+        coeffs = params[order_num][::-1]
+        # get the y fit using the coefficients for this order and xfit
+        yfit = np.polyval(coeffs, xfit)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
+
+def get_ll_from_coefficients_cheb(pixel_shift_inter, pixel_shift_slope, params,
+                             nx, nbo):
+    """
+    Use the coefficient matrix "params" to construct fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param pixel_shift_inter: float, the intercept of a linear pixel shift
+    :param pixel_shift_slope: float, the slope of a linear pixel shift
+
+    :param params: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+    """
+    # create x values
+    xfit = np.arange(nx) + pixel_shift_inter + (
+                pixel_shift_slope * np.arange(nx))
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        # (numpy needs them backwards)
+        coeffs = params[order_num]
+        # get the y fit using the coefficients for this order and xfit
+        yfit = np.polynomial.chebyshev.chebval(xfit, coeffs)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
+
+def get_dll_from_coefficients(params, nx, nbo):
+    """
+    Derivative of the coefficients, using the coefficient matrix "params"
+    to construct the derivative of the fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param params: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                dyfit = p[0]*(N-1)*x**(N-2) + p[1]*(N-2)*x**(N-3) + ... +
+                        p[N-3]*x + p[N-2]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
+    """
+
+    # create x values
+    xfit = np.arange(nx)
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        coeffs = params[order_num]
+        # get the y fit using the coefficients for this order and xfit
+        yfiti = []
+        # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
+        for it in range(len(coeffs) - 1):
+            yfiti.append((it + 1) * coeffs[it + 1] * xfit ** it)
+        yfit = np.nansum(yfiti, axis=0)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
 
 
 # =============================================================================

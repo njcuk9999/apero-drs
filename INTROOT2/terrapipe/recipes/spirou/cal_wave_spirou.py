@@ -233,20 +233,35 @@ def __main__(recipe, params):
                 hc_update.write()
 
             # --------------------------------------------------------------
-            # FP wavelength solution
+            # FP addition to wavelength solution
             # --------------------------------------------------------------
+            # check if there's a FP input and if HC solution passed QCs
+            if (fp_e2ds_file is not None) and params['QC']:
+                # ----------------------------------------------------------
+                # FP wavelength solution
+                # ----------------------------------------------------------
+                fpprops, wprops = wave.fp_wavesol(params, fp_e2ds_file, hcprops,
+                                                  wprops, fiber)
 
-            # --------------------------------------------------------------
-            # FP quality control
-            # --------------------------------------------------------------
+                # ----------------------------------------------------------
+                # FP quality control
+                # ----------------------------------------------------------
 
-            # --------------------------------------------------------------
-            # FP filesave
-            # --------------------------------------------------------------
+                # ----------------------------------------------------------
+                # write FP wavelength solution to file
+                # ----------------------------------------------------------
 
-            # --------------------------------------------------------------
-            # Update calibDB with FP solution
-            # --------------------------------------------------------------
+                # ----------------------------------------------------------
+                # Update calibDB with FP solution
+                # ----------------------------------------------------------
+
+            # If the HC solution failed QCs we do not compute FP-HC solution
+            elif (fp_e2ds_file is not None) and (not params['QC']):
+                WLOG(params, 'warning', TextEntry('10-017-00006'))
+            # If there is no FP file we log that
+            else:
+                WLOG(params, 'warning', TextEntry('10-017-00007'))
+
 
 
     # ----------------------------------------------------------------------
