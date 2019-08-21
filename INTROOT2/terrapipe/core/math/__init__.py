@@ -23,6 +23,8 @@ gauss_fit_nn = general.gauss_fit_nn
 
 gaussian_function_nn =  general.gaussian_function_nn
 
+gauss_function = general.gauss_function
+
 gauss_fit_s = general.gauss_fit_s
 
 iuv_spline = general.iuv_spline
