@@ -562,11 +562,9 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, fiber, **kwargs):
     # TODO: Is this the same as WAVE_HC_N_ORD_FINAL or WAVE_FP_N_ORD_FINAL
     # TODO:   Or another different one???
     end = pcheck(params, 'WAVE_HC_N_ORD_FINAL')
-
     # Log the file we are using
     wargs = [fpe2dsfile.filename]
     WLOG(params, '', TextEntry('40-017-00022', args=wargs))
-
     # ------------------------------------------------------------------
     # Get the FP solution
     # ------------------------------------------------------------------
@@ -583,7 +581,6 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, fiber, **kwargs):
         # # Plot the FP line wavelength residuals
         # sPlt.wave_fp_wavelength_residuals(p, loc)
         pass
-
     # ------------------------------------------------------------------
     # Create new wavelength solution
     # ------------------------------------------------------------------
@@ -592,24 +589,297 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, fiber, **kwargs):
     # fit the 1d solution
     llprops = fit_1d_solution(params, llprops, wavell, start, end, fiber,
                               iteration=2)
-
-
-
     # ------------------------------------------------------------------
     return llprops
 
 
-def fp_wavesol_lovis(params, llprops, fpe2dsfile):
+def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, **kwargs):
+
+    func_name = __NAME__ + '.fp_wavesol_lovis()'
+    # get parameters from params/kwargs
+    n_init = pcheck(params, 'WAVE_HC_N_ORD_START', 'n_init', kwargs, func_name)
+    n_fin = pcheck(params, 'WAVE_HC_N_ORD_FINAL', 'n_fin', kwargs, func_name)
+    wave_blaze_thres = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'wave_blaze_thres',
+                              kwargs, func_name)
+    xdiff_min = pcheck(params, 'WAVE_FP_XDIF_MIN', 'xdiff_min', kwargs,
+                       func_name)
+    xdiff_max = pcheck(params, 'WAVE_FP_XDIF_MAX', 'xdiff_max', kwargs,
+                       func_name)
+    dopd0 = pcheck(params, 'WAVE_FP_DOPD0', 'dopd0', kwargs, func_name)
+    ll_offset = pcheck(params, 'WAVE_FP_LL_OFFSET', 'll_offset', kwargs,
+                       func_name)
+    dv_max = pcheck(params, 'WAVE_FP_DV_MAX', 'dv_max', kwargs, func_name)
+    ll_fit_degree = pcheck(params, 'WAVE_FP_LL_DEGR_FIT', 'll_fit_degree',
+                           kwargs, func_name)
 
     # Log the file we are using
     wargs = [fpe2dsfile.filename]
     WLOG(params, '', TextEntry('40-017-00022', args=wargs))
 
     # TODO: Work here
+    # ------------------------------------------------------------------
+    # Find FP lines
+    # ------------------------------------------------------------------
+    # find the fp lines
+    llprops = find_fp_lines_new(params, llprops)
+
+    # ------------------------------------------------------------------
+    # Number FP peaks differentially and identify gaps
+    # ------------------------------------------------------------------
+    # set up storage
+    # FP peak wavelengths
+    fp_ll = []
+    # FP peak orders
+    fp_order = []
+    # FP peak pixel centers
+    fp_xx = []
+    # FP peak differential numbering
+    dif_n = []
+    # FP peak amplitudes
+    fp_amp = []
+    # loop over orders
+    for order_num in range(n_init, n_fin):
+        # ------------------------------------------------------------------
+        # Number FP peaks differentially and identify gaps
+        # ------------------------------------------------------------------
+        # get mask of FP lines for order
+        mask_fp = llprops['ORDPEAK'] == order_num
+        # get x values of FP lines
+        x_fp = llprops['XPEAK'][mask_fp]
+        # get amplitudes of FP lines (to save)
+        amp_fp = llprops['AMPPEAK'][mask_fp]
+        # get the coeff for this order
+        poly_wave_coeffs = llprops['POLY_WAVE_SOL'][order_num]
+        # get 30% blaze mask
+        with warnings.catch_warnings(record=True) as _:
+            maxblaze = np.nanmax(blaze[order_num])
+            mb = np.where(blaze[order_num] > wave_blaze_thres * maxblaze)
+        # keep only x values at above 30% blaze
+        bmask = (np.nanmax(mb) > x_fp) & (np.nanmin(mb < x_fp))
+        amp_fp = amp_fp[bmask]
+        x_fp = x_fp[bmask]
+        # initial differential numbering (assuming no gaps)
+        peak_num_init = np.arange(len(x_fp))
+        # find gaps in x
+        # get array of x differences
+        x_diff = x_fp[1:] - x_fp[:-1]
+        # get median of x difference
+        med_x_diff = np.nanmedian(x_diff)
+        # get indices where x_diff differs too much from median
+        cond1 = x_diff < xdiff_min * med_x_diff
+        cond2 = x_diff > xdiff_max * med_x_diff
+        x_gap_ind = np.where(cond1 | cond2)
+        # get the opposite mask (no-gap points)
+        cond3 = x_diff > xdiff_min * med_x_diff
+        cond4 = x_diff < xdiff_max * med_x_diff
+        x_good_ind = np.where(cond3 & cond4)
+        # fit x_fp v x_diff for good points
+        good_xfp = x_fp[1:][x_good_ind]
+        good_xdiff = x_diff[x_good_ind]
+        cfit_xdiff = math.nanpolyfit(good_xfp, good_xdiff, 2)
+        # loop over gap points
+        for i in range(np.shape(x_gap_ind)[1]):
+            # get estimated xdiff value from the fit
+            x_diff_aux = np.polyval(cfit_xdiff, x_fp[1:][x_gap_ind[0][i]])
+            # estimate missed peaks
+            x_jump = np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux)) - 1
+            # add the jump
+            peak_num_init[x_gap_ind[0][i] + 1:] += int(x_jump)
+        # Calculate original (HC sol) FP wavelengths
+        fp_ll.append(np.polyval(poly_wave_coeffs[::-1], x_fp))
+        # save differential numbering
+        dif_n.append(peak_num_init)
+        # save order number
+        fp_order.append(np.ones(len(x_fp)) * order_num)
+        # save x positions
+        fp_xx.append(x_fp)
+        # save amplitudes
+        fp_amp.append(amp_fp)
+
+    # ----------------------------------------------------------------------
+    # Assign absolute FP numbers for reddest order
+    # ----------------------------------------------------------------------
+    # determine absolute number for reference peak of reddest order
+    # take reddest FP line
+    m_init = int(round(dopd0 / fp_ll[-1][-1]))
+    # absolute numbers for reddest order:
+    # get differential numbers for reddest order peaks
+    aux_n = dif_n[n_fin - n_init - 1]
+    # calculate absolute peak numbers for reddest order
+    m_aux = m_init - aux_n + aux_n[-1]
+    # set m vector
+    m = m_aux
+    # initialise vector of order numbers for previous order
+    m_ord_prev = m_aux
+
+    # ----------------------------------------------------------------------
+    # Assign absolute FP numbers for rest of orders by wavelength matching
+    # ----------------------------------------------------------------------
+    # loop over orders from reddest-1 to bluest
+    for ord_num in range(n_fin - n_init - 2, -1, -1):
+        # define auxiliary arrays with ll for order and previous order
+        fp_ll_ord = fp_ll[ord_num]
+        fp_ll_ord_prev = fp_ll[ord_num + 1]
+        # define median ll diff for both orders
+        fp_ll_diff = np.nanmedian(fp_ll_ord[1:] - fp_ll_ord[:-1])
+        fp_ll_diff_prev = np.nanmedian(fp_ll_ord_prev[1:] -
+                                       fp_ll_ord_prev[:-1])
+        # check if overlap
+        if fp_ll_ord[-1] >= fp_ll_ord_prev[0]:
+            # get overlapping peaks for both
+            # allow WAVE_FP_LL_OFFSET*lldiff offsets
+            ord_over_lim = fp_ll_ord_prev[0] - (ll_offset * fp_ll_diff_prev)
+            prev_ord_lim = fp_ll_ord[-1] + (ll_offset * fp_ll_diff)
+            mask_ord_over = fp_ll_ord >= ord_over_lim
+            fp_ll_ord_over = fp_ll_ord[mask_ord_over]
+            mask_prev_over = fp_ll_ord_prev <= prev_ord_lim
+            fp_ll_prev_over = fp_ll_ord_prev[mask_prev_over]
+            # loop over peaks to find closest match
+            mindiff_peak = []
+            mindiff_peak_ind = []
+            for j in range(len(fp_ll_ord_over)):
+                # get differences for peak j
+                diff = np.abs(fp_ll_prev_over - fp_ll_ord_over[j])
+                # save the minimum and its index
+                mindiff_peak.append(np.min(diff))
+                mindiff_peak_ind.append(np.argmin(diff))
+            # get the smallest difference and its index
+            mindiff_all = np.min(mindiff_peak)
+            mindiff_all_ind = np.argmin(mindiff_peak)
+
+            # check that smallest difference is in fact a true line match
+            if mindiff_all < (ll_offset * fp_ll_diff):
+                # set the match m index as the one for the smallest diff
+                m_match_ind = mindiff_peak_ind[mindiff_all_ind]
+                # get line number for peak with smallest difference
+                m_end = m_ord_prev[mask_prev_over][m_match_ind]
+                # get differential peak number for peak with smallest diff
+                dif_n_match = dif_n[ord_num][mask_ord_over][mindiff_all_ind]
+                # define array of absolute peak numbers for the order
+                m_ord = m_end + dif_n_match - dif_n[ord_num]
+            # if not treat as no overlap
+            else:
+                m_ord = no_overlap_match_calc(params, ord_num, fp_ll_ord,
+                                              fp_ll_ord_prev, fp_ll_diff,
+                                              fp_ll_diff_prev, m_ord_prev,
+                                              dif_n)
+        # if no overlap
+        else:
+            m_ord = no_overlap_match_calc(params, ord_num, fp_ll_ord,
+                                          fp_ll_ord_prev, fp_ll_diff,
+                                          fp_ll_diff_prev, m_ord_prev,
+                                          dif_n)
+        # insert absolute order numbers at the start of m
+        m = np.concatenate((m_ord, m))
+        # redefine order number vector for previous order
+        m_ord_prev = m_ord
 
 
+    # ----------------------------------------------------------------------
+    # Derive d for each HC line
+    # ----------------------------------------------------------------------
+    # set up storage
+    # m(x) fit coefficients
+    coeff_xm_all = []
+    # m(x) fit dispersion
+    xm_disp = []
+    # effective cavity width for the HC lines
+    d = []
+    # 1/line number of the closest FP line to each HC line
+    one_m_d = []
+    # line number of the closest FP line to each HC line
+    m_d = []
+    # wavelength of HC lines
+    hc_ll_test = []
+    # pixel value of kept HC lines
+    hc_xx_test = []
+    # order of kept hc lines
+    hc_ord_test = []
+    # save mask for m(x) fits
+    xm_mask = []
+    # loop over orders
+    for order_num in range(n_fin - n_init):
+        # create order mask
+        fp_order_rav = np.concatenate(fp_order).ravel()
+        ind_ord = np.where(fp_order_rav == order_num + n_init)
+        # get FP line pixel positions for the order
+        fp_x_ord = fp_xx[order_num]
+        # get FP line numbers for the order
+        m_ord = m[ind_ord]
+        # HC mask for the order - keep best lines (small dv) only
+        cond1 = abs(llprops['DV_T']) < dv_max
+        cond2 = llprops['ORD_T'] == order_num + n_init
+        hc_mask = np.where(cond1 & cond2)
+        # get HC line pixel positions for the order
+        hc_x_ord = llprops['XGAU_T'][hc_mask]
+        # get 30% blaze mask
+        with warnings.catch_warnings(record=True) as _:
+            maxblaze = np.nanmax(blaze[order_num])
+            mb = np.where(blaze[order_num] > (wave_blaze_thres * maxblaze))
+        # keep only x values at above 30% blaze
+        blaze_mask = np.logical_and(np.nanmax(mb) > hc_x_ord,
+                                    np.nanmin(mb) < hc_x_ord)
+        hc_x_ord = hc_x_ord[blaze_mask]
+        # get corresponding catalogue lines from loc
+        hc_ll_ord_cat = llprops['WAVE_CATALOG'][hc_mask][blaze_mask]
 
+        # fit x vs m for FP lines w/sigma-clipping
+        coeff_xm, mask = sigclip_polyfit(params, fp_x_ord, m_ord, ll_fit_degree)
+        # save coefficients
+        coeff_xm_all.append(coeff_xm)
+        # save dispersion
+        polyval_xm = np.polyval(coeff_xm, fp_x_ord[mask])
+        xm_disp.append(np.std(m_ord[mask] - polyval_xm))
+        # save mask
+        xm_mask.append(mask)
+        # get fractional m for HC lines from fit
+        m_hc = np.polyval(coeff_xm, hc_x_ord)
+        # get cavity width for HC lines from FP equation
+        d_hc = m_hc * hc_ll_ord_cat / 2.
+        # save in arrays:
+        # cavity width for hc lines
+        d.append(d_hc)
+        # 1/m for HC lines
+        one_m_d.append(1 / m_hc)
+        # m for HC lines
+        m_d.append(m_hc)
+        # catalogue wavelengths
+        hc_ll_test.append(hc_ll_ord_cat)
+        # HC line centers (pixel position)
+        hc_xx_test.append(hc_x_ord)
+        # HC line orders
+        hc_ord_test.append((order_num + n_init) * np.ones_like(hc_x_ord))
 
+    # residuals plot
+    if params['DRS_PLOT'] and params['DRS_DEBUG'] > 0:
+        # TODO: Add plot
+        # sPlt.fp_m_x_residuals(p, fp_order, fp_xx, m, xm_mask, coeff_xm_all)
+        pass
+
+    # flatten arrays
+    one_m_d = np.concatenate(one_m_d).ravel()
+    d = np.concatenate(d).ravel()
+    m_d = np.concatenate(m_d).ravel()
+    hc_ll_test = np.concatenate(hc_ll_test).ravel()
+    hc_ord_test = np.concatenate(hc_ord_test).ravel()
+
+    # log absolute peak number span
+    wargs = [round(m_d[0]), round(m_d[-1])]
+    WLOG(params, '', TextEntry('40-017-00027', args=wargs))
+
+    # TODO: GOT TO HERE IN TERRAPIPE CONVERSION (2019-08-21)
+
+    # ----------------------------------------------------------------------
+    # Fit (1/m) vs d
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Update FP peak wavelengths
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Fit wavelength solution from FP peaks
+    # ----------------------------------------------------------------------
 
     # ------------------------------------------------------------------
     # Multi-order HC lines plot
@@ -629,7 +899,7 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile):
 
     # # TODO test linmin fitting
 
-    return 0
+    return llprops
 
 
 # =============================================================================
@@ -3038,6 +3308,118 @@ def get_dll_from_coefficients(params, nx, nbo):
     # return line list
     return ll
 
+
+def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
+                          fp_ll_diff, fp_ll_diff_prev, m_ord_prev, dif_n,
+                          **kwargs):
+    """
+    Calculate the absolute FP peak numbers when there is no overlap from one
+    order to the next by estimating the number of peaks missed
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            WAVE_FP_LLDIF_MIN: float, defines the minimum fraction of the median
+                        wavelength difference we accept as no gap between lines
+            WAVE_FP_LLDIF_MIN: float, defines the maximum fraction of the median
+                        wavelength difference we accept as no gap between lines
+
+    :param ord_num: the order number
+    :param fp_ll_ord: the FP peak wavelengths for the current order
+    :param fp_ll_ord_prev: the FP peak wavelengths for the previous order
+    :param fp_ll_diff: wavelength difference between consecutive FP peaks
+                       (current order)
+    :param fp_ll_diff_prev: wavelength difference between consecutive FP peaks
+                       (previous order)
+    :param m_ord_prev: absolute peak numbers of previous order
+    :param dif_n: differential peak numbering for all orders
+
+    :return m_ord: absolute peak numbers for current order
+
+    """
+    func_name = __NAME__ + '.no_overlap_match_calc()'
+    # get constants from params/kwargs
+    lldif_min = pcheck(params, 'WAVE_FP_LLDIF_MIN', 'lldif_max', kwargs,
+                       func_name)
+    lldif_max = pcheck(params, 'WAVE_FP_LLDIF_MAX', 'lldif_min', kwargs,
+                       func_name)
+    # print warning re no overlap
+    WLOG(params, 'warning', TextEntry('10-017-00009', args=[ord_num]))
+    # masks to keep only difference between no-gap lines for current order
+    mask_ll_diff = fp_ll_diff > (lldif_min * np.nanmedian(fp_ll_diff))
+    mask_ll_diff &= fp_ll_diff < (lldif_max * np.nanmedian(fp_ll_diff))
+    # get previous min/max limits
+    prevminlim = lldif_min * np.nanmedian(fp_ll_diff_prev)
+    prevmaxlim = lldif_max * np.nanmedian(fp_ll_diff_prev)
+    # masks to keep only difference between no-gap lines for previous order
+    mask_ll_diff_prev = fp_ll_diff_prev > prevminlim
+    mask_ll_diff_prev &= fp_ll_diff_prev < prevmaxlim
+    # get last diff for current order, first for prev
+    ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
+    ll_diff_init = fp_ll_diff_prev[mask_ll_diff_prev][0]
+    # calculate wavelength difference between end lines
+    ll_miss = fp_ll_ord_prev[0] - fp_ll_ord[-1]
+    # estimate lines missed using ll_diff from each order
+    m_end_1 = int(np.round(ll_miss / ll_diff_fin))
+    m_end_2 = int(np.round(ll_miss / ll_diff_init))
+    # check they are the same, print warning if not
+    if not m_end_1 == m_end_2:
+        # log that we are missing line estimate miss-match
+        wargs = [m_end_1, m_end_2, ll_diff_fin, ll_diff_init]
+        WLOG(params, 'warning', TextEntry('10-017-00010', args=wargs))
+    # calculate m_end, absolute peak number for last line of the order
+    m_end = int(m_ord_prev[0]) + m_end_1
+    # define array of absolute peak numbers for the order
+    m_ord = m_end + dif_n[ord_num][-1] - dif_n[ord_num]
+    # return m_ord
+    return m_ord
+
+
+def sigclip_polyfit(params, xx, yy, degree, weight=None, **kwargs):
+    """
+    Fit a polynomial with sigma-clipping of outliers
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            WAVE_SIGCLIP: clipping parameter
+
+    :param xx: numpy array, x values to fit
+    :param yy: numpy array, y values to fit
+    :param degree: int, the degree of fit
+    :param weight: optional, numpy array, weights to the fit
+
+    :return coeff: the fit coefficients
+    :return mask: the sigma-clip mask
+
+    """
+    func_name = __NAME__ + '.sigclip_polyfit()'
+    # read constants from p
+    sigclip = pcheck(params, 'WAVE_FP_SIGCLIP', 'sigclip', kwargs, func_name)
+    # initialise the while loop
+    sigmax = sigclip + 1
+    # initialise mask
+    mask = np.ones_like(xx, dtype='Bool')
+    # set up coeffs
+    coeff = np.zeros(degree)
+    # while we are above sigclip
+    while sigmax > sigclip:
+        # Need to mask weight here if not None
+        if weight is not None:
+            weight2 = weight[mask]
+        else:
+            weight2 = None
+        # fit on masked values
+        coeff = math.nanpolyfit(xx[mask], yy[mask], deg=degree, w=weight2)
+        # get residuals (not masked or dimension breaks)
+        res = yy - np.polyval(coeff, xx)
+        # normalise the residuals
+        res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+        # get the max residual in sigmas
+        sigmax = np.max(res[mask])
+        # mask all outliers
+        if sigmax > sigclip:
+            mask[res >= sigclip] = False
+    # return the coefficients and mask
+    return coeff, mask
 
 
 # =============================================================================
