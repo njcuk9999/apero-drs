@@ -835,7 +835,7 @@ THERMAL_ENVELOPE_PERCENTILE.value = 10
 
 
 # =============================================================================
-# CALIBRATION: WAVE SETTINGS
+# CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
@@ -882,18 +882,15 @@ WAVE_PIXEL_SHIFT_INTER.value = 0.0    #  6.26637214e+00
 WAVE_PIXEL_SHIFT_SLOPE = WAVE_PIXEL_SHIFT_SLOPE.copy(__NAME__)
 WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    #  4.22131253e-04
 
+
+# =============================================================================
+# CALIBRATION: WAVE HC SETTINGS
+# =============================================================================
 # Define the mode to calculate the hc wave solution
 #   Should be one of the following:
 #       0 - Etienne method
 WAVE_MODE_HC = WAVE_MODE_HC.copy(__NAME__)
 WAVE_MODE_HC.value = 0
-
-# Define the mode to calculate the hc wave solution
-#   Should be one of the following:
-#       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
-#       1 - following C Lovis (previously WAVE_NEW)
-WAVE_MODE_FP = WAVE_MODE_FP.copy(__NAME__)
-WAVE_MODE_FP.value = 0
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 #     so a 2*W+1 window
@@ -994,17 +991,33 @@ WAVE_HC_T_ORDER_START = WAVE_HC_T_ORDER_START.copy(__NAME__)
 WAVE_HC_T_ORDER_START.value = 79
 
 #  Defines order from which the solution is calculated
-WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
-WAVE_N_ORD_START.value = 0
+WAVE_HC_N_ORD_START = WAVE_HC_N_ORD_START.copy(__NAME__)
+WAVE_HC_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated
-WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 47
+WAVE_HC_N_ORD_FINAL = WAVE_HC_N_ORD_FINAL.copy(__NAME__)
+WAVE_HC_N_ORD_FINAL.value = 47
 
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = WAVE_HC_QC_SIGMA_MAX.copy(__NAME__)
 WAVE_HC_QC_SIGMA_MAX.value = 8
 
+# Define the minimum instrumental error
+WAVE_FP_ERRX_MIN = WAVE_FP_ERRX_MIN.copy(__NAME__)
+WAVE_FP_ERRX_MIN.value = 0.01  # 0.03
+
+#  Define the wavelength fit polynomial order
+WAVE_FP_LL_DEGR_FIT = WAVE_FP_LL_DEGR_FIT.copy(__NAME__)
+WAVE_FP_LL_DEGR_FIT.value = 4  # 5   #4  # 4
+
+#  Define the max rms for the wavelength sigma-clip fit
+WAVE_FP_MAX_LLFIT_RMS = WAVE_FP_MAX_LLFIT_RMS.copy(__NAME__)
+WAVE_FP_MAX_LLFIT_RMS.value = 3.0
+
+#  Define the weight threshold (small number) below which we do not keep fp
+#     lines
+WAVE_FP_WEIGHT_THRES = WAVE_FP_WEIGHT_THRES.copy(__NAME__)
+WAVE_FP_WEIGHT_THRES.value = 1.0e-30
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
@@ -1042,6 +1055,74 @@ WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 # TODO needs to be the same as ic_ll_degr_fit
 WAVE_LITTROW_EXT_ORDER_FIT_DEG = WAVE_LITTROW_EXT_ORDER_FIT_DEG.copy(__NAME__)
 WAVE_LITTROW_EXT_ORDER_FIT_DEG.value = 4  # 5  # 4
+
+# =============================================================================
+# CALIBRATION: WAVE FP SETTINGS
+# =============================================================================
+# Define the mode to calculate the hc wave solution
+#   Should be one of the following:
+#       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
+#       1 - following C Lovis (previously WAVE_NEW)
+WAVE_MODE_FP = WAVE_MODE_FP.copy(__NAME__)
+WAVE_MODE_FP.value = 0
+
+# Define the initial value of FP effective cavity width 2xd in nm
+#   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
+WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
+WAVE_FP_DOPD0.value = 2.44962434814043e7    # 2.44999e7  # 2.45e7
+
+#  Define the polynomial fit degree between FP line numbers and the
+#      measured cavity width for each line
+WAVE_FP_FIT_DEG = WAVE_FP_FIT_DEG.copy(__NAME__)
+WAVE_FP_FIT_DEG.value = 9
+
+#  Define the FP jump size that is too large
+WAVE_FP_LARGE_JUMP = WAVE_FP_LARGE_JUMP.copy(__NAME__)
+WAVE_FP_LARGE_JUMP.value = 0.5
+
+#  Define first order FP solution is calculated from
+WAVE_FP_N_ORD_START = WAVE_FP_N_ORD_START.copy(__NAME__)
+WAVE_FP_N_ORD_START.value = 0  # 0   # 9
+
+#  Defines last order FP solution is calculated to
+WAVE_FP_N_ORD_FINAL = WAVE_FP_N_ORD_FINAL.copy(__NAME__)
+WAVE_FP_N_ORD_FINAL.value = 47  # 47   # 45
+
+# index of FP line to start order cross-matching from
+WAVE_FP_CM_IND = -2
+
+#    Define the border size (edges in x-direction) for the FP fitting algorithm
+WAVE_FP_BORDER_SIZE = WAVE_FP_BORDER_SIZE.copy(__NAME__)
+WAVE_FP_BORDER_SIZE.value = 3
+
+#    Define the box half-size (in pixels) to fit an individual FP peak to
+#        - a gaussian will be fit to +/- this size from the center of
+#          the FP peak
+WAVE_FP_FPBOX_SIZE = WAVE_FP_FPBOX_SIZE.copy(__NAME__)
+WAVE_FP_FPBOX_SIZE.value = 3
+
+#    Define the sigma above the median that a peak must have  - [cal_drift-peak]
+#        to be recognised as a valid peak (before fitting a gaussian)
+#        must be a string dictionary and must have an fp key
+WAVE_FP_PEAK_SIG_LIM = WAVE_FP_PEAK_SIG_LIM.copy(__NAME__)
+WAVE_FP_PEAK_SIG_LIM.value = '{"fp": 1.0, "hc": 7.0}'
+
+#    Define the minimum spacing between peaks in order to be recognised
+#        as a valid peak (before fitting a gaussian)
+WAVE_FP_IPEAK_SPACING = WAVE_FP_IPEAK_SPACING.copy(__NAME__)
+WAVE_FP_IPEAK_SPACING.value = 5
+
+#    Define the expected width of FP peaks - used to "normalise" peaks
+#        (which are then subsequently removed if > drift_peak_norm_width_cut
+WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
+WAVE_FP_EXP_WIDTH.value = 0.9  # 0.8
+
+#    Define the "normalised" width of FP peaks that is too large normalised
+#        width = FP FWHM - WAVE_FP_EXP_WIDTH
+#        cut is essentially:
+#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
+WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NORM_WIDTH_CUT.copy(__NAME__)
+WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
 
 
 # =============================================================================

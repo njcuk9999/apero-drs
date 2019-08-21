@@ -102,12 +102,13 @@ __all__ = [
     'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
     'THERMAL_FILTER_WID', 'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
-    # wave constants
+    # wave general constants
     'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
     'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE', 'WAVE_FIT_DEGREE',
-    'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE', 'WAVE_MODE_HC',
-    'WAVE_MODE_FP', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
+    'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
+    # wave hc constants
+    'WAVE_MODE_HC', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
     'WAVE_HC_FITBOX_GFIT_DEG', 'WAVE_HC_FITBOX_RMS_DEVMIN',
     'WAVE_HC_FITBOX_RMS_DEVMAX', 'WAVE_HC_FITBOX_EWMIN',
     'WAVE_HC_FITBOX_EWMAX', 'WAVE_HCLL_FILE_FMT',
@@ -117,7 +118,7 @@ __all__ = [
     'WAVE_HC_TFIT_ORDER_FIT_CONT', 'WAVE_HC_TFIT_SIGCLIP_NUM',
     'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
     'WAVE_HC_TFIT_DVCUT_ALL', 'WAVE_HC_RESMAP_SIZE', 'WAVE_HC_RES_MAXDEV_THRES',
-    'WAVE_HC_T_ORDER_START', 'WAVE_N_ORD_START', 'WAVE_N_ORD_FINAL',
+    'WAVE_HC_T_ORDER_START', 'WAVE_HC_N_ORD_START', 'WAVE_HC_N_ORD_FINAL',
     'WAVE_HC_QC_SIGMA_MAX',
     # wave littrow parameters
     'WAVE_LITTROW_ORDER_INIT_1', 'WAVE_LITTROW_ORDER_INIT_2',
@@ -125,6 +126,12 @@ __all__ = [
     'WAVE_LITTROW_REMOVE_ORDERS', 'WAVE_LITTROW_CUT_STEP_1',
     'WAVE_LITTROW_CUT_STEP_2', 'WAVE_LITTROW_FIG_DEG_1',
     'WAVE_LITTROW_FIG_DEG_2', 'WAVE_LITTROW_EXT_ORDER_FIT_DEG',
+    # wave fp constants
+    'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_FIT_DEG', 'WAVE_FP_LARGE_JUMP',
+    'WAVE_FP_N_ORD_START', 'WAVE_FP_N_ORD_FINAL', 'WAVE_FP_BORDER_SIZE',
+    'WAVE_FP_FPBOX_SIZE', 'WAVE_FP_PEAK_SIG_LIM', 'WAVE_FP_IPEAK_SPACING',
+    'WAVE_FP_EXP_WIDTH', 'WAVE_FP_NORM_WIDTH_CUT', 'WAVE_FP_ERRX_MIN',
+    'WAVE_FP_LL_DEGR_FIT', 'WAVE_FP_MAX_LLFIT_RMS', 'WAVE_FP_WEIGHT_THRES',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
@@ -933,7 +940,7 @@ THERMAL_ENVELOPE_PERCENTILE = Const('THERMAL_ENVELOPE_PERCENTILE', value=None,
                                     minimum=0, maximum=100)
 
 # =============================================================================
-# CALIBRATION: WAVE SETTINGS
+# CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
@@ -979,13 +986,12 @@ WAVE_PIXEL_SHIFT_INTER = Const('WAVE_PIXEL_SHIFT_INTER', value=None,
 WAVE_PIXEL_SHIFT_SLOPE = Const('WAVE_PIXEL_SHIFT_SLOPE', value=None,
                                dtype=float, source=__NAME__)
 
+# =============================================================================
+# CALIBRATION: WAVE HC SETTINGS
+# =============================================================================
 # Define the mode to calculate the hc wave solution
 WAVE_MODE_HC = Const('WAVE_MODE_HC', value=None, dtype=int, source=__NAME__,
                      options=[0])
-
-# Define the mode to calculate the fp wave solution
-WAVE_MODE_FP = Const('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
-                     options=[0, 1])
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 #     so a 2*W+1 window
@@ -1086,12 +1092,12 @@ WAVE_HC_T_ORDER_START = Const('WAVE_HC_T_ORDER_START', value=None,
                               dtype=int, source=__NAME__)
 
 #  Defines order from which the solution is calculated
-WAVE_N_ORD_START = Const('WAVE_N_ORD_START', value=None, dtype=int,
-                         source=__NAME__)
+WAVE_HC_N_ORD_START = Const('WAVE_HC_N_ORD_START', value=None, dtype=int,
+                            source=__NAME__)
 
 #  Defines order to which the solution is calculated
-WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
-                         source=__NAME__)
+WAVE_HC_N_ORD_FINAL = Const('WAVE_HC_N_ORD_FINAL', value=None, dtype=int,
+                            source=__NAME__)
 
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
@@ -1134,6 +1140,88 @@ WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
 # TODO needs to be the same as ic_ll_degr_fit
 WAVE_LITTROW_EXT_ORDER_FIT_DEG = Const('WAVE_LITTROW_EXT_ORDER_FIT_DEG',
                                        value=None, dtype=int, source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: WAVE FP SETTINGS
+# =============================================================================
+# Define the mode to calculate the fp wave solution
+WAVE_MODE_FP = Const('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
+                     options=[0, 1])
+
+# Define the initial value of FP effective cavity width 2xd in nm
+WAVE_FP_DOPD0 = Const('WAVE_FP_DOPD0', value=None, dtype=float,
+                      source=__NAME__, minimum=0.0)
+
+#  Define the polynomial fit degree between FP line numbers and the
+#      measured cavity width for each line
+WAVE_FP_FIT_DEG = Const('WAVE_FP_FIT_DEG', value=None, dtype=int,
+                        source=__NAME__, minimum=0)
+
+#  Define the FP jump size that is too large
+WAVE_FP_LARGE_JUMP = Const('WAVE_FP_LARGE_JUMP', value=None, dtype=float,
+                           source=__NAME__, minimum=0)
+
+#  Define first order FP solution is calculated from
+WAVE_FP_N_ORD_START = Const('WAVE_FP_N_ORD_START', value=None, dtype=int,
+                            source=__NAME__, minimum=0)
+
+#  Defines last order FP solution is calculated to
+WAVE_FP_N_ORD_FINAL = Const('WAVE_FP_N_ORD_FINAL', value=None, dtype=int,
+                            source=__NAME__, minimum=0)
+
+# index of FP line to start order cross-matching from
+WAVE_FP_CM_IND = Const('WAVE_FP_CM_IND', value=None, dtype=int, source=__NAME__)
+
+#    Define the border size (edges in x-direction) for the FP fitting algorithm
+WAVE_FP_BORDER_SIZE = Const('WAVE_FP_BORDER_SIZE', value=None, dtype=int,
+                            source=__NAME__, minimum=0)
+
+#    Define the box half-size (in pixels) to fit an individual FP peak to
+#        - a gaussian will be fit to +/- this size from the center of
+#          the FP peak
+WAVE_FP_FPBOX_SIZE = Const('WAVE_FP_FPBOX_SIZE', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0)
+
+#    Define the sigma above the median that a peak must have  - [cal_drift-peak]
+#        to be recognised as a valid peak (before fitting a gaussian)
+#        must be a string dictionary and must have an fp key
+WAVE_FP_PEAK_SIG_LIM = Const('WAVE_FP_PEAK_SIG_LIM', value=None, dtype=str,
+                             source=__NAME__)
+
+#    Define the minimum spacing between peaks in order to be recognised
+#        as a valid peak (before fitting a gaussian)
+WAVE_FP_IPEAK_SPACING = Const('WAVE_FP_IPEAK_SPACING', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0)
+
+#    Define the expected width of FP peaks - used to "normalise" peaks
+#        (which are then subsequently removed if > WAVE_FP_NORM_WIDTH_CUT
+WAVE_FP_EXP_WIDTH = Const('WAVE_FP_EXP_WIDTH', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+#    Define the "normalised" width of FP peaks that is too large normalised
+#        width = FP FWHM - WAVE_FP_EXP_WIDTH
+#        cut is essentially:
+#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
+WAVE_FP_NORM_WIDTH_CUT = Const('WAVE_FP_NORM_WIDTH_CUT', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0)
+
+
+# Define the minimum instrumental error
+WAVE_FP_ERRX_MIN = Const('WAVE_FP_ERRX_MIN', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+#  Define the wavelength fit polynomial order
+WAVE_FP_LL_DEGR_FIT = Const('WAVE_FP_LL_DEGR_FIT', value=None, dtype=int,
+                            source=__NAME__, minimum=0)
+
+#  Define the max rms for the wavelength sigma-clip fit
+WAVE_FP_MAX_LLFIT_RMS = Const('WAVE_FP_MAX_LLFIT_RMS', value=None, dtype=float,
+                              source=__NAME__, minimum=0)
+
+#  Define the weight threshold (small number) below which we do not keep fp
+#     lines
+WAVE_FP_WEIGHT_THRES = Const('WAVE_FP_WEIGHT_THRES', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
