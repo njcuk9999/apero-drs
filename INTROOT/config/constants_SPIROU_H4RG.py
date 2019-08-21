@@ -1277,8 +1277,12 @@ WAVE_MODE_HC = 0
 #       1 - following C Lovis (previously WAVE_NEW)
 WAVE_MODE_FP = 1
 #  Defines order from which the solution is calculated              - [cal_wave]
+# TODO: Is this the same as WAVE_HC_N_ORD_START or WAVE_FP_N_ORD_START
+# TODO:   Or another different one???
 WAVE_N_ORD_START = 0
 #  Defines order to which the solution is calculated                - [cal_wave]
+# TODO: Is this the same as WAVE_HC_N_ORD_FINAL or WAVE_FP_N_ORD_FINAL
+# TODO:   Or another different one???
 WAVE_N_ORD_FINAL = 47
 # Minimum blaze threshold to keep FP peaks                          - [cal_wave]
 WAVE_BLAZE_THRESH = 0.3
