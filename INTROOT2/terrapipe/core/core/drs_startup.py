@@ -251,7 +251,7 @@ def run(func, recipe, params):
             emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
             llmain = dict(e=e, tb=string_trackback)
-        except SystemExit as e:
+        except drs_exceptions.LogExit as e:
             string_trackback = traceback.format_exc()
             success = False
             llmain = dict(e=e, tb=string_trackback)
@@ -329,10 +329,10 @@ def main_end_script(params, success, outputs='reduced', end=True):
             # close lock file
             drs_lock.close_lock_file(params, lock, lock_file, opath)
         # Must close lock file
-        except SystemExit as e:
+        except drs_exceptions.LogExit as e:
             drs_lock.close_lock_file(params, lock, lock_file, opath)
             # log error
-            eargs = [type(e), e, func_name]
+            eargs = [type(e), e.errormessage, func_name]
             WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
         except Exception as e:
             drs_lock.close_lock_file(params, lock, lock_file, opath)
