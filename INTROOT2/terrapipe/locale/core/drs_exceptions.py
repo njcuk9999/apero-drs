@@ -412,6 +412,16 @@ class ArgumentWarning:
                         name='Config', force_exit=False, wlog=wlog, **kwargs)
 
 
+class Exit(SystemExit):
+    """Raised when exit is called"""
+    pass
+
+
+class LogExit(Exit):
+    def __init__(self, errormessage, *args, **kwargs):
+        self.errormessage = errormessage
+        super().__init__(*args, **kwargs)
+
 
 # =============================================================================
 # Define functions
