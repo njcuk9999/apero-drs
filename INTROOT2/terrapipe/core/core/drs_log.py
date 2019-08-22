@@ -381,8 +381,7 @@ class Logger:
             if debug:
                 debug_start(self, params, raise_exception)
             elif raise_exception:
-                # self.pconstant.EXIT(p)(errorstring)
-                self.pconstant.EXIT(params)()
+                raise drs_exceptions.LogExit(errorstring)
 
     def update_param_dict(self, paramdict):
         # update the parameter dictionary
