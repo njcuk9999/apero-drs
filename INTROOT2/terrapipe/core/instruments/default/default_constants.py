@@ -132,6 +132,10 @@ __all__ = [
     'WAVE_FP_FPBOX_SIZE', 'WAVE_FP_PEAK_SIG_LIM', 'WAVE_FP_IPEAK_SPACING',
     'WAVE_FP_EXP_WIDTH', 'WAVE_FP_NORM_WIDTH_CUT', 'WAVE_FP_ERRX_MIN',
     'WAVE_FP_LL_DEGR_FIT', 'WAVE_FP_MAX_LLFIT_RMS', 'WAVE_FP_WEIGHT_THRES',
+    'WAVE_FP_BLAZE_THRES', 'WAVE_FP_XDIF_MIN', 'WAVE_FP_XDIF_MAX',
+    'WAVE_FP_LL_OFFSET', 'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY',
+    'WAVE_FP_CAVFIT_MODE', 'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN',
+    'WAVE_FP_LLDIF_MAX', 'WAVE_FP_SIGCLIP',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
@@ -1222,6 +1226,57 @@ WAVE_FP_MAX_LLFIT_RMS = Const('WAVE_FP_MAX_LLFIT_RMS', value=None, dtype=float,
 #     lines
 WAVE_FP_WEIGHT_THRES = Const('WAVE_FP_WEIGHT_THRES', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
+
+# Minimum blaze threshold to keep FP peaks
+WAVE_FP_BLAZE_THRES = Const('WAVE_FP_BLAZE_THRES', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0)
+
+# Minimum FP peaks pixel separation fraction diff. from median
+WAVE_FP_XDIF_MIN = Const('WAVE_FP_XDIF_MIN', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+# Maximum FP peaks pixel separation fraction diff. from median
+WAVE_FP_XDIF_MAX = Const('WAVE_FP_XDIF_MAX', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+# Maximum fract. wavelength offset between cross-matched FP peaks
+WAVE_FP_LL_OFFSET = Const('WAVE_FP_LL_OFFSET', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+# Maximum DV to keep HC lines in combined (WAVE_NEW) solution
+WAVE_FP_DV_MAX = Const('WAVE_FP_DV_MAX', value=None, dtype=float,
+                       source=__NAME__, minimum=0.0)
+
+# Decide whether to refit the cavity width (will update if files do not
+#   exist)
+WAVE_FP_UPDATE_CAVITY = Const('WAVE_FP_UPDATE_CAVITY', value=None, dtype=bool,
+                              source=__NAME__)
+
+# Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
+#   Should be one of the following:
+#       0 - derive using the 1/m vs d fit from HC lines
+#       1 - derive using the ll vs d fit from HC lines
+WAVE_FP_CAVFIT_MODE = Const('WAVE_FP_CAVFIT_MODE', value=None, dtype=int,
+                            source=__NAME__, options=[0, 1])
+
+# Select the FP wavelength fitting (WAVE_MODE_FP = 1 only)
+#   Should be one of the following:
+#       0 - use fit_1d_solution function
+#       1 - fit with sigma-clipping and mod 1 pixel correction
+WAVE_FP_LLFIT_MODE = Const('WAVE_FP_LLFIT_MODE', value=None, dtype=int,
+                            source=__NAME__, options=[0, 1])
+
+# Minimum FP peaks wavelength separation fraction diff. from median
+WAVE_FP_LLDIF_MIN = Const('WAVE_FP_LLDIF_MIN', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+# Maximum FP peaks wavelength separation fraction diff. from median
+WAVE_FP_LLDIF_MAX = Const('WAVE_FP_LLDIF_MAX', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+# Sigma-clip value for sigclip_polyfit
+WAVE_FP_SIGCLIP = Const('WAVE_FP_SIGCLIP', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS

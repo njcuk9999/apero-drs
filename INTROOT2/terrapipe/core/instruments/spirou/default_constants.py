@@ -1019,6 +1019,57 @@ WAVE_FP_MAX_LLFIT_RMS.value = 3.0
 WAVE_FP_WEIGHT_THRES = WAVE_FP_WEIGHT_THRES.copy(__NAME__)
 WAVE_FP_WEIGHT_THRES.value = 1.0e-30
 
+# Minimum blaze threshold to keep FP peaks
+WAVE_FP_BLAZE_THRES = WAVE_FP_BLAZE_THRES.copy(__NAME__)
+WAVE_FP_BLAZE_THRES.value = 0.3
+
+# Minimum FP peaks pixel separation fraction diff. from median
+WAVE_FP_XDIF_MIN = WAVE_FP_XDIF_MIN.copy(__NAME__)
+WAVE_FP_XDIF_MIN.value = 0.75
+
+# Maximum FP peaks pixel separation fraction diff. from median
+WAVE_FP_XDIF_MAX = WAVE_FP_XDIF_MAX.copy(__NAME__)
+WAVE_FP_XDIF_MAX.value = 1.25
+
+# Maximum fract. wavelength offset between cross-matched FP peaks
+WAVE_FP_LL_OFFSET = WAVE_FP_LL_OFFSET.copy(__NAME__)
+WAVE_FP_LL_OFFSET.value = 0.25
+
+# Maximum DV to keep HC lines in combined (WAVE_NEW) solution
+WAVE_FP_DV_MAX = WAVE_FP_DV_MAX.copy(__NAME__)
+WAVE_FP_DV_MAX.value = 0.25
+
+# Decide whether to refit the cavity width (will update if files do not
+#   exist)
+WAVE_FP_UPDATE_CAVITY = WAVE_FP_UPDATE_CAVITY.copy(__NAME__)
+WAVE_FP_UPDATE_CAVITY.value = False
+
+# Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
+#   Should be one of the following:
+#       0 - derive using the 1/m vs d fit from HC lines
+#       1 - derive using the ll vs d fit from HC lines
+WAVE_FP_CAVFIT_MODE = WAVE_FP_CAVFIT_MODE.copy(__NAME__)
+WAVE_FP_CAVFIT_MODE.value = 1
+
+# Select the FP wavelength fitting (WAVE_MODE_FP = 1 only)
+#   Should be one of the following:
+#       0 - use fit_1d_solution function
+#       1 - fit with sigma-clipping and mod 1 pixel correction
+WAVE_FP_LLFIT_MODE = WAVE_FP_LLFIT_MODE.copy(__NAME__)
+WAVE_FP_LLFIT_MODE.value = 1
+
+# Minimum FP peaks wavelength separation fraction diff. from median
+WAVE_FP_LLDIF_MIN = WAVE_FP_LLDIF_MIN.copy(__NAME__)
+WAVE_FP_LLDIF_MIN.value = 0.75
+
+# Maximum FP peaks wavelength separation fraction diff. from median
+WAVE_FP_LLDIF_MAX = WAVE_FP_LLDIF_MAX.copy(__NAME__)
+WAVE_FP_LLDIF_MAX.value = 1.25
+
+# Sigma-clip value for sigclip_polyfit
+WAVE_FP_SIGCLIP = WAVE_FP_SIGCLIP.copy(__NAME__)
+WAVE_FP_SIGCLIP.value = 7
+
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
