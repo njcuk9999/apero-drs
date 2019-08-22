@@ -38,7 +38,7 @@ Entry = locale.drs_text.Entry
 # =============================================================================
 # Define functions
 # =============================================================================
-def _main(recipe, params):
+def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
@@ -58,21 +58,12 @@ def main(directory=None, filelist1=None, filelist2=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    # solid debug mode option
+    if kwargs.get('DEBUG0000', False):
+        return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    try:
-        llmain = _main(recipe, params)
-        success = True
-    except Exception as e:
-        string_trackback = traceback.format_exc()
-        success = False
-        emsg = Entry('01-010-00001', args=[type(e)])
-        emsg += '\n\n' + Entry(string_trackback)
-        WLOG(params, 'error', emsg, raise_exception=False)
-        llmain = dict()
-    except SystemExit as e:
-        success = False
-        llmain = dict()
+    llmain, success = core.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
