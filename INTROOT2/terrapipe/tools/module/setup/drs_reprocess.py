@@ -21,6 +21,7 @@ from multiprocessing import Process, Manager, Event
 from terrapipe import core
 from terrapipe.core.core import drs_startup
 from terrapipe import locale
+from terrapipe.locale import drs_exceptions
 from terrapipe.core import constants
 from terrapipe.io import drs_table
 from terrapipe.io import drs_path
@@ -926,7 +927,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 finished = False
             # --------------------------------------------------------------
             # Manage expected errors
-            except SystemExit as e:
+            except drs_exceptions.LogExit as e:
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -934,7 +935,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 except Exception as _:
                     string_traceback = ''
                 emsgs = [textdict['00-503-00005'].format(priority)]
-                for emsg in str(e).split('\n'):
+                for emsg in e.errormessage.split('\n'):
                     emsgs.append('\t' + emsg)
                 WLOG(params, 'warning', emsgs)
                 pp['ERROR'] = emsgs
