@@ -111,6 +111,18 @@ def read_lines(params, filename, comments='#', delimiter=' '):
     return np.array(raw)
 
 
+def save_text_file(params, filename, array, func_name=None):
+    if func_name is None:
+        func_name = __NAME__ + '.save_text_file()'
+    # try to save text file
+    with warnings.catch_warnings(record=True) as _:
+        try:
+            np.savetxt(filename, array)
+        except Exception as e:
+            eargs = [filename, type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('', args=eargs))
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
