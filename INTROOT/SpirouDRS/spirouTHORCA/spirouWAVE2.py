@@ -626,6 +626,9 @@ def do_fp_wavesol(p, loc):
             # get achromatic cavity change - ie shift
             residual = d - np.polyval(fit_ll_d, hc_ll_test)
             # update coeffs with mean shift
+            # TODO: Melissa - you update this value but not fit_1m_d_func
+            # TODO:    if you use fit_1m_d_func after this point it wont be
+            # TODO     updated
             fit_ll_d[-1] += np.nanmedian(residual)
 
         fitval = np.polyval(fit_ll_d, hc_ll_test)
