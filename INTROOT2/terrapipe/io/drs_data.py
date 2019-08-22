@@ -149,6 +149,54 @@ def load_cavity_file(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
 
 
+def load_cavity_files(params, required=True, **kwargs):
+
+    func_name = __NAME__ + '.load_cavity_files()'
+    # get parameters from params/kwargs
+    relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
+                       func_name)
+
+    filename_1m = pcheck(params, 'CAVITY_1M_FILE', 'filename', kwargs,
+                         func_name)
+    filename_ll = pcheck(params, 'CAVITY_LL_FILE', 'filename', kwargs,
+                         func_name)
+    # construct absolute filenames
+    absfilename_1m = construct_filename(params, filename_1m, relfolder,
+                                        func=func_name)
+    absfilename_ll = construct_filename(params, filename_ll, relfolder,
+                                        func=func_name)
+    # check for absolute path existence
+    exists1 = os.path.exists(absfilename_1m)
+    exists2 = os.path.exists(absfilename_ll)
+
+    if not required:
+        if not exists1 or not exists2:
+            return None, None
+
+    # load text files
+    fit_1m, _ = load_text_file(params, filename_1m, relfolder, kwargs,
+                               func_name)
+    fit_ll, _ = load_text_file(params, filename_ll, relfolder, kwargs,
+                               func_name)
+    # return arrays from text files
+    return np.array(fit_1m), np.array(fit_ll)
+
+
+def save_cavity_files(params, fit_1m_d, fit_ll_d, **kwargs):
+    func_name = __NAME__ + '.save_cavity_files()'
+    # get parameters from params/kwargs
+    relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
+                       func_name)
+    filename_1m = pcheck(params, 'CAVITY_1M_FILE', 'filename', kwargs,
+                         func_name)
+    filename_ll = pcheck(params, 'CAVITY_LL_FILE', 'filename', kwargs,
+                         func_name)
+    # save the 1m file
+    save_text_file(params, filename_1m, relfolder, fit_1m_d, func_name)
+    # save the ll file
+    save_text_file(params, filename_ll, relfolder, fit_ll_d, func_name)
+
+
 def load_full_flat_badpix(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_badpix()')
@@ -282,7 +330,9 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     return table, absfilename
 
 
-def load_text_file(params, filename, directory, kwargs, func_name):
+def load_text_file(params, filename, directory, kwargs, func_name=None):
+    if func_name is None:
+        func_name = __NAME__ + '.load_text_file()'
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # construct filename
@@ -297,6 +347,17 @@ def load_text_file(params, filename, directory, kwargs, func_name):
                                        delimiter=' ')
     # return image
     return textlist, absfilename
+
+
+def save_text_file(params, filename, directory, array, func_name):
+    if func_name is None:
+        func_name = __NAME__ + '.save_text_file()'
+    # construct filename
+    absfilename = construct_filename(params, filename, directory,
+                                     func=func_name)
+    # save text file
+    drs_text.save_text_file(params, absfilename, array, func_name)
+
 
 
 def construct_filename(params, filename=None, directory=None, **kwargs):
