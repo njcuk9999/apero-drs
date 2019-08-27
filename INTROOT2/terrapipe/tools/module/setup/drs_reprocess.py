@@ -65,7 +65,9 @@ class Run:
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # find the recipe
-        self.recipe, self.recipemod = self.find_recipe(mod)
+        self.recipe, self.module = self.find_recipe(mod)
+        # import the recipe module
+        self.recipemod = self.recipe.main
         # turn off the input validation
         self.recipe.input_validation = False
         # run parser with arguments
