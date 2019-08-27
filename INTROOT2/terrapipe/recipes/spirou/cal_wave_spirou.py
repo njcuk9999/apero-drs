@@ -197,7 +197,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # HC quality control
             # --------------------------------------------------------------
-            qc_params = wave.hc_quality_control(params, hcprops, hc_e2ds_file)
+            qc_params = wave.hc_quality_control(params, hcprops)
             # --------------------------------------------------------------
             # log the global stats
             # --------------------------------------------------------------
@@ -206,7 +206,7 @@ def __main__(recipe, params):
             # write HC wavelength solution to file
             # --------------------------------------------------------------
             hcargs = [hcprops, hc_e2ds_file, fiber, combine, rawhcfiles,
-                      qc_params, iwprops]
+                      qc_params, iwprops, wprops]
             hcwavefile = wave.hc_write_wavesolution(params, recipe, *hcargs)
             # --------------------------------------------------------------
             # write resolution and line profiles to file
@@ -241,16 +241,17 @@ def __main__(recipe, params):
                 # FP wavelength solution
                 # ----------------------------------------------------------
                 fpprops, wprops = wave.fp_wavesol(params, fp_e2ds_file, hcprops,
-                                                  wprops, fiber)
-
+                                                  wprops, blaze, fiber)
                 # ----------------------------------------------------------
                 # FP quality control
                 # ----------------------------------------------------------
-
+                qc_params = wave.fp_quality_control(params, fpprops, qc_params)
                 # ----------------------------------------------------------
                 # write FP wavelength solution to file
                 # ----------------------------------------------------------
-
+                fpargs = [hcprops, fp_e2ds_file, fiber, combine, rawhcfiles,
+                          qc_params, wprops, hcwavefile]
+                fpwavefile = wave.fp_write_wavesolution(params, recipe, *fpargs)
                 # ----------------------------------------------------------
                 # Update calibDB with FP solution
                 # ----------------------------------------------------------
