@@ -290,6 +290,33 @@ def load_object_list(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-010-00005', args=eargs))
 
 
+def load_ccf_mask(params, **kwargs):
+    # get parameters from params/kwargs
+    func_name = kwargs.get('func', __NAME__ + '.load_ccf_mask()')
+
+    relfolder = pcheck(params, 'CCF_MASK_PATH', 'directory', kwargs,
+                       func_name)
+    filename = pcheck(params, 'CCF_MASK', 'filename', kwargs, func_name)
+
+    tablefmt = pcheck(params, 'CCF_MASK_FMT', 'fmt', kwargs, func_name)
+    return_filename = kwargs.get('return_filename', False)
+    # deal with return_filename
+    if return_filename:
+        return construct_filename(params, filename, relfolder, func=func_name)
+    # add back to kwargs
+    kwargs['fmt'] = tablefmt
+    # return image
+    try:
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                      func_name)
+        WLOG(params, '', TextEntry('40-020-00002', args=outf))
+        return table, outf
+
+    except LoadException:
+        eargs = [filename, relfolder]
+        WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
+
+
 # =============================================================================
 # Worker functions
 # =============================================================================
