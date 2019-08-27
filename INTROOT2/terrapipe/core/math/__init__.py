@@ -19,6 +19,8 @@ calculate_polyvals = general.calculate_polyvals
 
 fit_gauss_with_slope = general.fit_gauss_with_slope
 
+fitgaussian = general.fitgaussian
+
 gauss_fit_nn = general.gauss_fit_nn
 
 gaussian_function_nn =  general.gaussian_function_nn
@@ -26,6 +28,12 @@ gaussian_function_nn =  general.gaussian_function_nn
 gauss_function = general.gauss_function
 
 gauss_fit_s = general.gauss_fit_s
+
+get_dll_from_coefficients = general.get_dll_from_coefficients
+
+get_ll_from_coefficients = general.get_ll_from_coefficients
+
+get_ll_from_coefficients_cheb = general.get_ll_from_coefficients_cheb
 
 iuv_spline = general.iuv_spline
 
