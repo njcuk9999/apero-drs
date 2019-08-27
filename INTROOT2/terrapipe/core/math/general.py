@@ -12,6 +12,7 @@ Created on 2019-05-15 at 12:24
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import curve_fit
+from scipy.stats import chisquare
 import warnings
 
 from terrapipe.core import constants
@@ -107,18 +108,6 @@ def fit2dpoly(x, y, z):
     coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
     # return the coefficients
     return coeff
-
-
-def fit_gauss_with_slope(x, y, guess, return_fit=False):
-    # produce curve_fit using gauss_fit_s function
-    with warnings.catch_warnings(record=True) as _:
-        popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
-    # if we want fit return it
-    if return_fit:
-        return popt, pcov, gauss_fit_s(x, *popt)
-    # else just return the coefficients and the covariance
-    else:
-        return popt, pcov
 
 
 def fwhm(sigma=1.0):
@@ -433,6 +422,93 @@ def gauss_fit_s(x, a, x0, sigma, zp, slope):
     return gauss + correction
 
 
+def fit_gauss_with_slope(x, y, guess, return_fit=False):
+    # produce curve_fit using gauss_fit_s function
+    with warnings.catch_warnings(record=True) as _:
+        popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
+    # if we want fit return it
+    if return_fit:
+        return popt, pcov, gauss_fit_s(x, *popt)
+    # else just return the coefficients and the covariance
+    else:
+        return popt, pcov
+
+
+def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
+                return_uncertainties=False):
+    """
+    Fit a single gaussian to the data "y" at positions "x", points can be
+    weighted by "weights" and an initial guess for the gaussian parameters
+
+    :param x: numpy array (1D), the x values for the gaussian
+    :param y: numpy array (1D), the y values for the gaussian
+    :param weights: numpy array (1D), the weights for each y value
+    :param guess: list of floats, the initial guess for the guassian fit
+                  parameters in the following order:
+
+                  [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :param return_fit: bool, if True also calculates the fit values for x
+                       i.e. yfit = gauss_function(x, *pfit)
+
+    :param return_uncertainties: bool, if True also calculates the uncertainties
+                                 based on the covariance matrix (pcov)
+                                 uncertainties = np.sqrt(np.diag(pcov))
+
+    :return pfit: numpy array (1D), the fit parameters in the
+                  following order:
+
+                [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :return yfit: numpy array (1D), the fit y values, i.e. the gaussian values
+                  for the fit parameters, only returned if return_fit = True
+
+    """
+
+    # if we don't have weights set them to be all equally weighted
+    if weights is None:
+        weights = np.ones(len(x))
+    weights = 1.0 / weights
+    # if we aren't provided a guess, make one
+    if guess is None:
+        guess = [np.max(y), np.mean(y), np.std(y), 0]
+    # calculate the fit using curve_fit to the function "gauss_function"
+    with warnings.catch_warnings(record=True) as _:
+        pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,
+                               absolute_sigma=True)
+    if return_fit and return_uncertainties:
+        # calculate the fit parameters
+        yfit = gauss_function(x, *pfit)
+        # work out the normalisation constant
+        chis, _ = chisquare(y, f_exp=yfit)
+        norm = chis / (len(y) - len(guess))
+        # calculate the fit uncertainties based on pcov
+        efit = np.sqrt(np.diag(pcov)) * np.sqrt(norm)
+        # return pfit, yfit and efit
+        return pfit, yfit, efit
+    # if just return fit
+    elif return_fit:
+        # calculate the fit parameters
+        yfit = gauss_function(x, *pfit)
+        # return pfit and yfit
+        return pfit, yfit
+    # if return uncertainties
+    elif return_uncertainties:
+        # calculate the fit parameters
+        yfit = gauss_function(x, *pfit)
+        # work out the normalisation constant
+        chis, _ = chisquare(y, f_exp=yfit)
+        norm = chis / (len(y) - len(guess))
+        # calculate the fit uncertainties based on pcov
+        efit = np.sqrt(np.diag(pcov)) * np.sqrt(norm)
+        # return pfit and efit
+        return pfit, efit
+    # else just return the pfit
+    else:
+        # return pfit
+        return pfit
+
+
 # =============================================================================
 # Define NaN functions
 # =============================================================================
@@ -495,6 +571,146 @@ def killnan(vect, val=0):
     vect[mask] = val
     return vect
 
+
+# =============================================================================
+# Define NaN functions
+# =============================================================================
+def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, allcoeffs,
+                             nx, nbo):
+    """
+    Use the coefficient matrix "params" to construct fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param pixel_shift_inter: float, the intercept of a linear pixel shift
+    :param pixel_shift_slope: float, the slope of a linear pixel shift
+
+    :param allcoeffs: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+    """
+    # create x values
+    xfit = np.arange(nx) + pixel_shift_inter + (
+            pixel_shift_slope * np.arange(nx))
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        # (numpy needs them backwards)
+        coeffs = allcoeffs[order_num][::-1]
+        # get the y fit using the coefficients for this order and xfit
+        yfit = np.polyval(coeffs, xfit)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
+
+def get_ll_from_coefficients_cheb(pixel_shift_inter, pixel_shift_slope,
+                                  allcoeffs, nx, nbo):
+    """
+    Use the coefficient matrix "params" to construct fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param pixel_shift_inter: float, the intercept of a linear pixel shift
+    :param pixel_shift_slope: float, the slope of a linear pixel shift
+
+    :param allcoeffs: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+    """
+    # create x values
+    xfit = np.arange(nx) + pixel_shift_inter + (
+            pixel_shift_slope * np.arange(nx))
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        # (numpy needs them backwards)
+        coeffs = allcoeffs[order_num]
+        # get the y fit using the coefficients for this order and xfit
+        yfit = np.polynomial.chebyshev.chebval(xfit, coeffs)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
+
+def get_dll_from_coefficients(allcoeffs, nx, nbo):
+    """
+    Derivative of the coefficients, using the coefficient matrix "params"
+    to construct the derivative of the fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param allcoeffs: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                dyfit = p[0]*(N-1)*x**(N-2) + p[1]*(N-2)*x**(N-3) + ... +
+                        p[N-3]*x + p[N-2]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
+    """
+
+    # create x values
+    xfit = np.arange(nx)
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        coeffs = allcoeffs[order_num]
+        # get the y fit using the coefficients for this order and xfit
+        yfiti = []
+        # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
+        for it in range(len(coeffs) - 1):
+            yfiti.append((it + 1) * coeffs[it + 1] * xfit ** it)
+        yfit = np.nansum(yfiti, axis=0)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
 
 
 # =============================================================================
