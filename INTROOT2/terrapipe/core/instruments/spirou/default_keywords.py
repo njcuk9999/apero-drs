@@ -773,7 +773,133 @@ KW_WAVE_LITT_EXT_ORD_START_1 = KW_WAVE_LITT_EXT_ORD_START_1.copy(__NAME__)
 KW_WAVE_LITT_EXT_ORD_START_1.set(key='WAVL1EST',
                                  comment='Littrow HC - extrap start order')
 
-# -----------------------------------------------------------------------------
+# the first order used for FP wave sol improvement
+KW_WFP_ORD_START = KW_WFP_ORD_START.copy(__NAME__)
+KW_WFP_ORD_START.set(key='WFP_ORD0',
+                      comment='First order used for FP wave sol.')
+
+# the last order used for FP wave sol improvement
+KW_WFP_ORD_FINAL = KW_WFP_ORD_FINAL.copy(__NAME__)
+KW_WFP_ORD_FINAL.set(key='WFP_ORD1',
+                     comment='Last order used for FP wave sol.')
+
+# the blaze threshold used for FP wave sol improvement
+KW_WFP_BLZ_THRES = KW_WFP_BLZ_THRES.copy(__NAME__)
+KW_WFP_BLZ_THRES.set(key='WFPBLZTH',
+                     comment='Blaze threshold used for FP wave sol.')
+
+# the minimum fp peak pixel sep used for FP wave sol improvement
+KW_WFP_XDIFF_MIN = KW_WFP_XDIFF_MIN.copy(__NAME__)
+KW_WFP_XDIFF_MIN.set(key='WFPXDIF0',
+                     comment='Min fp peak pixel sep for FP wave sol.')
+
+# the maximum fp peak pixel sep used for FP wave sol improvement
+KW_WFP_XDIFF_MAX = KW_WFP_XDIFF_MAX.copy(__NAME__)
+KW_WFP_XDIFF_MAX.set(key='WFPXDIF1',
+                     comment='Max fp peak pixel sep for FP wave sol.')
+
+# the initial value of the FP effective cavity width used
+KW_WFP_DOPD0 = KW_WFP_DOPD0.copy(__NAME__)
+KW_WFP_DOPD0.set(key='WFPDOPD0',
+                 comment='initial value of Fp effective cavity width')
+
+# the  maximum fraction wavelength offset btwn xmatch fp peaks used
+KW_WFP_LL_OFFSET = KW_WFP_LL_OFFSET.copy(__NAME__)
+KW_WFP_LL_OFFSET.set(key='WFPLLOFF',
+                     comment='max frac. wavelength offset btwn fp peaks')
+
+# the max dv to keep hc lines used
+KW_WFP_DVMAX = KW_WFP_DVMAX.copy(__NAME__)
+KW_WFP_DVMAX.set(key='WFPDVMAX',
+                 comment='max dv to kee[ hc lines for fp wave sol.')
+
+# the used polynomial fit degree (to fit wave solution)
+KW_WFP_LLFITDEG = KW_WFP_LLFITDEG.copy(__NAME__)
+KW_WFP_LLFITDEG.set(key='WFPLLDEG',
+                    comment='Used poly fit degree for fp wave sol.')
+
+# whether the cavity file was updated
+KW_WFP_UPDATECAV = KW_WFP_UPDATECAV.copy(__NAME__)
+KW_WFP_UPDATECAV.set(key='WFPUPCAV',
+                     comment='Whether wave sol. was used to update cav file')
+
+# the mode used to fit the FP cavity
+KW_WFP_FPCAV_MODE = KW_WFP_FPCAV_MODE.copy(__NAME__)
+KW_WFP_FPCAV_MODE.set(key='WFPCAVMO',
+                      comment='The mode used to fit the FP cavity')
+
+# the mode used to fit the wavelength
+KW_WFP_LLFIT_MODE = KW_WFP_LLFIT_MODE.copy(__NAME__)
+KW_WFP_LLFIT_MODE.set(key='WFPLLFMO',
+                      comment='The mode used to fit the wavelength sol.')
+
+# the minimum instrumental error used
+KW_WFP_ERRX_MIN = KW_WFP_ERRX_MIN.copy(__NAME__)
+KW_WFP_ERRX_MIN.set(key='WFPERRXM',
+                    comment='The minimum instrumental error used for wave sol.')
+
+# the max rms for the wave sol sig clip
+KW_WFP_MAXLL_FIT_RMS = KW_WFP_MAXLL_FIT_RMS.copy(__NAME__)
+KW_WFP_MAXLL_FIT_RMS.set(key='WFPMAXLL',
+                         comment='The max rms for the FP wave sol sig cut')
+
+# the echelle number used for the first order
+KW_WFP_T_ORD_START = KW_WFP_T_ORD_START.copy(__NAME__)
+KW_WFP_T_ORD_START.set(key='WFPTORD',
+                       comment='The echelle number of order 0 (fp wave sol.)')
+
+# the weight below which fp lines are rejected
+KW_WFP_WEI_THRES = KW_WFP_WEI_THRES.copy(__NAME__)
+KW_WFP_WEI_THRES.set(key='WFPWTHRE',
+                     comment='The weight below which FP lines are rejected')
+
+# the polynomial degree fit order used for fitting the fp cavity
+KW_WFP_CAVFIT_DEG = KW_WFP_CAVFIT_DEG.copy(__NAME__)
+KW_WFP_CAVFIT_DEG.set(key='WFPCVFIT',
+                      comment='The fit degree used for fitting the fp cavity')
+
+# the largest jump in fp that was allowed
+KW_WFP_LARGE_JUMP = KW_WFP_LARGE_JUMP.copy(__NAME__)
+KW_WFP_LARGE_JUMP.set(key='WFPLJUMP',
+                      comment='The largest jump in fp that is allowed')
+
+# the index to start crossmatching fps at
+KW_WFP_CM_INDX = KW_WFP_CM_INDX.copy(__NAME__)
+KW_WFP_CM_INDX.set(key='WFPCMIND',
+                   comment='The index to start crossmatch at')
+
+# border size allowed to fit fps used
+KW_WFP_BORDER = KW_WFP_BORDER.copy(__NAME__)
+KW_WFP_BORDER.set(key='WFPBORDR',
+                  comment='Allowed border size for fittin FPs')
+
+# the box size used to fit fps (half-size)
+KW_WFP_BSIZE = KW_WFP_BSIZE.copy(__NAME__)
+KW_WFP_BSIZE.set(key='WFPBSIZE', comment='half box size used to fit FPs')
+
+# the sigma above median a peak must have to be a valid fp peak used
+KW_WFP_SIGLIM = KW_WFP_SIGLIM.copy(__NAME__)
+KW_WFP_SIGLIM.set(key='WFPSIGLM',
+                  comment='sigma above median for FP peak to be valid')
+
+# the lamp value that was used
+KW_WFP_LAMP = KW_WFP_LAMP.copy(__NAME__)
+KW_WFP_LAMP.set(key='WFPLAMP', comment='Lamp value used for FP wave sol.')
+
+# the minimum spacing between peaks used
+KW_WFP_IPEAK_SPACE = KW_WFP_IPEAK_SPACE,copy(__NAME__)
+KW_WFP_IPEAK_SPACE.set(key='WFPIPKSP',
+                       comment='Min spacing between FP peaks used.')
+
+# the expected width of the FP peaks used
+KW_WFP_EXPWIDTH = KW_WFP_EXPWIDTH.copy(__NAME__)
+KW_WFP_EXPWIDTH.set(key='WFPEXPWD', comment='expected width of FP peaks')
+
+# the normalised cut width for large peaks used
+KW_WFP_CUTWIDTH = KW_WFP_CUTWIDTH.copy(__NAME__)
+KW_WFP_CUTWIDTH.set(key='WFPCUTWD',
+                    comment='Normalised cut width used for large FP peaks')
+
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = KW_WFP_FILE.copy(__NAME__)
 KW_WFP_FILE.set(key='WFP_FILE', comment='WFP source file')

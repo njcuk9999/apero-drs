@@ -54,11 +54,8 @@ __all__ = [# input keys
            'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_MAGLIM',
            'KW_BERV_GAIA_PLXLIM', 'KW_DBERV', 'KW_DBERV_EST',
            # wave values
-           'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE',
-           'KW_WAVESOURCE', 'KW_WAVECOEFFS', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
-           'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MAXCPP',
-           'KW_WFP_MASK', 'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
-           'KW_WFP_STEP', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
+           'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
+           'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
            'KW_WAVE_MODE_FP', 'KW_WAVE_ECHELLE_START', 'KW_WAVE_HCG_WSIZE',
            'KW_WAVE_HCG_SIGPEAK', 'KW_WAVE_HCG_GFITMODE',
            'KW_WAVE_HCG_FB_RMSMIN', 'KW_WAVE_HCG_FB_RMSMAX',
@@ -76,6 +73,20 @@ __all__ = [# input keys
            'KW_WAVE_LIT_ORDER_END_1', 'KW_WAVE_LITT_XCUTSTEP_1',
            'KW_WAVE_LITT_FITDEG_1', 'KW_WAVE_LITT_EXT_FITDEG_1',
            'KW_WAVE_LITT_EXT_ORD_START_1',
+            # wave fp values
+           'KW_WFP_ORD_START', 'KW_WFP_ORD_FINAL', 'KW_WFP_BLZ_THRES',
+           'KW_WFP_XDIFF_MIN', 'KW_WFP_XDIFF_MAX', 'KW_WFP_DOPD0',
+           'KW_WFP_LL_OFFSET', 'KW_WFP_DVMAX', 'KW_WFP_LLFITDEG',
+           'KW_WFP_UPDATECAV', 'KW_WFP_FPCAV_MODE', 'KW_WFP_LLFIT_MODE',
+           'KW_WFP_ERRX_MIN', 'KW_WFP_MAXLL_FIT_RMS', 'KW_WFP_T_ORD_START',
+           'KW_WFP_WEI_THRES', 'KW_WFP_CAVFIT_DEG', 'KW_WFP_LARGE_JUMP',
+           'KW_WFP_CM_INDX', 'KW_WFP_BORDER', 'KW_WFP_BSIZE',
+           'KW_WFP_SIGLIM', 'KW_WFP_LAMP', 'KW_WFP_IPEAK_SPACE',
+           'KW_WFP_EXPWIDTH', 'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
+           'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MAXCPP',
+           'KW_WFP_MASK', 'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
+           'KW_WFP_STEP',
+
            ]
 
 # set name
@@ -692,7 +703,103 @@ KW_WAVE_LITT_EXT_FITDEG_1 = Keyword('KW_WAVE_LITT_EXT_FITDEG_1', key='',
 KW_WAVE_LITT_EXT_ORD_START_1 = Keyword('KW_WAVE_LITT_EXT_ORD_START_1', key='',
                                        dtype=int, source=__NAME__)
 
-# -----------------------------------------------------------------------------
+# the first order used for FP wave sol improvement
+KW_WFP_ORD_START = Keyword('KW_WFP_ORD_START', key='', dtype=int,
+                           source=__NAME__)
+
+# the last order used for FP wave sol improvement
+KW_WFP_ORD_FINAL = Keyword('KW_WFP_ORD_FINAL', key='', dtype=int,
+                           source=__NAME__)
+
+# the blaze threshold used for FP wave sol improvement
+KW_WFP_BLZ_THRES = Keyword('KW_WFP_BLZ_THRES', key='', dtype=float,
+                           source=__NAME__)
+
+# the minimum fp peak pixel sep used for FP wave sol improvement
+KW_WFP_XDIFF_MIN = Keyword('KW_WFP_XDIFF_MIN', key='', dtype=float,
+                           source=__NAME__)
+
+# the maximum fp peak pixel sep used for FP wave sol improvement
+KW_WFP_XDIFF_MAX = Keyword('KW_WFP_XDIFF_MAX', key='', dtype=float,
+                           source=__NAME__)
+
+# the initial value of the FP effective cavity width used
+KW_WFP_DOPD0 = Keyword('KW_WFP_DOPD0', key='', dtype=float, source=__NAME__)
+
+# the  maximum fraction wavelength offset btwn xmatch fp peaks used
+KW_WFP_LL_OFFSET = Keyword('KW_WFP_LL_OFFSET', key='', dtype=float,
+                           source=__NAME__)
+
+# the max dv to keep hc lines used
+KW_WFP_DVMAX = Keyword('KW_WFP_DVMAX', key='', dtype=float, source=__NAME__)
+
+# the used polynomial fit degree (to fit wave solution)
+KW_WFP_LLFITDEG = Keyword('KW_WFP_LLFITDEG', key='', dtype=int,
+                          source=__NAME__)
+
+# whether the cavity file was updated
+KW_WFP_UPDATECAV = Keyword('KW_WFP_UPDATECAV', key='', dtype=int,
+                           source=__NAME__)
+
+# the mode used to fit the FP cavity
+KW_WFP_FPCAV_MODE = Keyword('KW_WFP_FPCAV_MODE', key='', dtype=int,
+                            source=__NAME__)
+
+# the mode used to fit the wavelength
+KW_WFP_LLFIT_MODE = Keyword('KW_WFP_LLFIT_MODE', key='', dtype=int,
+                            source=__NAME__)
+
+# the minimum instrumental error used
+KW_WFP_ERRX_MIN = Keyword('KW_WFP_ERRX_MIN', key='', dtype=float,
+                          source=__NAME__)
+
+# the max rms for the wave sol sig clip
+KW_WFP_MAXLL_FIT_RMS = Keyword('KW_WFP_MAXLL_FIT_RMS', key='', dtype=float,
+                               source=__NAME__)
+
+# the echelle number used for the first order
+KW_WFP_T_ORD_START = Keyword('KW_WFP_T_ORD_START', key='', dtype=int,
+                             source=__NAME__)
+
+# the weight below which fp lines are rejected
+KW_WFP_WEI_THRES = Keyword('KW_WFP_WEI_THRES', key='', dtype=float,
+                           source=__NAME__)
+
+# the polynomial degree fit order used for fitting the fp cavity
+KW_WFP_CAVFIT_DEG = Keyword('KW_WFP_CAVFIT_DEG', key='', dtype=int,
+                            source=__NAME__)
+
+# the largest jump in fp that was allowed
+KW_WFP_LARGE_JUMP = Keyword('KW_WFP_LARGE_JUMP', key='', dtype=float,
+                            source=__NAME__)
+
+# the index to start crossmatching fps at
+KW_WFP_CM_INDX = Keyword('KW_WFP_CM_INDX', key='', dtype=float, source=__NAME__)
+
+# border size allowed to fit fps used
+KW_WFP_BORDER = Keyword('KW_WFP_BORDER', key='', dtype=float, source=__NAME__)
+
+# the box size used to fit fps (half-size)
+KW_WFP_BSIZE = Keyword('KW_WFP_BSIZE', key='', dtype=int, source=__NAME__)
+
+# the sigma above median a peak must have to be a valid fp peak used
+KW_WFP_SIGLIM = Keyword('KW_WFP_SIGLIM', key='', dtype=float, source=__NAME__)
+
+# the lamp value that was used
+KW_WFP_LAMP = Keyword('KW_WFP_LAMP', key='', dtype=str, source=__NAME__)
+
+# the minimum spacing between peaks used
+KW_WFP_IPEAK_SPACE = Keyword('KW_WFP_IPEAK_SPACE', key='', dtype=float,
+                             source=__NAME__)
+
+# the expected width of the FP peaks used
+KW_WFP_EXPWIDTH = Keyword('KW_WFP_EXPWIDTH', key='', dtype=float,
+                          source=__NAME__)
+
+# the normalised cut width for large peaks used
+KW_WFP_CUTWIDTH = Keyword('KW_WFP_CUTWIDTH', key='', dtype=float,
+                          source=__NAME__)
+
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = Keyword('KW_WFP_FILE', key='', dtype=str, source=__NAME__)
 
