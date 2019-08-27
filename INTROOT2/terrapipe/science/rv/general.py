@@ -22,6 +22,7 @@ from terrapipe.core import constants
 from terrapipe.core import math
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
+from terrapipe.io import drs_data
 
 
 # =============================================================================
@@ -389,6 +390,586 @@ def remove_wide_peaks(params, props, **kwargs):
 
     # return props
     return props
+
+
+def get_ccf_mask(params, filename, **kwargs):
+    func_name = __NAME__ + '.get_ccf_mask()'
+    # get constants from params / kwargs
+    mask_min = pcheck(params, 'CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
+                      func_name)
+    mask_width = pcheck(params, 'CCF_MASK_WIDTH', 'mask_width', kwargs,
+                        func_name)
+    # load table
+    table, absfilename = drs_data.load_ccf_mask(params, filename=filename)
+    # calculate the difference in mask_e and mask_s
+    ll_mask_d = np.array(table['ll_mask_e']) - np.array(table['ll_mask_s'])
+    ll_mask_ctr = np.array(table['ll_mask_s']) + ll_mask_d * 0.5
+    # if mask_width > 0 ll_mask_d is multiplied by mask_width/c
+    if mask_width > 0:
+        ll_mask_d = mask_width * np.array(table['ll_mask_s']) / speed_of_light
+    # make w_mask an array
+    w_mask = np.array(table['w_mask'])
+    # use w_min to select on w_mask or keep all if w_mask_min >= 1
+    if mask_min < 1.0:
+        mask = w_mask > mask_min
+        ll_mask_d = ll_mask_d[mask]
+        ll_mask_ctr = ll_mask_ctr[mask]
+        w_mask = w_mask[mask]
+    # else set all w_mask to one (and use all lines in file)
+    else:
+        w_mask = np.ones(len(ll_mask_d))
+    # return the size of each pixel, the central point of each pixel
+    #    and the weight mask
+    return ll_mask_d, ll_mask_ctr, w_mask
+
+
+def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
+    """
+    Compute the photon noise uncertainty for all orders (for the 2D image)
+
+    :param spe: numpy array (2D), the extracted spectrum
+                size = (number of orders by number of columns (x-axis))
+    :param wave: numpy array (2D), the wave solution for each pixel
+    :param sigdet: float, the read noise (sigdet) for calculating the
+                   noise array
+    :param threshold: float, upper limit for pixel values, above this limit
+                      pixels are regarded as saturated
+    :param size: int, size (in pixels) around saturated pixels to also regard
+                 as bad pixels
+
+    :return dvrms2: numpy array (1D), the photon noise for each pixel (squared)
+    :return weightedmean: float, weighted mean photon noise across all orders
+    """
+    # flag (saturated) fluxes above threshold as "bad pixels"
+    with warnings.catch_warnings(record=True) as _:
+        flag = spe < threshold
+    # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
+    for i_it in range(1, 2 * size, 1):
+        flag[:, size:-size] *= flag[:, i_it: i_it - 2 * size]
+    # get the wavelength normalised to the wavelength spacing
+    nwave = wave[:, 1:-1] / (wave[:, 2:] - wave[:, :-2])
+    # get the flux + noise array
+    sxn = (spe[:, 1:-1] + sigdet ** 2)
+    # get the flux difference normalised to the flux + noise
+    nspe = (spe[:, 2:] - spe[:, :-2]) / sxn
+    # get the mask value
+    maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
+    # get the total
+    tot = np.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
+    # convert to dvrms2
+    with warnings.catch_warnings(record=True) as _:
+        dvrms2 = (speed_of_light_ms ** 2) / abs(tot)
+    # weighted mean of dvrms2 values
+    weightedmean = 1. / np.sqrt(np.nansum(1.0 / dvrms2))
+    # return dv rms and weighted mean
+    return dvrms2, weightedmean
+
+
+def coravelation(params, props, log=False, **kwargs):
+    """
+    Calculate the CCF and fit it with a Gaussian profile
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                ccf_berv: float, the barycentric Earth RV (berv)
+                ccf_berv_max: float, the maximum barycentric Earth RV
+                target_rv: float, the target RV
+                ccf_width: float, the CCF width
+                ccf_step: float, the CCF step
+                ccf_det_noise: float, the detector noise to use in the ccf
+                ccf_fit_type: int, the type of fit for the CCF fit
+                log_opt: string, log option, normally the program name
+                DRS_DEBUG: int, Whether to run in debug mode
+                                0: no debug
+                                1: basic debugging on errors
+                                2: recipes specific (plots and some code runs)
+                DRS_PLOT: bool, Whether to plot (True to plot)
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                wave_ll: numpy array (1D), the line list values
+                param_ll: numpy array (1d), the line list fit coefficients
+                          (used to generate line list - read from file defined)
+                ll_mask_d: numpy array (1D), the size of each line
+                           (in wavelengths)
+                ll_mask_ctr: numpy array (1D), the central point of each line
+                             (in wavelengths)
+                w_mask: numpy array (1D), the weight mask
+                e2dsff: numpy array (2D), the flat fielded E2DS spectrum
+                        shape = (number of orders x number of columns in image
+                                                      (x-axis dimension) )
+                blaze: numpy array (2D), the blaze function
+                        shape = (number of orders x number of columns in image
+                                                      (x-axis dimension) )
+
+    :param log: bool, if True logs to stdout/file if False is silent
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                rv_ccf: numpy array (1D), the radial velocities for the CCF
+                ccf: numpy array (2D), the CCF for each order and each RV
+                     shape = (number of orders x number of RV points)
+                ccf_max: float, numpy array (1D), the max value of the CCF for
+                         each order
+                pix_passed_all: numpy array (1D), the weighted line list
+                                position for each order?
+                tot_line: numpy array (1D), the total number of lines for each
+                          order
+                ll_range_all: numpy array (1D), the weighted line list width for
+                          each order
+                ccf_noise: numpy array (2D), the CCF noise for each order and
+                           each RV
+                           shape = (number of orders x number of RV points)
+    """
+    func_name = __NAME__ + '.coravelation()'
+    # -------------------------------------------------------------------------
+    # get constants from p
+    # -------------------------------------------------------------------------
+    ccf_step = pcheck(params, 'CCF_STEP', 'ccf_step', kwargs, func_name)
+    ccf_width = pcheck(params, 'CCF_WIDTH', 'ccf_width', kwargs, func_name)
+    det_noise = pcheck(params, 'CCF_DET_NOISE', 'det_noise', kwargs, func_name)
+    fit_type = pcheck(params, 'CCF_FIT_TYPE', 'fit_type', kwargs, func_name)
+    target_rv = pcheck(params, 'CCF_TARGET_RV', 'target_rv', kwargs, func_name)
+
+    # -------------------------------------------------------------------------
+    # get data from loc
+    # -------------------------------------------------------------------------
+    # get the wavelengths for the lines and the fit coefficients for each line
+    ll_map, coeff_ll = props['WAVE_LL'], props['PARAM_LL']
+    # get the line centers and the line widths
+    ll_mask_ctr, ll_mask_d = props['LL_MASK_CTR'], props['LL_MASK_D']
+    # get the line weights
+    w_mask = props['W_MASK']
+    # get the flat fielded flux values
+    s2d = props['E2DSFF']
+    # get the blaze values
+    blaze = props['BLAZE']
+    # get the Barycentric Earth Velocity calculation
+    berv = props['BERV']
+    berv_max = props['BERV_MAX']
+
+    # TODO: Is this okay to do this?
+    if ~np.isfinite(berv):
+        berv = 0.0
+        berv_max = 0.0
+    # -------------------------------------------------------------------------
+    # log that we are computing ccf at target_rv
+    if log:
+        WLOG(params, '', TextEntry('40-020-00001', wargs=[target_rv]))
+    # -------------------------------------------------------------------------
+    # get rvmin and rvmax
+    if 'RVMIN' in kwargs:
+        rvmin = kwargs['RVMIN']
+    elif 'RVMIN' in params:
+        rvmin = params['RVMIN']
+    else:
+        rvmin = target_rv - ccf_width
+    if 'RVMAX' in kwargs:
+        rvmax = kwargs['RVMAX']
+    elif 'RVMAX' in params:
+        rvmax = params['RVMAX']
+    else:
+        rvmax = target_rv + ccf_width + ccf_step
+    # create a rv ccf range
+    rv_ccf = np.arange(rvmin, rvmax, ccf_step)
+    # -------------------------------------------------------------------------
+    # calculate modified map
+    ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    # calculate modified coefficients
+    coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    # get the differential map
+    dll_map = math.get_dll_from_coefficients(coeff_ll_b, len(ll_map[0]),
+                                             len(coeff_ll))
+    # -------------------------------------------------------------------------
+    # define some constants for loop
+    constant1 = (1 + 1.55e-8) * (1 + berv_max / speed_of_light)
+    constant2 = (1 + 1.55e-8) * (1 - berv_max / speed_of_light)
+    rvshift = 1 + rv_ccf / speed_of_light
+    # -------------------------------------------------------------------------
+    # storage for loop
+    orders = []
+    ccf_all = []
+    ccf_noise_all = []
+    ccf_all_fit = []
+    ccf_max = []
+    ccf_all_results = []
+    pix_passed_all = []
+    ll_range_all = []
+    tot_line = []
+    # -------------------------------------------------------------------------
+    # graph set up
+    if params['DRS_PLOT'] and params['DRS_DEBUG'] == 2:
+        # TODO: Add plots
+        # # start interactive plot
+        # sPlt.start_interactive_session(p)
+        # # define a figure
+        # fig = sPlt.define_figure()
+        pass
+    else:
+        fig = None
+    # -------------------------------------------------------------------------
+    # loop around the orders
+    for order_num in range(len(ll_map)):
+        # get the line list limits
+        ll_min = ll_map[order_num, 1] * constant1 / rvshift[0]
+        ll_max = ll_map[order_num, -1] * constant2 / rvshift[-1]
+        # define mask (mask centers must be inside ll_min and ll_max
+        cond = (ll_mask_ctr - 0.5 * ll_mask_d) > ll_min
+        cond &= (ll_mask_ctr + 0.5 * ll_mask_d) < ll_max
+        # mask mask_ctr, mask_d and w_mask
+        ll_sub_mask_ctr = ll_mask_ctr[cond]
+        ll_sub_mask_d = ll_mask_d[cond]
+        w_sub_mask = w_mask[cond]
+
+        # if we have values that meet the "cond" condition then we can do CCF
+        if np.nansum(cond) > 0:
+            # -----------------------------------------------------------------
+            # calculate the CCF
+            ccf_args = [ll_sub_mask_ctr, ll_sub_mask_d, w_sub_mask,
+                        ll_map_b[order_num], s2d[order_num],
+                        dll_map[order_num], blaze[order_num],
+                        rv_ccf, det_noise]
+            ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
+            # -----------------------------------------------------------------
+            # fit the CCF
+            fit_args = [params, rv_ccf, np.array(ccf_o), fit_type]
+            try:
+                with warnings.catch_warnings(record=True) as _:
+                    ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            except RuntimeError:
+                ll_range, pix_passed = 0.0, 1.0
+                ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+                ccf_o_results = np.zeros(4)
+
+            if np.sum(np.isfinite(ccf_o) == 0):
+                ll_range, pix_passed = 0.0, 1.0
+                ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+                ccf_o_results = np.zeros(4)
+        else:
+            # -----------------------------------------------------------------
+            # else append empty stats
+            ll_range, pix_passed = 0.0, 1.0
+            ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+            ccf_o_results = np.zeros(4)
+
+        # ---------------------------------------------------------------------
+        # append to storage
+        orders.append(order_num)
+        tot_line.append(len(w_sub_mask))
+        ccf_all.append(ccf_o)
+        ccf_noise_all.append(ccf_noise)
+        ccf_max.append(np.nanmax(ccf_o))
+        ccf_all_fit.append(ccf_o_fit)
+        ccf_all_results.append(ccf_o_results)
+        pix_passed_all.append(pix_passed)
+        ll_range_all.append(ll_range)
+        # ---------------------------------------------------------------------
+        # Plots
+        # ---------------------------------------------------------------------
+        cond1 = len(ll_sub_mask_ctr) > 0
+
+        if params['DRS_PLOT'] and cond1 and params['DRS_DEBUG'] == 2:
+            # TODO: Add plots
+            # # Plot rv vs ccf (and rv vs ccf_fit)
+            # sPlt.ccf_rv_ccf_plot(p, rv_ccf, ccf_o, ccf_o_fit, order=order_num,
+            #                      fig=fig)
+            pass
+    # -------------------------------------------------------------------------
+    # convert to arrays
+    orders = np.array(orders)
+    tot_line = np.array(tot_line)
+    ccf_all = np.array(ccf_all)
+    ccf_noise_all = np.array(ccf_noise_all)
+    ccf_max = np.array(ccf_max)
+    # ccf_all_fit = np.array(ccf_all_fit)
+    ccf_all_results = np.array(ccf_all_results)
+    pix_passed_all = np.array(pix_passed_all)
+    ll_range_all = np.array(ll_range_all)
+
+    # -------------------------------------------------------------------------
+    # add outputs to loc
+    props['RV_CCF'] = rv_ccf
+    props['CCF'] = ccf_all
+    props['CCF_MAX'] = ccf_max
+    props['PIX_PASSED_ALL'] = pix_passed_all
+    props['TOT_LINE'] = tot_line
+    props['LL_RANGE_ALL'] = ll_range_all
+    props['CCF_NOISE'] = ccf_noise_all
+    props['ORDERS'] = orders
+    props['CCF_ALL_RESULTS'] = ccf_all_results
+
+    # set source
+    keys = ['rv_ccf', 'ccf', 'ccf_max', 'pix_passed_all', 'tot_line',
+            'll_range_all', 'ccf_noise', 'orders', 'ccf_all_results']
+    props.set_sources(keys, __NAME__ + '/coravelation()')
+    # -------------------------------------------------------------------------
+    # return loc
+    return props
+
+
+def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
+                  rv_ccf, det_noise, mode='fast'):
+    """
+    Calculate the cross correlation function
+
+    :param mask_ll: numpy array (1D), the centers of the lines to be used
+                    size = (number of lines to use)
+    :param mask_d: numpy array (1D), the widths of the lines to be used
+                   size = (number of lines to use)
+    :param mask_w: numpy array (1D), the weights of each line
+                    size = (number of lines to use)
+    :param sp_ll: numpy array (1D), the wavelength values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param sp_flux: numpy array (1D), the flux values for this order
+                    size = (number of columns in e2ds file [x-dimension])
+    :param sp_dll: numpy array (1D), the derivative of the line list fits for
+                   this order
+                   size = (number of columns in e2ds file [x-dimension])
+    :param blaze: numpy array (1D), the blaze values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param rv_ccf: numpy array (1D), the RV values for this order
+                   size = (2 * ccf_width/ccf_step + 1)
+    :param det_noise: float, the detector noise
+    :param mode: string, if "fast" uses a non-for-loop python function to run
+                 the ccf calculation, if "slow" uses a direct fortran
+                 translation to run the ccf calculation
+
+    :return ccf: numpy array (1D), the CCF for each RV value
+    :return pix: float, the weighted line list position?
+    :return llrange: float, the weighted line list width?
+    :return ccf_noise: numpy array (1D), the CCF noise for each RV value
+    """
+
+    # constants
+    sp_ll_dll = sp_ll + sp_dll * 0.5
+    mask_ll_d1 = mask_ll - 0.5 * mask_d
+    mask_ll_d2 = mask_ll + 0.5 * mask_d
+    rv_corr = 1 + rv_ccf / speed_of_light
+    # get the line centers
+    line_ctr = mask_ll * (1 + rv_ccf[int(len(rv_ccf) / 2)] / speed_of_light)
+    index_line_ctr = np.searchsorted(sp_ll_dll, line_ctr) + 1
+
+    # loop around each rv in rv_ccf
+    ccf, ccf_noise = [], []
+    pix, llrange = 0.0, 0.0
+    for it in range(len(rv_ccf)):
+        # ge the blue and red ends of each line
+        mask_blue = mask_ll_d1 * rv_corr[it]
+        mask_red = mask_ll_d2 * rv_corr[it]
+        # get the indices for the blue and red ends of each line
+        index_mask_blue = np.searchsorted(sp_ll_dll, mask_blue) + 1
+        index_mask_red = np.searchsorted(sp_ll_dll, mask_red) + 1
+
+        # work out the correlation of each bin
+        cargs = [sp_flux, sp_ll, sp_dll, blaze, mask_blue, mask_red, mask_w,
+                 index_mask_blue, index_mask_red, index_line_ctr, det_noise]
+        # if mode == 'fast':
+        #     out, pix, llrange, sigout = new_correlbin(*cargs)
+        # else:
+        #     out, pix, llrange, sigout = correlbin(*cargs)
+        out, pix, llrange, sigout = correlbin(*cargs)
+
+        ccf.append(out), ccf_noise.append(sigout)
+    # return the ccf, pix, llrange and ccf_noise
+    return ccf, pix, llrange, ccf_noise
+
+
+def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
+              i_line_ctr, det_noise):
+    """
+    Raw (Fortran direct translate) of correlbin
+
+    Timing statistics:
+
+    raw_correlbin
+    523 µs ± 62.8 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+    correlbin
+    126 µs ± 13.5 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+    fortran
+    2.56 µs per loop
+
+    :param flux: numpy array (1D), the flux values for this order
+                 size = (number of columns in e2ds file [x-dimension])
+    :param ll: numpy array (1D), the wavelength values for this order
+               size = (number of columns in e2ds file [x-dimension])
+    :param dll: numpy array (1D), the derivative of the line list fits for
+                this order
+                size = (number of columns in e2ds file [x-dimension])
+    :param blaze: numpy array (1D), the blaze values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param ll_s: numpy array (1D), the wavelength at the blue end of each line
+                 size = (number of lines to use)
+    :param ll_e: numpy array (1D), the wavelength at the red end of each line
+                 size = (number of lines to use)
+    :param ll_wei: numpy array (1D), the weights of each line
+                   size = (number of lines to use)
+    :param i_start: numpy array (1D), the indices ll where ll_s would appear if
+                    inserted and sorted (i.e. the bin position to at the blue
+                    end of each line in the main image)
+                    size = (number of lines to use)
+    :param i_end: numpy array (1D), the indices ll where ll_e would appear if
+                  inserted and sorted (i.e. the bin position to at the red
+                  end of each line in the main image)
+                  size = (number of lines to use)
+    :param i_line_ctr: numpy array (1D), the indices ll where the line centers
+                       would appear if inserted and sorted (i.e. the bin
+                       position to at the red end of each line in the main
+                       image)
+                       size = (number of lines to use)
+    :param det_noise: float, the detector noise
+
+    :return out_ccf: float, the calculated CCF
+    :return pix: float, the last pix value?
+    :return llrange: float, the line list range?
+    :return ccf_noise: float, the calculated CCF noise
+    """
+    # get sizes of arrays
+    # nx = len(flux)
+    nfind = len(ll_s)
+    # set up outputs
+    out_ccf = 0.0
+    pix = 0.0
+    llrange = 0.0
+    ccf_noise = 0.0
+    # loop around nfind 1 to nfind +1 (+1 for python loop)
+    for it in range(1, nfind + 1):
+        # adjust from fortran indexing to python indexing
+        ft = it - 1
+
+        # get indices
+        start, end = i_start[ft], i_end[ft]
+        center = i_line_ctr[ft]
+        weight = ll_wei[ft]
+
+        # adjust from fortran indexing to python indexing
+        start = start - 1
+        end = end - 1
+        center = center - 1
+
+        # if the end and start index are the same
+        if start == end:
+            # pix value = take the difference over the derivative
+            pix_s = (ll_e[ft] - ll_s[ft]) / dll[start]
+            # output ccf calculation
+            out = pix_s * flux[start] / blaze[start]
+            out_ccf += (out * weight * blaze[center])
+            # pixel calculation
+            pix += (pix_s * weight)
+            llrange += (pix_s * dll[start] * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_s * det_noise ** 2
+            ccf_noise += ((noise1 + noise2) * weight ** 2)
+        # if start+1 == end
+        elif (start + 1) == end:
+            # pix value = start + 0.5 * derivative - Mask_blue/derivative
+            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
+            # pix value = (end - (start + derivative)) /derivative
+            pix_e = (ll_e[ft] - ll[start] - dll[start] * 0.5) / dll[end]
+            # output ccf calculation
+            out1 = pix_s * flux[start] / blaze[start]
+            out2 = pix_e * flux[end] / blaze[end]
+            out_ccf += ((out1 + out2) * weight * blaze[center])
+            # pixel calculation
+            pix += ((pix_s + pix_e) * weight)
+            llrange += ((pix_s * dll[start] + pix_e * dll[end]) * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_e * np.abs(flux[end])
+            noise3 = (pix_s + pix_e) * det_noise ** 2
+            ccf_noise += (noise1 + noise2 + noise3) * weight ** 2
+        # else
+        else:
+            # pix value = start + 0.5 * derivative - Mask_blue/derivative
+            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
+            # pix value = (end - (start + derivative)) /derivative
+            pix_e = (ll_e[ft] - ll[end - 1] - dll[end - 1] * 0.5) / dll[end]
+            # output ccf calculation
+            out1 = pix_s * flux[start] / blaze[start]
+            out2 = pix_e * flux[end] / blaze[end]
+            out_ccf += ((out1 + out2) * weight * blaze[center])
+            # pixel calculation
+            pix += ((pix_s + pix_e) * weight)
+            llrange += ((pix_s * dll[start] + pix_e * dll[end]) * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_e * np.abs(flux[end])
+            noise3 = (pix_s + pix_e) * det_noise ** 2
+            ccf_noise += (noise1 + noise2 + noise3) * weight ** 2
+            # loop around start + 1 to end - 1 + 1 (+1 for python loop)
+            for i in range(start + 1, end - 1 + 1):
+                # adjust from fortran indexing to python indexing
+                j = i - 1
+                # output ccf calculation
+                out_ccf += (flux[j] / blaze[j]) * blaze[center] * weight
+                # pixel calculation
+                pix += weight
+                llrange += (dll[j] * weight)
+                # ccf noise calculation
+                noise1 = np.abs(flux[j])
+                noise2 = det_noise ** 2
+                ccf_noise += (noise1 + noise2) * weight ** 2
+
+    # sqrt the noise
+    ccf_noise = np.sqrt(ccf_noise)
+    # return parameters
+    return out_ccf, pix, llrange, ccf_noise
+
+
+def fit_ccf(params, rv, ccf, fit_type):
+    """
+    Fit the CCF to a guassian function
+
+    :param rv: numpy array (1D), the radial velocities for the line
+    :param ccf: numpy array (1D), the CCF values for the line
+    :param fit_type: int, if "0" then we have an absorption line
+                          if "1" then we have an emission line
+
+    :return result: numpy array (1D), the fit parameters in the
+                    following order:
+
+                [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :return ccf_fit: numpy array (1D), the fit values, i.e. the gaussian values
+                     for the fit parameters in "result"
+    """
+    func_name = __NAME__ + '.fit_ccf()'
+    # deal with inconsistent lengths
+    if len(rv) != len(ccf):
+        eargs = [len(rv), len(ccf), func_name]
+        WLOG(params, 'error', TextEntry('00-020-00001', args=eargs))
+    # get constants
+    max_ccf, min_ccf = np.nanmax(ccf), np.nanmin(ccf)
+    argmin, argmax = np.argmin(ccf), np.argmax(ccf)
+    diff = max_ccf - min_ccf
+    rvdiff = rv[1] - rv[0]
+    # set up guess for gaussian fit
+    # if fit_type == 0 then we have absorption lines
+    if fit_type == 0:
+        if np.nanmax(ccf) != 0:
+            a = np.array([-diff / max_ccf, rv[argmin], 4 * rvdiff, 0])
+        else:
+            a = np.zeros(4)
+    # else (fit_type == 1) then we have emission lines
+    else:
+        a = np.array([diff / max_ccf, rv[argmax], 4 * rvdiff, 1])
+    # normalise y
+    y = ccf / max_ccf - 1 + fit_type
+    # x is just the RVs
+    x = rv
+    # uniform weights
+    w = np.ones(len(ccf))
+    # get gaussian fit
+    nanmask = np.isfinite(y)
+    y[~nanmask] = 0.0
+    # fit the gaussian
+    result, fit = math.fitgaussian(x, y, weights=w, guess=a)
+    # scal ethe ccf
+    ccf_fit = (fit + 1 - fit_type) * max_ccf
+    # return the best guess and the gaussian fit
+    return result, ccf_fit
 
 
 # =============================================================================
