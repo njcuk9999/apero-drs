@@ -65,9 +65,7 @@ class Run:
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # find the recipe
-        self.recipe = self.find_recipe(mod)
-        # import the recipe module
-        self.recipemod = self.recipe.main
+        self.recipe, self.recipemod = self.find_recipe(mod)
         # turn off the input validation
         self.recipe.input_validation = False
         # run parser with arguments
@@ -110,6 +108,12 @@ class Run:
                     del self.kwargs[kwargname]
 
     def find_recipe(self, mod=None):
+        """
+
+        :param mod: Module
+        :return:
+        :rtype: Tuple[DrsRecipe, Module]
+        """
         # find the recipe definition
         recipe, mod = drs_startup.find_recipe(self.recipename,
                                               self.params['INSTRUMENT'],
