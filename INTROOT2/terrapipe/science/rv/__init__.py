@@ -16,6 +16,12 @@ __all__ = []
 # =============================================================================
 # Define functions
 # =============================================================================
+coravelation = general.coravelation
+
+delta_v_rms_2d = general.delta_v_rms_2d
+
+fit_ccf = general.fit_ccf
+
 measure_fp_peaks = general.measure_fp_peaks
 
 remove_wide_peaks = general.remove_wide_peaks
