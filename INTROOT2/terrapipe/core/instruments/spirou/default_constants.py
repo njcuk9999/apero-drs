@@ -882,6 +882,18 @@ WAVE_PIXEL_SHIFT_INTER.value = 0.0    #  6.26637214e+00
 WAVE_PIXEL_SHIFT_SLOPE = WAVE_PIXEL_SHIFT_SLOPE.copy(__NAME__)
 WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    #  4.22131253e-04
 
+#  Defines echelle number of first extracted order
+WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
+WAVE_T_ORDER_START.value = 79
+
+#  Defines order from which the solution is calculated (first order)
+WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
+WAVE_N_ORD_START.value = 0
+
+#  Defines order to which the solution is calculated (last order)
+WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
+WAVE_N_ORD_FINAL.value = 47
+
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -986,18 +998,6 @@ WAVE_HC_RESMAP_SIZE.value = '5, 4'
 WAVE_HC_RES_MAXDEV_THRES = WAVE_HC_RES_MAXDEV_THRES.copy(__NAME__)
 WAVE_HC_RES_MAXDEV_THRES.value = 8
 
-#  Defines echelle number of first extracted order
-WAVE_HC_T_ORDER_START = WAVE_HC_T_ORDER_START.copy(__NAME__)
-WAVE_HC_T_ORDER_START.value = 79
-
-#  Defines order from which the solution is calculated
-WAVE_HC_N_ORD_START = WAVE_HC_N_ORD_START.copy(__NAME__)
-WAVE_HC_N_ORD_START.value = 0
-
-#  Defines order to which the solution is calculated
-WAVE_HC_N_ORD_FINAL = WAVE_HC_N_ORD_FINAL.copy(__NAME__)
-WAVE_HC_N_ORD_FINAL.value = 47
-
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = WAVE_HC_QC_SIGMA_MAX.copy(__NAME__)
 WAVE_HC_QC_SIGMA_MAX.value = 8
@@ -1031,7 +1031,7 @@ WAVE_FP_XDIF_MIN.value = 0.75
 WAVE_FP_XDIF_MAX = WAVE_FP_XDIF_MAX.copy(__NAME__)
 WAVE_FP_XDIF_MAX.value = 1.25
 
-# Maximum fract. wavelength offset between cross-matched FP peaks
+# Maximum fractional wavelength offset between cross-matched FP peaks
 WAVE_FP_LL_OFFSET = WAVE_FP_LL_OFFSET.copy(__NAME__)
 WAVE_FP_LL_OFFSET.value = 0.25
 
@@ -1124,20 +1124,12 @@ WAVE_FP_DOPD0.value = 2.44962434814043e7    # 2.44999e7  # 2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
-WAVE_FP_FIT_DEG = WAVE_FP_FIT_DEG.copy(__NAME__)
-WAVE_FP_FIT_DEG.value = 9
+WAVE_FP_CAVFIT_DEG = WAVE_FP_CAVFIT_DEG.copy(__NAME__)
+WAVE_FP_CAVFIT_DEG.value = 9
 
 #  Define the FP jump size that is too large
 WAVE_FP_LARGE_JUMP = WAVE_FP_LARGE_JUMP.copy(__NAME__)
 WAVE_FP_LARGE_JUMP.value = 0.5
-
-#  Define first order FP solution is calculated from
-WAVE_FP_N_ORD_START = WAVE_FP_N_ORD_START.copy(__NAME__)
-WAVE_FP_N_ORD_START.value = 0  # 0   # 9
-
-#  Defines last order FP solution is calculated to
-WAVE_FP_N_ORD_FINAL = WAVE_FP_N_ORD_FINAL.copy(__NAME__)
-WAVE_FP_N_ORD_FINAL.value = 47  # 47   # 45
 
 # index of FP line to start order cross-matching from
 WAVE_FP_CM_IND = -2
@@ -1175,6 +1167,21 @@ WAVE_FP_EXP_WIDTH.value = 0.9  # 0.8
 WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NORM_WIDTH_CUT.copy(__NAME__)
 WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
 
+# =============================================================================
+# CALIBRATION: WAVE CCF SETTINGS
+# =============================================================================
+#   The value of the noise for wave drift calculation
+#       snr = flux/sqrt(flux + noise^2)
+WAVE_CCF_DRIFT_NOISE = WAVE_CCF_DRIFT_NOISE.copy(__NAME__)
+WAVE_CCF_DRIFT_NOISE.value = 8.0  # 100
+
+#   The size around a saturated pixel to flag as unusable
+WAVE_CCF_BOXSIZE = WAVE_CCF_BOXSIZE.copy(__NAME__)
+WAVE_CCF_BOXSIZE.value = 12
+
+#   The maximum flux for a good (unsaturated) pixel
+WAVE_CCF_MAXFLUX = WAVE_CCF_MAXFLUX.copy(__NAME__)
+WAVE_CCF_MAXFLUX.value = 1.0e9
 
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
@@ -1204,6 +1211,25 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_whitelist.txt'
 
+# =============================================================================
+# CALIBRATION: CCF SETTINGS
+# =============================================================================
+# Define the ccf mask path
+CCF_MASK_PATH = CCF_MASK_PATH.copy(__NAME__)
+CCF_MASK_PATH.value = './data/spirou/ccf/'
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+CCF_MASK_MIN_WEIGHT = CCF_MASK_MIN_WEIGHT.copy(__NAME__)
+CCF_MASK_MIN_WEIGHT.value = 0.0
+
+#  Define the width of the template line (if 0 use natural)
+CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
+CCF_MASK_WIDTH.value = 1.7
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the CCF and RV
+CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
+CCF_N_ORD_MAX.value = 48
 
 # =============================================================================
 # TOOLS SETTINGS

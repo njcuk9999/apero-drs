@@ -107,6 +107,7 @@ __all__ = [
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
     'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE', 'WAVE_FIT_DEGREE',
     'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
+    'WAVE_T_ORDER_START', 'WAVE_N_ORD_START', 'WAVE_N_ORD_FINAL',
     # wave hc constants
     'WAVE_MODE_HC', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
     'WAVE_HC_FITBOX_GFIT_DEG', 'WAVE_HC_FITBOX_RMS_DEVMIN',
@@ -118,7 +119,6 @@ __all__ = [
     'WAVE_HC_TFIT_ORDER_FIT_CONT', 'WAVE_HC_TFIT_SIGCLIP_NUM',
     'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
     'WAVE_HC_TFIT_DVCUT_ALL', 'WAVE_HC_RESMAP_SIZE', 'WAVE_HC_RES_MAXDEV_THRES',
-    'WAVE_HC_T_ORDER_START', 'WAVE_HC_N_ORD_START', 'WAVE_HC_N_ORD_FINAL',
     'WAVE_HC_QC_SIGMA_MAX',
     # wave littrow parameters
     'WAVE_LITTROW_ORDER_INIT_1', 'WAVE_LITTROW_ORDER_INIT_2',
@@ -127,18 +127,22 @@ __all__ = [
     'WAVE_LITTROW_CUT_STEP_2', 'WAVE_LITTROW_FIG_DEG_1',
     'WAVE_LITTROW_FIG_DEG_2', 'WAVE_LITTROW_EXT_ORDER_FIT_DEG',
     # wave fp constants
-    'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_FIT_DEG', 'WAVE_FP_LARGE_JUMP',
-    'WAVE_FP_N_ORD_START', 'WAVE_FP_N_ORD_FINAL', 'WAVE_FP_BORDER_SIZE',
-    'WAVE_FP_FPBOX_SIZE', 'WAVE_FP_PEAK_SIG_LIM', 'WAVE_FP_IPEAK_SPACING',
-    'WAVE_FP_EXP_WIDTH', 'WAVE_FP_NORM_WIDTH_CUT', 'WAVE_FP_ERRX_MIN',
-    'WAVE_FP_LL_DEGR_FIT', 'WAVE_FP_MAX_LLFIT_RMS', 'WAVE_FP_WEIGHT_THRES',
-    'WAVE_FP_BLAZE_THRES', 'WAVE_FP_XDIF_MIN', 'WAVE_FP_XDIF_MAX',
-    'WAVE_FP_LL_OFFSET', 'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY',
-    'WAVE_FP_CAVFIT_MODE', 'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN',
-    'WAVE_FP_LLDIF_MAX', 'WAVE_FP_SIGCLIP',
+    'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_CAVFIT_DEG', 'WAVE_FP_LARGE_JUMP',
+    'WAVE_FP_BORDER_SIZE', 'WAVE_FP_FPBOX_SIZE', 'WAVE_FP_PEAK_SIG_LIM',
+    'WAVE_FP_IPEAK_SPACING', 'WAVE_FP_EXP_WIDTH', 'WAVE_FP_NORM_WIDTH_CUT',
+    'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT', 'WAVE_FP_MAX_LLFIT_RMS',
+    'WAVE_FP_WEIGHT_THRES', 'WAVE_FP_BLAZE_THRES', 'WAVE_FP_XDIF_MIN',
+    'WAVE_FP_XDIF_MAX', 'WAVE_FP_LL_OFFSET', 'WAVE_FP_DV_MAX',
+    'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE', 'WAVE_FP_LLFIT_MODE',
+    'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX', 'WAVE_FP_SIGCLIP',
+    # wave ccf constants
+    'WAVE_CCF_DRIFT_NOISE', 'WAVE_CCF_BOXSIZE', 'WAVE_CCF_MAXFLUX',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    # ccf constants
+    'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
+    'CCF_N_ORD_MAX',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -990,6 +994,18 @@ WAVE_PIXEL_SHIFT_INTER = Const('WAVE_PIXEL_SHIFT_INTER', value=None,
 WAVE_PIXEL_SHIFT_SLOPE = Const('WAVE_PIXEL_SHIFT_SLOPE', value=None,
                                dtype=float, source=__NAME__)
 
+#  Defines echelle of first extracted order
+WAVE_T_ORDER_START = Const('WAVE_T_ORDER_START', value=None,
+                              dtype=int, source=__NAME__)
+
+#  Defines order from which the solution is calculated
+WAVE_N_ORD_START = Const('WAVE_N_ORD_START', value=None, dtype=int,
+                            source=__NAME__)
+
+#  Defines order to which the solution is calculated
+WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
+                            source=__NAME__)
+
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
 # =============================================================================
@@ -1091,18 +1107,6 @@ WAVE_HC_RESMAP_SIZE = Const('WAVE_HC_RESMAP_SIZE', value=None, dtype=str,
 WAVE_HC_RES_MAXDEV_THRES = Const('WAVE_HC_RES_MAXDEV_THRES', value=None,
                                  dtype=float, source=__NAME__)
 
-#  Defines echelle of first extracted order
-WAVE_HC_T_ORDER_START = Const('WAVE_HC_T_ORDER_START', value=None,
-                              dtype=int, source=__NAME__)
-
-#  Defines order from which the solution is calculated
-WAVE_HC_N_ORD_START = Const('WAVE_HC_N_ORD_START', value=None, dtype=int,
-                            source=__NAME__)
-
-#  Defines order to which the solution is calculated
-WAVE_HC_N_ORD_FINAL = Const('WAVE_HC_N_ORD_FINAL', value=None, dtype=int,
-                            source=__NAME__)
-
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
@@ -1158,20 +1162,12 @@ WAVE_FP_DOPD0 = Const('WAVE_FP_DOPD0', value=None, dtype=float,
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
-WAVE_FP_FIT_DEG = Const('WAVE_FP_FIT_DEG', value=None, dtype=int,
+WAVE_FP_CAVFIT_DEG = Const('WAVE_FP_CAVFIT_DEG', value=None, dtype=int,
                         source=__NAME__, minimum=0)
 
 #  Define the FP jump size that is too large
 WAVE_FP_LARGE_JUMP = Const('WAVE_FP_LARGE_JUMP', value=None, dtype=float,
                            source=__NAME__, minimum=0)
-
-#  Define first order FP solution is calculated from
-WAVE_FP_N_ORD_START = Const('WAVE_FP_N_ORD_START', value=None, dtype=int,
-                            source=__NAME__, minimum=0)
-
-#  Defines last order FP solution is calculated to
-WAVE_FP_N_ORD_FINAL = Const('WAVE_FP_N_ORD_FINAL', value=None, dtype=int,
-                            source=__NAME__, minimum=0)
 
 # index of FP line to start order cross-matching from
 WAVE_FP_CM_IND = Const('WAVE_FP_CM_IND', value=None, dtype=int, source=__NAME__)
@@ -1279,6 +1275,22 @@ WAVE_FP_SIGCLIP = Const('WAVE_FP_SIGCLIP', value=None, dtype=float,
                           source=__NAME__, minimum=0.0)
 
 # =============================================================================
+# CALIBRATION: WAVE CCF SETTINGS
+# =============================================================================
+#   The value of the noise for wave drift calculation
+#       snr = flux/sqrt(flux + noise^2)
+WAVE_CCF_DRIFT_NOISE = Const('WAVE_CCF_DRIFT_NOISE', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
+
+#   The size around a saturated pixel to flag as unusable
+WAVE_CCF_BOXSIZE = Const('WAVE_CCF_BOXSIZE', value=None, dtype=int,
+                             source=__NAME__, minimum=0.0)
+
+#   The maximum flux for a good (unsaturated) pixel
+WAVE_CCF_MAXFLUX = Const('WAVE_CCF_MAXFLUX', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0)
+
+# =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
 # =============================================================================
 # Define the name of the tapas file to use
@@ -1303,6 +1315,25 @@ TELLU_WHITELIST_NAME = Const('TELLU_WHITELIST_NAME', value=None, dtype=str,
 # Define telluric black list name
 TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: CCF SETTINGS
+# =============================================================================
+# Define the ccf mask path
+CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__)
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+CCF_MASK_MIN_WEIGHT = Const('CCF_MASK_MIN_WEIGHT', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0)
+
+#  Define the width of the template line (if 0 use natural)
+CCF_MASK_WIDTH = Const('CCF_MASK_WIDTH', value=None, dtype=float,
+                       source=__NAME__, minimum=0.0)
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the CCF and RV
+CCF_N_ORD_MAX = Const('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__,
+                      minimum=1)
 
 # =============================================================================
 # TOOLS SETTINGS
