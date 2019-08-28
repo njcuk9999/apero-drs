@@ -28,7 +28,7 @@ from . import drs_table
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'io.drs_path.py'
+__NAME__ = 'io.drs_fits.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -651,7 +651,7 @@ def header_start_time(params, hdr, out_fmt=None, func=None, name=None):
     # ----------------------------------------------------------------------
     # get astropy time
     try:
-        acqtime = Time(rawtime, format=timefmt)
+        acqtime = Time(timetype(rawtime), format=timefmt)
     except Exception as e:
         eargs = [dbname, rawtime, timefmt, timetype, type(e), e, func_name]
         WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
@@ -717,7 +717,7 @@ def header_end_time(params, hdr, out_fmt=None, func=None, name=None):
     # ----------------------------------------------------------------------
     # get astropy time
     try:
-        endtime = Time(rawtime, format=timefmt)
+        endtime = Time(timetype(rawtime), format=timefmt)
     except Exception as e:
         eargs = [dbname, rawtime, timefmt, timetype, type(e), e, func_name]
         WLOG(params, 'error', TextEntry('00-001-00029', args=eargs))
@@ -764,13 +764,13 @@ def get_mid_obs_time(params, header, out_fmt=None, **kwargs):
         func_name = __NAME__ + '.get_mid_obs_time()'
         # get parameters from params/kwargs
         if 'exptime' in kwargs:
-            exptime = kwargs['exptime']
+            exptime = float(kwargs['exptime'])
             exp_timeunit = uu.s
         else:
             exp_timekey = params['KW_EXPTIME'][0]
             exp_timeunit = params.instances['KW_EXPTIME'].unit
 
-            exptime = header[exp_timekey]
+            exptime = float(header[exp_timekey])
         # -------------------------------------------------------------------
         # get header time
         endtime = header_end_time(params, header, func=func_name)
