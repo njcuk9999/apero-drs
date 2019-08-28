@@ -12,6 +12,7 @@ Created on 2019-08-06 at 11:57
 from __future__ import division
 import numpy as np
 import os
+import sys
 import time
 from astropy.table import Table
 from collections import OrderedDict
@@ -60,35 +61,17 @@ class Run:
         self.params = params
         self.runstring = runstring
         self.priority = priority
-        # get args
-        self.args = runstring.split(' ')
-        # the first argument must be the recipe name
-        self.recipename = self.args[0]
-        # find the recipe
-        self.recipe, self.module = self.find_recipe(mod)
-        # import the recipe module
-        self.recipemod = self.recipe.main
-        # turn off the input validation
-        self.recipe.input_validation = False
-        # run parser with arguments
-        self.kwargs = self.recipe.recipe_setup(inargs=self.args)
-        # add argument to set program name
-        pargs = [self.recipe.shortname, int(self.priority)]
-        self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
-        # deal with file arguments in kwargs (returned from recipe_setup as
-        #    [filenames, file instances]
-        self.filename_args()
-        # turn on the input validation
-        self.recipe.input_validation = True
+        self.args = []
+        self.recipename = ''
+        self.recipe = None
+        self.module = mod
+        self.recipemod = None
+        self.kwargs = dict()
         # set parameters
         self.kind = None
         self.nightname = None
-        # sort out names
-        self.runname = 'RUN_{0}'.format(self.recipe.shortname)
-        self.skipname = 'SKIP_{0}'.format(self.recipe.shortname)
-        # get properties
-        self.get_recipe_kind()
-        self.get_night_name()
+        # update parameters given runstring
+        self.update()
 
     def filename_args(self):
         # loop around positional arguments
@@ -154,6 +137,34 @@ class Run:
             self.nightname = self.args[pos]
         else:
             self.nightname = ''
+
+    def update(self):
+        # get args
+        self.args = self.runstring.split(' ')
+        # the first argument must be the recipe name
+        self.recipename = self.args[0]
+        # find the recipe
+        self.recipe, self.module = self.find_recipe(self.module)
+        # import the recipe module
+        self.recipemod = self.recipe.main
+        # turn off the input validation
+        self.recipe.input_validation = False
+        # run parser with arguments
+        self.kwargs = self.recipe.recipe_setup(inargs=self.args)
+        # add argument to set program name
+        pargs = [self.recipe.shortname, int(self.priority)]
+        self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
+        # deal with file arguments in kwargs (returned from recipe_setup as
+        #    [filenames, file instances]
+        self.filename_args()
+        # turn on the input validation
+        self.recipe.input_validation = True
+        # sort out names
+        self.runname = 'RUN_{0}'.format(self.recipe.shortname)
+        self.skipname = 'SKIP_{0}'.format(self.recipe.shortname)
+        # get properties
+        self.get_recipe_kind()
+        self.get_night_name()
 
 
     def __str__(self):
@@ -549,6 +560,7 @@ def skip_run_object(params, runobj):
             if 'skip' in recipe.kwargs:
                 if '--skip' not in runstring:
                     runobj.runstring = '{0} --skip=True'.format(runstring)
+                    runobj.update()
                     # debug log
                     WLOG(params, 'debug', TextEntry('90-503-00006'))
                     return False, None
@@ -798,9 +810,21 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # deal with nightname
         if srecipe.master:
             nightname = params['MASTER_NIGHT']
+            # check if master night name is valid (in table)
+            if nightname not in table[night_col]:
+                wargs = [nightname]
+                WLOG(params, 'warning', TextEntry('10-503-00004', args=wargs))
+                # get response for how to continue (skip or exit)
+                response = prompt(params)
+                if response:
+                    continue
+                else:
+                    sys.exit()
+
             # mask table by nightname
             mask = table[night_col] == nightname
             ftable = Table(table[mask])
+
         elif params['NIGHTNAME'] != '':
             nightname = params['NIGHTNAME']
             # mask table by nightname
@@ -808,6 +832,16 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             ftable = Table(table[mask])
         else:
             ftable = Table(table)
+        # deal with empty ftable
+        if len(ftable) == 0:
+            wargs = [nightname]
+            WLOG(params, 'warning', TextEntry('10-503-00003', args=wargs))
+            # get response for how to continue (skip or exit)
+            response = prompt(params)
+            if response:
+                continue
+            else:
+                sys.exit()
         # deal with filters
         filters = _get_filters(params, srecipe)
         # get runs for this recipe
@@ -841,6 +875,23 @@ def _update_run_table(sequence, runtable, newruns):
                 idnumber += 1
     # return out run table
     return outruntable
+
+
+def prompt(params):
+    # get the text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # prompt the user for response
+    uinput = input(textdict['40-503-00022'])
+    # get the True/False responses
+    true = textdict['40-503-00023']
+    false = textdict['40-503-00024']
+
+    if true.upper() in uinput.upper():
+        return 1
+    elif false.upper() in uinput.upper():
+        return 0
+    else:
+        return 1
 
 
 # =============================================================================
@@ -959,6 +1010,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         # if STOP_AT_EXCEPTION and not finished stop here
         if params['STOP_AT_EXCEPTION'] and not finished:
             if event is not None:
+                print('STOP AT EXCEPTION')
                 event.set()
         # ------------------------------------------------------------------
         # append to return dict
@@ -978,6 +1030,7 @@ def _multi_process(params, runlist, cores):
     for g_it, group in enumerate(grouplist):
         # skip if event is set
         if event.is_set():
+            print('EVENT IS SET - SKIPPING {0}'.format(g_it))
             continue
         # process storage
         jobs = []
