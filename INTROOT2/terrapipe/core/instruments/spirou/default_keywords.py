@@ -887,7 +887,7 @@ KW_WFP_LAMP = KW_WFP_LAMP.copy(__NAME__)
 KW_WFP_LAMP.set(key='WFPLAMP', comment='Lamp value used for FP wave sol.')
 
 # the minimum spacing between peaks used
-KW_WFP_IPEAK_SPACE = KW_WFP_IPEAK_SPACE,copy(__NAME__)
+KW_WFP_IPEAK_SPACE = KW_WFP_IPEAK_SPACE.copy(__NAME__)
 KW_WFP_IPEAK_SPACE.set(key='WFPIPKSP',
                        comment='Min spacing between FP peaks used.')
 
