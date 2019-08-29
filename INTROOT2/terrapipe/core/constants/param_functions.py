@@ -625,7 +625,6 @@ class ParamDict(CaseInsensitiveDict):
                     'dictionary (via listp)')
             raise ConfigError(emsg.format(key), level='error')
 
-
     def dictp(self, key, dtype=None):
         if key in self.keys():
             return _map_dictparameter(self.__getitem__(key), dtype=dtype)
@@ -633,6 +632,24 @@ class ParamDict(CaseInsensitiveDict):
             emsg = ('Config Error: Parameter "{0}" not found in parameter '
                     'dictionary (via dictp)')
             raise ConfigError(emsg.format(key), level='error')
+
+    def get_keyword_instances(self):
+        keyworddict = dict()
+        # loop around all keys
+        for key in list(self.keys()):
+            # get the instance for this key
+            instance = self.instances[key]
+            # skip None
+            if instance is None:
+                continue
+            # else check instance type
+            if isinstance(instance, constant_functions.Keyword):
+                keyworddict[instance.key] = instance
+            else:
+                continue
+        # return keyworddict
+        return keyworddict
+
 
 # =============================================================================
 # Define functions
