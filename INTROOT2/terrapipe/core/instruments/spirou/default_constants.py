@@ -1107,6 +1107,15 @@ WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 WAVE_LITTROW_EXT_ORDER_FIT_DEG = WAVE_LITTROW_EXT_ORDER_FIT_DEG.copy(__NAME__)
 WAVE_LITTROW_EXT_ORDER_FIT_DEG.value = 4  # 5  # 4
 
+#   Maximum littrow RMS value
+WAVE_LITTROW_QC_RMS_MAX = WAVE_LITTROW_QC_RMS_MAX.copy(__NAME__)
+WAVE_LITTROW_QC_RMS_MAX.value = 0.15    # 0.3
+
+#   Maximum littrow Deviation from wave solution (at x cut points)
+WAVE_LITTROW_QC_DEV_MAX = WAVE_LITTROW_QC_DEV_MAX.copy(__NAME__)
+WAVE_LITTROW_QC_DEV_MAX.value = 0.4   # 0.9
+
+
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
 # =============================================================================
@@ -1132,7 +1141,8 @@ WAVE_FP_LARGE_JUMP = WAVE_FP_LARGE_JUMP.copy(__NAME__)
 WAVE_FP_LARGE_JUMP.value = 0.5
 
 # index of FP line to start order cross-matching from
-WAVE_FP_CM_IND = -2
+WAVE_FP_CM_IND = WAVE_FP_CM_IND.copy(__NAME__)
+WAVE_FP_CM_IND.value = -2
 
 #    Define the border size (edges in x-direction) for the FP fitting algorithm
 WAVE_FP_BORDER_SIZE = WAVE_FP_BORDER_SIZE.copy(__NAME__)
@@ -1183,6 +1193,26 @@ WAVE_CCF_BOXSIZE.value = 12
 WAVE_CCF_MAXFLUX = WAVE_CCF_MAXFLUX.copy(__NAME__)
 WAVE_CCF_MAXFLUX.value = 1.0e9
 
+#   The CCF step size to use for the FP CCF
+WAVE_CCF_STEP = WAVE_CCF_STEP.copy(__NAME__)
+WAVE_CCF_STEP.value = 0.5
+
+#   The CCF width size to use for the FP CCF
+WAVE_CCF_WIDTH = WAVE_CCF_WIDTH.copy(__NAME__)
+WAVE_CCF_WIDTH.value = 7.5
+
+#   The target RV (CCF center) to use for the FP CCF
+WAVE_CCF_TARGET_RV = WAVE_CCF_TARGET_RV.copy(__NAME__)
+WAVE_CCF_TARGET_RV.value = 0.0
+
+#  The detector noise to use for the FP CCF
+WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
+WAVE_CCF_DETNOISE.value = 100.0
+
+#  The filename of the CCF Mask to use for the FP CCF
+WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
+WAVE_CCF_MASK.value = 'fp.mas'
+
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
 # =============================================================================
@@ -1217,6 +1247,14 @@ TELLU_BLACKLIST_NAME.value = 'tellu_whitelist.txt'
 # Define the ccf mask path
 CCF_MASK_PATH = CCF_MASK_PATH.copy(__NAME__)
 CCF_MASK_PATH.value = './data/spirou/ccf/'
+
+# Define the default CCF MASK to use
+CCF_MASK = CCF_MASK.copy(__NAME__)
+CCF_MASK.value = 'gl581_Sep18_cleaned.mas'
+
+# Define the CCF mask format (must be an astropy.table format)
+CCF_MASK_FMT = CCF_MASK_FMT.copy(__NAME__)
+CCF_MASK_FMT.value = 'ascii'
 
 #  Define the weight of the CCF mask (if 1 force all weights equal)
 CCF_MASK_MIN_WEIGHT = CCF_MASK_MIN_WEIGHT.copy(__NAME__)

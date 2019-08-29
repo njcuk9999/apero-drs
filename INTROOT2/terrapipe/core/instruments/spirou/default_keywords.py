@@ -101,11 +101,11 @@ KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear')
 
 # define the observation proper motion in ra HEADER key
 KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
-KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec/uu.yr)
+KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec / uu.yr)
 
 # define the observation proper motion in dec HEADER key
 KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
-KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec/uu.yr)
+KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr)
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
@@ -129,7 +129,7 @@ KW_PLX.set(key='OBJPLX', unit=uu.mas)
 
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
-KW_INPUTRV.set(key='OBSRV', unit=uu.km/uu.s)
+KW_INPUTRV.set(key='OBSRV', unit=uu.km / uu.s)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -166,7 +166,7 @@ KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
 # Define the mid exposure time
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
 KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
-                    datatype = 'mjd', dataformat = float)
+                    datatype='mjd', dataformat=float)
 
 # Define the method by which the MJD was calculated
 KW_MID_OBS_TIME_METHOD = KW_MID_OBS_TIME_METHOD.copy(__NAME__)
@@ -229,7 +229,6 @@ KW_OUTPUT = KW_OUTPUT.copy(__NAME__)
 KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
 KW_EXT_TYPE = KW_EXT_TYPE.copy(__NAME__)
 KW_EXT_TYPE.set(key='DRS_EOUT', comment='DRS Extraction input DPRTYPE')
-
 
 # -----------------------------------------------------------------------------
 # Define qc variables
@@ -326,51 +325,91 @@ ROOT_DRS_LOC.value = root_loc
 
 # Mean background (as percentage)
 KW_LOC_BCKGRD = KW_LOC_BCKGRD.copy(__NAME__)
-KW_LOC_BCKGRD.set(key=root_loc + 'BCKGRD', comment='mean background [%]')
+KW_LOC_BCKGRD.set(key=root_loc + 'BCKGRD', comment='mean background [%]',
+                  group='loc')
 
 # Number of orders located
 KW_LOC_NBO = KW_LOC_NBO.copy(__NAME__)
-KW_LOC_NBO.set(key=root_loc + 'NBO', comment='nb orders localised')
+KW_LOC_NBO.set(key=root_loc + 'NBO', comment='nb orders localised',
+               group='loc')
 
 # fit degree for order centers
 KW_LOC_DEG_C = KW_LOC_DEG_C.copy(__NAME__)
-KW_LOC_DEG_C.set(key=root_loc + 'DEGCTR', comment='degree fit ctr ord')
+KW_LOC_DEG_C.set(key=root_loc + 'DEGCTR', comment='degree fit ctr ord',
+                 group='loc')
 
 # fit degree for order widths
 KW_LOC_DEG_W = KW_LOC_DEG_W.copy(__NAME__)
-KW_LOC_DEG_W.set(key=root_loc + 'DEGFWH', comment='degree fit width ord')
+KW_LOC_DEG_W.set(key=root_loc + 'DEGFWH', comment='degree fit width ord',
+                 group='loc')
 
 # Maximum flux in order
 KW_LOC_MAXFLX = KW_LOC_MAXFLX.copy(__NAME__)
-KW_LOC_MAXFLX.set(key=root_loc + 'FLXMAX', comment='max flux in order [ADU]')
+KW_LOC_MAXFLX.set(key=root_loc + 'FLXMAX', comment='max flux in order [ADU]',
+                  group='loc')
 
 # Maximum number of removed points allowed for location fit
 KW_LOC_SMAXPTS_CTR = KW_LOC_SMAXPTS_CTR.copy(__NAME__)
-KW_LOC_SMAXPTS_CTR.set(key=root_loc + 'CTRMAX', comment='max rm pts ctr')
+KW_LOC_SMAXPTS_CTR.set(key=root_loc + 'CTRMAX', comment='max rm pts ctr',
+                       group='loc')
 
 # Maximum number of removed points allowed for width fit
 KW_LOC_SMAXPTS_WID = KW_LOC_SMAXPTS_WID.copy(__NAME__)
-KW_LOC_SMAXPTS_WID.set(key=root_loc + 'WIDMAX', comment='max rm pts width')
+KW_LOC_SMAXPTS_WID.set(key=root_loc + 'WIDMAX', comment='max rm pts width',
+                       group='loc')
 
 # Maximum rms allowed for location fit
 KW_LOC_RMS_CTR = KW_LOC_RMS_CTR.copy(__NAME__)
-KW_LOC_RMS_CTR.set(key=root_loc + 'RMSCTR', comment='max rms ctr')
+KW_LOC_RMS_CTR.set(key=root_loc + 'RMSCTR', comment='max rms ctr',
+                   group='loc')
 
 # Maximum rms allowed for width fit (formally KW_LOC_rms_fwhm)
 KW_LOC_RMS_WID = KW_LOC_RMS_WID.copy(__NAME__)
-KW_LOC_RMS_WID.set(key=root_loc + 'RMSWID', comment='max rms width')
+KW_LOC_RMS_WID.set(key=root_loc + 'RMSWID', comment='max rms width',
+                   group='loc')
 
 # Coeff center order
 KW_LOC_CTR_COEFF = KW_LOC_CTR_COEFF.copy(__NAME__)
-KW_LOC_CTR_COEFF.set(key=root_loc + 'CE{0:04d}', comment='Coeff center')
+KW_LOC_CTR_COEFF.set(key=root_loc + 'CE{0:04d}', comment='Coeff center',
+                     group='loc')
 
 # Coeff width order
 KW_LOC_WID_COEFF = KW_LOC_WID_COEFF.copy(__NAME__)
-KW_LOC_WID_COEFF.set(key=root_loc + 'FW{0:04d}', comment='Coeff fwhm')
+KW_LOC_WID_COEFF.set(key=root_loc + 'FW{0:04d}', comment='Coeff fwhm',
+                     group='loc')
 
 # -----------------------------------------------------------------------------
 # Define shape variables
 # -----------------------------------------------------------------------------
+# Shape transform dx parameter
+KW_SHAPE_DX = KW_SHAPE_DX.copy(__NAME__)
+KW_SHAPE_DX.set(key='SHAPE_DX', comment='Shape transform dx parameter',
+                group='shape')
+
+# Shape transform dy parameter
+KW_SHAPE_DY = KW_SHAPE_DY.copy(__NAME__)
+KW_SHAPE_DY.set(key='SHAPE_DY', comment='Shape transform dy parameter',
+                group='shape')
+
+# Shape transform A parameter
+KW_SHAPE_A = KW_SHAPE_A.copy(__NAME__)
+KW_SHAPE_A.set(key='SHAPE_A', comment='Shape transform A parameter',
+               group='shape')
+
+# Shape transform B parameter
+KW_SHAPE_B = KW_SHAPE_B.copy(__NAME__)
+KW_SHAPE_B.set(key='SHAPE_B', comment='Shape transform B parameter',
+               group='shape')
+
+# Shape transform C parameter
+KW_SHAPE_C = KW_SHAPE_C.copy(__NAME__)
+KW_SHAPE_C.set(key='SHAPE_C', comment='Shape transform C parameter',
+               group='shape')
+
+# Shape transform D parameter
+KW_SHAPE_D = KW_SHAPE_D.copy(__NAME__)
+KW_SHAPE_D.set(key='SHAPE_D', comment='Shape transform D parameter',
+               group='shape')
 
 # -----------------------------------------------------------------------------
 # Define extraction variables
@@ -434,7 +473,6 @@ KW_S1D_WAVESTART.set(key='S1DWAVE0', comment='Initial wavelength for s1d [nm]')
 # the wave end point used for s1d
 KW_S1D_WAVEEND = KW_S1D_WAVEEND.copy(__NAME__)
 KW_S1D_WAVEEND.set(key='S1DWAVE1', comment='Final wavelength for s1d [nm]')
-
 
 # the wave grid kind used for s1d (wave or velocity)
 KW_S1D_KIND = KW_S1D_KIND.copy(__NAME__)
@@ -616,7 +654,6 @@ KW_WAVE_MODE_HC.set(key='WAVHCMOD', comment='mode used to calc hc wave sol')
 KW_WAVE_MODE_FP = KW_WAVE_MODE_FP.copy(__NAME__)
 KW_WAVE_MODE_FP.set(key='WAVFPMOD', comment='mode used to calc fp wave sol')
 
-
 # the echelle number of the first order used
 KW_WAVE_ECHELLE_START = KW_WAVE_ECHELLE_START.copy(__NAME__)
 KW_WAVE_ECHELLE_START.set(key='WAV_ECH0', comment='Echelle no. of first order')
@@ -776,7 +813,7 @@ KW_WAVE_LITT_EXT_ORD_START_1.set(key='WAVL1EST',
 # the first order used for FP wave sol improvement
 KW_WFP_ORD_START = KW_WFP_ORD_START.copy(__NAME__)
 KW_WFP_ORD_START.set(key='WFP_ORD0',
-                      comment='First order used for FP wave sol.')
+                     comment='First order used for FP wave sol.')
 
 # the last order used for FP wave sol improvement
 KW_WFP_ORD_FINAL = KW_WFP_ORD_FINAL.copy(__NAME__)

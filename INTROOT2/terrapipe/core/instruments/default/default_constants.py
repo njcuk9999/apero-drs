@@ -126,23 +126,27 @@ __all__ = [
     'WAVE_LITTROW_REMOVE_ORDERS', 'WAVE_LITTROW_CUT_STEP_1',
     'WAVE_LITTROW_CUT_STEP_2', 'WAVE_LITTROW_FIG_DEG_1',
     'WAVE_LITTROW_FIG_DEG_2', 'WAVE_LITTROW_EXT_ORDER_FIT_DEG',
+    'WAVE_LITTROW_QC_RMS_MAX', 'WAVE_LITTROW_QC_DEV_MAX',
     # wave fp constants
-    'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_CAVFIT_DEG', 'WAVE_FP_LARGE_JUMP',
-    'WAVE_FP_BORDER_SIZE', 'WAVE_FP_FPBOX_SIZE', 'WAVE_FP_PEAK_SIG_LIM',
-    'WAVE_FP_IPEAK_SPACING', 'WAVE_FP_EXP_WIDTH', 'WAVE_FP_NORM_WIDTH_CUT',
-    'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT', 'WAVE_FP_MAX_LLFIT_RMS',
-    'WAVE_FP_WEIGHT_THRES', 'WAVE_FP_BLAZE_THRES', 'WAVE_FP_XDIF_MIN',
-    'WAVE_FP_XDIF_MAX', 'WAVE_FP_LL_OFFSET', 'WAVE_FP_DV_MAX',
-    'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE', 'WAVE_FP_LLFIT_MODE',
-    'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX', 'WAVE_FP_SIGCLIP',
+    'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_CAVFIT_DEG', 'WAVE_FP_CM_IND',
+    'WAVE_FP_LARGE_JUMP', 'WAVE_FP_BORDER_SIZE', 'WAVE_FP_FPBOX_SIZE',
+    'WAVE_FP_PEAK_SIG_LIM', 'WAVE_FP_IPEAK_SPACING', 'WAVE_FP_EXP_WIDTH',
+    'WAVE_FP_NORM_WIDTH_CUT', 'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT',
+    'WAVE_FP_MAX_LLFIT_RMS', 'WAVE_FP_WEIGHT_THRES', 'WAVE_FP_BLAZE_THRES',
+    'WAVE_FP_XDIF_MIN', 'WAVE_FP_XDIF_MAX', 'WAVE_FP_LL_OFFSET',
+    'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
+    'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
+    'WAVE_FP_SIGCLIP',
     # wave ccf constants
     'WAVE_CCF_DRIFT_NOISE', 'WAVE_CCF_BOXSIZE', 'WAVE_CCF_MAXFLUX',
+    'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
+    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
-    'CCF_N_ORD_MAX',
+    'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1149,6 +1153,14 @@ WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
 WAVE_LITTROW_EXT_ORDER_FIT_DEG = Const('WAVE_LITTROW_EXT_ORDER_FIT_DEG',
                                        value=None, dtype=int, source=__NAME__)
 
+#   Maximum littrow RMS value
+WAVE_LITTROW_QC_RMS_MAX = Const('WAVE_LITTROW_QC_RMS_MAX', value=None,
+                                dtype=float, source=__NAME__)
+
+#   Maximum littrow Deviation from wave solution (at x cut points)
+WAVE_LITTROW_QC_DEV_MAX = Const('WAVE_LITTROW_QC_DEV_MAX', value=None,
+                                dtype=float, source=__NAME__)
+
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
 # =============================================================================
@@ -1179,8 +1191,8 @@ WAVE_FP_BORDER_SIZE = Const('WAVE_FP_BORDER_SIZE', value=None, dtype=int,
 #    Define the box half-size (in pixels) to fit an individual FP peak to
 #        - a gaussian will be fit to +/- this size from the center of
 #          the FP peak
-WAVE_FP_FPBOX_SIZE = Const('WAVE_FP_FPBOX_SIZE', value=None, dtype=float,
-                           source=__NAME__, minimum=0.0)
+WAVE_FP_FPBOX_SIZE = Const('WAVE_FP_FPBOX_SIZE', value=None, dtype=int,
+                           source=__NAME__, minimum=0)
 
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
 #        to be recognised as a valid peak (before fitting a gaussian)
@@ -1290,6 +1302,25 @@ WAVE_CCF_BOXSIZE = Const('WAVE_CCF_BOXSIZE', value=None, dtype=int,
 WAVE_CCF_MAXFLUX = Const('WAVE_CCF_MAXFLUX', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
 
+#   The CCF step size to use for the FP CCF
+WAVE_CCF_STEP = Const('WAVE_CCF_STEP', value=None, dtype=float, source=__NAME__,
+                      minimum=0.0)
+
+#   The CCF width size to use for the FP CCF
+WAVE_CCF_WIDTH = Const('WAVE_CCF_WIDTH', value=None, dtype=float,
+                       source=__NAME__, minimum=0.0)
+
+#   The target RV (CCF center) to use for the FP CCF
+WAVE_CCF_TARGET_RV = Const('WAVE_CCF_TARGET_RV', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0)
+
+#  The detector noise to use for the FP CCF
+WAVE_CCF_DETNOISE = Const('WAVE_CCF_DETNOISE', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0)
+
+#  The filename of the CCF Mask to use for the FP CCF
+WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__)
+
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
 # =============================================================================
@@ -1321,6 +1352,12 @@ TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
 # =============================================================================
 # Define the ccf mask path
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__)
+
+# Define the default CCF MASK to use
+CCF_MASK = Const('CCF_MASK', value=None, dtype=str, source=__NAME__)
+
+# Define the CCF mask format (must be an astropy.table format)
+CCF_MASK_FMT = Const('CCF_MASK_FMT', value=None, dtype=str, source=__NAME__)
 
 #  Define the weight of the CCF mask (if 1 force all weights equal)
 CCF_MASK_MIN_WEIGHT = Const('CCF_MASK_MIN_WEIGHT', value=None, dtype=float,
