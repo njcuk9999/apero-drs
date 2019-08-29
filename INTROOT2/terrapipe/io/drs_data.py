@@ -305,6 +305,7 @@ def load_ccf_mask(params, **kwargs):
         return construct_filename(params, filename, relfolder, func=func_name)
     # add back to kwargs
     kwargs['fmt'] = tablefmt
+    kwargs['colnames'] = ['ll_mask_s', 'll_mask_e', 'w_mask']
     # return image
     try:
         table, outf = load_table_file(params, filename, relfolder, kwargs,
