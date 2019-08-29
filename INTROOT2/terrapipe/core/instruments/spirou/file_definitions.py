@@ -480,27 +480,27 @@ out_file.addset(out_ff_flat)
 
 # -----------------------------------------------------------------------------
 # extract
-out_ext_e2ds = drs_finput('EXTRACT_E2DS', KW_OUTPUT='EXT_E2DS',
+out_ext_e2ds = drs_finput('EXT_E2DS', KW_OUTPUT='EXT_E2DS',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
                           suffix='_e2ds', outfunc=out.general_file)
-out_ext_e2dsff = drs_finput('EXTRACT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
+out_ext_e2dsff = drs_finput('EXT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
                             suffix='_e2dsff', outfunc=out.general_file)
-out_ext_e2dsll = drs_finput('EXTRACT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
+out_ext_e2dsll = drs_finput('EXT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
                             suffix='_e2dsll', outfunc=out.debug_file)
-out_ext_loco = drs_finput('EXTRACT_LOCO', KW_OUTPUT='EXT_LOCO',
+out_ext_loco = drs_finput('EXT_LOCO', KW_OUTPUT='EXT_LOCO',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
                           suffix='_e2dsloco', outfunc=out.debug_file)
-out_ext_s1d_w = drs_finput('EXTRACT_S1D_W', KW_OUTPUT='EXT_S1D_W',
+out_ext_s1d_w = drs_finput('EXT_S1D_W', KW_OUTPUT='EXT_S1D_W',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits',
                            suffix='_s1d_w', outfunc=out.general_file)
-out_ext_s1d_v = drs_finput('EXTRACT_S1D_V', KW_OUTPUT='EXT_S1D_V',
+out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits',
                            suffix='_s1d_v', outfunc=out.general_file)
@@ -514,8 +514,7 @@ out_file.addset(out_ext_s1d_v)
 
 # -----------------------------------------------------------------------------
 # thermal
-out_thermal_e2ds = drs_finput('THERMAL_E2DS',
-                              KW_OUTPUT='THERMAL_E2DS',
+out_thermal_e2ds = drs_finput('THERMAL_E2DS', KW_OUTPUT='THERMAL_E2DS',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.fits',
                               suffix='_e2ds',
@@ -525,9 +524,8 @@ out_thermal_e2ds = drs_finput('THERMAL_E2DS',
 out_file.addset(out_thermal_e2ds)
 
 # -----------------------------------------------------------------------------
-# TODO: fill in definitions
 # wave solution using hc only
-out_wave_hc = drs_finput('WAVE', KW_OUTPUT='WAVE_HC_SOL',
+out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
                          fibers=['AB', 'A', 'B', 'C'],
                          filetype='.fits',
                          suffix='_wave_hc',
@@ -535,7 +533,7 @@ out_wave_hc = drs_finput('WAVE', KW_OUTPUT='WAVE_HC_SOL',
                          outfunc=out.calib_file)
 
 # wave solution using hc + fp
-out_wave_fp = drs_finput('WAVE', KW_OUTPUT='WAVE_FP_SOL',
+out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          fibers=['AB', 'A', 'B', 'C'],
                          filetype='.fits',
                          suffix='_wave_fp',
@@ -556,6 +554,19 @@ out_wave_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
                             suffix='_waveres',
                             outfunc=out.calib_file)
 
+# fp global results table
+out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
+                               fibers=['AB', 'A', 'B', 'C'],
+                               filetype='.tbl',
+                               outfunc=out.set_file,
+                               filename='cal_wave_results')
+# fp line list table
+out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.tbl',
+                              suffix='hc_lines',
+                              outfunc=out.calib_file)
+
 # wave master
 out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
                              fibers=['AB', 'A', 'B', 'C'],
@@ -566,9 +577,11 @@ out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
 
 # # add wave outputs to output fileset
 out_file.addset(out_wave_hc)
+out_file.addset(out_wave_fp)
 out_file.addset(out_wave_hcline)
 out_file.addset(out_wave_hcres)
-out_file.addset(out_wave_fp)
+out_file.addset(out_wave_res_table)
+out_file.addset(out_wave_ll_table)
 out_file.addset(out_wave_master)
 
 # -----------------------------------------------------------------------------
