@@ -100,6 +100,10 @@ def blank(params, **kwargs):
     return output_filenames.blank(params, **kwargs)
 
 
+def set_file(params, **kwargs):
+    return output_filenames.set_file(params, **kwargs)
+
+
 # =============================================================================
 # Define worker functions
 # =============================================================================

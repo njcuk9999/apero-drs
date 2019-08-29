@@ -124,7 +124,7 @@ def debug_file(params, **kwargs):
 
 
 def blank(params, **kwargs):
-    func_name = kwargs.get('func', __NAME__ + '.general_file()')
+    func_name = kwargs.get('func', __NAME__ + '.blank()')
     # get parameters from keyword arguments
     infile = kwargs.get('infile', None)
     # deal with kwargs that are required
@@ -132,6 +132,46 @@ def blank(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
     # return absolute path
     return infile.filename
+
+
+def set_file(params, **kwargs):
+    func_name = kwargs.get('func', __NAME__ + '.set_file()')
+    # get set filename from kwargs
+    filename = kwargs.get('filename', None)
+    # deal with no file name set
+    if filename is None:
+        WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
+    # get output file
+    outfile = kwargs.get('outfile', None)
+    # deal with no outfile set
+    if outfile is None:
+        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
+    # get path
+    path = kwargs.get('path', None)
+    # get extension
+    outext = outfile.filetype
+    # check for extension and set filename
+    if filename.endswith(outext):
+        outfilename = str(filename)
+    else:
+        outfilename = filename + outext
+    # deal with no given path (default)
+    if path is None:
+        # get output path from params
+        outpath = params['OUTPATH']
+        # check if outpath is set
+        if outpath is None:
+            WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+        # get output night name from params
+        outdirectory = params['NIGHTNAME']
+        # make sure night name folder exists (create it if not)
+        make_night_name(params, outdirectory, outpath)
+        # construct absolute path
+        abspath = os.path.join(outpath, outdirectory, outfilename)
+    else:
+        abspath = os.path.join(path, outfilename)
+    # return absolute path
+    return abspath
 
 
 # =============================================================================
