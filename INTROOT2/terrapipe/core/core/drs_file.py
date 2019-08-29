@@ -1514,7 +1514,7 @@ class DrsFitsFile(DrsInputFile):
         return drskey
 
     def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None,
-                           allkeys=False):
+                           allkeys=False, group=None):
         """
         Copies keys from hdr dictionary to DrsFile.hdict,
         if forbid_keys is True some keys will not be copied
@@ -1535,8 +1535,16 @@ class DrsFitsFile(DrsInputFile):
         :param root: string, if we have "root" then only copy keywords that
                      start with this string (prefix)
 
+        :param group: string, if not None sets the group to use (will only
+                      copy this groups header keys)
+
+
         :return None:
         """
+        # get params
+        params = self.recipe.drs_params
+        # generate instances from params
+        keyworddict = params.get_keyword_instances()
         # get pconstant
         pconstant = self.recipe.drs_pconstant
         # get drs_file header/comments
@@ -1553,6 +1561,21 @@ class DrsFitsFile(DrsInputFile):
             if root is not None:
                 if not key.startswith(root):
                     return False
+            # deal with group (have to get keyword instance from keyworddict
+            #    then check if it has a group then see if group = keygroup)
+            if group is not None:
+                # check if key is in keyword dict and return the corresponding
+                #    key (mkey) if found
+                cond, mkey = _check_keyworddict(key, keyworddict)
+                # if key is in keyword dict look if group matches
+                if cond:
+                    keygroup = keyworddict[mkey].group
+                    # if key group is None skip it
+                    if keygroup is None:
+                        return False
+                    # if key group does not match group skip it
+                    if keygroup.upper() != group.upper():
+                        return False
             # skip if key is forbidden key
             if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEYS()):
                 return False
@@ -2260,6 +2283,54 @@ def is_forbidden_prefix(pconstant, key):
         if key.startswith(prefix):
             cond = True
     return cond
+
+
+def _check_keyworddict(key, keyworddict):
+    """
+    Some keys have formatting i.e. LOCE{0:04d} and thus for these we need to
+    check their prefix matches the key (else we just check whole key)
+
+    This ONLY works under the assumption that all format keys look as following:
+
+        AAAA{0:4d}
+
+        BBB{0:2d}
+
+    (i.e. a string followed by a single formatting)
+
+    :param key: string, key in header to check
+    :param keyworddict: dictionary, the keyword dictionary to check (from
+                        keyword definitions)
+
+    :type key: str
+    :type keyworddict: dict
+
+    :return:
+    """
+    # loop around keys in keyword dict
+    for mkey in keyworddict:
+        # check if we have not formatting (assuming int/float)
+        try:
+            if mkey.format(0) == mkey:
+                # if key is found then we stop here
+                if key == mkey:
+                    return True, mkey
+                # we can skip to next key
+                else:
+                    continue
+        # if it breaks assume we have a none int/float format
+        except Exception as _:
+            pass
+        # else remove the formatting (assume it start with a '{'
+        prefix = mkey.split('{')[0]
+        # if key is found we stop here
+        if key.startswith(prefix):
+            return True, mkey
+        else:
+            continue
+    # if we have checked every key then key is not found
+    return False, None
+
 
 
 # =============================================================================
