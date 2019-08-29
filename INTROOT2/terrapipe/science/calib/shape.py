@@ -257,7 +257,7 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
     # set up arguments
     ltv = np.array(lin_transform_vect)
     wargs1 = [dim2, (ltv[2] - 1) * dim2, ltv[3] * dim2]
-    wargs2 = [dim2, ltv[3] * dim2, (ltv[5] - 1) * dim2]
+    wargs2 = [dim2, ltv[4] * dim2, (ltv[5] - 1) * dim2]
     # add to output
     wmsg = TextEntry('')
     wmsg += '\tdx={0:.6f} dy={1:.6f}'.format(*ltv)
