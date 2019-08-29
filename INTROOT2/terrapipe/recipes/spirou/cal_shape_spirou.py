@@ -249,6 +249,13 @@ def __main__(recipe, params):
         outfile = general.add_calibs_to_header(outfile, props)
         # add qc parameters
         outfile.add_qckeys(qc_params)
+        # add shape transform parameters
+        outfile.add_hkey('KW_SHAPE_DX', value=transform[0])
+        outfile.add_hkey('KW_SHAPE_DY', value=transform[1])
+        outfile.add_hkey('KW_SHAPE_A', value=transform[2])
+        outfile.add_hkey('KW_SHAPE_B', value=transform[3])
+        outfile.add_hkey('KW_SHAPE_C', value=transform[4])
+        outfile.add_hkey('KW_SHAPE_D', value=transform[5])
         # copy data
         outfile.data = [transform]
         # ------------------------------------------------------------------
