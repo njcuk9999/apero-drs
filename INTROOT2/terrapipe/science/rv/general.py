@@ -174,6 +174,7 @@ def measure_fp_peaks(params, props, **kwargs):
             maxpos = np.argmax(tmp)
             # define an area around the maximum peak
             index = np.arange(-size, 1 + size, 1) + maxpos
+            index = np.array(index).astype(int)
             # try to fit a gaussian to that peak
             try:
                 # set initial guess
@@ -233,27 +234,26 @@ def measure_fp_peaks(params, props, **kwargs):
             xprev = gg[1]
             # iterator
             ipeak += 1
-            # display warning messages
-            drs_log.warninglogger(params, w_all)
-            # log how many FPs were found and how many rejected
-            wargs = [order_num, ipeak, nreject]
-            WLOG(params, '', TextEntry('40-018-00001', args=wargs))
-
-            # add values to all storage (and sort by xpeak)
-            indsort = np.argsort(xpeak)
-            allordpeak = np.append(allordpeak, np.array(ordpeak)[indsort])
-            allxpeak = np.append(allxpeak, np.array(xpeak)[indsort])
-            allewpeak = np.append(allewpeak, np.array(ewpeak)[indsort])
-            allvrpeak = np.append(allvrpeak, np.array(vrpeak)[indsort])
-            allllpeak = np.append(allllpeak, np.array(llpeak)[indsort])
-            allamppeak = np.append(allamppeak, np.array(amppeak)[indsort])
+        # display warning messages
+        drs_log.warninglogger(params, w_all)
+        # log how many FPs were found and how many rejected
+        wargs = [order_num, ipeak, nreject]
+        WLOG(params, '', TextEntry('40-018-00001', args=wargs))
+        # add values to all storage (and sort by xpeak)
+        indsort = np.argsort(xpeak)
+        allordpeak.append(np.array(ordpeak)[indsort])
+        allxpeak.append(np.array(xpeak)[indsort])
+        allewpeak.append(np.array(ewpeak)[indsort])
+        allvrpeak.append(np.array(vrpeak)[indsort])
+        allllpeak.append(np.array(llpeak)[indsort])
+        allamppeak.append(np.array(amppeak)[indsort])
     # store values in loc
-    props['ORDPEAK'] = np.array(allordpeak, dtype=int)
-    props['XPEAK'] = allxpeak
-    props['EWPEAK'] = allewpeak
-    props['VRPEAK'] = allvrpeak
-    props['LLPEAK'] = allllpeak
-    props['AMPPEAK'] = allamppeak
+    props['ORDPEAK'] = np.concatenate(allordpeak).astype(int)
+    props['XPEAK'] = np.concatenate(allxpeak)
+    props['EWPEAK'] = np.concatenate(allewpeak)
+    props['VRPEAK'] = np.concatenate(allvrpeak)
+    props['LLPEAK'] = np.concatenate(allllpeak)
+    props['AMPPEAK'] = np.concatenate(allamppeak)
     # set source
     keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
     props.set_sources(keys, func_name)
@@ -320,7 +320,7 @@ def remove_wide_peaks(params, props, **kwargs):
                           kwargs, func_name)
 
     # define a mask to cut out wide peaks
-    mask = np.abs(props['EWPEAK'] - expwidth) < cutwidth
+    mask = np.abs(np.array(props['EWPEAK']) - expwidth) < cutwidth
 
     # apply mask
     props['ORDPEAK'] = props['ORDPEAK'][mask]
@@ -574,9 +574,9 @@ def coravelation(params, props, log=False, **kwargs):
     rv_ccf = np.arange(rvmin, rvmax, ccf_step)
     # -------------------------------------------------------------------------
     # calculate modified map
-    ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / speed_of_light)
     # calculate modified coefficients
-    coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / speed_of_light)
     # get the differential map
     dll_map = math.get_dll_from_coefficients(coeff_ll_b, len(ll_map[0]),
                                              len(coeff_ll))
