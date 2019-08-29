@@ -983,7 +983,7 @@ def generate_res_files(p, loc, hdict):
             hdict = spirouImage.AddKey1DList(p, hdict, kw_params,
                                              values=params, dim1name='coeff')
             # append this hdict to hicts
-            hdicts.append(dict(hdict))
+            hdicts.append(hdict.from_fits_header(hdict))
             # push data into correct columns
             resdata.append(np.array(list(zip(all_dvs, all_lines))))
     # return the data and hdicts

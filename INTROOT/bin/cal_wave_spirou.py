@@ -130,14 +130,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # read and combine all HC files except the first (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(*rargs)
+    p, hcdata, hchdr = spirouImage.ReadImageAndCombine(*rargs)
     # read first file (fpfitsfilename)
-    fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
+    fpdata, fphdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
 
     # add data and hdr to loc
     loc = ParamDict()
-    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
-    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hchdr.comments
+    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fphdr.comments
 
     # set the source
     sources = ['HCDATA', 'HCHDR', 'HCCDR']
@@ -259,17 +259,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     for order in range(loc['NBO']):
         oc = np.all(loc['WAVE_MAP2'][order, 1:] > loc['WAVE_MAP2'][order, :-1])
         ord_check[order] = oc
-    ord_check[5] = False
+    # TODO: Melissa Why is this here????
+    # ord_check[5] = False
     if np.all(ord_check):
         qc_pass.append(1)
+        qc_values.append('None')
     else:
         fmsg = 'Negative wavelength difference along an order'
         fail_msg.append(fmsg)
         passed = False
         qc_pass.append(0)
+        qc_values.append(np.ndarray.tolist(np.where(~ord_check)[0]))
     # add to qc header lists
     # vale: array of orders where it fails
-    qc_values.append(np.ndarray.tolist(np.where(~ord_check)[0]))
+
     qc_names.append('WAVE DIFF ALONG ORDER HC')
     qc_logic.append('WAVE DIFF ALONG ORDER < 0')
 
