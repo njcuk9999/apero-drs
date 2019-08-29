@@ -37,6 +37,9 @@ __all__ = [# input keys
            'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
            'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
            'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
+           # shape keys
+           'KW_SHAPE_DX', 'KW_SHAPE_DY', 'KW_SHAPE_A', 'KW_SHAPE_B',
+           'KW_SHAPE_C', 'KW_SHAPE_D',
            # flat values
            'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG',
            # extraction values
@@ -366,7 +369,23 @@ KW_LOC_WID_COEFF = Keyword('KW_LOC_WID_COEFF', key='', dtype=int,
 # -----------------------------------------------------------------------------
 # Define shape variables
 # -----------------------------------------------------------------------------
+# Shape transform dx parameter
+KW_SHAPE_DX = Keyword('KW_SHAPE_DX', key='', dtype=float, source=__NAME__)
 
+# Shape transform dy parameter
+KW_SHAPE_DY = Keyword('KW_SHAPE_DY', key='', dtype=float, source=__NAME__)
+
+# Shape transform A parameter
+KW_SHAPE_A = Keyword('KW_SHAPE_A', key='', dtype=float, source=__NAME__)
+
+# Shape transform B parameter
+KW_SHAPE_B = Keyword('KW_SHAPE_B', key='', dtype=float, source=__NAME__)
+
+# Shape transform C parameter
+KW_SHAPE_C = Keyword('KW_SHAPE_C', key='', dtype=float, source=__NAME__)
+
+# Shape transform D parameter
+KW_SHAPE_D = Keyword('KW_SHAPE_D', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define extraction variables
