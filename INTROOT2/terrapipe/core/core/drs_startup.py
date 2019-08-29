@@ -389,7 +389,8 @@ def get_local_variables(*args):
     return output_dict
 
 
-def get_file_definition(name, instrument, kind='raw', return_all=False):
+def get_file_definition(name, instrument, kind='raw', return_all=False,
+                        fiber=None):
     """
     Finds a given recipe in the instruments definitions
 
@@ -415,6 +416,12 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
     if name == 'None' or name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty
+    # deal with fiber (needs removing)
+    if fiber is not None:
+        suffix = '_{0}'.format(fiber)
+        if name.endswith(suffix):
+            name = name[:-(len(suffix))]
+
     # else we have a name and an instrument
     margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
     modules = constants.getmodnames(*margs, path=False)
@@ -441,7 +448,7 @@ def get_file_definition(name, instrument, kind='raw', return_all=False):
     if instrument is None and len(found_files) == 0:
         empty = drs_file.DrsFitsFile('Empty')
         return empty
-    if len(found_files) == 0:
+    if len(found_files) == 0 and required:
         eargs = [name, modules[0], func_name]
         WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
 
@@ -529,6 +536,12 @@ def file_processing_update(params, it, num_files):
     WLOG(params, '', params['DRS_HEADER'])
     eargs = [it + 1, num_files]
     WLOG(params, '', TextEntry('40-001-00020', args=eargs))
+    WLOG(params, '', params['DRS_HEADER'])
+
+
+def fiber_processing_update(params, fiber):
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', TextEntry('40-001-00022', args=[fiber]))
     WLOG(params, '', params['DRS_HEADER'])
 
 
