@@ -30,6 +30,9 @@ end_main = drs_startup.main_end_script
 # file processing message
 file_processing_update = drs_startup.file_processing_update
 
+# fiber processing update
+fiber_processing_update = drs_startup.fiber_processing_update
+
 # get the local variables
 get_locals = drs_startup.get_local_variables
 
