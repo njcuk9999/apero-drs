@@ -565,7 +565,9 @@ cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                      WAVE_HCLL=sf.out_wave_hcline,
                      WAVE_HCRES=sf.out_wave_hcres,
                      WAVE_HCMAP=sf.out_wave_hc,
-                     WAVE_FPMAP=sf.out_wave_fp)
+                     WAVE_FPMAP=sf.out_wave_fp,
+                     WAVE_FPRESTAB=sf.out_wave_res_table,
+                     WAVE_FPLLTAB=sf.out_wave_ll_table)
 cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
