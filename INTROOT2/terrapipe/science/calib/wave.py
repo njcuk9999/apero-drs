@@ -131,15 +131,18 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
-    # get file definition
-    out_wave = core.get_file_definition('WAVE', params['INSTRUMENT'],
-                                        kind='red')
+    # get file definitions (wave solution FP and wave solution HC)
+    out_wave_fp = core.get_file_definition('WAVE_FP', params['INSTRUMENT'],
+                                           kind='red')
+    out_wave_hc = core.get_file_definition('WAVE_HC', params['INSTRUMENT'],
+                                           kind='red')
     # get calibration key
-    key = out_wave.get_dbkey(fiber=usefiber)
+    key_fp = out_wave_fp.get_dbkey(fiber=usefiber)
+    key_hc = out_wave_hc.get_dbkey(fiber=usefiber)
     # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
-        if isinstance(infile, drs_file.DrsFitsFile):
+        if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
             WLOG(params, 'error', TextEntry('00-017-00001', args=eargs))
     # ------------------------------------------------------------------------
@@ -160,9 +163,14 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # ------------------------------------------------------------------------
     # if filename is defined get wave file from this file
     if filename is not None:
-        # construct new infile instance and read data/header
-        wavefile = out_wave.newcopy(filename=filename, recipe=recipe,
-                                    fiber=usefiber)
+        # construct new infile instance (first fp solution then hc solutions)
+        if out_wave_fp.suffix in filename:
+            wavefile = out_wave_fp.newcopy(filename=filename, recipe=recipe,
+                                           fiber=usefiber)
+        else:
+            wavefile = out_wave_hc.newcopy(filename=filename, recipe=recipe,
+                                           fiber=usefiber)
+        # read data/header
         wavefile.read()
         # get wave map
         wavemap = np.array(wavefile.data)
@@ -177,22 +185,36 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         cdb = drs_database.get_full_database(params, 'calibration')
         # get filename col
         filecol = cdb.file_col
-        # get the badpix entries
-        waveentries = drs_database.get_key_from_db(params, key, cdb, header,
+        # get the wave entries
+        waveentries = drs_database.get_key_from_db(params, key_fp, cdb, header,
                                                    n_ent=1, required=False)
-        # if there are no wave entries use master wave file
+        # if there are no fp wave solutions use wave hc
+        if len(waveentries) == 0:
+            waveentries = drs_database.get_key_from_db(params, key_hc, cdb,
+                                                       header, n_ent=1,
+                                                       required=False)
+        # if there are still no wave entries use master wave file
         if len(waveentries) == 0:
             # log warning that no entries were found so using master
-            WLOG(params, 'warning', TextEntry('10-017-00001', args=[key]))
+            if key_fp == key_hc:
+                wargs = [key_fp]
+            else:
+                wargs = ['{0} or {1}'.format(key_fp, key_hc)]
+            WLOG(params, 'warning', TextEntry('10-017-00001', args=wargs))
             # get master path
             wavefilepath = get_masterwave_filename(params, fiber=usefiber)
         else:
             # get badpix filename
             wavefilename = waveentries[filecol][0]
             wavefilepath = os.path.join(params['DRS_CALIB_DB'], wavefilename)
-        # construct new infile instance and read data/header
-        wavefile = out_wave.newcopy(filename=wavefilepath, recipe=recipe,
-                                    fiber=usefiber)
+        # construct new infile instance (first fp solution then hc solutions)
+        if out_wave_fp.suffix in os.path.basename(wavefilepath):
+            wavefile = out_wave_fp.newcopy(filename=wavefilepath, recipe=recipe,
+                                        fiber=usefiber)
+        else:
+            wavefile = out_wave_hc.newcopy(filename=wavefilepath, recipe=recipe,
+                                        fiber=usefiber)
+        # read data/header
         wavefile.read()
         # get wave map
         wavemap = np.array(wavefile.data)
@@ -203,11 +225,26 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # ------------------------------------------------------------------------
     # else we are using the header only
     elif infile is None:
-        # get filetype from header (dprtype)
-        filetype = header[params['KW_DPRTYPE'][0]]
+        # get keywords from params
+        outputkey = params['KW_OUTPUT'][0]
+        dprtypekey = params['KW_DPRTYPE'][0]
+        # first see if we are dealing with a reduced file
+        if outputkey in header:
+            # get filetype from header (KW_OUTPUT)
+            filetype = header[outputkey]
+            # set kind
+            kind = 'red'
+        # else we can't have a wavelength solution
+        else:
+            # get filetype from header (dprtype)
+            filetype = header[dprtypekey]
+            # log error
+            eargs = [outputkey, dprtypekey, filetype, func_name]
+            WLOG(params, 'error', TextEntry('00-017-00008', args=eargs))
+            kind = None
         # get wave file instance
         wavefile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                            kind='red')
+                                            kind=kind, fiber=fiber)
         # set wave file properties (using header)
         wavefile.recipe = recipe
         wavefile.header = header
@@ -225,6 +262,12 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         wavesource = 'header'
         # get wave map
         wavemap = None
+    # ------------------------------------------------------------------------
+    # Log progress
+    # -------------------------------------------------------------------------
+    wargs = [wavesource, wavefile.filename]
+    WLOG(params, '', TextEntry('40-017-00036', args=wargs))
+
     # ------------------------------------------------------------------------
     # Now deal with using wavefile
     # -------------------------------------------------------------------------
@@ -509,7 +552,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
         wargs = [wave_mode_fp, 'Bauer 2015']
         WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
         # calculate wave solution
-        llprops = fp_wavesol_bauer(params, llprops, fpe2dsfile)
+        llprops = fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber)
     elif wave_mode_fp == 1:
         # ------------------------------------------------------------------
         # Using the C Lovis (WAVE_NEW_2) method:
@@ -545,7 +588,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # Join 0-47 and 47-49 solutions
     # ------------------------------------------------------------------
     start = pcheck(params, 'WAVE_N_ORD_START', 'n_ord_start', kwargs, func_name)
-    end = pcheck(params, 'WAVE_N_ORD_END', 'n_ord_fin', kwargs, func_name)
+    end = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_ord_fin', kwargs, func_name)
     llprops = join_orders(llprops, start, end)
 
     # ------------------------------------------------------------------
@@ -580,12 +623,12 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
     wprops.set_sources(keys, func_name)
     # update ccf properties
-    wprops['WFP_DRIFT'] = rvprops['CCF_RES'[1]]
+    wprops['WFP_DRIFT'] = rvprops['CCF_RES'][1]
     wprops['WFP_FWHM'] = rvprops['FWHM']
     wprops['WFP_CONTRAST'] = rvprops['CONTRAST']
     wprops['WFP_MAXCPP'] = rvprops['MAXCPP']
     wprops['WFP_MASK'] = rvprops['CCF_MASK']
-    wprops['WFP_LINES'] = rvprops['TOT_LINES']
+    wprops['WFP_LINES'] = rvprops['TOT_LINE']
     wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
     wprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
     wprops['WFP_STEP'] = rvprops['CCF_STEP']
@@ -626,8 +669,8 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # ------------------------------------------------------------------
     # Get the FP solution
     # ------------------------------------------------------------------
-    llprops = fp_wavelength_sol_new(params, llprops, blaze, dopd0, fit_deg,
-                                    fp_large_jump, start, end, cm_ind)
+    llprops = fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0,
+                                    fit_deg, fp_large_jump, start, end, cm_ind)
     # ------------------------------------------------------------------
     # FP solution plots
     # ------------------------------------------------------------------
@@ -723,7 +766,7 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # Find FP lines
     # ------------------------------------------------------------------
     # find the fp lines
-    llprops = find_fp_lines_new(params, llprops)
+    llprops = find_fp_lines_new(params, llprops, fpe2dsfile)
 
     # ------------------------------------------------------------------
     # Number FP peaks differentially and identify gaps
@@ -766,7 +809,8 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # Fit (1/m) vs d
     # ----------------------------------------------------------------------
-    fit_ll_d = fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity)
+    fout = fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity)
+    fit_1m_d, fit_ll_d, one_m_d, d_arr = fout
 
     # ----------------------------------------------------------------------
     # Update FP peak wavelengths
@@ -2153,7 +2197,7 @@ def littrow(params, llprops, start, end, wavell, infile, iteration=1,
     # ------------------------------------------------------------------
     # extrapolate Littrow solution
     # ------------------------------------------------------------------
-    ekwargs = dict(infile=infile, wavell=wavell, iteration=1)
+    ekwargs = dict(infile=infile, wavell=wavell, iteration=iteration)
     llprops = extrapolate_littrow_sol(params, llprops, **ekwargs)
 
     # ------------------------------------------------------------------
@@ -2505,14 +2549,14 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
 # =============================================================================
 # Define fp worker functions
 # =============================================================================
-def fp_wavelength_sol_new(params, llprops, blaze, dopd0, fit_deg,
+def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                           fp_large_jump, n_ord_start_fp, n_ord_final_fp,
                           cm_ind):
     """
     Derives the FP line wavelengths from the first solution
     Follows the Bauer et al 2015 procedure
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
 
     :param llprops: parameter dictionary, ParamDict containing data
         Must contain at least:
@@ -2524,6 +2568,15 @@ def fp_wavelength_sol_new(params, llprops, blaze, dopd0, fit_deg,
                        each numpy array contains gaussian parameters
                        for each found line in that order
             BLAZE: numpy array (2D), the blaze data
+
+    :param fpe2dsfile:
+    :param blaze:
+    :param dopd0:
+    :param fit_deg:
+    :param fp_large_jump:
+    :param n_ord_start_fp:
+    :param n_ord_final_fp:
+    :param cm_ind:
 
     :return llprops: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
@@ -2541,7 +2594,7 @@ def fp_wavelength_sol_new(params, llprops, blaze, dopd0, fit_deg,
     """
     func_name = __NAME__ + '.fp_wavelength_sol_new()'
     # find FP lines
-    llprops = find_fp_lines_new(params, llprops)
+    llprops = find_fp_lines_new(params, llprops, fpe2dsfile)
     # get all_lines_2 from llprops
     all_lines_2 = llprops['ALL_LINES_2']
     # set up storage
@@ -2750,7 +2803,7 @@ def fp_wavelength_sol_new(params, llprops, blaze, dopd0, fit_deg,
     return llprops
 
 
-def find_fp_lines_new(params, llprops, **kwargs):
+def find_fp_lines_new(params, llprops, fpe2dsfile, **kwargs):
     func_name = __NAME__ + '.find_fp_lines_new()'
     # get constants from params/kwargs
     border = pcheck(params, 'WAVE_FP_BORDER_SIZE', 'border', kwargs,
@@ -2766,7 +2819,7 @@ def find_fp_lines_new(params, llprops, **kwargs):
                       kwargs, func_name)
     # get redefined variables (pipe inputs to llprops with correct names)
     # set fpfile as ref file
-    llprops['SPEREF'] = llprops['FPDATA']
+    llprops['SPEREF'] = fpe2dsfile.data
     # set wavelength solution as the one from the HC lines
     llprops['WAVE'] = llprops['LITTROW_EXTRAP_SOL_1']
     # set lamp as FP
@@ -3104,22 +3157,19 @@ def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
     Fits the 1D solution between pixel position and wavelength
     Uses sigma-clipping and removes modulo 1 pixel errors
 
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-            WAVE_N_ORD_START: first order of the wavelength solution
-            WAVE_N_ORD_FINAL: last order of the wavelength solution
+    :param params: parameter dictionary, ParamDict containing constants
 
-    :param loc: parameter dictionary, ParamDict containing data
+    :param llprops: parameter dictionary, ParamDict containing data
         Must contain at least:
             FP_XX_NEW: FP pixel pisitions
             FP_LL_NEW: FP wavelengths
             FP_ORD_NEW: FP line orders
             FP_WEI: FP line weights
 
-    :param ll: numpy array (1D), the initial guess wavelengths for each line
-    :param iteration: int, the iteration number (used so we can store multiple
-                      calculations in loc, defines "i" in input and outputs
-                      from p and loc
+    :param fiber:
+    :param n_init:
+    :param n_fin:
+    :param ll_fit_degree:
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
@@ -3137,13 +3187,13 @@ def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
                 SCALE_2 = scale
 
     """
-    func_name = __NAME__ + '.fit_1d_solution_sigclip()'
 
     # set up storage arrays
     xpix = np.arange(llprops['NBPIX'])
     wave_map_final = np.zeros((n_fin - n_init, llprops['NBPIX']))
     poly_wave_sol_final = np.zeros((n_fin - n_init, ll_fit_degree + 1))
-    fp_ll_in_clip, fp_x_in_clip, fp_x_final_clip = [], [], []
+    fp_x_in_clip, fp_x_final_clip = [], []
+    fp_ll_in_clip, fp_ll_final_clip, fp_ord_clip = [], [], []
     wsumres, sweight, wsumres2 = [], [], []
     wei_clip, res_clip, scale = [], [], []
     # fit x v wavelength w/sigma-clipping
@@ -3288,7 +3338,7 @@ def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
     Calculate the absolute FP peak numbers when there is no overlap from one
     order to the next by estimating the number of peaks missed
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
         Must contain at least:
             WAVE_FP_LLDIF_MIN: float, defines the minimum fraction of the median
                         wavelength difference we accept as no gap between lines
@@ -3350,10 +3400,7 @@ def sigclip_polyfit(params, xx, yy, degree, weight=None, **kwargs):
     """
     Fit a polynomial with sigma-clipping of outliers
 
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-            WAVE_SIGCLIP: clipping parameter
-
+    :param params: parameter dictionary, ParamDict containing constants
     :param xx: numpy array, x values to fit
     :param yy: numpy array, y values to fit
     :param degree: int, the degree of fit
@@ -3396,7 +3443,17 @@ def sigclip_polyfit(params, xx, yy, degree, weight=None, **kwargs):
 
 def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
                          xdiff_min, xdiff_max):
-    func_name = __NAME__ + '.find_num_fppeak_diff()'
+    """
+
+    :param llprops:
+    :param blaze:
+    :param n_init:
+    :param n_fin:
+    :param wave_blaze_thres:
+    :param xdiff_min:
+    :param xdiff_max:
+    :return:
+    """
     # set up storage
     # FP peak wavelengths
     fp_ll = []
@@ -3472,7 +3529,18 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
 
 def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
                           n_fin, ll_offset):
-    func_name = __NAME__ + '.assign_abs_fp_numbers()'
+    """
+
+    :param params:
+    :param fp_ll:
+    :param dif_n:
+    :param m_vec:
+    :param m_ord_prev:
+    :param n_init:
+    :param n_fin:
+    :param ll_offset:
+    :return:
+    """
     # set up m_ord
     m_ord = np.nan
     # loop over orders from reddest-1 to bluest
@@ -3505,7 +3573,7 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
                 mindiff_peak_ind.append(np.argmin(diff))
             # get the smallest difference and its index
             mindiff_all = np.min(mindiff_peak)
-            mindiff_all_ind = np.argmin(mindiff_peak)
+            mindiff_all_ind = int(np.argmin(mindiff_peak))
 
             # check that smallest difference is in fact a true line match
             if mindiff_all < (ll_offset * fp_ll_diff):
@@ -3679,6 +3747,9 @@ def fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity):
         # sPlt.interpolated_cavity_width_ll_hc(p, hc_ll_test, d, fp_ll, fitval)
         pass
 
+    # return variables
+    return fit_1m_d, fit_ll_d, one_m_d, d_arr
+
 
 def update_fp_peak_wavelengths(params, llprops, fit_ll_d, m_vec, fp_order,
                                fp_xx, fp_amp, fp_cavfit_mode):
@@ -3767,9 +3838,7 @@ def join_orders(llprops, start, end):
     """
     Merge the littrow extrapolated solutions with the fitted line solutions
 
-    :param p: parameter dictionary, ParamDict containing constants
-
-    :param loc: parameter dictionary, ParamDict containing data
+    :param llprops: parameter dictionary, ParamDict containing data
         Must contain at least:
             LL_OUT_2: numpy array (2D), the output wavelengths for each
                       pixel and each order (in the shape of original image)
@@ -3784,6 +3853,9 @@ def join_orders(llprops, start, end):
                               size=([no. orders] by [the fit degree +1])
                               the coefficients of the fits for each cut
                               point for each order
+
+    :param start:
+    :param end:
 
     :return loc: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
@@ -3839,10 +3911,10 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
 
     func_name = __NAME__ + '.fp_quality_control()'
     # get parameters from params/kwargs
-    rms_littrow_max = pcheck(params, 'QC_RMS_LITTROW_MAX', 'rms_littrow_max',
-                             kwargs, func_name)
-    dev_littrow_max = pcheck(params, 'QC_DEV_LITTROW_MAX', 'dev_littrow_max',
-                             kwargs, func_name)
+    rms_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_RMS_MAX',
+                             'rms_littrow_max', kwargs, func_name)
+    dev_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_DEV_MAX',
+                             'dev_littrow_max', kwargs, func_name)
     # --------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
@@ -4023,7 +4095,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wavefile.add_hkey('KW_WFP_ERRX_MIN', value=llprops['USED_ERRX_MIN'])
     wavefile.add_hkey('KW_WFP_MAXLL_FIT_RMS',
                       value=llprops['USED_MAX_LL_FIT_RMS'])
-    wavefile.add_hkey('KW_WFP_T_ORD_START', value= llprops['USED_T_ORD_START'])
+    wavefile.add_hkey('KW_WFP_T_ORD_START', value=llprops['USED_T_ORD_START'])
     wavefile.add_hkey('KW_WFP_WEI_THRES', value=llprops['USED_WEIGHT_THRES'])
     wavefile.add_hkey('KW_WFP_CAVFIT_DEG', value=llprops['USED_CAVFIT_DEG'])
     wavefile.add_hkey('KW_WFP_LARGE_JUMP', value=llprops['USED_LARGE_JUMP'])
@@ -4050,6 +4122,82 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     # ------------------------------------------------------------------
     # return hc wavefile
     return wavefile
+
+
+def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
+    # iterate through Littrow test cut values
+    lit_it = 2
+    # get from params
+    nightname = params['NIGHTNAME']
+    # calculate stats for table
+    final_mean = 1000 * llprops['X_MEAN_2']
+    final_var = 1000 * llprops['X_VAR_2']
+    num_lines = llprops['TOTAL_LINES_2']
+    err = 1000 * np.sqrt(llprops['X_VAR_2'] / num_lines)
+    sig_littrow = 1000 * np.array(llprops['LITTROW_SIG_' + str(lit_it)])
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    wavefile = recipe.outputs['WAVE_FPRESTAB'].newcopy(recipe=recipe,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    wavefile.construct_filename(params, infile=hcfile)
+    # ------------------------------------------------------------------
+    # construct and write table
+    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+                   'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
+                   'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
+    columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
+                     '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
+                     '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
+    columnvalues = [[nightname], [hcfile.basename],
+                    [fiber], [final_mean], [final_var],
+                    [num_lines], [err], [sig_littrow[0]],
+                    [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
+                    [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
+    # ------------------------------------------------------------------
+    # make the table
+    table = drs_table.make_table(params, columnnames, columnvalues,
+                                 columnformats)
+    # ------------------------------------------------------------------
+    # log saving of file
+    WLOG(params, '', TextEntry('40-017-00034', args=[wavefile.filename]))
+    # merge table
+    drs_table.merge_table(params, table, wavefile.filename, fmt='ascii.rst')
+
+
+def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
+
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    wavefile = recipe.outputs['WAVE_FPLLTAB'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    wavefile.construct_filename(params, infile=hcfile)
+    # ------------------------------------------------------------------
+    # construct and write table
+    columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
+    columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
+                     '{:12.4f}', '{:12.4f}', '{:8.4f}']
+    columnvalues = []
+    # construct column values (flatten over orders)
+    for it in range(len(llprops['X_DETAILS_2'])):
+        for jt in range(len(llprops['X_DETAILS_2'][it][0])):
+            row = [float(it), llprops['X_DETAILS_2'][it][0][jt],
+                   llprops['LL_DETAILS_2'][it][0][jt],
+                   llprops['X_DETAILS_2'][it][3][jt],
+                   llprops['X_DETAILS_2'][it][1][jt],
+                   llprops['X_DETAILS_2'][it][2][jt],
+                   llprops['SCALE_2'][it][jt]]
+            columnvalues.append(row)
+    # ------------------------------------------------------------------
+    # make the table
+    table = drs_table.make_table(params, columnnames, columnvalues,
+                                 columnformats)
+    # ------------------------------------------------------------------
+    # log saving of file
+    WLOG(params, '', TextEntry('40-017-00035', args=[wavefile.filename]))
+    # merge table
+    drs_table.write_table(params, table, wavefile.filename, fmt='ascii.rst')
 
 
 # =============================================================================
@@ -4089,15 +4237,14 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # push data into props
     props['E2DSFF'] = fpe2dsfile.data
     # TODO: Check why Blaze makes bugs in correlbin
-    # props['BLAZE'] = blaze
+    props['BLAZE'] = blaze
     props['BLAZE'] = np.ones_like(fpe2dsfile.data)
     # set BERV parameters to zero
     props['BERV'] = 0.0
     props['BERV_MAX'] = 0.0
     props['BJD'] = 0.0
     # get the mask parameters
-    cout = drs_data.load_ccf_mask(params, filename=ccfmask)
-    ll_mask_d, ll_mask_ctr, w_mask = cout
+    ll_mask_d, ll_mask_ctr, w_mask = rv.get_ccf_mask(params, filename=ccfmask)
     props['LL_MASK_D'] = ll_mask_d
     props['LL_MASK_CTR'] = ll_mask_ctr
     props['W_MASK'] = w_mask
@@ -4105,11 +4252,11 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     props['WAVE_LL'] = llprops['LL_FINAL']
     props['PARAM_LL'] = llprops['LL_PARAM_FINAL']
     # set sources
-    keys = ['E2DSFF', 'BLAZE', 'BERV', 'BERVMAX', 'BJD', 'LL_MASK_D',
+    keys = ['E2DSFF', 'BLAZE', 'BERV', 'BERV_MAX', 'BJD', 'LL_MASK_D',
             'LL_MASK_CTR', 'W_MASK']
     props.set_sources(keys, func_name)
-    props.set_source('WAVE_LL', llprops.sources['WAVE_LL'])
-    props.set_source('PARAM_LL', llprops.sources['PARAM_LL'])
+    props.set_source('WAVE_LL', llprops.sources['LL_FINAL'])
+    props.set_source('PARAM_LL', llprops.sources['LL_PARAM_FINAL'])
     # push key word arguments
     ckwargs = dict(ccf_step=ccfstep, ccf_width=ccfwidth, target_rv=targetrv,
                    fit_type=1, det_noise=detnoise)
@@ -4175,6 +4322,7 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
 
     # return the rv props
     return props
+
 
 # =============================================================================
 # Start of code

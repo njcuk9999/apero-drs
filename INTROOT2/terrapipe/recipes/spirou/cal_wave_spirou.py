@@ -61,7 +61,7 @@ def main(directory=None, hcfiles=None, **kwargs):
     :param kwargs: any additional keywords
 
     :type directory: str
-    :type files: list[str]
+    :type hcfiles: list[str]
 
     :keyword debug: int, debug level (0 for None)
     :keyword fpfiles: list of strings or string, the list of fp files (optional)
@@ -174,6 +174,8 @@ def __main__(recipe, params):
         # Loop around fibers
         # ------------------------------------------------------------------
         for fiber in fiber_types:
+            # log fiber process
+            core.fiber_processing_update(params, fiber)
             # get hc and fp outputs
             hc_e2ds_file = hc_outputs[fiber]
             fp_e2ds_file = fp_outputs[fiber]
@@ -184,7 +186,7 @@ def __main__(recipe, params):
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
             # load intial wavelength solution (start point) for this fiber
-            iwprops = wave.get_wavesolution(params, recipe, hcheader,
+            iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                             fiber=fiber)
             # check that wave parameters are consistent with required number
             #   of parameters (from constants)
@@ -240,8 +242,9 @@ def __main__(recipe, params):
                 # ----------------------------------------------------------
                 # FP wavelength solution
                 # ----------------------------------------------------------
-                fpprops, wprops = wave.fp_wavesol(params, fp_e2ds_file, hcprops,
-                                                  wprops, blaze, fiber)
+                fargs = [hc_e2ds_file, fp_e2ds_file, hcprops, wprops, blaze,
+                         fiber]
+                fpprops, wprops = wave.fp_wavesol(params, recipe, *fargs)
                 # ----------------------------------------------------------
                 # FP quality control
                 # ----------------------------------------------------------
@@ -253,8 +256,37 @@ def __main__(recipe, params):
                           qc_params, wprops, hcwavefile]
                 fpwavefile = wave.fp_write_wavesolution(params, recipe, *fpargs)
                 # ----------------------------------------------------------
+                # write FP result table to file
+                # ----------------------------------------------------------
+                fpargs = [fpprops, hc_e2ds_file, fiber]
+                wave.fp_write_results_table(params, recipe, *fpargs)
+                # ----------------------------------------------------------
+                # Save line list table file
+                # ----------------------------------------------------------
+                fpargs = [fpprops, hc_e2ds_file, fiber]
+                wave.fp_write_linelist_table(params, recipe, *fpargs)
+                # ----------------------------------------------------------
                 # Update calibDB with FP solution
                 # ----------------------------------------------------------
+                if params['QC']:
+                    # copy the hc wave solution file to the calibDB
+                    drs_database.add_file(params, fpwavefile)
+                # ----------------------------------------------------------
+                # Update header of current file with FP solution
+                # ----------------------------------------------------------
+                if params['QC']:
+                    # create copy of input e2ds hc file
+                    hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
+                    # update wave solution
+                    hc_update = wave.add_wave_keys(hc_update, wprops)
+                    # write hc update
+                    hc_update.write()
+                    # create copy of input e2ds fp file
+                    fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
+                    # update wave solution
+                    fp_update = wave.add_wave_keys(fp_update, wprops)
+                    # write hc update
+                    fp_update.write()
 
             # If the HC solution failed QCs we do not compute FP-HC solution
             elif (fp_e2ds_file is not None) and (not params['QC']):
@@ -262,8 +294,6 @@ def __main__(recipe, params):
             # If there is no FP file we log that
             else:
                 WLOG(params, 'warning', TextEntry('10-017-00007'))
-
-
 
     # ----------------------------------------------------------------------
     # End of main code
