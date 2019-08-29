@@ -48,7 +48,8 @@ BLOG = drs_exceptions.basiclogger
 class Const:
     def __init__(self, name, value=None, dtype=None, dtypei=None,
                  options=None, maximum=None, minimum=None, source=None,
-                 unit=None, default=None, datatype=None, dataformat=None):
+                 unit=None, default=None, datatype=None, dataformat=None,
+                 group=None):
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -61,6 +62,7 @@ class Const:
         self.default = default
         self.datatype = datatype
         self.dataformat = dataformat
+        self.group = group
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
@@ -104,9 +106,11 @@ class Const:
 class Keyword(Const):
     def __init__(self, name, key=None, value=None, dtype=None, comment=None,
                  options=None, maximum=None, minimum=None, source=None,
-                 unit=None, default=None, datatype=None, dataformat=None):
+                 unit=None, default=None, datatype=None, dataformat=None,
+                 group=None):
         Const.__init__(self, name, value, dtype, None, options, maximum,
-                       minimum, source, unit, default, datatype, dataformat)
+                       minimum, source, unit, default, datatype, dataformat,
+                       group)
         self.key = key
         self.comment = comment
         self.kind = 'Keyword'
@@ -115,10 +119,11 @@ class Keyword(Const):
         self.default = default
         self.datatype = datatype
         self.dataformat = dataformat
+        self.group = group
 
     def set(self, key=None, value=None, dtype=None, comment=None,
             options=None, unit=None, default=None, datatype=None,
-            dataformat=None):
+            dataformat=None, group=None):
         if key is not None:
             self.key = key
         if value is not None:
@@ -137,6 +142,8 @@ class Keyword(Const):
             self.datatype = datatype
         if dataformat is not None:
             self.dataformat = dataformat
+        if group is not None:
+            self.group = group
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
