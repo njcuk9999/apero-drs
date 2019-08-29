@@ -339,6 +339,14 @@ def __main__(recipe, params):
             # add qc parameters
             e2dsfile.add_qckeys(qc_params)
             # --------------------------------------------------------------
+            # add shape transform parameters
+            e2dsfile.add_hkey('KW_SHAPE_DX', value=shapelocal[0])
+            e2dsfile.add_hkey('KW_SHAPE_DY', value=shapelocal[1])
+            e2dsfile.add_hkey('KW_SHAPE_A', value=shapelocal[2])
+            e2dsfile.add_hkey('KW_SHAPE_B', value=shapelocal[3])
+            e2dsfile.add_hkey('KW_SHAPE_C', value=shapelocal[4])
+            e2dsfile.add_hkey('KW_SHAPE_D', value=shapelocal[5])
+            # --------------------------------------------------------------
             # add SNR parameters to header
             e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                                  dim1name='order')
@@ -361,7 +369,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # add loco parameters (using locofile)
             locofile = lprops['LOCOOBJECT']
-            e2dsfile.copy_original_keys(locofile, root=params['ROOT_DRS_LOC'])
+            e2dsfile.copy_original_keys(locofile, group='loc')
             # --------------------------------------------------------------
             e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
             # --------------------------------------------------------------
