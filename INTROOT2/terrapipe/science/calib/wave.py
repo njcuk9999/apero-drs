@@ -355,7 +355,14 @@ def add_wave_keys(infile, props):
     infile.add_hkey('KW_WFP_CONTRAST', value=props['WFP_CONTRAST'])
     infile.add_hkey('KW_WFP_MAXCPP', value=props['WFP_MAXCPP'])
     infile.add_hkey('KW_WFP_MASK', value=props['WFP_MASK'])
-    infile.add_hkey('KW_WFP_LINES', value=props['WFP_LINES'])
+    # WFP_LINES should be a list of ints or None or 'None'
+    #     (deal with it either way)
+    if props['WFP_LINES'] is None:
+        infile.add_hkey('KW_WFP_LINES', None)
+    elif isinstance(props['WFP_LINES'], str):
+        infile.add_hkey('KW_WFP_LINES', value=props['WFP_LINES'])
+    else:
+        infile.add_hkey('KW_WFP_LINES', value=np.nansum(props['WFP_LINES']))
     infile.add_hkey('KW_WFP_TARG_RV', value=props['WFP_TARG_RV'])
     infile.add_hkey('KW_WFP_WIDTH', value=props['WFP_WIDTH'])
     infile.add_hkey('KW_WFP_STEP', value=props['WFP_STEP'])
@@ -618,7 +625,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     wprops['COEFFS'] = llprops['LL_PARAM_FINAL']
     wprops['WAVEMAP'] = llprops['LL_FINAL']
     wprops['NBO'] = llprops['LL_PARAM_FINAL'].shape[0]
-    wprops['DEG'] = llprops['LL_PARAM_FINAL'].shape[1]
+    wprops['DEG'] = llprops['LL_PARAM_FINAL'].shape[1] - 1
     # set source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
     wprops.set_sources(keys, func_name)
@@ -942,13 +949,9 @@ def hc_quality_control(params, hcprops):
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         WLOG(params, 'info', TextEntry('40-005-10001'))
-        params['QC'] = 1
-        params.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-        params['QC'] = 0
-        params.set_source('QC', __NAME__ + '/main()')
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
@@ -4032,13 +4035,9 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         WLOG(params, 'info', TextEntry('40-005-10001'))
-        params['QC'] = 1
-        params.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-        params['QC'] = 0
-        params.set_source('QC', __NAME__ + '/main()')
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
@@ -4085,7 +4084,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wavefile.add_hkey('KW_WFP_BLZ_THRES', value=llprops['USED_BLAZE_THRES'])
     wavefile.add_hkey('KW_WFP_XDIFF_MIN', value=llprops['USED_XDIFF_MIN'])
     wavefile.add_hkey('KW_WFP_XDIFF_MAX', value=llprops['USED_XDIFF_MAX'])
-    wavefile.add_hkey('KW_WFP_DOPD0', value=llprops['DOPD0'])
+    wavefile.add_hkey('KW_WFP_DOPD0', value=llprops['USED_DOPD0'])
     wavefile.add_hkey('KW_WFP_LL_OFFSET', value=llprops['USED_LL_OFFSET'])
     wavefile.add_hkey('KW_WFP_DVMAX', value=llprops['USED_DV_MAX'])
     wavefile.add_hkey('KW_WFP_LLFITDEG', value=llprops['USED_LL_FIT_DEG'])
@@ -4116,7 +4115,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00019', args=wargs))
+    WLOG(params, '', TextEntry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write()
     # ------------------------------------------------------------------
@@ -4189,6 +4188,8 @@ def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
                    llprops['X_DETAILS_2'][it][2][jt],
                    llprops['SCALE_2'][it][jt]]
             columnvalues.append(row)
+    # need to flip values
+    columnvalues = np.array(columnvalues).T
     # ------------------------------------------------------------------
     # make the table
     table = drs_table.make_table(params, columnnames, columnvalues,
