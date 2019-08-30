@@ -96,7 +96,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
         # get parameterse from drs_params
-        program = self.recipe.drs_params['RECIPE']
+        program = str(self.recipe.drs_params['RECIPE'])
         # get parameters from drs_params
         params = self.recipe.drs_params
         # log message
@@ -107,7 +107,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
     def _print_message(self, message, file=None):
         # get parameters from drs_params
         params = self.recipe.drs_params
-        program = params['RECIPE']
+        program = str(params['RECIPE'])
         # construct error message
         if self.recipe.drs_params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
@@ -768,7 +768,7 @@ class _DisplayInfo(argparse.Action):
         params = recipe.drs_params
         etext = recipe.textdict
         htext = recipe.helptext
-        program = params['RECIPE']
+        program = str(params['RECIPE'])
         # get colours
         if params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
@@ -826,6 +826,7 @@ class _SetProgram(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_program(self, values):
+        func_name = __NAME__ + '._SetProgram._set_program()'
 
         if isinstance(values, list):
             strvalue =  values[0]
@@ -839,6 +840,10 @@ class _SetProgram(argparse.Action):
 
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['DRS_USER_PROGRAM'] = strvalue
+        self.recipe.drs_params.set_source('DRS_USER_PROGRAM', func_name)
+        self.recipe.drs_params.set_instance('DRS_USER_PROGRAM', None)
+        # return strvalue
+        return strvalue
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
@@ -846,8 +851,9 @@ class _SetProgram(argparse.Action):
         parser._has_special()
         self.recipe = parser.recipe
         # display version
-        self._set_program(values)
-
+        value = self._set_program(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
 
 # =============================================================================
 # Define Argument Class
@@ -1153,21 +1159,21 @@ class DrsArgument(object):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _get_version_info(p, green='', end=''):
+def _get_version_info(params, green='', end=''):
 
     # get name
-    if 'DRS_NAME' in p:
-        name = p['DRS_NAME']
+    if 'DRS_NAME' in params:
+        name = str(params['DRS_NAME'])
     else:
-        name = p['RECIPE']
+        name = str(params['RECIPE'])
     # get version
-    if 'DRS_VERSION' in p:
-        version = p['DRS_VERSION']
+    if 'DRS_VERSION' in params:
+        version = str(params['DRS_VERSION'])
     else:
         version = __version__
 
     # get text strings
-    text = TextDict(p['INSTRUMENT'], p['LANGUAGE'])
+    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     namestr = text['40-001-00001']
     versionstr = text['40-001-00002']
     authorstr = text['40-001-00003']
@@ -1280,7 +1286,7 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
     filelist, limitreached = _get_file_list(mlimit, fulldir, recursive=True,
                                             dir_only=dircond, list_all=list_all)
     # get parameterse from drs_params
-    program = params['RECIPE']
+    program = str(params['RECIPE'])
     # construct error message
     if return_string:
         green, end = '', ''

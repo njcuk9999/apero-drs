@@ -78,10 +78,10 @@ class DrsRecipe(object):
             self.name = 'UnknownRecipe'
         elif name.strip().endswith('.py'):
             while name.endswith('.py'):
-                name = name[:-3]
-            self.name = name
+                name = str(name[:-3])
+            self.name = str(name)
         else:
-            self.name = name
+            self.name = str(name)
         # set drs file module related to this recipe
         self.filemod = filemod
         # set filters
@@ -129,7 +129,7 @@ class DrsRecipe(object):
     def get_drs_params(self, **kwargs):
         func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
         # Get config parameters from primary file
-        self.drs_params = constants.load(self.instrument)
+        self.drs_params = constants.load(self.instrument).copy()
         self.drs_pconstant = constants.pload(self.instrument)
         self.textdict = TextDict(self.instrument, self.drs_params['LANGUAGE'])
         self.helptext = HelpText(self.instrument, self.drs_params['LANGUAGE'])
@@ -142,7 +142,7 @@ class DrsRecipe(object):
         # set recipe name
         while self.name.endswith('.py'):
             self.name = self.name[:-3]
-        self.drs_params['RECIPE'] = self.name
+        self.drs_params['RECIPE'] = str(self.name)
         self.drs_params.set_source('RECIPE', func_name)
         # ---------------------------------------------------------------------
         # if DRS_INTERACTIVE is not True and DRS_PLOT is to the screen
@@ -479,7 +479,7 @@ class DrsRecipe(object):
         else:
             self.str_arg_list = list(recipe.str_arg_list)
         # get drs parameters
-        self.drs_params = recipe.drs_params
+        self.drs_params = recipe.drs_params.copy()
         self.drs_pconstant = recipe.drs_pconstant
         self.textdict = self.textdict
         self.helptext = self.helptext
@@ -498,6 +498,7 @@ class DrsRecipe(object):
                 self.outputs[output] = newouput
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
+
 
     # =========================================================================
     # Reprocessing methods
@@ -996,7 +997,7 @@ class DrsRecipe(object):
             self.drs_params['PID'] = None
             self.drs_params.set_source('PID', func_name)
         if 'RECIPE' not in self.drs_params:
-            self.drs_params['RECIPE'] = __NAME__.replace('.py', '')
+            self.drs_params['RECIPE'] = str(__NAME__.replace('.py', ''))
             self.drs_params.set_source('RECIPE', func_name)
         # return drs_params
         return self.drs_params

@@ -69,6 +69,7 @@ class DrsInputFile:
         self.filetype = kwargs.get('filetype', '')
         self.suffix = kwargs.get('suffix', '')
         self.prefix = kwargs.get('prefix', '')
+        self.filename = None
         # get fiber type (if set)
         self.fibers = kwargs.get('fibers', None)
         self.fiber = kwargs.get('fiber', None)
@@ -136,6 +137,7 @@ class DrsInputFile:
         kwargs['filetype'] = kwargs.get('filetype', self.filetype)
         kwargs['suffix'] = kwargs.get('suffix', self.suffix)
         kwargs['prefix'] = kwargs.get('prefix', self.prefix)
+        kwargs['filename'] = kwargs.get('filename', self.filename)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['fibers'] = kwargs.get('fibers', self.fibers)
         kwargs['recipe'] = kwargs.get('recipe', self.recipe)
@@ -506,9 +508,11 @@ class DrsFitsFile(DrsInputFile):
         kwargs['numfiles'] = kwargs.get('numfiles', self.numfiles)
         for key in self.required_header_keys:
             kwargs[key] = self.required_header_keys[key]
-        self.get_header_keys(kwargs)
+
+        newfile = DrsFitsFile(name, **kwargs)
+        newfile.get_header_keys(kwargs)
         # return new instance
-        return DrsFitsFile(name, **kwargs)
+        return newfile
 
     def string_output(self):
         """
@@ -595,9 +599,11 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['numfiles'] = copy.deepcopy(drsfile.numfiles)
         for key in drsfile.required_header_keys:
             nkwargs[key] = drsfile.required_header_keys[key]
-        self.get_header_keys(nkwargs)
+
+        newfile = DrsFitsFile(**nkwargs)
+        newfile.get_header_keys(nkwargs)
         # return new instance of DrsFitsFile
-        return DrsFitsFile(**nkwargs)
+        return newfile
 
     # TODO: Merge/combine with completecopy and copyother
     def copyother(self, drsfile, **kwargs):
@@ -1032,6 +1038,9 @@ class DrsFitsFile(DrsInputFile):
             cond2 = self.header is not None
             if cond1 and cond2:
                 return True
+        # deal with no extension
+        if ext is None:
+            ext = 0
         # get params
         params = self.recipe.drs_params
         # check that filename is set
@@ -2128,7 +2137,7 @@ class DrsNpyFile(DrsInputFile):
         nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
         nkwargs['outfunc'] = drsfile.outfunc
         # return new instance of DrsFitsFile
-        return DrsFitsFile(**nkwargs)
+        return DrsNpyFile(**nkwargs)
 
 
 # =============================================================================
