@@ -44,6 +44,7 @@ __release__ = Constants['DRS_RELEASE']
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsNpyFile = drs_file.DrsNpyFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -64,7 +65,7 @@ speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                    shapey, orderpfile, **kwargs):
-
+    func_name = __NAME__ + '.order_profiles()'
     # get header from infile
     header = infile.header
     # look for filename in kwargs
@@ -86,7 +87,12 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         # check if temporary file exists
         if orderpsfile.file_exists() and (filename is None):
             # load the numpy temporary file
-            orderpsfile.read(params)
+            #    Note: NpyFitsFile needs arguments params!
+            if isinstance(orderpsfile, DrsNpyFile):
+                orderpsfile.read(params)
+            else:
+                eargs = [orderpsfile.__str__(), func_name]
+                WLOG(params, 'error', TextEntry('00-016-00023', args=eargs))
             # push data into orderp
             orderp = orderpsfile.data
             orderpfilename = orderpsfile.filename
