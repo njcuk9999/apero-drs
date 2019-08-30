@@ -126,7 +126,7 @@ class Logger:
         :param wrap: bool, if True wraps text at
                                  spirouConfig.Constants.CHARACTER_LOG_LENGTH()
         :param option: string, option code, overwrites the default (of using
-                       p['RECIPE'] or p['LOG_OPT']
+                       p['RECIPE'] or DRS_USER_PROGRAM
         :param colour: string, colour of the message wanted (overrides default)
                        currently supported colours are:
                        "red", "green", "blue", "yellow", "cyan", "magenta",
@@ -203,12 +203,12 @@ class Logger:
         if option is not None:
             option = option
         elif 'RECIPE' in params:
-            option = params.get('RECIPE', '')
+            option = str(params.get('RECIPE', ''))
         else:
             option = ''
         # overwrite these with DRS_USER_PROGRAM (if not None)
-        userprogram = params.get('DRS_USER_PROGRAM', None)
-        if userprogram not in [None, 'None']:
+        userprogram = str(params.get('DRS_USER_PROGRAM', None))
+        if userprogram != 'None':
             option = userprogram
 
         # ---------------------------------------------------------------------
