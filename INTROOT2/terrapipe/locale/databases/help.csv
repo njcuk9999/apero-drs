@@ -36,3 +36,5 @@
 "REPROCESS_NIGHTNAME_HELP","HELP","","None","[STRING] The 'night_name' or directory to reprocess","",""
 "REPROCESS_INST_HELP","HELP","","None","[STRING] The instrument to reprocess","",""
 "PPSKIP_HELP","HELP","","None","[BOOLEAN] If True skips preprocessed files that are already found","",""
+"HCMODE_HELP","HELP","","None","[INTEGER] the mode to calculate the hc wave solution. 0 = Etienne method","",""
+"FPMODE_HELP","HELP","","None","[INTEGER] the mode to calculate the fp+hc wave solution. 0 = following Bauer et al 15 (previously WAVE_E2DS_EA), 1 = following C Lovis (previously WAVE_NEW)","",""
