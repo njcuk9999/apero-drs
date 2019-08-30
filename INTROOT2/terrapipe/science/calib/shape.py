@@ -535,7 +535,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     ypix = np.zeros((nbo, dim2))
     # loop around order number
     for order_num in range(nbo):
-        # x pixel vecctor that is used with polynomials to
+        # x pixel vector that is used with polynomials to
         # find the order center y order center
         ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
     # -------------------------------------------------------------------------
