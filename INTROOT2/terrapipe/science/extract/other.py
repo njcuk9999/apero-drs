@@ -181,7 +181,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
             eargs = [recipe.name, func_name]
             WLOG(params, 'error', TextEntry('09-016-00002', args=eargs))
         # get qc
-        passed = llout['params']['QC']
+        passed = llout['passed']
         # deal with hc failure
         if not passed:
             # log error: extraction of file failed
