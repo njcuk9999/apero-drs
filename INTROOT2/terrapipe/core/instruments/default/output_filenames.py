@@ -38,7 +38,11 @@ TextEntry = locale.drs_text.TextEntry
 # Define file functions
 # =============================================================================
 def general_file(params, **kwargs):
-    func_name = kwargs.get('func', __NAME__ + '.general_file()')
+    func = __NAME__ + '.general_file()'
+    if 'func' in kwargs:
+        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
+    else:
+        func_name = func
     # get parameters from keyword arguments
     infile = kwargs.get('infile', None)
     outfile = kwargs.get('outfile', None)
@@ -85,12 +89,11 @@ def general_file(params, **kwargs):
 
 
 def npy_file(params, **kwargs):
-    func_name = __NAME__ + '.npy_file()'
-    func = kwargs.get('func', None)
-    if func is None:
-        func = func_name
+    func = __NAME__ + '.npy_file()'
+    if 'func' in kwargs:
+        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
     else:
-        func = '{0} and {1}'.format(func, func_name)
+        func_name = func
     # get out file and report error if not set
     outfile = kwargs.get('outfile', None)
     if outfile is None:
@@ -105,14 +108,13 @@ def npy_file(params, **kwargs):
 
 
 def debug_file(params, **kwargs):
-    func_name = __NAME__ + '.debug_back()'
-    func = kwargs.get('func', None)
-    if func is None:
-        func = func_name
+    func = __NAME__ + '.debug_back()'
+    if 'func' in kwargs:
+        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
     else:
-        func = '{0} and {1}'.format(func, func_name)
+        func_name = func
     # update keywords func name
-    kwargs['func'] = func
+    kwargs['func'] = func_name
     # get parameters from keyword arguments
     outfile = kwargs.get('outfile', None)
     if outfile is not None:
@@ -124,7 +126,11 @@ def debug_file(params, **kwargs):
 
 
 def blank(params, **kwargs):
-    func_name = kwargs.get('func', __NAME__ + '.blank()')
+    func = __NAME__ + '.blank()'
+    if 'func' in kwargs:
+        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
+    else:
+        func_name = func
     # get parameters from keyword arguments
     infile = kwargs.get('infile', None)
     # deal with kwargs that are required
@@ -135,17 +141,24 @@ def blank(params, **kwargs):
 
 
 def set_file(params, **kwargs):
-    func_name = kwargs.get('func', __NAME__ + '.set_file()')
+    func = __NAME__ + '.set_file()'
+    if 'func' in kwargs:
+        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
+    else:
+        func_name = func
     # get set filename from kwargs
     filename = kwargs.get('filename', None)
-    # deal with no file name set
-    if filename is None:
-        WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
     # get output file
     outfile = kwargs.get('outfile', None)
     # deal with no outfile set
     if outfile is None:
         WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
+    # get filename from outfile if None
+    if filename is None:
+        filename = outfile.filename
+    # deal with no file name set
+    if filename is None:
+        WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
     # get path
     path = kwargs.get('path', None)
     # get extension
@@ -180,7 +193,6 @@ def set_file(params, **kwargs):
 def get_outfilename(params, infilename, prefix=None, suffix=None,
                     inext=None, outext=None, fiber=None):
     func_name = __NAME__ + '.get_outfilename()'
-
     # deal with fiber
     if fiber is not None:
         suffix = '{0}_{1}'.format(suffix, fiber.upper())
