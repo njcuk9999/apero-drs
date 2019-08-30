@@ -915,10 +915,10 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         priority = run_item.priority
         # parameters to save
         pp = dict()
-        pp['RECIPE'] = run_item.recipename
-        pp['NIGHT_NAME'] = run_item.nightname
+        pp['RECIPE'] = str(run_item.recipename)
+        pp['NIGHT_NAME'] = str(run_item.nightname)
         pp['ARGS'] = kwargs
-        pp['RUNSTRING'] = run_item.runstring
+        pp['RUNSTRING'] = str(run_item.runstring)
         # ------------------------------------------------------------------
         # log what we are running
         wmsg1 = 'ID{0:05d} | {1}'.format(priority, run_item.runstring)
