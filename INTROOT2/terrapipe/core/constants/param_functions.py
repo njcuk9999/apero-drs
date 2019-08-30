@@ -15,6 +15,7 @@ import numpy as np
 import sys
 import os
 import pkg_resources
+import copy
 
 from collections import OrderedDict
 
@@ -176,6 +177,7 @@ class ParamDict(CaseInsensitiveDict):
         """
         self.sources = CaseInsensitiveDict()
         self.instances = CaseInsensitiveDict()
+        self.locked = False
         super(ParamDict, self).__init__(*arg, **kw)
 
     def __getitem__(self, key):
@@ -204,6 +206,10 @@ class ParamDict(CaseInsensitiveDict):
         :param source: string, the source for the parameter
         :return:
         """
+        if self.locked:
+            emsg = 'ParamDict locked. \n\t Cannot add \'{0}\'=\'{1}\''
+            raise ConfigError(emsg.format(key, value))
+
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -243,6 +249,12 @@ class ParamDict(CaseInsensitiveDict):
 
     def __str__(self):
         return self._string_print()
+
+    def lock(self):
+        self.locked = True
+
+    def unlock(self):
+        self.locked = False
 
     def get(self, key, default=None):
         """
@@ -575,7 +587,10 @@ class ParamDict(CaseInsensitiveDict):
         # loop around keys and add to new copy
         for k_it, key in enumerate(keys):
             value = values[k_it]
-            pp[key] = type(value)(value)
+            try:
+                pp[key] = copy.deepcopy(value)
+            except Exception as _:
+                pp[key] = type(value)(value)
             pp.set_source(key, self.sources[key])
             pp.set_instance(key, self.instances[key])
         # return new param dict filled
@@ -636,7 +651,7 @@ class ParamDict(CaseInsensitiveDict):
     def get_keyword_instances(self):
         keyworddict = dict()
         # loop around all keys
-        for key in list(self.keys()):
+        for key in list(self.instances.keys()):
             # get the instance for this key
             instance = self.instances[key]
             # skip None
