@@ -594,7 +594,10 @@ cal_wave.set_kwarg(**shapexfile)
 cal_wave.set_kwarg(**shapeyfile)
 cal_wave.set_kwarg(**shapelfile)
 cal_wave.set_kwarg(**wavefile)
-
+cal_wave.set_kwarg(name='-hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
+                   options=[0], default_ref='WAVE_MODE_HC')
+cal_wave.set_kwarg(name='-fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
+                   options=[0, 1], default_ref='WAVE_MODE_HC')
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
