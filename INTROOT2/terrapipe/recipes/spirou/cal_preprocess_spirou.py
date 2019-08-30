@@ -80,9 +80,9 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, success, outputs='None')
+    params = core.end_main(llmain['params'], recipe, success, outputs='None')
     # return a copy of locally defined variables in the memory
-    return core.get_locals(dict(locals()), llmain)
+    return core.get_locals(params, dict(locals()), llmain)
 
 
 def __main__(recipe, params):
@@ -222,13 +222,11 @@ def __main__(recipe, params):
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
             WLOG(params, 'info', TextEntry('40-005-10001'))
-            params['QC'] = 1
-            params.set_source('QC', __NAME__ + '/main()')
+            passed = 1
         else:
             for farg in fail_msg:
                 WLOG(params, 'warning', TextEntry('40-005-10001') + farg)
-            params['QC'] = 0
-            params.set_source('QC', __NAME__ + '/main()')
+            passed = 0
             continue
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -282,7 +280,8 @@ def __main__(recipe, params):
         # write image to file
         outfile.write()
         # index this file
-        params = core.end_main(params, success=True, outputs='pp', end=False)
+        params = core.end_main(params, recipe, success=True, outputs='pp',
+                               end=False)
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------

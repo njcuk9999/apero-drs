@@ -86,9 +86,9 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, success)
+    params = core.end_main(llmain['params'], recipe, success)
     # return a copy of locally defined variables in the memory
-    return core.get_locals(dict(locals()), llmain)
+    return core.get_locals(params, dict(locals()), llmain)
 
 
 def __main__(recipe, params):
@@ -247,13 +247,11 @@ def __main__(recipe, params):
             # quality control QC = 0 if we fail quality control
             if np.sum(qc_pass) == len(qc_pass):
                 WLOG(params, 'info', TextEntry('40-005-10001'))
-                params['QC'] = 1
-                params.set_source('QC', __NAME__ + '/main()')
+                passed = 1
             else:
                 for farg in fail_msg:
                     WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-                params['QC'] = 0
-                params.set_source('QC', __NAME__ + '/main()')
+                passed = 0
             # store in qc_params
             qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
@@ -370,7 +368,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update the calibration database
             # --------------------------------------------------------------
-            if params['QC']:
+            if passed:
                 # copy the blaze file to the calibDB
                 drs_database.add_file(params, blazefile)
                 # copy the flat file to the calibDB

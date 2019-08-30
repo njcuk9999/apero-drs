@@ -10,6 +10,7 @@ Created on 2019-08-16 at 09:23
 @author: cook
 """
 from __future__ import division
+import numpy as np
 
 from terrapipe import core
 from terrapipe import locale
@@ -83,9 +84,9 @@ def main(directory=None, hcfiles=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, success)
+    params = core.end_main(llmain['params'], recipe, success)
     # return a copy of locally defined variables in the memory
-    return core.get_locals(dict(locals()), llmain)
+    return core.get_locals(params, dict(locals()), llmain)
 
 
 def __main__(recipe, params):
@@ -100,9 +101,6 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get calibration database
-    cdb = drs_database.get_full_database(params, 'calibration')
-    params[cdb.dbshort] = cdb
     # get files
     hcfiles = params['INPUTS']['HCFILES'][1]
     # deal with (optional fp files)
@@ -200,6 +198,8 @@ def __main__(recipe, params):
             # HC quality control
             # --------------------------------------------------------------
             qc_params = wave.hc_quality_control(params, hcprops)
+            # passed if all qc passed
+            passed = np.all(qc_params[-1])
             # --------------------------------------------------------------
             # log the global stats
             # --------------------------------------------------------------
@@ -219,14 +219,14 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update calibDB with HC solution
             # --------------------------------------------------------------
-            if params['QC']:
+            if passed:
                 # copy the hc wave solution file to the calibDB
                 drs_database.add_file(params, hcwavefile)
 
             # --------------------------------------------------------------
             # Update header of current file with HC solution
             # --------------------------------------------------------------
-            if params['QC']:
+            if passed:
                 # create copy of infile
                 hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
                 # update wave solution
@@ -238,7 +238,7 @@ def __main__(recipe, params):
             # FP addition to wavelength solution
             # --------------------------------------------------------------
             # check if there's a FP input and if HC solution passed QCs
-            if (fp_e2ds_file is not None) and params['QC']:
+            if (fp_e2ds_file is not None) and passed:
                 # ----------------------------------------------------------
                 # FP wavelength solution
                 # ----------------------------------------------------------
@@ -249,11 +249,14 @@ def __main__(recipe, params):
                 # FP quality control
                 # ----------------------------------------------------------
                 qc_params = wave.fp_quality_control(params, fpprops, qc_params)
+                # passed if all qc passed
+                passed = np.all(qc_params[-1])
                 # ----------------------------------------------------------
                 # write FP wavelength solution to file
                 # ----------------------------------------------------------
-                fpargs = [hcprops, fp_e2ds_file, fiber, combine, rawhcfiles,
-                          qc_params, wprops, hcwavefile]
+                fpargs = [fpprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
+                          rawhcfiles, rawfpfiles,  qc_params, wprops,
+                          hcwavefile]
                 fpwavefile = wave.fp_write_wavesolution(params, recipe, *fpargs)
                 # ----------------------------------------------------------
                 # write FP result table to file
@@ -268,13 +271,13 @@ def __main__(recipe, params):
                 # ----------------------------------------------------------
                 # Update calibDB with FP solution
                 # ----------------------------------------------------------
-                if params['QC']:
+                if passed:
                     # copy the hc wave solution file to the calibDB
                     drs_database.add_file(params, fpwavefile)
                 # ----------------------------------------------------------
                 # Update header of current file with FP solution
                 # ----------------------------------------------------------
-                if params['QC']:
+                if passed:
                     # create copy of input e2ds hc file
                     hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
                     # update wave solution
@@ -289,7 +292,7 @@ def __main__(recipe, params):
                     fp_update.write()
 
             # If the HC solution failed QCs we do not compute FP-HC solution
-            elif (fp_e2ds_file is not None) and (not params['QC']):
+            elif (fp_e2ds_file is not None) and (not passed):
                 WLOG(params, 'warning', TextEntry('10-017-00006'))
             # If there is no FP file we log that
             else:
@@ -308,6 +311,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
+    print('core.end')
     core.end(ll, has_plots=True)
 
 # =============================================================================
