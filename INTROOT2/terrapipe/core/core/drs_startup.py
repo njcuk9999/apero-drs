@@ -15,6 +15,7 @@ from astropy.time import Time
 import traceback
 import sys
 import os
+import copy
 import code
 from collections import OrderedDict
 
@@ -55,6 +56,7 @@ COLOR = pseudo_const.Colors
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
+DrsInputFile = drs_file.DrsInputFile
 # get the Drs Exceptions
 DrsError = drs_exceptions.DrsError
 DrsWarning = drs_exceptions.DrsWarning
@@ -110,6 +112,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     WLOG.clean_log(pid)
     # find recipe
     recipe, recipemod = find_recipe(name, instrument)
+    # clean params
+    recipe.drs_params = ParamDict()
     # set recipemod
     recipe.recipemod = recipemod
     # quietly load DRS parameters (for setup)
@@ -179,10 +183,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         _display_run_time_arguments(recipe, fkwargs)
     # -------------------------------------------------------------------------
     # update params in log
-    WLOG.pin = recipe.drs_params
+    WLOG.pin = recipe.drs_params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    params = recipe.drs_params
+    params = recipe.drs_params.copy()
     params['INPATH'] = recipe.get_input_dir()
     params['OUTPATH'] = recipe.get_output_dir()
     if 'DIRECTORY' in params['INPUTS']:
@@ -209,6 +213,12 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         params['DATA_DICT'] = fkwargs['DATA_DICT']
     else:
         params['DATA_DICT'] = ParamDict()
+    # -------------------------------------------------------------------------
+    # lock parameter dictionary (cannot add items after this point)
+    params.lock()
+    # update params in log / and recipes after locking
+    recipe.drs_params = params.copy()
+    WLOG.pin = params.copy()
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
@@ -278,14 +288,21 @@ def get_params(recipe='None', instrument='None', **kwargs):
     :rtype: ParamDict
     """
     _, params = setup(recipe, instrument, quiet=True)
+    # unlock params for editing
+    params.unlock()
     # overwrite parameters with kwargs
     for kwarg in kwargs:
         params[kwarg] = kwargs[kwarg]
+    # update params in log / and recipes after locking
+    recipe.drs_params = params.copy()
+    WLOG.pin = params.copy()
+    # lock parameter dictionary (cannot add items after this point)
+    params.lock()
     # return parameters
     return params
 
 
-def main_end_script(params, success, outputs='reduced', end=True):
+def main_end_script(params, recipe, success, outputs='reduced', end=True):
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -343,19 +360,26 @@ def main_end_script(params, success, outputs='reduced', end=True):
     # log end message
     if end:
         if success:
-            iargs = [params['RECIPE']]
+            iargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'])
             WLOG(params, 'info', TextEntry('40-003-00001', args=iargs))
             WLOG(params, 'info', params['DRS_HEADER'])
         else:
-            wargs = [params['RECIPE']]
+            wargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
             WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs),
                  colour='red')
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
         # ---------------------------------------------------------------------
-        # add the logger messages to p
+        # unlock parameter dictionary
+        params.unlock()
+        # add the logger messages to params
         params = WLOG.output_param_dict(params)
+        # update params in log / and recipes after locking
+        recipe.drs_params = params.copy()
+        WLOG.pin = params.copy()
+        # lock parameter dictionary (cannot add items after this point)
+        params.lock()
         # ---------------------------------------------------------------------
         # finally clear out the log in WLOG
         WLOG.clean_log(params['PID'])
@@ -367,7 +391,7 @@ def main_end_script(params, success, outputs='reduced', end=True):
     return params
 
 
-def get_local_variables(*args):
+def get_local_variables(params, *args):
     """
     Takes the args (which should be dictionaries) and push them into
     one (output) dictionary
@@ -375,6 +399,47 @@ def get_local_variables(*args):
     :returns: dict, the output dictionary
     :rtype: dict
     """
+    func_name = __NAME__ + '.get_local_variables()'
+    # define copy param function
+    def _copy_param(key, value):
+        # copy DrsRecipe
+        if isinstance(value, DrsRecipe):
+            dargs = [key, 'DrsRecipe']
+            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
+            newrecipe = DrsRecipe()
+            newrecipe.copy(value)
+            newvalue = newrecipe
+        # copy DrsFitsFile
+        elif isinstance(value, DrsFitsFile):
+            dargs = [key, 'DrsFitsFile']
+            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
+            newvalue = value.completecopy(value)
+        # copy DrsInputFile
+        elif isinstance(value, DrsInputFile):
+            dargs = [key, 'DrsInputFile']
+            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
+            newvalue = value.completecopy(value)
+        # copy ParamDict
+        elif isinstance(value, ParamDict):
+            dargs = [key, 'ParamDict']
+            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
+            # unlock setting of parameter dictionary
+            value.unlock()
+            newvalue = value.copy()
+            # relock parameter dictionary
+            value.lock()
+            newvalue.lock()
+        else:
+            dargs = [key, type(value)]
+            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
+            # add to output dictionary
+            try:
+                newvalue = copy.deepcopy(value)
+            except Exception as _:
+                WLOG(params, 'debug', TextEntry('90-000-00003'))
+                newvalue = 'Not copied'
+        # return the new value
+        return newvalue
     # set up dictionary storage
     output_dict = dict()
     # loop around all input arguments
@@ -383,10 +448,21 @@ def get_local_variables(*args):
         if type(arg) is dict:
             # loop around each key
             for key in list(arg.keys()):
-                # add to output dictionary
-                output_dict[key] = arg[key]
+                # get value from args
+                value = arg[key]
+                # deal with a list of (possibly complicated) values
+                if isinstance(value, list):
+                    keys = ['List[{0}]'.format(key)] * len(value)
+                    output_dict[key] = list(map(_copy_param, keys, value))
+                # else just copy
+                else:
+                    output_dict[key] = _copy_param(key, value)
+
     # return output dictionary
     return output_dict
+
+
+
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,
@@ -448,7 +524,7 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
     if instrument is None and len(found_files) == 0:
         empty = drs_file.DrsFitsFile('Empty')
         return empty
-    if len(found_files) == 0 and required:
+    if len(found_files) == 0:
         eargs = [name, modules[0], func_name]
         WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
 
@@ -565,19 +641,23 @@ def exit_script(ll, has_plots=True):
     """
     # -------------------------------------------------------------------------
     # get parameter dictionary of constants (or create it)
-    if 'p' in ll:
-        params = ll['p']
+    if 'params' in ll:
+        params = ll['params']
     else:
         params = Constants
     # -------------------------------------------------------------------------
     # make sure we have DRS_PLOT
     if 'DRS_PLOT' not in params:
-        params['DRS_PLOT'] = 0
+        drs_plot = 0
+    else:
+        drs_plot = params['DRS_PLOT']
     # make sure we have DRS_INTERACTIVE
     if 'DRS_INTERACTIVE' not in params:
-        params['DRS_INTERACTIVE'] = 1
+        drs_interactive = 1
+    else:
+        drs_interactive = params['DRS_INTERACTIVE']
     # if DRS_INTERACTIVE is False just return 0
-    if not params['DRS_INTERACTIVE']:
+    if not drs_interactive:
         # print('Interactive mode off')
         return
     # find whether user is in ipython or python
@@ -1242,8 +1322,13 @@ def find_recipe(name='None', instrument='None', mod=None):
         return empty, None
     if found_recipe is None:
         WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+
+    # make a copy of found recipe to return
+    copy_recipe = DrsRecipe()
+    copy_recipe.copy(found_recipe)
+
     # return
-    return found_recipe, mod
+    return copy_recipe, mod
 
 
 def _get_arg_strval(value):
