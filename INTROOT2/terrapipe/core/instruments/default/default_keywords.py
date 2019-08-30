@@ -109,19 +109,6 @@ KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, source=__NAME__)
 # define the MJ end date HEADER key
 KW_MJDEND = Keyword('KW_MJEND', key='', value=None, source=__NAME__)
 
-# the format of ACQTIME as required by astropy.time
-#  options are:
-#          "mjd": mean julian date
-#          "iso": YYYY-MM-DD HH:MM:SS.S
-#          "unix": seconds since 1970-01-01 00:00:00
-#          "jyear": year as a decimal number
-KW_MJDEND_FMT = Const('KW_ACQTIME_FMT', value='mjd', dtype=str,
-                       options=['mjd', 'iso', 'unix', 'jyear'],
-                       source=__NAME__)
-# This is the dtype of the acqtime (i.e. str or float)
-KW_MJDEND_DTYPE = Const('KW_ACQTIME_FMT', value=float, dtype=None,
-                         options=[float, str], source=__NAME__)
-
 # define the observation date HEADER key
 KW_DATE_OBS = Keyword('KW_DATE_OBS', key='', dtype=float, source=__NAME__)
 # define the observation time HEADER key
@@ -539,17 +526,6 @@ KW_BERVMAX_EST = Keyword('KW_BERVMAX_EST', key='', dtype=float, source=__NAME__)
 # the derivative of the BERV (BERV at time + 1s - BERV) calculated with
 #     estimate
 KW_DBERV_EST = Keyword('KW_DBERV_EST', key='', dtype=float, source=__NAME__)
-
-# the start time of the observation used to calculate BERV (+KW_BERV_TIME_DELTA)
-KW_BERV_START = Keyword('KW_BERV_START', key='', dtype=float, source=__NAME__)
-
-# the exposure time used to calculate observation midpoint
-KW_BERV_EXP_TIME = Keyword('KW_BERV_EXP_TIME', key='', dtype=float,
-                           source=__NAME__)
-
-# the time delta used (KW_BERV_START + this) [in days]
-KW_BERV_TIME_DELTA = Keyword('KW_BERV_TIME_DELTA', key='', dtype=float,
-                             source=__NAME__)
 
 # the actual jd time used to calculate the BERV
 KW_BERV_OBSTIME = Keyword('KW_BERV_OBSTIME', key='', dtype=float,

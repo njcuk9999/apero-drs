@@ -275,7 +275,7 @@ class PseudoConstants:
         return exit_levels
 
     # noinspection PyPep8Naming
-    def LOG_FILE_NAME(self, p, dir_data_msg=None):
+    def LOG_FILE_NAME(self, params, dir_data_msg=None):
         """
         Define the log filename and full path.
 
@@ -287,7 +287,7 @@ class PseudoConstants:
         if p['DRS_USED_DATE'] is set this date is used instead
         if no utime is defined uses the time now (in gmt time)
 
-        :param p: parameter dictionary, ParamDict containing constants
+        :param params: parameter dictionary, ParamDict containing constants
             Must contain at least:
                     DRS_DATA_MSG: string, the directory that the log messages
                                   should be saved to (if "dir_data_msg" not
@@ -303,19 +303,19 @@ class PseudoConstants:
         """
         # deal with no dir_data_msg
         if dir_data_msg is None:
-            dir_data_msg = p['DRS_DATA_MSG']
+            dir_data_msg = str(params['DRS_DATA_MSG'])
 
         # deal with no PID
-        if 'PID' not in p:
+        if 'PID' not in params:
             pid = 'UNKNOWN-PID'
         else:
-            pid = p['PID']
+            pid = str(params['PID'])
 
         # deal with no recipe
-        if 'RECIPE' not in p:
+        if 'RECIPE' not in params:
             recipe = 'UNKNOWN-RECIPE'
         else:
-            recipe = p['RECIPE'].replace('.py', '')
+            recipe = str(params['RECIPE'].replace('.py', ''))
 
         # Get the HOST name (if it does not exist host = 'HOST')
         host = os.environ.get('HOST', 'HOST')

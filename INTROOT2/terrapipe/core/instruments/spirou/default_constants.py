@@ -1119,7 +1119,7 @@ WAVE_LITTROW_QC_DEV_MAX.value = 0.4   # 0.9
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
 # =============================================================================
-# Define the mode to calculate the hc wave solution
+# Define the mode to calculate the fp+hc wave solution
 #   Should be one of the following:
 #       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
 #       1 - following C Lovis (previously WAVE_NEW)
