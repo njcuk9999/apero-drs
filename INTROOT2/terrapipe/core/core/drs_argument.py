@@ -855,6 +855,46 @@ class _SetProgram(argparse.Action):
         # Add the attribute
         setattr(namespace, self.dest, value)
 
+
+class _SetIPythonReturn(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def _set_return(self, values):
+        func_name = __NAME__ + '._SetProgram._set_program()'
+        if isinstance(values, list):
+            strvalue =  values[0]
+        elif isinstance(values, np.ndarray):
+            strvalue =  values[0]
+        else:
+            strvalue = str(values)
+        # must be True or False
+        if strvalue.upper() in ['TRUE', '1']:
+            return_value = True
+        else:
+            return_value = False
+        # debug message: setting program to: "strvalue"
+        dmsg = TextEntry('90-001-00032', args=[str(return_value)])
+        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        # set DRS_DEBUG (must use the self version)
+        self.recipe.drs_params['IPYTHON_RETURN'] = return_value
+        self.recipe.drs_params.set_source('IPYTHON_RETURN', func_name)
+        self.recipe.drs_params.set_instance('IPYTHON_RETURN', None)
+        # return strvalue
+        return return_value
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        self.recipe = parser.recipe
+        # display version
+        value = self._set_return(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
 # =============================================================================
 # Define Argument Class
 # =============================================================================
@@ -1532,9 +1572,19 @@ def set_program(p):
     props['altnames'] = ['--p']
     props['action'] = _SetProgram
     props['nargs'] = 1
-    props['help'] = htext['INFO_HELP']
+    props['help'] = htext['SET_PROGRAM_HELP']
     return props
 
+
+def set_ipython_return(p):
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    props = OrderedDict()
+    props['name'] = '--idebug'
+    props['altnames'] = ['--idb']
+    props['action'] = _SetIPythonReturn
+    props['nargs'] = 1
+    props['help'] = htext['SET_IPYTHON_RETURN_HELP']
+    return props
 
 # =============================================================================
 # End of code
