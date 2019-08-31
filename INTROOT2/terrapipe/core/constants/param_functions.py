@@ -608,12 +608,21 @@ class ParamDict(CaseInsensitiveDict):
         # loop around keys and add to new copy
         for k_it, key in enumerate(keys):
             value = values[k_it]
+            # try to deep copy parameter
             try:
                 pp[key] = copy.deepcopy(value)
             except Exception as _:
                 pp[key] = type(value)(value)
-            pp.set_source(key, self.sources[key])
-            pp.set_instance(key, self.instances[key])
+            # copy source
+            if key in self.sources:
+                pp.set_source(key, self.sources[key])
+            else:
+                pp.set_source(key, None)
+            # copy instance
+            if key in self.instances:
+                pp.set_instance(key, self.instances[key])
+            else:
+                pp.set_instance(key, None)
         # return new param dict filled
         return pp
 
@@ -781,10 +790,10 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
     func_name = __NAME__ + '.get_file_names()'
 
     # get core path
-    core_path = _get_relative_folder(PACKAGE, default_path)
+    core_path = get_relative_folder(PACKAGE, default_path)
     # get constants package path
     if instrument is not None:
-        const_path = _get_relative_folder(PACKAGE, instrument_path)
+        const_path = get_relative_folder(PACKAGE, instrument_path)
         # get the directories within const_path
         filelist = os.listdir(const_path)
         directories = []
@@ -842,8 +851,8 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         default_path = CORE_PATH
 
     # get constants package path
-    const_path = _get_relative_folder(PACKAGE, instrument_path)
-    core_path = _get_relative_folder(PACKAGE, default_path)
+    const_path = get_relative_folder(PACKAGE, instrument_path)
+    core_path = get_relative_folder(PACKAGE, default_path)
     # get the directories within const_path
     filelist = os.listdir(const_path)
     directories = []
@@ -941,7 +950,7 @@ def _get_file_names(params, instrument=None):
     # get the package name
     drs_package = params['DRS_PACKAGE']
     # change user_dpath to a absolute path
-    user_dpath = _get_relative_folder(drs_package, user_dpath)
+    user_dpath = get_relative_folder(drs_package, user_dpath)
     # deal with no user environment and no default path
     if user_env is None and user_dpath is None:
         return []
@@ -1032,7 +1041,7 @@ def _get_subdir(directory, instrument, source):
     return subdir
 
 
-def _get_relative_folder(package, folder):
+def get_relative_folder(package, folder):
     """
     Get the absolute path of folder defined at relative path
     folder from package
@@ -1175,7 +1184,7 @@ def _check_mod_source(source):
     if source is None:
         return None
     # get package path
-    package_path = _get_relative_folder(PACKAGE, '')
+    package_path = get_relative_folder(PACKAGE, '')
     # if package path not in source then skip
     if package_path not in source:
         return source

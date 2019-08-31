@@ -20,7 +20,7 @@ __NAME__ = 'constants.__init__.py'
 # define all functions
 __all__ = ['load', 'pload', 'ParamDict', 'ArgumentError', 'ConfigError',
            'ConfigWarning', 'gen_all', 'getmodnames', 'import_module',
-           'get_filenames']
+           'get_filenames', 'get_relative_folder']
 
 # =============================================================================
 # Define functions
@@ -34,6 +34,8 @@ pload = param_functions.load_pconfig
 
 # get module names
 getmodnames = param_functions.get_module_names
+
+get_relative_folder = param_functions.get_relative_folder
 
 # import modules
 import_module = constant_functions.import_module
