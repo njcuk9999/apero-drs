@@ -1,0 +1,14 @@
+# pdb rc file
+#     execute if in working directory and
+#     pdb.set_trace() or ipdb.set_trace() is called
+
+
+# try to import Ipython and embed it
+try:
+    from IPython import embed
+    embed()
+# else just pass over the error
+except Excecption as e:
+    pass
+# go once up a level to return to __main__
+up
