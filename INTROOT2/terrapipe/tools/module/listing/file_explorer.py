@@ -784,7 +784,7 @@ def main(instrument=None):
     # end with a log message
     WLOG(datastore.params, '', 'Program has completed successfully')
     # return a copy of locally defined variables in the memory
-    return dict(locals())
+    return core.return_locals(params, locals())
 
 
 class LoadData:
