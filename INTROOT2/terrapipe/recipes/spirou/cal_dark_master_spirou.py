@@ -80,7 +80,7 @@ def main(**kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(llmain['params'], recipe, success)
+    params = core.end_main(params, llmain, recipe, success)
     # return a copy of locally defined variables in the memory
     return core.get_locals(params, dict(locals()), llmain)
 
@@ -98,14 +98,13 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # extract file type from inputs
-    params['FILETYPE'] = params['INPUTS']['FILETYPE']
-    params.set_source('FILETYPE', mainname)
+    filetype = params['INPUTS']['FILETYPE']
 
     # ----------------------------------------------------------------------
     # Get all preprocessed dark files
     # ----------------------------------------------------------------------
     # get all "filetype" filenames
-    fargs = [params['FILETYPE'], params['ALLOWED_DARK_TYPES']]
+    fargs = [filetype, params['ALLOWED_DARK_TYPES']]
     filenames = drs_fits.find_filetypes(params, *fargs)
     # convert to numpy array
     filenames = np.array(filenames)
@@ -123,11 +122,14 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # match files by date and median to produce master dark
     # ----------------------------------------------------------------------
-    cargs = [params, recipe, dark_table]
+    cargs = [params, recipe, filetype, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
     # get reference file night name
-    params['NIGHTNAME'] = drs_path.get_nightname(params, reffile.filename)
-    params.set_source('NIGHTNAME', mainname)
+    nightname = drs_path.get_nightname(params, reffile.filename)
+    # Have to update nightname while locked for all param dicts (do not copy)
+    #     Note: do not use 'uparamdicts' unless you know what you are doing.
+    ukwargs = dict(key='NIGHTNAME', value=nightname, source=mainname)
+    constants.uparamdicts(params, recipe.drs_params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------
     # Quality control

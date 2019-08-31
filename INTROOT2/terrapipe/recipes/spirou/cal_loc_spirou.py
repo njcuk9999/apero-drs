@@ -84,7 +84,7 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(llmain['params'], recipe, success)
+    params = core.end_main(params, llmain, recipe, success)
     # return a copy of locally defined variables in the memory
     return core.get_locals(params, dict(locals()), llmain)
 
@@ -101,9 +101,6 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get calibration database
-    cdb = drs_database.get_full_database(params, 'calibration')
-    params[cdb.dbshort] = cdb
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # get list of filenames (for output)
@@ -156,8 +153,6 @@ def __main__(recipe, params):
                      infile.basename]
             WLOG(params, 'error', TextEntry('00-013-00001', args=eargs))
             fiber = None
-        # get fiber parameters
-        params = PConstants.FIBER_SETTINGS(params, fiber=fiber)
 
         # ------------------------------------------------------------------
         # Construct image order_profile
@@ -215,7 +210,12 @@ def __main__(recipe, params):
                                  func=mainname)
         rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=mainname)
         rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=mainname)
-        required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=mainname)
+        # this one comes from pseudo constants
+        pconst = constants.pload(params['INSTRUMENT'])
+        fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+
+        required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=mainname,
+                                  paramdict=fiberparams)
         # ----------------------------------------------------------------------
         # check that max number of points rejected in center fit is below
         #    threshold
