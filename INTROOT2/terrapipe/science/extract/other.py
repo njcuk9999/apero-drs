@@ -70,10 +70,28 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
                                     therm_extract_type, kind='thermal',
                                     func_name=func_name)
     # ----------------------------------------------------------------------
+    # Need to push properties to thermal e2ds file (thermal_outputs are
+    #     regular e2ds files)
+    # ----------------------------------------------------------------------
+    # thermal e2ds file list storage
+    thermal_files = dict()
+    # loop around fibers
+    for fiber in thermal_outputs:
+        # get copy file instance
+        thermal_file = thfileinst.newcopy(recipe=recipe, fiber=fiber)
+        # construct the filename from file instance
+        thermal_file.construct_filename(params, infile=thermalfile)
+        # copy header and hdict
+        thermal_file.hdict = thermal_outputs[fiber].header
+        thermal_file.header = thermal_outputs[fiber].header
+        # append to list
+        thermal_files[fiber] = thermal_file
+
+    # ----------------------------------------------------------------------
     # return extraction outputs
     # ----------------------------------------------------------------------
-    # return hc and fp outputs
-    return thermal_outputs
+    # return thermal outputs
+    return thermal_files
 
 
 def extract_wave_files(params, recipe, extname, hcfile,
