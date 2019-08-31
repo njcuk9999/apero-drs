@@ -302,7 +302,9 @@ def get_params(recipe='None', instrument='None', **kwargs):
     return params
 
 
-def main_end_script(params, recipe, success, outputs='reduced', end=True):
+def main_end_script(params, llmain, recipe, success, outputs='reduced',
+                    end=True):
+
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -327,6 +329,9 @@ def main_end_script(params, recipe, success, outputs='reduced', end=True):
     :rtype: ParamDict
     """
     func_name = __NAME__ + '.main_end_script()'
+    # get params from llmain if present (from __main__ function not main)
+    if 'params' in llmain:
+        params = llmain['params']
     # get pconstants
     pconstant = constants.pload(params['INSTRUMENT'])
     # construct a lock file name
