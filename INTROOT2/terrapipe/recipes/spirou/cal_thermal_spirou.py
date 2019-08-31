@@ -82,9 +82,7 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, llmain, recipe, success)
-    # return a copy of locally defined variables in the memory
-    return core.get_locals(params, dict(locals()), llmain)
+    return core.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -135,26 +133,20 @@ def __main__(recipe, params):
         # Get the thermal output e2ds filename and extract/read file
         # ------------------------------------------------------------------
         eargs = [params, recipe, EXTRACT_NAME, infile]
-        out = extractother.extract_thermal_files(*eargs)
-        thermal_outputs, thermal_files = out
+        thermal_files = extractother.extract_thermal_files(*eargs)
 
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
         # loop around fiber types
         for fiber in fiber_types:
-            # construct out file
-            outfile = thermal_files[fiber]
-            # add header to outfile
-            outfile.hdict = thermal_outputs[fiber].header
-            outfile.header = thermal_outputs[fiber].header
             # add output from thermal files
-            drs_database.add_file(params, outfile)
+            drs_database.add_file(params, thermal_files[fiber])
 
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return dict(locals())
+    return core.return_locals(params, locals())
 
 
 # =============================================================================
@@ -163,8 +155,8 @@ def __main__(recipe, params):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message if in debug mode
-    core.end(ll, has_plots=True)
+    # Post main plot clean up
+    core.post_main(ll['params'], has_plots=True)
 
 # =============================================================================
 # End of code

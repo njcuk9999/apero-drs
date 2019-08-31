@@ -86,9 +86,7 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, llmain, recipe, success)
-    # return a copy of locally defined variables in the memory
-    return core.get_locals(params, dict(locals()), llmain)
+    return core.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -196,7 +194,7 @@ def __main__(recipe, params):
                  max_dxmap_info[2]]
         WLOG(params, 'warning', TextEntry('10-014-00003', args=fargs))
         # return a copy of locally defined variables in the memory
-        return dict(locals())
+        return core.return_locals(params, locals())
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map
@@ -407,7 +405,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return dict(locals())
+    return core.return_locals(params, locals())
 
 
 # =============================================================================
@@ -416,8 +414,8 @@ def __main__(recipe, params):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message if in debug mode
-    core.end(ll, has_plots=True)
+    # Post main plot clean up
+    core.post_main(ll['params'], has_plots=True)
 
 # =============================================================================
 # End of code

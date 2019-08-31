@@ -58,13 +58,11 @@ def main(directory=None, files=None, **kwargs):
     Main function for cal_shape_master_spirou.py
 
     :param directory: string, the night name sub-directory
-    :param hcfiles: list of strings or string, the list of hc files
-    :param fpfiles: list of strings or string, the list of fp files
+    :param files: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
     :type directory: str
-    :type hcfiles: list[str]
-    :type fpfiles: list[str]
+    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -85,9 +83,7 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, llmain, recipe, success)
-    # return a copy of locally defined variables in the memory
-    return core.get_locals(params, dict(locals()), llmain)
+    return core.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -102,9 +98,6 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get calibration database
-    cdb = drs_database.get_full_database(params, 'calibration')
-    params[cdb.dbshort] = cdb
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # get list of filenames (for output)
@@ -295,7 +288,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return dict(locals())
+    return core.return_locals(params, locals())
 
 
 # =============================================================================
@@ -304,8 +297,8 @@ def __main__(recipe, params):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message if in debug mode
-    core.end(ll, has_plots=True)
+    # Post main plot clean up
+    core.post_main(ll['params'], has_plots=True)
 
 # =============================================================================
 # End of code
