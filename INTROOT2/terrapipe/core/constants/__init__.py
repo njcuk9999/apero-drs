@@ -56,6 +56,8 @@ ConfigWarning = param_functions.ConfigWarning
 # helper function
 gen_all = param_functions.get_config_all
 
+# update param dicts
+uparamdicts = param_functions.update_paramdicts
 
 # =============================================================================
 # End of code
