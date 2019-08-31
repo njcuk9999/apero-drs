@@ -650,6 +650,9 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set program functionality
         self._make_special(drs_argument.set_program, skip=False)
+        # ---------------------------------------------------------------------
+        # set ipython return functionality
+        self._make_special(drs_argument.set_ipython_return, skip=False)
 
     def _make_special(self, function, skip=False):
         # make debug functionality
