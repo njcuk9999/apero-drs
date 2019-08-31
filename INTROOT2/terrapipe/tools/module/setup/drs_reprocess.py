@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 import os
 import sys
+import copy
 import time
 from astropy.table import Table
 from collections import OrderedDict
@@ -132,7 +133,7 @@ class Run:
     def get_night_name(self):
         if 'directory' in self.recipe.args:
             # get directory position
-            pos = self.recipe.args['directory'].pos
+            pos = int(self.recipe.args['directory'].pos)
             # set
             self.nightname = self.args[pos]
         else:
@@ -205,7 +206,9 @@ def read_runfile(params, runfile, **kwargs):
     # table storage
     runtable = OrderedDict()
     keytable = OrderedDict()
-    # sort out keys into id keys and values for p
+    # unlock params
+    params.unlock()
+    # sort out keys into id keys and values for params
     for it in range(len(keys)):
         # get this iterations values
         key = keys[it].upper().strip()
@@ -243,6 +246,9 @@ def read_runfile(params, runfile, **kwargs):
             # add to params
             params[key] = value
             params.set_source(key, func_name)
+
+    # relock params
+    params.lock()
     # ----------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
@@ -592,7 +598,7 @@ def _get_paths(params, runobj, directory):
     recipe = runobj.recipe
     # ----------------------------------------------------------------------
     # get the night name from directory position
-    nightname = runobj.args[directory.pos + 1]
+    nightname = runobj.args[int(directory.pos) + 1]
     # ----------------------------------------------------------------------
     # get the input directory
     if recipe.inputdir == 'raw':
@@ -957,10 +963,14 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 # TODO: deal with plotting
                 # # sPlt.closeall()
                 # keep only some parameters
-                pp['ERROR'] = list(ll_item['params']['LOGGER_ERROR'])
-                pp['WARNING'] = list(ll_item['params']['LOGGER_WARNING'])
-                pp['OUTPUTS'] = dict(ll_item['params']['OUTPUTS'])
+                llparams = ll_item['params']
+                pp['ERROR'] = copy.deepcopy(llparams['LOGGER_ERROR'])
+                pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
+                pp['OUTPUTS'] = copy.deepcopy(llparams['OUTPUTS'])
                 pp['TRACEBACK'] = []
+                # delete ll_item
+                del llparams
+                del ll_item
                 # flag finished
                 finished = True
             # --------------------------------------------------------------
