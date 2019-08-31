@@ -48,7 +48,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return dict(locals())
+    return core.return_locals(params, locals())
 
 
 def main(directory=None, filelist=None, **kwargs):
@@ -77,8 +77,8 @@ def main(directory=None, filelist=None, **kwargs):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message if in debug mode
-    core.end(ll, has_plots=True)
+    # Post main plot clean up
+    core.post_main(ll['params'], has_plots=True)
 
 # =============================================================================
 # End of code

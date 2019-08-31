@@ -84,7 +84,7 @@ def main(directory=None, flatfiles=None, darkfiles=None, **kwargs):
     # ----------------------------------------------------------------------
     params = core.end_main(params, llmain, recipe, success)
     # return a copy of locally defined variables in the memory
-    return core.get_locals(params, dict(locals()), llmain)
+    return core.get_locals(params, llmain, recipe)
 
 
 def __main__(recipe, params):
@@ -310,7 +310,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return dict(locals())
+    return core.return_locals(params, locals())
 
 
 # =============================================================================
@@ -319,8 +319,8 @@ def __main__(recipe, params):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message if in debug mode
-    core.end(ll, has_plots=True)
+    # Post main plot clean up
+    core.post_main(ll['params'], has_plots=True)
 
 # =============================================================================
 # End of code
