@@ -15,8 +15,7 @@ from astropy.time import Time
 import traceback
 import sys
 import os
-import copy
-import code
+import shutil
 from collections import OrderedDict
 
 from terrapipe import plotting
@@ -72,6 +71,8 @@ HelpText = drs_text.HelpDict
 # recipe control path
 INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
+PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
+CURRENT_PATH = ''
 
 
 # =============================================================================
@@ -302,6 +303,56 @@ def get_params(recipe='None', instrument='None', **kwargs):
     return params
 
 
+def return_locals(params, ll):
+    # deal with a ipython return
+    if params['IPYTHON_RETURN']:
+        # copy pdbrc
+        _copy_pdb_rc(params)
+        # start ipdb
+        try:
+            import ipdb
+            ipdb.set_trace()
+        except Exception as _:
+            import pdb
+            pdb.set_trace()
+        # delete pdbrc
+        _remove_pdb_rc(params)
+
+    # else return ll
+    return ll
+
+
+def _copy_pdb_rc(params):
+    # set global CURRENT_PATH
+    global CURRENT_PATH
+    # get package
+    package = params['DRS_PACKAGE']
+    # get path
+    path = params['DRS_PDB_RC_FILE']
+    # get file name
+    filename = os.path.basename(path)
+    # get current path
+    CURRENT_PATH = os.getcwd()
+    # get absolute path
+    oldsrc = constants.get_relative_folder(package, path)
+    # get newsrc
+    newsrc = os.path.join(CURRENT_PATH, filename)
+    # copy
+    shutil.copy(oldsrc, newsrc)
+
+
+def _remove_pdb_rc(params):
+    # get path
+    path = params['DRS_PDB_RC_FILE']
+    # get file name
+    filename = os.path.basename(path)
+    # get newsrc
+    newsrc = os.path.join(CURRENT_PATH, filename)
+    # remove
+    if os.path.exists(newsrc):
+        os.remove(newsrc)
+
+
 def main_end_script(params, llmain, recipe, success, outputs='reduced',
                     end=True):
 
@@ -392,82 +443,18 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         # deal with clearing warnings
         drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
-    # return p
-    return params
-
-
-def get_local_variables(params, *args):
-    """
-    Takes the args (which should be dictionaries) and push them into
-    one (output) dictionary
-
-    :returns: dict, the output dictionary
-    :rtype: dict
-    """
-    func_name = __NAME__ + '.get_local_variables()'
-    # define copy param function
-    def _copy_param(key, value):
-        # copy DrsRecipe
-        if isinstance(value, DrsRecipe):
-            dargs = [key, 'DrsRecipe']
-            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
-            newrecipe = DrsRecipe()
-            newrecipe.copy(value)
-            newvalue = newrecipe
-        # copy DrsFitsFile
-        elif isinstance(value, DrsFitsFile):
-            dargs = [key, 'DrsFitsFile']
-            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
-            newvalue = value.completecopy(value)
-        # copy DrsInputFile
-        elif isinstance(value, DrsInputFile):
-            dargs = [key, 'DrsInputFile']
-            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
-            newvalue = value.completecopy(value)
-        # copy ParamDict
-        elif isinstance(value, ParamDict):
-            dargs = [key, 'ParamDict']
-            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
-            # unlock setting of parameter dictionary
-            value.unlock()
-            newvalue = value.copy()
-            # relock parameter dictionary
-            value.lock()
-            newvalue.lock()
-        else:
-            dargs = [key, type(value)]
-            WLOG(params, 'debug', TextEntry('90-000-00002', args=dargs))
-            # add to output dictionary
-            try:
-                newvalue = copy.deepcopy(value)
-            except Exception as _:
-                WLOG(params, 'debug', TextEntry('90-000-00003'))
-                newvalue = 'Not copied'
-        # return the new value
-        return newvalue
-    # set up dictionary storage
-    output_dict = dict()
-    # loop around all input arguments
-    for arg in args:
-        # only add to dictionary if type is dict
-        if type(arg) is dict:
-            # loop around each key
-            for key in list(arg.keys()):
-                # get value from args
-                value = arg[key]
-                # deal with a list of (possibly complicated) values
-                if isinstance(value, list):
-                    keys = ['List[{0}]'.format(key)] * len(value)
-                    output_dict[key] = list(map(_copy_param, keys, value))
-                # else just copy
-                else:
-                    output_dict[key] = _copy_param(key, value)
-
-    # return output dictionary
-    return output_dict
-
-
-
+    # return ll (the output dictionary)
+    # -------------------------------------------------------------------------
+    outdict = dict()
+    # copy params
+    outdict['params'] = params.copy()
+    # copy recipe
+    outdict['recipe'] = recipe.copy()
+    # special (shallow) copy from cal_extract
+    if 'e2dsoutputs' in llmain:
+        outdict['e2dsoutputs'] = llmain['e2dsoutputs']
+    # return outdict
+    return outdict
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,
@@ -627,90 +614,20 @@ def fiber_processing_update(params, fiber):
 
 
 # noinspection PyProtectedMember
-def exit_script(ll, has_plots=True):
+def post_main(params, has_plots=True):
     """
-    Exit script for handling interactive endings to sessions (if DRS_PLOT is
-    active)
+    Post main script for cleaning up plots
 
-    :param ll: dict, the local variables
+    :param params: ParamDict - the constants parameter dictionary
     :param has_plots: bool, if True looks for and deal with having plots
                       (i.e. asks the user to close or closest automatically),
                       if False no plotting windows are assumed to be open
 
-    :exception SystemExit: on caught errors
-
-    :type ll: dict
+    :type params: ParamDict
     :type has_plots: bool
 
     :returns: None
     """
-    # -------------------------------------------------------------------------
-    # get parameter dictionary of constants (or create it)
-    if 'params' in ll:
-        params = ll['params']
-    else:
-        params = Constants
-    # -------------------------------------------------------------------------
-    # make sure we have DRS_PLOT
-    if 'DRS_PLOT' not in params:
-        drs_plot = 0
-    else:
-        drs_plot = params['DRS_PLOT']
-    # make sure we have DRS_INTERACTIVE
-    if 'DRS_INTERACTIVE' not in params:
-        drs_interactive = 1
-    else:
-        drs_interactive = params['DRS_INTERACTIVE']
-    # if DRS_INTERACTIVE is False just return 0
-    if not drs_interactive:
-        # print('Interactive mode off')
-        return
-    # find whether user is in ipython or python
-    if _find_ipython():
-        kind = 'ipython'
-    else:
-        kind = 'python'
-    # log message
-    WLOG(params, '', TextEntry(''), printonly=True)
-    WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
-    WLOG(params, 'info', TextEntry('40-003-00002', args=[kind]),
-         printonly=True)
-    # deal with python 2 / python 3 input method
-    if sys.version_info.major < 3:
-        # noinspection PyUnresolvedReferences
-        uinput = raw_input('[Y]es or [N]o:\t')  # note python 3 wont find this!
-    else:
-        uinput = input('[Y]es or [N]o:\t')
-    # -------------------------------------------------------------------------
-    # if yes or YES or Y or y then we need to continue in python
-    # this may require starting an interactive session
-    if 'Y' in uinput.upper():
-        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
-        # if user in ipython we need to try opening ipython
-        if kind == 'ipython':
-            WLOG(params, '', TextEntry('40-003-00004', args=['ipython']),
-                 printonly=True)
-            # noinspection PyBroadException
-            try:
-                from IPython import embed
-                # this is only to be used in this situation and should not
-                # be used in general
-                locals().update(ll)
-                embed()
-            except Exception:
-                pass
-        if not _find_interactive():
-            WLOG(params, '', TextEntry('40-003-00004', args=['python']),
-                 printonly=True)
-            # add some imports to locals
-            ll['np'], ll['plt'], ll['WLOG'] = np, plotting.core.plt, WLOG
-            ll['os'], ll['sys'], ll['ParamDict'] = os, sys, ParamDict
-            # run code
-            code.interact(local=ll)
-    # if "No" and not interactive quit python/ipython
-    elif not _find_interactive():
-        # noinspection PyProtectedMember
-        os._exit(0)
     # if interactive ask about closing plots
     if _find_interactive() and has_plots:
         # deal with closing plots
@@ -1593,9 +1510,15 @@ def _make_dirs(params, path):
     if os.path.exists(path):
         # return
         return
+
+    # make sure that directory exists in path
+    if not os.path.exists(os.path.dirname(path)):
+        _make_dirs(params, os.path.dirname(path))
+
     # need lock file
     lock, lockfilename = drs_lock.check_lock_file(params, path)
-    # first check if path already exists
+
+    # check again path already exists
     if os.path.exists(path):
         # close the lock file
         drs_lock.close_lock_file(params, lock, lockfilename, path)
@@ -1603,6 +1526,9 @@ def _make_dirs(params, path):
         return
     # if path doesn't exist try to make it
     try:
+        # log making directory
+        WLOG(params, '', TextEntry('40-001-00023', args=[path]))
+        # make directory
         os.makedirs(path)
         # close the lock file
         drs_lock.close_lock_file(params, lock, lockfilename, path)
