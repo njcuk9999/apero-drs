@@ -80,7 +80,7 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(llmain['params'], recipe, success, outputs='None')
+    params = core.end_main(params, llmain, recipe, success, outputs='None')
     # return a copy of locally defined variables in the memory
     return core.get_locals(params, dict(locals()), llmain)
 
@@ -102,8 +102,7 @@ def __main__(recipe, params):
     # Number of files
     num_files = len(params['INPUTS']['FILES'][1])
     # storage for output files
-    params['OUTPUT_NAMES'] = []
-    params.set_source('OUTPUT_NAMES', __NAME__ + '._main()')
+    output_names = []
 
     # loop around number of files
     for it in range(num_files):
@@ -285,7 +284,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------
-        params['OUTPUT_NAMES'].append(outfile.filename)
+        output_names.append(outfile.filename)
 
     # ----------------------------------------------------------------------
     # End of main code

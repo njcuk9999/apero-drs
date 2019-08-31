@@ -67,7 +67,7 @@ def main(directory=None, filelist1=None, filelist2=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(llmain['params'], recipe, success, outputs='None')
+    params = core.end_main(params, llmain, recipe, success, outputs='None')
     # return a copy of locally defined variables in the memory
     return core.get_locals(params, dict(locals()), llmain)
 
