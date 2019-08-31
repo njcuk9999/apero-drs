@@ -26,6 +26,7 @@ NOT_IMPLEMENTED = ('Definition Error: Must be overrided in instrument '
                    'pseudo_const not {0} \n\t i.e. in terrapipe.core.'
                    'instruments.spirou.pseudoconst.py \n\t method = {1}')
 
+
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
@@ -533,23 +534,8 @@ class PseudoConstants:
     # FIBER SETTINGS
     # =========================================================================
     def FIBER_SETTINGS(self, params, fiber):
-        source = __NAME__ + '.FIBER_SETTINGS()'
-        # list fiber keys
-        keys = []
-        # loop around all fiber keys and add to params
-        for key in keys:
-            # get fiber key
-            key1 = '{0}_{1}'.format(key, fiber)
-            # deal with key not existing
-            if key1 not in params:
-                emsg = 'Fiber Constant Error. Instrument requires key = {0}'
-                ConfigError(emsg.format(key1), level='error')
-            # if key exists add it for this fiber
-            else:
-                params[key] = params[key1]
-                params.set_source(key, source)
-        # return params
-        return params
+        func_name = 'FIBER_SETTINGS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def FIBER_LOC_TYPES(self, fiber):
         return fiber
