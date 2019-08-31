@@ -250,6 +250,27 @@ class ParamDict(CaseInsensitiveDict):
     def __str__(self):
         return self._string_print()
 
+    def set(self, key, value, source=None, instance=None):
+        """
+        Set an item even if params is locked
+
+        :param key:
+        :param value:
+        :param source:
+        :param instance:
+        :return:
+        """
+        # if we dont have the key in sources set it regardless
+        if key not in self.sources:
+            self.sources[key] = source
+            self.instances[key] = instance
+        # if we do have the key only set it if source is not None
+        elif source is not None:
+            self.sources[key] = source
+            self.instances[key] = instance
+        # then do the normal dictionary setting
+        super(ParamDict, self).__setitem__(key, value)
+
     def lock(self):
         self.locked = True
 
@@ -669,7 +690,22 @@ class ParamDict(CaseInsensitiveDict):
 # =============================================================================
 # Define functions
 # =============================================================================
+def update_paramdicts(*args, **kwargs):
+    key = kwargs.get('key', None)
+    value = kwargs.get('value', None)
+    source = kwargs.get('source', None)
+    instance = kwargs.get('instance', None)
+    # loop through param dicts
+    for arg in args:
+        if isinstance(arg, ParamDict):
+            arg.set(key, value=value, source=source, instance=instance)
+
+
 def load_config(instrument=None):
+    # deal with instrument set to 'None'
+    if isinstance(instrument, str):
+        if instrument.upper() == 'NONE':
+            instrument = None
     # get instrument sub-package constants files
     modules = get_module_names(instrument)
     # get constants from modules
@@ -706,6 +742,10 @@ def load_config(instrument=None):
 
 def load_pconfig(instrument=None):
     func_name = __NAME__ + '.load_pconfig()'
+    # deal with instrument set to 'None'
+    if isinstance(instrument, str):
+        if instrument.upper() == 'NONE':
+            instrument = None
     # get instrument sub-package constants files
     modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
     # import module
