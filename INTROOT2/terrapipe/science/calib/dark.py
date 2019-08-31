@@ -251,7 +251,7 @@ def construct_dark_table(params, filenames):
     return dark_table
 
 
-def construct_master_dark(params, recipe, dark_table, **kwargs):
+def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
     # get constants from p
     time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
@@ -343,7 +343,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
 
     # -------------------------------------------------------------------------
     # get infile from filetype
-    infile = core.get_file_definition(params['FILETYPE'], params['INSTRUMENT'],
+    infile = core.get_file_definition(filetype, params['INSTRUMENT'],
                                       kind='tmp')
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
