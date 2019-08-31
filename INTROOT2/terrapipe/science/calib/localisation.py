@@ -107,6 +107,10 @@ def calculate_order_profile(params, image, **kwargs):
 def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
+    # get fiber params
+    pconst = constants.pload(params['INSTRUMENT'])
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+
     # ----------------------------------------------------------------------
     # get constants from p
     # ----------------------------------------------------------------------
@@ -121,11 +125,11 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     back_thres = pcheck(params, 'LOC_BKGRD_THRESHOLD', 'back_thres', kwargs,
                         func=func_name)
     first_order = pcheck(params, 'FIBER_FIRST_ORDER_JUMP', 'first_order',
-                         kwargs, func=func_name)
+                         kwargs, func=func_name, paramdict=fiberparams)
     max_num_orders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', 'max_num_orders',
-                            kwargs, func=func_name)
+                            kwargs, func=func_name, paramdict=fiberparams)
     num_fibers = pcheck(params, 'FIBER_SET_NUM_FIBERS', 'num_fibers', kwargs,
-                        func=func_name)
+                        func=func_name, paramdict=fiberparams)
     wid_poly_deg = pcheck(params, 'LOC_WIDTH_POLY_DEG', 'wid_poly_deg', kwargs,
                           func=func_name)
     cent_poly_deg = pcheck(params, 'LOC_CENT_POLY_DEG', 'cent_poly_deg',
