@@ -22,6 +22,8 @@ __NAME__ = 'config.instruments.spirou.pseudo_const'
 __INSTRUMENT__ = 'SPIROU'
 # get parameters
 PARAMS = constants.load(__INSTRUMENT__)
+# Get Parmeter Dictionary class
+ParamDict = constants.ParamDict
 # get default Constant class
 DefaultConstants = pseudo_const.PseudoConstants
 # get error
@@ -94,6 +96,8 @@ class PseudoConstants(DefaultConstants):
         # list fiber keys
         keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
                 'FIBER_SET_NUM_FIBERS']
+        # set up new param dict
+        fiberparams = ParamDict()
         # loop around all fiber keys and add to params
         for key in keys:
             # get fiber key
@@ -104,10 +108,10 @@ class PseudoConstants(DefaultConstants):
                 ConfigError(emsg.format(key1), level='error')
             # if key exists add it for this fiber
             else:
-                params[key] = params[key1]
-                params.set_source(key, source)
+                fiberparams[key] = params[key1]
+                fiberparams.set_source(key, source)
         # return params
-        return params
+        return fiberparams
 
     def FIBER_LOC_TYPES(self, fiber):
         """
@@ -145,7 +149,7 @@ class PseudoConstants(DefaultConstants):
         orders, for C we take all. Note only have AB and C files also affects
         FIBER_LOC_TYPES
 
-        :param props:
+        :param coeffs:
         :param fiber:
         :return:
         """
@@ -211,7 +215,7 @@ class PseudoConstants(DefaultConstants):
         inputs['gaiaid'] = ['KW_GAIA_ID', 'KW_BERVGAIA_ID', 'header', 'None']
         inputs['objname'] = ['KW_OBJNAME', 'KW_BERVOBJNAME', 'header', 'None']
         inputs['ra'] = ['KW_OBJRA', 'KW_BERVRA', 'header', None]
-        inputs['dec'] = ['KW_OBJDEC','KW_BERVDEC', 'header', None]
+        inputs['dec'] = ['KW_OBJDEC', 'KW_BERVDEC', 'header', None]
         inputs['epoch'] = ['KW_OBJEQUIN', 'KW_BERVEPOCH', 'header', None]
         inputs['pmra'] = ['KW_OBJRAPM', 'KW_BERVPMRA', 'header', None]
         inputs['pmde'] = ['KW_OBJDECPM', 'KW_BERVPMDE', 'header', None]
@@ -260,6 +264,7 @@ class PseudoConstants(DefaultConstants):
                                       'KW_BERV_OBSTIME_METHOD', 'header', str]
         # return outputs
         return outputs
+
 # =============================================================================
 # End of code
 # =============================================================================
