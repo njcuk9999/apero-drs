@@ -2,13 +2,28 @@
 #     execute if in working directory and
 #     pdb.set_trace() or ipdb.set_trace() is called
 
+# Print message about debugger
+print("")
+print(" ================== IPDB/PDB DEBUGGER ==================")
+print("")
+print("     - type 'list' to list code ")
+print("     - type 'up' to go up a level ")
+print("     - type 'interact' to go to an interactive shell ")
+print("     - type 'print(variable)' to print a variable ")
+print("     - type 'continue' to exit ")
+print("     - type 'help' to see all commands ")
+print("")
+print("   Note: Do not type exit in ipdb/pdb")
+print("")
+print(" =======================================================")
+print("")
+print("")
 
-# try to import Ipython and embed it
-try:
-    from IPython import embed
-    embed()
-# else just pass over the error
-except Excecption as e:
-    pass
 # go once up a level to return to __main__
 up
+
+print("Entering IPython (exit to to to ipdb/pdb)")
+print("")
+
+from IPython import embed
+embed(colors="neutral")
