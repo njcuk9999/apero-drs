@@ -572,8 +572,10 @@ cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
                    helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+# note required is False (so we don't need fpfiles but reprocess is True
+#    so reprocessing script will fill both hc and fp files
 cal_wave.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                   nargs='+', filelogic='exclusive',
+                   nargs='+', filelogic='exclusive', reprocess=True,
                    helpstr=Help['WAVE_FPFILES_HELP'], default=[])
 cal_wave.set_kwarg(**add_cal)
 cal_wave.set_kwarg(**badfile)
@@ -729,8 +731,8 @@ limited_run.add(cal_loc, files=[sf.pp_flat_dark])
 limited_run.add(cal_shape)
 limited_run.add(cal_ff, files=[sf.pp_flat_flat])
 limited_run.add(cal_thermal)
-# TODO: Add in when wave written
-# # limited_run.add(cal_wave)
+limited_run.add(cal_wave, files=[sf.pp_hc1_hc1])
+limited_run.add(cal_wave, files=[sf.pp_hc1_hc1, sf.pp_fp_fp])
 # extract tellurics
 limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
