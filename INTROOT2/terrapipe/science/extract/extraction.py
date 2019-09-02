@@ -209,6 +209,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     else:
         props['BLAZE'] = inblaze
     # add setup properties
+    props['FIBER'] = fiber
     props['START_ORDER'] = start_order
     props['END_ORDER'] = end_order
     props['RANGE1'] = range1
@@ -226,7 +227,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['SAT_LEVEL'] = sat_level
     # add source
     keys = ['E2DS', 'E2DSFF', 'E2DSLL', 'SNR', 'N_COSMIC', 'RMS',
-            'FLAT', 'BLAZE', 'FLUX_VAL',
+            'FLAT', 'BLAZE', 'FLUX_VAL', 'FIBER',
             'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
             'GAIN', 'SIGDET', 'COSMIC', 'COSMIC_SIGCUT', 'COSMIC_THRESHOLD',
             'BLAZE_SIZE', 'BLAZE_CUT', 'BLAZE_DEG', 'SAT_QC', 'SAT_LEVEL']

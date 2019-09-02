@@ -89,6 +89,10 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             # load the numpy temporary file
             #    Note: NpyFitsFile needs arguments params!
             if isinstance(orderpsfile, DrsNpyFile):
+                # log progress (read file)
+                wargs = [orderpsfile.filename]
+                WLOG(params, '', TextEntry('40-013-00023', args=wargs))
+                # read npy file
                 orderpsfile.read(params)
             else:
                 eargs = [orderpsfile.__str__(), func_name]
@@ -107,7 +111,10 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                                         dxmap=shapex, dymap=shapey)
             # push into orderpsfile
             orderpsfile.data = orderp
-            # save for use later
+            # log progress (saving to file)
+            wargs = [orderpsfile.filename]
+            WLOG(params, '', TextEntry('40-013-00024', args=wargs))
+            # save for use later (as .npy)
             orderpsfile.write(params)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
