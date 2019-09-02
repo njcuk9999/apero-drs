@@ -332,7 +332,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
         # write image to file
         orderpfile.write()
-
+        # add to output files (for indexing)
+        recipe.add_output_file(orderpfile)
         # ------------------------------------------------------------------
         # Save and record of image of localization with order center
         #     and keywords
@@ -382,7 +383,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-013-00019', args=[loco1file.filename]))
         # write image to file
         loco1file.write()
-
+        # add to output files (for indexing)
+        recipe.add_output_file(loco1file)
         # ------------------------------------------------------------------
         # Save and record of image of sigma
         # ------------------------------------------------------------------
@@ -401,7 +403,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
         # write image to file
         loco2file.write()
-
+        # add to output files (for indexing)
+        recipe.add_output_file(loco2file)
         # ------------------------------------------------------------------
         # Save and Record of image of localization
         # ------------------------------------------------------------------
@@ -426,7 +429,8 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-013-00021', args=wargs))
             # write image to file
             loco3file.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(loco3file)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------

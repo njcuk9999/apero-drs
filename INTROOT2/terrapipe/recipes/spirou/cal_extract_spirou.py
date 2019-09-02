@@ -86,9 +86,7 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    llmain['params'] = core.end_main(params, llmain, recipe, success)
-    # return a copy of locally defined variables in the memory
-    return core.get_locals(params, dict(locals()), llmain)
+    return core.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -382,6 +380,8 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-015-00007', args=wargs))
             # write image to file
             e2dsfile.write()
+            # add to output files (for indexing)
+            recipe.add_output_file(e2dsfile)
             # --------------------------------------------------------------
             # Store E2DSFF in file
             # --------------------------------------------------------------
@@ -400,7 +400,8 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-016-00006', args=wargs))
             # write image to file
             e2dsfffile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(e2dsfffile)
             # --------------------------------------------------------------
             # Store E2DSLL in file
             # --------------------------------------------------------------
@@ -419,7 +420,8 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-016-00007', args=wargs))
             # write image to file
             e2dsllfile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(e2dsllfile)
             # --------------------------------------------------------------
             # Store S1D_W in file
             # --------------------------------------------------------------
@@ -442,7 +444,8 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-016-00010', args=wargs))
             # write image to file
             s1dwfile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(s1dwfile)
             # --------------------------------------------------------------
             # Store S1D_V in file
             # --------------------------------------------------------------
@@ -465,7 +468,8 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-016-00010', args=wargs))
             # write image to file
             s1dvfile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(s1dvfile)
             # --------------------------------------------------------------
             # add files to outputs
             # --------------------------------------------------------------

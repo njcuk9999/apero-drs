@@ -299,6 +299,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-011-00012', args=[outfile.filename]))
         # write image to file
         outfile.write()
+        # add to output files (for indexing)
+        recipe.add_output_file(outfile)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------

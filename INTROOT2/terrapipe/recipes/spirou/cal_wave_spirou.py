@@ -71,7 +71,7 @@ def main(directory=None, hcfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, hcfiles=None, **kwargs)
+    fkwargs = dict(directory=directory, hcfiles=hcfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -231,7 +231,8 @@ def __main__(recipe, params):
                 hc_update = wave.add_wave_keys(hc_update, wprops)
                 # write hc update
                 hc_update.write()
-
+                # add to output files (for indexing)
+                recipe.add_output_file(hc_update)
             # --------------------------------------------------------------
             # FP addition to wavelength solution
             # --------------------------------------------------------------
@@ -288,7 +289,8 @@ def __main__(recipe, params):
                     fp_update = wave.add_wave_keys(fp_update, wprops)
                     # write hc update
                     fp_update.write()
-
+                    # add to output files (for indexing)
+                    recipe.add_output_file(fp_update)
             # If the HC solution failed QCs we do not compute FP-HC solution
             elif (fp_e2ds_file is not None) and (not passed):
                 WLOG(params, 'warning', TextEntry('10-017-00006'))

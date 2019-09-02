@@ -254,7 +254,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-014-00037', args=[outfile.filename]))
         # write image to file
         outfile.write()
-
+        # add to output files (for indexing)
+        recipe.add_output_file(outfile)
         # ----------------------------------------------------------------------
         # Writing DEBUG files
         # ----------------------------------------------------------------------
@@ -269,6 +270,8 @@ def __main__(recipe, params):
             debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
             debugfile1.data = image
             debugfile1.write()
+            # add to output files (for indexing)
+            recipe.add_output_file(debugfile1)
             # out file
             shapel_out_fp_file = recipe.outputs['SHAPEL_OUT_FP_FILE']
             debugfile2 = shapel_out_fp_file.newcopy(recipe=recipe)
@@ -277,7 +280,8 @@ def __main__(recipe, params):
             debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
             debugfile2.data = image2
             debugfile2.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(debugfile2)
         # ----------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ----------------------------------------------------------------------
