@@ -888,7 +888,6 @@ class DrsFitsFile(DrsInputFile):
         # return valid (True if filename is valid False otherwise)
         return valid, os.path.basename(outfilename)
 
-
     def check_table_keys(self, filedict, rkeys=None):
         """
         Checks whether a dictionary contains the required key/value pairs
@@ -923,7 +922,6 @@ class DrsFitsFile(DrsInputFile):
 
         # return valid
         return valid
-
 
     # -------------------------------------------------------------------------
     # fits file checking (OLD)
@@ -1148,8 +1146,6 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
-        # add output to outfiles
-        params['OUTFILES'][self.basename] = self.output_dict
 
     def write_multi(self, data_list, header_list=None, datatype_list=None,
                     dtype_list=None):
@@ -1193,8 +1189,21 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
-        # add output to outfiles
-        params['OUTFILES'][self.basename] = self.output_dict
+
+    def get_fiber(self, header=None):
+        # get params
+        params = self.recipe.drs_params
+        # get fiber header key
+        key = params['KW_FIBER'][0]
+        # deal with case where no header was given
+        if header is None:
+            if self.header is not None:
+                return str(self.header[key])
+            else:
+                return None
+        else:
+            return str(header[key])
+
 
     def output_dictionary(self):
         """
@@ -2020,9 +2029,6 @@ class DrsNpyFile(DrsInputFile):
         # if filename is set
         if self.filename is not None:
             try:
-                # log progress (read file)
-                wargs = [self.filename]
-                WLOG(params, '', TextEntry('40-013-00023', args=wargs))
                 # read file
                 self.data = np.load(self.filename)
             except Exception as e:
@@ -2039,9 +2045,6 @@ class DrsNpyFile(DrsInputFile):
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
         if self.data is not None:
             try:
-                # log progress (saving to file)
-                wargs = [self.filename]
-                WLOG(params, '', TextEntry('40-013-00024', args=wargs))
                 # save to file
                 np.save(self.filename, self.data)
             except Exception as e:
