@@ -28,15 +28,6 @@
 ##  Wave solution
 
 - Finish converting `cal_wave_spirou.py` from SpirouDrs
-    - problem with constants `WAVE_HC_N_ORD_START`, `WAVE_HC_N_ORD_START`, `WAVE_N_ORD_START`
-    - need to add cavity constants to defaults
-    - need fp constants in header (how do we deal with different constants for modes?)
-    - need to separate `fp_wavesol_lovis` into different functions (too much to handle in one)
-    - need to add join_orders
-    - need to add FP CCF computation
-    - need to add FP QC
-    - need to add FP file writing
-    - need to add calibDB update
     - check that cavity file from EA is same as one from Melissa (and combine filename)
     
 ## tellurics
