@@ -182,7 +182,8 @@ def __main__(recipe, params):
     WLOG(params, '', TextEntry('40-011-10006', args=[outfile.filename]))
     # write data and header list to file
     outfile.write_multi(data_list=[dark_table])
-
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------

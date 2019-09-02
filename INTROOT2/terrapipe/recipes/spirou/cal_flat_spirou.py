@@ -324,7 +324,8 @@ def __main__(recipe, params):
                  TextEntry('40-015-00003', args=[blazefile.filename]))
             # write image to file
             blazefile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(blazefile)
             # --------------------------------------------------------------
             # Store Flat-field in file
             # --------------------------------------------------------------
@@ -343,7 +344,8 @@ def __main__(recipe, params):
                  TextEntry('40-015-00004', args=[flatfile.filename]))
             # write image to file
             flatfile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(flatfile)
             # --------------------------------------------------------------
             # Store E2DSLL in file
             # --------------------------------------------------------------
@@ -362,7 +364,8 @@ def __main__(recipe, params):
                  TextEntry('40-015-00005', args=[e2dsllfile.filename]))
             # write image to file
             e2dsllfile.write()
-
+            # add to output files (for indexing)
+            recipe.add_output_file(e2dsllfile)
             # --------------------------------------------------------------
             # Update the calibration database
             # --------------------------------------------------------------

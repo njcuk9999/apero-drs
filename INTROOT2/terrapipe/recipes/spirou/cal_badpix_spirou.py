@@ -82,9 +82,7 @@ def main(directory=None, flatfiles=None, darkfiles=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, llmain, recipe, success)
-    # return a copy of locally defined variables in the memory
-    return core.get_locals(params, llmain, recipe)
+    return core.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -281,6 +279,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
         # write image to file
         badpixfile.write()
+        # add to output files (for indexing)
+        recipe.add_output_file(badpixfile)
         # ----------------------------------------------------------------------
         # Save background map file
         # ----------------------------------------------------------------------
@@ -299,7 +299,8 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-012-00014', args=[backmapfile.filename]))
         # write image to file
         backmapfile.write()
-
+        # add to output files (for indexing)
+        recipe.add_output_file(backmapfile)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------

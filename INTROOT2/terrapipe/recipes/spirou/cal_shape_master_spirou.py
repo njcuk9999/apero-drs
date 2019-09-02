@@ -290,7 +290,8 @@ def __main__(recipe, params):
     WLOG(params, '', TextEntry('40-014-00026', args=[outfile1.filename]))
     # write image to file
     outfile1.write_multi(data_list=[fp_table])
-
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile1)
     # ----------------------------------------------------------------------
     # Writing DYMAP to file
     # ----------------------------------------------------------------------
@@ -306,7 +307,8 @@ def __main__(recipe, params):
     WLOG(params, '', TextEntry('40-014-00027', args=[outfile2.filename]))
     # write image to file
     outfile2.write_multi(data_list=[fp_table])
-
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile2)
     # ----------------------------------------------------------------------
     # Writing Master FP to file
     # ----------------------------------------------------------------------
@@ -322,7 +324,8 @@ def __main__(recipe, params):
     WLOG(params, '', TextEntry('40-014-00028', args=[outfile3.filename]))
     # write image to file
     outfile3.write_multi(data_list=[fp_table])
-
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile3)
     # ----------------------------------------------------------------------
     # Writing DEBUG files
     # ----------------------------------------------------------------------
@@ -338,6 +341,8 @@ def __main__(recipe, params):
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         debugfile0.data = dxmap0
         debugfile0.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile0)
         # ------------------------------------------------------------------
         # for the fp files take the header from outfile1
         # ------------------------------------------------------------------
@@ -348,6 +353,8 @@ def __main__(recipe, params):
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
         debugfile1.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile1)
         # out file
         debugfile2 = recipe.outputs['SHAPE_OUT_FP_FILE'].newcopy(recipe=recipe)
         debugfile2.construct_filename(params, infile=fpfile)
@@ -355,6 +362,8 @@ def __main__(recipe, params):
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = fpimage2
         debugfile2.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile2)
         # ------------------------------------------------------------------
         # for hc files copy over the fp parameters with the hc parameters
         # ------------------------------------------------------------------
@@ -383,6 +392,8 @@ def __main__(recipe, params):
         # add data
         debugfile3.data = hcimage
         debugfile3.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile3)
         # out file
         debugfile4 = recipe.outputs['SHAPE_OUT_HC_FILE'].newcopy(recipe=recipe)
         debugfile4.construct_filename(params, infile=hcfile)
@@ -390,7 +401,8 @@ def __main__(recipe, params):
         debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
         debugfile4.data = hcimage2
         debugfile4.write_multi(data_list=[fp_table])
-
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile4)
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
