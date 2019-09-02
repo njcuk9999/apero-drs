@@ -25,6 +25,7 @@ from terrapipe.core.core import drs_startup
 from terrapipe import locale
 from terrapipe.locale import drs_exceptions
 from terrapipe.core import constants
+from terrapipe import plotting
 from terrapipe.io import drs_table
 from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
@@ -75,6 +76,14 @@ class Run:
         self.update()
 
     def filename_args(self):
+        """
+        deal with file arguments in kwargs (returned from recipe_setup as
+            [filenames, file instances]
+
+        we only want the filenames (not the instances)
+
+        :return:
+        """
         # loop around positional arguments
         for argname in self.recipe.args:
             # get arg instance
@@ -88,8 +97,12 @@ class Run:
             kwarg = self.recipe.kwargs[kwargname]
             # only do this for arguments with filetype 'files' or 'file'
             if kwarg.dtype in ['files', 'file']:
-                if kwarg.required:
-                    self.kwargs[kwargname] = self.kwargs[kwargname][0]
+                if kwarg.required or kwarg.reprocess:
+
+                    if len(self.kwargs[kwargname]) == 0:
+                        self.kwargs[kwargname] = []
+                    else:
+                        self.kwargs[kwargname] = self.kwargs[kwargname][0]
                 else:
                     del self.kwargs[kwargname]
 
@@ -960,13 +973,13 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 ll_item = modulemain(**kwargs)
                 # ----------------------------------------------------------
                 # close all plotting
-                # TODO: deal with plotting
-                # # sPlt.closeall()
+                plotting.closeall()
                 # keep only some parameters
                 llparams = ll_item['params']
+                llrecipe = ll_item['recipe']
                 pp['ERROR'] = copy.deepcopy(llparams['LOGGER_ERROR'])
                 pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
-                pp['OUTPUTS'] = copy.deepcopy(llparams['OUTPUTS'])
+                pp['OUTPUTS'] = copy.deepcopy(llrecipe.output_files)
                 pp['TRACEBACK'] = []
                 # delete ll_item
                 del llparams

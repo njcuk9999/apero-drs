@@ -97,8 +97,8 @@ def reset_calibdb(params, log=True):
     :return:
     """
     name = 'calibration database'
-    calib_dir = params['DRS_TELLU_DB']
-    reset_path = params['DRS_RESET_TELLUDB_PATH']
+    calib_dir = params['DRS_CALIB_DB']
+    reset_path = params['DRS_RESET_CALIBDB_PATH']
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
 
 
@@ -110,9 +110,9 @@ def reset_telludb(params, log=True):
     :return:
     """
     name = 'tellruic database'
-    calib_dir = params['DRS_CALIB_DB']
-    reset_path = params['DRS_RESET_CALIBDB_PATH']
-    reset_dbdir(params, name, calib_dir, reset_path, log=log)
+    tellu_dir = params['DRS_TELLU_DB']
+    reset_path = params['DRS_RESET_TELLUDB_PATH']
+    reset_dbdir(params, name, tellu_dir, reset_path, log=log)
 
 
 def reset_dbdir(params, name, db_dir, reset_path, log=True):
