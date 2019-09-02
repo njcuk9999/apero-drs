@@ -1015,6 +1015,7 @@ class DrsArgument(object):
 
         # get required
         self.required = kwargs.get('required', False)
+        self.reprocess = kwargs.get('reprocess', False)
 
         # set empty
         self.props = OrderedDict()
@@ -1175,6 +1176,7 @@ class DrsArgument(object):
         self.default_ref = copy.deepcopy(argument.default_ref)
         # get required
         self.required = bool(argument.required)
+        self.reprocess = bool(argument.reprocess)
         # set empty
         self.props = copy.deepcopy(argument.props)
         self.value = copy.deepcopy(argument.value)
