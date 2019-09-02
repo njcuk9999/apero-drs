@@ -221,7 +221,8 @@ KW_C_RESIZE = KW_C_RESIZE.copy(__NAME__)
 KW_C_RESIZE.set(key='CAL_SIZE', comment='Whether the image was resized from pp')
 KW_C_FTYPE = KW_C_FTYPE.copy(__NAME__)
 KW_C_FTYPE.set(key='CAL_FTYP', comment='What this fiber was identified as')
-
+KW_FIBER = KW_FIBER.copy(__NAME__)
+KW_FIBER.set(key='FIBER', comment='The fiber name')
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
