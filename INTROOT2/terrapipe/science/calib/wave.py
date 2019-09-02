@@ -90,7 +90,7 @@ def get_masterwave_filename(params, fiber):
 
 
 def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
-                     **kwargs):
+                     master=False, **kwargs):
     """
     Get the wavelength solution
 
@@ -110,6 +110,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     :param infile: DrsFitsFile or None, the infile associated with the header
                    can be used instead of header
     :param fiber: str, the fiber to get the wave solution for
+    :param master: bool, if True forces use of the master wavelength solution
     :param kwargs: keyword arguments passed to function
 
     :keyword force: bool, if True forces wave solution to come from calibDB
@@ -158,6 +159,11 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         force = force or (params['KW_WAVE_NBO'][0] not in header)
         force = force or (params['KW_WAVE_DEG'][0] not in header)
         force = force or (params['KW_CDBWAVE'][0] not in header)
+    # ------------------------------------------------------------------------
+    # deal with master = True
+    if master is True:
+        # get master path
+        filename = get_masterwave_filename(params, fiber=usefiber)
     # ------------------------------------------------------------------------
     # Mode 1: wave filename defined
     # ------------------------------------------------------------------------
@@ -316,9 +322,11 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WAVEFILE'] = wavefile.filename
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
+    wprops['NBPIX'] = nbx
     wprops['DEG'] = deg
     wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wavemap
+    wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     # add the wfp keys
     wprops['WFP_DRIFT'] = wfp_drift
     wprops['WFP_FWHM'] = wfp_fwhm
@@ -332,7 +340,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
             'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MAXCPP', 'WFP_MASK',
-            'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+            'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP', 'WAVEINST',
+            'NBPIX']
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
@@ -1081,6 +1090,8 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     WLOG(params, '', TextEntry('40-017-00019', args=wargs))
     # write image to file
     wavefile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
     # return hc wavefile
     return wavefile
@@ -1108,7 +1119,8 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', TextEntry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist)
-
+    # add to output files (for indexing)
+    recipe.add_output_file(resfile)
 
 # =============================================================================
 # Define hc worker functions
@@ -4118,6 +4130,8 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     WLOG(params, '', TextEntry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
     # return hc wavefile
     return wavefile
