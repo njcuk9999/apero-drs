@@ -52,7 +52,7 @@ __all__ = [# input keys
            'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT', 'KW_BERV', 'KW_BJD',
            'KW_BERVMAX', 'KW_BERVSOURCE', 'KW_BERV_EST', 'KW_BJD_EST',
            'KW_BERVMAX_EST', 'KW_BERV_OBSTIME_METHOD', 'KW_BERV_OBSTIME',
-           'KW_BERVGAIA_ID',
+           'KW_BERVGAIA_ID', 'KW_FIBER',
            'KW_BERVOBJNAME', 'KW_BERVRV', 'KW_BERV_GAIA_GMAG',
            'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_MAGLIM',
            'KW_BERV_GAIA_PLXLIM', 'KW_DBERV', 'KW_DBERV_EST',
@@ -241,12 +241,13 @@ KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__)
 KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__)
 KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='', dtype=str, source=__NAME__)
 
-
 # additional properties of calibration
 KW_C_FLIP = Keyword('KW_C_FLIP', key='', dtype=str, source=__NAME__)
 KW_C_CVRTE = Keyword('KW_C_CVRTE', key='', dtype=str, source=__NAME__)
 KW_C_RESIZE = Keyword('KW_C_RESIZE', key='', dtype=str, source=__NAME__)
 KW_C_FTYPE = Keyword('KW_C_FTYPE', key='', dtype=str, source=__NAME__)
+# the fiber name
+KW_FIBER = Keyword('KW_FIBER', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
