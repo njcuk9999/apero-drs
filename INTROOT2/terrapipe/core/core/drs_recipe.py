@@ -119,6 +119,7 @@ class DrsRecipe(object):
         self.optional_args = []
         self.special_args = []
         self.outputs = dict()
+        self.output_files = dict()
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
         # get drs params
@@ -153,8 +154,7 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set up array to store inputs/outputs
         self.drs_params['INPUTS'] = ParamDict()
-        self.drs_params['OUTPUTS'] = ParamDict()
-        self.drs_params.set_sources(['INPUTS', 'OUTPUTS'], func_name)
+        self.drs_params.set_sources(['INPUTS'], func_name)
 
     def recipe_setup(self, fkwargs=None, inargs=None):
         """
@@ -370,6 +370,19 @@ class DrsRecipe(object):
         for kwarg in kwargs:
             self.outputs[kwarg] = kwargs[kwarg]
 
+    def add_output_file(self, outfile):
+        func_name = __NAME__ + '.DrsRecipe.add_output_file()'
+        # get the name of the outfile
+        key = outfile.basename
+        # check if outfile has output_dict
+        if hasattr(outfile, 'output_dict'):
+            self.output_files[key] = outfile.output_dict
+        else:
+            # log that output file has no attribute 'output_dict'
+            eargs = [outfile.name, func_name]
+            emsg = TextEntry('00-008-00016', args=eargs)
+            WLOG(self.drs_params, 'error', emsg)
+
     def main(self, **kwargs):
         """
         Run the main function associated with this recipe
@@ -498,7 +511,6 @@ class DrsRecipe(object):
                 self.outputs[output] = newouput
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
-
 
     # =========================================================================
     # Reprocessing methods
