@@ -21,7 +21,7 @@ from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.io import drs_lock
 from terrapipe.io import drs_fits
-
+from terrapipe.io import drs_table
 from . import drs_log
 
 
@@ -74,7 +74,6 @@ class Database():
         self.outpath = _get_outpath(self.params, self.dbname)
         self.abspath = os.path.join(self.outpath, self.dbfile)
         self.colnames = self.get_colnames()
-
 
     def get_colnames(self):
         """
@@ -407,6 +406,112 @@ def get_full_database(params, dbname):
         database = Database(params, dbname)
         database.read()
         return database
+
+
+# =============================================================================
+# Define database get functions
+# =============================================================================
+def load_db_file(params, key=None, header=None, filename=None, **kwargs):
+    func_name = kwargs.get('func', __NAME__ + '.load_db_file()')
+    # get keys from kwargs
+    n_entries = kwargs.get('n_entries', 1)
+    ext = kwargs.get('ext', 0)
+    # where = 'calibration', 'telluric', or 'guess'
+    where = kwargs.get('where', 'calibration')
+    # kind = 'image' or 'table'
+    kind = kwargs.get('kind', 'image')
+    # fmt = valid astropy table format
+    fmt = kwargs.get('fmt', 'fits')
+    # ----------------------------------------------------------------------
+    # deal with filename set
+    if filename is not None:
+        image, abspath = load_db_file_from_filename(params, filename, ext,
+                                                    fmt, kind, where='guess')
+        return [image], [abspath]
+    # deal with no header and no filename
+    if header is None:
+        # raise error that header must be defined if filename is None
+        WLOG(params, 'error', TextEntry('00-001-00034', args=[func_name]))
+    # deal with no key and no filename
+    if key is None:
+        # raise error that key must be defined if filename is None
+        WLOG(params, 'error', TextEntry('00-001-00035', args=[func_name]))
+    # ----------------------------------------------------------------------
+    # get calibDB
+    cdb = get_full_database(params, where)
+    # get filename col
+    filecol = cdb.file_col
+    # get the badpix entries
+    entries = get_key_from_db(params, key, cdb, header, n_ent=n_entries)
+    # storage
+    images, abspaths = [], []
+    # loop around entries
+    for entry in entries:
+        # get badpix filename
+        filename = entry[filecol]
+        # ------------------------------------------------------------------
+        # get calib fits file
+        image, abspath = load_db_file_from_filename(params, filename, ext,
+                                                    fmt, kind, where=where)
+        # ------------------------------------------------------------------
+        # append to storage
+        images.append(image)
+        abspaths.append(abspath)
+
+    # deal with if n_entries is 1 (just return file not list)
+    if n_entries == 1:
+        return images[0], abspaths[0]
+    else:
+        return images, abspaths
+
+
+def load_db_file_from_filename(params, filename, ext=None, fmt=None,
+                               kind='image', where='calibration'):
+    func_name = __NAME__ + '.load_db_file_from_filename()'
+    # ------------------------------------------------------------------
+    # get the calibration path and telluric path
+    cal_path = os.path.join(params['DRS_CALIB_DB'], filename)
+    tel_path = os.path.join(params['DRS_TELLU_DB'], filename)
+    # ------------------------------------------------------------------
+    # deal with where file is located
+    if where == 'calibration':
+        abspath = cal_path
+    elif where == 'telluric':
+        abspath = tel_path
+    elif where == 'guess':
+        # check full path
+        if os.path.exists(filename):
+            abspath = str(filename)
+        # check cal path
+        elif os.path.exists(cal_path):
+            abspath = cal_path
+        # check tellu path
+        elif os.path.exists(tel_path):
+            abspath = tel_path
+        else:
+            # raise error that defined filename does not exist
+            eargs = ['\n\t\t'.join([filename, cal_path, tel_path]), func_name]
+            WLOG(params, 'error', TextEntry('00-001-00036', args=eargs))
+            abspath = None
+    else:
+        # raise error that 'where' was not valid
+        eargs = [' or '.join(['calibration', 'telluric', 'guess']), func_name]
+        WLOG(params, 'error', TextEntry('00-001-00037', args=eargs))
+        abspath = None
+    # ------------------------------------------------------------------
+    # get calib fits file
+    if kind == 'image':
+        image = drs_fits.read(params, abspath, ext=ext)
+    elif kind == 'table':
+        image = drs_table.read_table(params, abspath, fmt=fmt)
+    else:
+        # raise error is kind is incorrect
+        eargs = [' or '.join(['image', 'table']), func_name]
+        WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
+        image = None
+    # ------------------------------------------------------------------
+    # return image and absolute path
+    return image, abspath
 
 
 # =============================================================================
