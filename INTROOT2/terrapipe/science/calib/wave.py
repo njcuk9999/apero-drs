@@ -322,7 +322,10 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WAVEFILE'] = wavefile.filename
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
-    wprops['NBPIX'] = nbx
+    if wavemap is not None:
+        wprops['NBPIX'] = wavemap.shape[1]
+    else:
+        wprops['NBPIX'] = None
     wprops['DEG'] = deg
     wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wavemap
