@@ -17,6 +17,7 @@ import sys
 import os
 import shutil
 from collections import OrderedDict
+from bdb import BdbQuit
 
 from terrapipe import plotting
 from terrapipe.locale import drs_text
@@ -29,7 +30,6 @@ from terrapipe.io import drs_lock
 from . import drs_log
 from . import drs_recipe
 from . import drs_file
-
 
 # =============================================================================
 # Define variables
@@ -261,11 +261,13 @@ def run(func, recipe, params):
             emsg = TextEntry('01-010-00001', args=[type(e)])
             emsg += '\n\n' + TextEntry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
-            llmain = dict(e=e, tb=string_trackback)
+            llmain = dict(e=e, tb=string_trackback, params=params,
+                          recipe=recipe)
         except drs_exceptions.LogExit as e:
             string_trackback = traceback.format_exc()
             success = False
-            llmain = dict(e=e, tb=string_trackback)
+            llmain = dict(e=e, tb=string_trackback, params=params,
+                          recipe=recipe)
     # return llmain and success
     return llmain, success
 
@@ -308,13 +310,17 @@ def return_locals(params, ll):
     if params['IPYTHON_RETURN']:
         # copy pdbrc
         _copy_pdb_rc(params)
-        # start ipdb
+        # catch bdb quit
         try:
-            import ipdb
-            ipdb.set_trace()
-        except Exception as _:
-            import pdb
-            pdb.set_trace()
+            # start ipdb
+            try:
+                import ipdb
+                ipdb.set_trace()
+            except Exception as _:
+                import pdb
+                pdb.set_trace()
+        except:
+            pass
         # delete pdbrc
         _remove_pdb_rc(params)
 
@@ -322,40 +328,8 @@ def return_locals(params, ll):
     return ll
 
 
-def _copy_pdb_rc(params):
-    # set global CURRENT_PATH
-    global CURRENT_PATH
-    # get package
-    package = params['DRS_PACKAGE']
-    # get path
-    path = params['DRS_PDB_RC_FILE']
-    # get file name
-    filename = os.path.basename(path)
-    # get current path
-    CURRENT_PATH = os.getcwd()
-    # get absolute path
-    oldsrc = constants.get_relative_folder(package, path)
-    # get newsrc
-    newsrc = os.path.join(CURRENT_PATH, filename)
-    # copy
-    shutil.copy(oldsrc, newsrc)
-
-
-def _remove_pdb_rc(params):
-    # get path
-    path = params['DRS_PDB_RC_FILE']
-    # get file name
-    filename = os.path.basename(path)
-    # get newsrc
-    newsrc = os.path.join(CURRENT_PATH, filename)
-    # remove
-    if os.path.exists(newsrc):
-        os.remove(newsrc)
-
-
 def main_end_script(params, llmain, recipe, success, outputs='reduced',
                     end=True):
-
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -381,24 +355,25 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     """
     func_name = __NAME__ + '.main_end_script()'
     # get params from llmain if present (from __main__ function not main)
-    if 'params' in llmain:
-        params = llmain['params']
+    if llmain is not None:
+        if 'params' in llmain:
+            params = llmain['params']
     # get pconstants
     pconstant = constants.pload(params['INSTRUMENT'])
     # construct a lock file name
     opath = pconstant.INDEX_LOCK_FILENAME(params)
     # index if we have outputs
-    if (outputs is not None) and success:
+    if (outputs is not None) and (outputs != 'None') and success:
         # get and check for file lock file
         lock, lock_file = drs_lock.check_lock_file(params, opath)
         # Must now deal with errors and make sure we close the lock file
         try:
             if outputs == 'pp':
                 # index outputs to pp dir
-                _index_pp(params)
+                _index_pp(params, recipe)
             elif outputs == 'reduced':
                 # index outputs to reduced dir
-                _index_outputs(params)
+                _index_outputs(params, recipe)
             # close lock file
             drs_lock.close_lock_file(params, lock, lock_file, opath)
         # Must close lock file
@@ -445,16 +420,20 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     # -------------------------------------------------------------------------
     # return ll (the output dictionary)
     # -------------------------------------------------------------------------
-    outdict = dict()
-    # copy params
-    outdict['params'] = params.copy()
-    # copy recipe
-    outdict['recipe'] = recipe.copy()
-    # special (shallow) copy from cal_extract
-    if 'e2dsoutputs' in llmain:
-        outdict['e2dsoutputs'] = llmain['e2dsoutputs']
-    # return outdict
-    return outdict
+    if end:
+        # out storage (i.e. ll)
+        outdict = dict()
+        # copy params
+        outdict['params'] = params.copy()
+        # copy recipe
+        newrecipe = DrsRecipe()
+        newrecipe.copy(recipe)
+        outdict['recipe'] = newrecipe
+        # special (shallow) copy from cal_extract
+        if 'e2dsoutputs' in llmain:
+            outdict['e2dsoutputs'] = llmain['e2dsoutputs']
+        # return outdict
+        return outdict
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,
@@ -628,8 +607,11 @@ def post_main(params, has_plots=True):
 
     :returns: None
     """
+    # get parameters from params
+    isinteractive = params['DRS_INTERACTIVE']
+
     # if interactive ask about closing plots
-    if _find_interactive() and has_plots:
+    if _find_interactive() and has_plots and isinteractive:
         # deal with closing plots
         WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
         WLOG(params, 'info', TextEntry('40-003-00003'), printonly=True)
@@ -646,6 +628,9 @@ def post_main(params, has_plots=True):
         if 'Y' in uinput.upper():
             # close any open plots properly
             plotting.closeall()
+    # else if has plots close all plots
+    elif has_plots:
+        plotting.closeall()
 
 
 # =============================================================================
@@ -702,7 +687,6 @@ def _display_drs_title(p):
     # Log title
     _display_title(p, title)
     _display_logo(p)
-
 
 
 def _display_title(p, title):
@@ -944,7 +928,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
 # =============================================================================
 # Indexing functions
 # =============================================================================
-def _index_pp(params):
+def _index_pp(params, recipe):
     """
     Index the pre-processed files (into p["TMP"] directory)
 
@@ -963,7 +947,7 @@ def _index_pp(params):
     # get absolute path
     abspath = os.path.join(path, filename)
     # get the outputs
-    outputs = params['OUTFILES']
+    outputs = recipe.output_files
     # check that outputs is not empty
     if len(outputs) == 0:
         WLOG(params, '', TextEntry('40-004-00001'))
@@ -978,7 +962,7 @@ def _index_pp(params):
     _save_index_file(params, istore, abspath)
 
 
-def _index_outputs(params):
+def _index_outputs(params, recipe):
     """
     Index the reduced files (into p["REDUCED_DIR"] directory)
 
@@ -1002,7 +986,7 @@ def _index_outputs(params):
     # get absolute path
     abspath = os.path.join(path, filename)
     # get the outputs
-    outputs = params['OUTFILES']
+    outputs = recipe.output_files
     # check that outputs is not empty
     if len(outputs) == 0:
         WLOG(params, '', TextEntry('40-004-00001'))
@@ -1133,6 +1117,37 @@ def _save_index_file(p, istore, abspath):
 # =============================================================================
 # Exit functions
 # =============================================================================
+def _copy_pdb_rc(params):
+    # set global CURRENT_PATH
+    global CURRENT_PATH
+    # get package
+    package = params['DRS_PACKAGE']
+    # get path
+    path = params['DRS_PDB_RC_FILE']
+    # get file name
+    filename = os.path.basename(path)
+    # get current path
+    CURRENT_PATH = os.getcwd()
+    # get absolute path
+    oldsrc = constants.get_relative_folder(package, path)
+    # get newsrc
+    newsrc = os.path.join(CURRENT_PATH, filename)
+    # copy
+    shutil.copy(oldsrc, newsrc)
+
+
+def _remove_pdb_rc(params):
+    # get path
+    path = params['DRS_PDB_RC_FILE']
+    # get file name
+    filename = os.path.basename(path)
+    # get newsrc
+    newsrc = os.path.join(CURRENT_PATH, filename)
+    # remove
+    if os.path.exists(newsrc):
+        os.remove(newsrc)
+
+
 def _find_interactive():
     """
     Find whether user is using an interactive session
@@ -1499,7 +1514,7 @@ def _sort_version(messages=None):
         other = sys.version.split('[')[1].split(']')[0].strip()
         messages += '\n' + TextEntry('40-001-00016', args=[other])
     except IndexError:
-            pass
+        pass
 
     # return updated messages
     return messages
@@ -1540,7 +1555,6 @@ def _make_dirs(params, path):
         emsg = TextEntry('01-000-00001', args=[path, type(e)])
         emsg += '\n\n' + TextEntry(string_trackback)
         WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
-
 
 # =============================================================================
 # End of code
