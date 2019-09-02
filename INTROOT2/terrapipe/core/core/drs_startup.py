@@ -429,6 +429,13 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         newrecipe = DrsRecipe()
         newrecipe.copy(recipe)
         outdict['recipe'] = newrecipe
+        # copy success
+        outdict['success'] = bool(success)
+        # copy qc passed
+        if 'passed' in llmain:
+            outdict['passed'] = bool(llmain['passed'])
+        else:
+            outdict['passed'] = True
         # special (shallow) copy from cal_extract
         if 'e2dsoutputs' in llmain:
             outdict['e2dsoutputs'] = llmain['e2dsoutputs']
