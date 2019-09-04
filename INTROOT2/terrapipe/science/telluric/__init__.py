@@ -16,9 +16,17 @@ __all__ = ['get_blacklist', 'get_whitelist']
 # =============================================================================
 # Define functions
 # =============================================================================
+calculate_telluric_absorption = general.calculate_telluric_absorption
+
 get_blacklist = general.get_blacklist
 
 get_whitelist = general.get_whitelist
+
+load_conv_tapas = general.load_conv_tapas
+
+load_templates = general.load_templates
+
+normalise_by_pblaze = general.normalise_by_pblaze
 
 # =============================================================================
 # End of code
