@@ -16,15 +16,11 @@ import warnings
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
-from terrapipe.io import drs_image
-from terrapipe.science.calib import flat_blaze
-from terrapipe.science.calib import general
-from terrapipe.science.calib import localisation
-from terrapipe.science.calib import shape
+
 from terrapipe.science.calib import wave
 from terrapipe.science import extract
+from terrapipe.science import telluric
 
 # =============================================================================
 # Define variables
@@ -107,7 +103,6 @@ def __main__(recipe, params):
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
-
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
         infiles = params['DATA_DICT']['files']
@@ -133,6 +128,34 @@ def __main__(recipe, params):
         infile = infiles[it]
         # get header from file instance
         header = infile.header
+        # get image
+        image = infile.image
+        # ------------------------------------------------------------------
+        # check that file has valid DPRTYPE
+        # ------------------------------------------------------------------
+        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        # if dprtype is incorrect skip
+        if dprtype not in params.listp('TEELU_ALLOWED_DPRTYPES'):
+            # join allowed dprtypes
+            allowed_dprtypes = ', '.join(params.listp('TEELU_ALLOWED_DPRTYPES'))
+            # log that we are skipping
+            wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
+            WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            # continue
+            continue
+        # ------------------------------------------------------------------
+        # check that file objname is not in blacklist
+        # ------------------------------------------------------------------
+        objname = infile.get_key('KW_OBJNAME', dtype=str)
+        # get black list
+        blacklist = telluric.get_blacklist(params)
+        # if objname in blacklist then skip
+        if objname in blacklist:
+            # log that we are skipping
+            wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
+            WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
+            # continue
+            continue
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
@@ -153,6 +176,39 @@ def __main__(recipe, params):
         # Load the TAPAS atmospheric transmission convolved with the
         #   master wave solution
         # ------------------------------------------------------------------
+        largs = [header, mprops, fiber]
+        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
+        # ------------------------------------------------------------------
+        # Normalize image by peak blaze
+        # ------------------------------------------------------------------
+        nargs = [image, header, fiber]
+        image, nprops = telluric.normalise_by_pblaze(params, *nargs)
+        # ------------------------------------------------------------------
+        # Get BERV
+        # ------------------------------------------------------------------
+        bprops = extract.get_berv(params, infile)
+        # ------------------------------------------------------------------
+        # Get template file (if available)
+        # ------------------------------------------------------------------
+        tout = telluric.load_templates(params, recipe, header, objname, fiber)
+        template, template_file = tout
+        # ------------------------------------------------------------------
+        # Calculate telluric absorption
+        # ------------------------------------------------------------------
+        cargs = [image, template, header, wprops, tapas_props, bprops]
+        tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+
+        # ------------------------------------------------------------------
+        # Save transmission map to file
+        # ------------------------------------------------------------------
+
+        # ------------------------------------------------------------------
+        # Add transmission map to telluDB
+        # ------------------------------------------------------------------
+
 
 
     # ----------------------------------------------------------------------
