@@ -11,16 +11,16 @@ Created on 2019-08-27 at 14:58
 """
 from __future__ import division
 import numpy as np
-import warnings
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
-
 from terrapipe.science.calib import wave
 from terrapipe.science import extract
 from terrapipe.science import telluric
+
 
 # =============================================================================
 # Define variables
@@ -184,7 +184,7 @@ def __main__(recipe, params):
         nargs = [image, header, fiber]
         image, nprops = telluric.normalise_by_pblaze(params, *nargs)
         # ------------------------------------------------------------------
-        # Get BERV
+        # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
@@ -195,22 +195,26 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [image, template, header, wprops, tapas_props, bprops]
+        cargs = [image, template, template_file, header, wprops, tapas_props,
+                 bprops]
         tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-
+        pargs = [tellu_props, infile]
+        qc_params = telluric.mk_tellu_quality_control(params, *pargs)
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
-
+        targs = [infile, rawfiles, fiber, combine, tapas_props, wprops,
+                 nprops, tellu_props, qc_params]
+        transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
         # ------------------------------------------------------------------
         # Add transmission map to telluDB
         # ------------------------------------------------------------------
-
-
-
+        if np.all(qc_params[3]):
+            # copy the transmission map to telluDB
+            drs_database.add_file(params, transfile)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

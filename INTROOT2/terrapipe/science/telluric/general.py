@@ -137,6 +137,7 @@ def load_tellu_file(params, key=None, header=None, filename=None,
                                      where='telluric', func=func_name,
                                      get_header=get_header, **kwargs)
 
+
 def load_templates(params, recipe, header, objname, fiber):
 
 
@@ -193,15 +194,13 @@ def load_templates(params, recipe, header, objname, fiber):
     return valid_images[sort][-1], valid_filenames[sort][-1]
 
 
-
-
 # =============================================================================
 # Tapas functions
 # =============================================================================
 def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
-    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERES', 'absorbers', kwargs,
+    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
                              func_name)
     fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', 'fwhm_lsf', kwargs,
                             func_name)
@@ -281,13 +280,12 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     return tapas_props
 
 
-
-
 # =============================================================================
 # Make telluric functions
 # =============================================================================
-def calculate_telluric_absorption(params, image, template, header, wprops,
-                                  tapas_props, bprops, **kwargs):
+def calculate_telluric_absorption(params, image, template, template_file,
+                                  header, wprops, tapas_props, bprops,
+                                  **kwargs):
 
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
@@ -325,7 +323,8 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
     tellu_med_sampling = pcheck(params, 'IMAGE_PIXEL_SIZE', 'med_sampling',
                                 kwargs, func_name)
     plot_order_nums = pcheck(params, 'MKTELLU_PLOT_ORDER_NUMS',
-                             'plot_order_nums', kwargs, func_name)
+                             'plot_order_nums', kwargs, func_name,
+                             mapf='list', dtype=int)
     tau_water_upper = pcheck(params, 'MKTELLU_TAU_WATER_ULIMIT',
                              'tau_water_upper', kwargs, func_name)
     tau_others_lower = pcheck(params, 'MKTELLU_TAU_OTHER_LLIMIT',
@@ -335,6 +334,8 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
     tapas_small_number = pcheck(params, 'MKTELLU_SMALL_LIMIT',
                                 'tapas_small_number', kwargs, func_name)
     # ------------------------------------------------------------------
+    # copy image
+    image1 = np.array(image)
     # get berv from bprops
     berv = bprops['BERV']
     # get airmass from header
@@ -342,7 +343,7 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
     # get wave map
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
-    nbo, nbpix = image.shape
+    nbo, nbpix = image1.shape
     # get the tapas data
     tapas_water = tapas_props['TAPAS_WATER']
     tapas_others = tapas_props['TAPAS_OTHER']
@@ -356,7 +357,7 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
         # set a flag to tell us that we didn't start with a template
         template_flag = True
         # assume template is ones everywhere
-        template = np.ones_like(image).astype(float)
+        template = np.ones_like(image1).astype(float)
         # check that clean orders are valid
         for clean_order in clean_orders:
             if (clean_order < 0) or (clean_order >= nbo):
@@ -370,6 +371,8 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
         wconv[clean_orders] = finer_conv_width
     # else we need to divide by template (after shifting)
     else:
+        # set a flag to tell us that we didn't start with a template
+        template_flag = False
         # wavelength offset from BERV
         dvshift = math.relativistic_waveshift(berv, units='km/s')
         # median-filter the template. we know that stellar features
@@ -420,7 +423,7 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
 
     # first estimate of the absorption spectrum
     tau1 = tapas_fit(np.isfinite(wavemap), guess[0], guess[1])
-    tau1 = tau1.reshape(image.shape)
+    tau1 = tau1.reshape(image1.shape)
     # first guess at the SED estimate for the hot start (we guess with a
     #   spectrum full of ones
     sed = np.ones_like(wavemap)
@@ -454,7 +457,7 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
         prev_guess = np.array(guess)
         # ---------------------------------------------------------------------
         # we have an estimate of the absorption spectrum
-        fit_image = image / sed
+        fit_image = image1 / sed
         # ---------------------------------------------------------------------
         # some masking of NaN regions
         nanmask = ~np.isfinite(fit_image)
@@ -506,13 +509,13 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
         # ---------------------------------------------------------------------
         # get current best-fit spectrum
         tau1 = tapas_fit(np.isfinite(wavemap), guess[0], guess[1])
-        tau1 = tau1.reshape(image.shape)
+        tau1 = tau1.reshape(image1.shape)
         # ---------------------------------------------------------------------
         # for each order, we fit the SED after correcting for absorption
         for order_num in range(nbo):
             # -----------------------------------------------------------------
             # get the per-order spectrum divided by best guess
-            oimage = image[order_num] / tau1[order_num]
+            oimage = image1[order_num] / tau1[order_num]
             # -----------------------------------------------------------------
             # find this orders good pixels
             good = keep[order_num]
@@ -528,7 +531,7 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
                 norm = np.ones_like(oimage)
             # -----------------------------------------------------------------
             # normalise this orders spectrum
-            image[order_num] = image[order_num] / norm
+            image1[order_num] = image1[order_num] / norm
             # normalise sp2 and the sed
             oimage = oimage / norm
             sed[order_num] = sed[order_num] / norm
@@ -618,10 +621,10 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
             pedestal = tau1[order_num] < 0.01
             # check if we have enough strong absorption
             if np.nansum(pedestal) > 100:
-                zero_point = np.nanmedian(image[order_num, pedestal])
+                zero_point = np.nanmedian(image1[order_num, pedestal])
                 # if zero_point is finite subtract it off the spectrum
                 if np.isfinite(zero_point):
-                    image[order_num] -= zero_point
+                    image1[order_num] -= zero_point
             # -----------------------------------------------------------------
             # update the sed
             sed[order_num] = sed_update
@@ -671,20 +674,250 @@ def calculate_telluric_absorption(params, image, template, header, wprops,
         # if off:
         #     sPlt.plt.ion()
         pass
-
+    # ---------------------------------------------------------------------
+    # calculate transmission map
+    transmission_map = image1 / sed
+    # ---------------------------------------------------------------------
     # add output dictionary
     tprops = ParamDict()
     tprops['PASSED'] = not fail
     tprops['RECOV_AIRMASS'] = guess[1]
     tprops['RECOV_WATER'] = guess[0]
-    tprops['IMAGE_OUT'] = image
+    tprops['IMAGE_OUT'] = image1
     tprops['SED_OUT'] = sed
     tprops['TEMPLATE'] = template
-    tprops['TEMPLATE_FLAT'] = template_flag
-
-
+    tprops['TEMPLATE_FLAG'] = template_flag
+    tprops['TRANMISSION_MAP'] = transmission_map
+    tprops['AIRMASS'] = airmass
+    tprops['TEMPLATE_FILE'] = template_file
+    # set sources
+    keys = ['PASSED', 'RECOV_AIRMASS', 'RECOV_WATER', 'IMAGE_OUT', 'SED_OUT',
+            'TEMPLATE', 'TEMPLATE_FLAG', 'TRANMISSION_MAP', 'AIRMASS',
+            'TEMPLATE_FILE']
+    tprops.set_sources(keys, func_name)
+    # add constants
+    tprops['DEFAULT_CWIDTH'] = default_conv_width
+    tprops['FINER_CWIDTH'] = finer_conv_width
+    tprops['TEMP_MED_FILT'] = med_filt1
+    tprops['DPARAM_THRES'] = dparam_threshold
+    tprops['MAX_ITERATIONS'] = max_iteration
+    tprops['THRES_TRANSFIT'] = threshold_transmission_fit
+    tprops['MIN_WATERCOL'] = min_watercol
+    tprops['MAX_WATERCOL'] = max_watercol
+    tprops['MIN_NUM_GOOD'] = min_number_good_points
+    tprops['BTRANS_PERCENT'] = btrans_percentile
+    tprops['NSIGCLIP'] = nsigclip
+    tprops['TRANS_TMEDFILT'] = med_filt2
+    tprops['SMALL_W_ERR'] = small_weight
+    tprops['IMAGE_PIXEL_SIZE'] = tellu_med_sampling
+    tprops['TAU_WATER_UPPER'] = tau_water_upper
+    tprops['TAU_OTHER_LOWER'] = tau_others_lower
+    tprops['TAU_OTHER_UPPER'] = tau_others_upper
+    tprops['TAPAS_SMALL_NUM'] = tapas_small_number
+    # set sources
+    keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT',
+            'DPARAM_THRES', 'MAX_ITERATIONS', 'THRES_TRANSFIT', 'MIN_WATERCOL',
+            'MAX_WATERCOL', 'MIN_NUM_GOOD', 'BTRANS_PERCENT', 'NSIGCLIP',
+            'TRANS_TMEDFILT', 'SMALL_W_ERR', 'IMAGE_PIXEL_SIZE',
+            'TAU_WATER_UPPER', 'TAU_OTHER_LOWER', 'TAU_OTHER_UPPER',
+            'TAPAS_SMALL_NUM']
+    tprops.set_sources(keys, func_name)
     # return tprops
     return tprops
+
+
+# =============================================================================
+# QC and writing functions
+# =============================================================================
+def mk_tellu_quality_control(params, tprops, infile, **kwargs):
+
+    func_name = __NAME__ + '.mk_tellu_quality_control()'
+    # get parameters from params/kwargs
+    snr_order = pcheck(params, 'QC_MK_TELLU_SNR_ORDER', 'snr_order', kwargs,
+                       func_name)
+    qc_snr_min = pcheck(params, 'QC_MK_TELLU_SNR_MIN', 'qc_snr_min', kwargs,
+                        func_name)
+    qc_airmass_diff = pcheck(params, 'QC_MKTELLU_AIRMASS_DIFF',
+                             'qc_airmass_diff', kwargs, func_name)
+    qc_min_watercol = pcheck(params, 'MKTELLU_TRANS_MIN_WATERCOL',
+                             'qc_min_watercol', kwargs, func_name)
+    qc_max_watercol = pcheck(params, 'MKTELLU_TRANS_MAX_WATERCOL',
+                             'qc_min_watercol', kwargs, func_name)
+    # get the text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # get data from tprops
+    transmission_map = tprops['TRANMISSION_MAP']
+    image1 = tprops['IMAGE_OUT']
+    calc_passed = tprops['PASSED']
+    airmass = tprops['AIRMASS']
+    recovered_airmass = tprops['RECOV_AIRMASS']
+    recovered_water = tprops['RECOV_WATER']
+    # set passed variable and fail message list
+    fail_msg = []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # ----------------------------------------------------------------------
+    # if array is completely NaNs it shouldn't pass
+    if np.sum(np.isfinite(transmission_map)) == 0:
+        fail_msg.append(textdict['40-019-00006'])
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append('NaN')
+    qc_names.append('image')
+    qc_logic.append('image is all NaN')
+    # ----------------------------------------------------------------------
+    # get SNR for each order from header
+    nbo, nbpix = image1.shape
+    snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+    # check that SNR is high enough
+    if snr[snr_order] < qc_snr_min:
+        fargs = [snr_order, snr[snr_order], qc_snr_min]
+        fail_msg.append(textdict['40-019-00007'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(snr[snr_order])
+    qc_name_str = 'SNR[{0}]'.format(snr_order)
+    qc_names.append(qc_name_str)
+    qc_logic.append('{0} < {1:.2f}'.format(qc_name_str, qc_snr_min))
+    # ----------------------------------------------------------------------
+    # check that the file passed the CalcTelluAbsorption sigma clip loop
+    if not calc_passed:
+        fargs = [infile.basename]
+        fail_msg.append(textdict['40-019-00008'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(infile.basename)
+    qc_names.append('FILE')
+    qc_logic.append('FILE did not converge')
+    # ----------------------------------------------------------------------
+    # check that the airmass is not too different from input airmass
+    airmass_diff = np.abs(recovered_airmass - airmass)
+    if airmass_diff > qc_airmass_diff:
+        fargs = [recovered_airmass, airmass, qc_airmass_diff]
+        fail_msg.append(textdict['40-019-00009'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(airmass_diff)
+    qc_names.append('airmass_diff')
+    qc_logic.append('airmass_diff > {0:.2f}'.format(qc_airmass_diff))
+    # ----------------------------------------------------------------------
+    # check that the water vapor is within limits
+    water_cond1 = recovered_water < qc_min_watercol
+    water_cond2 = recovered_water > qc_max_watercol
+    # check both conditions
+    if water_cond1 or water_cond2:
+        fargs = [qc_min_watercol, qc_max_watercol, recovered_water]
+        fail_msg.append(textdict['40-019-00010'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # get args for qc_logic
+    fargs = [qc_min_watercol, qc_max_watercol]
+    # add to qc header lists
+    qc_values.append(recovered_water)
+    qc_names.append('RECOV_WATER')
+    qc_logic.append('RECOV_WATER not between {0:.3f} & {1:.3f}'.format(*fargs))
+    # --------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    #     quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params
+    return qc_params
+
+
+def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
+                              tapas_props, wprops, nprops, tprops, qc_params):
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    transfile = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    transfile.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # copy keys from input file
+    transfile.copy_original_keys(infile)
+    # add version
+    transfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    transfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    transfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    transfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    transfile.add_hkey('KW_OUTPUT', value=transfile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    transfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add  calibration files used
+    transfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
+    transfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    # ----------------------------------------------------------------------
+    # add qc parameters
+    transfile.add_qckeys(qc_params)
+    # ----------------------------------------------------------------------
+    # add telluric constants used
+    if tprops['TEMPLATE_FLAG']:
+        transfile.add_hkey('KW_MKTELL_TEMP_FILE', value=tprops['TEMPLATE_FILE'])
+    else:
+        transfile.add_hkey('KW_MKTELL_TEMP_FILE', value='None')
+    # add blaze parameters
+    transfile.add_hkey('KW_MKTELL_BLAZE_PRCT', value=nprops['BLAZE_PERCENTILE'])
+    transfile.add_hkey('KW_MKTELL_BLAZE_CUT', value=nprops['BLAZE_CUT_NORM'])
+    # add tapas parameteres
+    transfile.add_hkey('KW_MKTELL_TAPASFILE', value=tapas_props['TAPAS_FILE'])
+    transfile.add_hkey('KW_MKTELL_FWHMPLSF', value=tapas_props['FWHM_PIXEL_LSF'])
+    # add tprops parameters
+    transfile.add_hkey('KW_MKTELL_DEF_CONV_WID', value=tprops['DEFAULT_CWIDTH'])
+    transfile.add_hkey('KW_MKTELL_FIN_CONV_WID', value=tprops['FINER_CWIDTH'])
+    transfile.add_hkey('KW_MKTELL_TEMP_MEDFILT', value=tprops['TEMP_MED_FILT'])
+    transfile.add_hkey('KW_MKTELL_DPARAM_THRES', value=tprops['DPARAM_THRES'])
+    transfile.add_hkey('KW_MKTELL_MAX_ITER', value=tprops['MAX_ITERATIONS'])
+    transfile.add_hkey('KW_MKTELL_THRES_TFIT', value=tprops['THRES_TRANSFIT'])
+    transfile.add_hkey('KW_MKTELL_MIN_WATERCOL', value=tprops['MIN_WATERCOL'])
+    transfile.add_hkey('KW_MKTELL_MAX_WATERCOL', value=tprops['MAX_WATERCOL'])
+    transfile.add_hkey('KW_MKTELL_MIN_NUM_GOOD', value=tprops['MIN_NUM_GOOD'])
+    transfile.add_hkey('KW_MKTELL_BTRANS_PERC', value=tprops['BTRANS_PERCENT'])
+    transfile.add_hkey('KW_MKTELL_NSIGCLIP', value=tprops['NSIGCLIP'])
+    transfile.add_hkey('KW_MKTELL_TRANS_TMFILT', value=tprops['TRANS_TMEDFILT'])
+    transfile.add_hkey('KW_MKTELL_SMALL_W_ERR', value=tprops['SMALL_W_ERR'])
+    transfile.add_hkey('KW_MKTELL_IM_PSIZE', value=tprops['IMAGE_PIXEL_SIZE'])
+    transfile.add_hkey('KW_MKTELL_TAU_WATER_U', value=tprops['TAU_WATER_UPPER'])
+    transfile.add_hkey('KW_MKTELL_TAU_OTHER_L', value=tprops['TAU_OTHER_LOWER'])
+    transfile.add_hkey('KW_MKTELL_TAU_OTHER_U', value=tprops['TAU_OTHER_UPPER'])
+    transfile.add_hkey('KW_MKTELL_TAPAS_SNUM', value=tprops['TAPAS_SMALL_NUM'])
+    # ----------------------------------------------------------------------
+    # save recovered airmass and water vapor
+    transfile.add_hkey('KW_MKTELL_AIRMASS', value=tprops['RECOV_AIRMASS'])
+    transfile.add_hkey('KW_MKTELL_WATER', value=tprops['RECOV_WATER'])
+    # ----------------------------------------------------------------------
+    # copy data
+    transfile.data = tprops['TRANMISSION_MAP']
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-019-00011', args=[transfile.filename]))
+    # write image to file
+    transfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(transfile)
+    # ------------------------------------------------------------------
+    # return transmission file instance
+    return transfile
 
 
 # =============================================================================
