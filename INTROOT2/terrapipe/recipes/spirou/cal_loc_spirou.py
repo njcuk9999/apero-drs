@@ -439,7 +439,6 @@ def __main__(recipe, params):
             drs_database.add_file(params, orderpfile)
             # copy the loco file to the calibDB
             drs_database.add_file(params, loco1file)
-
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
