@@ -1913,6 +1913,10 @@ class DrsFitsFile(DrsInputFile):
                 value = qcparams[jt][it]
                 # add to the hdict dictionary in form (value, comment)
                 self.hdict[key.format(it + 1)] = (value, comment)
+        # add a final criteria that says whether everything passed or not
+        self.hdict['KW_DRS_QC'] = np.all(qcparams[3])
+
+
 
     def get_keywordstore(self, kwstore=None, func_name=None):
         """
