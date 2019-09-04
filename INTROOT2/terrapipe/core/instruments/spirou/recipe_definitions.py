@@ -148,6 +148,8 @@ cal_shape = DrsRecipe(__INSTRUMENT__, filemod=sf)
 cal_shape_master = DrsRecipe(__INSTRUMENT__, filemod=sf)
 cal_thermal = DrsRecipe(__INSTRUMENT__, filemod=sf)
 cal_wave = DrsRecipe(__INSTRUMENT__, filemod=sf)
+obj_mk_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
+obj_fit_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__, filemod=sf)
@@ -155,6 +157,7 @@ test = DrsRecipe(__INSTRUMENT__, filemod=sf)
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
+           obj_mk_tellu, obj_fit_tellu,
            test]
 
 # =============================================================================
@@ -617,11 +620,30 @@ cal_drift2.name = 'cal_DRIFTPEAK_E2DS_spirou.py'
 cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu
+# obj_mk_tellu
 # -----------------------------------------------------------------------------
+obj_mk_tellu.name = 'obj_mk_tellu.py'
+obj_mk_tellu.shortname = 'MKTELL'
+obj_mk_tellu.instrument = __INSTRUMENT__
+obj_mk_tellu.outputdir = 'reduced'
+obj_mk_tellu.inputdir = 'tmp'
+obj_mk_tellu.inputtype = 'reduced'
+obj_mk_tellu.extension = 'fits'
+obj_mk_tellu.description = Help['MKTELL_DESC']
+obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
+obj_mk_tellu.set_outputs()
+obj_mk_tellu.set_arg(pos=0, **directory)
+obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
+                     files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                     limit=1)
+obj_mk_tellu.set_kwarg(**add_cal)
+obj_mk_tellu.set_kwarg(**plot)
+obj_mk_tellu.set_kwarg(**interactive)
+obj_mk_tellu.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu
+# obj_fit_tellu
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -725,6 +747,7 @@ limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
 # night runs
 limited_run.add(cal_pp)
+limited_run.add(cal_badpix)
 limited_run.add(cal_badpix)
 limited_run.add(cal_loc, files=[sf.pp_dark_flat])
 limited_run.add(cal_loc, files=[sf.pp_flat_dark])
