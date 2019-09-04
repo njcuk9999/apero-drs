@@ -21,6 +21,7 @@ __all__ = [
     'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
+    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
     'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT',
     'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
@@ -144,6 +145,17 @@ __all__ = [
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    # make telluric constants
+    'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
+    'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_FINER_CONV_WIDTH',
+    'MKTELLU_CLEAN_ORDERS', 'MKTELLU_TEMP_MED_FILT', 'MKTELLU_DPARAMS_THRES',
+    'MKTELLU_MAX_ITER', 'MKTELLU_THRES_TRANSFIT', 'MKTELLU_TRANS_FIT_UPPER_BAD',
+    'MKTELLU_TRANS_MIN_WATERCOL', 'MKTELLU_TRANS_MAX_WATERCOL',
+    'MKTELLU_TRANS_MIN_NUM_GOOD', 'MKTELLU_TRANS_TAU_PERCENTILE',
+    'MKTELLU_TRANS_SIGMA_CLIP', 'MKTELLU_TRANS_TEMPLATE_MEDFILT',
+    'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
+    'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
+    'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
@@ -151,7 +163,7 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
-    ]
+]
 
 # set name
 __NAME__ = 'core.instruments.default.default_constants.py'
@@ -202,6 +214,15 @@ IMAGE_Y_LOW = Const('IMAGE_Y_LOW', value=None, dtype=int, minimum=0,
                     source=__NAME__)
 IMAGE_Y_HIGH = Const('IMAGE_Y_HIGH', value=None, dtype=int, minimum=0,
                      source=__NAME__)
+
+# Define the pixel size in km/s / pix
+#    also used for the median sampling size in tellu correction
+IMAGE_PIXEL_SIZE = Const('IMAGE_PIXEL_SIZE', value=None, dtype=float,
+                         source=__NAME__)
+
+# Define mean line width expressed in pix
+FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
+                       source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -1000,15 +1021,15 @@ WAVE_PIXEL_SHIFT_SLOPE = Const('WAVE_PIXEL_SHIFT_SLOPE', value=None,
 
 #  Defines echelle of first extracted order
 WAVE_T_ORDER_START = Const('WAVE_T_ORDER_START', value=None,
-                              dtype=int, source=__NAME__)
+                           dtype=int, source=__NAME__)
 
 #  Defines order from which the solution is calculated
 WAVE_N_ORD_START = Const('WAVE_N_ORD_START', value=None, dtype=int,
-                            source=__NAME__)
+                         source=__NAME__)
 
 #  Defines order to which the solution is calculated
 WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
-                            source=__NAME__)
+                         source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1045,7 +1066,7 @@ WAVE_HC_FITBOX_EWMAX = Const('WAVE_HC_FITBOX_EWMAX', value=None, dtype=float,
 
 # define the file type for saving the initial guess at the hc peak list
 WAVE_HCLL_FILE_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
-                          source=__NAME__)
+                           source=__NAME__)
 
 # number of bright lines kept per order
 #     avoid >25 as it takes super long
@@ -1115,7 +1136,6 @@ WAVE_HC_RES_MAXDEV_THRES = Const('WAVE_HC_RES_MAXDEV_THRES', value=None,
 WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
 
-
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
@@ -1175,7 +1195,7 @@ WAVE_FP_DOPD0 = Const('WAVE_FP_DOPD0', value=None, dtype=float,
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
 WAVE_FP_CAVFIT_DEG = Const('WAVE_FP_CAVFIT_DEG', value=None, dtype=int,
-                        source=__NAME__, minimum=0)
+                           source=__NAME__, minimum=0)
 
 #  Define the FP jump size that is too large
 WAVE_FP_LARGE_JUMP = Const('WAVE_FP_LARGE_JUMP', value=None, dtype=float,
@@ -1216,7 +1236,6 @@ WAVE_FP_EXP_WIDTH = Const('WAVE_FP_EXP_WIDTH', value=None, dtype=float,
 #           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
 WAVE_FP_NORM_WIDTH_CUT = Const('WAVE_FP_NORM_WIDTH_CUT', value=None,
                                dtype=float, source=__NAME__, minimum=0.0)
-
 
 # Define the minimum instrumental error
 WAVE_FP_ERRX_MIN = Const('WAVE_FP_ERRX_MIN', value=None, dtype=float,
@@ -1272,7 +1291,7 @@ WAVE_FP_CAVFIT_MODE = Const('WAVE_FP_CAVFIT_MODE', value=None, dtype=int,
 #       0 - use fit_1d_solution function
 #       1 - fit with sigma-clipping and mod 1 pixel correction
 WAVE_FP_LLFIT_MODE = Const('WAVE_FP_LLFIT_MODE', value=None, dtype=int,
-                            source=__NAME__, options=[0, 1])
+                           source=__NAME__, options=[0, 1])
 
 # Minimum FP peaks wavelength separation fraction diff. from median
 WAVE_FP_LLDIF_MIN = Const('WAVE_FP_LLDIF_MIN', value=None, dtype=float,
@@ -1284,7 +1303,7 @@ WAVE_FP_LLDIF_MAX = Const('WAVE_FP_LLDIF_MAX', value=None, dtype=float,
 
 # Sigma-clip value for sigclip_polyfit
 WAVE_FP_SIGCLIP = Const('WAVE_FP_SIGCLIP', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0)
+                        source=__NAME__, minimum=0.0)
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
@@ -1296,11 +1315,11 @@ WAVE_CCF_DRIFT_NOISE = Const('WAVE_CCF_DRIFT_NOISE', value=None, dtype=float,
 
 #   The size around a saturated pixel to flag as unusable
 WAVE_CCF_BOXSIZE = Const('WAVE_CCF_BOXSIZE', value=None, dtype=int,
-                             source=__NAME__, minimum=0.0)
+                         source=__NAME__, minimum=0.0)
 
 #   The maximum flux for a good (unsaturated) pixel
 WAVE_CCF_MAXFLUX = Const('WAVE_CCF_MAXFLUX', value=None, dtype=float,
-                             source=__NAME__, minimum=0.0)
+                         source=__NAME__, minimum=0.0)
 
 #   The CCF step size to use for the FP CCF
 WAVE_CCF_STEP = Const('WAVE_CCF_STEP', value=None, dtype=float, source=__NAME__,
@@ -1346,6 +1365,129 @@ TELLU_WHITELIST_NAME = Const('TELLU_WHITELIST_NAME', value=None, dtype=str,
 # Define telluric black list name
 TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: MAKE TELLURIC SETTINGS
+# =============================================================================
+# value below which the blaze in considered too low to be useful
+#     for all blaze profiles, we normalize to the 95th percentile.
+#     That's pretty much the peak value, but it is resistent to
+#     eventual outliers
+MKTELLU_BLAZE_PERCENTILE = Const('MKTELLU_BLAZE_PERCENTILE', value=None,
+                                 dtype=float, source=__NAME__)
+MKTELLU_CUT_BLAZE_NORM = Const('MKTELLU_CUT_BLAZE_NORM', value=None,
+                               dtype=float, source=__NAME__)
+
+# Define list of absorbers in the tapas fits table
+TELLU_ABSORBERS = Const('TELLU_ABSORBERS', value=None, dtype=str,
+                        source=__NAME__)
+
+# define the default convolution width [in pixels]
+MKTELLU_DEFAULT_CONV_WIDTH = Const('MKTELLU_DEFAULT_CONV_WIDTH', value=None,
+                                   dtype=int, source=__NAME__)
+
+# define the finer convolution width [in pixels]
+MKTELLU_FINER_CONV_WIDTH = Const('MKTELLU_FINER_CONV_WIDTH', value=None,
+                                 dtype=int, source=__NAME__)
+
+# define which orders are clean enough of tellurics to use the finer
+#     convolution width (should be a string list separated by commas)
+MKTELLU_CLEAN_ORDERS = Const('MKTELLU_CLEAN_ORDERS', value=None,
+                             dtype=str, source=__NAME__)
+
+# median-filter the template. we know that stellar features
+#    are very broad. this avoids having spurious noise in our
+#    templates [pixel]
+MKTELLU_TEMP_MED_FILT = Const('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
+                              source=__NAME__)
+
+# threshold in absorbance where we will stop iterating the absorption
+#     model fit
+MKTELLU_DPARAMS_THRES = Const('MKTELLU_DPARAMS_THRES', value=None, dtype=float,
+                              source=__NAME__)
+
+# max number of iterations, normally converges in about 12 iterations
+MKTELLU_MAX_ITER = Const('MKTELLU_MAX_ITER', value=None, dtype=int,
+                         source=__NAME__, minimum=1)
+
+# minimum transmission required for use of a given pixel in the TAPAS
+#    and SED fitting
+MKTELLU_THRES_TRANSFIT = Const('MKTELLU_THRES_TRANSFIT', value=None,
+                               dtype=float, source=__NAME__)
+
+# Defines the bad pixels if the spectrum is larger than this value.
+#    These values are likely an OH line or a cosmic ray
+MKTELLU_TRANS_FIT_UPPER_BAD = Const('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
+                                    dtype=float, source=__NAME__)
+
+# Defines the minimum allowed value for the recovered water vapor optical
+#    depth (should not be able 1)
+MKTELLU_TRANS_MIN_WATERCOL = Const('MKTELLU_TRANS_MIN_WATERCOL', value=None,
+                                   dtype=float, source=__NAME__)
+
+# Defines the maximum allowed value for the recovered water vapor optical
+#    depth
+MKTELLU_TRANS_MAX_WATERCOL = Const('MKTELLU_TRANS_MAX_WATERCOL', value=None,
+                                   dtype=float, source=__NAME__)
+
+# Defines the minimum number of good points required to normalise the
+#    spectrum, if less than this we don't normalise the spectrum by its
+#    median
+MKTELLU_TRANS_MIN_NUM_GOOD = Const('MKTELLU_TRANS_MIN_NUM_GOOD', value=None,
+                                   dtype=int, source=__NAME__)
+
+# Defines the percentile used to gauge which transmission points should
+#    be used to median (above this percentile is used to median)
+MKTELLU_TRANS_TAU_PERCENTILE = Const('MKTELLU_TRANS_TAU_PERCENTILE', value=None,
+                                     dtype=float, source=__NAME__)
+
+# sigma-clipping of the residuals of the difference between the
+# spectrum divided by the fitted TAPAS absorption and the
+# best guess of the SED
+MKTELLU_TRANS_SIGMA_CLIP = Const('MKTELLU_TRANS_SIGMA_CLIP', value=None,
+                                 dtype=float, source=__NAME__)
+
+# median-filter the trans data measured in pixels
+MKTELLU_TRANS_TEMPLATE_MEDFILT = Const('MKTELLU_TRANS_TEMPLATE_MEDFILT',
+                                       value=None, dtype=int, source=__NAME__)
+
+# Define the threshold for "small" values that do not add to the weighting
+MKTELLU_SMALL_WEIGHTING_ERROR = Const('MKTELLU_SMALL_WEIGHTING_ERROR',
+                                      value=None, dtype=float, source=__NAME__)
+
+# Define the orders to plot (not too many) - but can put 'all' to show all
+#    'all' are shown one-by-one and then closed (in non-interactive mode)
+#    values should be a string list separated by commas (unless = 'all')
+MKTELLU_PLOT_ORDER_NUMS = Const('MKTELLU_PLOT_ORDER_NUMS', value=None,
+                                dtype=str, source=__NAME__)
+
+# Set an upper limit for the allowed line-of-sight optical depth of water
+MKTELLU_TAU_WATER_ULIMIT = Const('MKTELLU_TAU_WATER_ULIMIT', value=None,
+                                 dtype=float, source=__NAME__)
+
+# set a lower and upper limit for the allowed line-of-sight optical depth
+#    for other absorbers (upper limit equivalent to airmass limit)
+# line-of-sight optical depth for other absorbers cannot be less than one
+#      (that's zenith) keep the limit at 0.2 just so that the value gets
+#      propagated to header and leaves open the possibility that during
+#      the convergence of the algorithm, values go slightly below 1.0
+MKTELLU_TAU_OTHER_LLIMIT = Const('MKTELLU_TAU_OTHER_LLIMIT', value=None,
+                                 dtype=float, source=__NAME__)
+
+# line-of-sight optical depth for other absorbers cannot be greater than 5
+#       that would be an airmass of 5 and SPIRou cannot observe there
+MKTELLU_TAU_OTHER_ULIMIT = Const('MKTELLU_TAU_OTHER_ULIMIT', value=None,
+                                 dtype=float, source=__NAME__)
+
+# bad values and small values are set to this value (as a lower limit to
+#   avoid dividing by small numbers or zero
+MKTELLU_SMALL_LIMIT = Const('MKTELLU_SMALL_LIMIT', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0)
+
+# =============================================================================
+# CALIBRATION: FIT TELLURIC SETTINGS
+# =============================================================================
+
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS

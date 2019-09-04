@@ -63,6 +63,14 @@ IMAGE_Y_LOW.value = 250
 IMAGE_Y_HIGH = IMAGE_Y_HIGH.copy(__NAME__)
 IMAGE_Y_HIGH.value = 3350
 
+# Define the pixel size in km/s / pix
+#    also used for the median sampling size in tellu correction
+IMAGE_PIXEL_SIZE = IMAGE_PIXEL_SIZE.copy(__NAME__)
+IMAGE_PIXEL_SIZE.value = 2.28
+
+# Define mean line width expressed in pix
+FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
+FWHM_PIXEL_LSF.value = 2.1
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -877,10 +885,10 @@ WAVE_FIT_DEGREE.value = 4
 
 # Define intercept and slope for a pixel shift
 WAVE_PIXEL_SHIFT_INTER = WAVE_PIXEL_SHIFT_INTER.copy(__NAME__)
-WAVE_PIXEL_SHIFT_INTER.value = 0.0    #  6.26637214e+00
+WAVE_PIXEL_SHIFT_INTER.value = 0.0    # 6.26637214e+00
 
 WAVE_PIXEL_SHIFT_SLOPE = WAVE_PIXEL_SHIFT_SLOPE.copy(__NAME__)
-WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    #  4.22131253e-04
+WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    # 4.22131253e-04
 
 #  Defines echelle number of first extracted order
 WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
@@ -949,7 +957,7 @@ WAVE_HC_NITER_FIT_TRIPLET.value = 3
 # Maximum distance between catalog line and init guess line to accept
 #     line in m/s
 WAVE_HC_MAX_DV_CAT_GUESS = WAVE_HC_MAX_DV_CAT_GUESS.copy(__NAME__)
-WAVE_HC_MAX_DV_CAT_GUESS.value= 60000
+WAVE_HC_MAX_DV_CAT_GUESS.value = 60000
 
 # The fit degree between triplets
 WAVE_HC_TFIT_DEG = WAVE_HC_TFIT_DEG.copy(__NAME__)
@@ -1240,6 +1248,124 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 # Define telluric black list name
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_whitelist.txt'
+
+# =============================================================================
+# CALIBRATION: MAKE TELLURIC SETTINGS
+# =============================================================================
+# value below which the blaze in considered too low to be useful
+#     for all blaze profiles, we normalize to the 95th percentile.
+#     That's pretty much the peak value, but it is resistent to
+#     eventual outliers
+MKTELLU_BLAZE_PERCENTILE = MKTELLU_BLAZE_PERCENTILE.copy(__NAME__)
+MKTELLU_BLAZE_PERCENTILE.value = 95
+MKTELLU_CUT_BLAZE_NORM = MKTELLU_CUT_BLAZE_NORM.copy(__NAME__)
+MKTELLU_CUT_BLAZE_NORM.value = 0.1
+
+# Define list of absorbers in the tapas fits table
+TELLU_ABSORBERS = TELLU_ABSORBERS.copy(__NAME__)
+TELLU_ABSORBERS.value = 'combined, h2o, o3, n2o, o2, co2, ch4'
+
+# define the default convolution width [in pixels]
+MKTELLU_DEFAULT_CONV_WIDTH = MKTELLU_DEFAULT_CONV_WIDTH.copy(__NAME__)
+MKTELLU_DEFAULT_CONV_WIDTH.value = 900
+
+# define the finer convolution width [in pixels]
+MKTELLU_FINER_CONV_WIDTH = MKTELLU_FINER_CONV_WIDTH.copy(__NAME__)
+MKTELLU_FINER_CONV_WIDTH.value = 100
+
+# define which orders are clean enough of tellurics to use the finer
+#     convolution width (should be a string list separated by commas)
+MKTELLU_CLEAN_ORDERS = MKTELLU_CLEAN_ORDERS.copy(__NAME__)
+MKTELLU_CLEAN_ORDERS.value = '2, 3, 5, 6, 7, 8, 9, 14, 15, 19, 20, 28, 29, 30, 31, 32, 33, 34, 35, 43, 44'
+
+# median-filter the template. we know that stellar features
+#    are very broad. this avoids having spurious noise in our
+#    templates [pixel]
+MKTELLU_TEMP_MED_FILT = MKTELLU_TEMP_MED_FILT.copy(__NAME__)
+MKTELLU_TEMP_MED_FILT.value = 15
+
+# threshold in absorbance where we will stop iterating the absorption
+#     model fit
+MKTELLU_DPARAMS_THRES = MKTELLU_DPARAMS_THRES.copy(__NAME__)
+MKTELLU_DPARAMS_THRES.value = 0.001
+
+# max number of iterations, normally converges in about 12 iterations
+MKTELLU_MAX_ITER = MKTELLU_MAX_ITER.copy(__NAME__)
+MKTELLU_MAX_ITER.value = 50
+
+# minimum transmission required for use of a given pixel in the TAPAS
+#    and SED fitting
+MKTELLU_THRES_TRANSFIT = MKTELLU_THRES_TRANSFIT.copy(__NAME__)
+MKTELLU_THRES_TRANSFIT.value = 0.3
+
+# Defines the bad pixels if the spectrum is larger than this value.
+#    These values are likely an OH line or a cosmic ray
+MKTELLU_TRANS_FIT_UPPER_BAD = MKTELLU_TRANS_FIT_UPPER_BAD.copy(__NAME__)
+MKTELLU_TRANS_FIT_UPPER_BAD.value = 1.1
+
+# Defines the minimum allowed value for the recovered water vapor optical
+#    depth (should not be able 1)
+MKTELLU_TRANS_MIN_WATERCOL = MKTELLU_TRANS_MIN_WATERCOL.copy(__NAME__)
+MKTELLU_TRANS_MIN_WATERCOL.value = 0.2
+
+# Defines the maximum allowed value for the recovered water vapor optical
+#    depth
+MKTELLU_TRANS_MAX_WATERCOL = MKTELLU_TRANS_MAX_WATERCOL.copy(__NAME__)
+MKTELLU_TRANS_MAX_WATERCOL.value = 99
+
+# Defines the minimum number of good points required to normalise the
+#    spectrum, if less than this we don't normalise the spectrum by its
+#    median
+MKTELLU_TRANS_MIN_NUM_GOOD = MKTELLU_TRANS_MIN_NUM_GOOD.copy(__NAME__)
+MKTELLU_TRANS_MIN_NUM_GOOD.value = 100
+
+# Defines the percentile used to gauge which transmission points should
+#    be used to median (above this percentile is used to median)
+MKTELLU_TRANS_TAU_PERCENTILE = MKTELLU_TRANS_TAU_PERCENTILE.copy(__NAME__)
+MKTELLU_TRANS_TAU_PERCENTILE.value = 95
+
+# sigma-clipping of the residuals of the difference between the
+# spectrum divided by the fitted TAPAS absorption and the
+# best guess of the SED
+MKTELLU_TRANS_SIGMA_CLIP = MKTELLU_TRANS_SIGMA_CLIP.copy(__NAME__)
+MKTELLU_TRANS_SIGMA_CLIP.value = 20.0
+
+# median-filter the trans data measured in pixels
+MKTELLU_TRANS_TEMPLATE_MEDFILT = MKTELLU_TRANS_TEMPLATE_MEDFILT.copy(__NAME__)
+MKTELLU_TRANS_TEMPLATE_MEDFILT.value = 31
+
+# Define the threshold for "small" values that do not add to the weighting
+MKTELLU_SMALL_WEIGHTING_ERROR = MKTELLU_SMALL_WEIGHTING_ERROR.copy(__NAME__)
+MKTELLU_SMALL_WEIGHTING_ERROR.value = 0.01
+
+# Define the orders to plot (not too many) - but can put 'all' to show all
+#    'all' are shown one-by-one and then closed (in non-interactive mode)
+#    values should be a string list separated by commas (unless = 'all')
+MKTELLU_PLOT_ORDER_NUMS = MKTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
+MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
+
+# Set an upper limit for the allowed line-of-sight optical depth of water
+MKTELLU_TAU_WATER_ULIMIT = MKTELLU_TAU_WATER_ULIMIT.copy(__NAME__)
+MKTELLU_TAU_WATER_ULIMIT.value = 99
+
+# set a lower and upper limit for the allowed line-of-sight optical depth
+#    for other absorbers (upper limit equivalent to airmass limit)
+# line-of-sight optical depth for other absorbers cannot be less than one
+#      (that's zenith) keep the limit at 0.2 just so that the value gets
+#      propagated to header and leaves open the possibility that during
+#      the convergence of the algorithm, values go slightly below 1.0
+MKTELLU_TAU_OTHER_LLIMIT = MKTELLU_TAU_OTHER_LLIMIT.copy(__NAME__)
+MKTELLU_TAU_OTHER_LLIMIT.value = 0.2
+
+# line-of-sight optical depth for other absorbers cannot be greater than 5
+#       that would be an airmass of 5 and SPIRou cannot observe there
+MKTELLU_TAU_OTHER_ULIMIT = MKTELLU_TAU_OTHER_ULIMIT.copy(__NAME__)
+MKTELLU_TAU_OTHER_ULIMIT.value = 5.0
+
+# bad values and small values are set to this value (as a lower limit to
+#   avoid dividing by small numbers or zero
+MKTELLU_SMALL_LIMIT = MKTELLU_SMALL_LIMIT.copy(__NAME__)
+MKTELLU_SMALL_LIMIT.value = 1.0e-9
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS

@@ -235,7 +235,7 @@ KW_EXT_TYPE.set(key='DRS_EOUT', comment='DRS Extraction input DPRTYPE')
 # Define qc variables
 # -----------------------------------------------------------------------------
 KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
-KW_DRS_QC.set(key='QCC', comment='All quality control passed')
+KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed')
 KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
 KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='All quality control passed')
 KW_DRS_QC_NAME = KW_DRS_QC_NAME.copy(__NAME__)
