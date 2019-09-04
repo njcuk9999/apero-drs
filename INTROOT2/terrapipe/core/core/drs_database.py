@@ -411,7 +411,8 @@ def get_full_database(params, dbname):
 # =============================================================================
 # Define database get functions
 # =============================================================================
-def load_db_file(params, key=None, header=None, filename=None, **kwargs):
+def load_db_file(params, key=None, header=None, filename=None,
+                 get_header=False, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.load_db_file()')
     # get keys from kwargs
     n_entries = kwargs.get('n_entries', 1)
@@ -425,9 +426,18 @@ def load_db_file(params, key=None, header=None, filename=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with filename set
     if filename is not None:
-        image, abspath = load_db_file_from_filename(params, filename, ext,
-                                                    fmt, kind, where='guess')
-        return [image], [abspath]
+        # get db fits file
+        out = load_db_file_from_filename(params, filename, ext, fmt, kind,
+                                         where='guess', get_header=get_header)
+        if get_header:
+            image, header, abspath = out
+        else:
+            image, abspath = out
+            header = None
+        if get_header:
+            return [image], [header], [abspath]
+        else:
+            return [image], [abspath]
     # deal with no header and no filename
     if header is None:
         # raise error that header must be defined if filename is None
@@ -444,29 +454,50 @@ def load_db_file(params, key=None, header=None, filename=None, **kwargs):
     # get the badpix entries
     entries = get_key_from_db(params, key, cdb, header, n_ent=n_entries)
     # storage
-    images, abspaths = [], []
+    images, headers, abspaths = [], [], []
     # loop around entries
     for entry in entries:
         # get badpix filename
         filename = entry[filecol]
         # ------------------------------------------------------------------
-        # get calib fits file
-        image, abspath = load_db_file_from_filename(params, filename, ext,
-                                                    fmt, kind, where=where)
+        # get db fits file
+        out = load_db_file_from_filename(params, filename, ext, fmt, kind,
+                                         where=where, get_header=get_header)
+        if get_header:
+            image, header, abspath = out
+        else:
+            image, abspath = out
+            header = None
         # ------------------------------------------------------------------
         # append to storage
         images.append(image)
         abspaths.append(abspath)
-
-    # deal with if n_entries is 1 (just return file not list)
-    if n_entries == 1:
-        return images[0], abspaths[0]
+        headers.append(header)
+    # ----------------------------------------------------------------------
+    # deal with returns with and without header
+    if get_header:
+        # deal with expecting 1 entry but found None
+        if n_entries == 1 and len(images) == 0:
+            return None, None, None
+        # deal with if n_entries is 1 (just return file not list)
+        elif n_entries == 1:
+            return images[-1], headers[-1], abspaths[-1]
+        else:
+            return images, headers, abspaths
     else:
-        return images, abspaths
+        # deal with expecting 1 entry but found None
+        if n_entries == 1 and len(images) == 0:
+            return None, None
+        # deal with if n_entries is 1 (just return file not list)
+        elif n_entries == 1:
+            return images[-1], abspaths[-1]
+        else:
+            return images, abspaths
 
 
 def load_db_file_from_filename(params, filename, ext=None, fmt=None,
-                               kind='image', where='calibration'):
+                               kind='image', where='calibration',
+                               get_header=False):
     func_name = __NAME__ + '.load_db_file_from_filename()'
     # ------------------------------------------------------------------
     # get the calibration path and telluric path
@@ -510,8 +541,17 @@ def load_db_file_from_filename(params, filename, ext=None, fmt=None,
         WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
         image = None
     # ------------------------------------------------------------------
+    # get header if required
+    if get_header:
+        header = drs_fits.read_header(params, abspath, ext=ext)
+    else:
+        header = None
+    # ------------------------------------------------------------------
     # return image and absolute path
-    return image, abspath
+    if get_header:
+        return image, header, abspath
+    else:
+        return image, abspath
 
 
 # =============================================================================
