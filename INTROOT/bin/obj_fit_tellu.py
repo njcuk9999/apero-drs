@@ -394,7 +394,7 @@ def main(night_name=None, files=None):
             loc['FIT_PC'][:, comp] = shift_fpc.reshape(wargs[1].shape)
 
         # ------------------------------------------------------------------
-        # Shift the pca components to correct frame
+        # Shift the tapas spectrum to correct frame
         # ------------------------------------------------------------------
         # log process
         wmsg1 = 'Shifting TAPAS spectrum from master wavelength grid'
