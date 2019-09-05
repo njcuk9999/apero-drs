@@ -41,6 +41,8 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = drs_log.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
+# alias pcheck
+pcheck = drs_log.find_param
 
 
 # =============================================================================
@@ -241,7 +243,13 @@ class Database():
             r_entries = self.rdata[mask1]
         # if mode is None then we just want all data from this entry
         if mode is None:
-            return entries
+            # sort by time
+            timesort = np.argsort(r_entries['rtime'])
+            # return the first n_entries (after timesorting)
+            if isinstance(n_entries, str):
+                return entries[timesort]
+            elif isinstance(n_entries, int):
+                return entries[timesort][:n_entries]
         # if mode is not None and time_used is None we have a problem
         elif (mode is not None) and (usetime is None):
             eargs = [mode, self.dbname, func_name]
@@ -319,8 +327,10 @@ def add_file(params, outfile, night=None):
         update_telludb(params, dbname, dbkey, outfile, night)
 
 
-def copy_calibrations(params, header):
-
+def copy_calibrations(params, header, **kwargs):
+    func_name = __NAME__ + '.copy_calibrations()'
+    # get parameters from params/kwargs
+    mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
     # set the dbname
     dbname = 'calibration'
     # get the output filename directory
@@ -334,7 +344,8 @@ def copy_calibrations(params, header):
     # get each unique key get the entry
     entry_tables = []
     # loop around unique keys and add to list
-    gkwargs = dict(database=cdb, header=header, n_ent=1, required=False)
+    gkwargs = dict(database=cdb, header=header, n_ent=1, required=False,
+                   mode=mode)
     for key in cdb.unique_keys:
         # get closest key
         entry_table = get_key_from_db(params, key, **gkwargs)
@@ -381,9 +392,11 @@ def get_header_time(params, database, header):
     return _get_time(params, database.dbname, header=header)
 
 
-def get_key_from_db(params, key, database, header, n_ent=1, required=True):
-    # get mode
-    mode = params['CALIB_DB_MATCH']
+# =============================================================================
+# Define database get functions
+# =============================================================================
+def get_key_from_db(params, key, database, header, n_ent=1, required=True,
+                    mode=None):
     # ----------------------------------------------------------------------
     # get time from header
     header_time = _get_time(params, database.dbname, header=header)
@@ -408,97 +421,8 @@ def get_full_database(params, dbname):
         return database
 
 
-# =============================================================================
-# Define database get functions
-# =============================================================================
-def load_db_file(params, key=None, header=None, filename=None,
-                 get_header=False, **kwargs):
-    func_name = kwargs.get('func', __NAME__ + '.load_db_file()')
-    # get keys from kwargs
-    n_entries = kwargs.get('n_entries', 1)
-    ext = kwargs.get('ext', 0)
-    # where = 'calibration', 'telluric', or 'guess'
-    where = kwargs.get('where', 'calibration')
-    # kind = 'image' or 'table'
-    kind = kwargs.get('kind', 'image')
-    # fmt = valid astropy table format
-    fmt = kwargs.get('fmt', 'fits')
-    # ----------------------------------------------------------------------
-    # deal with filename set
-    if filename is not None:
-        # get db fits file
-        out = load_db_file_from_filename(params, filename, ext, fmt, kind,
-                                         where='guess', get_header=get_header)
-        if get_header:
-            image, header, abspath = out
-        else:
-            image, abspath = out
-            header = None
-        if get_header:
-            return [image], [header], [abspath]
-        else:
-            return [image], [abspath]
-    # deal with no header and no filename
-    if header is None:
-        # raise error that header must be defined if filename is None
-        WLOG(params, 'error', TextEntry('00-001-00034', args=[func_name]))
-    # deal with no key and no filename
-    if key is None:
-        # raise error that key must be defined if filename is None
-        WLOG(params, 'error', TextEntry('00-001-00035', args=[func_name]))
-    # ----------------------------------------------------------------------
-    # get calibDB
-    cdb = get_full_database(params, where)
-    # get filename col
-    filecol = cdb.file_col
-    # get the badpix entries
-    entries = get_key_from_db(params, key, cdb, header, n_ent=n_entries)
-    # storage
-    images, headers, abspaths = [], [], []
-    # loop around entries
-    for entry in entries:
-        # get badpix filename
-        filename = entry[filecol]
-        # ------------------------------------------------------------------
-        # get db fits file
-        out = load_db_file_from_filename(params, filename, ext, fmt, kind,
-                                         where=where, get_header=get_header)
-        if get_header:
-            image, header, abspath = out
-        else:
-            image, abspath = out
-            header = None
-        # ------------------------------------------------------------------
-        # append to storage
-        images.append(image)
-        abspaths.append(abspath)
-        headers.append(header)
-    # ----------------------------------------------------------------------
-    # deal with returns with and without header
-    if get_header:
-        # deal with expecting 1 entry but found None
-        if n_entries == 1 and len(images) == 0:
-            return None, None, None
-        # deal with if n_entries is 1 (just return file not list)
-        elif n_entries == 1:
-            return images[-1], headers[-1], abspaths[-1]
-        else:
-            return images, headers, abspaths
-    else:
-        # deal with expecting 1 entry but found None
-        if n_entries == 1 and len(images) == 0:
-            return None, None
-        # deal with if n_entries is 1 (just return file not list)
-        elif n_entries == 1:
-            return images[-1], abspaths[-1]
-        else:
-            return images, abspaths
-
-
-def load_db_file_from_filename(params, filename, ext=None, fmt=None,
-                               kind='image', where='calibration',
-                               get_header=False):
-    func_name = __NAME__ + '.load_db_file_from_filename()'
+def get_db_abspath(params, filename=None, where='guess'):
+    func_name = __NAME__ + '.get_db_abspath()'
     # ------------------------------------------------------------------
     # get the calibration path and telluric path
     cal_path = os.path.join(params['DRS_CALIB_DB'], filename)
@@ -529,9 +453,18 @@ def load_db_file_from_filename(params, filename, ext=None, fmt=None,
         eargs = [' or '.join(['calibration', 'telluric', 'guess']), func_name]
         WLOG(params, 'error', TextEntry('00-001-00037', args=eargs))
         abspath = None
+    # return the absolute path
+    return abspath
+
+
+def get_db_file(params, abspath, ext, fmt, kind, get_image=True,
+                get_header=False):
+    func_name = __NAME__ + '.get_db_file'
     # ------------------------------------------------------------------
-    # get calib fits file
-    if kind == 'image':
+    # get db fits file
+    if not get_image:
+        image = None
+    elif kind == 'image':
         image = drs_fits.read(params, abspath, ext=ext)
     elif kind == 'table':
         image = drs_table.read_table(params, abspath, fmt=fmt)
@@ -546,12 +479,8 @@ def load_db_file_from_filename(params, filename, ext=None, fmt=None,
         header = drs_fits.read_header(params, abspath, ext=ext)
     else:
         header = None
-    # ------------------------------------------------------------------
-    # return image and absolute path
-    if get_header:
-        return image, header, abspath
-    else:
-        return image, abspath
+    # return the image and header
+    return image, header
 
 
 # =============================================================================
