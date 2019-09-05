@@ -520,7 +520,7 @@ def load_orderp(params, header, fiber, filename=None):
     key = out_loc_orderp.get_dbkey(fiber=usefiber)
     # load calib file
     orderp, orderp_file = general.load_calib_file(params, key, header,
-                                                  filename=filename)
+                                                     filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-013-00022', args=[orderp_file]))
     # return the master image

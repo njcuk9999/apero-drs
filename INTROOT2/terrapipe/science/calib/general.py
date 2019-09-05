@@ -17,6 +17,7 @@ from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
+from terrapipe.io import drs_table
 from . import dark
 from . import badpix
 from . import background
@@ -274,12 +275,80 @@ def add_calibs_to_header(outfile, props):
     return outfile
 
 
-def load_calib_file(params, key=None, header=None, filename=None, **kwargs):
+def load_calib_file(params, key=None, inheader=None, filename=None,
+                    get_image=True, get_header=False, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.load_calib_file()')
-    # get file
-    return drs_database.load_db_file(params, key, header, filename,
-                                     where='calibration', func=func_name,
-                                     **kwargs)
+    # get keys from params/kwargs
+    n_entries = kwargs.get('n_entries', 1)
+    required = kwargs.get('required', True)
+    mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
+    # valid extension (zero by default)
+    ext = kwargs.get('ext', 0)
+    # fmt = valid astropy table format
+    fmt = kwargs.get('fmt', 'fits')
+    # kind = 'image' or 'table'
+    kind = kwargs.get('kind', 'image')
+    # ----------------------------------------------------------------------
+    # deal with filename set
+    if filename is not None:
+        # get db fits file
+        abspath = drs_database.get_db_abspath(params, filename, where='guess')
+        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
+                                                 get_image, get_header)
+        # return here
+        if get_header:
+            return [image], [header], [abspath]
+        else:
+            return [image], [abspath]
+    # ----------------------------------------------------------------------
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get calibration entries
+    entries = drs_database.get_key_from_db(params, key, cdb, inheader,
+                                           n_ent=n_entries, mode=mode,
+                                           required=required)
+    # get filename col
+    filecol = cdb.file_col
+    # ----------------------------------------------------------------------
+    # storage
+    images, headers, abspaths = [], [], []
+    # ----------------------------------------------------------------------
+    # loop around entries
+    for it, entry in entries:
+        # get entry filename
+        filename = entry[filecol]
+        # ------------------------------------------------------------------
+        # get absolute path
+        abspath = drs_database.get_db_abspath(params, filename,
+                                              where='calibration')
+        # append to storage
+        abspaths.append(abspath)
+        # load image/header
+        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
+                                                 get_image, get_header)
+        # append to storage
+        images.append(image)
+        # append to storage
+        headers.append(header)
+    # ----------------------------------------------------------------------
+    # deal with returns with and without header
+    if get_header:
+        if not required and len(images) == 0:
+            return None, None, None
+        # deal with if n_entries is 1 (just return file not list)
+        if n_entries == 1:
+            return images[-1], headers[-1], abspaths[-1]
+        else:
+            return images, headers, abspaths
+    else:
+        if not required and len(images) == 0:
+            return None, None, None
+        # deal with if n_entries is 1 (just return file not list)
+        if n_entries == 1:
+            return images[-1], abspaths[-1]
+        else:
+            return images, abspaths
+
 
 # =============================================================================
 # Define worker functions
