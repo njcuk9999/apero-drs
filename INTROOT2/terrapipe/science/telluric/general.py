@@ -910,7 +910,7 @@ def gen_absorption_pca_calc(params, recipe, transfiles, fiber, **kwargs):
         # TODO: fill in error
         WLOG(params, 'debug', TextEntry('', args=dargs))
 
-
+    # TODO: This is where we are up to
 
 
 
