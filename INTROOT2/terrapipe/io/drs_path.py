@@ -167,6 +167,30 @@ def group_files_by_time(params, times, time_thres, time_unit='hours'):
     return matched_id
 
 
+def get_most_recent(filelist):
+    """
+    Find the most recent file in a list of files
+
+    :param filelist: list of strings, the file list (absolute paths)
+
+    :return:
+    """
+    # set most recent time to None to start
+    most_recent = None
+    # loop around file list
+    for file_it in filelist:
+        # get modified time
+        file_time = os.path.getctime(file_it)
+        # add to most_recent if newer
+        if most_recent is None:
+            most_recent = file_time
+        elif file_time > most_recent:
+            most_recent = file_time
+    # return most recent time
+    return most_recent
+
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
