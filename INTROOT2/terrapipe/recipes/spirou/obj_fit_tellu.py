@@ -216,6 +216,8 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ----------------------------------------------------------------------
+        # TODO: Got to here with changes
+        telluric.gen_absorption_pca_calc
         # TODO: Add code here
 
         # ------------------------------------------------------------------

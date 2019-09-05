@@ -904,6 +904,9 @@ def gen_absorption_pca_calc(params, recipe, transfiles, fiber, **kwargs):
     try:
         # try loading from file
         abso = np.load(abso_npy.filename)
+        # log that we have loaded abso from file
+        wargs = [abso_npy.filename]
+        WLOG(params, '', TextEntry('', args=wargs))
     except Exception as e:
         # debug print out
         dargs = [abso_npy, type(e), e]
