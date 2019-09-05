@@ -22,8 +22,9 @@ from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
-from terrapipe.science.calib import flat_blaze
 from terrapipe.io import drs_data
+from terrapipe.io import drs_path
+from terrapipe.science.calib import flat_blaze
 
 
 # =============================================================================
@@ -89,16 +90,20 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
                      func_name)
     cut_blaze_norm = pcheck(params, 'MKTELLU_CUT_BLAZE_NORM', 'cut_blaze_norm',
                             kwargs, func_name)
+
+    # ----------------------------------------------------------------------
+    # copy the image
+    image1 = np.array(image)
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
     blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
 
     # loop through blaze orders, normalize blaze by its peak amplitude
-    for order_num in range(image.shape[0]):
+    for order_num in range(image1.shape[0]):
         # normalize the spectrum
-        spo, bzo = image[order_num], blaze[order_num]
+        spo, bzo = image1[order_num], blaze[order_num]
 
-        image[order_num] = spo / np.nanpercentile(spo, blaze_p)
+        image1[order_num] = spo / np.nanpercentile(spo, blaze_p)
         # normalize the blaze
         blaze[order_num] = bzo / np.nanpercentile(bzo, blaze_p)
     # ----------------------------------------------------------------------
@@ -109,11 +114,11 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     # set bad blaze to NaN
     blaze[badblaze] = np.nan
     # set to NaN values where spectrum is zero
-    zeromask = image == 0
-    image[zeromask] = np.nan
+    zeromask = image1 == 0
+    image1[zeromask] = np.nan
     # divide spectrum by blaze
     with warnings.catch_warnings(record=True) as _:
-        image = image / blaze
+        image1 = image1 / blaze
     # ----------------------------------------------------------------------
     # parameter dictionary
     nprops = ParamDict()
@@ -123,27 +128,90 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     nprops['BLAZE_FILE'] = blaze_file
 
     # return the normalised image and the properties
-    return image, nprops
+    return image1, nprops
 
 
 # =============================================================================
 # Database functions
 # =============================================================================
-def load_tellu_file(params, key=None, header=None, filename=None,
-                    get_header=False, **kwargs):
+def load_tellu_file(params, key=None, inheader=None, filename=None,
+                    get_image=True, get_header=False, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.load_tellu_file()')
-    # get file
-    return drs_database.load_db_file(params, key, header, filename,
-                                     where='telluric', func=func_name,
-                                     get_header=get_header, **kwargs)
+    # get keys from params/kwargs
+    n_entries = kwargs.get('n_entries', 1)
+    required = kwargs.get('required', True)
+    mode = None
+    # valid extension (zero by default)
+    ext = kwargs.get('ext', 0)
+    # fmt = valid astropy table format
+    fmt = kwargs.get('fmt', 'fits')
+    # kind = 'image' or 'table'
+    kind = kwargs.get('kind', 'image')
+    # ----------------------------------------------------------------------
+    # deal with filename set
+    if filename is not None:
+        # get db fits file
+        abspath = drs_database.get_db_abspath(params, filename, where='guess')
+        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
+                                                 get_image, get_header)
+        # return here
+        if get_header:
+            return [image], [header], [abspath]
+        else:
+            return [image], [abspath]
+    # ----------------------------------------------------------------------
+    # get telluDB
+    tdb = drs_database.get_full_database(params, 'telluric')
+    # get calibration entries
+    entries = drs_database.get_key_from_db(params, key, tdb, inheader,
+                                           n_ent=n_entries, mode=mode,
+                                           required=required)
+    # get filename col
+    filecol = tdb.file_col
+    # ----------------------------------------------------------------------
+    # storage
+    images, headers, abspaths = [], [], []
+    # ----------------------------------------------------------------------
+    # loop around entries
+    for it, entry in entries:
+        # get entry filename
+        filename = entry[filecol]
+        # ------------------------------------------------------------------
+        # get absolute path
+        abspath = drs_database.get_db_abspath(params, filename,
+                                              where='telluric')
+        # append to storage
+        abspaths.append(abspath)
+        # load image/header
+        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
+                                                 get_image, get_header)
+        # append to storage
+        images.append(image)
+        # append to storage
+        headers.append(header)
+    # ----------------------------------------------------------------------
+    # deal with returns with and without header
+    if get_header:
+        if not required and len(images) == 0:
+            return None, None, None
+        # deal with if n_entries is 1 (just return file not list)
+        if n_entries == 1:
+            return images[-1], headers[-1], abspaths[-1]
+        else:
+            return images, headers, abspaths
+    else:
+        if not required and len(images) == 0:
+            return None, None, None
+        # deal with if n_entries is 1 (just return file not list)
+        if n_entries == 1:
+            return images[-1], abspaths[-1]
+        else:
+            return images, abspaths
 
 
 def load_templates(params, recipe, header, objname, fiber):
-
-
     # get file definition
-    out_temp = recipe.outputs['OBJ_TEMP'].newcopy(recipe=recipe,
-                                                        fiber=fiber)
+    out_temp = recipe.outputs['TELLU_TEMP'].newcopy(recipe=recipe, fiber=fiber)
     # get key
     temp_key = out_temp.get_dbkey()
     # load tellu file, header and abspaths
@@ -166,14 +234,11 @@ def load_templates(params, recipe, header, objname, fiber):
     for it, temp_header in enumerate(temp_headers):
         # get objname
         temp_objname = temp_header[params['KW_OBJNAME'][0]]
-        # get time
-        temp_time = temp_header[params['KW_MID_OBS_TIME'][0]]
         # if temp_objname is the same as objname (input) then we have a
         #   valid template
         if temp_objname.upper().strip() == objname.upper().strip():
             valid_images.append(temp_images[it])
             valid_filenames.append(temp_filenames[it])
-            valid_times.append(temp_time)
 
     # deal with no files for this object name
     if len(valid_images) == 0:
@@ -181,17 +246,34 @@ def load_templates(params, recipe, header, objname, fiber):
         wargs = [params['KW_OBJNAME'][0], objname]
         WLOG(params, '', TextEntry('40-019-00004', args=wargs))
         return None, None
-    # convert arrays
-    valid_images = np.array(valid_images)
-    valid_filenames = np.array(valid_filenames)
-    valid_times = np.array(valid_times)
-    # sort by unixtimes
-    sort = np.argsort(valid_times)
     # log which template we are using
-    wargs = [valid_filenames[sort][-1]]
+    wargs = [valid_filenames[-1]]
     WLOG(params, '', TextEntry('40-019-00005', args=wargs))
     # only return most recent template
-    return valid_images[sort][-1], valid_filenames[sort][-1]
+    return valid_images[-1], valid_filenames[-1]
+
+
+def get_transmission_files(params, recipe, header, fiber):
+    # get file definition
+    out_trans = recipe.outputs['TELLU_MAP'].newcopy(recipe=recipe, fiber=fiber)
+    # get key
+    trans_key = out_trans.get_dbkey()
+    # load tellu file, header and abspaths
+    _, trans_filenames = load_tellu_file(params, trans_key, header,
+                                         n_entries='all', get_image=False)
+    # storage for valid files/images/times
+    valid_filenames = []
+    # loop around header and get times
+    for filename in enumerate(valid_filenames):
+        # only add if filename not in list already (files will be overwritten
+        #   but we can have multiple entries in database)
+        if filename not in trans_filenames:
+            # append to list
+            valid_filenames.append(filename)
+    # convert arrays
+    valid_filenames = np.array(valid_filenames)
+    # return all valid sorted in time
+    return valid_filenames
 
 
 # =============================================================================
@@ -213,13 +295,12 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     # get key
     conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
-    conv_files, conv_paths = load_tellu_file(params, conv_key, header,
-                                             n_entries='all')
+    _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
+                                    get_image=False)
     # construct the filename from file instance
     out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'])
-
     # if our npy file already exists then we just need to read it
-    if out_tellu_conv.filename in conv_files:
+    if out_tellu_conv.filename in conv_paths:
         # log that we are loading tapas convolved file
         wargs = [out_tellu_conv.filename]
         WLOG(params, '', TextEntry('40-019-00001', args=wargs))
@@ -278,6 +359,66 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     tapas_props.set_sources(keys, func_name)
     # return tapas props
     return tapas_props
+
+
+def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
+    func_name = __NAME__ + '.load_conv_tapas()'
+    # get parameters from params/kwargs
+    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
+                             func_name)
+    fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', 'fwhm_lsf', kwargs,
+                            func_name)
+    # ----------------------------------------------------------------------
+    # Load any convolved files from database
+    # ----------------------------------------------------------------------
+    # get file definition
+    out_tellu_conv = recipe.outputs['TELL_CONV'].newcopy(recipe=recipe,
+                                                         fiber=fiber)
+    # get key
+    conv_key = out_tellu_conv.get_dbkey()
+    # load tellu file
+    _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
+                                    get_images=False)
+    # construct the filename from file instance
+    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'])
+    # if our npy file already exists then we just need to read it
+    if out_tellu_conv.filename in conv_paths:
+        # log that we are loading tapas convolved file
+        wargs = [out_tellu_conv.filename]
+        WLOG(params, '', TextEntry('40-019-00001', args=wargs))
+        # ------------------------------------------------------------------
+        # Load the convolved TAPAS atmospheric transmission from file
+        # ------------------------------------------------------------------
+        # load npy file
+        out_tellu_conv.read(params)
+        # push data into array
+        tapas_all_species = np.array(out_tellu_conv.data)
+        # ------------------------------------------------------------------
+        # get the tapas_water and tapas_others data
+        # ------------------------------------------------------------------
+        # water is the second column
+        tapas_water = tapas_all_species[1, :]
+        # other is defined as the product of the other columns
+        tapas_other = np.prod(tapas_all_species[2:, :], axis=0)
+        # return the tapas info in a ParamDict
+        tapas_props = ParamDict()
+        tapas_props['TAPAS_ALL_SPECIES'] = tapas_all_species
+        tapas_props['TAPAS_WATER'] = tapas_water
+        tapas_props['TAPAS_OTHER'] = tapas_other
+        tapas_props['TAPAS_FILE'] = out_tellu_conv.filename
+        tapas_props['TELLU_ABORBERS'] = tellu_absorbers
+        tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
+        # set source
+        keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
+                'TAPAS_FILE', 'TELLU_ABSORBERS', 'FWHM_PIXEL_LSF']
+        tapas_props.set_sources(keys, func_name)
+        # return tapas props
+        return tapas_props
+    # else we generate an error
+    else:
+        # log that no matching tapas convolved file exists
+        wargs = [conv_key, out_tellu_conv.filename, func_name]
+        WLOG(params, 'error', TextEntry('09-019-00002', args=wargs))
 
 
 # =============================================================================
@@ -725,6 +866,76 @@ def calculate_telluric_absorption(params, image, template, template_file,
     # return tprops
     return tprops
 
+# =============================================================================
+# Fit telluric functions
+# =============================================================================
+def gen_absorption_pca_calc(params, recipe, transfiles, fiber, **kwargs):
+    func_name = __NAME__ + '.gen_absorption_pca_calc()'
+    # ----------------------------------------------------------------------
+    # get constants from params/kwargs
+    npc = pcheck(params, 'FTELLU_NUM_PRINCIPLE_COMP', 'npc', kwargs, func_name)
+
+    # ------------------------------------------------------------------
+    # get the transmission map key
+    out_trans = recipe.outputs['TELLU_MAP'].newcopy(recipe=recipe, fiber=fiber)
+    # get key
+    trans_key = out_trans.get_dbkey()
+
+    # ----------------------------------------------------------------------
+    # check that we have enough trans files for pca calculation (must be greater
+    #     than number of principle components
+    if len(transfiles) <= npc:
+        # log and raise error: not enough tranmission maps to run pca analysis
+        wargs = [trans_key, len(transfiles), npc, 'FTELLU_NUM_PRINCIPLE_COMP',
+                 func_name]
+        WLOG(params, 'error', TextEntry('09-019-00003', args=wargs))
+    # ----------------------------------------------------------------------
+    # check whether we can use pre-saved absorption map
+    # ----------------------------------------------------------------------
+    # get most recent file time
+    recent_filetime = drs_path.get_most_recent(transfiles)
+    # get new instance of ABSO_NPY file
+    abso_npy = recipe.outputs['ABSO_NPY'].newcopy(recipe=recipe, fiber=fiber)
+    # construct the filename from file instance
+    abso_npy_filename = 'tellu_save_{0}.npy'.format(recent_filetime)
+    abso_npy.construct_filename(params, filename=abso_npy_filename,
+                                path=params['DRS_TELLU_DB'])
+    # noinspection PyBroadException
+    try:
+        # try loading from file
+        abso = np.load(abso_npy.filename)
+    except Exception as e:
+        # debug print out
+        dargs = [abso_npy, type(e), e]
+        # TODO: fill in error
+        WLOG(params, 'debug', TextEntry('', args=dargs))
+
+
+
+
+
+
+    return None
+
+
+def shift_all_to_frame(params, **kwargs):
+    func_name = __NAME__ + '.shift_all_to_frame()'
+    # ------------------------------------------------------------------
+    # get constants from params/kwargs
+    # ------------------------------------------------------------------
+
+
+    return None
+
+def calc_recon_and_correct(params, **kwargs):
+    func_name = __NAME__ + '.calc_recon_and_correct()'
+    # ------------------------------------------------------------------
+    # get constants from params/kwargs
+    # ------------------------------------------------------------------
+
+
+    return None
+
 
 # =============================================================================
 # QC and writing functions
@@ -1032,6 +1243,9 @@ def _calc_tapas_abso(keep, tau_water, tau_others, sp_water, sp_others,
 
     # return the tapas spectrum
     return sp
+
+
+
 
 
 # =============================================================================
