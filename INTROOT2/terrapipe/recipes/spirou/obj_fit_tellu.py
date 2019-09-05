@@ -1,35 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-obj_mk_tellu [night_directory] [files]
+obj_fit_tellu [night_directory] [files]
 
-Creates a flattened transmission spectrum from a hot star observation.
-The continuum is set to 1 and regions with too many tellurics for continuum
-estimates are set to NaN and should not used for RV. Overall, the domain with
-a valid transmission mask corresponds to the YJHK photometric bandpasses.
-The transmission maps have the same shape as e2ds files. Ultimately, we will
-want to retrieve a transmission profile for the entire nIR domain for generic
-science that may be done in the deep water bands. The useful domain for RV
-measurements will (most likely) be limited to the domain without very strong
-absorption, so the output transmission files meet our pRV requirements in
-terms of wavelength coverage. Extension of the transmission maps to the
-domain between photometric bandpasses is seen as a low priority item.
+Using all transmission files, we fit the absorption of a given science
+observation. To reduce the number of degrees of freedom, we perform a PCA and
+keep only the N (currently we suggest N=5)  principal components in absorbance.
+As telluric absorption may shift in velocity from one observation to another,
+we have the option of including the derivative of the absorbance in the
+reconstruction. The method also measures a proxy of optical depth per molecule
+(H2O, O2, O3, CO2, CH4, N2O) that can be used for data quality assessment.
 
 Usage:
-  obj_mk_tellu night_name telluric_file_name.fits
-
+  obj_fit_tellu night_name object.fits
 
 Outputs:
-  telluDB: TELL_MAP file - telluric transmission map for input file
+  telluDB: TELL_OBJ file - The object corrected for tellurics
         file also saved in the reduced folder
-        input file + '_trans.fits'
+        input file + '_tellu_corrected.fits'
 
-  telluDB: TELL_CONV file - convolved molecular file (for specific
-                            wavelength solution) if it doesn't already exist
-        file also saved in the reduced folder
-        wavelength solution + '_tapas_convolved.npy'
+    recon_abso file - The reconstructed absorption file saved in the reduced
+                    folder
+        input file + '_tellu_recon.fits'
 
-Created on 2019-09-03 at 14:58
+Created on 2019-09-05 at 14:58
 
 @author: cook
 """
@@ -49,7 +43,7 @@ from terrapipe.science import telluric
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'obj_mk_tellu.py'
+__NAME__ = 'obj_fit_tellu.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -197,12 +191,6 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
         # ------------------------------------------------------------------
-        # Load the TAPAS atmospheric transmission convolved with the
-        #   master wave solution
-        # ------------------------------------------------------------------
-        largs = [header, mprops, fiber]
-        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
-        # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
         nargs = [image, header, fiber]
@@ -211,34 +199,71 @@ def __main__(recipe, params):
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile)
+        # ----------------------------------------------------------------------
+        # Load transmission files
+        # ----------------------------------------------------------------------
+        trans_files = telluric.get_trans_files(params, recipe, header, fiber)
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
         tout = telluric.load_templates(params, recipe, header, objname, fiber)
         template, template_file = tout
+        # ----------------------------------------------------------------------
+        # load the expected atmospheric transmission
+        # ----------------------------------------------------------------------
+        tpargs = [header, mprops, fiber]
+        tapas_props = telluric.load_tapas_convolved(params, recipe, *tpargs)
+        # ----------------------------------------------------------------------
+        # Generate the absorption map + calculate PCA components
+        # ----------------------------------------------------------------------
+        # TODO: Add code here
+
         # ------------------------------------------------------------------
-        # Calculate telluric absorption
+        # Shift the template/pca components and tapas spectrum to correct
+        #     frames
         # ------------------------------------------------------------------
-        cargs = [image, template, template_file, header, wprops, tapas_props,
-                 bprops]
-        tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # Calculate reconstructed absorption + correct E2DS file
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # Create 1d spectra (s1d) of the corrected E2DS file
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        pargs = [tellu_props, infile]
-        qc_params = telluric.mk_tellu_quality_control(params, *pargs)
+        qc_params = [None, None, None, None]
+
         # ------------------------------------------------------------------
-        # Save transmission map to file
+        # Save corrected E2DS to file
         # ------------------------------------------------------------------
-        targs = [infile, rawfiles, fiber, combine, tapas_props, wprops,
-                 nprops, tellu_props, qc_params]
-        transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
+        # TODO: Add code here
+
         # ------------------------------------------------------------------
-        # Add transmission map to telluDB
+        # Save 1d corrected spectra to file
         # ------------------------------------------------------------------
-        if np.all(qc_params[3]):
-            # copy the transmission map to telluDB
-            drs_database.add_file(params, transfile)
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # Save reconstructed absorption to file
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # Save 1d reconstructed absorption spectra to file
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # Add TELLU_OBJ and TELLU_RECON to database
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
