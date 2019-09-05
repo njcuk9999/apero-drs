@@ -227,7 +227,7 @@ def get_thermal(params, header, fiber, filename=None):
     key = out_thermal.get_dbkey(fiber=fiber)
     # load calib file
     thermal, thermal_file = general.load_calib_file(params, key, header,
-                                                    filename=filename)
+                                                       filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00040', args=[thermal_file]))
     # return the master image
