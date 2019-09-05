@@ -89,8 +89,20 @@ __all__ = [# input keys
            'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MAXCPP',
            'KW_WFP_MASK', 'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
            'KW_WFP_STEP',
-
-           ]
+           # mktellu values
+           'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
+           'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
+           'KW_MKTELL_DEF_CONV_WID', 'KW_MKTELL_FIN_CONV_WID',
+           'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_DPARAM_THRES',
+           'KW_MKTELL_MAX_ITER', 'KW_MKTELL_THRES_TFIT',
+           'KW_MKTELL_MIN_WATERCOL', 'KW_MKTELL_MAX_WATERCOL',
+           'KW_MKTELL_MIN_NUM_GOOD', 'KW_MKTELL_BTRANS_PERC',
+           'KW_MKTELL_NSIGCLIP', 'KW_MKTELL_TRANS_TMFILT',
+           'KW_MKTELL_SMALL_W_ERR', 'KW_MKTELL_IM_PSIZE',
+           'KW_MKTELL_TAU_WATER_U', 'KW_MKTELL_TAU_OTHER_L',
+           'KW_MKTELL_TAU_OTHER_U', 'KW_MKTELL_TAPAS_SNUM',
+           'KW_MKTELL_AIRMASS', 'KW_MKTELL_WATER',
+]
 
 # set name
 __NAME__ = 'terrapipe.constants.default.default_keywords'
@@ -826,3 +838,106 @@ KW_WFP_WIDTH = Keyword('KW_WFP_WIDTH', key='', dtype=float, source=__NAME__)
 
 # Step for the wave FP file CCF
 KW_WFP_STEP = Keyword('KW_WFP_STEP', key='', dtype=float, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define make telluric variables
+# -----------------------------------------------------------------------------
+# The template file used for mktellu calculation
+KW_MKTELL_TEMP_FILE = Keyword('KW_MKTELL_TEMP_FILE', key='', dtype=str,
+                              source=__NAME__)
+
+# The blaze percentile used for mktellu calculation
+KW_MKTELL_BLAZE_PRCT = Keyword('KW_MKTELL_BLAZE_PRCT', key='', dtype=float,
+                               source=__NAME__)
+
+# The blaze normalization cut used for mktellu calculation
+KW_MKTELL_BLAZE_CUT = Keyword('KW_MKTELL_BLAZE_CUT', key='', dtype=float,
+                              source=__NAME__)
+
+# The original tapas file used for mktellu calculation
+KW_MKTELL_TAPASFILE = Keyword('KW_MKTELL_TAPASFILE', key='', dtype=str,
+                              source=__NAME__)
+
+# The mean line width in pix used for mktellu calculation
+KW_MKTELL_FWHMPLSF = Keyword('KW_MKTELL_FWHMPLSF', key='', dtype=float,
+                             source=__NAME__)
+
+# The default convolution width in pix used for mktellu calculation
+KW_MKTELL_DEF_CONV_WID = Keyword('KW_MKTELL_DEF_CONV_WID', key='', dtype=int,
+                                 source=__NAME__)
+
+# The finer convolution width in pix used for mktellu calculation
+KW_MKTELL_FIN_CONV_WID = Keyword('KW_MKTELL_FIN_CONV_WID', key='', dtype=int,
+                                 source=__NAME__)
+
+# The median filter width used for mktellu calculation
+KW_MKTELL_TEMP_MEDFILT = Keyword('KW_MKTELL_TEMP_MEDFILT', key='', dtype=float,
+                                 source=__NAME__)
+
+# The threshold in absorbance used for mktellu calculation
+KW_MKTELL_DPARAM_THRES = Keyword('KW_MKTELL_DPARAM_THRES', key='', dtype=float,
+                                 source=__NAME__)
+
+# The max num of iterations used for mktellu calculation
+KW_MKTELL_MAX_ITER = Keyword('KW_MKTELL_MAX_ITER', key='', dtype=int,
+                             source=__NAME__)
+
+# The min transmission requirement used for mktellu calculation
+KW_MKTELL_THRES_TFIT = Keyword('KW_MKTELL_THRES_TFIT', key='', dtype=float,
+                               source=__NAME__)
+
+# The min allowed value for recovered water vapor optical depth in mktellu
+KW_MKTELL_MIN_WATERCOL = Keyword('KW_MKTELL_MIN_WATERCOL', key='', dtype=float,
+                                 source=__NAME__)
+
+# The max allowed value for recovered water vapor optical depth in mktellu
+KW_MKTELL_MAX_WATERCOL = Keyword('KW_MKTELL_MAX_WATERCOL', key='', dtype=float,
+                                 source=__NAME__)
+
+# The min num of good points requirement used for mktellu calculation
+KW_MKTELL_MIN_NUM_GOOD = Keyword('KW_MKTELL_MIN_NUM_GOOD', key='', dtype=int,
+                                 source=__NAME__)
+
+# The transmission percentile used to normalise by for mktellu calculation
+KW_MKTELL_BTRANS_PERC = Keyword('KW_MKTELL_BTRANS_PERC', key='', dtype=float,
+                                source=__NAME__)
+
+# The sigma clip used to clip residuals of the diff for mktellu calculation
+KW_MKTELL_NSIGCLIP = Keyword('KW_MKTELL_NSIGCLIP', key='', dtype=float,
+                             source=__NAME__)
+
+# The median filter used for the trans data used for mktellu calculation
+KW_MKTELL_TRANS_TMFILT = Keyword('KW_MKTELL_TRANS_TMFILT', key='', dtype=float,
+                                 source=__NAME__)
+
+# The threshold for small values to be weighted used for mktellu calculation
+KW_MKTELL_SMALL_W_ERR = Keyword('KW_MKTELL_SMALL_W_ERR', key='', dtype=float,
+                                source=__NAME__)
+
+# The image pixel size used (in km/s) used for mktellu calculation
+KW_MKTELL_IM_PSIZE = Keyword('KW_MKTELL_IM_PSIZE', key='', dtype=float,
+                             source=__NAME__)
+
+# The upper lim allowed for optical depth of water used for mktellu calculation
+KW_MKTELL_TAU_WATER_U = Keyword('KW_MKTELL_TAU_WATER_U', key='', dtype=float,
+                                source=__NAME__)
+
+# The lower lim allowed for other absorbers used for mktellu calculation
+KW_MKTELL_TAU_OTHER_L = Keyword('KW_MKTELL_TAU_OTHER_L', key='', dtype=float,
+                                source=__NAME__)
+
+# The upper lim allowed for other absorbers used for mktellu calculation
+KW_MKTELL_TAU_OTHER_U = Keyword('KW_MKTELL_TAU_OTHER_U', key='', dtype=float,
+                                source=__NAME__)
+
+# The bad values are set to this small number, used for mktellu calculation
+KW_MKTELL_TAPAS_SNUM = Keyword('KW_MKTELL_TAPAS_SNUM', key='', dtype=float,
+                               source=__NAME__)
+
+# The recovered airmass value calculated in mktellu calculation
+KW_MKTELL_AIRMASS = Keyword('KW_MKTELL_AIRMASS', key='', dtype=float,
+                            source=__NAME__)
+
+# The recovered water optical depth calculated in mktellu calculation
+KW_MKTELL_WATER = Keyword('KW_MKTELL_WATER', key='', dtype=float,
+                          source=__NAME__)
