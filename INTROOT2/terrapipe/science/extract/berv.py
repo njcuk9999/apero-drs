@@ -358,15 +358,17 @@ def assign_properties(params, props=None, **kwargs):
         oprops['USE_BERV'] = oprops['BERV_EST']
         oprops['USE_BJD'] = oprops['BJD_EST']
         oprops['USE_BERV_MAX'] = oprops['BERV_MAX_EST']
+        oprops['USED_ESTIMATE'] = True
         psource = '{0} [{1}]'.format(func_name, 'pyasl')
     else:
         # set parameters
         oprops['USE_BERV'] = oprops['BERV']
         oprops['USE_BJD'] = oprops['BJD']
         oprops['USE_BERV_MAX'] = oprops['BERV_MAX']
+        oprops['USED_ESTIMATE'] = False
         psource = '{0} [{1}]'.format(func_name, 'barycorrpy')
     # set source
-    keys = ['USE_BERV', 'USE_BJD', 'USE_BERV_MAX']
+    keys = ['USE_BERV', 'USE_BJD', 'USE_BERV_MAX', 'USED_ESTIMATE']
     oprops.set_sources(keys, psource)
 
     # return properties
