@@ -307,6 +307,8 @@ def assign_properties(params, props=None, **kwargs):
     func_name = __NAME__ + '.assign_properties()'
     # get the pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
+    # get estimate accuracy
+    estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
     # get parameters from kwargs
     source = kwargs.get('source', 'None')
     # get output properties
@@ -341,6 +343,32 @@ def assign_properties(params, props=None, **kwargs):
     for prop in props:
         oprops[prop] = props[prop]
         oprops.set_source(prop, props.sources[prop])
+
+    # -------------------------------------------------------------------------
+    # need to decide which values should be used (and report if we are using
+    #   estimate)
+    cond = oprops['BERV'] is not None
+    cond &= oprops['BJD'] is not None
+    cond &= oprops['BERV_MAX_EST'] is not None
+
+    if cond or (source == 'pyasl'):
+        # log warning that we are using an estimate
+        WLOG(params, 'warning', TextEntry('10-016-00014', args=[estimate]))
+        # set parameters
+        oprops['USE_BERV'] = oprops['BERV_EST']
+        oprops['USE_BJD'] = oprops['BJD_EST']
+        oprops['USE_BERV_MAX'] = oprops['BERV_MAX_EST']
+        psource = '{0} [{1}]'.format(func_name, 'pyasl')
+    else:
+        # set parameters
+        oprops['USE_BERV'] = oprops['BERV']
+        oprops['USE_BJD'] = oprops['BJD']
+        oprops['USE_BERV_MAX'] = oprops['BERV_MAX']
+        psource = '{0} [{1}]'.format(func_name, 'barycorrpy')
+    # set source
+    keys = ['USE_BERV', 'USE_BJD', 'USE_BERV_MAX']
+    oprops.set_sources(keys, psource)
+
     # return properties
     return oprops
 
