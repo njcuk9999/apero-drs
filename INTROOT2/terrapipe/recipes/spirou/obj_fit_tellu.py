@@ -28,12 +28,10 @@ Created on 2019-09-05 at 14:58
 @author: cook
 """
 from __future__ import division
-import numpy as np
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import wave
 from terrapipe.science import extract
@@ -194,11 +192,11 @@ def __main__(recipe, params):
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
         nargs = [image, header, fiber]
-        image, nprops = telluric.normalise_by_pblaze(params, *nargs)
+        image2, nprops = telluric.normalise_by_pblaze(params, *nargs)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile)
+        bprops = extract.get_berv(params, infile, dprtype=dprtype)
         # ----------------------------------------------------------------------
         # Load transmission files
         # ----------------------------------------------------------------------
@@ -216,29 +214,39 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ----------------------------------------------------------------------
-        # TODO: Got to here with changes
-        telluric.gen_absorption_pca_calc
-        # TODO: Add code here
-
+        pargs = [image2, trans_files, fiber]
+        pca_props = telluric.gen_abso_pca_calc(params, recipe, *pargs)
         # ------------------------------------------------------------------
         # Shift the template/pca components and tapas spectrum to correct
         #     frames
         # ------------------------------------------------------------------
-        # TODO: Add code here
-
+        sargs = [image2, template, bprops, mprops, wprops, pca_props,
+                 tapas_props]
+        sprops = telluric.shift_all_to_frame(params, *sargs)
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption + correct E2DS file
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        cargs = [image, wprops, pca_props, sprops]
+        cprops = telluric.calc_recon_and_correct(params, *cargs)
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the corrected E2DS file
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        sargs = [wprops['WAVEMAP'], cprops['CORRECTED_SP'], nprops['BLAZE']]
+        swprops = extract.e2ds_to_s1d(params, *sargs, wgrid='wave')
+        svprops = extract.e2ds_to_s1d(params, *sargs, wgrid='velocity')
+
+        # ------------------------------------------------------------------
+        # Create 1d spectra (s1d) of the reconstructed absorption
+        # ------------------------------------------------------------------
+        rargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
+        rwprops = extract.e2ds_to_s1d(params, *rargs, wgrid='wave')
+        rvprops = extract.e2ds_to_s1d(params, *rargs, wgrid='velocity')
 
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
+        # TODO: Work has got to here
         qc_params = [None, None, None, None]
 
         # ------------------------------------------------------------------
