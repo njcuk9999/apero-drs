@@ -12,6 +12,7 @@ Created on 2018-04-13 at 17:20
 from __future__ import division
 import numpy as np
 import os
+from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -227,6 +228,18 @@ def main(night_name=None, ufiles=None):
         # rotation to match HARPS orientation (expected by DRS)
         image = spirouImage.RotateImage(image, p['RAW_TO_PP_ROTATION'])
 
+        # select hotpixel reference and detect pixel shift
+        package = spirouConfig.Constants.PACKAGE()
+        datadir = spirouConfig.GetAbsFolderPath(package, './data/')
+        hotpixel_reference = os.path.join(datadir, 'ref_hotpix.csv')
+        shiftdx, shiftdy = check_shift(image, hotpixel_reference)
+        # use dx/dy to shift the image back to where the engineering flat
+        #    is located
+        if shiftdx != 0 or shiftdy != 0:
+            # shift image
+            image = np.roll(image, [shiftdy], axis=0)
+            image = np.roll(image, [shiftdx], axis=1)
+
         # ------------------------------------------------------------------
         # Save rotated image
         # ------------------------------------------------------------------
@@ -273,6 +286,59 @@ def main(night_name=None, ufiles=None):
     p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
+
+
+# =============================================================================
+# Pixel shift detection
+# =============================================================================
+def check_shift(image, ref_hotpix_file):
+    # Checks if an image has an offset relative to a list of reference hot
+    # pixels
+    # Input : image
+    # Output : dx,dy
+    #
+    # dx and dy are offset by -2,-1,0,1,2 pix
+    #
+    # reading the CSV file with the XPOS/YPOS/BRIGHTNESS of hot pixels
+    tbl = Table.read(ref_hotpix_file)
+    # read the image to be tested for shifts
+
+    # cube with all the hot pixels
+    hotpix_cube = np.zeros([len(tbl),5,5])
+
+    # set x/y/brightness as numpy array to avoid accessing a table too many
+    # times
+    xhot = np.array(tbl['X'])
+    yhot = np.array(tbl['Y'])
+    val = np.array(tbl['BRIGHTNESS'])
+
+    # filling the cube
+    for i in range(len(tbl)):
+        hotpix_cube[i,:,:,]=image[yhot[i]-2:yhot[i]+3,xhot[i]-2:xhot[i]+3]/val[i]
+
+    # derive a median hot pixel map
+    hotpix_map = np.nanmedian(hotpix_cube,axis=0)
+
+    # normalize by its absolute deviation
+    hotpix_map /=np.nanmedian(np.abs(hotpix_map))
+
+    maxval = np.max(hotpix_map)
+
+    # Quality checks, must be above 100 absolute deviations
+    QC1 = maxval > 100
+    num_bright_pixels = np.sum((hotpix_map/maxval) > 0.05)
+    QC2 = num_bright_pixels == 1
+    print('Peak value', maxval, 'is above 100 abs deviation:', QC1)
+    print('No other pixel brighter than 5% of peak value:', QC2, '-',
+          num_bright_pixels, 'pixels')
+    # find peak value
+    dy = 2-(np.argmax(hotpix_map) // 5)
+    dx = 2-(np.argmax(hotpix_map) % 5)
+    print('dx = {0}, dy = {1}'.format(dx,dy) )
+    if not QC1 or not QC2:
+        print('pixel shift QC checks failed, not shifting')
+        return 0, 0
+    return dx, dy
 
 
 # =============================================================================
