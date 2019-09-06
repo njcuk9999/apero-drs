@@ -457,8 +457,8 @@ def get_db_abspath(params, filename=None, where='guess'):
     return abspath
 
 
-def get_db_file(params, abspath, ext, fmt, kind, get_image=True,
-                get_header=False):
+def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
+                get_image=True, get_header=False):
     func_name = __NAME__ + '.get_db_file'
     # ------------------------------------------------------------------
     # get db fits file
