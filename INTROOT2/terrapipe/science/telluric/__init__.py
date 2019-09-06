@@ -18,7 +18,11 @@ __all__ = ['calculate_telluric_absorption', 'get_blacklist', 'get_whitelist',
 # =============================================================================
 # Define functions
 # =============================================================================
+calc_recon_and_correct = general.calc_recon_and_correct
+
 calculate_telluric_absorption = general.calculate_telluric_absorption
+
+gen_abso_pca_calc = general.gen_abso_pca_calc
 
 get_blacklist = general.get_blacklist
 
@@ -37,6 +41,8 @@ mk_tellu_quality_control = general.mk_tellu_quality_control
 mk_tellu_write_trans_file = general.mk_tellu_write_trans_file
 
 normalise_by_pblaze = general.normalise_by_pblaze
+
+shift_all_to_frame = general.shift_all_to_frame
 
 # =============================================================================
 # End of code
