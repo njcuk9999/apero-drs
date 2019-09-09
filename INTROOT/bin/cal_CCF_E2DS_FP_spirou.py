@@ -165,6 +165,10 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'], loc['WSOURCE'] = wout
     source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
     loc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE', 'WSOURCE'], source)
+    # get date of wave obs for AB
+    wavefile_path_AB = os.path.join(p['REDUCED_DIR'], wavefile)
+    whdr_AB = spirouImage.ReadHeader(filepath=wavefile_path_AB)
+    wtime_AB = float(whdr_AB['MJD-OBS'])
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -362,6 +366,10 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
     sourcenames = ['WAVE_LL', 'PARAM_LL', 'WAVEFILE', 'WHDR', 'WSOURCE']
     cloc.set_sources(sourcenames, source)
+    # get date of wave obs for C
+    wavefile_path_C = os.path.join(p['REDUCED_DIR'], wavefile)
+    whdr_C = spirouImage.ReadHeader(filepath=wavefile_path_C)
+    wtime_C = float(whdr_C['MJD-OBS'])
 
     # Read the CCFRV2 FP Drift value on the wavefile of fiber C
     cp = spirouImage.ReadParam(cp, whdr, 'KW_WFP_DRIFT', name='DRIFT0',
@@ -450,6 +458,16 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
             'CCF_RES', 'CCF_FIT']
     cloc.set_sources(keys, __NAME__ + '/main()')
     # ----------------------------------------------------------------------
+    # check dates of wavefiles, if no match set drift to zero
+    if wtime_AB == wtime_C:
+        wmsg = 'Epochs of wavelength solutions match, absolute drift corrected'
+        WLOG(p, 'info', wmsg)
+    else:
+        cloc['RV'] = 0.0
+        wmsg = 'Epochs of wavelength solutions match, absolute drift set to 0'
+        WLOG(p, 'warning', wmsg)
+
+    # ----------------------------------------------------------------------
     # log the stats
     wmsg = ('FP Correlation: C={0:.1f}[%] ABSOLUTE DRIFT={1:.2f}[m/s] '
             'RELATIVE DRIFT={2:.2f}[m/s] FWHM={3:.4f}[km/s] maxcpp={4:.1f}')
@@ -494,6 +512,21 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     passed, fail_msg = True, []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # TODO: Needs doing
+    # ----------------------------------------------------------------------
+    # QC on wavelength solution epochs
+    wtimediff = wtime_AB - wtime_C
+    if wtimediff != 0:
+        fmsg = 'Wavelength solutions MJDs differ by {0:.4f}'
+        fail_msg.append(fmsg.format(wtimediff))
+        passed = False
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to QC header lists
+    qc_values.append(wtimediff)
+    qc_names.append('WAVE SOLS MJD DIFF')
+    qc_logic.append('MJD DIFF =! 0')
+
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
