@@ -17,7 +17,6 @@ from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core import math
 from terrapipe.core.core import drs_database
-from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import general
 from terrapipe.science.calib import localisation

@@ -425,7 +425,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Store S1D_W in file
             # --------------------------------------------------------------
-            # get a new copy of the e2dsll file
+            # get a new copy of the s1d_w file
             s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(recipe=recipe,
                                                             fiber=fiber)
             # construct the filename from file instance
@@ -449,7 +449,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Store S1D_V in file
             # --------------------------------------------------------------
-            # get a new copy of the e2dsll file
+            # get a new copy of the s1d_v file
             s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(recipe=recipe,
                                                             fiber=fiber)
             # construct the filename from file instance
