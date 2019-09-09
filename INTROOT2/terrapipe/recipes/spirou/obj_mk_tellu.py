@@ -214,7 +214,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, recipe, header, objname, fiber)
+        tout = telluric.load_templates(params, header, objname, fiber)
         template, template_file = tout
         # ------------------------------------------------------------------
         # Calculate telluric absorption

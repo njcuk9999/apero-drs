@@ -27,7 +27,7 @@ from terrapipe.io import drs_data
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_path
 from terrapipe.science.calib import flat_blaze
-
+from terrapipe.science import extract
 
 # =============================================================================
 # Define variables
@@ -85,7 +85,6 @@ def get_blacklist(params, **kwargs):
 
 
 def normalise_by_pblaze(params, image, header, fiber, **kwargs):
-
     func_name = __NAME__ + '.normalise_by_pblaze()'
     # get properties from params/kwargs
     blaze_p = pcheck(params, 'MKTELLU_BLAZE_PERCENTILE', 'blaze_p', kwargs,
@@ -142,7 +141,6 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
 # =============================================================================
 def load_tellu_file(params, key=None, inheader=None, filename=None,
                     get_image=True, get_header=False, **kwargs):
-    func_name = kwargs.get('func', __NAME__ + '.load_tellu_file()')
     # get keys from params/kwargs
     n_entries = kwargs.get('n_entries', 1)
     required = kwargs.get('required', True)
@@ -158,8 +156,8 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
     if filename is not None:
         # get db fits file
         abspath = drs_database.get_db_abspath(params, filename, where='guess')
-        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
-                                                 get_image, get_header)
+        image, header = drs_database.get_db_file(params, abspath, ext, fmt,
+                                                 kind, get_image, get_header)
         # return here
         if get_header:
             return [image], [header], [abspath]
@@ -189,8 +187,8 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
         # append to storage
         abspaths.append(abspath)
         # load image/header
-        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
-                                                 get_image, get_header)
+        image, header = drs_database.get_db_file(params, abspath, ext, fmt,
+                                                 kind, get_image, get_header)
         # append to storage
         images.append(image)
         # append to storage
@@ -215,9 +213,10 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
             return images, abspaths
 
 
-def load_templates(params, recipe, header, objname, fiber):
+def load_templates(params, header, objname, fiber):
     # get file definition
-    out_temp = recipe.outputs['TELLU_TEMP'].newcopy(recipe=recipe, fiber=fiber)
+    out_temp = core.get_file_definition('TELLU_TEMP', params['INSTRUMENT'],
+                                        kind='red', fiber=fiber)
     # get key
     temp_key = out_temp.get_dbkey()
     # load tellu file, header and abspaths
@@ -261,7 +260,8 @@ def load_templates(params, recipe, header, objname, fiber):
 
 def get_transmission_files(params, recipe, header, fiber):
     # get file definition
-    out_trans = recipe.outputs['TELLU_MAP'].newcopy(recipe=recipe, fiber=fiber)
+    out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
+                                         kind='red', fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey()
     # load tellu file, header and abspaths
@@ -378,8 +378,8 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
     # Load any convolved files from database
     # ----------------------------------------------------------------------
     # get file definition
-    out_tellu_conv = recipe.outputs['TELL_CONV'].newcopy(recipe=recipe,
-                                                         fiber=fiber)
+    out_tellu_conv = core.get_file_definition('TELL_CONV', params['INSTRUMENT'],
+                                              kind='red', fiber=fiber)
     # get key
     conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
@@ -433,7 +433,6 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
 def calculate_telluric_absorption(params, image, template, template_file,
                                   header, wprops, tapas_props, bprops,
                                   **kwargs):
-
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
     default_conv_width = pcheck(params, 'MKTELLU_DEFAULT_CONV_WIDTH',
@@ -447,7 +446,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
     dparam_threshold = pcheck(params, 'MKTELLU_DPARAMS_THRES',
                               'dparam_threshold', kwargs, func_name)
     max_iteration = pcheck(params, 'MKTELLU_MAX_ITER', 'max_iteration',
-                            kwargs, func_name)
+                           kwargs, func_name)
     threshold_transmission_fit = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
                                         'treshold_transmission_fit', kwargs,
                                         func_name)
@@ -562,8 +561,8 @@ def calculate_telluric_absorption(params, image, template, template_file,
                             tapas_small_number=tapas_small_number)
 
     # define function for curve_fit
-    def tapas_fit(keep, tau_water, tau_others):
-        return _calc_tapas_abso(keep, tau_water, tau_others, **tapas_fit_kwargs)
+    def tapas_fit(kp, tau_water, tau_others):
+        return _calc_tapas_abso(kp, tau_water, tau_others, **tapas_fit_kwargs)
 
     # starting point for the optical depth of water and other gasses
     guess = [airmass, airmass]
@@ -595,8 +594,8 @@ def calculate_telluric_absorption(params, image, template, template_file,
 
     # set up empty arrays
     oimage2_arr = np.zeros((nbo, nbpix), dtype=float)
-    sed_update_arr = np.zeros(nbpix, dtype=float)
-    keep = np.zeros(nbpix, dtype=bool)
+    # sed_update_arr = np.zeros(nbpix, dtype=float)
+    # keep = np.zeros(nbpix, dtype=bool)
     # loop around until one condition not met
     while cond1 and cond2 and cond3:
         # ---------------------------------------------------------------------
@@ -722,7 +721,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
             wconv_ord = int(wconv[order_num])
             kernal_x = np.arange(-2 * wconv_ord, 2 * wconv_ord)
             # get the gaussian kernal
-            kernal_y = np.exp(-0.5*(kernal_x / ew) **2 )
+            kernal_y = np.exp(-0.5 * (kernal_x / ew) ** 2)
             # normalise kernal so it is max at unity
             kernal_y = kernal_y / np.nansum(kernal_y)
             # -----------------------------------------------------------------
@@ -743,10 +742,10 @@ def calculate_telluric_absorption(params, image, template, template_file,
             for iteration_sig_clip_good in range(1, 6):
                 # get residuals
                 with warnings.catch_warnings(record=True) as _:
-                    residual_SED = oimage2 - sed_update
-                    residual_SED[~good] = np.nan
+                    residual_sed = oimage2 - sed_update
+                    residual_sed[~good] = np.nan
                 # turn all residual values to positive
-                rms = np.abs(residual_SED)
+                rms = np.abs(residual_sed)
                 # identify the good values and set them to zero
                 with warnings.catch_warnings(record=True) as _:
                     good[rms > (rms_limit / iteration_sig_clip_good)] = 0
@@ -872,6 +871,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
     # return tprops
     return tprops
 
+
 # =============================================================================
 # Fit telluric functions
 # =============================================================================
@@ -888,7 +888,8 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     # ------------------------------------------------------------------
     # get the transmission map key
     # ----------------------------------------------------------------------
-    out_trans = recipe.outputs['TELLU_MAP'].newcopy(recipe=recipe, fiber=fiber)
+    out_trans = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey()
     # ----------------------------------------------------------------------
@@ -920,7 +921,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
         wargs = [abso_npy.filename]
         WLOG(params, '', TextEntry('40-019-00012', args=wargs))
         # set abso source
-        abso_source = abso_npy.filename
+        abso_source = '[file] ' + abso_npy.basename
         transfiles_used = list(transfiles)
     except Exception as e:
         # debug print out: cannot load abso file
@@ -945,7 +946,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
                 # add to the trans files used list
                 transfiles_used.append(filename)
         # set abso source
-        abso_source = 'trans_file'
+        abso_source = '[database] trans_file'
         # log that we are saving the abso to file
         WLOG(params, '', TextEntry('40-019-00013', args=[abso_npy.filename]))
         # remove all other abso npy files
@@ -956,7 +957,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # log the absorption cube
     # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         log_abso = np.log(abso)
     # ----------------------------------------------------------------------
     # Locate valid pixels for PCA
@@ -967,7 +968,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     fraction = np.nansum(keep) / len(keep)
     WLOG(params, '', TextEntry('40-019-00015', args=[fraction]))
     # log fraction of valid pixels > 1 - (1/e)
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         keep &= np.min(log_abso, axis=0) > -1
     fraction = np.nansum(keep) / len(keep)
     WLOG(params, '', TextEntry('40-019-00016', args=[fraction]))
@@ -1015,8 +1016,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     props['ADD_DERIV_PC'] = add_deriv_pc
     props['FIT_DERIV_PC'] = fit_deriv_pc
     props['ABSO_SOURCE'] = abso_source
+    props['TRANS_FILE_USED'] = transfiles_used
     # set the source
-    keys = ['ABSO', 'LOG_ABSO', 'PC', 'NPC', 'FIT_PC',
+    keys = ['ABSO', 'LOG_ABSO', 'PC', 'NPC', 'FIT_PC', 'TRANS_FILE_USED',
             'ADD_DERIV_PC', 'FIT_DERIV_PC', 'ABSO_SOURCE']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
@@ -1030,8 +1032,8 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     # ------------------------------------------------------------------
     # get constants from params/kwargs
     # ------------------------------------------------------------------
-    fit_keep_frac = pcheck(params, 'FTELLU_FIT_KEEP_FRAC', 'fit_keep_frac',
-                           kwargs, func_name)
+    fit_keep_num = pcheck(params, 'FTELLU_FIT_KEEP_NUM', 'fit_keep_num',
+                          kwargs, func_name)
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------
@@ -1068,7 +1070,7 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
             # find good (not NaN) pixels
             keep = np.isfinite(template[order_num, :])
             # if we have enough values spline them
-            if np.nansum(keep) > fit_keep_frac:
+            if np.nansum(keep) > fit_keep_num:
                 # define keep wave
                 keepwave = masterwavemap[order_num, keep]
                 # define keep temp
@@ -1142,10 +1144,9 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     props['PC2'] = pc2
     props['FIT_PC2'] = fit_pc2
     props['TAPAS_ALL_SPECIES2'] = tapas_all_species2
-    props['FIT_KEEP_FRAC'] = fit_keep_frac
+    props['FIT_KEEP_NUM'] = fit_keep_num
     # set sources
-    keys = ['TEMPLATE2', 'PC2', 'FIT_PC2', 'TAPAS_ALL_SPECIES2',
-            'FIT_KEEP_FRAC']
+    keys = ['TEMPLATE2', 'PC2', 'FIT_PC2', 'TAPAS_ALL_SPECIES2', 'FIT_KEEP_NUM']
     props.set_sources(keys, func_name)
     # return props
     return props
@@ -1164,13 +1165,11 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     lambda_max = pcheck(params, 'FTELLU_LAMBDA_MAX', 'lambda_max', kwargs,
                         func_name)
     kernel_vsini = pcheck(params, 'FTELLU_KERNEL_VSINI', 'kernel_vsini',
-                           kwargs, func_name)
+                          kwargs, func_name)
     image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
     fit_iterations = pcheck(params, 'FTELLU_FIT_ITERS', 'fit_iterations',
                             kwargs, func_name)
-    transmission_cut = pcheck(params, 'FTELLU_TRANS_CUT', 'transmission_cut',
-                              kwargs, func_name)
     fit_deriv_pc = pcheck(params, 'FTELLU_FIT_DERIV_PC', 'fit_deriv_pc',
                           kwargs, func_name)
     recon_limit = pcheck(params, 'FTELLU_FIT_RECON_LIMIT', 'recon_limit',
@@ -1222,7 +1221,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     # construct convolution kernel
     # ----------------------------------------------------------------------
     # gaussian ew for vinsi km/s
-    ewid = kernel_vsini / image_pixel_size / math.general.fwhm()
+    ewid = kernel_vsini / image_pixel_size / math.fwhm()
     # set up the kernel exponent
     xxarr = np.arange(ewid * 6) - ewid * 3
     # kernel is the a gaussian
@@ -1249,7 +1248,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
                 # produce a mask of good transmission
                 order_tapas = 2[0, start:end]
                 with warnings.catch_warnings(record=True) as _:
-                    mask = order_tapas > transmission_cut
+                    mask = order_tapas > fit_min_trans
                 # get good transmission spectrum
                 spgood = image[order_num, :] * np.array(mask, dtype=float)
                 recongood = recon_abso[start:end]
@@ -1280,7 +1279,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
                 with warnings.catch_warnings(record=True) as _:
                     # produce a mask of good transmission
                     order_tapas = tapas_all_species2[0, start:end]
-                    mask = order_tapas > transmission_cut
+                    mask = order_tapas > fit_min_trans
                     fmask = np.array(mask, dtype=float)
                     # get good transmission spectrum
                     resspecgood = resspec[start:end] * fmask
@@ -1348,7 +1347,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
         # sPlt.tellu_fit_recon_abso_plot(p, loc)
         pass
     # ------------------------------------------------------------------
-    # calculate molecular absoprtion
+    # calculate molecular absorption
     # ------------------------------------------------------------------
     # log data
     log_recon_abso = np.log(recon_abso)
@@ -1402,7 +1401,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     props = ParamDict()
     props['TEMPLATE2'] = template2
     props['CORRECTED_SP'] = sp_out
-    props['RECON_ABSO'] = recon_abso
+    props['RECON_ABSO'] = recon_abso.reshape(image.shape)
     props['RECON_ABSO_SP'] = recon_abso2
     props['AMPS_ABSO_TOTAL'] = amps_abso_total
     props['TAU_MOLECULES'] = molecule_data
@@ -1419,13 +1418,12 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     props['KERNEL_VSINI'] = kernel_vsini
     props['IMAGE_PIXEL_SIZE'] = image_pixel_size
     props['FIT_ITERATIONS'] = fit_iterations
-    props['TRANSMISSION_CUT'] = transmission_cut
     props['FIT_DERIV_PC'] = fit_deriv_pc
     props['RECON_LIMIT'] = recon_limit
     props['TELLU_ABSORBERS'] = tellu_absorbers
     # set sources
     keys = ['FIT_MIN_TRANS', 'LAMBDA_MIN', 'LAMBDA_MAX', 'KERNEL_VSINI',
-            'IMAGE_PIXEL_SIZE', 'FIT_ITERATIONS', 'TRANSMISSION_CUT',
+            'IMAGE_PIXEL_SIZE', 'FIT_ITERATIONS',
             'FIT_DERIV_PC', 'RECON_LIMIT', 'TELLU_ABSORBERS']
     props.set_sources(keys, func_name)
     # return props
@@ -1436,7 +1434,6 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
 # QC and writing functions
 # =============================================================================
 def mk_tellu_quality_control(params, tprops, infile, **kwargs):
-
     func_name = __NAME__ + '.mk_tellu_quality_control()'
     # get parameters from params/kwargs
     snr_order = pcheck(params, 'QC_MK_TELLU_SNR_ORDER', 'snr_order', kwargs,
@@ -1587,7 +1584,8 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_MKTELL_BLAZE_CUT', value=nprops['BLAZE_CUT_NORM'])
     # add tapas parameteres
     transfile.add_hkey('KW_MKTELL_TAPASFILE', value=tapas_props['TAPAS_FILE'])
-    transfile.add_hkey('KW_MKTELL_FWHMPLSF', value=tapas_props['FWHM_PIXEL_LSF'])
+    transfile.add_hkey('KW_MKTELL_FWHMPLSF',
+                       value=tapas_props['FWHM_PIXEL_LSF'])
     # add tprops parameters
     transfile.add_hkey('KW_MKTELL_DEF_CONV_WID', value=tprops['DEFAULT_CWIDTH'])
     transfile.add_hkey('KW_MKTELL_FIN_CONV_WID', value=tprops['FINER_CWIDTH'])
@@ -1624,6 +1622,260 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # return transmission file instance
     return transfile
+
+
+def fit_tellu_quality_control(params, infile, **kwargs):
+    func_name = __NAME__ + '.fit_tellu_quality_control()'
+    # get parameters from params/kwargs
+    snr_order = pcheck(params, 'QC_MK_TELLU_SNR_ORDER', 'snr_order', kwargs,
+                       func_name)
+    qc_snr_min = pcheck(params, 'QC_MK_TELLU_SNR_MIN', 'qc_snr_min', kwargs,
+                        func_name)
+    # get the text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set passed variable and fail message list
+    fail_msg = []
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # ----------------------------------------------------------------------
+    # get SNR for each order from header
+    nbo, nbpix = infile.shape
+    snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+    # check that SNR is high enough
+    if snr[snr_order] < qc_snr_min:
+        fargs = [snr_order, snr[snr_order], qc_snr_min]
+        fail_msg.append(textdict['40-019-00007'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(snr[snr_order])
+    qc_name_str = 'SNR[{0}]'.format(snr_order)
+    qc_names.append(qc_name_str)
+    qc_logic.append('{0} < {1:.2f}'.format(qc_name_str, qc_snr_min))
+
+    # --------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    #     quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params
+    return qc_params
+
+
+def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
+                              nprops, wprops, pca_props, sprops, cprops,
+                              qc_params, **kwargs):
+    func_name = __NAME__ + '.fit_tellu_write_corrected()'
+    # get parameters from params
+    abso_prefix_kws = pcheck(params, 'KW_FTELLU_ABSO_PREFIX', 'abso_prefix_kws',
+                             kwargs, func_name)
+    npc = pca_props['NPC']
+    add_deriv_pc = pca_props['ADD_DERIV_PC']
+    # get parameters from cprops
+    sp_out = cprops['CORRECTED_SP']
+    amps_abso_t = cprops['AMPS_ABSO_TOTAL']
+    tau_molecules = cprops['TAU_MOLECULES']
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    corrfile = recipe.outputs['TELLU_OBJ'].newcopy(recipe=recipe, fiber=fiber)
+    # construct the filename from file instance
+    corrfile.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # copy keys from input file
+    corrfile.copy_original_keys(infile)
+    # add version
+    corrfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    corrfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    corrfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    corrfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    corrfile.add_hkey('KW_OUTPUT', value=corrfile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    corrfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add  calibration files used
+    corrfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
+    corrfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    # ----------------------------------------------------------------------
+    # add qc parameters
+    corrfile.add_qckeys(qc_params)
+    # ----------------------------------------------------------------------
+    # add telluric constants used
+    corrfile.add_hkey('KW_FTELLU_NPC', value=npc)
+    corrfile.add_hkey('KW_FTELLU_ADD_DPC', value=add_deriv_pc)
+    corrfile.add_hkey('KW_FTELLU_FIT_DPC', value=pca_props['FIT_DERIV_PC'])
+    corrfile.add_hkey('KW_FTELLU_ABSO_SRC', value=pca_props['ABSO_SOURCE'])
+    corrfile.add_hkey('KW_FTELLU_FIT_KEEP_NUM', value=sprops['FIT_KEEP_NUM'])
+    corrfile.add_hkey('KW_FTELLU_FIT_MIN_TRANS', value=cprops['FIT_MIN_TRANS'])
+    corrfile.add_hkey('KW_FTELLU_LAMBDA_MIN', value=cprops['LAMBDA_MIN'])
+    corrfile.add_hkey('KW_FTELLU_LAMBDA_MAX', value=cprops['LAMBDA_MAX'])
+    corrfile.add_hkey('KW_FTELLU_KERN_VSINI', value=cprops['KERNEL_VSINI'])
+    corrfile.add_hkey('KW_FTELLU_IM_PX_SIZE', value=cprops['IMAGE_PIXEL_SIZE'])
+    corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
+    corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
+    # ----------------------------------------------------------------------
+    # add the amplitudes (and derivatives)
+    if add_deriv_pc:
+        values = amps_abso_t[:npc - 2]
+        # add the standard keys
+        corrfile.add_hkey_1d('KW_FTELLU_AMP_PC', values=values, dim1name='amp')
+        # add the derivs
+        corrfile.add_hkey_1d('KW_FTELLU_DVTELL1', value=amps_abso_t[npc - 2])
+        corrfile.add_hkey_1d('KW_FTELLU_DVTELL2', value=amps_abso_t[npc - 1])
+    # else just add the amp pc and blank for the dvtells
+    else:
+        # add the standard keys
+        corrfile.add_hkey_1d('KW_FTELLU_AMP_PC', values=amps_abso_t,
+                             dim1name='amp')
+        # add the derivs (blank)
+        corrfile.add_hkey_1d('KW_FTELLU_DVTELL1', value='None')
+        corrfile.add_hkey_1d('KW_FTELLU_DVTELL2', value='None')
+    # ----------------------------------------------------------------------
+    # add the absorbance
+    for molecule in tau_molecules:
+        # construct molecule key
+        molkey = '{0}_{1}'.format(abso_prefix_kws[0], molecule.upper())
+        # construct keyword dict
+        molkws = [molkey, 0.0, abso_prefix_kws[2].format(molecule)]
+        # add to header
+        corrfile.add_hkey(molkws, value=tau_molecules[molecule])
+    # add the tau values
+    corrfile.add_hkey('KW_FTELLU_TAU_H2O', value=cprops['TAU_H2O'])
+    corrfile.add_hkey('KW_FTELLU_TAU_REST', value=cprops['TAU_REST'])
+    # ----------------------------------------------------------------------
+    # copy data
+    corrfile.data = sp_out
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-019-00023', args=[corrfile.filename]))
+    # write image to file
+    corrfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(corrfile)
+    # ------------------------------------------------------------------
+    # return corrected e2ds file instance
+    return corrfile
+
+
+
+def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
+                                  scwprops, scvprops):
+    # ------------------------------------------------------------------
+    # get new copy of the corrected s1d_w file
+    sc1dwfile = recipe.outputs['SC1D_W_FILE'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    sc1dwfile.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    sc1dwfile.copy_hdict(corrfile)
+    # add new header keys
+    sc1dwfile = extract.add_s1d_keys(sc1dwfile, scwprops)
+    # copy data
+    sc1dwfile.data = scwprops['S1DTABLE']
+    # must change the datatpye to 'table'
+    sc1dwfile.datatype = 'table'
+    # log that we are saving s1d table
+    wargs = ['wave', sc1dwfile.filename]
+    WLOG(params, '', TextEntry('40-019-00024', args=wargs))
+    # write image to file
+    sc1dwfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(sc1dwfile)
+    # ------------------------------------------------------------------
+    # get new copy of the corrected s1d_v file
+    sc1dvfile = recipe.outputs['SC1D_V_FILE'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    sc1dvfile.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    sc1dvfile.copy_hdict(corrfile)
+    # add new header keys
+    sc1dvfile = extract.add_s1d_keys(sc1dvfile, scvprops)
+    # copy data
+    sc1dvfile.data = scvprops['S1DTABLE']
+    # must change the datatpye to 'table'
+    sc1dvfile.datatype = 'table'
+    # log that we are saving s1d table
+    wargs = ['velocity', sc1dvfile.filename]
+    WLOG(params, '', TextEntry('40-019-00024', args=wargs))
+    # write image to file
+    sc1dvfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(sc1dvfile)
+
+
+def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
+                          rcwprops, rcvprops):
+    # ------------------------------------------------------------------
+    # get new copy of the corrected s1d_w file
+    reconfile = recipe.outputs['TELLU_RECON'].newcopy(recipe=recipe,
+                                                     fiber=fiber)
+    # construct the filename from file instance
+    reconfile.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    reconfile.copy_hdict(corrfile)
+    # copy data
+    reconfile.data = cprops['RECON_ABSO']
+    # log that we are saving recon e2ds file
+    WLOG(params, '', TextEntry('40-019-00025', args=[reconfile.filename]))
+    # write image to file
+    reconfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(reconfile)
+    # ------------------------------------------------------------------
+    # get new copy of the corrected s1d_w file
+    rc1dwfile = recipe.outputs['RC1D_W_FILE'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    rc1dwfile.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    rc1dwfile.copy_hdict(corrfile)
+    # add new header keys
+    rc1dwfile = extract.add_s1d_keys(rc1dwfile, rcwprops)
+    # copy data
+    rc1dwfile.data = rcwprops['S1DTABLE']
+    # must change the datatpye to 'table'
+    rc1dwfile.datatype = 'table'
+    # log that we are saving s1d table
+    wargs = ['wave', rc1dwfile.filename]
+    WLOG(params, '', TextEntry('40-019-00026', args=wargs))
+    # write image to file
+    rc1dwfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(rc1dwfile)
+    # ------------------------------------------------------------------
+    # get new copy of the corrected s1d_v file
+    rc1dvfile = recipe.outputs['RC1D_V_FILE'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    rc1dvfile.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    rc1dvfile.copy_hdict(corrfile)
+    # add new header keys
+    rc1dvfile = extract.add_s1d_keys(rc1dvfile, rcvprops)
+    # copy data
+    rc1dvfile.data = rcvprops['S1DTABLE']
+    # must change the datatpye to 'table'
+    rc1dvfile.datatype = 'table'
+    # log that we are saving s1d table
+    wargs = ['velocity', rc1dvfile.filename]
+    WLOG(params, '', TextEntry('40-019-00024', args=wargs))
+    # write image to file
+    rc1dvfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(rc1dvfile)
+    # ------------------------------------------------------------------
+    return reconfile
 
 
 # =============================================================================
@@ -1684,7 +1936,6 @@ def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
 
     # return tapas_all_species
     return tapas_all_species
-
 
 
 def _calc_tapas_abso(keep, tau_water, tau_others, sp_water, sp_others,
@@ -1763,7 +2014,7 @@ def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
 
-    :param p: ParamDict, the parameter dictionary
+    :param params: ParamDict, the parameter dictionary
     :param spectrum: numpy array (2D),  flux in the reference frame of the
                      file wave1
     :param wave1: numpy array (2D), initial wavelength grid
@@ -1817,6 +2068,7 @@ def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
             output_spectrum[iord, bad] = np.nan
     # return the filled output spectrum
     return output_spectrum
+
 
 # =============================================================================
 # Start of code
