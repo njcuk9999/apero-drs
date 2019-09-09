@@ -631,7 +631,8 @@ obj_mk_tellu.inputtype = 'reduced'
 obj_mk_tellu.extension = 'fits'
 obj_mk_tellu.description = Help['MKTELL_DESC']
 obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
-obj_mk_tellu.set_outputs()
+obj_mk_tellu.set_outputs(TELLU_CONV=sf.out_tellu_conv,
+                         TELLU_TRANS=sf.out_tellu_trans)
 obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
@@ -645,6 +646,32 @@ obj_mk_tellu.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
 # -----------------------------------------------------------------------------
+obj_fit_tellu.name = 'obj_fit_tellu.py'
+obj_fit_tellu.shortname = 'MKTELL'
+obj_fit_tellu.instrument = __INSTRUMENT__
+obj_fit_tellu.outputdir = 'reduced'
+obj_fit_tellu.inputdir = 'tmp'
+obj_fit_tellu.inputtype = 'reduced'
+obj_fit_tellu.extension = 'fits'
+obj_fit_tellu.description = Help['MKTELL_DESC']
+obj_fit_tellu.epilog = Help['MKTELL_EXAMPLE']
+obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
+                          TELLU_OBJ=sf.out_tellu_obj,
+                          SC1D_W_FILE=sf.out_tellu_sc1d_w,
+                          SC1D_V_FILE=sf.out_tellu_sc1d_v,
+                          TELLU_RECON=sf.out_tellu_recon,
+                          RC1D_W_FILE=sf.out_tellu_rc1d_w,
+                          RC1D_V_FILE=sf.out_tellu_rc1d_v)
+obj_fit_tellu.set_arg(pos=0, **directory)
+obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
+                     files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                     limit=1)
+obj_fit_tellu.set_kwarg(**add_cal)
+obj_fit_tellu.set_kwarg(**plot)
+obj_fit_tellu.set_kwarg(**interactive)
+obj_fit_tellu.set_kwarg(**wavefile)
+
 
 # -----------------------------------------------------------------------------
 # obj_mk_tell_template

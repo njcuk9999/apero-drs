@@ -608,20 +608,75 @@ out_file.addset(out_wave_master)
 #                                 KW_OUTPUT='CCF_E2DS_FP_FF_AB')
 
 # -----------------------------------------------------------------------------
-# telluric
+# make telluric
+
+# convolved tapas map (with wave solution)
+out_tellu_conv = drs_finput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
+                            fibers=['AB', 'A', 'B', 'C'],
+                            filetype='.fits',
+                            suffix='_tellu_conv',
+                            dbname='calibration', dbkey='TELLU_CONV',
+                            outfunc=out.general_file)
+
+# transmission map
+out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits',
+                             suffix='_tellu_trans',
+                             dbname='calibration', dbkey='TELLU_TRANS',
+                             outfunc=out.general_file)
+
+# -----------------------------------------------------------------------------
+# fit telluric
+# absorption files (npy file)
+out_tellu_abso_npy = drs_ninput('ABSO_NPY',
+                                filetype='.npy',
+                                filename='tellu_save_0.npy',
+                                outfunc=out.set_file)
+
+# telluric corrected e2ds spectrum
+out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits',
+                           suffix='_tellu_obj',
+                           dbname='calibration', dbkey='TELLU_OBJ',
+                           outfunc=out.general_file)
+
+# telluric corrected s1d spectrum
+out_tellu_sc1d_w = drs_finput('SC1D_W_FILE', KW_OUTPUT='SC1D_W_FILE',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.fits',
+                              suffix='_tellu_obj_s1d_w',
+                              outfunc=out.general_file)
+out_tellu_sc1d_v = drs_finput('SC1D_V_FILE', KW_OUTPUT='SC1D_V_FILE',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.fits',
+                              suffix='_tellu_obj_s1d_v',
+                              outfunc=out.general_file)
+
+# reconstructed telluric absorption file
+out_tellu_recon = drs_finput('TELLU_RECON', KW_OUTPUT='TELLU_RECON',
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits',
+                             suffix='_tellu_recon',
+                             dbname='calibration', dbkey='TELLU_RECON',
+                             outfunc=out.general_file)
+
+# reconstructed telluric 1d absorption
+out_tellu_rc1d_w = drs_finput('RC1D_W_FILE', KW_OUTPUT='RC1D_W_FILE',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.fits',
+                              suffix='_tellu_recon_s1d_w',
+                              outfunc=out.general_file)
+out_tellu_rc1d_v = drs_finput('RC1D_V_FILE', KW_OUTPUT='RC1D_V_FILE',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.fits',
+                              suffix='_tellu_recon_s1d_v',
+                              outfunc=out.general_file)
+
+# -----------------------------------------------------------------------------
+# telluric template
 # TODO: fill in definitions
-# out_tellu_trans_map = drs_finput('TELLU_TRANS_MAP_AB', fiber='AB',
-#                                  KW_OUTPUT='TELLU_TRANS_AB')
-# out_tellu_abso_map = drs_finput('TELLU_ABSO_MAP_AB', fiber='AB',
-#                                 KW_OUTPUT='TELLU_ABSO_MAP_AB')
-# out_tellu_abso_med = drs_finput('TELLU_ABSO_MEDIAN_AB', fiber='AB',
-#                                 KW_OUTPUT='TELLU_ABSO_MED_AB')
-# out_tellu_abso_norm = drs_finput('TELLU_ABSO_NORM_MAP_AB', fiber='AB',
-#                                  KW_OUTPUT='TELLU_ABSO_NORM_AB')
-# out_tellu_fit = drs_finput('TELLU_FIT_OUT_AB', fiber='AB',
-#                            KW_OUTPUT='TELLU_CORRECTED_AB')
-# out_tellu_fit_recon = drs_finput('TELLU_FIT_RECON_AB', fiber='AB',
-#                                  KW_OUTPUT='TELLU_RECON_AB')
 # out_tellu_obj_temp = drs_finput('OBJTELLU_TEMPLATE_AB', fiber='AB',
 #                                 KW_OUTPUT='OBJTELLU_TEMPLATE_AB')
 # out_tellu_cube1 = drs_finput('OBJTELLU_TEMPLATE_CUBE_FILE1_AB', fiber='AB',

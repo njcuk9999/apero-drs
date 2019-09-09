@@ -1368,6 +1368,53 @@ MKTELLU_SMALL_LIMIT = MKTELLU_SMALL_LIMIT.copy(__NAME__)
 MKTELLU_SMALL_LIMIT.value = 1.0e-9
 
 # =============================================================================
+# CALIBRATION: FIT TELLURIC SETTINGS
+# =============================================================================
+# Define whether to add the first derivative and broadening factor to the
+#     principal components this allows a variable resolution and velocity
+#     offset of the PCs this is performed in the pixel space and NOT the
+#     velocity space as this is should be due to an instrument shift
+FTELLU_ADD_DERIV_PC = FTELLU_ADD_DERIV_PC.copy(__NAME__)
+FTELLU_ADD_DERIV_PC.value = True
+
+# Define whether to fit the derivatives instead of the principal components
+FTELLU_FIT_DERIV_PC = FTELLU_FIT_DERIV_PC.copy(__NAME__)
+FTELLU_FIT_DERIV_PC.value = False
+
+# The number of pixels required (per order) to be able to interpolate the
+#    template on to a berv shifted wavelength grid
+FTELLU_FIT_KEEP_NUM  = FTELLU_FIT_KEEP_NUM.copy(__NAME__)
+FTELLU_FIT_KEEP_NUM.value = 20
+
+# The minimium transmission allowed to define good pixels (for reconstructed
+#    absorption calculation)
+FTELLU_FIT_MIN_TRANS  = FTELLU_FIT_MIN_TRANS.copy(__NAME__)
+FTELLU_FIT_MIN_TRANS.value = 0.2
+
+# The minimum wavelength constraint (in nm) to calculate reconstructed
+#     absorption
+FTELLU_LAMBDA_MIN  = FTELLU_LAMBDA_MIN.copy(__NAME__)
+FTELLU_LAMBDA_MIN.value = 1000.0
+
+# The maximum wavelength constraint (in nm) to calculate reconstructed
+#     absorption
+FTELLU_LAMBDA_MAX  = FTELLU_LAMBDA_MAX.copy(__NAME__)
+FTELLU_LAMBDA_MAX.value = 2100.0
+
+# The gaussian kernel used to smooth the template and residual spectrum [km/s]
+FTELLU_KERNEL_VSINI  = FTELLU_KERNEL_VSINI.copy(__NAME__)
+FTELLU_KERNEL_VSINI.value = 30.0
+
+# The number of iterations to use in the reconstructed absorption calculation
+FTELLU_FIT_ITERS  = FTELLU_FIT_ITERS.copy(__NAME__)
+FTELLU_FIT_ITERS.value = 4
+
+# The minimum log absorption the is allowed in the molecular absorption
+#     calculation
+FTELLU_FIT_RECON_LIMIT  = FTELLU_FIT_RECON_LIMIT.copy(__NAME__)
+FTELLU_FIT_RECON_LIMIT.value = -0.5
+
+# =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
 # Define the ccf mask path

@@ -156,6 +156,10 @@ __all__ = [
     'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
     'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
     'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT',
+    # fit telluric constants,
+    'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC', 'FTELLU_FIT_KEEP_NUM',
+    'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN', 'FTELLU_LAMBDA_MAX',
+    'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS', 'FTELLU_FIT_RECON_LIMIT',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
@@ -1487,7 +1491,49 @@ MKTELLU_SMALL_LIMIT = Const('MKTELLU_SMALL_LIMIT', value=None, dtype=float,
 # =============================================================================
 # CALIBRATION: FIT TELLURIC SETTINGS
 # =============================================================================
+# Define whether to add the first derivative and broadening factor to the
+#     principal components this allows a variable resolution and velocity
+#     offset of the PCs this is performed in the pixel space and NOT the
+#     velocity space as this is should be due to an instrument shift
+FTELLU_ADD_DERIV_PC = Const('FTELLU_ADD_DERIV_PC', value=None, dtype=bool,
+                            source=__NAME__)
 
+# Define whether to fit the derivatives instead of the principal components
+FTELLU_FIT_DERIV_PC = Const('FTELLU_FIT_DERIV_PC', value=None, dtype=bool,
+                            source=__NAME__)
+
+# The number of pixels required (per order) to be able to interpolate the
+#    template on to a berv shifted wavelength grid
+FTELLU_FIT_KEEP_NUM = Const('FTELLU_FIT_KEEP_NUM', value=None, dtype=int,
+                            source=__NAME__)
+
+# The minimium transmission allowed to define good pixels (for reconstructed
+#    absorption calculation)
+FTELLU_FIT_MIN_TRANS = Const('FTELLU_FIT_MIN_TRANS', value=None, dtype=float,
+                             source=__NAME__)
+
+# The minimum wavelength constraint (in nm) to calculate reconstructed
+#     absorption
+FTELLU_LAMBDA_MIN = Const('FTELLU_LAMBDA_MIN', value=None, dtype=float,
+                          source=__NAME__)
+
+# The maximum wavelength constraint (in nm) to calculate reconstructed
+#     absorption
+FTELLU_LAMBDA_MAX = Const('FTELLU_LAMBDA_MAX', value=None, dtype=float,
+                          source=__NAME__)
+
+# The gaussian kernel used to smooth the template and residual spectrum [km/s]
+FTELLU_KERNEL_VSINI = Const('FTELLU_KERNEL_VSINI', value=None, dtype=float,
+                             source=__NAME__)
+
+# The number of iterations to use in the reconstructed absorption calculation
+FTELLU_FIT_ITERS = Const('FTELLU_FIT_ITERS', value=None, dtype=int,
+                         source=__NAME__)
+
+# The minimum log absorption the is allowed in the molecular absorption
+#     calculation
+FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
+                               dtype=float, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
