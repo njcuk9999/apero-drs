@@ -1099,3 +1099,62 @@ KW_MKTELL_WATER = KW_MKTELL_WATER.copy(__NAME__)
 KW_MKTELL_WATER.set(key='TAU_OTHE',
                     comment='mktellu recovered depth others (tau other)')
 
+# -----------------------------------------------------------------------------
+# Define fit telluric variables
+# -----------------------------------------------------------------------------
+# The number of principle components used
+KW_FTELLU_NPC = KW_FTELLU_NPC.copy(__NAME__)
+KW_FTELLU_NPC.set(key='FTT_NPC',
+                  comment='ftellu Number of principal components used')
+
+# whether we added first derivative to principal components
+KW_FTELLU_ADD_DPC = KW_FTELLU_ADD_DPC.copy(__NAME__)
+KW_FTELLU_ADD_DPC.set(key='FTT_ADPC',
+                      comment='ftellu first deriv. was added to pc')
+
+# whether we fitted the derivatives of the principal components
+KW_FTELLU_FIT_DPC = KW_FTELLU_FIT_DPC.copy(__NAME__)
+KW_FTELLU_FIT_DPC.set(key='FTT_FDPC',
+                      comment='ftellu deriv. of pc was fit instead of pc')
+
+# The source of the loaded absorption (npy file or trans_file from database)
+KW_FTELLU_ABSO_SRC = KW_FTELLU_ABSO_SRC.copy(__NAME__)
+KW_FTELLU_ABSO_SRC.set(key='FTTABSOS',
+                       comment='ftellu source of the abso (file or database)')
+
+# Number of good pixels requirement used
+KW_FTELLU_FIT_KEEP_NUM = KW_FTELLU_FIT_KEEP_NUM.copy(__NAME__)
+KW_FTELLU_FIT_KEEP_NUM.set(key='FTTFKNUM',
+                           comment='ftellu num of good pixels used per order')
+
+# The minimum transmission used
+KW_FTELLU_FIT_MIN_TRANS = KW_FTELLU_FIT_MIN_TRANS.copy(__NAME__)
+KW_FTELLU_FIT_MIN_TRANS.set(key='FTTMTRAN',
+                            comment='ftellu min transmission used')
+
+# The minimum wavelength used
+KW_FTELLU_LAMBDA_MIN = KW_FTELLU_LAMBDA_MIN.copy(__NAME__)
+KW_FTELLU_LAMBDA_MIN.set(key='FTTMINLL', comment='ftellu min wavelength used')
+
+# The maximum wavelength used
+KW_FTELLU_LAMBDA_MAX = KW_FTELLU_LAMBDA_MAX.copy(__NAME__)
+KW_FTELLU_LAMBDA_MAX.set(key='FTTMAXLL', comment='ftellu max wavelength used')
+
+# The smoothing kernel size [km/s] used
+KW_FTELLU_KERN_VSINI = KW_FTELLU_KERN_VSINI.copy(__NAME__)
+KW_FTELLU_KERN_VSINI.set(key='FTTSKERN',
+                         comment='ftellu smoothing kernal used [km/s]')
+
+# The image pixel size used
+KW_FTELLU_IM_PX_SIZE = KW_FTELLU_IM_PX_SIZE.copy(__NAME__)
+KW_FTELLU_IM_PX_SIZE.set(key='FTTIMPXS', comment='ftellu image pixel size used')
+
+# the number of iterations used to fit
+KW_FTELLU_FIT_ITERS = KW_FTELLU_FIT_ITERS.copy(__NAME__)
+KW_FTELLU_FIT_ITERS.set(key='FTTFITRS',
+                        comment='ftellu num iterations used for fit')
+
+# the log limit in minimum absorption used
+KW_FTELLU_RECON_LIM = KW_FTELLU_RECON_LIM.copy(__NAME__)
+KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
+                        comment='ftellu log limit in min absorption used')

@@ -102,6 +102,12 @@ __all__ = [# input keys
            'KW_MKTELL_TAU_WATER_U', 'KW_MKTELL_TAU_OTHER_L',
            'KW_MKTELL_TAU_OTHER_U', 'KW_MKTELL_TAPAS_SNUM',
            'KW_MKTELL_AIRMASS', 'KW_MKTELL_WATER',
+           # fittellu values
+           'KW_FTELLU_NPC', 'KW_FTELLU_ADD_DPC', 'KW_FTELLU_FIT_DPC',
+           'KW_FTELLU_ABSO_SRC', 'KW_FTELLU_FIT_KEEP_NUM',
+           'KW_FTELLU_FIT_MIN_TRANS', 'KW_FTELLU_LAMBDA_MIN',
+           'KW_FTELLU_LAMBDA_MAX', 'KW_FTELLU_KERN_VSINI',
+           'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
 ]
 
 # set name
@@ -283,7 +289,7 @@ KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
 # Define preprocessing variables
 # -----------------------------------------------------------------------------
 # The shift in pixels so that image is at same location as engineering flat
-KW_PPSHIFTX =Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__)
+KW_PPSHIFTX = Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__)
 KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
@@ -941,3 +947,53 @@ KW_MKTELL_AIRMASS = Keyword('KW_MKTELL_AIRMASS', key='', dtype=float,
 # The recovered water optical depth calculated in mktellu calculation
 KW_MKTELL_WATER = Keyword('KW_MKTELL_WATER', key='', dtype=float,
                           source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define fit telluric variables
+# -----------------------------------------------------------------------------
+# The number of principle components used
+KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='', dtype=int, source=__NAME__)
+
+# whether we added first derivative to principal components
+KW_FTELLU_ADD_DPC = Keyword('KW_FTELLU_ADD_DPC', key='', dtype=bool,
+                            source=__NAME__)
+
+# whether we fitted the derivatives of the principal components
+KW_FTELLU_FIT_DPC = Keyword('KW_FTELLU_FIT_DPC', key='', dtype=bool,
+                            source=__NAME__)
+
+# The source of the loaded absorption (npy file or trans_file from database)
+KW_FTELLU_ABSO_SRC = Keyword('KW_FTELLU_ABSO_SRC', key='', dtype=str,
+                             source=__NAME__)
+
+# Number of good pixels requirement used
+KW_FTELLU_FIT_KEEP_NUM = Keyword('KW_FTELLU_FIT_KEEP_NUM', key='', dtype=int,
+                                 source=__NAME__)
+
+# The minimum transmission used
+KW_FTELLU_FIT_MIN_TRANS = Keyword('KW_FTELLU_FIT_MIN_TRANS', key='',
+                                  dtype=float, source=__NAME__)
+
+# The minimum wavelength used
+KW_FTELLU_LAMBDA_MIN = Keyword('KW_FTELLU_LAMBDA_MIN', key='', dtype=float,
+                               source=__NAME__)
+
+# The maximum wavelength used
+KW_FTELLU_LAMBDA_MAX = Keyword('KW_FTELLU_LAMBDA_MAX', key='', dtype=float,
+                               source=__NAME__)
+
+# The smoothing kernel size [km/s] used
+KW_FTELLU_KERN_VSINI = Keyword('KW_FTELLU_KERN_VSINI', key='', dtype=float,
+                               source=__NAME__)
+
+# The image pixel size used
+KW_FTELLU_IM_PX_SIZE = Keyword('KW_FTELLU_IM_PX_SIZE', key='', dtype=float,
+                               source=__NAME__)
+
+# the number of iterations used to fit
+KW_FTELLU_FIT_ITERS = Keyword('KW_FTELLU_FIT_ITERS', key='', dtype=int,
+                              source=__NAME__)
+
+# the log limit in minimum absorption used
+KW_FTELLU_RECON_LIM = Keyword('KW_FTELLU_RECON_LIM', key='', dtype=float,
+                              source=__NAME__)
