@@ -22,6 +22,14 @@ calc_recon_and_correct = general.calc_recon_and_correct
 
 calculate_telluric_absorption = general.calculate_telluric_absorption
 
+fit_tellu_write_corrected = general.fit_tellu_write_corrected
+
+fit_tellu_write_corrected_s1d = general.fit_tellu_write_corrected_s1d
+
+fit_tellu_write_recon = general.fit_tellu_write_recon
+
+fit_tellu_quality_control = general.fit_tellu_quality_control
+
 gen_abso_pca_calc = general.gen_abso_pca_calc
 
 get_blacklist = general.get_blacklist

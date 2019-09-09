@@ -28,10 +28,12 @@ Created on 2019-09-05 at 14:58
 @author: cook
 """
 from __future__ import division
+import numpy as np
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import wave
 from terrapipe.science import extract
@@ -204,7 +206,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, recipe, header, objname, fiber)
+        tout = telluric.load_templates(params, header, objname, fiber)
         template, template_file = tout
         # ----------------------------------------------------------------------
         # load the expected atmospheric transmission
@@ -232,47 +234,49 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the corrected E2DS file
         # ------------------------------------------------------------------
-        sargs = [wprops['WAVEMAP'], cprops['CORRECTED_SP'], nprops['BLAZE']]
-        swprops = extract.e2ds_to_s1d(params, *sargs, wgrid='wave')
-        svprops = extract.e2ds_to_s1d(params, *sargs, wgrid='velocity')
+        scargs = [wprops['WAVEMAP'], cprops['CORRECTED_SP'], nprops['BLAZE']]
+        scwprops = extract.e2ds_to_s1d(params, *scargs, wgrid='wave')
+        scvprops = extract.e2ds_to_s1d(params, *scargs, wgrid='velocity')
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
-        rargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
-        rwprops = extract.e2ds_to_s1d(params, *rargs, wgrid='wave')
-        rvprops = extract.e2ds_to_s1d(params, *rargs, wgrid='velocity')
+        rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
+        rcwprops = extract.e2ds_to_s1d(params, *rcargs, wgrid='wave')
+        rcvprops = extract.e2ds_to_s1d(params, *rcargs, wgrid='velocity')
 
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        # TODO: Work has got to here
-        qc_params = [None, None, None, None]
+        qc_params = telluric.fit_tellu_quality_control(params, infile)
 
         # ------------------------------------------------------------------
         # Save corrected E2DS to file
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        fargs = [infile, rawfiles, fiber, combine, nprops, wprops, pca_props,
+                 sprops, cprops, qc_params]
+        corrfile = telluric.fit_tellu_write_corrected(params, recipe, *fargs)
 
         # ------------------------------------------------------------------
         # Save 1d corrected spectra to file
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        fsargs = [infile, corrfile, fiber, scwprops, scvprops]
+        telluric.fit_tellu_write_corrected_s1d(params, recipe, *fsargs)
 
         # ------------------------------------------------------------------
-        # Save reconstructed absorption to file
+        # Save reconstructed absorption to file (E2DS + S1D)
         # ------------------------------------------------------------------
-        # TODO: Add code here
-
-        # ------------------------------------------------------------------
-        # Save 1d reconstructed absorption spectra to file
-        # ------------------------------------------------------------------
-        # TODO: Add code here
+        frargs = [infile. corrfile, fiber, cprops, rcwprops, rcvprops]
+        reconfile = telluric.fit_tellu_write_recon(params, recipe, *frargs)
 
         # ------------------------------------------------------------------
         # Add TELLU_OBJ and TELLU_RECON to database
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        if np.all(qc_params[3]):
+            # copy the tellu_obj file to database
+            drs_database.add_file(params, corrfile)
+            # copy the tellu_rcon file to database
+            drs_database.add_file(params, reconfile)
 
     # ----------------------------------------------------------------------
     # End of main code
