@@ -1411,8 +1411,20 @@ FTELLU_FIT_ITERS.value = 4
 
 # The minimum log absorption the is allowed in the molecular absorption
 #     calculation
-FTELLU_FIT_RECON_LIMIT  = FTELLU_FIT_RECON_LIMIT.copy(__NAME__)
+FTELLU_FIT_RECON_LIMIT = FTELLU_FIT_RECON_LIMIT.copy(__NAME__)
 FTELLU_FIT_RECON_LIMIT.value = -0.5
+
+# =============================================================================
+# CALIBRATION: MAKE TEMPLATE SETTINGS
+# =============================================================================
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input template files
+MKTEMPLATE_FILETYPE = MKTEMPLATE_FILETYPE.copy(__NAME__)
+MKTEMPLATE_FILETYPE.value = 'EXT_E2DS_FF_AB'
+
+# the fiber required for input template files
+MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
+MKTEMPLATE_FIBER_TYPE.value = 'AB'
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS

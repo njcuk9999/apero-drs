@@ -160,6 +160,8 @@ __all__ = [
     'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC', 'FTELLU_FIT_KEEP_NUM',
     'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN', 'FTELLU_LAMBDA_MAX',
     'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS', 'FTELLU_FIT_RECON_LIMIT',
+    # make template constants
+    'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
@@ -1534,6 +1536,18 @@ FTELLU_FIT_ITERS = Const('FTELLU_FIT_ITERS', value=None, dtype=int,
 #     calculation
 FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
                                dtype=float, source=__NAME__)
+
+# =============================================================================
+# CALIBRATION: MAKE TEMPLATE SETTINGS
+# =============================================================================
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input template files
+MKTEMPLATE_FILETYPE = Const('MKTEMPLATE_FILETYPE', value=None, dtype=str,
+                            source=__NAME__)
+
+# the fiber required for input template files
+MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
+                              source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
