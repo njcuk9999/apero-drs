@@ -1431,6 +1431,15 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
 
 
 # =============================================================================
+# Fit telluric functions
+# =============================================================================
+def make_template_cubes(params, filenames):
+
+    # TODO: Got to here
+
+    return 0
+
+# =============================================================================
 # QC and writing functions
 # =============================================================================
 def mk_tellu_quality_control(params, tprops, infile, **kwargs):
@@ -1778,6 +1787,8 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dwfile.construct_filename(params, infile=infile)
     # copy header from corrected e2ds file
     sc1dwfile.copy_hdict(corrfile)
+    # add output tag
+    sc1dwfile.add_hkey('KW_OUTPUT', value=sc1dwfile.name)
     # add new header keys
     sc1dwfile = extract.add_s1d_keys(sc1dwfile, scwprops)
     # copy data
@@ -1799,6 +1810,8 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dvfile.construct_filename(params, infile=infile)
     # copy header from corrected e2ds file
     sc1dvfile.copy_hdict(corrfile)
+    # add output tag
+    sc1dvfile.add_hkey('KW_OUTPUT', value=sc1dvfile.name)
     # add new header keys
     sc1dvfile = extract.add_s1d_keys(sc1dvfile, scvprops)
     # copy data
@@ -1824,6 +1837,8 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     reconfile.construct_filename(params, infile=infile)
     # copy header from corrected e2ds file
     reconfile.copy_hdict(corrfile)
+    # add output tag
+    reconfile.add_hkey('KW_OUTPUT', value=reconfile.name)
     # copy data
     reconfile.data = cprops['RECON_ABSO']
     # log that we are saving recon e2ds file
@@ -1840,6 +1855,8 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dwfile.construct_filename(params, infile=infile)
     # copy header from corrected e2ds file
     rc1dwfile.copy_hdict(corrfile)
+    # add output tag
+    rc1dwfile.add_hkey('KW_OUTPUT', value=rc1dwfile.name)
     # add new header keys
     rc1dwfile = extract.add_s1d_keys(rc1dwfile, rcwprops)
     # copy data
@@ -1861,6 +1878,8 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile.construct_filename(params, infile=infile)
     # copy header from corrected e2ds file
     rc1dvfile.copy_hdict(corrfile)
+    # add output tag
+    rc1dvfile.add_hkey('KW_OUTPUT', value=rc1dvfile.name)
     # add new header keys
     rc1dvfile = extract.add_s1d_keys(rc1dvfile, rcvprops)
     # copy data

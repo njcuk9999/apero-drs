@@ -44,6 +44,8 @@ load_tapas_convolved = general.load_tapas_convolved
 
 load_templates = general.load_templates
 
+make_template_cubes = general.make_template_cubes
+
 mk_tellu_quality_control = general.mk_tellu_quality_control
 
 mk_tellu_write_trans_file = general.mk_tellu_write_trans_file
