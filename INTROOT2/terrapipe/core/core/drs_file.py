@@ -1917,8 +1917,6 @@ class DrsFitsFile(DrsInputFile):
         qc_all = params['KW_DRS_QC'][0]
         self.hdict[qc_all] = np.all(qcparams[3])
 
-
-
     def get_keywordstore(self, kwstore=None, func_name=None):
         """
         Deal with extraction of key, value and comment from kwstore
