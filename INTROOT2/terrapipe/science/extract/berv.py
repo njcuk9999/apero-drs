@@ -111,12 +111,12 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
         # log that we are skipping due to dprtype
         WLOG(params, '', TextEntry('40-016-00018', args=[dprtype]))
         # all entries returns are empty
-        return assign_properties(params)
+        return assign_properties(params, use=False)
     if kind == 'None':
         # log that we are skipping due to user
         WLOG(params, '', TextEntry('40-016-00019'))
         # all entries returns are empty
-        return assign_properties(params)
+        return assign_properties(params, use=False)
     # ----------------------------------------------------------------------
     # check if we already have berv (or bervest)
     bprops = get_outputs(params, infile, header, props, kwargs)
@@ -278,7 +278,7 @@ def add_berv_keys(params, infile, props):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def assign_properties(params, props=None, **kwargs):
+def assign_properties(params, props=None, use=True, **kwargs):
     """
     Assigns properties from input and deals with missing parameters
 
@@ -351,7 +351,15 @@ def assign_properties(params, props=None, **kwargs):
     cond &= oprops['BJD'] is not None
     cond &= oprops['BERV_MAX_EST'] is not None
 
-    if cond or (source == 'pyasl'):
+    # Case 1: Not BERV used
+    if not use:
+        oprops['USE_BERV'] = None
+        oprops['USE_BJD'] = None
+        oprops['USE_BERV_MAX'] = None
+        oprops['USED_ESTIMATE'] = None
+        psource = '{0} [{1}]'.format(func_name, 'None')
+    # Case 2: pyasl used
+    elif cond or (source == 'pyasl'):
         # log warning that we are using an estimate
         WLOG(params, 'warning', TextEntry('10-016-00014', args=[estimate]))
         # set parameters
@@ -360,6 +368,7 @@ def assign_properties(params, props=None, **kwargs):
         oprops['USE_BERV_MAX'] = oprops['BERV_MAX_EST']
         oprops['USED_ESTIMATE'] = True
         psource = '{0} [{1}]'.format(func_name, 'pyasl')
+    # Case 3: Barycorrpy used
     else:
         # set parameters
         oprops['USE_BERV'] = oprops['BERV']
