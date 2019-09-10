@@ -160,9 +160,15 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get all preprocessed fp files
     # ----------------------------------------------------------------------
+    # check file type
+    filetype = fpprops['DPRTYPE']
+    if filetype not in params['ALLOWED_FP_TYPES']:
+        emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+        for allowedtype in params['ALLOWED_FP_TYPES']:
+            emsg += '\n\t - "{0}"'.format(allowedtype)
+        WLOG(params, 'error', emsg)
     # get all "filetype" filenames
-    fargs = [fpprops['DPRTYPE'], params['ALLOWED_FP_TYPES']]
-    filenames = drs_fits.find_filetypes(params, *fargs)
+    filenames = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype)
     # convert to numpy array
     filenames = np.array(filenames)
 
@@ -301,6 +307,8 @@ def __main__(recipe, params):
     outfile2.construct_filename(params, infile=fpfile)
     # copy header from outfile1
     outfile2.copy_hdict(outfile1)
+    # set output key
+    outfile2.add_hkey('KW_OUTPUT', value=outfile2.name)
     # copy data
     outfile2.data = dymap
     # log that we are saving dymap to file
@@ -318,6 +326,8 @@ def __main__(recipe, params):
     outfile3.construct_filename(params, infile=fpfile)
     # copy header from outfile1
     outfile3.copy_hdict(outfile1)
+    # set output key
+    outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
     # copy data
     outfile3.data = master_fp
     # log that we are saving master_fp to file

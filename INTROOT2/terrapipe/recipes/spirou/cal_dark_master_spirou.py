@@ -101,9 +101,14 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get all preprocessed dark files
     # ----------------------------------------------------------------------
+    # check file type
+    if filetype not in params['ALLOWED_DARK_TYPES']:
+        emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+        for allowedtype in params['ALLOWED_DARK_TYPES']:
+            emsg += '\n\t - "{0}"'.format(allowedtype)
+        WLOG(params, 'error', emsg)
     # get all "filetype" filenames
-    fargs = [filetype, params['ALLOWED_DARK_TYPES']]
-    filenames = drs_fits.find_filetypes(params, *fargs)
+    filenames = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype)
     # convert to numpy array
     filenames = np.array(filenames)
 
