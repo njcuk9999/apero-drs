@@ -955,9 +955,6 @@ class DrsArgument(object):
         self.allowed_dtypes = ['files', 'file', 'directory', 'bool',
                                'options', 'switch', int, float, str, list]
         # ----------------------------------------------
-        # Get text for default language/instrument
-        text = TextDict(None, None)
-
         # deal with no name or kind (placeholder for copy)
         if name is None:
             name = 'UnknownArg'
@@ -1001,11 +998,18 @@ class DrsArgument(object):
         # get file logic
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
+            # Get text for default language/instrument
+            text = TextDict(None, None)
+            # get entry to log error
             ee = TextEntry('00-006-00008', args=[self.filelogic])
             self.exception(None, errorobj=[ee, text])
         # deal with no default/default_ref for kwarg
         if kind == 'kwarg':
+            # get entry
             if ('default' not in kwargs) and ('default_ref' not in kwargs):
+                # Get text for default language/instrument
+                text = TextDict(None, None)
+                # get entry to log error
                 ee = TextEntry('00-006-00009', args=self.filelogic)
                 self.exception(None, errorobj=[ee, text])
         # get default
@@ -1034,13 +1038,14 @@ class DrsArgument(object):
 
         :return None:
         """
-        # Get text for default language/instrument
-        text = TextDict(None, None)
         # deal with no dtype
         if self.dtype is None:
             self.dtype = str
         # make sure dtype is valid
         if self.dtype not in self.allowed_dtypes:
+            # Get text for default language/instrument
+            text = TextDict(None, None)
+            # make error
             a_dtypes_str = ['"{0}"'.format(i) for i in self.allowed_dtypes]
             eargs = [' or '.join(a_dtypes_str), self.dtype]
             ee = TextEntry('00-006-00010', args=eargs)
