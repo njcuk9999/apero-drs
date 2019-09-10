@@ -396,7 +396,15 @@ def get_header_time(params, database, header):
 # Define database get functions
 # =============================================================================
 def get_key_from_db(params, key, database, header, n_ent=1, required=True,
-                    mode=None):
+                    mode=None, **kwargs):
+    func_name = __NAME__ + '.get_key_from_db()'
+    # ----------------------------------------------------------------------
+    # deal with no mode set (assume from calibDB)
+    if mode is None:
+        mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
+    # debug print mode using
+    dargs = [mode, func_name]
+    WLOG(params, 'debug', TextEntry('90-002-00002', args=dargs))
     # ----------------------------------------------------------------------
     # get time from header
     header_time = _get_time(params, database.dbname, header=header)
