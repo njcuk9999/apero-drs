@@ -1914,7 +1914,8 @@ class DrsFitsFile(DrsInputFile):
                 # add to the hdict dictionary in form (value, comment)
                 self.hdict[key.format(it + 1)] = (value, comment)
         # add a final criteria that says whether everything passed or not
-        self.hdict['KW_DRS_QC'] = np.all(qcparams[3])
+        qc_all = params['KW_DRS_QC'][0]
+        self.hdict[qc_all] = np.all(qcparams[3])
 
 
 
