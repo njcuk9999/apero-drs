@@ -314,7 +314,7 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
     images, headers, abspaths = [], [], []
     # ----------------------------------------------------------------------
     # loop around entries
-    for it, entry in entries:
+    for it, entry in enumerate(entries):
         # get entry filename
         filename = entry[filecol]
         # ------------------------------------------------------------------
