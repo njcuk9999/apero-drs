@@ -150,6 +150,7 @@ cal_thermal = DrsRecipe(__INSTRUMENT__, filemod=sf)
 cal_wave = DrsRecipe(__INSTRUMENT__, filemod=sf)
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
+obj_mk_temp = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__, filemod=sf)
@@ -157,7 +158,7 @@ test = DrsRecipe(__INSTRUMENT__, filemod=sf)
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
-           obj_mk_tellu, obj_fit_tellu,
+           obj_mk_tellu, obj_fit_tellu, obj_mk_temp,
            test]
 
 # =============================================================================
@@ -622,7 +623,7 @@ cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
 # -----------------------------------------------------------------------------
 # obj_mk_tellu
 # -----------------------------------------------------------------------------
-obj_mk_tellu.name = 'obj_mk_tellu.py'
+obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
 obj_mk_tellu.outputdir = 'reduced'
@@ -636,7 +637,7 @@ obj_mk_tellu.set_outputs(TELLU_CONV=sf.out_tellu_conv,
 obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                     helpstr=Help['FILES_HELP'] + Help['MKTELL_FILES_HELP'],
                      limit=1)
 obj_mk_tellu.set_kwarg(**add_cal)
 obj_mk_tellu.set_kwarg(**plot)
@@ -646,15 +647,15 @@ obj_mk_tellu.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
 # -----------------------------------------------------------------------------
-obj_fit_tellu.name = 'obj_fit_tellu.py'
+obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
 obj_fit_tellu.shortname = 'MKTELL'
 obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.outputdir = 'reduced'
 obj_fit_tellu.inputdir = 'tmp'
 obj_fit_tellu.inputtype = 'reduced'
 obj_fit_tellu.extension = 'fits'
-obj_fit_tellu.description = Help['MKTELL_DESC']
-obj_fit_tellu.epilog = Help['MKTELL_EXAMPLE']
+obj_fit_tellu.description = Help['FIT_TELL_DESC']
+obj_fit_tellu.epilog = Help['FIT_TELL_EXAMPLE']
 obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           TELLU_OBJ=sf.out_tellu_obj,
                           SC1D_W_FILE=sf.out_tellu_sc1d_w,
@@ -665,7 +666,7 @@ obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                     helpstr=Help['FILES_HELP'] + Help['FIT_TELL_FILES_HELP'],
                      limit=1)
 obj_fit_tellu.set_kwarg(**add_cal)
 obj_fit_tellu.set_kwarg(**plot)
@@ -674,8 +675,28 @@ obj_fit_tellu.set_kwarg(**wavefile)
 
 
 # -----------------------------------------------------------------------------
-# obj_mk_tell_template
+# obj_mk_temp
 # -----------------------------------------------------------------------------
+obj_mk_temp.name = 'obj_mk_temp_spirou.py'
+obj_mk_temp.shortname = 'MKTEMP'
+obj_mk_temp.instrument = __INSTRUMENT__
+obj_mk_temp.outputdir = 'reduced'
+obj_mk_temp.inputdir = 'tmp'
+obj_mk_temp.inputtype = 'reduced'
+obj_mk_temp.extension = 'fits'
+obj_mk_temp.description = Help['MKTEMP_DESC']
+obj_mk_temp.epilog = Help['MKTEMP_EXAMPLE']
+obj_mk_temp.set_outputs()
+obj_mk_temp.set_arg(pos=0, **directory)
+obj_mk_temp.set_arg(name='files', dtype='files', pos='1+',
+                     files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                     helpstr=Help['FILES_HELP'] + Help['MKTEMP_FILES_HELP'],
+                     limit=1)
+obj_mk_temp.set_kwarg(**add_cal)
+obj_mk_temp.set_kwarg(**plot)
+obj_mk_temp.set_kwarg(**interactive)
+obj_mk_temp.set_kwarg(**wavefile)
+
 
 # -----------------------------------------------------------------------------
 # pol_spirou
