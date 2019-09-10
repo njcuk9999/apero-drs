@@ -2,6 +2,511 @@ Changelog
 =========
 
 
+0.5.068 (2019-09-10)
+--------------------
+- Tools.modlue.setup.drs_reprocess.py - load "adds" when checking
+  sequences (taken out of recipe init) [Neil Cook]
+- Science.extract.berv.py - do not report estimate used when we are
+  meant to be return no berv. [Neil Cook]
+- Science.calib.general.py + science.telluric.general.py - need to
+  enumerate around entries. [Neil Cook]
+- Locale.core.drs_text.py - cache data - do not load a textdict again
+  for an instrument (now cached) [Neil Cook]
+- Core.math.gauss.py - import general (for fwhm) [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add obj_mk_temp. [Neil
+  Cook]
+- Drs_recipe.py - remove second deep copy (now copied internally to
+  constants.load) [Neil Cook]
+- Core.core.drs_file.py - replace KW_DRS_QC with params['KW_DRS_QC'][0]
+  [Neil Cook]
+- Core.core.drs_argument.py - move textdict loading to error handling
+  (only needed here) [Neil Cook]
+- Core.constants.param_functions.py - add caches to speed up loading.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Rename obj_mk_tellu and obj_fit_tellu (add _spirou suffix) [Neil Cook]
+- Make recipes executable. [Neil Cook]
+- Update language database. [Neil Cook]
+- Obj_fit_tellu.py + obj_mk_tellu.py - keep porting telluric code from
+  SpirouDRS. [Neil Cook]
+- Recipe.spirou - pep8 changes. [Neil Cook]
+- Core.math.__init__.py - add fwhm alias. [Neil Cook]
+- Core.instruments - add telluric constants/keywords/definitions. [Neil
+  Cook]
+
+
+0.5.067 (2019-09-06)
+--------------------
+- Science.extract.berv.py - add additional flag for when estiamte is
+  used/not used. [njcuk9999]
+- Extract.berv.py - add USE_BERV, USE_BJD and USE_BERV_MAX to berv props
+  (these are the ones that should be used and will be either estimate or
+  barycorrpy values. [njcuk9999]
+- Science.telluric.general.py - add gen_abso_pca_calc,
+  shift_all_to_frame and calc_recon_and_correct functions. [njcuk9999]
+- Obj_fit_tellu.py - continue porting content from SpirouDRS to
+  terrapipe. [njcuk9999]
+- Update language database. [njcuk9999]
+- Core.core.drs_database.py - add default parameters to get_db_file.
+  [njcuk9999]
+
+
+0.5.066 (2019-09-05)
+--------------------
+- Obj_fit_tellu.py - update how far we have got. [njcuk9999]
+- Update language database. [njcuk9999]
+- Science.calib and science.extract - fix calls to load_calib_file.
+  [njcuk9999]
+- Obj_fit_tellu.py/obj_mk_tellu.py - continue to port from SpirouDRS to
+  terrapipe. [njcuk9999]
+- Core.io.drs_path.py - add 'get_most_recent' function. [njcuk9999]
+- Core.instruments - add mk_tellu constants/keywords. [njcuk9999]
+- Core.core.drs_database.py - change how loading works (rearrange
+  functionality) [njcuk9999]
+- Obj_fit_tellu.py - start to copy over code from SpirouDRS to
+  terrapipe. [njcuk9999]
+
+
+0.5.065 (2019-09-04)
+--------------------
+- Update language database. [njcuk9999]
+- Core.core.drs_file.py - add overall pass/fail QC key. [njcuk9999]
+- Obj_mk_tellu.py - continue work on adding SpirouDRS code to terrapipe.
+  [njcuk9999]
+- Cal_loc_spirou.py - remove blank space. [njcuk9999]
+- Core.instruments - add mk_tellu constants. [njcuk9999]
+- Update language database. [njcuk9999]
+- Science.rv.general.py - remove empty lines. [njcuk9999]
+- Recipe.spirou.obj_mk_tellu.py - continue copying over SpirouDRS code
+  (obj_mk_tellu) [njcuk9999]
+- Core.maths - split out some functions into own scripts (separate from
+  general.py) [njcuk9999]
+- Core.instruments.spirou.py - add obj_mk_tellu an obj_fit_tellu as
+  DrsRecipes. [njcuk9999]
+- Core.core.drs_database.py - add option to get header from database
+  file. [njcuk9999]
+
+
+0.5.064 (2019-09-02)
+--------------------
+- Science.calib.wave.py - add NBPIX to wprops. [njcuk9999]
+- Core.core.drs_startup.py - add success and passed to outdict.
+  [njcuk9999]
+- Fix end_main calls. [njcuk9999]
+- Tools.module.setup - fix some small bugs. [njcuk9999]
+- Obj_mk_tellu.py - first commit and functions ported from SpirouDrs.
+  [njcuk9999]
+- Science.extract - add fiber key and fix orderp logging in npy
+  read/write functions. [njcuk9999]
+- Science.calib.wave.py - allow get_wavelength solution to force to
+  master. [njcuk9999]
+- Science.calib.general.py - move load_calib_file to drs_database.
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- Data.core..pdbrc - update pdb rc file (print out) [njcuk9999]
+- Core.core.recipe_definitions.py - add reprocess=True to cal_wave + add
+  wave to limited_run. [njcuk9999]
+- Core.instruments.*.default_keywords - add fiber and KW_MID_OBS_TIME.
+  [njcuk9999]
+- Core.core.drs_startup.py - fixes to indexing + pdb debug mode and exit
+  functionality. [njcuk9999]
+- Core.core.drs_recipe.py - add_output_file method and remove
+  params['OUTPUTS'] [njcuk9999]
+- Core.core.drs_file.py - add get_fiber method. [njcuk9999]
+- Core.core.drs_database.py - load_db_file load_db_file_from_filename
+  functions. [njcuk9999]
+- Core.core.drs_argument.py - add a reprocess key as well as required
+  key. [njcuk9999]
+- Recipes.spirou.* - add_output_file to allow indexing to work.
+  [njcuk9999]
+
+
+0.5.063 (2019-08-31)
+--------------------
+- Data.core..pdbrc - add pdb/ipdb script to run on execution (after
+  copying to working directory) [njcuk9999]
+- Tools.module.error.find_error.py
+  tools.module.listing.file_explorer.py - change exit/cleanup function
+  calls. [njcuk9999]
+- Tools.dev.changelog.py - change exit/cleanup function calls.
+  [njcuk9999]
+- Science.extract.other.py - fix problem with thermal (was returning
+  e2ds instance not thermal e2ds instance) [njcuk9999]
+- Update the exit/clean up function calls in main and __main__
+  functions. [njcuk9999]
+- Update language database. [njcuk9999]
+- Update object query list. [njcuk9999]
+- Core.__init__.py - add aliases to new exit/cleanup functions.
+  [njcuk9999]
+- Core.instruments.default.default_config.py - add idebug constants.
+  [njcuk9999]
+- Core.core.drs_startup.py - change the way ending is cleared up (ipdb +
+  ll redo + locals sorting) [njcuk9999]
+- Core.core.drs_recipe.py - add special set_ipython_return (for idebug
+  mode) [njcuk9999]
+- Core.core.drs_argument.py - add SetIpythonReturn class (for idebug
+  mode) [njcuk9999]
+- Core.constants.param_functions.py - add get_relative_folder and.
+  [njcuk9999]
+- Tools.module.setup.drs_reprocess.py - change when to lock/unlock
+  params + handle deep copying / deletion better. [njcuk9999]
+- Tools.dev.* - change call to core.end_main. [njcuk9999]
+- Tools.bin.* - change call to core.end_main. [njcuk9999]
+- Science.calib.localisation.py - use fiber params to get some
+  parameters. [njcuk9999]
+- Science.calib.dark.py - change where filetype comes from (not params)
+  [njcuk9999]
+- Receipes.spirou.* - change call to core.end_main. [njcuk9999]
+- Core.instruments.*.pseudo_const.py - fix writing to params (now
+  fiber_params) [njcuk9999]
+- Drs_startup.py - get params from llmain. [njcuk9999]
+- Param_functions.py - add a way to set while being locked (only for use
+  when really know what you are doing) [njcuk9999]
+
+
+0.5.062 (2019-08-30)
+--------------------
+- Tools.module.setup.drs_reprocess.py - fix copying (deep copy)
+  [njcuk9999]
+- Tools.dev.changelog.py - fix end_main and get_locals() [njcuk9999]
+- Tools.bin.* - fix main function (end_main + get_locals) [njcuk9999]
+- Science.extract.other.py - remove params['QC'] --> passed. [njcuk9999]
+- Science.extract.general.py - fix order_profiles (must be DrsNpyFile)
+  [njcuk9999]
+- Science.calib.wave,py - continue work to get cal_wave_spirou.py to
+  work. [njcuk9999]
+- Science.calib.shape.py - fix spelling in comment. [njcuk9999]
+- Recipe.spirou.* - remove params['QC'] --> passed, fix core.end_main
+  params call. [njcuk9999]
+- Update the language database. [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - add a hcmode and
+  fpmode (for changing the WAVE_MODE_HC and WAVE_MODE_FP) [njcuk9999]
+- Output_filenames.py - add output function to func_name (for error
+  printing - need to locate the problem better) [njcuk9999]
+- Core.core.instruments - deal with copying better (deep copies) + check
+  used/unused keys. [njcuk9999]
+- Core.core.drs_startup.py - deal with copying params better + lock
+  after copies. [njcuk9999]
+- Core.core.* - deal with deep copying better. [njcuk9999]
+- Core.constants.param_functions.py - add locking/unlocking function -
+  stop setting keys to params. [njcuk9999]
+
+
+0.5.061 (2019-08-29)
+--------------------
+- Science.rv.general.py - fix tabbing typo + other fixes (found after
+  first run) [njcuk9999]
+- Science.calib.shape.py - fix error in log args (C  pos 3 --> 4 )
+  [njcuk9999]
+- Cal_wave_spirou.py + science.calib.wave.py - continue work on
+  converting spiroudrs to terrapipe. [njcuk9999]
+- Recipes.spirou.cal_shape_spirou.py - add shape keywords. [njcuk9999]
+- Recipes.spirou.cal_extract_spirou.py - add shape keywords. [njcuk9999]
+- Update language database. [njcuk9999]
+- Io.drs_data.py - add colnames to ccf mask data function. [njcuk9999]
+- Core.__init__.py - add fiber_processing_update. [njcuk9999]
+- Core.math.general.py - fix nanpolyfit (if kwargs['w'] is None it
+  breaks) [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - add new wave fp
+  outputs. [njcuk9999]
+- Core.instruments.spirou.file_definitions.py - add wave definitions and
+  make sure name == KW_OUTPUT. [njcuk9999]
+- Data.spirou.ccf - add CCF masks. [njcuk9999]
+- Core.instruments.*.output_filenames.py - add set_file function.
+  [njcuk9999]
+- Core.instruments.* - add wave constants/keyword args. [njcuk9999]
+- Core.core.drs_startup.py - get_file_definition needs to remove fiber
+  if present + add function 'fiber_processing_update' [njcuk9999]
+- Core.core.drs_file.py - add group option to copy_original_keys
+  (including checking _check_keyworddict) [njcuk9999]
+- Core.constants.param_functions.py - add get_keyword_instances (for
+  obtaining dictionary of header keys linked to params + their
+  instances) [njcuk9999]
+- Core.constants.constant_functions.py - add group. [njcuk9999]
+- Cal_wave_spirou.py - corrections from Melissa commit + nanpolyfit
+  change. [njcuk9999]
+
+
+0.5.060 (2019-08-28)
+--------------------
+- Tools.module.setup.drs_reprocess.py - fix updating keys in Run
+  (runstring/args/kwargs), deal with wrong nightname. [njcuk9999]
+- Update language database. [njcuk9999]
+- Io.drs_fits.py - correct formatting of Time (need to use dtype)
+  [njcuk9999]
+- Core.instruments.spirou.default_keywords.py - correct typo in
+  constants. [njcuk9999]
+
+
+0.5.059 (2019-08-27)
+--------------------
+- Science.rv.general - add get_ccf_mask, coravelation, delta_v_rms_2d
+  calculate_ccf correlbin and fit_ccf functions. [njcuk9999]
+- Cal_wave_spirou.py - continue updating from SpirouDRS --> terrapipe.
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- Update language database. [njcuk9999]
+- Drs_data.py - add load_ccf_mask function. [njcuk9999]
+- Core.math.* - add fitgauss, get_dll and get_ll functions. [njcuk9999]
+- Core.instruments.*.py - continue adding wave constants/keywords.
+  [njcuk9999]
+- Drs_reprocess.py - fix the return to self.find_recipe. [njcuk9999]
+- Drs_reprocess.py - fix the return to self.find_recipe. [njcuk9999]
+
+
+0.5.058 (2019-08-22)
+--------------------
+- Neil_TODO.md - currently needed before release of terrapipe. [Neil
+  Cook]
+- Tools.module.setup.drs_reprocess.py - change SystemExit to LogExit.
+  [Neil Cook]
+- Science.calib.wave.py - continue convert spiroudrs wave fp solution to
+  terrapipe. [Neil Cook]
+- Update test files with new __main__ and exception handling (from
+  default and spirou) [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_exceptions.py - add LogExit and Exit classes. [Neil Cook]
+- Io.drs_text.py - add save text file. [Neil Cook]
+- Terrapipe.io.drs_data.py - add load + save cavity files. [Neil Cook]
+- Core.instruments.* - add WAVE_FP constants. [Neil Cook]
+- Core.core.drs_startup.py - change SystemExit catch to LogExit catch.
+  [Neil Cook]
+- Core.core.drs_log.py - change exit system (now via LogExit) [Neil
+  Cook]
+- SpirouWAVE2.py - another question for Melissa. [Neil Cook]
+
+
+0.5.057 (2019-08-21)
+--------------------
+- Science.calib.wave.py - continue to add wave fp code. [Neil Cook]
+- Update language database. [Neil Cook]
+- SpirouWAVE2.py - add a todo on progress of terrapipe adding. [Neil
+  Cook]
+- Cal_wave_spirou.py - continue adapting SpirouDRS wave codes to
+  terrapipe. [Neil Cook]
+- Science.rv.general.py - add measure_fp_peaks (create_drift_file) and
+  remove_wide_peaks. [Neil Cook]
+- Core.math.general.py - add gauss_function. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.* - continue to add wave_fp constants. [Neil Cook]
+
+
+0.5.056 (2019-08-21)
+--------------------
+- Constants_SPIROU_H4RG.py - add comments for @melissa-hobson to try to
+  explain. [Neil Cook]
+- Cal_wave_spirou.py and science.calib.wave.py - continue work on
+  converting from SpirouDRS. [Neil Cook]
+- Cal_loc_spirou.py - fix comment indentation. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - add out_wave_hc,
+  out_wave_fp, out_wave_hcline, out_wave_hcres and update recipe
+  definitions accordingly. [Neil Cook]
+- Core.instruments.* - continue adding wave constants + keywords. [Neil
+  Cook]
+- Core.core.drs_file.py - fix add_hkey_1d function (no longer using
+  kwstore in same way) [Neil Cook]
+
+
+0.5.055 (2019-08-19)
+--------------------
+- Science.calib.wave.py - continued integration of wave from SpirouDRS.
+  [Neil Cook]
+- Cal_wave_spirou.py - update call to wave.hc_wavesol. [Neil Cook]
+- Core.math.general.py - add fit_gauss_with_slope function. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments - add wave constants. [Neil Cook]
+- Core.constants.param_functions.py - _map_listparameter and
+  _map_dictparameter - deal with value == '' [Neil Cook]
+- SpirouWAVE2.py - clean up (for integration into terrapipe) [Neil Cook]
+
+
+0.5.054 (2019-08-16)
+--------------------
+- Tools.module.setup.drs_reprocess.py - change how find_recipe works.
+  [Neil Cook]
+- Science.extract.other.py - add other extraction functions
+  (specifically for extracting files in recipes) [Neil Cook]
+- Recipe.spirou.cal_wave_spirou.py - start conversion of cal_wave /
+  wave.py. [Neil Cook]
+- Recipes.spirou.*.py - add DATA_DICT and change average/sum to median
+  for combining. [Neil Cook]
+- Udpate language database. [Neil Cook]
+- Io.drs_image.py - only check fiber in params['inputs'] if it is in
+  inputs. [Neil Cook]
+- Core.instruments.recipe_definitions.py - add cal_wave. [Neil Cook]
+- Core.instruments.file_definitions.py - add out_hcline. [Neil Cook]
+- Core.instruments.*.default_constants.py - add wave constants. [Neil
+  Cook]
+- Core.core.drs_startup.py - add DATA_DICT functionality + recipemod
+  saving. [Neil Cook]
+- Core.core.drs_recipe.py - add unset recipemod to recipe class. [Neil
+  Cook]
+- Core.core.drs_file.py - change combine to include median. [Neil Cook]
+- Merge branch 'melissa' into dev. [Neil Cook]
+
+  Conflicts:
+  	INTROOT/config/constants_SPIROU_H4RG.py
+  	INTROOT/misc/cal_HC_E2DS_spirou.py
+- Cal_wave_spirou: new QC: consecutive pixels along an order must have
+  increasing wavelengths. [melissa-hobson]
+- Merge remote-tracking branch 'origin/melissa' into melissa. [Melissa
+  Hobson]
+
+  Conflicts:
+  	INTROOT/bin/cal_CCF_E2DS_FP_spirou.py
+  	INTROOT/misc/cal_CCF_wrap_MH.py
+- SpirouWAVE2 - bug fixes. [melissa-hobson]
+- SpirouWAVE2.py - implementation of fit_1d_solution method for
+  wave_new. [melissa-hobson]
+- SpirouWAVE2.py - move polynomial fitting to function. [melissa-hobson]
+- SpirouWAVE2 - corrections to saves for line list table. [melissa-
+  hobson]
+- Cal_wave_spirou, spirouWAVE2.py - fixed line list table for wave_new
+  method. [melissa-hobson]
+- Cal_wave_spirou, spirouWAVE2.py - fixed results table for wave_new
+  method. [melissa-hobson]
+- SpirouPlot, spirouWAVE2 - plot fixes. [melissa-hobson]
+- Merge branch 'melissa' of https://github.com/njcuk9999/spirou_py3 into
+  melissa. [melissa-hobson]
+- Constants_SPIROU_H4RG: added wave constants spirouPlot.py: added plots
+  for cal_wave_new spirouWAVE2.py - cal_wave_new adaptation -
+  update_cavity switch and proper paths, plots moved to spirouPlot,
+  fitting cleaned up. [melissa-hobson]
+- Cal_wave_new_final save. [melissa-hobson]
+- Cal_HC_E2DS_EA - corrected QC mistake. [melissa-hobson]
+- Constants_SPIROU_H4RG: added wave constants spirouPlot.py: added plots
+  for cal_wave_new spirouWAVE2.py - cal_wave_new adaptation -
+  update_cavity switch and proper paths, plots moved to spirouPlot.
+  [melissa-hobson]
+- Constants_SPIROU_H4RG: added wave constants for FP peak ID
+  spirouWAVE2.py - cal_wave_new adaptation - FP peak ID. [melissa-
+  hobson]
+- Constants_SPIROU_H4RG: added wave constants spirouWAVE2.py -
+  cal_wave_new adaptation. [melissa-hobson]
+- SpirouWAVE2.py - clarification of all_lines creation; fix of start and
+  end orders for FP method 0; common parts of FP solution (Littrow, CCF)
+  moved outside if loop. [melissa-hobson]
+- Cal_wave_spirou.py, spirouWAVE2 - cleanup. [melissa-hobson]
+- Cal_wave_spirou.py - bug fixes. [melissa-hobson]
+- Cal_wave_spirou.py, spirouWAVE2.py - C Lovis method incorporation.
+  [melissa-hobson]
+- Cal_wave_spirou.py, spirouWAVE2.py - creation of single unified
+  wavelength solution codes. [melissa-hobson]
+- Cal_WAVE_NEW_E2DS_spirou_2.py - fixes to correctly handle NaNs.
+  [melissa-hobson]
+- Cal_HC_E2DS_EA, cal_WAVE_E2DS_EA: New QC that verifies that the
+  difference in wavelength fits between consecutive orders is positive.
+  [melissa-hobson]
+- SpirouWAVE.py, spirouRV.py - fixes to correctly deal with NaN
+  warnings. [melissa-hobson]
+- SpirouWAVE.py - in find_hc_gauss_peaks, segments with fewer not-nan
+  values than gaussian parameters + 1 are ignored. [melissa-hobson]
+- Merge branch 'master' into melissa. [melissa-hobson]
+
+  # Conflicts:
+  #	INTROOT/bin/cal_CCF_E2DS_FP_MH_spirou.py
+  #	INTROOT/bin/cal_CCF_E2DS_FP_spirou.py
+  #	INTROOT/misc/cal_CCF_wrap_MH.py
+  #	INTROOT/misc/cal_WAVE_NEW_E2DS_spirou_2.py
+- Merge remote-tracking branch 'origin/melissa' into melissa. [melissa-
+  hobson]
+
+  # Conflicts:
+  #	INTROOT/bin/cal_CCF_E2DS_FP_spirou.py
+  #	INTROOT/misc/cal_CCF_wrap_MH.py
+- Cal CCF bla. [melissa-hobson]
+- Merge branch 'master' into melissa. [Melissa Hobson]
+
+  Conflicts:
+  	INTROOT/bin/cal_CCF_E2DS_FP_MH_spirou.py
+  	INTROOT/bin/cal_CCF_E2DS_FP_spirou.py
+  	INTROOT/misc/cal_CCF_wrap_MH.py
+  	INTROOT/misc/cal_WAVE_NEW_E2DS_spirou_2.py
+- Cal_HC function updates cal_WAVE_NEW save all input files. [melissa-
+  hobson]
+- Cal_CCF_MH: allows wavesols as arguments cal_CCF_wrap: calls all CCFs.
+  [melissa-hobson]
+- Cal_WAVE_E2DS_EA: fix wave file reading. [melissa-hobson]
+- Recipes.spirou.cal_wave_spirou.py - first commit. [Neil Cook]
+
+
+0.5.053 (2019-08-15)
+--------------------
+- Tools.module.setup.drs_reprocess.py - correct how we determine whether
+  we have errors in odict. [Neil Cook]
+- Core.instruments.spirou.py - add hc_run. [Neil Cook]
+- Update object list. [Neil Cook]
+- Tools.module.setup.drs_reprocess.py - add shortname to processing list
+  and skip RUN=False before generation (speed up) [Neil Cook]
+- Science.extract.berv.py - make columns lower case (to fix table) [Neil
+  Cook]
+- Core.core.drs_startup.py - lock before making directories (for
+  parallisation) [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.preprocessing.identification.py - fix problem shallow copying
+  fileset instance (use completecopy) [Neil Cook]
+- Science.preprocessing.detector.py - add dx/dy and suppress warnings
+  for nan problems in pp functions. [Neil Cook]
+- Science.calib.* - change times to mid_obs_time + change debug_back to
+  recipe.outputs definition. [Neil Cook]
+- Berv - shift around berv code + make time used come from mid_obs_time.
+  [Neil Cook]
+- Cal_preprocess_spirou.py - add in fix for 1 pixel shift + add in
+  calculation of mid observation time. [Neil Cook]
+- Update language database. [Neil Cook]
+- Drs_fits.py - add header_end_time and get_mid_obs_time functions.
+  [Neil Cook]
+- Core.instrument.spirou.recipe_definitions.py - add debug_back to
+  outputs. [Neil Cook]
+- Core.instruments.*.file_defintions.py - move debug_back to instrument
+  setup. [Neil Cook]
+- Drs_database.py - correct typo need to return t for get_mid_obs_time
+  call. [Neil Cook]
+- Core.instruments.*.py - add new time constants. [Neil Cook]
+- Drs_database.py - go from start_time --> mid_obs_time. [Neil Cook]
+
+
+0.5.052 (2019-08-14)
+--------------------
+- Update object query list. [Neil Cook]
+- Update language database. [Neil Cook]
+- Reprocessing fix - continue work. [Neil Cook]
+
+
+0.5.051 (2019-08-13)
+--------------------
+- Reprocessing - continue work on reprocessing. [Neil Cook]
+- Reprocessing - continue work on reprocessing. [Neil Cook]
+- Recipe.spirou.cal_thermal_spirou.py - fix bug with THERMAL_E2DS_FILE
+  --> recipe.outputs['THERMAL_E2DS_FILE'] [Neil Cook]
+- Data.core.object_query_list.fits - update query list. [Neil Cook]
+- Core.instruemnts.spirou.recipe_definitions.py - update shortnames +
+  add science run. [Neil Cook]
+- Core.core.drs_recipe.py - copy arguments/files properly (avoid shallow
+  copying) [Neil Cook]
+- Core.core.drs_log.py - add printmessage to WLOG. [Neil Cook]
+- Core.core.drs_file.py - allow copying of drsfiles (required to allow
+  recipe copying) [Neil Cook]
+- Core.core.drs_argument.py - add changes to allow copying of arguments
+  (needed for new recipe copies) [Neil Cook]
+- Drs_reprocess.py - fix problems with modulemain. [Neil Cook]
+- Recipes.spirou.cal_extract_spirou - remove unused imports. [Neil Cook]
+- Core.instrument.* - add reprocessing constants. [Neil Cook]
+- Drs_startup.py - every call to import_module should call func_name (so
+  we know where they come from) [Neil Cook]
+- Drs_recipe.py - remove _import_module without path. [Neil Cook]
+- Core.constants.param_functions.py - every call to import_module should
+  have func_name as argument (so we know where it came from) [Neil Cook]
+- Core.constants.constant_functions.py - every use of import_module
+  should have 'func_name' as argument (so we know where it came from)
+  [Neil Cook]
+- Recipes.spirou.cal_badpix_spirou.py - fix bug BACKMAP -->
+  recipe.outputs['BACKMAP'] [Neil Cook]
+- Update old version file. [Neil Cook]
+- Update changelog/version/date. [Neil Cook]
+
+
 0.5.050 (2019-08-12)
 --------------------
 - Tools.reprocess - add processing (linear/parallel) functionality.
