@@ -42,6 +42,9 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 
+# Cached data
+CACHE_DATA = dict()
+
 
 # =============================================================================
 # Define functions
@@ -85,11 +88,21 @@ class Text:
         return self.sources[key]
 
     def _load_dict(self, filelist):
-        # get files to check
-        dict_files = _get_dict_files(self.instrument, filelist)
-        # read dict files
-        out = _read_dict_files(dict_files, self.language)
-        values, sources, args, kinds, comments = out
+        global CACHE_DATA
+        if self.name in CACHE_DATA and self.instrument in CACHE_DATA[self.name]:
+            # get data from cached data
+            out = CACHE_DATA[self.name][self.instrument]
+            values, sources, args, kinds, comments = out
+        else:
+            # get files to check
+            dict_files = _get_dict_files(self.instrument, filelist)
+            # read dict files
+            out = _read_dict_files(dict_files, self.language)
+            values, sources, args, kinds, comments = out
+            # save data to cached data
+            if self.name not in CACHE_DATA:
+                CACHE_DATA[self.name] = dict()
+            CACHE_DATA[self.name][self.instrument] = out
         # append to Parameter dictionary
         for key in list(values.keys()):
             # clean values (escape characters)
