@@ -15,6 +15,7 @@ from scipy.stats import chisquare
 import warnings
 
 from terrapipe.core import constants
+from . import general
 
 # =============================================================================
 # Define variables
@@ -152,7 +153,7 @@ def gauss_fit_nn(xpix, ypix, nn):
     func_name = __NAME__ + '.gauss_fit_slope()'
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / fwhm()
+    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / general.fwhm()
 
     if nn == 3:
         # only amp, cen and ew
@@ -188,7 +189,7 @@ def gauss_fit_nn(xpix, ypix, nn):
         # work out residuals
         residu = ypix - gfit
         # work out amplitudes and residual fit
-        amps, fit = linear_minimization(residu, pder)
+        amps, fit = general.linear_minimization(residu, pder)
 
         # add to the amplitudes
         a0 += amps
