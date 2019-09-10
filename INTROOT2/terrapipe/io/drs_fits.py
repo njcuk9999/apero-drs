@@ -427,88 +427,152 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
 # =============================================================================
 # Define search functions
 # =============================================================================
-def find_filetypes(params, filetype, allowedtypes=None, path=None):
+def find_files(params, kind=None, path=None, logic='and', **kwargs):
     """
-    Find all files in "path" with DPRTYPE = "filetype"
+    Find files using kwargs (using index files located in 'kind' or 'path')
 
-    must be in "allowedtypes" if None
-    if path is "None" params['INPATH'] is used
+    If path is set will use this path to look for index files
 
-    :param params: ParamDict, the parameter dictionary of constants
-    :param filetype: str, the value of DPRTYPE files must have
-    :param allowedtypes: list of strings, the allowed "filetypes" (filetypes
-                         can be a user input so must be checked for valid
-                         filetype) by default is undefined (thus all "filetypes"
-                         will be valid)
-    :param path: str, the path to check for filetypes (must have index files
-                 in this path or sub directories of this path)
-                 if path is "None" params['INPATH'] is used
+    If kind is set to 'raw' uses DRS_DATA_RAW path, if kind is set to 'tmp'
+    uses DRS_DATA_WORKING path, if kind is set to 'red' uses DRS_DATA_REDUC
+    else uses params['INPATH']
 
-    :type params: ParamDict
-    :type filetype: str
-    :type allowedtypes: list[str]
-    :type path: str
+    The logic defines how kwargs are added.
+    kwargs must be in index file (column names) or in params as header keyword
+    stores (i.e. KW_DPRTYPE = [HEADER key, HEADER value, HEADER comment]
 
+    i.e.
+
+    find_files(params, kind='tmp', KW_DPRTYPE='FP_FP')
+    --> will return all files in the working directory with DPRTYPE = 'FP_FP'
+
+    find_files(params, kind='red', KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
+               KW_OUTPUT='EXT_E2DS')
+    --> will return all files in reduced directory with:
+          DPRTYPE = OBJ_FP or OBJ_DARK   and DRSOUTID
+
+    :param params:
+    :param kind:
+    :param path:
+    :param logic:
+    :param kwargs:
     :return:
     """
-    func_name = __NAME__ + '.find_filetypes()'
-    # deal with no path set
-    if path is None:
-        path = params['INPATH']
-    # deal with no allowed types
-    if allowedtypes is None:
-        allowedtypes = [filetype]
-    elif isinstance(allowedtypes, str):
-        # split at commas
-        allowedtypes = allowedtypes.split(',')
-        # strip spaces
-        allowedtypes = list(map(lambda x: x.strip(), allowedtypes))
-    else:
-        allowedtypes = list(allowedtypes)
+    func_name = __NAME__ + '.find_files()'
     # ----------------------------------------------------------------------
-    # check file type is allowed
-    if filetype not in allowedtypes:
-        emsg = TextEntry('01-001-00020', args=[filetype, func_name])
-        for allowedtype in allowedtypes:
-            emsg += '\n\t - "{0}"'.format(allowedtype)
-        WLOG(params, 'error', emsg)
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # ge the index file col name
+    filecol = params['dRS_INDEX_FILENAME']
+    # ----------------------------------------------------------------------
+    # deal with setting path
+    if path is not None:
+        path = str(path)
+        columns = None
+    elif kind == 'raw':
+        path = params['DRS_DATA_RAW']
+        columns = None
+    elif kind == 'tmp':
+        path = params['DRS_DATA_WORKING']
+        columns = pconst.RAW_OUTPUT_COLUMNS(params)
+    elif kind == 'red':
+        path = params['DRS_DATA_REDUC']
+        columns = pconst.REDUC_OUTPUT_COLUMNS(params)
+    else:
+        path = params['INPATH']
+        columns = None
+    # ----------------------------------------------------------------------
+    # deal with making sure all kwargs are in columns (if columns defined)
+    if columns is not None:
+        for kwarg in kwargs:
+            # set dkey
+            dkey, dkeyval = str(kwarg), str(kwarg)
+            # check if kwarg is in params (if so is a keyword)
+            if kwarg in params:
+                if isinstance(params[kwarg], list):
+                    dkey = params[kwarg][0]
+                    dkeyval = '{0} ({1})'.format(dkey, kwarg)
+            # if dkey not in columns report error
+            if dkey not in columns:
+                # log and raise error
+                eargs = [dkeyval, path, func_name]
+                WLOG(params, 'error', TextEntry('00-004-00001', args=eargs))
     # ----------------------------------------------------------------------
     # get index files
     index_files = get_index_files(params, path)
     # ----------------------------------------------------------------------
-    # valid files dictionary (key = telluric object name)
+    # valid files storage
     valid_files = []
+    # filters added string
+    fstring = ''
     # ----------------------------------------------------------------------
-    # ---------------------------------------------------------------------
     # loop through index files
     for index_file in index_files:
         # read index file
         index = drs_table.read_fits_table(params, index_file)
         # get directory
         dirname = os.path.dirname(index_file)
-        # -----------------------------------------------------------------
-        # get filename and object name
-        index_filenames = index['FILENAME']
-        index_output = index[params['KW_DPRTYPE'][0]]
-        # -----------------------------------------------------------------
-        # mask by KW_OUTPUT
-        mask = index_output == filetype
-        # -----------------------------------------------------------------
-        # append found files to this list
-        if np.nansum(mask) > 0:
-            for filename in index_filenames[mask]:
-                # construct absolute path
-                absfilename = os.path.join(dirname, filename)
-                # check that file exists
-                if not os.path.exists(absfilename):
-                    continue
-                # append to storage
-                if absfilename not in valid_files:
-                    valid_files.append(absfilename)
-    # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # overall masks
+        mask = np.ones(len(index), dtype=bool)
+        # filters added string
+        fstring = ''
+        # ------------------------------------------------------------------
+        # filter via kwargs
+        for kwarg in kwargs:
+            # --------------------------------------------------------------
+            # set dkey
+            dkey, dkeyval = str(kwarg), str(kwarg)
+            # check if kwarg is in params (if so is a keyword)
+            if kwarg in params:
+                if isinstance(params[kwarg], list):
+                    dkey = params[kwarg][0]
+                    dkeyval = '{0} ({1})'.format(dkey, kwarg)
+            # --------------------------------------------------------------
+            # if dkey is not found in index file then report error
+            if dkey not in index.colnames:
+                # report error
+                eargs = [dkeyval, index_file, func_name]
+                WLOG(params, 'error', TextEntry('00-004-00002', args=eargs))
+            # --------------------------------------------------------------
+            # deal with list of args
+            if isinstance(kwargs[kwarg], list):
+                # get new mask
+                mask0 = np.zeros_like(mask)
+                # loop around kwargs[kwarg] values (has to be logic==or here)
+                for value in kwargs[kwarg]:
+                    mask0 |= (index[dkey] == value)
+            else:
+                mask0 = (index[dkey] == kwargs[kwarg])
+            # --------------------------------------------------------------
+            # mask by filter
+            if logic == 'or':
+                mask |= mask0
+            else:
+                mask &= mask0
+            # --------------------------------------------------------------
+            # add to fstring
+            fstring += '\n\t{0}=\'{1}\''.format(dkeyval, kwargs[kwarg])
+        # ------------------------------------------------------------------
+        # get files for those that remain
+        masked_files = index[filecol][mask]
+        # ------------------------------------------------------------------
+        # check that files exist
+        # loop around masked files
+        for filename in masked_files:
+            # construct absolute path
+            absfilename = os.path.join(dirname, filename)
+            # check that file exists
+            if not os.path.exists(absfilename):
+                continue
+            # append to storage
+            if absfilename not in valid_files:
+                valid_files.append(absfilename)
+    # ----------------------------------------------------------------------
     # log found
-    wargs = [len(valid_files), filetype]
+    wargs = [len(valid_files), fstring]
     WLOG(params, '', TextEntry('40-004-00004', args=wargs))
+    # ----------------------------------------------------------------------
     # return full list
     return valid_files
 
