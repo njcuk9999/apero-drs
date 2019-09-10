@@ -461,6 +461,8 @@ def display_timing(params, outlist):
     WLOG(params, '', '')
     # sort outlist ids
     keys = np.sort(list(outlist.keys()))
+    # store times
+    tot_time = 0
     # loop around timings (non-errors only)
     for key in keys:
         cond1 = len(outlist[key]['ERROR']) == 0
@@ -470,6 +472,14 @@ def display_timing(params, outlist):
             WLOG(params, '', TextEntry('40-503-00020', args=wargs))
             WLOG(params, '', '\t\t{0}'.format(outlist[key]['RUNSTRING']),
                  wrap=False)
+            WLOG(params, '', '')
+        # add to total time
+            tot_time += outlist[key]['TIMING']
+    # add total time
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, 'info', TextEntry('40-503-00025', args=[tot_time]))
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', '')
 
 
 def display_errors(params, outlist):
@@ -498,7 +508,7 @@ def display_errors(params, outlist):
             WLOG.printmessage(params, outlist[key]['TRACEBACK'], colour='red')
             WLOG(params, '', '', colour='red')
             WLOG(params, '', params['DRS_HEADER'], colour='red')
-
+    WLOG(params, '', '')
 
 # =============================================================================
 # Define "from id" functions
@@ -780,8 +790,6 @@ def _remove_py(innames):
 # Define "from sequence" functions
 # =============================================================================
 def _check_for_sequences(rvalues, mod):
-    # generate sequence
-    mod.process_adds()
     # find sequences
     all_sequences = mod.sequences
     # get sequences names
@@ -810,6 +818,8 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    # generate sequence
+    sequence[1].process_adds()
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # storage for new runs to add
