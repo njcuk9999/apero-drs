@@ -150,7 +150,7 @@ cal_thermal = DrsRecipe(__INSTRUMENT__, filemod=sf)
 cal_wave = DrsRecipe(__INSTRUMENT__, filemod=sf)
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
-obj_mk_temp = DrsRecipe(__INSTRUMENT__, filemod=sf)
+obj_mk_template = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__, filemod=sf)
@@ -158,7 +158,7 @@ test = DrsRecipe(__INSTRUMENT__, filemod=sf)
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
-           obj_mk_tellu, obj_fit_tellu, obj_mk_temp,
+           obj_mk_tellu, obj_fit_tellu, obj_mk_template,
            test]
 
 # =============================================================================
@@ -677,25 +677,28 @@ obj_fit_tellu.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_mk_temp
 # -----------------------------------------------------------------------------
-obj_mk_temp.name = 'obj_mk_temp_spirou.py'
-obj_mk_temp.shortname = 'MKTEMP'
-obj_mk_temp.instrument = __INSTRUMENT__
-obj_mk_temp.outputdir = 'reduced'
-obj_mk_temp.inputdir = 'tmp'
-obj_mk_temp.inputtype = 'reduced'
-obj_mk_temp.extension = 'fits'
-obj_mk_temp.description = Help['MKTEMP_DESC']
-obj_mk_temp.epilog = Help['MKTEMP_EXAMPLE']
-obj_mk_temp.set_outputs()
-obj_mk_temp.set_arg(pos=0, **directory)
-obj_mk_temp.set_arg(name='files', dtype='files', pos='1+',
-                     files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                     helpstr=Help['FILES_HELP'] + Help['MKTEMP_FILES_HELP'],
-                     limit=1)
-obj_mk_temp.set_kwarg(**add_cal)
-obj_mk_temp.set_kwarg(**plot)
-obj_mk_temp.set_kwarg(**interactive)
-obj_mk_temp.set_kwarg(**wavefile)
+obj_mk_template.name = 'obj_mk_template_spirou.py'
+obj_mk_template.shortname = 'MKTEMP'
+obj_mk_template.instrument = __INSTRUMENT__
+obj_mk_template.outputdir = 'reduced'
+obj_mk_template.inputdir = 'tmp'
+obj_mk_template.inputtype = 'reduced'
+obj_mk_template.extension = 'fits'
+obj_mk_template.description = Help['MKTEMP_DESC']
+obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
+obj_mk_template.set_outputs()
+obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
+                        helpstr=Help['MKTEMP_OBJNAME_HELP'])
+obj_mk_template.set_kwarg(name='-filetype', dtype=str,
+                          default_ref='MKTEMPLATE_FILETYPE',
+                          helpstr=Help['MKTEMP_FILETYPE'])
+obj_mk_template.set_kwarg(name='-fiber', dtype=str,
+                          default_ref='MKTEMPLATE_FIBER_TYPE',
+                          helpstr=Help['MKTEMP_FIBER'])
+obj_mk_template.set_kwarg(**add_cal)
+obj_mk_template.set_kwarg(**plot)
+obj_mk_template.set_kwarg(**interactive)
+obj_mk_template.set_kwarg(**wavefile)
 
 
 # -----------------------------------------------------------------------------
