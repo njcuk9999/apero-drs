@@ -336,6 +336,8 @@ def __main__(recipe, params):
             flatfile.construct_filename(params, infile=infile)
             # copy header from blaze file
             flatfile.copy_hdict(blazefile)
+            # set output key
+            flatfile.add_hkey('KW_OUTPUT', value=flatfile.name)
             # copy data
             flatfile.data = eprops['FLAT']
             # --------------------------------------------------------------
@@ -356,6 +358,8 @@ def __main__(recipe, params):
             e2dsllfile.construct_filename(params, infile=infile)
             # copy header from blaze file
             e2dsllfile.copy_hdict(blazefile)
+            # set output key
+            e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
             # copy data
             e2dsllfile.data = eprops['E2DSLL']
             # --------------------------------------------------------------

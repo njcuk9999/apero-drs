@@ -290,6 +290,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # define header keys for output file (copy of badpixfile)
         backmapfile.copy_hdict(badpixfile)
+        # add output tag
+        backmapfile.add_hkey('KW_OUTPUT', value=backmapfile.name)
         # write to file
         backmap = np.array(backmap, dtype=int)
         # copy data

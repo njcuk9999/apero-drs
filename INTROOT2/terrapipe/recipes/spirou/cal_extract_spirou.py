@@ -392,6 +392,8 @@ def __main__(recipe, params):
             e2dsfffile.construct_filename(params, infile=infile)
             # copy header from e2dsff file
             e2dsfffile.copy_hdict(e2dsfile)
+            # set output key
+            e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
             # copy data
             e2dsfffile.data = eprops['E2DSFF']
             # --------------------------------------------------------------
@@ -412,6 +414,8 @@ def __main__(recipe, params):
             e2dsllfile.construct_filename(params, infile=infile)
             # copy header from e2dsll file
             e2dsllfile.copy_hdict(e2dsfile)
+            # set output key
+            e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
             # copy data
             e2dsllfile.data = eprops['E2DSLL']
             # --------------------------------------------------------------
@@ -432,6 +436,8 @@ def __main__(recipe, params):
             s1dwfile.construct_filename(params, infile=infile)
             # copy header from e2dsll file
             s1dwfile.copy_hdict(e2dsfile)
+            # set output key
+            s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
             # add new header keys
             s1dwfile = extract.add_s1d_keys(s1dwfile, swprops)
             # copy data
@@ -458,6 +464,8 @@ def __main__(recipe, params):
             s1dvfile.copy_hdict(e2dsfile)
             # add new header keys
             s1dvfile = extract.add_s1d_keys(s1dvfile, svprops)
+            # set output key
+            s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
             # copy data
             s1dvfile.data = svprops['S1DTABLE']
             # must change the datatype to 'table'
