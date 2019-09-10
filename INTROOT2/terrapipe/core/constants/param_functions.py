@@ -48,7 +48,10 @@ ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # get the logger
 BLOG = drs_exceptions.basiclogger
-
+# relative folder cache
+REL_CACHE = dict()
+CONFIG_CACHE = dict()
+PCONFIG_CACHE = dict()
 
 # =============================================================================
 # Define Custom classes
@@ -711,6 +714,10 @@ def update_paramdicts(*args, **kwargs):
 
 
 def load_config(instrument=None):
+    global CONFIG_CACHE
+    # check config cache
+    if instrument in CONFIG_CACHE:
+        return CONFIG_CACHE[instrument]
     # deal with instrument set to 'None'
     if isinstance(instrument, str):
         if instrument.upper() == 'NONE':
@@ -745,12 +752,18 @@ def load_config(instrument=None):
     params.set_sources(keys=keys, sources=sources)
     # save sources to params
     params = _save_config_params(params)
+    # cache these params
+    CONFIG_CACHE[instrument] = params.copy()
     # return the parameter dictionary
     return params
 
 
 def load_pconfig(instrument=None):
+    global PCONFIG_CACHE
     func_name = __NAME__ + '.load_pconfig()'
+    # check cache
+    if instrument in PCONFIG_CACHE:
+        return PCONFIG_CACHE[instrument]
     # deal with instrument set to 'None'
     if isinstance(instrument, str):
         if instrument.upper() == 'NONE':
@@ -767,8 +780,11 @@ def load_pconfig(instrument=None):
         emsg = 'Module "{0}" is required to have class "{1}"'
         ConfigError(emsg.format(modules[0], PSEUDO_CONST_CLASS))
         sys.exit(1)
-    # return instance of PseudoClass
-    return PsConst(instrument=instrument)
+    # get instance of PseudoClass
+    pconfig = PsConst(instrument=instrument)
+    # update cache
+    PCONFIG_CACHE[instrument] = pconfig
+    return pconfig
 
 
 def get_config_all():
@@ -1052,7 +1068,14 @@ def get_relative_folder(package, folder):
     :return data: string, the absolute path and filename of the default config
                   file
     """
+    global REL_CACHE
+    # set function name
     func_name = __NAME__ + '.get_relative_folder()'
+    # ----------------------------------------------------------------------
+    # check relative folder cache
+    if package in REL_CACHE and folder in REL_CACHE[package]:
+        return REL_CACHE[package][folder]
+    # ----------------------------------------------------------------------
     # get the package.__init__ file path
     try:
         init = pkg_resources.resource_filename(package, '__init__.py')
@@ -1074,6 +1097,13 @@ def get_relative_folder(package, folder):
         emsg = 'Folder "{0}" does not exist in {1}'
         eargs = [os.path.basename(data_folder), os.path.dirname(data_folder)]
         raise ConfigError(emsg.format(*eargs), level='error')
+    # ----------------------------------------------------------------------
+    # update REL_CACHE
+    if package not in REL_CACHE:
+        REL_CACHE[package] = dict()
+    # update entry
+    REL_CACHE[folder] = data_folder
+    # ----------------------------------------------------------------------
     # return the absolute data_folder path
     return data_folder
 
@@ -1183,13 +1213,13 @@ def _check_mod_source(source):
     # deal with source being None
     if source is None:
         return None
+    # if source doesn't exist also skip
+    if not os.path.exists(source):
+        return source
     # get package path
     package_path = get_relative_folder(PACKAGE, '')
     # if package path not in source then skip
     if package_path not in source:
-        return source
-    # if source doesn't exist also skip
-    if not os.path.exists(source):
         return source
     # remove package path and replace with PACKAGE
     source = source.replace(package_path, PACKAGE.lower())
