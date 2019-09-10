@@ -130,7 +130,7 @@ class DrsRecipe(object):
     def get_drs_params(self, **kwargs):
         func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
         # Get config parameters from primary file
-        self.drs_params = constants.load(self.instrument).copy()
+        self.drs_params = constants.load(self.instrument)
         self.drs_pconstant = constants.pload(self.instrument)
         self.textdict = TextDict(self.instrument, self.drs_params['LANGUAGE'])
         self.helptext = HelpText(self.instrument, self.drs_params['LANGUAGE'])
@@ -1039,6 +1039,7 @@ class DrsRunSequence(object):
         self.name = name
         self.instrument = instrument
         self.sequence = []
+        self.adds = []
 
     def __str__(self):
         return 'DrsRunSequence[{0}]'.format(self.name)
@@ -1047,20 +1048,25 @@ class DrsRunSequence(object):
         return 'DrsRunSequence[{0}]'.format(self.name)
 
     def add(self, recipe, **kwargs):
-        # set up new recipe
-        frecipe = DrsRecipe(self.instrument)
-        # copy from given recipe
-        frecipe.copy(recipe)
-        # update short name
-        frecipe.shortname = kwargs.get('name', frecipe.shortname)
-        # add filters
-        frecipe = self.add_filters(frecipe, kwargs)
-        # update file definitions
-        frecipe = self.update_files(frecipe, kwargs)
-        # update master
-        frecipe.master = kwargs.get('master', frecipe.master)
-        # add to sequence storage
-        self.sequence.append(frecipe)
+        self.adds.append([recipe, dict(kwargs)])
+
+    def process_adds(self):
+        for add in self.adds:
+            recipe, kwargs = add
+            # set up new recipe
+            frecipe = DrsRecipe(self.instrument)
+            # copy from given recipe
+            frecipe.copy(recipe)
+            # update short name
+            frecipe.shortname = kwargs.get('name', frecipe.shortname)
+            # add filters
+            frecipe = self.add_filters(frecipe, kwargs)
+            # update file definitions
+            frecipe = self.update_files(frecipe, kwargs)
+            # update master
+            frecipe.master = kwargs.get('master', frecipe.master)
+            # add to sequence storage
+            self.sequence.append(frecipe)
 
     def add_filters(self, frecipe, kwargs):
         # add filters
