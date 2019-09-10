@@ -1111,6 +1111,8 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     # define header keys for output file
     # copy keys from wavefile
     resfile.copy_hdict(wavefile)
+    # set output key
+    resfile.add_hkey('KW_OUTPUT', value=resfile.name)
     # ------------------------------------------------------------------
     datalist, headerlist = generate_res_files(params, llprops, resfile)
     # ------------------------------------------------------------------
@@ -1124,6 +1126,7 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     resfile.write_multi(data_list=datalist, header_list=headerlist)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
+
 
 # =============================================================================
 # Define hc worker functions
@@ -4071,7 +4074,8 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     wavefile.copy_hdict(hcwavefile)
-
+    # set output key
+    wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
     # add input hc files (and deal with combining or not combining)
     if combine:
         hfiles = rawhcfiles
@@ -4085,6 +4089,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     else:
         hfiles = [fpfile.basename]
     wavefile.add_hkey_1d('KW_INFILE2', values=hfiles, dim1name='file')
+
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
     wavefile = add_wave_keys(wavefile, wprops)

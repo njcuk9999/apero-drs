@@ -395,6 +395,8 @@ def __main__(recipe, params):
         # define header keys for output file
         # copy keys from loco1file
         loco2file.copy_hdict(loco1file)
+        # set output key
+        loco2file.add_hkey('KW_OUTPUT', value=loco2file.name)
         # copy data
         loco2file.data = width_fits
         # ------------------------------------------------------------------
@@ -420,6 +422,8 @@ def __main__(recipe, params):
             # define header keys for output file
             # copy keys from loco1file
             loco3file.copy_hdict(loco1file)
+            # set output key
+            loco3file.add_hkey('KW_OUTPUT', value=loco3file.name)
             # copy data
             loco3file.data = image5
             # --------------------------------------------------------------
