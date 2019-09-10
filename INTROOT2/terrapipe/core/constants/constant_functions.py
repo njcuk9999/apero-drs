@@ -450,10 +450,10 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
-        if type(value) is str:
+        if isinstance(value, str):
             if value.lower() in ['1', 'true']:
                 value = True
-            if value.lower() in ['0', 'false']:
+            elif value.lower() in ['0', 'false']:
                 value = False
 
         if value not in [True, 1, False, 0]:
