@@ -780,6 +780,8 @@ def _remove_py(innames):
 # Define "from sequence" functions
 # =============================================================================
 def _check_for_sequences(rvalues, mod):
+    # generate sequence
+    mod.process_adds()
     # find sequences
     all_sequences = mod.sequences
     # get sequences names
