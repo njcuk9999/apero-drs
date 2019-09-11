@@ -88,6 +88,7 @@ KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
 KW_OBJDEC.set(key='OBJDEC', unit=uu.deg)
 
 # define the observation name
+# Todo: Change to OBJECT?
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
 KW_OBJNAME.set(key='OBJNAME')
 
@@ -571,49 +572,60 @@ KW_BERVALT.set(key='BC_ALT', comment='OBS Altitude [m] used to calc. BERV')
 
 # the BERV calculated with KW_BERVSOURCE
 KW_BERV = KW_BERV.copy(__NAME__)
-KW_BERV.set(key='BERV', comment='Barycentric Velocity calc. in BERVSRCE [km/s]')
+KW_BERV.set(key='BERV', comment='Barycentric Velocity calc. in BERVSRCE [km/s]',
+            datatype=float)
 
 # the Barycenter Julian date calculate with KW_BERVSOURCE
 KW_BJD = KW_BJD.copy(__NAME__)
-KW_BJD.set(key='BJD', comment='Barycentric Julian data calc. in BERVSRCE')
+KW_BJD.set(key='BJD', comment='Barycentric Julian data calc. in BERVSRCE',
+           datatype=float)
 
 # the maximum BERV found across 1 year (with KW_BERVSOURCE)
 KW_BERVMAX = KW_BERVMAX.copy(__NAME__)
-KW_BERVMAX.set(key='BERVMAX', comment='Max BERV 1 yr calc. in BERVSRCE [km/s]')
+KW_BERVMAX.set(key='BERVMAX', comment='Max BERV 1 yr calc. in BERVSRCE [km/s]',
+               datatype=float)
 
 # the derivative of the BERV (BERV at time + 1s - BERV)
 KW_DBERV = KW_DBERV.copy(__NAME__)
-KW_DBERV.set(key='DBERV', comment='Deviation in BERV in BERVSRCE [km/s/s]')
+KW_DBERV.set(key='DBERV', comment='Deviation in BERV in BERVSRCE [km/s/s]',
+             datatype=float)
 
 # the source of the calculated BERV parameters
 KW_BERVSOURCE = KW_BERVSOURCE.copy(__NAME__)
-KW_BERVSOURCE.set(key='BERVSRCE', comment='How BERV was calculated')
+KW_BERVSOURCE.set(key='BERVSRCE', comment='How BERV was calculated',
+                  datatype=str)
 
 # the BERV calculated with the estimate
 KW_BERV_EST = KW_BERV_EST.copy(__NAME__)
-KW_BERV_EST.set(key='BERV_EST', comment='Barycentric Velocity estimate [km/s]')
+KW_BERV_EST.set(key='BERV_EST', comment='Barycentric Velocity estimate [km/s]',
+                datatype=float)
 
 # the Barycenter Julian date calculated with the estimate
 KW_BJD_EST = KW_BJD_EST.copy(__NAME__)
-KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian data estimate')
+KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian data estimate',
+               datatype=float)
 
 # the maximum BERV found across 1 year (calculated with estimate)
 KW_BERVMAX_EST = KW_BERVMAX_EST.copy(__NAME__)
-KW_BERVMAX_EST.set(key='BERVMAXE', comment='Max BERV 1 yr estimate [km/s]')
+KW_BERVMAX_EST.set(key='BERVMAXE', comment='Max BERV 1 yr estimate [km/s]',
+                   datatype=float)
 
 # the derivative of the BERV (BERV at time + 1s - BERV)
 KW_DBERV_EST = KW_DBERV_EST.copy(__NAME__)
 KW_DBERV_EST.set(key='DBERVE',
-                 comment='Deviation in BERV estimate [km/s/s]')
+                 comment='Deviation in BERV estimate [km/s/s]',
+                 datatype=float)
 
 # the actual jd time used to calculate the BERV
 KW_BERV_OBSTIME = KW_BERV_OBSTIME.copy(__NAME__)
-KW_BERV_OBSTIME.set(key='BERVOBST', comment='BERV observation time used [days]')
+KW_BERV_OBSTIME.set(key='BERVOBST', comment='BERV observation time used [days]',
+                    datatype=float)
 
 # the method used to obtain the berv obs time
 KW_BERV_OBSTIME_METHOD = KW_BERV_OBSTIME_METHOD.copy(__NAME__)
 KW_BERV_OBSTIME_METHOD.set(key='BERVOBSM',
-                           comment='BERV method used to calc observation time')
+                           comment='BERV method used to calc observation time',
+                           datatype=str)
 
 # -----------------------------------------------------------------------------
 # Define wave variables
@@ -1122,6 +1134,10 @@ KW_FTELLU_ABSO_SRC = KW_FTELLU_ABSO_SRC.copy(__NAME__)
 KW_FTELLU_ABSO_SRC.set(key='FTTABSOS',
                        comment='ftellu source of the abso (file or database)')
 
+# The prefix for molecular
+KW_FTELLU_ABSO_PREFIX = KW_FTELLU_ABSO_PREFIX.copy(__NAME__)
+KW_FTELLU_ABSO_PREFIX.set(key='ABSO', comment='Absorption in {0}')
+
 # Number of good pixels requirement used
 KW_FTELLU_FIT_KEEP_NUM = KW_FTELLU_FIT_KEEP_NUM.copy(__NAME__)
 KW_FTELLU_FIT_KEEP_NUM.set(key='FTTFKNUM',
@@ -1158,3 +1174,37 @@ KW_FTELLU_FIT_ITERS.set(key='FTTFITRS',
 KW_FTELLU_RECON_LIM = KW_FTELLU_RECON_LIM.copy(__NAME__)
 KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
                         comment='ftellu log limit in min absorption used')
+
+# Telluric principle component amplitudes (for use with 1D list)
+KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
+KW_FTELLU_AMP_PC.set(key='AMPPC{0:03d}',
+                     comment='Principle Component Amplitudes')
+
+# Telluric principle component first derivative
+KW_FTELLU_DVTELL1 = KW_FTELLU_DVTELL1.copy(__NAME__)
+KW_FTELLU_DVTELL1.set(key='DV_TELL1', comment='Principle Component first der.')
+
+# Telluric principle component second derivative
+KW_FTELLU_DVTELL2 = KW_FTELLU_DVTELL2.copy(__NAME__)
+KW_FTELLU_DVTELL2.set(key='DV_TELL1', comment='Principle Component second der.')
+
+# Tau Water depth calculated in fit tellu
+KW_FTELLU_TAU_H2O = KW_FTELLU_TAU_H2O.copy(__NAME__)
+KW_FTELLU_TAU_H2O.set(key='TAU_H20', comment='TAPAS tau H2O')
+
+# Tau Rest depth calculated in fit tellu
+KW_FTELLU_TAU_REST = KW_FTELLU_TAU_REST.copy(__NAME__)
+KW_FTELLU_TAU_REST.set(key='TAU_OTHE',
+                       comment='TAPAS tau for O2,O3,CH4,N2O,CO2')
+
+# -----------------------------------------------------------------------------
+# Define make template variables
+# -----------------------------------------------------------------------------
+# the snr order used for quality control cut in make template calculation
+KW_MKTEMP_SNR_ORDER = KW_MKTEMP_SNR_ORDER.copy(__NAME__)
+KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
+
+# the snr threshold used for quality control cut in make template calculation
+KW_MKTEMP_SNR_THRES = KW_MKTEMP_SNR_THRES.copy(__NAME__)
+KW_MKTEMP_SNR_THRES.set(key='MTPSNRTH', comment='mktemplate snr threshold used')
+

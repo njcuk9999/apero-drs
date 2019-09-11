@@ -144,7 +144,8 @@ __all__ = [
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
-    'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    'TELLU_ALLOWED_DPRTYPES', 'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME',
+    'TELLU_BLACKLIST_NAME',
     # make telluric constants
     'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
     'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_FINER_CONV_WIDTH',
@@ -155,13 +156,15 @@ __all__ = [
     'MKTELLU_TRANS_SIGMA_CLIP', 'MKTELLU_TRANS_TEMPLATE_MEDFILT',
     'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
     'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
-    'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT',
+    'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT', 'MKTELLU_QC_SNR_ORDER',
+    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
     # fit telluric constants,
-    'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC', 'FTELLU_FIT_KEEP_NUM',
-    'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN', 'FTELLU_LAMBDA_MAX',
-    'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS', 'FTELLU_FIT_RECON_LIMIT',
+    'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
+    'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
+    'FTELLU_LAMBDA_MAX', 'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS',
+    'FTELLU_FIT_RECON_LIMIT',
     # make template constants
-    'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
+    'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE', 'MKTEMPLATE_SNR_ORDER',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
@@ -1355,6 +1358,10 @@ TAPAS_FILE = Const('TAPAS_FILE', value=None, dtype=str, source=__NAME__)
 # Define the format (astropy format) of the tapas file "TAPAS_FILE"
 TAPAS_FILE_FMT = Const('TAPAS_FILE_FMT', value=None, dtype=str, source=__NAME__)
 
+# The allowed input DPRTYPES for input telluric files
+TELLU_ALLOWED_DPRTYPES = Const('TELLU_ALLOWED_DPRTYPES', value=None, dtype=str,
+                               source=__NAME__)
+
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
 TELLU_CUT_BLAZE_NORM = Const('TELLU_CUT_BLAZE_NORM', value=None, dtype=float,
@@ -1490,9 +1497,27 @@ MKTELLU_TAU_OTHER_ULIMIT = Const('MKTELLU_TAU_OTHER_ULIMIT', value=None,
 MKTELLU_SMALL_LIMIT = Const('MKTELLU_SMALL_LIMIT', value=None, dtype=float,
                             source=__NAME__, minimum=0.0)
 
+#   Define the order to use for SNR check when accepting tellu files
+#      to the telluDB
+MKTELLU_QC_SNR_ORDER = Const('MKTELLU_QC_SNR_ORDER', value=None, dtype=int,
+                             source=__NAME__, minimum=0)
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
+#      accepted to the telluDB
+MKTELLU_QC_SNR_MIN = Const('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0)
+
+# Define the allowed difference between recovered and input airmass
+MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
+                                dtype=float, source=__NAME__)
+
 # =============================================================================
 # CALIBRATION: FIT TELLURIC SETTINGS
 # =============================================================================
+# The number of principle components to use in PCA fit
+FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
+                                  dtype=int, source=__NAME__, minimum=1)
+
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
 #     offset of the PCs this is performed in the pixel space and NOT the
@@ -1548,6 +1573,10 @@ MKTEMPLATE_FILETYPE = Const('MKTEMPLATE_FILETYPE', value=None, dtype=str,
 # the fiber required for input template files
 MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
                               source=__NAME__)
+
+# the order to use for signal to noise cut requirement
+MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
+                             source=__NAME__, minimum=0)
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS

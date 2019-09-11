@@ -1232,6 +1232,10 @@ TAPAS_FILE.value = 'tapas_all_sp.fits.gz'
 TAPAS_FILE_FMT = TAPAS_FILE_FMT.copy(__NAME__)
 TAPAS_FILE_FMT.value = 'fits'
 
+# The allowed input DPRTYPES for input telluric files
+TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
+TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
 TELLU_CUT_BLAZE_NORM = TELLU_CUT_BLAZE_NORM.copy(__NAME__)
@@ -1247,7 +1251,7 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 
 # Define telluric black list name
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
-TELLU_BLACKLIST_NAME.value = 'tellu_whitelist.txt'
+TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 
 # =============================================================================
 # CALIBRATION: MAKE TELLURIC SETTINGS
@@ -1367,9 +1371,27 @@ MKTELLU_TAU_OTHER_ULIMIT.value = 5.0
 MKTELLU_SMALL_LIMIT = MKTELLU_SMALL_LIMIT.copy(__NAME__)
 MKTELLU_SMALL_LIMIT.value = 1.0e-9
 
+#   Define the order to use for SNR check when accepting tellu files
+#      to the telluDB
+MKTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
+MKTELLU_QC_SNR_ORDER.value = 33
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
+#      accepted to the telluDB
+MKTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
+MKTELLU_QC_SNR_MIN.value = 100
+
+# Define the allowed difference between recovered and input airmass
+MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
+MKTELLU_QC_AIRMASS_DIFF.value = 0.1
+
 # =============================================================================
 # CALIBRATION: FIT TELLURIC SETTINGS
 # =============================================================================
+# The number of principle components to use in PCA fit
+FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
+FTELLU_NUM_PRINCIPLE_COMP.value = 5
+
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
 #     offset of the PCs this is performed in the pixel space and NOT the
@@ -1420,11 +1442,16 @@ FTELLU_FIT_RECON_LIMIT.value = -0.5
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
 MKTEMPLATE_FILETYPE = MKTEMPLATE_FILETYPE.copy(__NAME__)
-MKTEMPLATE_FILETYPE.value = 'EXT_E2DS_FF_AB'
+MKTEMPLATE_FILETYPE.value = 'EXT_E2DS_FF'
 
 # the fiber required for input template files
 MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
 MKTEMPLATE_FIBER_TYPE.value = 'AB'
+
+# the order to use for signal to noise cut requirement
+MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
+MKTEMPLATE_SNR_ORDER.value = 33
+
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS

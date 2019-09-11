@@ -108,6 +108,10 @@ __all__ = [# input keys
            'KW_FTELLU_FIT_MIN_TRANS', 'KW_FTELLU_LAMBDA_MIN',
            'KW_FTELLU_LAMBDA_MAX', 'KW_FTELLU_KERN_VSINI',
            'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
+           'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
+           'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
+           # make template values
+           'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
 ]
 
 # set name
@@ -966,6 +970,10 @@ KW_FTELLU_FIT_DPC = Keyword('KW_FTELLU_FIT_DPC', key='', dtype=bool,
 KW_FTELLU_ABSO_SRC = Keyword('KW_FTELLU_ABSO_SRC', key='', dtype=str,
                              source=__NAME__)
 
+# The prefix for molecular
+KW_FTELLU_ABSO_PREFIX = Keyword('KW_FTELLU_ABSO_PREFIX', key='', dtype=float,
+                                source=__NAME__)
+
 # Number of good pixels requirement used
 KW_FTELLU_FIT_KEEP_NUM = Keyword('KW_FTELLU_FIT_KEEP_NUM', key='', dtype=int,
                                  source=__NAME__)
@@ -996,4 +1004,35 @@ KW_FTELLU_FIT_ITERS = Keyword('KW_FTELLU_FIT_ITERS', key='', dtype=int,
 
 # the log limit in minimum absorption used
 KW_FTELLU_RECON_LIM = Keyword('KW_FTELLU_RECON_LIM', key='', dtype=float,
+                              source=__NAME__)
+
+# Telluric principle component amplitudes (for use with 1D list)
+KW_FTELLU_AMP_PC = Keyword('KW_FTELLU_AMP_PC', key='', dtype=float,
+                           source=__NAME__)
+
+# Telluric principle component first derivative
+KW_FTELLU_DVTELL1 = Keyword('KW_FTELLU_DVTELL1', key='', dtype=float,
+                            source=__NAME__)
+
+# Telluric principle component second derivative
+KW_FTELLU_DVTELL2 = Keyword('KW_FTELLU_DVTELL2', key='', dtype=float,
+                            source=__NAME__)
+
+# Tau Water depth calculated in fit tellu
+KW_FTELLU_TAU_H2O = Keyword('KW_FTELLU_TAU_H2O', key='', dtype=float,
+                            source=__NAME__)
+
+# Tau Rest depth calculated in fit tellu
+KW_FTELLU_TAU_REST = Keyword('KW_FTELLU_TAU_REST', key='', dtype=float,
+                             source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define make template variables
+# -----------------------------------------------------------------------------
+# the snr order used for quality control cut in make template calculation
+KW_MKTEMP_SNR_ORDER = Keyword('KW_MKTEMP_SNR_ORDER', key='', dtype=int,
+                              source=__NAME__)
+
+# the snr threshold used for quality control cut in make template calculation
+KW_MKTEMP_SNR_THRES = Keyword('KW_MKTEMP_SNR_THRES', key='', dtype=float,
                               source=__NAME__)
