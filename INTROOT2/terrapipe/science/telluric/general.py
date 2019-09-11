@@ -11,10 +11,12 @@ Created on 2019-08-12 at 17:16
 """
 from __future__ import division
 import numpy as np
+from astropy.time import Time
 from scipy.ndimage import filters
 from scipy.optimize import curve_fit
 import os
 import warnings
+from collections import OrderedDict
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -26,7 +28,9 @@ from terrapipe.core.core import drs_database
 from terrapipe.io import drs_data
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_path
+from terrapipe.io import drs_table
 from terrapipe.science.calib import flat_blaze
+from terrapipe.science.calib import wave
 from terrapipe.science import extract
 
 # =============================================================================
@@ -64,10 +68,11 @@ def get_whitelist(params, **kwargs):
     filename = pcheck(params, 'TELLU_WHITELIST_NAME', 'filename', kwargs,
                       func_name)
     # load the white list
-    whitelist = drs_data.load_text_file(params, filename, relfolder, kwargs,
-                                        func_name)
+    wout = drs_data.load_text_file(params, filename, relfolder, kwargs,
+                                   func_name)
+    whitelist, whitelistfile = wout
     # return the whitelist
-    return whitelist
+    return whitelist, whitelistfile
 
 
 def get_blacklist(params, **kwargs):
@@ -78,10 +83,11 @@ def get_blacklist(params, **kwargs):
     filename = pcheck(params, 'TELLU_BLACKLIST_NAME', 'filename', kwargs,
                       func_name)
     # load the white list
-    blacklist = drs_data.load_text_file(params, filename, relfolder, kwargs,
-                                        func_name)
+    bout = drs_data.load_text_file(params, filename, relfolder, kwargs,
+                                   func_name)
+    blacklist, blacklistfile = bout
     # return the whitelist
-    return blacklist
+    return blacklist, blacklistfile
 
 
 def normalise_by_pblaze(params, image, header, fiber, **kwargs):
@@ -205,7 +211,7 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
             return images, headers, abspaths
     else:
         if not required and len(images) == 0:
-            return None, None, None
+            return None, None
         # deal with if n_entries is 1 (just return file not list)
         if n_entries == 1:
             return images[-1], abspaths[-1]
@@ -218,10 +224,10 @@ def load_templates(params, header, objname, fiber):
     out_temp = core.get_file_definition('TELLU_TEMP', params['INSTRUMENT'],
                                         kind='red', fiber=fiber)
     # get key
-    temp_key = out_temp.get_dbkey()
+    temp_key = out_temp.get_dbkey(fiber=fiber)
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, temp_key, header, get_header=True,
-                               n_entries='all')
+                               n_entries='all', required=False)
     temp_images, temp_headers, temp_filenames = temp_out
 
     # deal with no files in database
@@ -249,11 +255,11 @@ def load_templates(params, header, objname, fiber):
     if len(valid_images) == 0:
         # log that we found no templates for this object
         wargs = [params['KW_OBJNAME'][0], objname]
-        WLOG(params, '', TextEntry('40-019-00004', args=wargs))
+        WLOG(params, 'info', TextEntry('40-019-00004', args=wargs))
         return None, None
     # log which template we are using
     wargs = [valid_filenames[-1]]
-    WLOG(params, '', TextEntry('40-019-00005', args=wargs))
+    WLOG(params, 'info', TextEntry('40-019-00005', args=wargs))
     # only return most recent template
     return valid_images[-1], valid_filenames[-1]
 
@@ -263,17 +269,17 @@ def get_transmission_files(params, recipe, header, fiber):
     out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
                                          kind='red', fiber=fiber)
     # get key
-    trans_key = out_trans.get_dbkey()
+    trans_key = out_trans.get_dbkey(fiber=fiber)
     # load tellu file, header and abspaths
     _, trans_filenames = load_tellu_file(params, trans_key, header,
                                          n_entries='all', get_image=False)
     # storage for valid files/images/times
     valid_filenames = []
     # loop around header and get times
-    for filename in enumerate(valid_filenames):
+    for filename in trans_filenames:
         # only add if filename not in list already (files will be overwritten
         #   but we can have multiple entries in database)
-        if filename not in trans_filenames:
+        if filename not in valid_filenames:
             # append to list
             valid_filenames.append(filename)
     # convert arrays
@@ -289,22 +295,25 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
-                             func_name)
+                             func_name, mapf='list', dtype=str)
     fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', 'fwhm_lsf', kwargs,
                             func_name)
     # ----------------------------------------------------------------------
     # Load any convolved files from database
     # ----------------------------------------------------------------------
     # get file definition
-    out_tellu_conv = recipe.outputs['TELL_CONV'].newcopy(recipe=recipe,
-                                                         fiber=fiber)
+    out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
+                                                          fiber=fiber)
     # get key
     conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
     _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
-                                    get_image=False)
+                                    get_image=False, required=False)
+    if conv_paths is None:
+        conv_paths = []
     # construct the filename from file instance
-    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'])
+    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'],
+                                      path=params['DRS_TELLU_DB'])
     # if our npy file already exists then we just need to read it
     if out_tellu_conv.filename in conv_paths:
         # log that we are loading tapas convolved file
@@ -337,9 +346,13 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         WLOG(params, '', TextEntry('40-019-00002', args=wargs))
         # save
         out_tellu_conv.write(params)
+
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------
+        # npy file must set header/hdict (to update)
+        out_tellu_conv.header = header
+        out_tellu_conv.hdict = header
         # copy the order profile to the calibDB
         drs_database.add_file(params, out_tellu_conv)
 
@@ -357,7 +370,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     tapas_props['TAPAS_WATER'] = tapas_water
     tapas_props['TAPAS_OTHER'] = tapas_other
     tapas_props['TAPAS_FILE'] = out_tellu_conv.filename
-    tapas_props['TELLU_ABORBERS'] = tellu_absorbers
+    tapas_props['TELLU_ABSORBERS'] = tellu_absorbers
     tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
     # set source
     keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
@@ -378,15 +391,17 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
     # Load any convolved files from database
     # ----------------------------------------------------------------------
     # get file definition
-    out_tellu_conv = core.get_file_definition('TELL_CONV', params['INSTRUMENT'],
+    out_tellu_conv = core.get_file_definition('TELLU_CONV',
+                                              params['INSTRUMENT'],
                                               kind='red', fiber=fiber)
     # get key
-    conv_key = out_tellu_conv.get_dbkey()
+    conv_key = out_tellu_conv.get_dbkey(fiber=fiber)
     # load tellu file
     _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
-                                    get_images=False)
+                                    get_image=False, required=False)
     # construct the filename from file instance
-    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'])
+    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'],
+                                      path=params['DRS_TELLU_DB'])
     # if our npy file already exists then we just need to read it
     if out_tellu_conv.filename in conv_paths:
         # log that we are loading tapas convolved file
@@ -412,7 +427,7 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
         tapas_props['TAPAS_WATER'] = tapas_water
         tapas_props['TAPAS_OTHER'] = tapas_other
         tapas_props['TAPAS_FILE'] = out_tellu_conv.filename
-        tapas_props['TELLU_ABORBERS'] = tellu_absorbers
+        tapas_props['TELLU_ABSORBERS'] = tellu_absorbers
         tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
         # set source
         keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
@@ -651,7 +666,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
         # ---------------------------------------------------------------------
         # print progress
         wargs = [iteration, max_iteration, guess[0], guess[1], airmass]
-        WLOG(params, '', TextEntry('', args=wargs))
+        WLOG(params, '', TextEntry('40-019-00032', args=wargs))
         # ---------------------------------------------------------------------
         # get current best-fit spectrum
         tau1 = tapas_fit(np.isfinite(wavemap), guess[0], guess[1])
@@ -888,10 +903,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     # ------------------------------------------------------------------
     # get the transmission map key
     # ----------------------------------------------------------------------
-    out_trans = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
-                                                      fiber=fiber)
+    out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
+                                         kind='red', fiber=fiber)
     # get key
-    trans_key = out_trans.get_dbkey()
+    trans_key = out_trans.get_dbkey(fiber=fiber)
     # ----------------------------------------------------------------------
     # check that we have enough trans files for pca calculation (must be greater
     #     than number of principle components
@@ -1110,13 +1125,13 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     WLOG(params, '', TextEntry('40-019-00018', args=wargs))
     # shift pca components (one by one)
     for comp in range(npc):
-        shift_pc = _wave_to_wave(params, pc2[comp], masterwavemap, wavemap,
-                                 reshape=True)
-        pc2[:, comp] = shift_pc.reshape(pc.shape)
+        shift_pc = _wave_to_wave(params, pc2[:, comp], masterwavemap,
+                                 wavemap, reshape=True)
+        pc2[:, comp] = shift_pc.reshape(pc2[:, comp].shape)
 
-        shift_fpc = _wave_to_wave(params, fit_pc2[comp], masterwavemap, wavemap,
-                                  reshape=True)
-        fit_pc2[:, comp] = shift_fpc.reshape(fit_pc.shape)
+        shift_fpc = _wave_to_wave(params, fit_pc2[:, comp], masterwavemap,
+                                  wavemap, reshape=True)
+        fit_pc2[:, comp] = shift_fpc.reshape(fit_pc2[:, comp].shape)
     # ------------------------------------------------------------------
     # Shift the pca components to correct wave frame
     # ------------------------------------------------------------------
@@ -1127,7 +1142,7 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     for row in range(len(tapas_all_species2)):
         stapas = _wave_to_wave(params, tapas_all_species[row], masterwavemap,
                                wavemap, reshape=True)
-        tapas_all_species2[row] = stapas.reshape(tapas_all_species.shape)
+        tapas_all_species2[row] = stapas.reshape(tapas_all_species[row].shape)
     # ------------------------------------------------------------------
     # Shift comparison plot
     # ------------------------------------------------------------------
@@ -1175,7 +1190,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     recon_limit = pcheck(params, 'FTELLU_FIT_RECON_LIMIT', 'recon_limit',
                          kwargs, func_name)
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
-                             func_name)
+                             func_name, mapf='list', dtype=str)
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------
@@ -1246,7 +1261,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
                 start = order_num * nbpix
                 end = order_num * nbpix + nbpix
                 # produce a mask of good transmission
-                order_tapas = 2[0, start:end]
+                order_tapas = tapas_all_species2[0, start:end]
                 with warnings.catch_warnings(record=True) as _:
                     mask = order_tapas > fit_min_trans
                 # get good transmission spectrum
@@ -1301,7 +1316,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
         # ------------------------------------------------------------------
         # subtract off the median from each order
         # ------------------------------------------------------------------
-        for order_num in nbo:
+        for order_num in range(nbo):
             # get start and end points
             start = order_num * nbpix
             end = order_num * nbpix + nbpix
@@ -1325,7 +1340,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
         keep &= np.isfinite(fit_dd)
         keep &= np.nansum(np.isfinite(fit_pc2), axis=1) == npc
         # log number of kept pixels
-        wargs = np.nansum(keep)
+        wargs = [np.nansum(keep)]
         WLOG(params, '', TextEntry('40-019-00022', args=wargs))
         # ------------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
@@ -1433,11 +1448,220 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
 # =============================================================================
 # Fit telluric functions
 # =============================================================================
-def make_template_cubes(params, filenames):
+def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
+                        fiber, **kwargs):
+    func_name = __NAME__ + '.make_template_cubes()'
+    # get parameters from params/kwargs
+    qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
+                          kwargs, func_name)
+    # get master wave map
+    mwavemap = mprops['WAVEMAP']
+    # get the objname
+    objname = reffile.get_key('KW_OBJNAME', dtype=str)
+    # log that we are constructing the cubes
+    WLOG(params, 'info', TextEntry('40-019-00027'))
+    # ----------------------------------------------------------------------
+    # Compile a median SNR for rejection of bad files
+    # ----------------------------------------------------------------------
+    # storage
+    snr_all, infiles, vfilenames, vbasenames, midexps = [], [], [], [], []
+    # choose snr to check
+    snr_order = qc_snr_order
+    # loop through files
+    for it, filename in enumerate(filenames):
+        # do not get duplicate files with same base name
+        if os.path.basename(filename) in vbasenames:
+            continue
+        # get new copy of file definition
+        infile = reffile.newcopy(recipe=recipe, fiber=fiber)
+        # set filename
+        infile.set_filename(filename)
+        # read header only
+        infile.read_header()
+        # get number of orders
+        nbo = infile.get_key('KW_WAVE_NBO', dtype=int)
+        # get snr
+        snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+        # get times (for sorting)
+        midexp = infile.get_key('KW_MID_OBS_TIME', dtype=float)
+        # append filename
+        vfilenames.append(filename)
+        vbasenames.append(os.path.basename(filename))
+        # append snr_all
+        snr_all.append(snr[snr_order])
+        # append times
+        midexps.append(midexp)
+        # append infiles
+        infiles.append(infile)
+    # ----------------------------------------------------------------------
+    # Sort by mid observation time
+    # ----------------------------------------------------------------------
+    sortmask = np.argsort(midexps)
+    snr_all = np.array(snr_all)[sortmask]
+    midexps = np.array(midexps)[sortmask]
+    vfilenames = np.array(vfilenames)[sortmask]
+    infiles = np.array(infiles)[sortmask]
+    # ----------------------------------------------------------------------
+    # work our bad snr (less than half the median SNR)
+    # ----------------------------------------------------------------------
+    snr_thres = np.nanmedian(snr_all) / 2.0
+    bad_snr_objects = np.where(snr_all < snr_thres)[0]
 
-    # TODO: Got to here
+    # ----------------------------------------------------------------------
+    # Storage for cube table
+    # ----------------------------------------------------------------------
+    # compile base columns
+    b_cols = OrderedDict()
+    b_cols['RowNum'], b_cols['Filename'], b_cols['OBJNAME'] = [], [], []
+    b_cols['BERV'], b_cols['SNR{0}'.format(snr_order)] = [], []
+    b_cols['MidObsHuman'], b_cols['MidObsMJD'] = [], []
+    b_cols['VERSION'], b_cols['Process_Date'], b_cols['DRS_Date'] = [], [], []
+    b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
+    b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
+    b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
+    b_cols['SHAPELFILE'], b_cols['THERMALFILE'], b_cols['WAVEFILE'] = [], [], []
+    # ----------------------------------------------------------------------
+    # Set up storage for cubes (NaN arrays)
+    # ----------------------------------------------------------------------
+    # set up flat size
+    dims = [reffile.shape[0], reffile.shape[1], len(vfilenames)]
+    flatsize = np.product(dims)
+    # create NaN filled storage
+    big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
+    big_cube0 = np.repeat([np.nan], flatsize).reshape(*dims)
 
-    return 0
+
+
+    # ----------------------------------------------------------------------
+    # Loop through input files
+    # ----------------------------------------------------------------------
+    for it, filename in enumerate(vfilenames):
+        # get the infile for this iteration
+        infile = infiles[it]
+        # ------------------------------------------------------------------
+        # load the data for this iteration
+        # ------------------------------------------------------------------
+        infile.read()
+        # get image and set up shifted image
+        image = np.array(infile.data)
+
+        # normalise image by the normalised blaze
+        image2 = image / nprops['NBLAZE']
+
+        # get dprtype
+        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        # ------------------------------------------------------------------
+        # Get barycentric corrections (BERV)
+        # ------------------------------------------------------------------
+        bprops = extract.get_berv(params, infile, dprtype=dprtype)
+        # get berv from bprops
+        berv = bprops['USE_BERV']
+        # ------------------------------------------------------------------
+        # load wavelength solution for this fiber
+        # ------------------------------------------------------------------
+        wprops = wave.get_wavesolution(params, recipe, infile=infile,
+                                       fiber=fiber)
+        # get wavemap
+        wavemap = wprops['WAVEMAP']
+        # ------------------------------------------------------------------
+        # append to table lists
+        # ------------------------------------------------------------------
+        # get string/file kwargs
+        bkwargs = dict(dtype=str, required=False)
+        # get drs date now
+        drs_date_now = infile.get_key('KW_DRS_DATE_NOW', dtype=str)
+        # add values
+        b_cols['RowNum'].append(it)
+        b_cols['Filename'].append(infile.basename)
+        b_cols['OBJNAME'].append(infile.get_key('KW_OBJNAME', dtype=str))
+        b_cols['BERV'].append(berv)
+        b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
+        b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
+        b_cols['MidObsMJD'].append(midexps[it])
+        b_cols['VERSION'].append(infile.get_key('KW_VERSION', dtype=str))
+        b_cols['Process_Date'].append(drs_date_now)
+        b_cols['DRS_Date'].append(infile.get_key('KW_DRS_DATE', dtype=str))
+        b_cols['DARKFILE'].append(infile.get_key('KW_CDBDARK', **bkwargs))
+        b_cols['BADFILE'].append(infile.get_key('KW_CDBBAD', **bkwargs))
+        b_cols['BACKFILE'].append(infile.get_key('KW_CDBBACK', **bkwargs))
+        b_cols['LOCOFILE'].append(infile.get_key('KW_CDBLOCO', **bkwargs))
+        b_cols['BLAZEFILE'].append(infile.get_key('KW_CDBBLAZE', **bkwargs))
+        b_cols['FLATFILE'].append(infile.get_key('KW_CDBFLAT', **bkwargs))
+        b_cols['SHAPEXFILE'].append(infile.get_key('KW_CDBSHAPEDX', **bkwargs))
+        b_cols['SHAPEYFILE'].append(infile.get_key('KW_CDBSHAPEDY', **bkwargs))
+        b_cols['SHAPELFILE'].append(infile.get_key('KW_CDBSHAPEL', **bkwargs))
+        b_cols['THERMALFILE'].append(infile.get_key('KW_CDBTHERMAL', **bkwargs))
+        b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
+        # ------------------------------------------------------------------
+        # skip if bad snr object
+        # ------------------------------------------------------------------
+        if it in bad_snr_objects:
+            # log skipping
+            wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
+            WLOG(params, 'warning', TextEntry('10-019-00006', args=wargs))
+            # skip
+            continue
+        # else print progress
+        else:
+            # log progress
+            wargs = [it + 1, len(vfilenames)]
+            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', TextEntry('40-019-00028', args=wargs))
+            WLOG(params, '', params['DRS_HEADER'])
+        # ------------------------------------------------------------------
+        # Shift to correct berv
+        # ------------------------------------------------------------------
+        # get velocity shift due to berv
+        dvshift = math.relativistic_waveshift(berv, units='km/s')
+        # shift the image
+        simage = _wave_to_wave(params, image2, wavemap * dvshift, mwavemap)
+        # ------------------------------------------------------------------
+        # normalise by the median of each order
+        # ------------------------------------------------------------------
+        for order_num in range(reffile.shape[0]):
+            # normalise the shifted data
+            simage[order_num, :] /= np.nanmedian(simage[order_num, :])
+            # normalise the original data
+            image2[order_num, :] /= np.nanmedian(image2[order_num, :])
+        # ------------------------------------------------------------------
+        # add to cube storage
+        # ------------------------------------------------------------------
+        # add the shifted data to big_cube
+        big_cube[:, :, it] = simage
+        # add the original data to big_cube0
+        big_cube0[:, :, it] = image2
+
+    # ----------------------------------------------------------------------
+    # setup output parameter dictionary
+    props = ParamDict()
+    props['BIG_CUBE'] = np.swapaxes(big_cube, 1, 2)
+    props['BIG_CUBE0'] = np.swapaxes(big_cube0, 1, 2)
+    props['BIG_COLS'] = b_cols
+    props['QC_SNR_ORDER'] = qc_snr_order
+    props['QC_SNR_THRES'] = snr_thres
+    # set sources
+    keys = ['BIG_CUBE', 'BIG_CUBE0', 'BIG_COLS', 'QC_SNR_ORDER', 'QC_SNR_THRES']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
+    # deal with having no files
+    if len(b_cols['RowNum']) == 0:
+        # log that no files were found
+        WLOG(params, 'warning', TextEntry('10-019-00007', args=[objname]))
+        # set big_cube_med to None
+        props['BIG_CUBE_MED'] = None
+        props.set_source('BIG_CUBE_MED', func_name)
+    # else median image
+    else:
+        # make median image
+        with warnings.catch_warnings(record=True) as _:
+            big_cube_med = np.nanmedian(big_cube, axis=2)
+        # set big_cube_med to median
+        props['BIG_CUBE_MED'] = big_cube_med
+        props.set_source('BIG_CUBE_MED', func_name)
+    # ----------------------------------------------------------------------
+    # return outputs
+    return props
+
 
 # =============================================================================
 # QC and writing functions
@@ -1445,11 +1669,11 @@ def make_template_cubes(params, filenames):
 def mk_tellu_quality_control(params, tprops, infile, **kwargs):
     func_name = __NAME__ + '.mk_tellu_quality_control()'
     # get parameters from params/kwargs
-    snr_order = pcheck(params, 'QC_MK_TELLU_SNR_ORDER', 'snr_order', kwargs,
+    snr_order = pcheck(params, 'MKTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
                        func_name)
-    qc_snr_min = pcheck(params, 'QC_MK_TELLU_SNR_MIN', 'qc_snr_min', kwargs,
+    qc_snr_min = pcheck(params, 'MKTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
-    qc_airmass_diff = pcheck(params, 'QC_MKTELLU_AIRMASS_DIFF',
+    qc_airmass_diff = pcheck(params, 'MKTELLU_QC_AIRMASS_DIFF',
                              'qc_airmass_diff', kwargs, func_name)
     qc_min_watercol = pcheck(params, 'MKTELLU_TRANS_MIN_WATERCOL',
                              'qc_min_watercol', kwargs, func_name)
@@ -1636,9 +1860,9 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
 def fit_tellu_quality_control(params, infile, **kwargs):
     func_name = __NAME__ + '.fit_tellu_quality_control()'
     # get parameters from params/kwargs
-    snr_order = pcheck(params, 'QC_MK_TELLU_SNR_ORDER', 'snr_order', kwargs,
+    snr_order = pcheck(params, 'MKTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
                        func_name)
-    qc_snr_min = pcheck(params, 'QC_MK_TELLU_SNR_MIN', 'qc_snr_min', kwargs,
+    qc_snr_min = pcheck(params, 'MKTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
     # get the text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
@@ -1739,16 +1963,16 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
         # add the standard keys
         corrfile.add_hkey_1d('KW_FTELLU_AMP_PC', values=values, dim1name='amp')
         # add the derivs
-        corrfile.add_hkey_1d('KW_FTELLU_DVTELL1', value=amps_abso_t[npc - 2])
-        corrfile.add_hkey_1d('KW_FTELLU_DVTELL2', value=amps_abso_t[npc - 1])
+        corrfile.add_hkey('KW_FTELLU_DVTELL1', value=amps_abso_t[npc - 2])
+        corrfile.add_hkey('KW_FTELLU_DVTELL2', value=amps_abso_t[npc - 1])
     # else just add the amp pc and blank for the dvtells
     else:
         # add the standard keys
         corrfile.add_hkey_1d('KW_FTELLU_AMP_PC', values=amps_abso_t,
                              dim1name='amp')
         # add the derivs (blank)
-        corrfile.add_hkey_1d('KW_FTELLU_DVTELL1', value='None')
-        corrfile.add_hkey_1d('KW_FTELLU_DVTELL2', value='None')
+        corrfile.add_hkey('KW_FTELLU_DVTELL1', value='None')
+        corrfile.add_hkey('KW_FTELLU_DVTELL2', value='None')
     # ----------------------------------------------------------------------
     # add the absorbance
     for molecule in tau_molecules:
@@ -1774,7 +1998,6 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # return corrected e2ds file instance
     return corrfile
-
 
 
 def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
@@ -1832,7 +2055,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
     reconfile = recipe.outputs['TELLU_RECON'].newcopy(recipe=recipe,
-                                                     fiber=fiber)
+                                                      fiber=fiber)
     # construct the filename from file instance
     reconfile.construct_filename(params, infile=infile)
     # copy header from corrected e2ds file
@@ -1895,6 +2118,102 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     recipe.add_output_file(rc1dvfile)
     # ------------------------------------------------------------------
     return reconfile
+
+
+def mk_template_write(params, recipe, infile, cprops, filetype,
+                      fiber, qc_params):
+
+    # get objname
+    objname = infile.get_key('KW_OBJNAME', dtype=str)
+    # construct suffix
+    suffix = '_{0}_{1}_{2}'.format(objname, filetype.lower(), fiber)
+
+    # ------------------------------------------------------------------
+    # Set up template big table
+    # ------------------------------------------------------------------
+    # get columns and values from cprops big column dictionary
+    columns = list(cprops['BIG_COLS'].keys())
+    values = list(cprops['BIG_COLS'].values())
+    # construct table
+    bigtable = drs_table.make_table(params, columns=columns, values=values)
+
+    # ------------------------------------------------------------------
+    # write the template file (TELLU_TEMP)
+    # ------------------------------------------------------------------
+    # get copy of instance of file
+    template_file = recipe.outputs['TELLU_TEMP'].newcopy(recipe=recipe,
+                                                         fiber=fiber)
+    # construct the filename from file instance
+    template_file.construct_filename(params, infile=infile, suffix=suffix)
+    # ------------------------------------------------------------------
+    # copy keys from input file
+    template_file.copy_original_keys(infile)
+    # add version
+    template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    template_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    template_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    template_file.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    template_file.add_hkey('KW_OUTPUT', value=template_file.name)
+    # add qc parameters
+    template_file.add_qckeys(qc_params)
+    # add constants
+    template_file.add_hkey('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
+    template_file.add_hkey('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
+    # set data
+    template_file.data = cprops['BIG_CUBE_MED']
+    # log that we are saving s1d table
+    WLOG(params, '', TextEntry('40-019-00029', args=[template_file.filename]))
+    # write multi
+    template_file.write_multi(data_list=[bigtable], datatype_list=['table'])
+    # add to output files (for indexing)
+    recipe.add_output_file(template_file)
+
+    # ------------------------------------------------------------------
+    # write the big cube file
+    # ------------------------------------------------------------------
+    bigcubefile = recipe.outputs['TELLU_BIGCUBE'].newcopy(recipe=recipe,
+                                                          fiber=fiber)
+    # construct the filename from file instance
+    bigcubefile.construct_filename(params, infile=infile, suffix=suffix)
+    # copy header from corrected e2ds file
+    bigcubefile.copy_hdict(bigcubefile)
+    # add output tag
+    bigcubefile.add_hkey('KW_OUTPUT', value=bigcubefile.name)
+    # set data
+    bigcubefile.data = cprops['BIG_CUBE']
+    # log that we are saving s1d table
+    WLOG(params, '', TextEntry('40-019-00030', args=[bigcubefile.filename]))
+    # write multi
+    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'])
+    # add to output files (for indexing)
+    recipe.add_output_file(bigcubefile)
+
+    # ------------------------------------------------------------------
+    # write the big cube 0 file
+    # ------------------------------------------------------------------
+    bigcubefile0 = recipe.outputs['TELLU_BIGCUBE0'].newcopy(recipe=recipe,
+                                                            fiber=fiber)
+    # construct the filename from file instance
+    bigcubefile0.construct_filename(params, infile=infile, suffix=suffix)
+    # copy header from corrected e2ds file
+    bigcubefile0.copy_hdict(bigcubefile0)
+    # add output tag
+    bigcubefile0.add_hkey('KW_OUTPUT', value=bigcubefile0.name)
+    # set data
+    bigcubefile0.data = cprops['BIG_CUBE0']
+    # log that we are saving s1d table
+    WLOG(params, '', TextEntry('40-019-00031', args=[bigcubefile0.filename]))
+    # write multi
+    bigcubefile0.write_multi(data_list=[bigtable], datatype_list=['table'])
+    # add to output files (for indexing)
+    recipe.add_output_file(bigcubefile0)
+
+    # return the template file
+    return template_file
+
 
 
 # =============================================================================

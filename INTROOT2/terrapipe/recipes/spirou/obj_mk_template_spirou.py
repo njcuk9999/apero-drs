@@ -35,8 +35,8 @@ from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
+from terrapipe.io import drs_path
 from terrapipe.science.calib import wave
-from terrapipe.science import extract
 from terrapipe.science import telluric
 
 
@@ -123,14 +123,15 @@ def __main__(recipe, params):
     fiber = params['MKTEMPLATE_FIBER_TYPE']
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    object_filenames = drs_fits.find_files(params, kind='red',
+    object_filenames = drs_fits.find_files(params, kind='red', fiber=fiber,
                                            KW_OBJNAME=objname,
                                            KW_OUTPUT=filetype)
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
         WLOG(params, 'warning', TextEntry('10-019-00005', args=wargs))
-        return core.return_locals(params, locals())
+        # TODO: Activate return
+        # return core.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Get filetype definition
     infiletype = core.get_file_definition(filetype, params['INSTRUMENT'],
@@ -141,22 +142,69 @@ def __main__(recipe, params):
     infile.set_filename(object_filenames[-1])
     # read data
     infile.read()
+    # get night name
+    nightname = drs_path.get_nightname(params, infile.filename)
+    params.set(key='NIGHTNAME', value=nightname, source=mainname)
     # ----------------------------------------------------------------------
     # load master wavelength solution
-    mprops = wave.get_wavesolution(params, recipe, infile.header, master=True,
-                                   fiber=fiber)
+    mkwargs = dict(header=infile.header, master=True, fiber=fiber)
+    mprops = wave.get_wavesolution(params, recipe, **mkwargs)
+    # ------------------------------------------------------------------
+    # Normalize image by peak blaze
+    # ------------------------------------------------------------------
+    nargs = [np.array(infile.data), infile.header, fiber]
+    _, nprops = telluric.normalise_by_pblaze(params, *nargs)
     # ----------------------------------------------------------------------
     # Make data cubes
     # ----------------------------------------------------------------------
-    cprops = telluric.make_template_cubes(params, object_filenames)
+    cargs = [object_filenames, infile, mprops, nprops, fiber]
+    cprops = telluric.make_template_cubes(params, recipe, *cargs)
+    # deal with no good files
+    if cprops['BIG_CUBE_MED'] is None:
+        # TODO: Activate return
+        # return core.return_locals(params, locals())
+        pass
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names = [], [], [],
+    qc_logic, qc_pass = [], []
+    # ----------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # ----------------------------------------------------------------------
+    # Write cubes and median to file
+    # ----------------------------------------------------------------------
+    margs = [infile, cprops, filetype, fiber, qc_params]
+    template_file = telluric.mk_template_write(params, recipe, *margs)
 
-
-
+    # ----------------------------------------------------------------------
+    # Update the telluric database with the template
+    # ----------------------------------------------------------------------
+    if passed:
+        # copy the big cube median to the calibDB
+        drs_database.add_file(params, template_file, night=nightname)
 
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
     return core.return_locals(params, locals())
+
 
 
 # =============================================================================

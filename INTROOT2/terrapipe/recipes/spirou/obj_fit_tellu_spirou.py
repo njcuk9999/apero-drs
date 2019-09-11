@@ -147,15 +147,15 @@ def __main__(recipe, params):
         # get header from file instance
         header = infile.header
         # get image
-        image = infile.image
+        image = infile.data
         # ------------------------------------------------------------------
         # check that file has valid DPRTYPE
         # ------------------------------------------------------------------
         dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
         # if dprtype is incorrect skip
-        if dprtype not in params.listp('TEELU_ALLOWED_DPRTYPES'):
+        if dprtype not in params.listp('TELLU_ALLOWED_DPRTYPES'):
             # join allowed dprtypes
-            allowed_dprtypes = ', '.join(params.listp('TEELU_ALLOWED_DPRTYPES'))
+            allowed_dprtypes = ', '.join(params.listp('TELLU_ALLOWED_DPRTYPES'))
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
@@ -166,7 +166,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         objname = infile.get_key('KW_OBJNAME', dtype=str)
         # get black list
-        blacklist = telluric.get_blacklist(params)
+        blacklist, _ = telluric.get_blacklist(params)
         # if objname in blacklist then skip
         if objname in blacklist:
             # log that we are skipping
@@ -186,10 +186,11 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load master wavelength solution
         mprops = wave.get_wavesolution(params, recipe, header, master=True,
-                                       fiber=fiber)
+                                       fiber=fiber, infile=infile)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+                                       infile=infile)
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
@@ -228,7 +229,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption + correct E2DS file
         # ------------------------------------------------------------------
-        cargs = [image, wprops, pca_props, sprops]
+        cargs = [image, wprops, pca_props, sprops, nprops]
         cprops = telluric.calc_recon_and_correct(params, *cargs)
 
         # ------------------------------------------------------------------
@@ -266,7 +267,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save reconstructed absorption to file (E2DS + S1D)
         # ------------------------------------------------------------------
-        frargs = [infile. corrfile, fiber, cprops, rcwprops, rcvprops]
+        frargs = [infile, corrfile, fiber, cprops, rcwprops, rcvprops]
         reconfile = telluric.fit_tellu_write_recon(params, recipe, *frargs)
 
         # ------------------------------------------------------------------

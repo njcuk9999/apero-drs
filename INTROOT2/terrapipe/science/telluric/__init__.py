@@ -50,6 +50,8 @@ mk_tellu_quality_control = general.mk_tellu_quality_control
 
 mk_tellu_write_trans_file = general.mk_tellu_write_trans_file
 
+mk_template_write = general.mk_template_write
+
 normalise_by_pblaze = general.normalise_by_pblaze
 
 shift_all_to_frame = general.shift_all_to_frame
