@@ -258,7 +258,7 @@ def load_tapas(params, **kwargs):
         table, outf = load_table_file(params, filename, relfolder, kwargs,
                                       func_name)
         WLOG(params, '', TextEntry('40-999-00002', args=outf))
-        return table
+        return table, outf
     except LoadException:
         eargs = [filename, relfolder]
         WLOG(params, 'error', TextEntry('00-010-00004', args=eargs))
