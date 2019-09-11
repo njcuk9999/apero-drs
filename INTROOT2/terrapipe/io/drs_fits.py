@@ -427,7 +427,8 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
 # =============================================================================
 # Define search functions
 # =============================================================================
-def find_files(params, kind=None, path=None, logic='and', **kwargs):
+def find_files(params, kind=None, path=None, logic='and', fiber=None,
+               **kwargs):
     """
     Find files using kwargs (using index files located in 'kind' or 'path')
 
@@ -560,6 +561,11 @@ def find_files(params, kind=None, path=None, logic='and', **kwargs):
         # check that files exist
         # loop around masked files
         for filename in masked_files:
+            # ------------------------------------------------------------------
+            # deal with fiber
+            if fiber is not None:
+                if '_{0}'.format(fiber) not in filename:
+                    continue
             # construct absolute path
             absfilename = os.path.join(dirname, filename)
             # check that file exists
