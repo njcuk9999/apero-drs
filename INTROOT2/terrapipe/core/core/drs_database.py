@@ -56,7 +56,7 @@ class Database():
         self.calib_cols = ['key', 'nightname', 'filename', 'humantime',
                            'unixtime']
         self.tellu_cols = ['key', 'nightname', 'filename', 'humantime',
-                           'unixtime']
+                           'unixtime', 'objname']
         self.key_col = 'key'
         self.time_col = 'unixtime'
         self.file_col = 'filename'
@@ -322,9 +322,16 @@ def add_file(params, outfile, night=None):
     # ------------------------------------------------------------------
     # update database with key
     if dbname.lower() == 'telluric':
-        update_calibdb(params, dbname, dbkey, outfile, night)
+        # get object name
+        if hasattr(outfile, 'get_key'):
+            objname = outfile.get_key('KW_OBJNAME', dtype=str)
+        else:
+            objname = 'None'
+        # update telluric database
+        update_telludb(params, dbname, dbkey, outfile, night, objname)
     elif dbname.lower() == 'calibration':
-        update_telludb(params, dbname, dbkey, outfile, night)
+        # update calibration database
+        update_calibdb(params, dbname, dbkey, outfile, night)
 
 
 def copy_calibrations(params, header, **kwargs):
@@ -469,8 +476,13 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
                 get_image=True, get_header=False):
     func_name = __NAME__ + '.get_db_file'
     # ------------------------------------------------------------------
+    # deal with npy files
+    if abspath.endswith('.npy'):
+        image = np.load(abspath)
+        return image, None
+    # ------------------------------------------------------------------
     # get db fits file
-    if not get_image:
+    if (not get_image) or (not abspath.endswith('.fits')):
         image = None
     elif kind == 'image':
         image = drs_fits.read(params, abspath, ext=ext)
@@ -482,8 +494,8 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
         WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
         image = None
     # ------------------------------------------------------------------
-    # get header if required
-    if get_header:
+    # get header if required (and a fits file)
+    if get_header and abspath.endswith('.fits'):
         header = drs_fits.read_header(params, abspath, ext=ext)
     else:
         header = None
@@ -511,7 +523,7 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None):
     key = str(dbkey)
     nightname = night
     filename = outfile.basename
-    human_time = str(header_time.iso)
+    human_time = str(header_time.iso).replace(' ', '_')
     unix_time = str(header_time.unix)
     # ----------------------------------------------------------------------
     # push into list
@@ -526,11 +538,14 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None):
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
-def update_telludb(params, dbname, dbkey, outfile, night=None):
+def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None):
     func_name = __NAME__ + '.update_calibdb()'
     # deal with no night name
     if night is None:
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
+    # deal with no object name
+    if objname is None:
+        objname = 'Unknown'
     # ----------------------------------------------------------------------
     # get the hdict
     hdict, header = _get_hdict(params, dbname, outfile)
@@ -546,9 +561,9 @@ def update_telludb(params, dbname, dbkey, outfile, night=None):
     unix_time = str(header_time.unix)
     # ----------------------------------------------------------------------
     # push into list
-    largs = [key, nightname, filename, human_time, unix_time]
+    largs = [key, nightname, filename, human_time, unix_time, objname]
     # construct the line
-    line = '\n{0} {1} {2} {3} {4}'.format(*largs)
+    line = '\n{0} {1} {2} {3} {4} {5}'.format(*largs)
     # ----------------------------------------------------------------------
     # write to file
     _write_line_to_database(params, key, dbname, outfile, line)
@@ -654,6 +669,9 @@ def _get_database_file(params, dbname, outfile=None):
 def _copy_db_file(params, dbname, inpath, outpath, lock=None,
                   lockfile=None, lockpath=None):
     func_name = __NAME__ + '._copy_file()'
+    # remove file if already present
+    if inpath == outpath:
+        return 0
     # noinspection PyExceptClausesOrder
     try:
         shutil.copyfile(inpath, outpath)
