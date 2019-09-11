@@ -306,7 +306,10 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # if wavemap is unset create it from wave coefficients
     if wavemap is None:
         # get image dimensions
-        nby, nbx = infile.data.shape
+        if infile is not None:
+            nby, nbx = infile.data.shape
+        else:
+            nby, nbx = header['NAXIS2'], header['NAXIS1']
         # set up storage
         wavemap = np.zeros((nbo, nbx))
         xpixels = np.arange(nbx)
