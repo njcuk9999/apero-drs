@@ -2,6 +2,68 @@ Changelog
 =========
 
 
+0.5.069 (2019-09-11)
+--------------------
+- Science.extract.general.py - fix loading of tapas (in thermal
+  correction 1) [Neil Cook]
+- Science.extract.berv.py - fix how berv is obtained from header. [Neil
+  Cook]
+- Science.calib.wave.py - add a way to get dimensions from header
+  (NAXIS2 and NAXIS1) if image (via infile) is not defined. [Neil Cook]
+- Recipe.spirou.obj_fit_tellu_spirou.py + obj_mk_tellu_spirou.py +
+  obj_mk_template_spirou.py - continue work on telluric functions
+  (SpirouDRS --> terrapipe) [Neil Cook]
+- Recipe.spirou.cal_extract_spirou.py - add fiber key to header. [Neil
+  Cook]
+- Locale.core.drs_text.py - add way to deal with TextEntry args being a
+  int/float/bool (still not a list)--> list. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - fix find_files (now deals with having a fiber filter
+  as well) [Neil Cook]
+- Io.drs_data.py - return both table and outfilename in load_tapas
+  function. [Neil Cook]
+- Data.spirou.reset.telludb.master_tellu_SPIROU.txt - add objname to
+  default telluDB entries. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add outputs to
+  telluric recipes. [Neil Cook]
+- Core.instruments.spirou.pseduo_const.py - fix typo in bervmaxest key.
+  [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - make adjustments to
+  telluric files. [Neil Cook]
+- Core.instruments.default.output_filenames.py - allow suffix to be
+  added to set_file. [Neil Cook]
+- Core.instruments.*.default_constants/default_keywords - add missing
+  make_tellu, fit_tellu and make_template constants/keywords. [Neil
+  Cook]
+- Core.core.drs_file.py - by default overwrite data if already read in
+  DrsFitsFile.read() [Neil Cook]
+- Core.core.drs_database.py - add objname to telludb column. [Neil Cook]
+- Tools.module.setup.drs_reprocess.py = add total time calculation.
+  [Neil Cook]
+- Science.telluric.general.py - add make_template_cubes placeholder.
+  [Neil Cook]
+- Recipe.spirou.obj_mk_template_spirou.py - first commit - port from
+  SpirouDRS. [Neil Cook]
+- Recipe.spirou.cal_dark_master/cal_spirou_master - update call to
+  find_files. [Neil Cook]
+- Recipe.spirou - add KW_OUTPUT (needs to be added everywhere we
+  copy_hdict to separate different files) [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - remove find_filetypes and add (more generic)
+  find_files function. [Neil Cook]
+- Core.instrumets.spirou.py - add in obj_mk_template. [Neil Cook]
+- Core.instruments.*.default_constants.py - add in mk_template
+  constants. [Neil Cook]
+- Core.core.drs_database.py - add in default mode (CALIB_DB_MATCH) [Neil
+  Cook]
+- Core.constants.constant_functions.py - for bool arguments make sure
+  they are strings to do .lower and change second if to elif. [Neil
+  Cook]
+- Core.core.drs_file.py - update pep8 remove redundant lines. [Neil
+  Cook]
+- Update version/date/changelog. [Neil Cook]
+
+
 0.5.068 (2019-09-10)
 --------------------
 - Tools.modlue.setup.drs_reprocess.py - load "adds" when checking
