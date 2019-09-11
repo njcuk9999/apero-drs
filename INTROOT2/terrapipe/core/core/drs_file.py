@@ -1018,7 +1018,7 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
-    def read(self, ext=None, check=True):
+    def read(self, ext=None, check=False):
         """
         Read this fits file data and header
 
@@ -1087,7 +1087,15 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.header = header
 
-    def check_read(self):
+    def check_read(self, header_only=False):
+        # deal with only wanting to check if header is read
+        if header_only:
+            if self.header is None:
+                func = self.__repr__()
+                eargs = [func, func + '.read()']
+                self.__error__(TextEntry('00-001-00004', args=eargs))
+            else:
+                return 1
         # check that data/header/comments is not None
         if self.data is None:
             func = self.__repr__()
@@ -1193,17 +1201,25 @@ class DrsFitsFile(DrsInputFile):
     def get_fiber(self, header=None):
         # get params
         params = self.recipe.drs_params
+        # must have fibers defined to be able to get a fiber
+        if self.fibers is None:
+            return None
         # get fiber header key
         key = params['KW_FIBER'][0]
         # deal with case where no header was given
         if header is None:
             if self.header is not None:
-                return str(self.header[key])
-            else:
-                return None
+                if key in self.header:
+                    return str(self.header[key])
         else:
-            return str(header[key])
-
+            if key in header:
+                return str(header[key])
+        # if we still don't have fiber search in file name for fiber
+        for fiber in self.fibers:
+            if '_{0}'.format(fiber) in self.basename:
+                return fiber
+        # if we still don't have fiber then return None
+        return None
 
     def output_dictionary(self):
         """
@@ -1346,7 +1362,7 @@ class DrsFitsFile(DrsInputFile):
         # check that recipe is set
         self.check_recipe()
         # check that data is read
-        self.check_read()
+        self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
         # if we have a default key try to get key else use default value
@@ -1402,7 +1418,7 @@ class DrsFitsFile(DrsInputFile):
         # check that recipe is set
         self.check_recipe()
         # check that data is read
-        self.check_read()
+        self.check_read(header_only=True)
         # make sure keys is a list
         try:
             keys = list(keys)
@@ -1445,7 +1461,7 @@ class DrsFitsFile(DrsInputFile):
         """
         func_name = __NAME__ + '.DrsFitsFile.read_header_key_1d_list()'
         # check that data is read
-        self.check_read()
+        self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
         # create 2d list
@@ -1486,7 +1502,7 @@ class DrsFitsFile(DrsInputFile):
         """
         func_name = __NAME__ + '.read_key_2d_list()'
         # check that data is read
-        self.check_read()
+        self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
         # create 2d list
@@ -1567,11 +1583,11 @@ class DrsFitsFile(DrsInputFile):
         pconstant = self.recipe.drs_pconstant
         # get drs_file header/comments
         if drs_file is None:
-            self.check_read()
+            self.check_read(header_only=True)
             fileheader = self.header
         else:
             # check that data/header is read
-            drs_file.check_read()
+            drs_file.check_read(header_only=True)
             fileheader = drs_file.header
 
         def __keep_card(card):
@@ -1953,7 +1969,7 @@ class DrsFitsFile(DrsInputFile):
         self.hdict = drsfile.hdict
 
     # -------------------------------------------------------------------------
-    # database methods (dbkey
+    # database methods
     # -------------------------------------------------------------------------
     def get_dbkey(self, **kwargs):
         func_name = __NAME__ + '.DrsFitsFile.get_dbkey()'
@@ -2022,6 +2038,7 @@ class DrsNpyFile(DrsInputFile):
         self.outfunc = kwargs.get('outfunc', None)
         self.outtag = kwargs.get('KW_OUTPUT', 'UNKNOWN')
         self.dbname = kwargs.get('dbname', None)
+        self.raw_dbkey = kwargs.get('dbkey', None)
         self.dbkey = kwargs.get('dbkey', None)
         # set empty fits file storage
         self.data = kwargs.get('data', None)
@@ -2105,6 +2122,9 @@ class DrsNpyFile(DrsInputFile):
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         kwargs['indextable'] = kwargs.get('indextable', self.indextable)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
+        kwargs['dbname'] = kwargs.get('dbname', self.dbname)
+        kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
+        kwargs['raw_dbkey'] = kwargs.get('raw_dbkey', self.raw_dbkey)
         # return new instance
         return DrsNpyFile(name, **kwargs)
 
@@ -2142,9 +2162,43 @@ class DrsNpyFile(DrsInputFile):
         # ------------------------------------------------------------------
         nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
         nkwargs['outfunc'] = drsfile.outfunc
+        nkwargs['dbname'] = copy.deepcopy(drsfile.dbname)
+        nkwargs['dbkey'] = copy.deepcopy(drsfile.dbkey)
+        nkwargs['raw_dbkey'] = copy.deepcopy(drsfile.raw_dbkey)
         # return new instance of DrsFitsFile
         return DrsNpyFile(**nkwargs)
 
+    # -------------------------------------------------------------------------
+    # database methods
+    # -------------------------------------------------------------------------
+    def get_dbkey(self, **kwargs):
+        func_name = __NAME__ + '.DrsFitsFile.get_dbkey()'
+        func_name = kwargs.get('func', func_name)
+        # deal with dbkey not set
+        if self.raw_dbkey is None or self.dbkey is None:
+            return None
+        # update fiber if needed
+        self.fiber = kwargs.get('fiber', self.fiber)
+        # get parameters for error message
+        if self.recipe is not None:
+            params = self.recipe.drs_params
+        else:
+            params = None
+        # deal with fiber being required but still unset
+        if self.fibers is not None and self.fiber is None:
+            eargs = [self, func_name]
+            WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
+        # add fiber name to dbkey
+        if self.fibers is not None:
+            if not self.raw_dbkey.endswith('_' + self.fiber):
+                self.dbkey = '{0}_{1}'.format(self.raw_dbkey, self.fiber)
+        else:
+            self.dbkey = str(self.raw_dbkey)
+        # make dbkey uppdercase
+        if self.dbkey is not None:
+            self.dbkey = self.dbkey.upper()
+        # return dbkey
+        return self.dbkey
 
 # =============================================================================
 # User functions
