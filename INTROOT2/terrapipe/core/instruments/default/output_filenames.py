@@ -159,10 +159,15 @@ def set_file(params, **kwargs):
     # deal with no file name set
     if filename is None:
         WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
+    # get suffix
+    suffix = kwargs.get('suffix', None)
     # get path
     path = kwargs.get('path', None)
     # get extension
-    outext = outfile.filetype
+    if suffix is None:
+        outext = outfile.filetype
+    else:
+        outext = suffix + outfile.filetype
     # check for extension and set filename
     if filename.endswith(outext):
         outfilename = str(filename)
