@@ -156,8 +156,10 @@ class Entry:
         # make args a list if it is a string
         if type(args) is str:
             args = [args]
+        elif type(args) in [int, float, bool]:
+            args = [str(args)]
         # make keys a list
-        if type(key) is list:
+        if isinstance(key, list):
             self.keys = key
             if args is None:
                 args = [[]]*len(key)
