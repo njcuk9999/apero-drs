@@ -318,6 +318,7 @@ def __main__(recipe, params):
             e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
             # add the calibration files use
             e2dsfile = general.add_calibs_to_header(e2dsfile, props)
+            e2dsfile.add_hkey('KW_FIBER', value=fiber)
             # --------------------------------------------------------------
             # add the other calibration files used
             e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)
