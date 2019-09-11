@@ -627,7 +627,7 @@ obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
 obj_mk_tellu.outputdir = 'reduced'
-obj_mk_tellu.inputdir = 'tmp'
+obj_mk_tellu.inputdir = 'reduced'
 obj_mk_tellu.inputtype = 'reduced'
 obj_mk_tellu.extension = 'fits'
 obj_mk_tellu.description = Help['MKTELL_DESC']
@@ -651,7 +651,7 @@ obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
 obj_fit_tellu.shortname = 'MKTELL'
 obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.outputdir = 'reduced'
-obj_fit_tellu.inputdir = 'tmp'
+obj_fit_tellu.inputdir = 'reduced'
 obj_fit_tellu.inputtype = 'reduced'
 obj_fit_tellu.extension = 'fits'
 obj_fit_tellu.description = Help['FIT_TELL_DESC']
@@ -681,12 +681,14 @@ obj_mk_template.name = 'obj_mk_template_spirou.py'
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
 obj_mk_template.outputdir = 'reduced'
-obj_mk_template.inputdir = 'tmp'
+obj_mk_template.inputdir = 'reduced'
 obj_mk_template.inputtype = 'reduced'
 obj_mk_template.extension = 'fits'
 obj_mk_template.description = Help['MKTEMP_DESC']
 obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
-obj_mk_template.set_outputs()
+obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
+                            TELLU_BIGCUBE=sf.out_tellu_bigcube,
+                            TELLU_BIGCUBE0=sf.out_tellu_bigcube0)
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
 obj_mk_template.set_kwarg(name='-filetype', dtype=str,
