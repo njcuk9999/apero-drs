@@ -257,7 +257,7 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
         return image
     # ----------------------------------------------------------------------
     # load tapas
-    tapas = drs_data.load_tapas(params, filename=tapas_file)
+    tapas, _ = drs_data.load_tapas(params, filename=tapas_file)
     wtapas, ttapas = tapas['wavelength'], tapas['trans_combined']
     # ----------------------------------------------------------------------
     # splining tapas onto the order 49 wavelength grid
