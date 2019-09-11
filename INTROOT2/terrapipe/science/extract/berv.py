@@ -318,20 +318,10 @@ def assign_properties(params, props=None, use=True, **kwargs):
     # set up storage
     oprops = ParamDict()
     # -------------------------------------------------------------------------
-    # deal with no props
-    if props is None:
-        props = ParamDict()
-        for key in inputs:
-            if isinstance(inputs[key].default, str):
-                props[key] = 'None'
-            else:
-                props[key] = np.nan
-            props.set_source(key, '{0} [{1}]'.format(func_name, source))
-    # -------------------------------------------------------------------------
     # add outputs
     for key in outputs:
         output = outputs[key]
-        value = kwargs.get(key, None)
+        value = kwargs.get(output[0], None)
         if value is None:
             oprops[output[0]] = np.nan
         else:
@@ -340,16 +330,17 @@ def assign_properties(params, props=None, use=True, **kwargs):
         oprops.set_source(output[0], '{0} [{1}]'.format(func_name, source))
     # -------------------------------------------------------------------------
     # deal with inputs (set value and source)
-    for prop in props:
-        oprops[prop] = props[prop]
-        oprops.set_source(prop, props.sources[prop])
+    if props is not None:
+        for prop in props:
+            oprops[prop] = props[prop]
+            oprops.set_source(prop, props.sources[prop])
 
     # -------------------------------------------------------------------------
     # need to decide which values should be used (and report if we are using
     #   estimate)
     cond = oprops['BERV'] is not None
     cond &= oprops['BJD'] is not None
-    cond &= oprops['BERV_MAX_EST'] is not None
+    #cond &= oprops['BERV_MAX'] is not None
 
     # Case 1: Not BERV used
     if not use:
@@ -359,7 +350,7 @@ def assign_properties(params, props=None, use=True, **kwargs):
         oprops['USED_ESTIMATE'] = None
         psource = '{0} [{1}]'.format(func_name, 'None')
     # Case 2: pyasl used
-    elif cond or (source == 'pyasl'):
+    elif not cond or (source == 'pyasl'):
         # log warning that we are using an estimate
         WLOG(params, 'warning', TextEntry('10-016-00014', args=[estimate]))
         # set parameters
@@ -396,36 +387,44 @@ def get_outputs(params, infile, header, props, kwargs):
         inkey, outkey, kind, dtype = berv_keys[key]
         # unset value
         value, datatype = None, None
+        # check for outkey in params
+        if outkey in params:
+            hkey = params[outkey][0]
+        else:
+            hkey = outkey
         # get the value of the key from infile
         if kind == 'header' and infile is not None:
-            if outkey in infile.header:
-                value = infile.header[outkey][0]
-                datatype = params.instance[outkey].datatype
+            if hkey in infile.header:
+                value = infile.header[hkey]
+                datatype = params.instances[outkey].datatype
                 found = True
         # get the value of the key from header
-        if (kind == 'header') and (header is not None) and (value is None):
-            if outkey in infile.header:
-                value = infile.header[outkey][0]
-                datatype = params.instance[outkey].datatype
+        elif (kind == 'header') and (header is not None) and (value is None):
+            if hkey in infile.header:
+                value = infile.header[hkey]
+                datatype = params.instances[outkey].datatype
                 found = True
         # get the value from props
-        if (value is None) and (key in props):
+        elif (value is None) and (props is not None) and (key in props):
             value = props[key]
             datatype = dtype
             found = True
         # get the value from kwargs
-        if (value is None) and (key in kwargs):
+        elif (value is None) and (key in kwargs):
             value = kwargs[key]
             datatype = dtype
             found = True
         # else set the value
-        if (value is None) and (key in params):
+        elif (value is None) and (key in params):
             value = params[outkey]
             datatype = dtype
             found = True
         # push values into props
         if found:
-            bprops[inkey] = datatype(value)
+            if datatype is not None:
+                bprops[inkey] = datatype(value)
+            else:
+                bprops[inkey] = value
     # only return if we filled it
     if len(bprops) == len(berv_keys):
         return bprops
