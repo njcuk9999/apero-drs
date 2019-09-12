@@ -320,17 +320,17 @@ out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 # -----------------------------------------------------------------------------
 # dark out file
 out_dark = drs_finput('DARK', KW_OUTPUT='DARK',
-                      filetype='.fits',
+                      filetype='.fits', intype=pp_dark_dark,
                       suffix='',
                       outfunc=out.calib_file,
                       dbname='calibration', dbkey='DARK')
 out_sky = drs_finput('SKY', KW_OUTPUT='SKY',
-                     filetype='.fits',
+                     filetype='.fits', intype=pp_dark_dark,
                      suffix='',
                      outfunc=out.calib_file,
                      dbname='calibration', dbkey='SKYDARK')
 out_dark_master = drs_finput('DARKM', KW_OUTPUT='DARKM',
-                             filetype='.fits',
+                             filetype='.fits', intype=pp_dark_dark,
                              suffix='_dark_master',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='DARKM')
@@ -343,7 +343,7 @@ out_file.addset(out_dark_master)
 # -----------------------------------------------------------------------------
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
-                        filetype='.fits',
+                        filetype='.fits', intype=pp_flat_flat,
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
@@ -354,7 +354,7 @@ out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
 
 # background debug file
 debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
-                        filetype='.fits',
+                        filetype='.fits', intype=pp_flat_flat,
                         suffix='background.fits', outfunc=out.debug_file)
 
 # add badpix outputs to output fileset
@@ -368,23 +368,24 @@ out_file.addset(debug_back)
 out_loc_orderp = drs_finput('LOC_ORDERP', KW_OUTPUT='LOC_ORDERP',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
+                            intype=[pp_flat_dark, pp_dark_flat],
                             suffix='_order_profile.fits',
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', KW_OUTPUT='LOC_LOCO',
                           fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
+                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_loco',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='LOC')
 out_loc_fwhm = drs_finput('LOC_FWHM', KW_OUTPUT='LOC_FWHM',
                           fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
+                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_fwhm-order',
                           outfunc=out.calib_file)
 out_loc_sup = drs_finput('LOC_SUP', KW_OUTPUT='LOC_SUP',
                          fibers=['AB', 'A', 'B', 'C'],
-                         filetype='.fits',
+                         filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                          suffix='_with-order',
                          outfunc=out.calib_file)
 # add localisation outputs to output fileset
@@ -398,38 +399,38 @@ out_file.addset(out_loc_sup)
 # -----------------------------------------------------------------------------
 # shape master
 out_shape_dxmap = drs_finput('SHAPE_X', KW_OUTPUT='SHAPE_X',
-                             filetype='.fits',
+                             filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapex',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='SHAPEX')
 out_shape_dymap = drs_finput('SHAPE_Y', KW_OUTPUT='SHAPE_Y',
-                             filetype='.fits',
+                             filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapey',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='SHAPEY')
 out_shape_fpmaster = drs_finput('MASTER_FP', KW_OUTPUT='MASTER_FP',
-                                filetype='.fits',
+                                filetype='.fits', intype=pp_fp_fp,
                                 suffix='_fpmaster',
                                 outfunc=out.calib_file,
                                 dbname='calibration', dbkey='FPMASTER')
 out_shape_debug_ifp = drs_finput('SHAPE_IN_FP', KW_OUTPUT='SHAPE_IN_FP',
-                                 filetype='.fits',
+                                 filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_in_fp',
                                  outfunc=out.debug_file)
 out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP', KW_OUTPUT='SHAPE_OUT_FP',
-                                 filetype='.fits',
+                                 filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_fp',
                                  outfunc=out.debug_file)
 out_shape_debug_ihc = drs_finput('SHAPE_IN_HC', KW_OUTPUT='SHAPE_IN_HC',
-                                 filetype='.fits',
+                                 filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_in_hc',
                                  outfunc=out.debug_file)
 out_shape_debug_ohc = drs_finput('SHAPE_OUT_HC', KW_OUTPUT='SHAPE_OUT_HC',
-                                 filetype='.fits',
+                                 filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_hc',
                                  outfunc=out.debug_file)
 out_shape_debug_bdx = drs_finput('SHAPE_BDX', KW_OUTPUT='SHAPE_BDX',
-                                 filetype='.fits',
+                                 filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_bdx',
                                  outfunc=out.debug_file)
 # add shape master outputs to output fileset
@@ -446,17 +447,17 @@ out_file.addset(out_shape_debug_bdx)
 # -----------------------------------------------------------------------------
 # shape local
 out_shape_local = drs_finput('SHAPEL', KW_OUTPUT='SHAPEL',
-                             filetype='.fits',
+                             filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapel',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='SHAPEL')
 out_shapel_debug_ifp = drs_finput('SHAPEL_IN_FP', KW_OUTPUT='SHAPEL_IN_FP',
-                                  filetype='.fits',
+                                  filetype='.fits', intype=pp_fp_fp,
                                   suffix='_shapel_in_fp.fits',
                                   outfunc=out.debug_file)
 
 out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP', KW_OUTPUT='SHAPEL_OUT_FP',
-                                  filetype='.fits',
+                                  filetype='.fits', intype=pp_fp_fp,
                                   suffix='_shapel_out_fp.fits',
                                   outfunc=out.debug_file)
 # add shape local outputs to output fileset
@@ -470,20 +471,20 @@ out_file.addset(out_shapel_debug_ofp)
 # flat
 out_ff_blaze = drs_finput('FF_BLAZE', KW_OUTPUT='FF_BLAZE',
                           fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
+                          filetype='.fits', intype=pp_flat_flat,
                           suffix='_blaze',
                           dbname='calibration', dbkey='BLAZE',
                           outfunc=out.calib_file)
 out_ff_flat = drs_finput('FF_FLAT', KW_OUTPUT='FF_FLAT',
                          fibers=['AB', 'A', 'B', 'C'],
-                         filetype='.fits',
+                         filetype='.fits', intype=pp_flat_flat,
                          suffix='_flat',
                          dbname='calibration', dbkey='FLAT',
                          outfunc=out.calib_file)
 
 out_orderp_straight = drs_ninput('ORDERP_STRAIGHT', KW_OUTPUT='ORDERP_STRAIGHT',
                                  fibers=['AB', 'A', 'B', 'C'],
-                                 filetype='.npy',
+                                 filetype='.npy', intype=pp_flat_flat,
                                  suffix='_orderp',
                                  outfunc=out.npy_file)
 
@@ -497,32 +498,32 @@ out_file.addset(out_ff_flat)
 # extract E2DS without flat fielding
 out_ext_e2ds = drs_finput('EXT_E2DS', KW_OUTPUT='EXT_E2DS',
                           fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
+                          filetype='.fits', intype=pp_file,
                           suffix='_e2ds', outfunc=out.general_file)
 # extract E2DS with flat fielding
 out_ext_e2dsff = drs_finput('EXT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.fits',
+                            filetype='.fits', intype=pp_file,
                             suffix='_e2dsff', outfunc=out.general_file)
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.fits',
+                            filetype='.fits', intype=pp_file,
                             suffix='_e2dsll', outfunc=out.debug_file)
 # extraction localisation file
 out_ext_loco = drs_finput('EXT_LOCO', KW_OUTPUT='EXT_LOCO',
                           fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
+                          filetype='.fits', intype=pp_file,
                           suffix='_e2dsloco', outfunc=out.debug_file)
 # extract s1d without flat fielding (constant in wavelength)
 out_ext_s1d_w = drs_finput('EXT_S1D_W', KW_OUTPUT='EXT_S1D_W',
                            fibers=['AB', 'A', 'B', 'C'],
-                           filetype='.fits',
+                           filetype='.fits', intype=pp_file,
                            suffix='_s1d_w', outfunc=out.general_file)
 # extract s1d without flat fielding (constant in velocity)
 out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
                            fibers=['AB', 'A', 'B', 'C'],
-                           filetype='.fits',
+                           filetype='.fits', intype=pp_file,
                            suffix='_s1d_v', outfunc=out.general_file)
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
@@ -538,7 +539,7 @@ out_file.addset(out_ext_s1d_v)
 # thermal
 out_thermal_e2ds = drs_finput('THERMAL_E2DS', KW_OUTPUT='THERMAL_E2DS',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits',
+                              filetype='.fits', intype=pp_dark_dark,
                               suffix='_e2ds',
                               dbname='calibration', dbkey='THERMAL',
                               outfunc=out.general_file)
@@ -551,7 +552,7 @@ out_file.addset(out_thermal_e2ds)
 # wave solution using hc only
 out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
                          fibers=['AB', 'A', 'B', 'C'],
-                         filetype='.fits',
+                         filetype='.fits', intype=pp_hc1_hc1,
                          suffix='_wave_hc',
                          dbname='calibration', dbkey='WAVE',
                          outfunc=out.calib_file)
@@ -559,7 +560,7 @@ out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
 # wave solution using hc + fp
 out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          fibers=['AB', 'A', 'B', 'C'],
-                         filetype='.fits',
+                         filetype='.fits', intype=pp_hc1_hc1,
                          suffix='_wave_fp',
                          dbname='calibration', dbkey='WAVE',
                          outfunc=out.calib_file)
@@ -568,33 +569,34 @@ out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
 out_wave_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.dat',
+                            intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_linelist',
                             outfunc=out.calib_file)
 
 # hc resolution map
 out_wave_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.fits',
+                            filetype='.fits', intype=pp_hc1_hc1,
                             suffix='_waveres',
                             outfunc=out.calib_file)
 
 # fp global results table
 out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                fibers=['AB', 'A', 'B', 'C'],
-                               filetype='.tbl',
+                               filetype='.tbl', intype=pp_hc1_hc1,
                                outfunc=out.set_file,
                                filename='cal_wave_results')
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.tbl',
+                              filetype='.tbl', intype=pp_hc1_hc1,
                               suffix='hc_lines',
                               outfunc=out.calib_file)
 
 # wave master
 out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
                              fibers=['AB', 'A', 'B', 'C'],
-                             filetype='.fits',
+                             filetype='.fits', intype=pp_hc1_hc1,
                              suffix='_wavem',
                              dbname='calibration', dbkey='WAVEM',
                              outfunc=out.calib_file)
@@ -637,16 +639,16 @@ out_file.addset(out_wave_master)
 # convolved tapas map (with wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.npy',
-                            suffix='_tellu_conv',
+                            filetype='.npy', intype=out_ext_e2dsff,
+                            suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
                             outfunc=out.general_file)
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
                              fibers=['AB', 'A', 'B', 'C'],
-                             filetype='.fits',
-                             suffix='_tellu_trans',
+                             filetype='.fits', intype=out_ext_e2dsff,
+                             suffix='_tellu_trans', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_TRANS',
                              outfunc=out.general_file)
 
@@ -666,41 +668,41 @@ out_tellu_abso_npy = drs_ninput('ABSO_NPY',
 # telluric corrected e2ds spectrum
 out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',
                            fibers=['AB', 'A', 'B', 'C'],
-                           filetype='.fits',
-                           suffix='_tellu_obj',
+                           filetype='.fits', intype=out_ext_e2dsff,
+                           suffix='_e2dsff_tcorr', remove_insuffix=True,
                            dbname='telluric', dbkey='TELLU_OBJ',
                            outfunc=out.general_file)
 
 # telluric corrected s1d spectrum
 out_tellu_sc1d_w = drs_finput('SC1D_W_FILE', KW_OUTPUT='SC1D_W_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits',
-                              suffix='_tellu_obj_s1d_w',
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_s1d_w_tcorr', remove_insuffix=True,
                               outfunc=out.general_file)
 out_tellu_sc1d_v = drs_finput('SC1D_V_FILE', KW_OUTPUT='SC1D_V_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits',
-                              suffix='_tellu_obj_s1d_v',
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_s1d_v_tcorr', remove_insuffix=True,
                               outfunc=out.general_file)
 
 # reconstructed telluric absorption file
 out_tellu_recon = drs_finput('TELLU_RECON', KW_OUTPUT='TELLU_RECON',
                              fibers=['AB', 'A', 'B', 'C'],
-                             filetype='.fits',
-                             suffix='_tellu_recon',
+                             filetype='.fits', intype=out_ext_e2dsff,
+                             suffix='_e2dsff_recon', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_RECON',
                              outfunc=out.general_file)
 
 # reconstructed telluric 1d absorption
 out_tellu_rc1d_w = drs_finput('RC1D_W_FILE', KW_OUTPUT='RC1D_W_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits',
-                              suffix='_tellu_recon_s1d_w',
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_s1d_w_recon', remove_insuffix=True,
                               outfunc=out.general_file)
 out_tellu_rc1d_v = drs_finput('RC1D_V_FILE', KW_OUTPUT='RC1D_V_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits',
-                              suffix='_tellu_recon_s1d_v',
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_s1d_v_recon', remove_insuffix=True,
                               outfunc=out.general_file)
 
 # add fit telluric outputs to output fileset
