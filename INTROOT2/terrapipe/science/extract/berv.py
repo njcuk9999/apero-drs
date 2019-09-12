@@ -324,10 +324,20 @@ def assign_properties(params, props=None, use=True, **kwargs):
     # set up storage
     oprops = ParamDict()
     # -------------------------------------------------------------------------
+    # deal with no props
+    if props is None:
+        props = ParamDict()
+        for key in inputs:
+            if isinstance(inputs[key].default, str):
+                props[key] = 'None'
+            else:
+                props[key] = np.nan
+            props.set_source(key, '{0} [{1}]'.format(func_name, source))
+    # -------------------------------------------------------------------------
     # add outputs
     for key in outputs:
         output = outputs[key]
-        value = kwargs.get(output[0], None)
+        value = kwargs.get(key, None)
         if value is None:
             oprops[output[0]] = np.nan
         else:
@@ -336,10 +346,9 @@ def assign_properties(params, props=None, use=True, **kwargs):
         oprops.set_source(output[0], '{0} [{1}]'.format(func_name, source))
     # -------------------------------------------------------------------------
     # deal with inputs (set value and source)
-    if props is not None:
-        for prop in props:
-            oprops[prop] = props[prop]
-            oprops.set_source(prop, props.sources[prop])
+    for prop in props:
+        oprops[prop] = props[prop]
+        oprops.set_source(prop, props.sources[prop])
 
     # -------------------------------------------------------------------------
     # need to decide which values should be used (and report if we are using
