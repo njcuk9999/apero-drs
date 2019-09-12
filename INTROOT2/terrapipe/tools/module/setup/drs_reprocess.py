@@ -1001,11 +1001,12 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
                 pp['OUTPUTS'] = copy.deepcopy(llrecipe.output_files)
                 pp['TRACEBACK'] = []
+                pp['SUCCESS'] = bool(ll_item['success'])
                 # delete ll_item
                 del llparams
                 del ll_item
                 # flag finished
-                finished = True
+                finished = pp['success']
             # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
