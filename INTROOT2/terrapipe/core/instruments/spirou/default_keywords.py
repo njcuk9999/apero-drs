@@ -90,7 +90,7 @@ KW_OBJDEC.set(key='OBJDEC', unit=uu.deg)
 # define the observation name
 # Todo: Change to OBJECT?
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='OBJNAME')
+KW_OBJNAME.set(key='OBJECT')
 
 # define the gaia id
 KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
