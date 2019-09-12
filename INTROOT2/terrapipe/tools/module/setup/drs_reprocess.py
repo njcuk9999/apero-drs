@@ -760,7 +760,7 @@ def _check_for_files(params, runobj):
                     # construct file name
                     outfile.construct_filename(params, infile=infile,
                                                fiber=fiber, path=outpath,
-                                               nightname=nightname)
+                                               nightname=nightname, check=False)
                     # get outfilename absolute path
                     outfilename = outfile.filename
                     # if file is found return True
@@ -772,7 +772,7 @@ def _check_for_files(params, runobj):
             else:
                 # construct file name
                 outfile.construct_filename(params, infile=infile, path=outpath,
-                                           nightname=nightname)
+                                           nightname=nightname, check=False)
                 # get outfilename absolute path
                 outfilename = outfile.filename
                 # if file is found return True
@@ -895,8 +895,11 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 sys.exit()
         # deal with filters
         filters = _get_filters(params, srecipe)
+        # get fiber filter
+        allowedfibers = srecipe.allowedfibers
         # get runs for this recipe
-        sruns = srecipe.generate_runs(params, ftable, filters=filters)
+        sruns = srecipe.generate_runs(params, ftable, filters=filters,
+                                      allowedfibers=allowedfibers)
         # append runs to new runs list
         for srun in sruns:
             newruns.append([srun, srecipe])
