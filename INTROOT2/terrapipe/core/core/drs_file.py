@@ -17,7 +17,7 @@ from collections import OrderedDict
 import copy
 import warnings
 
-from . import drs_log
+from terrapipe.core.core import drs_log
 from terrapipe.core import constants
 from terrapipe.locale import drs_text
 from terrapipe.io import drs_fits
@@ -68,8 +68,10 @@ class DrsInputFile:
         # define the extension
         self.filetype = kwargs.get('filetype', '')
         self.suffix = kwargs.get('suffix', '')
+        self.remove_insuffix = kwargs.get('remove_insuffix', False)
         self.prefix = kwargs.get('prefix', '')
         self.filename = None
+        self.intype = None
         # get fiber type (if set)
         self.fibers = kwargs.get('fibers', None)
         self.fiber = kwargs.get('fiber', None)
@@ -136,8 +138,11 @@ class DrsInputFile:
         name = kwargs.get('name', self.name)
         kwargs['filetype'] = kwargs.get('filetype', self.filetype)
         kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['remove_insuffix'] = kwargs.get('remove_insuffix',
+                                               self.remove_insuffix)
         kwargs['prefix'] = kwargs.get('prefix', self.prefix)
         kwargs['filename'] = kwargs.get('filename', self.filename)
+        kwargs['intype'] = kwargs.get('infile', self.intype)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['fibers'] = kwargs.get('fibers', self.fibers)
         kwargs['recipe'] = kwargs.get('recipe', self.recipe)
@@ -230,6 +235,7 @@ class DrsInputFile:
         nkwargs['name'] = kwargs.get('name', self.name)
         nkwargs['recipe'] = kwargs.get('recipe', self.recipe)
         nkwargs['filename'] = kwargs.get('filename', drsfile.filename)
+        nkwargs['intype'] = kwargs.get('infile', drsfile.intype)
         nkwargs['path'] = kwargs.get('path', drsfile.path)
         nkwargs['basename'] = kwargs.get('basename', drsfile.basename)
         nkwargs['inputdir'] = kwargs.get('inputdir', drsfile.inputdir)
@@ -246,11 +252,13 @@ class DrsInputFile:
         nkwargs['name'] = copy.deepcopy(drsfile.name)
         nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
         nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
+        nkwargs['remove_insuffix'] = bool(drsfile.remove_insuffix)
         nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
         nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
         nkwargs['fibers'] = copy.deepcopy(drsfile.fibers)
         nkwargs['recipe'] = copy.deepcopy(drsfile.recipe)
         nkwargs['filename'] = copy.deepcopy(drsfile.filename)
+        nkwargs['intype'] = drsfile.intype
         nkwargs['path'] = copy.deepcopy(drsfile.path)
         nkwargs['basename'] = copy.deepcopy(drsfile.basename)
         nkwargs['inputdir'] = copy.deepcopy(drsfile.inputdir)
@@ -373,11 +381,27 @@ class DrsInputFile:
     # -------------------------------------------------------------------------
     # user functions
     # -------------------------------------------------------------------------
-    def construct_filename(self, params, **kwargs):
+    def construct_filename(self, params, infile=None, check=True, **kwargs):
         func_name = __NAME__ + '.construct_filename()'
+        # check that we are allowed to use infile (if set)
+        if infile is not None and check:
+            if self.intype is not None:
+                # deal with self.intype being a list
+                if isinstance(self.intype, list):
+                    reqfiles = list(map(lambda x: x.name, self.intype))
+                    reqstr = ' or '.join(reqfiles)
+                else:
+                    reqfiles = [self.intype.name]
+                    reqstr = str(self.intype.name)
+
+                if infile.name not in reqfiles:
+                    eargs = [infile.name, reqstr, func_name]
+                    WLOG(params, 'error', TextEntry('00-008-00017', args=eargs))
+
         # set outfile from self
         kwargs['outfile'] = self
         kwargs['func'] = func_name
+        kwargs['infile'] = infile
         # if we have a function use it
         if self.outfunc is not None:
             abspath = self.outfunc(params, **kwargs)
@@ -484,6 +508,8 @@ class DrsFitsFile(DrsInputFile):
         name = kwargs.get('name', self.name)
         kwargs['filetype'] = kwargs.get('filetype', self.filetype)
         kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['remove_insuffix'] = kwargs.get('remove_insuffix',
+                                               self.remove_insuffix)
         kwargs['prefix'] = kwargs.get('prefix', self.prefix)
         kwargs['recipe'] = kwargs.get('recipe', self.recipe)
         kwargs['filename'] = kwargs.get('filename', self.filename)
@@ -559,6 +585,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['name'] = copy.deepcopy(drsfile.name)
         nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
         nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
+        nkwargs['remove_insuffix'] = bool(drsfile.remove_insuffix)
         nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
         nkwargs['recipe'] = drsfile.recipe
         nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
@@ -618,6 +645,8 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['name'] = kwargs.get('name', self.name)
         nkwargs['filetype'] = kwargs.get('filetype', self.filetype)
         nkwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        nkwargs['remove_insuffix'] = kwargs.get('remove_insuffix',
+                                                self.remove_insuffix)
         nkwargs['prefix'] = kwargs.get('prefix', self.prefix)
         nkwargs['recipe'] = kwargs.get('recipe', self.recipe)
         nkwargs['fiber'] = kwargs.get('fiber', self.fiber)
@@ -814,21 +843,68 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # table checking
     # -------------------------------------------------------------------------
-    def get_infile(self, recipe, infilename, ext='.fits'):
+    def get_infile_outfilename(self, params, recipe, infilename,
+                               allowedfibers=None, ext='.fits'):
         # ------------------------------------------------------------------
         # 1. need to assign an input type for our raw file
         if self.intype is not None:
-            infile = self.intype.newcopy(recipe=recipe)
+            # deal with in type being list
+            if isinstance(self.intype, list):
+                intype = self.intype[0]
+            else:
+                intype = self.intype
+            # get new copy
+            infile = intype.newcopy(recipe=recipe)
         else:
             infile = DrsFitsFile('DRS_RAW_TEMP')
-        # add values to infile
-        infile.filename = infilename
-        infile.basename = os.path.basename(infilename)
-        infile.filetype = ext
-        # return infile
-        return infile
+        # ------------------------------------------------------------------
+        # storage of files
+        chain_files = []
+        # need to go back through the file history and update filename
+        cintype = self.completecopy(infile)
+        # loop until we have no intype (raw file)
+        while cintype is not None:
+            # add to chain
+            chain_files.append(self.completecopy(cintype))
+            if hasattr(cintype, 'intype'):
+                # deal with in type being list
+                if isinstance(cintype.intype, list):
+                    cintype = cintype.intype[0]
+                else:
+                    cintype = cintype.intype
+            else:
+                break
+        # ------------------------------------------------------------------
+        # set the file name to the infilename
+        filename = infilename
+        bottomfile = chain_files[-1]
+        # now we have chain we can project file (assuming last element in the
+        #   chain is the raw file)
+        for cintype in chain_files[::-1][1:]:
+            bottomfile.filename = filename
+            bottomfile.basename = os.path.basename(filename)
 
-    def check_table_filename(self, params, recipe, infile):
+            out = cintype.check_table_filename(params, recipe, bottomfile,
+                                               fullpath=True)
+            valid, outfilename = out
+            # set the filename to the outfilename
+            filename = outfilename
+            bottomfile = cintype
+        # ------------------------------------------------------------------
+        # add values to infile
+        infile.filename = filename
+        infile.basename = os.path.basename(filename)
+        infile.filetype = ext
+        # ------------------------------------------------------------------
+        # get outfilename (final)
+        valid, outfilename = self.check_table_filename(params, recipe, infile,
+                                                       allowedfibers)
+        # ------------------------------------------------------------------
+        # return infile
+        return infile, valid, outfilename
+
+    def check_table_filename(self, params, recipe, infile, allowedfibers=None,
+                             fullpath=False):
         """
         Checks whether raw "filename" belongs to this DrsFile
 
@@ -838,7 +914,12 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.check_table_filename()'
         # ------------------------------------------------------------------
         # deal with fibers
-        if self.fibers is None:
+        if allowedfibers is not None:
+            if isinstance(allowedfibers, str):
+                fibers = [allowedfibers]
+            else:
+                fibers = list(allowedfibers)
+        elif self.fibers is None:
             fibers = [None]
         else:
             fibers = self.fibers
@@ -886,7 +967,10 @@ class DrsFitsFile(DrsInputFile):
                 valid &= valid1
         # ------------------------------------------------------------------
         # return valid (True if filename is valid False otherwise)
-        return valid, os.path.basename(outfilename)
+        if fullpath:
+            return valid, outfilename
+        else:
+            return valid, os.path.basename(outfilename)
 
     def check_table_keys(self, filedict, rkeys=None):
         """
@@ -1233,15 +1317,21 @@ class DrsFitsFile(DrsInputFile):
         """
         # check that recipe is set
         self.check_recipe()
-        p = self.recipe.drs_params
+        params = self.recipe.drs_params
         pconstant = self.recipe.drs_pconstant
         # get output dictionary
-        output_hdr_keys = pconstant.OUTPUT_FILE_HEADER_KEYS(p)
+        output_hdr_keys = pconstant.OUTPUT_FILE_HEADER_KEYS()
         # loop around the keys and find them in hdict (or add null character if
         #     not found)
         for key in output_hdr_keys:
-            if key in self.hdict:
-                self.output_dict[key] = str(self.hdict[key])
+            # deal with header key stores
+            if key in params:
+                dkey = params[key][0]
+            else:
+                dkey = str(key)
+
+            if dkey in self.hdict:
+                self.output_dict[key] = str(self.hdict[dkey])
             else:
                 self.output_dict[key] = '--'
 
@@ -1312,6 +1402,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['name'] = self.name
         nkwargs['filetype'] = self.filetype
         nkwargs['suffix'] = self.suffix
+        nkwargs['remove_insuffix'] = self.remove_insuffix
         nkwargs['prefix'] = self.prefix
         nkwargs['recipe'] = self.recipe
         nkwargs['fiber'] = self.fiber
@@ -2108,6 +2199,8 @@ class DrsNpyFile(DrsInputFile):
         name = kwargs.get('name', self.name)
         kwargs['filetype'] = kwargs.get('filetype', self.filetype)
         kwargs['suffix'] = kwargs.get('suffix', self.suffix)
+        kwargs['remove_insuffix'] = kwargs.get('remove_insuffix',
+                                               self.remove_insuffix)
         kwargs['prefix'] = kwargs.get('prefix', self.prefix)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['fibers'] = kwargs.get('fibers', self.fibers)
@@ -2134,6 +2227,7 @@ class DrsNpyFile(DrsInputFile):
         nkwargs['name'] = copy.deepcopy(drsfile.name)
         nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
         nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
+        nkwargs['remove_insuffix'] = bool(drsfile.remove_insuffix)
         nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
         nkwargs['recipe'] = drsfile.recipe
         nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
