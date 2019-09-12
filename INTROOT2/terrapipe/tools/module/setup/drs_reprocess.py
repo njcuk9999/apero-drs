@@ -67,6 +67,7 @@ class Run:
         self.recipename = ''
         self.recipe = None
         self.module = mod
+        self.master = False
         self.recipemod = None
         self.kwargs = dict()
         # set parameters
@@ -163,6 +164,8 @@ class Run:
         self.recipemod = self.recipe.main
         # turn off the input validation
         self.recipe.input_validation = False
+        # get the master setting
+        self.master = self.recipe.master
         # run parser with arguments
         self.kwargs = self.recipe.recipe_setup(inargs=self.args)
         # add argument to set program name
@@ -577,7 +580,7 @@ def skip_run_object(params, runobj):
     # check if the user wants to skip
     if runobj.skipname in params:
         # if master in skipname do not skip
-        if 'MASTER' in runobj.skipname:
+        if runobj.master:
             # debug log
             dargs = [runobj.skipname]
             WLOG(params, 'debug', TextEntry('90-503-00003', args=dargs))
@@ -937,6 +940,11 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         return_dict = dict()
     # loop around runlist
     for run_item in runlist:
+        # get parameters from params
+        stop_at_exception = bool(params['STOP_AT_EXCEPTION'])
+        # if master we should always stop at exception
+        if run_item.master:
+            stop_at_exception = True
         # ------------------------------------------------------------------
         # get the module
         modulemain = run_item.recipemod
@@ -1043,7 +1051,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
             pp['TIMING'] = endtime - starttime
         # ------------------------------------------------------------------
         # if STOP_AT_EXCEPTION and not finished stop here
-        if params['STOP_AT_EXCEPTION'] and not finished:
+        if stop_at_exception and not finished:
             if event is not None:
                 print('STOP AT EXCEPTION')
                 event.set()
