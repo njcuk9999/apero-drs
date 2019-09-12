@@ -59,13 +59,13 @@ pcheck = core.pcheck
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, runstring, mod=None, priority=0):
+    def __init__(self, params, runstring, mod=None, priority=0, inrecipe=None):
         self.params = params
         self.runstring = runstring
         self.priority = priority
         self.args = []
         self.recipename = ''
-        self.recipe = None
+        self.recipe = inrecipe
         self.module = mod
         self.master = False
         self.recipemod = None
@@ -159,7 +159,8 @@ class Run:
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # find the recipe
-        self.recipe, self.module = self.find_recipe(self.module)
+        if self.recipe is None:
+            self.recipe, self.module = self.find_recipe(self.module)
         # import the recipe module
         self.recipemod = self.recipe.main
         # turn off the input validation
@@ -410,6 +411,8 @@ def generate_run_list(params, table, runtable):
     rvalues = _get_rvalues(runtable)
     # check if rvalues has a run sequence
     sequencelist = _check_for_sequences(rvalues, recipemod)
+    # set rlist to None (for no sequences)
+    rlist = None
     # if we have found sequences need to deal with them
     if sequencelist is not None:
         # loop around sequences
@@ -419,9 +422,9 @@ def generate_run_list(params, table, runtable):
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence, table)
             # update runtable with sequence generation
-            runtable = _update_run_table(sequence, runtable, newruns)
+            runtable, rlist = _update_run_table(sequence, runtable, newruns)
     # return Run instances for each runtable element
-    return generate_ids(params, runtable, recipemod)
+    return generate_ids(params, runtable, recipemod, rlist)
 
 
 def process_run_list(params, runlist):
@@ -516,18 +519,24 @@ def display_errors(params, outlist):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def generate_ids(params, runtable, mod, **kwargs):
+def generate_ids(params, runtable, mod, rlist=None, **kwargs):
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
     run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
+    # deal with unset rlist (recipe list)
+    if rlist is not None:
+        inrecipes = np.array(list(rlist.values()))
+    else:
+        inrecipes = np.array([None] * len(numbers))
     # sort by number
     sortmask = np.argsort(numbers)
     # get sorted run list
     runlist = list(commands[sortmask])
     keylist = list(numbers[sortmask])
+    inrecipelist = list(inrecipes[sortmask])
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
     # iterate through and make run objects
@@ -535,14 +544,17 @@ def generate_ids(params, runtable, mod, **kwargs):
     for it, run_item in enumerate(runlist):
         # get runid
         runid = '{0}{1:05d}'.format(run_key, keylist[it])
-        # log process
+        # get recipe
+        input_recipe = inrecipelist[it]
+        # log process: validating run
         wargs = [runid, it + 1, len(runlist)]
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', TextEntry('40-503-00004', args=wargs))
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', TextEntry('40-503-00013', args=[run_item]))
         # create run object
-        run_object = Run(params, run_item, mod=mod, priority=keylist[it])
+        run_object = Run(params, run_item, mod=mod, priority=keylist[it],
+                         inrecipe=input_recipe)
         # deal with skip
         skip, reason = skip_run_object(params, run_object)
         # append to list
@@ -569,7 +581,6 @@ def skip_run_object(params, runobj):
     # get recipe and runstring
     recipe = runobj.recipe
     runstring = runobj.runstring
-
     # ----------------------------------------------------------------------
     # check if the user wants to run this runobj (in run list)
     if runobj.runname in params:
@@ -882,7 +893,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         sruns = srecipe.generate_runs(params, ftable, filters=filters)
         # append runs to new runs list
         for srun in sruns:
-            newruns.append(srun)
+            newruns.append([srun, srecipe])
     # return all new runs
     return newruns
 
@@ -890,6 +901,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
 def _update_run_table(sequence, runtable, newruns):
     # define output runtable
     outruntable = OrderedDict()
+    recipe_list = OrderedDict()
     # new id number
     idnumber = 0
     # loop around runtable until we get to sequence
@@ -898,17 +910,19 @@ def _update_run_table(sequence, runtable, newruns):
         if runtable[idkey].upper() != sequence[0]:
             # add run table row to out run table
             outruntable[idnumber] = runtable[idkey]
+            recipe_list[idnumber] = None
             # update id number
             idnumber += 1
         # else we have found where we need to insert rows
         else:
             for newrun in newruns:
                 # add run table row to out run table
-                outruntable[idnumber] = newrun
+                outruntable[idnumber] = newrun[0]
+                recipe_list[idnumber] = newrun[1]
                 # update id number
                 idnumber += 1
     # return out run table
-    return outruntable
+    return outruntable, recipe_list
 
 
 def prompt(params):
@@ -1057,7 +1071,8 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         # if STOP_AT_EXCEPTION and not finished stop here
         if stop_at_exception and not finished:
             if event is not None:
-                print('STOP AT EXCEPTION')
+                wargs = [run_item.recipename]
+                WLOG(params, 'debug', TextEntry('90-503-00008', args=wargs))
                 event.set()
         # ------------------------------------------------------------------
         # append to return dict
@@ -1077,7 +1092,7 @@ def _multi_process(params, runlist, cores):
     for g_it, group in enumerate(grouplist):
         # skip if event is set
         if event.is_set():
-            print('EVENT IS SET - SKIPPING {0}'.format(g_it))
+            WLOG(params, 'debug', TextEntry('90-503-00009', args=[g_it]))
             continue
         # process storage
         jobs = []
