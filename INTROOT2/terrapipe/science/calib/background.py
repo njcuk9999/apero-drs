@@ -269,7 +269,7 @@ def debug_file(recipe, params, infile, dlist):
     # debug output
     debug_back = recipe.outputs['DEBUG_BACK'].newcopy(recipe=recipe)
     # construct the filename from file instance
-    debug_back.construct_filename(params, infile=infile)
+    debug_back.construct_filename(params, infile=infile, check=False)
     # copy keys from input file
     debug_back.copy_original_keys(infile)
     # add version
