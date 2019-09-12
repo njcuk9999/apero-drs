@@ -1595,8 +1595,12 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                     break
                 # finally add new_run to runs
                 runs.append(new_run)
-    # return runs
-    return runs
+    # deal with master (should only be 1)
+    if recipe.master:
+        return [runs[0]]
+    else:
+        # return runs
+        return runs
 
 
 def convert_to_command(self, runargs):
