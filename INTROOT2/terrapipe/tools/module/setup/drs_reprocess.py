@@ -65,6 +65,8 @@ class Run:
         self.priority = priority
         self.args = []
         self.recipename = ''
+        self.runname = None
+        self.skipname = None
         self.recipe = inrecipe
         self.module = mod
         self.master = False
@@ -581,6 +583,10 @@ def skip_run_object(params, runobj):
     # get recipe and runstring
     recipe = runobj.recipe
     runstring = runobj.runstring
+
+    # debug log giving info on name/runname/skipname
+    dargs = [recipe.name, recipe.shortname, runobj.runname, runobj.skipname]
+    WLOG(params, 'debug', TextEntry('90-503-00010', args=dargs))
     # ----------------------------------------------------------------------
     # check if the user wants to run this runobj (in run list)
     if runobj.runname in params:
