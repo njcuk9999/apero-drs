@@ -960,7 +960,7 @@ def _index_pp(params, recipe):
         WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.RAW_OUTPUT_COLUMNS(params)
+    icolumns = pconstant.RAW_OUTPUT_KEYS()
     # ------------------------------------------------------------------------
     # index files
     istore = _indexing(params, outputs, icolumns, abspath)
@@ -999,7 +999,7 @@ def _index_outputs(params, recipe):
         WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.REDUC_OUTPUT_COLUMNS(params)
+    icolumns = pconstant.REDUC_OUTPUT_KEYS()
     # ------------------------------------------------------------------------
     # index files
     istore = _indexing(params, outputs, icolumns, abspath)
@@ -1042,13 +1042,19 @@ def _indexing(params, outputs, icolumns, abspath):
     for output in outputs:
         # get absfilename
         absoutput = os.path.join(opath, output)
+
+        if not os.path.exists(absoutput):
+            mtime = np.nan
+        else:
+            mtime = os.path.getmtime(absoutput)
+
         # get filename
         if 'FILENAME' not in istore:
             istore['FILENAME'] = [output]
-            istore['LAST_MODIFIED'] = [os.path.getmtime(absoutput)]
+            istore['LAST_MODIFIED'] = [mtime]
         else:
             istore['FILENAME'].append(output)
-            istore['LAST_MODIFIED'].append(os.path.getmtime(absoutput))
+            istore['LAST_MODIFIED'].append(mtime)
 
         # loop around index columns and add outputs to istore
         for icol in icolumns:
