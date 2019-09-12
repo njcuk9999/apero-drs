@@ -60,13 +60,32 @@ def general_file(params, **kwargs):
     if outfile.fibers is not None and fiber is None:
         eargs = [outfile, func_name]
         WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
+
+    # set infile basename
+    inbasename = infile.basename
+    # get condition to remove input file prefix
+    remove_insuffix = kwargs.get('remove_insuffix', outfile.remove_insuffix)
+    # if remove in suffix is True then remove it from inbasename
+    if remove_insuffix and (infile.suffix is not None):
+        # get the infile suffix
+        insuffix = infile.suffix
+        # check for fibers
+        if infile.fibers is not None:
+            for infiber in infile.fibers:
+                insuffix = '{0}_{1}'.format(insuffix, infiber.upper())
+                # check that infile suffix is not None
+                if insuffix in inbasename:
+                    inbasename = inbasename.replace(insuffix, '')
+        elif insuffix in inbasename:
+            inbasename = inbasename.replace(insuffix, '')
+
     # get kwargs where default dependent on required arguments
     prefix = kwargs.get('prefix', outfile.prefix)
     suffix = kwargs.get('suffix', outfile.suffix)
     # construct out filename
     inext = infile.filetype
     outext = outfile.filetype
-    outfilename = get_outfilename(params, infile.basename, prefix=prefix,
+    outfilename = get_outfilename(params, inbasename, prefix=prefix,
                                   suffix=suffix, inext=inext, outext=outext,
                                   fiber=fiber)
     # deal with no given path (default)
