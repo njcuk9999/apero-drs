@@ -87,6 +87,7 @@ class DrsRecipe(object):
         # set filters
         self.filters = dict()
         self.master = False
+        self.allowedfibers = None
         # shortname set to name initially
         self.shortname = str(self.name)
         # save recipe module
@@ -459,6 +460,7 @@ class DrsRecipe(object):
         # set filters
         self.filters = dict(recipe.filters)
         self.master = bool(recipe.master)
+        self.allowedfibers = copy.deepcopy(recipe.allowedfibers)
         # shortname
         self.shortname = str(recipe.shortname)
         # import module
@@ -515,7 +517,7 @@ class DrsRecipe(object):
     # =========================================================================
     # Reprocessing methods
     # =========================================================================
-    def generate_runs(self, params, table, filters=None):
+    def generate_runs(self, params, table, filters=None, allowedfibers=None):
         # need to find files in table that match each argument
         #    filedict is a dictionary of arguments each for
         #    each drsfile (if filelogic=exclusive)
@@ -523,11 +525,12 @@ class DrsRecipe(object):
         #    else all drsfiles go to 'all'
         #       i.e. filedict[argname]['all']
         argdict = find_run_files(params, self, table, self.args,
-                                 filters=filters)
+                                 filters=filters, allowedfibers=allowedfibers)
         # same for keyword args but this time we need to check only if
         #   keyword is required, else skip (don't add optionals)
         kwargdict = find_run_files(params, self, table, self.kwargs,
-                                   filters=filters, check_required=True)
+                                   filters=filters, allowedfibers=allowedfibers,
+                                   check_required=True)
         # now we have the file lists we need to group files and match where
         #   there are more than one argument, we then add in the other
         #   arguments and construct the runs
@@ -1059,6 +1062,8 @@ class DrsRunSequence(object):
             frecipe.copy(recipe)
             # update short name
             frecipe.shortname = kwargs.get('name', frecipe.shortname)
+            # set fiber
+            frecipe.allowedfibers = kwargs.get('fiber', frecipe.allowedfibers)
             # add filters
             frecipe = self.add_filters(frecipe, kwargs)
             # update file definitions
@@ -1389,7 +1394,8 @@ def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
 # =============================================================================
 # Define run making functions
 # =============================================================================
-def find_run_files(params, recipe, table, args, filters=None, **kwargs):
+def find_run_files(params, recipe, table, args, filters=None,
+                   allowedfibers=None, **kwargs):
     func_name = __NAME__ + '.find_run_files()'
     # storage for valid files for each argument
     filedict = OrderedDict()
@@ -1397,7 +1403,7 @@ def find_run_files(params, recipe, table, args, filters=None, **kwargs):
     absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col',
                          kwargs, func_name)
     check_required = kwargs.get('check_required', False)
-    # get filenames from table
+    # get raw filenames from table
     files = table[absfile_col]
     # loop around arguments
     for argname in args:
@@ -1429,11 +1435,11 @@ def find_run_files(params, recipe, table, args, filters=None, **kwargs):
             valid_outfiles = []
             # loop around files
             for filename in files:
-                # get infile instance
-                infile = drsfile.get_infile(recipe, filename)
-                # check if filename is valid
-                out = drsfile.check_table_filename(params, recipe, infile)
-                valid, outfilename = out
+                # get infile instance (i.e. raw or pp file) and assign the
+                #   correct outfile (from filename)
+                out = drsfile.get_infile_outfilename(params, recipe, filename,
+                                                     allowedfibers)
+                infile, valid, outfilename = out
                 # if still valid add to list
                 if valid:
                     valid_infiles.append(infile)
@@ -1455,8 +1461,6 @@ def find_run_files(params, recipe, table, args, filters=None, **kwargs):
                 # check whether tabledict means that file is valid for this
                 #   infile
                 valid1 = infile.check_table_keys(tabledict)
-
-
                 # check whether filters are found
                 valid2 = infile.check_table_keys(tabledict, rkeys=filters)
                 # if valid then add to filedict for this argnameand drs file
