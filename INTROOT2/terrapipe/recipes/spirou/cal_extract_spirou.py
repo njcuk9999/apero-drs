@@ -177,15 +177,12 @@ def __main__(recipe, params):
         # straighten image
         image2 = shape.ea_transform(params, image, shapelocal, dxmap=shapex,
                                     dymap=shapey)
-
         # ------------------------------------------------------------------
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, header, props)
-
         # storage for return
         e2dsoutputs = dict()
-
         # ------------------------------------------------------------------
         # Fiber loop
         # ------------------------------------------------------------------
@@ -203,6 +200,8 @@ def __main__(recipe, params):
                                                    fiber=fiber, merge=True)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
+            # shift the coefficients
+            lcoeffs = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
             # --------------------------------------------------------------
             # load the flat file for this fiber
             flat_file, flat = flat_blaze.get_flat(params, header, fiber)

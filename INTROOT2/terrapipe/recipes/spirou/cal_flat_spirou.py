@@ -175,6 +175,8 @@ def __main__(recipe, params):
                                                    fiber=fiber, merge=True)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
+            # shift the coefficients
+            lcoeffs = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
             # --------------------------------------------------------------
             # get the number of frames used
             nframes = infile.numfiles
@@ -186,7 +188,6 @@ def __main__(recipe, params):
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
                                        props, kind='flat', fiber=fiber)
-
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------
