@@ -422,11 +422,11 @@ out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP', KW_OUTPUT='SHAPE_OUT_FP',
                                  suffix='_shape_out_fp',
                                  outfunc=out.debug_file)
 out_shape_debug_ihc = drs_finput('SHAPE_IN_HC', KW_OUTPUT='SHAPE_IN_HC',
-                                 filetype='.fits', intype=pp_fp_fp,
+                                 filetype='.fits', intype=pp_hc1_hc1,
                                  suffix='_shape_in_hc',
                                  outfunc=out.debug_file)
 out_shape_debug_ohc = drs_finput('SHAPE_OUT_HC', KW_OUTPUT='SHAPE_OUT_HC',
-                                 filetype='.fits', intype=pp_fp_fp,
+                                 filetype='.fits', intype=pp_hc1_hc1,
                                  suffix='_shape_out_hc',
                                  outfunc=out.debug_file)
 out_shape_debug_bdx = drs_finput('SHAPE_BDX', KW_OUTPUT='SHAPE_BDX',
