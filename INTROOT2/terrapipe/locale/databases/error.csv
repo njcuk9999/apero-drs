@@ -1096,3 +1096,7 @@
 "90-503-00005","DEBUG","prints that we did not skip as skipname was not in params","{0} = skipname","Skip Check: not skipping as {0} not in params (unset)","",""
 "90-503-00006","DEBUG","prints that we found argument 'skip' and user wanted to skip so we are adding argument skip","None","Skip Check: keyword 'skip' found so skipping internally using skip=True","",""
 "90-503-00007","DEBUG","prints that we found argument 'skip' but skip was already set so we are ignoring skipping","None","Skip Check: keyword 'skip' found and 'skip' already set","",""
+"90-503-00008","DEBUG","prints that an exception was found and we are stopping","{0} = recipe name","Stop at Exception triggered for recipe: {0}","",""
+"90-503-00009","DEBUG","prints that we are skipping further jobs due to exception","{0} = group iteration number","Stop at Exception skipping group {0}","",""
+"90-503-00010","DEBUG","prints the naming info for run object","{0} = recipe name; {1} = short name; {2} = run name; {3} = skip name","Skip Check: \n\t recipe = {0} \n\t short name = {1} \n\t run name = {2} \n\t skip name = {3}","",""
+"90-503-00011","DEBUG","","","","",""
