@@ -2111,7 +2111,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['velocity', rc1dvfile.filename]
-    WLOG(params, '', TextEntry('40-019-00024', args=wargs))
+    WLOG(params, '', TextEntry('40-019-00026', args=wargs))
     # write image to file
     rc1dvfile.write()
     # add to output files (for indexing)
