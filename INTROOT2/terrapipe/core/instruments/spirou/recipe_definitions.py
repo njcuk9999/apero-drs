@@ -648,7 +648,7 @@ obj_mk_tellu.set_kwarg(**wavefile)
 # obj_fit_tellu
 # -----------------------------------------------------------------------------
 obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
-obj_fit_tellu.shortname = 'MKTELL'
+obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.outputdir = 'reduced'
 obj_fit_tellu.inputdir = 'reduced'
