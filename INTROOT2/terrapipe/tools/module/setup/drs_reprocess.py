@@ -1006,7 +1006,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 del llparams
                 del ll_item
                 # flag finished
-                finished = pp['success']
+                finished = pp['SUCCESS']
             # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
@@ -1053,7 +1053,6 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         # ------------------------------------------------------------------
         # set finished flag
         pp['FINISHED'] = finished
-        pp['STOP'] = (not finished) & stop_at_exception
         # ------------------------------------------------------------------
         # if STOP_AT_EXCEPTION and not finished stop here
         if stop_at_exception and not finished:
@@ -1074,13 +1073,8 @@ def _multi_process(params, runlist, cores):
     manager = Manager()
     event = Event()
     return_dict = manager.dict()
-    stop = False
     # loop around groups
     for g_it, group in enumerate(grouplist):
-        # if we have been told to stop skip
-        if stop:
-            print('STOP IS SET - SKIPPING {0}'.format(g_it))
-            continue
         # skip if event is set
         if event.is_set():
             print('EVENT IS SET - SKIPPING {0}'.format(g_it))
@@ -1103,10 +1097,6 @@ def _multi_process(params, runlist, cores):
             proc.join()
             if event.is_set():
                 _terminate_jobs(jobs)
-        # check that we haven't been told to stop
-        for idkey in list(return_dict.keys()):
-            if return_dict[idkey]['STOP']:
-                stop = True
 
     # return return_dict
     return dict(return_dict)
