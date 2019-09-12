@@ -1103,7 +1103,7 @@ def _multi_process(params, runlist, cores):
             if event.is_set():
                 _terminate_jobs(jobs)
         # check that we haven't been told to stop
-        for idkey in return_dict:
+        for idkey in list(return_dict.keys()):
             if return_dict[idkey]['STOP']:
                 stop = True
 
