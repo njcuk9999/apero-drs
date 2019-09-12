@@ -281,7 +281,7 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
     # log process
-    WLOG(params, '', TextEntry('40-011-10003'))
+    WLOG(params, 'info', TextEntry('40-011-10003'))
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # currently number of bins == number of groups
@@ -318,11 +318,14 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # we perform a median filter over a +/- "med_size" pixel box
     # -------------------------------------------------------------------------
     # log process
-    WLOG(params, '', TextEntry('40-011-10005', args=[num_bins]))
+    WLOG(params, 'info', TextEntry('40-011-10005', args=[num_bins]))
     # storage of output dark cube
     dark_cube1 = np.zeros([num_bins, dim1, dim2])
     # loop around the bins
     for bin_it in range(num_bins):
+        # log progress group g_it + 1 of len(u_groups)
+        wargs = [bin_it + 1, num_bins]
+        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
         # get the dark for this bin
         bindark = dark_cube[bin_it]
         # performing a median filter of the image with [-med_size, med_size]
@@ -333,7 +336,8 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
             if jt != 0:
                 tmp.append(np.roll(bindark, [0, jt]))
         # low frequency image
-        lf_dark = np.nanmedian(tmp, axis=0)
+        with warnings.catch_warnings(record=True) as _:
+            lf_dark = np.nanmedian(tmp, axis=0)
         # high frequency image
         dark_cube1[bin_it] = bindark - lf_dark
     # -------------------------------------------------------------------------
