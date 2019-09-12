@@ -111,7 +111,7 @@ class PseudoConstants:
         return opath
 
     # noinspection PyPep8Naming
-    def OUTPUT_FILE_HEADER_KEYS(self, p):
+    def OUTPUT_FILE_HEADER_KEYS(self):
         """
         Output file header keys.
 
@@ -121,26 +121,14 @@ class PseudoConstants:
         :return:
         """
         # Get required header keys from spirouKeywords.py (via p)
-        output_keys = [p['KW_DATE_OBS'][0],
-                       p['KW_UTC_OBS'][0],
-                       p['KW_ACQTIME'][0],
-                       p['KW_MID_OBS_TIME'][0],
-                       p['KW_OBJNAME'][0],
-                       p['KW_OBSTYPE'][0],
-                       p['KW_EXPTIME'][0],
-                       p['KW_CCAS'][0],
-                       p['KW_CREF'][0],
-                       p['KW_CDEN'][0],
-                       p['KW_DPRTYPE'][0],
-                       p['KW_OUTPUT'][0],
-                       p['KW_EXT_TYPE'][0],
-                       p['KW_CMPLTEXP'][0],
-                       p['KW_NEXP'][0],
-                       p['KW_VERSION'][0],
-                       p['KW_PPVERSION'][0]]
+        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
+                       'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
+                       'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
+                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_EXT_TYPE',
+                       'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION',
+                       'KW_PPVERSION']
         # return output_keys
         return output_keys
-
 
     # noinspection PyPep8Naming
     def RAW_OUTPUT_KEYS(self):
@@ -152,57 +140,20 @@ class PseudoConstants:
         # return these keys
         return output_keys
 
-
     # noinspection PyPep8Naming
-    def RAW_OUTPUT_COLUMNS(self, p):
-        func_name = __NAME__ + '.RAW_OUTPUT_COLUMNS()'
+    def REDUC_OUTPUT_KEYS(self):
         # define selected keys
-        output_keys = []
-        # get the raw output keys and get value from p
-        for key in self.RAW_OUTPUT_KEYS():
-            output_keys.append(p[key][0])
-        # check in master list
-        masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
-        for key in output_keys:
-            if key not in self.OUTPUT_FILE_HEADER_KEYS(p):
-                emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
-                emsg2 = '\tfunction = {0}'.format(func_name)
-                raise ValueError(emsg1 + '\n' + emsg2)
-        # return keys
+        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
+                       'KW_OBJNAME', 'KW_OUTPUT', 'KW_EXT_TYPE',
+                       'KW_VERSION']
+        # return these keys
         return output_keys
 
     # noinspection PyPep8Naming
-    def REDUC_OUTPUT_COLUMNS(self, p):
-        func_name = __NAME__ + '.REDUC_OUTPUT_COLUMNS()'
-
-        output_keys = [p['KW_DATE_OBS'][0],
-                       p['KW_UTC_OBS'][0],
-                       p['KW_MID_OBS_TIME'][0],
-                       p['KW_OBJNAME'][0],
-                       p['KW_OUTPUT'][0],
-                       p['KW_EXT_TYPE'][0],
-                       p['KW_VERSION'][0]]
-        # check in master list
-        masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
-        for key in output_keys:
-            if key not in self.OUTPUT_FILE_HEADER_KEYS(p):
-                emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
-                emsg2 = '\tfunction = {0}'.format(func_name)
-                raise ValueError(emsg1 + '\n' + emsg2)
-        # return keys
-        return output_keys
-
-    # noinspection PyPep8Naming
-    def GEN_OUTPUT_COLUMNS(self, p):
-        output_keys = [p['KW_DATE_OBS'][0],
-                       p['KW_UTC_OBS'][0],
-                       p['KW_MID_OBS_TIME'][0],
-                       p['KW_OBJNAME'][0],
-                       p['KW_OBSTYPE'][0],
-                       p['KW_EXPTIME'][0],
-                       p['KW_OUTPUT'][0],
-                       p['KW_EXT_TYPE'][0],
-                       p['KW_VERSION'][0]]
+    def GEN_OUTPUT_COLUMNS(self):
+        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
+                       'KW_OBJNAME', 'KW_OBSTYPE', 'KW_EXPTIME',
+                       'KW_OUTPUT', 'KW_EXT_TYPE', 'KW_VERSION']
         return output_keys
 
     # =========================================================================
