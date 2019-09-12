@@ -264,13 +264,19 @@ def add_berv_keys(params, infile, props):
         # get this output
         output = outputs[key]
         # add key to header
-        infile.add_hkey(output[1], value=props[output[0]])
+        if output[0] in props:
+            infile.add_hkey(output[1], value=props[output[0]])
+        else:
+            infile.add_hkey(output[1], value='None')
     # add input keys
     for param in inputs.keys():
         # get require parameter instance
         inparam = inputs[param]
         # add key to header
-        infile.add_hkey(inparam.outkey, value=props[param])
+        if param in props:
+            infile.add_hkey(inparam.outkey, value=props[param])
+        else:
+            infile.add_hkey(inparam.outkey, value='None')
     # return infile
     return infile
 
