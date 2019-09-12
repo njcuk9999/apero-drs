@@ -475,10 +475,10 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         columns = None
     elif kind == 'tmp':
         path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_COLUMNS(params)
+        columns = pconst.RAW_OUTPUT_KEYS()
     elif kind == 'red':
         path = params['DRS_DATA_REDUC']
-        columns = pconst.REDUC_OUTPUT_COLUMNS(params)
+        columns = pconst.REDUC_OUTPUT_KEYS()
     else:
         path = params['INPATH']
         columns = None
@@ -486,17 +486,10 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
     # deal with making sure all kwargs are in columns (if columns defined)
     if columns is not None:
         for kwarg in kwargs:
-            # set dkey
-            dkey, dkeyval = str(kwarg), str(kwarg)
-            # check if kwarg is in params (if so is a keyword)
-            if kwarg in params:
-                if isinstance(params[kwarg], list):
-                    dkey = params[kwarg][0]
-                    dkeyval = '{0} ({1})'.format(dkey, kwarg)
             # if dkey not in columns report error
-            if dkey not in columns:
+            if kwarg not in columns:
                 # log and raise error
-                eargs = [dkeyval, path, func_name]
+                eargs = [kwarg, path, func_name]
                 WLOG(params, 'error', TextEntry('00-004-00001', args=eargs))
     # ----------------------------------------------------------------------
     # get index files
@@ -522,18 +515,10 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         # filter via kwargs
         for kwarg in kwargs:
             # --------------------------------------------------------------
-            # set dkey
-            dkey, dkeyval = str(kwarg), str(kwarg)
-            # check if kwarg is in params (if so is a keyword)
-            if kwarg in params:
-                if isinstance(params[kwarg], list):
-                    dkey = params[kwarg][0]
-                    dkeyval = '{0} ({1})'.format(dkey, kwarg)
-            # --------------------------------------------------------------
             # if dkey is not found in index file then report error
-            if dkey not in index.colnames:
+            if kwarg not in index.colnames:
                 # report error
-                eargs = [dkeyval, index_file, func_name]
+                eargs = [kwarg, index_file, func_name]
                 WLOG(params, 'error', TextEntry('00-004-00002', args=eargs))
             # --------------------------------------------------------------
             # deal with list of args
@@ -542,9 +527,9 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
                 mask0 = np.zeros_like(mask)
                 # loop around kwargs[kwarg] values (has to be logic==or here)
                 for value in kwargs[kwarg]:
-                    mask0 |= (index[dkey] == value)
+                    mask0 |= (index[kwarg] == value)
             else:
-                mask0 = (index[dkey] == kwargs[kwarg])
+                mask0 = (index[kwarg] == kwargs[kwarg])
             # --------------------------------------------------------------
             # mask by filter
             if logic == 'or':
@@ -553,7 +538,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
                 mask &= mask0
             # --------------------------------------------------------------
             # add to fstring
-            fstring += '\n\t{0}=\'{1}\''.format(dkeyval, kwargs[kwarg])
+            fstring += '\n\t{0}=\'{1}\''.format(kwarg, kwargs[kwarg])
         # ------------------------------------------------------------------
         # get files for those that remain
         masked_files = index[filecol][mask]
