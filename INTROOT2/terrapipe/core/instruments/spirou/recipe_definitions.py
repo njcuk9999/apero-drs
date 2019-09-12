@@ -448,8 +448,7 @@ cal_ff.set_outputs(FLAT_FILE=sf.out_ff_flat,
                    DEBUG_BACK=sf.debug_back)
 cal_ff.set_arg(pos=0, **directory)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
-               files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark],
-               pos='1+',
+               files=[sf.pp_flat_flat], pos='1+',
                helpstr=Help['FILES_HELP'] + Help['FLAT_FILES_HELP'])
 cal_ff.set_kwarg(**add_cal)
 cal_ff.set_kwarg(**badfile)
@@ -768,14 +767,13 @@ obj_mk_template.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 full_run = drs_recipe.DrsRunSequence('full_run', __INSTRUMENT__)
 # master run
-full_run.add(cal_pp, name='PPM', master=True)
+full_run.add(cal_pp)
 full_run.add(cal_dark_master, master=True)
 full_run.add(cal_badpix, name='BADM', master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_run.add(cal_shape_master, master=True)
 # night runs
-full_run.add(cal_pp)
 full_run.add(cal_badpix)
 full_run.add(cal_loc, files=[sf.pp_dark_flat])
 full_run.add(cal_loc, files=[sf.pp_flat_dark])
@@ -792,14 +790,13 @@ full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # -----------------------------------------------------------------------------
 limited_run = drs_recipe.DrsRunSequence('limited_run', __INSTRUMENT__)
 # master run
-limited_run.add(cal_pp, name='PPM', master=True)
+limited_run.add(cal_pp)
 limited_run.add(cal_dark_master, master=True)
 limited_run.add(cal_badpix, name='BADM', master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
 # night runs
-limited_run.add(cal_pp)
 limited_run.add(cal_badpix)
 limited_run.add(cal_badpix)
 limited_run.add(cal_loc, files=[sf.pp_dark_flat])
@@ -817,6 +814,23 @@ limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
 limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
+# telluric recipes
+limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
+                fiber='AB')
+limited_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
+                fiber='AB')
+# limited_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
+#                 fiber='AB')
+# limited_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
+#                 fiber='AB')
+
+limited_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
+                fiber='AB')
+# limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
+#                 fiber='AB')
+# limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
+#                 fiber='AB')
+
 # -----------------------------------------------------------------------------
 # object run (extract )
 # -----------------------------------------------------------------------------
@@ -832,14 +846,13 @@ science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 # -----------------------------------------------------------------------------
 hc_run = drs_recipe.DrsRunSequence('hc_run', __INSTRUMENT__)
 # master run
-hc_run.add(cal_pp, name='PPM', master=True)
+hc_run.add(cal_pp)
 hc_run.add(cal_dark_master, master=True)
 hc_run.add(cal_badpix, name='BADM', master=True)
 hc_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 hc_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 hc_run.add(cal_shape_master, master=True)
 # night runs
-hc_run.add(cal_pp)
 hc_run.add(cal_badpix)
 hc_run.add(cal_loc, files=[sf.pp_dark_flat])
 hc_run.add(cal_loc, files=[sf.pp_flat_dark])
