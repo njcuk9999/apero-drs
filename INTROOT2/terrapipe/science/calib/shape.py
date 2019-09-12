@@ -468,6 +468,34 @@ def ea_transform(params, image, lin_transform_vect=None,
     return out_image
 
 
+def ea_transform_coeff(image, coeffs, lin_transform_vect):
+    # get the number of orders
+    nbo = coeffs.shape[0]
+    # get the x pixel positions
+    xpix = np.arange(image.shape[1])
+    # extract out the parameters from lin transform vector
+    dx0, dy0 = lin_transform_vect[:2]
+    # invert the lin transform vector
+    lin_vec = np.array(lin_transform_vect[2:]).reshape(2, 2)
+    inv_lin_vec = np.linalg.inv(lin_vec)
+    lin_a, lin_b, lin_c, lin_d = inv_lin_vec.ravel()
+    # get the new coeffs array
+    coeffs2 = np.zeros_like(coeffs)
+    # loop through the orders
+    for order_num in range(nbo):
+        # get this orders coefficients
+        ocoeff = coeffs[order_num]
+        # get the poly fit values for coeffs
+        yfit = np.polyval(ocoeff[::-1], xpix)
+        # transform the x pixel positions and fit positions
+        xpix2 = -dx0 + xpix * lin_a + yfit * lin_b
+        yfit2 = -dy0 + xpix * lin_c + yfit * lin_d
+        # refit polynomial
+        coeffs2[order_num] = np.polyfit(xpix2, yfit2, len(ocoeff) - 1)[::-1]
+    # return new coefficients
+    return coeffs2
+
+
 def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
     # get parameters from params/kwargs
