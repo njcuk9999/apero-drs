@@ -144,7 +144,7 @@
 "00-008-00014","ERROR","Means that data is not set for drsfile.npyfile","{0} = filename; {1} = function name","NpyFile must have data set. \n\t Filename = {0} \n\t Function = {1}","",""
 "00-008-00015","ERROR","Means there was a problem reading data for drsfile.npyfile","{0} = filename; {1} = function name","NpyFile could not read file. \n\t Filename = {0} \n\t Function = {1}","",""
 "00-008-00016","ERROR","Means that ‘add_output_file’ was used by outfile has no attribute ‘output_dict’ and therefore cannot be added to output_files","{0} = outfile name; {1} = function name","Output file = {0} has no attribute ‘output_dict’ and therefore cannot be added to output_files. \n\t Function = {1}","",""
-"","","","","","",""
+"00-008-00017","ERROR","Means that construct file infile was not suitably defined (must have infile set)","{0} = current drs file kind; {1} = required drs file kind; {2} = function name","'infile' is not valid. Current infile='{0}' required infile='{1}' \n\t Function = {2}","",""
 "","","","","","",""
 "","","","","","",""
 "00-009-00000","ERROR","Dev Error: Indexing Error","None","","",""
