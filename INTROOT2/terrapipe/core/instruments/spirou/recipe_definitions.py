@@ -132,28 +132,28 @@ DrsRecipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
 #     must have filemod = correct file definitions
-cal_badpix = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_ccf = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_dark = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_dark_master = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_drift1 = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_drift2 = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_extract = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_ff = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_hc = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_loc = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_pp = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_slit = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_shape = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_shape_master = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_thermal = DrsRecipe(__INSTRUMENT__, filemod=sf)
-cal_wave = DrsRecipe(__INSTRUMENT__, filemod=sf)
-obj_mk_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
-obj_fit_tellu = DrsRecipe(__INSTRUMENT__, filemod=sf)
-obj_mk_template = DrsRecipe(__INSTRUMENT__, filemod=sf)
+cal_badpix = DrsRecipe(__INSTRUMENT__)
+cal_ccf = DrsRecipe(__INSTRUMENT__)
+cal_dark = DrsRecipe(__INSTRUMENT__)
+cal_dark_master = DrsRecipe(__INSTRUMENT__)
+cal_drift1 = DrsRecipe(__INSTRUMENT__)
+cal_drift2 = DrsRecipe(__INSTRUMENT__)
+cal_extract = DrsRecipe(__INSTRUMENT__)
+cal_ff = DrsRecipe(__INSTRUMENT__)
+cal_hc = DrsRecipe(__INSTRUMENT__)
+cal_loc = DrsRecipe(__INSTRUMENT__)
+cal_pp = DrsRecipe(__INSTRUMENT__)
+cal_slit = DrsRecipe(__INSTRUMENT__)
+cal_shape = DrsRecipe(__INSTRUMENT__)
+cal_shape_master = DrsRecipe(__INSTRUMENT__)
+cal_thermal = DrsRecipe(__INSTRUMENT__)
+cal_wave = DrsRecipe(__INSTRUMENT__)
+obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
+obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
+obj_mk_template = DrsRecipe(__INSTRUMENT__,)
 
 # TODO: remove later
-test = DrsRecipe(__INSTRUMENT__, filemod=sf)
+test = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
@@ -816,20 +816,20 @@ limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 
 # telluric recipes
 limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB')
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 limited_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB')
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-#                 fiber='AB')
+#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-#                 fiber='AB')
+#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 limited_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
-                fiber='AB')
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
-#                 fiber='AB')
+#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-#                 fiber='AB')
+#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # object run (extract )
