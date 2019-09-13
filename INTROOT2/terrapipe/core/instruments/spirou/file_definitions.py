@@ -508,7 +508,7 @@ out_ext_e2dsff = drs_finput('EXT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.fits', intype=pp_file,
+                            filetype='.fits', intype=[pp_file, pp_flat_flat],
                             suffix='_e2dsll', outfunc=out.debug_file)
 # extraction localisation file
 out_ext_loco = drs_finput('EXT_LOCO', KW_OUTPUT='EXT_LOCO',
@@ -552,7 +552,8 @@ out_file.addset(out_thermal_e2ds)
 # wave solution using hc only
 out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
                          fibers=['AB', 'A', 'B', 'C'],
-                         filetype='.fits', intype=pp_hc1_hc1,
+                         filetype='.fits',
+                         intype=[out_ext_e2ds, out_ext_e2dsff],
                          suffix='_wave_hc',
                          dbname='calibration', dbkey='WAVE',
                          outfunc=out.calib_file)
@@ -560,7 +561,8 @@ out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
 # wave solution using hc + fp
 out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          fibers=['AB', 'A', 'B', 'C'],
-                         filetype='.fits', intype=pp_hc1_hc1,
+                         filetype='.fits',
+                         intype=[out_ext_e2ds, out_ext_e2dsff],
                          suffix='_wave_fp',
                          dbname='calibration', dbkey='WAVE',
                          outfunc=out.calib_file)
@@ -576,27 +578,31 @@ out_wave_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
 # hc resolution map
 out_wave_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.fits', intype=pp_hc1_hc1,
+                            filetype='.fits',
+                            intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_waveres',
                             outfunc=out.calib_file)
 
 # fp global results table
 out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                fibers=['AB', 'A', 'B', 'C'],
-                               filetype='.tbl', intype=pp_hc1_hc1,
+                               filetype='.tbl',
+                               intype=[out_ext_e2ds, out_ext_e2dsff],
                                outfunc=out.set_file,
                                filename='cal_wave_results')
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.tbl', intype=pp_hc1_hc1,
+                              filetype='.tbl',
+                              intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='hc_lines',
                               outfunc=out.calib_file)
 
 # wave master
 out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
                              fibers=['AB', 'A', 'B', 'C'],
-                             filetype='.fits', intype=pp_hc1_hc1,
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavem',
                              dbname='calibration', dbkey='WAVEM',
                              outfunc=out.calib_file)
