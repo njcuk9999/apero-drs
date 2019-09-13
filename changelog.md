@@ -2,6 +2,96 @@ Changelog
 =========
 
 
+0.5.070 (2019-09-13)
+--------------------
+- Tools.bin.reprocess.py - change how master table is defined (keys
+  'KW_MID_OBS_TIME' and 'KW_DPRTYPE' need values creating as not in raw
+  file headers), filters need to check for lists. [Neil Cook]
+- Science.telluric.general.py - add some new logging. [Neil Cook]
+- Sciecne.calib.dark.py - add some new logging for dark master creation.
+  [Neil Cook]
+- Recipes.spirou.obj_fit_tellu_spirou.py - change how image2 is
+  normalised by blaze (not the same as mk_tellu) [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - add get_dprtype. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - move filemod to pseudo
+  consts + add KW_DPRTYPE to limited run for fit_tellu/mk_tellu. [Neil
+  Cook]
+- Core.instruments.spirou.py - add some new intypes. [Neil Cook]
+- Core.instruments.*.pseudo_const.py - add FILEMOD and RECIPEMOD
+  definitions. [Neil Cook]
+- Core.instruments.*.default* - add end of file and debug constants.
+  [Neil Cook]
+- Core.core.drs_startup.py - get filemod and recipemod from pseudo
+  constants (and re-get them if we change instrument) [Neil Cook]
+- Core.core.drs_recipe.py - add some display_func, and debug logging +
+  add params to check_table_keys. [Neil Cook]
+- Core.core.drs_log.py - add display_func and put debug numbers into
+  params (not hard coded) [Neil Cook]
+- Core.core.drs_file.py - add generate_reqfiles (for checking infile
+  name in construct_filename) [Neil Cook]
+- Science.calib.dark.py - add some extra print outs. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - fix bad shape intypes
+  (some should be hc1_hc1 not fp_fp) [Neil Cook]
+- Core.core.drs_recipe.py - when running a master recipe only do one run
+  (multiple are not needed) [Neil Cook]
+- Tools.module.setup.drs_reprocess.py - add changes to generate_runs and
+  add allowed fibers getting. [Neil Cook]
+- Sciecne.telluric.general.py - change message in recon s1d writing.
+  [Neil Cook]
+- Sciecne.extract.berv.py - fix berv - properties weren't copying. [Neil
+  Cook]
+- Sciecne.calib.background.py - do not check file for debug (could be
+  any input file and we don't care here) [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - add changes to RAW_OUTPUT_KEYS/REDUC_OUTPUT_KEYS.
+  [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - change sequences (must
+  start with full preprocess - master dark + master shape wont work
+  otherwise) [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - add intypes to all out
+  files (for file history lookup) [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - KW_OBJNAME from OBJNAME
+  --> OBJECT. [Neil Cook]
+- Core.instruments.default.pseudo_const.py - re-work output columns (now
+  only output_keys) [Neil Cook]
+- Core.instruments.default.py - add additional features to general
+  output file (infile suffix removal) [Neil Cook]
+- Core.core.drs_startup.py - change how we index using raw and reduc
+  output columns --> keys (allows more flexible changing of header keys
+  without rewriting full index) [Neil Cook]
+- Core.core.drs_recipe.py - fix how we generate file names for runs
+  (follow file history) [Neil Cook]
+- Core.core.drs_file.py - add remove insuffix, control better construct
+  filename. [Neil Cook]
+- Recipes.spirou.cal_extract_spirou.py + cal_flat_spirou.py - transform
+  localisation coefficients to master grid. [Neil Cook]
+- Science.calib.shape.py - add ea_transform_coeff function to transform
+  per night localisation coefficients to master grid. [Neil Cook]
+- Science.extract.berv.py - fix problem when we don't have BERV
+  variables (set header keys to None) [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - update shortname of
+  fit_tellu. [Neil Cook]
+- Update language database. [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - deal with fact RunSequence
+  recipes are lost after generation (run must take inrecipe when recipe
+  is given) [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - deal with fact RunSequence
+  recipes are lost after generation (run must take inrecipe when recipe
+  is given) [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - take out stop just use
+  event.is_set. [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - deal with recipe finishing (but
+  not successfully) [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - extra stopping criteria added.
+  [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - extra stopping criteria added.
+  [Neil Cook]
+- Toolts.module.setup.drs_reprocess.py - make master stop at exception
+  always. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.069 (2019-09-11)
 --------------------
 - Science.extract.general.py - fix loading of tapas (in thermal
