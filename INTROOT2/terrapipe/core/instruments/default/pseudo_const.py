@@ -9,6 +9,7 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+import importlib
 import sys
 import os
 
@@ -19,6 +20,7 @@ from terrapipe.locale import drs_exceptions
 # =============================================================================
 # Name of program
 __NAME__ = 'instruments.default.pseudo_const'
+__PATH__ = 'instruments.default'
 # get error
 ConfigError = drs_exceptions.ConfigError
 # get not implemented error
@@ -33,6 +35,17 @@ NOT_IMPLEMENTED = ('Definition Error: Must be overrided in instrument '
 class PseudoConstants:
     def __init__(self, instrument=None):
         self.instrument = instrument
+
+    # =========================================================================
+    # File and Recipe definitions
+    # =========================================================================
+    def FILEMOD(self):
+        module_name = 'terrapipe.core.instruments.default.file_definitions'
+        return importlib.import_module(module_name)
+
+    def RECIPEMOD(self):
+        module_name = 'terrapipe.core.instruments.default.recipe_definitions'
+        return importlib.import_module(module_name)
 
     # =========================================================================
     # HEADER SETTINGS
@@ -136,7 +149,7 @@ class PseudoConstants:
         output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
                        'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
                        'KW_EXPTIME', 'KW_DPRTYPE', 'KW_CCAS', 'KW_CREF',
-                       'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_PPVERSION']
+                       'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP']
         # return these keys
         return output_keys
 
