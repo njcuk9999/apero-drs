@@ -1530,17 +1530,25 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
     big_cube0 = np.repeat([np.nan], flatsize).reshape(*dims)
 
-
-
     # ----------------------------------------------------------------------
     # Loop through input files
     # ----------------------------------------------------------------------
     for it, filename in enumerate(vfilenames):
         # get the infile for this iteration
         infile = infiles[it]
+
+        # log progress
+        wargs = [it + 1, len(vfilenames)]
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', TextEntry('40-019-00028', args=wargs))
+        WLOG(params, '', params['DRS_HEADER'])
         # ------------------------------------------------------------------
         # load the data for this iteration
         # ------------------------------------------------------------------
+        # log progres: reading file: {0}
+        wargs = [infile.filename]
+        WLOG(params, '', TextEntry('40-019-00033', args=wargs))
+        # read data
         infile.read()
         # get image and set up shifted image
         image = np.array(infile.data)
@@ -1601,13 +1609,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
             WLOG(params, 'warning', TextEntry('10-019-00006', args=wargs))
             # skip
             continue
-        # else print progress
-        else:
-            # log progress
-            wargs = [it + 1, len(vfilenames)]
-            WLOG(params, '', params['DRS_HEADER'])
-            WLOG(params, '', TextEntry('40-019-00028', args=wargs))
-            WLOG(params, '', params['DRS_HEADER'])
+
         # ------------------------------------------------------------------
         # Shift to correct berv
         # ------------------------------------------------------------------
