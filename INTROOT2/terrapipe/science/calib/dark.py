@@ -311,7 +311,14 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         # record the number of cubes that are going into this bin
         bin_cube[g_it % num_bins] += 1
     # need to normalize if we have more than 1 cube per bin
+    # log process
+    WLOG(params, 'info', TextEntry('40-011-10007'))
+    # loop through groups
     for bin_it in range(num_bins):
+        # log progress group g_it + 1 of len(u_groups)
+        wargs = [g_it + 1, len(u_groups)]
+        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
+        # normalise
         dark_cube[bin_it] /= bin_cube[bin_it]
 
     # -------------------------------------------------------------------------
@@ -341,6 +348,8 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         # high frequency image
         dark_cube1[bin_it] = bindark - lf_dark
     # -------------------------------------------------------------------------
+    # log process
+    WLOG(params, 'info', TextEntry('40-011-10008'))
     # median the dark cube to create the master dark
     with warnings.catch_warnings(record=True) as _:
         master_dark = np.nanmedian(dark_cube1, axis=0)
