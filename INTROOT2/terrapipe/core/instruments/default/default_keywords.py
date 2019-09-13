@@ -1036,3 +1036,7 @@ KW_MKTEMP_SNR_ORDER = Keyword('KW_MKTEMP_SNR_ORDER', key='', dtype=int,
 # the snr threshold used for quality control cut in make template calculation
 KW_MKTEMP_SNR_THRES = Keyword('KW_MKTEMP_SNR_THRES', key='', dtype=float,
                               source=__NAME__)
+
+# =============================================================================
+#  End of configuration file
+# =============================================================================

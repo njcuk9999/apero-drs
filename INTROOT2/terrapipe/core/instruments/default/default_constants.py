@@ -1637,3 +1637,7 @@ REPROCESS_SEQCOL = Const('REPROCESS_SEQCOL', value=None, dtype=str,
 # define the time col for raw file table
 REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
                           source=__NAME__)
+
+# =============================================================================
+#  End of configuration file
+# =============================================================================

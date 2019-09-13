@@ -35,6 +35,9 @@ __all__ = [# global settings
            # PLOT SETTINGS
            'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
+            # debug settings
+            'DEBUG_MODE_LOG_PRINT', 'DEBUG_MODE_TEXTNAME_PRINT',
+            'DEBUG_MODE_FUNC_PRINT',
             ]
 
 # set name
@@ -326,6 +329,23 @@ DRS_PLOT_FONT_SIZE = Const('DRS_PLOT_FONT_SIZE', value=-1, dtype=int,
 #     (i.e. seaborn or dark_background) "None" for not set
 DRS_PLOT_STYLE = Const('DRS_PLOT_STYLE', value='None', dtype=str,
                        source=__NAME__)
+
+
+# =============================================================================
+# DEBUG MODES
+# =============================================================================
+# The debug number to print debug log messages
+DEBUG_MODE_LOG_PRINT = Const('DEBUG_MODE_LOG_PRINT', value=1, dtype=int,
+                             source=__NAME__)
+
+# The debug number to print text entry names on all messages
+DEBUG_MODE_TEXTNAME_PRINT = Const('DEBUG_MODE_TEXTNAME_PRINT', value=100,
+                                  dtype=int, source=__NAME__)
+
+# The debug number to print function definitions
+DEBUG_MODE_FUNC_PRINT = Const('DEBUG_MODE_FUNC_PRINT', value=200, dtype=int,
+                              source=__NAME__)
+
 
 # =============================================================================
 #  End of configuration file
