@@ -337,7 +337,11 @@ def assign_properties(params, props=None, use=True, **kwargs):
     # add outputs
     for key in outputs:
         output = outputs[key]
+        # check for the key in kwargs
         value = kwargs.get(key, None)
+        # if not found (None) check for the outputs[0] key in kwargs
+        if value is None:
+            value = kwargs.get(output[0], None)
         if value is None:
             oprops[output[0]] = np.nan
         else:
@@ -355,7 +359,7 @@ def assign_properties(params, props=None, use=True, **kwargs):
     #   estimate)
     cond = oprops['BERV'] is not None
     cond &= oprops['BJD'] is not None
-    #cond &= oprops['BERV_MAX'] is not None
+    cond &= oprops['BERV_MAX'] is not None
 
     # Case 1: Not BERV used
     if not use:
