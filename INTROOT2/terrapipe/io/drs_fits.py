@@ -855,6 +855,31 @@ def get_mid_obs_time(params, header, out_fmt=None, **kwargs):
         WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
 
 
+def get_dprtype(recipe, header):
+    # get the drs files and raw_prefix
+    drsfiles = recipe.filemod.raw_file.fileset
+    raw_prefix = recipe.filemod.raw_prefix
+    # set up inname
+    dprtype = 'Unknown'
+    # loop around drs files
+    for drsfile in drsfiles:
+        # set recipe
+        drsfile.set_recipe(recipe)
+        # find out whether file is valid
+        valid, _ = drsfile.has_correct_hkeys(header, log=False)
+        # if valid the assign dprtype
+        if valid:
+            # remove prefix if not None
+            if raw_prefix is not None:
+                dprtype = drsfile.name.split(raw_prefix)[-1]
+            else:
+                dprtype = drsfile.name
+            # we have found file so break
+            break
+    # return dprtype
+    return dprtype
+
+
 # =============================================================================
 # Worker functions
 # =============================================================================
