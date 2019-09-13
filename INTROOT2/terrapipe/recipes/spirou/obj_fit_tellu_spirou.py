@@ -195,7 +195,9 @@ def __main__(recipe, params):
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
         nargs = [image, header, fiber]
-        image2, nprops = telluric.normalise_by_pblaze(params, *nargs)
+        _, nprops = telluric.normalise_by_pblaze(params, *nargs)
+        # normalise by the blaze
+        image2 = image / nprops['NBLAZE']
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
@@ -229,7 +231,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption + correct E2DS file
         # ------------------------------------------------------------------
-        cargs = [image, wprops, pca_props, sprops, nprops]
+        cargs = [image2, wprops, pca_props, sprops, nprops]
         cprops = telluric.calc_recon_and_correct(params, *cargs)
 
         # ------------------------------------------------------------------
