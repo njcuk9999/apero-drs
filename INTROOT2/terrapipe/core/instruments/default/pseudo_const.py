@@ -102,13 +102,13 @@ class PseudoConstants:
     def INDEX_LOCK_FILENAME(self, p):
         # get the message directory
         if 'DRS_DATA_MSG' not in p:
-            p['DRS_DATA_MSG'] = './'
+            p.set('DRS_DATA_MSG', value='./')
         # if it is set to None
         elif p['DRS_DATA_MSG'] is None:
-            p['DRS_DATA_MSG'] = './'
+            p.set('DRS_DATA_MSG', value='./')
         # if path does not exist
         elif not os.path.exists(p['DRS_DATA_MSG']):
-            p['DRS_DATA_MSG'] = './'
+            p.set('DRS_DATA_MSG', value='./')
         # get the night name directory
         if 'NIGHTNAME' not in p:
             night_name = 'UNKNOWN'
