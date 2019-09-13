@@ -142,6 +142,13 @@ class Logger:
         :return None:
         """
         func_name = __NAME__ + '.Logger.__call__()'
+        # ---------------------------------------------------------------------
+        # deal with debug mode. If DRS_DEBUG is zero do not print these
+        #     messages
+        debug = params.get('DRS_DEBUG', 0)
+        if key == 'debug' and debug < params['DEBUG_MODE_LOG_PRINT']:
+            return
+        # ---------------------------------------------------------------------
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
         # ---------------------------------------------------------------------
@@ -193,12 +200,6 @@ class Logger:
         # update pin and pconstant from p (selects instrument)
         self.update_param_dict(params)
         # ---------------------------------------------------------------------
-        # deal with debug mode. If DRS_DEBUG is zero do not print these
-        #     messages
-        debug = params.get('DRS_DEBUG', 0)
-        if key == 'debug' and debug == 0:
-            return
-        # ---------------------------------------------------------------------
         # deal with option
         if option is not None:
             option = option
@@ -244,7 +245,7 @@ class Logger:
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         report = self.pconstant.REPORT_KEYS().get(key, False)
         # special case of report
-        if debug >= 100:
+        if debug >= params['DEBUG_MODE_TEXTNAME_PRINT']:
             report = True
         # get messages
         if type(message) is HelpEntry:
@@ -688,6 +689,33 @@ def debug_start(logobj, params, raise_exception):
     except:
         if raise_exception:
             logobj.pconstant.EXIT(params)()
+
+
+def display_func(params=None, name=None, program=None, class_name=None):
+    # start the string function
+    strfunc = ''
+    # deal with no file name
+    if name is None:
+        name = 'Unknown'
+    # add brackets to show function
+    if not name.endswith('()'):
+        name += '()'
+    # add the program
+    if program is not None:
+        strfunc = str(program)
+    if class_name is not None:
+        strfunc += '.{0}'.format(class_name)
+    # add the name
+    strfunc += '.{0}'.format(name)
+    # deal with no params (do not log)
+    if params is None:
+        return strfunc
+    # debug log (only if mode > 200)
+    if params.get('DRS_DEBUG', 0) >= params['DEBUG_MODE_FUNC_PRINT']:
+        wlog(params, 'debug', TextEntry('90-000-00004', args=[strfunc]),
+             wrap=False)
+    # return func_name
+    return strfunc
 
 
 def warninglogger(p, w, funcname=None):
