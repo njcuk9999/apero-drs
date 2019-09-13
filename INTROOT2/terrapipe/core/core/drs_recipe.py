@@ -36,6 +36,8 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# Get function string
+display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # get print colours
@@ -1396,7 +1398,8 @@ def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
 # =============================================================================
 def find_run_files(params, recipe, table, args, filters=None,
                    allowedfibers=None, **kwargs):
-    func_name = __NAME__ + '.find_run_files()'
+    # set function name
+    func_name = display_func(params, 'find_run_files', __NAME__)
     # storage for valid files for each argument
     filedict = OrderedDict()
     # get constants from params
@@ -1405,6 +1408,11 @@ def find_run_files(params, recipe, table, args, filters=None,
     check_required = kwargs.get('check_required', False)
     # get raw filenames from table
     files = table[absfile_col]
+
+    # debug log the number of files found
+    dargs = [func_name, len(files)]
+    WLOG(params, 'debug', TextEntry('90-503-00011', args=dargs))
+
     # loop around arguments
     for argname in args:
         # get arg instance
@@ -1420,10 +1428,15 @@ def find_run_files(params, recipe, table, args, filters=None,
         else:
             # add sub-dictionary for each drs file
             filedict[argname] = OrderedDict()
+        # debug log: the argument being scanned
+        WLOG(params, 'debug', TextEntry('90-503-00012', args=[argname]))
         # get drs file instances
         drsfiles = arg.files
         # loop around drs files
         for drsfile in drsfiles:
+            # debug log: the file being tested
+            dargs = [drsfile.name]
+            WLOG(params, 'debug', TextEntry('90-503-00013', args=dargs))
             # define storage (if not already defined)
             cond1 = drsfile.name not in filedict[argname]
             if cond1 and (arg.filelogic == 'exclusive'):
@@ -1433,6 +1446,7 @@ def find_run_files(params, recipe, table, args, filters=None,
             # list of valid files
             valid_infiles = []
             valid_outfiles = []
+            valid_num = 0
             # loop around files
             for filename in files:
                 # get infile instance (i.e. raw or pp file) and assign the
@@ -1444,9 +1458,12 @@ def find_run_files(params, recipe, table, args, filters=None,
                 if valid:
                     valid_infiles.append(infile)
                     valid_outfiles.append(outfilename)
+                    valid_num += 1
                 else:
                     valid_infiles.append(None)
                     valid_outfiles.append(None)
+            # debug log the number of valid files
+            WLOG(params, 'debug', TextEntry('90-503-00014', args=[valid_num]))
             # add outfiles to table
             table['OUT'] = valid_outfiles
             # for the valid files we can now check infile headers
@@ -1460,9 +1477,10 @@ def find_run_files(params, recipe, table, args, filters=None,
                 tabledict = dict(zip(table.colnames, table[it]))
                 # check whether tabledict means that file is valid for this
                 #   infile
-                valid1 = infile.check_table_keys(tabledict)
+                valid1 = infile.check_table_keys(params, tabledict)
                 # check whether filters are found
-                valid2 = infile.check_table_keys(tabledict, rkeys=filters)
+                valid2 = infile.check_table_keys(params, tabledict,
+                                                 rkeys=filters)
                 # if valid then add to filedict for this argnameand drs file
                 if valid1 and valid2:
                     if arg.filelogic == 'exclusive':
