@@ -9,6 +9,7 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+import importlib
 import numpy as np
 
 from terrapipe.core import constants
@@ -41,6 +42,17 @@ class PseudoConstants(DefaultConstants):
     # -------------------------------------------------------------------------
     # OVERWRITE PSEUDO-CONSTANTS from constants.default.pseudo_const.py here
     # -------------------------------------------------------------------------
+
+    # =========================================================================
+    # File and Recipe definitions
+    # =========================================================================
+    def FILEMOD(self):
+        module_name = 'terrapipe.core.instruments.spirou.file_definitions'
+        return importlib.import_module(module_name)
+
+    def RECIPEMOD(self):
+        module_name = 'terrapipe.core.instruments.spirou.recipe_definitions'
+        return importlib.import_module(module_name)
 
     # =========================================================================
     # HEADER SETTINGS
