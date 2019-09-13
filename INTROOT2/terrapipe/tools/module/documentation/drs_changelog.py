@@ -41,14 +41,8 @@ TextDict = locale.drs_text.TextDict
 VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
 DATESTR_PREFIX = 'DRS_DATE = Const('
 
-VERSIONSTR = """
-DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str, 
-                    source=__NAME__)
-"""
-DATESTR = """
-DRS_DATE = Const('DATE', value='{0}', dtype=str, 
-                 source=__NAME__)
-"""
+VERSIONSTR = "DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str,"
+DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__)"
 
 
 # =============================================================================
@@ -144,15 +138,25 @@ def update_py_version(filename, version):
         if line.startswith(DATESTR_PREFIX):
             date_it = it
     # update version
-    lines[version_it] = VERSIONSTR.format(version)
+    version_string = VERSIONSTR.format(version)
     # update date
     dt = datetime.now()
     dargs = [DATESTR.strip(), dt.year, dt.month, dt.day]
-    datestr = '{0} \'{1:04d}-{2:02d}-{3:02d}\'\n'.format(*dargs)
-    lines[date_it] = DATESTR.format(datestr)
+    datestr = '{1:04d}-{2:02d}-{3:02d}'.format(*dargs)
+    date_string = DATESTR.format(datestr)
+    # get new lines
+    new_lines = []
+    # update lines
+    for it, line in enumerate(lines):
+        if it == version_it:
+            new_lines += version_string + '\n'
+        elif it == date_it:
+            new_lines += date_string + '\n'
+        else:
+            new_lines.append(line)
     # write lines
     f = open(filename, 'w')
-    f.writelines(lines)
+    f.writelines(new_lines)
     f.close()
     # remove backup
     os.remove(filename + '.backup')
