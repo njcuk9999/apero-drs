@@ -34,6 +34,8 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# Get function string
+display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -86,6 +88,7 @@ class DrsInputFile:
         self.data = kwargs.get('data', None)
         self.header = kwargs.get('header', None)
         self.fileset = kwargs.get('fileset', [])
+        self.filesetnames = kwargs.get('filesetnames', [])
         self.indextable = kwargs.get('index', None)
         self.outfunc = kwargs.get('outfunc', None)
         # allow instance to be associated with a filename
@@ -154,6 +157,7 @@ class DrsInputFile:
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        kwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
         kwargs['indextable'] = kwargs.get('indextable', self.indextable)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         # return new instance
@@ -222,6 +226,7 @@ class DrsInputFile:
         :return:
         """
         self.fileset.append(drsfile)
+        self.filesetnames.append(drsfile.name)
 
     def copyother(self, drsfile, **kwargs):
         # check file has been read (if 'read' not equal to False)
@@ -243,6 +248,7 @@ class DrsInputFile:
         nkwargs['data'] = kwargs.get('data', drsfile.data)
         nkwargs['header'] = kwargs.get('header', drsfile.header)
         nkwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        nkwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
         # return new instance of DrsFitsFile
         return DrsInputFile(**nkwargs)
 
@@ -279,6 +285,7 @@ class DrsInputFile:
 
         else:
             nkwargs['fileset'] = drsfile.fileset
+        nkwargs['filesetnames'] = drsfile.filesetnames
         # ------------------------------------------------------------------
         nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
         nkwargs['outfunc'] = drsfile.outfunc
@@ -382,22 +389,20 @@ class DrsInputFile:
     # user functions
     # -------------------------------------------------------------------------
     def construct_filename(self, params, infile=None, check=True, **kwargs):
+        """
+        Constructs the filename from the parameters defined at instance
+        definition and using the infile (if required). If check is True, checks
+        the infile type against "intype". Uses "outfunc" in instance definition
+        to set the suffices/prefixes/fiber etc
+
+        :param params: Param Dict
+        :param infile: Drsfile, the input DrsFile
+        :param check: bool, whether to check infile.name against self.intype
+        :param kwargs: keyword arguments passed to self.outfunc
+
+        :return: Sets self.filename and self.basename to the correct values
+        """
         func_name = __NAME__ + '.construct_filename()'
-        # check that we are allowed to use infile (if set)
-        if infile is not None and check:
-            if self.intype is not None:
-                # deal with self.intype being a list
-                if isinstance(self.intype, list):
-                    reqfiles = list(map(lambda x: x.name, self.intype))
-                    reqstr = ' or '.join(reqfiles)
-                else:
-                    reqfiles = [self.intype.name]
-                    reqstr = str(self.intype.name)
-
-                if infile.name not in reqfiles:
-                    eargs = [infile.name, reqstr, func_name]
-                    WLOG(params, 'error', TextEntry('00-008-00017', args=eargs))
-
         # set outfile from self
         kwargs['outfile'] = self
         kwargs['func'] = func_name
@@ -411,6 +416,56 @@ class DrsInputFile:
         else:
             eargs = [self.__repr__(), func_name]
             WLOG(params, 'error', TextEntry('00-008-00004', args=eargs))
+        # check that we are allowed to use infile (if set)
+        if infile is not None and check:
+            if self.intype is not None:
+                # get required names
+                reqfiles = self.generate_reqfiles()
+                reqstr = ' or '.join(reqfiles)
+                # see if infile is in reqfiles
+                if infile.name not in reqfiles:
+                    eargs = [infile.name, reqstr, self.filename, func_name]
+                    WLOG(params, 'error', TextEntry('00-008-00017', args=eargs))
+
+    def generate_reqfiles(self):
+        """
+        Takes "intype" and works out all the combinations of file names that
+        are valid for this "intype" (i.e. if we have a fileset in one of the
+        "intypes" we should add all files from this set)
+
+        :return: list of DrsInputFile names (drsfile.name) to know which names
+                 are valid
+        :rtype list:
+        """
+        # deal with intype being unset
+        if self.intype is None:
+            return []
+        # set out list storage
+        required_names = []
+        # deal with having a list of files
+        if isinstance(self.intype, list):
+            # loop around intypes
+            for intype in self.intype:
+                # deal with intype having fileset (set of files associated
+                #   with this file)
+                if len(intype.filesetnames) != 0:
+                    required_names += list(intype.filesetnames)
+                    required_names.append(intype.name)
+                else:
+                    required_names.append(intype.name)
+        else:
+            intype = self.intype
+            # deal with intype having fileset (set of files associated
+            #   with this file)
+            if len(intype.filesetnames) != 0:
+                required_names += list(intype.filesetnames)
+                required_names.append(intype.name)
+            else:
+                required_names.append(intype.name)
+        # clean up required name list by only keeping unique names
+        required_names = list(np.unique(required_names))
+        # return required names
+        return required_names
 
 
 class DrsFitsFile(DrsInputFile):
@@ -521,6 +576,7 @@ class DrsFitsFile(DrsInputFile):
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        kwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
         kwargs['check_ext'] = kwargs.get('check_ext', self.filetype)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['fibers'] = kwargs.get('fibers', self.fibers)
@@ -595,7 +651,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['path'] = copy.deepcopy(drsfile.path)
         nkwargs['basename'] = copy.deepcopy(drsfile.basename)
         nkwargs['inputdir'] = copy.deepcopy(drsfile.inputdir)
-        nkwargs['intype'] = copy.deepcopy(drsfile.intype)
+        nkwargs['intype'] = drsfile.intype
         nkwargs['directory'] = copy.deepcopy(drsfile.directory)
         nkwargs['data'] = copy.deepcopy(drsfile.data)
         nkwargs['header'] = copy.deepcopy(drsfile.header)
@@ -616,6 +672,7 @@ class DrsFitsFile(DrsInputFile):
 
         else:
             nkwargs['fileset'] = drsfile.fileset
+        nkwargs['filesetnames'] = list(drsfile.filesetnames)
         # ------------------------------------------------------------------
         nkwargs['outfunc'] = drsfile.outfunc
         nkwargs['dbname'] = copy.deepcopy(drsfile.dbname)
@@ -664,6 +721,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['hdict'] = kwargs.get('hdict', drsfile.hdict)
         nkwargs['output_dict'] = kwargs.get('output_dict', drsfile.output_dict)
         nkwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        nkwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
         nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         nkwargs['dbname'] = kwargs.get('dbname', self.dbname)
         nkwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
@@ -790,7 +848,7 @@ class DrsFitsFile(DrsInputFile):
 
         return True, None
 
-    def has_correct_hkeys(self, header=None, argname=None):
+    def has_correct_hkeys(self, header=None, argname=None, log=True):
         func_name = __NAME__ + 'DrsFitsFile.has_correct_header_keys()'
         # deal with no input header
         if header is None:
@@ -828,13 +886,15 @@ class DrsFitsFile(DrsInputFile):
             # check if key is valid
             if rvalue != value:
                 dargs = [argname, key, rvalue]
-                WLOG(params, 'debug', TextEntry('90-001-00011', args=dargs),
-                     wrap=False)
+                if log:
+                    WLOG(params, 'debug', TextEntry('90-001-00011', args=dargs),
+                         wrap=False)
                 found = False
             else:
                 dargs = [argname, key, rvalue]
-                WLOG(params, 'debug', TextEntry('90-001-00012', args=dargs),
-                     wrap=False)
+                if log:
+                    WLOG(params, 'debug', TextEntry('90-001-00012', args=dargs),
+                         wrap=False)
             # store info
             errors[key] = (found, argname, rvalue, value)
 
@@ -845,6 +905,9 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     def get_infile_outfilename(self, params, recipe, infilename,
                                allowedfibers=None, ext='.fits'):
+        # set function name
+        func_name = display_func(params, 'get_infile_outfilename', __NAME__,
+                                 class_name='DrsFitsFile')
         # ------------------------------------------------------------------
         # 1. need to assign an input type for our raw file
         if self.intype is not None:
@@ -911,7 +974,9 @@ class DrsFitsFile(DrsInputFile):
         :param filename:
         :return:
         """
-        func_name = __NAME__ + '.DrsFitsFile.check_table_filename()'
+        # set function name
+        func_name = display_func(params, 'check_table_filename', __NAME__,
+                                 class_name='DrsFitsFile')
         # ------------------------------------------------------------------
         # deal with fibers
         if allowedfibers is not None:
@@ -946,16 +1011,23 @@ class DrsFitsFile(DrsInputFile):
         else:
             filename = None
             valid = False
+            # debug log that extension was incorrect
+            dargs = [self.filetype, filename]
+            WLOG(params, 'debug', TextEntry('90-008-00004', args=dargs))
         # ------------------------------------------------------------------
         # check suffix (after extension removed)
-        if (self.suffix is not None) and (valid is True):
+        if (self.suffix is not None) and valid:
             # if we have no fibers file should end with suffix
             if self.fibers is None:
                 if not filename.endswith(self.suffix):
                     valid = False
+                    # debug log that extension was incorrect
+                    dargs = [self.suffix, filename]
+                    WLOG(params, 'debug', TextEntry('90-008-00005', args=dargs))
+            # ------------------------------------------------------------------
             # if we have fibers then file should end with one of them and
             # the suffix
-            else:
+            elif (self.fibers is not None) and (len(self.fibers) > 0):
                 # have to set up a new valid that should be True if any
                 #  fiber is present
                 valid1 = False
@@ -963,6 +1035,10 @@ class DrsFitsFile(DrsInputFile):
                 for fiber in self.fibers:
                     if filename.endswith('{0}_{1}'.format(self.suffix, fiber)):
                         valid1 |= True
+                # if valid1 is False debug log that fibers were not found
+                if not valid1:
+                    dargs = [', '.join(self.fibers), filename]
+                    WLOG(params, 'debug', TextEntry('90-008-00006', args=dargs))
                 # put valid1 back into valid
                 valid &= valid1
         # ------------------------------------------------------------------
@@ -972,7 +1048,7 @@ class DrsFitsFile(DrsInputFile):
         else:
             return valid, os.path.basename(outfilename)
 
-    def check_table_keys(self, filedict, rkeys=None):
+    def check_table_keys(self, params, filedict, rkeys=None):
         """
         Checks whether a dictionary contains the required key/value pairs
         to belong to this DrsFile
@@ -980,6 +1056,10 @@ class DrsFitsFile(DrsInputFile):
         :param table:
         :return:
         """
+        # set function name
+        func_name = display_func(params, 'check_table_keys', __NAME__,
+                                 class_name='DrsFitsFile')
+        # ------------------------------------------------------------------
         # get required keys
         if rkeys is None:
             rkeys = self.required_header_keys
@@ -1003,6 +1083,12 @@ class DrsFitsFile(DrsInputFile):
                         valid1 |= True
                 # modify valid value
                 valid &= valid1
+                dargs = [key, valid, rvalues]
+                WLOG(params, 'debug', TextEntry('90-008-00003', args=dargs))
+            else:
+                # Log that key was not found
+                dargs = [key, ', '.join(list(filedict.keys()))]
+                WLOG(params, 'debug', TextEntry('90-008-00002', args=dargs))
 
         # return valid
         return valid
@@ -1419,6 +1505,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['hdict'] = self.hdict
         nkwargs['output_dict'] = self.output_dict
         nkwargs['fileset'] = self.fileset
+        nkwargs['filesetnames'] = self.filesetnames
         nkwargs['outfunc'] = self.outfunc
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
@@ -2213,6 +2300,7 @@ class DrsNpyFile(DrsInputFile):
         kwargs['data'] = kwargs.get('data', self.data)
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
+        kwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
         kwargs['indextable'] = kwargs.get('indextable', self.indextable)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         kwargs['dbname'] = kwargs.get('dbname', self.dbname)
@@ -2253,6 +2341,7 @@ class DrsNpyFile(DrsInputFile):
 
         else:
             nkwargs['fileset'] = drsfile.fileset
+        nkwargs['filesetnames'] = list(drsfile.filesetnames)
         # ------------------------------------------------------------------
         nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
         nkwargs['outfunc'] = drsfile.outfunc
@@ -2293,6 +2382,7 @@ class DrsNpyFile(DrsInputFile):
             self.dbkey = self.dbkey.upper()
         # return dbkey
         return self.dbkey
+
 
 # =============================================================================
 # User functions
