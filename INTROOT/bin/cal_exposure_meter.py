@@ -255,7 +255,7 @@ def main(night_name=None, flatfile=None):
     # ------------------------------------------------------------------
     # Construct parameters for header
     # ------------------------------------------------------------------
-    hdict = OrderedDict()
+    hdict = spirouImage.Header()
     # set the version
     hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_PID'], value=p['PID'])

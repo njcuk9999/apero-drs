@@ -125,6 +125,8 @@ GetWaveSolution = spirouFITS.get_wave_solution
 
 GetWaveKeys = spirouImage.get_wave_keys
 
+Header = spirouFITS.Header
+
 IdentifyUnProFile = spirouFile.identify_unprocessed_file
 
 InterpolateBadRegions = spirouImage.interp_bad_regions
