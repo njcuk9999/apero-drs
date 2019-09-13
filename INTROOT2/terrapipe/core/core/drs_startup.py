@@ -111,8 +111,15 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     pid, htime = _assign_pid()
     # Clean WLOG
     WLOG.clean_log(pid)
+    # get filemod and recipe mod
+    pconst = constants.pload(instrument)
+    filemod = pconst.FILEMOD()
+    recipemod = pconst.RECIPEMOD()
     # find recipe
-    recipe, recipemod = find_recipe(name, instrument)
+    recipe, recipemod = find_recipe(name, instrument, mod=recipemod)
+    # set file module and recipe module
+    recipe.filemod = filemod
+    recipe.recipemod = recipemod
     # clean params
     recipe.drs_params = ParamDict()
     # set recipemod
@@ -149,6 +156,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         recipe.instrument = recipe.drs_params['INPUTS']['INSTRUMENT']
         # quietly load DRS parameters (for setup)
         recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
+        # update filemod and recipemod
+        pconst = constants.pload(recipe.instrument)
+        recipe.filemod = pconst.FILEMOD()
+        recipe.recipemod = pconst.RECIPEMOD()
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
         # do not need to display if we have special keywords
