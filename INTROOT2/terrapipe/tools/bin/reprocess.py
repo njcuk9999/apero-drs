@@ -116,7 +116,7 @@ def __main__(recipe, params):
     # find all raw files
     # ----------------------------------------------------------------------
     # get raw files
-    rawtable, rawpath = drs_reprocess.find_raw_files(params)
+    rawtable, rawpath = drs_reprocess.find_raw_files(params, recipe)
 
     # ----------------------------------------------------------------------
     # Generate run list

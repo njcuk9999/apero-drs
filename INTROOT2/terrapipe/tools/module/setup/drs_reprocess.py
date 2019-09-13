@@ -364,7 +364,7 @@ def reset_files(params):
             drs_reset.reset_plot(params)
 
 
-def find_raw_files(params, **kwargs):
+def find_raw_files(params, recipe, **kwargs):
     func_name = __NAME__ + '.find_raw_files()'
     # get properties from params
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
@@ -384,16 +384,16 @@ def find_raw_files(params, **kwargs):
     # get path
     path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
     # get files
-    gfout = _get_files(params, path, rpath)
-    nightnames, filelist, basenames, mod_times, kwargs = gfout
+    gfout = _get_files(params, recipe, path, rpath)
+    nightnames, filelist, basenames, mod_times, mkwargs = gfout
     # construct a table
     mastertable = Table()
     mastertable[night_col] = nightnames
     mastertable[itable_filecol] = basenames
     mastertable[absfile_col] = filelist
     mastertable[modified_col] = mod_times
-    for kwarg in kwargs:
-        mastertable[kwarg] = kwargs[kwarg]
+    for kwarg in mkwargs:
+        mastertable[kwarg] = mkwargs[kwarg]
     # sort by sortcol
     sortmask = np.argsort(mastertable[sortcol])
     mastertable = mastertable[sortmask]
@@ -1180,7 +1180,7 @@ def _get_path_and_check(params, key):
         return path, rpath
 
 
-def _get_files(params, path, rpath, **kwargs):
+def _get_files(params, recipe, path, rpath, **kwargs):
     func_name = __NAME__ + '.get_files()'
     # get properties from params
     absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col', kwargs,
@@ -1192,6 +1192,7 @@ def _get_files(params, path, rpath, **kwargs):
     # ----------------------------------------------------------------------
     # get the pseudo constant object
     pconst = constants.pload(params['INSTRUMENT'])
+    # ----------------------------------------------------------------------
     # get header keys
     headerkeys = pconst.RAW_OUTPUT_KEYS()
     # get raw valid files
@@ -1278,7 +1279,19 @@ def _get_files(params, path, rpath, **kwargs):
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
-                    if rkey in header:
+                    # need to work out mid exposure time (this comes from pp)
+                    if key == 'KW_MID_OBS_TIME':
+                        # get mid obstime as astropy.Time object
+                        value, _ = drs_fits.get_mid_obs_time(params, header)
+                        # append to list (as float)
+                        kwargs[key].append(value.mjd)
+                    # need to work out dprtpye (this comes from pp)
+                    elif key == 'KW_DPRTYPE':
+                        # get DPRTYPE (have to calculate it here)
+                        value = drs_fits.get_dprtype(recipe, header)
+                        # append string value to list
+                        kwargs[key].append(value)
+                    elif rkey in header:
                         kwargs[key].append(header[rkey])
                     else:
                         kwargs[key].append('')
@@ -1293,8 +1306,11 @@ def _get_filters(params, srecipe):
     for key in srecipe.filters:
         # get value
         value = srecipe.filters[key]
+        # deal with list
+        if isinstance(value, list):
+            filters[key] = value
         # if this is in params set this value
-        if value in params:
+        elif value in params:
             # get values from
             user_filter = params[value]
             # deal with unset value
