@@ -1515,3 +1515,7 @@ REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
 # define the time col for raw file table
 REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
 REPROCESS_TIMECOL.value = 'KW_ACQTIME'
+
+# =============================================================================
+#  End of configuration file
+# =============================================================================
