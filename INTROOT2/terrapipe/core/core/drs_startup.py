@@ -17,7 +17,6 @@ import sys
 import os
 import shutil
 from collections import OrderedDict
-from bdb import BdbQuit
 
 from terrapipe import plotting
 from terrapipe.locale import drs_text
