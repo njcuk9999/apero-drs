@@ -65,7 +65,7 @@ def drs_infile_id(params, given_drs_file):
     fileset = list(given_drs_file.fileset)
     # set found to False
     found = False
-    kind = None
+    kind = given_drs_file.completecopy(given_drs_file)
     # loop around files
     for drs_file in fileset:
         # copy info from given_drs_file into drs_file
