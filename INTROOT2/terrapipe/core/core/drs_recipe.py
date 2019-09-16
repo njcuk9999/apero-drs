@@ -1417,6 +1417,10 @@ def find_run_files(params, recipe, table, args, filters=None,
 
     # loop around arguments
     for argname in args:
+        # log file processing
+        # TODO: remove?
+        pargs = [argname]
+        WLOG(params, '', 'Argname = {0}'.format(*pargs))
         # get arg instance
         arg = args[argname]
         # if check required see if parameter is required
@@ -1451,8 +1455,6 @@ def find_run_files(params, recipe, table, args, filters=None,
             valid_num = 0
             # loop around files
             for filename in files:
-                # log file processing
-                drs_log.Printer(None, None, '\t\t{0}'.format(filename))
                 # get infile instance (i.e. raw or pp file) and assign the
                 #   correct outfile (from filename)
                 out = drsfile.get_infile_outfilename(params, recipe, filename,
@@ -1466,8 +1468,6 @@ def find_run_files(params, recipe, table, args, filters=None,
                 else:
                     valid_infiles.append(None)
                     valid_outfiles.append(None)
-            # clear printer
-            drs_log.Printer(None, None, '')
             # debug log the number of valid files
             WLOG(params, 'debug', TextEntry('90-503-00014', args=[valid_num]))
             # add outfiles to table
@@ -1476,8 +1476,6 @@ def find_run_files(params, recipe, table, args, filters=None,
             for it in range(len(table)):
                 # get infile
                 infile = valid_infiles[it]
-                # log file processing
-                drs_log.Printer(None, None, '\t\t{0}'.format(infile.filename))
                 # skip those that were invalid
                 if infile is None:
                     continue
@@ -1495,8 +1493,6 @@ def find_run_files(params, recipe, table, args, filters=None,
                         filedict[argname][drsfile.name].append(table[it])
                     else:
                         filedict[argname]['all'].append(table[it])
-            # clear printer
-            drs_log.Printer(None, None, '')
     outfiledict = OrderedDict()
     # convert each appended table to a single table per file
     for argname in filedict:
@@ -1510,8 +1506,9 @@ def find_run_files(params, recipe, table, args, filters=None,
         # loop around drs files
         for name in filedict[argname]:
             # log file processing
+            # TODO: remove?
             pargs = [argname, name]
-            drs_log.Printer(None, None, '\t\t{0} {1}'.format(*pargs))
+            WLOG(params, '', 'Argname = {0} filedict = {1}'.format(*pargs))
             # get table list
             tablelist = filedict[argname][name]
             # deal with empty list
@@ -1524,8 +1521,6 @@ def find_run_files(params, recipe, table, args, filters=None,
             else:
                 # vstack all rows
                 outfiledict[argname][name] = vstack(tablelist)
-        # clear printer
-        drs_log.Printer(None, None, '')
     # return filedict
     return outfiledict
 
