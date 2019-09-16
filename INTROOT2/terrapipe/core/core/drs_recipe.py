@@ -539,6 +539,8 @@ class DrsRecipe(object):
         runargs = group_run_files(params, self, argdict, kwargdict)
         # now we have the runargs we can convert to a runlist
         runlist = convert_to_command(self, runargs)
+        # clear printer
+        drs_log.Printer(None, None, '')
         # return the runlist
         return runlist
 
@@ -1449,6 +1451,8 @@ def find_run_files(params, recipe, table, args, filters=None,
             valid_num = 0
             # loop around files
             for filename in files:
+                # log file processing
+                drs_log.Printer(None, None, '\t\t{0}'.format(filename))
                 # get infile instance (i.e. raw or pp file) and assign the
                 #   correct outfile (from filename)
                 out = drsfile.get_infile_outfilename(params, recipe, filename,
