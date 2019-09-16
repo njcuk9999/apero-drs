@@ -1304,52 +1304,6 @@ def _check_if_directory(argname, files):
     else:
         return True, files, []
 
-#
-# def _check_file_extension(recipe, argname, file_instance):
-#     """
-#     If '.fits' file checks the file extension is valid.
-#
-#     :param argname: string, the argument name (for error reporting)
-#     :param filename: list of strings, the files to check
-#     :param ext: string or None, the extension to check, if None skips
-#
-#     :return cond: bool, True if extension valid
-#     :return errors: list of strings, the errors that occurred if cond=False
-#     """
-#     # extension
-#     ext = file_instance.ext
-#     # filename
-#     filename = file_instance
-#     # get drs parameters
-#     params = recipe.drs_params
-#     # check
-#     valid, msg = file_instance.has_correct_extension(filename=filename)
-#     # if valid return True and no error
-#     if valid:
-#         dargs = [argname, os.path.basename(filename)]
-#         WLOG(params, 'debug', TextEntry('90-001-00009', args=dargs),
-#              wrap=False)
-#         return True, None
-#     # if False generate error and return it
-#     else:
-#         emsg = TextEntry('09-001-00006', args=[argname, ext])
-#         return False, emsg
-#
-#
-# def _check_file_header(recipe, argname, drs_file, filename, directory):
-#     # get the input directory
-#     # noinspection PyProtectedMember
-#     inputdir = recipe._get_input_dir()
-#     # create an instance of this drs_file with the filename set
-#     file_instance = drs_file.newcopy(filename=filename, recipe=recipe)
-#     file_instance.read()
-#     # set the directory
-#     fdir = drs_argument.get_uncommon_path(directory, inputdir)
-#     file_instance.directory = fdir
-#     # -----------------------------------------------------------------
-#     # use file_instances check file header method
-#     return file_instance.check_file_header(argname=argname)
-#
 
 def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
                             alltypelist=None):
@@ -1581,6 +1535,10 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
             usedgroups = dict()
             # keep matching until condition met
             while cond:
+                # print statement
+                pmsg = '\t\tProcessing run {0}'.format(len(runs))
+                drs_log.Printer(None, None, pmsg)
+
                 # check for None
                 if rundict[arg0][drsfile] is None:
                     break
@@ -2010,9 +1968,7 @@ def _vstack_cols(params, tablelist):
             valuedict[col] = []
         # loop around elements in tablelist
         for it, table_it in enumerate(tablelist):
-            pargs = [it + 1, len(tablelist)]
-            pmsg = '\t\tProcessing Line {0} of {1}'.format(*pargs)
-            drs_log.Printer(None, None, pmsg)
+            # loop around columns and add to valudict
             for col in columns:
                 valuedict[col].append(table_it[col])
         # push into new table
