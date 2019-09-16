@@ -149,7 +149,9 @@ cal_shape_master = DrsRecipe(__INSTRUMENT__)
 cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_wave = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
+obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
+obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_template = DrsRecipe(__INSTRUMENT__,)
 
 # TODO: remove later
@@ -159,6 +161,7 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
+           obj_mk_tellu_db, obj_fit_tellu_db,
            test]
 
 # =============================================================================
@@ -644,6 +647,33 @@ obj_mk_tellu.set_kwarg(**interactive)
 obj_mk_tellu.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
+# obj_mk_tellu_db
+# -----------------------------------------------------------------------------
+obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
+obj_mk_tellu_db.shortname = 'MKTELLDB'
+obj_mk_tellu_db.instrument = __INSTRUMENT__
+obj_mk_tellu_db.outputdir = 'reduced'
+obj_mk_tellu_db.inputdir = 'reduced'
+obj_mk_tellu_db.inputtype = 'reduced'
+obj_mk_tellu_db.extension = 'fits'
+obj_mk_tellu_db.description = Help['MKTELL_DESC']
+obj_mk_tellu_db.epilog = Help['MKTELL_EXAMPLE']
+obj_mk_tellu_db.set_outputs()
+obj_mk_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
+                          helpstr=Help['FILES_HELP'])
+obj_mk_tellu_db.set_kwarg(name='--filetype', dtype=str,
+                          default_ref='MKTEMPLATE_FILETYPE',
+                          helpstr=Help['MKTEMP_FILETYPE'])
+obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
+                          default_ref='MKTEMPLATE_FIBER_TYPE',
+                          helpstr=Help['MKTEMP_FIBER'])
+obj_mk_tellu_db.set_kwarg(**add_cal)
+obj_mk_tellu_db.set_kwarg(**add_cal)
+obj_mk_tellu_db.set_kwarg(**plot)
+obj_mk_tellu_db.set_kwarg(**interactive)
+obj_mk_tellu_db.set_kwarg(**wavefile)
+
+# -----------------------------------------------------------------------------
 # obj_fit_tellu
 # -----------------------------------------------------------------------------
 obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
@@ -672,6 +702,32 @@ obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**interactive)
 obj_fit_tellu.set_kwarg(**wavefile)
 
+# -----------------------------------------------------------------------------
+# obj_fit_tellu_db
+# -----------------------------------------------------------------------------
+obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
+obj_fit_tellu_db.shortname = 'FTELLDB'
+obj_fit_tellu_db.instrument = __INSTRUMENT__
+obj_fit_tellu_db.outputdir = 'reduced'
+obj_fit_tellu_db.inputdir = 'reduced'
+obj_fit_tellu_db.inputtype = 'reduced'
+obj_fit_tellu_db.extension = 'fits'
+obj_fit_tellu_db.description = Help['MKTELL_DESC']
+obj_fit_tellu_db.epilog = Help['MKTELL_EXAMPLE']
+obj_fit_tellu_db.set_outputs()
+obj_fit_tellu_db.set_kwarg(name='-cores', dtype=int, default=1,
+                          helpstr=Help['FILES_HELP'])
+obj_fit_tellu_db.set_kwarg(name='-filetype', dtype=str,
+                          default_ref='MKTEMPLATE_FILETYPE',
+                          helpstr=Help['MKTEMP_FILETYPE'])
+obj_fit_tellu_db.set_kwarg(name='-fiber', dtype=str,
+                          default_ref='MKTEMPLATE_FIBER_TYPE',
+                          helpstr=Help['MKTEMP_FIBER'])
+obj_fit_tellu_db.set_kwarg(**add_cal)
+obj_fit_tellu_db.set_kwarg(**add_cal)
+obj_fit_tellu_db.set_kwarg(**plot)
+obj_fit_tellu_db.set_kwarg(**interactive)
+obj_fit_tellu_db.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # obj_mk_temp
