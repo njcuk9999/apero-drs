@@ -882,6 +882,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             mask = table[night_col] == nightname
             ftable = Table(table[mask])
         else:
+            nightname = 'all'
             ftable = Table(table)
         # deal with empty ftable
         if len(ftable) == 0:
