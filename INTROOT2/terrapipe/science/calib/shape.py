@@ -129,6 +129,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # storage of dark cube
     fp_cube, transforms_list, fp_dprtypes = [], [], []
     fp_darkfiles, fp_badpfiles, fp_backfiles = [], [], []
+    valid_matched_id = []
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
@@ -140,6 +141,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
         if len(fp_ids) >= min_num:
             # load this groups files into a cube
             cube = []
+            # get this groups storage
+            vdprtypes, vdarkfiles, vbadpfiles, vbackfiles = [], [], [], []
+            # loop around fp ids
             for f_it, filename in enumerate(fp_ids):
                 # log reading of data
                 wargs = [os.path.basename(filename), f_it + 1, len(fp_ids)]
@@ -157,10 +161,10 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                                correctback=False)
                 props_it, image_it = general.calibrate_ppfile(*cargs, **ckwargs)
                 # extract properties and add to lists
-                fp_dprtypes.append(props_it['DPRTYPE'])
-                fp_darkfiles.append(os.path.basename(props_it['DARKFILE']))
-                fp_badpfiles.append(os.path.basename(props_it['BADPFILE']))
-                fp_backfiles.append(os.path.basename(props_it['BACKFILE']))
+                vdprtypes.append(props_it['DPRTYPE'])
+                vdarkfiles.append(os.path.basename(props_it['DARKFILE']))
+                vbadpfiles.append(os.path.basename(props_it['BADPFILE']))
+                vbackfiles.append(os.path.basename(props_it['BACKFILE']))
                 # append to cube
                 cube.append(image_it)
             # log process
@@ -192,6 +196,12 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # append transforms to list
             for _ in fp_ids:
                 transforms_list.append(transforms)
+            # now add extract properties to main group
+            fp_dprtypes += vdprtypes
+            fp_darkfiles += vdarkfiles
+            fp_badpfiles += vbadpfiles
+            fp_backfiles += vbackfiles
+            valid_matched_id.append(matched_id[g_it])
         else:
             eargs = [g_it + 1, min_num]
             WLOG(params, '', TextEntry('40-014-00015', args=eargs))
@@ -200,6 +210,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             fp_darkfiles.append('')
             fp_badpfiles.append('')
             fp_backfiles.append('')
+            valid_matched_id.append(matched_id[g_it])
             # append transforms to list
             for _ in fp_ids:
                 transforms_list.append([np.nan] * 6)
@@ -214,7 +225,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     colnames = ['DPRTYPE', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'GROUPID',
                 'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
     values = [fp_dprtypes, fp_darkfiles, fp_badpfiles, fp_backfiles,
-              matched_id, tarrary[:, 0], tarrary[:, 1], tarrary[:, 2],
+              valid_matched_id, tarrary[:, 0], tarrary[:, 1], tarrary[:, 2],
               tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
     for c_it, col in enumerate(colnames):
         fp_table[col] = values[c_it]
