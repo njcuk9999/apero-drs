@@ -15,6 +15,7 @@ import rules:
 from __future__ import division
 import numpy as np
 import os
+import shutil
 from astropy.table import Table, vstack
 from astropy.table import TableMergeError
 from astropy.io.registry import get_formats
@@ -455,20 +456,38 @@ def write_fits_table(p, astropy_table, output_filename):
     if not os.path.exists(dir_name):
         eargs = [dir_name, func_name]
         WLOG(p, 'error', TextEntry('01-002-00016', args=eargs))
-
+    # get backup file name
+    backup_file = output_filename.replace('.fits', '.fits.back')
     # get and check for file lock file
     lock, lock_file = drs_lock.check_lock_file(p, output_filename)
+    # deal with file already existing
+    if os.path.exists(output_filename):
+        try:
+            # backup file
+            shutil.copy(output_filename, backup_file)
+            # remove file
+            os.remove(output_filename)
+        except Exception as e:
+            # close lock file
+            drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+            # log error
+            eargs = [output_filename, type(e), e, func_name]
+            WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
     # write data
     try:
-        # remove file
-        os.remove(output_filename)
         # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
         # close lock file
         drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+        # remove backup file
+        if os.path.exists(output_filename) and os.path.exists(backup_file):
+            os.remove(backup_file)
     except Exception as e:
         # close lock file
         drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+        # remove backup file
+        if os.path.exists(output_filename) and os.path.exists(backup_file):
+            os.remove(backup_file)
         # log error
         eargs = [output_filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
