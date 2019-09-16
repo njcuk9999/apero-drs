@@ -33,11 +33,12 @@ drs_recipe = drs_recipe.DrsRecipe
 # Below one must define all recipes and put into the "recipes" list
 test = drs_recipe(__INSTRUMENT__)
 drs_changelog = drs_recipe(__INSTRUMENT__)
+listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 reprocess = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, reprocess]
+recipes = [test, drs_changelog, reset, reprocess, listing]
 
 # =============================================================================
 # Recipe definitions
@@ -129,3 +130,17 @@ reprocess.set_arg(pos=1, name='runfile', dtype=str,
                   helpstr=Help['REPROCESS_RUNFILE_HELP'])
 reprocess.set_kwarg(name='--nightname', dtype=str, default='None',
                     helpstr=Help['REPROCESS_NIGHTNAME_HELP'])
+
+# -----------------------------------------------------------------------------
+# listing.py
+# -----------------------------------------------------------------------------
+listing.name = 'listing.py'
+listing.instrument = __INSTRUMENT__
+listing.description = 'None'
+listing.set_arg(pos=0, name='instrument', dtype='options',
+                  helpstr='None', options=['SPIROU', 'NIRPS'])
+listing.set_kwarg(name='--nightname', dtype=str, default='',
+                    helpstr='None')
+listing.set_kwarg(name='--kind', dtype=str, default='raw',
+                    options=['raw', 'tmp', 'red'],
+                    helpstr='None')
