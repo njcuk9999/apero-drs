@@ -1417,10 +1417,6 @@ def find_run_files(params, recipe, table, args, filters=None,
 
     # loop around arguments
     for argname in args:
-        # log file processing
-        # TODO: remove?
-        pargs = [argname]
-        WLOG(params, '', 'Argname = {0}'.format(*pargs))
         # get arg instance
         arg = args[argname]
         # if check required see if parameter is required
@@ -1505,12 +1501,15 @@ def find_run_files(params, recipe, table, args, filters=None,
             outfiledict[argname] = OrderedDict()
         # loop around drs files
         for name in filedict[argname]:
+            # get table list
+            tablelist = filedict[argname][name]
+
             # log file processing
             # TODO: remove?
             pargs = [argname, name]
             WLOG(params, '', 'Argname = {0} filedict = {1}'.format(*pargs))
-            # get table list
-            tablelist = filedict[argname][name]
+            print(len(tablelist))
+
             # deal with empty list
             if len(tablelist) == 0:
                 # append a None
