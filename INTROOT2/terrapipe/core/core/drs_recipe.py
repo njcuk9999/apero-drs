@@ -1503,23 +1503,8 @@ def find_run_files(params, recipe, table, args, filters=None,
         for name in filedict[argname]:
             # get table list
             tablelist = filedict[argname][name]
-
-            # log file processing
-            # TODO: remove?
-            pargs = [argname, name]
-            WLOG(params, '', 'Argname = {0} filedict = {1}'.format(*pargs))
-            print(len(tablelist))
-
-            # deal with empty list
-            if len(tablelist) == 0:
-                # append a None
-                outfiledict[argname][name] = None
-            elif len(tablelist) == 1:
-                # append the single row
-                outfiledict[argname][name] = tablelist[0]
-            else:
-                # vstack all rows
-                outfiledict[argname][name] = vstack(tablelist)
+            # deal with combining tablelist
+            outfiledict[argname][name] = _vstack_cols(params, tablelist)
     # return filedict
     return outfiledict
 
@@ -1661,7 +1646,6 @@ def convert_to_command(self, runargs):
         outputs.append(command.strip())
     # return outputs
     return outputs
-
 
 
 # =============================================================================
@@ -2007,6 +1991,36 @@ def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
     # ----------------------------------------------------------------------
     # return files for min position
     return list(table_s['OUT'][mask_s])
+
+
+def _vstack_cols(params, tablelist):
+    # deal with empty list
+    if len(tablelist) == 0:
+        # append a None
+        return None
+    elif len(tablelist) == 1:
+        # append the single row
+        return  tablelist[0]
+    else:
+        # get column names
+        columns = tablelist[0].colnames
+        # get value dictionary
+        valuedict = dict()
+        for col in columns:
+            valuedict[col] = []
+        # loop around elements in tablelist
+        for it, table_it in enumerate(tablelist):
+            pargs = [it + 1, len(tablelist)]
+            pmsg = '\t\tProcessing Line {0} of {1}'.format(*pargs)
+            drs_log.Printer(None, None, pmsg)
+            for col in columns:
+                valuedict[col].append(table_it[col])
+        # push into new table
+        newtable = Table()
+        for col in columns:
+            newtable[col] = valuedict[col]
+        # vstack all rows
+        return newtable
 
 
 # =============================================================================
