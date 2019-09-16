@@ -776,7 +776,7 @@ def main(instrument=None):
     # load data
     datastore = LoadData(instrument)
     # Log that we are running indexing
-    WLOG(datastore.params, '', 'Running file explorer application')
+    WLOG(params, '', 'Running file explorer application')
     # Main code here
     app = App(datastore=datastore)
     app.geometry("1024x768")
