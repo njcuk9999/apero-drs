@@ -460,6 +460,8 @@ def write_fits_table(p, astropy_table, output_filename):
     lock, lock_file = drs_lock.check_lock_file(p, output_filename)
     # write data
     try:
+        # remove file
+        os.remove(output_filename)
         # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
         # close lock file
