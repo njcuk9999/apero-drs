@@ -118,9 +118,9 @@ def __main__(recipe, params):
     # get the object name
     objname = params['INPUTS']['OBJNAME']
     # get the filetype (this is overwritten from user inputs if defined)
-    filetype = params['MKTEMPLATE_FILETYPE']
+    filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
-    fiber = params['MKTEMPLATE_FIBER_TYPE']
+    fiber = params['INPUTS']['FIBER']
     # ----------------------------------------------------------------------
     # get objects that match this object name
     object_filenames = drs_fits.find_files(params, kind='red', fiber=fiber,
