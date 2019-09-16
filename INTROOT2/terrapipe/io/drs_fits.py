@@ -464,7 +464,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # ge the index file col name
-    filecol = params['dRS_INDEX_FILENAME']
+    filecol = params['DRS_INDEX_FILENAME']
     # ----------------------------------------------------------------------
     # deal with setting path
     if path is not None:
@@ -568,7 +568,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
     return valid_files
 
 
-def get_index_files(params, path=None):
+def get_index_files(params, path=None, required=True):
     """
     Get index files in path (or sub-directory of path)
         if path is "None" params['INPATH'] is used
@@ -598,7 +598,7 @@ def get_index_files(params, path=None):
     # log number of index files found
     if len(index_files) > 0:
         WLOG(params, '', TextEntry('40-004-00003', args=[len(index_files)]))
-    else:
+    elif required:
         eargs = [path, func_name]
         WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
     # return the index files
