@@ -973,10 +973,10 @@ def _index_pp(params, recipe):
     icolumns = pconstant.RAW_OUTPUT_KEYS()
     # ------------------------------------------------------------------------
     # index files
-    istore = _indexing(params, outputs, icolumns, abspath)
+    istore = indexing(params, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    _save_index_file(params, istore, abspath)
+    save_index_file(params, istore, abspath)
 
 
 def _index_outputs(params, recipe):
@@ -1012,13 +1012,13 @@ def _index_outputs(params, recipe):
     icolumns = pconstant.REDUC_OUTPUT_KEYS()
     # ------------------------------------------------------------------------
     # index files
-    istore = _indexing(params, outputs, icolumns, abspath)
+    istore = indexing(params, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    _save_index_file(params, istore, abspath)
+    save_index_file(params, istore, abspath)
 
 
-def _indexing(params, outputs, icolumns, abspath):
+def indexing(params, outputs, icolumns, abspath):
     """
     Adds the "outputs" to index file at "abspath"
 
@@ -1109,7 +1109,7 @@ def _indexing(params, outputs, icolumns, abspath):
     return istore
 
 
-def _save_index_file(p, istore, abspath):
+def save_index_file(p, istore, abspath):
     """
     Saves the index file (from input "istore") at location "abspath"
 
