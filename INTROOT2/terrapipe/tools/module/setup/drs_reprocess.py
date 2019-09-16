@@ -518,6 +518,61 @@ def display_errors(params, outlist):
             WLOG(params, '', params['DRS_HEADER'], colour='red')
     WLOG(params, '', '')
 
+
+def generate_run_table(params, recipe, *args, **kwargs):
+    func_name = __NAME__ + '.generate_run_table()'
+    # set length initially to None
+    length = None
+    # loop around arguments and identify list of arguments
+    for it, arg in enumerate(args):
+        # if we have a list it needs to be the same length as all other list
+        # arguments
+        if isinstance(arg, list):
+            if length is None:
+                length = len(arg)
+            elif len(arg) != length:
+                eargs = ['Arg {0}'.format(it), length, func_name]
+                WLOG(params, 'error', TextEntry('00-503-00010', args=eargs))
+    # loop around keyword arguments and identify list of arguments
+    for kwarg in kwargs:
+        # if we have a list it needs to be the same length as all other list
+        # arguments
+        if isinstance(kwargs[kwarg], list):
+            if length is None:
+                length = len(kwargs[kwarg])
+            elif len(kwargs[kwarg]) != length:
+                # log error we need all lists to have the same number of
+                #    elements
+                eargs = [kwarg,length, func_name]
+                WLOG(params, 'error', TextEntry('00-503-00010', args=eargs))
+    # length could still be None should be 1
+    if length is None:
+        length = 1
+    # now we have checked arguments can generate runs
+    run_table = OrderedDict()
+    # loop around rows up to length
+    for row in range(length):
+        # get base command
+        command = '{0}'.format(recipe.name)
+        # loop around args
+        for arg in args:
+            if isinstance(arg, list):
+                command += ' {0}'.format(arg[row])
+            else:
+                command += ' {0}'.format(arg)
+        # loop around kwargs
+        for kwarg in kwargs:
+            if isinstance(kwargs[kwarg], list):
+                command += ' {0}={1}'.format(kwarg, kwargs[kwarg][row])
+            else:
+                command += ' {0}={1}'.format(kwarg, kwargs[kwarg])
+        # add to run table
+        run_table[row] = command
+    # return run table
+    return run_table
+
+
+
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
