@@ -171,8 +171,6 @@ def __main__(recipe, params):
     # step 3: Run mk_obj_template on each telluric star obj name
     # -------------------------------------------------------------------------
     # arguments are: object names
-    # TODO: We need to filter by those that exist or allow obj_mk_template to
-    # TODO:   skip if missing
     gargs = [objnames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTEMP'
