@@ -1458,7 +1458,7 @@ def find_run_files(params, recipe, table, args, filters=None,
             # get table list
             tablelist = filedict[argname][name]
             # deal with combining tablelist
-            outfiledict[argname][name] = _vstack_cols(params, tablelist)
+            outfiledict[argname][name] = vstack_cols(params, tablelist)
     # return filedict
     return outfiledict
 
@@ -1951,7 +1951,7 @@ def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
     return list(table_s['OUT'][mask_s])
 
 
-def _vstack_cols(params, tablelist):
+def vstack_cols(params, tablelist):
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -1970,7 +1970,7 @@ def _vstack_cols(params, tablelist):
         for it, table_it in enumerate(tablelist):
             # loop around columns and add to valudict
             for col in columns:
-                valuedict[col].append(table_it[col])
+                valuedict[col] += list(table_it[col])
         # push into new table
         newtable = Table()
         for col in columns:
