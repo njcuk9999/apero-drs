@@ -34,7 +34,7 @@ gen_abso_pca_calc = general.gen_abso_pca_calc
 
 get_blacklist = general.get_blacklist
 
-get_objects = general.get_objects
+get_non_tellu_objs = general.get_non_tellu_objs
 
 get_trans_files = general.get_transmission_files
 
