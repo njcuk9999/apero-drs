@@ -17,7 +17,7 @@ __all__ = [# input keys
            'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
-           'KW_EXT_TYPE', 'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
+           'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
            'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
            'KW_MID_OBS_TIME_METHOD',
            # calibration file header keys
@@ -276,9 +276,6 @@ KW_FIBER = Keyword('KW_FIBER', key='', dtype=str, source=__NAME__)
 # -----------------------------------------------------------------------------
 # the output key for drs outputs
 KW_OUTPUT = Keyword('KW_OUTPUT', key='', dtype=str, source=__NAME__)
-# the extraction type of an output (KW_DPRTYPE)
-KW_EXT_TYPE = Keyword('KW_EXT_TYPE', key='', dtype=str, source=__NAME__)
-
 
 # -----------------------------------------------------------------------------
 # Define qc variables
