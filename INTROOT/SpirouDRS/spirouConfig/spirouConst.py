@@ -24,7 +24,7 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.5.070'
+__version__ = '0.5.072'
 # Define Authors
 # noinspection PyPep8
 __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
@@ -32,7 +32,7 @@ __author__ = ('N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, '
 # Define release type
 __release__ = 'beta pre-release'
 # Define date of last edit
-__date__ = '2019-09-131'
+__date__ = '2019-09-17'
 
 
 # =============================================================================

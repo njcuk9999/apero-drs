@@ -2,6 +2,107 @@ Changelog
 =========
 
 
+0.5.072 (2019-09-17)
+--------------------
+- Tools.bin.reset.py - remove instrument re-definition (now done in
+  core.setup) [Neil Cook]
+- Science.telluric.general.py - change KW_DPRTYPES --> KW_DPRTYPE. [Neil
+  Cook]
+- Science.calib.shape.py - add filename and basename (just for
+  printing/logging) [Neil Cook]
+- Recipes.spirou.obj_fit_tellu_db_spirou.py - fix inputs. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - fix kwargs --objname.
+  [Neil Cook]
+- Core.core.drs_argument.py - checks for arg/kwarg/special arg on naming
+  - kwarg and special should have '-' positional should not. [Neil Cook]
+- Science.core.shape.py - correct type fpfile_it.image -->
+  fpfile_it.data. [Neil Cook]
+- Correct vstack_cols (needs to handle single row as well as astropy
+  table) [Neil Cook]
+- Science.telluric.general.py - change function get_objects to
+  get_non_tellu_objs and generalise. [Neil Cook]
+- Recipes.spirou.obj_fit_tellu_db_spirou.py - get dprtypes and robjnames
+  in main code. [Neil Cook]
+- Science.calib.shape.py - calibrate after combining group of FPs. [Neil
+  Cook]
+- Core.insturments.spirou.recipe_definitions.py - change default to
+  None. [Neil Cook]
+- Science.telluric.general.py - add function get_objects to get non
+  telluric objects. [Neil Cook]
+- Recipe.spirou.obj_fit_tellu_db_spirou.py - first commit (mostly just
+  copy of obj_mk_tellu_db_spirou) but does fit_tellu, mk_template,
+  fit_tellu on all objects except telluric stars) [Neil Cook]
+- Recipe.spirou.obj_mk_template_spirou.py - add ending script when files
+  are skipped. [Neil Cook]
+- Recipes.spirou.obj_mk_tellu_db_spirou.py - remove todo (dealt with
+  internally) [Neil Cook]
+- Update the language database. [Neil Cook]
+- Core.io.drs_table.py - lock the index file when reading (and don't try
+  to open when closing) [Neil Cook]
+- Io.drs_fits.py - update find_files to allow returning of a astropy
+  table for all files found (a stack of the valid entries in the index
+  files) [Neil Cook]
+- Core.instruments.spirou.recipe_deinfitoins.py - fix help files + add
+  obj_fit_tellu_db + add options to feiltypes and fiber arguments. [Neil
+  Cook]
+- Cpre.instruments.default.pseudo_const.py - remove EXT_TYPE (and add
+  DPRTYPE) to list of indexing columns. [Neil Cook]
+- Core.instruments.*.default_* - add telluric db keys. [Neil Cook]
+- Core.core.drs_recipe.py - make vstack a public function and change how
+  coluns are added (via list comprehension) [Neil Cook]
+
+
+0.5.071 (2019-09-16)
+--------------------
+- Tools.module.setup.drs_reprocess.py - add generate_run_table to
+  generate run_table from a set of args/kwargs. [Neil Cook]
+- Tools.module.listing.general.py - functions for listing.py. [Neil
+  Cook]
+- Tools.bin.listing.py - first commit - code to re-index directories.
+  [Neil Cook]
+- Recipes.spirou.obj_mk_template_spirou.py - correct typo (get filetype
+  and fiber from inputs) [Neil Cook]
+- Recipe.spirou.obj_mk_tellu_db_spirou.py - first commit. [Neil Cook]
+- Io.drs_fits.py - correct typo and add required switch to
+  get_index_files. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.recipe_defintions.py - add mk_tellu_db and
+  obj_fit_tellu_db. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add listing recipe.
+  [Neil Cook]
+- Core.core.drs_startup.py - make indexing and save_index_file non
+  private functions. [Neil Cook]
+- Core.core.drs_recipe.py - test log message in group_run_files + remove
+  old olg test message. [Neil Cook]
+- Core.core.drs_recipe.py - change how we stack tablelist. [Neil Cook]
+- Core.core.drs_recipe.py - test wlog statements. [Neil Cook]
+- Core.core.drs_recipe.py - test wlog statements. [Neil Cook]
+- Core.core.drs_recipe.py - add print statements. [Neil Cook]
+- Tools.module.setup.drs_reprocess.py - add nightname for all (for when
+  ftable is empty) [Neil Cook]
+- Tools.module.listing.file_explorer.py - change where params comes
+  from. [Neil Cook]
+- Io.drs_table.py - try to fix index file error. [Neil Cook]
+- Core.core.drs_startup.py - remove unused import. [Neil Cook]
+- Core.core.drs_recipe.py - clear printer after printing filenames.
+  [Neil Cook]
+- Science.preprocessing.identification.py - need kind to be set (even if
+  file not found) for error message. [Neil Cook]
+- Science.calib.shape.py - need to only copy extract parameters for
+  those that are not skiped. [Neil Cook]
+- Io.drs_table.py - remove table before writing it (to try to get rid of
+  "file exists" error) [Neil Cook]
+- Add "runs" folder to data. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+- Science.extract.berv.py - fix bug that berv will be set to NaN if
+  coming from header (need to check both key and output[0] for kwargs)
+  [Neil Cook]
+- Core.instruments.default.pseudo_const.py - fix bug that p is locked
+  (so set manually) [Neil Cook]
+- Drs_changelog.py - fix bug in updating version/date. [Neil Cook]
+
+
 0.5.070 (2019-09-13)
 --------------------
 - Tools.bin.reprocess.py - change how master table is defined (keys
