@@ -107,10 +107,12 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # get the index file col name
     filecol = params['DRS_INDEX_FILENAME']
-    # get the dprtype required
+    # get the required dprtypes
     dprtypes = params['INPUTS']['DPRTYPE']
-    # get the required object name
+    # get the required object names
     robjnames = params['INPUTS']['OBJNAME']
+    if robjnames == 'None':
+        robjnames = None
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
     params.set('DEBUG', False)
