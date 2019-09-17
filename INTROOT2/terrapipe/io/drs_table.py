@@ -569,6 +569,14 @@ def deal_with_missing_end_card(p, filename, e, func_name):
 
 
 def vstack_cols(params, tablelist):
+    """
+    Take a list of Astropy Tables and stack into single Astropy Table
+    Note same as core.core.drs_recipe.vstack_cols
+
+    :param params:
+    :param tablelist:
+    :return:
+    """
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -587,7 +595,13 @@ def vstack_cols(params, tablelist):
         for it, table_it in enumerate(tablelist):
             # loop around columns and add to valudict
             for col in columns:
-                valuedict[col] += list(table_it[col])
+                # must catch instances of astropy.table.row.Row as
+                #   they are not a list
+                if isinstance(table_it, Table.Row):
+                    valuedict[col] += [table_it[col]]
+                # else we assume they are astropy.table.Table
+                else:
+                    valuedict[col] += list(table_it[col])
         # push into new table
         newtable = Table()
         for col in columns:
