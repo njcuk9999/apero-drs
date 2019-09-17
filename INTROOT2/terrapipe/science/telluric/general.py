@@ -142,18 +142,33 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     return image1, nprops
 
 
-def get_objects(params, fiber, filetype):
-    # get the dprtype required
-    dprtypes = params['INPUTS']['DPRTYPE'].split(',')
-    # get the required object name
-    robjnames = params['INPUTS']['OBJNAME'].split(',')
+def get_non_tellu_objs(params, fiber, filetype=None, dprtypes=None,
+                       robjnames=None):
+    """
+    Get the objects of "filetype" and "
+    :param params:
+    :param fiber:
+    :param filetype:
+    :return:
+    """
     # get the telluric star names (we don't want to process these)
     objnames, _ = get_whitelist(params)
     objnames = list(objnames)
+    # deal with filetype being string
+    if isinstance(filetype, str):
+        filetype = filetype.split(',')
+    # deal with dprtypes being string
+    if isinstance(dprtypes, str):
+        dprtypes = dprtypes.split(',')
+    # construct kwargs
+    fkwargs = dict()
+    if filetype is not None:
+        fkwargs['KW_OUTPUT'] = filetype
+    if dprtypes is not None:
+        fkwargs['KW_DPRTYPES'] = dprtypes
     # # find files
     out = drs_fits.find_files(params, kind='red', return_table=True,
-                              fiber=fiber, KW_OUTPUT=filetype,
-                              KW_DPRTYPE=dprtypes)
+                              fiber=fiber, **fkwargs)
     obj_filenames, obj_table = out
     # filter out telluric stars
     obj_stars, obj_names = [], []
@@ -162,7 +177,7 @@ def get_objects(params, fiber, filetype):
         # get object name
         iobjname = obj_table['KW_OBJNAME'][row]
         # if required object name is set
-        if 'None' not in robjnames:
+        if robjnames is not None:
             if iobjname in robjnames:
                 obj_stars.append(obj_filenames[row])
                 if iobjname not in obj_names:
