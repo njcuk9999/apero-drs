@@ -407,6 +407,8 @@ def read_fits_table(p, filename, return_dict=False):
     :rtype: astropy.table.Table | dict
     """
     func_name = __NAME__ + '.read_fits_table()'
+    # get and check for file lock file
+    lock, lock_file = drs_lock.check_lock_file(p, filename)
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
@@ -415,11 +417,19 @@ def read_fits_table(p, filename, return_dict=False):
     try:
         astropy_table = Table.read(filename)
     except OSError as e:
+        # close lock file
+        drs_lock.close_lock_file(p, lock, lock_file, filename)
+        # try to deal with missing card issue
         astropy_table = deal_with_missing_end_card(p, filename, e, func_name)
     except Exception as e:
+        # close lock file
+        drs_lock.close_lock_file(p, lock, lock_file, filename)
+        # display error
         eargs = [filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00015', args=eargs))
         astropy_table = None
+    # close lock file
+    drs_lock.close_lock_file(p, lock, lock_file, filename)
     # return dict if return_dict is True
     if return_dict:
         # set up dictionary for storage
@@ -556,6 +566,34 @@ def deal_with_missing_end_card(p, filename, e, func_name):
     astropy_table.write(filename, format='fits', overwrite=True)
     # return table
     return astropy_table
+
+
+def vstack_cols(params, tablelist):
+    # deal with empty list
+    if len(tablelist) == 0:
+        # append a None
+        return None
+    elif len(tablelist) == 1:
+        # append the single row
+        return  tablelist[0]
+    else:
+        # get column names
+        columns = tablelist[0].colnames
+        # get value dictionary
+        valuedict = dict()
+        for col in columns:
+            valuedict[col] = []
+        # loop around elements in tablelist
+        for it, table_it in enumerate(tablelist):
+            # loop around columns and add to valudict
+            for col in columns:
+                valuedict[col] += list(table_it[col])
+        # push into new table
+        newtable = Table()
+        for col in columns:
+            newtable[col] = valuedict[col]
+        # vstack all rows
+        return newtable
 
 
 # =============================================================================
