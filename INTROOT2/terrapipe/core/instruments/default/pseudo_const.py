@@ -137,9 +137,8 @@ class PseudoConstants:
         output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
                        'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
                        'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
-                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_EXT_TYPE',
-                       'KW_CMPLTEXP', 'KW_NEXP', 'KW_VERSION',
-                       'KW_PPVERSION']
+                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
+                       'KW_VERSION', 'KW_PPVERSION']
         # return output_keys
         return output_keys
 
@@ -157,7 +156,7 @@ class PseudoConstants:
     def REDUC_OUTPUT_KEYS(self):
         # define selected keys
         output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
-                       'KW_OBJNAME', 'KW_OUTPUT', 'KW_EXT_TYPE',
+                       'KW_OBJNAME', 'KW_OUTPUT', 'KW_DPRTYPE',
                        'KW_VERSION']
         # return these keys
         return output_keys
@@ -166,7 +165,7 @@ class PseudoConstants:
     def GEN_OUTPUT_COLUMNS(self):
         output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
                        'KW_OBJNAME', 'KW_OBSTYPE', 'KW_EXPTIME',
-                       'KW_OUTPUT', 'KW_EXT_TYPE', 'KW_VERSION']
+                       'KW_OUTPUT', 'KW_DPRTYPE', 'KW_VERSION']
         return output_keys
 
     # =========================================================================
