@@ -107,13 +107,18 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # get the index file col name
     filecol = params['DRS_INDEX_FILENAME']
+    # get the dprtype required
+    dprtypes = params['INPUTS']['DPRTYPE']
+    # get the required object name
+    robjnames = params['INPUTS']['OBJNAME']
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
     params.set('DEBUG', False)
     params.set('CORES', params['INPUTS']['CORES'])
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    obj_stars, obj_names = telluric.get_objects(params, fiber, filetype)
+    gargs = [fiber, filetype, dprtypes, robjnames]
+    obj_stars, obj_names = telluric.get_non_tellu_objs(params, *gargs)
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, obj_basenames = [], []
