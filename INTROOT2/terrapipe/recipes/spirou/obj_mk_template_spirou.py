@@ -130,8 +130,7 @@ def __main__(recipe, params):
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
         WLOG(params, 'warning', TextEntry('10-019-00005', args=wargs))
-        # TODO: Activate return
-        # return core.return_locals(params, locals())
+        return core.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Get filetype definition
     infiletype = core.get_file_definition(filetype, params['INSTRUMENT'],
@@ -161,9 +160,7 @@ def __main__(recipe, params):
     cprops = telluric.make_template_cubes(params, recipe, *cargs)
     # deal with no good files
     if cprops['BIG_CUBE_MED'] is None:
-        # TODO: Activate return
-        # return core.return_locals(params, locals())
-        pass
+        return core.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
