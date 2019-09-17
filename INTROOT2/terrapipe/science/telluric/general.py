@@ -165,7 +165,7 @@ def get_non_tellu_objs(params, fiber, filetype=None, dprtypes=None,
     if filetype is not None:
         fkwargs['KW_OUTPUT'] = filetype
     if dprtypes is not None:
-        fkwargs['KW_DPRTYPES'] = dprtypes
+        fkwargs['KW_DPRTYPE'] = dprtypes
     # # find files
     out = drs_fits.find_files(params, kind='red', return_table=True,
                               fiber=fiber, **fkwargs)
