@@ -155,7 +155,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
                 fpfile_it.read()
                 # append to cube
-                cube.append(fpfile_it.image)
+                cube.append(fpfile_it.data)
                 vheaders.append(fpfile_it.header)
             # log process
             WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
