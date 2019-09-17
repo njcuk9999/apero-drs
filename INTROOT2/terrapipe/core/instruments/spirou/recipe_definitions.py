@@ -725,7 +725,7 @@ obj_fit_tellu_db.set_kwarg(name='--filetype', dtype=str,
 obj_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
                           default_ref='TELLURIC_FIBER_TYPE',
                           helpstr=Help['FTELLUDB_FIBER'])
-obj_fit_tellu_db.set_kwarg(name='objname', dtype=str, default=None,
+obj_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
                           helpstr=Help['FTELLUDB_OBJNAME'])
 obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
                           default_ref='TELLURIC_DPRTYPES',
