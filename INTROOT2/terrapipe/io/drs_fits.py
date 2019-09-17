@@ -428,7 +428,7 @@ def write(params, filename, data, header, datatype, dtype=None, func=None):
 # Define search functions
 # =============================================================================
 def find_files(params, kind=None, path=None, logic='and', fiber=None,
-               **kwargs):
+               return_table=False, **kwargs):
     """
     Find files using kwargs (using index files located in 'kind' or 'path')
 
@@ -463,7 +463,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
     # ----------------------------------------------------------------------
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
-    # ge the index file col name
+    # get the index file col name
     filecol = params['DRS_INDEX_FILENAME']
     # ----------------------------------------------------------------------
     # deal with setting path
@@ -497,6 +497,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
     # ----------------------------------------------------------------------
     # valid files storage
     valid_files = []
+    table_list = []
     # filters added string
     fstring = ''
     # ----------------------------------------------------------------------
@@ -543,10 +544,13 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         # get files for those that remain
         masked_files = index[filecol][mask]
         # ------------------------------------------------------------------
+        masked_index = index[mask]
+        # new mask for index files
+        mask1 = np.zeros(len(masked_files), dtype=bool)
         # check that files exist
         # loop around masked files
-        for filename in masked_files:
-            # ------------------------------------------------------------------
+        for row, filename in enumerate(masked_files):
+            # --------------------------------------------------------------
             # deal with fiber
             if fiber is not None:
                 if '_{0}'.format(fiber) not in filename:
@@ -556,16 +560,27 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
             # check that file exists
             if not os.path.exists(absfilename):
                 continue
+            # deal with returning index
+            mask1[row] = True
             # append to storage
             if absfilename not in valid_files:
                 valid_files.append(absfilename)
+        # ------------------------------------------------------------------
+        # append to table list
+        if return_table:
+            table_list.append(masked_index[mask1])
     # ----------------------------------------------------------------------
     # log found
     wargs = [len(valid_files), fstring]
     WLOG(params, '', TextEntry('40-004-00004', args=wargs))
     # ----------------------------------------------------------------------
-    # return full list
-    return valid_files
+    # deal with table list
+    if return_table:
+        indextable = drs_table.vstack_cols(params, table_list)
+        return valid_files, indextable
+    else:
+        # return full list
+        return valid_files
 
 
 def get_index_files(params, path=None, required=True):
