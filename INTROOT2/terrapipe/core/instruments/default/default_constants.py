@@ -164,7 +164,8 @@ __all__ = [
     'FTELLU_LAMBDA_MAX', 'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS',
     'FTELLU_FIT_RECON_LIMIT',
     # make template constants
-    'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE', 'MKTEMPLATE_SNR_ORDER',
+    'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE', 'TELLURIC_DPRTYPES',
+    'MKTEMPLATE_SNR_ORDER',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
@@ -1567,12 +1568,17 @@ FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
 # =============================================================================
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
-MKTEMPLATE_FILETYPE = Const('MKTEMPLATE_FILETYPE', value=None, dtype=str,
+TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
                             source=__NAME__)
 
 # the fiber required for input template files
-MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
+TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None, dtype=str,
                               source=__NAME__)
+
+# the dprtypes (i.e. OBJ_DARK) to be used in the telluric recipes, should be
+#    a string or a string list (i.e. dprtypes separated by commas)
+TELLURIC_DPRTYPES = Const('TELLURIC_DPRTYPES', value=None, dtype=str,
+                          source=__NAME__)
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,

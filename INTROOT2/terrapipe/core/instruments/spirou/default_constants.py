@@ -1441,12 +1441,17 @@ FTELLU_FIT_RECON_LIMIT.value = -0.5
 # =============================================================================
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
-MKTEMPLATE_FILETYPE = MKTEMPLATE_FILETYPE.copy(__NAME__)
-MKTEMPLATE_FILETYPE.value = 'EXT_E2DS_FF'
+TELLURIC_FILETYPE = TELLURIC_FILETYPE.copy(__NAME__)
+TELLURIC_FILETYPE.value = 'EXT_E2DS_FF'
 
 # the fiber required for input template files
-MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
-MKTEMPLATE_FIBER_TYPE.value = 'AB'
+TELLURIC_FIBER_TYPE = TELLURIC_FIBER_TYPE.copy(__NAME__)
+TELLURIC_FIBER_TYPE.value = 'AB'
+
+# the dprtypes (i.e. OBJ_DARK) to be used in the telluric recipes, should be
+#    a string or a string list (i.e. dprtypes separated by commas)
+TELLURIC_DPRTYPES = TELLURIC_DPRTYPES.copy(__NAME__)
+TELLURIC_DPRTYPES.value = 'OBJ_FP,OBJ_DARK'
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)

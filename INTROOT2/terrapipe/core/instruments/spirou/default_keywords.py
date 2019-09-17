@@ -229,8 +229,6 @@ KW_FIBER.set(key='FIBER', comment='The fiber name')
 # -----------------------------------------------------------------------------
 KW_OUTPUT = KW_OUTPUT.copy(__NAME__)
 KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
-KW_EXT_TYPE = KW_EXT_TYPE.copy(__NAME__)
-KW_EXT_TYPE.set(key='DRS_EOUT', comment='DRS Extraction input DPRTYPE')
 
 # -----------------------------------------------------------------------------
 # Define qc variables
