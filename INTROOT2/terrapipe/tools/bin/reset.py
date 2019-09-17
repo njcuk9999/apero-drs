@@ -67,8 +67,6 @@ def main(instrument=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
-    # update instrument
-    __INSTRUMENT__ = recipe.instrument
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
