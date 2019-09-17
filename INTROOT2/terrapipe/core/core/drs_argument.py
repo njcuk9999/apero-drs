@@ -945,24 +945,24 @@ class DrsArgument(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
         """
-        # ----------------------------------------------
+        # ------------------------------------------------------------------
         # define class constants
-        # ----------------------------------------------
+        # ------------------------------------------------------------------
         # define allowed properties
         self.propkeys = ['action', 'nargs', 'type', 'choices', 'default',
                          'help']
         # define allowed dtypes
         self.allowed_dtypes = ['files', 'file', 'directory', 'bool',
                                'options', 'switch', int, float, str, list]
-        # ----------------------------------------------
+        # ------------------------------------------------------------------
         # deal with no name or kind (placeholder for copy)
         if name is None:
             name = 'UnknownArg'
         if kind is None:
             kind = 'arg'
-        # ----------------------------------------------
+        # ------------------------------------------------------------------
         # assign values from construction
-        # ----------------------------------------------
+        # ------------------------------------------------------------------
         # deal with name
         # get argument name
         self.argname = str(name)
@@ -970,12 +970,39 @@ class DrsArgument(object):
         self.name = name
         while self.name.startswith('-'):
             self.name = self.name[1:]
-        # get kind
-        if kind in ['arg', 'kwarg', 'special']:
+        # ------------------------------------------------------------------
+        # check name is correct for kind
+        if kind == 'arg':
             self.kind = kind
+            # check argname
+            if self.argname.startswith('-'):
+                # Get text for default language/instrument
+                text = TextDict(None, None)
+                # get entry to log error
+                ee = TextEntry('00-006-00015', args=[self.argname])
+                self.exception(None, errorobj=[ee, text])
+        elif kind == 'kwarg':
+            self.kind = kind
+            # check argname
+            if not self.argname.startswith('-'):
+                # Get text for default language/instrument
+                text = TextDict(None, None)
+                # get entry to log error
+                ee = TextEntry('00-006-00016', args=[self.argname])
+                self.exception(None, errorobj=[ee, text])
+        elif kind == 'special':
+            self.kind = kind
+            # check argname
+            if not self.argname.startswith('-'):
+                # Get text for default language/instrument
+                text = TextDict(None, None)
+                # get entry to log error
+                ee = TextEntry('00-006-00017', args=[self.argname])
+                self.exception(None, errorobj=[ee, text])
         else:
             emsg = '"kind" must be "arg" or "kwarg" or "special"'
             self.exception(emsg)
+        # ------------------------------------------------------------------
         # special parameter (whether to skip other arguments)
         self.skip = False
         # get position
