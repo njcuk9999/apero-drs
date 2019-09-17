@@ -169,6 +169,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             groupfile = file_inst.newcopy(recipe=recipe)
             groupfile.data = groupfp
             groupfile.header = vheaders[0]
+            groupfile.filename = fp_ids[0]
+            groupfile.basename = os.path.basename(fp_ids[0])
             # get and correct file
             cargs = [params, recipe, groupfile]
             ckwargs = dict(n_percentile=percent_thres,
