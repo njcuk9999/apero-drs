@@ -127,9 +127,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of dark cube
-    fp_cube, transforms_list, fp_dprtypes = [], [], []
-    fp_darkfiles, fp_badpfiles, fp_backfiles = [], [], []
-    valid_matched_id = []
+    fp_cube, transforms_list, valid_matched_id = [], [], []
+    table_mask = np.zeros(len(fp_table), dtype=bool)
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
@@ -137,41 +136,45 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
         WLOG(params, 'info', TextEntry('40-014-00006', args=wargs))
         # find all files for this group
         fp_ids = filenames[matched_id == group_num]
+        indices = np.arange(len(filenames))[matched_id == group_num]
         # only combine if 3 or more images were taken
         if len(fp_ids) >= min_num:
             # load this groups files into a cube
             cube = []
+            # get infile from filetype
+            file_inst = core.get_file_definition(dprtype, params['INSTRUMENT'],
+                                                 kind='tmp')
             # get this groups storage
-            vdprtypes, vdarkfiles, vbadpfiles, vbackfiles = [], [], [], []
+            vheaders = []
             # loop around fp ids
             for f_it, filename in enumerate(fp_ids):
                 # log reading of data
                 wargs = [os.path.basename(filename), f_it + 1, len(fp_ids)]
                 WLOG(params, 'info', TextEntry('40-014-00007', args=wargs))
-                # get infile from filetype
-                fpfile_it = core.get_file_definition(dprtype,
-                                                     params['INSTRUMENT'],
-                                                     kind='tmp')
                 # construct new infile instance
-                fpfile_it = fpfile_it.newcopy(filename=filename, recipe=recipe)
+                fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
                 fpfile_it.read()
-                # get and correct file
-                cargs = [params, recipe, fpfile_it]
-                ckwargs = dict(n_percentile=percent_thres,
-                               correctback=False)
-                props_it, image_it = general.calibrate_ppfile(*cargs, **ckwargs)
-                # extract properties and add to lists
-                vdprtypes.append(props_it['DPRTYPE'])
-                vdarkfiles.append(os.path.basename(props_it['DARKFILE']))
-                vbadpfiles.append(os.path.basename(props_it['BADPFILE']))
-                vbackfiles.append(os.path.basename(props_it['BACKFILE']))
                 # append to cube
-                cube.append(image_it)
+                cube.append(fpfile_it.image)
+                vheaders.append(fpfile_it.header)
             # log process
             WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
             # median fp cube
             with warnings.catch_warnings(record=True) as _:
                 groupfp = np.nanmedian(cube, axis=0)
+            # --------------------------------------------------------------
+            # calibrate group fp
+            # --------------------------------------------------------------
+            # construct new infile instance
+            groupfile = file_inst.newcopy(recipe=recipe)
+            groupfile.data = groupfp
+            groupfile.header = vheaders[0]
+            # get and correct file
+            cargs = [params, recipe, groupfile]
+            ckwargs = dict(n_percentile=percent_thres,
+                           correctback=False)
+            props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
+            # --------------------------------------------------------------
             # shift group to master
             gout = get_linear_transform_params(params, image_ref, groupfp)
             transforms, xres, yres = gout
@@ -194,44 +197,32 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # append to cube
             fp_cube.append(groupfp)
             # append transforms to list
-            for _ in fp_ids:
+            for fp_id in fp_ids:
                 transforms_list.append(transforms)
             # now add extract properties to main group
-            fp_dprtypes += vdprtypes
-            fp_darkfiles += vdarkfiles
-            fp_badpfiles += vbadpfiles
-            fp_backfiles += vbackfiles
             valid_matched_id.append(matched_id[g_it])
+            table_mask[indices] = True
         else:
             eargs = [g_it + 1, min_num]
             WLOG(params, '', TextEntry('40-014-00015', args=eargs))
-            # add blank properties
-            fp_dprtypes.append('')
-            fp_darkfiles.append('')
-            fp_badpfiles.append('')
-            fp_backfiles.append('')
-            valid_matched_id.append(matched_id[g_it])
-            # append transforms to list
-            for _ in fp_ids:
-                transforms_list.append([np.nan] * 6)
 
     # ----------------------------------------------------------------------
     # convert fp cube to array
     fp_cube = np.array(fp_cube)
     # convert transform_list to array
     tarrary = np.array(transforms_list)
+    # cut down fp_table to valid
+    valid_fp_table = fp_table[table_mask]
     # ----------------------------------------------------------------------
     # add columns to fp_table
-    colnames = ['DPRTYPE', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'GROUPID',
-                'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
-    values = [fp_dprtypes, fp_darkfiles, fp_badpfiles, fp_backfiles,
-              valid_matched_id, tarrary[:, 0], tarrary[:, 1], tarrary[:, 2],
-              tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
+    colnames = ['GROUPID', 'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
+    values = [valid_matched_id, tarrary[:, 0], tarrary[:, 1],
+              tarrary[:, 2], tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
     for c_it, col in enumerate(colnames):
-        fp_table[col] = values[c_it]
+        valid_fp_table[col] = values[c_it]
     # ----------------------------------------------------------------------
     # return fp_cube
-    return fp_cube, fp_table
+    return fp_cube, valid_fp_table
 
 
 def get_linear_transform_params(params, image1, image2, **kwargs):
