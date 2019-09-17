@@ -656,17 +656,19 @@ obj_mk_tellu_db.outputdir = 'reduced'
 obj_mk_tellu_db.inputdir = 'reduced'
 obj_mk_tellu_db.inputtype = 'reduced'
 obj_mk_tellu_db.extension = 'fits'
-obj_mk_tellu_db.description = Help['MKTELL_DESC']
-obj_mk_tellu_db.epilog = Help['MKTELL_EXAMPLE']
+obj_mk_tellu_db.description = Help['MKTELLDB_DESC']
+obj_mk_tellu_db.epilog = Help['MKTELLDB_EXAMPLE']
 obj_mk_tellu_db.set_outputs()
 obj_mk_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                          helpstr=Help['FILES_HELP'])
+                          helpstr=Help['MKTELLDB_CORES'])
 obj_mk_tellu_db.set_kwarg(name='--filetype', dtype=str,
-                          default_ref='MKTEMPLATE_FILETYPE',
-                          helpstr=Help['MKTEMP_FILETYPE'])
+                          default_ref='TELLURIC_FILETYPE',
+                          helpstr=Help['MKTELLDB_FILETYPE'],
+                          options=['EXT_E2DS', 'EXT_E2DS_FF'])
 obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
-                          default_ref='MKTEMPLATE_FIBER_TYPE',
-                          helpstr=Help['MKTEMP_FIBER'])
+                          default_ref='TELLURIC_FIBER_TYPE',
+                          helpstr=Help['MKTELLDB_FIBER'],
+                          options=['AB', 'A', 'B', 'C'])
 obj_mk_tellu_db.set_kwarg(**add_cal)
 obj_mk_tellu_db.set_kwarg(**add_cal)
 obj_mk_tellu_db.set_kwarg(**plot)
@@ -683,8 +685,8 @@ obj_fit_tellu.outputdir = 'reduced'
 obj_fit_tellu.inputdir = 'reduced'
 obj_fit_tellu.inputtype = 'reduced'
 obj_fit_tellu.extension = 'fits'
-obj_fit_tellu.description = Help['FIT_TELL_DESC']
-obj_fit_tellu.epilog = Help['FIT_TELL_EXAMPLE']
+obj_fit_tellu.description = Help['FTELLU_DESC']
+obj_fit_tellu.epilog = Help['FTELLU_EXAMPLE']
 obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           TELLU_OBJ=sf.out_tellu_obj,
                           SC1D_W_FILE=sf.out_tellu_sc1d_w,
@@ -695,7 +697,7 @@ obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                     helpstr=Help['FILES_HELP'] + Help['FIT_TELL_FILES_HELP'],
+                     helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                      limit=1)
 obj_fit_tellu.set_kwarg(**add_cal)
 obj_fit_tellu.set_kwarg(**plot)
@@ -712,17 +714,22 @@ obj_fit_tellu_db.outputdir = 'reduced'
 obj_fit_tellu_db.inputdir = 'reduced'
 obj_fit_tellu_db.inputtype = 'reduced'
 obj_fit_tellu_db.extension = 'fits'
-obj_fit_tellu_db.description = Help['MKTELL_DESC']
-obj_fit_tellu_db.epilog = Help['MKTELL_EXAMPLE']
+obj_fit_tellu_db.description = Help['FTELLUDB_DESC']
+obj_fit_tellu_db.epilog = Help['FTELLUDB_EXAMPLE']
 obj_fit_tellu_db.set_outputs()
-obj_fit_tellu_db.set_kwarg(name='-cores', dtype=int, default=1,
-                          helpstr=Help['FILES_HELP'])
-obj_fit_tellu_db.set_kwarg(name='-filetype', dtype=str,
-                          default_ref='MKTEMPLATE_FILETYPE',
-                          helpstr=Help['MKTEMP_FILETYPE'])
-obj_fit_tellu_db.set_kwarg(name='-fiber', dtype=str,
-                          default_ref='MKTEMPLATE_FIBER_TYPE',
-                          helpstr=Help['MKTEMP_FIBER'])
+obj_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
+                          helpstr=Help['FTELLUDB_CORES'])
+obj_fit_tellu_db.set_kwarg(name='--filetype', dtype=str,
+                          default_ref='TELLURIC_FILETYPE',
+                          helpstr=Help['FTELLUDB_FILETYPE'])
+obj_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
+                          default_ref='TELLURIC_FIBER_TYPE',
+                          helpstr=Help['FTELLUDB_FIBER'])
+obj_fit_tellu_db.set_kwarg(name='objname', dtype=str, default='None',
+                          helpstr=Help['FTELLUDB_OBJNAME'])
+obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
+                          default_ref='TELLURIC_DPRTYPES',
+                          helpstr=Help['FTELLUDB_DPRTYPES'])
 obj_fit_tellu_db.set_kwarg(**add_cal)
 obj_fit_tellu_db.set_kwarg(**add_cal)
 obj_fit_tellu_db.set_kwarg(**plot)
@@ -747,11 +754,13 @@ obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
 obj_mk_template.set_kwarg(name='-filetype', dtype=str,
-                          default_ref='MKTEMPLATE_FILETYPE',
-                          helpstr=Help['MKTEMP_FILETYPE'])
+                          default_ref='TELLURIC_FILETYPE',
+                          helpstr=Help['MKTEMP_FILETYPE'],
+                          options=['EXT_E2DS', 'EXT_E2DS_FF'])
 obj_mk_template.set_kwarg(name='-fiber', dtype=str,
-                          default_ref='MKTEMPLATE_FIBER_TYPE',
-                          helpstr=Help['MKTEMP_FIBER'])
+                          default_ref='TELLURIC_FIBER_TYPE',
+                          helpstr=Help['MKTEMP_FIBER'],
+                          options=['AB', 'A', 'B', 'C'])
 obj_mk_template.set_kwarg(**add_cal)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**interactive)
