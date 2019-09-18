@@ -159,10 +159,12 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 # append to cube
                 cube.append(fpfile_it.data)
                 vheaders.append(fpfile_it.header)
+            # convert to numpy array
+            cube = np.array(cube)
             # log process
             WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
             # median fp cube
-            print('start {0} len(cube)={1}'.format(Time.now().iso), len(cube))
+            print('start {0} shape={1}'.format(Time.now().iso, cube.shape))
             with warnings.catch_warnings(record=True) as _:
                 groupfp = np.nanmedian(cube, axis=0)
             print('end 1 {0}'.format(Time.now().iso))
