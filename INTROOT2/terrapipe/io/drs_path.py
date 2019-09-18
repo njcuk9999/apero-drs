@@ -15,6 +15,7 @@ from astropy import units as uu
 import os
 
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe import locale
 
@@ -150,11 +151,11 @@ def group_files_by_time(params, times, time_thres, time_unit='hours'):
     # loop until all files are matched with all other files taken within
     #    time_thres
     group_num, it = 1, 0
-    while np.min(matched_id) == 0 and it < len(times):
+    while mp.nanmin(matched_id) == 0 and it < len(times):
         # find all non-matched dark times
         non_matched = matched_id == 0
         # find the first non-matched dark time
-        first = np.min(np.where(non_matched)[0])
+        first = mp.nanmin(np.where(non_matched)[0])
         # find all non-matched that are lower than threshold (in days)
         group_mask = np.abs(times[first] - times) < time_thres
         # add this group to matched_id

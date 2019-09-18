@@ -16,6 +16,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import warnings
 
 from terrapipe.core import constants
+from . import fast
 
 # =============================================================================
 # Define variables
@@ -67,8 +68,8 @@ def measure_box_min_max(y, size):
     # loop around each pixel from "size" to length - "size" (non-edge pixels)
     # and get the minimum and maximum of each box
     for it in range(size, ny - size):
-        min_image[it] = np.nanmin(y[it - size:it + size])
-        max_image[it] = np.nanmax(y[it - size:it + size])
+        min_image[it] = fast.nanmin(y[it - size:it + size])
+        max_image[it] = fast.nanmax(y[it - size:it + size])
 
     # deal with leading edge --> set to value at size
     min_image[0:size] = min_image[size]
@@ -154,9 +155,9 @@ def linear_minimization(vector, sample):
         v = np.zeros(sz_sample[0])
         for i in range(sz_sample[0]):
             for j in range(i, sz_sample[0]):
-                mm[i, j] = np.nansum(sample[i, :] * sample[j, :])
+                mm[i, j] = fast.nansum(sample[i, :] * sample[j, :])
                 mm[j, i] = mm[i, j]
-            v[i] = np.nansum(vector * sample[i, :])
+            v[i] = fast.nansum(vector * sample[i, :])
 
         if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[0]) + np.nan
@@ -175,9 +176,9 @@ def linear_minimization(vector, sample):
         v = np.zeros(sz_sample[1])
         for i in range(sz_sample[1]):
             for j in range(i, sz_sample[1]):
-                mm[i, j] = np.nansum(sample[:, i] * sample[:, j])
+                mm[i, j] = fast.nansum(sample[:, i] * sample[:, j])
                 mm[j, i] = mm[i, j]
-            v[i] = np.nansum(vector * sample[:, i])
+            v[i] = fast.nansum(vector * sample[:, i])
 
         if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
@@ -239,7 +240,7 @@ def median_filter_ea(vector, width):
         # set the value of the new pixel equal to the median of the box of
         #   the original vector (and deal with NaNs)
         with warnings.catch_warnings(record=True) as _:
-            vector2[ix] = np.nanmedian(vector[start:end])
+            vector2[ix] = mp.nanmedian(vector[start:end])
     # return new vector
     return vector2
 
@@ -378,7 +379,7 @@ def get_dll_from_coefficients(allcoeffs, nx, nbo):
         # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
         for it in range(len(coeffs) - 1):
             yfiti.append((it + 1) * coeffs[it + 1] * xfit ** it)
-        yfit = np.nansum(yfiti, axis=0)
+        yfit = fast.nansum(yfiti, axis=0)
         # add to line list storage
         ll[order_num, :] = yfit
     # return line list

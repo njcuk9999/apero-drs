@@ -15,6 +15,7 @@ import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
@@ -288,7 +289,7 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    spelong = np.zeros((np.nanmax(j2s - j1s) + 1, dim2), dtype=float)
+    spelong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
     # loop around each pixel along the order
@@ -300,8 +301,8 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
                 # get hte order profile slice
                 fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
                 # Renormalise the rotated order profile
-                if np.nansum(fx) > 0:
-                    fx = fx / np.nansum(fx)
+                if mp.nansum(fx) > 0:
+                    fx = fx / mp.nansum(fx)
                 else:
                     fx = np.ones(fx.shape, dtype=float)
 
@@ -319,7 +320,7 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
                     sigdets = np.repeat([sigdet ** 2], len(sx))
                     noises = (sx * gain) + sigdet ** 2
                     # find the weight for each pixel in sx
-                    raw_weights = np.max([noises, sigdets], axis=0)
+                    raw_weights = mp.nanmax([noises, sigdets], axis=0)
                     # weights is the inverse
                     weights = 1.0 / raw_weights
                 elif case == 2:
@@ -331,10 +332,10 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
 
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = (weights * sx * fx)
-                spe[ic] = np.nansum(weights * sx * fx)
+                spe[ic] = mp.nansum(weights * sx * fx)
                 # normalise spe
-                spe[ic] = spe[ic] / np.nansum(weights * fx ** 2)
-                spelong[:, ic] = spelong[:, ic] / np.nansum(weights * fx ** 2)
+                spe[ic] = spe[ic] / mp.nansum(weights * fx ** 2)
+                spelong[:, ic] = spelong[:, ic] / mp.nansum(weights * fx ** 2)
 
                 # Cosmic rays correction
                 if cosmic:
@@ -354,7 +355,7 @@ def calculate_snr(e2ds, blaze_width, r1, r2, sigdet):
     blaze_lower = cent_pos - blaze_width
     blaze_upper = cent_pos + blaze_width
     # get the average flux in the blaze window
-    flux = np.nansum(e2ds[blaze_lower:blaze_upper] / (2 * blaze_width))
+    flux = mp.nansum(e2ds[blaze_lower:blaze_upper] / (2 * blaze_width))
     # calculate the noise
     noise = sigdet * np.sqrt(r1 + r2)
     # calculate the snr ratio = flux / sqrt(flux + noise**2)
@@ -393,15 +394,15 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     #       critical pixel values > sigcut * extraction
     #    or
     #       the loop exceeds "cosmic_threshold"
-    cond1 = np.nanmax(crit) > np.nanmax((sigcut * spe[ic], 1000.))
+    cond1 = mp.nanmax(crit) > mp.nanmax((sigcut * spe[ic], 1000.))
     cond2 = nbloop < cosmic_threshold
     while cond1 and cond2:
         # define the cosmic ray mask (True where not cosmic ray)
-        cosmask = ~(crit > np.nanmax(crit) - 0.1)
+        cosmask = ~(crit > mp.nanmax(crit) - 0.1)
         # set the pixels where there is a cosmic ray to zero
         part1 = weights * cosmask * sx * fx
         part2 = weights * cosmask * fx ** 2
-        spe[ic] = np.nansum(part1) / np.nansum(part2)
+        spe[ic] = mp.nansum(part1) / mp.nansum(part2)
         # recalculate the critical parameter
         crit = (sx * cosmask - spe[ic] * fx * cosmask)
         # increase the number of found cosmic rays by 1
@@ -409,7 +410,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
         # increase the loop counter
         nbloop += 1
         # recalculate conditions
-        cond1 = np.nanmax(crit) > np.nanmax((sigcut * spe[ic], 1000.))
+        cond1 = mp.nanmax(crit) > mp.nanmax((sigcut * spe[ic], 1000.))
         cond2 = nbloop < cosmic_threshold
 
     # finally return spe and cpt

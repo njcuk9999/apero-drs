@@ -16,14 +16,13 @@ import warnings
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_database
-from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
 from terrapipe.science.calib import general
 from terrapipe.science.calib import localisation
 from terrapipe.science.calib import shape
-from terrapipe.science.calib import wave
 from terrapipe.science import extract
 
 # =============================================================================
@@ -228,7 +227,7 @@ def __main__(recipe, params):
             remove_orders = np.array(remove_orders)
             remove_mask = np.in1d(np.arange(len(eprops['RMS'])), remove_orders)
             # apply max and calculate the maximum of the rms values
-            max_rms = np.nanmax(eprops['RMS'][~remove_mask])
+            max_rms = mp.nanmax(eprops['RMS'][~remove_mask])
             # apply the quality control based on the maximum rms
             if max_rms > params['QC_FF_MAX_RMS']:
                 # add failed message to fail message list
@@ -314,7 +313,7 @@ def __main__(recipe, params):
             # add saturation parameters used
             blazefile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
             with warnings.catch_warnings(record=True) as _:
-                max_sat_level = np.nanmax(eprops['FLUX_VAL'])
+                max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
             blazefile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
             # --------------------------------------------------------------
             # copy data

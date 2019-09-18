@@ -16,6 +16,7 @@ import warnings
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
@@ -360,7 +361,7 @@ def __main__(recipe, params):
             # add saturation parameters used
             e2dsfile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
             with warnings.catch_warnings(record=True) as _:
-                max_sat_level = np.nanmax(eprops['FLUX_VAL'])
+                max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
             e2dsfile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
             # --------------------------------------------------------------
             # add loco parameters (using locofile)

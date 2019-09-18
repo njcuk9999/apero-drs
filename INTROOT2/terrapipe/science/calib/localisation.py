@@ -17,7 +17,7 @@ import warnings
 from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
@@ -99,7 +99,7 @@ def calculate_order_profile(params, image, **kwargs):
         # ------------------------------------------------------------------
         # apply the weighted mean for this column
         with warnings.catch_warnings(record=True) as _:
-            newimage[:, it] = np.nanmedian(part, axis=1)
+            newimage[:, it] = mp.nanmedian(part, axis=1)
     # return the new smoothed image
     return newimage
 
@@ -163,7 +163,7 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     # deal with the central column column=ic_cent_col
     y = image[row_offset:, central_col]
     # measure min max of box smoothed central col
-    miny, maxy = math.measure_box_min_max(y, horder_size)
+    miny, maxy = mp.measure_box_min_max(y, horder_size)
     max_signal = np.nanpercentile(y, 95)
     diff_maxmin = maxy - miny
 
@@ -204,7 +204,7 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     posc = posc_all[first_order:] + row_offset
     # work out the number of orders to use (minimum of ic_locnbmaxo and number
     #    of orders found in 'LocateCentralOrderPositions')
-    num_orders = np.min([max_num_orders, len(posc)])
+    num_orders = mp.nanmin([max_num_orders, len(posc)])
     norm_num_orders = int(num_orders / num_fibers)
     # log the number of orders than have been detected
     wargs = [fiber, norm_num_orders, num_fibers]
@@ -284,11 +284,11 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
             ovalues = image[rowtop:rowbottom, col]
             # only use if max - min above threshold = 100 * sigdet
             truethres = nm_thres * sigdet
-            cond = np.nanmax(ovalues) - np.nanmin(ovalues) > truethres
+            cond = mp.nanmax(ovalues) - mp.nanmin(ovalues) > truethres
             if cond:
                 # as we are not normalised threshold needs multiplying by
                 # the maximum value
-                threshold = np.nanmax(ovalues) * back_thres
+                threshold = mp.nanmax(ovalues) * back_thres
                 # find the row center position and the width of the order
                 # for this column
                 lkwargs = dict(values=ovalues, threshold=threshold,
@@ -319,7 +319,7 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
         # get the x pixels where we have non-zero width
         xpix = np.arange(image.shape[1])[mask]
         # check that we have enough data points to fit data
-        if len(xpix) > (np.max([wid_poly_deg, cent_poly_deg]) + 1):
+        if len(xpix) > (mp.nanmax([wid_poly_deg, cent_poly_deg]) + 1):
             # --------------------------------------------------------------
             # initial fit for center positions for this order
             cent_y = cent_0[rorder_num, :][mask]
@@ -379,8 +379,8 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     wargs = [fiber, rorder_num]
     WLOG(params, 'info', TextEntry('40-013-00011', args=wargs))
     # get the mean rms values
-    mean_rms_cent = np.nansum(cent_rms[:rorder_num]) * 1000 / rorder_num
-    mean_rms_wid = np.nansum(wid_rms[:rorder_num]) * 1000 / rorder_num
+    mean_rms_cent = mp.nansum(cent_rms[:rorder_num]) * 1000 / rorder_num
+    mean_rms_wid = mp.nansum(wid_rms[:rorder_num]) * 1000 / rorder_num
     # Log mean rms values
     WLOG(params, 'info', TextEntry('40-013-00012', args=[mean_rms_cent]))
     WLOG(params, 'info', TextEntry('40-013-00013', args=[mean_rms_wid]))
@@ -583,7 +583,7 @@ def find_position_of_cent_col(values, threshold):
                 # ly is the cvalues values in this order (use lx to get them)
                 ly = values[lx]
                 # position = sum of (lx * ly) / sum of sum(ly)
-                position = np.nansum(lx * ly * 1.0) / np.nansum(ly)
+                position = mp.nansum(lx * ly * 1.0) / mp.nansum(ly)
                 # append position and width to storage
                 positions.append(position)
         # if row is still below threshold then move the row number forward
@@ -656,7 +656,7 @@ def locate_order_center(values, threshold, min_width=None):
                 # ly is the cvalues values in this order (use lx to get them)
                 ly = values[lx]
                 # position = sum of (lx * ly) / sum of sum(ly)
-                position = np.nansum(lx * ly * 1.0) / np.nansum(ly)
+                position = mp.nansum(lx * ly * 1.0) / mp.nansum(ly)
                 # width is just the distance from start to end
                 width = abs(order_end - order_start)
         # if row is still below threshold then move the row number forward
@@ -712,7 +712,7 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
     if kind == 'center':
         max_ptp_frac = max_ptp / rms
     else:
-        max_ptp_frac = np.max(abs_res/y) * 100
+        max_ptp_frac = mp.nanmax(abs_res/y) * 100
     # -------------------------------------------------------------------------
     # Work out the fit value at ic_cent_col (for logging)
     cfitval = np.polyval(acoeffs[::-1], ccol)
@@ -839,7 +839,7 @@ def sigmaclip_order_fit(params, x, y, fitdata, f_order, max_rmpts,
         if kind == 'center':
             max_ptp_frac = max_ptp / rms
         else:
-            max_ptp_frac = np.max(abs_res / yo) * 100
+            max_ptp_frac = mp.nanmax(abs_res / yo) * 100
         # recalculate condition for doing sigma clip
         cond = rms > ic_max_rms
         if kind == 'center':
@@ -883,7 +883,7 @@ def calculate_fit(x, y, f):
                      residuals i.e. max(abs_res)
     """
     # Do initial fit (revere due to fortran compatibility)
-    a = math.nanpolyfit(x, y, deg=f)[::-1]
+    a = mp.nanpolyfit(x, y, deg=f)[::-1]
     # Get the intial fit data
     fit = np.polyval(a[::-1], x)
     # work out residuals
@@ -891,9 +891,9 @@ def calculate_fit(x, y, f):
     # Work out absolute residuals
     abs_res = abs(res)
     # work out rms
-    rms = np.std(res)
+    rms = mp.nanstd(res)
     # work out max point to point of residuals
-    max_ptp = np.max(abs_res)
+    max_ptp = mp.nanmax(abs_res)
     # return all
     return a, fit, res, abs_res, rms, max_ptp
 

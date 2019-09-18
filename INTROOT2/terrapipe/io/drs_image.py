@@ -15,7 +15,7 @@ import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe import locale
 
@@ -234,7 +234,7 @@ def clean_hotpix(image, badpix):
     # We apply a 5-pix median boxcar in X and a 5-pix boxcar smoothing
     # in x. This blurs along the dispersion over a scale of ~7 pixels.
     box = np.ones([1, 5])
-    box /= np.nansum(box)
+    box /= mp.nansum(box)
     low_pass = signal.medfilt(image_rms_measurement, [1, 5])
     low_pass = signal.convolve2d(low_pass, box, mode='same')
     # residual image showing pixel-to-pixel noise
@@ -247,7 +247,7 @@ def clean_hotpix(image, badpix):
     # a lower limit to the local RMS at 0.5x the median
     # rms
     with warnings.catch_warnings(record=True) as _:
-        rms[rms < (0.5 * np.nanmedian(rms))] = 0.5 * np.nanmedian(rms)
+        rms[rms < (0.5 * mp.nanmedian(rms))] = 0.5 * mp.nanmedian(rms)
         # determining a proxy of N sigma
         nsig = image_rms_measurement / rms
         bad = np.array((np.abs(nsig) > 10), dtype=bool)
@@ -263,14 +263,14 @@ def clean_hotpix(image, badpix):
     # correcting bad pixels with a 2D fit to valid neighbours
     for i in range(len(x)):
         keep = ~badpix[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
-        if np.nansum(keep) < 6:
+        if mp.nansum(keep) < 6:
             continue
         box = image[x[i] - 1:x[i] + 2, y[i] - 1:y[i] + 2]
         # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
         # corresponds to the bad pixel, then the first coefficient
         # of the fit (its zero point) corresponds to the value that
         # must be given to the pixel
-        coeff = math.fit2dpoly(xx[keep], yy[keep], box[keep])
+        coeff = mp.fit2dpoly(xx[keep], yy[keep], box[keep])
         image1[x[i], y[i]] = coeff[0]
     # return the cleaned image
     return image1

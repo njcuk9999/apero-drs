@@ -19,6 +19,7 @@ import warnings
 
 from terrapipe.core.core import drs_log
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.locale import drs_text
 from terrapipe.io import drs_fits
 
@@ -1456,7 +1457,7 @@ class DrsFitsFile(DrsInputFile):
         # if we want to sum the data
         if math in ['sum', 'add', '+']:
             with warnings.catch_warnings(record=True) as _:
-                data = np.nansum(datacube, axis=0)
+                data = mp.nansum(datacube, axis=0)
         # else if we want to subtract the data
         elif math in ['subtract', '-']:
             for im in range(1, len(datacube)):
@@ -1472,11 +1473,11 @@ class DrsFitsFile(DrsInputFile):
         # elif if mean/average
         elif math in ['average', 'mean']:
             with warnings.catch_warnings(record=True) as _:
-                data = np.nanmean(datacube, axis=0)
+                data = mp.nanmean(datacube, axis=0)
         # elif if median
         elif math in ['median', 'med']:
             with warnings.catch_warnings(record=True) as _:
-                data = np.nanmedian(datacube, axis=0)
+                data = mp.nanmedian(datacube, axis=0)
         # else we have an error in math
         else:
             eargs = [math, available_math, func_name]

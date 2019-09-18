@@ -20,7 +20,7 @@ from collections import OrderedDict
 
 from terrapipe import core
 from terrapipe.core import constants
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
@@ -584,7 +584,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
         # set a flag to tell us that we didn't start with a template
         template_flag = False
         # wavelength offset from BERV
-        dvshift = math.relativistic_waveshift(berv, units='km/s')
+        dvshift = mp.relativistic_waveshift(berv, units='km/s')
         # median-filter the template. we know that stellar features
         #    are very broad. this avoids having spurious noise in our templates
         # loop around each order
@@ -602,12 +602,12 @@ def calculate_telluric_absorption(params, image, template, template_file,
             # if less than 50% of the order is considered valid, then set
             #     template value to 1 this only apply to the really contaminated
             #     orders
-            if np.nansum(keep) > nbpix // 2:
+            if mp.nansum(keep) > nbpix // 2:
                 # get the wave and template masked arrays
                 keepwave = wavemap[order_num, keep]
                 keeptmp = template[order_num, keep]
                 # spline the good values
-                spline = math.iuv_spline(keepwave * dvshift, keeptmp, k=1,
+                spline = mp.iuv_spline(keepwave * dvshift, keeptmp, k=1,
                                          ext=3)
                 # interpolate good values onto full array
                 template[order_num] = spline(wavemap[order_num])
@@ -711,7 +711,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
             break
         # ---------------------------------------------------------------------
         # calculate how much the optical depth params change
-        dparam = np.sqrt(np.nansum((guess - prev_guess) ** 2))
+        dparam = np.sqrt(mp.nansum((guess - prev_guess) ** 2))
         # ---------------------------------------------------------------------
         # print progress
         wargs = [iteration, max_iteration, guess[0], guess[1], airmass]
@@ -732,11 +732,11 @@ def calculate_telluric_absorption(params, image, template, template_file,
             # -----------------------------------------------------------------
             # if we have enough valid points, we normalize the domain by its
             #    median
-            if np.nansum(good) > min_number_good_points:
+            if mp.nansum(good) > min_number_good_points:
                 limit = np.nanpercentile(tau1[order_num][good],
                                          btrans_percentile)
                 best_trans = tau1[order_num] > limit
-                norm = np.nanmedian(oimage[best_trans])
+                norm = mp.nanmedian(oimage[best_trans])
             else:
                 norm = np.ones_like(oimage)
             # -----------------------------------------------------------------
@@ -749,8 +749,8 @@ def calculate_telluric_absorption(params, image, template, template_file,
             # find far outliers to the SED for sigma-clipping
             with warnings.catch_warnings(record=True) as _:
                 res = oimage - sed[order_num]
-                res -= np.nanmedian(res)
-                res /= np.nanmedian(np.abs(res))
+                res -= mp.nanmedian(res)
+                res /= mp.nanmedian(np.abs(res))
             # set all NaN pixels to large value
             nanmask = ~np.isfinite(res)
             res[nanmask] = 99
@@ -759,7 +759,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
             good &= np.abs(res) < nsigclip
             # apply median to sed
             with warnings.catch_warnings(record=True) as _:
-                good &= sed[order_num] > 0.5 * np.nanmedian(sed[order_num])
+                good &= sed[order_num] > 0.5 * mp.nanmedian(sed[order_num])
             # only fit where the transmission is greater than a certain value
             good &= tau1[order_num] > threshold_transmission_fit
             # -----------------------------------------------------------------
@@ -780,14 +780,14 @@ def calculate_telluric_absorption(params, image, template, template_file,
             #    subtract noise this is why we have an order-dependent width.
             #    the stellar lines are expected to be larger than 200km/s,
             #    so a kernel much smaller than this value does not make sense
-            ew = wconv[order_num] / tellu_med_sampling / math.fwhm()
+            ew = wconv[order_num] / tellu_med_sampling / mp.fwhm()
             # get the kernal x values
             wconv_ord = int(wconv[order_num])
             kernal_x = np.arange(-2 * wconv_ord, 2 * wconv_ord)
             # get the gaussian kernal
             kernal_y = np.exp(-0.5 * (kernal_x / ew) ** 2)
             # normalise kernal so it is max at unity
-            kernal_y = kernal_y / np.nansum(kernal_y)
+            kernal_y = kernal_y / mp.nansum(kernal_y)
             # -----------------------------------------------------------------
             # construct a weighting matrix for the sed
             ww1 = np.convolve(good, kernal_y, mode='same')
@@ -830,8 +830,8 @@ def calculate_telluric_absorption(params, image, template, template_file,
             #    absorptions
             pedestal = tau1[order_num] < 0.01
             # check if we have enough strong absorption
-            if np.nansum(pedestal) > 100:
-                zero_point = np.nanmedian(image1[order_num, pedestal])
+            if mp.nansum(pedestal) > 100:
+                zero_point = mp.nanmedian(image1[order_num, pedestal])
                 # if zero_point is finite subtract it off the spectrum
                 if np.isfinite(zero_point):
                     image1[order_num] -= zero_point
@@ -1029,12 +1029,12 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     # determining the pixels relevant for PCA construction
     keep = np.isfinite(np.sum(abso, axis=0))
     # log fraction of valid (non NaN) pixels
-    fraction = np.nansum(keep) / len(keep)
+    fraction = mp.nansum(keep) / len(keep)
     WLOG(params, '', TextEntry('40-019-00015', args=[fraction]))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as _:
-        keep &= np.min(log_abso, axis=0) > -1
-    fraction = np.nansum(keep) / len(keep)
+        keep &= mp.nanmin(log_abso, axis=0) > -1
+    fraction = mp.nansum(keep) / len(keep)
     WLOG(params, '', TextEntry('40-019-00016', args=[fraction]))
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
@@ -1134,15 +1134,15 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
             # find good (not NaN) pixels
             keep = np.isfinite(template[order_num, :])
             # if we have enough values spline them
-            if np.nansum(keep) > fit_keep_num:
+            if mp.nansum(keep) > fit_keep_num:
                 # define keep wave
                 keepwave = masterwavemap[order_num, keep]
                 # define keep temp
                 keeptemp = template[order_num, keep]
                 # calculate interpolation for keep temp at keep wave
-                spline = math.iuv_spline(keepwave, keeptemp, ext=3)
+                spline = mp.iuv_spline(keepwave, keeptemp, ext=3)
                 # interpolate at shifted values
-                dvshift = math.relativistic_waveshift(dv, units='km/s')
+                dvshift = mp.relativistic_waveshift(dv, units='km/s')
                 waveshift = masterwavemap[order_num, :] * dvshift
                 # interpolate at shifted wavelength
                 start = order_num * xdim
@@ -1285,13 +1285,13 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     # construct convolution kernel
     # ----------------------------------------------------------------------
     # gaussian ew for vinsi km/s
-    ewid = kernel_vsini / image_pixel_size / math.fwhm()
+    ewid = kernel_vsini / image_pixel_size / mp.fwhm()
     # set up the kernel exponent
     xxarr = np.arange(ewid * 6) - ewid * 3
     # kernel is the a gaussian
     kernel = np.exp(-.5 * (xxarr / ewid) ** 2)
     # normalise kernel
-    kernel /= np.nansum(kernel)
+    kernel /= mp.nansum(kernel)
     # ----------------------------------------------------------------------
     # loop around a number of times
     for ite in range(fit_iterations):
@@ -1370,10 +1370,10 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
             start = order_num * nbpix
             end = order_num * nbpix + nbpix
             # skip if whole order is NaNs
-            if np.nansum(np.isfinite(log_resspec[start:end])) == 0:
+            if mp.nansum(np.isfinite(log_resspec[start:end])) == 0:
                 continue
             # get median
-            log_resspec_med = np.nanmedian(log_resspec[start:end])
+            log_resspec_med = mp.nanmedian(log_resspec[start:end])
             # subtract of median
             log_resspec[start:end] = log_resspec[start:end] - log_resspec_med
         # ------------------------------------------------------------------
@@ -1387,14 +1387,14 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
         # identify good pixels to keep
         # ------------------------------------------------------------------
         keep &= np.isfinite(fit_dd)
-        keep &= np.nansum(np.isfinite(fit_pc2), axis=1) == npc
+        keep &= mp.nansum(np.isfinite(fit_pc2), axis=1) == npc
         # log number of kept pixels
-        wargs = [np.nansum(keep)]
+        wargs = [mp.nansum(keep)]
         WLOG(params, '', TextEntry('40-019-00022', args=wargs))
         # ------------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
         # ------------------------------------------------------------------
-        amps, recon = math.linear_minimization(fit_dd[keep], fit_pc2[keep, :])
+        amps, recon = mp.linear_minimization(fit_dd[keep], fit_pc2[keep, :])
         # set up storage for absorption array 2
         abso2 = np.zeros(len(resspec))
         with warnings.catch_warnings(record=True) as _:
@@ -1419,14 +1419,14 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
         log_tapas_abso = np.log(tapas_all_species2[1:, :])
     # get good pixels
     with warnings.catch_warnings(record=True) as _:
-        keep = np.min(log_tapas_abso, axis=0) > recon_limit
+        keep = mp.nanmin(log_tapas_abso, axis=0) > recon_limit
         keep &= log_recon_abso > recon_limit
     keep &= np.isfinite(recon_abso)
     # get keep arrays
     klog_recon_abso = log_recon_abso[keep]
     klog_tapas_abso = log_tapas_abso[:, keep]
     # work out amplitudes and recon
-    amps1, recon1 = math.linear_minimization(klog_recon_abso, klog_tapas_abso)
+    amps1, recon1 = mp.linear_minimization(klog_recon_abso, klog_tapas_abso)
     # load amplitudes into loc
     water_it, others_it = [], []
     molecule_data = dict()
@@ -1445,7 +1445,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     # combine others
     klog_tapas_abso2[1] = np.sum(klog_tapas_abso[np.array(others_it)], axis=0)
     # work out amplitudes and recon
-    amps2, recon2 = math.linear_minimization(klog_recon_abso, klog_tapas_abso2)
+    amps2, recon2 = mp.linear_minimization(klog_recon_abso, klog_tapas_abso2)
 
     # ------------------------------------------------------------------
     # correct spectrum
@@ -1553,7 +1553,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     # ----------------------------------------------------------------------
     # work our bad snr (less than half the median SNR)
     # ----------------------------------------------------------------------
-    snr_thres = np.nanmedian(snr_all) / 2.0
+    snr_thres = mp.nanmedian(snr_all) / 2.0
     bad_snr_objects = np.where(snr_all < snr_thres)[0]
 
     # ----------------------------------------------------------------------
@@ -1663,7 +1663,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # Shift to correct berv
         # ------------------------------------------------------------------
         # get velocity shift due to berv
-        dvshift = math.relativistic_waveshift(berv, units='km/s')
+        dvshift = mp.relativistic_waveshift(berv, units='km/s')
         # shift the image
         simage = _wave_to_wave(params, image2, wavemap * dvshift, mwavemap)
         # ------------------------------------------------------------------
@@ -1671,9 +1671,9 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # ------------------------------------------------------------------
         for order_num in range(reffile.shape[0]):
             # normalise the shifted data
-            simage[order_num, :] /= np.nanmedian(simage[order_num, :])
+            simage[order_num, :] /= mp.nanmedian(simage[order_num, :])
             # normalise the original data
-            image2[order_num, :] /= np.nanmedian(image2[order_num, :])
+            image2[order_num, :] /= mp.nanmedian(image2[order_num, :])
         # ------------------------------------------------------------------
         # add to cube storage
         # ------------------------------------------------------------------
@@ -1705,7 +1705,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     else:
         # make median image
         with warnings.catch_warnings(record=True) as _:
-            big_cube_med = np.nanmedian(big_cube, axis=2)
+            big_cube_med = mp.nanmedian(big_cube, axis=2)
         # set big_cube_med to median
         props['BIG_CUBE_MED'] = big_cube_med
         props.set_source('BIG_CUBE_MED', func_name)
@@ -2284,11 +2284,11 @@ def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
     # set up the kernel exponent
     kernel = np.arange(npix_ker) - npix_ker // 2
     # kernal is the a gaussian
-    kernel = np.exp(-0.5 * (kernel / (fwhm_pixel_lsf / math.fwhm())) ** 2)
+    kernel = np.exp(-0.5 * (kernel / (fwhm_pixel_lsf / mp.fwhm())) ** 2)
     # we only want an approximation of the absorption to find the continuum
     #    and estimate chemical abundances.
     #    there's no need for a varying kernel shape
-    kernel /= np.nansum(kernel)
+    kernel /= mp.nansum(kernel)
     # ----------------------------------------------------------------------
     # storage for output
     tapas_all_species = np.zeros([len(tellu_absorbers), xdim * ydim])
@@ -2304,7 +2304,7 @@ def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
         # get molecule transmission
         trans = tapas_table['trans_{0}'.format(molecule)]
         # interpolate with Univariate Spline
-        tapas_spline = math.iuv_spline(lam, trans)
+        tapas_spline = mp.iuv_spline(lam, trans)
         # log the mean transmission level
         wmsg = '\tMean Trans level: {0:.3f}'.format(np.mean(trans))
         WLOG(params, '', wmsg)
@@ -2423,7 +2423,7 @@ def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
             eargs = [spectrum.shape, wave2.shape, func_name]
             WLOG(params, 'error', TextEntry('09-019-00004', args=eargs))
     # if they are the same
-    if np.nansum(wave1 != wave2) == 0:
+    if mp.nansum(wave1 != wave2) == 0:
         return spectrum
     # size of array, assumes wave1, wave2 and spectrum have same shape
     sz = np.shape(spectrum)
@@ -2434,12 +2434,12 @@ def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
         # only interpolate valid pixels
         g = np.isfinite(spectrum[iord, :])
         # if no valid pixel, thn skip order
-        if np.nansum(g) != 0:
+        if mp.nansum(g) != 0:
             # spline the spectrum
-            spline = math.iuv_spline(wave1[iord, g], spectrum[iord, g],
+            spline = mp.iuv_spline(wave1[iord, g], spectrum[iord, g],
                                      k=5, ext=1)
             # keep track of pixels affected by NaNs
-            splinemask = math.iuv_spline(wave1[iord, :], g, k=5, ext=1)
+            splinemask = mp.iuv_spline(wave1[iord, :], g, k=5, ext=1)
             # spline the input onto the output
             output_spectrum[iord, :] = spline(wave2[iord, :])
             # find which pixels are not NaNs

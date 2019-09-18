@@ -19,7 +19,7 @@ import warnings
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.io import drs_data
@@ -110,7 +110,7 @@ def measure_fp_peaks(params, props, **kwargs):
     """
     func_name = __NAME__ + '.create_drift_file()'
     # get gauss function
-    gfunc = math.gauss_function
+    gfunc = mp.gauss_function
     # get constants from params/kwargs
     border = pcheck(params, 'DRIFT_PEAK_BORDER_SIZE', 'border', kwargs,
                     func_name)
@@ -156,10 +156,10 @@ def measure_fp_peaks(params, props, **kwargs):
         # tmp /= norm
 
         # peak value depends on type of lamp
-        limit = np.nanmedian(tmp) * siglimdict[lamp]
+        limit = mp.nanmedian(tmp) * siglimdict[lamp]
 
         # define the maximum pixel value of the normalized array
-        maxtmp = np.nanmax(tmp)
+        maxtmp = mp.nanmax(tmp)
         # set up loop constants
         xprev, ipeak = -99, 0
         nreject = 0
@@ -174,7 +174,7 @@ def measure_fp_peaks(params, props, **kwargs):
             # try to fit a gaussian to that peak
             try:
                 # set initial guess
-                p0 = [tmp[maxpos], maxpos, 1.0, np.min(tmp[index])]
+                p0 = [tmp[maxpos], maxpos, 1.0, mp.nanmin(tmp[index])]
                 # do gauss fit
                 #    gg = [mean, amplitude, sigma, dc]
                 with warnings.catch_warnings(record=True) as w:
@@ -225,7 +225,7 @@ def measure_fp_peaks(params, props, **kwargs):
                 # add to rejected
                 nreject += 1
             # recalculate the max peak
-            maxtmp = np.max(tmp)
+            maxtmp = mp.nanmax(tmp)
             # set previous peak to this one
             xprev = gg[1]
             # iterator
@@ -376,7 +376,7 @@ def remove_wide_peaks(params, props, **kwargs):
     props.append_sources(keys, func_name)
 
     # log number of lines removed for suspicious width
-    wargs = [np.nansum(~mask)]
+    wargs = [mp.nansum(~mask)]
     WLOG(params, 'info', TextEntry('40-018-00003', args=wargs))
 
     # log number of lines removed as double-fitted
@@ -451,12 +451,12 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     # get the mask value
     maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
     # get the total
-    tot = np.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
+    tot = mp.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
     # convert to dvrms2
     with warnings.catch_warnings(record=True) as _:
         dvrms2 = (speed_of_light_ms ** 2) / abs(tot)
     # weighted mean of dvrms2 values
-    weightedmean = 1. / np.sqrt(np.nansum(1.0 / dvrms2))
+    weightedmean = 1. / np.sqrt(mp.nansum(1.0 / dvrms2))
     # return dv rms and weighted mean
     return dvrms2, weightedmean
 
@@ -574,7 +574,7 @@ def coravelation(params, props, log=False, **kwargs):
     # calculate modified coefficients
     coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / speed_of_light)
     # get the differential map
-    dll_map = math.get_dll_from_coefficients(coeff_ll_b, len(ll_map[0]),
+    dll_map = mp.get_dll_from_coefficients(coeff_ll_b, len(ll_map[0]),
                                              len(coeff_ll))
     # -------------------------------------------------------------------------
     # define some constants for loop
@@ -618,7 +618,7 @@ def coravelation(params, props, log=False, **kwargs):
         w_sub_mask = w_mask[cond]
 
         # if we have values that meet the "cond" condition then we can do CCF
-        if np.nansum(cond) > 0:
+        if mp.nansum(cond) > 0:
             # -----------------------------------------------------------------
             # calculate the CCF
             ccf_args = [ll_sub_mask_ctr, ll_sub_mask_d, w_sub_mask,
@@ -654,7 +654,7 @@ def coravelation(params, props, log=False, **kwargs):
         tot_line.append(len(w_sub_mask))
         ccf_all.append(ccf_o)
         ccf_noise_all.append(ccf_noise)
-        ccf_max.append(np.nanmax(ccf_o))
+        ccf_max.append(mp.nanmax(ccf_o))
         ccf_all_fit.append(ccf_o_fit)
         ccf_all_results.append(ccf_o_results)
         pix_passed_all.append(pix_passed)
@@ -937,14 +937,14 @@ def fit_ccf(params, rv, ccf, fit_type):
         eargs = [len(rv), len(ccf), func_name]
         WLOG(params, 'error', TextEntry('00-020-00001', args=eargs))
     # get constants
-    max_ccf, min_ccf = np.nanmax(ccf), np.nanmin(ccf)
-    argmin, argmax = np.argmin(ccf), np.argmax(ccf)
+    max_ccf, min_ccf = mp.nanmax(ccf), mp.nanmin(ccf)
+    argmin, argmax = mp.nanargmin(ccf), mp.nanargmax(ccf)
     diff = max_ccf - min_ccf
     rvdiff = rv[1] - rv[0]
     # set up guess for gaussian fit
     # if fit_type == 0 then we have absorption lines
     if fit_type == 0:
-        if np.nanmax(ccf) != 0:
+        if mp.nanmax(ccf) != 0:
             a = np.array([-diff / max_ccf, rv[argmin], 4 * rvdiff, 0])
         else:
             a = np.zeros(4)
@@ -961,7 +961,7 @@ def fit_ccf(params, rv, ccf, fit_type):
     nanmask = np.isfinite(y)
     y[~nanmask] = 0.0
     # fit the gaussian
-    result, fit = math.fitgaussian(x, y, weights=w, guess=a)
+    result, fit = mp.fitgaussian(x, y, weights=w, guess=a)
     # scal ethe ccf
     ccf_fit = (fit + 1 - fit_type) * max_ccf
     # return the best guess and the gaussian fit

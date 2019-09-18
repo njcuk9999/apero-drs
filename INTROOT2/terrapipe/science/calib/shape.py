@@ -23,8 +23,7 @@ from astropy.time import Time
 from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.core import math
-from terrapipe.core.core import drs_database
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.io import drs_path
@@ -166,7 +165,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # median fp cube
             print('start {0} shape={1}'.format(Time.now().iso, cube.shape))
             with warnings.catch_warnings(record=True) as _:
-                groupfp = np.nanmedian(cube, axis=0)
+                groupfp = mp.nanmedian(cube, axis=0)
             print('end 1 {0}'.format(Time.now().iso))
 
             # --------------------------------------------------------------
@@ -196,7 +195,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                          BACKFILE='BACKFILE')
             transforms, xres, yres = [0, 0, 0, 0, 0, 0], 0, 0
             if g_it % 10 == 0:
-                xres, yres = 2*qc_res, 2*qc_res
+                xres, yres = 2 * qc_res, 2 * qc_res
 
             print('end 3 {0}'.format(Time.now().iso))
 
@@ -367,12 +366,12 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
             vvv = np.zeros([3, len(x1)])
             vvv[0, :], vvv[1, :], vvv[2, :] = np.ones_like(x1), x1, y1
             # linear minimisation of difference w.r.t. v
-            ampsx, xrecon = math.linear_minimization(x1 - x2, vvv)
-            ampsy, yrecon = math.linear_minimization(y1 - y2, vvv)
+            ampsx, xrecon = mp.linear_minimization(x1 - x2, vvv)
+            ampsy, yrecon = mp.linear_minimization(y1 - y2, vvv)
             # express distance of all residual error in x1-y1 and y1-y2
             # in absolute deviation
-            xnanmed = np.nanmedian(np.abs((x1 - x2) - xrecon))
-            ynanmed = np.nanmedian(np.abs((y1 - y2) - yrecon))
+            xnanmed = mp.nanmedian(np.abs((x1 - x2) - xrecon))
+            ynanmed = mp.nanmedian(np.abs((y1 - y2) - yrecon))
             xrms = ((x1 - x2) - xrecon) ** 2 / xnanmed
             yrms = ((y1 - y2) - yrecon) ** 2 / ynanmed
             # How many 'sigma' for the core of distribution
@@ -388,8 +387,8 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
             if len(x1) < (0.5 * n_terms):
                 return None, None, None
 
-        xres = np.std((x1 - x2) - xrecon)
-        yres = np.std((y1 - y2) - yrecon)
+        xres = mp.nanstd((x1 - x2) - xrecon)
+        yres = mp.nanstd((y1 - y2) - yrecon)
 
         # we have our linear transform terms!
         dx0, dy0 = ampsx[0], ampsy[0]
@@ -667,18 +666,18 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 # calculate spline interpolation and ribbon values
                 if bottom > 0:
                     # for the hc data
-                    spline_hc = math.iuv_spline(sx, hcdata2[bottom:top, ix],
-                                                ext=1, k=3)
+                    spline_hc = mp.iuv_spline(sx, hcdata2[bottom:top, ix],
+                                              ext=1, k=3)
                     ribbon_hc[:, ix] = spline_hc(ypix[order_num, ix] + widths)
                     # for the fp data
-                    spline_fp = math.iuv_spline(sx, fpdata2[bottom:top, ix],
-                                                ext=1, k=3)
+                    spline_fp = mp.iuv_spline(sx, fpdata2[bottom:top, ix],
+                                              ext=1, k=3)
                     ribbon_fp[:, ix] = spline_fp(ypix[order_num, ix] + widths)
 
             # normalizing ribbon stripes to their median abs dev
             for iw in range(width):
                 # for the hc data
-                norm_fp = np.nanmedian(np.abs(ribbon_fp[iw, :]))
+                norm_fp = mp.nanmedian(np.abs(ribbon_fp[iw, :]))
                 ribbon_hc[iw, :] = ribbon_hc[iw, :] / norm_fp
                 # for the fp data
                 ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
@@ -707,11 +706,11 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                     # get the ddx value
                     ddx = (iw - width / 2.0) * slope
                     # get the spline
-                    spline = math.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
+                    spline = mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
                     # calculate the new ribbon values
                     ribbon_fp2[iw, :] = spline(xpix + ddx)
                 # record the profile of the ribbon
-                profile = np.nanmedian(ribbon_fp2, axis=0)
+                profile = mp.nanmedian(ribbon_fp2, axis=0)
                 # loop around the sections to record rv content
                 for nsection in range(nsections):
                     # sum of integral of derivatives == RV content.
@@ -719,20 +718,20 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                     start = nsection * dim2 // nsections
                     end = (nsection + 1) * dim2 // nsections
                     grad = np.gradient(profile[start:end])
-                    rvcontent[islope, nsection] = np.nansum(grad ** 2)
+                    rvcontent[islope, nsection] = mp.nansum(grad ** 2)
             # -------------------------------------------------------------
             # we find the peak of RV content and fit a parabola to that peak
             for nsection in range(nsections):
                 # we must have some RV content (i.e., !=0)
-                if np.nanmax(rvcontent[:, nsection]) != 0:
+                if mp.nanmax(rvcontent[:, nsection]) != 0:
                     vec = np.ones_like(slopes)
                     vec[0], vec[-1] = 0, 0
                     # get the max pixel
-                    maxpix = np.nanargmax(rvcontent[:, nsection] * vec)
+                    maxpix = mp.nanargmax(rvcontent[:, nsection] * vec)
                     # max RV and fit on the neighbouring pixels
                     xff = slopes[maxpix - 1: maxpix + 2]
                     yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
-                    coeffs = math.nanpolyfit(xff, yff, 2)
+                    coeffs = mp.nanpolyfit(xff, yff, 2)
                     # if peak within range, then its fine
                     dcoeffs = -0.5 * coeffs[1] / coeffs[0]
                     if np.abs(dcoeffs) < 1:
@@ -743,35 +742,35 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             # work out the median slope
             dxdiff = dxsection[1:] - dxsection[:-1]
             xdiff = xsection[1:] - xsection[:-1]
-            medslope = np.nanmedian(dxdiff / xdiff)
+            medslope = mp.nanmedian(dxdiff / xdiff)
             # work out the residual of dxsection (based on median slope)
             residual = dxsection - (medslope * xsection)
-            residual = residual - np.nanmedian(residual)
-            res_residual = residual - np.nanmedian(residual)
-            residual = residual / np.nanmedian(np.abs(res_residual))
+            residual = residual - mp.nanmedian(residual)
+            res_residual = residual - mp.nanmedian(residual)
+            residual = residual / mp.nanmedian(np.abs(res_residual))
             # work out the maximum sigma and update keep vector
-            sigmax = np.nanmax(np.abs(residual[keep]))
+            sigmax = mp.nanmax(np.abs(residual[keep]))
             with warnings.catch_warnings(record=True) as _:
                 keep &= np.abs(residual) < sigclipmax
             # -------------------------------------------------------------
             # sigma clip
             while sigmax > sigclipmax:
                 # recalculate the fit
-                coeffs = math.nanpolyfit(xsection[keep], dxsection[keep], 2)
+                coeffs = mp.nanpolyfit(xsection[keep], dxsection[keep], 2)
                 # get the residuals
                 res = dxsection - np.polyval(coeffs, xsection)
                 # normalise residuals
-                res = res - np.nanmedian(res[keep])
-                res = res / np.nanmedian(np.abs(res[keep]))
+                res = res - mp.nanmedian(res[keep])
+                res = res / mp.nanmedian(np.abs(res[keep]))
                 # calculate the sigma
-                sigmax = np.nanmax(np.abs(res[keep]))
+                sigmax = mp.nanmax(np.abs(res[keep]))
                 # do not keep bad residuals
                 with warnings.catch_warnings(record=True) as _:
                     keep &= np.abs(res) < sigclipmax
             # -------------------------------------------------------------
             # fit a 2nd order polynomial to the slope vx position
             #    along order
-            coeffs = math.nanpolyfit(xsection[keep], dxsection[keep], 2)
+            coeffs = mp.nanpolyfit(xsection[keep], dxsection[keep], 2)
             # log slope at center
             s_xpix = dim2 // 2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
@@ -803,7 +802,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 # get the x shift
                 ddx = (iw - width / 2.0) * yfit
                 # calculate the spline at this width
-                spline_fp = math.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
+                spline_fp = mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
                 # push spline values with shift into ribbon2
                 ribbon_fp2[iw, :] = spline_fp(xpix + ddx)
             # -------------------------------------------------------------
@@ -814,14 +813,14 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 # get the x shift
                 ddx = (iw - width / 2.0) * yfit
                 # calculate the spline at this width
-                spline_hc = math.iuv_spline(xpix, ribbon_hc[iw, :], ext=1)
+                spline_hc = mp.iuv_spline(xpix, ribbon_hc[iw, :], ext=1)
                 # push spline values with shift into ribbon2
                 ribbon_hc2[iw, :] = spline_hc(xpix + ddx)
 
             # -------------------------------------------------------------
             # get the median values of the fp and hc
-            sp_fp = np.nanmedian(ribbon_fp2, axis=0)
-            sp_hc = np.nanmedian(ribbon_hc2, axis=0)
+            sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
+            sp_hc = mp.nanmedian(ribbon_hc2, axis=0)
 
             pargs = [params, sp_fp, sp_hc, order_num, hcdata,
                      poly_wave_ref, une_lines, poly_cavity]
@@ -837,7 +836,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
             # row of the ribbon with this
-            profile = np.nanmedian(ribbon_fp2, axis=0)
+            profile = mp.nanmedian(ribbon_fp2, axis=0)
             medianprofile = filters.median_filter(profile, med_filter_size)
             profile = profile - medianprofile
 
@@ -861,15 +860,15 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                 xvec = ddx
                 yvec = ccor[iw, :]
                 with warnings.catch_warnings(record=True) as _:
-                    gcoeffs, _ = math.gauss_fit_nn(xvec, yvec, 4)
+                    gcoeffs, _ = mp.gauss_fit_nn(xvec, yvec, 4)
                 # check that max value is good
-                if np.nanmax(ccor[iw, :]) > min_good_corr:
+                if mp.nanmax(ccor[iw, :]) > min_good_corr:
                     dx[order_num, iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
             dypix = np.arange(len(dx[order_num]))
             with warnings.catch_warnings(record=True):
-                keep = np.abs(dx[order_num] - np.nanmedian(dx[order_num])) < 1
+                keep = np.abs(dx[order_num] - mp.nanmedian(dx[order_num])) < 1
             keep &= np.isfinite(dx[order_num])
             # -------------------------------------------------------------
             # if the first pixel is nan and the second is OK,
@@ -907,13 +906,13 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         dx2_short = np.array(dx)
         for iw in range(width):
             margs = [dx[:, iw], short_medfilt_width]
-            dx2_short[:, iw] = math.median_filter_ea(*margs)
+            dx2_short[:, iw] = mp.median_filter_ea(*margs)
         # get the median filter of short dx with longer median
         #     filter/second pass
         dx2_long = np.array(dx)
         for iw in range(width):
             margs = [dx2_short[:, iw], long_medfilt_width]
-            dx2_long[:, iw] = math.median_filter_ea(*margs)
+            dx2_long[:, iw] = mp.median_filter_ea(*margs)
         # apply short dx filter to dx2
         dx2 = np.array(dx2_short)
         # apply long dx filter to NaN positions of short dx filter
@@ -952,17 +951,17 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             # get locations of keep
             pos_keep = np.where(keep)[0]
             # set the start point
-            start_good_ccor = np.min(pos_keep) - 2
+            start_good_ccor = mp.nanmin(pos_keep) - 2
             # deal with start being out-of-bounds
             if start_good_ccor == -1:
                 start_good_ccor = 0
             # set the end point
-            end_good_ccor = np.max(pos_keep) + 2
+            end_good_ccor = mp.nanmax(pos_keep) + 2
             # deal with end being out-of-bounds
             if end_good_ccor == width:
                 end_good_ccor = width - 1
             # work out spline
-            spline = math.iuv_spline(dypix[keep], dx2[order_num][keep], ext=3)
+            spline = mp.iuv_spline(dypix[keep], dx2[order_num][keep], ext=3)
             # define a mask for the good ccor
             good_ccor_mask = np.zeros(len(keep), dtype=bool)
             good_ccor_mask[start_good_ccor:end_good_ccor] = True
@@ -1031,7 +1030,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                     # after each iteration updating the dxmap, we verify
                     # that the per-order and per-x-pixel shift is not larger
                     # than the maximum seen over 'normal' images.
-                    dxmap_std = np.nanstd(master_dxmap[positions, ix])
+                    dxmap_std = mp.nanstd(master_dxmap[positions, ix])
 
                     dxmap_stds.append(dxmap_std)
 
@@ -1041,7 +1040,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        # return dxmap, max_dxmap_std, max_dxmap_info
+                        return dxmap, max_dxmap_std, max_dxmap_info
 
             # -----------------------------------------------------------------
             if params['DRS_PLOT'] and (params['DRS_DEBUG'] >= 2) and plot_on:
@@ -1073,7 +1072,7 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     master_dxmap[order_overlap != 0] = 0.0
 
     # save qc
-    max_dxmap_std = np.max(dxmap_stds)
+    max_dxmap_std = mp.nanmax(dxmap_stds)
     max_dxmap_info = [None, None]
     # return parameters
     return master_dxmap, max_dxmap_std, max_dxmap_info
@@ -1137,7 +1136,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
         # dy for all orders and all fibers
         dy = y0[:, ix] - y0[:, dim2 // 2]
         # fitting the dy to the position of the order
-        yfit = math.nanpolyfit(y0[:, dim2 // 2], dy, 3)
+        yfit = mp.nanpolyfit(y0[:, dim2 // 2], dy, 3)
         ypix = np.arange(dim1)
         # add to the master dy map
         master_dymap[:, ix] = np.polyval(yfit, ypix)
@@ -1214,7 +1213,7 @@ def get_shapelocal(params, header, filename=None):
     key = out_shape_local.dbkey
     # load calib file
     shapel, shapel_file = general.load_calib_file(params, key, header,
-                                                 filename=filename)
+                                                  filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00039', args=[shapel_file]))
     # return the master image
@@ -1239,7 +1238,7 @@ def _max_neighbour_mask(image, percent, thres):
             box[it] = np.roll(np.roll(image, dx, axis=0), dy, axis=1)
     # maximum value of neighbouring pixels
     with warnings.catch_warnings(record=True) as _:
-        max_neighbours = np.nanmax(box, axis=0)
+        max_neighbours = mp.nanmax(box, axis=0)
 
     # find pixels brighter than neighbours and brighter than 80th percentile
     # of image. These are the peaks of FP lines
@@ -1363,7 +1362,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
         top[xpix] = np.nanpercentile(segment, top_fp_percentile)
     # -------------------------------------------------------------------------
     # put a floor in the top values
-    top_floor_value = top_floor_frac * np.max(top)
+    top_floor_value = top_floor_frac * mp.nanmax(top)
     top_mask = top <= top_floor_value
     top[top_mask] = top_floor_value
     # -------------------------------------------------------------------------
@@ -1379,7 +1378,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     # >3-sigma peak relative to the continuum
     sp_hc = sp_hc - medfilt(sp_hc, med_filter_wid)
     # normalise HC to its absolute deviation
-    norm = np.nanmedian(np.abs(sp_hc[sp_hc != 0]))
+    norm = mp.nanmedian(np.abs(sp_hc[sp_hc != 0]))
     sp_hc = sp_hc / norm
     # -------------------------------------------------------------------------
     # fpindex is a variable that contains the index of the FP peak interference
@@ -1422,7 +1421,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     #    e-width of the line. Could be used for quality check
     xpeak, peakval, ewval = [], [], []
     # peak value of the FP spectrum
-    maxfp = np.max(sp_fp)
+    maxfp = mp.nanmax(sp_fp)
     # current maximum value after masking
     max_it = float(maxfp)
     # mask
@@ -1453,8 +1452,8 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
         mask2 = np.ones_like(yy).astype(int)
         mask2[mask_extwidth:] = 0
         # find the minima of the fp's in this mask
-        y0 = np.argmin(yy / np.max(yy) + mask1)
-        y1 = np.argmin(yy / np.max(yy) + mask2)
+        y0 = mp.nanargmin(yy / mp.nanmax(yy) + mask1)
+        y1 = mp.nanargmin(yy / mp.nanmax(yy) + mask2)
         # re-set xx and yy
         xx = np.array(xx[y0:y1 + 1]).astype(float)
         yy = np.array(yy[y0:y1 + 1]).astype(float)
@@ -1462,12 +1461,13 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
         # the FP must be at least 5 pixels long to be valid
         if len(xx) > valid_fp_length:
             # set up the guess: amp, x0, w, zp
-            guess = (float(np.max(yy) - np.min(yy)),
-                     float(xx[np.argmax(yy)]), 1.0, float(np.min(yy)), 0.0)
+            guess = (float(mp.nanmax(yy) - mp.nanmin(yy)),
+                     float(xx[mp.nanargmax(yy)]), 1.0,
+                     float(mp.nanmin(yy)), 0.0)
             # try to fit a gaussian
             # noinspection PyBroadException
             try:
-                coeffs, _ = curve_fit(math.gauss_fit_s, xx, yy, p0=guess)
+                coeffs, _ = curve_fit(mp.gauss_fit_s, xx, yy, p0=guess)
                 goodfit = True
             except Exception as _:
                 goodfit, coeffs = False, None
@@ -1494,7 +1494,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     uppermask = dxpeak < np.nanpercentile(dxpeak, deviant_percentiles[1])
     good = lowermask & uppermask
     # apply good mask and fit the peak separation
-    fit_peak_separation = math.nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)
+    fit_peak_separation = mp.nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)
     # Looping through peaks and counting the number of meddx between peaks
     #    we know that peaks will be at integer multiple or medds (in the
     #    overwhelming majority, they will be at 1 x meddx)
@@ -1534,7 +1534,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     for zp in range(fpstart, fpend):
         # we take a trial solution between wave (from the theoretical FP
         #    solution) and the x position of measured peaks
-        fitzp = math.nanpolyfit(wave_fp[zp - ipeak], xpeak2, 3)
+        fitzp = mp.nanpolyfit(wave_fp[zp - ipeak], xpeak2, 3)
         # we predict an x position for the known U Ne lines
         xpos_predict = np.polyval(fitzp, une_lines)
         # deal with borders
@@ -1571,16 +1571,16 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
-        fit_err_xpix = math.nanpolyfit(xpeak2[good], err_pix[good], 1)
+        fit_err_xpix = mp.nanpolyfit(xpeak2[good], err_pix[good], 1)
         # get the deviation from error fit
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
-        absdev = np.nanmedian(np.abs(dev))
+        absdev = mp.nanmedian(np.abs(dev))
         # very low thresholding values tend to clip valid points
         if absdev < absdev_threshold:
             absdev = absdev_threshold
         # get the max median asbolute deviation
-        maxabsdev = np.nanmax(np.abs(dev[good] / absdev))
+        maxabsdev = mp.nanmax(np.abs(dev[good] / absdev))
         # iterate the good mask
         good &= np.abs(dev / absdev) < maxdev_threshold
     # -------------------------------------------------------------------------
@@ -1591,16 +1591,16 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     # loop around until we are better than threshold
     while maxabsdev > maxdev_threshold:
         # get the error fit (1st order polynomial)
-        fit_err_xpix = math.nanpolyfit(xpeak2[good], err_pix[good], 5)
+        fit_err_xpix = mp.nanpolyfit(xpeak2[good], err_pix[good], 5)
         # get the deviation from error fit
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
-        absdev = np.nanmedian(np.abs(dev))
+        absdev = mp.nanmedian(np.abs(dev))
         # very low thresholding values tend to clip valid points
         if absdev < absdev_threshold:
             absdev = absdev_threshold
         # get the max median asbolute deviation
-        maxabsdev = np.nanmax(np.abs(dev[good] / absdev))
+        maxabsdev = mp.nanmax(np.abs(dev[good] / absdev))
         # iterate the good mask
         good &= np.abs(dev / absdev) < maxdev_threshold
     # -------------------------------------------------------------------------
@@ -1610,11 +1610,11 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     corr_err_xpix = np.polyval(fit_err_xpix, np.arange(dim2))
     # -------------------------------------------------------------------------
     # get the statistics
-    std_dev = np.std(dev)
-    errpix_med = np.nanmedian(err_pix)
-    std_corr = np.std(corr_err_xpix[xpos_predict_int])
-    corr_med = np.nanmedian(corr_err_xpix[xpos_predict_int])
-    cent_fit = math.nanpolyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
+    std_dev = mp.nanstd(dev)
+    errpix_med = mp.nanmedian(err_pix)
+    std_corr = mp.nanstd(corr_err_xpix[xpos_predict_int])
+    corr_med = mp.nanmedian(corr_err_xpix[xpos_predict_int])
+    cent_fit = mp.nanpolyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
     num_fp_cent = np.polyval(cent_fit, dim2 // 2)
     # log the statistics
     wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
@@ -1622,7 +1622,6 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     # -------------------------------------------------------------------------
     # return loc
     return corr_err_xpix, xpeak2, peakval2, ewval2, err_pix, good
-
 
 # =============================================================================
 # End of code

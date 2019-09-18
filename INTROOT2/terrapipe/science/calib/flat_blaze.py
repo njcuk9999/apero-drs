@@ -16,7 +16,7 @@ import warnings
 from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from . import general
@@ -63,7 +63,7 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     # find all good pixels
     good = np.isfinite(e2ds)
     # do poly fit on good values
-    coeffs = math.nanpolyfit(xpix[good], e2ds[good], deg=blaze_deg)
+    coeffs = mp.nanpolyfit(xpix[good], e2ds[good], deg=blaze_deg)
     # fit all positions based on these fit coefficients
     blaze = np.polyval(coeffs, xpix)
     # blaze is not usable outside mask range to do this we convole with a
@@ -72,7 +72,7 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     # find minimum/maximum position of convolved blaze
     nanxpix = np.array(xpix).astype(float)
     nanxpix[~good] = np.nan
-    minpos, maxpos = np.nanargmin(nanxpix), np.nanargmax(nanxpix)
+    minpos, maxpos = mp.nanargmin(nanxpix), mp.nanargmax(nanxpix)
 
     # TODO: need a way to remove cluster of pixels that are outliers above
     # TODO:    the cut off (blaze mask region)
@@ -90,7 +90,7 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     # ----------------------------------------------------------------------
     # calculate the rms
     # ----------------------------------------------------------------------
-    rms = np.nanstd(flat)
+    rms = mp.nanstd(flat)
 
     # ----------------------------------------------------------------------
     # return values

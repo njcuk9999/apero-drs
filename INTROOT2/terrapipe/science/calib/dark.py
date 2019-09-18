@@ -15,6 +15,7 @@ import os
 import warnings
 
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe import locale
 from terrapipe import core
 from terrapipe.core.core import drs_log
@@ -101,7 +102,7 @@ def measure_dark(params, image, entry_key, **kwargs):
     # get the number of NaNs
     imax = image.size - len(fimage)
     # get the median value of the non-NaN data
-    med = np.median(fimage)
+    med = mp.nanmedian(fimage)
     # get the 5th and 95th percentile qmin
     qmin, qmax = np.percentile(fimage, [dark_qmin, dark_qmax])
     # get the histogram for flattened data
@@ -305,7 +306,7 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
             cube.append(data_it)
         # median dark cube
         with warnings.catch_warnings(record=True) as _:
-            groupdark = np.nanmedian(cube, axis=0)
+            groupdark = mp.nanmedian(cube, axis=0)
         # sum within each bin
         dark_cube[g_it % num_bins] += groupdark
         # record the number of cubes that are going into this bin
@@ -344,7 +345,7 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
                 tmp.append(np.roll(bindark, [0, jt]))
         # low frequency image
         with warnings.catch_warnings(record=True) as _:
-            lf_dark = np.nanmedian(tmp, axis=0)
+            lf_dark = mp.nanmedian(tmp, axis=0)
         # high frequency image
         dark_cube1[bin_it] = bindark - lf_dark
     # -------------------------------------------------------------------------
@@ -352,7 +353,7 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     WLOG(params, 'info', TextEntry('40-011-10008'))
     # median the dark cube to create the master dark
     with warnings.catch_warnings(record=True) as _:
-        master_dark = np.nanmedian(dark_cube1, axis=0)
+        master_dark = mp.nanmedian(dark_cube1, axis=0)
 
     # -------------------------------------------------------------------------
     # get infile from filetype
