@@ -145,9 +145,12 @@ class Logger:
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
-        debug = params.get('DRS_DEBUG', 0)
-        if key == 'debug' and debug < params['DEBUG_MODE_LOG_PRINT']:
-            return
+        if params is not None:
+            debug = params.get('DRS_DEBUG', 0)
+            if key == 'debug' and debug < params['DEBUG_MODE_LOG_PRINT']:
+                return
+        else:
+            debug = 0
         # ---------------------------------------------------------------------
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
