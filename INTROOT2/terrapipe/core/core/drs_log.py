@@ -151,6 +151,9 @@ class Logger:
                 return
         else:
             debug = 0
+        # if in debug mode don't wrap
+        if debug > 0 and (key == 'debug'):
+            wrap = False
         # ---------------------------------------------------------------------
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
