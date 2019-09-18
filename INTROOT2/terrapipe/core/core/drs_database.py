@@ -672,11 +672,17 @@ def _copy_db_file(params, dbname, inpath, outpath, lock=None,
     # remove file if already present
     if inpath == outpath:
         return 0
+    # lock the input and output files
+    lock1, lock_file1 = drs_lock.check_lock_file(params, inpath)
+    lock2, lock_file2 = drs_lock.check_lock_file(params, outpath)
     # noinspection PyExceptClausesOrder
     try:
         shutil.copyfile(inpath, outpath)
         os.chmod(outpath, 0o0644)
     except IOError as e:
+        # close input and output lock files
+        drs_lock.close_lock_file(params, lock1, lock_file1, inpath)
+        drs_lock.close_lock_file(params, lock2, lock_file2, outpath)
         # if we have a lock file we need to close it before raise error
         if lock is not None and lockfile is not None and lockpath is not None:
             drs_lock.close_lock_file(params, lock, lockfile, lockpath)
@@ -686,6 +692,9 @@ def _copy_db_file(params, dbname, inpath, outpath, lock=None,
     except OSError as e:
         wargs = [dbname, outpath, type(e), e, func_name]
         WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
+    # close input and output lock files
+    drs_lock.close_lock_file(params, lock1, lock_file1, inpath)
+    drs_lock.close_lock_file(params, lock2, lock_file2, outpath)
 
 
 def _get_time(params, dbname, hdict=None, header=None, kind=None):
