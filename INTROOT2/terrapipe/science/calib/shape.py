@@ -18,6 +18,7 @@ from scipy.optimize import curve_fit
 from scipy.signal import medfilt
 from scipy.stats import stats
 import warnings
+from astropy.time import Time
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -161,8 +162,11 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # log process
             WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
             # median fp cube
+            print('start {0}'.format(Time.now().iso))
             with warnings.catch_warnings(record=True) as _:
                 groupfp = np.nanmedian(cube, axis=0)
+            print('end 1 {0}'.format(Time.now().iso))
+
             # --------------------------------------------------------------
             # calibrate group fp
             # --------------------------------------------------------------
@@ -172,6 +176,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             groupfile.header = vheaders[0]
             groupfile.filename = fp_ids[0]
             groupfile.basename = os.path.basename(fp_ids[0])
+
+            print('end 2 {0}'.format(Time.now().iso))
+
             # get and correct file
             # cargs = [params, recipe, groupfile]
             # ckwargs = dict(n_percentile=percent_thres,
@@ -188,6 +195,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             transforms, xres, yres = [0, 0, 0, 0, 0, 0], 0, 0
             if g_it % 10 == 0:
                 xres, yres = 2*qc_res, 2*qc_res
+
+            print('end 3 {0}'.format(Time.now().iso))
 
             # quality control on group
             if transforms is None:
@@ -207,6 +216,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # groupfp = ea_transform(params, groupfp,
             #                        lin_transform_vect=transforms)
 
+            print('end 4 {0}'.format(Time.now().iso))
+
             # append to cube
             fp_cube.append(groupfp)
             # append transforms to list
@@ -219,6 +230,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 valid_backfiles.append(props['BACKFILE'])
             # validate table mask
             table_mask[indices] = True
+
+            print('end 5 {0}'.format(Time.now().iso))
+
         else:
             eargs = [g_it + 1, min_num]
             WLOG(params, '', TextEntry('40-014-00015', args=eargs))
@@ -231,8 +245,10 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     valid_fp_table = fp_table[table_mask]
     # ----------------------------------------------------------------------
     # add columns to fp_table
-    colnames = ['GROUPID', 'DXREF', 'DYREF', 'A', 'B', 'C', 'D']
-    values = [valid_matched_id, tarrary[:, 0], tarrary[:, 1],
+    colnames = ['GROUPID', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'DXREF',
+                'DYREF', 'A', 'B', 'C', 'D']
+    values = [valid_matched_id, valid_dark_files, valid_badpfiles,
+              valid_backfiles, tarrary[:, 0], tarrary[:, 1],
               tarrary[:, 2], tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
     for c_it, col in enumerate(colnames):
         valid_fp_table[col] = values[c_it]
