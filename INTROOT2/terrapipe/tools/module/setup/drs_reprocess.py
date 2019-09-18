@@ -180,12 +180,12 @@ class Run:
         # turn on the input validation
         self.recipe.input_validation = True
         # sort out names
-        self.runname = 'RUN_{0}'.format(self.recipe.shortname)
-        self.skipname = 'SKIP_{0}'.format(self.recipe.shortname)
+        self.shortname = self.recipe.shortname
+        self.runname = 'RUN_{0}'.format(self.shortname)
+        self.skipname = 'SKIP_{0}'.format(self.shortname)
         # get properties
         self.get_recipe_kind()
         self.get_night_name()
-
 
     def __str__(self):
         return self.__repr__()
@@ -425,6 +425,8 @@ def generate_run_list(params, table, runtable):
             newruns = _generate_run_from_sequence(params, sequence, table)
             # update runtable with sequence generation
             runtable, rlist = _update_run_table(sequence, runtable, newruns)
+    # all runtable elements should now be in recipe list
+    _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
     return generate_ids(params, runtable, recipemod, rlist)
 
@@ -1039,19 +1041,18 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         pp['RUNSTRING'] = str(run_item.runstring)
         # ------------------------------------------------------------------
         # log what we are running
-        wmsg1 = 'ID{0:05d} | {1}'.format(priority, run_item.runstring)
+        if cores > 1:
+            wargs = [priority, number, cores, run_item.runstring]
+            wmsg = 'ID{0:05d}|C{1:02d}/{2:02d}| {3}'.format(*wargs)
+        else:
+            wmsg = 'ID{0:05d}| {1}'.format(priority, run_item.runstring)
         # deal with a debug run
         if params['DEBUG']:
             # log which core is being used (only if using multiple cores)
             if cores > 1:
-                wargs = ['', number, cores, run_item.nightname]
-                wmsg2 = '{0:7s} | core = {1}/{2} night = "{3}"'.format(*wargs)
-                # log message 1
-                WLOG(params, 'info', [wmsg1, wmsg2], colour='magenta',
-                     wrap=False)
+                WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
             else:
-                # log message 1
-                WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
+                WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
             # add default outputs
             pp['ERROR'] = []
             pp['WARNING'] = []
@@ -1060,8 +1061,8 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
             # flag finished
             finished = True
         else:
-            # log message 1
-            WLOG(params, 'info', wmsg1, colour='magenta', wrap=False)
+            # log message
+            WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
             # start time
             starttime = time.time()
             # try to run the main function
@@ -1148,7 +1149,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
 
 def _multi_process(params, runlist, cores):
     # first try to group tasks
-    grouplist = _group_tasks(runlist, cores)
+    grouplist, groupnames = _group_tasks(runlist, cores)
     # start process manager
     manager = Manager()
     event = Event()
@@ -1162,7 +1163,7 @@ def _multi_process(params, runlist, cores):
         # process storage
         jobs = []
         # log progress
-        _group_progress(params, g_it, grouplist)
+        _group_progress(params, g_it, grouplist, groupnames)
         # loop around sub groups (to be run at same time)
         for r_it, runlist_group in enumerate(group):
             # get args
@@ -1217,6 +1218,25 @@ def _get_recipe_module(params, **kwargs):
 
 def _get_rvalues(runtable):
     return list(map(lambda x: x.upper(), runtable.values()))
+
+
+def _check_runtable(params, runtable, recipemod):
+    func_name = __NAME__ + '._check_runtable()'
+    # get recipe list
+    recipelist = list(map(lambda x: x.name, recipemod.recipes))
+    # remove .py
+    recipelist = np.char.replace(recipelist, '.py', '')
+    # check that all run items start with a recipe
+    for runkey in runtable:
+        # get this iterations run item
+        run_item = runtable[runkey]
+        # get the program (should be the first word in the run_item)
+        program = run_item.split(' ')[0].replace('.py', '')
+        # make sure it is in recipelist
+        if program not in recipelist:
+            # log error
+            eargs = [program, params['INSTRUMENT'], func_name]
+            WLOG(params, 'error', TextEntry('00-503-00011', args=eargs))
 
 
 def _get_path_and_check(params, key):
@@ -1420,9 +1440,9 @@ def _get_cores(params):
     return cores
 
 
-def _group_progress(params, g_it, grouplist):
+def _group_progress(params, g_it, grouplist, groupnames):
     # get message
-    wargs = [' * ', g_it + 1, len(grouplist)]
+    wargs = [' * ', g_it + 1, len(grouplist), groupnames[g_it]]
     # log
     WLOG(params, 'info', '', colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
@@ -1439,14 +1459,15 @@ def _group_tasks(runlist, cores):
     # get all recipe names
     recipenames = []
     for it, run_item in enumerate(runlist):
-        recipenames.append(run_item.recipename)
+        recipenames.append(run_item.shortname)
     # storage of groups
     groups = dict()
+    names = dict()
     group_number = 0
     # loop around runlist
     for it, run_item in enumerate(runlist):
         # get recipe name
-        recipe = run_item.recipename
+        recipe = run_item.shortname
         # if it is the first item must have a new group
         if it == 0:
             groups[group_number] = [run_item]
@@ -1456,13 +1477,17 @@ def _group_tasks(runlist, cores):
             else:
                 group_number += 1
                 groups[group_number] = [run_item]
+        # add the names
+        names[group_number] = recipe
     # now we have the groups we can push into the core sub-groups
     out_groups = []
+    out_names = []
 
     for groupkey in groups:
 
         out_group = []
         group = groups[groupkey]
+        out_name = names[groupkey]
 
         for it in range(cores):
             sub_group = group[it::cores]
@@ -1470,8 +1495,9 @@ def _group_tasks(runlist, cores):
                 out_group.append(sub_group)
 
         out_groups.append(out_group)
+        out_names.append(out_name)
     # return output groups
-    return out_groups
+    return out_groups, out_names
 
 
 # =============================================================================
