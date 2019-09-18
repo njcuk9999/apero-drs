@@ -127,6 +127,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of dark cube
+    valid_dark_files, valid_badpfiles, valid_backfiles = [], [], []
     fp_cube, transforms_list, valid_matched_id = [], [], []
     table_mask = np.zeros(len(fp_table), dtype=bool)
     # loop through groups
@@ -172,14 +173,22 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             groupfile.filename = fp_ids[0]
             groupfile.basename = os.path.basename(fp_ids[0])
             # get and correct file
-            cargs = [params, recipe, groupfile]
-            ckwargs = dict(n_percentile=percent_thres,
-                           correctback=False)
-            props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
+            # cargs = [params, recipe, groupfile]
+            # ckwargs = dict(n_percentile=percent_thres,
+            #                correctback=False)
+            # props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
             # --------------------------------------------------------------
             # shift group to master
-            gout = get_linear_transform_params(params, image_ref, groupfp)
-            transforms, xres, yres = gout
+            # TODO: Add back in
+            # gout = get_linear_transform_params(params, image_ref, groupfp)
+            # transforms, xres, yres = gout
+
+            props = dict(DARKFILE='DARKFILE', BADPFILE='BADPFILE',
+                         BACKFILE='BACKFILE')
+            transforms, xres, yres = [0, 0, 0, 0, 0], 0, 0
+            if g_it % 10 == 0:
+                xres, yres = 2*qc_res, 2*qc_res
+
             # quality control on group
             if transforms is None:
                 # log that image quality too poor
@@ -194,20 +203,25 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 # skip adding to group
                 continue
             # perform a final transform on the group
-            groupfp = ea_transform(params, groupfp,
-                                   lin_transform_vect=transforms)
+            # TODO: Add back in
+            # groupfp = ea_transform(params, groupfp,
+            #                        lin_transform_vect=transforms)
+
             # append to cube
             fp_cube.append(groupfp)
             # append transforms to list
-            for fp_id in fp_ids:
+            for _ in fp_ids:
                 transforms_list.append(transforms)
-            # now add extract properties to main group
-            valid_matched_id.append(matched_id[g_it])
+                # now add extract properties to main group
+                valid_matched_id.append(group_num)
+                valid_dark_files.append(props['DARKFILE'])
+                valid_badpfiles.append(props['BADPFILE'])
+                valid_backfiles.append(props['BACKFILE'])
+            # validate table mask
             table_mask[indices] = True
         else:
             eargs = [g_it + 1, min_num]
             WLOG(params, '', TextEntry('40-014-00015', args=eargs))
-
     # ----------------------------------------------------------------------
     # convert fp cube to array
     fp_cube = np.array(fp_cube)
