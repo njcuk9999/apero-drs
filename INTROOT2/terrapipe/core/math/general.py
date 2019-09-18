@@ -213,38 +213,6 @@ def iuv_spline(x, y, **kwargs):
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
-def median_filter_ea(vector, width):
-    """
-    Median filter array "vector" by a box of width "width"
-    Note: uses nanmedian to median the boxes
-
-    :param vector: numpy array (1D): the vector to median filter
-    :param width: int, the size of the median box to apply
-
-    :return vector2: numpy array (1D): same size as "vector" except the pixel
-                     value is that of the median of box +/- width//2 of each
-                     pixel
-    """
-    # construct an output vector filled with NaNs
-    vector2 = np.zeros_like(vector) + np.nan
-    # loop around pixel in vector
-    for ix in range(len(vector)):
-        # define a start and end of our median box
-        start = ix - width // 2
-        end = ix + width // 2
-        # deal with boundaries
-        if start < 0:
-            start = 0
-        if end > len(vector) - 1:
-            end = len(vector) - 1
-        # set the value of the new pixel equal to the median of the box of
-        #   the original vector (and deal with NaNs)
-        with warnings.catch_warnings(record=True) as _:
-            vector2[ix] = mp.nanmedian(vector[start:end])
-    # return new vector
-    return vector2
-
-
 # =============================================================================
 # Define wave functions
 # =============================================================================

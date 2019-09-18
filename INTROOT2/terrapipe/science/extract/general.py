@@ -11,7 +11,6 @@ Created on 2019-07-09 at 13:42
 """
 from __future__ import division
 import numpy as np
-from scipy.signal import medfilt
 from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
@@ -277,7 +276,7 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
     torder_mask[wavemask] = torder_tapas < tapas_thres
     # median filter the thermal (loop around orders)
     for order_num in range(thermal.shape[0]):
-        thermal[order_num] = medfilt(thermal[order_num], filter_wid)
+        thermal[order_num] = mp.medfilt_1d(thermal[order_num], filter_wid)
 
     # we find the median scale between the observation and the thermal
     #    background in domains where there is no transmission
@@ -346,7 +345,7 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
     # ----------------------------------------------------------------------
     # median filter the thermal (loop around orders)
     for order_num in range(dim1):
-        thermal[order_num] = medfilt(thermal[order_num], filter_wid)
+        thermal[order_num] = mp.medfilt_1d(thermal[order_num], filter_wid)
     # ----------------------------------------------------------------------
     # only keep wavelength in range of thermal limits
     wavemask = (wavemap[torder] > blue_limit) & (wavemap[torder] < red_limit)

@@ -9,12 +9,14 @@ Created on 2019-09-18 at 10:53
 
 @author: cook
 """
+
+import numpy as np
+from scipy import signal
+
 try:
     import bottleneck as bn
-    import numpy as np
     HAS_BOTTLENECK = True
 except Exception as e:
-    import numpy as np
     HAS_BOTTLENECK = False
 
 from terrapipe.core import constants
@@ -253,6 +255,35 @@ def median(a, axis, **kwargs):
     else:
         # return numpy function
         return np.median(a, axis=axis, **kwargs)
+
+
+def medfilt_1d(a, window=None):
+    """
+    Bottleneck or scipy.signal implementation of medfilt depending on imports
+
+    :param a: numpy array, Input array. If `a` is not an array, a conversion
+              is attempted.
+    :param window: int, The number of elements in the moving window.
+
+    :type a: np.ndarray
+    :type window: int
+
+    :return:
+    """
+    if HAS_BOTTLENECK:
+        # get half window size
+        half_window = window // 2
+        # need to shift
+        a1 = np.append(a, [np.nan] * half_window)
+        # median filter (via bottleneck function)
+        y = bn.move_median(a1, window=window, min_count=half_window)
+        # return shifted bottleneck function
+        return y[half_window:]
+    else:
+        # return scipy function
+        return signal.medfilt(a, kernel_size=window)
+
+
 
 
 # =============================================================================
