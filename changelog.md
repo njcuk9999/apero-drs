@@ -2,6 +2,22 @@ Changelog
 =========
 
 
+0.5.073 (2019-09-18)
+--------------------
+- Core.math - add a fast medfilt_1d function. [Neil Cook]
+- Core.math.fast.py - first commit numpy nan functions from bottleneck
+  if available. [Neil Cook]
+- Change nan numpy functions to mp.nan functions (use bottleneck if
+  available for speed up) [Neil Cook]
+- Science.calib.shape.py - test cube as array. [Neil Cook]
+- Science.calib.shape.py - add length of cube for printout. [Neil Cook]
+- Science.calib.shape.py - add printouts to check. [Neil Cook]
+- Science.calib.shape.py - set transforms/xres/yres to zero. [Neil Cook]
+- Science.calib.shape.py - test the fpmaster loop (without long parts)
+  [Neil Cook]
+- Update date/changelog/version. [Neil Cook]
+
+
 0.5.072 (2019-09-17)
 --------------------
 - Tools.bin.reset.py - remove instrument re-definition (now done in
