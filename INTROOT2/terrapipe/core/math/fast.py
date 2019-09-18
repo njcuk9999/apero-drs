@@ -226,8 +226,14 @@ def nansum(a, axis=None, **kwargs):
     :return:
     """
     if HAS_BOTTLENECK and len(kwargs) == 0:
+        # make sure a is an array
+        a1 = np.array(a)
+        # bottle neck return in type given for bool array this is not
+        #  what we want
+        if a1.dtype == bool:
+            a1 = a1.astype(int)
         # return bottleneck function
-        return bn.nansum(a, axis=axis)
+        return bn.nansum(a1, axis=axis)
     else:
         # return numpy function
         return np.nansum(a, axis=axis, **kwargs)
