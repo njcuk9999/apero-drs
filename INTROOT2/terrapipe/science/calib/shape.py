@@ -15,10 +15,8 @@ import os
 from scipy.ndimage import filters
 from scipy.ndimage import map_coordinates as mapc
 from scipy.optimize import curve_fit
-from scipy.signal import medfilt
 from scipy.stats import stats
 import warnings
-from astropy.time import Time
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -163,10 +161,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # log process
             WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
             # median fp cube
-            print('start {0} shape={1}'.format(Time.now().iso, cube.shape))
             with warnings.catch_warnings(record=True) as _:
                 groupfp = mp.nanmedian(cube, axis=0)
-            print('end 1 {0}'.format(Time.now().iso))
 
             # --------------------------------------------------------------
             # calibrate group fp
@@ -178,27 +174,15 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             groupfile.filename = fp_ids[0]
             groupfile.basename = os.path.basename(fp_ids[0])
 
-            print('end 2 {0}'.format(Time.now().iso))
-
             # get and correct file
-            # cargs = [params, recipe, groupfile]
-            # ckwargs = dict(n_percentile=percent_thres,
-            #                correctback=False)
-            # props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
+            cargs = [params, recipe, groupfile]
+            ckwargs = dict(n_percentile=percent_thres,
+                           correctback=False)
+            props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
             # --------------------------------------------------------------
             # shift group to master
-            # TODO: Add back in
-            # gout = get_linear_transform_params(params, image_ref, groupfp)
-            # transforms, xres, yres = gout
-
-            props = dict(DARKFILE='DARKFILE', BADPFILE='BADPFILE',
-                         BACKFILE='BACKFILE')
-            transforms, xres, yres = [0, 0, 0, 0, 0, 0], 0, 0
-            if g_it % 10 == 0:
-                xres, yres = 2 * qc_res, 2 * qc_res
-
-            print('end 3 {0}'.format(Time.now().iso))
-
+            gout = get_linear_transform_params(params, image_ref, groupfp)
+            transforms, xres, yres = gout
             # quality control on group
             if transforms is None:
                 # log that image quality too poor
@@ -213,12 +197,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 # skip adding to group
                 continue
             # perform a final transform on the group
-            # TODO: Add back in
-            # groupfp = ea_transform(params, groupfp,
-            #                        lin_transform_vect=transforms)
-
-            print('end 4 {0}'.format(Time.now().iso))
-
+            groupfp = ea_transform(params, groupfp,
+                                   lin_transform_vect=transforms)
             # append to cube
             fp_cube.append(groupfp)
             # append transforms to list
@@ -231,9 +211,6 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 valid_backfiles.append(props['BACKFILE'])
             # validate table mask
             table_mask[indices] = True
-
-            print('end 5 {0}'.format(Time.now().iso))
-
         else:
             eargs = [g_it + 1, min_num]
             WLOG(params, '', TextEntry('40-014-00015', args=eargs))
@@ -555,9 +532,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                              'med_filter_size', kwargs, func_name)
     min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
                            'min_good_corr', kwargs, func_name)
-    short_medfilt_width = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
+    short_medfilt_wid = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
                                  'short_medfilt_width', kwargs, func_name)
-    long_medfilt_width = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
+    long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
                                 'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
     plot_on = pcheck(params, 'SHAPE_PLOT_PER_ORDER', 'plot_on',
@@ -905,14 +882,12 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         # get the median filter of dx (short median filter)
         dx2_short = np.array(dx)
         for iw in range(width):
-            margs = [dx[:, iw], short_medfilt_width]
-            dx2_short[:, iw] = mp.median_filter_ea(*margs)
+            dx2_short[:, iw] = mp.medfilt_1d(dx[:, iw], short_medfilt_wid)
         # get the median filter of short dx with longer median
         #     filter/second pass
         dx2_long = np.array(dx)
         for iw in range(width):
-            margs = [dx2_short[:, iw], long_medfilt_width]
-            dx2_long[:, iw] = mp.median_filter_ea(*margs)
+            dx2_long[:, iw] = mp.medfilt_1d(dx2_short[:, iw], long_medfilt_wid)
         # apply short dx filter to dx2
         dx2 = np.array(dx2_short)
         # apply long dx filter to NaN positions of short dx filter
@@ -1376,7 +1351,7 @@ def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
     # The HC spectrum is high-passed. We are just interested to know if
     # a given expected line from the catalog falls at the position of a
     # >3-sigma peak relative to the continuum
-    sp_hc = sp_hc - medfilt(sp_hc, med_filter_wid)
+    sp_hc = sp_hc - mp.medfilt_1d(sp_hc, med_filter_wid)
     # normalise HC to its absolute deviation
     norm = mp.nanmedian(np.abs(sp_hc[sp_hc != 0]))
     sp_hc = sp_hc / norm
