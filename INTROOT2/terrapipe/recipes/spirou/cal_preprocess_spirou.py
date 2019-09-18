@@ -15,6 +15,7 @@ import os
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.science import preprocessing
 from terrapipe.io import drs_image
 from terrapipe.io import drs_fits
@@ -202,16 +203,16 @@ def __main__(recipe, params):
         # get rms threshold
         rms_threshold = params['PP_CORRUPT_RMS_THRES']
         # check
-        if np.max(rms_list) > rms_threshold:
+        if mp.nanmax(rms_list) > rms_threshold:
             # add failed message to fail message list
-            fargs = [np.max(rms_list), rms_threshold, infile.filename]
+            fargs = [mp.nanmax(rms_list), rms_threshold, infile.filename]
             fail_msg.append(TextEntry('40-010-00008', args=fargs))
             passed = False
             qc_pass.append(0)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(np.max(rms_list))
+        qc_values.append(mp.nanmax(rms_list))
         qc_names.append('max(rms_list)')
         qc_logic.append('max(rms_list) > {0:.4e}'.format(rms_threshold))
         # ----------------------------------------------------------------------

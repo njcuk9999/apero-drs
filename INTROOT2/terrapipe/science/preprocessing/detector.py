@@ -14,6 +14,7 @@ import warnings
 from scipy import ndimage
 
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.io import drs_path
@@ -78,9 +79,9 @@ def get_hot_pixels(params):
     # median out full band structures
     with warnings.catch_warnings(record=True) as _:
         for ix in range(med_size, dark_size):
-            full_badpix[:, ix] -= np.nanmedian(full_badpix[:, ix])
+            full_badpix[:, ix] -= mp.nanmedian(full_badpix[:, ix])
         for iy in range(dim1):
-            full_badpix[iy, :] -= np.nanmedian(full_badpix[iy, :])
+            full_badpix[iy, :] -= mp.nanmedian(full_badpix[iy, :])
 
     full_badpix[~np.isfinite(full_badpix)] = 0.0
 
@@ -155,8 +156,8 @@ def ref_top_bottom(params, image):
         # loop around the even and then the odd pixels
         for oddeven in range(2):
             # work out the median of the bottom pixels for this amplifier
-            bottom = np.nanmedian(image[:nbottom, pixmask + oddeven])
-            top = np.nanmedian(image[dim1 - ntop:, pixmask + oddeven])
+            bottom = mp.nanmedian(image[:nbottom, pixmask + oddeven])
+            top = mp.nanmedian(image[dim1 - ntop:, pixmask + oddeven])
             # work out contribution to subtract from top and bottom
             contrib = (top * weightarr) + (bottom * (1 - weightarr))
             # subtraction contribution from image for this amplifier
@@ -211,7 +212,7 @@ def median_filter_dark_amp(params, image):
             x0, y0 = i * binstep, j * binstep
             x1, y1 = i * binstep + binstep, j * binstep + binstep
             # calculate value at this position
-            imagebin[i, j] = np.nanmedian(image2b[x0:x1, y0:y1])
+            imagebin[i, j] = mp.nanmedian(image2b[x0:x1, y0:y1])
     # apply a cubic spline onto the binned image
     image3 = ndimage.zoom(imagebin, binstep, order=2)
     # ----------------------------------------------------------------------
@@ -239,7 +240,7 @@ def median_filter_dark_amp(params, image):
     # from the cube that contains all dark amplifiers construct the
     #    median dark amplifier
     with warnings.catch_warnings(record=True) as _:
-        refamp = np.nanmedian(darkamps, axis=0)
+        refamp = mp.nanmedian(darkamps, axis=0)
     # ----------------------------------------------------------------------
     # subtract the median dark amp from each amplifier in the image
     for amp in range(tamp):
@@ -291,7 +292,7 @@ def median_one_over_f_noise(params, image):
         end = amp * amp_width + amp_width
         # median this amplifier across the x axis
         with warnings.catch_warnings(record=True) as _:
-            residual_low_f_tmp = np.nanmedian(image[:, start:end], axis=1)
+            residual_low_f_tmp = mp.nanmedian(image[:, start:end], axis=1)
         # if this is the first amplifier just set it equal to the median
         if amp == 0:
             residual_low_f = np.array(residual_low_f_tmp)
@@ -348,18 +349,18 @@ def test_for_corrupt_files(params, image, hotpix):
             # get the hot pixel values at position in median box
             data_hot = np.array(image[yhot + dx, xhot + dy])
             # median the data_hot for this box position
-            med_hotpix[posx, posy] = np.nanmedian(data_hot)
+            med_hotpix[posx, posy] = mp.nanmedian(data_hot)
     # get dark ribbon
     dark_ribbon = image[:, 0:dark_size]
     # you should not have an excess in odd/even RMS of pixels
-    rms2 = np.nanmedian(np.abs(dark_ribbon[0:-1, :] - dark_ribbon[1:, :]))
-    rms3 = np.nanmedian(np.abs(dark_ribbon[:, 0:-1] - dark_ribbon[:, 1:]))
+    rms2 = mp.nanmedian(np.abs(dark_ribbon[0:-1, :] - dark_ribbon[1:, :]))
+    rms3 = mp.nanmedian(np.abs(dark_ribbon[:, 0:-1] - dark_ribbon[:, 1:]))
     with warnings.catch_warnings(record=True) as _:
-        med0 = np.nanmedian(dark_ribbon, axis=0)
-        med1 = np.nanmedian(dark_ribbon, axis=1)
+        med0 = mp.nanmedian(dark_ribbon, axis=0)
+        med1 = mp.nanmedian(dark_ribbon, axis=1)
     # work out the remaining two rms values
-    rms0 = np.nanmedian(np.abs(med0 - np.nanmedian(med0)))
-    rms1 = np.nanmedian(np.abs(med1 - np.nanmedian(med1)))
+    rms0 = mp.nanmedian(np.abs(med0 - mp.nanmedian(med0)))
+    rms1 = mp.nanmedian(np.abs(med1 - mp.nanmedian(med1)))
     # get the 'rms_percentile' percentile value
     percentile_cut = np.nanpercentile(image, rms_percentile)
     # make sure the percentile does not fall below a lower level
@@ -371,13 +372,13 @@ def test_for_corrupt_files(params, image, hotpix):
     rms2 = rms2 / percentile_cut
     rms3 = rms3 / percentile_cut
     # normalise med_hotpix to it's own median
-    res = med_hotpix - np.nanmedian(med_hotpix)
+    res = med_hotpix - mp.nanmedian(med_hotpix)
 
-    dy = med_size - (np.argmax(res) // (2 * med_size + 1))
-    dx = med_size - (np.argmax(res) % (2 * med_size + 1))
+    dy = med_size - (mp.nanargmax(res) // (2 * med_size + 1))
+    dx = med_size - (mp.nanargmax(res) % (2 * med_size + 1))
 
     # work out an rms
-    rms = np.nanmedian(np.abs(res))
+    rms = mp.nanmedian(np.abs(res))
     # signal to noise = res / rms
     snr_hotpix = res[med_size, med_size] / rms
     # return test values

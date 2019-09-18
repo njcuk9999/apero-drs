@@ -16,6 +16,7 @@ import warnings
 
 from terrapipe.core import constants
 from . import general
+from . import fast
 
 # =============================================================================
 # Define variables
@@ -153,24 +154,24 @@ def gauss_fit_nn(xpix, ypix, nn):
     func_name = __NAME__ + '.gauss_fit_slope()'
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / general.fwhm()
+    ew_guess = 2 * mp.nanmedian(np.gradient(xpix)) / general.fwhm()
 
     if nn == 3:
         # only amp, cen and ew
-        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
-              xpix[np.nanargmax(ypix)], ew_guess]
+        a0 = [fast.nanmax(ypix) - fast.nanmin(ypix),
+              xpix[fast.nanargmax(ypix)], ew_guess]
     elif nn == 4:
         # only amp, cen, ew, dc offset
-        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
-              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix)]
+        a0 = [fast.nanmax(ypix) - fast.nanmin(ypix),
+              xpix[fast.nanargmax(ypix)], ew_guess, fast.nanmin(ypix)]
     elif nn == 5:
         # only amp, cen, ew, dc offset, slope
-        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
-              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix), 0]
+        a0 = [fast.nanmax(ypix) - fast.nanmin(ypix),
+              xpix[fast.nanargmax(ypix)], ew_guess, fast.nanmin(ypix), 0]
     elif nn == 6:
         # only amp, cen, ew, dc offset, slope, curvature
-        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
-              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix), 0, 0]
+        a0 = [fast.nanmax(ypix) - fast.nanmin(ypix),
+              xpix[fast.nanargmax(ypix)], ew_guess, fast.nanmin(ypix), 0, 0]
     else:
         emsg = 'nn must be 3, 4, 5 or 6 only. ({0})'
         raise ValueError(emsg.format(func_name))
@@ -194,12 +195,12 @@ def gauss_fit_nn(xpix, ypix, nn):
         # add to the amplitudes
         a0 += amps
         # recalculate rms
-        rdiff = np.nanmax(ypix) - np.nanmin(ypix)
+        rdiff = fast.nanmax(ypix) - fast.nanmin(ypix)
         # check for nans
         if np.sum(np.isfinite(residu)) == 0:
             rms = np.nan
         else:
-            rms = np.nanstd(residu - residu_prev) / rdiff
+            rms = fast.nanstd(residu - residu_prev) / rdiff
         # set the previous residual to the new one
         residu_prev = np.array(residu)
         # add to iteration
@@ -264,7 +265,7 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     weights = 1.0 / weights
     # if we aren't provided a guess, make one
     if guess is None:
-        guess = [np.max(y), np.mean(y), np.std(y), 0]
+        guess = [fast.nanmax(y), fast.nanmean(y), fast.nanstd(y), 0]
     # calculate the fit using curve_fit to the function "gauss_function"
     with warnings.catch_warnings(record=True) as _:
         pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,

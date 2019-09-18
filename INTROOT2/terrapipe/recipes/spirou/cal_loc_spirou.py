@@ -216,7 +216,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # check that max number of points rejected in center fit is below
         #    threshold
-        sum_cent_max_rmpts = np.nansum(cent_max_rmpts)
+        sum_cent_max_rmpts = mp.nansum(cent_max_rmpts)
         if sum_cent_max_rmpts > max_removed_cent:
             # add failed message to fail message list
             fargs = [sum_cent_max_rmpts, max_removed_cent]
@@ -232,7 +232,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # check that  max number of points rejected in width fit is below
         #   threshold
-        sum_wid_max_rmpts = np.nansum(wid_max_rmpts)
+        sum_wid_max_rmpts = mp.nansum(wid_max_rmpts)
         if sum_wid_max_rmpts > max_removed_wid:
             # add failed message to fail message list
             fargs = [sum_wid_max_rmpts, max_removed_wid]

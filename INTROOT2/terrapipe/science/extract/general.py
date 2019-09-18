@@ -19,7 +19,7 @@ import warnings
 
 from terrapipe import core
 from terrapipe.core import constants
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
@@ -253,7 +253,7 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
         thermal = thermal / flat
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
-    if np.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
+    if mp.nansum(thermal) == 0 or mp.sum(np.isfinite(thermal)) == 0:
         return image
     # ----------------------------------------------------------------------
     # load tapas
@@ -261,7 +261,7 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
     wtapas, ttapas = tapas['wavelength'], tapas['trans_combined']
     # ----------------------------------------------------------------------
     # splining tapas onto the order 49 wavelength grid
-    sptapas = math.iuv_spline(wtapas, ttapas)
+    sptapas = mp.iuv_spline(wtapas, ttapas)
     # binary mask to be saved; this corresponds to the domain for which
     #    transmission is basically zero and we can safely use the domain
     #    to scale the thermal background. We only do this for wavelength smaller
@@ -283,7 +283,7 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
     #    background in domains where there is no transmission
     thermal_torder = thermal[torder, torder_mask]
     image_torder = image[torder, torder_mask]
-    ratio = np.nanmedian(thermal_torder / image_torder)
+    ratio = mp.nanmedian(thermal_torder / image_torder)
     # scale thermal by ratio
     thermal = thermal / ratio
     # ----------------------------------------------------------------------
@@ -323,7 +323,7 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
         thermal = thermal / flat
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
-    if np.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
+    if mp.nansum(thermal) == 0 or mp.sum(np.isfinite(thermal)) == 0:
         return image
     # ----------------------------------------------------------------------
     # set up an envelope to measure thermal background in image
@@ -354,7 +354,7 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
     #    background in domains where there is no transmission
     thermal_torder = thermal[torder, wavemask]
     envelope_torder = envelope[wavemask]
-    ratio = np.nanmedian(thermal_torder / envelope_torder)
+    ratio = mp.nanmedian(thermal_torder / envelope_torder)
     # scale thermal by ratio
     thermal = thermal / ratio
     # ----------------------------------------------------------------------
@@ -433,14 +433,14 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
         # find the valid pixels
         cond1 = np.isfinite(oblaze) & np.isfinite(e2ds[order_num])
         with warnings.catch_warnings(record=True) as _:
-            cond2 = oblaze > (blazethres * np.nanmax(oblaze))
+            cond2 = oblaze > (blazethres * mp.nanmax(oblaze))
         valid = cond1 & cond2 & edges
         # convolve with the edge kernel
         oweight = np.convolve(valid, ker, mode='same')
         # normalise to the maximum
         with warnings.catch_warnings(record=True) as _:
-            oweight = oweight - np.nanmin(oweight)
-            oweight = oweight / np.nanmax(oweight)
+            oweight = oweight - mp.nanmin(oweight)
+            oweight = oweight / mp.nanmax(oweight)
         # append to sloping vector storage
         slopevector[order_num] = oweight
 
@@ -466,11 +466,11 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
         oe2ds = e2ds[order_num, valid]
         oblaze = blaze[order_num, valid]
         # create the splines for this order
-        spline_sp = math.iuv_spline(owave, oe2ds, k=5, ext=1)
-        spline_bl = math.iuv_spline(owave, oblaze, k=5, ext=1)
+        spline_sp = mp.iuv_spline(owave, oe2ds, k=5, ext=1)
+        spline_bl = mp.iuv_spline(owave, oblaze, k=5, ext=1)
         # can only spline in domain of the wave
-        useful_range = (wavegrid > np.nanmin(owave))
-        useful_range &= (wavegrid < np.nanmax(owave))
+        useful_range = (wavegrid > mp.nanmin(owave))
+        useful_range &= (wavegrid < mp.nanmax(owave))
         # get splines and add to outputs
         weight[useful_range] += spline_bl(wavegrid[useful_range])
         out_spec[useful_range] += spline_sp(wavegrid[useful_range])

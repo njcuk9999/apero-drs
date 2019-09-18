@@ -20,7 +20,7 @@ import copy
 
 from terrapipe import core
 from terrapipe.core import constants
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe import locale
 from terrapipe.core.core import drs_database
 from terrapipe.core.core import drs_log
@@ -377,7 +377,7 @@ def add_wave_keys(infile, props):
     elif isinstance(props['WFP_LINES'], str):
         infile.add_hkey('KW_WFP_LINES', value=props['WFP_LINES'])
     else:
-        infile.add_hkey('KW_WFP_LINES', value=np.nansum(props['WFP_LINES']))
+        infile.add_hkey('KW_WFP_LINES', value=mp.nansum(props['WFP_LINES']))
     infile.add_hkey('KW_WFP_TARG_RV', value=props['WFP_TARG_RV'])
     infile.add_hkey('KW_WFP_WIDTH', value=props['WFP_WIDTH'])
     infile.add_hkey('KW_WFP_STEP', value=props['WFP_STEP'])
@@ -413,7 +413,7 @@ def check_wave_consistency(params, props, **kwargs):
             # get the wave map for this order
             yfit = np.polyval(props['COEFFS'][order_num][::-1], xfit)
             # get the new coefficients based on a fit to this wavemap
-            coeffs = math.nanpolyfit(xfit, yfit, required_deg)[::-1]
+            coeffs = mp.nanpolyfit(xfit, yfit, required_deg)[::-1]
             # push into storage
             output_coeffs[order_num] = coeffs
             output_map[order_num] = yfit
@@ -930,13 +930,13 @@ def hc_quality_control(params, hcprops):
     #     positive
     # get the differences
     wave_diff = hcprops['WAVE_MAP2'][1:] - hcprops['WAVE_MAP2'][:-1]
-    if np.min(wave_diff) < 0:
+    if mp.nanmin(wave_diff) < 0:
         fail_msg.append(textdict['40-017-00016'])
         qc_pass.append(0)
     else:
         qc_pass.append(1)
     # add to qc header lists
-    qc_values.append(np.min(wave_diff))
+    qc_values.append(mp.nanmin(wave_diff))
     qc_names.append('MIN WAVE DIFF HC')
     qc_logic.append('MIN WAVE DIFF < 0')
     # --------------------------------------------------------------
@@ -987,8 +987,8 @@ def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
         hc_ll_cat = hcprops['WAVE_CATALOG'][order_mask]
         hc_ll_diff = hc_ll_ord - hc_ll_cat
         res_hc.append(hc_ll_diff * speed_of_light / hc_ll_cat)
-        sumres_hc += np.nansum(res_hc[order])
-        sumres2_hc += np.nansum(res_hc[order] ** 2)
+        sumres_hc += mp.nansum(res_hc[order])
+        sumres2_hc += mp.nansum(res_hc[order] ** 2)
     # get the total number of lines
     total_lines_hc = len(np.concatenate(res_hc))
     # get the final mean and varianace
@@ -1231,9 +1231,9 @@ def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
                     # continue to next segment
                     continue
                 # calculate the RMS
-                rms = np.nanmedian(np.abs(segment[1:] - segment[:-1]))
+                rms = mp.nanmedian(np.abs(segment[1:] - segment[:-1]))
                 # find the peak pixel value
-                peak = np.nanmax(segment) - np.nanmedian(segment)
+                peak = mp.nanmax(segment) - mp.nanmedian(segment)
                 # ----------------------------------------------------------
                 # keep only peaks that are well behaved:
                 # RMS not zero
@@ -1256,10 +1256,10 @@ def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
                 if keep:
                     # fit a gaussian with a slope
                     gargs = [xpix, segment, gfitmode]
-                    popt_left, g2 = math.gauss_fit_nn(*gargs)
+                    popt_left, g2 = mp.gauss_fit_nn(*gargs)
                     # residual of the fit normalized by peak value similar to
                     #    an 1/SNR value
-                    gauss_rms_dev0 = np.std(segment - g2) / popt_left[0]
+                    gauss_rms_dev0 = mp.nanstd(segment - g2) / popt_left[0]
                     # all values that will be added (if keep_peak=True) to the
                     #    vector of all line parameters
                     zp0 = popt_left[3]
@@ -1504,8 +1504,8 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             # get the peaks for this order
             order_peaks = peak[good]
             # we may have fewer lines within the order than nmax_bright
-            if np.nansum(good) <= nmax_bright:
-                nmax = np.nansum(good) - 1
+            if mp.nansum(good) <= nmax_bright:
+                nmax = mp.nansum(good) - 1
             else:
                 nmax = nmax_bright
             # Find the "nmax" brightest peaks
@@ -1595,7 +1595,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             pos_bright = np.where(good_bright)[0]
             pos = np.where(good)[0]
             # get number of good_bright
-            num_gb = int(np.nansum(good_bright))
+            num_gb = int(mp.nansum(good_bright))
             bestn = 0
             best_coeffs = np.zeros(triplet_deg + 1)
             # get the indices of the triplets of bright lines
@@ -1610,19 +1610,19 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
                 yy = wave_catalog[pos_it]
                 # fit this position's lines and take it as the best-guess
                 #    solution
-                coeffs = math.nanpolyfit(xx, yy, triplet_deg)
+                coeffs = mp.nanpolyfit(xx, yy, triplet_deg)
                 # extrapolate out over all lines
                 fit_all = np.polyval(coeffs, xgau[good_all])
                 # work out the error in velocity
                 ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
                 # work out the number of lines to keep
-                nkeep = np.nansum(np.abs(ev) < cut_fit_threshold)
+                nkeep = mp.nansum(np.abs(ev) < cut_fit_threshold)
                 # if number of lines to keep largest seen --> store
                 if nkeep > bestn:
                     bestn = nkeep
                     best_coeffs = np.array(coeffs)
             # Log the total number of valid lines found
-            wargs = [order_num, bestn, np.nansum(good_all)]
+            wargs = [order_num, bestn, mp.nansum(good_all)]
             WLOG(params, '', TextEntry('40-017-00008', args=wargs))
             # if we have the minimum number of lines check that we satisfy
             #   the cut_fit_threshold for all good lines and reject outliers
@@ -1635,7 +1635,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
                 abs_ev = np.abs(ev)
                 # if max error in velocity greater than threshold, remove
                 #    those greater than cut_fit_threshold
-                if np.nanmax(abs_ev) > cut_fit_threshold:
+                if mp.nanmax(abs_ev) > cut_fit_threshold:
                     # get outliers
                     with warnings.catch_warnings(record=True) as _:
                         outliers = pos[abs_ev > cut_fit_threshold]
@@ -1673,16 +1673,16 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
         # ------------------------------------------------------------------
         # Quality check on the total number of lines found
         # ------------------------------------------------------------------
-        if np.nansum(good) < min_tot_num_lines:
+        if mp.nansum(good) < min_tot_num_lines:
             # log error that we have insufficient lines found
-            eargs = [np.nansum(good), min_tot_num_lines, func_name]
+            eargs = [mp.nansum(good), min_tot_num_lines, func_name]
             WLOG(params, 'error', TextEntry('00-017-00003', args=eargs))
 
         # ------------------------------------------------------------------
         # Linear model slice generation
         # ------------------------------------------------------------------
         # storage for the linear model slice
-        lin_mod_slice = np.zeros((len(xgau), np.nansum(order_fit_cont)))
+        lin_mod_slice = np.zeros((len(xgau), mp.nansum(order_fit_cont)))
 
         # construct the unit vectors for wavelength model
         # loop around order fit continuity values
@@ -1701,7 +1701,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
         # ------------------------------------------------------------------
         # storage for arrays
         recon0 = np.zeros_like(wave_catalog)
-        amps0 = np.zeros(np.nansum(order_fit_cont))
+        amps0 = np.zeros(mp.nansum(order_fit_cont))
 
         # Loop sigma_clip_num times for sigma clipping and numerical
         #    convergence. In most cases ~10 iterations would be fine but this
@@ -1710,7 +1710,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             # calculate the linear minimization
             largs = [wave_catalog - recon0, lin_mod_slice]
             with warnings.catch_warnings(record=True) as _:
-                amps, recon = math.linear_minimization(*largs)
+                amps, recon = mp.linear_minimization(*largs)
             # add the amps and recon to new storage
             amps0 = amps0 + amps
             recon0 = recon0 + recon
@@ -1719,8 +1719,8 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
                 # work out the residuals
                 res = (wave_catalog - recon0)
                 # work out the sum of residuals
-                sum_r = np.nansum(res * lin_mod_slice[:, a_it])
-                sum_l2 = np.nansum(lin_mod_slice[:, a_it] ** 2)
+                sum_r = mp.nansum(res * lin_mod_slice[:, a_it])
+                sum_l2 = mp.nansum(lin_mod_slice[:, a_it] ** 2)
                 # normalise by sum squared
                 ampsx = sum_r / sum_l2
                 # add this contribution on
@@ -1729,7 +1729,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             # recalculate dv [in km/s]
             dv = ((wave_catalog / recon0) - 1) * speed_of_light
             # calculate the standard deviation
-            sig = np.std(dv)
+            sig = mp.nanstd(dv)
             absdev = np.abs(dv / sig)
 
             # initialize lists for saving
@@ -1751,9 +1751,9 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
                 # get abs dev for order
                 absdev_ord = absdev[omask]
                 # check if above threshold
-                if np.max(absdev_ord) > sigma_clip_thres:
+                if mp.nanmax(absdev_ord) > sigma_clip_thres:
                     # create mask for worst line
-                    sig_mask = absdev_ord < np.max(absdev_ord)
+                    sig_mask = absdev_ord < mp.nanmax(absdev_ord)
                     # apply mask
                     recon0_aux.append(recon0[omask][sig_mask])
                     lin_mod_slice_aux.append(lin_mod_slice[omask][sig_mask])
@@ -1813,7 +1813,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
         # loop around the orders
         for order_num in range(nbo):
             order_mask = orders == order_num
-            if np.nansum(order_mask) == 0:
+            if mp.nansum(order_mask) == 0:
                 # log that no values were found
                 wargs = [order_num]
                 WLOG(params, 'warning', TextEntry('10-017-00005', args=wargs))
@@ -1935,8 +1935,8 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
             b_wave_catalog = wave_catalog[mask]
 
             # set up storage for lines and dvs
-            all_lines = np.zeros((np.nansum(mask), 2 * wsize + 1))
-            all_dvs = np.zeros((np.nansum(mask), 2 * wsize + 1))
+            all_lines = np.zeros((mp.nansum(mask), 2 * wsize + 1))
+            all_dvs = np.zeros((mp.nansum(mask), 2 * wsize + 1))
 
             # set up base
             base = np.zeros(2 * wsize + 1, dtype=bool)
@@ -1948,7 +1948,7 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
             # pixels. This allows us to merge all lines in a single
             # profile and removes differences in pixel sampling and
             # resolution.
-            for it in range(int(np.nansum(mask))):
+            for it in range(int(mp.nansum(mask))):
                 # get limits
                 border = int(b_orders[it])
                 start = int(b_xgau[it] + 0.5) - wsize
@@ -1956,8 +1956,8 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
                 # get line
                 line = np.array(hc_sp)[border, start:end]
                 # subtract median base and normalise line
-                line -= np.nanmedian(line[base])
-                line /= np.nansum(line)
+                line -= mp.nanmedian(line[base])
+                line /= mp.nansum(line)
                 # calculate velocity... express things in velocity
                 ratio = wave_map2[border, start:end] / b_wave_catalog[it]
                 dv = -speed_of_light * (ratio - 1)
@@ -1988,23 +1988,23 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
                              guess=init_guess)
                 # do curve fit on point
                 try:
-                    popt, pcov = math.fit_gauss_with_slope(**fargs)
+                    popt, pcov = mp.fit_gauss_with_slope(**fargs)
                 except Exception as e:
                     # log error: Resolution map curve_fit error
                     eargs = [type(e), e, func_name]
                     WLOG(params, 'error', TextEntry('09-017-00002', args=eargs))
                 # calculate residuals for full line list
-                res = all_lines - math.gauss_fit_s(all_dvs, *popt)
+                res = all_lines - mp.gauss_fit_s(all_dvs, *popt)
                 # calculate RMS of residuals
-                rms = res / np.nanmedian(np.abs(res))
+                rms = res / mp.nanmedian(np.abs(res))
                 # calculate max deviation
-                maxdev = np.nanmax(np.abs(rms[keep]))
+                maxdev = mp.nanmax(np.abs(rms[keep]))
                 # re-calculate the keep mask
                 keep[np.abs(rms) > max_dev_thres] = False
                 # increase value of iterator
                 n_it += 1
             # calculate resolution
-            resolution = popt[2] * math.general.fwhm()
+            resolution = popt[2] * mp.fwhm()
             # store order criteria
             order_dvs.append(all_dvs[keep])
             order_lines.append(all_lines[keep])
@@ -2013,7 +2013,7 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
             resolution1 = speed_of_light / resolution
             resolution_map[order_num // bin_order, xpos] = resolution1
             # log resolution output
-            wargs = [order_num, order_num + bin_order, np.nansum(mask), xpos,
+            wargs = [order_num, order_num + bin_order, mp.nansum(mask), xpos,
                      resolution,
                      resolution1]
             WLOG(params, '', TextEntry('40-017-00011', args=wargs))
@@ -2039,8 +2039,8 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
     llprops.set_sources(keys, func_name)
 
     # print stats
-    wargs = [np.nanmean(resolution_map), np.nanmedian(resolution_map),
-             np.nanstd(resolution_map)]
+    wargs = [mp.nanmean(resolution_map), mp.nanmedian(resolution_map),
+             mp.nanstd(resolution_map)]
     WLOG(params, '', TextEntry('40-017-00012', args=wargs))
 
     # map line profile map
@@ -2397,34 +2397,34 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
         frac_ll_point = ll_point / ll_start_point
         # fit the inverse order numbers against the fractional
         #    wavelength contrib.
-        coeffs = math.nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
-        coeffs0 = math.nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        coeffs = mp.nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        coeffs0 = mp.nanpolyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
         # calculate the fit values
         cfit = np.polyval(coeffs[::-1], inv_orderpos)
         # calculate the residuals
         res = cfit - frac_ll_point
         # find the largest residual
-        largest = np.max(abs(res))
+        largest = mp.nanmax(abs(res))
         sigmaclip = abs(res) != largest
         # remove the largest residual
         inv_orderpos_s = inv_orderpos[sigmaclip]
         frac_ll_point_s = frac_ll_point[sigmaclip]
         # refit the inverse order numbers against the fractional
         #    wavelength contrib. after sigma clip
-        coeffs = math.nanpolyfit(inv_orderpos_s, frac_ll_point_s, fit_degree)
+        coeffs = mp.nanpolyfit(inv_orderpos_s, frac_ll_point_s, fit_degree)
         coeffs = coeffs[::-1]
         # calculate the fit values (for all values - including sigma clipped)
         cfit = np.polyval(coeffs[::-1], inv_orderpos)
         # calculate residuals (in km/s) between fit and original values
         respix = speed_of_light * (cfit - frac_ll_point) / frac_ll_point
         # calculate stats
-        mean = np.nansum(respix) / len(respix)
-        mean2 = np.nansum(respix ** 2) / len(respix)
+        mean = mp.nansum(respix) / len(respix)
+        mean2 = mp.nansum(respix ** 2) / len(respix)
         rms = np.sqrt(mean2 - mean ** 2)
-        mindev = np.min(respix)
-        maxdev = np.max(respix)
-        mindev_ord = np.argmin(respix)
-        maxdev_ord = np.argmax(respix)
+        mindev = mp.nanmin(respix)
+        maxdev = mp.nanmax(respix)
+        mindev_ord = mp.nanargmin(respix)
+        maxdev_ord = mp.nanargmax(respix)
         # add to storage
         llprops['LITTROW_INVORD_{0}'.format(iteration)].append(inv_orderpos)
         llprops['LITTROW_FRACLL_{0}'.format(iteration)].append(frac_ll_point)
@@ -2541,7 +2541,7 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
     # loop around orders and extrapolate
     for order_num in range(ydim):
         # fit the littrow extrapolation
-        param = math.nanpolyfit(x_cut_points, littrow_extrap[order_num],
+        param = mp.nanpolyfit(x_cut_points, littrow_extrap[order_num],
                                 fit_degree)[::-1]
         # add to storage
         littrow_extrap_param[order_num] = param
@@ -2639,13 +2639,13 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
         xxpos = llprops['XPEAK'][gg]
         # get the median pixel difference between successive lines
         #    (to check for gaps)
-        xxpos_diff_med = np.nanmedian(xxpos[1:] - xxpos[:-1])
+        xxpos_diff_med = mp.nanmedian(xxpos[1:] - xxpos[:-1])
         # store the amplitudes of the lines
         ampl = llprops['AMPPEAK'][gg]
         # store the values of the blaze at the pixel positions of the lines
         weight_bl = np.zeros_like(llpos)
         # get and normalize blaze for the order
-        nblaze = blaze[order_num] / np.nanmax(blaze[order_num])
+        nblaze = blaze[order_num] / mp.nanmax(blaze[order_num])
         for it in range(1, len(llpos)):
             weight_bl[it] = nblaze[int(np.round(xxpos[it]))]
         # store the order numbers
@@ -2702,7 +2702,7 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                 ind = np.abs(ll_prev - llpos[cm_ind]).argmin()
                 # the peak matching the reddest may not always be found!!
                 # define maximum permitted difference
-                llpos_diff_med = np.nanmedian(llpos[1:] - llpos[:-1])
+                llpos_diff_med = mp.nanmedian(llpos[1:] - llpos[:-1])
                 # print(llpos_diff_med)
                 # print(abs(ll_prev[ind] - floc['llpos'][-1]))
                 # check if the difference is over the limit
@@ -2794,7 +2794,7 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
     # fit a polynomial to line number v measured difference in cavity
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
-        coeffs = math.nanpolyfit(m_fp_all, dopd_all, fit_deg,
+        coeffs = mp.nanpolyfit(m_fp_all, dopd_all, fit_deg,
                                  w=weight_bl_all)[::-1]
     drs_log.warninglogger(params, w, funcname=func_name)
     # get the values of the fitted cavity width difference
@@ -2895,7 +2895,7 @@ def insert_fp_lines(params, newll, llpos_all, all_lines_2, order_rec_all,
     # insert FP lines into all_lines at the correct orders
     # ----------------------------------------------------------------------
     # define wavelength difference limit for keeping a line
-    fp_cut = 3 * np.std(newll - llpos_all)
+    fp_cut = 3 * mp.nanstd(newll - llpos_all)
     # define correct starting order number
     start_order = min(n_ord_start_fp, n_ord_start_hc)
     # define starting point for prepended zeroes
@@ -2983,13 +2983,13 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
         while improve:
             # fit wavelength to pixel solution (with polynomial)
             ww = np.sqrt(weight)
-            coeffs = math.nanpolyfit(lines, x_fit, fit_degree, w=ww)[::-1]
+            coeffs = mp.nanpolyfit(lines, x_fit, fit_degree, w=ww)[::-1]
             # calculate the fit
             cfit = np.polyval(coeffs[::-1], lines)
             # calculate the variance
             res = cfit - x_fit
-            wsig = np.nansum(res ** 2 * weight) / np.nansum(weight)
-            wmean = (np.nansum(res * weight) / np.nansum(weight))
+            wsig = mp.nansum(res ** 2 * weight) / mp.nansum(weight)
+            wmean = (mp.nansum(res * weight) / mp.nansum(weight))
             var = wsig - (wmean ** 2)
             # append stats
             iter0.append([np.array(wmean), np.array(var),
@@ -2999,15 +2999,15 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
             # check improve condition (RMS > MAX_RMS)
             ll_fit_rms = abs(res) * np.sqrt(weight)
             badrms = ll_fit_rms > max_ll_fit_rms
-            improve = np.nansum(badrms)
+            improve = mp.nansum(badrms)
             # set largest weighted residual to zero
-            largest = np.max(ll_fit_rms)
+            largest = mp.nanmax(ll_fit_rms)
             badpoints = ll_fit_rms == largest
             weight[badpoints] = 0.0
             # only keep the lines that have postive weight
             goodmask = weight > 0.0
             # check that we have points
-            if np.nansum(goodmask) == 0:
+            if mp.nansum(goodmask) == 0:
                 eargs = [order_num, max_ll_fit_rms]
                 WLOG(params, 'error', TextEntry('00-017-00007', args=eargs))
             else:
@@ -3043,11 +3043,11 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
         # get res1
         res1 = details[-1][1] - details[-1][2]
         # sum the weights (recursively)
-        sweight += np.nansum(details[-1][3])
+        sweight += mp.nansum(details[-1][3])
         # sum the weighted residuals in km/s
-        wsumres += np.nansum(res1 * convert * details[-1][3])
+        wsumres += mp.nansum(res1 * convert * details[-1][3])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.nansum(details[-1][3] * (res1 * convert) ** 2)
+        wsumres2 += mp.nansum(details[-1][3] * (res1 * convert) ** 2)
         # store the conversion to km/s
         scale.append(convert)
     # convert to arrays
@@ -3057,7 +3057,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     final_mean = (wsumres / sweight)
     final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # log the global stats
-    total_lines = np.nansum(final_iter[:, 2])
+    total_lines = mp.nansum(final_iter[:, 2])
     wargs = [fiber, final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
     WLOG(params, 'info', TextEntry('40-017-00024', args=wargs))
@@ -3099,7 +3099,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
         # set weights
         weight = np.ones(num_lines, dtype=float)
         # get fit coefficients
-        coeffs = math.nanpolyfit(cfit, lines, fit_degree, w=weight)[::-1]
+        coeffs = mp.nanpolyfit(cfit, lines, fit_degree, w=weight)[::-1]
         # get the y values for the coefficients
         icfit = np.polyval(coeffs[::-1], cfit)
         # work out the residuals
@@ -3113,17 +3113,17 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
         # invert parameters
         # ------------------------------------------------------------------
         # sum the weights (recursively)
-        sweight += np.nansum(wei)
+        sweight += mp.nansum(wei)
         # sum the weighted residuals in km/s
-        wsumres += np.nansum(nres * wei)
+        wsumres += mp.nansum(nres * wei)
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.nansum(wei * nres ** 2)
+        wsumres2 += mp.nansum(wei * nres ** 2)
     # calculate the final var and mean
     final_mean = (wsumres / sweight)
     final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # ------------------------------------------------------------------
     # log the inversion process
-    total_lines = np.nansum(iter0[:, 2])
+    total_lines = mp.nansum(iter0[:, 2])
     wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              1000.0 * np.sqrt(final_var / total_lines)]
     WLOG(params, '', TextEntry('40-017-00025', args=wargs))
@@ -3149,17 +3149,17 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     pixel_shift_inter = 0
     pixel_shift_slope = 0
     # get new line list
-    ll_out = math.get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope,
+    ll_out = mp.get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope,
                                            inv_params, xdim, num_orders)
     # get the first derivative of the line list
-    dll_out = math.get_dll_from_coefficients(inv_params, xdim, num_orders)
+    dll_out = mp.get_dll_from_coefficients(inv_params, xdim, num_orders)
     # find the central pixel value
     centpix = ll_out.shape[1] // 2
     # get the mean pixel scale (in km/s/pixel) of the central pixel
     norm = dll_out[:, centpix] / ll_out[:, centpix]
-    meanpixscale = speed_of_light * np.nansum(norm) / len(ll_out[:, centpix])
+    meanpixscale = speed_of_light * mp.nansum(norm) / len(ll_out[:, centpix])
     # get the total number of lines used
-    total_lines = int(np.nansum(llprops['X_ITER_2'][:, 2]))
+    total_lines = int(mp.nansum(llprops['X_ITER_2'][:, 2]))
     # add to llprops
     llprops['LL_OUT_{0}'.format(iteration)] = ll_out
     llprops['DLL_OUT_{0}'.format(iteration)] = dll_out
@@ -3283,11 +3283,11 @@ def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
             convert = speed_of_light * dldx / fp_ll_final_ord
             scale.append(convert)
             # sum the weights (recursively)
-            sweight += np.nansum(wei_clip[onum])
+            sweight += mp.nansum(wei_clip[onum])
             # sum the weighted residuals in km/s
-            wsumres += np.nansum(res_clip[onum] * wei_clip[onum])
+            wsumres += mp.nansum(res_clip[onum] * wei_clip[onum])
             # sum the weighted squared residuals in km/s
-            wsumres2 += np.nansum(wei_clip[onum] * res_clip[onum] ** 2)
+            wsumres2 += mp.nansum(wei_clip[onum] * res_clip[onum] ** 2)
         # we construct a sin/cos model of the error in line center position
         # and fit it to the residuals
         cosval = np.cos(2 * np.pi * (llprops['FP_XX_NEW'] % 1))
@@ -3299,11 +3299,11 @@ def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
         outl_fit, mask_all = sigclip_polyfit(params, llprops['FP_XX_NEW'],
                                              res_modx, 0)
         # create model
-        sumcos1 = np.nansum(cosval[mask_all] * res_modx[mask_all])
-        sumcos2 = np.nansum(cosval[mask_all] ** 2)
+        sumcos1 = mp.nansum(cosval[mask_all] * res_modx[mask_all])
+        sumcos2 = mp.nansum(cosval[mask_all] ** 2)
         acos = sumcos1 / sumcos2
-        sumsin1 = np.nansum(sinval[mask_all] * res_modx[mask_all])
-        sumsin2 = np.nansum(sinval[mask_all] ** 2)
+        sumsin1 = mp.nansum(sinval[mask_all] * res_modx[mask_all])
+        sumsin2 = mp.nansum(sinval[mask_all] ** 2)
 
         asin = sumsin1 / sumsin2
         model_sin = ((cosval * acos) + (sinval * asin))
@@ -3391,11 +3391,11 @@ def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
     # print warning re no overlap
     WLOG(params, 'warning', TextEntry('10-017-00009', args=[ord_num]))
     # masks to keep only difference between no-gap lines for current order
-    mask_ll_diff = fp_ll_diff > (lldif_min * np.nanmedian(fp_ll_diff))
-    mask_ll_diff &= fp_ll_diff < (lldif_max * np.nanmedian(fp_ll_diff))
+    mask_ll_diff = fp_ll_diff > (lldif_min * mp.nanmedian(fp_ll_diff))
+    mask_ll_diff &= fp_ll_diff < (lldif_max * mp.nanmedian(fp_ll_diff))
     # get previous min/max limits
-    prevminlim = lldif_min * np.nanmedian(fp_ll_diff_prev)
-    prevmaxlim = lldif_max * np.nanmedian(fp_ll_diff_prev)
+    prevminlim = lldif_min * mp.nanmedian(fp_ll_diff_prev)
+    prevmaxlim = lldif_max * mp.nanmedian(fp_ll_diff_prev)
     # masks to keep only difference between no-gap lines for previous order
     mask_ll_diff_prev = fp_ll_diff_prev > prevminlim
     mask_ll_diff_prev &= fp_ll_diff_prev < prevmaxlim
@@ -3451,13 +3451,13 @@ def sigclip_polyfit(params, xx, yy, degree, weight=None, **kwargs):
         else:
             weight2 = None
         # fit on masked values
-        coeff = math.nanpolyfit(xx[mask], yy[mask], deg=degree, w=weight2)
+        coeff = mp.nanpolyfit(xx[mask], yy[mask], deg=degree, w=weight2)
         # get residuals (not masked or dimension breaks)
         res = yy - np.polyval(coeff, xx)
         # normalise the residuals
-        res = np.abs(res / np.nanmedian(np.abs(res[mask])))
+        res = np.abs(res / mp.nanmedian(np.abs(res[mask])))
         # get the max residual in sigmas
-        sigmax = np.max(res[mask])
+        sigmax = mp.nanmax(res[mask])
         # mask all outliers
         if sigmax > sigclip:
             mask[res >= sigclip] = False
@@ -3504,10 +3504,10 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
         poly_wave_coeffs = llprops['POLY_WAVE_SOL'][order_num]
         # get 30% blaze mask
         with warnings.catch_warnings(record=True) as _:
-            maxblaze = np.nanmax(blaze[order_num])
+            maxblaze = mp.nanmax(blaze[order_num])
             mb = np.where(blaze[order_num] > wave_blaze_thres * maxblaze)
         # keep only x values at above 30% blaze
-        bmask = (np.nanmax(mb) > x_fp) & (np.nanmin(mb < x_fp))
+        bmask = (mp.nanmax(mb) > x_fp) & (mp.nanmin(mb < x_fp))
         amp_fp = amp_fp[bmask]
         x_fp = x_fp[bmask]
         # initial differential numbering (assuming no gaps)
@@ -3516,7 +3516,7 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
         # get array of x differences
         x_diff = x_fp[1:] - x_fp[:-1]
         # get median of x difference
-        med_x_diff = np.nanmedian(x_diff)
+        med_x_diff = mp.nanmedian(x_diff)
         # get indices where x_diff differs too much from median
         cond1 = x_diff < xdiff_min * med_x_diff
         cond2 = x_diff > xdiff_max * med_x_diff
@@ -3528,7 +3528,7 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
         # fit x_fp v x_diff for good points
         good_xfp = x_fp[1:][x_good_ind]
         good_xdiff = x_diff[x_good_ind]
-        cfit_xdiff = math.nanpolyfit(good_xfp, good_xdiff, 2)
+        cfit_xdiff = mp.nanpolyfit(good_xfp, good_xdiff, 2)
         # loop over gap points
         for i in range(np.shape(x_gap_ind)[1]):
             # get estimated xdiff value from the fit
@@ -3573,8 +3573,8 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
         fp_ll_ord = fp_ll[ord_num]
         fp_ll_ord_prev = fp_ll[ord_num + 1]
         # define median ll diff for both orders
-        fp_ll_diff = np.nanmedian(fp_ll_ord[1:] - fp_ll_ord[:-1])
-        fp_ll_diff_prev = np.nanmedian(fp_ll_ord_prev[1:] -
+        fp_ll_diff = mp.nanmedian(fp_ll_ord[1:] - fp_ll_ord[:-1])
+        fp_ll_diff_prev = mp.nanmedian(fp_ll_ord_prev[1:] -
                                        fp_ll_ord_prev[:-1])
         # check if overlap
         if fp_ll_ord[-1] >= fp_ll_ord_prev[0]:
@@ -3593,10 +3593,10 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
                 # get differences for peak j
                 diff = np.abs(fp_ll_prev_over - fp_ll_ord_over[j])
                 # save the minimum and its index
-                mindiff_peak.append(np.min(diff))
+                mindiff_peak.append(mp.nanmin(diff))
                 mindiff_peak_ind.append(np.argmin(diff))
             # get the smallest difference and its index
-            mindiff_all = np.min(mindiff_peak)
+            mindiff_all = mp.nanmin(mindiff_peak)
             mindiff_all_ind = int(np.argmin(mindiff_peak))
 
             # check that smallest difference is in fact a true line match
@@ -3669,11 +3669,11 @@ def get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
         hc_x_ord = llprops['XGAU_T'][hc_mask]
         # get 30% blaze mask
         with warnings.catch_warnings(record=True) as _:
-            maxblaze = np.nanmax(blaze[order_num])
+            maxblaze = mp.nanmax(blaze[order_num])
             mb = np.where(blaze[order_num] > (wave_blaze_thres * maxblaze))
         # keep only x values at above 30% blaze
-        blaze_mask = np.logical_and(np.nanmax(mb) > hc_x_ord,
-                                    np.nanmin(mb) < hc_x_ord)
+        blaze_mask = np.logical_and(mp.nanmax(mb) > hc_x_ord,
+                                    mp.nanmin(mb) < hc_x_ord)
         hc_x_ord = hc_x_ord[blaze_mask]
         # get corresponding catalogue lines from loc
         hc_ll_ord_cat = llprops['WAVE_CATALOG'][hc_mask][blaze_mask]
@@ -3684,7 +3684,7 @@ def get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
         coeff_xm_all.append(coeff_xm)
         # save dispersion
         polyval_xm = np.polyval(coeff_xm, fp_x_ord[mask])
-        xm_disp.append(np.std(m_ord[mask] - polyval_xm))
+        xm_disp.append(mp.nanstd(m_ord[mask] - polyval_xm))
         # save mask
         xm_mask.append(mask)
         # get fractional m for HC lines from fit
@@ -3743,7 +3743,7 @@ def fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity):
         one_m_d = np.array(one_m_d)[one_m_sort]
         d_arr = np.array(d_arr)[one_m_sort]
         # polynomial fit for d vs 1/m
-        fit_1m_d = math.nanpolyfit(one_m_d, d_arr, 9)
+        fit_1m_d = mp.nanpolyfit(one_m_d, d_arr, 9)
         res_d_final = d_arr - np.polyval(fit_1m_d, one_m_d)
         # fit d v wavelength w/sigma-clipping
         fit_ll_d, mask = sigclip_polyfit(params, hc_ll_test, d_arr, degree=9)
@@ -3761,7 +3761,7 @@ def fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity):
         # get achromatic cavity change - ie shift
         residual = d_arr - np.polyval(fit_ll_d, hc_ll_test)
         # update the coeffs with mean shift
-        fit_ll_d[-1] += np.nanmedian(residual)
+        fit_ll_d[-1] += mp.nanmedian(residual)
 
     if params['DRS_PLOT']:
         # TODO: Add plots
@@ -3948,13 +3948,13 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     # check the difference between consecutive orders is always positive
     # get the differences
     wave_diff = fpprops['LL_FINAL'][1:] - fpprops['LL_FINAL'][:-1]
-    if np.min(wave_diff) < 0:
+    if mp.nanmin(wave_diff) < 0:
         fail_msg.append(textdict['40-017-00030'])
         qc_pass.append(0)
     else:
         qc_pass.append(1)
     # add to qc header lists
-    qc_values.append(np.min(wave_diff))
+    qc_values.append(mp.nanmin(wave_diff))
     qc_names.append('MIN WAVE DIFF FP-HC')
     qc_logic.append('MIN WAVE DIFF < 0')
     # ----------------------------------------------------------------------
@@ -3999,7 +3999,7 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
         qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
         # ----------------------------------------------------------------------
         # check if min/max littrow is out of bounds
-        if np.max([max_littrow, min_littrow]) > dev_littrow_max:
+        if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
             fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(textdict['40-017-00033'].format(*fargs))
@@ -4041,13 +4041,13 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
 
                 # if outlying order, recalculate stats
                 if redo_sigma:
-                    mean = np.nansum(respix_2) / len(respix_2)
-                    mean2 = np.nansum(respix_2 ** 2) / len(respix_2)
+                    mean = mp.nansum(respix_2) / len(respix_2)
+                    mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
                     rms = np.sqrt(mean2 - mean ** 2)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(np.max([max_littrow, min_littrow]))
+        qc_values.append(mp.nanmax([max_littrow, min_littrow]))
         qc_names.append('max or min littrow')
         qc_logic.append('max or min littrow > {0:.2f}'
                         ''.format(dev_littrow_max))
@@ -4293,9 +4293,9 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # Update the Correlation stats with values using fiber C (FP) drift
     # ----------------------------------------------------------------------
     # get the average ccf
-    props['AVERAGE_CCF'] = np.nansum(props['CCF'][: ccfnmax], axis=0)
+    props['AVERAGE_CCF'] = mp.nansum(props['CCF'][: ccfnmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = props['AVERAGE_CCF'] / np.nanmax(props['AVERAGE_CCF'])
+    normalized_ccf = props['AVERAGE_CCF'] / mp.nanmax(props['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = rv.fit_ccf(params, props['RV_CCF'], normalized_ccf,
                                   fit_type=1)
@@ -4303,13 +4303,13 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     props['CCF_RES'], props['CCF_FIT'] = ccf_res, ccf_fit
     # get the max cpp
     ppa = props['PIX_PASSED_ALL']
-    props['MAXCPP'] = np.nansum(props['CCF_MAX']) / np.nansum(ppa)
+    props['MAXCPP'] = mp.nansum(props['CCF_MAX']) / mp.nansum(ppa)
     # get the RV value from the normalised average ccf fit center location
     props['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
     props['CONTRAST'] = np.abs(100 * ccf_res[0])
     # get the FWHM value
-    props['FWHM'] = ccf_res[2] * math.general.fwhm()
+    props['FWHM'] = ccf_res[2] * mp.fwhm()
     # set the source
     keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
             'CCF_RES', 'CCF_FIT']

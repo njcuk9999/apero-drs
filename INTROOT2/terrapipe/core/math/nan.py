@@ -13,6 +13,7 @@ import numpy as np
 import warnings
 
 from terrapipe.core import constants
+from . import fast
 
 # =============================================================================
 # Define variables
@@ -64,7 +65,7 @@ def nanpad(oimage):
             tmp[:, it] = image[ypix, xpix]
         # median the neghbours and pad back into the input image
         with warnings.catch_warnings(record=True) as _:
-            image[gy, gx] = np.nanmedian(tmp, axis=1)
+            image[gy, gx] = fast.nanmedian(tmp, axis=1)
         # find NaNs again and pad again if needed
         gy, gx = np.where(~np.isfinite(image))
     # return padded image

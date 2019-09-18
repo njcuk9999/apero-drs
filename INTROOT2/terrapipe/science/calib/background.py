@@ -19,7 +19,7 @@ from scipy.ndimage import map_coordinates as mapc
 from terrapipe import core
 from terrapipe.core import constants
 from terrapipe import locale
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
@@ -75,7 +75,7 @@ def create_background_map(params, image, badpixmask, **kwargs):
     # to show a significant curvature within w pixels
     for x_it in range(0, image0.shape[1], width):
         # ribbon to find the order profile
-        ribbon = np.nanmedian(image0[:, x_it:x_it + width], axis=1)
+        ribbon = mp.nanmedian(image0[:, x_it:x_it + width], axis=1)
 
         for y_it in range(image0.shape[0]):
             # we perform a running Nth percentile filter along the
@@ -133,7 +133,7 @@ def correct_local_background(params, image, **kwargs):
     ker = ker / np.sum(ker)
     # we need to remove NaNs from image
     WLOG(params, '', TextEntry('40-012-00011'))
-    image1 = math.nanpad(image)
+    image1 = mp.nanpad(image)
     # we determine the scattered light image by convolving our image by
     #    the kernel
     WLOG(params, '', TextEntry('40-012-00012'))
@@ -222,7 +222,7 @@ def correction(recipe, params, infile, image, header, return_map=False,
                 with warnings.catch_warnings(record=True) as _:
                     # do not use the nanpercentile, just a median
                     # as we masked non-background pixels with NaNs
-                    value = np.nanmedian(subframe)
+                    value = mp.nanmedian(subframe)
 
                 if np.isfinite(value):
                     background_image[i_it, j_it] = value

@@ -15,8 +15,8 @@ import numpy as np
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_database
-from terrapipe.core.instruments.spirou import file_definitions
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
 from terrapipe.science.calib import badpix
@@ -127,7 +127,7 @@ def __main__(recipe, params):
         wargs = [len(flatfiles), len(darkfiles)]
         WLOG(params, 'error', TextEntry('10-012-00001', args=wargs))
         # get the number of files
-        num_files = np.min([len(flatfiles), len(darkfiles)])
+        num_files = mp.nanmin([len(flatfiles), len(darkfiles)])
     else:
         # get the number of files
         num_files = len(flatfiles)
@@ -163,7 +163,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         bad_pixel_map = badpixelmap_a | badpixelmap_b
         # total number of bad pixels
-        btotal = (np.nansum(bad_pixel_map) / bad_pixel_map.size) * 100
+        btotal = (mp.nansum(bad_pixel_map) / bad_pixel_map.size) * 100
         # log result
         WLOG(params, '', TextEntry('40-012-00007', args=[btotal]))
 

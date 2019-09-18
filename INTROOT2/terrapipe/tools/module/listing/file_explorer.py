@@ -29,6 +29,7 @@ else:
     import ttk
 
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe import core
 
 
@@ -617,7 +618,7 @@ class TableSection:
             new_length1 = self.myFont.measure(str(test_string))
             new_length2 = self.myFont.measure(str(col))
             new_length3 = MIN_TABLE_COL_WIDTH
-            new_length = np.max([new_length1, new_length2, new_length3])
+            new_length = mp.nanmax([new_length1, new_length2, new_length3])
             if new_length > max_column_widths[it]:
                 max_column_widths[it] = int(new_length * 1.10)
         return max_column_widths
@@ -920,7 +921,7 @@ class LoadData:
             if len(clens) == 0:
                 self.lengths[col] = 0
             else:
-                self.lengths[col] = np.max([np.max(clens), len(col)])
+                self.lengths[col] = mp.nanmax([mp.nanmax(clens), len(col)])
 
     def clean(self, value):
         return str(value).upper().strip()

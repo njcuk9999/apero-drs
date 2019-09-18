@@ -19,6 +19,7 @@ from astropy.coordinates import SkyCoord
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_lock
 from . import bervest
@@ -142,7 +143,7 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
             bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'], **bprops)
             # --------------------------------------------------------------
             # calculate max berv
-            bervmax = np.max(np.abs(bervs))
+            bervmax = mp.nanmax(np.abs(bervs))
             # --------------------------------------------------------------
             # calculate berv derivative (add 1 second)
             deltat = (1*uu.s).to(uu.day).value
@@ -163,7 +164,7 @@ def get_berv(params, infile=None, header=None, props=None, **kwargs):
     bervs, bjds = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
     # --------------------------------------------------------------
     # calculate max berv
-    bervmax = np.max(np.abs(bervs))
+    bervmax = mp.nanmax(np.abs(bervs))
     # --------------------------------------------------------------
     # calculate berv derivative (add 1 second)
     deltat = (1 * uu.s).to(uu.day).value
