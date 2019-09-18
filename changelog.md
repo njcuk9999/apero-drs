@@ -4,6 +4,23 @@ Changelog
 
 0.5.073 (2019-09-18)
 --------------------
+- Tools.module.setup.drs_reprocess.py - add shortname to Run class,
+  check that all recipes in run table are valid, print group name
+  (recipe short name) on group print out. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.math.gauss.py - mp references should be "fast" references within
+  math module. [Neil Cook]
+- Core.instruments.spirou.py - remove unused recipes + give names to
+  wavehc and wavefp. [Neil Cook]
+- Core.core.drs_recipe.py - process_adds should look for ['files',
+  'file'] in arg dtype. [Neil Cook]
+- Core.core.drs_log.py - params may be None - deal with this. [Neil
+  Cook]
+- Drs_database.py - lock the input and output files before copying to
+  database. [Neil Cook]
+- Recipes.spirou.cal_loc_spirou.py - need to import math as mp. [Neil
+  Cook]
+- Update date/version/changelog. [Neil Cook]
 - Core.math - add a fast medfilt_1d function. [Neil Cook]
 - Core.math.fast.py - first commit numpy nan functions from bottleneck
   if available. [Neil Cook]
