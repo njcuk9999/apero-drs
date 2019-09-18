@@ -310,15 +310,9 @@ def add_file(params, outfile, night=None):
     # ------------------------------------------------------------------
     # construct outpath
     abs_outpath = os.path.join(outpath, infile)
-    # lock the master file
-    lock, lock_file = drs_lock.check_lock_file(params, abs_outpath)
     # ------------------------------------------------------------------
     # first copy file to database folder
-    lockargs = [lock, lock_file, abs_outpath]
-    _copy_db_file(params, dbname, inpath, abs_outpath, *lockargs)
-    # ------------------------------------------------------------------
-    # must close lock file
-    drs_lock.close_lock_file(params, lock, lock_file, abs_outpath)
+    _copy_db_file(params, dbname, inpath, abs_outpath)
     # ------------------------------------------------------------------
     # update database with key
     if dbname.lower() == 'telluric':
@@ -385,13 +379,8 @@ def copy_calibrations(params, header, **kwargs):
             # log copying
             wargs = [dbshort, infilename, outpath]
             WLOG(params, '', TextEntry('40-006-00003', args=wargs))
-            # lock the input and output files
-            lock, lock_file = drs_lock.check_lock_file(params, outabspath)
             # copy the database file
-            lockargs = [lock, lock_file, outabspath]
-            _copy_db_file(params, dbname, inabspath, outabspath, *lockargs)
-            # must close lock file
-            drs_lock.close_lock_file(params, lock, lock_file, outabspath)
+            _copy_db_file(params, dbname, inabspath, outabspath)
 
 
 def get_header_time(params, database, header):
@@ -666,8 +655,7 @@ def _get_database_file(params, dbname, outfile=None):
     return outpath
 
 
-def _copy_db_file(params, dbname, inpath, outpath, lock=None,
-                  lockfile=None, lockpath=None):
+def _copy_db_file(params, dbname, inpath, outpath):
     func_name = __NAME__ + '._copy_file()'
     # remove file if already present
     if inpath == outpath:
@@ -683,9 +671,6 @@ def _copy_db_file(params, dbname, inpath, outpath, lock=None,
         # close input and output lock files
         drs_lock.close_lock_file(params, lock1, lock_file1, inpath)
         drs_lock.close_lock_file(params, lock2, lock_file2, outpath)
-        # if we have a lock file we need to close it before raise error
-        if lock is not None and lockfile is not None and lockpath is not None:
-            drs_lock.close_lock_file(params, lock, lockfile, lockpath)
         # log and raise error
         eargs = [dbname, inpath, outpath, type(e), e, func_name]
         WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
