@@ -1058,6 +1058,7 @@ class DrsRunSequence(object):
         self.adds.append([recipe, dict(kwargs)])
 
     def process_adds(self):
+        self.sequence = []
         for add in self.adds:
             recipe, kwargs = add
             # set up new recipe
@@ -1102,7 +1103,7 @@ class DrsRunSequence(object):
                     # set the value to None
                     frecipe.args[argname].files = None
                 # if we have a file or files we need to copy them properly
-                elif argname in ['files', 'file']:
+                elif frecipe.args[argname].dtype in ['files', 'file']:
                     # set up empty set
                     frecipe.args[argname].files = []
                     # loop around files
@@ -1111,9 +1112,6 @@ class DrsRunSequence(object):
                         drsfilecopy = drsfile.completecopy(drsfile)
                         # append to new list
                         frecipe.args[argname].files.append(drsfilecopy)
-                # else assume we can just copy normally
-                else:
-                    frecipe.args[argname] = copy.deepcopy(value)
         # ------------------------------------------------------------------
         # update kwargs - loop around positional arguments
         for kwargname in frecipe.kwargs:
@@ -1127,7 +1125,7 @@ class DrsRunSequence(object):
                     # set the value to None
                     frecipe.kwargs[kwargname].files = None
                 # if we have a file or files we need to copy them properly
-                elif kwargname in ['files', 'file']:
+                elif frecipe.kwargs[kwargname].dtype in ['files', 'file']:
                     # set up empty set
                     frecipe.kwargs[kwargname].files = []
                     # loop around files
@@ -1136,9 +1134,6 @@ class DrsRunSequence(object):
                         drsfilecopy = drsfile.completecopy(drsfile)
                         # append to new list
                         frecipe.kwargs[kwargname].files.append(drsfilecopy)
-                # else assume we can just copy normally
-                else:
-                    frecipe.kwargs[kwargname] = copy.deepcopy(value)
         # return recipes
         return frecipe
 
@@ -1375,7 +1370,7 @@ def find_run_files(params, recipe, table, args, filters=None,
         arg = args[argname]
         # if check required see if parameter is required
         if check_required:
-            if not arg.required:
+            if not arg.required and not arg.reprocess:
                 continue
         # make sure we are only dealing with dtype=files
         if arg.dtype not in ['file', 'files']:
@@ -1388,6 +1383,9 @@ def find_run_files(params, recipe, table, args, filters=None,
         WLOG(params, 'debug', TextEntry('90-503-00012', args=[argname]))
         # get drs file instances
         drsfiles = arg.files
+        # if files are None continue
+        if drsfiles is None:
+            continue
         # loop around drs files
         for drsfile in drsfiles:
             # debug log: the file being tested
@@ -1785,6 +1783,13 @@ def _get_runorder(recipe, argdict, kwargdict):
             continue
         # get arg
         arg = args[argname]
+        # deal with non-required arguments when argdict has no values
+        #    these are allowed only if arg.reprocess is True
+        #    we skip adding to runorder
+        if hasattr(argdict[argname], '__len__'):
+            arglen = len(argdict[argname])
+            if arg.reprocess and not arg.required and (arglen == 0):
+                continue
         # get position or set it using iterator
         if arg.pos is not None:
             runorder[arg.pos] = argname
@@ -1798,6 +1803,13 @@ def _get_runorder(recipe, argdict, kwargdict):
             continue
         # get arg
         kwarg = kwargs[kwargname]
+        # deal with non-required arguments when argdict has no values
+        #    these are allowed only if arg.reprocess is True
+        #    we skip adding to runorder
+        if hasattr(kwargdict[kwargname], '__len__'):
+            kwarglen = len(kwargdict[kwargname])
+            if kwarg.reprocess and not kwarg.required and (kwarglen == 0):
+                continue
         # get position or set it using iterator
         if kwarg.pos is not None:
             runorder[kwarg.pos] = kwargname
