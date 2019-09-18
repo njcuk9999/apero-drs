@@ -140,10 +140,8 @@ cal_drift1 = DrsRecipe(__INSTRUMENT__)
 cal_drift2 = DrsRecipe(__INSTRUMENT__)
 cal_extract = DrsRecipe(__INSTRUMENT__)
 cal_ff = DrsRecipe(__INSTRUMENT__)
-cal_hc = DrsRecipe(__INSTRUMENT__)
 cal_loc = DrsRecipe(__INSTRUMENT__)
 cal_pp = DrsRecipe(__INSTRUMENT__)
-cal_slit = DrsRecipe(__INSTRUMENT__)
 cal_shape = DrsRecipe(__INSTRUMENT__)
 cal_shape_master = DrsRecipe(__INSTRUMENT__)
 cal_thermal = DrsRecipe(__INSTRUMENT__)
@@ -158,7 +156,7 @@ obj_mk_template = DrsRecipe(__INSTRUMENT__,)
 test = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
-           cal_drift2, cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
+           cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
            obj_mk_tellu_db, obj_fit_tellu_db,
@@ -863,14 +861,14 @@ limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
 # night runs
 limited_run.add(cal_badpix)
-limited_run.add(cal_badpix)
 limited_run.add(cal_loc, files=[sf.pp_dark_flat])
 limited_run.add(cal_loc, files=[sf.pp_flat_dark])
 limited_run.add(cal_shape)
 limited_run.add(cal_ff, files=[sf.pp_flat_flat])
 limited_run.add(cal_thermal)
-limited_run.add(cal_wave, files=[sf.pp_hc1_hc1])
-limited_run.add(cal_wave, files=[sf.pp_hc1_hc1, sf.pp_fp_fp])
+limited_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
+limited_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
+                fpfiles=[sf.pp_fp_fp])
 # extract tellurics
 limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
@@ -926,7 +924,6 @@ hc_run.add(cal_ff, files=[sf.pp_flat_flat])
 hc_run.add(cal_thermal)
 # extract science
 hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
-
 
 # -----------------------------------------------------------------------------
 # sequences list
