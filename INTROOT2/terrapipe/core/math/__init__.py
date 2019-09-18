@@ -12,6 +12,7 @@ Created on 2019-01-18 at 15:53
 from . import general
 from . import gauss
 from . import nan
+from . import fast
 
 # =============================================================================
 # Define functions
@@ -49,9 +50,27 @@ measure_box_min_max = general.measure_box_min_max
 
 median_filter_ea = general.median_filter_ea
 
+nanargmax = fast.nanargmax
+
+nanargmin = fast.nanargmin
+
+nanmax = fast.nanmax
+
+nanmin = fast.nanmin
+
+nanmean = fast.nanmean
+
+nanmedian = fast.nanmedian
+
 nanpad = nan.nanpad
 
 nanpolyfit = nan.nanpolyfit
+
+nanstd = fast.nanstd
+
+nansum = fast.nansum
+
+median = fast.median
 
 linear_minimization = general.linear_minimization
 
