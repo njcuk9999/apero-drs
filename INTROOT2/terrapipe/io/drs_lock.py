@@ -65,6 +65,7 @@ def check_lock_file(p, filename):
     :returns: tuple containing the lock file and lock filename
     :rtype: tuple[_io.TextIOWrapper, str]
     """
+    func_name = __NAME__ + '.check_lock_file()'
     # create lock file (to make sure database is only open once at a time)
     # construct lock file name
     max_wait_time = p['DB_MAX_WAIT']
@@ -75,9 +76,13 @@ def check_lock_file(p, filename):
         WLOG(p, 'warning', TextEntry('10-001-00002', args=[filename]))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
+    # wait for lock file not to exist
     while os.path.exists(lock_file) and wait_time < max_wait_time:
         time.sleep(1)
         wait_time += 1
+        if wait_time % 10 == 0:
+            dargs = [lock_file, wait_time, func_name]
+            WLOG(p, 'debug', TextEntry('90-008-00008', args=dargs))
     if wait_time > max_wait_time:
         eargs = [filename, lock_file]
         WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
@@ -106,11 +111,14 @@ def open_lock_file(p, lock_file, filename):
     :returns: the lock_file
     :rtype: _io.TextIOWrapper
     """
+    func_name = __NAME__ + '.open_lock_file()'
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     open_file = True
     lock = None
+    emessages = []
+    # wait for lock file to be opened
     while open_file and wait_time < p['LOCKOPEN_MAX_WAIT']:
         # noinspection PyBroadException
         try:
@@ -121,6 +129,16 @@ def open_lock_file(p, lock_file, filename):
                 WLOG(p, 'warning', TextEntry('10-001-00003', args=[lock_file]))
             time.sleep(1)
             wait_time += 1
+            # debug log if not already shown
+            if str(e) not in emessages:
+                dargs = [lock_file, wait_time, type(e), str(e), func_name]
+                WLOG(p, 'debug', TextEntry('90-008-00009', args=dargs))
+                # append emessages
+                emessages.append(str(e))
+        # print debug message every 10 iterations
+        if wait_time % 10 == 0:
+            dargs = [lock_file, wait_time, func_name]
+            WLOG(p, 'debug', TextEntry('90-008-00008', args=dargs))
     if wait_time > p['LOCKOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
         WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
@@ -146,10 +164,13 @@ def close_lock_file(p, lock, lock_file, filename):
 
     :returns: None
     """
+    func_name = __NAME__ + '.close_lock_file()'
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     close_file = True
+    emessages= []
+    # wait for lock file to be closed
     while close_file and wait_time < p['LOCKOPEN_MAX_WAIT']:
         # noinspection PyBroadException
         try:
@@ -162,6 +183,16 @@ def close_lock_file(p, lock, lock_file, filename):
                 WLOG(p, 'warning', TextEntry('10-001-00004', args=[lock_file]))
             time.sleep(1)
             wait_time += 1
+            # debug log if not already shown
+            if str(e) not in emessages:
+                dargs = [lock_file, wait_time, type(e), str(e), func_name]
+                WLOG(p, 'debug', TextEntry('90-008-00009', args=dargs))
+                # append emessages
+                emessages.append(str(e))
+        # print debug message every 10 iterations
+        if wait_time % 10 == 0:
+            dargs = [lock_file, wait_time, func_name]
+            WLOG(p, 'debug', TextEntry('90-008-00008', args=dargs))
     if wait_time > p['LOCKOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
         WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
