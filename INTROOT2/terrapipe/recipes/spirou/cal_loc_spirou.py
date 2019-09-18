@@ -15,7 +15,7 @@ import numpy as np
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.core import math
+from terrapipe.core import math as mp
 from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.science.calib import general
@@ -173,8 +173,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values
         # ------------------------------------------------------------------
-        center_fits = math.calculate_polyvals(cent_coeffs, image.shape[1])
-        width_fits = math.calculate_polyvals(wid_coeffs, image.shape[1])
+        center_fits = mp.calculate_polyvals(cent_coeffs, image.shape[1])
+        width_fits = mp.calculate_polyvals(wid_coeffs, image.shape[1])
 
         # ------------------------------------------------------------------
         # Plot the image (ready for fit points to be overplotted later)
