@@ -154,7 +154,7 @@ def gauss_fit_nn(xpix, ypix, nn):
     func_name = __NAME__ + '.gauss_fit_slope()'
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * mp.nanmedian(np.gradient(xpix)) / general.fwhm()
+    ew_guess = 2 * fast.nanmedian(np.gradient(xpix)) / general.fwhm()
 
     if nn == 3:
         # only amp, cen and ew
