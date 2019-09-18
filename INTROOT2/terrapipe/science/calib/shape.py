@@ -185,7 +185,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
 
             props = dict(DARKFILE='DARKFILE', BADPFILE='BADPFILE',
                          BACKFILE='BACKFILE')
-            transforms, xres, yres = [0, 0, 0, 0, 0], 0, 0
+            transforms, xres, yres = [0, 0, 0, 0, 0, 0], 0, 0
             if g_it % 10 == 0:
                 xres, yres = 2*qc_res, 2*qc_res
 
