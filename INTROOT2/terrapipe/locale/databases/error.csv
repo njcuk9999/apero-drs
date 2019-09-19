@@ -586,6 +586,8 @@
 "","","","","","",""
 "","","","","","",""
 "10-020-00000","WARNING","User Radial velocity Warning","None","","",""
+"10-020-00001","WARNING","Means that an all NaN array was found when trying to fit the CCF","{0} = order number","All NaN slice found when fitting CCF (Order = {0}). Returning NaNs instead of fit.","",""
+"","","","","","",""
 "","","","","","",""
 "10-502-00000","ALL","User Warning: Reset messages","None","","",""
 "10-502-00001","ALL","Prints that file does not exist in reset directory","{0} = filename; {1} = absolute path","File '{0}' does not exist in '{1}' - cannot add","",""
