@@ -43,19 +43,20 @@ __all__ = [# input keys
            # flat values
            'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG',
            # extraction values
-           'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END', 'KW_EXT_RANGE1',
-           'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT', 'KW_COSMIC_THRES',
-           'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART', 'KW_S1D_WAVEEND',
-           'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO', 'KW_S1D_SMOOTH',
-           'KW_S1D_BLAZET', 'KW_BERVRA', 'KW_BERVDEC', 'KW_BERVEPOCH',
-           'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX', 'KW_BERV_POS_SOURCE',
-           'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT', 'KW_BERV', 'KW_BJD',
-           'KW_BERVMAX', 'KW_BERVSOURCE', 'KW_BERV_EST', 'KW_BJD_EST',
-           'KW_BERVMAX_EST', 'KW_BERV_OBSTIME_METHOD', 'KW_BERV_OBSTIME',
-           'KW_BERVGAIA_ID', 'KW_FIBER',
-           'KW_BERVOBJNAME', 'KW_BERVRV', 'KW_BERV_GAIA_GMAG',
-           'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_MAGLIM',
-           'KW_BERV_GAIA_PLXLIM', 'KW_DBERV', 'KW_DBERV_EST',
+           'KW_EXT_TYPE', 'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END',
+           'KW_EXT_RANGE1', 'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT',
+           'KW_COSMIC_THRES', 'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART',
+           'KW_S1D_WAVEEND', 'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO',
+           'KW_S1D_SMOOTH', 'KW_S1D_BLAZET', 'KW_BERVRA', 'KW_BERVDEC',
+           'KW_BERVEPOCH', 'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX',
+           'KW_BERV_POS_SOURCE', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
+           'KW_BERV', 'KW_BJD', 'KW_BERVMAX', 'KW_BERVSOURCE',
+           'KW_BERV_EST', 'KW_BJD_EST', 'KW_BERVMAX_EST',
+           'KW_BERV_OBSTIME_METHOD', 'KW_BERV_OBSTIME',
+           'KW_BERVGAIA_ID', 'KW_FIBER', 'KW_BERVOBJNAME', 'KW_BERVRV',
+           'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
+           'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
+           'KW_DBERV_EST',
            # wave values
            'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
            'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
@@ -397,6 +398,9 @@ KW_SHAPE_D = Keyword('KW_SHAPE_D', key='', dtype=float, source=__NAME__)
 # -----------------------------------------------------------------------------
 # Define extraction variables
 # -----------------------------------------------------------------------------
+# The extraction type (only added for E2DS files in extraction)
+KW_EXT_TYPE = Keyword('KW_EXT_TYPE', key='', dtype=str, source=__NAME__)
+
 # SNR calculated in extraction process (per order)
 KW_EXT_SNR = Keyword('KW_EXT_SNR', key='', dtype=float, source=__NAME__)
 

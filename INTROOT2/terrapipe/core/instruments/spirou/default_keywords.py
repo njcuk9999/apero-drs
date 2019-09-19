@@ -414,6 +414,10 @@ KW_SHAPE_D.set(key='SHAPE_D', comment='Shape transform D parameter',
 # -----------------------------------------------------------------------------
 # Define extraction variables
 # -----------------------------------------------------------------------------
+# The extraction type (only added for E2DS files in extraction)
+KW_EXT_TYPE = KW_EXT_TYPE.copy(__NAME__)
+KW_EXT_TYPE.set(key='EXT_TYPE', comment='Extract type (E2DS or E2DSFF)')
+
 # SNR calculated in extraction process (per order)
 KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
 KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')

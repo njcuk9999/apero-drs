@@ -168,7 +168,9 @@ __all__ = [
     'MKTEMPLATE_SNR_ORDER',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
-    'CCF_N_ORD_MAX', 'CCF_MASK', 'CCF_MASK_FMT',
+    'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_FMT',
+    'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
+    'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1591,7 +1593,8 @@ MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__)
 
 # Define the default CCF MASK to use
-CCF_MASK = Const('CCF_MASK', value=None, dtype=str, source=__NAME__)
+CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
+                         source=__NAME__)
 
 # Define the CCF mask format (must be an astropy.table format)
 CCF_MASK_FMT = Const('CCF_MASK_FMT', value=None, dtype=str, source=__NAME__)
@@ -1604,10 +1607,31 @@ CCF_MASK_MIN_WEIGHT = Const('CCF_MASK_MIN_WEIGHT', value=None, dtype=float,
 CCF_MASK_WIDTH = Const('CCF_MASK_WIDTH', value=None, dtype=float,
                        source=__NAME__, minimum=0.0)
 
+# Define the width of the CCF range [km/s]
+CCF_DEFAULT_WIDTH = Const('CCF_DEFAULT_WIDTH', value=None, dtype=float,
+                       source=__NAME__, minimum=0.0)
+
+# Define the computations steps of the CCF [km/s]
+CCF_DEFAULT_STEP = Const('CCF_DEFAULT_STEP', value=None, dtype=float,
+                       source=__NAME__, minimum=0.0)
+
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
 CCF_N_ORD_MAX = Const('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__,
                       minimum=1)
+
+# Allowed input DPRTYPES for input  for CCF recipe
+CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
+                             source=__NAME__)
+
+# Define the KW_OUTPUT types that are valid telluric corrected spectra
+CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
+                                dtype=str, source=__NAME__)
+
+# The transmission threshold for removing telluric domain (if and only if
+#     we have a telluric corrected input file
+CCF_TELLU_THRES = Const('CCF_TELLU_THRES', value=None, dtype=float,
+                        source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS
