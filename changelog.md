@@ -2,6 +2,39 @@ Changelog
 =========
 
 
+0.5.074 (2019-09-19)
+--------------------
+- Science.telluric.general.py - add an upper and lower limit to keep for
+  the pca fit. [Neil Cook]
+- Science.extract.general.py - fix some minor bugs + pep8 correction.
+  [Neil Cook]
+- Calib.wave.py, velocity module - change module rv--> velocity, add
+  remove_telluric_domain function. [Neil Cook]
+- Recipe.spirou.cal_extract_spirou.py - add KW_EXT_TYPE. [Neil Cook]
+- Recipe.spirou.cal_ccf_spirou.py - first commit + testing of inputs.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - change --add2calib to
+  --database, add cal_ccf definition. [Neil Cook]
+- Core.instruments.*.default_constants.py + default_keywords.py - add
+  first CCF constants. [Neil Cook]
+- Core.core.drs_startup - change p to param. [Neil Cook]
+- Core.core.drs_database.py - add a check for
+  params['INPUTS']['DATABASE'] to check whether we should save to
+  database when add_file is used. [Neil Cook]
+- Core.constants.param_functions.py - deal with copying ParamDict inside
+  ParamDict. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_lock.py - add debug printout for locking. [Neil Cook]
+- Core.math.fast.py - bn.nansum return bool arrays as bools we don't
+  want this. [Neil Cook]
+- Core.core.drs_log.py - only turn off wrapping for debug wlog entries.
+  [Neil Cook]
+- Core.core.drs_database.py - move locking/checking into copy db file
+  function. [Neil Cook]
+- Update changelog.md. [Neil Cook]
+
+
 0.5.073 (2019-09-18)
 --------------------
 - Tools.module.setup.drs_reprocess.py - add shortname to Run class,
