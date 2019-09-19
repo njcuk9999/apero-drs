@@ -305,6 +305,15 @@ def add_file(params, outfile, night=None):
     # get database key (if it exists)
     dbkey = get_dbkey(params, outfile)
     # ------------------------------------------------------------------
+    # deal with database input being set to False
+    if 'DATABASE' in params['INPUTS']:
+        if not params['INPUTS']['DATABASE']:
+            # Log that we are not adding file due to user input
+            wargs = [dbkey, outfile.filename]
+            WLOG(params, 'info', TextEntry('40-001-00024', args=wargs))
+            # return here
+            return
+    # ------------------------------------------------------------------
     # test database name
     outpath = _get_outpath(params, dbname, outfile)
     # ------------------------------------------------------------------
