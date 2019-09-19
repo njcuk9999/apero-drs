@@ -344,6 +344,8 @@ def __main__(recipe, params):
             e2dsfile.add_hkey('KW_SHAPE_C', value=shapelocal[4])
             e2dsfile.add_hkey('KW_SHAPE_D', value=shapelocal[5])
             # --------------------------------------------------------------
+            # add extraction type (does not change for future files)
+            e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
             # add SNR parameters to header
             e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                                  dim1name='order')
@@ -393,6 +395,8 @@ def __main__(recipe, params):
             e2dsfffile.construct_filename(params, infile=infile)
             # copy header from e2dsff file
             e2dsfffile.copy_hdict(e2dsfile)
+            # add extraction type (does not change for future files)
+            e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
             # set output key
             e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
             # copy data
