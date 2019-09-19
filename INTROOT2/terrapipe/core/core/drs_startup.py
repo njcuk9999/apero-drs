@@ -902,7 +902,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
     """
     log_strings = []
     # get parameters
-    p = recipe.drs_params
+    params = recipe.drs_params
     # get special keys
     skeys = _get_recipe_keys(recipe.specialargs, remove_prefix='-',
                              add=['--help', '-h'])
@@ -911,7 +911,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
     skeys = list(map(lambda x: x.upper(), skeys))
     pkeys = list(map(lambda x: x.upper(), pkeys))
     # loop around inputs
-    for argname in p['INPUTS']:
+    for argname in params['INPUTS']:
         # if we have a special input ignore
         if argname in skeys:
             continue
@@ -919,7 +919,7 @@ def _display_run_time_arguments(recipe, fkwargs=None):
         if argname not in pkeys:
             continue
         # get value of argument
-        value = p['INPUTS'][argname]
+        value = params['INPUTS'][argname]
         # value is either a list or a single value
         if type(value) not in [list, np.ndarray]:
             # generate this arguments log string
@@ -937,9 +937,9 @@ def _display_run_time_arguments(recipe, fkwargs=None):
     # -------------------------------------------------------------------------
     # log to screen and log file
     if len(log_strings) > 0:
-        WLOG(p, 'info', TextEntry('40-001-00017'))
-        WLOG(p, 'info', TextEntry(log_strings), wrap=False)
-        WLOG(p, '', TextEntry(p['DRS_HEADER']))
+        WLOG(params, 'info', TextEntry('40-001-00017'))
+        WLOG(params, 'info', TextEntry(log_strings), wrap=False)
+        WLOG(params, '', TextEntry(params['DRS_HEADER']))
 
 
 # =============================================================================
