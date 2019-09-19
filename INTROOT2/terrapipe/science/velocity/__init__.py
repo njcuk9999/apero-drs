@@ -26,9 +26,9 @@ get_ccf_mask = general.get_ccf_mask
 
 measure_fp_peaks = general.measure_fp_peaks
 
+remove_telluric_domain = general.remove_telluric_domain
+
 remove_wide_peaks = general.remove_wide_peaks
-
-
 
 # =============================================================================
 # End of code

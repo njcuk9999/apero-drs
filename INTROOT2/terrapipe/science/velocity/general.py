@@ -13,6 +13,7 @@ from __future__ import division
 from astropy import constants as cc
 from astropy import units as uu
 import numpy as np
+import os
 from scipy.optimize import curve_fit
 import warnings
 
@@ -628,7 +629,7 @@ def coravelation(params, props, log=False, **kwargs):
             ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
             # -----------------------------------------------------------------
             # fit the CCF
-            fit_args = [params, rv_ccf, np.array(ccf_o), fit_type]
+            fit_args = [params, order_num, rv_ccf, np.array(ccf_o), fit_type]
             try:
                 with warnings.catch_warnings(record=True) as _:
                     ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
@@ -914,7 +915,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
-def fit_ccf(params, rv, ccf, fit_type):
+def fit_ccf(params, order_num, rv, ccf, fit_type):
     """
     Fit the CCF to a guassian function
 
@@ -936,6 +937,17 @@ def fit_ccf(params, rv, ccf, fit_type):
     if len(rv) != len(ccf):
         eargs = [len(rv), len(ccf), func_name]
         WLOG(params, 'error', TextEntry('00-020-00001', args=eargs))
+
+    # deal with all nans
+    if np.sum(np.isnan(ccf)) == len(ccf):
+        # log warning about all NaN ccf
+        wargs = [order_num]
+        WLOG(params, 'warning', TextEntry('10-020-00001', args=wargs))
+        # return NaNs
+        result = np.zeros(4) * np.nan
+        ccf_fit = np.zeros_like(ccf) * np.nan
+        return result, ccf_fit
+
     # get constants
     max_ccf, min_ccf = mp.nanmax(ccf), mp.nanmin(ccf)
     argmin, argmax = mp.nanargmin(ccf), mp.nanargmax(ccf)
@@ -966,6 +978,47 @@ def fit_ccf(params, rv, ccf, fit_type):
     ccf_fit = (fit + 1 - fit_type) * max_ccf
     # return the best guess and the gaussian fit
     return result, ccf_fit
+
+
+def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
+    func_name = __NAME__ + '.remove_telluric_domain()'
+    # get parameters from params/kwargs
+    ccf_tellu_thres = pcheck(params, 'CCF_TELLU_THRES', 'ccf_tellu_thres',
+                             kwargs, func_name)
+    # get extraction type from the header
+    ext_type = infile.get_key('KW_EXT_TYPE', dtype=str)
+    # get the input file (assumed to be the first file from header
+    e2dsfilename = infile.get_key('KW_INFILE1', dtype=str)
+    # construct absolute path for the e2ds file
+    e2dsabsfilename = os.path.join(infile.path, e2dsfilename)
+    # check that e2ds file exists
+    if not os.path.exists(e2dsabsfilename):
+        eargs = [infile.filename, ext_type, e2dsabsfilename]
+        WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+    # get infile
+    e2dsinst = core.get_file_definition(ext_type, params['INSTRUMENT'],
+                                        kind='red')
+    # construct e2ds file
+    e2dsfile = e2dsinst.newcopy(recipe=recipe, fiber=fiber)
+    e2dsfile.set_filename(e2dsfilename)
+    # get recon file
+    reconinst = core.get_file_definition('TELLU_RECON', params['INSTRUMENT'],
+                                         kind='red')
+    # construct recon file
+    reconfile = reconinst.newcopy(recipe=recipe, fiber=fiber)
+    reconfile.construct_filename(params, infile=e2dsfile)
+    # check recon file exists
+    if not os.path.exists(reconfile.filename):
+        eargs = [infile.filename, reconfile.name, e2dsfile.filename]
+        WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+    # read recon file
+    reconfile.read()
+    # find all places below threshold
+    keep = reconfile.data > ccf_tellu_thres
+    # set all bad data to NaNs
+    infile.data[~keep] = np.nan
+    # return in file
+    return infile
 
 
 # =============================================================================

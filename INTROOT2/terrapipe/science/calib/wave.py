@@ -27,7 +27,7 @@ from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.io import drs_data
 from terrapipe.io import drs_table
-from terrapipe.science import rv
+from terrapipe.science import velocity
 from . import general
 
 # =============================================================================
@@ -2853,13 +2853,13 @@ def find_fp_lines_new(params, llprops, fpe2dsfile, **kwargs):
     ckwargs = dict(border=border, size=size, siglimdict=siglimdict,
                    ipeakspace=ipeakspace)
     # measure the positions of the FP peaks
-    llprops = rv.measure_fp_peaks(params, llprops, **ckwargs)
+    llprops = velocity.measure_fp_peaks(params, llprops, **ckwargs)
     # use rv module to remove wide/spurious/doule-fitted peaks
     #   first need to set all input parameters (via ckwargs)
     ckwargs = dict(expwidth=expwidth, cutwidth=cutwidth,
                    peak_spacing=ipeakspace)
     # remove wide / double-fitted peaks
-    llprops = rv.remove_wide_peaks(params, llprops, **ckwargs)
+    llprops = velocity.remove_wide_peaks(params, llprops, **ckwargs)
 
     # add constants to llprops
     llprops['USED_BORDER'] = border
@@ -4250,7 +4250,7 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     dkwargs = dict(spe=fpe2dsfile.data, wave=llprops['LL_FINAL'],
                    sigdet=sigdet, size=boxsize, threshold=maxflux)
     # run DeltaVrms2D
-    dvrmsref, wmeanref = rv.delta_v_rms_2d(**dkwargs)
+    dvrmsref, wmeanref = velocity.delta_v_rms_2d(**dkwargs)
 
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
@@ -4270,7 +4270,7 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     props['BERV_MAX'] = 0.0
     props['BJD'] = 0.0
     # get the mask parameters
-    ll_mask_d, ll_mask_ctr, w_mask = rv.get_ccf_mask(params, filename=ccfmask)
+    ll_mask_d, ll_mask_ctr, w_mask = velocity.get_ccf_mask(params, filename=ccfmask)
     props['LL_MASK_D'] = ll_mask_d
     props['LL_MASK_CTR'] = ll_mask_ctr
     props['W_MASK'] = w_mask
@@ -4287,7 +4287,7 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     ckwargs = dict(ccf_step=ccfstep, ccf_width=ccfwidth, target_rv=targetrv,
                    fit_type=1, det_noise=detnoise)
     # do the correlation on the FP
-    props = rv.coravelation(params, props, **ckwargs)
+    props = velocity.coravelation(params, props, **ckwargs)
 
     # ----------------------------------------------------------------------
     # Update the Correlation stats with values using fiber C (FP) drift
@@ -4297,8 +4297,8 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # normalize the average ccf
     normalized_ccf = props['AVERAGE_CCF'] / mp.nanmax(props['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
-    ccf_res, ccf_fit = rv.fit_ccf(params, props['RV_CCF'], normalized_ccf,
-                                  fit_type=1)
+    ccf_res, ccf_fit = velocity.fit_ccf(params, 'average', props['RV_CCF'],
+                                        normalized_ccf, fit_type=1)
     # push into props
     props['CCF_RES'], props['CCF_FIT'] = ccf_res, ccf_fit
     # get the max cpp
