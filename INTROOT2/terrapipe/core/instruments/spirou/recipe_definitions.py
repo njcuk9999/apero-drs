@@ -32,8 +32,8 @@ directory = dict(name='directory', dtype='directory',
 # Note for these to work MUST add to spirouStartup.spirou_options_manager
 #
 # -----------------------------------------------------------------------------
-add_cal = dict(name='--add2calib', dtype='bool', default=True,
-               helpstr=Help['ADD_CAL_HELP'])
+add_db = dict(name='--database', dtype='bool', default=True,
+              helpstr=Help['ADD_CAL_HELP'])
 # -----------------------------------------------------------------------------
 dobad = dict(name='--badcorr', dtype='bool', default=True,
              helpstr=Help['DOBAD_HELP'])
@@ -150,7 +150,7 @@ obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_mk_template = DrsRecipe(__INSTRUMENT__,)
+obj_mk_template = DrsRecipe(__INSTRUMENT__, )
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__)
@@ -219,7 +219,7 @@ test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
                required=True)
 test.set_kwarg(**plot)
 test.set_kwarg(**interactive)
-test.set_kwarg(**add_cal)
+test.set_kwarg(**add_db)
 test.set_kwarg(**dobad)
 test.set_kwarg(**badfile)
 test.set_kwarg(default=False, **combine)
@@ -268,7 +268,7 @@ cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
 cal_badpix.set_kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
-cal_badpix.set_kwarg(**add_cal)
+cal_badpix.set_kwarg(**add_db)
 cal_badpix.set_kwarg(default=True, **combine)
 cal_badpix.set_kwarg(**flipimage)
 cal_badpix.set_kwarg(**fluxunits)
@@ -292,7 +292,7 @@ cal_dark.set_outputs(DARK_FILE=sf.out_dark, SKY_FILE=sf.out_sky)
 cal_dark.set_arg(pos=0, **directory)
 cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
                  helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
-cal_dark.set_kwarg(**add_cal)
+cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
 cal_dark.set_kwarg(**interactive)
@@ -313,7 +313,7 @@ cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
 cal_dark_master.set_outputs(DARK_MASTER_FILE=sf.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str, default='DARK_DARK',
                           helpstr=Help['DARK_MASTER_FILETYPE'])
-cal_dark_master.set_kwarg(**add_cal)
+cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
 cal_dark_master.set_kwarg(**interactive)
 
@@ -338,7 +338,7 @@ cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                 files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
                 helpstr=Help['FILES_HELP'] + Help['LOC_FILES_HELP'])
-cal_loc.set_kwarg(**add_cal)
+cal_loc.set_kwarg(**add_db)
 cal_loc.set_kwarg(**badfile)
 cal_loc.set_kwarg(**dobad)
 cal_loc.set_kwarg(**backsub)
@@ -381,7 +381,7 @@ cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
 cal_shape_master.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
-cal_shape_master.set_kwarg(**add_cal)
+cal_shape_master.set_kwarg(**add_db)
 cal_shape_master.set_kwarg(**badfile)
 cal_shape_master.set_kwarg(**dobad)
 cal_shape_master.set_kwarg(**backsub)
@@ -414,7 +414,7 @@ cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
 cal_shape.set_arg(pos=0, **directory)
 cal_shape.set_arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
                   helpstr=Help['SHAPE_FPFILES_HELP'])
-cal_shape.set_kwarg(**add_cal)
+cal_shape.set_kwarg(**add_db)
 cal_shape.set_kwarg(**badfile)
 cal_shape.set_kwarg(**dobad)
 cal_shape.set_kwarg(**backsub)
@@ -451,7 +451,7 @@ cal_ff.set_arg(pos=0, **directory)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
                files=[sf.pp_flat_flat], pos='1+',
                helpstr=Help['FILES_HELP'] + Help['FLAT_FILES_HELP'])
-cal_ff.set_kwarg(**add_cal)
+cal_ff.set_kwarg(**add_db)
 cal_ff.set_kwarg(**badfile)
 cal_ff.set_kwarg(**dobad)
 cal_ff.set_kwarg(**backsub)
@@ -488,7 +488,7 @@ cal_thermal.set_arg(name='files', dtype='files', pos='1+',
                     files=[sf.pp_dark_dark],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                     limit=1)
-cal_thermal.set_kwarg(**add_cal)
+cal_thermal.set_kwarg(**add_db)
 cal_thermal.set_kwarg(**badfile)
 cal_thermal.set_kwarg(**dobad)
 cal_thermal.set_kwarg(**backsub)
@@ -531,7 +531,6 @@ cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                     limit=1)
-cal_extract.set_kwarg(**add_cal)
 cal_extract.set_kwarg(**badfile)
 cal_extract.set_kwarg(**dobad)
 cal_extract.set_kwarg(**backsub)
@@ -581,7 +580,7 @@ cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
 cal_wave.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
                    nargs='+', filelogic='exclusive', reprocess=True,
                    helpstr=Help['WAVE_FPFILES_HELP'], default=[])
-cal_wave.set_kwarg(**add_cal)
+cal_wave.set_kwarg(**add_db)
 cal_wave.set_kwarg(**badfile)
 cal_wave.set_kwarg(**dobad)
 cal_wave.set_kwarg(**backsub)
@@ -618,7 +617,33 @@ cal_drift2.name = 'cal_DRIFTPEAK_E2DS_spirou.py'
 # -----------------------------------------------------------------------------
 # cal_CCF_E2DS_spirou
 # -----------------------------------------------------------------------------
-cal_ccf.name = 'cal_CCF_E2DS_spirou.py'
+cal_ccf.name = 'cal_ccf_spirou.py'
+cal_ccf.shortname = 'CCF'
+cal_ccf.instrument = __INSTRUMENT__
+cal_ccf.outputdir = 'reduced'
+cal_ccf.inputdir = 'reduced'
+cal_ccf.inputtype = 'reduced'
+cal_ccf.extension = 'fits'
+cal_ccf.description = Help['CCF_DESC']
+cal_ccf.epilog = Help['CCF_EXAMPLE']
+cal_ccf.set_outputs()
+cal_ccf.set_arg(pos=0, **directory)
+cal_ccf.set_arg(name='files', dtype='files', pos='1+',
+                files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
+                       sf.out_tellu_obj],
+                helpstr=Help['FILES_HELP'] + Help['CCF_FILES_HELP'],
+                limit=1)
+cal_ccf.set_kwarg(name='--mask', dtype='file', default_ref='CCF_DEFAULT_MASK',
+                  helpstr=Help['CCF_MASK_HELP'])
+cal_ccf.set_kwarg(name='--rv', dtype=float, default=0.0,
+                  helpstr=Help['CCF_RV_HELP'])
+cal_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
+                  helpstr=Help['CCF_WIDTH_HELP'])
+cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
+                  helpstr=Help['CCF_STEP_HELP'])
+cal_ccf.set_kwarg(**add_db)
+cal_ccf.set_kwarg(**plot)
+cal_ccf.set_kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # obj_mk_tellu
@@ -639,7 +664,7 @@ obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
                      helpstr=Help['FILES_HELP'] + Help['MKTELL_FILES_HELP'],
                      limit=1)
-obj_mk_tellu.set_kwarg(**add_cal)
+obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**plot)
 obj_mk_tellu.set_kwarg(**interactive)
 obj_mk_tellu.set_kwarg(**wavefile)
@@ -667,8 +692,8 @@ obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
                           default_ref='TELLURIC_FIBER_TYPE',
                           helpstr=Help['MKTELLDB_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
-obj_mk_tellu_db.set_kwarg(**add_cal)
-obj_mk_tellu_db.set_kwarg(**add_cal)
+obj_mk_tellu_db.set_kwarg(**add_db)
+obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**plot)
 obj_mk_tellu_db.set_kwarg(**interactive)
 obj_mk_tellu_db.set_kwarg(**wavefile)
@@ -694,10 +719,10 @@ obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           RC1D_V_FILE=sf.out_tellu_rc1d_v)
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
-                     files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                     helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
-                     limit=1)
-obj_fit_tellu.set_kwarg(**add_cal)
+                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                      helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
+                      limit=1)
+obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**interactive)
 obj_fit_tellu.set_kwarg(**wavefile)
@@ -716,20 +741,20 @@ obj_fit_tellu_db.description = Help['FTELLUDB_DESC']
 obj_fit_tellu_db.epilog = Help['FTELLUDB_EXAMPLE']
 obj_fit_tellu_db.set_outputs()
 obj_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                          helpstr=Help['FTELLUDB_CORES'])
+                           helpstr=Help['FTELLUDB_CORES'])
 obj_fit_tellu_db.set_kwarg(name='--filetype', dtype=str,
-                          default_ref='TELLURIC_FILETYPE',
-                          helpstr=Help['FTELLUDB_FILETYPE'])
+                           default_ref='TELLURIC_FILETYPE',
+                           helpstr=Help['FTELLUDB_FILETYPE'])
 obj_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
-                          default_ref='TELLURIC_FIBER_TYPE',
-                          helpstr=Help['FTELLUDB_FIBER'])
+                           default_ref='TELLURIC_FIBER_TYPE',
+                           helpstr=Help['FTELLUDB_FIBER'])
 obj_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
-                          helpstr=Help['FTELLUDB_OBJNAME'])
+                           helpstr=Help['FTELLUDB_OBJNAME'])
 obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
-                          default_ref='TELLURIC_DPRTYPES',
-                          helpstr=Help['FTELLUDB_DPRTYPES'])
-obj_fit_tellu_db.set_kwarg(**add_cal)
-obj_fit_tellu_db.set_kwarg(**add_cal)
+                           default_ref='TELLURIC_DPRTYPES',
+                           helpstr=Help['FTELLUDB_DPRTYPES'])
+obj_fit_tellu_db.set_kwarg(**add_db)
+obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
 obj_fit_tellu_db.set_kwarg(**interactive)
 obj_fit_tellu_db.set_kwarg(**wavefile)
@@ -759,11 +784,10 @@ obj_mk_template.set_kwarg(name='-fiber', dtype=str,
                           default_ref='TELLURIC_FIBER_TYPE',
                           helpstr=Help['MKTEMP_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
-obj_mk_template.set_kwarg(**add_cal)
+obj_mk_template.set_kwarg(**add_db)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**interactive)
 obj_mk_template.set_kwarg(**wavefile)
-
 
 # -----------------------------------------------------------------------------
 # pol_spirou
@@ -902,8 +926,6 @@ science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
 science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
-
-
 # -----------------------------------------------------------------------------
 # hc run (extract )
 # -----------------------------------------------------------------------------
@@ -929,4 +951,3 @@ hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
 # sequences list
 # -----------------------------------------------------------------------------
 sequences = [full_run, limited_run, science_run, hc_run]
-
