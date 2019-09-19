@@ -612,10 +612,13 @@ class ParamDict(CaseInsensitiveDict):
         for k_it, key in enumerate(keys):
             value = values[k_it]
             # try to deep copy parameter
-            try:
-                pp[key] = copy.deepcopy(value)
-            except Exception as _:
-                pp[key] = type(value)(value)
+            if isinstance(value, ParamDict):
+                pp[key] = value.copy()
+            else:
+                try:
+                    pp[key] = copy.deepcopy(value)
+                except Exception as _:
+                    pp[key] = type(value)(value)
             # copy source
             if key in self.sources:
                 pp.set_source(key, self.sources[key])
