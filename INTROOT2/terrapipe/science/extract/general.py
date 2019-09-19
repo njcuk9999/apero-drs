@@ -124,7 +124,6 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
 
 def thermal_correction(params, recipe, header, props=None, eprops=None,
                        fiber=None, **kwargs):
-
     func_name = __NAME__ + '.thermal_correction()'
     # deal with props = None
     if props is None:
@@ -226,7 +225,7 @@ def get_thermal(params, header, fiber, filename=None):
     key = out_thermal.get_dbkey(fiber=fiber)
     # load calib file
     thermal, thermal_file = general.load_calib_file(params, key, header,
-                                                       filename=filename)
+                                                    filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00040', args=[thermal_file]))
     # return the master image
@@ -252,7 +251,7 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
         thermal = thermal / flat
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
-    if mp.nansum(thermal) == 0 or mp.sum(np.isfinite(thermal)) == 0:
+    if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
         return image
     # ----------------------------------------------------------------------
     # load tapas
@@ -302,13 +301,12 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
 
 def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
               **kwargs):
-
     envelope_percent = kwargs.get('envelope', None)
     filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
     red_limit = kwargs.get('red_limit', None)
     blue_limit = kwargs.get('blue_limit', None)
-    thermal_file = kwargs.get('thermal_file', None)
+    # thermal_file = kwargs.get('thermal_file', None)
     # get the shape
     dim1, dim2 = image.shape
     # ----------------------------------------------------------------------
@@ -322,7 +320,7 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
         thermal = thermal / flat
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
-    if mp.nansum(thermal) == 0 or mp.sum(np.isfinite(thermal)) == 0:
+    if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
         return image
     # ----------------------------------------------------------------------
     # set up an envelope to measure thermal background in image
@@ -372,7 +370,6 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
 
 
 def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
-
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -398,10 +395,10 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     # Decide on output wavelength grid
     # -------------------------------------------------------------------------
     if wgrid == 'wave':
-        wavegrid = np.arange(wavestart, waveend + binwave/2.0, binwave)
+        wavegrid = np.arange(wavestart, waveend + binwave / 2.0, binwave)
     else:
         # work out number of wavelength points
-        flambda = np.log(waveend/wavestart)
+        flambda = np.log(waveend / wavestart)
         nlambda = np.round((speed_of_light_kms / binvelo) * flambda)
         # updating end wavelength slightly to have exactly 'step' km/s
         waveend = np.exp(nlambda * (binvelo / speed_of_light_kms)) * wavestart
@@ -417,7 +414,7 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     # -------------------------------------------------------------------------
     # define a kernal that goes from -3 to +3 smooth_sizes of the mask
     xker = np.arange(-smooth_size * 3, smooth_size * 3, 1)
-    ker = np.exp(-0.5*(xker / smooth_size)**2)
+    ker = np.exp(-0.5 * (xker / smooth_size) ** 2)
     # set up the edge vector
     edges = np.ones(npix, dtype=bool)
     # set edges of the image to 0 so that  we get a sloping weight
@@ -482,14 +479,15 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 0:
         # TODO: Add plots
         pass
-        # sPlt.ext_1d_spectrum_debug_plot(params, wavegrid, out_spec, weight, wgrid)
+        # sPlt.ext_1d_spectrum_debug_plot(params, wavegrid, out_spec,
+        #                                 weight, wgrid)
 
     # work out the weighted spectrum
     with warnings.catch_warnings(record=True) as _:
         w_out_spec = out_spec / weight
 
     # TODO: propagate errors
-    ew_out_spec = np.zeros_like((w_out_spec))
+    ew_out_spec = np.zeros_like(w_out_spec)
 
     # construct the s1d table (for output)
     s1dtable = Table()
