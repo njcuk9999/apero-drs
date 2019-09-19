@@ -948,6 +948,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
                           kwargs, func_name)
     fit_deriv_pc = pcheck(params, 'FTELLU_FIT_DERIV_PC', 'fit_deriv_pc',
                           kwargs, func_name)
+    thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
+                                'thres_transfit_low', kwargs, func_name)
+    thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
+                                  'thres_transfit_upper', kwargs, func_name)
 
     # ------------------------------------------------------------------
     # get the transmission map key
@@ -1028,6 +1032,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # determining the pixels relevant for PCA construction
     keep = np.isfinite(np.sum(abso, axis=0))
+    keep &= (np.min(abso, axis=0) > thres_transfit_low)
+    keep &= (np.max(abso, axis=0) < thres_transfit_upper)
+
     # log fraction of valid (non NaN) pixels
     fraction = mp.nansum(keep) / len(keep)
     WLOG(params, '', TextEntry('40-019-00015', args=[fraction]))
