@@ -30,7 +30,7 @@ DATA_CORE.value = './data/core/'
 # Define whether to force wave solution from calibration database (instead of
 #    using header wave solution if available)
 CALIB_DB_FORCE_WAVESOL = CALIB_DB_FORCE_WAVESOL.copy(__NAME__)
-CALIB_DB_FORCE_WAVESOL.value = False
+CALIB_DB_FORCE_WAVESOL.value = True
 
 
 # =============================================================================
@@ -1466,8 +1466,8 @@ CCF_MASK_PATH = CCF_MASK_PATH.copy(__NAME__)
 CCF_MASK_PATH.value = './data/spirou/ccf/'
 
 # Define the default CCF MASK to use
-CCF_MASK = CCF_MASK.copy(__NAME__)
-CCF_MASK.value = 'gl581_Sep18_cleaned.mas'
+CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
+CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
 
 # Define the CCF mask format (must be an astropy.table format)
 CCF_MASK_FMT = CCF_MASK_FMT.copy(__NAME__)
@@ -1481,10 +1481,33 @@ CCF_MASK_MIN_WEIGHT.value = 0.0
 CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
 CCF_MASK_WIDTH.value = 1.7
 
+# Define the width of the CCF range [km/s]
+CCF_DEFAULT_WIDTH = CCF_DEFAULT_WIDTH.copy(__NAME__)
+CCF_DEFAULT_WIDTH.value = 30.0
+
+# Define the computations steps of the CCF [km/s]
+CCF_DEFAULT_STEP = CCF_DEFAULT_STEP.copy(__NAME__)
+CCF_DEFAULT_STEP.value = 0.5
+
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
 CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
 CCF_N_ORD_MAX.value = 48
+
+# Allowed input DPRTYPES for input  for CCF recipe
+CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
+CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+
+
+# Define the KW_OUTPUT types that are valid telluric corrected spectra
+CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)
+CCF_CORRECT_TELLU_TYPES.value = 'TELLU_OBJ'
+
+# The transmission threshold for removing telluric domain (if and only if
+#     we have a telluric corrected input file
+CCF_TELLU_THRES = CCF_TELLU_THRES.copy(__NAME__)
+CCF_TELLU_THRES.value = 0.5
+
 
 # =============================================================================
 # TOOLS SETTINGS
