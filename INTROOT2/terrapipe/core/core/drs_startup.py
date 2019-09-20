@@ -214,6 +214,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
     if params['OUTPATH'] is not None and params['NIGHTNAME'] is not None:
         _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
+
+    # -------------------------------------------------------------------------
+    # We must have DRS_DATA_MSG
+    params['DRS_DATA_MSG'] = drs_log.get_drs_data_msg(params)
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
     if 'DATA_DICT' in fkwargs:
