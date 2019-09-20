@@ -895,6 +895,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    # get filemod and recipe mod
+    pconst = constants.pload(params['INSTRUMENT'])
+    filemod = pconst.FILEMOD()
+    recipemod = pconst.RECIPEMOD()
     # generate sequence
     sequence[1].process_adds()
     # get the sequence recipe list
@@ -915,6 +919,11 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # print progress
         wargs = [srecipe.name, srecipe.shortname]
         WLOG(params, '', TextEntry('40-503-00012', args=wargs))
+        # add file and recipe mod if not set
+        if srecipe.recipemod is None:
+            srecipe.recipemod = recipemod
+        if srecipe.filemod is None:
+            srecipe.filemod = filemod
         # deal with nightname
         if srecipe.master:
             nightname = params['MASTER_NIGHT']
