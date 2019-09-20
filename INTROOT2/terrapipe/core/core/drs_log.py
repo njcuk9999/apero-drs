@@ -325,10 +325,8 @@ class Logger:
             for mess in raw_messages2:
                 # Get the time now in human readable format
                 human_time = time.get_hhmmss_now()
-
                 # clean up log message (no colour codes)
                 mess = _clean_message(mess)
-
                 # storage for cmds
                 cmds = []
                 cmdargs = [human_time, code, option, mess]
@@ -336,25 +334,9 @@ class Logger:
                 # append separate commands for log writing
                 cmds.append(cmd)
                 # get logfilepath
-                logfilepath, warning = get_logfilepath(self, params)
+                logfilepath = get_logfilepath(self, params)
                 # write to log file
-                if len(warning) == 0:
-                    for cmd in cmds:
-                        writelog(self, params, cmd, key, logfilepath)
-                # see if we have warning
-                if warning and ('DRS_LOG_WARNING_ACTIVE' in params):
-                    negate_warning = params['DRS_LOG_WARNING_ACTIVE']
-                elif warning:
-                    negate_warning = False
-                    params['DRS_LOG_WARNING_ACTIVE'] = True
-                    params.set_source('DRS_LOG_WARNING_ACTIVE', func_name)
-                else:
-                    negate_warning = True
-                # if warning is True then we used TDATA and should report that
-                if len(warning) > 0 and (not negate_warning):
-                    if not logonly:
-                        for warn in warning:
-                            errors.append([warn, 'warning', human_time, option])
+                writelog(self, params, cmd, key, logfilepath)
 
         # ---------------------------------------------------------------------
         # deal with errors caused by logging (print)
@@ -773,7 +755,7 @@ def warninglogger(p, w, funcname=None):
                 displayed_warnings.append(wmsg)
 
 
-def get_logfilepath(logobj, p):
+def get_logfilepath(logobj, params):
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
     generates an ConfigError exception.
@@ -783,31 +765,12 @@ def get_logfilepath(logobj, p):
     :return lpath: string, the path and filename for the log file to be used
     :return warning: bool, if True print warnings about log file path
     """
-    msgkey = 'DRS_DATA_MSG'
-    # -------------------------------------------------------------------------
-    # Get DRS_DATA_MSG folder directory
-    dir_data_msg = p.get(msgkey, None)
-    print_warnings = []
-    # if None use "TDATA"
-    if dir_data_msg is None:
-        wmsg = logobj.textdict['10-005-00002'].format(msgkey)
-        print_warnings += wmsg.split('\n')
-        warning = True
-    # if it doesn't exist also set to TDATA
-    elif not os.path.exists(dir_data_msg):
-        margs = [msgkey, p[msgkey]]
-        wmsg = logobj.textdict['10-005-00003'].format(*margs)
-        print_warnings += wmsg.split('\n')
-        warning = True
-    else:
-        warning = False
-    # do not save to log file
-    if warning:
-        return None, print_warnings
-    else:
-        lpath = logobj.pconstant.LOG_FILE_NAME(p, dir_data_msg)
-        # return the logpath and the warning
-        return lpath, print_warnings
+    # get dir_data_msg key
+    dir_data_msg = get_drs_data_msg(params)
+    # add log file to path
+    lpath = logobj.pconstant.LOG_FILE_NAME(params, dir_data_msg)
+    # return the logpath and the warning
+    return lpath
 
 
 def correct_level(logobj, key, level):
@@ -1110,6 +1073,36 @@ def _clean_message(message):
             message = str(message.replace(code, ''))
     # return message
     return message
+
+
+def get_drs_data_msg(params):
+    # get from params
+    dir_data_msg = params.get('DRS_DATA_MSG', None)
+    # if None use we have to create it
+    if dir_data_msg is None:
+        # create default path
+        create = True
+    # if it doesn't exist we also have to create it
+    elif not os.path.exists(dir_data_msg):
+        # create default path
+        create = True
+    else:
+        return dir_data_msg
+    # if we have reached here then we need to create a default drs_data_msg
+    if create:
+        # get the users home directory
+        homedir = os.path.expanduser('~')
+        # make the default message directory
+        default_msg = os.path.join(homedir, '.terrapipe_msg/')
+        # check that deafult message directory exists
+        if not os.path.exists(default_msg):
+            try:
+                os.makedirs(default_msg)
+                return default_msg
+            except Exception as _:
+                return './'
+        else:
+            return default_msg
 
 
 # =============================================================================

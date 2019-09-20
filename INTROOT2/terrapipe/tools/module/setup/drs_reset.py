@@ -161,7 +161,7 @@ def reset_log(params):
     # remove files from reduced folder
     log_dir = params['DRS_DATA_MSG']
     # get current log file (must be skipped)
-    current_logfile, _ = drs_log.get_logfilepath(WLOG, params)
+    current_logfile = drs_log.get_logfilepath(WLOG, params)
     # loop around files and folders in reduced dir
     remove_all(params, log_dir, skipfiles=[current_logfile])
 
