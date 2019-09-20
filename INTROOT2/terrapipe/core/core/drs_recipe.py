@@ -1058,6 +1058,12 @@ class DrsRunSequence(object):
         self.adds.append([recipe, dict(kwargs)])
 
     def process_adds(self):
+
+        # get filemod and recipe mod
+        pconst = constants.pload(self.instrument)
+        filemod = pconst.FILEMOD()
+        recipemod = pconst.RECIPEMOD()
+
         self.sequence = []
         for add in self.adds:
             recipe, kwargs = add
@@ -1065,6 +1071,9 @@ class DrsRunSequence(object):
             frecipe = DrsRecipe(self.instrument)
             # copy from given recipe
             frecipe.copy(recipe)
+            # set filemod and recipemod
+            frecipe.filemod = filemod
+            frecipe.recipemod = recipemod
             # update short name
             frecipe.shortname = kwargs.get('name', frecipe.shortname)
             # set fiber
