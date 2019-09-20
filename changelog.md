@@ -2,6 +2,19 @@ Changelog
 =========
 
 
+0.5.075 (2019-09-20)
+--------------------
+- Tools.module.setup.drs_reprocess.py - set filemod and recipemod for
+  srecipes that do not have them set. [Neil Cook]
+- Science.telluric.general.py - guess the sed that goes in (not just
+  ones) + sigma clip around fit_dd + add a bad mask for sp2 (set to NaN)
+  [Neil Cook]
+- Drs_recipe.py - for process adds method (in DrsRunSequence) add
+  filemod and recipemod is frecipe does not have them set. [Neil Cook]
+- Update object_query_list. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.074 (2019-09-19)
 --------------------
 - Science.telluric.general.py - add an upper and lower limit to keep for
