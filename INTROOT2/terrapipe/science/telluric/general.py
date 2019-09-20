@@ -637,6 +637,15 @@ def calculate_telluric_absorption(params, image, template, template_file,
     # first guess at the SED estimate for the hot start (we guess with a
     #   spectrum full of ones
     sed = np.ones_like(wavemap)
+    # then we correct with out first estimate of the absorption
+    for order_num in range(image1.shape[0]):
+        # get an estimate at the sed
+        tmp_corr = image1[order_num] / tau1[order_num]
+        # get the smoothing size from wconv
+        smooth = int(wconv[order_num])
+        # median filter
+        sed[order_num] = filters.median_filter(tmp_corr, smooth)
+
     # flag to see if we converged (starts off very large)
     # this is the quadratic sum of the change in airmass and water column
     # when the change in the sum of these two values is very small between
@@ -680,6 +689,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
         # considered bad if the spectrum is larger than '. This is
         #     likely an OH line or a cosmic ray
         keep &= fit_image < transfit_upper_bad
+        keep &= fit_image > threshold_transmission_fit
         # ---------------------------------------------------------------------
         # fit telluric absorption of the spectrum
         with warnings.catch_warnings(record=True) as _:
@@ -1051,7 +1061,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     # if we are adding the derivatives to the pc need extra components
     if add_deriv_pc:
         # the npc+1 term will be the derivative of the first PC
-        # the npc+2 term will be the broadning factor the first PC
+        # the npc+2 term will be the broadening factor the first PC
         pc = np.zeros([np.product(image.shape), npc + 2])
     else:
         # create pc image
@@ -1247,6 +1257,10 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
                          kwargs, func_name)
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
                              func_name, mapf='list', dtype=str)
+    thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
+                                'thres_transfit_low', kwargs, func_name)
+    thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
+                                  'thres_transfit_upper', kwargs, func_name)
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------
@@ -1395,6 +1409,19 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
         # ------------------------------------------------------------------
         keep &= np.isfinite(fit_dd)
         keep &= mp.nansum(np.isfinite(fit_pc2), axis=1) == npc
+
+        # TODO: added a constraint on the max deviation in fit_dd
+        # TODO: this prevents points that are very deviant to be include
+        # TODO: in principle, there should be NO very deviant point as
+        # TODO: we already have a cut on the abso from TAPAS, but this
+        # TODO: is used as a sigma-clipping. The cut is expressed in log
+        # TODO: abso, so a value of 1 is equivalent to a 2.7x difference
+        # TODO: in residual.
+
+        sigma = 1.0 #mp.nanmedian(np.abs(fit_dd))
+        print('sigma = ',sigma)
+        keep &= (np.abs(fit_dd) < sigma)
+
         # log number of kept pixels
         wargs = [mp.nansum(keep)]
         WLOG(params, '', TextEntry('40-019-00022', args=wargs))
@@ -1455,6 +1482,14 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     amps2, recon2 = mp.linear_minimization(klog_recon_abso, klog_tapas_abso2)
 
     # ------------------------------------------------------------------
+    # remove all bad tranmission
+    # ------------------------------------------------------------------
+    badmask = recon_abso < thres_transfit_low
+    badmask |= recon_abso > thres_transfit_upper
+    # set bad values in sp2 to NaN
+    sp2[badmask] = np.nan
+
+    # ------------------------------------------------------------------
     # correct spectrum
     # ------------------------------------------------------------------
     # divide spectrum by reconstructed absorption
@@ -1476,6 +1511,7 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     props['RECON_ABSO_SP'] = recon_abso2
     props['AMPS_ABSO_TOTAL'] = amps_abso_total
     props['TAU_MOLECULES'] = molecule_data
+    # TODO: Etienne says these values are the wrong way round?
     props['TAU_H2O'] = amps2[0]
     props['TAU_REST'] = amps2[1]
     # set sources
@@ -2323,7 +2359,8 @@ def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
             # interpolate the values at these points
             svalues = tapas_spline(masterwave[iord, :])
             # convolve with a gaussian function
-            cvalues = np.convolve(svalues, kernel, mode='same')
+            nvalues = np.convolve(np.ones_like(svalues), kernel, mode='same')
+            cvalues = np.convolve(svalues, kernel, mode='same') / nvalues
             # add to storage
             tapas_all_species[n_species, start: end] = cvalues
     # deal with non-real values (must be between 0 and 1
