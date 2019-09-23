@@ -1236,6 +1236,15 @@ TAPAS_FILE_FMT.value = 'fits'
 TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
 TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
 
+# the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input telluric files
+TELLURIC_FILETYPE = TELLURIC_FILETYPE.copy(__NAME__)
+TELLURIC_FILETYPE.value = 'EXT_E2DS_FF'
+
+# the fiber required for input template files
+TELLURIC_FIBER_TYPE = TELLURIC_FIBER_TYPE.copy(__NAME__)
+TELLURIC_FIBER_TYPE.value = 'AB'
+
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
 TELLU_CUT_BLAZE_NORM = TELLU_CUT_BLAZE_NORM.copy(__NAME__)
@@ -1401,7 +1410,7 @@ FTELLU_ADD_DERIV_PC.value = True
 
 # Define whether to fit the derivatives instead of the principal components
 FTELLU_FIT_DERIV_PC = FTELLU_FIT_DERIV_PC.copy(__NAME__)
-FTELLU_FIT_DERIV_PC.value = False
+FTELLU_FIT_DERIV_PC.value = True
 
 # The number of pixels required (per order) to be able to interpolate the
 #    template on to a berv shifted wavelength grid
@@ -1441,17 +1450,12 @@ FTELLU_FIT_RECON_LIMIT.value = -0.5
 # =============================================================================
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
-TELLURIC_FILETYPE = TELLURIC_FILETYPE.copy(__NAME__)
-TELLURIC_FILETYPE.value = 'EXT_E2DS_FF'
+MKTEMPLATE_FILETYPE = MKTEMPLATE_FILETYPE.copy(__NAME__)
+MKTEMPLATE_FILETYPE.value = 'TELLU_OBJ'
 
 # the fiber required for input template files
-TELLURIC_FIBER_TYPE = TELLURIC_FIBER_TYPE.copy(__NAME__)
-TELLURIC_FIBER_TYPE.value = 'AB'
-
-# the dprtypes (i.e. OBJ_DARK) to be used in the telluric recipes, should be
-#    a string or a string list (i.e. dprtypes separated by commas)
-TELLURIC_DPRTYPES = TELLURIC_DPRTYPES.copy(__NAME__)
-TELLURIC_DPRTYPES.value = 'OBJ_FP,OBJ_DARK'
+MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
+MKTEMPLATE_FIBER_TYPE.value = 'AB'
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
