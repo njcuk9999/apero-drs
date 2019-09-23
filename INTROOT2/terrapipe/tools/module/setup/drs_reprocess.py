@@ -806,7 +806,12 @@ def _check_for_files(params, runobj):
             # get output
             output = recipe.outputs[outputkey]
             # add the infile type from output
-            infile.filetype = output.inext
+            if output.intype is None:
+                continue
+            elif isinstance(output.intype, list):
+                infile.filetype = output.intype[0].filetype
+            else:
+                infile.filetype = output.intype.filetype
             # define outfile
             outfile = output.newcopy(recipe=recipe)
             # --------------------------------------------------------------
