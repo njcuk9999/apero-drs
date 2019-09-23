@@ -450,23 +450,32 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     # -------------------------------------------------------------------------
     out_spec = np.zeros_like(wavegrid)
     weight = np.zeros_like(wavegrid)
+
     # loop around all orders
     for order_num in range(nord):
         # identify the valid pixels
         valid = np.isfinite(e2ds[order_num]) & np.isfinite(blaze[order_num])
+        valid_float = valid.astype(float)
         # if we have no valid points we need to skip
         if np.sum(valid) == 0:
             continue
         # get this orders vectors
-        owave = wavemap[order_num, valid]
+        owave = wavemap[order_num]
         oe2ds = e2ds[order_num, valid]
         oblaze = blaze[order_num, valid]
         # create the splines for this order
-        spline_sp = mp.iuv_spline(owave, oe2ds, k=5, ext=1)
-        spline_bl = mp.iuv_spline(owave, oblaze, k=5, ext=1)
+        spline_sp = mp.iuv_spline(owave[valid], oe2ds, k=5, ext=1)
+        spline_bl = mp.iuv_spline(owave[valid], oblaze, k=5, ext=1)
+        spline_valid = mp.iuv_spline(owave, valid_float, k=1, ext=1)
         # can only spline in domain of the wave
-        useful_range = (wavegrid > mp.nanmin(owave))
-        useful_range &= (wavegrid < mp.nanmax(owave))
+        useful_range = (wavegrid > mp.nanmin(owave[valid]))
+        useful_range &= (wavegrid < mp.nanmax(owave[valid]))
+        # finding pixels where we have immediate neighbours that are
+        #   considered valid in the spline (to avoid interpolating over large
+        #   gaps in validity)
+        maskvalid = np.zeros_like(wavegrid, dtype=bool)
+        maskvalid[useful_range] = spline_valid(wavegrid[useful_range]) > 0.9
+        useful_range &= maskvalid
         # get splines and add to outputs
         weight[useful_range] += spline_bl(wavegrid[useful_range])
         out_spec[useful_range] += spline_sp(wavegrid[useful_range])
