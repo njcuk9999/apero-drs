@@ -1105,13 +1105,13 @@ KW_MKTELL_TAPAS_SNUM.set(key='MKTTAPSN',
 
 # The recovered airmass value calculated in mktellu calculation
 KW_MKTELL_AIRMASS = KW_MKTELL_AIRMASS.copy(__NAME__)
-KW_MKTELL_AIRMASS.set(key='TAU_H2O',
-                      comment='mktellu recovered airmass (tau H2O)')
+KW_MKTELL_AIRMASS.set(key='TAU_OTHE',
+                      comment='mktellu recovered airmass (tau other)')
 
 # The recovered water optical depth calculated in mktellu calculation
 KW_MKTELL_WATER = KW_MKTELL_WATER.copy(__NAME__)
-KW_MKTELL_WATER.set(key='TAU_OTHE',
-                    comment='mktellu recovered depth others (tau other)')
+KW_MKTELL_WATER.set(key='TAU_H2O',
+                    comment='mktellu recovered water depth (tau H2O)')
 
 # -----------------------------------------------------------------------------
 # Define fit telluric variables
