@@ -751,7 +751,7 @@ obj_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
 obj_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
                            helpstr=Help['FTELLUDB_OBJNAME'])
 obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
-                           default_ref='TELLURIC_DPRTYPES',
+                           default_ref='TELLU_ALLOWED_DPRTYPES',
                            helpstr=Help['FTELLUDB_DPRTYPES'])
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
@@ -777,11 +777,11 @@ obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
 obj_mk_template.set_kwarg(name='-filetype', dtype=str,
-                          default_ref='TELLURIC_FILETYPE',
+                          default_ref='MKTEMPLATE_FILETYPE',
                           helpstr=Help['MKTEMP_FILETYPE'],
                           options=['EXT_E2DS', 'EXT_E2DS_FF'])
 obj_mk_template.set_kwarg(name='-fiber', dtype=str,
-                          default_ref='TELLURIC_FIBER_TYPE',
+                          default_ref='MKTEMPLATE_FIBER_TYPE',
                           helpstr=Help['MKTEMP_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
 obj_mk_template.set_kwarg(**add_db)
