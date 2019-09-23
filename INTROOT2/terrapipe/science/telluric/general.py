@@ -1209,6 +1209,13 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
         stapas = _wave_to_wave(params, tapas_all_species[row], masterwavemap,
                                wavemap, reshape=True)
         tapas_all_species2[row] = stapas.reshape(tapas_all_species[row].shape)
+
+    # water is the second column
+    tapas_water2 = tapas_all_species2[1, :]
+    # other is defined as the product of the other columns
+    tapas_other2 = np.prod(tapas_all_species2[2:, :], axis=0)
+
+
     # ------------------------------------------------------------------
     # Shift comparison plot
     # ------------------------------------------------------------------
@@ -1225,6 +1232,8 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     props['PC2'] = pc2
     props['FIT_PC2'] = fit_pc2
     props['TAPAS_ALL_SPECIES2'] = tapas_all_species2
+    props['TAPAS_WATER2'] = tapas_water2
+    props['TAPAS_OTHER2'] = tapas_other2
     props['FIT_KEEP_NUM'] = fit_keep_num
     # set sources
     keys = ['TEMPLATE2', 'PC2', 'FIT_PC2', 'TAPAS_ALL_SPECIES2', 'FIT_KEEP_NUM']
