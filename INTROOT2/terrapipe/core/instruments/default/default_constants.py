@@ -144,8 +144,8 @@ __all__ = [
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
-    'TELLU_ALLOWED_DPRTYPES', 'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME',
-    'TELLU_BLACKLIST_NAME',
+    'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
+    'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
     # make telluric constants
     'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
     'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_FINER_CONV_WIDTH',
@@ -164,8 +164,7 @@ __all__ = [
     'FTELLU_LAMBDA_MAX', 'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS',
     'FTELLU_FIT_RECON_LIMIT',
     # make template constants
-    'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE', 'TELLURIC_DPRTYPES',
-    'MKTEMPLATE_SNR_ORDER',
+    'MKTEMPLATE_SNR_ORDER', 'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_FMT',
@@ -1577,10 +1576,14 @@ TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
 TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None, dtype=str,
                               source=__NAME__)
 
-# the dprtypes (i.e. OBJ_DARK) to be used in the telluric recipes, should be
-#    a string or a string list (i.e. dprtypes separated by commas)
-TELLURIC_DPRTYPES = Const('TELLURIC_DPRTYPES', value=None, dtype=str,
-                          source=__NAME__)
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input template files
+MKTEMPLATE_FILETYPE = Const('MKTEMPLATE_FILETYPE', value=None, dtype=str,
+                            source=__NAME__)
+
+# the fiber required for input template files
+MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
+                              source=__NAME__)
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
