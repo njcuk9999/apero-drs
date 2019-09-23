@@ -348,6 +348,7 @@ out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
+                         intype=pp_flat_flat,
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 
@@ -727,6 +728,7 @@ out_file.addset(out_tellu_rc1d_v)
 out_tellu_template = drs_finput('TELLU_TEMP', KW_OUTPUT='TELLU_TEMP',
                                 fibers=['AB', 'A', 'B', 'C'],
                                 filetype='.fits',
+                                intype=[out_ext_e2dsff, out_tellu_obj],
                                 filename='Template',
                                 dbname='telluric', dbkey='TELLU_TEMP',
                                 outfunc=out.set_file)
@@ -735,6 +737,7 @@ out_tellu_template = drs_finput('TELLU_TEMP', KW_OUTPUT='TELLU_TEMP',
 out_tellu_bigcube = drs_finput('TELLU_BIGCUBE', KW_OUTPUT='TELLU_BIGCUBE',
                                fibers=['AB', 'A', 'B', 'C'],
                                filetype='.fits',
+                               intype=[out_ext_e2dsff, out_tellu_obj],
                                filename='BigCube',
                                outfunc=out.set_file)
 
@@ -742,6 +745,7 @@ out_tellu_bigcube = drs_finput('TELLU_BIGCUBE', KW_OUTPUT='TELLU_BIGCUBE',
 out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
                                 fibers=['AB', 'A', 'B', 'C'],
                                 filetype='.fits',
+                                intype=[out_ext_e2dsff, out_tellu_obj],
                                 filename='BigCube0',
                                 outfunc=out.set_file)
 # add make template outputs to output fileset
