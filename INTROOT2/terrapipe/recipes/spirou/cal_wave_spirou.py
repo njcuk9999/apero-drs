@@ -224,6 +224,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update header of current file with HC solution
             # --------------------------------------------------------------
+            # TODO: Add the database criteria or have another options
             if passed:
                 # create copy of infile
                 hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
@@ -296,6 +297,7 @@ def __main__(recipe, params):
                 WLOG(params, 'warning', TextEntry('10-017-00006'))
             # If there is no FP file we log that
             else:
+                # log warning: No FP files given. FP wave solution not generated
                 WLOG(params, 'warning', TextEntry('10-017-00007'))
 
     # ----------------------------------------------------------------------
