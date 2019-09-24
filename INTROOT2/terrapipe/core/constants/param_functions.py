@@ -632,6 +632,22 @@ class ParamDict(CaseInsensitiveDict):
         # return new param dict filled
         return pp
 
+    def merge(self, paramdict):
+        # add param dict to self
+        for key in paramdict:
+            # copy source
+            if key in paramdict.sources:
+                ksource = paramdict.source[key]
+            else:
+                ksource = None
+            # copy instance
+            if key in paramdict.instances:
+                kinst = paramdict.instances[key]
+            else:
+                kinst = None
+            # add to self
+            self.set(key, paramdict[key], ksource, kinst)
+
     def _string_print(self):
         pfmt = '\t{0:30s}{1:45s} # {2}'
 
