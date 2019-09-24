@@ -138,10 +138,12 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP',
-    # wave ccf constants
+    # wave ccf constantsCCF_N_ORD_MAX
     'WAVE_CCF_DRIFT_NOISE', 'WAVE_CCF_BOXSIZE', 'WAVE_CCF_MAXFLUX',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
-    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK',
+    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_UNITS',
+    'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
+    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -167,9 +169,10 @@ __all__ = [
     'MKTEMPLATE_SNR_ORDER', 'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
-    'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_FMT',
+    'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
-    'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES',
+    'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
+    'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1351,6 +1354,31 @@ WAVE_CCF_DETNOISE = Const('WAVE_CCF_DETNOISE', value=None, dtype=float,
 #  The filename of the CCF Mask to use for the FP CCF
 WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__)
 
+
+# Define the wavelength units for the mask for the FP CCF
+WAVE_CCF_UNITS = Const('WAVE_CCF_UNITS', value=None, dtype=str, source=__NAME__)
+
+# Define the ccf mask path the FP CCF
+WAVE_CCF_MASK_PATH = Const('WAVE_CCF_MASK_PATH', value=None, dtype=str,
+                           source=__NAME__)
+
+# Define the CCF mask format (must be an astropy.table format)
+WAVE_CCF_MASK_FMT = Const('WAVE_CCF_MASK_FMT', value=None, dtype=str,
+                          source=__NAME__)
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+WAVE_CCF_MASK_MIN_WEIGHT = Const('WAVE_CCF_MASK_MIN_WEIGHT', value=None,
+                                 dtype=float, source=__NAME__)
+
+#  Define the width of the template line (if 0 use natural)
+WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
+                            source=__NAME__)
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the FP CCF
+WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
+                           source=__NAME__, minimum=1)
+
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
 # =============================================================================
@@ -1599,6 +1627,13 @@ CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__)
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
                          source=__NAME__)
 
+# Define the wavelength units for the mask
+CCF_MASK_UNITS = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
+                       source=__NAME__,
+                       options=['AA', 'Angstrom', 'nm', 'nanometer', 'um',
+                                'micron', 'mm', 'millimeter', 'cm',
+                                'centimeter', 'm', 'meter'])
+
 # Define the CCF mask format (must be an astropy.table format)
 CCF_MASK_FMT = Const('CCF_MASK_FMT', value=None, dtype=str, source=__NAME__)
 
@@ -1635,6 +1670,29 @@ CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
 #     we have a telluric corrected input file
 CCF_TELLU_THRES = Const('CCF_TELLU_THRES', value=None, dtype=float,
                         source=__NAME__)
+
+# The half size (in pixels) of the smoothing box used to calculate what value
+#    should replace the NaNs in the E2ds before CCF is calculated
+CCF_FILL_NAN_KERN_SIZE = Const('CCF_FILL_NAN_KERN_SIZE', value=None,
+                               dtype=float, source=__NAME__)
+
+# the step size (in pixels) of the smoothing box used to calculate what value
+#   should replace the NaNs in the E2ds before CCF is calculated
+CCF_FILL_NAN_KERN_RES = Const('CCF_FILL_NAN_KERN_RES', value=None,
+                              dtype=float, source=__NAME__)
+
+#  Define the detector noise to use in the ccf
+CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__)
+
+# Define the fit type for the CCF fit
+#     if 0 then we have an absorption line
+#     if 1 then we have an emission line
+CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
+                     options=[0, 1])
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#     to calculate the CCF and RV
+CCF_N_ORD_MAX = Const('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS

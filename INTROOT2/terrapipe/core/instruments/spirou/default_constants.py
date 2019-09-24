@@ -1221,6 +1221,31 @@ WAVE_CCF_DETNOISE.value = 100.0
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 WAVE_CCF_MASK.value = 'fp.mas'
 
+# Define the wavelength units for the mask for the FP CCF
+WAVE_CCF_UNITS = WAVE_CCF_UNITS.copy(__NAME__)
+WAVE_CCF_UNITS.value = 'nm'
+
+# Define the ccf mask path the FP CCF
+WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
+WAVE_CCF_MASK_PATH.value = './data/spirou/ccf/'
+
+# Define the CCF mask format (must be an astropy.table format)
+WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
+WAVE_CCF_MASK_FMT.value = 'ascii'
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+WAVE_CCF_MASK_MIN_WEIGHT = WAVE_CCF_MASK_MIN_WEIGHT.copy(__NAME__)
+WAVE_CCF_MASK_MIN_WEIGHT.value = 0.0
+
+#  Define the width of the template line (if 0 use natural)
+WAVE_CCF_MASK_WIDTH = WAVE_CCF_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_MASK_WIDTH.value = 1.7
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the FP CCF
+WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
+WAVE_CCF_N_ORD_MAX.value = 48
+
 # =============================================================================
 # CALIBRATION: TELLURIC SETTINGS
 # =============================================================================
@@ -1473,6 +1498,10 @@ CCF_MASK_PATH.value = './data/spirou/ccf/'
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
 CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
 
+# Define the wavelength units for the mask
+CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
+CCF_MASK_UNITS.value = 'nm'
+
 # Define the CCF mask format (must be an astropy.table format)
 CCF_MASK_FMT = CCF_MASK_FMT.copy(__NAME__)
 CCF_MASK_FMT.value = 'ascii'
@@ -1512,6 +1541,30 @@ CCF_CORRECT_TELLU_TYPES.value = 'TELLU_OBJ'
 CCF_TELLU_THRES = CCF_TELLU_THRES.copy(__NAME__)
 CCF_TELLU_THRES.value = 0.5
 
+# The half size (in pixels) of the smoothing box used to calculate what value
+#    should replace the NaNs in the E2ds before CCF is calculated
+CCF_FILL_NAN_KERN_SIZE = CCF_FILL_NAN_KERN_SIZE.copy(__NAME__)
+CCF_FILL_NAN_KERN_SIZE.value = 10
+
+# the step size (in pixels) of the smoothing box used to calculate what value
+#   should replace the NaNs in the E2ds before CCF is calculated
+CCF_FILL_NAN_KERN_RES = CCF_FILL_NAN_KERN_RES.copy(__NAME__)
+CCF_FILL_NAN_KERN_RES.value = 0.1
+
+#  Define the detector noise to use in the ccf
+CCF_DET_NOISE = CCF_DET_NOISE.copy(__NAME__)
+CCF_DET_NOISE.value = 100.0
+
+# Define the fit type for the CCF fit
+#     if 0 then we have an absorption line
+#     if 1 then we have an emission line
+CCF_FIT_TYPE = CCF_FIT_TYPE.copy(__NAME__)
+CCF_FIT_TYPE.value = 0
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#     to calculate the CCF and RV
+CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
+CCF_N_ORD_MAX.value = 48
 
 # =============================================================================
 # TOOLS SETTINGS

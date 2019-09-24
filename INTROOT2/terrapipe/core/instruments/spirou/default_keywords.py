@@ -994,6 +994,38 @@ KW_WFP_WIDTH.set(key='WFPWIDTH', comment='wave sol FP CCF width [km/s]')
 KW_WFP_STEP = KW_WFP_STEP.copy(__NAME__)
 KW_WFP_STEP.set(key='WFPSTEP', comment='wave sol FP CCF step [km/s]')
 
+# The sigdet used for FP file CCF
+KW_WFP_SIGDET = KW_WFP_SIGDET.copy(__NAME__)
+KW_WFP_SIGDET.set(key='WFPCSDET', comment='wave sol FP CCF sigdet used')
+
+# The boxsize used for FP file CCF
+KW_WFP_BOXSIZE = KW_WFP_BOXSIZE.copy(__NAME__)
+KW_WFP_BOXSIZE.set(key='WFPCBSZ', comment='wave sol FP CCF boxsize used')
+
+# The max flux used for the FP file CCF
+KW_WFP_MAXFLUX = KW_WFP_MAXFLUX.copy(__NAME__)
+KW_WFP_MAXFLUX.set(key='WFPCMFLX', comment='wave sol FP CCF max flux used')
+
+# The det noise used for the FP file CCF
+KW_WFP_DETNOISE = KW_WFP_DETNOISE.copy(__NAME__)
+KW_WFP_DETNOISE.set(key='WFPCDETN', comment='wave sol FP CCF det noise used')
+
+# the highest order used for the FP file CCF
+KW_WFP_NMAX = KW_WFP_NMAX.copy(__NAME__)
+KW_WFP_NMAX.set(key='WFPCNMAX', comment='wave sol FP CCF highest order used')
+
+# The weight of the CCF mask (if 1 force all weights equal) used for FP CCF
+KW_WFP_MASKMIN = KW_WFP_MASKMIN.copy(__NAME__)
+KW_WFP_MASKMIN.set(key='WFPCMMIN', comment='wave sol FP CCF mask weight used')
+
+# The width of the CCF mask template line (if 0 use natural) used for FP CCF
+KW_WFP_MASKWID = KW_WFP_MASKWID.copy(__NAME_)
+KW_WFP_MASKWID.set(key='WFPCMWID', comment='wave sol FP CCF mask width used')
+
+# The units of the input CCF mask (converted to nm in code)
+KW_WFP_MASKUNITS = KW_WFP_MASKUNITS.copy(__NAME__)
+KW_WFP_MASKUNITS.set(key='WFPCMUNT', commnet='wave sol FP CCF mask units used')
+
 # -----------------------------------------------------------------------------
 # Define make telluric variables
 # -----------------------------------------------------------------------------

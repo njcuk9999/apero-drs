@@ -89,7 +89,9 @@ __all__ = [# input keys
            'KW_WFP_EXPWIDTH', 'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
            'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MAXCPP',
            'KW_WFP_MASK', 'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
-           'KW_WFP_STEP',
+           'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
+           'KW_WFP_DETNOISE', 'KW_WFP_NMAX', 'KW_WFP_MASKMIN', 'KW_WFP_MASKWID',
+           'KW_WFP_MASKUNITS',
            # mktellu values
            'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
            'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
@@ -849,6 +851,32 @@ KW_WFP_WIDTH = Keyword('KW_WFP_WIDTH', key='', dtype=float, source=__NAME__)
 
 # Step for the wave FP file CCF
 KW_WFP_STEP = Keyword('KW_WFP_STEP', key='', dtype=float, source=__NAME__)
+
+# The sigdet used for FP file CCF
+KW_WFP_SIGDET = Keyword('KW_WFP_SIGDET', key='', dtype=float, source=__NAME__)
+
+# The boxsize used for FP file CCF
+KW_WFP_BOXSIZE = Keyword('KW_WFP_BOXSIZE', key='', dtype=int, source=__NAME__)
+
+# The max flux used for the FP file CCF
+KW_WFP_MAXFLUX = Keyword('KW_WFP_MAXFLUX', key='', dtype=float, source=__NAME__)
+
+# The det noise used for the FP file CCF
+KW_WFP_DETNOISE = Keyword('KW_WFP_DETNOISE', key='', dtype=float,
+                          source=__NAME__)
+
+# the highest order used for the FP file CCF
+KW_WFP_NMAX = Keyword('KW_WFP_NMAX', key='', dtype=int, source=__NAME__)
+
+# The weight of the CCF mask (if 1 force all weights equal) used for FP CCF
+KW_WFP_MASKMIN = Keyword('KW_WFP_MASKMIN', key='', dtype=float, source=__NAME__)
+
+# The width of the CCF mask template line (if 0 use natural) used for FP CCF
+KW_WFP_MASKWID = Keyword('KW_WFP_MASKWID', key='', dtype=float, source=__NAME__)
+
+# The units of the input CCF mask (converted to nm in code)
+KW_WFP_MASKUNITS = Keyword('KW_WFP_MASKUNITS', key='', dtype=str,
+                           source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
