@@ -1643,8 +1643,23 @@ class DrsFitsFile(DrsInputFile):
         self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
-        # create 2d list
-        values = np.zeros(dim1, dtype=dtype)
+        # ------------------------------------------------------------------
+        # deal with no dim1 key
+        if dim1 is None:
+            # use wild card to try to find keys
+            wildkey = drskey.split('{')[0] + '*'
+            # use wild card in header
+            wildvalues = self.header[wildkey]
+            # deal with no wild card values found
+            if wildvalues is None:
+                eargs = [wildkey, dim1, self.basename, func_name]
+                self.__error__(TextEntry('09-000-00008', args=eargs))
+            # else get the length of dim1
+            else:
+                dim1 = len(wildvalues)
+        # ------------------------------------------------------------------
+        # create 1d list
+        values = []
         # loop around the 2D array
         for it in range(dim1):
             # construct the key name
@@ -1652,13 +1667,13 @@ class DrsFitsFile(DrsInputFile):
             # try to get the values
             try:
                 # set the value
-                values[it] = dtype(self.header[keyname])
+                values.append(dtype(self.header[keyname]))
             except KeyError:
                 eargs = [keyname, dim1, self.basename, func_name]
                 self.__error__(TextEntry('09-000-00008', args=eargs))
                 values = None
         # return values
-        return values
+        return np.array(values)
 
     def read_header_key_2d_list(self, key, dim1, dim2, dtype=float):
         """
