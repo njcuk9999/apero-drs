@@ -626,6 +626,8 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # ----------------------------------------------------------------------
     rvprops = compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber)
 
+    # merge rvprops into llprops (shallow copy)
+    llprops.merge(rvprops)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
@@ -4130,6 +4132,15 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wavefile.add_hkey('KW_WFP_IPEAK_SPACE', value=llprops['USED_IPEAK_SPACE'])
     wavefile.add_hkey('KW_WFP_EXPWIDTH', value=llprops['USED_EXPWIDTH'])
     wavefile.add_hkey('KW_WFP_CUTWIDTH', value=llprops['USED_CUTWIDTH'])
+    # from fp ccf calculation (compute_fp_ccf)
+    wavefile.add_hkey('KW_WFP_SIGDET', value=llprops['CCF_SIGDET'])
+    wavefile.add_hkey('KW_WFP_BOXSIZE', value=llprops['CCF_BOXSIZE'])
+    wavefile.add_hkey('KW_WFP_MAXFLUX', value=llprops['CCF_MAXFLUX'])
+    wavefile.add_hkey('KW_WFP_DETNOISE', value=llprops['CCF_DETNOISE'])
+    wavefile.add_hkey('KW_WFP_NMAX', value=llprops['CCF_NMAX'])
+    wavefile.add_hkey('KW_WFP_MASKMIN', value=llprops['MASK_MIN'])
+    wavefile.add_hkey('KW_WFP_MASKWID', value=llprops['MASK_WIDTH'])
+    wavefile.add_hkey('KW_WFP_MASKUNITS', value=llprops['MASK_UNITS'])
     # ------------------------------------------------------------------
     # add qc parameters
     wavefile.add_qckeys(qc_params)
@@ -4242,7 +4253,14 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     detnoise = pcheck(params, 'WAVE_CCF_DETNOISE', 'detnoise', kwargs,
                       func_name)
     ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
-    ccfnmax = pcheck(params, 'CCF_N_ORD_MAX', 'ccfnmax', kwargs, func_name)
+    ccfnmax = pcheck(params, 'WAVE_CCF_N_ORD_MAX', 'ccfnmax', kwargs,
+                     func_name)
+    mask_min = pcheck(params, 'WAVE_CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
+                      func_name)
+    mask_width = pcheck(params, 'WAVE_CCF_MASK_WIDTH', 'mask_width', kwargs,
+                        func_name)
+    mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
+                        func_name)
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for FP
     # ------------------------------------------------------------------
@@ -4270,7 +4288,9 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     props['BERV_MAX'] = 0.0
     props['BJD'] = 0.0
     # get the mask parameters
-    ll_mask_d, ll_mask_ctr, w_mask = velocity.get_ccf_mask(params, filename=ccfmask)
+    mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
+                   mask_units=mask_units)
+    ll_mask_d, ll_mask_ctr, w_mask = velocity.get_ccf_mask(params, **mkwargs)
     props['LL_MASK_D'] = ll_mask_d
     props['LL_MASK_CTR'] = ll_mask_ctr
     props['W_MASK'] = w_mask
@@ -4325,9 +4345,13 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     props['CCF_MAXFLUX'] = maxflux
     props['CCF_DETNOISE'] = detnoise
     props['CCF_NMAX'] = ccfnmax
+    props['MASK_MIN'] = mask_min
+    props['MASK_WIDTH'] = mask_width
+    props['MASK_UNITS'] = mask_units
     # set source
     keys = ['CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_DETNOISE', 'CCF_NMAX']
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_DETNOISE', 'CCF_NMAX',
+            'MASK_MIN', 'MASK_WIDTH', 'MASK_UNITS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # log the stats
