@@ -159,15 +159,54 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         blazefile, blaze = flat_blaze.get_blaze(params, header, fiber)
 
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         #   Remove domain with telluric > 50%
-        # ----------------------------------------------------------------------
-        if dprtype in params['CCF_CORRECT_TELLU_TYPES']:
+        # ------------------------------------------------------------------
+        outtype = infile.get_key('KW_OUTPUT', dtype=str)
+
+        if outtype in params['CCF_CORRECT_TELLU_TYPES']:
             # remove telluric domain below a defined threshold
             #    and return the infile (with infile.data updated)
             targs = [infile, fiber]
-            infile = velocity.remove_telluric_domain(params, recipe, *targs)
+            image = velocity.remove_telluric_domain(params, recipe, *targs)
+        else:
+            image = infile.data
 
+        # ------------------------------------------------------------------
+        #   Remove and fill NaN values (with smooth convolved values)
+        # ------------------------------------------------------------------
+        image = velocity.fill_e2ds_nans(params, image)
+
+        # ------------------------------------------------------------------
+        # Compute CCF on science channel
+        # ------------------------------------------------------------------
+        cargs = [image, blaze, wprops, bprops, fiber]
+        rv_props1 = velocity.compute_ccf_science(params, *cargs)
+
+        # ------------------------------------------------------------------
+        # Compute CCF on reference fiber (FP only)
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # archive ccf to table
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # archive ccf from science fiber
+        # ------------------------------------------------------------------
+        # TODO: Add code here
+
+        # ------------------------------------------------------------------
+        # archive ccf from reference fiber
+        # ------------------------------------------------------------------
+        # TODO: Add code here
 
     # ----------------------------------------------------------------------
     # End of main code
