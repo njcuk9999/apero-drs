@@ -175,15 +175,17 @@ def load_cavity_files(params, required=True, **kwargs):
 
     # load text files
     fit_1m, _ = load_text_file(params, filename_1m, relfolder, kwargs,
-                               func_name)
+                               func_name, dtype=float)
     fit_ll, _ = load_text_file(params, filename_ll, relfolder, kwargs,
-                               func_name)
+                               func_name, dtype=float)
     # return arrays from text files
+    # TODO: are these strings?
     return np.array(fit_1m), np.array(fit_ll)
 
 
 def save_cavity_files(params, fit_1m_d, fit_ll_d, **kwargs):
     func_name = __NAME__ + '.save_cavity_files()'
+    # TODO: Ask about when and where we save this file
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
                        func_name)
@@ -358,7 +360,8 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     return table, absfilename
 
 
-def load_text_file(params, filename, directory, kwargs, func_name=None):
+def load_text_file(params, filename, directory, kwargs, func_name=None,
+                   dtype=float):
     if func_name is None:
         func_name = __NAME__ + '.load_text_file()'
     # load text dict
@@ -373,6 +376,9 @@ def load_text_file(params, filename, directory, kwargs, func_name=None):
     # load text as list
     textlist = drs_text.load_text_file(params, absfilename, comments='#',
                                        delimiter=' ')
+    # deal with change list to numpy array
+    textlist = np.array(textlist).astype(dtype)
+
     # return image
     return textlist, absfilename
 
