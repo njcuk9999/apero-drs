@@ -691,10 +691,10 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     wargs = [fpe2dsfile.filename]
     WLOG(params, '', TextEntry('40-017-00022', args=wargs))
     # ------------------------------------------------------------------
-    # Get the FP solution
+    # Find the fp lines and measure the cavity width dependency
     # ------------------------------------------------------------------
-    llprops = fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0,
-                                    fit_deg, fp_large_jump, start, end, cm_ind)
+    llprops = add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0,
+                                   fit_deg, fp_large_jump, start, end, cm_ind)
     # ------------------------------------------------------------------
     # FP solution plots
     # ------------------------------------------------------------------
@@ -803,7 +803,7 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # Assign absolute FP numbers for reddest order
     # ----------------------------------------------------------------------
     # determine absolute number for reference peak of reddest order
-    # take reddest FP line
+    # take reddest FP line and apply FP equation
     m_init = int(round(dopd0 / fp_ll[-1][-1]))
     # absolute numbers for reddest order:
     # get differential numbers for reddest order peaks
@@ -818,9 +818,8 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # Assign absolute FP numbers for rest of orders by wavelength matching
     # ----------------------------------------------------------------------
-    mout = assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev,
+    m_vec = assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev,
                                  n_init, n_fin, ll_offset)
-    m_vec, m_ord, m_ord_prev = mout
 
     # ----------------------------------------------------------------------
     # Derive d for each HC line
@@ -2575,7 +2574,7 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
 # =============================================================================
 # Define fp worker functions
 # =============================================================================
-def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
+def add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                           fp_large_jump, n_ord_start_fp, n_ord_final_fp,
                           cm_ind):
     """
@@ -2618,7 +2617,7 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                              for each found line in that order
 
     """
-    func_name = __NAME__ + '.fp_wavelength_sol_new()'
+    func_name = __NAME__ + '.add_fpline_calc_cwid()'
     # find FP lines
     llprops = find_fp_lines_new(params, llprops, fpe2dsfile)
     # get all_lines_2 from llprops
@@ -2634,15 +2633,13 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
         gg = llprops['ORDPEAK'] == order_num
         # store the initial wavelengths of the lines
         ctmp = llprops['LITTROW_EXTRAP_PARAM_1'][order_num][::-1]
-        xtmp = llprops['XPEAK'][gg]
-        # floc['llpos'] = np.polynomial.chebyshev.chebval(xtmp, ctmp[::-1])
-        llpos = np.polyval(ctmp, xtmp)
         # store the pixel positions of the lines
         xxpos = llprops['XPEAK'][gg]
+        llpos = np.polyval(ctmp, xxpos)
         # get the median pixel difference between successive lines
         #    (to check for gaps)
         xxpos_diff_med = mp.nanmedian(xxpos[1:] - xxpos[:-1])
-        # store the amplitudes of the lines
+        # store the amplitudes of the fp lines
         ampl = llprops['AMPPEAK'][gg]
         # store the values of the blaze at the pixel positions of the lines
         weight_bl = np.zeros_like(llpos)
@@ -2666,6 +2663,7 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                 # no gap: add 1 to line number of previous line
                 mpeak[it] = mpeak[it + 1] + 1
             # if there is a gap, fix it
+            #    Note we have to check if the gap has multiple jumps!
             else:
                 # get line x positions
                 flocx0 = xxpos[it]
@@ -2678,21 +2676,21 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                 # add to m of previous peak
                 mpeak[it] = mpeak[it + 1] + m_offset
                 # verify there's no dopd jump, fix if present
-                dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
-                dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
-                # do loops to check jumps
+                dopd_1 = (mpeak[it] * floc0 / 2 - dopd0 / 2)
+                dopd_2 = (mpeak[it + 1] * floc1 / 2 - dopd0 / 2)
+                # do loops to check jumps until it converges
                 if dopd_1 - dopd_2 > fp_large_jump:
                     while (dopd_1 - dopd_2) > fp_large_jump:
                         mpeak[it] = mpeak[it] - 1
-                        dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
-                        dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
+                        dopd_1 = (mpeak[it] * floc0 / 2 - dopd0 / 2)
+                        dopd_2 = (mpeak[it + 1] * floc1 / 2 - dopd0 / 2)
                 elif dopd_1 - dopd_2 < -fp_large_jump:
                     while (dopd_1 - dopd_2) < -fp_large_jump:
                         mpeak[it] = mpeak[it] + 1
-                        dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
-                        dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
+                        dopd_1 = (mpeak[it] * floc0 / 2 - dopd0 / 2)
+                        dopd_2 = (mpeak[it + 1] * floc1 / 2 - dopd0 / 2)
         # determination of observed effective cavity width
-        dopd_t = mpeak * llpos
+        dopd_t = mpeak * llpos / 2
         # store m and d
         m_fp = mpeak
         dopd_t = dopd_t
@@ -2704,7 +2702,7 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                 ind = np.abs(ll_prev - llpos[cm_ind]).argmin()
                 # the peak matching the reddest may not always be found!!
                 # define maximum permitted difference
-                llpos_diff_med = mp.nanmedian(llpos[1:] - llpos[:-1])
+                llpos_diff_med = np.median(llpos[1:] - llpos[:-1])
                 # print(llpos_diff_med)
                 # print(abs(ll_prev[ind] - floc['llpos'][-1]))
                 # check if the difference is over the limit
@@ -2732,10 +2730,9 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                     wargs = [order_num, m_match - m_init]
                     WLOG(params, 'debug', TextEntry('90-017-00001', args=wargs))
                     # recalculate observed effective cavity width
-                    dopd_t = mpeak * llpos
+                    dopd_t = mpeak * llpos / 2
                     # store new m and d
                     m_fp = mpeak
-                    dopd_t = dopd_t
             else:
                 # log that no overlap for order
                 wargs = [order_num]
@@ -2744,19 +2741,17 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                 m_init = mpeak[cm_ind]
                 m_test = mpeak[cm_ind]
                 # get dopd for last line of current & first of last order
-                dopd_curr = (m_test * llpos[cm_ind] - dopd0) * 1.e-3
-                dopd_prev = (m_prev[0] * ll_prev[0] - dopd0) * 1.e-3
+                dopd_curr = (m_test * llpos[cm_ind] / 2 - dopd0 / 2)
+                dopd_prev = (m_prev[0] * ll_prev[0] / 2 - dopd0 / 2)
                 # do loops to check jumps
                 if dopd_curr - dopd_prev > fp_large_jump:
                     while (dopd_curr - dopd_prev) > fp_large_jump:
                         m_test = m_test - 1
-                        dopd_curr = (m_test * llpos[cm_ind] - dopd0)
-                        dopd_curr = dopd_curr * 1.e-3
+                        dopd_curr = (m_test * llpos[cm_ind] / 2 - dopd0 / 2)
                 elif dopd_curr - dopd_prev < -fp_large_jump:
                     while (dopd_curr - dopd_prev) < -fp_large_jump:
                         m_test = m_test + 1
-                        dopd_curr = (m_test * llpos[cm_ind] - dopd0)
-                        dopd_curr = dopd_curr * 1.e-3
+                        dopd_curr = (m_test * llpos[cm_ind] / 2 - dopd0 / 2)
                 # recalculate m if there's an offset from cross_match
                 m_offset_c = m_test - m_init
                 if m_offset_c != 0:
@@ -2766,10 +2761,9 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                     wargs = [order_num, mpeak[cm_ind] - m_init]
                     WLOG(params, 'debug', TextEntry('90-017-00001', args=wargs))
                     # recalculate observed effective cavity width
-                    dopd_t = mpeak * llpos
+                    dopd_t = mpeak * llpos / 2
                     # store new m and d
                     m_fp = mpeak
-                    dopd_t = dopd_t
 
         # add to storage
         llpos_all += list(llpos)
@@ -2778,8 +2772,8 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
         m_fp_all += list(m_fp)
         weight_bl_all += list(weight_bl)
         order_rec_all += list(order_rec)
-        # difference in cavity width converted to microns
-        dopd_all += list((dopd_t - dopd0) * 1.e-3)
+        # difference in cavity width
+        dopd_all += list(dopd_t - dopd0 / 2)
         # save numpy arrays of current order to be previous in next loop
         ll_prev = np.array(llpos)
         m_prev = np.array(m_fp)
@@ -2797,12 +2791,12 @@ def fp_wavelength_sol_new(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
         coeffs = mp.nanpolyfit(m_fp_all, dopd_all, fit_deg,
-                                 w=weight_bl_all)[::-1]
+                               w=weight_bl_all)[::-1]
     drs_log.warninglogger(params, w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
     # update line wavelengths using the new cavity width fit
-    newll = (dopd0 + cfit * 1000.) / m_fp_all
+    newll = (dopd0 + 2 * cfit) / m_fp_all
     # ----------------------------------------------------------------------
     # insert fp lines into all_lines2 (at the correct positions)
     all_lines_2 = insert_fp_lines(params, newll, llpos_all, all_lines_2,
@@ -3358,8 +3352,7 @@ def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
 
 
 def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
-                          fp_ll_diff, fp_ll_diff_prev, m_ord_prev, dif_n,
-                          **kwargs):
+                          m_ord_prev, dif_n, **kwargs):
     """
     Calculate the absolute FP peak numbers when there is no overlap from one
     order to the next by estimating the number of peaks missed
@@ -3390,20 +3383,24 @@ def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
                        func_name)
     lldif_max = pcheck(params, 'WAVE_FP_LLDIF_MAX', 'lldif_min', kwargs,
                        func_name)
+
+    ll_diff = fp_ll_ord[1:] - fp_ll_ord[:-1]
+    ll_diff_prev = fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1]
+
     # print warning re no overlap
     WLOG(params, 'warning', TextEntry('10-017-00009', args=[ord_num]))
     # masks to keep only difference between no-gap lines for current order
-    mask_ll_diff = fp_ll_diff > (lldif_min * mp.nanmedian(fp_ll_diff))
-    mask_ll_diff &= fp_ll_diff < (lldif_max * mp.nanmedian(fp_ll_diff))
+    mask_ll_diff = ll_diff > (lldif_min * mp.nanmedian(ll_diff))
+    mask_ll_diff &= ll_diff < (lldif_max * mp.nanmedian(ll_diff))
     # get previous min/max limits
-    prevminlim = lldif_min * mp.nanmedian(fp_ll_diff_prev)
-    prevmaxlim = lldif_max * mp.nanmedian(fp_ll_diff_prev)
+    prevminlim = lldif_min * mp.nanmedian(ll_diff_prev)
+    prevmaxlim = lldif_max * mp.nanmedian(ll_diff_prev)
     # masks to keep only difference between no-gap lines for previous order
-    mask_ll_diff_prev = fp_ll_diff_prev > prevminlim
-    mask_ll_diff_prev &= fp_ll_diff_prev < prevmaxlim
+    mask_ll_diff_prev = ll_diff_prev > prevminlim
+    mask_ll_diff_prev &= ll_diff_prev < prevmaxlim
     # get last diff for current order, first for prev
-    ll_diff_fin = fp_ll_diff[mask_ll_diff][-1]
-    ll_diff_init = fp_ll_diff_prev[mask_ll_diff_prev][0]
+    ll_diff_fin = ll_diff[mask_ll_diff][-1]
+    ll_diff_init = ll_diff_prev[mask_ll_diff_prev][0]
     # calculate wavelength difference between end lines
     ll_miss = fp_ll_ord_prev[0] - fp_ll_ord[-1]
     # estimate lines missed using ll_diff from each order
@@ -3507,9 +3504,9 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
         # get 30% blaze mask
         with warnings.catch_warnings(record=True) as _:
             maxblaze = mp.nanmax(blaze[order_num])
-            mb = np.where(blaze[order_num] > wave_blaze_thres * maxblaze)
+            maskblaze = np.where(blaze[order_num] > wave_blaze_thres * maxblaze)
         # keep only x values at above 30% blaze
-        bmask = (mp.nanmax(mb) > x_fp) & (mp.nanmin(mb < x_fp))
+        bmask = (mp.nanmax(maskblaze) > x_fp) & (mp.nanmin(maskblaze) < x_fp)
         amp_fp = amp_fp[bmask]
         x_fp = x_fp[bmask]
         # initial differential numbering (assuming no gaps)
@@ -3522,23 +3519,23 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
         # get indices where x_diff differs too much from median
         cond1 = x_diff < xdiff_min * med_x_diff
         cond2 = x_diff > xdiff_max * med_x_diff
-        x_gap_ind = np.where(cond1 | cond2)
+        x_gap_ind = np.where(cond1 | cond2)[0]
         # get the opposite mask (no-gap points)
         cond3 = x_diff > xdiff_min * med_x_diff
         cond4 = x_diff < xdiff_max * med_x_diff
-        x_good_ind = np.where(cond3 & cond4)
+        x_good_ind = np.where(cond3 & cond4)[0]
         # fit x_fp v x_diff for good points
         good_xfp = x_fp[1:][x_good_ind]
         good_xdiff = x_diff[x_good_ind]
         cfit_xdiff = mp.nanpolyfit(good_xfp, good_xdiff, 2)
         # loop over gap points
-        for i in range(np.shape(x_gap_ind)[1]):
+        for it in range(len(x_gap_ind)):
             # get estimated xdiff value from the fit
-            x_diff_aux = np.polyval(cfit_xdiff, x_fp[1:][x_gap_ind[0][i]])
+            x_diff_aux = np.polyval(cfit_xdiff, x_fp[1:][x_gap_ind[it]])
             # estimate missed peaks
-            x_jump = np.round((x_diff[x_gap_ind[0][i]] / x_diff_aux)) - 1
+            x_jump = np.round((x_diff[x_gap_ind[it]] / x_diff_aux)) - 1
             # add the jump
-            peak_num_init[x_gap_ind[0][i] + 1:] += int(x_jump)
+            peak_num_init[x_gap_ind[it] + 1:] += int(x_jump)
         # Calculate original (HC sol) FP wavelengths
         fp_ll.append(np.polyval(poly_wave_coeffs[::-1], x_fp))
         # save differential numbering
@@ -3575,15 +3572,15 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
         fp_ll_ord = fp_ll[ord_num]
         fp_ll_ord_prev = fp_ll[ord_num + 1]
         # define median ll diff for both orders
-        fp_ll_diff = mp.nanmedian(fp_ll_ord[1:] - fp_ll_ord[:-1])
-        fp_ll_diff_prev = mp.nanmedian(fp_ll_ord_prev[1:] -
-                                       fp_ll_ord_prev[:-1])
+        fp_ll_diff_med = mp.nanmedian(fp_ll_ord[1:] - fp_ll_ord[:-1])
+        fp_ll_diff_prev_med = mp.nanmedian(fp_ll_ord_prev[1:] -
+                                           fp_ll_ord_prev[:-1])
         # check if overlap
         if fp_ll_ord[-1] >= fp_ll_ord_prev[0]:
             # get overlapping peaks for both
             # allow WAVE_FP_LL_OFFSET*lldiff offsets
-            ord_over_lim = fp_ll_ord_prev[0] - (ll_offset * fp_ll_diff_prev)
-            prev_ord_lim = fp_ll_ord[-1] + (ll_offset * fp_ll_diff)
+            ord_over_lim = fp_ll_ord_prev[0] - (ll_offset * fp_ll_diff_prev_med)
+            prev_ord_lim = fp_ll_ord[-1] + (ll_offset * fp_ll_diff_med)
             mask_ord_over = fp_ll_ord >= ord_over_lim
             fp_ll_ord_over = fp_ll_ord[mask_ord_over]
             mask_prev_over = fp_ll_ord_prev <= prev_ord_lim
@@ -3602,7 +3599,7 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
             mindiff_all_ind = int(np.argmin(mindiff_peak))
 
             # check that smallest difference is in fact a true line match
-            if mindiff_all < (ll_offset * fp_ll_diff):
+            if mindiff_all < (ll_offset * fp_ll_diff_med):
                 # set the match m index as the one for the smallest diff
                 m_match_ind = mindiff_peak_ind[mindiff_all_ind]
                 # get line number for peak with smallest difference
@@ -3614,21 +3611,17 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
             # if not treat as no overlap
             else:
                 m_ord = no_overlap_match_calc(params, ord_num, fp_ll_ord,
-                                              fp_ll_ord_prev, fp_ll_diff,
-                                              fp_ll_diff_prev, m_ord_prev,
-                                              dif_n)
+                                              fp_ll_ord_prev, m_ord_prev, dif_n)
         # if no overlap
         else:
             m_ord = no_overlap_match_calc(params, ord_num, fp_ll_ord,
-                                          fp_ll_ord_prev, fp_ll_diff,
-                                          fp_ll_diff_prev, m_ord_prev,
-                                          dif_n)
+                                          fp_ll_ord_prev, m_ord_prev, dif_n)
         # insert absolute order numbers at the start of m
         m_vec = np.concatenate((m_ord, m_vec))
         # redefine order number vector for previous order
         m_ord_prev = m_ord
 
-    return m_vec, m_ord, m_ord_prev
+    return m_vec
 
 
 def get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
@@ -3792,6 +3785,7 @@ def update_fp_peak_wavelengths(params, llprops, fit_ll_d, m_vec, fp_order,
     elif fp_cavfit_mode == 1:
         # from the d v wavelength fit - iterative fit
         # TODO: Melissa - Why 1600 - should this be a constant?
+        # TODO: ---> Ask Etienne
         fp_ll_new = np.ones_like(m_vec) * 1600.
         for ite in range(6):
             recon_d = np.polyval(fit_ll_d, fp_ll_new)
@@ -3811,7 +3805,7 @@ def update_fp_peak_wavelengths(params, llprops, fit_ll_d, m_vec, fp_order,
     llprops.set_sources(keys, func_name)
 
     # plot old-new wavelength difference
-    if params['DRS_PLOT']:
+    if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 1:
         # TODO: Add plots
         # sPlt.fp_ll_difference(p, loc)
         pass
@@ -4261,6 +4255,7 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
                         func_name)
     mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
                         func_name)
+
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for FP
     # ------------------------------------------------------------------
@@ -4274,12 +4269,18 @@ def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     wargs = [fiber, wmeanref]
     WLOG(params, 'info', TextEntry('40-017-00028', args=wargs))
 
+    # ------------------------------------------------------------------
+    #   Remove and fill NaN values (with smooth convolved values)
+    # ------------------------------------------------------------------
+    # TODO: Needed to remove NaNs - is there another way - doesn't fix all NaNs
+    image = velocity.fill_e2ds_nans(params, fpe2dsfile.data)
+
     # ----------------------------------------------------------------------
     # Do correlation on FP
     # ----------------------------------------------------------------------
     props = ParamDict()
     # push data into props
-    props['E2DSFF'] = fpe2dsfile.data
+    props['E2DSFF'] = image
     # TODO: Check why Blaze makes bugs in correlbin
     props['BLAZE'] = blaze
     props['BLAZE'] = np.ones_like(fpe2dsfile.data)
