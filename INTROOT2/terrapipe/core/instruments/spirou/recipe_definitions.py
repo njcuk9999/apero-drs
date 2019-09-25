@@ -903,16 +903,19 @@ limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 
 # telluric recipes
 limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+                files = [sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 limited_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
 #                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
 #                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 limited_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
 #                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
