@@ -96,6 +96,14 @@ CAVITY_LENGTH_FILE_START.value = 0
 CAVITY_LENGTH_FILE_WAVECOL = CAVITY_LENGTH_FILE_WAVECOL.copy(__NAME__)
 CAVITY_LENGTH_FILE_WAVECOL.value = 'WAVELENGTH_COEFF'
 
+# Define the coefficients of the fit of 1/m vs d
+CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
+CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
+
+# Define the coefficients of the fit of wavelength vs d
+CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
+CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
+
 # Define the object list file name
 OBJ_LIST_FILE = OBJ_LIST_FILE.copy(__NAME__)
 OBJ_LIST_FILE.value = 'object_query_list.fits'
@@ -1146,7 +1154,7 @@ WAVE_FP_CAVFIT_DEG.value = 9
 
 #  Define the FP jump size that is too large
 WAVE_FP_LARGE_JUMP = WAVE_FP_LARGE_JUMP.copy(__NAME__)
-WAVE_FP_LARGE_JUMP.value = 0.5
+WAVE_FP_LARGE_JUMP.value = 250
 
 # index of FP line to start order cross-matching from
 WAVE_FP_CM_IND = WAVE_FP_CM_IND.copy(__NAME__)
@@ -1176,7 +1184,7 @@ WAVE_FP_IPEAK_SPACING.value = 5
 #    Define the expected width of FP peaks - used to "normalise" peaks
 #        (which are then subsequently removed if > drift_peak_norm_width_cut
 WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
-WAVE_FP_EXP_WIDTH.value = 0.9  # 0.8
+WAVE_FP_EXP_WIDTH.value = 1.0   # 0.9  # 0.8
 
 #    Define the "normalised" width of FP peaks that is too large normalised
 #        width = FP FWHM - WAVE_FP_EXP_WIDTH
@@ -1222,8 +1230,8 @@ WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 WAVE_CCF_MASK.value = 'fp.mas'
 
 # Define the wavelength units for the mask for the FP CCF
-WAVE_CCF_UNITS = WAVE_CCF_UNITS.copy(__NAME__)
-WAVE_CCF_UNITS.value = 'nm'
+WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
+WAVE_CCF_MASK_UNITS.value = 'nm'
 
 # Define the ccf mask path the FP CCF
 WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
