@@ -1019,12 +1019,12 @@ KW_WFP_MASKMIN = KW_WFP_MASKMIN.copy(__NAME__)
 KW_WFP_MASKMIN.set(key='WFPCMMIN', comment='wave sol FP CCF mask weight used')
 
 # The width of the CCF mask template line (if 0 use natural) used for FP CCF
-KW_WFP_MASKWID = KW_WFP_MASKWID.copy(__NAME_)
+KW_WFP_MASKWID = KW_WFP_MASKWID.copy(__NAME__)
 KW_WFP_MASKWID.set(key='WFPCMWID', comment='wave sol FP CCF mask width used')
 
 # The units of the input CCF mask (converted to nm in code)
 KW_WFP_MASKUNITS = KW_WFP_MASKUNITS.copy(__NAME__)
-KW_WFP_MASKUNITS.set(key='WFPCMUNT', commnet='wave sol FP CCF mask units used')
+KW_WFP_MASKUNITS.set(key='WFPCMUNT', comment='wave sol FP CCF mask units used')
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
