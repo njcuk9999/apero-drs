@@ -2,8 +2,72 @@ Changelog
 =========
 
 
-0.5.075 (2019-09-20)
+0.5.078 (2019-09-25)
 --------------------
+- Misc.mk_template_s1d.py - etiennes code to be added to mk_template.
+  [Neil Cook]
+- Recipe_definitions.py - only process e2dsff files for obj_mk_tellu and
+  obj_fit_tellu. [Neil Cook]
+- Core.drs_file.py - make sure tested keys have no white spaces at
+  start/end and all are upper case (case insensitive) [Neil Cook]
+- Science.velocity.general.py - coravelation - fix reporting of number
+  of lines found. [Neil Cook]
+- Science.calib.wave.py - change name of fp_wavelength_sol_new to
+  add_fpline_calc_cwid, remove unused outputs of assign_abs_fp_numbers,
+  make two method consistent with FP equation d = m * ll/2, fix
+  no_overlap_match_calc, and try to fix NaNs in fp e2ds for ccf
+  calculation. [Neil Cook]
+- Add cavity length ll and m fit files to data. [Neil Cook]
+- Update language database. [Neil Cook]
+- Recipes.spirou.cal_wave_spirou.py - print that we are updating hc/fp
+  files with new wave solution. [Neil Cook]
+- Io.drs_data.py - load text file needs to default to floats in an
+  array. [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - correct typos in
+  keywords. [Neil Cook]
+- Core.instrument.*.default_constants.py - cavity_length_m_fit.dat.
+  [Neil Cook]
+
+
+0.5.077 (2019-09-24)
+--------------------
+- Science.velocity.general.py - add compute_ccf_sciecne and
+  fill_e2ds_nans functions (continued work on cal_ccf_spirou) [Neil
+  Cook]
+- Science.calib.wave.py - add some extra wave keys (from ccf process)
+  [Neil Cook]
+- Cal_wave_spirou.py - add a TODO for cal_wave_spirou. [Neil Cook]
+- Recipe.spirou.cal_ccf_spirou.py - continue to port code from SpirouDRS
+  --> terrapipe. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.isntruments.spirou.recipe_definitions.py - correct typo in
+  cal_wave -fpmode definitions (found by @melissa-hobson) [Neil Cook]
+- Core.instruments.*.default_constants.py + default_keywords.py - add
+  CCF/RV keys. [Neil Cook]
+- Core.core.drs_file.py - add option in read_header_key_1d_list to try
+  to guess dim1 (if manually set to None) [Neil Cook]
+- Core.constants.param_functions.py - add merge function (to merge one
+  param dict into another) [Neil Cook]
+- Tools.module.setup.drs_reprocess.py - fix how we set infile.filetype
+  (look at output.intype and deal with None/list/str) [Neil Cook]
+
+
+0.5.076 (2019-09-23)
+--------------------
+- Science.telluric.general.py - re calculate tapas_water and tapas_other
+  after shift. [Neil Cook]
+- Science.extract.general.py - fix s1d how we interpolate over NaN gaps.
+  [Neil Cook]
+- Core.instruments.spirou.file_definitions.py/recipe_definitions.py -
+  fix intypes for file definitions and tellu default_refs. [Neil Cook]
+- Udpate object list. [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - fix
+  KW_MKTELL_AIRMASS/WATER values. [Neil Cook]
+- Core.instruments.*.default_constants - change telluric
+  filetype/dprtype/fiber type definitions. [Neil Cook]
+- Core.core.drs_log.py - always have log file (put it in home directory)
+  [Neil Cook]
+- Update changelog/date/version. [Neil Cook]
 - Tools.module.setup.drs_reprocess.py - set filemod and recipemod for
   srecipes that do not have them set. [Neil Cook]
 - Science.telluric.general.py - guess the sed that goes in (not just
