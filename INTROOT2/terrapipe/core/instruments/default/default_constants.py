@@ -23,8 +23,8 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
-    'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT',
-    'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START',
+    'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT', 'CAVITY_1M_FILE',
+    'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START', 'CAVITY_LL_FILE',
     'CAVITY_LENGTH_FILE_WAVECOL', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
     'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
@@ -141,7 +141,7 @@ __all__ = [
     # wave ccf constantsCCF_N_ORD_MAX
     'WAVE_CCF_DRIFT_NOISE', 'WAVE_CCF_BOXSIZE', 'WAVE_CCF_MAXFLUX',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
-    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_UNITS',
+    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
     'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
     # telluric constants
@@ -261,6 +261,12 @@ CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
 # Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
 CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
                                    dtype=str, source=__NAME__)
+
+# Define the coefficients of the fit of 1/m vs d
+CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__)
+
+# Define the coefficients of the fit of wavelength vs d
+CAVITY_LL_FILE = Const('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__)
 
 # Define the object list file name
 OBJ_LIST_FILE = Const('OBJ_LIST_FILE', value=None, dtype=str, source=__NAME__)
@@ -1356,7 +1362,8 @@ WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__)
 
 
 # Define the wavelength units for the mask for the FP CCF
-WAVE_CCF_UNITS = Const('WAVE_CCF_UNITS', value=None, dtype=str, source=__NAME__)
+WAVE_CCF_MASK_UNITS = Const('WAVE_CCF_MASK_UNITS', value=None, dtype=str,
+                            source=__NAME__)
 
 # Define the ccf mask path the FP CCF
 WAVE_CCF_MASK_PATH = Const('WAVE_CCF_MASK_PATH', value=None, dtype=str,
