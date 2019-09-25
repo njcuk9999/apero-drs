@@ -69,7 +69,7 @@ def get_whitelist(params, **kwargs):
                       func_name)
     # load the white list
     wout = drs_data.load_text_file(params, filename, relfolder, kwargs,
-                                   func_name)
+                                   func_name, dtype=str)
     whitelist, whitelistfile = wout
     # return the whitelist
     return whitelist, whitelistfile
@@ -84,7 +84,7 @@ def get_blacklist(params, **kwargs):
                       func_name)
     # load the white list
     bout = drs_data.load_text_file(params, filename, relfolder, kwargs,
-                                   func_name)
+                                   func_name, dtype=str)
     blacklist, blacklistfile = bout
     # return the whitelist
     return blacklist, blacklistfile
