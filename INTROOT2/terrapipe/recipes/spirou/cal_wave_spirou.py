@@ -226,6 +226,9 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # TODO: Add the database criteria or have another options
             if passed:
+                # log that we are updating the HC file with wave params
+                wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
+                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
                 # create copy of infile
                 hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
                 # update wave solution
@@ -278,12 +281,18 @@ def __main__(recipe, params):
                 # Update header of current file with FP solution
                 # ----------------------------------------------------------
                 if passed:
+                    # log that we are updating the HC file with wave params
+                    wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
+                    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
                     # create copy of input e2ds hc file
                     hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
                     # update wave solution
                     hc_update = wave.add_wave_keys(hc_update, wprops)
                     # write hc update
                     hc_update.write()
+                    # log that we are updating the HC file with wave params
+                    wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
+                    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
                     # create copy of input e2ds fp file
                     fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
                     # update wave solution
