@@ -30,7 +30,7 @@ DATA_CORE.value = './data/core/'
 # Define whether to force wave solution from calibration database (instead of
 #    using header wave solution if available)
 CALIB_DB_FORCE_WAVESOL = CALIB_DB_FORCE_WAVESOL.copy(__NAME__)
-CALIB_DB_FORCE_WAVESOL.value = True
+CALIB_DB_FORCE_WAVESOL.value = False
 
 
 # =============================================================================
