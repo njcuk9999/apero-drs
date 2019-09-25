@@ -1140,7 +1140,7 @@ WAVE_LITTROW_QC_DEV_MAX.value = 0.4   # 0.9
 #       0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
 #       1 - following C Lovis (previously WAVE_NEW)
 WAVE_MODE_FP = WAVE_MODE_FP.copy(__NAME__)
-WAVE_MODE_FP.value = 0
+WAVE_MODE_FP.value = 1
 
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
