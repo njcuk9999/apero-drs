@@ -256,7 +256,7 @@ def measure_fp_peaks(params, props, **kwargs):
     props.set_sources(keys, func_name)
 
     # Log the total number of FP lines found
-    wargs = [len(allxpeak)]
+    wargs = [len(props['XPEAK'])]
     WLOG(params, 'info', TextEntry('40-018-00002', args=wargs))
 
     # return the property parameter dictionary
@@ -558,7 +558,7 @@ def coravelation(params, props, ccf_step, ccf_width, det_noise,
     # -------------------------------------------------------------------------
     # log that we are computing ccf at target_rv
     if log:
-        WLOG(params, '', TextEntry('40-020-00001', wargs=[target_rv]))
+        WLOG(params, '', TextEntry('40-020-00001', args=[target_rv]))
     # -------------------------------------------------------------------------
     # get rvmin and rvmax
     if 'RVMIN' in kwargs:
