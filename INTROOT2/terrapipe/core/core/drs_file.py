@@ -1079,8 +1079,11 @@ class DrsFitsFile(DrsInputFile):
                 valid1 = False
                 # loop around
                 for rvalue in rvalues:
+                    # make sure there are no white spaces and all upper case
+                    filedictvalue = filedict[key].strip().upper()
+                    rvalueclean = rvalue.strip().upper()
                     # if key is in file dictionary then we should check it
-                    if filedict[key] == rvalue:
+                    if filedictvalue == rvalueclean:
                         valid1 |= True
                 # modify valid value
                 valid &= valid1
