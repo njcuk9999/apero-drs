@@ -16,9 +16,6 @@ from scipy import ndimage
 from terrapipe.core import constants
 from terrapipe.core import math as mp
 from terrapipe import core
-from terrapipe import locale
-from terrapipe.io import drs_path
-from terrapipe.io import drs_fits
 from terrapipe.io import drs_data
 
 # =============================================================================
@@ -37,8 +34,6 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 # get param dict
 ParamDict = constants.ParamDict
-# Get the text types
-TextEntry = locale.drs_text.TextEntry
 
 
 # =============================================================================
@@ -90,35 +85,6 @@ def get_hot_pixels(params):
 
     # return the hot pixel indices
     return [yhot, xhot]
-
-
-def get_full_flat(params):
-    """
-    Get the full flat image using constants in parameter dictionary
-
-    :param params: parameter dictionary, ParamDict containing constants
-
-    :type params: ParamDict
-
-    :return: numpy array (2D): the full flat image
-    :rtype: np.ndarray
-    """
-    # get filename from parameters
-    filename = params['PP_FULL_FLAT']
-    # get the engineering data path from parameters
-    relfolder = params['DATA_ENGINEERING']
-    # construct the data directory
-    datadir = drs_path.get_relative_folder(params, package, relfolder)
-    # construct the absolute file path
-    absfilename = os.path.join(datadir, filename)
-    # check that filepath exists
-    if not os.path.exists(absfilename):
-        eargs = [filename, datadir]
-        WLOG(params, 'error', TextEntry('00-010-00002', args=eargs))
-    # read the image
-    mdata = drs_fits.read(params, absfilename)
-    # return the image
-    return mdata
 
 
 def ref_top_bottom(params, image):
