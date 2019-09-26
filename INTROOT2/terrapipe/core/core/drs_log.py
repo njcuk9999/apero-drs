@@ -503,7 +503,8 @@ wlog = Logger()
 # Define function
 # =============================================================================
 def find_param(params=None, key=None, name=None, kwargs=None, func=None,
-               mapf=None, dtype=None, paramdict=None):
+               mapf=None, dtype=None, paramdict=None, required=True,
+               default=None):
     # deal with params being None
     if params is None:
         params = ParamDict()
@@ -538,22 +539,25 @@ def find_param(params=None, key=None, name=None, kwargs=None, func=None,
     if name in rkwargs:
         if rkwargs[name] is None:
             del rkwargs[name]
-
     # deal with key not found in params
-    if (key not in paramdict) and (name not in rkwargs):
+    not_in_paramdict = name not in rkwargs
+    not_in_rkwargs = key not in paramdict
+    return_default = (not required) or (default is not None)
+    # if we don't require value
+    if return_default and not_in_paramdict and not_in_rkwargs:
+        return default
+    elif not_in_paramdict and not_in_rkwargs:
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
-        value = None
+        return default
     elif name in rkwargs:
-        value = rkwargs[name]
+        return rkwargs[name]
     elif mapf == 'list':
-        value = paramdict.listp(key, dtype=dtype)
+        return paramdict.listp(key, dtype=dtype)
     elif mapf == 'dict':
-        value = paramdict.dictp(key, dtype=dtype)
+        return paramdict.dictp(key, dtype=dtype)
     else:
-        value = paramdict[key]
-    # set value
-    return value
+        return paramdict[key]
 
 
 def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
