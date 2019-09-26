@@ -520,6 +520,9 @@ class DrsRecipe(object):
     # Reprocessing methods
     # =========================================================================
     def generate_runs(self, params, table, filters=None, allowedfibers=None):
+        # set function name
+        func_name = display_func(params, 'generate_runs', __NAME__,
+                                 class_name='DrsRecipe')
         # need to find files in table that match each argument
         #    filedict is a dictionary of arguments each for
         #    each drsfile (if filelogic=exclusive)
@@ -538,7 +541,7 @@ class DrsRecipe(object):
         #   arguments and construct the runs
         runargs = group_run_files(params, self, argdict, kwargdict)
         # now we have the runargs we can convert to a runlist
-        runlist = convert_to_command(self, runargs)
+        runlist = convert_to_command(self, params, runargs)
         # clear printer
         drs_log.Printer(None, None, '')
         # return the runlist
@@ -829,6 +832,8 @@ class DrsRecipe(object):
         """
         # get drs parameters
         params = self.drs_params
+        # set function name
+        func_name = display_func(params, '_valid_file', __NAME__, 'DrsRecipe')
         # deal with no current typelist (alltypelist=None)
         if alltypelist is None:
             alltypelist = []
@@ -837,7 +842,13 @@ class DrsRecipe(object):
         # get the argument that we are checking the file of
         arg = _get_arg(self, argname)
         drs_files = arg.files
+        # make sure drs_files is a list
+        if not isinstance(drs_files, list):
+            drs_files = [drs_files]
+        # get the drs logic
         drs_logic = arg.filelogic
+        # deal with arg.path set
+        directory = _check_arg_path(params, arg, directory)
         # ---------------------------------------------------------------------
         # Step 1: Check file location is valid
         # ---------------------------------------------------------------------
@@ -879,16 +890,19 @@ class DrsRecipe(object):
             header_errors = dict()
             # add to checked files
             checked_files.append(filename_it)
+            # deal with not having any drs files set
+            if len(drs_files) == 0:
+                # files must be set
+                eargs = [argname, func_name]
+                WLOG(params, 'error', TextEntry('00-006-00019', args=eargs))
             # loop around file types
             for drs_file in drs_files:
                 # if in debug mode print progres
                 dargs = [drs_file.name, os.path.basename(filename_it)]
                 WLOG(params, 'debug', TextEntry('90-001-00008', args=dargs),
                      wrap=False)
-
                 # -------------------------------------------------------------
                 # make instance of the DrsFile
-                # noinspection PyProtectedMember
                 inputdir = self.get_input_dir()
                 # create an instance of this drs_file with the filename set
                 file_in = drs_file.newcopy(filename=filename_it, recipe=self)
@@ -1057,8 +1071,10 @@ class DrsRunSequence(object):
     def add(self, recipe, **kwargs):
         self.adds.append([recipe, dict(kwargs)])
 
-    def process_adds(self):
-
+    def process_adds(self, params):
+        # set function name
+        func_name = display_func(params, 'process_adds', __NAME__,
+                                 class_name='DrsRunSequence')
         # get filemod and recipe mod
         pconst = constants.pload(self.instrument)
         filemod = pconst.FILEMOD()
@@ -1471,7 +1487,8 @@ def find_run_files(params, recipe, table, args, filters=None,
 
 
 def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
-    func_name = __NAME__ + '.group_run_files()'
+    # set function name
+    func_name = display_func(params, 'group_run_files', __NAME__)
     # get parameters from params
     file_col = pcheck(params, 'DRS_INDEX_FILENAME', 'filecol', kwargs,
                      func_name)
@@ -1524,7 +1541,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # brute force approach
     runs = []
     # find first file argument
-    fout = _find_first_filearg(runorder, argdict, kwargdict)
+    fout = _find_first_filearg(params, runorder, argdict, kwargdict)
     # if fout is None means we have no file arguments
     if fout is None:
         # get new run
@@ -1578,7 +1595,9 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
         return runs
 
 
-def convert_to_command(self, runargs):
+def convert_to_command(self, params, runargs):
+    # set function name
+    func_name = display_func(params, 'convert_to_command', __NAME__)
     # get args/kwargs from recipe
     args = self.args
     kwargs = self.kwargs
@@ -1616,6 +1635,33 @@ def convert_to_command(self, runargs):
 # =============================================================================
 # Define worker functions
 # =============================================================================
+def _check_arg_path(params, arg, directory):
+    # set function name
+    func_name = display_func(params, '_check_arg_path', __NAME__)
+    # set the path as directory if arg.path is None
+    if arg.path is None:
+        return directory
+    # deal with arg.path being a link to a constant
+    if arg.path in params:
+        path = params[arg.path]
+    # else assume arg.path is a path
+    else:
+        path = arg.path
+    # path may be relative to main drs package to get full path
+    if not os.path.exists(path):
+        # get package name
+        package = params['DRS_PACKAGE']
+        # get absolute path
+        path = constants.get_relative_folder(package, path)
+    # now check that path is valid
+    if not os.path.exists(path):
+        # log that arg path was wrong
+        eargs = [arg.name, arg.path, func_name]
+        WLOG(params, 'error', TextEntry('00-006-00018', args=eargs))
+    else:
+        return path
+
+
 def _gen_header_errors(params, header_errors):
     # set up message storage
     emsgs = TextEntry(None)
@@ -1679,8 +1725,8 @@ def _get_arg(recipe, argname):
 
 
 def _group_drs_files(params, drstable, **kwargs):
-
-    func_name = __NAME__ + '.group_drs_files()'
+    # set function name
+    func_name = display_func(params, 'group_drs_files', __NAME__)
     # get properties from params
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
@@ -1779,6 +1825,9 @@ def _group_drs_files(params, drstable, **kwargs):
 
 
 def _get_runorder(recipe, argdict, kwargdict):
+    # set function name
+    func_name = display_func(recipe.drs_params, '_get_runorder', __NAME__)
+    # set up storage
     runorder = OrderedDict()
     # get args/kwargs from recipe
     args = recipe.args
@@ -1874,7 +1923,10 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
     return new_run
 
 
-def _find_first_filearg(runorder, argdict, kwargdict):
+def _find_first_filearg(params, runorder, argdict, kwargdict):
+    # set function name
+    func_name = display_func(params, '_find_first_filearg', __NAME__)
+    # loop around the run order
     for argname in runorder:
         if argname in argdict:
             if isinstance(argdict[argname], OrderedDict):
