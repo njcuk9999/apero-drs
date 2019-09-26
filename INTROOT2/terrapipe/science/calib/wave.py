@@ -287,8 +287,6 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
                                         required=False)
     wfp_contrast = wavefile.read_header_key('KW_WFP_CONTRAST', dtype=float,
                                             required=False)
-    wfp_maxcpp = wavefile.read_header_key('KW_WFP_MAXCPP', dtype=float,
-                                          required=False)
     wfp_mask = wavefile.read_header_key('KW_WFP_MASK', dtype=float,
                                         required=False)
     wfp_lines = wavefile.read_header_key('KW_WFP_LINES', dtype=float,
@@ -368,7 +366,6 @@ def add_wave_keys(infile, props):
     infile.add_hkey('KW_WFP_DRIFT', value=props['WFP_DRIFT'])
     infile.add_hkey('KW_WFP_FWHM', value=props['WFP_FWHM'])
     infile.add_hkey('KW_WFP_CONTRAST', value=props['WFP_CONTRAST'])
-    infile.add_hkey('KW_WFP_MAXCPP', value=props['WFP_MAXCPP'])
     infile.add_hkey('KW_WFP_MASK', value=props['WFP_MASK'])
     # WFP_LINES should be a list of ints or None or 'None'
     #     (deal with it either way)
@@ -620,12 +617,11 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
         # TODO: Add plots
         # sPlt.wave_ea_plot_single_order(p, loc)
         pass
-
     # ----------------------------------------------------------------------
     # FP CCF COMPUTATION - common to all methods
     # ----------------------------------------------------------------------
-    rvprops = compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber)
-
+    rvprops = velocity.compute_ccf_fp(params, fpe2dsfile, fpe2dsfile.data,
+                                      blaze, llprops['LL_FINAL'], fiber)
     # merge rvprops into llprops (shallow copy)
     llprops.merge(rvprops)
     # ------------------------------------------------------------------
@@ -647,18 +643,17 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
     wprops.set_sources(keys, func_name)
     # update ccf properties
-    wprops['WFP_DRIFT'] = rvprops['CCF_RES'][1]
+    wprops['WFP_DRIFT'] = rvprops['CCF_FIT_COEFFS'][1]
     wprops['WFP_FWHM'] = rvprops['FWHM']
     wprops['WFP_CONTRAST'] = rvprops['CONTRAST']
-    wprops['WFP_MAXCPP'] = rvprops['MAXCPP']
     wprops['WFP_MASK'] = rvprops['CCF_MASK']
     wprops['WFP_LINES'] = rvprops['TOT_LINE']
     wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
     wprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
     wprops['WFP_STEP'] = rvprops['CCF_STEP']
     # set sources
-    keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MAXCPP',
-            'WFP_MASK', 'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+    keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK', 'WFP_LINES',
+            'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
     wprops.set_sources(keys, func_name)
 
     # ------------------------------------------------------------------
@@ -4229,150 +4224,6 @@ def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
     WLOG(params, '', TextEntry('40-017-00035', args=[wavefile.filename]))
     # merge table
     drs_table.write_table(params, table, wavefile.filename, fmt='ascii.rst')
-
-
-# =============================================================================
-# FP CCF computation
-# =============================================================================
-def compute_fp_ccf(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
-    func_name = __NAME__ + '.compute_fp_ccf()'
-    # get constants from params/kwargs
-    sigdet = pcheck(params, 'WAVE_CCF_DRIFT_NOISE', 'sigdet', kwargs, func_name)
-    boxsize = pcheck(params, 'WAVE_CCF_BOXSIZE', 'boxsize', kwargs, func_name)
-    maxflux = pcheck(params, 'WAVE_CCF_MAXFLUX', 'maxflux', kwargs, func_name)
-    ccfstep = pcheck(params, 'WAVE_CCF_STEP', 'ccfstep', kwargs, func_name)
-    ccfwidth = pcheck(params, 'WAVE_CCF_WIDTH', 'ccfwidth', kwargs, func_name)
-    targetrv = pcheck(params, 'WAVE_CCF_TARGET_RV', 'targetrv', kwargs,
-                      func_name)
-    detnoise = pcheck(params, 'WAVE_CCF_DETNOISE', 'detnoise', kwargs,
-                      func_name)
-    ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
-    ccfnmax = pcheck(params, 'WAVE_CCF_N_ORD_MAX', 'ccfnmax', kwargs,
-                     func_name)
-    mask_min = pcheck(params, 'WAVE_CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
-                      func_name)
-    mask_width = pcheck(params, 'WAVE_CCF_MASK_WIDTH', 'mask_width', kwargs,
-                        func_name)
-    mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
-                        func_name)
-
-    # ------------------------------------------------------------------
-    # Compute photon noise uncertainty for FP
-    # ------------------------------------------------------------------
-    # set up the arguments for DeltaVrms2D
-    dkwargs = dict(spe=fpe2dsfile.data, wave=llprops['LL_FINAL'],
-                   sigdet=sigdet, size=boxsize, threshold=maxflux)
-    # run DeltaVrms2D
-    dvrmsref, wmeanref = velocity.delta_v_rms_2d(**dkwargs)
-
-    # log the estimated RV uncertainty
-    wargs = [fiber, wmeanref]
-    WLOG(params, 'info', TextEntry('40-017-00028', args=wargs))
-
-    # ------------------------------------------------------------------
-    #   Remove and fill NaN values (with smooth convolved values)
-    # ------------------------------------------------------------------
-    # TODO: Needed to remove NaNs - is there another way - doesn't fix all NaNs
-    image = velocity.fill_e2ds_nans(params, fpe2dsfile.data)
-
-    # ----------------------------------------------------------------------
-    # Do correlation on FP
-    # ----------------------------------------------------------------------
-    props = ParamDict()
-    # push data into props
-    props['E2DSFF'] = image
-    # TODO: Check why Blaze makes bugs in correlbin
-    props['BLAZE'] = blaze
-    props['BLAZE'] = np.ones_like(fpe2dsfile.data)
-    # set BERV parameters to zero
-    props['BERV'] = 0.0
-    props['BERV_MAX'] = 0.0
-    props['BJD'] = 0.0
-    # get the mask parameters
-    mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
-                   mask_units=mask_units)
-    ll_mask_d, ll_mask_ctr, w_mask = velocity.get_ccf_mask(params, **mkwargs)
-    props['LL_MASK_D'] = ll_mask_d
-    props['LL_MASK_CTR'] = ll_mask_ctr
-    props['W_MASK'] = w_mask
-    # set the wavelength solution from current
-    props['WAVE_LL'] = llprops['LL_FINAL']
-    props['PARAM_LL'] = llprops['LL_PARAM_FINAL']
-    # set sources
-    keys = ['E2DSFF', 'BLAZE', 'BERV', 'BERV_MAX', 'BJD', 'LL_MASK_D',
-            'LL_MASK_CTR', 'W_MASK']
-    props.set_sources(keys, func_name)
-    props.set_source('WAVE_LL', llprops.sources['LL_FINAL'])
-    props.set_source('PARAM_LL', llprops.sources['LL_PARAM_FINAL'])
-    # push key word arguments
-    ckwargs = dict(ccf_step=ccfstep, ccf_width=ccfwidth, target_rv=targetrv,
-                   fit_type=1, det_noise=detnoise)
-    # do the correlation on the FP
-    props = velocity.coravelation(params, props, **ckwargs)
-
-    # ----------------------------------------------------------------------
-    # Update the Correlation stats with values using fiber C (FP) drift
-    # ----------------------------------------------------------------------
-    # get the average ccf
-    props['AVERAGE_CCF'] = mp.nansum(props['CCF'][: ccfnmax], axis=0)
-    # normalize the average ccf
-    normalized_ccf = props['AVERAGE_CCF'] / mp.nanmax(props['AVERAGE_CCF'])
-    # get the fit for the normalized average ccf
-    ccf_res, ccf_fit = velocity.fit_ccf(params, 'average', props['RV_CCF'],
-                                        normalized_ccf, fit_type=1)
-    # push into props
-    props['CCF_RES'], props['CCF_FIT'] = ccf_res, ccf_fit
-    # get the max cpp
-    ppa = props['PIX_PASSED_ALL']
-    props['MAXCPP'] = mp.nansum(props['CCF_MAX']) / mp.nansum(ppa)
-    # get the RV value from the normalised average ccf fit center location
-    props['RV'] = float(ccf_res[1])
-    # get the contrast (ccf fit amplitude)
-    props['CONTRAST'] = np.abs(100 * ccf_res[0])
-    # get the FWHM value
-    props['FWHM'] = ccf_res[2] * mp.fwhm()
-    # set the source
-    keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
-            'CCF_RES', 'CCF_FIT']
-    props.set_sources(keys, func_name)
-    # ----------------------------------------------------------------------
-    # add constants to props
-    props['CCF_MASK'] = ccfmask
-    props['CCF_STEP'] = ccfstep
-    props['CCF_WIDTH'] = ccfwidth
-    props['TARGET_RV'] = targetrv
-    props['CCF_SIGDET'] = sigdet
-    props['CCF_BOXSIZE'] = boxsize
-    props['CCF_MAXFLUX'] = maxflux
-    props['CCF_DETNOISE'] = detnoise
-    props['CCF_NMAX'] = ccfnmax
-    props['MASK_MIN'] = mask_min
-    props['MASK_WIDTH'] = mask_width
-    props['MASK_UNITS'] = mask_units
-    # set source
-    keys = ['CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_DETNOISE', 'CCF_NMAX',
-            'MASK_MIN', 'MASK_WIDTH', 'MASK_UNITS']
-    props.set_sources(keys, func_name)
-    # ----------------------------------------------------------------------
-    # log the stats
-    wargs = [props['CONTRAST'], float(ccf_res[1]), props['FWHM'],
-             props['MAXCPP']]
-    WLOG(params, 'info', TextEntry('40-017-00029', args=wargs))
-    # ----------------------------------------------------------------------
-    # rv ccf plot
-    # ----------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plot
-        # # Plot rv vs ccf (and rv vs ccf_fit)
-        # p['OBJNAME'] = 'FP'
-        # sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
-        pass
-
-    # TODO : Add QC of the FP CCF once they are defined
-
-    # return the rv props
-    return props
 
 
 # =============================================================================
