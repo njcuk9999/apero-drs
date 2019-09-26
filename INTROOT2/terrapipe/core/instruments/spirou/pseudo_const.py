@@ -210,6 +210,11 @@ class PseudoConstants(DefaultConstants):
         else:
             return dprtype.split('_')[1]
 
+    def FIBER_CCF(self):
+        science = 'AB'
+        reference = 'C'
+        return science, reference
+
     # =========================================================================
     # BERV_KEYS
     # =========================================================================

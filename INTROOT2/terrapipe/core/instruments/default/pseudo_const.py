@@ -24,7 +24,7 @@ __PATH__ = 'instruments.default'
 # get error
 ConfigError = drs_exceptions.ConfigError
 # get not implemented error
-NOT_IMPLEMENTED = ('Definition Error: Must be overrided in instrument '
+NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
                    'pseudo_const not {0} \n\t i.e. in terrapipe.core.'
                    'instruments.spirou.pseudoconst.py \n\t method = {1}')
 
@@ -504,6 +504,10 @@ class PseudoConstants:
 
     def FIBER_DATA_TYPE(self, dprtype, fiber):
         func_name = 'FIBER_DATA_TYPE'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_CCF(self):
+        func_name = 'FIBER_CCF'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================
