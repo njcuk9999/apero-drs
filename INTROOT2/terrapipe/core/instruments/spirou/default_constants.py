@@ -32,7 +32,6 @@ DATA_CORE.value = './data/core/'
 CALIB_DB_FORCE_WAVESOL = CALIB_DB_FORCE_WAVESOL.copy(__NAME__)
 CALIB_DB_FORCE_WAVESOL.value = False
 
-
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
@@ -321,7 +320,6 @@ DARK_MASTER_MATCH_TIME.value = 2
 DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
 DARK_MASTER_MED_SIZE.value = 4
 
-
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
@@ -333,7 +331,6 @@ BADPIX_FULL_FLAT.value = 'detector_flat_full.fits'
 #      image [percentage]
 BADPIX_NORM_PERCENTILE = BADPIX_NORM_PERCENTILE.copy(__NAME__)
 BADPIX_NORM_PERCENTILE.value = 90.0
-
 
 #   Define the median image in the x dimension over a boxcar of this width
 BADPIX_FLAT_MED_WID = BADPIX_FLAT_MED_WID.copy(__NAME__)
@@ -354,7 +351,6 @@ BADPIX_MAX_HOTPIX.value = 5.0
 #   Defines the threshold on the full detector flat file to deem pixels as good
 BADPIX_FULL_THRESHOLD = BADPIX_FULL_THRESHOLD.copy(__NAME__)
 BADPIX_FULL_THRESHOLD.value = 0.3
-
 
 # =============================================================================
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
@@ -397,7 +393,6 @@ BKGR_KER_WY.value = 9
 BKGR_KER_SIG = BKGR_KER_SIG.copy(__NAME__)
 BKGR_KER_SIG.value = 3
 
-
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
@@ -420,7 +415,7 @@ LOC_HALF_ORDER_SPACING.value = 45
 
 # Minimum amplitude to accept (in e-)
 LOC_MINPEAK_AMPLITUDE = LOC_MINPEAK_AMPLITUDE.copy(__NAME__)
-LOC_MINPEAK_AMPLITUDE.value = 10    # 50
+LOC_MINPEAK_AMPLITUDE.value = 10  # 50
 
 #   Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
@@ -444,7 +439,7 @@ LOC_IMAGE_GAP.value = 0
 
 #   Define minimum width of order to be accepted
 LOC_ORDER_WIDTH_MIN = LOC_ORDER_WIDTH_MIN.copy(__NAME__)
-LOC_ORDER_WIDTH_MIN.value = 10   # 5
+LOC_ORDER_WIDTH_MIN.value = 10  # 5
 
 #   Define the noise multiplier threshold in order to accept an
 #       order center as usable i.e.
@@ -474,7 +469,7 @@ LOC_MAX_PTP_WID.value = 10.0
 
 #   Normalised amplitude threshold to accept pixels for background calculation
 LOC_BKGRD_THRESHOLD = LOC_BKGRD_THRESHOLD.copy(__NAME__)
-LOC_BKGRD_THRESHOLD.value = 0.15    # 0.17  # 0.18
+LOC_BKGRD_THRESHOLD.value = 0.15  # 0.17  # 0.18
 
 #   Define the amount we drop from the centre of the order when
 #      previous order center is missed (in finding the position)
@@ -707,7 +702,6 @@ SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
 SHAPE_DEBUG_OUTPUTS.value = True
 
-
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
@@ -730,8 +724,7 @@ FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
 
 #   Maximum allowed RMS of flat field
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
-QC_FF_MAX_RMS.value = 0.05      # 0.14
-
+QC_FF_MAX_RMS.value = 0.05  # 0.14
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -849,13 +842,12 @@ THERMAL_THRES_TAPAS.value = 0.010
 THERMAL_ENVELOPE_PERCENTILE = THERMAL_ENVELOPE_PERCENTILE.copy(__NAME__)
 THERMAL_ENVELOPE_PERCENTILE.value = 10
 
-
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
-WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'    # 'catalogue_ThAr.dat'
+WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'  # 'catalogue_ThAr.dat'
 
 # Define the line list file format (must be astropy.table format)
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
@@ -893,10 +885,10 @@ WAVE_FIT_DEGREE.value = 4
 
 # Define intercept and slope for a pixel shift
 WAVE_PIXEL_SHIFT_INTER = WAVE_PIXEL_SHIFT_INTER.copy(__NAME__)
-WAVE_PIXEL_SHIFT_INTER.value = 0.0    # 6.26637214e+00
+WAVE_PIXEL_SHIFT_INTER.value = 0.0  # 6.26637214e+00
 
 WAVE_PIXEL_SHIFT_SLOPE = WAVE_PIXEL_SHIFT_SLOPE.copy(__NAME__)
-WAVE_PIXEL_SHIFT_SLOPE.value = 0.0    # 4.22131253e-04
+WAVE_PIXEL_SHIFT_SLOPE.value = 0.0  # 4.22131253e-04
 
 #  Defines echelle number of first extracted order
 WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
@@ -909,7 +901,6 @@ WAVE_N_ORD_START.value = 0
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
 WAVE_N_ORD_FINAL.value = 47
-
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1125,12 +1116,11 @@ WAVE_LITTROW_EXT_ORDER_FIT_DEG.value = 4  # 5  # 4
 
 #   Maximum littrow RMS value
 WAVE_LITTROW_QC_RMS_MAX = WAVE_LITTROW_QC_RMS_MAX.copy(__NAME__)
-WAVE_LITTROW_QC_RMS_MAX.value = 0.15    # 0.3
+WAVE_LITTROW_QC_RMS_MAX.value = 0.15  # 0.3
 
 #   Maximum littrow Deviation from wave solution (at x cut points)
 WAVE_LITTROW_QC_DEV_MAX = WAVE_LITTROW_QC_DEV_MAX.copy(__NAME__)
-WAVE_LITTROW_QC_DEV_MAX.value = 0.4   # 0.9
-
+WAVE_LITTROW_QC_DEV_MAX.value = 0.4  # 0.9
 
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
@@ -1145,7 +1135,7 @@ WAVE_MODE_FP.value = 1
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
-WAVE_FP_DOPD0.value = 2.44962434814043e7    # 2.44999e7  # 2.45e7
+WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
@@ -1184,7 +1174,7 @@ WAVE_FP_IPEAK_SPACING.value = 5
 #    Define the expected width of FP peaks - used to "normalise" peaks
 #        (which are then subsequently removed if > drift_peak_norm_width_cut
 WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
-WAVE_FP_EXP_WIDTH.value = 1.0   # 0.9  # 0.8
+WAVE_FP_EXP_WIDTH.value = 1.0  # 0.9  # 0.8
 
 #    Define the "normalised" width of FP peaks that is too large normalised
 #        width = FP FWHM - WAVE_FP_EXP_WIDTH
@@ -1196,18 +1186,19 @@ WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
-#   The value of the noise for wave drift calculation
+#   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
-WAVE_CCF_DRIFT_NOISE = WAVE_CCF_DRIFT_NOISE.copy(__NAME__)
-WAVE_CCF_DRIFT_NOISE.value = 8.0  # 100
+WAVE_CCF_NOISE_SIGDET = WAVE_CCF_NOISE_SIGDET.copy(__NAME__)
+WAVE_CCF_NOISE_SIGDET.value = 8.0  # 100
 
-#   The size around a saturated pixel to flag as unusable
-WAVE_CCF_BOXSIZE = WAVE_CCF_BOXSIZE.copy(__NAME__)
-WAVE_CCF_BOXSIZE.value = 12
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+WAVE_CCF_NOISE_BOXSIZE = WAVE_CCF_NOISE_BOXSIZE.copy(__NAME__)
+WAVE_CCF_NOISE_BOXSIZE.value = 12
 
-#   The maximum flux for a good (unsaturated) pixel
-WAVE_CCF_MAXFLUX = WAVE_CCF_MAXFLUX.copy(__NAME__)
-WAVE_CCF_MAXFLUX.value = 1.0e9
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+WAVE_CCF_NOISE_THRES = WAVE_CCF_NOISE_THRES.copy(__NAME__)
+WAVE_CCF_NOISE_THRES.value = 1.0e9
 
 #   The CCF step size to use for the FP CCF
 WAVE_CCF_STEP = WAVE_CCF_STEP.copy(__NAME__)
@@ -1447,30 +1438,30 @@ FTELLU_FIT_DERIV_PC.value = True
 
 # The number of pixels required (per order) to be able to interpolate the
 #    template on to a berv shifted wavelength grid
-FTELLU_FIT_KEEP_NUM  = FTELLU_FIT_KEEP_NUM.copy(__NAME__)
+FTELLU_FIT_KEEP_NUM = FTELLU_FIT_KEEP_NUM.copy(__NAME__)
 FTELLU_FIT_KEEP_NUM.value = 20
 
 # The minimium transmission allowed to define good pixels (for reconstructed
 #    absorption calculation)
-FTELLU_FIT_MIN_TRANS  = FTELLU_FIT_MIN_TRANS.copy(__NAME__)
+FTELLU_FIT_MIN_TRANS = FTELLU_FIT_MIN_TRANS.copy(__NAME__)
 FTELLU_FIT_MIN_TRANS.value = 0.2
 
 # The minimum wavelength constraint (in nm) to calculate reconstructed
 #     absorption
-FTELLU_LAMBDA_MIN  = FTELLU_LAMBDA_MIN.copy(__NAME__)
+FTELLU_LAMBDA_MIN = FTELLU_LAMBDA_MIN.copy(__NAME__)
 FTELLU_LAMBDA_MIN.value = 1000.0
 
 # The maximum wavelength constraint (in nm) to calculate reconstructed
 #     absorption
-FTELLU_LAMBDA_MAX  = FTELLU_LAMBDA_MAX.copy(__NAME__)
+FTELLU_LAMBDA_MAX = FTELLU_LAMBDA_MAX.copy(__NAME__)
 FTELLU_LAMBDA_MAX.value = 2100.0
 
 # The gaussian kernel used to smooth the template and residual spectrum [km/s]
-FTELLU_KERNEL_VSINI  = FTELLU_KERNEL_VSINI.copy(__NAME__)
+FTELLU_KERNEL_VSINI = FTELLU_KERNEL_VSINI.copy(__NAME__)
 FTELLU_KERNEL_VSINI.value = 30.0
 
 # The number of iterations to use in the reconstructed absorption calculation
-FTELLU_FIT_ITERS  = FTELLU_FIT_ITERS.copy(__NAME__)
+FTELLU_FIT_ITERS = FTELLU_FIT_ITERS.copy(__NAME__)
 FTELLU_FIT_ITERS.value = 4
 
 # The minimum log absorption the is allowed in the molecular absorption
@@ -1493,7 +1484,6 @@ MKTEMPLATE_FIBER_TYPE.value = 'AB'
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
 MKTEMPLATE_SNR_ORDER.value = 33
-
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
@@ -1530,6 +1520,20 @@ CCF_DEFAULT_WIDTH.value = 30.0
 CCF_DEFAULT_STEP = CCF_DEFAULT_STEP.copy(__NAME__)
 CCF_DEFAULT_STEP.value = 0.5
 
+#   The value of the noise for wave dv rms calculation
+#       snr = flux/sqrt(flux + noise^2)
+CCF_NOISE_SIGDET = CCF_NOISE_SIGDET.copy(__NAME__)
+CCF_NOISE_SIGDET.value = 8.0  # 100
+
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+CCF_NOISE_BOXSIZE = CCF_NOISE_BOXSIZE.copy(__NAME__)
+CCF_NOISE_BOXSIZE.value = 12
+
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+CCF_NOISE_THRES = CCF_NOISE_THRES.copy(__NAME__)
+CCF_NOISE_THRES.value = 1.0e9
+
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
 CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
@@ -1538,7 +1542,6 @@ CCF_N_ORD_MAX.value = 48
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
 CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
-
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)

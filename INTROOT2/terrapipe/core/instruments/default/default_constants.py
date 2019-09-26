@@ -139,7 +139,7 @@ __all__ = [
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP',
     # wave ccf constantsCCF_N_ORD_MAX
-    'WAVE_CCF_DRIFT_NOISE', 'WAVE_CCF_BOXSIZE', 'WAVE_CCF_MAXFLUX',
+    'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
@@ -173,6 +173,7 @@ __all__ = [
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
+    'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1328,18 +1329,19 @@ WAVE_FP_SIGCLIP = Const('WAVE_FP_SIGCLIP', value=None, dtype=float,
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
-#   The value of the noise for wave drift calculation
+#   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
-WAVE_CCF_DRIFT_NOISE = Const('WAVE_CCF_DRIFT_NOISE', value=None, dtype=float,
+WAVE_CCF_NOISE_SIGDET = Const('WAVE_CCF_NOISE_SIGDET', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0)
+
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+WAVE_CCF_NOISE_BOXSIZE = Const('WAVE_CCF_NOISE_BOXSIZE', value=None, dtype=int,
+                               source=__NAME__, minimum=0.0)
+
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+WAVE_CCF_NOISE_THRES = Const('WAVE_CCF_NOISE_THRES', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
-
-#   The size around a saturated pixel to flag as unusable
-WAVE_CCF_BOXSIZE = Const('WAVE_CCF_BOXSIZE', value=None, dtype=int,
-                         source=__NAME__, minimum=0.0)
-
-#   The maximum flux for a good (unsaturated) pixel
-WAVE_CCF_MAXFLUX = Const('WAVE_CCF_MAXFLUX', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0)
 
 #   The CCF step size to use for the FP CCF
 WAVE_CCF_STEP = Const('WAVE_CCF_STEP', value=None, dtype=float, source=__NAME__,
@@ -1359,7 +1361,6 @@ WAVE_CCF_DETNOISE = Const('WAVE_CCF_DETNOISE', value=None, dtype=float,
 
 #  The filename of the CCF Mask to use for the FP CCF
 WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__)
-
 
 # Define the wavelength units for the mask for the FP CCF
 WAVE_CCF_MASK_UNITS = Const('WAVE_CCF_MASK_UNITS', value=None, dtype=str,
@@ -1588,7 +1589,7 @@ FTELLU_LAMBDA_MAX = Const('FTELLU_LAMBDA_MAX', value=None, dtype=float,
 
 # The gaussian kernel used to smooth the template and residual spectrum [km/s]
 FTELLU_KERNEL_VSINI = Const('FTELLU_KERNEL_VSINI', value=None, dtype=float,
-                             source=__NAME__)
+                            source=__NAME__)
 
 # The number of iterations to use in the reconstructed absorption calculation
 FTELLU_FIT_ITERS = Const('FTELLU_FIT_ITERS', value=None, dtype=int,
@@ -1605,11 +1606,11 @@ FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
 TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
-                            source=__NAME__)
+                          source=__NAME__)
 
 # the fiber required for input template files
 TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None, dtype=str,
-                              source=__NAME__)
+                            source=__NAME__)
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
@@ -1654,11 +1655,25 @@ CCF_MASK_WIDTH = Const('CCF_MASK_WIDTH', value=None, dtype=float,
 
 # Define the width of the CCF range [km/s]
 CCF_DEFAULT_WIDTH = Const('CCF_DEFAULT_WIDTH', value=None, dtype=float,
-                       source=__NAME__, minimum=0.0)
+                          source=__NAME__, minimum=0.0)
 
 # Define the computations steps of the CCF [km/s]
 CCF_DEFAULT_STEP = Const('CCF_DEFAULT_STEP', value=None, dtype=float,
-                       source=__NAME__, minimum=0.0)
+                         source=__NAME__, minimum=0.0)
+
+#   The value of the noise for wave dv rms calculation
+#       snr = flux/sqrt(flux + noise^2)
+CCF_NOISE_SIGDET = Const('CCF_NOISE_SIGDET', value=None, dtype=float,
+                         source=__NAME__, minimum=0.0)
+
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+CCF_NOISE_BOXSIZE = Const('CCF_NOISE_BOXSIZE', value=None, dtype=int,
+                          source=__NAME__, minimum=0.0)
+
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+CCF_NOISE_THRES = Const('CCF_NOISE_THRES', value=None, dtype=float,
+                        source=__NAME__, minimum=0.0)
 
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
@@ -1696,10 +1711,6 @@ CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__)
 #     if 1 then we have an emission line
 CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
                      options=[0, 1])
-
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#     to calculate the CCF and RV
-CCF_N_ORD_MAX = Const('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS

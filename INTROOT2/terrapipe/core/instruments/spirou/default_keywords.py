@@ -969,11 +969,6 @@ KW_WFP_FWHM.set(key='WFPFWHM', comment='FWHM of wave sol FP CCF [km/s]')
 KW_WFP_CONTRAST = KW_WFP_CONTRAST.copy(__NAME__)
 KW_WFP_CONTRAST.set(key='WFPCONT', comment='wave sol FP Contrast of CCF (%)')
 
-# Max count/pixel of the wave FP file CCF
-KW_WFP_MAXCPP = KW_WFP_MAXCPP.copy(__NAME__)
-KW_WFP_MAXCPP.set(key='WFPMACPP',
-                  comment='wave sol FP max count/pixel of CCF (e-)')
-
 # Mask for the wave FP file CCF
 KW_WFP_MASK = KW_WFP_MASK.copy(__NAME__)
 KW_WFP_MASK.set(key='WFPMASK', comment='wave sol FP Mask filename')
