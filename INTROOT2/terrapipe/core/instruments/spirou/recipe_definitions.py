@@ -634,7 +634,8 @@ cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 helpstr=Help['FILES_HELP'] + Help['CCF_FILES_HELP'],
                 limit=1)
 cal_ccf.set_kwarg(name='--mask', dtype='file', default_ref='CCF_DEFAULT_MASK',
-                  helpstr=Help['CCF_MASK_HELP'])
+                  helpstr=Help['CCF_MASK_HELP'], path='WAVE_CCF_MASK_PATH',
+                  files=sf.other_ccf_mask_file)
 cal_ccf.set_kwarg(name='--rv', dtype=float, default=0.0,
                   helpstr=Help['CCF_RV_HELP'])
 cal_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
