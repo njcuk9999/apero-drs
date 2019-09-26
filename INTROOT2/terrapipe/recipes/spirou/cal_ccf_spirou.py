@@ -170,18 +170,13 @@ def __main__(recipe, params):
             targs = [infile, fiber]
             image = velocity.remove_telluric_domain(params, recipe, *targs)
         else:
-            image = infile.data
-
-        # ------------------------------------------------------------------
-        #   Remove and fill NaN values (with smooth convolved values)
-        # ------------------------------------------------------------------
-        image = velocity.fill_e2ds_nans(params, image)
+            image = np.array(infile.data)
 
         # ------------------------------------------------------------------
         # Compute CCF on science channel
         # ------------------------------------------------------------------
         cargs = [image, blaze, wprops, bprops, fiber]
-        rv_props1 = velocity.compute_ccf_science(params, *cargs)
+        rv_props1 = velocity.compute_ccf_science(params, infile, *cargs)
 
         # ------------------------------------------------------------------
         # Compute CCF on reference fiber (FP only)
