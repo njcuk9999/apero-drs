@@ -1017,6 +1017,8 @@ class DrsArgument(object):
         self.helpstr = kwargs.get('helpstr', '')
         # get files
         self.files = kwargs.get('files', [])
+        # define the input path for files
+        self.path = kwargs.get('path', None)
         # get limit
         self.limit = kwargs.get('limit', None)
         # get limits
@@ -1187,11 +1189,19 @@ class DrsArgument(object):
         self.helpstr = copy.deepcopy(argument.helpstr)
         # get files
         self.files = []
-        for drsfile in argument.files:
-            # copy attributes from drsfile
-            newdrsfile = drsfile.completecopy(drsfile)
-            # append to files
-            self.files.append(newdrsfile)
+        # deal with files as a list
+        if isinstance(argument.files, list):
+            for drsfile in argument.files:
+                # copy attributes from drsfile
+                newdrsfile = drsfile.completecopy(drsfile)
+                # append to files
+                self.files.append(newdrsfile)
+        # else assume file is a single file (but put it into a list any way)
+        else:
+            drsfile = argument.files
+            self.files = [drsfile.completecopy(drsfile)]
+        # copy the path
+        self.path = copy.deepcopy(argument.path)
         # get limit
         if argument.limit is None:
             self.limit = None
