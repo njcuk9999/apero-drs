@@ -339,13 +339,13 @@ class DrsInputFile:
         # if 1, 2 and 3 pass return True
         return True, None
 
-    def has_correct_extension(self, ext=None):
+    def has_correct_extension(self, filename=None, filetype=None, argname=None):
         return True, None
 
-    def header_keys_exist(self, header=None):
+    def hkeys_exist(self, header=None, filename=None, argname=None):
         return True, None
 
-    def has_correct_header_keys(self, header=None):
+    def has_correct_hkeys(self, header=None, argname=None, log=True):
         return True, None
 
     # -------------------------------------------------------------------------
@@ -385,6 +385,15 @@ class DrsInputFile:
 
     def check_file_header(self, quiet=False):
         return True, TextEntry('')
+
+    # -------------------------------------------------------------------------
+    # read/write methods
+    # -------------------------------------------------------------------------
+    def read(self, ext=None, check=False):
+        pass
+
+    def write(self):
+        pass
 
     # -------------------------------------------------------------------------
     # user functions
