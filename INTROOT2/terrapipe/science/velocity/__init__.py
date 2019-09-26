@@ -16,17 +16,9 @@ __all__ = []
 # =============================================================================
 # Define functions
 # =============================================================================
+compute_ccf_fp = general.compute_ccf_fp
+
 compute_ccf_science = general.compute_ccf_science
-
-coravelation = general.coravelation
-
-delta_v_rms_2d = general.delta_v_rms_2d
-
-fill_e2ds_nans = general.fill_e2ds_nans
-
-fit_ccf = general.fit_ccf
-
-get_ccf_mask = general.get_ccf_mask
 
 measure_fp_peaks = general.measure_fp_peaks
 
