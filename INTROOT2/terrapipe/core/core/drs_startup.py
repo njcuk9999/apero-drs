@@ -1303,7 +1303,8 @@ def _get_arg_strval(value):
     :param value: object, the value to be printed
     :return out: string, the string representation of "object"
     """
-    drs_file_type = drs_file.DrsFitsFile
+    drs_fitsfile_type = drs_file.DrsFitsFile
+    drs_file_type = drs_file.DrsInputFile
 
     # if list is empty --> return
     if len(value) == 0:
@@ -1317,13 +1318,22 @@ def _get_arg_strval(value):
         return value
 
     # if we have a list of list we may have a DrsFile return
-    if type(value[1][0]) == drs_file_type:
+    if isinstance(value[1][0], drs_fitsfile_type):
         out = []
         for it in range(len(value[0])):
             filename = os.path.basename(value[0][it])
             kind = value[1][it].name
             out.append('[{0}] {1}'.format(kind, filename))
         return out
+    elif isinstance(value[1][0], drs_file_type):
+        out = []
+        for it in range(len(value[0])):
+            filename = os.path.basename(value[0][it])
+            kind = value[1][it].name
+            out.append('[{0}] {1}'.format(kind, filename))
+        return out
+    else:
+        return []
 
 
 def _get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
