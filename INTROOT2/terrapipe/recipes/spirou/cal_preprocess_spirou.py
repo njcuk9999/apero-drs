@@ -84,6 +84,7 @@ def main(directory=None, files=None, **kwargs):
     return core.end_main(params, llmain, recipe, success, outputs='None')
 
 
+
 def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
@@ -160,6 +161,7 @@ def __main__(recipe, params):
             # shift image
             image = np.roll(image, [shiftdy], axis=0)
             image = np.roll(image, [shiftdx], axis=1)
+
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
