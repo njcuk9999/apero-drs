@@ -616,6 +616,11 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
                          inrecipe=input_recipe)
         # deal with skip
         skip, reason = skip_run_object(params, run_object)
+        # deal with passing debug
+        if params['DRS_DEBUG'] > 0:
+            dargs = [run_object.runstring, params['DRS_DEBUG']]
+            run_object.runstring = '{0} --debug={1}'.format(*dargs)
+            run_object.update()
         # append to list
         if not skip:
             # log that we have validated run
@@ -664,13 +669,7 @@ def skip_run_object(params, runobj):
         elif params[runobj.skipname]:
             # deal with adding skip to recipes
             if 'skip' in recipe.kwargs:
-                if '--skip' not in runstring:
-                    runobj.runstring = '{0} --skip=True'.format(runstring)
-                    runobj.update()
-                    # debug log
-                    WLOG(params, 'debug', TextEntry('90-503-00006'))
-                    return False, None
-                else:
+                if '--skip' in runstring:
                     # debug log
                     WLOG(params, 'debug', TextEntry('90-503-00007'))
                     return False, None
@@ -905,7 +904,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
-    sequence[1].process_adds()
+    sequence[1].process_adds(params)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # storage for new runs to add
@@ -1060,8 +1059,8 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
             wmsg = 'ID{0:05d}|C{1:02d}/{2:02d}| {3}'.format(*wargs)
         else:
             wmsg = 'ID{0:05d}| {1}'.format(priority, run_item.runstring)
-        # deal with a debug run
-        if params['DEBUG']:
+        # deal with a test run
+        if params['TEST_RUN']:
             # log which core is being used (only if using multiple cores)
             if cores > 1:
                 WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
