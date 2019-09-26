@@ -2,6 +2,51 @@ Changelog
 =========
 
 
+0.5.079 (2019-09-26)
+--------------------
+- Tools.module.setup.drs_reprocess.py - take out pushing skip to recipes
+  and add in pushing debug to recipes, rename DEBUG --> TEST_RUN to do a
+  test run. [Neil Cook]
+- Sciecne.velocity.general.py - new ccf calculation functions + work on
+  ccf for science/fp. [Neil Cook]
+- Science.preprocessing.detectory.py - remove unused functions/imports.
+  [Neil Cook]
+- Science.calib.wave.py - clean up and move ccf stuff to velocity
+  module. [Neil Cook]
+- Cal_preprocess_spirou.py - pep8 empty line clean up. [Neil Cook]
+- Cal_ccf_spirou.py - remove nan filling and copy image from infile when
+  tellurics are not removed. [Neil Cook]
+- Update language database. [Neil Cook]
+- Add Etiennes ccf mask for Gl699. [Neil Cook]
+- Update run files. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add mask file
+  definition and add path in --mask kwarg. [Neil Cook]
+- Core.instruments.*.pseudo_const.py - add FIBER_CCF (defines what is a
+  science fiber and what is a reference fiber for CCF calculation. [Neil
+  Cook]
+- Core.instruments.*.default_constants.py + default_keywords.py -
+  fix/modify constants/keywords for wavecff/ccf. [Neil Cook]
+- Core.core.drs_startup.py - _get_arg_strval: deal with DrsInputFile as
+  well as DrsFitsFile. [Neil Cook]
+- Core.core.drs_recipe.py - add display_func and deal with no drs_files
+  added to files when dtype=file/files, add function _check_arg_path.
+  [Neil Cook]
+- Core.core.drs_log.py - find_param: add required and default inputs
+  (and allow them to return without error) [Neil Cook]
+- Core.core.drs_file.py - add methods has_correct_extension,
+  header_keys_exist, has_correct_header_keys, read, write for
+  DrsInputFile. [Neil Cook]
+- Core.core.drs_argument.py - need to deal with drsfiles being a single
+  drsfile + add attribute "path" [Neil Cook]
+- Core.instruments.spirou.default_constants.py - do not force get the
+  wave solution from the calibDB (use header) [Neil Cook]
+- Core.instruments.spirou.default_constants.py - default wave mode now C
+  Lovis method. [Neil Cook]
+- Science.telluric.general.py - for drs_data.load_text_file must define
+  dtype. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.078 (2019-09-25)
 --------------------
 - Misc.mk_template_s1d.py - etiennes code to be added to mk_template.
