@@ -335,7 +335,6 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WFP_DRIFT'] = wfp_drift
     wprops['WFP_FWHM'] = wfp_fwhm
     wprops['WFP_CONTRAST'] = wfp_contrast
-    wprops['WFP_MAXCPP'] = wfp_maxcpp
     wprops['WFP_MASK'] = wfp_mask
     wprops['WFP_LINES'] = wfp_lines
     wprops['WFP_TARG_RV'] = wfp_target_rv
@@ -343,7 +342,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WFP_STEP'] = wfp_step
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
-            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MAXCPP', 'WFP_MASK',
+            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
             'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP', 'WAVEINST',
             'NBPIX']
     wprops.set_sources(keys, func_name)
@@ -488,7 +487,6 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     wprops['WFP_DRIFT'] = None
     wprops['WFP_FWHM'] = None
     wprops['WFP_CONTRAST'] = None
-    wprops['WFP_MAXCPP'] = None
     wprops['WFP_MASK'] = None
     wprops['WFP_LINES'] = None
     wprops['WFP_TARG_RV'] = None
@@ -497,7 +495,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'NBPIX',
             'COEFFS',
-            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MAXCPP', 'WFP_MASK',
+            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
             'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
     wprops.set_sources(keys, func_name)
 
