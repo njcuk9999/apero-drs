@@ -528,7 +528,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
                 mask0 = np.zeros_like(mask)
                 # loop around kwargs[kwarg] values (has to be logic==or here)
                 for value in kwargs[kwarg]:
-                    mask0 |= (index[kwarg] == value)
+                    mask0 |= (index[kwarg] == value.strip())
             else:
                 mask0 = (index[kwarg] == kwargs[kwarg])
             # --------------------------------------------------------------
