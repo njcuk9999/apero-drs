@@ -473,6 +473,16 @@ class Logger:
         for message in messages:
             printlog(self, params, message, key='all', colour=colour)
 
+    def logmessage(self, params, messages):
+        # get logfilepath
+        logfilepath = get_logfilepath(self, params)
+        # check whether message is string (if so make a list)
+        if isinstance(messages, str):
+            messages = [messages]
+        # loop around messages
+        for message in messages:
+            writelog(self, params, message, key='all', logfilepath=logfilepath)
+
 
 class Printer():
     """Print things to stdout on one line dynamically"""
