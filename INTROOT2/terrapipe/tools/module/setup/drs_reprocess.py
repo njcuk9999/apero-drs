@@ -512,11 +512,27 @@ def display_errors(params, outlist):
                  colour='red', wrap=False)
             WLOG(params, '', params['DRS_HEADER'], colour='red')
             WLOG(params, '', '', colour='red')
-            WLOG(params, 'warning', outlist[key]['ERROR'], colour='red',
-                 wrap=False)
+            # --------------------------------------------------------------
+            # deal with list from out error
+            for error in outlist[key]['ERROR']:
+                if isinstance(error, list):
+                    strerror = '{1}'.format(*error)
+                else:
+                    strerror = str(error)
+                WLOG.printmessage(params, strerror, colour='red')
+                WLOG.logmessage(params, strerror)
             WLOG(params, '', '', colour='red')
-            WLOG.printmessage(params, outlist[key]['TRACEBACK'], colour='red')
+            # --------------------------------------------------------------
+            # deal with list from out traceback
+            for tback in outlist[key]['TRACEBACK']:
+                if isinstance(tback, list):
+                    strtback = '{1}'.format(*tback)
+                else:
+                    strtback = str(tback)
+                WLOG.printmessage(params, strtback, colour='red')
+                WLOG.logmessage(params, strtback)
             WLOG(params, '', '', colour='red')
+            # --------------------------------------------------------------
             WLOG(params, '', params['DRS_HEADER'], colour='red')
     WLOG(params, '', '')
 
@@ -1117,7 +1133,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                     string_traceback = ''
                 emsgs = [textdict['00-503-00004'].format(priority)]
                 for emsg in str(e).split('\n'):
-                    emsgs.append('\t' + emsg)
+                    emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
@@ -1136,7 +1152,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                     string_traceback = ''
                 emsgs = [textdict['00-503-00005'].format(priority)]
                 for emsg in e.errormessage.split('\n'):
-                    emsgs.append('\t' + emsg)
+                    emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
