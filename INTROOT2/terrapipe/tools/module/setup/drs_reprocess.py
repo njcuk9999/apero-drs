@@ -621,6 +621,12 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
             dargs = [run_object.runstring, params['DRS_DEBUG']]
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
             run_object.update()
+
+        # deal with extra arguments passed to add via add_extra
+        if input_recipe is not None and len(input_recipe.extras) > 0:
+            for extra in input_recipe.extras:
+                run_object.runstring += ' {0}'.format(extra)
+            run_object.update()
         # append to list
         if not skip:
             # log that we have validated run
