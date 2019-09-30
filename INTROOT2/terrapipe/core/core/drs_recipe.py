@@ -109,6 +109,8 @@ class DrsRecipe(object):
         self.args = OrderedDict()
         self.kwargs = OrderedDict()
         self.specialargs = OrderedDict()
+        # list of strings of extra arguments to add / overwrite set values
+        self.extras = []
         # define arg list
         self.arg_list = []
         self.str_arg_list = None
@@ -488,6 +490,8 @@ class DrsRecipe(object):
         for sargname in recipe.specialargs.keys():
             self.specialargs[sargname] = DrsArgument()
             self.specialargs[sargname].copy(recipe.specialargs[sargname])
+        for row in recipe.extras:
+            self.extras.append(str(recipe.extras[row]))
         # define arg list
         self.arg_list = list(recipe.arg_list)
         # get string arg list (may be None)
@@ -521,8 +525,7 @@ class DrsRecipe(object):
     # =========================================================================
     def generate_runs(self, params, table, filters=None, allowedfibers=None):
         # set function name
-        func_name = display_func(params, 'generate_runs', __NAME__,
-                                 class_name='DrsRecipe')
+        func_name = display_func(params, 'generate_runs', __NAME__, 'DrsRecipe')
         # need to find files in table that match each argument
         #    filedict is a dictionary of arguments each for
         #    each drsfile (if filelogic=exclusive)
@@ -546,6 +549,29 @@ class DrsRecipe(object):
         drs_log.Printer(None, None, '')
         # return the runlist
         return runlist
+
+    def add_extra(self, params, arguments):
+        # set function name
+        func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
+        # loop around arguments
+        for argname in arguments:
+            # get value
+            value = arguments[argname]
+            # check if value is a reference to a params value
+            if isinstance(value, str):
+                if value in params:
+                    value = params[value]
+            # check for argument in args
+            if argname in self.args:
+                self.extras.append(str(value))
+            # check for argument in kwargs
+            elif argname in self.kwargs:
+                exargs = [self.kwargs[argname].argname, str(value)]
+                self.extras.append('{0} {1}'.format(*exargs))
+            # else raise an error
+            else:
+                eargs = [argname, value, func_name]
+                WLOG(params, 'error', TextEntry('00-503-00012', args=eargs))
 
     # =========================================================================
     # Private Methods (Not to be used externally to spirouRecipe.py)
@@ -1061,6 +1087,7 @@ class DrsRunSequence(object):
         self.instrument = instrument
         self.sequence = []
         self.adds = []
+        self.arguments = dict()
 
     def __str__(self):
         return 'DrsRunSequence[{0}]'.format(self.name)
@@ -1079,8 +1106,9 @@ class DrsRunSequence(object):
         pconst = constants.pload(self.instrument)
         filemod = pconst.FILEMOD()
         recipemod = pconst.RECIPEMOD()
-
+        # storage of sequences
         self.sequence = []
+        # loop around the added recipes to sequence
         for add in self.adds:
             recipe, kwargs = add
             # set up new recipe
@@ -1097,7 +1125,7 @@ class DrsRunSequence(object):
             # add filters
             frecipe = self.add_filters(frecipe, kwargs)
             # update file definitions
-            frecipe = self.update_files(frecipe, kwargs)
+            frecipe = self.update_args(params, frecipe, kwargs)
             # update master
             frecipe.master = kwargs.get('master', frecipe.master)
             # add to sequence storage
@@ -1114,53 +1142,45 @@ class DrsRunSequence(object):
         # return frecipe
         return frecipe
 
-    def update_files(self, frecipe, fargs):
+    def update_args(self, params, frecipe, fargs):
+        # deal with arguments overwrite
+        if 'arguments' in fargs:
+            frecipe.add_extra(params, fargs['arguments'])
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
-        for argname in frecipe.args:
+        frecipe.args = self._update_arg(frecipe.args, fargs)
+        # ------------------------------------------------------------------
+        # update kwargs - loop around positional arguments
+        frecipe.kwargs = self._update_arg(frecipe.kwargs, fargs)
+        # ------------------------------------------------------------------
+        # return recipes
+        return frecipe
+
+    def _update_arg(self, arguments, fargs):
+        # loop around each argument
+        for argname in arguments:
             # if positional argument in function args (fargs) then we can
             #   update the value
             if argname in fargs:
                 # get the value of each key
                 value = fargs[argname]
-                # if the value is None the frecipe arg should be set to None
-                if value is None:
-                    # set the value to None
-                    frecipe.args[argname].files = None
                 # if we have a file or files we need to copy them properly
-                elif frecipe.args[argname].dtype in ['files', 'file']:
-                    # set up empty set
-                    frecipe.args[argname].files = []
-                    # loop around files
-                    for drsfile in value:
-                        # copy file
-                        drsfilecopy = drsfile.completecopy(drsfile)
-                        # append to new list
-                        frecipe.args[argname].files.append(drsfilecopy)
-        # ------------------------------------------------------------------
-        # update kwargs - loop around positional arguments
-        for kwargname in frecipe.kwargs:
-            # if positional argument in function args (fargs) then we can
-            #   update the value
-            if kwargname in fargs:
-                # get the value of each key
-                value = fargs[kwargname]
-                # if the value is None the frecipe arg should be set to None
-                if value is None:
-                    # set the value to None
-                    frecipe.kwargs[kwargname].files = None
-                # if we have a file or files we need to copy them properly
-                elif frecipe.kwargs[kwargname].dtype in ['files', 'file']:
-                    # set up empty set
-                    frecipe.kwargs[kwargname].files = []
-                    # loop around files
-                    for drsfile in value:
-                        # copy file
-                        drsfilecopy = drsfile.completecopy(drsfile)
-                        # append to new list
-                        frecipe.kwargs[kwargname].files.append(drsfilecopy)
-        # return recipes
-        return frecipe
+                if arguments[argname].dtype in ['files', 'file']:
+                    # if the value is None the frecipe arg should be set to None
+                    if value is None:
+                        # set the value to None
+                        arguments[argname].files = None
+                    else:
+                        # set up empty set
+                        arguments[argname].files = []
+                        # loop around files
+                        for drsfile in value:
+                            # copy file
+                            drsfilecopy = drsfile.completecopy(drsfile)
+                            # append to new list
+                            arguments[argname].files.append(drsfilecopy)
+        # return the arguments
+        return arguments
 
 
 class DrsRecipeException(Exception):
@@ -1457,15 +1477,20 @@ def find_run_files(params, recipe, table, args, filters=None,
                 # check whether tabledict means that file is valid for this
                 #   infile
                 valid1 = infile.check_table_keys(params, tabledict)
+                # do not continue if valid1 not True
+                if not valid1:
+                    continue
                 # check whether filters are found
                 valid2 = infile.check_table_keys(params, tabledict,
                                                  rkeys=filters)
+                # do not continue if valid2 not True
+                if not valid2:
+                    continue
                 # if valid then add to filedict for this argnameand drs file
-                if valid1 and valid2:
-                    if arg.filelogic == 'exclusive':
-                        filedict[argname][drsfile.name].append(table[it])
-                    else:
-                        filedict[argname]['all'].append(table[it])
+                if arg.filelogic == 'exclusive':
+                    filedict[argname][drsfile.name].append(table[it])
+                else:
+                    filedict[argname]['all'].append(table[it])
     outfiledict = OrderedDict()
     # convert each appended table to a single table per file
     for argname in filedict:
@@ -1557,6 +1582,12 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
             cond = True
             # set used groups
             usedgroups = dict()
+            # get drs table
+            drstable = rundict[arg0][drsfile]
+            # get group column from drstable
+            groups = np.array(drstable['GROUPS']).astype(int)
+            # get unique groups from groups
+            ugroups = np.sort(np.unique(groups))
             # keep matching until condition met
             while cond:
                 # print statement
@@ -1567,7 +1598,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 if rundict[arg0][drsfile] is None:
                     break
                 # get first group
-                nargs = [arg0, rundict[arg0][drsfile], usedgroups]
+                nargs = [arg0, drstable, usedgroups, groups, ugroups]
                 gtable0, usedgroups = _find_next_group(*nargs)
                 # check for grouptable unset --> skip
                 if gtable0 is None:
@@ -1579,9 +1610,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 # _match_groups raises exception when finished so need a
                 #   try/except here to catch it
                 try:
-                    new_run = _gen_run(params, rundict, runorder,
-                                       nightname, meantime, arg0,
-                                       gtable0, file_col)
+                    new_run = _gen_run(params, rundict, runorder, nightname,
+                                       meantime, arg0, gtable0, file_col)
                 # catch exception
                 except DrsRecipeException:
                     break
@@ -1726,7 +1756,7 @@ def _get_arg(recipe, argname):
 
 def _group_drs_files(params, drstable, **kwargs):
     # set function name
-    func_name = display_func(params, 'group_drs_files', __NAME__)
+    func_name = display_func(params, '_group_drs_files', __NAME__)
     # get properties from params
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
@@ -1760,7 +1790,7 @@ def _group_drs_files(params, drstable, **kwargs):
             valid |= nightmask
             continue
         # set invalid sequence numbers to 1
-        sequence_mask = sequence_col == ''
+        sequence_mask = sequence_col.astype(str) == ''
         sequence_col[sequence_mask] = 1
         # get the sequence number
         sequences = sequence_col[nightmask].astype(int)
@@ -1937,28 +1967,47 @@ def _find_first_filearg(params, runorder, argdict, kwargdict):
     return None
 
 
-def _find_next_group(argname, drstable, usedgroups):
+# def _find_next_group(argname, drstable, usedgroups, groups, ugroups):
+#     # make sure argname is in usedgroups
+#     if argname not in usedgroups:
+#         usedgroups[argname] = []
+#
+#     arggroup = list(usedgroups[argname])
+#     # loop around unique groups
+#     for group in ugroups:
+#         # if used skip
+#         if group in arggroup:
+#             continue
+#         else:
+#             # find rows in this group
+#             mask = groups == group
+#             # add group to used groups
+#             usedgroups[argname].append(group)
+#             # return masked table and usedgroups
+#             return Table(drstable[mask]), usedgroups
+#     # return None if all groups used
+#     return None, usedgroups
+
+
+def _find_next_group(argname, drstable, usedgroups, groups, ugroups):
     # make sure argname is in usedgroups
     if argname not in usedgroups:
         usedgroups[argname] = []
-    # get group column from drstable
-    groups = np.array(drstable['GROUPS']).astype(int)
-    # get unique groups from groups
-    ugroups = np.unique(groups)
-    # loop around unique groups
-    for group in np.sort(ugroups):
-        # if used skip
-        if group in usedgroups[argname]:
-            continue
-        else:
-            # find rows in this group
-            mask = groups == group
-            # add group to used groups
-            usedgroups[argname].append(group)
-            # return masked table and usedgroups
-            return Table(drstable[mask]), usedgroups
-    # return None if all groups used
-    return None, usedgroups
+    # get the arg group for this arg name
+    arggroup = list(usedgroups[argname])
+    # find all ugroups not in arggroup
+    mask = np.in1d(ugroups, arggroup)
+    # deal with all groups already found
+    if np.sum(~mask) == 0:
+        return None, usedgroups
+    # get the next group
+    group = ugroups[~mask][0]
+    # find rows in this group
+    mask = groups == group
+    # add group to used groups
+    usedgroups[argname].append(group)
+    # return masked table and usedgroups
+    return Table(drstable[mask]), usedgroups
 
 
 def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
