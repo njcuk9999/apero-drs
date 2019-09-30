@@ -107,7 +107,7 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
-    params.set('DEBUG', False)
+    params.set('TEST_RUN', False)
     params.set('CORES', params['INPUTS']['CORES'])
     # get the telluric star names
     objnames, _ = telluric.get_whitelist(params)
@@ -170,44 +170,44 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # step 3: Run mk_obj_template on each telluric star obj name
     # -------------------------------------------------------------------------
-    # # arguments are: object names
-    # gargs = [objnames]
-    # gkwargs = dict()
-    # gkwargs['--program'] = 'DBMKTEMP'
-    # # generate run table (dictionary from reprocessing)
-    # runtable = drs_reprocess.generate_run_table(params, obj_mk_template, *gargs,
-    #                                             **gkwargs)
-    # # Generate run list
-    # runlist = drs_reprocess.generate_run_list(params, None, runtable)
-    # # Process run list
-    # outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
-    # # display errors
-    # if has_errors:
-    #     drs_reprocess.display_errors(params, outlist)
-    #     # terminate here
-    #     eargs = [obj_mk_template.name, recipe.name]
-    #     WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
-    #
-    # # -------------------------------------------------------------------------
-    # # step 4: Run mk_tellu on all telluric stars
-    # # -------------------------------------------------------------------------
-    # # arguments are: directory and telluric files
-    # gargs = [night_names, tellu_basenames]
-    # gkwargs = dict()
-    # gkwargs['--program'] = 'DBMKTELLU2'
-    # # generate run table (dictionary from reprocessing)
-    # runtable = drs_reprocess.generate_run_table(params, obj_mk_tellu, *gargs,
-    #                                             **gkwargs)
-    # # Generate run list
-    # runlist = drs_reprocess.generate_run_list(params, None, runtable)
-    # # Process run list
-    # outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
-    # # display errors
-    # if has_errors:
-    #     drs_reprocess.display_errors(params, outlist)
-    #     # terminate here
-    #     eargs = [obj_mk_tellu.name, recipe.name]
-    #     WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
+    # arguments are: object names
+    gargs = [objnames]
+    gkwargs = dict()
+    gkwargs['--program'] = 'DBMKTEMP'
+    # generate run table (dictionary from reprocessing)
+    runtable = drs_reprocess.generate_run_table(params, obj_mk_template, *gargs,
+                                                **gkwargs)
+    # Generate run list
+    runlist = drs_reprocess.generate_run_list(params, None, runtable)
+    # Process run list
+    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    # display errors
+    if has_errors:
+        drs_reprocess.display_errors(params, outlist)
+        # terminate here
+        eargs = [obj_mk_template.name, recipe.name]
+        WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
+
+    # -------------------------------------------------------------------------
+    # step 4: Run mk_tellu on all telluric stars
+    # -------------------------------------------------------------------------
+    # arguments are: directory and telluric files
+    gargs = [night_names, tellu_basenames]
+    gkwargs = dict()
+    gkwargs['--program'] = 'DBMKTELLU2'
+    # generate run table (dictionary from reprocessing)
+    runtable = drs_reprocess.generate_run_table(params, obj_mk_tellu, *gargs,
+                                                **gkwargs)
+    # Generate run list
+    runlist = drs_reprocess.generate_run_list(params, None, runtable)
+    # Process run list
+    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    # display errors
+    if has_errors:
+        drs_reprocess.display_errors(params, outlist)
+        # terminate here
+        eargs = [obj_mk_tellu.name, recipe.name]
+        WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
 
     # ----------------------------------------------------------------------
     # End of main code
