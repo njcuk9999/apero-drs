@@ -1098,6 +1098,9 @@ class DrsFitsFile(DrsInputFile):
                 valid &= valid1
                 dargs = [key, valid, rvalues]
                 WLOG(params, 'debug', TextEntry('90-008-00003', args=dargs))
+                # if we haven't found a key the we can stop here
+                if not valid:
+                    return False
             else:
                 # Log that key was not found
                 dargs = [key, ', '.join(list(filedict.keys()))]
