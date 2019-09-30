@@ -779,11 +779,11 @@ def compute_ccf_science(params, infile, image, blaze, wprops, bprops,
     props['RV'] = ccf_rv
     props['CONTRAST'] = ccf_contrast
     props['FWHM'] = ccf_fwhm
-    props['CCF_RES'] = ccf_res
-    props['CCF_FIT'] = ccf_fit
+    props['MED_CCF_RES'] = ccf_res
+    props['MED_CCF_FIT'] = ccf_fit
     props['RV_NOISE'] = rv_noise
     # set the source
-    keys = ['MED_CCF', 'RV', 'CONTRAST', 'FWHM', 'CCF_RES', 'CCF_FIT',
+    keys = ['MED_CCF', 'RV', 'CONTRAST', 'FWHM', 'MED_CCF_RES', 'MED_CCF_FIT',
             'RV_NOISE']
     props.set_sources(keys, func_name)
     # add constants to props
@@ -986,6 +986,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_all_fit = []
     ccf_all_results = []
     ccf_lines = []
+
+    # TODO: Remove test plot
+    import matplotlib.pyplot as plt
+    plt.vlines(mask_centers, 0, np.nanmax(image), linestyles='--', colors='0.5')
+
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1051,6 +1056,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         fargs = [order_num, rv_ccf, ccf_ord, fit_type]
         ccf_res_ord, ccf_fit_ord = fit_ccf(params, *fargs)
         # ------------------------------------------------------------------
+        # TODO: Remove test plot
+        wave_tmp = mask_centers * wave_shifts[len(rv_ccf)//2]
+        plt.plot(wave_tmp, spline_sp(wave_tmp))
+
+
 
         # TODO: Need Etienne's help this ccf_noise is not the same as
         # TODO:   Francois one - his gives a sigdet per rv element
@@ -1058,7 +1068,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # calculate the residuals of the ccf fit
         res = ccf_ord - ccf_fit_ord
         # calculate the CCF noise per order
-        ccf_noise = np.nanstd(res)
+        ccf_noise = np.array(res)
         # ------------------------------------------------------------------
         # append ccf to storage
         ccf_all.append(ccf_ord)
@@ -1066,6 +1076,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         ccf_all_results.append(ccf_res_ord)
         ccf_noise_all.append(ccf_noise)
         ccf_lines.append(numlines)
+
+    # TODO: Remove test plot
+    plt.show()
+    plt.close()
+
     # store outputs in param dict
     props = ParamDict()
     props['RV_CCF'] = rv_ccf
