@@ -280,6 +280,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # extract keys from header
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
+    wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
+                                        has_default=True, default=0.0)
     # get the wfp keys
     wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
                                          required=False)
@@ -331,6 +333,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wavemap
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
+    wprops['WAVETIME'] = wavetime
     # add the wfp keys
     wprops['WFP_DRIFT'] = wfp_drift
     wprops['WFP_FWHM'] = wfp_fwhm
@@ -342,7 +345,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WFP_STEP'] = wfp_step
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
-            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+            'WAVETIME', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
             'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP', 'WAVEINST',
             'NBPIX']
     wprops.set_sources(keys, func_name)
@@ -641,9 +644,9 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
     wprops.set_sources(keys, func_name)
     # update ccf properties
-    wprops['WFP_DRIFT'] = rvprops['CCF_FIT_COEFFS'][1]
-    wprops['WFP_FWHM'] = rvprops['FWHM']
-    wprops['WFP_CONTRAST'] = rvprops['CONTRAST']
+    wprops['WFP_DRIFT'] = rvprops['MEAN_CCF_COEFFS'][1]
+    wprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
+    wprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
     wprops['WFP_MASK'] = rvprops['CCF_MASK']
     wprops['WFP_LINES'] = rvprops['TOT_LINE']
     wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
