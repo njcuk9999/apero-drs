@@ -159,8 +159,31 @@ def __main__(recipe, params):
     cargs = [object_filenames, infile, mprops, nprops, fiber]
     cprops = telluric.make_template_cubes(params, recipe, *cargs)
     # deal with no good files
-    if cprops['BIG_CUBE_MED'] is None:
+    if cprops['MEDIAN'] is None:
         return core.return_locals(params, locals())
+    # ----------------------------------------------------------------------
+    # Make s1d cubes
+    # ----------------------------------------------------------------------
+    s1d_cubes = []
+    # get objects that match this object name
+    for s1d_filetype in infile.s1d:
+        # log progress
+        WLOG(params, 'info', TextEntry('40-019-00038', args=[s1d_filetype]))
+        # Get filetype definition
+        dkwargs = dict(instrument=params['INSTRUMENT'], kind='red')
+        s1d_inst = core.get_file_definition(s1d_filetype, **dkwargs)
+        # get new copy of file definition
+        s1d_file = s1d_inst.newcopy(recipe=recipe, fiber=fiber)
+        # get s1d filenames
+        fkwargs = dict(kind='red', fiber=fiber, KW_OBJNAME=objname,
+                       KW_OUTPUT=s1d_filetype)
+        s1d_filenames = drs_fits.find_files(params, **fkwargs)
+        # make s1d cube
+        margs = [s1d_filenames, s1d_file, fiber]
+        s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
+        # append to storage
+        s1d_cubes.append(s1d_props)
+
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
@@ -187,8 +210,13 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Write cubes and median to file
     # ----------------------------------------------------------------------
+    # write e2ds cubes + median
     margs = [infile, cprops, filetype, fiber, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
+    # write s1d cubes + median
+    for it, s1d_props in enumerate(s1d_cubes):
+        sargs = [infile, s1d_props, infile.s1d[it], fiber, qc_params]
+        telluric.mk_1d_template_write(params, recipe, *sargs)
 
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
