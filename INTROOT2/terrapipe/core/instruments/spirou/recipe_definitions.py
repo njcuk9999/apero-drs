@@ -774,7 +774,9 @@ obj_mk_template.description = Help['MKTEMP_DESC']
 obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
 obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
                             TELLU_BIGCUBE=sf.out_tellu_bigcube,
-                            TELLU_BIGCUBE0=sf.out_tellu_bigcube0)
+                            TELLU_BIGCUBE0=sf.out_tellu_bigcube0,
+                            TELLU_TEMP_S1D=sf.out_tellu_s1d_template,
+                            TELLU_BIGCUBE_S1D=sf.out_tellu_s1d_bigcube)
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
 obj_mk_template.set_kwarg(name='-filetype', dtype=str,
