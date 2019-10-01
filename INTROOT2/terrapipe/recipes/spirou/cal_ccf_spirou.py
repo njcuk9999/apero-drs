@@ -181,6 +181,29 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Compute CCF on reference fiber (FP only)
         # ------------------------------------------------------------------
+        if has_fp:
+            # find the c fiber file
+            infile_r = velocity.locate_reference_file(params, recipe, infile)
+            # get the wave solution associated with this file
+            wprops_r = wave.get_wavesolution(params, recipe, fiber='C',
+                                             infile=infile_r)
+            # --------------------------------------------------------------
+            # deal with differing wavelength solutions (between science and
+            #    reference)
+            if wprops['WAVETIME'] != wprops_r['WAVETIME']:
+                # log warning
+                wargs = [wprops_r['WAVETIME'], wprops['WAVETIME'],
+                         wprops_r['WAVEFILE'], wprops['WAVEFILE']]
+                WLOG(params, 'warning', TextEntry('10-020-00003', args=wargs))
+                # set the reference wave solution to the science wave solution
+                wprops_r = wprops
+            # --------------------------------------------------------------
+            # Compute CCF on reference channel
+            cargs = [infile_r.data, blaze, wprops_r, 'C']
+            rv_props2 = velocity.compute_ccf_fp(params, infile_r, *cargs)
+            # --------------------------------------------------------------
+
+
         # TODO: Add code here
 
         # ------------------------------------------------------------------
