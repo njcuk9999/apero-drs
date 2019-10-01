@@ -535,6 +535,7 @@ class DrsFitsFile(DrsInputFile):
         self.dtype = kwargs.get('dtype', None)
         self.data_array = None
         self.header_array = None
+        self.s1d = kwargs.get('s1d', [])
         # update parameters based on all inputs
         if self.fiber is not None:
             self.get_dbkey()
@@ -596,6 +597,7 @@ class DrsFitsFile(DrsInputFile):
         kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
         kwargs['datatype'] = kwargs.get('datatype', self.datatype)
         kwargs['dtype'] = kwargs.get('dtype', self.dtype)
+        kwargs['s1d'] = kwargs.get('s1d', self.s1d)
         kwargs['shape'] = kwargs.get('shape', self.shape)
         kwargs['numfiles'] = kwargs.get('numfiles', self.numfiles)
         for key in self.required_header_keys:
@@ -691,9 +693,9 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['dtype'] = copy.deepcopy(drsfile.dtype)
         nkwargs['shape'] = copy.deepcopy(drsfile.shape)
         nkwargs['numfiles'] = copy.deepcopy(drsfile.numfiles)
+        nkwargs['s1d'] = copy.deepcopy(drsfile.s1d)
         for key in drsfile.required_header_keys:
             nkwargs[key] = drsfile.required_header_keys[key]
-
         newfile = DrsFitsFile(**nkwargs)
         newfile.get_header_keys(nkwargs)
         # return new instance of DrsFitsFile
@@ -739,6 +741,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['dtype'] = kwargs.get('dtype', drsfile.dtype)
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
+        nkwargs['s1d'] = kwargs.get('s1d', drsfile.s1d)
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
 
@@ -1223,8 +1226,10 @@ class DrsFitsFile(DrsInputFile):
             if cond1 and cond2:
                 return True
         # deal with no extension
-        if ext is None:
+        if (ext is None) and (self.datatype == 'image'):
             ext = 0
+        elif ext is None:
+            ext = 1
         # get params
         params = self.recipe.drs_params
         # check that filename is set
@@ -1246,8 +1251,10 @@ class DrsFitsFile(DrsInputFile):
         # set number of data sets to 1
         self.numfiles = 1
         # set the shape
-        if self.data is not None:
+        if (self.data is not None) and (self.datatype == 'image'):
             self.shape = self.data.shape
+        elif self.data is not None:
+            self.shape = [len(self.data)]
 
     def read_data(self, ext=0):
         func_name = __NAME__ + '.DrsFitsFile.read_data()'
