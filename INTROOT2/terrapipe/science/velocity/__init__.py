@@ -20,6 +20,8 @@ compute_ccf_fp = general.compute_ccf_fp
 
 compute_ccf_science = general.compute_ccf_science
 
+locate_reference_file = general.locate_reference_file
+
 measure_fp_peaks = general.measure_fp_peaks
 
 remove_telluric_domain = general.remove_telluric_domain
