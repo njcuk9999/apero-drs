@@ -352,7 +352,6 @@ out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 
-
 # background debug file
 debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
                         filetype='.fits', intype=pp_flat_flat,
@@ -505,7 +504,8 @@ out_ext_e2ds = drs_finput('EXT_E2DS', KW_OUTPUT='EXT_E2DS',
 out_ext_e2dsff = drs_finput('EXT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits', intype=pp_file,
-                            suffix='_e2dsff', outfunc=out.general_file)
+                            suffix='_e2dsff', outfunc=out.general_file,
+                            s1d=['EXT_S1D_W', 'EXT_S1D_V'])
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
                             fibers=['AB', 'A', 'B', 'C'],
@@ -678,19 +678,20 @@ out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',
                            filetype='.fits', intype=out_ext_e2dsff,
                            suffix='_e2dsff_tcorr', remove_insuffix=True,
                            dbname='telluric', dbkey='TELLU_OBJ',
-                           outfunc=out.general_file)
+                           outfunc=out.general_file,
+                           s1d=['SC1D_W_FILE', 'SC1D_V_FILE'])
 
 # telluric corrected s1d spectrum
 out_tellu_sc1d_w = drs_finput('SC1D_W_FILE', KW_OUTPUT='SC1D_W_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_w_tcorr', remove_insuffix=True,
-                              outfunc=out.general_file)
+                              outfunc=out.general_file, datatype='table')
 out_tellu_sc1d_v = drs_finput('SC1D_V_FILE', KW_OUTPUT='SC1D_V_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_v_tcorr', remove_insuffix=True,
-                              outfunc=out.general_file)
+                              outfunc=out.general_file, datatype='table')
 
 # reconstructed telluric absorption file
 out_tellu_recon = drs_finput('TELLU_RECON', KW_OUTPUT='TELLU_RECON',
@@ -698,19 +699,20 @@ out_tellu_recon = drs_finput('TELLU_RECON', KW_OUTPUT='TELLU_RECON',
                              filetype='.fits', intype=out_ext_e2dsff,
                              suffix='_e2dsff_recon', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_RECON',
-                             outfunc=out.general_file)
+                             outfunc=out.general_file,
+                             s1d=['RC1D_W_FILE', 'RC1D_V_FILE'])
 
 # reconstructed telluric 1d absorption
 out_tellu_rc1d_w = drs_finput('RC1D_W_FILE', KW_OUTPUT='RC1D_W_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_w_recon', remove_insuffix=True,
-                              outfunc=out.general_file)
+                              outfunc=out.general_file, datatype='table')
 out_tellu_rc1d_v = drs_finput('RC1D_V_FILE', KW_OUTPUT='RC1D_V_FILE',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_v_recon', remove_insuffix=True,
-                              outfunc=out.general_file)
+                              outfunc=out.general_file, datatype='table')
 
 # add fit telluric outputs to output fileset
 out_file.addset(out_tellu_abso_npy)
@@ -748,10 +750,30 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 filename='BigCube0',
                                 outfunc=out.set_file)
+
+# s1d template file (median)
+out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D', KW_OUTPUT='TELLU_TEMP_S1D',
+                                   fibers=['AB', 'A', 'B', 'C'],
+                                   filetype='.fits',
+                                   intype=[out_ext_e2dsff, out_tellu_obj],
+                                   filename='Template_s1d', datatype='table',
+                                   outfunc=out.set_file)
+
+# s1d cibe file (after shift)
+out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
+                                    KW_OUTPUT='TELLU_BIGCUBE_S1D',
+                                    fibers=['AB', 'A', 'B', 'C'],
+                                    filetype='.fits',
+                                    intype=[out_ext_e2dsff, out_tellu_obj],
+                                    filename='BigCube_s1d',
+                                    outfunc=out.set_file)
+
 # add make template outputs to output fileset
 out_file.addset(out_tellu_template)
 out_file.addset(out_tellu_bigcube)
 out_file.addset(out_tellu_bigcube0)
+out_file.addset(out_tellu_s1d_template)
+out_file.addset(out_tellu_s1d_bigcube)
 
 # -----------------------------------------------------------------------------
 # polarisation
