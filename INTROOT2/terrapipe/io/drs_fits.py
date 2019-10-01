@@ -291,7 +291,7 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
     # deal with getting data
     if getdata:
         try:
-            data = Table.read(filename, fornat='fits')
+            data = Table.read(filename, format='fits')
         except Exception as e:
             string_trackback = traceback.format_exc()
             emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
