@@ -10,6 +10,7 @@ Created on 2019-08-21 at 12:28
 @author: cook
 """
 from __future__ import division
+from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
 import numpy as np
@@ -499,7 +500,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     # check that e2ds file exists
     if not os.path.exists(e2dsabsfilename):
         eargs = [infile.filename, ext_type, e2dsabsfilename]
-        WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+        WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
     # get infile
     e2dsinst = core.get_file_definition(ext_type, params['INSTRUMENT'],
                                         kind='red')
@@ -515,7 +516,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     # check recon file exists
     if not os.path.exists(reconfile.filename):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
-        WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+        WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
     # read recon file
     reconfile.read()
     # find all places below threshold
@@ -607,7 +608,7 @@ def locate_reference_file(params, recipe, infile):
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================
-def compute_ccf_science(params, infile, image, blaze, wprops, bprops,
+def compute_ccf_science(params, infile, image, blaze, wavemap, bprops,
                         fiber, **kwargs):
 
     func_name = __NAME__ + '.compute_ccf()'
@@ -639,11 +640,8 @@ def compute_ccf_science(params, infile, image, blaze, wprops, bprops,
     # else mask has come from constants
     else:
         ccfmask = params['INPUTS']['MASK']
-    # get wave map
-    wavemap = wprops['WAVEMAP']
     # get the berv
     berv = bprops['USE_BERV']
-
     # ----------------------------------------------------------------------
     # Check we are using correct fiber
     # ----------------------------------------------------------------------
@@ -686,7 +684,7 @@ def compute_ccf_science(params, infile, image, blaze, wprops, bprops,
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
-                            fit_type)
+                            fit_type, fiber)
 
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
@@ -760,8 +758,8 @@ def compute_ccf_science(params, infile, image, blaze, wprops, bprops,
     props['MASK_UNITS'] = mask_units
     # set source
     keys = ['CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_DETNOISE', 'CCF_NMAX',
-            'MASK_MIN', 'MASK_WIDTH', 'MASK_UNITS']
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_MIN', 'MASK_WIDTH',
+            'MASK_UNITS']
     props.set_sources(keys, func_name)
 
     # ------------------------------------------------------------------
@@ -814,7 +812,7 @@ def compute_ccf_fp(params, infile, image, blaze, wavemap, fiber, **kwargs):
     if fiber != rfiber:
         # log that the science fiber was not correct
         eargs = [fiber, rfiber, infile.name, infile.filename]
-        WLOG(params, 'error', TextEntry('09-020-00002', args=eargs))
+        WLOG(params, 'error', TextEntry('09-020-00004', args=eargs))
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for FP
     # ------------------------------------------------------------------
@@ -836,7 +834,8 @@ def compute_ccf_fp(params, infile, image, blaze, wavemap, fiber, **kwargs):
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
-                            ccfwidth, ccfstep, ll_mask_ctr, w_mask, fit_type)
+                            ccfwidth, ccfstep, ll_mask_ctr, w_mask, fit_type,
+                            fiber)
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
@@ -909,8 +908,8 @@ def compute_ccf_fp(params, infile, image, blaze, wavemap, fiber, **kwargs):
     props['MASK_UNITS'] = mask_units
     # set source
     keys = ['CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_DETNOISE', 'CCF_NMAX',
-            'MASK_MIN', 'MASK_WIDTH', 'MASK_UNITS']
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_MIN', 'MASK_WIDTH',
+            'MASK_UNITS']
     props.set_sources(keys, func_name)
 
     # ----------------------------------------------------------------------
@@ -930,7 +929,8 @@ def compute_ccf_fp(params, infile, image, blaze, wavemap, fiber, **kwargs):
 
 
 def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
-                    ccfstep, mask_centers, mask_weights, fit_type, **kwargs):
+                    ccfstep, mask_centers, mask_weights, fit_type, fiber,
+                    **kwargs):
     # set function name
     func_name = display_func(params, 'calculate_ccf', __NAME__)
     # get rvmin and rvmax
@@ -954,7 +954,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     # loop around the orders
     for order_num in range(nbo):
         # log the process
-        WLOG(params, '', TextEntry('40-020-00005', args=[order_num]))
+        WLOG(params, '', TextEntry('40-020-00005', args=[fiber, order_num]))
         # ------------------------------------------------------------------
         # get this orders values
         wa_ord = np.array(wavemap[order_num])
@@ -1121,6 +1121,100 @@ def fit_ccf(params, order_num, rv, ccf, fit_type):
 
     # return the best guess and the gaussian fit
     return result, ccf_fit
+
+
+# =============================================================================
+# Define writing functions
+# =============================================================================
+def write_ccf(params, recipe, infile, props, rawfiles, combine,
+                      qc_params, fiber):
+    # ----------------------------------------------------------------------
+    # produce CCF table
+    table1 = Table()
+    table1['RV'] = props['RV_CCF']
+    for order_num in range(len(props['CCF'])):
+        table1['ORDER{0:02d}'.format(order_num)] = props['CCF'][order_num]
+    table1['COMBINED'] = props['MEAN_CCF']
+    # ----------------------------------------------------------------------
+    # produce stats table
+    table2 = Table()
+    table2['ORDERS'] = np.arange(len(props['CCF'])).astype(int)
+    table2['NLINES'] = props['CCF_LINES']
+    # get the coefficients
+    coeffs = props['CCF_FIT_COEFFS']
+    table2['CONTRAST'] = np.abs(100 * coeffs[:, 0])
+    table2['RV'] = coeffs[:, 1]
+    table2['FWHM'] = coeffs[:, 2]
+    table2['DC'] = coeffs[:, 3]
+    table2['SNR'] = props['CCF_SNR']
+    # ----------------------------------------------------------------------
+    # archive ccf to fits file
+    # ----------------------------------------------------------------------
+    # get a new copy of the ccf file
+    ccf_file = recipe.outputs['CCF_RV'].newcopy(recipe=recipe, fiber=fiber)
+    # construct the filename from file instance
+    ccf_file.construct_filename(params, infile=infile)
+    # define header keys for output file
+    # copy keys from input file
+    ccf_file.copy_original_keys(infile)
+    # add version
+    ccf_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    ccf_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    ccf_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    ccf_file.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    ccf_file.add_hkey('KW_OUTPUT', value=ccf_file.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    ccf_file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add fiber to file
+    ccf_file.add_hkey('KW_FIBER', value=fiber)
+    # ----------------------------------------------------------------------
+    # add results from the CCF
+    ccf_file.add_hkey('KW_CCF_MEAN_RV', value=props['MEAN_RV'])
+    ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['MEAN_CONTRAST'])
+    ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['MEAN_FWHM'])
+    ccf_file.add_hkey('KW_CCF_MEAN_RV_NOISE', value=props['MEAN_RV_NOISE'])
+    ccf_file.add_hkey('KW_CCF_TOT_LINES', value=props['TOT_LINE'])
+    # ----------------------------------------------------------------------
+    # add constants used to process
+    ccf_file.add_hkey('KW_CCF_MASK', value=props['CCF_MASK'])
+    ccf_file.add_hkey('KW_CCF_STEP', value=props['CCF_STEP'])
+    ccf_file.add_hkey('KW_CCF_WIDTH', value=props['CCF_WIDTH'])
+    ccf_file.add_hkey('KW_CCF_TARGET_RV', value=props['TARGET_RV'])
+    ccf_file.add_hkey('KW_CCF_SIGDET', value=props['CCF_SIGDET'])
+    ccf_file.add_hkey('KW_CCF_BOXSIZE', value=props['CCF_BOXSIZE'])
+    ccf_file.add_hkey('KW_CCF_MAXFLUX', value=props['CCF_MAXFLUX'])
+    ccf_file.add_hkey('KW_CCF_NMAX', value=props['CCF_NMAX'])
+    ccf_file.add_hkey('KW_CCF_MASK_MIN', value=props['MASK_MIN'])
+    ccf_file.add_hkey('KW_CCF_MASK_WID', value=props['MASK_WIDTH'])
+    ccf_file.add_hkey('KW_CCF_MASK_UNITS', value=props['MASK_UNITS'])
+    # ----------------------------------------------------------------------
+    ccf_file.add_hkey('KW_CCF_RV_WAVE_FP', value=props['RV_WAVE_FP'])
+    ccf_file.add_hkey('KW_CCF_RV_SIMU_FP', value=props['RV_SIMU_FP'])
+    ccf_file.add_hkey('KW_CCF_RV_DRIFT', value=props['RV_DRIFT'])
+    ccf_file.add_hkey('KW_CCF_RV_OBJ', value=props['RV_OBJ'])
+    ccf_file.add_hkey('KW_CCF_RV_CORR', value=props['RV_CORR'])
+    # ----------------------------------------------------------------------
+    # add qc parameters
+    ccf_file.add_qckeys(qc_params)
+    # ----------------------------------------------------------------------
+    # copy data
+    ccf_file.data = table1
+    ccf_file.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, ccf_file.filename]
+    WLOG(params, '', TextEntry('40-020-00006', args=wargs))
+    # write multi
+    ccf_file.write_multi(data_list=[table2], datatype_list=['table'])
+    # add to output files (for indexing)
+    recipe.add_output_file(ccf_file)
 
 
 # =============================================================================
