@@ -519,12 +519,12 @@ out_ext_loco = drs_finput('EXT_LOCO', KW_OUTPUT='EXT_LOCO',
 # extract s1d without flat fielding (constant in wavelength)
 out_ext_s1d_w = drs_finput('EXT_S1D_W', KW_OUTPUT='EXT_S1D_W',
                            fibers=['AB', 'A', 'B', 'C'],
-                           filetype='.fits', intype=pp_file,
+                           filetype='.fits', intype=pp_file, datatype='table',
                            suffix='_s1d_w', outfunc=out.general_file)
 # extract s1d without flat fielding (constant in velocity)
 out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
                            fibers=['AB', 'A', 'B', 'C'],
-                           filetype='.fits', intype=pp_file,
+                           filetype='.fits', intype=pp_file, datatype='table',
                            suffix='_s1d_v', outfunc=out.general_file)
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
@@ -628,17 +628,6 @@ out_file.addset(out_wave_master)
 #                                 KW_OUTPUT='DRIFTPEAK_E2DS_AB')
 # out_driftccf_e2ds = drs_finput('DRIFTCCF_E2DS_FITS_AB', fiber='AB',
 #                                KW_OUTPUT='DRIFTCCF_E2DS_AB')
-# -----------------------------------------------------------------------------
-# TODO: fill in definitions
-# ccf
-# out_ccf_fits = drs_finput('CCF_FITS_AB', KW_OUTPUT='CCF_E2DS',
-#                           fiber='AB')
-# out_ccf_fits_ff = drs_finput('CCF_FITS_FF_AB', KW_OUTPUT='CCF_E2DS_FF',
-#                              fiber='AB')
-# out_ccf_fp_fits = drs_finput('CCF_FP_FITS_AB', KW_OUTPUT='CCF_E2DS_FP',
-#                              fiber='AB')
-# out_ccf_ff_fits_ff = drs_finput('CCF_FP_FITS_FF_AB', fiber='AB',
-#                                 KW_OUTPUT='CCF_E2DS_FP_FF_AB')
 
 # -----------------------------------------------------------------------------
 # make telluric
@@ -774,6 +763,18 @@ out_file.addset(out_tellu_bigcube)
 out_file.addset(out_tellu_bigcube0)
 out_file.addset(out_tellu_s1d_template)
 out_file.addset(out_tellu_s1d_bigcube)
+
+# -----------------------------------------------------------------------------
+# ccf
+out_ccf_fits = drs_finput('CCF_RV', KW_OUTPUT='CCF_RV',
+                          fibers=['AB', 'A', 'B', 'C'],
+                          filetype='.fits',
+                          suffix='_ccf',
+                          intype=[out_ext_e2dsff, out_tellu_obj],
+                          datatype='table',
+                          outfunc=out.general_file)
+
+out_file.addset(out_ccf_fits)
 
 # -----------------------------------------------------------------------------
 # polarisation
