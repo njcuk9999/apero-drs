@@ -380,7 +380,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # log that we are saving rotated image
             wargs = [e2dsfile.filename]
-            WLOG(params, '', TextEntry('40-015-00007', args=wargs))
+            WLOG(params, '', TextEntry('40-016-00005', args=wargs))
             # write image to file
             e2dsfile.write()
             # add to output files (for indexing)
