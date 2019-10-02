@@ -11,7 +11,9 @@ Created on 2019-01-17 at 14:31
 """
 from . import general
 
-__all__ = []
+__all__ = ['compute_ccf_fp', 'compute_ccf_science', 'locate_reference_file',
+           'measure_fp_peaks', 'remove_telluric_domain', 'remove_wide_peaks',
+           'write_ccf']
 
 # =============================================================================
 # Define functions
@@ -27,6 +29,9 @@ measure_fp_peaks = general.measure_fp_peaks
 remove_telluric_domain = general.remove_telluric_domain
 
 remove_wide_peaks = general.remove_wide_peaks
+
+write_ccf = general.write_ccf
+
 
 # =============================================================================
 # End of code

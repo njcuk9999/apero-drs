@@ -146,6 +146,16 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
+        # ----------------------------------------------------------------------
+        # Check we are using correct fiber
+        # ----------------------------------------------------------------------
+        pconst = constants.pload(params['INSTRUMENT'])
+        sfiber, rfiber = pconst.FIBER_CCF()
+        if fiber != sfiber:
+            # log that the science fiber was not correct
+            eargs = [fiber, sfiber, infile.name, infile.filename]
+            WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
@@ -175,7 +185,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Compute CCF on science channel
         # ------------------------------------------------------------------
-        cargs = [image, blaze, wprops, bprops, fiber]
+        # log progress: Computing CCF on fiber
+        WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
+        # compute ccf
+        cargs = [image, blaze, wprops['WAVEMAP'], bprops, fiber]
         rv_props1 = velocity.compute_ccf_science(params, infile, *cargs)
 
         # ------------------------------------------------------------------
@@ -197,34 +210,102 @@ def __main__(recipe, params):
                 WLOG(params, 'warning', TextEntry('10-020-00003', args=wargs))
                 # set the reference wave solution to the science wave solution
                 wprops_r = wprops
+            # log progress: Computing CCF on fiber
+            WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
             # --------------------------------------------------------------
             # Compute CCF on reference channel
-            cargs = [infile_r.data, blaze, wprops_r, 'C']
+            cargs = [infile_r.data, blaze, wprops_r['WAVEMAP'], rfiber]
             rv_props2 = velocity.compute_ccf_fp(params, infile_r, *cargs)
             # --------------------------------------------------------------
-
-
-        # TODO: Add code here
+            # compute the rv output stats
+            # --------------------------------------------------------------
+            # need to deal with no drift from wave solution
+            if wprops_r['WFP_DRIFT'] is None:
+                rv_wave_fp = np.nan
+                rv_simu_fp = rv_props2['MEAN_RV']
+                rv_drift = rv_simu_fp
+                rv_obj = rv_props1['MEAN_RV']
+                rv_corrected = rv_obj - rv_drift
+            # else we have drift from wave solution
+            else:
+                rv_wave_fp = wprops_r['WFP_DRIFT']
+                rv_simu_fp = rv_props2['MEAN_RV']
+                rv_drift = rv_wave_fp - rv_simu_fp
+                rv_obj = rv_props1['MEAN_RV']
+                rv_corrected = rv_obj - rv_drift
+        # need to deal with no drift from wave solution and no simultaneous FP
+        elif wprops['WFP_DRIFT']:
+            # set rv_props2
+            rv_props2 = ParamDict()
+            # compute the stats
+            rv_wave_fp = np.nan
+            rv_simu_fp = np.nan
+            rv_drift = 0.0
+            rv_obj = rv_props1['MEAN_RV']
+            rv_corrected = rv_obj - rv_drift
+        # need to deal no simultaneous FP
+        else:
+            # set rv_props2
+            rv_props2 = ParamDict()
+            # compute the stats
+            rv_wave_fp = wprops['WFP_DRIFT']
+            rv_simu_fp = np.nan
+            rv_drift = rv_wave_fp
+            rv_obj = rv_props1['MEAN_RV']
+            rv_corrected = rv_obj - rv_drift
+        # ------------------------------------------------------------------
+        # add rv stats to properties
+        rv_props1['RV_WAVE_FP'] = rv_wave_fp
+        rv_props1['RV_SIMU_FP'] = rv_simu_fp
+        rv_props1['RV_DRIFT'] = rv_drift
+        rv_props1['RV_OBJ'] = rv_obj
+        rv_props1['RV_CORR'] = rv_corrected
+        rv_props2['RV_WAVE_FP'] = rv_wave_fp
+        rv_props2['RV_SIMU_FP'] = rv_simu_fp
+        rv_props2['RV_DRIFT'] = rv_drift
+        rv_props2['RV_OBJ'] = rv_obj
+        rv_props2['RV_CORR'] = rv_corrected
+        # set sources
+        keys = ['RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ', 'RV_CORR']
+        rv_props1.set_sources(keys, mainname)
+        rv_props2.set_sources(keys, mainname)
 
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        # TODO: Add code here
-
+        # set passed variable and fail message list
+        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # no quality control currently
+        qc_values.append('None')
+        qc_names.append('None')
+        qc_logic.append('None')
+        qc_pass.append(1)
         # ------------------------------------------------------------------
-        # archive ccf to table
-        # ------------------------------------------------------------------
-        # TODO: Add code here
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if np.sum(qc_pass) == len(qc_pass):
+            WLOG(params, 'info', TextEntry('40-005-10001'))
+            passed = 1
+        else:
+            for farg in fail_msg:
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            passed = 0
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
         # ------------------------------------------------------------------
         # archive ccf from science fiber
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        velocity.write_ccf(params, recipe, infile, rv_props1, rawfiles,
+                           combine, qc_params, fiber)
 
         # ------------------------------------------------------------------
         # archive ccf from reference fiber
         # ------------------------------------------------------------------
-        # TODO: Add code here
+        if has_fp:
+            velocity.write_ccf(params, recipe, infile, rv_props2, rawfiles,
+                               combine, qc_params, rfiber)
 
     # ----------------------------------------------------------------------
     # End of main code
