@@ -2,6 +2,28 @@ Changelog
 =========
 
 
+0.5.082 (2019-10-02)
+--------------------
+- Tools.module.setup.drs_reprocess.py - deal with traceback as a list or
+  string. [Neil Cook]
+- Science.telluric.general.py - fix bug if we have template must divide
+  image by it! [Neil Cook]
+- Science.calib.wave.py - check for empty wfp variables and set to None.
+  [Neil Cook]
+- Recipe.spirou.cal_extract_spirou.py - correct typo in text entry.
+  [Neil Cook]
+- Recipe.spirou.cal_ccf_spirou.py - add saving of files (via write_ccf)
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Update object list. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py + recipe_defintions.py -
+  add out_ccf_fits. [Neil Cook]
+- Core.instruments.*.default_keywords.py - add CCF keywords. [Neil Cook]
+- Core.constants.param_functions.py - correct typo in merge function
+  "source" --> "sources" [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.081 (2019-10-01)
 --------------------
 - Science.velocity.general.py - add locate_reference_file function and
