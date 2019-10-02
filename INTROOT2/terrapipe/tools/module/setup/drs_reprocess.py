@@ -524,7 +524,12 @@ def display_errors(params, outlist):
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
             # deal with list from out traceback
-            for tback in outlist[key]['TRACEBACK']:
+            if isinstance(outlist[key]['TRACEBACK'], str):
+                tbacklist = [outlist[key]['TRACEBACK']]
+            else:
+                tbacklist = outlist[key]['TRACEBACK']
+            # loop around trace back list
+            for tback in tbacklist:
                 if isinstance(tback, list):
                     strtback = '{1}'.format(*tback)
                 else:
@@ -1158,7 +1163,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 # expected error does not need traceback
-                pp['TRACEBACK'] = str(string_traceback)
+                pp['TRACEBACK'] = []
                 # flag not finished
                 finished = False
             # end time
