@@ -966,7 +966,8 @@ class DrsFitsFile(DrsInputFile):
                 fiber = None
             # get out file name
             out = cintype.check_table_filename(params, recipe, bottomfile,
-                                               fullpath=True, fiber=fiber)
+                                               fullpath=True,
+                                               allowedfibers=fiber)
             valid, outfilename = out
             # set the filename to the outfilename
             filename = outfilename
