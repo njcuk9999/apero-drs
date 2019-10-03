@@ -32,6 +32,8 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# Get function string
+display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -190,6 +192,19 @@ def get_most_recent(filelist):
     # return most recent time
     return most_recent
 
+
+def makedirs(params, path):
+    # set function name
+    func_name = display_func(params, 'makedirs', __NAME__)
+    # test if path does not already exist
+    if not os.path.exists(path):
+        # try to make directories
+        try:
+            os.makedirs(path)
+        # catch all exceptions and pipe to drs error
+        except Exception as e:
+            eargs = [path, type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('01-010-00002', args=eargs))
 
 
 # =============================================================================
