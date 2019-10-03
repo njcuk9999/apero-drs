@@ -1113,7 +1113,8 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 ll_item = modulemain(**kwargs)
                 # ----------------------------------------------------------
                 # close all plotting
-                plotting.closeall()
+                plotter = plotting.Plotter(params)
+                plotter.closeall()
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
