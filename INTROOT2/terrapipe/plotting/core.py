@@ -10,6 +10,7 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 from __future__ import division
+import os
 import matplotlib
 
 from terrapipe.plotting import plot_functions
@@ -17,7 +18,7 @@ from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core import drs_log
-
+from terrapipe.io import drs_path
 
 # =============================================================================
 # Define variables
@@ -47,18 +48,27 @@ definitions = plot_functions.definitions
 # get Graph function
 Graph = plot_functions.Graph
 # -----------------------------------------------------------------------------
+# storage of modules (so we only load them once)
+PLT_MOD = None
+MPL_MOD = None
 
 
 # =============================================================================
 # Define plotting class
 # =============================================================================
 class Plotter:
-    def __init__(self, params):
+    def __init__(self, params, recipe=None):
         self.params = params
+        self.recipe = recipe
         self.plot = params['DRS_PLOT']
         self.names = dict()
         self.plot_switches = dict()
         self.has_debugs = False
+        # summary file location
+        self.summary_location = None
+        self.summary_filename = None
+        # storage of summary plots
+        self.summary_graphs = dict()
         # get the text dictionary
         self.textdict = TextDict(self.params['INSTRUMENT'],
                                  self.params['LANGUAGE'])
@@ -72,6 +82,8 @@ class Plotter:
         self._get_plot_names()
         # set self.plot_switches via _get_plot_switches()
         self._get_plot_switches()
+        # set summary location
+        self._set_location()
         # set matplotlib via _get_matplotlib()
         self._get_matplotlib()
 
@@ -112,8 +124,12 @@ class Plotter:
                 # if it is check whether it is set to False
                 return 0
         # ------------------------------------------------------------------
+        # new instance of the plot object
+        plot_inst = plot_obj.copy()
+        # set output file name
+        plot_inst.set_filename(self.params, self.summary_location)
         # execute the plotting function
-        plot_obj.func(self, plot_obj, kwargs)
+        plot_inst.func(self, plot_inst, kwargs)
         # ------------------------------------------------------------------
         # if successful return 1
         return 1
@@ -131,7 +147,7 @@ class Plotter:
                 pass
             # if plot = 1 we are in iteractive mode
             elif self.plot == 1:
-                pass
+                self.plt.ioff()
             # if plot = 2 we need to show the plot
             elif self.plot == 2:
                 self.plt.show()
@@ -140,9 +156,11 @@ class Plotter:
         elif graph.kind == 'summary':
             # TODO: Add summary options
             # 1. save to file
+            self.plt.ioff()
+            self.plt.savefig(graph.filename)
+            self.plt.close()
             # 2. add graph to summary plots
-            pass
-
+            self.summary_graphs[graph.name] = graph.copy()
         else:
             pass
 
@@ -271,6 +289,13 @@ class Plotter:
 
         :return:
         """
+        global PLT_MOD
+        global MPL_MOD
+
+        # if matplotlib modules set then just use these
+        if PLT_MOD is not None:
+            self.plt = PLT_MOD
+            self.mpl_toolkits = MPL_MOD
         # ------------------------------------------------------------------
         # if we do not have debug plots then we do not need any fancy backend
         # and can just use Agg
@@ -281,6 +306,8 @@ class Plotter:
             self.plt = plt
             self.matplotlib = matplotlib
             self.mpl_toolkits = mpl_toolkits
+            PLT_MOD = plt
+            MPL_MOD = mpl_toolkits
         # else we may have to plot graphs to the screen so we need to use
         #    a more fancy backend (but not MacOSX)
         else:
@@ -295,6 +322,8 @@ class Plotter:
                     self.plt = plt
                     self.matplotlib = matplotlib
                     self.mpl_toolkits = mpl_toolkits
+                    PLT_MOD = plt
+                    MPL_MOD = mpl_toolkits
                     break
                 except:
                     continue
@@ -309,14 +338,31 @@ class Plotter:
         if backend == 'MacOSX':
             WLOG(self.params, 'error', TextEntry('09-100-00001'))
 
-
-# TODO: Remove Deprecated
-def closeall():
-    import warnings
-    warnings.warn('close all should be used from class', DeprecationWarning)
-    params = constants.load('SPIROU')
-    plotter = Plotter(params)
-    plotter.closeall()
+    def _set_location(self):
+        # get pid
+        pid = self.params['PID']
+        ext = self.params['DRS_SUMMARY_EXT']
+        if self.recipe is None:
+            rname = 'None'
+        else:
+            rname = self.recipe.name
+        # get root plot path
+        plot_path = self.params['DRS_DATA_PLOT']
+        # get night name (and deal with unset/other)
+        nightname = self.params['NIGHTNAME']
+        if nightname is None or nightname == '':
+            nightname = 'other'
+        # construct summary pdf
+        path = os.path.join(plot_path, nightname)
+        # create folder it if doesn't exist
+        drs_path.makedirs(self.params, path)
+        # create the summary plot name
+        filename = 'summary_{0}_{1}.{2}'.format(pid, rname, ext)
+        # make filename all lower case
+        filename = filename.lower()
+        # update these values
+        self.summary_location = path
+        self.summary_filename = os.path.join(path, filename)
 
 
 # =============================================================================
@@ -325,13 +371,20 @@ def closeall():
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    params = constants.load('SPIROU')
+    __NAME__ = 'cal_dark_spirou.py'
+    import sys
+    sys.argv = 'cal_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
+    from terrapipe.recipes.spirou import cal_dark_spirou
+    recipe, params = cal_dark_spirou.main(DEBUG0000=True)
+
     params.set('DRS_DEBUG', value=1)
     params.set('DRS_PLOT', value=2)
+    params.set('DRS_PLOT_EXT', 'pdf')
+    params.set('DRS_SUMMARY_EXT', 'pdf')
     params.set('PLOT_TEST1', value=True)
-    params.set('PLOT_TEST2', value=False)
+    params.set('PLOT_TEST2', value=True)
     params.set('PLOT_TEST3', value=True)
-    plotter = Plotter(params)
+    plotter = Plotter(params, recipe)
     import numpy as np
     x = np.arange(-10, 10)
     y = x ** 2

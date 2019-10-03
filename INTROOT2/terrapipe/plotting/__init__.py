@@ -16,8 +16,7 @@ from . import core
 # Core functionality
 # =============================================================================
 # close all plots
-closeall = core.closeall
-
+Plotter = core.Plotter
 
 # =============================================================================
 # End of code

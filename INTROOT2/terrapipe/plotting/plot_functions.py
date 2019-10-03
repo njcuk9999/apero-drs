@@ -9,7 +9,8 @@ Created on 2019-10-03 at 10:51
 
 @author: cook
 """
-
+import copy
+import os
 
 # =============================================================================
 # Define variables
@@ -21,7 +22,8 @@ Created on 2019-10-03 at 10:51
 # Define plotting class
 # =============================================================================
 class Graph:
-    def __init__(self, name, kind='debug', func=None):
+    def __init__(self, name, kind='debug', func=None, filename=None,
+                 description=None, figsize=None, dpi=None):
         self.name = name
         # set kind
         if kind in ['debug', 'summary']:
@@ -30,18 +32,75 @@ class Graph:
             self.kind = None
         # set function
         self.func = func
+        # storage of filename
+        self.filename = filename
+        # set the description
+        self.description = description
+        # set the figsize
+        if figsize is None:
+            self.figsize = (6.4, 4.8)
+        else:
+            self.figsize = figsize
+        # set the dots per inch
+        if dpi is None:
+            self.dpi = 100
+        else:
+            self.dpi = dpi
+
+    def copy(self):
+        """
+        Make a copy of the Graph instance (don't ever want to set values to
+        the default ones defined below)
+        :return:
+        """
+        name = copy.deepcopy(self.name)
+        # deep copy other parameters (deep copy as could be string or None)
+        kwargs = dict()
+        kwargs['kind'] = copy.deepcopy(self.kind)
+        kwargs['func'] = self.func
+        kwargs['filename'] = copy.deepcopy(self.filename)
+        kwargs['description'] = copy.deepcopy(self.description)
+        kwargs['figsize'] = copy.deepcopy(self.figsize)
+        kwargs['dpi'] = copy.deepcopy(self.dpi)
+        # return new instance
+        return Graph(name, **kwargs)
+
+    def set_filename(self, params, location):
+        """
+        Set the file name for this Graph instance
+        :param params:
+        :param location:
+        :return:
+        """
+        # get pid
+        pid = params['PID']
+        plot_ext = params['DRS_PLOT_EXT']
+        # construct filename
+        filename = 'plot_{0}_{1}.{2}'.format(self.name, pid, plot_ext)
+        # make filename all lowercase
+        filename = filename.lower()
+        # construct absolute filename
+        self.filename = os.path.join(location, filename)
+
+    def set_figure(self, plotter, **kwargs):
+        # get plt from plotter (for matplotlib set up)
+        plt = plotter.plt
+        # get figure and frame
+        fig, frames = plt.subplots(**kwargs)
+        # set figure parameters
+        fig.set_size_inches(self.figsize)
+        fig.set_dpi(self.dpi)
+        # return figure and frames
+        return fig, frames
 
 
 # =============================================================================
-# Define functions
+# Define test functions
 # =============================================================================
 def graph_test_plot_1(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
     plotter.start(graph)
-    # ------------------------------------------------------------------
-    # get plt from plotter (for matplotlib set up)
-    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     x = kwargs['x']
@@ -49,7 +108,7 @@ def graph_test_plot_1(plotter, graph, kwargs):
     colour = kwargs['colour']
     # ------------------------------------------------------------------
     # plot
-    fig, frame = plt.subplots(ncols=1, nrows=1)
+    fig, frame = graph.set_figure(plotter)
     frame.plot(x, y, color=colour, label='test')
     frame.legend(loc=0)
     # ------------------------------------------------------------------
@@ -62,9 +121,6 @@ def graph_test_plot_2(plotter, graph, kwargs):
     # start the plotting process
     plotter.start(graph)
     # ------------------------------------------------------------------
-    # get plt from plotter (for matplotlib set up)
-    plt = plotter.plt
-    # ------------------------------------------------------------------
     # get the arguments from kwargs
     ord = kwargs['ord']
     x_arr = kwargs['x']
@@ -75,18 +131,26 @@ def graph_test_plot_2(plotter, graph, kwargs):
     generator = plotter.plotloop(ord)
     # loop aroun the orders
     for ord_num in generator:
-        plt.figure()
-        plt.plot(x_arr[ord_num], y_arr[ord_num], color=colour)
-        plt.title('Order {0}'.format(ord_num))
+        fig, frame = graph.set_figure(plotter)
+        frame.plot(x_arr[ord_num], y_arr[ord_num], color=colour)
+        frame.set_title('Order {0}'.format(ord_num))
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.end(graph)
 
 
 # defined graphing instance
-test_plot1 = Graph('TEST1', kind='debug', func=graph_test_plot_1)
+test_plot1 = Graph('TEST1', kind='summary', func=graph_test_plot_1,
+                   description='This is a test plot',
+                   figsize=(10, 4), dpi=300)
 test_plot2 = Graph('TEST2', kind='debug', func=graph_test_plot_1)
 test_plot3 = Graph('TEST3', kind='debug', func=graph_test_plot_2)
+
+
+# =============================================================================
+# Define dark plotting functions
+# =============================================================================
+
 
 
 
