@@ -909,7 +909,8 @@ limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
 limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # ccf
-limited_run.add(cal_ccf, files=[sf.out_tellu_obj])
+limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # object run (extract )
