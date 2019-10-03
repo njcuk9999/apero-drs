@@ -1534,7 +1534,7 @@ CCF_MASK_WIDTH.value = 1.7
 
 # Define the width of the CCF range [km/s]
 CCF_DEFAULT_WIDTH = CCF_DEFAULT_WIDTH.copy(__NAME__)
-CCF_DEFAULT_WIDTH.value = 30.0
+CCF_DEFAULT_WIDTH.value = 300.0
 
 # Define the computations steps of the CCF [km/s]
 CCF_DEFAULT_STEP = CCF_DEFAULT_STEP.copy(__NAME__)
