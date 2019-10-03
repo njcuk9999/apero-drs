@@ -68,10 +68,11 @@ def general_file(params, **kwargs):
     # if remove in suffix is True then remove it from inbasename
     if remove_insuffix and (infile.suffix is not None):
         # get the infile suffix
-        insuffix = infile.suffix
+        insuffix = str(infile.suffix)
         # check for fibers
         if infile.fibers is not None:
             for infiber in infile.fibers:
+                insuffix = str(infile.suffix)
                 insuffix = '{0}_{1}'.format(insuffix, infiber.upper())
                 # check that infile suffix is not None
                 if insuffix in inbasename:

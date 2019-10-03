@@ -1237,6 +1237,113 @@ KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
 KW_MKTEMP_SNR_THRES = KW_MKTEMP_SNR_THRES.copy(__NAME__)
 KW_MKTEMP_SNR_THRES.set(key='MTPSNRTH', comment='mktemplate snr threshold used')
 
+# -----------------------------------------------------------------------------
+# Define ccf variables
+# -----------------------------------------------------------------------------
+# The mean rv calculated from the mean ccf
+KW_CCF_MEAN_RV = KW_CCF_MEAN_RV.copy(__NAME__)
+KW_CCF_MEAN_RV.set(key='CCFMNRV',
+                   comment='Mean RV calc. from the mean CCF [km/s]')
+
+# the mean constrast (depth of fit ccf) from the mean ccf
+KW_CCF_MEAN_CONSTRAST = KW_CCF_MEAN_CONSTRAST.copy(__NAME__)
+KW_CCF_MEAN_CONSTRAST.set(key='CCFMCONT',
+                          comment='Mean contrast (depth of fit) from mean CCF')
+
+# the mean fwhm from the mean ccf
+KW_CCF_MEAN_FWHM = KW_CCF_MEAN_FWHM.copy(__NAME__)
+KW_CCF_MEAN_FWHM.set(key='CCFMFWHM', comment='Mean FWHM from mean CCF')
+
+# the mean rv noise from the mean ccf
+KW_CCF_MEAN_RV_NOISE = KW_CCF_MEAN_RV_NOISE.copy(__NAME__)
+KW_CCF_MEAN_RV_NOISE.set(key='CCFMRVNS', comment='Mean RV Noise from mean CCF')
+
+# the total number of mask lines used in all ccfs
+KW_CCF_TOT_LINES = KW_CCF_TOT_LINES.copy(__NAME__)
+KW_CCF_TOT_LINES.set(key='CCFTLINE',
+                     comment='Total no. of mask lines used in CCF')
+
+# the ccf mask file used
+KW_CCF_MASK = KW_CCF_MASK.copy(__NAME__)
+KW_CCF_MASK.set(key='CCFMASK', comment='CCF mask file used')
+
+# the ccf step used (in km/s)
+KW_CCF_STEP = KW_CCF_STEP.copy(__NAME__)
+KW_CCF_STEP.set(key='CCFSTEP', comment='CCF step used [km/s]')
+
+# the width of the ccf used (in km/s)
+KW_CCF_WIDTH = KW_CCF_WIDTH.copy(__NAME__)
+KW_CCF_WIDTH.set(key='CCFWIDTH', comment='CCF width used [km/s]')
+
+# the central rv used (in km/s) rv elements run from rv +/- width in the ccf
+KW_CCF_TARGET_RV = KW_CCF_TARGET_RV.copy(__NAME__)
+KW_CCF_TARGET_RV.set(key='CCFTRGRV',
+                     comment='CCF central RV used in CCF [km/s]')
+
+# the read noise used in the photon noise uncertainty calculation in the ccf
+KW_CCF_SIGDET = KW_CCF_SIGDET.copy(__NAME__)
+KW_CCF_SIGDET.set(key='CCFSIGDT',
+                  comment='Read noise used in photon noise calc. in CCF')
+
+# the size in pixels around saturated pixels to regard as bad pixels used in
+#    the ccf photon noise calculation
+KW_CCF_BOXSIZE = KW_CCF_BOXSIZE.copy(__NAME__)
+KW_CCF_BOXSIZE.set(key='CCFBOXSZ',
+                   comment='Size of bad px used in photon noise calc. in CCF')
+
+# the upper limit for good pixels (above this are bad) used in the ccf photon
+#   noise calculation
+KW_CCF_MAXFLUX = KW_CCF_MAXFLUX.copy(__NAME__)
+KW_CCF_MAXFLUX.set(key='CCFMAXFX',
+                   comment='Flux thres for bad px in photon noise calc. in CCF')
+
+# The last order used in the mean CCF (from 0 to nmax are used)
+KW_CCF_NMAX = KW_CCF_NMAX.copy(__NAME__)
+KW_CCF_NMAX.set(key='CCFORDMX',
+                comment='Last order used in mean for mean CCF')
+
+# the minimum weight of a line in the CCF MASK used
+KW_CCF_MASK_MIN = KW_CCF_MASK_MIN.copy(__NAME__)
+KW_CCF_MASK_MIN.set(key='CCFMSKMN',
+                    comment='Minimum weight of lines used in the CCF mask')
+
+# the mask width of lines in the CCF Mask used
+KW_CCF_MASK_WID = KW_CCF_MASK_WID.copy(__NAME__)
+KW_CCF_MASK_WID.set(key='CCFMSKWD',
+                    comment='Width of lines used in the CCF mask')
+
+# the wavelength units used in the CCF Mask for line centers
+KW_CCF_MASK_UNITS = KW_CCF_MASK_UNITS.copy(__NAME__)
+KW_CCF_MASK_UNITS.set(key='CCFMUNIT', comment='Units used in CCF Mask')
+
+# The radial velocity measured from the wave solution FP CCF
+KW_CCF_RV_WAVE_FP = KW_CCF_RV_WAVE_FP.copy(__NAME__)
+KW_CCF_RV_WAVE_FP.set(key='RV_WAVFP',
+                      comment='RV measured from wave sol FP CCF [km/s]')
+
+# The radial velocity measured from a simultaneous FP CCF
+#     (FP in reference channel)
+KW_CCF_RV_SIMU_FP = KW_CCF_RV_SIMU_FP.copy(__NAME__)
+KW_CCF_RV_SIMU_FP.set(key='RV_SIMFP',
+                      comment='RV measured from simultaneous FP CCF [km/s]')
+
+# The radial velocity drift between wave sol FP and simultaneous FP (if present)
+#   if simulataneous FP not present this is just the wave solution FP CCF value
+KW_CCF_RV_DRIFT = KW_CCF_RV_DRIFT.copy(__NAME__)
+KW_CCF_RV_DRIFT.set(key='RV_DRIFT',
+                    comment='RV drift between wave sol and sim. FP [km/s]')
+
+# The radial velocity measured from the object CCF against the CCF MASK
+KW_CCF_RV_OBJ = KW_CCF_RV_OBJ.copy(__NAME__)
+KW_CCF_RV_OBJ.set(key='RV_OBJ',
+                  comment='RV measured in the object CCF (non corr.) [km/s]')
+
+# the corrected radial velocity of the object (taking into account the FP RVs)
+KW_CCF_RV_CORR = KW_CCF_RV_CORR.copy(__NAME__)
+KW_CCF_RV_CORR.set(key='RV_CORR',
+                   comment='RV corrected for FP drift [km/s]')
+
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

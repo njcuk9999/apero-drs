@@ -1485,6 +1485,26 @@ MKTEMPLATE_FIBER_TYPE.value = 'AB'
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
 MKTEMPLATE_SNR_ORDER.value = 33
 
+# The number of iterations to filter low frequency noise before medianing
+#   the template "big cube" to the final template spectrum
+MKTEMPLATE_E2DS_ITNUM = MKTEMPLATE_E2DS_ITNUM.copy(__NAME__)
+MKTEMPLATE_E2DS_ITNUM.value = 5
+
+# The size (in pixels) to filter low frequency noise before medianing
+#   the template "big cube" to the final template spectrum
+MKTEMPLATE_E2DS_LOWF_SIZE = MKTEMPLATE_E2DS_LOWF_SIZE.copy(__NAME__)
+MKTEMPLATE_E2DS_LOWF_SIZE.value = 501
+
+# The number of iterations to filter low frequency noise before medianing
+#   the s1d template "big cube" to the final template spectrum
+MKTEMPLATE_S1D_ITNUM = MKTEMPLATE_S1D_ITNUM.copy(__NAME__)
+MKTEMPLATE_S1D_ITNUM.value = 5
+
+# The size (in pixels) to filter low frequency noise before medianing
+#   the s1d template "big cube" to the final template spectrum
+MKTEMPLATE_S1D_LOWF_SIZE = MKTEMPLATE_S1D_LOWF_SIZE.copy(__NAME__)
+MKTEMPLATE_S1D_LOWF_SIZE.value = 501
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================

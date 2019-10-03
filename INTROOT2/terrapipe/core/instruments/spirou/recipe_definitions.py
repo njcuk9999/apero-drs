@@ -626,7 +626,7 @@ cal_ccf.inputtype = 'reduced'
 cal_ccf.extension = 'fits'
 cal_ccf.description = Help['CCF_DESC']
 cal_ccf.epilog = Help['CCF_EXAMPLE']
-cal_ccf.set_outputs()
+cal_ccf.set_outputs(CCF_RV=sf.out_ccf_fits)
 cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
@@ -774,7 +774,9 @@ obj_mk_template.description = Help['MKTEMP_DESC']
 obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
 obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
                             TELLU_BIGCUBE=sf.out_tellu_bigcube,
-                            TELLU_BIGCUBE0=sf.out_tellu_bigcube0)
+                            TELLU_BIGCUBE0=sf.out_tellu_bigcube0,
+                            TELLU_TEMP_S1D=sf.out_tellu_s1d_template,
+                            TELLU_BIGCUBE_S1D=sf.out_tellu_s1d_bigcube)
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
 obj_mk_template.set_kwarg(name='-filetype', dtype=str,
@@ -868,9 +870,9 @@ full_run.add(cal_loc, files=[sf.pp_flat_dark])
 full_run.add(cal_shape)
 full_run.add(cal_ff, files=[sf.pp_flat_flat])
 full_run.add(cal_thermal)
-# TODO: Add in when wave written
-# # full_run.add(cal_wave)
-# extract
+full_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
+             fpfiles=[sf.pp_fp_fp])
+# extract all
 full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
 # -----------------------------------------------------------------------------
@@ -903,24 +905,12 @@ limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
 # telluric recipes
-limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                files = [sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-# limited_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-# limited_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
-limited_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
+# ccf
+limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-# limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
-#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-# limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # object run (extract )

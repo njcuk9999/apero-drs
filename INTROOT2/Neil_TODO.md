@@ -30,20 +30,6 @@
 - Finish converting `cal_wave_spirou.py` from SpirouDrs
     - check that cavity file from EA is same as one from Melissa (and combine filename)
     
-## tellurics
-
-- Need to convert `obj_mk_tellu`
-    - start from e2ds or pp?
-    - need to make sure we have s1d for trans
-- Need to convert `obj_fit_tellu`
-    - start from e2ds or pp?
-    - need to make sure we have s1d for correct + recon
-- Need to convert `obj_mk_obj_template`
-    - rename to `obj_mk_template`
-    - need to add s1d for template
-- Need to convert `obj_mk_tellu_db`
-- Need to convert `obj_fit_tellu_db`
-
 ## RV
 
 - Need to convert `cal_CCF_spirou` (and FP -- merge into 1)

@@ -96,10 +96,11 @@ mode2['alt'] = Property(name='obs_alt', unit=uu.deg)
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_berv(params, infile=None, header=None, props=None, **kwargs):
+def get_berv(params, infile=None, header=None, props=None, log=True, **kwargs):
     func_name = __NAME__ + '.get_berv()'
     # log progress
-    WLOG(params, 'info', TextEntry('40-016-00017'))
+    if log:
+        WLOG(params, 'info', TextEntry('40-016-00017'))
     # get parameters from params and kwargs
     dprtype = pcheck(params, 'DPRTYPE', 'dprtype', kwargs, func_name,
                      paramdict=props)

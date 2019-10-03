@@ -535,6 +535,7 @@ class DrsFitsFile(DrsInputFile):
         self.dtype = kwargs.get('dtype', None)
         self.data_array = None
         self.header_array = None
+        self.s1d = kwargs.get('s1d', [])
         # update parameters based on all inputs
         if self.fiber is not None:
             self.get_dbkey()
@@ -596,6 +597,7 @@ class DrsFitsFile(DrsInputFile):
         kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
         kwargs['datatype'] = kwargs.get('datatype', self.datatype)
         kwargs['dtype'] = kwargs.get('dtype', self.dtype)
+        kwargs['s1d'] = kwargs.get('s1d', self.s1d)
         kwargs['shape'] = kwargs.get('shape', self.shape)
         kwargs['numfiles'] = kwargs.get('numfiles', self.numfiles)
         for key in self.required_header_keys:
@@ -691,9 +693,9 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['dtype'] = copy.deepcopy(drsfile.dtype)
         nkwargs['shape'] = copy.deepcopy(drsfile.shape)
         nkwargs['numfiles'] = copy.deepcopy(drsfile.numfiles)
+        nkwargs['s1d'] = copy.deepcopy(drsfile.s1d)
         for key in drsfile.required_header_keys:
             nkwargs[key] = drsfile.required_header_keys[key]
-
         newfile = DrsFitsFile(**nkwargs)
         newfile.get_header_keys(nkwargs)
         # return new instance of DrsFitsFile
@@ -739,6 +741,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['dtype'] = kwargs.get('dtype', drsfile.dtype)
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
+        nkwargs['s1d'] = kwargs.get('s1d', drsfile.s1d)
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
 
@@ -949,16 +952,21 @@ class DrsFitsFile(DrsInputFile):
                 break
         # ------------------------------------------------------------------
         # set the file name to the infilename
-        filename = infilename
+        filename = str(infilename)
         bottomfile = chain_files[-1]
         # now we have chain we can project file (assuming last element in the
         #   chain is the raw file)
         for cintype in chain_files[::-1][1:]:
             bottomfile.filename = filename
             bottomfile.basename = os.path.basename(filename)
-
+            # check whether we need fiber
+            if bottomfile.fibers is not None:
+                fiber = allowedfibers
+            else:
+                fiber = None
+            # get out file name
             out = cintype.check_table_filename(params, recipe, bottomfile,
-                                               fullpath=True)
+                                               fullpath=True, fiber=fiber)
             valid, outfilename = out
             # set the filename to the outfilename
             filename = outfilename
@@ -1028,7 +1036,7 @@ class DrsFitsFile(DrsInputFile):
         # check suffix (after extension removed)
         if (self.suffix is not None) and valid:
             # if we have no fibers file should end with suffix
-            if self.fibers is None:
+            if fibers is None:
                 if not filename.endswith(self.suffix):
                     valid = False
                     # debug log that extension was incorrect
@@ -1037,17 +1045,19 @@ class DrsFitsFile(DrsInputFile):
             # ------------------------------------------------------------------
             # if we have fibers then file should end with one of them and
             # the suffix
-            elif (self.fibers is not None) and (len(self.fibers) > 0):
+            elif (fibers is not None) and (len(fibers) > 0):
                 # have to set up a new valid that should be True if any
                 #  fiber is present
                 valid1 = False
                 # loop around fibers
-                for fiber in self.fibers:
+                for fiber in fibers:
                     if filename.endswith('{0}_{1}'.format(self.suffix, fiber)):
                         valid1 |= True
                 # if valid1 is False debug log that fibers were not found
                 if not valid1:
-                    dargs = [', '.join(self.fibers), filename]
+                    if fibers == [None]:
+                        fibers = ['None']
+                    dargs = [', '.join(fibers), filename]
                     WLOG(params, 'debug', TextEntry('90-008-00006', args=dargs))
                 # put valid1 back into valid
                 valid &= valid1
@@ -1223,8 +1233,10 @@ class DrsFitsFile(DrsInputFile):
             if cond1 and cond2:
                 return True
         # deal with no extension
-        if ext is None:
+        if (ext is None) and (self.datatype == 'image'):
             ext = 0
+        elif ext is None:
+            ext = 1
         # get params
         params = self.recipe.drs_params
         # check that filename is set
@@ -1246,8 +1258,10 @@ class DrsFitsFile(DrsInputFile):
         # set number of data sets to 1
         self.numfiles = 1
         # set the shape
-        if self.data is not None:
+        if (self.data is not None) and (self.datatype == 'image'):
             self.shape = self.data.shape
+        elif self.data is not None:
+            self.shape = [len(self.data)]
 
     def read_data(self, ext=0):
         func_name = __NAME__ + '.DrsFitsFile.read_data()'

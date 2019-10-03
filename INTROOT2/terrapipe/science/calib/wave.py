@@ -280,6 +280,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # extract keys from header
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
+    wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
+                                        has_default=True, default=0.0)
     # get the wfp keys
     wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
                                          required=False)
@@ -331,20 +333,21 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wavemap
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
+    wprops['WAVETIME'] = wavetime
     # add the wfp keys
-    wprops['WFP_DRIFT'] = wfp_drift
-    wprops['WFP_FWHM'] = wfp_fwhm
-    wprops['WFP_CONTRAST'] = wfp_contrast
-    wprops['WFP_MASK'] = wfp_mask
-    wprops['WFP_LINES'] = wfp_lines
-    wprops['WFP_TARG_RV'] = wfp_target_rv
-    wprops['WFP_WIDTH'] = wfp_width
-    wprops['WFP_STEP'] = wfp_step
+    wfp_keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+                'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+    wfp_values = [wfp_drift, wfp_fwhm, wfp_contrast, wfp_mask,
+                  wfp_lines, wfp_target_rv, wfp_width, wfp_step]
+    # add keys accounting for 'None' and blanks
+    for wfpi in range(len(wfp_keys)):
+        if wfp_values[wfpi] == '' or wfp_values[wfpi] == 'None':
+            wprops[wfp_keys[wfpi]] = None
+        else:
+            wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
-            'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
-            'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP', 'WAVEINST',
-            'NBPIX']
+            'WAVETIME',  'WAVEINST', 'NBPIX'] + wfp_keys
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
@@ -618,8 +621,12 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # ----------------------------------------------------------------------
     # FP CCF COMPUTATION - common to all methods
     # ----------------------------------------------------------------------
+    # get the FP (reference) fiber
+    pconst = constants.pload(params['INSTRUMENT'])
+    sfiber, rfiber = pconst.FIBER_CCF()
+    # compute the ccf
     rvprops = velocity.compute_ccf_fp(params, fpe2dsfile, fpe2dsfile.data,
-                                      blaze, llprops['LL_FINAL'], fiber)
+                                      blaze, llprops['LL_FINAL'], rfiber)
     # merge rvprops into llprops (shallow copy)
     llprops.merge(rvprops)
     # ------------------------------------------------------------------
@@ -641,9 +648,9 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
     wprops.set_sources(keys, func_name)
     # update ccf properties
-    wprops['WFP_DRIFT'] = rvprops['CCF_FIT_COEFFS'][1]
-    wprops['WFP_FWHM'] = rvprops['FWHM']
-    wprops['WFP_CONTRAST'] = rvprops['CONTRAST']
+    wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
+    wprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
+    wprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
     wprops['WFP_MASK'] = rvprops['CCF_MASK']
     wprops['WFP_LINES'] = rvprops['TOT_LINE']
     wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
@@ -4123,7 +4130,6 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wavefile.add_hkey('KW_WFP_SIGDET', value=llprops['CCF_SIGDET'])
     wavefile.add_hkey('KW_WFP_BOXSIZE', value=llprops['CCF_BOXSIZE'])
     wavefile.add_hkey('KW_WFP_MAXFLUX', value=llprops['CCF_MAXFLUX'])
-    wavefile.add_hkey('KW_WFP_DETNOISE', value=llprops['CCF_DETNOISE'])
     wavefile.add_hkey('KW_WFP_NMAX', value=llprops['CCF_NMAX'])
     wavefile.add_hkey('KW_WFP_MASKMIN', value=llprops['MASK_MIN'])
     wavefile.add_hkey('KW_WFP_MASKWID', value=llprops['MASK_WIDTH'])
