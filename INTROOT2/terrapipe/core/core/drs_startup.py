@@ -18,7 +18,6 @@ import os
 import shutil
 from collections import OrderedDict
 
-from terrapipe import plotting
 from terrapipe.locale import drs_text
 from terrapipe.locale import drs_exceptions
 from terrapipe.core import constants
@@ -368,10 +367,17 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :rtype: ParamDict
     """
     func_name = __NAME__ + '.main_end_script()'
-    # get params from llmain if present (from __main__ function not main)
+    # get params/plotter from llmain if present
+    #     (from __main__ function not main)
     if llmain is not None:
         if 'params' in llmain:
             params = llmain['params']
+        if 'plotter' in llmain:
+            plotter = llmain['plotter']
+        else:
+            plotter = None
+    else:
+        plotter = None
     # get pconstants
     pconstant = constants.pload(params['INSTRUMENT'])
     # construct a lock file name
@@ -439,6 +445,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         outdict = dict()
         # copy params
         outdict['params'] = params.copy()
+        outdict['plotter'] = plotter
         # copy recipe
         newrecipe = DrsRecipe()
         newrecipe.copy(recipe)
@@ -614,14 +621,12 @@ def fiber_processing_update(params, fiber):
 
 
 # noinspection PyProtectedMember
-def post_main(params, has_plots=True):
+def post_main(params, plotting=None):
     """
     Post main script for cleaning up plots
 
     :param params: ParamDict - the constants parameter dictionary
-    :param has_plots: bool, if True looks for and deal with having plots
-                      (i.e. asks the user to close or closest automatically),
-                      if False no plotting windows are assumed to be open
+    :param plotter: Plotter instance - the plotting object
 
     :type params: ParamDict
     :type has_plots: bool
@@ -630,7 +635,11 @@ def post_main(params, has_plots=True):
     """
     # get parameters from params
     isinteractive = params['DRS_INTERACTIVE']
-
+    # deal with no plotting instance
+    if plotting is None:
+        return None
+    else:
+        has_plots = True
     # if interactive ask about closing plots
     if _find_interactive() and has_plots and isinteractive:
         # deal with closing plots
