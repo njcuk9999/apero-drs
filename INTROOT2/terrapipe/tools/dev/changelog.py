@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # Post main plot clean up
-    core.post_main(ll['params'], has_plots=False)
+    core.post_main(ll['params'])
 
 # =============================================================================
 # End of code
