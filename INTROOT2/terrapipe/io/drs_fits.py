@@ -291,7 +291,7 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
     # deal with getting data
     if getdata:
         try:
-            data = Table.read(filename, fornat='fits')
+            data = Table.read(filename, format='fits')
         except Exception as e:
             string_trackback = traceback.format_exc()
             emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
@@ -528,7 +528,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
                 mask0 = np.zeros_like(mask)
                 # loop around kwargs[kwarg] values (has to be logic==or here)
                 for value in kwargs[kwarg]:
-                    mask0 |= (index[kwarg] == value)
+                    mask0 |= (index[kwarg] == value.strip())
             else:
                 mask0 = (index[kwarg] == kwargs[kwarg])
             # --------------------------------------------------------------

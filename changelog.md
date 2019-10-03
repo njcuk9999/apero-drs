@@ -2,6 +2,82 @@ Changelog
 =========
 
 
+0.5.082 (2019-10-02)
+--------------------
+- Tools.module.setup.drs_reprocess.py - deal with traceback as a list or
+  string. [Neil Cook]
+- Science.telluric.general.py - fix bug if we have template must divide
+  image by it! [Neil Cook]
+- Science.calib.wave.py - check for empty wfp variables and set to None.
+  [Neil Cook]
+- Recipe.spirou.cal_extract_spirou.py - correct typo in text entry.
+  [Neil Cook]
+- Recipe.spirou.cal_ccf_spirou.py - add saving of files (via write_ccf)
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Update object list. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py + recipe_defintions.py -
+  add out_ccf_fits. [Neil Cook]
+- Core.instruments.*.default_keywords.py - add CCF keywords. [Neil Cook]
+- Core.constants.param_functions.py - correct typo in merge function
+  "source" --> "sources" [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
+0.5.081 (2019-10-01)
+--------------------
+- Science.velocity.general.py - add locate_reference_file function and
+  work on calculating ccf (now combining with nanmean) [Neil Cook]
+- Science.telluric.general.py - add make_1d_template_cube and
+  mk_1d_template_write functions. [Neil Cook]
+- Science.extract.berv.py - add option not to log obtaining berv
+  (log=True/False) [Neil Cook]
+- Science.calib.wave.py - get wave time in wprops. [Neil Cook]
+- Recipe.spirou.obj_mk_template_spirou.py - add s1d template code to
+  mk_template. [Neil Cook]
+- Recipe.spirou.cal_ccf_spirou.py - start adding in ccf fp stuff. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - correct typo "fornat" --> "format" [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add s1d files to set
+  outputs. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - add the s1d template
+  files + s1d lists for e2ds files. [Neil Cook]
+- Core.instruments.*.default_constants.py - add new mk_template
+  constants. [Neil Cook]
+- Core.core.drs_file.py - add s1d property and fix shape for table.
+  [Neil Cook]
+
+
+0.5.080 (2019-09-30)
+--------------------
+- Tools.module.setup.drs_reprocess.py - fix error in printing errors at
+  end (and add these errors to the log properly) [Neil Cook]
+- Core.core.drs_log.py - add wlog.logmessage (to manually add a message
+  to the log file) [Neil Cook]
+- Neil_TODO.md - update list. [Neil Cook]
+- Terrapipe.science.velocity.general.py - add test plots while ccf is
+  not working. [Neil Cook]
+- Terrapipe.recipes.spirou.py - add TEST_RUN to obj_fit_tellu_db_spirou
+  and obj_mk_tellu_db_spirou and uncomment mk_obj_template. [Neil Cook]
+- Update language database. [Neil Cook]
+- Terrapipe.io.drs_fits.py - make sure values are striped of whitespaces
+  before comparison. [Neil Cook]
+- Core.core.recipe_definition.py - add obj_mk_telludb and
+  obj_fit_telludb instead of obj_mk_tellu/obj_fit_tellu and
+  obj_mk_template. [Neil Cook]
+- Tools.module.setup.drs_reprocess.py - deal with adding extra arguments
+  to reprocessing recipes. [Neil Cook]
+- Science.calib.wave.py - remove maxcpp references. [Neil Cook]
+- Core.core.drs_recipe.py - add extras to recipe (to overwrite arguments
+  from reprocessing) [Neil Cook]
+- Core.core.drs_log.py - update debugging in print function mode. [Neil
+  Cook]
+- Core.core.drs_file.py - do not continue if not valid. [Neil Cook]
+- Update language database. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.079 (2019-09-26)
 --------------------
 - Tools.module.setup.drs_reprocess.py - take out pushing skip to recipes

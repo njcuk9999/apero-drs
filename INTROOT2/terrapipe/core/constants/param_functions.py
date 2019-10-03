@@ -637,7 +637,7 @@ class ParamDict(CaseInsensitiveDict):
         for key in paramdict:
             # copy source
             if key in paramdict.sources:
-                ksource = paramdict.source[key]
+                ksource = paramdict.sources[key]
             else:
                 ksource = None
             # copy instance

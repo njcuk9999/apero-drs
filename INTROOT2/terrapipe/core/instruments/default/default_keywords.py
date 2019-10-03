@@ -115,6 +115,14 @@ __all__ = [# input keys
            'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
            # make template values
            'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
+           # ccf values
+           'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
+           'KW_CCF_MEAN_RV_NOISE', 'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
+           'KW_CCF_STEP', 'KW_CCF_WIDTH', 'KW_CCF_TARGET_RV', 'KW_CCF_SIGDET',
+           'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
+           'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
+           'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
+           'KW_CCF_RV_CORR',
 ]
 
 # set name
@@ -1065,6 +1073,87 @@ KW_MKTEMP_SNR_ORDER = Keyword('KW_MKTEMP_SNR_ORDER', key='', dtype=int,
 # the snr threshold used for quality control cut in make template calculation
 KW_MKTEMP_SNR_THRES = Keyword('KW_MKTEMP_SNR_THRES', key='', dtype=float,
                               source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define ccf variables
+# -----------------------------------------------------------------------------
+# The mean rv calculated from the mean ccf
+KW_CCF_MEAN_RV = Keyword('KW_CCF_MEAN_RV', key='', dtype=float, source=__NAME__)
+
+# the mean constrast (depth of fit ccf) from the mean ccf
+KW_CCF_MEAN_CONSTRAST = Keyword('KW_CCF_MEAN_CONSTRAST', key='', dtype=float,
+                                source=__NAME__)
+
+# the mean fwhm from the mean ccf
+KW_CCF_MEAN_FWHM = Keyword('KW_CCF_MEAN_FWHM', key='', dtype=float,
+                           source=__NAME__)
+
+# the mean rv noise from the mean ccf
+KW_CCF_MEAN_RV_NOISE = Keyword('KW_CCF_MEAN_RV_NOISE', key='', dtype=float,
+                               source=__NAME__)
+
+# the total number of mask lines used in all ccfs
+KW_CCF_TOT_LINES = Keyword('KW_CCF_TOT_LINES', key='', dtype=int,
+                           source=__NAME__)
+
+# the ccf mask file used
+KW_CCF_MASK = Keyword('KW_CCF_MASK', key='', dtype=str, source=__NAME__)
+
+# the ccf step used (in km/s)
+KW_CCF_STEP = Keyword('KW_CCF_STEP', key='', dtype=float, source=__NAME__)
+
+# the width of the ccf used (in km/s)
+KW_CCF_WIDTH = Keyword('KW_CCF_WIDTH', key='', dtype=float, source=__NAME__)
+
+# the central rv used (in km/s) rv elements run from rv +/- width in the ccf
+KW_CCF_TARGET_RV = Keyword('KW_CCF_TARGET_RV', key='', dtype=float,
+                           source=__NAME__)
+
+# the read noise used in the photon noise uncertainty calculation in the ccf
+KW_CCF_SIGDET = Keyword('KW_CCF_SIGDET', key='', dtype=float, source=__NAME__)
+
+# the size in pixels around saturated pixels to regard as bad pixels used in
+#    the ccf photon noise calculation
+KW_CCF_BOXSIZE = Keyword('KW_CCF_BOXSIZE', key='', dtype=int, source=__NAME__)
+
+# the upper limit for good pixels (above this are bad) used in the ccf photon
+#   noise calculation
+KW_CCF_MAXFLUX = Keyword('KW_CCF_MAXFLUX', key='', dtype=float, source=__NAME__)
+
+# The last order used in the mean CCF (from 0 to nmax are used)
+KW_CCF_NMAX = Keyword('KW_CCF_NMAX', key='', dtype=int, source=__NAME__)
+
+# the minimum weight of a line in the CCF MASK used
+KW_CCF_MASK_MIN = Keyword('KW_CCF_MASK_MIN', key='', dtype=float,
+                          source=__NAME__)
+
+# the mask width of lines in the CCF Mask used
+KW_CCF_MASK_WID = Keyword('KW_CCF_MASK_WID', key='', dtype=float,
+                          source=__NAME__)
+
+# the wavelength units used in the CCF Mask for line centers
+KW_CCF_MASK_UNITS = Keyword('KW_CCF_MASK_UNITS', key='', dtype=str,
+                            source=__NAME__)
+
+# The radial velocity measured from the wave solution FP CCF
+KW_CCF_RV_WAVE_FP = Keyword('KW_CCF_RV_WAVE_FP', key='', dtype=float,
+                            source=__NAME__)
+
+# The radial velocity measured from a simultaneous FP CCF
+#     (FP in reference channel)
+KW_CCF_RV_SIMU_FP = Keyword('KW_CCF_RV_SIMU_FP', key='', dtype=float,
+                            source=__NAME__)
+
+# The radial velocity drift between wave sol FP and simultaneous FP (if present)
+#   if simulataneous FP not present this is just the wave solution FP CCF value
+KW_CCF_RV_DRIFT = Keyword('KW_CCF_RV_DRIFT', key='', dtype=float,
+                            source=__NAME__)
+
+# The radial velocity measured from the object CCF against the CCF MASK
+KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)
+
+# the corrected radial velocity of the object (taking into account the FP RVs)
+KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__)
 
 # =============================================================================
 #  End of configuration file
