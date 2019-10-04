@@ -226,11 +226,14 @@ class DrsRecipe(object):
         # get params
         try:
             params = vars(parser.parse_args(args=self.str_arg_list))
-
         except Exception as e:
             eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
             WLOG(drs_params, 'error', TextEntry('00-006-00014', args=eargs))
             params = None
+        # ---------------------------------------------------------------------
+        # record the inputs (either via self.str_arg_list or sys.argv)
+        if self.str_arg_list is None:
+            self.str_arg_list = sys.argv
         # ---------------------------------------------------------------------
         # set the source for the params
         source = str(parser.source)
