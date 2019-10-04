@@ -10,15 +10,18 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 from __future__ import division
+from astropy.table import Table
 import os
 import matplotlib
 
-from terrapipe.plotting import plot_functions
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core import drs_log
 from terrapipe.io import drs_path
+
+from terrapipe.plotting import plot_functions
+from terrapipe.plotting import latex
 
 # =============================================================================
 # Define variables
@@ -51,6 +54,9 @@ Graph = plot_functions.Graph
 # storage of modules (so we only load them once)
 PLT_MOD = None
 MPL_MOD = None
+# -----------------------------------------------------------------------------
+# get latex string cleaning function
+clean = latex.clean
 
 
 # =============================================================================
@@ -64,14 +70,19 @@ class Plotter:
         self.names = dict()
         self.plot_switches = dict()
         self.has_debugs = False
+        # get the text dictionary
+        self.textdict = TextDict(self.params['INSTRUMENT'],
+                                 self.params['LANGUAGE'])
+        # ------------------------------------------------------------------
         # summary file location
         self.summary_location = None
         self.summary_filename = None
         # storage of summary plots
         self.summary_graphs = dict()
-        # get the text dictionary
-        self.textdict = TextDict(self.params['INSTRUMENT'],
-                                 self.params['LANGUAGE'])
+        # summary info
+        sargs = [clean(recipe.name), clean(recipe.shortname), params['PID']]
+        self.summary_title = self.textdict['40-100-01006'].format(*sargs)
+        self.summary_authors = ' '.join(__author__)
         # ------------------------------------------------------------------
         # matplotlib modules
         self.plt = None
@@ -134,6 +145,59 @@ class Plotter:
         # if successful return 1
         return 1
 
+    def summary(self, qc_params):
+        # set up the latex document
+        doc = latex.Document(self.summary_filename)
+        # get recipe short name
+        shortname = clean(self.recipe.shortname)
+        # add start
+        doc.preamble()
+        doc.begin()
+        # add title
+        doc.add_title(self.summary_title, self.summary_authors)
+        # add graph section
+        doc.section(self.textdict['40-100-01000'])
+        # add graph section text
+        doc.add_text(self.textdict['40-100-01001'].format(shortname))
+        doc.newline()
+        # display the arguments used
+        argv = ' '.join(clean(self.recipe.str_arg_list))
+        doc.add_text(self.textdict['40-100-01002'].format(argv))
+        doc.newline()
+        # display all graphs
+        for g_it, gname in enumerate(self.summary_graphs):
+            # reference graph
+            doc.add_text(self.textdict['40-100-01007'].format(g_it + 1, gname))
+            doc.newline()
+            # get graph instance for gname
+            sgraph = self.summary_graphs[gname]
+            # add graph
+            doc.figure(filename=sgraph.filename, caption=sgraph.description,
+                       width=10)
+        # add qc_param section
+        doc.section(self.textdict['40-100-01003'])
+        # add qc_param text
+        doc.add_text(self.textdict['40-100-01004'].format(shortname))
+        # add qc_param table
+        qc_table, qc_mask = qc_param_table(qc_params)
+        # get qc_caption
+        qc_caption = self.textdict['40-100-01005'].format(shortname)
+        # insert table
+        doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
+        # end the document properly
+        doc.end()
+        # write and compile latex file
+        doc.write_latex()
+        doc.compile()
+        # clean up auxiliary files
+        doc.cleanup()
+        # remove temporary graph files
+        for gname in self.summary_graphs:
+            # get graph instance for gname
+            sgraph = self.summary_graphs[gname]
+            # remove graph
+            os.remove(sgraph.filename)
+
     def start(self, graph):
         if graph.kind == 'debug':
             if self.plot == 1:
@@ -167,6 +231,7 @@ class Plotter:
     def plotloop(self, looplist):
         # check that looplist is a valid list
         if not isinstance(looplist, list):
+            # noinspection PyBroadException
             try:
                 looplist = list(looplist)
             except Exception as _:
@@ -193,6 +258,7 @@ class Plotter:
                 # get user input
                 userinput = input(message)
                 # try to cast into a integer
+                # noinspection PyBroadException
                 try:
                     userinput = int(userinput)
                 except Exception as _:
@@ -275,11 +341,11 @@ class Plotter:
             # only deal with keys that start with 'PLOT_'
             key = 'PLOT_{0}'.format(name.upper())
             # check if in params
-            if key in params:
+            if key in self.params:
                 # load into switch dictionary
-                self.plot_switches[name] = params[key]
+                self.plot_switches[name] = self.params[key]
                 # for debug plots check whether switch is True
-                if (self.names[name].kind == 'debug') and params[key]:
+                if (self.names[name].kind == 'debug') and self.params[key]:
                     self.has_debugs = True
 
     def _get_matplotlib(self):
@@ -325,7 +391,7 @@ class Plotter:
                     PLT_MOD = plt
                     MPL_MOD = mpl_toolkits
                     break
-                except:
+                except Exception as _:
                     continue
         # ------------------------------------------------------------------
         # get backend
@@ -366,6 +432,41 @@ class Plotter:
 
 
 # =============================================================================
+# Define  functions
+# =============================================================================
+def qc_param_table(qc_params):
+    # define storage to pipe into table
+    conditions = []
+    values = []
+    passed = []
+    # get qc_param vectors
+    qc_names, qc_values, qc_logic, qc_pass = qc_params
+    # loop around length of vectors and extract values
+    for it in range(len(qc_names)):
+        # if value is None then ignore this row
+        if qc_names[it] == 'None':
+            continue
+        # else extract conditions values and passed criteria
+        else:
+            conditions.append(qc_logic[it])
+            # deal with no value
+            if qc_values[it] == 'None':
+                values.append(qc_names[it])
+            else:
+                vargs = [qc_names[it], qc_values[it]]
+                values.append('{0} = {1}'.format(*vargs))
+                passed.append(qc_pass[it] == 1)
+    # deal with no qc defined
+    if len(conditions) == 0:
+        return None, None
+    else:
+        qc_table = Table()
+        qc_table['Condition'] = conditions
+        qc_table['Value'] = values
+        return qc_table, np.array(passed)
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
@@ -375,16 +476,16 @@ if __name__ == "__main__":
     import sys
     sys.argv = 'cal_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
     from terrapipe.recipes.spirou import cal_dark_spirou
-    recipe, params = cal_dark_spirou.main(DEBUG0000=True)
+    _recipe, _params = cal_dark_spirou.main(DEBUG0000=True)
 
-    params.set('DRS_DEBUG', value=1)
-    params.set('DRS_PLOT', value=2)
-    params.set('DRS_PLOT_EXT', 'pdf')
-    params.set('DRS_SUMMARY_EXT', 'pdf')
-    params.set('PLOT_TEST1', value=True)
-    params.set('PLOT_TEST2', value=True)
-    params.set('PLOT_TEST3', value=True)
-    plotter = Plotter(params, recipe)
+    _params.set('DRS_DEBUG', value=1)
+    _params.set('DRS_PLOT', value=2)
+    _params.set('DRS_PLOT_EXT', 'pdf')
+    _params.set('DRS_SUMMARY_EXT', 'pdf')
+    _params.set('PLOT_TEST1', value=True)
+    _params.set('PLOT_TEST2', value=True)
+    _params.set('PLOT_TEST3', value=True)
+    plotter = Plotter(_params, _recipe)
     import numpy as np
     x = np.arange(-10, 10)
     y = x ** 2
@@ -397,6 +498,12 @@ if __name__ == "__main__":
         yarr.append(x ** order_num)
         xarr.append(x + 10**order_num)
     plotter.graph('TEST3', ord=orders, x=xarr, y=yarr)
+
+    _qc_params = [['DARKAMP', 'LIGHTAMP'], [4, 10],
+                  ['DARKAMP < 5', 'LIGHTAMP < 5'], [1, 0]]
+
+    plotter.summary(_qc_params)
+
 
 # =============================================================================
 # End of code

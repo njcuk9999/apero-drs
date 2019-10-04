@@ -142,7 +142,7 @@ def graph_test_plot_2(plotter, graph, kwargs):
 # defined graphing instance
 test_plot1 = Graph('TEST1', kind='summary', func=graph_test_plot_1,
                    description='This is a test plot',
-                   figsize=(10, 4), dpi=300)
+                   figsize=(10, 10), dpi=150)
 test_plot2 = Graph('TEST2', kind='debug', func=graph_test_plot_1)
 test_plot3 = Graph('TEST3', kind='debug', func=graph_test_plot_2)
 
