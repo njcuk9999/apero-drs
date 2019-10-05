@@ -16,7 +16,6 @@ Created on 2018-10-31 at 18:06
 from terrapipe.core import constants
 from terrapipe.core.core import drs_file
 
-from . import output_filenames as out
 
 # =============================================================================
 # Define variables
