@@ -9,10 +9,10 @@ Created on 2019-01-18 at 15:53
 
 @author: cook
 """
-from . import general
-from . import gauss
-from . import nan
-from . import fast
+from terrapipe.core.math import general
+from terrapipe.core.math import gauss
+from terrapipe.core.math import nan
+from terrapipe.core.math import fast
 
 # =============================================================================
 # Define functions
