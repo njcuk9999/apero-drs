@@ -130,6 +130,8 @@ reprocess.set_arg(pos=1, name='runfile', dtype=str,
                   helpstr=Help['REPROCESS_RUNFILE_HELP'])
 reprocess.set_kwarg(name='--nightname', dtype=str, default='None',
                     helpstr=Help['REPROCESS_NIGHTNAME_HELP'])
+reprocess.set_kwarg(name='--filename', dtype=str, default='None',
+                    helpstr=Help['REPROCESS_FILENAME_HELP'])
 
 # -----------------------------------------------------------------------------
 # listing.py

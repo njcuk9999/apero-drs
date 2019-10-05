@@ -61,10 +61,6 @@ flipimage = dict(name='--flipimage', dtype='options', default='both',
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
-interactive = dict(name='--interactive', dtype='bool',
-                   helpstr=Help['INTERACTIVE_HELP'],
-                   default_ref='DRS_INTERACTIVE')
-# -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
             default_ref='DRS_PLOT', minimum=0, maximum=2)
 # -----------------------------------------------------------------------------
@@ -218,7 +214,6 @@ test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
                files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
                required=True)
 test.set_kwarg(**plot)
-test.set_kwarg(**interactive)
 test.set_kwarg(**add_db)
 test.set_kwarg(**dobad)
 test.set_kwarg(**badfile)
@@ -273,7 +268,6 @@ cal_badpix.set_kwarg(default=True, **combine)
 cal_badpix.set_kwarg(**flipimage)
 cal_badpix.set_kwarg(**fluxunits)
 cal_badpix.set_kwarg(**plot)
-cal_badpix.set_kwarg(**interactive)
 cal_badpix.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -295,7 +289,6 @@ cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
 cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
-cal_dark.set_kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # cal_dark_master_spirou
@@ -315,7 +308,6 @@ cal_dark_master.set_kwarg(name='--filetype', dtype=str, default='DARK_DARK',
                           helpstr=Help['DARK_MASTER_FILETYPE'])
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
-cal_dark_master.set_kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
@@ -348,7 +340,6 @@ cal_loc.set_kwarg(**dodark)
 cal_loc.set_kwarg(**flipimage)
 cal_loc.set_kwarg(**fluxunits)
 cal_loc.set_kwarg(**plot)
-cal_loc.set_kwarg(**interactive)
 cal_loc.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -392,7 +383,6 @@ cal_shape_master.set_kwarg(**flipimage)
 cal_shape_master.set_kwarg(**fluxunits)
 cal_shape_master.set_kwarg(**locofile)
 cal_shape_master.set_kwarg(**plot)
-cal_shape_master.set_kwarg(**interactive)
 cal_shape_master.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
@@ -425,7 +415,6 @@ cal_shape.set_kwarg(**flipimage)
 cal_shape.set_kwarg(**fluxunits)
 cal_shape.set_kwarg(**fpmaster)
 cal_shape.set_kwarg(**plot)
-cal_shape.set_kwarg(**interactive)
 cal_shape.set_kwarg(**resize)
 cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
@@ -464,7 +453,6 @@ cal_ff.set_kwarg(**fluxunits)
 cal_ff.set_kwarg(**locofile)
 cal_ff.set_kwarg(**orderpfile)
 cal_ff.set_kwarg(**plot)
-cal_ff.set_kwarg(**interactive)
 cal_ff.set_kwarg(**resize)
 cal_ff.set_kwarg(**shapexfile)
 cal_ff.set_kwarg(**shapeyfile)
@@ -501,7 +489,6 @@ cal_thermal.set_kwarg(**fluxunits)
 cal_thermal.set_kwarg(**locofile)
 cal_thermal.set_kwarg(**orderpfile)
 cal_thermal.set_kwarg(**plot)
-cal_thermal.set_kwarg(**interactive)
 cal_thermal.set_kwarg(**resize)
 cal_thermal.set_kwarg(**shapexfile)
 cal_thermal.set_kwarg(**shapeyfile)
@@ -545,7 +532,6 @@ cal_extract.set_kwarg(**fluxunits)
 cal_extract.set_kwarg(**locofile)
 cal_extract.set_kwarg(**orderpfile)
 cal_extract.set_kwarg(**plot)
-cal_extract.set_kwarg(**interactive)
 cal_extract.set_kwarg(**resize)
 cal_extract.set_kwarg(**shapexfile)
 cal_extract.set_kwarg(**shapeyfile)
@@ -593,7 +579,6 @@ cal_wave.set_kwarg(**fluxunits)
 cal_wave.set_kwarg(**locofile)
 cal_wave.set_kwarg(**orderpfile)
 cal_wave.set_kwarg(**plot)
-cal_wave.set_kwarg(**interactive)
 cal_wave.set_kwarg(**resize)
 cal_wave.set_kwarg(**shapexfile)
 cal_wave.set_kwarg(**shapeyfile)
@@ -644,7 +629,6 @@ cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
                   helpstr=Help['CCF_STEP_HELP'])
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**plot)
-cal_ccf.set_kwarg(**interactive)
 
 # -----------------------------------------------------------------------------
 # obj_mk_tellu
@@ -667,7 +651,6 @@ obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      limit=1)
 obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**plot)
-obj_mk_tellu.set_kwarg(**interactive)
 obj_mk_tellu.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
@@ -696,7 +679,6 @@ obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
 obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**plot)
-obj_mk_tellu_db.set_kwarg(**interactive)
 obj_mk_tellu_db.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
@@ -725,7 +707,6 @@ obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       limit=1)
 obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**plot)
-obj_fit_tellu.set_kwarg(**interactive)
 obj_fit_tellu.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
@@ -757,7 +738,6 @@ obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
-obj_fit_tellu_db.set_kwarg(**interactive)
 obj_fit_tellu_db.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
@@ -789,7 +769,6 @@ obj_mk_template.set_kwarg(name='-fiber', dtype=str,
                           options=['AB', 'A', 'B', 'C'])
 obj_mk_template.set_kwarg(**add_db)
 obj_mk_template.set_kwarg(**plot)
-obj_mk_template.set_kwarg(**interactive)
 obj_mk_template.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
