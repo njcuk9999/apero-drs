@@ -26,7 +26,7 @@ from terrapipe.core import constants
 from terrapipe.locale import drs_text
 from terrapipe.core.core import drs_log
 
-from . import drs_lock
+from terrapipe.io import drs_lock
 
 
 # =============================================================================

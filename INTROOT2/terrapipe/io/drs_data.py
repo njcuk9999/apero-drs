@@ -19,10 +19,10 @@ from terrapipe.core import constants
 from terrapipe import locale
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
-from . import drs_path
-from . import drs_fits
-from . import drs_table
-from . import drs_text
+from terrapipe.io import drs_path
+from terrapipe.io import drs_fits
+from terrapipe.io import drs_table
+from terrapipe.io import drs_text
 
 
 # =============================================================================
