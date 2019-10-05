@@ -15,7 +15,7 @@ from astropy.table import Table
 from collections import OrderedDict
 import pkg_resources
 
-from . import drs_exceptions
+from terrapipe.locale.core import drs_exceptions
 
 # =============================================================================
 # Define variables
