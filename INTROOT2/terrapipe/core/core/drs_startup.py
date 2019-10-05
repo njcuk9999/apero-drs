@@ -25,6 +25,7 @@ from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.io import drs_table
 from terrapipe.io import drs_path
 from terrapipe.io import drs_lock
+from terrapipe import plotting
 from . import drs_log
 from . import drs_recipe
 from . import drs_file
@@ -213,7 +214,6 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
     if params['OUTPATH'] is not None and params['NIGHTNAME'] is not None:
         _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
-
     # -------------------------------------------------------------------------
     # We must have DRS_DATA_MSG
     params['DRS_DATA_MSG'] = drs_log.get_drs_data_msg(params)
@@ -233,6 +233,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     # update params in log / and recipes after locking
     recipe.drs_params = params.copy()
     WLOG.pin = params.copy()
+    # add in the plotter
+    recipe.plotter = plotting.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
@@ -372,12 +374,6 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     if llmain is not None:
         if 'params' in llmain:
             params = llmain['params']
-        if 'plotter' in llmain:
-            plotter = llmain['plotter']
-        else:
-            plotter = None
-    else:
-        plotter = None
     # get pconstants
     pconstant = constants.pload(params['INSTRUMENT'])
     # construct a lock file name
@@ -438,6 +434,12 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         # deal with clearing warnings
         drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
+    # deal with closing graphs
+    # -------------------------------------------------------------------------
+    if end:
+        end_plotting(params, recipe)
+
+    # -------------------------------------------------------------------------
     # return ll (the output dictionary)
     # -------------------------------------------------------------------------
     if end:
@@ -445,7 +447,6 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         outdict = dict()
         # copy params
         outdict['params'] = params.copy()
-        outdict['plotter'] = plotter
         # copy recipe
         newrecipe = DrsRecipe()
         newrecipe.copy(recipe)
@@ -620,47 +621,24 @@ def fiber_processing_update(params, fiber):
     WLOG(params, '', params['DRS_HEADER'])
 
 
-# noinspection PyProtectedMember
-def post_main(params, plotting=None):
-    """
-    Post main script for cleaning up plots
-
-    :param params: ParamDict - the constants parameter dictionary
-    :param plotter: Plotter instance - the plotting object
-
-    :type params: ParamDict
-    :type has_plots: bool
-
-    :returns: None
-    """
-    # get parameters from params
-    isinteractive = params['DRS_INTERACTIVE']
-    # deal with no plotting instance
-    if plotting is None:
-        return None
-    else:
-        has_plots = True
-    # if interactive ask about closing plots
-    if _find_interactive() and has_plots and isinteractive:
-        # deal with closing plots
-        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
-        WLOG(params, 'info', TextEntry('40-003-00003'), printonly=True)
-        # deal with python 2 / python 3 input method
-        if sys.version_info.major < 3:
-            # note python 3 wont find this!
-            # noinspection PyUnresolvedReferences
-            uinput = raw_input('[Y]es or [N]o:\t')
-        else:
-            uinput = input('[Y]es or [N]o:\t')
-        # print end banner
-        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
-        # if yes close all plots
-        if 'Y' in uinput.upper():
-            # close any open plots properly
-            plotting.closeall()
-    # else if has plots close all plots
-    elif has_plots:
-        plotting.closeall()
+def end_plotting(params, recipe):
+    plotter = recipe.plotter
+    if plotter is not None:
+        if len(plotter.debug_graphs) > 0:
+            # deal with closing plots
+            WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
+            WLOG(params, 'info', TextEntry('40-003-00003'), printonly=True)
+            # deal with python 2 / python 3 input method
+            if sys.version_info.major < 3:
+                # note python 3 wont find this!
+                # noinspection PyUnresolvedReferences
+                uinput = raw_input('[Y]es or [N]o:\t')
+            else:
+                uinput = input('[Y]es or [N]o:\t')
+            # if yes close all plots
+            if 'Y' in uinput.upper():
+                # close any open plots properly
+                plotter.closeall()
 
 
 # =============================================================================
@@ -822,8 +800,6 @@ def _display_initial_parameterisation(p):
       - DRS_DATA_WORKING: (optional) string, the temporary working
         directory
 
-      - DRS_INTERACTIVE: bool, True if running in interactive mode.
-
       - DRS_DEBUG: int, Whether to run in debug mode
 
            * 0: no debug
@@ -847,10 +823,6 @@ def _display_initial_parameterisation(p):
     wmsgs += TextEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**p))
     wmsgs += TextEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**p))
     wmsgs += TextEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**p))
-    if not p['DRS_INTERACTIVE']:
-        wmsgs += '\n' + TextEntry('40-001-00007', args=['DRS_INTERACTIVE'])
-    else:
-        wmsgs += '\n' + TextEntry('40-001-00008', args=['DRS_INTERACTIVE'])
     if p['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', p['DRS_DEBUG']]
         wmsgs += '\n' + TextEntry('40-001-00009', args=wargs)
