@@ -9,7 +9,7 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from . import general
+from terrapipe.science.velocity import general
 
 __all__ = ['compute_ccf_fp', 'compute_ccf_science', 'locate_reference_file',
            'measure_fp_peaks', 'remove_telluric_domain', 'remove_wide_peaks',

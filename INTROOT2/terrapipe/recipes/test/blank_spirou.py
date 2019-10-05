@@ -86,7 +86,7 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     params = core.end_main(params, llmain, recipe, success, outputs='None')
     # return a copy of locally defined variables in the memory
-    return core.get_locals(params, dict(locals()), llmain)
+    return core.return_locals(params, locals())
 
 
 # =============================================================================
@@ -95,8 +95,6 @@ def main(directory=None, files=None, **kwargs):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # Post main plot clean up
-    core.post_main(ll['params'], plotting=ll['plotter'])
 
 # =============================================================================
 # End of code

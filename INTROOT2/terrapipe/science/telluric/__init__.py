@@ -9,7 +9,7 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from . import general
+from terrapipe.science.telluric import general
 
 __all__ = ['calculate_telluric_absorption', 'get_blacklist', 'get_whitelist',
            'load_conv_tapas', 'load_templates', 'mk_tellu_quality_control',

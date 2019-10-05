@@ -9,7 +9,7 @@ Created on 2019-02-13 at 16:37
 
 @author: cook
 """
-from . import general
+from terrapipe.tools.module.listing import general
 
 
 # =============================================================================

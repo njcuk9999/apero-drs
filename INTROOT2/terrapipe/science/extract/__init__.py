@@ -9,9 +9,9 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from . import berv
-from . import extraction
-from . import general
+from terrapipe.science.extract import berv
+from terrapipe.science.extract import extraction
+from terrapipe.science.extract import general
 
 __all__ = []
 

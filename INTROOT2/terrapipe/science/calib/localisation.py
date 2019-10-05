@@ -21,7 +21,7 @@ from terrapipe.core import math as mp
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_database
-from . import general
+from terrapipe.science.calib import general
 
 # =============================================================================
 # Define variables

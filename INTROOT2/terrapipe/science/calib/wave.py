@@ -28,7 +28,7 @@ from terrapipe.core.core import drs_file
 from terrapipe.io import drs_data
 from terrapipe.io import drs_table
 from terrapipe.science import velocity
-from . import general
+from terrapipe.science.calib import general
 
 # =============================================================================
 # Define variables

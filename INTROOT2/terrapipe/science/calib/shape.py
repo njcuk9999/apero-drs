@@ -28,8 +28,8 @@ from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_table
 from terrapipe.io import drs_data
-from . import general
-from . import localisation
+from terrapipe.science.calib import general
+from terrapipe.science.calib import localisation
 
 # =============================================================================
 # Define variables
