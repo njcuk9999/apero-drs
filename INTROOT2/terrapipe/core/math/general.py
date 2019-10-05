@@ -16,7 +16,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import warnings
 
 from terrapipe.core import constants
-from . import fast
+from terrapipe.core.math import fast
 
 # =============================================================================
 # Define variables

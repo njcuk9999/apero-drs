@@ -15,8 +15,8 @@ from scipy.stats import chisquare
 import warnings
 
 from terrapipe.core import constants
-from . import general
-from . import fast
+from terrapipe.core.math import general
+from terrapipe.core.math import fast
 
 # =============================================================================
 # Define variables

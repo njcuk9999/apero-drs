@@ -13,7 +13,7 @@ import numpy as np
 import warnings
 
 from terrapipe.core import constants
-from . import fast
+from terrapipe.core.math import fast
 
 # =============================================================================
 # Define variables
