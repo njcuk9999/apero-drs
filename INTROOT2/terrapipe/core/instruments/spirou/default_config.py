@@ -39,12 +39,6 @@ OBS_ALT.value = 4204
 DRS_PLOT = DRS_PLOT.copy(__NAME__)
 DRS_PLOT.value = 0
 
-# Whether to run in interactive mode - False or 0 to be in non-interactive mode
-#    (If 0 DRS_PLOT will be forced to 0)
-#    Will stop any user input at the end of recipes if set to 0
-DRS_INTERACTIVE = DRS_INTERACTIVE.copy(__NAME__)
-DRS_INTERACTIVE.value = False
-
 # Whether to run in debug mode
 #      0: no debug
 #      1: basic debugging on errors
