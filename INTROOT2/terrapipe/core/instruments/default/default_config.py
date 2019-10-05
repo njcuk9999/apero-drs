@@ -6,7 +6,7 @@ from terrapipe.core.constants import constant_functions
 # =============================================================================
 # all definition
 __all__ = [# global settings
-           'DRS_PLOT', 'DRS_INTERACTIVE', 'DRS_DEBUG',
+           'DRS_PLOT', 'DRS_DEBUG',
            # path settings
            'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
            'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_DATA_RUN',
@@ -35,6 +35,7 @@ __all__ = [# global settings
            # PLOT SETTINGS
            'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
+           'DRS_PLOT_EXT', 'DRS_SUMMARY_EXT',
             # debug settings
             'DEBUG_MODE_LOG_PRINT', 'DEBUG_MODE_TEXTNAME_PRINT',
             'DEBUG_MODE_FUNC_PRINT',
@@ -51,12 +52,6 @@ Const = constant_functions.Const
 # =============================================================================
 # Whether to plotting (True or 1 to plotting)
 DRS_PLOT = Const('DRS_PLOT', value=0, dtype=int, source=__NAME__)
-
-# Whether to run in interactive mode - False or 0 to be in non-interactive mode
-#    (If 0 DRS_PLOT will be forced to 0)
-#    Will stop any user input at the end of recipes if set to 0
-DRS_INTERACTIVE = Const('DRS_INTERACTIVE', value=False, dtype=bool,
-                        source=__NAME__)
 
 # Whether to run in debug mode
 #      0: no debug
@@ -326,6 +321,12 @@ DRS_PLOT_FONT_SIZE = Const('DRS_PLOT_FONT_SIZE', value=-1, dtype=int,
 DRS_PLOT_STYLE = Const('DRS_PLOT_STYLE', value='None', dtype=str,
                        source=__NAME__)
 
+# Set the plot file extension
+DRS_PLOT_EXT = Const('DRS_PLOT_EXT', value='pdf', dtype=str, source=__NAME__)
+
+# Set the summary document extension
+DRS_SUMMARY_EXT = Const('DRS_SUMMARY_EXT', value='pdf', dtype=str,
+                        source=__NAME__)
 
 # =============================================================================
 # DEBUG MODES
