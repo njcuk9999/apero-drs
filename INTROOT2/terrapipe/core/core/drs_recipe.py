@@ -21,8 +21,8 @@ import copy
 from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.core import constants
 from terrapipe.locale import drs_text
-from . import drs_log
-from . import drs_argument
+from terrapipe.core.core import drs_log
+from terrapipe.core.core import drs_argument
 
 # =============================================================================
 # Define variables
@@ -125,6 +125,8 @@ class DrsRecipe(object):
         self.special_args = []
         self.outputs = dict()
         self.output_files = dict()
+        # the plotter
+        self.plotter = None
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
         # get drs params
@@ -150,12 +152,6 @@ class DrsRecipe(object):
             self.name = self.name[:-3]
         self.drs_params['RECIPE'] = str(self.name)
         self.drs_params.set_source('RECIPE', func_name)
-        # ---------------------------------------------------------------------
-        # if DRS_INTERACTIVE is not True and DRS_PLOT is to the screen
-        #     then DRS_PLOT should be turned off too
-        if not self.drs_params['DRS_INTERACTIVE']:
-            if self.drs_params['DRS_PLOT'] == 1:
-                self.drs_params['DRS_PLOT'] = 0
         # ---------------------------------------------------------------------
         # set up array to store inputs/outputs
         self.drs_params['INPUTS'] = ParamDict()
@@ -321,12 +317,6 @@ class DrsRecipe(object):
             if key in self.drs_params:
                 self.drs_params[key] = input_parameters[key]
                 self.drs_params.set_source(key, input_parameters.sources[key])
-        # ---------------------------------------------------------------------
-        # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
-        if not self.drs_params['DRS_INTERACTIVE']:
-            self.drs_params['DRS_PLOT'] = 0
-            psource = '{0} [{1}]'.format(func_name, 'DRS_INTERACTIVE=False')
-            self.drs_params.set_source('DRS_PLOT', psource)
 
     def set_arg(self, name=None, **kwargs):
         """

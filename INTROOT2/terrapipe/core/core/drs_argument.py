@@ -19,7 +19,7 @@ from collections import OrderedDict
 from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.core import constants
 from terrapipe.locale import drs_text
-from . import drs_log
+from terrapipe.core.core import drs_log
 
 
 # =============================================================================

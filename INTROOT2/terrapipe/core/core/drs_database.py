@@ -22,7 +22,7 @@ from terrapipe import locale
 from terrapipe.io import drs_lock
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_table
-from . import drs_log
+from terrapipe.core.core import drs_log
 
 
 # =============================================================================
