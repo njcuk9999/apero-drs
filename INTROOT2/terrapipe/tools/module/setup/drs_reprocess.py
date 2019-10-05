@@ -266,6 +266,13 @@ def read_runfile(params, runfile, **kwargs):
             params[key] = value
             params.set_source(key, func_name)
 
+    # ----------------------------------------------------------------------
+    # deal with arguments from command line (params['INPUTS'])
+    if 'NIGHTNAME' in params['INPUTS']:
+        if params['INPUTS']['NIGHTNAME'] not in ['None', '', None]:
+            params['NIGHT_NAME'] = params['INPUTS']['NIGHTNAME']
+    # ----------------------------------------------------------------------
+
     # relock params
     params.lock()
     # ----------------------------------------------------------------------
@@ -379,10 +386,25 @@ def find_raw_files(params, recipe, **kwargs):
                             kwargs, func_name)
     itable_filecol = pcheck(params, 'DRS_INDEX_FILENAME', 'itable_filecol',
                             kwargs, func_name)
-    # print progress
-    WLOG(params, 'info', TextEntry('40-503-00010'))
     # get path
     path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
+    # deal with having a file specified
+    if 'FILENAME' in params['INPUTS']:
+        if params['INPUTS']['FILENAME'] not in ['None', '', None]:
+
+            nightname = params['INPUTS']['NIGHTNAME']
+            filename = params['INPUTS']['FILENAME']
+
+            path = os.path.join(path, nightname, filename)
+
+            if os.path.exists(path):
+
+            # TODO: Finish here
+                pass
+
+    # print progress
+    WLOG(params, 'info', TextEntry('40-503-00010'))
+
     # get files
     gfout = _get_files(params, recipe, path, rpath)
     nightnames, filelist, basenames, mod_times, mkwargs = gfout
