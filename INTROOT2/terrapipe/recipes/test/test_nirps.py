@@ -66,7 +66,7 @@ def main(directory=None, filelist=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return core.return_locals(params, locals())
 
 
 # =============================================================================
@@ -75,8 +75,6 @@ def main(directory=None, filelist=None, **kwargs):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # Post main plot clean up
-    core.post_main(ll['params'], plotting=ll['plotter'])
 
 # =============================================================================
 # End of code

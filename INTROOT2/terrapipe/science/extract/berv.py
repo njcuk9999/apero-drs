@@ -22,8 +22,8 @@ from terrapipe.core import constants
 from terrapipe.core import math as mp
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_lock
-from . import bervest
-from . import crossmatch
+from terrapipe.science.extract import bervest
+from terrapipe.science.extract import crossmatch
 
 # =============================================================================
 # Define variables

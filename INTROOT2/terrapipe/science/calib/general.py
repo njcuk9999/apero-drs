@@ -18,9 +18,9 @@ from terrapipe.core.core import drs_database
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_image
 from terrapipe.io import drs_table
-from . import dark
-from . import badpix
-from . import background
+from terrapipe.science.calib import dark
+from terrapipe.science.calib import badpix
+from terrapipe.science.calib import background
 
 
 # =============================================================================

@@ -8,8 +8,8 @@ Created on 2019-03-05 16:35
 @author: ncook
 Version 0.0.1
 """
-from . import identification
-from . import detector
+from terrapipe.science.preprocessing import identification
+from terrapipe.science.preprocessing import detector
 
 __all__ = []
 
