@@ -23,7 +23,7 @@ import traceback
 from terrapipe.core import constants
 from terrapipe.core.core import drs_log
 from terrapipe import locale
-from . import drs_table
+from terrapipe.io import drs_table
 
 # =============================================================================
 # Define variables
