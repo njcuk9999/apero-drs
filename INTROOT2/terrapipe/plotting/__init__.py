@@ -10,7 +10,7 @@ Created on 2019-01-19 at 13:44
 @author: cook
 """
 
-from . import core
+from terrapipe.plotting import core
 
 # =============================================================================
 # Core functionality
