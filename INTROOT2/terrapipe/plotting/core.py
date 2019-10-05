@@ -14,7 +14,6 @@ from astropy.table import Table
 import os
 import matplotlib
 
-from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core import drs_log
@@ -38,14 +37,14 @@ __release__ = Constants['DRS_RELEASE']
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # alias pcheck
-pcheck = core.pcheck
+pcheck = drs_log.find_param
 # get plotting definitions
 definitions = plot_functions.definitions
 # get Graph function
@@ -73,6 +72,9 @@ class Plotter:
         # get the text dictionary
         self.textdict = TextDict(self.params['INSTRUMENT'],
                                  self.params['LANGUAGE'])
+        # ------------------------------------------------------------------
+        # storage of debug plots
+        self.debug_graphs = dict()
         # ------------------------------------------------------------------
         # summary file location
         self.summary_location = None
@@ -212,6 +214,8 @@ class Plotter:
             # if plot = 1 we are in iteractive mode
             elif self.plot == 1:
                 self.plt.ioff()
+                # add debug plots
+                self.debug_graphs[graph.name] = graph.copy()
             # if plot = 2 we need to show the plot
             elif self.plot == 2:
                 self.plt.show()
