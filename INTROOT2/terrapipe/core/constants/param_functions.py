@@ -20,7 +20,7 @@ import copy
 from collections import OrderedDict
 
 from terrapipe.locale import drs_exceptions
-from . import constant_functions
+from terrapipe.core.constants import constant_functions
 
 # =============================================================================
 # Define variables

@@ -9,8 +9,8 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from . import constant_functions
-from . import param_functions
+from terrapipe.core.constants import constant_functions
+from terrapipe.core.constants import param_functions
 
 # =============================================================================
 # Define variables
