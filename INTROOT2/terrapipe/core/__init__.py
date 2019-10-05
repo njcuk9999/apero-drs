@@ -10,19 +10,16 @@ Created on 2019-01-17 at 14:31
 @author: cook
 """
 
-from .core import drs_log
-from .core import drs_startup
+from terrapipe.core.core import drs_log
+from terrapipe.core.core import drs_startup
 
-__all__ = ['setup', 'end_main', 'end', 'wlog']
+__all__ = ['setup', 'end_main', 'wlog']
 
 # =============================================================================
 # Define functions
 # =============================================================================
 # deal with copying input keyword arguments from one main to another
 copy_kwargs = drs_startup.copy_kwargs
-
-# Exit function
-post_main = drs_startup.post_main
 
 # Ending __main__ function
 return_locals = drs_startup.return_locals
