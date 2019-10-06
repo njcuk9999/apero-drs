@@ -1564,8 +1564,6 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     runs = []
     # ----------------------------------------------------------------------
     # deal with no file found
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
     all_none = True
     for runarg in runorder:
         if rundict[runarg] is not None:
