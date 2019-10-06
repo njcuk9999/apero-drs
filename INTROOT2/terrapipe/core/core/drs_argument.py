@@ -864,26 +864,15 @@ class _SetIPythonReturn(argparse.Action):
 
     def _set_return(self, values):
         func_name = __NAME__ + '._SetProgram._set_program()'
-        if isinstance(values, list):
-            strvalue =  values[0]
-        elif isinstance(values, np.ndarray):
-            strvalue =  values[0]
-        else:
-            strvalue = str(values)
-        # must be True or False
-        if strvalue.upper() in ['TRUE', '1']:
-            return_value = True
-        else:
-            return_value = False
         # debug message: setting program to: "strvalue"
-        dmsg = TextEntry('90-001-00032', args=[str(return_value)])
+        dmsg = TextEntry('90-001-00032')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
-        self.recipe.drs_params['IPYTHON_RETURN'] = return_value
+        self.recipe.drs_params['IPYTHON_RETURN'] = True
         self.recipe.drs_params.set_source('IPYTHON_RETURN', func_name)
         self.recipe.drs_params.set_instance('IPYTHON_RETURN', None)
         # return strvalue
-        return return_value
+        return True
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
@@ -894,6 +883,36 @@ class _SetIPythonReturn(argparse.Action):
         value = self._set_return(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
+
+
+class _Breakpoints(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def _set_return(self, values):
+        func_name = __NAME__ + '._SetProgram._set_program()'
+        # debug message: setting program to: "strvalue"
+        dmsg = TextEntry('90-001-00033')
+        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        # set DRS_DEBUG (must use the self version)
+        self.recipe.drs_params['ALLOW_BREAKPOINTS'] = True
+        self.recipe.drs_params.set_source('ALLOW_BREAKPOINTS', func_name)
+        self.recipe.drs_params.set_instance('ALLOW_BREAKPOINTS', None)
+        # return strvalue
+        return True
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        self.recipe = parser.recipe
+        # display version
+        value = self._set_return(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
 
 # =============================================================================
 # Define Argument Class
@@ -1613,7 +1632,7 @@ def set_program(p):
     htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
     props['name'] = '--program'
-    props['altnames'] = ['--p']
+    props['altnames'] = ['--prog']
     props['action'] = _SetProgram
     props['nargs'] = 1
     props['help'] = htext['SET_PROGRAM_HELP']
@@ -1626,8 +1645,20 @@ def set_ipython_return(p):
     props['name'] = '--idebug'
     props['altnames'] = ['--idb']
     props['action'] = _SetIPythonReturn
-    props['nargs'] = 1
+    props['nargs'] = 0
     props['help'] = htext['SET_IPYTHON_RETURN_HELP']
+    return props
+
+
+
+def breakpoints(p):
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    props = OrderedDict()
+    props['name'] = '--breakpoints'
+    props['altnames'] = ['--break']
+    props['action'] = _Breakpoints
+    props['nargs'] = 0
+    props['help'] = htext['BREAKPOINTS_HELP']
     return props
 
 # =============================================================================
