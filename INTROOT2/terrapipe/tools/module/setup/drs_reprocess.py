@@ -270,9 +270,19 @@ def read_runfile(params, runfile, **kwargs):
     # deal with arguments from command line (params['INPUTS'])
     if 'NIGHTNAME' in params['INPUTS']:
         if params['INPUTS']['NIGHTNAME'] not in ['None', '', None]:
-            params['NIGHT_NAME'] = params['INPUTS']['NIGHTNAME']
+            params['NIGHTNAME'] = params['INPUTS']['NIGHTNAME']
+    # make sure nightname is str or None
+    if params['NIGHTNAME'] in ['None', '']:
+        params['NIGHTNAME'] = None
+    # deal with having a file specified
+    params['FILENAME'] = None
+    if 'FILENAME' in params['INPUTS']:
+        if params['INPUTS']['FILENAME'] not in ['None', '', None]:
+            if isinstance(params['INPUTS']['FILENAME'], str):
+                params['FILENAME'] = params['INPUTS'].listp('FILENAME')
+            else:
+                params['FILENAME'] = params['INPUTS']['FILENAME']
     # ----------------------------------------------------------------------
-
     # relock params
     params.lock()
     # ----------------------------------------------------------------------
@@ -388,19 +398,6 @@ def find_raw_files(params, recipe, **kwargs):
                             kwargs, func_name)
     # get path
     path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
-    # deal with having a file specified
-    if 'FILENAME' in params['INPUTS']:
-        if params['INPUTS']['FILENAME'] not in ['None', '', None]:
-
-            nightname = params['INPUTS']['NIGHTNAME']
-            filename = params['INPUTS']['FILENAME']
-
-            path = os.path.join(path, nightname, filename)
-
-            if os.path.exists(path):
-
-            # TODO: Finish here
-                pass
 
     # print progress
     WLOG(params, 'info', TextEntry('40-503-00010'))
@@ -408,6 +405,7 @@ def find_raw_files(params, recipe, **kwargs):
     # get files
     gfout = _get_files(params, recipe, path, rpath)
     nightnames, filelist, basenames, mod_times, mkwargs = gfout
+
     # construct a table
     mastertable = Table()
     mastertable[night_col] = nightnames
@@ -995,7 +993,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             mask = table[night_col] == nightname
             ftable = Table(table[mask])
 
-        elif params['NIGHTNAME'] != '':
+        elif params['NIGHTNAME'] not in ['', 'None', None]:
             nightname = params['NIGHTNAME']
             # mask table by nightname
             mask = table[night_col] == nightname
@@ -1098,7 +1096,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
         # parameters to save
         pp = dict()
         pp['RECIPE'] = str(run_item.recipename)
-        pp['NIGHT_NAME'] = str(run_item.nightname)
+        pp['NIGHTNAME'] = str(run_item.nightname)
         pp['ARGS'] = kwargs
         pp['RUNSTRING'] = str(run_item.runstring)
         # ------------------------------------------------------------------
@@ -1308,8 +1306,8 @@ def _get_path_and_check(params, key):
         WLOG(params, 'error', '{0} not found in params'.format(key))
     # get top level path to search
     rpath = params[key]
-    if params['NIGHT_NAME'] is not None and params['NIGHT_NAME'] != '':
-        path = os.path.join(rpath, params['NIGHT_NAME'])
+    if params['NIGHTNAME'] not in ['', 'None', None]:
+        path = os.path.join(rpath, params['NIGHTNAME'])
     else:
         path = str(rpath)
     # check if path exists
@@ -1328,6 +1326,8 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                           kwargs, func_name)
     raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
                             kwargs, func_name)
+    # get the file filter (should be None unless we want specific files)
+    filefilter = list(params['FILENAME'])
     # ----------------------------------------------------------------------
     # get the pseudo constant object
     pconst = constants.pload(params['INSTRUMENT'])
@@ -1355,6 +1355,10 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     for root, dirs, files in os.walk(path):
         # loop around files in this root directory
         for filename in files:
+            # --------------------------------------------------------------
+            if filefilter is not None:
+                if os.path.basename(filename) not in filefilter:
+                    continue
             # --------------------------------------------------------------
             # get night name
             ucpath = drs_path.get_uncommon_path(rpath, root)
