@@ -322,23 +322,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
 
 def return_locals(params, ll):
     # deal with a ipython return
-    if params['IPYTHON_RETURN']:
-        # copy pdbrc
-        _copy_pdb_rc(params)
-        # catch bdb quit
-        try:
-            # start ipdb
-            try:
-                import ipdb
-                ipdb.set_trace()
-            except Exception as _:
-                import pdb
-                pdb.set_trace()
-        except:
-            pass
-        # delete pdbrc
-        _remove_pdb_rc(params)
-
+    constants.breakpoint(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 
@@ -1125,37 +1109,6 @@ def save_index_file(p, istore, abspath):
 # =============================================================================
 # Exit functions
 # =============================================================================
-def _copy_pdb_rc(params):
-    # set global CURRENT_PATH
-    global CURRENT_PATH
-    # get package
-    package = params['DRS_PACKAGE']
-    # get path
-    path = params['DRS_PDB_RC_FILE']
-    # get file name
-    filename = os.path.basename(path)
-    # get current path
-    CURRENT_PATH = os.getcwd()
-    # get absolute path
-    oldsrc = constants.get_relative_folder(package, path)
-    # get newsrc
-    newsrc = os.path.join(CURRENT_PATH, filename)
-    # copy
-    shutil.copy(oldsrc, newsrc)
-
-
-def _remove_pdb_rc(params):
-    # get path
-    path = params['DRS_PDB_RC_FILE']
-    # get file name
-    filename = os.path.basename(path)
-    # get newsrc
-    newsrc = os.path.join(CURRENT_PATH, filename)
-    # remove
-    if os.path.exists(newsrc):
-        os.remove(newsrc)
-
-
 def _find_interactive():
     """
     Find whether user is using an interactive session

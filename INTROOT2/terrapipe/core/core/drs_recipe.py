@@ -694,6 +694,10 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
+        # ---------------------------------------------------------------------
+        # set ipython return functionality
+        self._make_special(drs_argument.breakpoints, skip=False)
+
 
     def _make_special(self, function, skip=False):
         # make debug functionality
@@ -1558,6 +1562,21 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # ----------------------------------------------------------------------
     # brute force approach
     runs = []
+    # ----------------------------------------------------------------------
+    # deal with no file found
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+    all_none = True
+    for runarg in runorder:
+        if rundict[runarg] is not None:
+            for entry in rundict[runarg]:
+                if rundict[runarg][entry] is not None:
+                    all_none = False
+    # if all none is True then return no runs
+    if all_none:
+        return []
+
+    # ----------------------------------------------------------------------
     # find first file argument
     fout = _find_first_filearg(params, runorder, argdict, kwargdict)
     # if fout is None means we have no file arguments
