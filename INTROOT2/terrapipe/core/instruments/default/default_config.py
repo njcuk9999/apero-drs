@@ -22,7 +22,7 @@ __all__ = [# global settings
            'DRS_INSTRUMENT_RECIPE_PATH', 'DRS_DEFAULT_RECIPE_PATH',
            'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
            'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
-           'DRS_PDB_RC_FILE', 'IPYTHON_RETURN',
+           'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
            # DRS INDEXING SETTINGS
            'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
            # DATABASE SETTINGS
@@ -150,6 +150,12 @@ DRS_USERENV = Const('DRS_USERENV', value='DRS_UCONFIG', dtype=str,
 DRS_USER_PROGRAM = Const('DRS_USER_PROGRAM', value=None, dtype=str,
                          source=__NAME__)
 
+# whether to be in ipython return mode (always exits to ipdb via pdbrc)
+IPYTHON_RETURN = Const('IPYTHON_RETURN', value=False, dtype=bool,
+                       source=__NAME__)
+# whether to allow break points
+ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
+                          source=__NAME__)
 
 # =============================================================================
 # DRS INTERNAL PATHS
@@ -199,9 +205,7 @@ DRS_RESET_TELLUDB_PATH = Const('DRS_RESET_TELLUDB_PATH', dtype=str,
 # where the pdb rc file is
 DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/.pdbrc',
                         dtype=str, source=__NAME__)
-# whether to be in ipython return mode (always exits to ipdb via pdbrc)
-IPYTHON_RETURN = Const('IPYTHON_RETURN', value=False, dtype=bool,
-                       source=__NAME__)
+
 
 # =============================================================================
 # DRS INDEXING SETTINGS
