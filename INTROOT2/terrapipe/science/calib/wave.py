@@ -4171,7 +4171,7 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
     wavefile.construct_filename(params, infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
-    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+    columnnames = ['nightname', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
