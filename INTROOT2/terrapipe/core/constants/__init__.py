@@ -20,7 +20,7 @@ __NAME__ = 'constants.__init__.py'
 # define all functions
 __all__ = ['load', 'pload', 'ParamDict', 'ArgumentError', 'ConfigError',
            'ConfigWarning', 'gen_all', 'getmodnames', 'import_module',
-           'get_filenames', 'get_relative_folder']
+           'get_filenames', 'get_relative_folder', 'breakpoint']
 
 # =============================================================================
 # Define functions
@@ -60,6 +60,9 @@ gen_all = param_functions.get_config_all
 
 # update param dicts
 uparamdicts = param_functions.update_paramdicts
+
+# generate a drs breakpoint
+breakpoint = param_functions.breakpoint
 
 # =============================================================================
 # End of code
