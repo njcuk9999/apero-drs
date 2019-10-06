@@ -16,6 +16,7 @@ import sys
 import os
 import pkg_resources
 import copy
+import shutil
 
 from collections import OrderedDict
 
@@ -969,6 +970,32 @@ def print_error(error):
     print('='*70, '\n')
 
 
+def breakpoint(params=None, allow=None):
+    if params is None:
+        params = load_config()
+    # if allow is not set
+    if allow is None:
+        allow = params['ALLOW_BREAKPOINTS']
+    # if still not allowed the return
+    if not allow:
+        return
+    # copy pdbrc
+    _copy_pdb_rc(params)
+    # catch bdb quit
+    try:
+        # start ipdb
+        try:
+            import ipdb
+            ipdb.set_trace()
+        except Exception as _:
+            import pdb
+            pdb.set_trace()
+    except:
+        pass
+    # delete pdbrc
+    _remove_pdb_rc(params)
+
+
 # =============================================================================
 # Config loading private functions
 # =============================================================================
@@ -1331,6 +1358,37 @@ def _map_dictparameter(value, dtype=None):
         error = ('Parameter \'{0}\' can not be converted to a dictionary.' 
                  '\n\t Error {1}: {2}. \n\t function = {3}')
         BLOG(message=error.format(eargs), level='error')
+
+
+def _copy_pdb_rc(params):
+    # set global CURRENT_PATH
+    global CURRENT_PATH
+    # get package
+    package = params['DRS_PACKAGE']
+    # get path
+    path = params['DRS_PDB_RC_FILE']
+    # get file name
+    filename = os.path.basename(path)
+    # get current path
+    CURRENT_PATH = os.getcwd()
+    # get absolute path
+    oldsrc = get_relative_folder(package, path)
+    # get newsrc
+    newsrc = os.path.join(CURRENT_PATH, filename)
+    # copy
+    shutil.copy(oldsrc, newsrc)
+
+
+def _remove_pdb_rc(params):
+    # get path
+    path = params['DRS_PDB_RC_FILE']
+    # get file name
+    filename = os.path.basename(path)
+    # get newsrc
+    newsrc = os.path.join(CURRENT_PATH, filename)
+    # remove
+    if os.path.exists(newsrc):
+        os.remove(newsrc)
 
 
 # =============================================================================
