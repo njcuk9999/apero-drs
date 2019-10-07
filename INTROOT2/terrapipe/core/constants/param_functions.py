@@ -973,6 +973,8 @@ def print_error(error):
 def breakpoint(params=None, allow=None):
     if params is None:
         params = load_config()
+        # force to True
+        params['ALLOW_BREAKPOINTS'] = True
     # if allow is not set
     if allow is None:
         allow = params['ALLOW_BREAKPOINTS']
