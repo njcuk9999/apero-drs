@@ -10,9 +10,13 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 from __future__ import division
+import numpy as np
 from astropy.table import Table
 import os
+import glob
 import matplotlib
+import shutil
+from collections import OrderedDict
 
 from terrapipe import locale
 from terrapipe.core import constants
@@ -21,6 +25,7 @@ from terrapipe.io import drs_path
 
 from terrapipe.plotting import plot_functions
 from terrapipe.plotting import latex
+from terrapipe.plotting import html
 
 # =============================================================================
 # Define variables
@@ -69,6 +74,8 @@ class Plotter:
         self.names = dict()
         self.plot_switches = dict()
         self.has_debugs = False
+        self.stat_dict = OrderedDict()
+        self.stats = None
         # get the text dictionary
         self.textdict = TextDict(self.params['INSTRUMENT'],
                                  self.params['LANGUAGE'])
@@ -81,12 +88,9 @@ class Plotter:
         self.summary_filename = None
         # storage of summary plots
         self.summary_graphs = dict()
-        # summary info
-        sargs = [clean(recipe.name), clean(recipe.shortname), params['PID']]
-        self.summary_title = self.textdict['40-100-01006'].format(*sargs)
-        self.summary_authors = ' '.join(__author__)
         # ------------------------------------------------------------------
         # matplotlib modules
+        self.backend = None
         self.plt = None
         self.matplotlib = None
         self.mpl_toolkits = None
@@ -117,7 +121,12 @@ class Plotter:
         """
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if self.plot == 0:
+        if self.plot == -1:
+            WLOG(self.params, 'debug', TextEntry('09-100-00002'))
+            return 0
+        # ------------------------------------------------------------------
+        # deal with no plot needed
+        if (self.plot == 0) and (name in self.debug_graphs):
             WLOG(self.params, 'debug', TextEntry('09-100-00002'))
             return 0
         # ------------------------------------------------------------------
@@ -130,12 +139,31 @@ class Plotter:
         # ------------------------------------------------------------------
         # deal with debug plots (that should be skipped if PLOT_{NAME} is False)
         if name in self.plot_switches:
+            # do not need to turn off/on summary plots
+            if plot_obj.kind == 'summary':
+                pass
             # if it is check whether it is set to False
-            if not self.plot_switches[name]:
+            elif not self.plot_switches[name]:
                 dmsg = TextEntry('09-100-00003', args=[name.upper()])
                 WLOG(self.params, 'debug', dmsg)
                 # if it is check whether it is set to False
                 return 0
+        # do not plot if we are in debug mode and plot == 0
+        if plot_obj.kind == 'debug':
+            if self.plot == 0:
+                return 0
+        # ------------------------------------------------------------------
+        # must be in plot lists
+        if name in self.recipe.debug_plots:
+            # log: plotting debug plot
+            WLOG(self.params, '', TextEntry('40-100-00002', args=[name]))
+        elif name in self.recipe.summary_plots:
+            # log: plotting summary plot
+            WLOG(self.params, '', TextEntry('40-100-00003', args=[name]))
+        else:
+            # else log an error
+            eargs = [name, self.recipe.name]
+            WLOG(self.params, 'error', TextEntry('00-100-00002', args=eargs))
         # ------------------------------------------------------------------
         # new instance of the plot object
         plot_inst = plot_obj.copy()
@@ -147,65 +175,20 @@ class Plotter:
         # if successful return 1
         return 1
 
-    def summary(self, qc_params):
-        # set up the latex document
-        doc = latex.Document(self.summary_filename)
-        # get recipe short name
-        shortname = clean(self.recipe.shortname)
-        # add start
-        doc.preamble()
-        doc.begin()
-        # add title
-        doc.add_title(self.summary_title, self.summary_authors)
-        # add graph section
-        doc.section(self.textdict['40-100-01000'])
-        # add graph section text
-        doc.add_text(self.textdict['40-100-01001'].format(shortname))
-        doc.newline()
-        # display the arguments used
-        argv = ' '.join(clean(self.recipe.str_arg_list))
-        doc.add_text(self.textdict['40-100-01002'].format(argv))
-        doc.newline()
-        # display all graphs
-        for g_it, gname in enumerate(self.summary_graphs):
-            # reference graph
-            doc.add_text(self.textdict['40-100-01007'].format(g_it + 1, gname))
-            doc.newline()
-            # get graph instance for gname
-            sgraph = self.summary_graphs[gname]
-            # add graph
-            doc.figure(filename=sgraph.filename, caption=sgraph.description,
-                       width=10)
-        # add qc_param section
-        doc.section(self.textdict['40-100-01003'])
-        # add qc_param text
-        doc.add_text(self.textdict['40-100-01004'].format(shortname))
-        # add qc_param table
-        qc_table, qc_mask = qc_param_table(qc_params)
-        # get qc_caption
-        qc_caption = self.textdict['40-100-01005'].format(shortname)
-        # insert table
-        doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
-        # end the document properly
-        doc.end()
-        # write and compile latex file
-        doc.write_latex()
-        doc.compile()
-        # clean up auxiliary files
-        doc.cleanup()
-        # remove temporary graph files
-        for gname in self.summary_graphs:
-            # get graph instance for gname
-            sgraph = self.summary_graphs[gname]
-            # remove graph
-            os.remove(sgraph.filename)
-
-    def start(self, graph):
+    def plotstart(self, graph):
         if graph.kind == 'debug':
             if self.plot == 1:
                 self.plt.ion()
+            if self.plot > 0:
+                return True
+            else:
+                return False
+        elif graph.kind == 'summary':
+            return True
+        else:
+            return False
 
-    def end(self, graph):
+    def plotend(self, graph):
         # deal with debug plots
         if graph.kind == 'debug':
             # we shouldn't have got here but if plot=0 do not plot
@@ -298,6 +281,262 @@ class Plotter:
         self.plt.close('all')
 
     # ------------------------------------------------------------------
+    # summary methods
+    # ------------------------------------------------------------------
+    def summary_document(self, qc_params=None, stats=None):
+        func_name = display_func(self.params, 'summary_document', __NAME__,
+                                 'Plotter')
+        # get recipe short name
+        name = self.recipe.name
+        pid = self.params['PID'].lower()
+        pid_dir = '{0}_{1}'.format(pid, name)
+        # deal with no stats
+        if stats is None:
+            # process stats
+            self.summary_stats()
+            # set stats to internal stats
+            stats = self.stats
+        # ------------------------------------------------------------------
+        # summary plot in latex
+        try:
+            # log progress
+            WLOG(self.params, 'info', TextEntry('40-100-00004'))
+            # latex document
+            latexdoc = self.summary_latex(qc_params, stats)
+        except Exception as e:
+            # log error as warning
+            wargs = [type(e), e, func_name]
+            WLOG(self.params, 'warning', TextEntry('10-100-01001', args=wargs))
+            # set latex doc to None
+            latexdoc = None
+        # ------------------------------------------------------------------
+        # summary html
+        try:
+            # log progress
+            WLOG(self.params, 'info', TextEntry('40-100-00005'))
+            # latex document
+            htmldoc = self.summary_html(qc_params, stats)
+        except Exception as e:
+            # log error as warning
+            wargs = [type(e), e, func_name]
+            WLOG(self.params, 'warning', TextEntry('10-100-01002', args=wargs))
+            # set latex doc to None
+            htmldoc = None
+        # ------------------------------------------------------------------
+        # clean up
+        if latexdoc is not None:
+            latexdoc.cleanup()
+        if htmldoc is not None:
+            htmldoc.cleanup()
+        # move all pid to a folder
+        files = glob.glob(self.summary_location + os.sep + '*')
+        # ------------------------------------------------------------------
+        # make pid directory
+        os.makedirs(os.path.join(self.summary_location, pid_dir))
+        # loop around files and move to pid directory
+        for filename in files:
+            # skip directories
+            if os.path.isdir(filename):
+                continue
+            # only look for files with pid in the name
+            if pid in filename:
+                # get new path
+                basename = os.path.basename(filename)
+                jargs = [self.summary_location, pid_dir, basename]
+                newfilename = os.path.join(*jargs)
+                # move files
+                shutil.move(filename, newfilename)
+
+    def summary_latex(self, qc_params, stats):
+        # set up the latex document
+        doc = latex.LatexDocument(self.summary_filename)
+        # get recipe short name
+        shortname = clean(self.recipe.shortname)
+        pid = self.params['PID'].lower()
+        name = clean(self.recipe.name)
+        # summary info
+        sargs = [name, shortname, pid]
+        summary_title = self.textdict['40-100-01006'].format(*sargs)
+        summary_authors = ' '.join(__author__)
+        # add start
+        doc.preamble()
+        doc.begin()
+        # add title
+        doc.add_title(summary_title, summary_authors)
+        # display the arguments used
+        doc.newline()
+        argv = ' '.join(clean(self.recipe.used_command))
+        doc.add_text(self.textdict['40-100-01002'].format(argv))
+        doc.newline()
+        # add graph section
+        doc.section(self.textdict['40-100-01000'])
+        # add graph section text
+        doc.add_text(self.textdict['40-100-01001'].format(shortname))
+        doc.newline()
+        # display all graphs
+        for g_it, gname in enumerate(self.summary_graphs):
+            # get cleaned name
+            cgname = clean(gname)
+            # reference graph
+            doc.add_text(self.textdict['40-100-01007'].format(g_it + 1, cgname))
+            doc.newline()
+        # display all graphs
+        for g_it, gname in enumerate(self.summary_graphs):
+            # get graph instance for gname
+            sgraph = self.summary_graphs[gname]
+            # add graph
+            doc.figure(filename=sgraph.filename,
+                       caption=clean(sgraph.description),
+                       width=10)
+        # add qc params section
+        self.summary_latex_qc_params(doc, qc_params)
+        # add stats section
+        self.summary_latex_stats(doc, stats)
+        # end the document properly
+        doc.end()
+        # write and compile latex file
+        doc.write_latex()
+        # get log file
+        logfile = drs_log.get_logfilepath(WLOG, self.params)
+        doc.compile(logfile)
+        # return the doc
+        return doc
+
+    def summary_latex_qc_params(self, doc, qc_params):
+        if qc_params is None:
+            return
+        # get recipe short name
+        shortname = clean(self.recipe.shortname)
+        # add qc_param section
+        doc.section(self.textdict['40-100-01003'])
+        # add qc_param text
+        doc.add_text(self.textdict['40-100-01004'].format(shortname))
+        # add qc_param table
+        qc_table, qc_mask = qc_param_table(qc_params)
+        # get qc_caption
+        qc_caption = self.textdict['40-100-01005'].format(shortname)
+        # insert table
+        doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
+
+    def summary_latex_stats(self, doc, stats):
+        if stats is None:
+            return
+        # get recipe short name
+        shortname = clean(self.recipe.shortname)
+        # add qc_param section
+        doc.section(self.textdict['40-100-01008'])
+        # add qc_param text
+        doc.add_text(self.textdict['40-100-01009'].format(shortname))
+        # get qc_caption
+        caption = self.textdict['40-100-01010'].format(shortname)
+        # copy table
+        stats_latex = Table(stats)
+        # insert table
+        doc.insert_table(stats_latex, caption=caption)
+
+    def summary_html(self, qc_params, stats):
+        # set up the latex document
+        doc = html.HtmlDocument(self.summary_filename)
+        # get recipe short name
+        shortname = self.recipe.shortname
+        pid = self.params['PID'].lower()
+        name = self.recipe.name
+        # summary info
+        sargs = [name, shortname, pid]
+        summary_title = self.textdict['40-100-01006'].format(*sargs)
+        summary_authors = ' '.join(__author__)
+        # add start
+        doc.preamble()
+        # add title
+        doc.add_title(summary_title, summary_authors)
+        # display the arguments used
+        doc.newline()
+        argv = ' '.join(self.recipe.used_command)
+        doc.add_text(self.textdict['40-100-01002'].format(argv))
+        doc.newline()
+        # add graph section
+        doc.section(self.textdict['40-100-01000'])
+        # add graph section text
+        doc.add_text(self.textdict['40-100-01001'].format(shortname))
+        doc.newline()
+        # display all graphs
+        for g_it, gname in enumerate(self.summary_graphs):
+            # get graph instance for gname
+            sgraph = self.summary_graphs[gname]
+            # reference graph
+            targs = [g_it + 1, sgraph.description]
+            doc.add_text(self.textdict['40-100-01007'].format(*targs))
+            doc.newline()
+            # add graph
+            sbasename = os.path.basename(sgraph.filename)
+            doc.figure(filename=sbasename, width=1024, height=1024)
+        # add qc params section
+        self.summary_html_qc_params(doc, qc_params)
+        # add stats section
+        self.summary_html_stats(doc, stats)
+        # end the document properly
+        doc.end()
+        # write and compile latex file
+        doc.write_html()
+        # return doc
+        return doc
+
+    def summary_html_qc_params(self, doc, qc_params):
+        if qc_params is None:
+            return
+        # get recipe short name
+        shortname = self.recipe.shortname
+        # add qc_param section
+        doc.section(self.textdict['40-100-01003'])
+        # add qc_param text
+        doc.add_text(self.textdict['40-100-01004'].format(shortname))
+        # add qc_param table
+        qc_table, qc_mask = qc_param_table(qc_params)
+        # get qc_caption
+        qc_caption = self.textdict['40-100-01005'].format(shortname)
+        # insert table
+        doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
+
+    def summary_html_stats(self, doc, stats):
+        if stats is None:
+            return
+        if stats is None:
+            return
+        # get recipe short name
+        shortname = self.recipe.shortname
+        # add qc_param section
+        doc.section(self.textdict['40-100-01008'])
+        # add qc_param text
+        doc.add_text(self.textdict['40-100-01009'].format(shortname))
+        # get qc_caption
+        caption = self.textdict['40-100-01010'].format(shortname)
+        # copy table
+        stats_html = Table(stats)
+        # insert table
+        doc.insert_table(stats_html, caption=caption)
+
+    def summary_stats(self):
+        # get columns
+        names, values = [], []
+        for kwarg in self.stat_dict:
+            # append to lists
+            names.append(kwarg)
+            values.append(str(self.stat_dict[kwarg]))
+        # push into table
+        self.stats = Table()
+        self.stats['NAMES'] = names
+        self.stats['VALUES'] = values
+
+    def add_stat(self, key, value):
+
+        if key in self.params:
+            dkey = self.params[key][0]
+        else:
+            dkey = str(key).upper()
+
+        self.stat_dict[dkey] = str(value)
+
+    # ------------------------------------------------------------------
     # internal methods
     # ------------------------------------------------------------------
     def _get_func(self, name):
@@ -313,7 +552,7 @@ class Plotter:
         func_name = display_func(self.params, '_get_func', __NAME__, 'Plotter')
         # check if name is in plot names
         if name.upper() in self.names:
-            return self.names[name]
+            return self.names[name].copy()
         # else return an error
         else:
             # log error: Plotter error: graph name was not found in plotting
@@ -340,17 +579,22 @@ class Plotter:
         to see if we have any debug plots
         :return:
         """
+        debug_plots = self.recipe.debug_plots
         # loop around keys in parameter dictionary
         for name in self.names:
+            # get kind
+            kind = self.names[name].kind
             # only deal with keys that start with 'PLOT_'
             key = 'PLOT_{0}'.format(name.upper())
             # check if in params
             if key in self.params:
                 # load into switch dictionary
                 self.plot_switches[name] = self.params[key]
-                # for debug plots check whether switch is True
-                if (self.names[name].kind == 'debug') and self.params[key]:
-                    self.has_debugs = True
+            else:
+                self.plot_switches[name] = False
+            # if recipe is allowed to use plot (in recipe.set_plots)
+            if name in debug_plots and kind == 'debug':
+                self.has_debugs = True
 
     def _get_matplotlib(self):
         """
@@ -361,7 +605,7 @@ class Plotter:
         """
         global PLT_MOD
         global MPL_MOD
-
+        # ------------------------------------------------------------------
         # if matplotlib modules set then just use these
         if PLT_MOD is not None:
             self.plt = PLT_MOD
@@ -399,13 +643,13 @@ class Plotter:
                     continue
         # ------------------------------------------------------------------
         # get backend
-        backend = matplotlib.get_backend()
+        self.backend = matplotlib.get_backend()
         # debug log which backend used
-        dargs = [backend]
+        dargs = [self.backend]
         WLOG(self.params, 'debug', TextEntry('09-100-00001', args=dargs))
         # ------------------------------------------------------------------
         # deal with still having MacOSX backend
-        if backend == 'MacOSX':
+        if self.backend == 'MacOSX':
             WLOG(self.params, 'error', TextEntry('09-100-00001'))
 
     def _set_location(self):
@@ -482,6 +726,10 @@ if __name__ == "__main__":
     from terrapipe.recipes.spirou import cal_dark_spirou
     _recipe, _params = cal_dark_spirou.main(DEBUG0000=True)
 
+    _recipe.debug_plots.append('TEST1')
+    _recipe.debug_plots.append('TEST2')
+    _recipe.summary_plots.append('TEST3')
+
     _params.set('DRS_DEBUG', value=1)
     _params.set('DRS_PLOT', value=2)
     _params.set('DRS_PLOT_EXT', 'pdf')
@@ -506,7 +754,11 @@ if __name__ == "__main__":
     _qc_params = [['DARKAMP', 'LIGHTAMP'], [4, 10],
                   ['DARKAMP < 5', 'LIGHTAMP < 5'], [1, 0]]
 
-    plotter.summary(_qc_params)
+    _stats = Table()
+    _stats['Name'] = ['TEST_VALUE_1', 'V2', 'VALUE3', 'TEST4']
+    _stats['Value'] = [1, 0.1, 0.2, 100]
+
+    plotter.summary_document(_qc_params, _stats)
 
 
 # =============================================================================
