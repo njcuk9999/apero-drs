@@ -121,18 +121,17 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    runlist = drs_reprocess.generate_run_list(params, rawtable, runtable)
+    rlist = drs_reprocess.generate_run_list(params, rawtable, runtable)
 
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
-    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
 
     # ----------------------------------------------------------------------
     # Print timing
     # ----------------------------------------------------------------------
-    if not has_errors:
-        drs_reprocess.display_timing(params, outlist)
+    drs_reprocess.display_timing(params, outlist)
 
     # ----------------------------------------------------------------------
     # Print out any errors

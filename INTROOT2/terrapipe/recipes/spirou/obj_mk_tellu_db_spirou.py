@@ -136,9 +136,9 @@ def __main__(recipe, params):
     runtable = drs_reprocess.generate_run_table(params, obj_mk_tellu, *gargs,
                                                 **gkwargs)
     # Generate run list
-    runlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_reprocess.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
         drs_reprocess.display_errors(params, outlist)
@@ -157,9 +157,9 @@ def __main__(recipe, params):
     runtable = drs_reprocess.generate_run_table(params, obj_fit_tellu, *gargs,
                                                 **gkwargs)
     # Generate run list
-    runlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_reprocess.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
         drs_reprocess.display_errors(params, outlist)
@@ -178,9 +178,9 @@ def __main__(recipe, params):
     runtable = drs_reprocess.generate_run_table(params, obj_mk_template, *gargs,
                                                 **gkwargs)
     # Generate run list
-    runlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_reprocess.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
         drs_reprocess.display_errors(params, outlist)
@@ -199,9 +199,9 @@ def __main__(recipe, params):
     runtable = drs_reprocess.generate_run_table(params, obj_mk_tellu, *gargs,
                                                 **gkwargs)
     # Generate run list
-    runlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_reprocess.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, runlist)
+    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
         drs_reprocess.display_errors(params, outlist)
