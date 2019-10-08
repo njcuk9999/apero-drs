@@ -259,23 +259,23 @@ QC_MAX_DEAD.value = 1.0
 
 # Defines the blue resized image
 IMAGE_X_BLUE_LOW = IMAGE_X_BLUE_LOW.copy(__NAME__)
-IMAGE_X_BLUE_LOW.value = 4
+IMAGE_X_BLUE_LOW.value = 100
 IMAGE_X_BLUE_HIGH = IMAGE_X_BLUE_HIGH.copy(__NAME__)
-IMAGE_X_BLUE_HIGH.value = 4092
+IMAGE_X_BLUE_HIGH.value = 4000
 IMAGE_Y_BLUE_LOW = IMAGE_Y_BLUE_LOW.copy(__NAME__)
-IMAGE_Y_BLUE_LOW.value = 250
+IMAGE_Y_BLUE_LOW.value = 3300
 IMAGE_Y_BLUE_HIGH = IMAGE_Y_BLUE_HIGH.copy(__NAME__)
-IMAGE_Y_BLUE_HIGH.value = 3350
+IMAGE_Y_BLUE_HIGH.value = 3720
 
 # Defines the red resized image
 IMAGE_X_RED_LOW = IMAGE_X_RED_LOW.copy(__NAME__)
-IMAGE_X_RED_LOW.value = 4
+IMAGE_X_RED_LOW.value = 100
 IMAGE_X_RED_HIGH = IMAGE_X_RED_HIGH.copy(__NAME__)
-IMAGE_X_RED_HIGH.value = 4092
+IMAGE_X_RED_HIGH.value = 4000
 IMAGE_Y_RED_LOW = IMAGE_Y_RED_LOW.copy(__NAME__)
-IMAGE_Y_RED_LOW.value = 250
+IMAGE_Y_RED_LOW.value = 780
 IMAGE_Y_RED_HIGH = IMAGE_Y_RED_HIGH.copy(__NAME__)
-IMAGE_Y_RED_HIGH.value = 3350
+IMAGE_Y_RED_HIGH.value = 1200
 
 #   Define a bad pixel cut limit (in ADU/s)
 DARK_CUTLIMIT = DARK_CUTLIMIT.copy(__NAME__)
@@ -1515,6 +1515,7 @@ CCF_MASK_PATH.value = './data/spirou/ccf/'
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
 CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
+CCF_DEFAULT_MASK.value = 'lines_Gl699.mas'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
@@ -1596,6 +1597,21 @@ CCF_FIT_TYPE.value = 0
 #     to calculate the CCF and RV
 CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
 CCF_N_ORD_MAX.value = 48
+
+# =============================================================================
+# DEBUG PLOT SETTINGS
+# =============================================================================
+# turn on dark image region debug plot
+PLOT_DARK_IMAGE_REGIONS = PLOT_DARK_IMAGE_REGIONS.copy(__NAME__)
+PLOT_DARK_IMAGE_REGIONS.value = True
+
+# turn on dark histogram debug plot
+PLOT_DARK_HISTOGRAM = PLOT_DARK_HISTOGRAM.copy(__NAME__)
+PLOT_DARK_HISTOGRAM.value = True
+
+# turn on badpix map debug plot
+PLOT_BADPIX_MAP = PLOT_BADPIX_MAP.copy(__NAME__)
+PLOT_BADPIX_MAP.value = True
 
 # =============================================================================
 # TOOLS SETTINGS

@@ -176,6 +176,8 @@ __all__ = [
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
+    # debug plot settings
+    'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1733,6 +1735,21 @@ CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__)
 #     if 1 then we have an emission line
 CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
                      options=[0, 1])
+
+# =============================================================================
+# DEBUG PLOT SETTINGS
+# =============================================================================
+# turn on dark image region debug plot
+PLOT_DARK_IMAGE_REGIONS = Const('PLOT_DARK_IMAGE_REGIONS', value=False,
+                                dtype=bool, source=__NAME__)
+
+# turn on dark histogram debug plot
+PLOT_DARK_HISTOGRAM = Const('PLOT_DARK_HISTOGRAM', value=False, dtype=bool,
+                            source=__NAME__)
+
+# turn on badpix map debug plot
+PLOT_BADPIX_MAP = Const('PLOT_BADPIX_MAP', value=False, dtype=bool,
+                            source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS

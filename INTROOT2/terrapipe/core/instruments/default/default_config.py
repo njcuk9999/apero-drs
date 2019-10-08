@@ -35,7 +35,7 @@ __all__ = [# global settings
            # PLOT SETTINGS
            'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
            'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
-           'DRS_PLOT_EXT', 'DRS_SUMMARY_EXT',
+           'DRS_PLOT_EXT', 'DRS_SUMMARY_EXT', 'DRS_SUMMARY_STYLE',
             # debug settings
             'DEBUG_MODE_LOG_PRINT', 'DEBUG_MODE_TEXTNAME_PRINT',
             'DEBUG_MODE_FUNC_PRINT',
@@ -331,6 +331,10 @@ DRS_PLOT_EXT = Const('DRS_PLOT_EXT', value='pdf', dtype=str, source=__NAME__)
 # Set the summary document extension
 DRS_SUMMARY_EXT = Const('DRS_SUMMARY_EXT', value='pdf', dtype=str,
                         source=__NAME__)
+
+# Set the summary document style
+DRS_SUMMARY_STYLE = Const('DRS_SUMMARY_STYLE', value='latex', dtype=str,
+                          source=__NAME__)
 
 # =============================================================================
 # DEBUG MODES
