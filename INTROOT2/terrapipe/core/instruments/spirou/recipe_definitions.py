@@ -256,6 +256,8 @@ cal_badpix.extension = 'fits'
 cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
 cal_badpix.set_outputs(BADPIX=sf.out_badpix, BACKMAP=sf.out_backmap)
+cal_badpix.set_debug_plots('BADPIX_MAP')
+cal_badpix.set_summary_plots('SUM_BADPIX_MAP')
 cal_badpix.set_arg(pos=0, **directory)
 cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
                      nargs='+', filelogic='exclusive', required=True,
@@ -283,6 +285,8 @@ cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
 cal_dark.set_outputs(DARK_FILE=sf.out_dark, SKY_FILE=sf.out_sky)
+cal_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
+cal_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 cal_dark.set_arg(pos=0, **directory)
 cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
                  helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
