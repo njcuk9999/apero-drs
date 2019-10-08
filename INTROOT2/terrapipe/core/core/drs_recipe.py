@@ -114,6 +114,7 @@ class DrsRecipe(object):
         # define arg list
         self.arg_list = []
         self.str_arg_list = None
+        self.used_command = []
         # get drs parameters
         self.drs_params = ParamDict()
         self.drs_pconstant = None
@@ -125,6 +126,8 @@ class DrsRecipe(object):
         self.special_args = []
         self.outputs = dict()
         self.output_files = dict()
+        self.debug_plots = []
+        self.summary_plots = []
         # the plotter
         self.plotter = None
         # set up the input validation (should be True to check arguments)
@@ -229,7 +232,9 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # record the inputs (either via self.str_arg_list or sys.argv)
         if self.str_arg_list is None:
-            self.str_arg_list = sys.argv
+            self.used_command = list(sys.argv)
+        else:
+            self.used_command = [self.name] + list(self.str_arg_list)
         # ---------------------------------------------------------------------
         # set the source for the params
         source = str(parser.source)
@@ -368,6 +373,14 @@ class DrsRecipe(object):
         for kwarg in kwargs:
             self.outputs[kwarg] = kwargs[kwarg]
 
+    def set_debug_plots(self, *args):
+        for arg in args:
+            self.debug_plots.append(arg)
+
+    def set_summary_plots(self, *args):
+        for arg in args:
+            self.summary_plots.append(arg)
+
     def add_output_file(self, outfile):
         func_name = __NAME__ + '.DrsRecipe.add_output_file()'
         # get the name of the outfile
@@ -488,10 +501,8 @@ class DrsRecipe(object):
         # define arg list
         self.arg_list = list(recipe.arg_list)
         # get string arg list (may be None)
-        if recipe.str_arg_list is None:
-            self.str_arg_list = None
-        else:
-            self.str_arg_list = list(recipe.str_arg_list)
+        self.str_arg_list = copy.deepcopy(recipe.str_arg_list)
+        self.used_command = copy.deepcopy(recipe.used_command)
         # get drs parameters
         self.drs_params = recipe.drs_params.copy()
         self.drs_pconstant = recipe.drs_pconstant
@@ -510,6 +521,8 @@ class DrsRecipe(object):
                 oldoutput = recipe.outputs[output]
                 newouput = oldoutput.completecopy(oldoutput)
                 self.outputs[output] = newouput
+        self.debug_plots = list(recipe.debug_plots)
+        self.summary_plots = list(recipe.summary_plots)
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
 
