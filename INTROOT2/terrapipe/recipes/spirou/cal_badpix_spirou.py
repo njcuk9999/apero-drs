@@ -170,7 +170,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
-        # TODO: fill in plot section
+        recipe.plotter.graph('BADPIX_MAP', map=bad_pixel_map)
 
         # ------------------------------------------------------------------
         # Flip images
@@ -309,6 +309,25 @@ def __main__(recipe, params):
         if passed:
             drs_database.add_file(params, badpixfile)
             drs_database.add_file(params, backmapfile)
+        # ------------------------------------------------------------------
+        # Summary plots
+        # ------------------------------------------------------------------
+        recipe.plotter.graph('SUM_BADPIX_MAP', map=bad_pixel_map)
+        # ------------------------------------------------------------------
+        # Construct summary document
+        # ------------------------------------------------------------------
+        # add stats
+        recipe.plotter.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plotter.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+        recipe.plotter.add_stat('KW_BHOT', value=bstats_a[0])
+        recipe.plotter.add_stat('KW_BBFLAT', value=bstats_a[1])
+        recipe.plotter.add_stat('KW_BNDARK', value=bstats_a[2])
+        recipe.plotter.add_stat('KW_BNFLAT', value=bstats_a[3])
+        recipe.plotter.add_stat('KW_BBAD', value=bstats_a[4])
+        recipe.plotter.add_stat('KW_BNILUM', value=bstats_b)
+        recipe.plotter.add_stat('KW_BTOT', value=btotal)
+        # construct summary
+        recipe.plotter.summary_document()
 
     # ----------------------------------------------------------------------
     # End of main code
