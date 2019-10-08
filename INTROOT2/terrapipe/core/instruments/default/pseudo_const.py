@@ -99,18 +99,18 @@ class PseudoConstants:
         return filename
 
     # noinspection PyPep8Naming
-    def INDEX_LOCK_FILENAME(self, p):
+    def INDEX_LOCK_FILENAME(self, params):
+        night_name = 'UNKNOWN'
         # get the night name directory
-        if 'NIGHTNAME' not in p:
-            night_name = 'UNKNOWN'
-        else:
-            night_name = p['NIGHTNAME'].replace(os.sep, '_')
-            night_name = night_name.replace(' ', '_')
+        if 'NIGHTNAME' in params:
+            if params['NIGHTNAME'] is not None:
+                night_name = params['NIGHTNAME'].replace(os.sep, '_')
+                night_name = night_name.replace(' ', '_')
         # get the index file
         index_file = self.INDEX_OUTPUT_FILENAME()
         # construct the index lock file name
         oargs = [night_name, index_file]
-        opath = os.path.join(p['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
+        opath = os.path.join(params['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
         # return the index lock file name
         return opath
 
