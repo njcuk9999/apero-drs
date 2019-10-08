@@ -97,7 +97,10 @@ def general_file(params, **kwargs):
         if outpath is None:
             WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
         # get output night name from params
-        outdirectory = params['NIGHTNAME']
+        if params['NIGHTNAME'] is None:
+            outdirectory = ''
+        else:
+            outdirectory = params['NIGHTNAME']
         # make sure night name folder exists (create it if not)
         make_night_name(params, outdirectory, outpath)
         # construct absolute path
@@ -248,6 +251,9 @@ def get_outfilename(params, infilename, prefix=None, suffix=None,
 
 def make_night_name(params, nightname, path):
     func_name = __NAME__ + '.make_night_name()'
+    # deal with no night name set
+    if nightname is None:
+        return
     # make full path
     full_path = os.path.join(path, nightname)
 
