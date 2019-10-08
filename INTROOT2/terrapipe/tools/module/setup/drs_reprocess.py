@@ -149,7 +149,7 @@ class Run:
     def get_night_name(self):
         if 'directory' in self.recipe.args:
             # get directory position
-            pos = int(self.recipe.args['directory'].pos)
+            pos = int(self.recipe.args['directory'].pos) + 1
             # set
             self.nightname = self.args[pos]
         else:
@@ -451,7 +451,7 @@ def generate_run_list(params, table, runtable):
     return generate_ids(params, runtable, recipemod, rlist)
 
 
-def process_run_list(params, runlist):
+def process_run_list(params, recipe, runlist):
     # get number of cores
     cores = _get_cores(params)
     # pipe to correct module
@@ -459,12 +459,12 @@ def process_run_list(params, runlist):
         # log process: Running with 1 core
         WLOG(params, 'info', TextEntry('40-503-00016'))
         # run as linear process
-        rdict = _linear_process(params, runlist)
+        rdict = _linear_process(params, recipe, runlist)
     else:
         # log process: Running with N cores
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, runlist, cores)
+        rdict = _multi_process(params, recipe, runlist, cores)
     # convert to ParamDict and set all sources
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
@@ -1072,8 +1072,8 @@ def prompt(params):
 # =============================================================================
 # Define processing functions
 # =============================================================================
-def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
-                    event=None):
+def _linear_process(params, recipe, runlist, return_dict=None, number=0,
+                    cores=1, event=None):
     # get textdict
     textdict = TextDict(params['instrument'], params['LANGUAGE'])
     # deal with empty return_dict
@@ -1133,7 +1133,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
                 ll_item = modulemain(**kwargs)
                 # ----------------------------------------------------------
                 # close all plotting
-                plotter = plotting.Plotter(params)
+                plotter = plotting.Plotter(params, recipe)
                 plotter.closeall()
                 # keep only some parameters
                 llparams = ll_item['params']
@@ -1208,7 +1208,7 @@ def _linear_process(params, runlist, return_dict=None, number=0, cores=1,
     return return_dict
 
 
-def _multi_process(params, runlist, cores):
+def _multi_process(params, recipe, runlist, cores):
     # first try to group tasks
     grouplist, groupnames = _group_tasks(runlist, cores)
     # start process manager
@@ -1228,8 +1228,8 @@ def _multi_process(params, runlist, cores):
         # loop around sub groups (to be run at same time)
         for r_it, runlist_group in enumerate(group):
             # get args
-            args = [params, runlist_group, return_dict, r_it + 1, cores,
-                    event]
+            args = [params, recipe, runlist_group, return_dict, r_it + 1,
+                    cores, event]
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
@@ -1327,7 +1327,9 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
                             kwargs, func_name)
     # get the file filter (should be None unless we want specific files)
-    filefilter = list(params['FILENAME'])
+    filefilter = params['FILENAME']
+    if filefilter is not None:
+        filefilter = list(params['FILENAME'])
     # ----------------------------------------------------------------------
     # get the pseudo constant object
     pconst = constants.pload(params['INSTRUMENT'])
