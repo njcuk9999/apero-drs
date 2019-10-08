@@ -159,11 +159,11 @@ def __main__(recipe, params):
                        yhigh=params['IMAGE_Y_BLUE_HIGH'])
         imageblue = drs_image.resize(params, image0, **bkwargs)
         # resize red image
-        bkwargs = dict(xlow=params['IMAGE_X_RED_LOW'],
+        rkwargs = dict(xlow=params['IMAGE_X_RED_LOW'],
                        xhigh=params['IMAGE_X_RED_HIGH'],
                        ylow=params['IMAGE_Y_RED_LOW'],
                        yhigh=params['IMAGE_Y_RED_HIGH'])
-        imagered = drs_image.resize(params, image0, **bkwargs)
+        imagered = drs_image.resize(params, image0, **rkwargs)
         # ------------------------------------------------------------------
         # Dark Measurement
         # ------------------------------------------------------------------
@@ -188,8 +188,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
-        # TODO: fill in plot section
-
+        recipe.plotter.graph('DARK_IMAGE_REGIONS', params=params, image=image,
+                             med=med_full)
+        recipe.plotter.graph('DARK_HISTOGRAM', params=params,
+                             histograms=[hist_full, hist_blue, hist_red])
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
@@ -306,6 +308,29 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if passed:
             drs_database.add_file(params, outfile)
+        # ------------------------------------------------------------------
+        # Summary plots
+        # ------------------------------------------------------------------
+        recipe.plotter.graph('SUM_DARK_IMAGE_REGIONS', params=params,
+                             image=image,
+                             med=med_full)
+        recipe.plotter.graph('SUM_DARK_HISTOGRAM', params=params,
+                             histograms=[hist_full, hist_blue, hist_red])
+        # ------------------------------------------------------------------
+        # Construct summary document
+        # ------------------------------------------------------------------
+        # add stats
+        recipe.plotter.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plotter.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+        recipe.plotter.add_stat('KW_DARK_DEAD', value=dadead_full)
+        recipe.plotter.add_stat('KW_DARK_MED', value=med_full)
+        recipe.plotter.add_stat('KW_DARK_B_DEAD', value=dadead_blue)
+        recipe.plotter.add_stat('KW_DARK_B_MED', value=med_blue)
+        recipe.plotter.add_stat('KW_DARK_R_DEAD', value=dadead_red)
+        recipe.plotter.add_stat('KW_DARK_R_MED', value=med_red)
+        recipe.plotter.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
+        # construct summary
+        recipe.plotter.summary_document(qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code
