@@ -18,11 +18,11 @@ from collections import OrderedDict
 # Define variables
 # =============================================================================
 # define known extensions
-KNOWN_EXTENSIONS = ['.pdf', '.tex']
+KNOWN_EXTENSIONS = ['.pdf', '.tex', '.html']
 # define latex packages to add (with options)
 PACKAGELIST = dict()
 PACKAGELIST['graphicx'] = None
-PACKAGELIST['geometry'] = 'margin=3cm'
+PACKAGELIST['geometry'] = 'margin=1cm'
 PACKAGELIST['xcolor'] = 'table, xcdraw'
 # define colours
 GOOD_COLOUR = '67FD9A'
@@ -34,11 +34,13 @@ SYMBOLS = OrderedDict()
 SYMBOLS['_'] = r'\_'
 SYMBOLS['>'] = r'$>$'
 SYMBOLS['<'] = r'$<$'
+# LATEX COMMAND
+LATEX_CMD = 'pdflatex -halt-on-error'
 
 # =============================================================================
 # Define classes
 # =============================================================================
-class Document:
+class LatexDocument:
     def __init__(self, filename, extension='.pdf'):
         # remove extensions
         if extension in filename:
@@ -52,7 +54,7 @@ class Document:
         # set up pdf filename
         self.pdffilename = self.filename + '.pdf'
         # set up temporary table filename
-        self.tablefile = self.filename + '.table'
+        self.tablefile = self.filename + '.tablelatex'
         # set up the storage of the text
         self._t_ = ''
         # set up flags
@@ -72,30 +74,31 @@ class Document:
         # write file to disk
         write_file(self.latexfilename, self._t_)
 
-    def compile(self):
+    def compile(self, logfile):
         # get current working directory
         cwd = os.getcwd()
-        # change to path
-        os.chdir(os.path.dirname(self.latexfilename))
+        if os.path.dirname(self.latexfilename) != '':
+            # change to path
+            os.chdir(os.path.dirname(self.latexfilename))
         # compile the tex file
-        os.system('pdflatex {0}'.format(self.latexfilename))
+        cargs = [LATEX_CMD, self.latexfilename, logfile]
+        os.system('{0} {1} >> {2}'.format(*cargs))
         # change back to original directory
-        os.chdir(cwd)
+        if os.path.dirname(self.latexfilename) != '':
+            os.chdir(cwd)
 
     def openpdf(self):
         os.system('okular {0}'.format(self.pdffilename))
 
     def cleanup(self):
-
         # get all files in directory that have the filename (without extension)
         files = glob.glob(self.filename + '*')
         # loop around files
         for filename in files:
-            # do not remove pdf file
-            if filename == self.pdffilename:
-                continue
-            # do not remove latex file
-            if filename == self.latexfilename:
+            # get extension
+            ext = '.' + filename.split('.')[-1]
+            # do not remove extensions of known types
+            if ext in KNOWN_EXTENSIONS:
                 continue
             # remove everything else
             else:
@@ -230,7 +233,7 @@ class Document:
         # get the number of columns
         num_cols = len(table.colnames)
         # set up the column alignment
-        col_align = '|c' * num_cols + '|'
+        col_align = '|l' * num_cols + '|'
         # set up caption
         if caption is not None and label is not None:
             caption = caption + ' ' + cmd('label', label)
@@ -242,7 +245,8 @@ class Document:
             caption = None
         # set up latex dictionary
         latexdict = dict(header_start=r'\hline', header_end=r'\hline',
-                         data_end=r'\hline', col_align=col_align)
+                         data_end=r'\hline', col_align=col_align,
+                         tablealign='h!', preamble=r'\centering')
         if units is not None:
             latexdict['units'] = units
         if caption is not None:
@@ -263,6 +267,14 @@ class Document:
         self.newline()
         for line in lines:
             self._t_ += line
+        # remove table file
+        if os.path.exists(self.tablefile):
+            os.remove(self.tablefile)
+
+    def add_command(self, command, inputs=None, options=None):
+        self.newline()
+        self._t_ += cmd(command, inputs, options)
+        self.newline()
 
     # ----------------------------------------------------------------------
     # environment latex functions
@@ -287,7 +299,7 @@ class Document:
                label=None):
         self.newline(2)
         # add equation start
-        self._t_ += cmd('begin', 'figure')
+        self._t_ += cmd('begin', 'figure') + '[ht]'
         self.newline()
         # add centering
         self._t_ += '\t' + cmd('centering')
@@ -439,9 +451,11 @@ if __name__ == "__main__":
     datatable['value2'] = y
     datamask = np.array(x % 10000).astype(bool)
 
+
+
     # ----------------------------------------------------------------------
     # test
-    doc = Document('test.pdf')
+    doc = LatexDocument('test.pdf')
     doc.preamble()
     doc.begin()
     doc.add_title('This is a test', 'Neil Cook')
@@ -454,17 +468,20 @@ if __name__ == "__main__":
     doc.subsection('Subsection Heading Here')
     doc.add_text('Write your subsection text here.')
 
-    doc.figure('plot_test1_pid-00015702112504085060.pdf',
+    doc.figure('plot_TEST1_PID-00015701409882315794.pdf',
                width=14, caption='Test figure 1', label='simple_figure')
+
+    doc.subsection('Table test section')
     doc.insert_table(datatable, caption='Test table', label='simple_table',
                      colormask=datamask)
+
     doc.section('Conclusion')
     doc.add_text('Write your conclusion here')
 
     doc.end()
 
     doc.write_latex()
-    doc.compile()
+    doc.compile('log.txt')
     doc.openpdf()
 
 
