@@ -500,6 +500,22 @@ QC_LOC_RMSMAX_WID.value = 500
 LOC_SAVE_SUPERIMP_FILE = LOC_SAVE_SUPERIMP_FILE.copy(__NAME__)
 LOC_SAVE_SUPERIMP_FILE.value = True
 
+# set the zoom in levels for the plots (bottom left corners)
+LOC_PLOT_CORNER_XZOOM1 = LOC_PLOT_CORNER_XZOOM1.copy(__NAME__)
+LOC_PLOT_CORNER_XZOOM1.value = '1000, 1000, 1944, 1944, 3388, 3388'
+
+# set the zoom in levels for the plots (bottom right corners)
+LOC_PLOT_CORNER_XZOOM2 = LOC_PLOT_CORNER_XZOOM2.copy(__NAME__)
+LOC_PLOT_CORNER_XZOOM2.value = '1200, 1200, 2144, 2144, 3588, 3588'
+
+# set the zoom in levels for the plots (top left corners)
+LOC_PLOT_CORNER_YZOOM1 = LOC_PLOT_CORNER_YZOOM1.copy(__NAME__)
+LOC_PLOT_CORNER_YZOOM1.value = '1000, 2400, 1350, 1550, 1000, 2400'
+
+# set the zoom in levels for the plots (top right corners)
+LOC_PLOT_CORNER_YZOOM2 = LOC_PLOT_CORNER_YZOOM2.copy(__NAME__)
+LOC_PLOT_CORNER_YZOOM2.value = '1200, 2600, 1550, 1750, 1200, 2600'
+
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
 # =============================================================================
@@ -1612,6 +1628,27 @@ PLOT_DARK_HISTOGRAM.value = True
 # turn on badpix map debug plot
 PLOT_BADPIX_MAP = PLOT_BADPIX_MAP.copy(__NAME__)
 PLOT_BADPIX_MAP.value = True
+
+# turn on the localisation cent min max debug plot
+PLOT_LOC_MINMAX_CENTS = PLOT_LOC_MINMAX_CENTS.copy(__NAME__)
+PLOT_LOC_MINMAX_CENTS.value = True
+
+# turn on the localisation cent/thres debug plot
+PLOT_LOC_MIN_CENTS_THRES = PLOT_LOC_MIN_CENTS_THRES.copy(__NAME__)
+PLOT_LOC_MIN_CENTS_THRES.value = True
+
+# turn on the localisation finding orders debug plot
+PLOT_LOC_FINDING_ORDERS = PLOT_LOC_FINDING_ORDERS.copy(__NAME__)
+PLOT_LOC_FINDING_ORDERS.value = False
+
+# turn on the image above saturation threshold debug plot
+PLOT_LOC_IM_SAT_THRES = PLOT_LOC_IM_SAT_THRES.copy(__NAME__)
+PLOT_LOC_IM_SAT_THRES.value = True
+
+# turn on the order number vs rms debug plot
+PLOT_LOC_ORD_VS_RMS = PLOT_LOC_ORD_VS_RMS.copy(__NAME__)
+PLOT_LOC_ORD_VS_RMS.value = True
+
 
 # =============================================================================
 # TOOLS SETTINGS

@@ -63,7 +63,8 @@ __all__ = [
     'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
     'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
     'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
-    'LOC_ORDER_CURVE_DROP',
+    'LOC_ORDER_CURVE_DROP', 'LOC_PLOT_CORNER_XZOOM1', 'LOC_PLOT_CORNER_XZOOM2',
+    'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2',
     # shape constants
     'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
     'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
@@ -178,6 +179,8 @@ __all__ = [
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     # debug plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
+    'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
+    'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -654,6 +657,22 @@ QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID', value=None, dtype=float,
 # Option for archiving the location image
 LOC_SAVE_SUPERIMP_FILE = Const('LOC_SAVE_SUPERIMP_FILE', value=None,
                                dtype=bool, source=__NAME__)
+
+# set the zoom in levels for the plots (bottom left corners)
+LOC_PLOT_CORNER_XZOOM1 = Const('LOC_PLOT_CORNER_XZOOM1', value=None,
+                               dtype=str, source=__NAME__)
+
+# set the zoom in levels for the plots (bottom right corners)
+LOC_PLOT_CORNER_XZOOM2 = Const('LOC_PLOT_CORNER_XZOOM2', value=None,
+                               dtype=str, source=__NAME__)
+
+# set the zoom in levels for the plots (top left corners)
+LOC_PLOT_CORNER_YZOOM1 = Const('LOC_PLOT_CORNER_YZOOM1', value=None,
+                               dtype=str, source=__NAME__)
+
+# set the zoom in levels for the plots (top right corners)
+LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
+                               dtype=str, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
@@ -1750,6 +1769,27 @@ PLOT_DARK_HISTOGRAM = Const('PLOT_DARK_HISTOGRAM', value=False, dtype=bool,
 # turn on badpix map debug plot
 PLOT_BADPIX_MAP = Const('PLOT_BADPIX_MAP', value=False, dtype=bool,
                             source=__NAME__)
+
+# turn on the localisation cent min max debug plot
+PLOT_LOC_MINMAX_CENTS = Const('PLOT_LOC_MINMAX_CENTS', value=False,
+                              dtype=bool, source=__NAME__)
+
+# turn on the localisation cent/thres debug plot
+PLOT_LOC_MIN_CENTS_THRES = Const('PLOT_LOC_MIN_CENTS_THRES', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the localisation finding orders debug plot
+PLOT_LOC_FINDING_ORDERS = Const('PLOT_LOC_FINDING_ORDERS', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the image above saturation threshold debug plot
+PLOT_LOC_IM_SAT_THRES = Const('PLOT_LOC_IM_SAT_THRES', value=False,
+                              dtype=bool, source=__NAME__)
+
+# turn on the order number vs rms debug plot
+PLOT_LOC_ORD_VS_RMS = Const('PLOT_LOC_ORD_VS_RMS', value=False,
+                            dtype=bool, source=__NAME__)
+
 
 # =============================================================================
 # TOOLS SETTINGS
