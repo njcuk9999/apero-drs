@@ -170,7 +170,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
-        recipe.plotter.graph('BADPIX_MAP', map=bad_pixel_map)
+        recipe.plot('BADPIX_MAP', badmap=bad_pixel_map)
 
         # ------------------------------------------------------------------
         # Flip images
@@ -312,22 +312,22 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------
-        recipe.plotter.graph('SUM_BADPIX_MAP', map=bad_pixel_map)
+        recipe.plot('SUM_BADPIX_MAP', badmap=bad_pixel_map)
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
         # add stats
-        recipe.plotter.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-        recipe.plotter.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-        recipe.plotter.add_stat('KW_BHOT', value=bstats_a[0])
-        recipe.plotter.add_stat('KW_BBFLAT', value=bstats_a[1])
-        recipe.plotter.add_stat('KW_BNDARK', value=bstats_a[2])
-        recipe.plotter.add_stat('KW_BNFLAT', value=bstats_a[3])
-        recipe.plotter.add_stat('KW_BBAD', value=bstats_a[4])
-        recipe.plotter.add_stat('KW_BNILUM', value=bstats_b)
-        recipe.plotter.add_stat('KW_BTOT', value=btotal)
+        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+        recipe.plot.add_stat('KW_BHOT', value=bstats_a[0])
+        recipe.plot.add_stat('KW_BBFLAT', value=bstats_a[1])
+        recipe.plot.add_stat('KW_BNDARK', value=bstats_a[2])
+        recipe.plot.add_stat('KW_BNFLAT', value=bstats_a[3])
+        recipe.plot.add_stat('KW_BBAD', value=bstats_a[4])
+        recipe.plot.add_stat('KW_BNILUM', value=bstats_b)
+        recipe.plot.add_stat('KW_BTOT', value=btotal)
         # construct summary
-        recipe.plotter.summary_document()
+        recipe.plot.summary_document()
 
     # ----------------------------------------------------------------------
     # End of main code
