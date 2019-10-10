@@ -330,6 +330,10 @@ cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     FWHM_FILE=sf.out_loc_fwhm,
                     SUP_FILE=sf.out_loc_sup,
                     DEBUG_BACK=sf.debug_back)
+cal_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
+                        'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
+                        'LOC_ORD_VS_RMS')
+cal_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                 files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
