@@ -1,6 +1,6 @@
 
 
-# How to terrapipe like a Developer
+# How to terrapipe
 
 
 
@@ -31,34 +31,34 @@
 ##### 1. in plot_functions.py define a plotting function:
 
 ```python
-def my_plot_function(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # get plt
-    plt = plotter.plt
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    x = kwargs['x']
-    y = kwargs['y']
-    color = kwargs['color']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    frame.plot(x, y, color=color)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
+        def my_plot_function(plotter, graph, kwargs):
+            # ------------------------------------------------------------------
+            # start the plotting process
+            if not plotter.plotstart(graph):
+                return
+            # get plt
+            plt = plotter.plt
+            # ------------------------------------------------------------------
+            # get the arguments from kwargs
+            x = kwargs['x']
+            y = kwargs['y']
+            color = kwargs['color']
+            # ------------------------------------------------------------------
+            # set up plot
+            fig, frame = graph.set_figure(plotter)
+            frame.plot(x, y, color=color)
+            # ------------------------------------------------------------------
+            # wrap up using plotter
+            plotter.plotend(graph)
 ```
 
 ##### 2. In plot_functions.py define a Graph instance:
 ```python
-my_plot = Graph(name, kind, func)
+        my_plot = Graph(name, kind, func)
 ```
 ```python
-my_debug_plot = Graph('MY_DEBUG_PLOT', kind='debug', func=my_plot_function)
-my_summary_plot = Graph('MY_SUM_PLOT', kind='summary', func=my_plot_function)
+        my_debug_plot = Graph('MY_DEBUG_PLOT', kind='debug', func=my_plot_function)
+        my_summary_plot = Graph('MY_SUM_PLOT', kind='summary', func=my_plot_function)
 ```
     where my_plot_function links to the function defined in (1)
     where name is the NAME that will be used to link to other places in the code
@@ -66,38 +66,38 @@ my_summary_plot = Graph('MY_SUM_PLOT', kind='summary', func=my_plot_function)
 
 ##### 3. In plot_functions.py add Graph instance to definitions list
 ```python
-definitions = [my_plot, my_debug_plot, my_summary_plot]
+        definitions += [my_plot, my_debug_plot, my_summary_plot]
 ```
 
 ##### 4. In recipe_definitions.py add NAME to set_debug_plots or set_summary_plots
 ```python
-my_recipe.set_debug_plots(NAME)
+        my_recipe.set_debug_plots(NAME)
 ```
 ```python
-my_recipe.set_debug_plots('MY_DEBUG_PLOT')
-my_recipe.set_summary_plots('MY_SUMMARY_PLOT')
+        my_recipe.set_debug_plots('MY_DEBUG_PLOT')
+        my_recipe.set_summary_plots('MY_SUMMARY_PLOT')
 ```
-##### 5. If kind='debug' then in instrument/default_constants.py (and default/default_constants.py) add PLOT_{NAME}
+##### 5. If kind='debug' then we need to allow user to turn it on/off. 
 
-instrument/default_constants.py    
+This is done in `terrapipe/core/instruments/{instrument}/default_constants.py` (and `terrapipe/core/instruments/default/default_constants.py`) by adding a constant `PLOT_{NAME}`
+
+In `terrapipe/core/instruments/{instrument}/default_constants.py` (where `instrument` is the instrument name)
 ```python
-PLOT_{NAME} = PLOT_{NAME}.copy(__NAME__)
-PLOT_{NAME}.value = True
+        PLOT_{NAME} = PLOT_{NAME}.copy(__NAME__)
+        PLOT_{NAME}.value = True
 ```
-    default/default_constants.py
+In `terrapipe/core/instruments/default/default_constants.py`
 ```python 
         PLOT_NAME = Const('PLOT_{NAME}', value=False, dtype=bool, source=__NAME__)
 ```
     where NAME is the NAME from (2)
 
-i.e.
-
-instrument/default_constants.py    
+i.e. in `terrapipe/core/instruments/{instrument}/default_constants.py`   
 ```python
-PLOT_MY_DEBUG_PLOT = PLOT_MY_DEBUG_PLOT.copy(__NAME__)
-PLOT_MY_DEBUG_PLOT.value = True
+        PLOT_MY_DEBUG_PLOT = PLOT_MY_DEBUG_PLOT.copy(__NAME__)
+        PLOT_MY_DEBUG_PLOT.value = True
 ```
-default/default_constants.py
+in `terrapipe/core/instruments/default/default_constants.py`
 ```python 
         PLOT_MY_DEBUG_PLOT = Const('PLOT_MY_DEBUG_PLOT', value=False, dtype=bool, source=__NAME__)
 ```
@@ -115,6 +115,7 @@ where name = "my_plot_functions" and the kwargs match what is needed in the func
 ```python
         recipe.plotter.graph('my_plot_function', x=[1,2,3,4], y=[5,6,7,8], color='red')
 ```
+
 
 
 ##### Summary plot
