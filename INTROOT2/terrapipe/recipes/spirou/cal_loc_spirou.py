@@ -161,7 +161,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # find and fit localisation
         largs = [order_profile, props['SIGDET'], fiber]
-        lout = localisation.find_and_fit_localisation(params, *largs)
+        lout = localisation.find_and_fit_localisation(params, recipe, *largs)
+
         # get parameters from lout
         cent_0, cent_coeffs, cent_rms, cent_max_ptp = lout[:4]
         cent_frac_ptp, cent_max_rmpts = lout[4:6]
@@ -177,22 +178,19 @@ def __main__(recipe, params):
         width_fits = mp.calculate_polyvals(wid_coeffs, image.shape[1])
 
         # ------------------------------------------------------------------
-        # Plot the image (ready for fit points to be overplotted later)
+        # Plot the image and fit points
         # ------------------------------------------------------------------
-        # Plot the image (ready for fit points to be overplotted later)
-        if params['DRS_PLOT'] > 0:
-            # get saturation threshold
-            loc_sat_thres = pcheck(params, 'LOC_SAT_THRES', func=mainname)
-            sat_thres = loc_sat_thres * props['GAIN'] * num_files
-            # plot image above saturation threshold
-            # TODO: Add sPlt.locplot_im_sat_threshold(p, loc, data2, sat_thres)
-
+        # get saturation threshold
+        loc_sat_thres = params['LOC_SAT_THRES']
+        sat_thres = loc_sat_thres * props['GAIN'] * num_files
+        # plot image above saturation threshold
+        recipe.plot('LOC_IM_SAT_THRES', image=image, xarr=xplot, yarr=yplot,
+                    threshold=sat_thres)
         # ------------------------------------------------------------------
         # Plot of RMS for positions and widths
         # ------------------------------------------------------------------
-        if params['DRS_PLOT'] > 0:
-            # TODO: Add sPlt.locplot_order_number_against_rms(p, loc, rorder_num)
-            pass
+        recipe.plot('LOC_ORD_VS_RMS', rnum=rorder_num, fiber=fiber,
+                    rms_center=cent_rms, rms_fwhm=wid_rms)
 
         # ------------------------------------------------------------------
         # Quality control
@@ -442,6 +440,31 @@ def __main__(recipe, params):
             drs_database.add_file(params, orderpfile)
             # copy the loco file to the calibDB
             drs_database.add_file(params, loco1file)
+        # ------------------------------------------------------------------
+        # Summary plots
+        # ------------------------------------------------------------------
+        recipe.plot('SUM_LOC_IM_THRES', image=image, xarr=xplot, yarr=yplot,
+                    threshold=sat_thres)
+        recipe.plot('SUM_LOC_IM_CORNER', image=image, xarr=xplot, yarr=yplot,
+                    threshold=sat_thres, params=params)
+        # ------------------------------------------------------------------
+        # Construct summary document
+        # ------------------------------------------------------------------
+        # add stats
+        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+        recipe.plot.add_stat('KW_LOC_BCKGRD', value=mean_backgrd)
+        recipe.plot.add_stat('KW_LOC_NBO', value=rorder_num)
+        recipe.plot.add_stat('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
+        recipe.plot.add_stat('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
+        recipe.plot.add_stat('KW_LOC_MAXFLX', value=max_signal)
+        recipe.plot.add_stat('KW_LOC_SMAXPTS_CTR', value=max_removed_cent)
+        recipe.plot.add_stat('KW_LOC_SMAXPTS_WID', value=max_removed_wid)
+        recipe.plot.add_stat('KW_LOC_RMS_CTR', value=rmsmax_cent)
+        recipe.plot.add_stat('KW_LOC_RMS_WID', value=rmsmax_wid)
+        # construct summary
+        recipe.plot.summary_document(qc_params)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

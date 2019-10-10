@@ -12,6 +12,7 @@ Created on 2019-01-19 at 13:45
 from __future__ import division
 import numpy as np
 from astropy.table import Table
+import sys
 import os
 import glob
 import matplotlib
@@ -104,7 +105,7 @@ class Plotter:
         # set matplotlib via _get_matplotlib()
         self._get_matplotlib()
 
-    def graph(self, name, func=None, **kwargs):
+    def __call__(self, name, func=None, **kwargs):
         """
         Function used to plot a specific graph (name needs to be defined in
         plot functions), keyword arguments are passed to plotting function
@@ -178,7 +179,7 @@ class Plotter:
     def plotstart(self, graph):
         if graph.kind == 'debug':
             if self.plot == 1:
-                self.plt.ion()
+                self.interactive(True)
             if self.plot > 0:
                 return True
             else:
@@ -194,9 +195,9 @@ class Plotter:
             # we shouldn't have got here but if plot=0 do not plot
             if self.plot == 0:
                 pass
-            # if plot = 1 we are in iteractive mode
+            # if plot = 1 we are in interactive mode
             elif self.plot == 1:
-                self.plt.ioff()
+                self.interactive(False)
                 # add debug plots
                 self.debug_graphs[graph.name] = graph.copy()
             # if plot = 2 we need to show the plot
@@ -207,7 +208,7 @@ class Plotter:
         elif graph.kind == 'summary':
             # TODO: Add summary options
             # 1. save to file
-            self.plt.ioff()
+            self.interactive(False)
             self.plt.savefig(graph.filename)
             self.plt.close()
             # 2. add graph to summary plots
@@ -216,6 +217,14 @@ class Plotter:
             pass
 
     def plotloop(self, looplist):
+        # must run in plot mode 2
+
+        if self.plot == 1:
+            current_mode = 1
+            self.plot = 2
+            self.plt.ioff()
+        else:
+            current_mode = None
         # check that looplist is a valid list
         if not isinstance(looplist, list):
             # noinspection PyBroadException
@@ -232,6 +241,11 @@ class Plotter:
         while it < len(looplist):
             # deal with end of looplist
             if it == len(looplist):
+                # must set the mode back to original (if changed)
+                if current_mode is not None:
+                    self.plot = current_mode
+                    self.plt.ion()
+                # break out of while
                 break
             # if this is the first iteration do not print message
             if first:
@@ -270,6 +284,11 @@ class Plotter:
                     yield looplist[it]
                 # else we assume the loop is over and we want to exit
                 else:
+                    # must set the mode back to original (if changed)
+                    if current_mode is not None:
+                        self.plot = current_mode
+                        self.plt.ion()
+                    # break out of while
                     break
 
     def closeall(self):
@@ -279,6 +298,50 @@ class Plotter:
         :return None:
         """
         self.plt.close('all')
+
+    def close_plots(self, loop=False):
+        # deal with closing loop plots
+        if loop:
+            WLOG(self.params, 'info', TextEntry('40-100-00006'), printonly=True)
+        # log message asking to close plots
+        WLOG(self.params, 'info', TextEntry('40-003-00003'), printonly=True)
+        # deal with python 2 / python 3 input method
+        if sys.version_info.major < 3:
+            # note python 3 wont find this!
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('[Y]es or [N]o:\t')
+        else:
+            uinput = input('[Y]es or [N]o:\t')
+        # if yes close all plots
+        if 'Y' in uinput.upper():
+            # close any open plots properly
+            self.closeall()
+
+    def interactive(self, switch=False):
+        """
+        plt.ion()/plt.ioff() sometimes does not work in debug mode
+        therefore we must catch it.
+
+        :param switch: bool, if True turn on interactive mode else turn it off
+        :type switch: bool
+
+        :return: None
+        """
+        # if switch is True turn on interactive mode
+        if switch:
+            try:
+                self.plt.ion()
+            except:
+                pass
+        # else we assume switch is False and turn off interactive mode
+        #    note here we show and close plots in case anything was opened
+        #    in interactive mode and is now stuck open
+        else:
+            try:
+                self.plt.ioff()
+            except:
+                self.plt.show()
+                self.plt.close()
 
     # ------------------------------------------------------------------
     # summary methods
@@ -398,7 +461,7 @@ class Plotter:
         doc.write_latex()
         # get log file
         logfile = drs_log.get_logfilepath(WLOG, self.params)
-        doc.compile(logfile)
+        doc.compile(logfile + '.latex')
         # return the doc
         return doc
 

@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 import os
 import warnings
+from collections import OrderedDict
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -104,7 +105,7 @@ def calculate_order_profile(params, image, **kwargs):
     return newimage
 
 
-def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
+def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
     # get fiber params
@@ -183,9 +184,7 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     WLOG(params, 'info', TextEntry('40-013-00003', args=[max_signal]))
     WLOG(params, 'info', TextEntry('40-013-00004', args=[mean_backgrd]))
     # plot y, miny and maxy
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add locplot_y_miny_maxy(p, y, miny, maxy) here
-        pass
+    recipe.plot('LOC_MINMAX_CENTS', y=y, miny=miny, maxy=maxy)
 
     # ----------------------------------------------------------------------
     # Step 2: Search for order center on the central column - quick
@@ -193,10 +192,8 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # log progress
     WLOG(params, '', TextEntry('40-013-00005'))
-    # plot the minimum of ycc and ic_locseuil if in debug and plot mode
-    if params['DRS_DEBUG'] > 0 and params['DRS_PLOT']:
-        # TODO: Add debug_locplot_min_ycc_loc_threshold(p, ycc)
-        pass
+    # plot the minimum of ycc and back_thres
+    recipe.plot('LOC_MIN_CENTS_THRES', centers=ycc, threshold=back_thres)
     # find the central positions of the orders in the central
     posc_all = find_position_of_cent_col(ycc, back_thres)
     # depending on the fiber type we may need to skip some pixels and also
@@ -209,7 +206,6 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     # log the number of orders than have been detected
     wargs = [fiber, norm_num_orders, num_fibers]
     WLOG(params, 'info', TextEntry('40-013-00006', args=wargs))
-
     # ----------------------------------------------------------------------
     # Step 3: Search for order center and profile on specific columns
     # ----------------------------------------------------------------------
@@ -235,6 +231,9 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
     # set the central col centers in the cpos_orders array
     cent_0[:, central_col] = posc[0:num_orders]
     # ----------------------------------------------------------------------
+    # storage for plotting
+    dvars = OrderedDict()
+    plimits = OrderedDict()
     # loop around each order
     rorder_num = 0
     for order_num in range(num_orders):
@@ -250,6 +249,8 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
         columns = list(range(central_col + locstep, nx2 - locstep, locstep))
         columns += list(range(central_col, locstep, -locstep))
         # ------------------------------------------------------------------
+        # storage for plotting
+        col_vals, maxycc, minxcc, maxxcc = [], -np.inf, np.inf, -np.inf
         # loop around each column to get the order row center position from
         # previous central measurement.
         # For the first iteration this uses "posc" for all other iterations
@@ -271,7 +272,6 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
             # now make sure our extraction isn't out of bounds
             if rowtop <= 0 or rowbottom >= nx2:
                 break
-
             # TODO: This value may need changing - What does it do?
             # if col <= (800 - order_num*30):
             if col <= (750 - rowcenter * 0.7):
@@ -308,11 +308,18 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
             # add these positions to storage
             cent_0[order_num, col] = center
             wid_0[order_num, col] = width
-            # debug plot
-            if params['DRS_DEBUG'] == 2 and params['DRS_PLOT']:
-                dvars = [params, order_num, col, rowcenter, rowtop, rowbottom,
-                         center, width, ovalues]
-                #TODO: Add sPlt.debug_locplot_finding_orders(*dvars)
+            # debug plot parameters
+            if np.nanmax(ovalues) > maxycc:
+                maxycc = np.nanmax(ovalues)
+            if (rowtop - center) < minxcc:
+                minxcc = rowtop - center
+            if (rowbottom - center) > maxxcc:
+                maxxcc = rowbottom - center
+            col_val = [rowcenter, rowtop, rowbottom, center, width, ovalues]
+            col_vals.append(col_val)
+        # append col vals to order storage
+        dvars[order_num] = col_vals
+        plimits[order_num] = [minxcc, maxxcc, 0, maxycc]
         # ------------------------------------------------------------------
         # only keep the orders with non-zero width
         mask = wid_0[order_num, :] != 0
@@ -373,7 +380,8 @@ def find_and_fit_localisation(params, image, sigdet, fiber, **kwargs):
         # else log that the order is unusable
         else:
             WLOG(params, '', TextEntry('40-013-00010'))
-
+    # plot finding orders plot
+    recipe.plot('LOC_FINDING_ORDERS', plotdict=dvars, plimits=plimits)
     # ----------------------------------------------------------------------
     # Log that the order geometry has been measured
     wargs = [fiber, rorder_num]

@@ -188,9 +188,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
-        recipe.plotter.graph('DARK_IMAGE_REGIONS', params=params, image=image,
+        recipe.plot('DARK_IMAGE_REGIONS', params=params, image=image,
                              med=med_full)
-        recipe.plotter.graph('DARK_HISTOGRAM', params=params,
+        recipe.plot('DARK_HISTOGRAM', params=params,
                              histograms=[hist_full, hist_blue, hist_red])
         # ------------------------------------------------------------------
         # Quality control
@@ -311,26 +311,25 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------
-        recipe.plotter.graph('SUM_DARK_IMAGE_REGIONS', params=params,
-                             image=image,
-                             med=med_full)
-        recipe.plotter.graph('SUM_DARK_HISTOGRAM', params=params,
-                             histograms=[hist_full, hist_blue, hist_red])
+        recipe.plot('SUM_DARK_IMAGE_REGIONS', params=params, image=image,
+                    med=med_full)
+        recipe.plot('SUM_DARK_HISTOGRAM', params=params,
+                    histograms=[hist_full, hist_blue, hist_red])
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
         # add stats
-        recipe.plotter.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-        recipe.plotter.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-        recipe.plotter.add_stat('KW_DARK_DEAD', value=dadead_full)
-        recipe.plotter.add_stat('KW_DARK_MED', value=med_full)
-        recipe.plotter.add_stat('KW_DARK_B_DEAD', value=dadead_blue)
-        recipe.plotter.add_stat('KW_DARK_B_MED', value=med_blue)
-        recipe.plotter.add_stat('KW_DARK_R_DEAD', value=dadead_red)
-        recipe.plotter.add_stat('KW_DARK_R_MED', value=med_red)
-        recipe.plotter.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
+        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+        recipe.plot.add_stat('KW_DARK_DEAD', value=dadead_full)
+        recipe.plot.add_stat('KW_DARK_MED', value=med_full)
+        recipe.plot.add_stat('KW_DARK_B_DEAD', value=dadead_blue)
+        recipe.plot.add_stat('KW_DARK_B_MED', value=med_blue)
+        recipe.plot.add_stat('KW_DARK_R_DEAD', value=dadead_red)
+        recipe.plot.add_stat('KW_DARK_R_MED', value=med_red)
+        recipe.plot.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
         # construct summary
-        recipe.plotter.summary_document(qc_params)
+        recipe.plot.summary_document(qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code
