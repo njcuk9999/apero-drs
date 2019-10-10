@@ -372,6 +372,9 @@ cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
                              SHAPE_OUT_HC_FILE=sf.out_shape_debug_ohc,
                              SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx,
                              DEBUG_BACK=sf.debug_back)
+cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
+                                 'SHAPE_ANGLE_OFFSET')
+cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
 cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
