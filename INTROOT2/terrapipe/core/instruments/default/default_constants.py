@@ -77,9 +77,9 @@ __all__ = [
     'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
     'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
     'SHAPE_SHORT_DX_MEDFILT_WID', 'SHAPE_LONG_DX_MEDFILT_WID',
-    'SHAPE_QC_DXMAP_STD', 'SHAPE_PLOT_PER_ORDER',
-    'SHAPEOFFSET_XOFFSET', 'SHAPEOFFSET_BOTTOM_PERCENTILE',
-    'SHAPEOFFSET_TOP_PERCENTILE', 'SHAPEOFFSET_TOP_FLOOR_FRAC',
+    'SHAPE_QC_DXMAP_STD', 'SHAPEOFFSET_XOFFSET',
+    'SHAPEOFFSET_BOTTOM_PERCENTILE', 'SHAPEOFFSET_TOP_PERCENTILE',
+    'SHAPEOFFSET_TOP_FLOOR_FRAC',
     'SHAPEOFFSET_MED_FILTER_WIDTH', 'SHAPEOFFSET_FPINDEX_MAX',
     'SHAPEOFFSET_VALID_FP_LENGTH', 'SHAPEOFFSET_DRIFT_MARGIN',
     'SHAPEOFFSET_WAVEFP_INV_IT', 'SHAPEOFFSET_MASK_BORDER',
@@ -88,7 +88,7 @@ __all__ = [
     'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
     'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
     'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
-    'SHAPE_DEBUG_OUTPUTS',
+    'SHAPE_DEBUG_OUTPUTS', 'SHAPE_PLOT_SELECTED_ORDER',
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS',
@@ -181,6 +181,7 @@ __all__ = [
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
     'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
+    'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -734,6 +735,10 @@ SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
 SHAPE_NUM_ITERATIONS = Const('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
                              minimum=1, source=__NAME__)
 
+# The order to use on the shape plot
+SHAPE_PLOT_SELECTED_ORDER = Const('SHAPE_PLOT_SELECTED_ORDER', value=None,
+                                  dtype=int, minimum=0, source=__NAME__)
+
 # width of the ABC fibers (in pixels)
 SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=int,
                           minimum=1, source=__NAME__)
@@ -778,10 +783,6 @@ SHAPE_LONG_DX_MEDFILT_WID = Const('SHAPE_SHORT_DX_MEDFILT_WID', value=None,
 #  per-order and per-x-pixel shift of the FP peaks
 SHAPE_QC_DXMAP_STD = Const('SHAPE_QC_DXMAP_STD', value=None, dtype=int,
                            source=__NAME__)
-
-#  Defines whether to plot the debug plot per order (this creates many plots)
-SHAPE_PLOT_PER_ORDER = Const('SHAPE_PLOT_PER_ORDER', value=None, dtype=bool,
-                             source=__NAME__)
 
 # defines the shape offset xoffset (before and after) fp peaks
 SHAPEOFFSET_XOFFSET = Const('SHAPEOFFSET_XOFFSET', value=None, dtype=int,
@@ -1789,6 +1790,17 @@ PLOT_LOC_IM_SAT_THRES = Const('PLOT_LOC_IM_SAT_THRES', value=False,
 # turn on the order number vs rms debug plot
 PLOT_LOC_ORD_VS_RMS = Const('PLOT_LOC_ORD_VS_RMS', value=False,
                             dtype=bool, source=__NAME__)
+
+# turn on the shape dx debug plot
+PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__)
+
+# turn on the shape angle offset (all orders in loop) debug plot
+PLOT_SHAPE_ANGLE_OFFSET_ALL = Const('PLOT_SHAPE_ANGLE_OFFSET_ALL', value=False,
+                                    dtype=bool, source=__NAME__)
+
+# turn on the shape angle offset (one selected order) debug plot
+PLOT_SHAPE_ANGLE_OFFSET = Const('PLOT_SHAPE_ANGLE_OFFSET', value=False,
+                                dtype=bool, source=__NAME__)
 
 
 # =============================================================================

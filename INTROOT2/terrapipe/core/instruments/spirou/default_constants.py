@@ -502,19 +502,19 @@ LOC_SAVE_SUPERIMP_FILE.value = True
 
 # set the zoom in levels for the plots (bottom left corners)
 LOC_PLOT_CORNER_XZOOM1 = LOC_PLOT_CORNER_XZOOM1.copy(__NAME__)
-LOC_PLOT_CORNER_XZOOM1.value = '1000, 1000, 1944, 1944, 3388, 3388'
+LOC_PLOT_CORNER_XZOOM1.value = '0 , 2240, 0 , 2240'
 
 # set the zoom in levels for the plots (bottom right corners)
 LOC_PLOT_CORNER_XZOOM2 = LOC_PLOT_CORNER_XZOOM2.copy(__NAME__)
-LOC_PLOT_CORNER_XZOOM2.value = '1200, 1200, 2144, 2144, 3588, 3588'
+LOC_PLOT_CORNER_XZOOM2.value = '1848 , 4088, 1848 , 4088'
 
 # set the zoom in levels for the plots (top left corners)
 LOC_PLOT_CORNER_YZOOM1 = LOC_PLOT_CORNER_YZOOM1.copy(__NAME__)
-LOC_PLOT_CORNER_YZOOM1.value = '1000, 2400, 1350, 1550, 1000, 2400'
+LOC_PLOT_CORNER_YZOOM1.value = '2500 , 2800, 0, 000'
 
 # set the zoom in levels for the plots (top right corners)
 LOC_PLOT_CORNER_YZOOM2 = LOC_PLOT_CORNER_YZOOM2.copy(__NAME__)
-LOC_PLOT_CORNER_YZOOM2.value = '1200, 2600, 1550, 1750, 1200, 2600'
+LOC_PLOT_CORNER_YZOOM2.value = '3000 , 3100, 400, 400'
 
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
@@ -572,6 +572,10 @@ SHAPE_MASTER_FIBER.value = 'AB'
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
 SHAPE_NUM_ITERATIONS.value = 4
 
+# The order to use on the shape plot
+SHAPE_PLOT_SELECTED_ORDER = SHAPE_PLOT_SELECTED_ORDER.copy(__NAME__)
+SHAPE_PLOT_SELECTED_ORDER.value = 33
+
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
 SHAPE_ORDER_WIDTH.value = 60
@@ -619,10 +623,6 @@ SHAPE_LONG_DX_MEDFILT_WID.value = 9
 #    per-order and per-x-pixel shift of the FP peaks
 SHAPE_QC_DXMAP_STD = SHAPE_QC_DXMAP_STD.copy(__NAME__)
 SHAPE_QC_DXMAP_STD.value = 5
-
-#  Defines whether to plot the debug plot per order (this creates many plots)
-SHAPE_PLOT_PER_ORDER = SHAPE_PLOT_PER_ORDER.copy(__NAME__)
-SHAPE_PLOT_PER_ORDER.value = False
 
 # defines the shape offset xoffset (before and after) fp peaks
 SHAPEOFFSET_XOFFSET = SHAPEOFFSET_XOFFSET.copy(__NAME__)
@@ -1648,6 +1648,18 @@ PLOT_LOC_IM_SAT_THRES.value = True
 # turn on the order number vs rms debug plot
 PLOT_LOC_ORD_VS_RMS = PLOT_LOC_ORD_VS_RMS.copy(__NAME__)
 PLOT_LOC_ORD_VS_RMS.value = True
+
+# turn on the shape dx debug plot
+PLOT_SHAPE_DX = PLOT_SHAPE_DX.copy(__NAME__)
+PLOT_SHAPE_DX.value = True
+
+# turn on the shape angle offset (all orders in loop) debug plot
+PLOT_SHAPE_ANGLE_OFFSET_ALL = PLOT_SHAPE_ANGLE_OFFSET_ALL.copy(__NAME__)
+PLOT_SHAPE_ANGLE_OFFSET_ALL.value = True
+
+# turn on the shape angle offset (one selected order) debug plot
+PLOT_SHAPE_ANGLE_OFFSET = PLOT_SHAPE_ANGLE_OFFSET.copy(__NAME__)
+PLOT_SHAPE_ANGLE_OFFSET.value = True
 
 
 # =============================================================================
