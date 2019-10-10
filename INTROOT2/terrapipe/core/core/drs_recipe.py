@@ -129,7 +129,7 @@ class DrsRecipe(object):
         self.debug_plots = []
         self.summary_plots = []
         # the plotter
-        self.plotter = None
+        self.plot = None
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
         # get drs params
@@ -521,6 +521,9 @@ class DrsRecipe(object):
                 oldoutput = recipe.outputs[output]
                 newouput = oldoutput.completecopy(oldoutput)
                 self.outputs[output] = newouput
+        # copy plotter
+        self.plot = recipe.plot
+        # plot options
         self.debug_plots = list(recipe.debug_plots)
         self.summary_plots = list(recipe.summary_plots)
         # set up the input validation (should be True to check arguments)
