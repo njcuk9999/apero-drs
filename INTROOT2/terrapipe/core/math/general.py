@@ -213,6 +213,41 @@ def iuv_spline(x, y, **kwargs):
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
+def sigfig(x, n):
+    """
+    Produces x values to "n" significant figures
+
+    From : https://stackoverflow.com/a/55599055
+
+    :param x: numpy array, the values to round
+    :param n: int, the number of significant figures required
+    :return:
+    """
+
+    if isinstance(x, np.ndarray):
+        xin = np.array(x)
+    elif isinstance(x, list):
+        xin = np.array(x)
+    else:
+        xin = np.array([x])
+    # filter out zeros
+    mask = xin != 0
+    # get the power and factor
+    power = -(np.floor(np.log10(abs(xin)))).astype(int) + (n - 1)
+    factor = (10 ** power)
+    # get sig fig
+    xr = np.round(xin[mask] * factor) / factor
+    # deal with return
+    if isinstance(x, np.ndarray):
+        return xr
+    elif isinstance(x, list):
+        return list(xr)
+    else:
+        return xr[0]
+
+
+
+
 # =============================================================================
 # Define wave functions
 # =============================================================================

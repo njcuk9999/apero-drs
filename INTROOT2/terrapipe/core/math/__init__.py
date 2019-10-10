@@ -76,6 +76,8 @@ linear_minimization = general.linear_minimization
 
 relativistic_waveshift = general.relativistic_waveshift
 
+sigfig = general.sigfig
+
 # =============================================================================
 # End of code
 # =============================================================================
