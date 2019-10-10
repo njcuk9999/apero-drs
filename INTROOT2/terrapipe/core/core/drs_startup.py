@@ -234,7 +234,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     recipe.drs_params = params.copy()
     WLOG.pin = params.copy()
     # add in the plotter
-    recipe.plotter = plotting.Plotter(params, recipe)
+    recipe.plot = plotting.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
@@ -606,23 +606,10 @@ def fiber_processing_update(params, fiber):
 
 
 def end_plotting(params, recipe):
-    plotter = recipe.plotter
+    plotter = recipe.plot
     if plotter is not None:
         if len(plotter.debug_graphs) > 0:
-            # deal with closing plots
-            WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=True)
-            WLOG(params, 'info', TextEntry('40-003-00003'), printonly=True)
-            # deal with python 2 / python 3 input method
-            if sys.version_info.major < 3:
-                # note python 3 wont find this!
-                # noinspection PyUnresolvedReferences
-                uinput = raw_input('[Y]es or [N]o:\t')
-            else:
-                uinput = input('[Y]es or [N]o:\t')
-            # if yes close all plots
-            if 'Y' in uinput.upper():
-                # close any open plots properly
-                plotter.closeall()
+            plotter.close_plots(params)
 
 
 # =============================================================================
