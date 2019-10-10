@@ -224,7 +224,7 @@ def __main__(recipe, params):
             qc_pass.append(1)
         # add to qc header lists
         qc_values.append(sum_cent_max_rmpts)
-        qc_names.append('sum(MAX_RMPTS_POS')
+        qc_names.append('sum(MAX_RMPTS_POS)')
         qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
                         ''.format(sum_cent_max_rmpts))
         # ----------------------------------------------------------------------
