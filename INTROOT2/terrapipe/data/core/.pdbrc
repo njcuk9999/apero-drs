@@ -19,7 +19,8 @@ print(" =======================================================")
 print("")
 print("")
 
-# go once up a level to return to __main__
+# go twice up a level to return to breakpoint/__main__
+up
 up
 
 print("Entering IPython (exit to to to ipdb/pdb)")
