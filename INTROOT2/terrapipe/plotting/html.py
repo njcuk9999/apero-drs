@@ -199,13 +199,14 @@ class HtmlDocument:
 
     def figure(self, filename, height=None, width=None, caption=None,
                label=None):
+        # set image options
         img_options = dict(src=filename)
         if height is not None:
             img_options['height'] = str(width)
         if width is not None:
             img_options['width'] = str(width)
         self.newline()
-        self._t_ += cmd('embed', options=img_options)
+        self._t_ += cmd('img', options=img_options)
         self.newline()
         if caption is not None:
             self.add_text(caption)
@@ -328,7 +329,7 @@ if __name__ == "__main__":
     doc.subsection('Subsection Heading Here')
     doc.add_text('Write your subsection text here.')
 
-    doc.figure('plot_TEST1_PID-00015701409882315794.pdf',
+    doc.figure('plot_TEST1_PID-00015701409882315794.png',
                width=1024, height=256,
                caption='Test figure 1', label='simple_figure')
 

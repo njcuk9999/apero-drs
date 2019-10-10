@@ -34,6 +34,7 @@ SYMBOLS = OrderedDict()
 SYMBOLS['_'] = r'\_'
 SYMBOLS['>'] = r'$>$'
 SYMBOLS['<'] = r'$<$'
+SYMBOLS['%'] = r'\%'
 # LATEX COMMAND
 LATEX_CMD = 'pdflatex -halt-on-error'
 
@@ -251,7 +252,7 @@ class LatexDocument:
             latexdict['units'] = units
         if caption is not None:
             latexdict['caption'] = caption
-        # fix table - underscores need '\_'
+        # fix table - need to clean bad characters
         for col in table.colnames:
             # check if column has strings
             if isinstance(table[col][0], str):
@@ -334,14 +335,28 @@ class LatexDocument:
 # Define functions
 # =============================================================================
 def clean(text):
+    # if we have a list go to clean list function
     if isinstance(text, list):
         return cleanlist(text)
+    # else copy new text
     else:
         newtext = str(text)
+    # define a proxy for not replacing
+    proxy = '@' * 100
     # 1. deal with symbols
     for symbol in SYMBOLS:
+        # special case for % (if it is a comment)
+        if newtext.strip().startswith('%'):
+            newtext = newtext.replace('%', proxy, 1)
+        # make sure we have no corrections already
+        if SYMBOLS[symbol] in newtext:
+            newtext = newtext.replace(SYMBOLS[symbol], proxy)
+        # clean symbol
         if symbol in newtext:
             newtext = newtext.replace(symbol, SYMBOLS[symbol])
+        # re-replace corrections already applied
+        if proxy in newtext:
+            newtext = newtext.replace(proxy, SYMBOLS[symbol])
 
     # return new text
     return newtext

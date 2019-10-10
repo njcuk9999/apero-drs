@@ -22,6 +22,7 @@ from collections import OrderedDict
 from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core import drs_log
+from terrapipe.core import math as mp
 from terrapipe.io import drs_path
 
 from terrapipe.plotting import plot_functions
@@ -71,7 +72,8 @@ class Plotter:
     def __init__(self, params, recipe=None):
         self.params = params
         self.recipe = recipe
-        self.plot = params['DRS_PLOT']
+        self.recipename = '{0} ({1})'.format(recipe.name, recipe.shortname)
+        self.plotoption = params['DRS_PLOT']
         self.names = dict()
         self.plot_switches = dict()
         self.has_debugs = False
@@ -94,7 +96,7 @@ class Plotter:
         self.backend = None
         self.plt = None
         self.matplotlib = None
-        self.mpl_toolkits = None
+        self.axes_grid1 = None
         # ------------------------------------------------------------------
         # set self.names via _get_plot_names()
         self._get_plot_names()
@@ -122,12 +124,12 @@ class Plotter:
         """
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if self.plot == -1:
+        if self.plotoption == -1:
             WLOG(self.params, 'debug', TextEntry('09-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if (self.plot == 0) and (name in self.debug_graphs):
+        if (self.plotoption == 0) and (name in self.debug_graphs):
             WLOG(self.params, 'debug', TextEntry('09-100-00002'))
             return 0
         # ------------------------------------------------------------------
@@ -151,7 +153,7 @@ class Plotter:
                 return 0
         # do not plot if we are in debug mode and plot == 0
         if plot_obj.kind == 'debug':
-            if self.plot == 0:
+            if self.plotoption == 0:
                 return 0
         # ------------------------------------------------------------------
         # must be in plot lists
@@ -178,9 +180,9 @@ class Plotter:
 
     def plotstart(self, graph):
         if graph.kind == 'debug':
-            if self.plot == 1:
+            if self.plotoption == 1:
                 self.interactive(True)
-            if self.plot > 0:
+            if self.plotoption > 0:
                 return True
             else:
                 return False
@@ -193,15 +195,15 @@ class Plotter:
         # deal with debug plots
         if graph.kind == 'debug':
             # we shouldn't have got here but if plot=0 do not plot
-            if self.plot == 0:
+            if self.plotoption == 0:
                 pass
             # if plot = 1 we are in interactive mode
-            elif self.plot == 1:
+            elif self.plotoption == 1:
                 self.interactive(False)
                 # add debug plots
                 self.debug_graphs[graph.name] = graph.copy()
             # if plot = 2 we need to show the plot
-            elif self.plot == 2:
+            elif self.plotoption == 2:
                 self.plt.show()
                 self.plt.close()
         # deal with summary plots
@@ -209,7 +211,8 @@ class Plotter:
             # TODO: Add summary options
             # 1. save to file
             self.interactive(False)
-            self.plt.savefig(graph.filename)
+            self.plt.savefig(graph.filename + '.png', dpi=graph.dpi)
+            self.plt.savefig(graph.filename + '.pdf', dpi=graph.dpi)
             self.plt.close()
             # 2. add graph to summary plots
             self.summary_graphs[graph.name] = graph.copy()
@@ -219,9 +222,9 @@ class Plotter:
     def plotloop(self, looplist):
         # must run in plot mode 2
 
-        if self.plot == 1:
+        if self.plotoption == 1:
             current_mode = 1
-            self.plot = 2
+            self.plotoption = 2
             self.plt.ioff()
         else:
             current_mode = None
@@ -243,7 +246,7 @@ class Plotter:
             if it == len(looplist):
                 # must set the mode back to original (if changed)
                 if current_mode is not None:
-                    self.plot = current_mode
+                    self.plotoption = current_mode
                     self.plt.ion()
                 # break out of while
                 break
@@ -286,7 +289,7 @@ class Plotter:
                 else:
                     # must set the mode back to original (if changed)
                     if current_mode is not None:
-                        self.plot = current_mode
+                        self.plotoption = current_mode
                         self.plt.ion()
                     # break out of while
                     break
@@ -414,11 +417,11 @@ class Plotter:
         # set up the latex document
         doc = latex.LatexDocument(self.summary_filename)
         # get recipe short name
-        shortname = clean(self.recipe.shortname)
+        shortname = clean(self.recipename)
         pid = self.params['PID'].lower()
         name = clean(self.recipe.name)
         # summary info
-        sargs = [name, shortname, pid]
+        sargs = [shortname, pid]
         summary_title = self.textdict['40-100-01006'].format(*sargs)
         summary_authors = ' '.join(__author__)
         # add start
@@ -447,10 +450,11 @@ class Plotter:
         for g_it, gname in enumerate(self.summary_graphs):
             # get graph instance for gname
             sgraph = self.summary_graphs[gname]
+            # get graph basename with correct file extension
+            sbasename = os.path.basename(sgraph.filename) + '.pdf'
             # add graph
-            doc.figure(filename=sgraph.filename,
-                       caption=clean(sgraph.description),
-                       width=10)
+            doc.figure(filename=sbasename, caption=clean(sgraph.description),
+                       width=16)
         # add qc params section
         self.summary_latex_qc_params(doc, qc_params)
         # add stats section
@@ -469,7 +473,7 @@ class Plotter:
         if qc_params is None:
             return
         # get recipe short name
-        shortname = clean(self.recipe.shortname)
+        shortname = clean(self.recipename)
         # add qc_param section
         doc.section(self.textdict['40-100-01003'])
         # add qc_param text
@@ -485,7 +489,7 @@ class Plotter:
         if stats is None:
             return
         # get recipe short name
-        shortname = clean(self.recipe.shortname)
+        shortname = clean(self.recipename)
         # add qc_param section
         doc.section(self.textdict['40-100-01008'])
         # add qc_param text
@@ -501,11 +505,11 @@ class Plotter:
         # set up the latex document
         doc = html.HtmlDocument(self.summary_filename)
         # get recipe short name
-        shortname = self.recipe.shortname
+        shortname = self.recipename
         pid = self.params['PID'].lower()
         name = self.recipe.name
         # summary info
-        sargs = [name, shortname, pid]
+        sargs = [shortname, pid]
         summary_title = self.textdict['40-100-01006'].format(*sargs)
         summary_authors = ' '.join(__author__)
         # add start
@@ -530,9 +534,9 @@ class Plotter:
             targs = [g_it + 1, sgraph.description]
             doc.add_text(self.textdict['40-100-01007'].format(*targs))
             doc.newline()
-            # add graph
-            sbasename = os.path.basename(sgraph.filename)
-            doc.figure(filename=sbasename, width=1024, height=1024)
+            # add graph with correct extension
+            sbasename = os.path.basename(sgraph.filename) + '.png'
+            doc.figure(filename=sbasename, width=1024)
         # add qc params section
         self.summary_html_qc_params(doc, qc_params)
         # add stats section
@@ -548,7 +552,7 @@ class Plotter:
         if qc_params is None:
             return
         # get recipe short name
-        shortname = self.recipe.shortname
+        shortname = self.recipename
         # add qc_param section
         doc.section(self.textdict['40-100-01003'])
         # add qc_param text
@@ -566,7 +570,7 @@ class Plotter:
         if stats is None:
             return
         # get recipe short name
-        shortname = self.recipe.shortname
+        shortname = self.recipename
         # add qc_param section
         doc.section(self.textdict['40-100-01008'])
         # add qc_param text
@@ -579,25 +583,51 @@ class Plotter:
         doc.insert_table(stats_html, caption=caption)
 
     def summary_stats(self):
-        # get columns
-        names, values = [], []
+        # storage of table columns
+        names, values, comments = [], [], []
+        # switch for knowing whether we have found comments
+        has_comments = False
+        # loop around statistics dictionary
         for kwarg in self.stat_dict:
             # append to lists
             names.append(kwarg)
-            values.append(str(self.stat_dict[kwarg]))
+            # get value and comment
+            value, comment = self.stat_dict[kwarg]
+            # append to lists
+            values.append(str(value))
+            if comment is not None:
+                comments.append(comment)
+                has_comments = True
+            else:
+                comments.append('')
         # push into table
         self.stats = Table()
         self.stats['NAMES'] = names
         self.stats['VALUES'] = values
+        if has_comments:
+            self.stats['COMMENTS'] = comments
 
-    def add_stat(self, key, value):
+    def add_stat(self, key, value, comment=None):
 
+        # if key is in parameter dictionary then assume we have a
+        #    drs key word store ([key, value, comment])
         if key in self.params:
+            # get key
             dkey = self.params[key][0]
-        else:
-            dkey = str(key).upper()
+            # get comment
+            dcomment = self.params[key][2]
+            # check if value is float and round if needed
+            value = _sigfig(value, digits=5)
+            # add to stat dictionary
+            self.stat_dict[dkey] = [str(value), str(dcomment)]
 
-        self.stat_dict[dkey] = str(value)
+        else:
+            # check if value is float and round if needed
+            value = _sigfig(value, digits=5)
+            # get key in capitals
+            dkey = str(key).upper()
+            # add to stat dictionary
+            self.stat_dict[dkey] = [str(value), comment]
 
     # ------------------------------------------------------------------
     # internal methods
@@ -672,19 +702,19 @@ class Plotter:
         # if matplotlib modules set then just use these
         if PLT_MOD is not None:
             self.plt = PLT_MOD
-            self.mpl_toolkits = MPL_MOD
+            self.axes_grid1 = MPL_MOD
         # ------------------------------------------------------------------
         # if we do not have debug plots then we do not need any fancy backend
         # and can just use Agg
         if not self.has_debugs:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
-            import mpl_toolkits
+            from  mpl_toolkits import axes_grid1
             self.plt = plt
             self.matplotlib = matplotlib
-            self.mpl_toolkits = mpl_toolkits
+            self.axes_grid1 = axes_grid1
             PLT_MOD = plt
-            MPL_MOD = mpl_toolkits
+            MPL_MOD = axes_grid1
         # else we may have to plot graphs to the screen so we need to use
         #    a more fancy backend (but not MacOSX)
         else:
@@ -695,12 +725,12 @@ class Plotter:
                 try:
                     matplotlib.use(gui, warn=False, force=True)
                     import matplotlib.pyplot as plt
-                    import mpl_toolkits
+                    from mpl_toolkits import axes_grid1
                     self.plt = plt
                     self.matplotlib = matplotlib
-                    self.mpl_toolkits = mpl_toolkits
+                    self.axes_grid1 = axes_grid1
                     PLT_MOD = plt
-                    MPL_MOD = mpl_toolkits
+                    MPL_MOD = axes_grid1
                     break
                 except Exception as _:
                     continue
@@ -760,13 +790,18 @@ def qc_param_table(qc_params):
         # else extract conditions values and passed criteria
         else:
             conditions.append(qc_logic[it])
+            # get value
+            value = qc_values[it]
             # deal with no value
-            if qc_values[it] == 'None':
+            if value == 'None':
                 values.append(qc_names[it])
-            else:
-                vargs = [qc_names[it], qc_values[it]]
-                values.append('{0} = {1}'.format(*vargs))
-                passed.append(qc_pass[it] == 1)
+                continue
+            # check if value is float and round if needed
+            value = _sigfig(value, digits=5)
+            vargs = [qc_names[it], value]
+            # append to list
+            values.append('{0} = {1}'.format(*vargs))
+            passed.append(qc_pass[it] == 1)
     # deal with no qc defined
     if len(conditions) == 0:
         return None, None
@@ -775,6 +810,17 @@ def qc_param_table(qc_params):
         qc_table['Condition'] = conditions
         qc_table['Value'] = values
         return qc_table, np.array(passed)
+
+
+def _sigfig(value, digits=5):
+    # deal with float values
+    try:
+        if '.' in str(value):
+            value = np.round(float(value), digits)
+            return mp.sigfig(value, digits)
+    except ValueError:
+        pass
+    return value
 
 
 # =============================================================================

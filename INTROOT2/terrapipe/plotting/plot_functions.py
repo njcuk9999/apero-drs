@@ -78,9 +78,8 @@ class Graph:
         """
         # get pid
         pid = params['PID']
-        plot_ext = params['DRS_PLOT_EXT']
         # construct filename
-        filename = 'plot_{0}_{1}.{2}'.format(self.name, pid, plot_ext)
+        filename = 'plot_{0}_{1}'.format(self.name, pid)
         # make filename all lowercase
         filename = filename.lower()
         # construct absolute filename
@@ -93,9 +92,20 @@ class Graph:
         fig, frames = plt.subplots(**kwargs)
         # set figure parameters
         fig.set_size_inches(self.figsize)
-        fig.set_dpi(self.dpi)
         # return figure and frames
         return fig, frames
+
+    def set_grid(self, plotter, **kwargs):
+        # get plt from plotter (for matplotlib set up)
+        plt = plotter.plt
+        # get figure and frame
+        fig = plt.figure()
+        # get grid
+        gs = fig.add_gridspec(**kwargs)
+        # set figure parameters
+        fig.set_size_inches(self.figsize)
+        # return figure and frames
+        return fig, gs
 
 
 # =============================================================================
@@ -435,6 +445,9 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get plt
+    plt = plotter.plt
+    axes_grid1 = plotter.axes_grid1
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     image = kwargs['image']
@@ -445,7 +458,8 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='viridis')
+    im = frame.imshow(image, origin='lower', clim=(1.0, threshold),
+                      cmap='viridis')
     # set the limits
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
     # loop around xarr and yarr and plot
@@ -454,6 +468,13 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
         x, y = xarr[order_num], yarr[order_num]
         # plot
         frame.plot(x, y, label=order_num, linewidth=1.5, color='red')
+    # create an axes on the right side of ax. The width of cax will be 5%
+    # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+    divider = axes_grid1.make_axes_locatable(frame)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im, cax=cax)
+    # adjust plot
+    plt.subplots_adjust(top=0.95, bottom=0.05, left=0.05, right=0.975)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -495,11 +516,11 @@ def plot_loc_im_corner(plotter, graph, kwargs):
         return
     # get plt
     plt = plotter.plt
+    axes_grid1 = plotter.axes_grid1
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
     image = kwargs['image']
-    threshold = kwargs['threshold']
     xarr = kwargs['xarr']
     yarr = kwargs['yarr']
     # get zoom values
@@ -528,11 +549,13 @@ def plot_loc_im_corner(plotter, graph, kwargs):
         ymin, ymax = yzoom1[row], yzoom2[row]
         # get image zoom
         image_zoom = image[ymin:ymax, xmin:xmax]
+        # threshold = percentile
+        threshold = np.nanpercentile(image_zoom, 98)
         # ------------------------------------------------------------------
         # plot image
-        frame.imshow(image_zoom, origin='lower', clim=(1.0, threshold),
-                     cmap='viridis', aspect='auto',
-                     extent=[xmin, xmax, ymin, ymax])
+        im = frame.imshow(image_zoom, origin='lower', vmin=0.0, vmax=threshold,
+                          cmap='viridis', aspect='auto',
+                          extent=[xmin, xmax, ymin, ymax])
         # loop around xarr and yarr and plot
         for order_num in range(len(xarr)):
             # x and y
@@ -541,6 +564,12 @@ def plot_loc_im_corner(plotter, graph, kwargs):
             frame.plot(x, y, label=order_num, linewidth=1.5, color='red')
         # set the limits
         frame.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
+        # create an axes on the right side of ax. The width of cax will be 5%
+        # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+        divider = axes_grid1.make_axes_locatable(frame)
+        cax = divider.append_axes("top", size="5%", pad=0.05)
+        cb = plt.colorbar(im, cax=cax, orientation='horizontal')
+        cb.ax.xaxis.set_ticks_position('top')
     # adjust plot
     plt.subplots_adjust(top=0.95, bottom=0.05, left=0.05, right=0.975)
     # ------------------------------------------------------------------
@@ -559,13 +588,16 @@ loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
                          func=plot_loc_im_sat_thres)
 loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
                        func=plot_loc_ord_vs_rms)
+description = ('Polynomial fits for localisation (overplotted on '
+               'pre-processed image)')
 sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
-                             func=plot_loc_im_sat_thres,
-                               figsize = (12, 12), dpi = 150)
+                             func=plot_loc_im_sat_thres, figsize=(12, 8),
+                             dpi=300, description=description)
+description = ('Zoom in polynomial fits for localisation (overplotted on '
+               'pre-processed image)')
 sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
-                               func=plot_loc_im_corner,
-                               figsize = (16, 16), dpi = 150)
-
+                               func=plot_loc_im_corner, figsize=(16, 10),
+                               dpi=150, description=description)
 # add to definitions
 definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
                 loc_im_sat_thres, loc_ord_vs_rms, sum_loc_im_sat_thres,
@@ -575,6 +607,195 @@ definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
 # =============================================================================
 # Define shape plotting functions
 # =============================================================================
+def plot_shape_dx(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    axes_grid1 = plotter.axes_grid1
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    dx = kwargs['dx']
+    dx2 = kwargs['dx2']
+    bnum = kwargs['bnum']
+    nbanana = kwargs['nbanana']
+    # set the zeropoint
+    zeropoint = np.nanmedian(dx)
+    # get the sig of dx
+    sig_dx = np.nanmedian(np.abs(dx - zeropoint))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
+    # set up axis
+    frame1, frame2, frame3 = frames
+    # ----------------------------------------------------------------------
+    # plot dx
+    vmin = (-2 * sig_dx) + zeropoint
+    vmax = (2 * sig_dx) + zeropoint
+    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis')
+    # add colour bar
+    divider1 = axes_grid1.make_axes_locatable(frame1)
+    cax1 = divider1.append_axes("top", size="10%", pad=0.05)
+    cb1 = plt.colorbar(im1, cax=cax1, orientation='horizontal')
+    # set colorbar tick positions and label
+    cb1.ax.xaxis.set_ticks_position('top')
+    cb1.ax.xaxis.set_label_position('top')
+    cb1.set_label('dx')
+    # set labels and title
+    frame1.set(xlabel='width [pix]', ylabel='order number', title='dx')
+    # ----------------------------------------------------------------------
+    # plot dx2
+    vmin = (-2 * sig_dx) + zeropoint
+    vmax = (2 * sig_dx) + zeropoint
+    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis')
+    # add colour bar
+    divider2 = axes_grid1.make_axes_locatable(frame2)
+    cax2 = divider2.append_axes("top", size="10%", pad=0.05)
+    cb2 = plt.colorbar(im2, cax=cax2, orientation='horizontal')
+    # set colorbar tick positions and label
+    cb2.ax.xaxis.set_ticks_position('top')
+    cb2.ax.xaxis.set_label_position('top')
+    cb2.set_label('dx2')
+    # set labels and title
+    frame2.set(xlabel='width [pix]', ylabel='order number', title='dx2')
+    # ----------------------------------------------------------------------
+    # plot diff
+    vmin = (-0.5 * sig_dx) + zeropoint
+    vmax = (0.5 * sig_dx) + zeropoint
+    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis')
+    # add colour bar
+    divider3 = axes_grid1.make_axes_locatable(frame3)
+    cax3 = divider3.append_axes("top", size="10%", pad=0.05)
+    cb3 = plt.colorbar(im3, cax=cax3, orientation='horizontal')
+    # set colorbar tick positions and label
+    cb3.ax.xaxis.set_ticks_position('top')
+    cb3.ax.xaxis.set_label_position('top')
+    cb3.set_label('dx - dx2')
+    # set labels and title
+    frame3.set(xlabel='width [pix]', ylabel='order number', title='dx - dx2')
+    # ----------------------------------------------------------------------
+    # title
+    # ----------------------------------------------------------------------
+    plt.suptitle('Iteration {0} / {1}'.format(bnum + 1, nbanana))
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_shape_angle_offset(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    bnum = kwargs.get('bnum', None)
+    nbo = kwargs['nbo']
+    nbpix = kwargs['nbpix']
+    # get data for plots 1 and 2
+    slope_deg_arr = kwargs['slope_deg']
+    slope_arr = kwargs['slope']
+    skeep_arr = kwargs['skeep']
+    xsection_arr = kwargs['xsection']
+    ccor_arr = kwargs['ccor']
+    ddx_arr = kwargs['ddx']
+    dx_arr = kwargs['dx']
+    dypix_arr = kwargs['dypix']
+    ckeep_arr = kwargs['ckeep']
+    # get data for plot 3
+    corr_dx_from_fp_arr = kwargs['corr_dx_fp']
+    xpeak2_arr = kwargs['xpeak2']
+    err_pix_arr = kwargs['err_pix']
+    goodmask_arr = kwargs['good']
+    # get parameters from params
+    sorder = params['SHAPE_PLOT_SELECTED_ORDER']
+    nbanana = params['SHAPE_NUM_ITERATIONS']
+    width = params['SHAPE_ORDER_WIDTH']
+    # ------------------------------------------------------------------
+    # if we have a bnum set get the plot loop generator (around orders)
+    if bnum is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        banana_gen = [0]
+    # else we are loop around bnums for a selected order
+    else:
+        order_gen = [sorder]
+        banana_gen = plotter.plotloop(np.arange(nbanana).astype(int))
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # iterating the correction, from coarser to finer
+        for banana_num in banana_gen:
+            # --------------------------------------------------------------
+            # get this iterations parameters
+            slope_deg = slope_deg_arr[banana_num][order_num]
+            slope = slope_arr[banana_num][order_num]
+            s_keep = skeep_arr[banana_num][order_num]
+            xsection = xsection_arr[banana_num][order_num]
+            ccor = ccor_arr[banana_num][order_num]
+            ddx = ddx_arr[banana_num][order_num]
+            dx = dx_arr[banana_num][order_num]
+            dypix = dypix_arr[banana_num][order_num]
+            c_keep = ckeep_arr[banana_num][order_num]
+            corr_dx_from_fp = corr_dx_from_fp_arr[banana_num][order_num]
+            xpeak2 = xpeak2_arr[banana_num][order_num]
+            err_pix = err_pix_arr[banana_num][order_num]
+            good = goodmask_arr[banana_num][order_num]
+            # --------------------------------------------------------------
+            # set up plot
+            fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
+            frame1, frame2, frame3 = frames
+            # title
+            title = 'Iteration {0}/{1} - Order {2}'
+            plt.suptitle(title.format(banana_num, nbanana, order_num))
+            # --------------------------------------------------------------
+            # frame 1
+            # --------------------------------------------------------------
+            frame1.plot(xsection[s_keep], slope_deg[s_keep], color='g',
+                        marker='o', ls='None')
+            frame1.plot(np.arange(nbpix), slope)
+            frame1.set(xlabel='x pixel', ylabel='slope [deg]')
+            # --------------------------------------------------------------
+            # frame 2
+            # --------------------------------------------------------------
+            frame2.imshow(ccor, aspect=0.2, cmap='viridis')
+            frame2.plot(dx - np.min(ddx), dypix, color='r', marker='o',
+                        ls='None')
+            frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
+                        marker='o', ls='None')
+            frame2.set(ylim=[0.0, width - 1], xlim=[0, len(ddx) - 1])
+            # --------------------------------------------------------------
+            # plot 3
+            # --------------------------------------------------------------
+            # add plot
+            frame3.plot(xpeak2, err_pix, color='r', linestyle='None',
+                        marker='.', label='err pixel')
+            frame3.plot(xpeak2[good], err_pix[good], color='g',
+                        linestyle='None', marker='.',
+                        label='err pixel (for fit)')
+            frame3.plot(np.arange(nbpix), corr_dx_from_fp, color='k',
+                        label='fit to err pix')
+            frame3.set(xlabel='Pixel', ylabel='Err Pixel')
+            frame3.legend(loc=0)
+            # --------------------------------------------------------------
+            # wrap up using plotter
+            plotter.plotend(graph)
+
+
+shape_dx = Graph('SHAPE_DX', kind='debug', func=plot_shape_dx)
+shape_angle_offset_all = Graph('SHAPE_ANGLE_OFFSET_ALL', kind='debug',
+                           func=plot_shape_angle_offset)
+shape_angle_offset = Graph('SHAPE_ANGLE_OFFSET', kind='debug',
+                           func=plot_shape_angle_offset)
+sum_shape_angle_offset = Graph('SUM_SHAPE_ANGLE_OFFSET', kind='summary',
+                           func=plot_shape_angle_offset)
+# add to definitions
+definitions += [shape_dx, shape_angle_offset_all, shape_angle_offset,
+                sum_shape_angle_offset]
+
 
 # =============================================================================
 # Define flat plotting functions
