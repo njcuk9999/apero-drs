@@ -985,13 +985,7 @@ def breakpoint(params=None, allow=None):
     _copy_pdb_rc(params)
     # catch bdb quit
     try:
-        # start ipdb
-        try:
-            import ipdb
-            ipdb.set_trace()
-        except Exception as _:
-            import pdb
-            pdb.set_trace()
+        _execute_ipdb()
     except:
         pass
     # delete pdbrc
@@ -1279,6 +1273,15 @@ def _check_mod_source(source):
     # return edited source
     return source
 
+
+def _execute_ipdb():
+    # start ipdb
+    try:
+        import ipdb
+        ipdb.set_trace()
+    except Exception as _:
+        import pdb
+        pdb.set_trace()
 
 # =============================================================================
 # Other private functions
