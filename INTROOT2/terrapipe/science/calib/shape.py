@@ -508,7 +508,7 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
     return coeffs2
 
 
-def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
+def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
@@ -537,9 +537,6 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
                                 'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
-    plot_on = pcheck(params, 'SHAPE_PLOT_PER_ORDER', 'plot_on',
-                     kwargs, func_name)
-
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
@@ -548,25 +545,21 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
     poly_cavity = drs_data.load_cavity_file(params)
     # get the dimensions
     dim1, dim2 = fpdata.shape
-
     # -------------------------------------------------------------------------
     # define storage for plotting
     slope_deg_arr, slope_arr, skeep_arr = [], [], []
     xsec_arr, ccor_arr = [], []
     ddx_arr, dx_arr = [], []
     dypix_arr, cckeep_arr = [], []
-
+    corr_dx_from_fp_arr, xpeak2_arr = [], []
+    peakval2_arr, ewval2_arr = [], []
+    err_pix_arr, good_mask_arr = [], []
     # define storage for output
     master_dxmap = np.zeros_like(fpdata)
     map_orders = np.zeros_like(fpdata) - 1
     order_overlap = np.zeros_like(fpdata)
     slope_all_ord = np.zeros((nbo, dim2))
-    corr_dx_from_fp = np.zeros((nbo, dim2))
-    xpeak2 = [[]] * nbo
-    peakval2 = [[]] * nbo
-    ewval2 = [[]] * nbo
-    err_pix = [[]] * nbo
-    good_mask = [[]] * nbo
+    corr_dx_from_fp = np.zeros((nbanana, nbo, dim2))
     # -------------------------------------------------------------------------
     # create the x pixel vector (used with polynomials to find
     #    order center)
@@ -604,12 +597,9 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         range_slopes = np.tan(np.deg2rad(np.array(range_slopes_deg)))
         # set up iteration storage
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
-        xsec_arr_i, ccor_arr_i = [], []
-        ddx_arr_i, dx_arr_i = [], []
+        xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
         dypix_arr_i, cckeep_arr_i = [], []
-
-        # storage for loc2
-        loc2s = []
+        xpeak2, peakval2, ewval2, err_pix, good_mask = [], [], [], [], []
         # get dx array (NaN)
         dx = np.zeros((nbo, width)) + np.nan
         # ------------------------------------------------------------------
@@ -804,11 +794,11 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             out = _get_offset_sp(*pargs)
             # get and save offest outputs into lists
             corr_dx_from_fp[order_num] = out[0]
-            xpeak2[order_num] = out[1]
-            peakval2[order_num] = out[2]
-            ewval2[order_num] = out[3]
-            err_pix[order_num] = out[4]
-            good_mask[order_num] = out[5]
+            xpeak2.append(out[1])
+            peakval2.append(out[2])
+            ewval2.append(out[3])
+            err_pix.append(out[4])
+            good_mask.append(out[5])
 
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
@@ -866,18 +856,8 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
             dypix_arr_i.append(np.array(dypix))
             cckeep_arr_i.append(np.array(keep))
             # -----------------------------------------------------------------
-            if params['DRS_PLOT'] and params['DRS_DEBUG'] >= 2:
-                # add temp keys for debug plot
-                loc2['XSECTION'] = np.array(xsection)
-                loc2['CCOR'], loc2['DDX'] = ccor, ddx
-                loc2['DX'], loc2['DYPIX'] = dx[order_num], dypix
-                loc2['C_KEEP'] = keep
-            # append loc2 to storage
-            loc2s.append(loc2)
-            # -----------------------------------------------------------------
             # set those values that should not be kept to NaN
             dx[order_num][~keep] = np.nan
-
         # -----------------------------------------------------------------
         # get the median filter of dx (short median filter)
         dx2_short = np.array(dx)
@@ -893,19 +873,10 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         # apply long dx filter to NaN positions of short dx filter
         nanmask = ~np.isfinite(dx2)
         dx2[nanmask] = dx2_long[nanmask]
-
         # ---------------------------------------------------------------------
         # dx plot
-        if params['DRS_PLOT'] > 0:
-            # TODO: Do plots
-            pass
-            # # plots setup: start interactive plot
-            # sPlt.start_interactive_session(p)
-            # # plot
-            # sPlt.slit_shape_dx_plot(p, dx, dx2, banana_num)
-            # # end interactive section
-            # sPlt.end_interactive_session(p)
-
+        recipe.plot('SHAPE_DX', dx=dx, dx2=dx2, bnum=banana_num,
+                    nbanana=nbanana)
         # ---------------------------------------------------------------------
         # loop around orders
         for order_num in range(nbo):
@@ -1016,21 +987,16 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
                         return dxmap, max_dxmap_std, max_dxmap_info
-
-            # -----------------------------------------------------------------
-            if params['DRS_PLOT'] and (params['DRS_DEBUG'] >= 2) and plot_on:
-                # TODO: Do plots
-                pass
-                # # plot angle and offset plot for each order
-                # sPlt.plt.ioff()
-                # sPlt.slit_shape_angle_plot(p, loc2s[order_num],
-                #                            bnum=banana_num,
-                #                            order=order_num)
-                # sPlt.slit_shape_offset_plot(p, loc, bnum=banana_num,
-                #                             order=order_num)
-                # sPlt.plt.show()
-                # sPlt.plt.close()
-                # sPlt.plt.ion()
+        # -----------------------------------------------------------------
+        # plot all order angle_offset plot (in loop)
+        pkwargs = dict(slope_deg_arr=[slope_deg_arr_i], slope_arr=[slope_arr_i],
+                       skeep_arr=[skeep_arr_i], xsection_arr=[xsec_arr_i],
+                       ccor_arr=[ccor_arr_i], ddx_arr=[ddx_arr_i],
+                       dx_arr=[dx_arr_i], dypix_arr=[dypix_arr_i],
+                       ckeep_arr=[cckeep_arr_i], corr_dx_fp=[corr_dx_from_fp],
+                       xpeak2=[xpeak2], err_pix=[err_pix], good=[good_mask])
+        recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
+                    nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
         # append to storage
         slope_deg_arr.append(slope_deg_arr_i), slope_arr.append(slope_arr_i)
@@ -1038,14 +1004,30 @@ def calculate_dxmap(params, hcdata, fpdata, wprops, lprops, **kwargs):
         ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
         dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
         cckeep_arr.append(cckeep_arr_i)
-
+        corr_dx_from_fp_arr.append(corr_dx_from_fp), xpeak2_arr.append(xpeak2)
+        peakval2_arr.append(peakval2), ewval2_arr.append(ewval2)
+        err_pix_arr.append(err_pix), good_mask_arr.append(good_mask)
+    # ---------------------------------------------------------------------
+    # plot selected order angle_offset plot
+    pkwargs = dict(slope_deg_arr=slope_deg_arr, slope_arr=slope_arr,
+                   skeep_arr=skeep_arr, xsection_arr=xsec_arr,
+                   ccor_arr=ccor_arr, ddx_arr=ddx_arr, dx_arr=dx_arr,
+                   dypix_arr=dypix_arr, ckeep_arr=cckeep_arr,
+                   corr_dx_fp=corr_dx_from_fp_arr, xpeak2=xpeak2_arr,
+                   err_pix=err_pix_arr, good=good_mask_arr)
+    # plot as debug plot
+    recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
+                nbpix=dim2, **pkwargs)
+    # plot as summary plot
+    recipe.plot('SUM_SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
+                nbpix=dim2, **pkwargs)
+    # ---------------------------------------------------------------------
     # setting to 0 pixels that are NaNs
     nanmask = ~np.isfinite(master_dxmap)
     master_dxmap[nanmask] = 0.0
 
     # distortions where there is some overlap between orders will be wrong
     master_dxmap[order_overlap != 0] = 0.0
-
     # save qc
     max_dxmap_std = mp.nanmax(dxmap_stds)
     max_dxmap_info = [None, None]
