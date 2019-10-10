@@ -990,7 +990,7 @@
 "40-100-00003","ALL","Plotting summary plot","{0} = name of plot","Plotting summary plot: {0}","",""
 "40-100-00004","ALL","Creating summary latex document","None","Creating summary latex document","",""
 "40-100-00005","ALL","Creating summary html document","None","Creating summary html document","",""
-"","","","","","",""
+"40-100-00006","ALL","Close plots for loop debug plot","None","Plotting: Must close other plots before loop debug plot.","",""
 "","","","","","",""
 "40-100-01000","ALL","Summary plot messages","None","","",""
 "40-100-01000","ALL","text for graph section title","None","Graphs","",""
