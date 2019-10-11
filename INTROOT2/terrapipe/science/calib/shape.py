@@ -645,6 +645,14 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             for iw in range(width):
                 # for the hc data
                 norm_fp = mp.nanmedian(np.abs(ribbon_fp[iw, :]))
+                # deal with a zero norm_fp (means the order is out of bounds
+                #   here
+                # TODO: Problem here when norm_fp is zero
+                # TODO:  This can happen if the order goes off the egde of
+                # TODO:  the bottom/top before the left/right edge -->
+                # TODO:   a column of all zeros --> nanmedian = 0
+                # TODO:   ribbon --> NaN
+
                 ribbon_hc[iw, :] = ribbon_hc[iw, :] / norm_fp
                 # for the fp data
                 ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
@@ -874,6 +882,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         nanmask = ~np.isfinite(dx2)
         dx2[nanmask] = dx2_long[nanmask]
         # ---------------------------------------------------------------------
+        # TODO: remove break point
+        constants.breakpoint(params)
         # dx plot
         recipe.plot('SHAPE_DX', dx=dx, dx2=dx2, bnum=banana_num,
                     nbanana=nbanana)
@@ -995,6 +1005,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                        dx_arr=[dx_arr_i], dypix_arr=[dypix_arr_i],
                        ckeep_arr=[cckeep_arr_i], corr_dx_fp=[corr_dx_from_fp],
                        xpeak2=[xpeak2], err_pix=[err_pix], good=[good_mask])
+        # TODO: remove break point
+        constants.breakpoint(params)
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
                     nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
@@ -1015,6 +1027,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                    dypix_arr=dypix_arr, ckeep_arr=cckeep_arr,
                    corr_dx_fp=corr_dx_from_fp_arr, xpeak2=xpeak2_arr,
                    err_pix=err_pix_arr, good=good_mask_arr)
+    # TODO: remove break point
+    constants.breakpoint(params)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
                 nbpix=dim2, **pkwargs)
@@ -1175,6 +1189,168 @@ def get_shapelocal(params, header, filename=None):
     WLOG(params, '', TextEntry('40-014-00039', args=[shapel_file]))
     # return the master image
     return shapel_file, shapel
+
+
+# =============================================================================
+# write file functions
+# =============================================================================
+def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
+                             rawhcfiles, dxmap, dymap, master_fp, fp_table,
+                             fpprops, dxmap0, fpimage, fpimage2, hcimage,
+                             hcimage2, qc_params):
+    # ----------------------------------------------------------------------
+    # Writing DXMAP to file
+    # ----------------------------------------------------------------------
+    # define outfile
+    outfile1 = recipe.outputs['DXMAP_FILE'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile1.construct_filename(params, infile=fpfile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from input file
+    outfile1.copy_original_keys(fpfile)
+    # add version
+    outfile1.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile1.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile1.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile1.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    outfile1.add_hkey('KW_OUTPUT', value=outfile1.name)
+    # add input files (and deal with combining or not combining)
+    outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles, dim1name='hcfiles')
+    outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles, dim1name='fpfiles')
+    # add the calibration files use
+    outfile1 = general.add_calibs_to_header(outfile1, fpprops)
+    # add qc parameters
+    outfile1.add_qckeys(qc_params)
+    # copy data
+    outfile1.data = dxmap
+    # ------------------------------------------------------------------
+    # log that we are saving dxmap to file
+    WLOG(params, '', TextEntry('40-014-00026', args=[outfile1.filename]))
+    # write image to file
+    outfile1.write_multi(data_list=[fp_table])
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile1)
+    # ----------------------------------------------------------------------
+    # Writing DYMAP to file
+    # ----------------------------------------------------------------------
+    # define outfile
+    outfile2 = recipe.outputs['DYMAP_FILE'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile2.construct_filename(params, infile=fpfile)
+    # copy header from outfile1
+    outfile2.copy_hdict(outfile1)
+    # set output key
+    outfile2.add_hkey('KW_OUTPUT', value=outfile2.name)
+    # copy data
+    outfile2.data = dymap
+    # log that we are saving dymap to file
+    WLOG(params, '', TextEntry('40-014-00027', args=[outfile2.filename]))
+    # write image to file
+    outfile2.write_multi(data_list=[fp_table])
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile2)
+    # ----------------------------------------------------------------------
+    # Writing Master FP to file
+    # ----------------------------------------------------------------------
+    # define outfile
+    outfile3 = recipe.outputs['FPMASTER_FILE'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile3.construct_filename(params, infile=fpfile)
+    # copy header from outfile1
+    outfile3.copy_hdict(outfile1)
+    # set output key
+    outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
+    # copy data
+    outfile3.data = master_fp
+    # log that we are saving master_fp to file
+    WLOG(params, '', TextEntry('40-014-00028', args=[outfile3.filename]))
+    # write image to file
+    outfile3.write_multi(data_list=[fp_table])
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile3)
+    # ----------------------------------------------------------------------
+    # Writing DEBUG files
+    # ----------------------------------------------------------------------
+    if params['SHAPE_DEBUG_OUTPUTS']:
+        # log progress (writing debug outputs)
+        WLOG(params, '', TextEntry('40-014-00029'))
+        # ------------------------------------------------------------------
+        # deal with the unstraighted dxmap
+        # ------------------------------------------------------------------
+        debugfile0 = recipe.outputs['SHAPE_BDXMAP_FILE'].newcopy(recipe=recipe)
+        debugfile0.construct_filename(params, infile=fpfile)
+        debugfile0.copy_hdict(outfile1)
+        debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        debugfile0.data = dxmap0
+        debugfile0.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile0)
+        # ------------------------------------------------------------------
+        # for the fp files take the header from outfile1
+        # ------------------------------------------------------------------
+        # in file
+        debugfile1 = recipe.outputs['SHAPE_IN_FP_FILE'].newcopy(recipe=recipe)
+        debugfile1.construct_filename(params, infile=fpfile)
+        debugfile1.copy_hdict(outfile1)
+        debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
+        debugfile1.data = fpimage
+        debugfile1.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile1)
+        # out file
+        debugfile2 = recipe.outputs['SHAPE_OUT_FP_FILE'].newcopy(recipe=recipe)
+        debugfile2.construct_filename(params, infile=fpfile)
+        debugfile2.copy_hdict(outfile1)
+        debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
+        debugfile2.data = fpimage2
+        debugfile2.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile2)
+        # ------------------------------------------------------------------
+        # for hc files copy over the fp parameters with the hc parameters
+        # ------------------------------------------------------------------
+        # in file
+        debugfile3 = recipe.outputs['SHAPE_IN_HC_FILE'].newcopy(recipe=recipe)
+        debugfile3.construct_filename(params, infile=hcfile)
+        debugfile3.copy_original_keys(hcfile)
+        # add version
+        debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+        # add process id
+        debugfile3.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
+        # add input files (and deal with combining or not combining)
+        debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                               dim1name='hcfiles')
+        debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
+                               dim1name='fpfiles')
+        # add the calibration files use
+        debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
+        # add qc parameters
+        debugfile3.add_qckeys(qc_params)
+        # add data
+        debugfile3.data = hcimage
+        debugfile3.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile3)
+        # out file
+        debugfile4 = recipe.outputs['SHAPE_OUT_HC_FILE'].newcopy(recipe=recipe)
+        debugfile4.construct_filename(params, infile=hcfile)
+        debugfile4.copy_hdict(debugfile4)
+        debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
+        debugfile4.data = hcimage2
+        debugfile4.write_multi(data_list=[fp_table])
+        # add to output files (for indexing)
+        recipe.add_output_file(debugfile4)
+    # return output files (not debugs)
+    return outfile1, outfile2, outfile3
 
 
 # =============================================================================
