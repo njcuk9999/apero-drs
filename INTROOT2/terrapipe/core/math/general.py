@@ -231,12 +231,14 @@ def sigfig(x, n):
     else:
         xin = np.array([x])
     # filter out zeros
-    mask = xin != 0
+    mask = (xin != 0) & (np.isfinite(xin))
     # get the power and factor
-    power = -(np.floor(np.log10(abs(xin)))).astype(int) + (n - 1)
+    power = -(np.floor(np.log10(abs(xin[mask])))).astype(int) + (n - 1)
     factor = (10 ** power)
+    # copy xin into mask
+    xr = np.array(xin)
     # get sig fig
-    xr = np.round(xin[mask] * factor) / factor
+    xr[mask] = np.round(xin[mask] * factor) / factor
     # deal with return
     if isinstance(x, np.ndarray):
         return xr
