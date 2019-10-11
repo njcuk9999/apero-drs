@@ -202,7 +202,7 @@ def __main__(recipe, params):
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
             # shift the coefficients
-            lcoeffs = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
+            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
             # --------------------------------------------------------------
             # load the flat file for this fiber
             flat_file, flat = flat_blaze.get_flat(params, header, fiber)
@@ -220,7 +220,7 @@ def __main__(recipe, params):
             # log progress: extracting image
             WLOG(params, 'info', TextEntry('40-016-00011'))
             # extract spectrum
-            eprops = extract.extract2d(params, image2, orderp, lcoeffs, nframes,
+            eprops = extract.extract2d(params, image2, orderp, lcoeffs2, nframes,
                                        props, inflat=flat, inblaze=blaze,
                                        fiber=fiber)
             # --------------------------------------------------------------

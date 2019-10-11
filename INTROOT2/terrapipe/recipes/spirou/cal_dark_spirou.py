@@ -329,7 +329,7 @@ def __main__(recipe, params):
         recipe.plot.add_stat('KW_DARK_R_MED', value=med_red)
         recipe.plot.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
         # construct summary
-        recipe.plot.summary_document(qc_params)
+        recipe.plot.summary_document(it, qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code
