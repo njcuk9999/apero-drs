@@ -126,6 +126,175 @@ def get_blaze(params, header, fiber):
 
 
 # =============================================================================
+# Define write and qc functions
+# =============================================================================
+def flat_blaze_qc(params, eprops, fiber):
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names = [], [], [],
+    qc_logic, qc_pass = [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # --------------------------------------------------------------
+    # check that rms values in required orders are below threshold
+
+    # get mask for removing certain values
+    remove_orders = params.listp('FF_RMS_SKIP_ORDERS', dtype=int)
+    remove_orders = np.array(remove_orders)
+    remove_mask = np.in1d(np.arange(len(eprops['RMS'])), remove_orders)
+    # apply max and calculate the maximum of the rms values
+    max_rms = mp.nanmax(eprops['RMS'][~remove_mask])
+    # apply the quality control based on the maximum rms
+    if max_rms > params['QC_FF_MAX_RMS']:
+        # add failed message to fail message list
+        fargs = [fiber, max_rms, params['QC_FF_MAX_RMS']]
+        fail_msg.append(textdict['40-015-00008'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(max_rms)
+    qc_names.append('max_rms')
+    qc_logic.append('max_rms < {0:.2f}'.format(params['QC_FF_MAX_RMS']))
+    # --------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc params
+    return qc_params, passed
+
+
+def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
+                     props, lprops, orderpfile, shapelocalfile, shapexfile,
+                     shapeyfile, qc_params):
+    # --------------------------------------------------------------
+    # Store Blaze in file
+    # --------------------------------------------------------------
+    # get a new copy of the blaze file
+    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(recipe=recipe,
+                                                     fiber=fiber)
+    # construct the filename from file instance
+    blazefile.construct_filename(params, infile=infile)
+    # define header keys for output file
+    # copy keys from input file
+    blazefile.copy_original_keys(infile)
+    # add version
+    blazefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    blazefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    blazefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    blazefile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    blazefile.add_hkey('KW_OUTPUT', value=blazefile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    blazefile.add_hkey_1d('KW_INFILE1', values=hfiles,
+                          dim1name='file')
+    # add qc parameters
+    blazefile.add_qckeys(qc_params)
+    # add the calibration files use
+    blazefile = general.add_calibs_to_header(blazefile, props)
+    # --------------------------------------------------------------
+    # add the other calibration files used
+    blazefile.add_hkey('KW_CDBORDP', value=orderpfile)
+    blazefile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
+    blazefile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
+    blazefile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
+    blazefile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
+    # --------------------------------------------------------------
+    # add SNR parameters to header
+    blazefile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
+                          dim1name='order')
+    # add start and end extraction order used
+    blazefile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
+    blazefile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
+    # add extraction ranges used
+    blazefile.add_hkey('KW_EXT_RANGE1', value=eprops['RANGE1'])
+    blazefile.add_hkey('KW_EXT_RANGE2', value=eprops['RANGE2'])
+    # add cosmic parameters used
+    blazefile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
+    blazefile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
+    blazefile.add_hkey('KW_COSMIC_THRES',
+                       value=eprops['COSMIC_THRESHOLD'])
+    # add blaze parameter used
+    blazefile.add_hkey('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'])
+    blazefile.add_hkey('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'])
+    blazefile.add_hkey('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'])
+    # add saturation parameters used
+    blazefile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
+    with warnings.catch_warnings(record=True) as _:
+        max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
+    blazefile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
+    # --------------------------------------------------------------
+    # copy data
+    blazefile.data = eprops['BLAZE']
+    # --------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '',
+         TextEntry('40-015-00003', args=[blazefile.filename]))
+    # write image to file
+    blazefile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(blazefile)
+    # --------------------------------------------------------------
+    # Store Flat-field in file
+    # --------------------------------------------------------------
+    # get a new copy of the blaze file
+    flatfile = recipe.outputs['FLAT_FILE'].newcopy(recipe=recipe,
+                                                   fiber=fiber)
+    # construct the filename from file instance
+    flatfile.construct_filename(params, infile=infile)
+    # copy header from blaze file
+    flatfile.copy_hdict(blazefile)
+    # set output key
+    flatfile.add_hkey('KW_OUTPUT', value=flatfile.name)
+    # copy data
+    flatfile.data = eprops['FLAT']
+    # --------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '',
+         TextEntry('40-015-00004', args=[flatfile.filename]))
+    # write image to file
+    flatfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(flatfile)
+    # --------------------------------------------------------------
+    # Store E2DSLL in file
+    # --------------------------------------------------------------
+    # get a new copy of the blaze file
+    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    e2dsllfile.construct_filename(params, infile=infile)
+    # copy header from blaze file
+    e2dsllfile.copy_hdict(blazefile)
+    # set output key
+    e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
+    # copy data
+    e2dsllfile.data = eprops['E2DSLL']
+    # --------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '',
+         TextEntry('40-015-00005', args=[e2dsllfile.filename]))
+    # write image to file
+    e2dsllfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsllfile)
+    # return out file
+    return blazefile, flatfile
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
