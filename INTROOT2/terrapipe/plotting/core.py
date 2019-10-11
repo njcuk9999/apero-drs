@@ -79,6 +79,7 @@ class Plotter:
         self.has_debugs = False
         self.stat_dict = OrderedDict()
         self.stats = None
+        self.qc_params = OrderedDict()
         # get the text dictionary
         self.textdict = TextDict(self.params['INSTRUMENT'],
                                  self.params['LANGUAGE'])
@@ -107,7 +108,7 @@ class Plotter:
         # set matplotlib via _get_matplotlib()
         self._get_matplotlib()
 
-    def __call__(self, name, func=None, **kwargs):
+    def __call__(self, name, func=None, fiber=None, **kwargs):
         """
         Function used to plot a specific graph (name needs to be defined in
         plot functions), keyword arguments are passed to plotting function
@@ -132,6 +133,9 @@ class Plotter:
         if (self.plotoption == 0) and (name in self.debug_graphs):
             WLOG(self.params, 'debug', TextEntry('09-100-00002'))
             return 0
+        # ------------------------------------------------------------------
+        # add fiber to keyword arguments
+        kwargs['fiber'] = fiber
         # ------------------------------------------------------------------
         # deal with func being set
         if func is not None:
@@ -171,7 +175,7 @@ class Plotter:
         # new instance of the plot object
         plot_inst = plot_obj.copy()
         # set output file name
-        plot_inst.set_filename(self.params, self.summary_location)
+        plot_inst.set_filename(self.params, self.summary_location, fiber)
         # execute the plotting function
         plot_inst.func(self, plot_inst, kwargs)
         # ------------------------------------------------------------------
@@ -215,7 +219,7 @@ class Plotter:
             self.plt.savefig(graph.filename + '.pdf', dpi=graph.dpi)
             self.plt.close()
             # 2. add graph to summary plots
-            self.summary_graphs[graph.name] = graph.copy()
+            self.summary_graphs[graph.filename] = graph.copy()
         else:
             pass
 
@@ -349,13 +353,13 @@ class Plotter:
     # ------------------------------------------------------------------
     # summary methods
     # ------------------------------------------------------------------
-    def summary_document(self, qc_params=None, stats=None):
+    def summary_document(self, iteration, qc_params=None, stats=None):
         func_name = display_func(self.params, 'summary_document', __NAME__,
                                  'Plotter')
         # get recipe short name
         name = self.recipe.name
         pid = self.params['PID'].lower()
-        pid_dir = '{0}_{1}'.format(pid, name)
+        pid_dir = '{0}_{1}_{2}'.format(pid, name, iteration + 1)
         # deal with no stats
         if stats is None:
             # process stats
@@ -398,7 +402,9 @@ class Plotter:
         files = glob.glob(self.summary_location + os.sep + '*')
         # ------------------------------------------------------------------
         # make pid directory
-        os.makedirs(os.path.join(self.summary_location, pid_dir))
+        fullpath = os.path.join(self.summary_location, pid_dir)
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
         # loop around files and move to pid directory
         for filename in files:
             # skip directories
@@ -408,8 +414,7 @@ class Plotter:
             if pid in filename:
                 # get new path
                 basename = os.path.basename(filename)
-                jargs = [self.summary_location, pid_dir, basename]
-                newfilename = os.path.join(*jargs)
+                newfilename = os.path.join(fullpath, basename)
                 # move files
                 shutil.move(filename, newfilename)
 
@@ -419,7 +424,6 @@ class Plotter:
         # get recipe short name
         shortname = clean(self.recipename)
         pid = self.params['PID'].lower()
-        name = clean(self.recipe.name)
         # summary info
         sargs = [shortname, pid]
         summary_title = self.textdict['40-100-01006'].format(*sargs)
@@ -440,16 +444,18 @@ class Plotter:
         doc.add_text(self.textdict['40-100-01001'].format(shortname))
         doc.newline()
         # display all graphs
-        for g_it, gname in enumerate(self.summary_graphs):
+        for g_it, key in enumerate(self.summary_graphs):
+            # get graph instance for gname
+            sgraph = self.summary_graphs[key]
             # get cleaned name
-            cgname = clean(gname)
+            cgname = clean(sgraph.name)
             # reference graph
             doc.add_text(self.textdict['40-100-01007'].format(g_it + 1, cgname))
             doc.newline()
         # display all graphs
-        for g_it, gname in enumerate(self.summary_graphs):
+        for key in self.summary_graphs:
             # get graph instance for gname
-            sgraph = self.summary_graphs[gname]
+            sgraph = self.summary_graphs[key]
             # get graph basename with correct file extension
             sbasename = os.path.basename(sgraph.filename) + '.pdf'
             # add graph
@@ -470,7 +476,7 @@ class Plotter:
         return doc
 
     def summary_latex_qc_params(self, doc, qc_params):
-        if qc_params is None:
+        if qc_params is None and self.qc_params is None:
             return
         # get recipe short name
         shortname = clean(self.recipename)
@@ -479,7 +485,7 @@ class Plotter:
         # add qc_param text
         doc.add_text(self.textdict['40-100-01004'].format(shortname))
         # add qc_param table
-        qc_table, qc_mask = qc_param_table(qc_params)
+        qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
         # get qc_caption
         qc_caption = self.textdict['40-100-01005'].format(shortname)
         # insert table
@@ -502,8 +508,9 @@ class Plotter:
         doc.insert_table(stats_latex, caption=caption)
 
     def summary_html(self, qc_params, stats):
+        summary_filename = self.summary_filename
         # set up the latex document
-        doc = html.HtmlDocument(self.summary_filename)
+        doc = html.HtmlDocument(summary_filename)
         # get recipe short name
         shortname = self.recipename
         pid = self.params['PID'].lower()
@@ -527,9 +534,9 @@ class Plotter:
         doc.add_text(self.textdict['40-100-01001'].format(shortname))
         doc.newline()
         # display all graphs
-        for g_it, gname in enumerate(self.summary_graphs):
+        for g_it, key in enumerate(self.summary_graphs):
             # get graph instance for gname
-            sgraph = self.summary_graphs[gname]
+            sgraph = self.summary_graphs[key]
             # reference graph
             targs = [g_it + 1, sgraph.description]
             doc.add_text(self.textdict['40-100-01007'].format(*targs))
@@ -549,7 +556,7 @@ class Plotter:
         return doc
 
     def summary_html_qc_params(self, doc, qc_params):
-        if qc_params is None:
+        if qc_params is None and self.qc_params is None:
             return
         # get recipe short name
         shortname = self.recipename
@@ -558,7 +565,7 @@ class Plotter:
         # add qc_param text
         doc.add_text(self.textdict['40-100-01004'].format(shortname))
         # add qc_param table
-        qc_table, qc_mask = qc_param_table(qc_params)
+        qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
         # get qc_caption
         qc_caption = self.textdict['40-100-01005'].format(shortname)
         # insert table
@@ -584,15 +591,16 @@ class Plotter:
 
     def summary_stats(self):
         # storage of table columns
-        names, values, comments = [], [], []
+        names, values, comments, fibers = [], [], [], []
         # switch for knowing whether we have found comments
         has_comments = False
+        has_fibers = False
         # loop around statistics dictionary
         for kwarg in self.stat_dict:
             # append to lists
             names.append(kwarg)
             # get value and comment
-            value, comment = self.stat_dict[kwarg]
+            value, comment, fiber = self.stat_dict[kwarg]
             # append to lists
             values.append(str(value))
             if comment is not None:
@@ -600,14 +608,21 @@ class Plotter:
                 has_comments = True
             else:
                 comments.append('')
+            if fiber is not None:
+                fibers.append(fiber)
+                has_fibers = True
+            else:
+                fibers.append('')
         # push into table
         self.stats = Table()
         self.stats['NAMES'] = names
         self.stats['VALUES'] = values
         if has_comments:
             self.stats['COMMENTS'] = comments
+        if has_fibers:
+            self.stats['FIBER'] = fibers
 
-    def add_stat(self, key, value, comment=None):
+    def add_stat(self, key, value, comment=None, fiber=None):
 
         # if key is in parameter dictionary then assume we have a
         #    drs key word store ([key, value, comment])
@@ -619,7 +634,7 @@ class Plotter:
             # check if value is float and round if needed
             value = _sigfig(value, digits=5)
             # add to stat dictionary
-            self.stat_dict[dkey] = [str(value), str(dcomment)]
+            self.stat_dict[dkey] = [str(value), str(dcomment), fiber]
 
         else:
             # check if value is float and round if needed
@@ -627,7 +642,11 @@ class Plotter:
             # get key in capitals
             dkey = str(key).upper()
             # add to stat dictionary
-            self.stat_dict[dkey] = [str(value), comment]
+            self.stat_dict[dkey] = [str(value), comment, fiber]
+
+    def add_qc_params(self, qc_params, fiber):
+        # add qc_params for this fiber
+        self.qc_params[fiber] = qc_params
 
     # ------------------------------------------------------------------
     # internal methods
@@ -748,7 +767,6 @@ class Plotter:
     def _set_location(self):
         # get pid
         pid = self.params['PID']
-        ext = self.params['DRS_SUMMARY_EXT']
         if self.recipe is None:
             rname = 'None'
         else:
@@ -764,7 +782,7 @@ class Plotter:
         # create folder it if doesn't exist
         drs_path.makedirs(self.params, path)
         # create the summary plot name
-        filename = 'summary_{0}_{1}.{2}'.format(pid, rname, ext)
+        filename = 'summary_{0}_{1}'.format(pid, rname)
         # make filename all lower case
         filename = filename.lower()
         # update these values
@@ -775,41 +793,58 @@ class Plotter:
 # =============================================================================
 # Define  functions
 # =============================================================================
-def qc_param_table(qc_params):
+def qc_param_table(qc_params, qc_param_dict):
+    # deal with no qc_params
+    if qc_params is None:
+        # flag that we do have fibers
+        has_fiber = True
+    else:
+        # set up a one key dictionary
+        qc_param_dict = OrderedDict(none=qc_params)
+        # flag that we do not have fibers
+        has_fiber = False
     # define storage to pipe into table
     conditions = []
     values = []
     passed = []
-    # get qc_param vectors
-    qc_names, qc_values, qc_logic, qc_pass = qc_params
-    # loop around length of vectors and extract values
-    for it in range(len(qc_names)):
-        # if value is None then ignore this row
-        if qc_names[it] == 'None':
-            continue
-        # else extract conditions values and passed criteria
-        else:
-            conditions.append(qc_logic[it])
-            # get value
-            value = qc_values[it]
-            # deal with no value
-            if value == 'None':
-                values.append(qc_names[it])
+    fibers = []
+    # loop around keys in dicitonary of quality control params
+    for key in qc_param_dict:
+        # get qc_params for this key
+        qc_params = qc_param_dict[key]
+        # get qc_param vectors
+        qc_names, qc_values, qc_logic, qc_pass = qc_params
+        # loop around length of vectors and extract values
+        for it in range(len(qc_names)):
+            # if value is None then ignore this row
+            if qc_names[it] == 'None':
                 continue
-            # check if value is float and round if needed
-            value = _sigfig(value, digits=5)
-            vargs = [qc_names[it], value]
-            # append to list
-            values.append('{0} = {1}'.format(*vargs))
-            passed.append(qc_pass[it] == 1)
-    # deal with no qc defined
-    if len(conditions) == 0:
-        return None, None
-    else:
-        qc_table = Table()
-        qc_table['Condition'] = conditions
-        qc_table['Value'] = values
-        return qc_table, np.array(passed)
+            # else extract conditions values and passed criteria
+            else:
+                conditions.append(qc_logic[it])
+                # get value
+                value = qc_values[it]
+                # deal with no value
+                if value == 'None':
+                    values.append(qc_names[it])
+                    continue
+                # check if value is float and round if needed
+                value = _sigfig(value, digits=5)
+                vargs = [qc_names[it], value]
+                # append to list
+                values.append('{0} = {1}'.format(*vargs))
+                passed.append(qc_pass[it] == 1)
+                fibers.append(key)
+        # deal with no qc defined
+        if len(conditions) == 0:
+            return None, None
+        else:
+            qc_table = Table()
+            qc_table['Condition'] = conditions
+            qc_table['Value'] = values
+            if has_fiber:
+                qc_table['Fiber'] = fibers
+            return qc_table, np.array(passed)
 
 
 def _sigfig(value, digits=5):
