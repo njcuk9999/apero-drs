@@ -412,6 +412,8 @@ cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
                       SHAPEL_IN_FP_FILE=sf.out_shapel_debug_ifp,
                       SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp,
                       DEBUG_BACK=sf.debug_back)
+cal_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT')
+cal_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 cal_shape.set_arg(pos=0, **directory)
 cal_shape.set_arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
                   helpstr=Help['SHAPE_FPFILES_HELP'])
@@ -447,6 +449,9 @@ cal_ff.set_outputs(FLAT_FILE=sf.out_ff_flat,
                    E2DSLL_FILE=sf.out_ext_e2dsll,
                    ORDERP_SFILE=sf.out_orderp_straight,
                    DEBUG_BACK=sf.debug_back)
+cal_ff.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
+                       'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
+cal_ff.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 cal_ff.set_arg(pos=0, **directory)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
                files=[sf.pp_flat_flat], pos='1+',
