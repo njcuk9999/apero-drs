@@ -140,3 +140,7 @@ or
 ```python
         recipe.plotter.summary_document(qc_params)
 ```
+
+
+## Using breakpoints
+
