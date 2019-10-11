@@ -597,11 +597,10 @@ class Plotter:
         has_fibers = False
         # loop around statistics dictionary
         for kwarg in self.stat_dict:
-            # append to lists
-            names.append(kwarg)
             # get value and comment
-            value, comment, fiber = self.stat_dict[kwarg]
+            name, value, comment, fiber = self.stat_dict[kwarg]
             # append to lists
+            names.append(name)
             values.append(str(value))
             if comment is not None:
                 comments.append(comment)
@@ -624,6 +623,10 @@ class Plotter:
 
     def add_stat(self, key, value, comment=None, fiber=None):
 
+        if fiber is None:
+            fkey = key
+        else:
+            fkey = '{0}_{1}'.format(key, fiber)
         # if key is in parameter dictionary then assume we have a
         #    drs key word store ([key, value, comment])
         if key in self.params:
@@ -634,7 +637,7 @@ class Plotter:
             # check if value is float and round if needed
             value = _sigfig(value, digits=5)
             # add to stat dictionary
-            self.stat_dict[dkey] = [str(value), str(dcomment), fiber]
+            self.stat_dict[fkey] = [dkey, str(value), str(dcomment), fiber]
 
         else:
             # check if value is float and round if needed
@@ -642,7 +645,7 @@ class Plotter:
             # get key in capitals
             dkey = str(key).upper()
             # add to stat dictionary
-            self.stat_dict[dkey] = [str(value), comment, fiber]
+            self.stat_dict[fkey] = [dkey, str(value), comment, fiber]
 
     def add_qc_params(self, qc_params, fiber):
         # add qc_params for this fiber
@@ -835,16 +838,16 @@ def qc_param_table(qc_params, qc_param_dict):
                 values.append('{0} = {1}'.format(*vargs))
                 passed.append(qc_pass[it] == 1)
                 fibers.append(key)
-        # deal with no qc defined
-        if len(conditions) == 0:
-            return None, None
-        else:
-            qc_table = Table()
-            qc_table['Condition'] = conditions
-            qc_table['Value'] = values
-            if has_fiber:
-                qc_table['Fiber'] = fibers
-            return qc_table, np.array(passed)
+    # deal with no qc defined
+    if len(conditions) == 0:
+        return None, None
+    else:
+        qc_table = Table()
+        qc_table['Condition'] = conditions
+        qc_table['Value'] = values
+        if has_fiber:
+            qc_table['Fiber'] = fibers
+        return qc_table, np.array(passed)
 
 
 def _sigfig(value, digits=5):
