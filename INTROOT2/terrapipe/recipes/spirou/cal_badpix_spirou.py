@@ -327,7 +327,7 @@ def __main__(recipe, params):
         recipe.plot.add_stat('KW_BNILUM', value=bstats_b)
         recipe.plot.add_stat('KW_BTOT', value=btotal)
         # construct summary
-        recipe.plot.summary_document()
+        recipe.plot.summary_document(it)
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -282,12 +282,37 @@ def __main__(recipe, params):
             debugfile2.write()
             # add to output files (for indexing)
             recipe.add_output_file(debugfile2)
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         if passed:
             # add shapel transforms
             drs_database.add_file(params, outfile)
+        # ------------------------------------------------------------------
+        # plot a zoom in of non-shifted vs shifted
+        # ------------------------------------------------------------------
+        pkwargs = dict(params=params, image=image, simage=image2)
+        # TODO: remove breakpoint
+        constants.breakpoint(params)
+        # debug plot
+        recipe.plot('SHAPEL_ZOOM_SHIFT', **pkwargs)
+        # summary plot
+        recipe.plot('SUM_SHAPEL_ZOOM_SHIFT', **pkwargs)
+        # ------------------------------------------------------------------
+        # Construct summary document
+        # ------------------------------------------------------------------
+        # add stats
+        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+        recipe.plot.add_stat('KW_SHAPE_DX', value=transform[0])
+        recipe.plot.add_stat('KW_SHAPE_DY', value=transform[1])
+        recipe.plot.add_stat('KW_SHAPE_A', value=transform[2])
+        recipe.plot.add_stat('KW_SHAPE_B', value=transform[3])
+        recipe.plot.add_stat('KW_SHAPE_C', value=transform[4])
+        recipe.plot.add_stat('KW_SHAPE_D', value=transform[5])
+        # construct summary
+        recipe.plot.summary_document(it, qc_params)
+
 
     # ----------------------------------------------------------------------
     # End of main code
