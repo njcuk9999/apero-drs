@@ -89,9 +89,10 @@ __all__ = [
     'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
     'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
     'SHAPE_DEBUG_OUTPUTS', 'SHAPE_PLOT_SELECTED_ORDER',
+    'SHAPEL_PLOT_ZOOM1', 'SHAPEL_PLOT_ZOOM2',
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
-    'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS',
+    'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -182,6 +183,9 @@ __all__ = [
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
     'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
     'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
+    'PLOT_SHAPEL_ZOOM_SHIFT',
+    'PLOT_FLAT_ORDER_FIT_EDGES1', 'PLOT_FLAT_ORDER_FIT_EDGES2',
+    'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -659,19 +663,19 @@ QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID', value=None, dtype=float,
 LOC_SAVE_SUPERIMP_FILE = Const('LOC_SAVE_SUPERIMP_FILE', value=None,
                                dtype=bool, source=__NAME__)
 
-# set the zoom in levels for the plots (bottom left corners)
+# set the zoom in levels for the plots (xmin values)
 LOC_PLOT_CORNER_XZOOM1 = Const('LOC_PLOT_CORNER_XZOOM1', value=None,
                                dtype=str, source=__NAME__)
 
-# set the zoom in levels for the plots (bottom right corners)
+# set the zoom in levels for the plots (xmax values)
 LOC_PLOT_CORNER_XZOOM2 = Const('LOC_PLOT_CORNER_XZOOM2', value=None,
                                dtype=str, source=__NAME__)
 
-# set the zoom in levels for the plots (top left corners)
+# set the zoom in levels for the plots (ymin values)
 LOC_PLOT_CORNER_YZOOM1 = Const('LOC_PLOT_CORNER_YZOOM1', value=None,
                                dtype=str, source=__NAME__)
 
-# set the zoom in levels for the plots (top right corners)
+# set the zoom in levels for the plots (ymax values)
 LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
                                dtype=str, source=__NAME__)
 
@@ -880,6 +884,16 @@ SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
 SHAPE_DEBUG_OUTPUTS = Const('SHAPE_DEBUG_OUTPUTS', value=None, dtype=bool,
                             source=__NAME__)
 
+#  Define first zoom plot for shape local zoom debug plot
+#     should be a string list (xmin, xmax, ymin, ymax)
+SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None, dtype=str,
+                          source=__NAME__)
+
+#  Define second zoom plot for shape local zoom debug plot
+#     should be a string list (xmin, xmax, ymin, ymax)
+SHAPEL_PLOT_ZOOM2 = Const('SHAPEL_PLOT_ZOOM2', value=None, dtype=str,
+                          source=__NAME__)
+
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
@@ -902,6 +916,9 @@ FF_RMS_SKIP_ORDERS = Const('FF_RMS_SKIP_ORDERS', value=None, dtype=str,
 
 # Maximum allowed RMS of flat field
 QC_FF_MAX_RMS = Const('QC_FF_MAX_RMS', value=None, dtype=float, source=__NAME__)
+
+# Define the order to plot in summary plots
+FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -1801,6 +1818,26 @@ PLOT_SHAPE_ANGLE_OFFSET_ALL = Const('PLOT_SHAPE_ANGLE_OFFSET_ALL', value=False,
 # turn on the shape angle offset (one selected order) debug plot
 PLOT_SHAPE_ANGLE_OFFSET = Const('PLOT_SHAPE_ANGLE_OFFSET', value=False,
                                 dtype=bool, source=__NAME__)
+
+# turn on the shape local zoom plot
+PLOT_SHAPEL_ZOOM_SHIFT = Const('PLOT_SHAPEL_ZOOM_SHIFT', value=False,
+                                dtype=bool, source=__NAME__)
+
+# turn on the flat order fit edges debug plot (loop)
+PLOT_FLAT_ORDER_FIT_EDGES1 = Const('PLOT_FLAT_ORDER_FIT_EDGES1', value=False,
+                                   dtype=bool, source=__NAME__)
+
+# turn on the flat order fit edges debug plot (selected order)
+PLOT_FLAT_ORDER_FIT_EDGES2 = Const('PLOT_FLAT_ORDER_FIT_EDGES2', value=False,
+                                   dtype=bool, source=__NAME__)
+
+# turn on the flat blaze order debug plot (loop)
+PLOT_FLAT_BLAZE_ORDER1 = Const('PLOT_FLAT_BLAZE_ORDER1', value=False,
+                               dtype=bool, source=__NAME__)
+
+# turn on the flat blaze order debug plot (selected order)
+PLOT_FLAT_BLAZE_ORDER2 = Const('PLOT_FLAT_BLAZE_ORDER2', value=False,
+                               dtype=bool, source=__NAME__)
 
 
 # =============================================================================

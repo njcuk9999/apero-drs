@@ -500,21 +500,21 @@ QC_LOC_RMSMAX_WID.value = 500
 LOC_SAVE_SUPERIMP_FILE = LOC_SAVE_SUPERIMP_FILE.copy(__NAME__)
 LOC_SAVE_SUPERIMP_FILE.value = True
 
-# set the zoom in levels for the plots (bottom left corners)
+# set the zoom in levels for the plots (x min value)
 LOC_PLOT_CORNER_XZOOM1 = LOC_PLOT_CORNER_XZOOM1.copy(__NAME__)
-LOC_PLOT_CORNER_XZOOM1.value = '0 , 2240, 0 , 2240'
+LOC_PLOT_CORNER_XZOOM1.value = '0, 2044, 0, 2044'
 
-# set the zoom in levels for the plots (bottom right corners)
+# set the zoom in levels for the plots (x max value)
 LOC_PLOT_CORNER_XZOOM2 = LOC_PLOT_CORNER_XZOOM2.copy(__NAME__)
-LOC_PLOT_CORNER_XZOOM2.value = '1848 , 4088, 1848 , 4088'
+LOC_PLOT_CORNER_XZOOM2.value = '2044, 4088, 2044, 4088'
 
 # set the zoom in levels for the plots (top left corners)
 LOC_PLOT_CORNER_YZOOM1 = LOC_PLOT_CORNER_YZOOM1.copy(__NAME__)
-LOC_PLOT_CORNER_YZOOM1.value = '2500 , 2800, 0, 000'
+LOC_PLOT_CORNER_YZOOM1.value = '0, 0, 2500, 2500'
 
 # set the zoom in levels for the plots (top right corners)
 LOC_PLOT_CORNER_YZOOM2 = LOC_PLOT_CORNER_YZOOM2.copy(__NAME__)
-LOC_PLOT_CORNER_YZOOM2.value = '3000 , 3100, 400, 400'
+LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
 
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
@@ -718,6 +718,16 @@ SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
 SHAPE_DEBUG_OUTPUTS.value = True
 
+#  Define first zoom plot for shape local zoom debug plot
+#     should be a string list (xmin, xmax, ymin, ymax)
+SHAPEL_PLOT_ZOOM1 = SHAPEL_PLOT_ZOOM1.copy(__NAME__)
+SHAPEL_PLOT_ZOOM1.value = '1844, 2244, 0, 400'
+
+#  Define second zoom plot for shape local zoom debug plot
+#     should be a string list (xmin, xmax, ymin, ymax)
+SHAPEL_PLOT_ZOOM2 = SHAPEL_PLOT_ZOOM2.copy(__NAME__)
+SHAPEL_PLOT_ZOOM2.value = '1844, 2244, 2700, 3100'
+
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
@@ -741,6 +751,10 @@ FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
 #   Maximum allowed RMS of flat field
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
 QC_FF_MAX_RMS.value = 0.05  # 0.14
+
+# Define the order to plot in summary plots
+FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
+FF_PLOT_ORDER.value = 4
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -1660,6 +1674,26 @@ PLOT_SHAPE_ANGLE_OFFSET_ALL.value = True
 # turn on the shape angle offset (one selected order) debug plot
 PLOT_SHAPE_ANGLE_OFFSET = PLOT_SHAPE_ANGLE_OFFSET.copy(__NAME__)
 PLOT_SHAPE_ANGLE_OFFSET.value = True
+
+# turn on the shape local zoom debug plot
+PLOT_SHAPEL_ZOOM_SHIFT = PLOT_SHAPEL_ZOOM_SHIFT.copy(__NAME__)
+PLOT_SHAPEL_ZOOM_SHIFT.value = True
+
+# turn on the flat order fit edges debug plot (loop)
+PLOT_FLAT_ORDER_FIT_EDGES1 = PLOT_FLAT_ORDER_FIT_EDGES1.copy(__NAME__)
+PLOT_FLAT_ORDER_FIT_EDGES1.value = False
+
+# turn on the flat order fit edges debug plot (selected order)
+PLOT_FLAT_ORDER_FIT_EDGES2 = PLOT_FLAT_ORDER_FIT_EDGES2.copy(__NAME__)
+PLOT_FLAT_ORDER_FIT_EDGES2.value = True
+
+# turn on the flat blaze order debug plot (loop)
+PLOT_FLAT_BLAZE_ORDER1 = PLOT_FLAT_BLAZE_ORDER1.copy(__NAME__)
+PLOT_FLAT_BLAZE_ORDER1.value = False
+
+# turn on the flat blaze order debug plot (selected order)
+PLOT_FLAT_BLAZE_ORDER2 = PLOT_FLAT_BLAZE_ORDER2.copy(__NAME__)
+PLOT_FLAT_BLAZE_ORDER2.value = True
 
 
 # =============================================================================
