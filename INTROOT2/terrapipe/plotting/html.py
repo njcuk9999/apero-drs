@@ -52,6 +52,8 @@ class HtmlDocument:
         # remove extensions
         if extension in filename:
             self.filename = filename[:-len(extension)]
+        else:
+            self.filename = filename
         # remove any known extensions
         for ext in KNOWN_EXTENSIONS:
             while self.filename.endswith(ext):
