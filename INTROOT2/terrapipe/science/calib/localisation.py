@@ -41,6 +41,8 @@ ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get function string
+display_func = drs_log.display_func
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
@@ -534,6 +536,273 @@ def load_orderp(params, header, fiber, filename=None):
     # return the master image
     return orderp_file, orderp
 
+# =============================================================================
+# write files and qc functions
+# =============================================================================
+def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
+                        mean_rms_cent, mean_rms_wid, rorder_num):
+
+    # set function name
+    func_name = display_func(params, 'localisation_quality_control', __NAME__)
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # get qc parameters
+    max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
+                              func=func_name)
+    max_removed_wid = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_WID',
+                             func=func_name)
+    rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
+    rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
+    # this one comes from pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+
+    required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=func_name,
+                              paramdict=fiberparams)
+    # ----------------------------------------------------------------------
+    # check that max number of points rejected in center fit is below
+    #    threshold
+    sum_cent_max_rmpts = mp.nansum(cent_max_rmpts)
+    if sum_cent_max_rmpts > max_removed_cent:
+        # add failed message to fail message list
+        fargs = [sum_cent_max_rmpts, max_removed_cent]
+        fail_msg.append(textdict['40-013-00014'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(sum_cent_max_rmpts)
+    qc_names.append('sum(MAX_RMPTS_POS)')
+    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
+                    ''.format(sum_cent_max_rmpts))
+    # ----------------------------------------------------------------------
+    # check that  max number of points rejected in width fit is below
+    #   threshold
+    sum_wid_max_rmpts = mp.nansum(wid_max_rmpts)
+    if sum_wid_max_rmpts > max_removed_wid:
+        # add failed message to fail message list
+        fargs = [sum_wid_max_rmpts, max_removed_wid]
+        fail_msg.append(textdict['40-013-00015'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(sum_wid_max_rmpts)
+    qc_names.append('sum(MAX_RMPTS_WID)')
+    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'
+                    ''.format(sum_wid_max_rmpts))
+    # ------------------------------------------------------------------
+    if mean_rms_cent > rmsmax_cent:
+        # add failed message to fail message list
+        fargs = [mean_rms_cent, rmsmax_cent]
+        fail_msg.append(textdict['40-013-00016'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(mean_rms_cent)
+    qc_names.append('mean_rms_center')
+    qc_logic.append('mean_rms_center < {0:.2f}'.format(rmsmax_cent))
+    # ------------------------------------------------------------------
+    if mean_rms_wid > rmsmax_wid:
+        # add failed message to fail message list
+        fargs = [mean_rms_wid, rmsmax_wid]
+        fail_msg.append(textdict['40-013-00017'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(mean_rms_wid)
+    qc_names.append('mean_rms_wid')
+    qc_logic.append('mean_rms_wid < {0:.2f}'.format(rmsmax_wid))
+    # ------------------------------------------------------------------
+    # check for abnormal number of identified orders
+    if rorder_num != required_norders:
+        # add failed message to fail message list
+        fargs = [rorder_num, required_norders]
+        fail_msg.append(textdict['40-013-00018'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(rorder_num)
+    qc_names.append('rorder_num')
+    qc_logic.append('rorder_num != {0}'.format(required_norders))
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    #    quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params
+    return qc_params, passed
+
+
+def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
+                             fiber, props, order_profile, mean_backgrd,
+                             rorder_num, max_signal, cent_coeffs, wid_coeffs,
+                             center_fits, width_fits, qc_params):
+    # set function name
+    func_name = display_func(params, 'write_localisation_files', __NAME__)
+    # get qc parameters
+    max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
+                              func=func_name)
+    max_removed_wid = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_WID',
+                             func=func_name)
+    rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
+    rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
+    # this one comes from pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+    # ------------------------------------------------------------------
+    # Write image order_profile to file
+    # ------------------------------------------------------------------
+    # get a new copy to the order profile
+    orderpfile = recipe.outputs['ORDERP_FILE'].newcopy(recipe=recipe,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    orderpfile.construct_filename(params, infile=infile)
+    # define header keys for output file
+    # copy keys from input file
+    orderpfile.copy_original_keys(infile)
+    # add version
+    orderpfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    orderpfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    orderpfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    orderpfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    orderpfile.add_hkey('KW_OUTPUT', value=orderpfile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    orderpfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add the calibration files use
+    orderpfile = general.add_calibs_to_header(orderpfile, props)
+    # add qc parameters
+    orderpfile.add_qckeys(qc_params)
+    # copy data
+    orderpfile.data = order_profile
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
+    # write image to file
+    orderpfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(orderpfile)
+    # ------------------------------------------------------------------
+    # Save and record of image of localization with order center
+    #     and keywords
+    # ------------------------------------------------------------------
+    loco1file = recipe.outputs['LOCO_FILE'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    loco1file.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from input file
+    loco1file.copy_original_keys(infile)
+    # add version
+    loco1file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add output tag
+    loco1file.add_hkey('KW_OUTPUT', value=loco1file.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    loco1file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add the calibration files use
+    loco1file = general.add_calibs_to_header(loco1file, props)
+    # add localisation parameters
+    loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
+    loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)
+    loco1file.add_hkey('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
+    loco1file.add_hkey('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
+    loco1file.add_hkey('KW_LOC_MAXFLX', value=max_signal)
+    loco1file.add_hkey('KW_LOC_SMAXPTS_CTR', value=max_removed_cent)
+    loco1file.add_hkey('KW_LOC_SMAXPTS_WID', value=max_removed_wid)
+    loco1file.add_hkey('KW_LOC_RMS_CTR', value=rmsmax_cent)
+    loco1file.add_hkey('KW_LOC_RMS_WID', value=rmsmax_wid)
+    # write 2D list of position fit coefficients
+    loco1file.add_hkeys_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
+                           dim1name='order', dim2name='coeff')
+    # write 2D list of width fit coefficients
+    loco1file.add_hkeys_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
+                           dim1name='order', dim2name='coeff')
+    # add qc parameters
+    loco1file.add_qckeys(qc_params)
+    # copy data
+    loco1file.data = center_fits
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-013-00019', args=[loco1file.filename]))
+    # write image to file
+    loco1file.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(loco1file)
+    # ------------------------------------------------------------------
+    # Save and record of image of sigma
+    # ------------------------------------------------------------------
+    loco2file = recipe.outputs['FWHM_FILE'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    loco2file.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from loco1file
+    loco2file.copy_hdict(loco1file)
+    # set output key
+    loco2file.add_hkey('KW_OUTPUT', value=loco2file.name)
+    # copy data
+    loco2file.data = width_fits
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
+    # write image to file
+    loco2file.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(loco2file)
+    # ------------------------------------------------------------------
+    # Save and Record of image of localization
+    # ------------------------------------------------------------------
+    if params['LOC_SAVE_SUPERIMP_FILE']:
+        # --------------------------------------------------------------
+        # super impose zeros over the fit in the image
+        image5 = image_superimp(image, cent_coeffs)
+        # --------------------------------------------------------------
+        loco3file = recipe.outputs['SUP_FILE'].newcopy(recipe=recipe,
+                                                       fiber=fiber)
+        # construct the filename from file instance
+        loco3file.construct_filename(params, infile=infile)
+        # --------------------------------------------------------------
+        # define header keys for output file
+        # copy keys from loco1file
+        loco3file.copy_hdict(loco1file)
+        # set output key
+        loco3file.add_hkey('KW_OUTPUT', value=loco3file.name)
+        # copy data
+        loco3file.data = image5
+        # --------------------------------------------------------------
+        # log that we are saving rotated image
+        wargs = [loco3file.filename]
+        WLOG(params, '', TextEntry('40-013-00021', args=wargs))
+        # write image to file
+        loco3file.write()
+        # add to output files (for indexing)
+        recipe.add_output_file(loco3file)
+    # ------------------------------------------------------------------
+    # return out files
+    return orderpfile, loco1file
 
 # =============================================================================
 # Worker functions
