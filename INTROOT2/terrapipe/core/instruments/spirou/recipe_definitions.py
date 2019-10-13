@@ -674,6 +674,7 @@ obj_mk_tellu.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
 obj_mk_tellu_db.shortname = 'MKTELLDB'
+obj_mk_tellu_db.master = True
 obj_mk_tellu_db.instrument = __INSTRUMENT__
 obj_mk_tellu_db.outputdir = 'reduced'
 obj_mk_tellu_db.inputdir = 'reduced'
@@ -730,6 +731,7 @@ obj_fit_tellu.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
 obj_fit_tellu_db.shortname = 'FTELLDB'
+obj_fit_tellu_db.master = True
 obj_fit_tellu_db.instrument = __INSTRUMENT__
 obj_fit_tellu_db.outputdir = 'reduced'
 obj_fit_tellu_db.inputdir = 'reduced'

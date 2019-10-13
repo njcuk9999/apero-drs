@@ -988,7 +988,6 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                     continue
                 else:
                     sys.exit()
-
             # mask table by nightname
             mask = table[night_col] == nightname
             ftable = Table(table[mask])
