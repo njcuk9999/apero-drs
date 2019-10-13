@@ -888,15 +888,15 @@ if __name__ == "__main__":
     import numpy as np
     x = np.arange(-10, 10)
     y = x ** 2
-    plotter.graph('TEST1', x=x, y=y, colour='red')
-    plotter.graph('TEST2', x=x, y=y, colour='blue')
+    plotter('TEST1', x=x, y=y, colour='red')
+    plotter('TEST2', x=x, y=y, colour='blue')
 
     orders = np.arange(10)
     xarr, yarr = [], []
     for order_num in range(len(orders)):
         yarr.append(x ** order_num)
         xarr.append(x + 10**order_num)
-    plotter.graph('TEST3', ord=orders, x=xarr, y=yarr)
+    plotter('TEST3', ord=orders, x=xarr, y=yarr)
 
     _qc_params = [['DARKAMP', 'LIGHTAMP'], [4, 10],
                   ['DARKAMP < 5', 'LIGHTAMP < 5'], [1, 0]]
