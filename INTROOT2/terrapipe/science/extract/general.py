@@ -372,7 +372,8 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     return corrected_image
 
 
-def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
+def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
+                **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -489,7 +490,7 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
 
     # plot the s1d weight/before/after plot
     recipe.plot('EXTRACT_S1D_WEIGHT', params=params, wave=wavegrid,
-                flux=out_spec, weight=weight, kind=wgrid)
+                flux=out_spec, weight=weight, kind=wgrid, fiber=fiber)
     # work out the weighted spectrum
     with warnings.catch_warnings(record=True) as _:
         w_out_spec = out_spec / weight
