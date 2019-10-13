@@ -530,6 +530,13 @@ cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         S1D_V_FILE=sf.out_ext_s1d_v,
                         ORDERP_SFILE=sf.out_orderp_straight,
                         DEBUG_BACK=sf.debug_back)
+cal_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
+                            'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
+                            'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
+                            'EXTRACT_SPECTRAL_ORDER2', 'EXTRACT_S1D',
+                            'EXTRACT_S1D_WEIGHT')
+cal_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
+                              'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D')
 cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
