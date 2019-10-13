@@ -97,6 +97,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # extract file type from inputs
     filetype = params['INPUTS']['FILETYPE']
+    # set up plotting (no plotting before this)
+    recipe.plot.set_location()
 
     # ----------------------------------------------------------------------
     # Get all preprocessed dark files

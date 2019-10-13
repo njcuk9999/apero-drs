@@ -128,6 +128,8 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # set up plotting (no plotting before this)
+        recipe.plot.set_location(it)
         # print file iteration progress
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
@@ -230,9 +232,10 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # create 1d spectra (s1d) of the e2ds file
             sargs = [wprops['WAVEMAP'], eprops['E2DSFF'], eprops['BLAZE']]
-            swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave')
+            swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
+                                          fiber=fiber)
             svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                          wgrid='velocity')
+                                          wgrid='velocity', fiber=fiber)
 
             # --------------------------------------------------------------
             # Plots
@@ -255,7 +258,8 @@ def __main__(recipe, params):
             recipe.plot('EXTRACT_SPECTRAL_ORDER2', order=sorder, eprops=eprops,
                         wave=wprops['WAVEMAP'], fiber=fiber)
             # plot the s1d plot
-            recipe.plot('EXTRACT_S1D', params=params, props=svprops)
+            recipe.plot('EXTRACT_S1D', params=params, props=svprops,
+                        fiber=fiber)
             # --------------------------------------------------------------
             # Quality control
             # --------------------------------------------------------------
@@ -295,7 +299,8 @@ def __main__(recipe, params):
             recipe.plot('SUM_EXTRACT_SP_ORDER', order=sorder,
                         wave=wprops['WAVEMAP'], eprops=eprops, fiber=fiber)
             # plot the s1d plot
-            recipe.plot('SUM_EXTRACT_S1D', params=params, props=svprops)
+            recipe.plot('SUM_EXTRACT_S1D', params=params, props=svprops,
+                        fiber=fiber)
             # ------------------------------------------------------------------
             # Construct summary document
             # ------------------------------------------------------------------
