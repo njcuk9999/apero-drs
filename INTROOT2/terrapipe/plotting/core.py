@@ -469,8 +469,12 @@ class Plotter:
             # add graph
             doc.figure(filename=sbasename, caption=clean(sgraph.description),
                        width=16)
+        # clear page after graphs
+        latex.cmd('clearpage')
         # add qc params section
         self.summary_latex_qc_params(doc, qc_params)
+        # clear page after graphs
+        latex.cmd('clearpage')
         # add stats section
         self.summary_latex_stats(doc, stats)
         # end the document properly
@@ -785,9 +789,9 @@ class Plotter:
             self.plt = PLT_MOD
             self.axes_grid1 = MPL_MOD
         # ------------------------------------------------------------------
-        # if we do not have debug plots then we do not need any fancy backend
-        # and can just use Agg
-        if not self.has_debugs:
+        # if we do not have debug plots or we are in plotoption = 0
+        #    then we do not need any fancy backend and can just use Agg
+        if not self.has_debugs or self.plotoption < 1:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             from  mpl_toolkits import axes_grid1

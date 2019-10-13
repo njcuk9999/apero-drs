@@ -250,7 +250,7 @@ class LatexDocument:
         # set up latex dictionary
         latexdict = dict(header_start=r'\hline', header_end=r'\hline',
                          data_end=r'\hline', col_align=col_align,
-                         preamble=r'\centering')
+                         tablealign='[h!]', preamble=r'\centering')
         if units is not None:
             latexdict['units'] = units
         if caption is not None:
@@ -304,7 +304,7 @@ class LatexDocument:
                label=None):
         self.newline(2)
         # add equation start
-        self._t_ += cmd('begin', 'figure')
+        self._t_ += cmd('begin', 'figure') + '[hp]'
         self.newline()
         # add centering
         self._t_ += '\t' + cmd('centering')
