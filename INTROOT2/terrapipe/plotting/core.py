@@ -74,8 +74,8 @@ class Plotter:
         self.recipe = recipe
         self.recipename = '{0} ({1})'.format(recipe.name, recipe.shortname)
         self.plotoption = params['DRS_PLOT']
-        self.names = dict()
-        self.plot_switches = dict()
+        self.names = OrderedDict()
+        self.plot_switches = OrderedDict()
         self.has_debugs = False
         self.stat_dict = OrderedDict()
         self.stats = None
@@ -85,13 +85,13 @@ class Plotter:
                                  self.params['LANGUAGE'])
         # ------------------------------------------------------------------
         # storage of debug plots
-        self.debug_graphs = dict()
+        self.debug_graphs = OrderedDict()
         # ------------------------------------------------------------------
         # summary file location
-        self.summary_location = None
+        self.location = None
         self.summary_filename = None
         # storage of summary plots
-        self.summary_graphs = dict()
+        self.summary_graphs = OrderedDict()
         # ------------------------------------------------------------------
         # matplotlib modules
         self.backend = None
@@ -103,10 +103,35 @@ class Plotter:
         self._get_plot_names()
         # set self.plot_switches via _get_plot_switches()
         self._get_plot_switches()
-        # set summary location
-        self._set_location()
         # set matplotlib via _get_matplotlib()
         self._get_matplotlib()
+
+    def set_location(self, iteration=0):
+        # get name and location
+        if self.recipe is None:
+            rname = 'None'
+        else:
+            rname = self.recipe.name
+        # get directory
+        pid = self.params['PID'].lower()
+        self.pid_dir = '{0}_{1}_{2}'.format(pid, rname, iteration + 1)
+        # get root plot path
+        plot_path = self.params['DRS_DATA_PLOT']
+        # get night name (and deal with unset/other)
+        nightname = self.params['NIGHTNAME']
+        if nightname is None or nightname == '':
+            nightname = 'other'
+        # construct summary pdf
+        path = os.path.join(plot_path, nightname, self.pid_dir)
+        # create folder it if doesn't exist
+        drs_path.makedirs(self.params, path)
+        # create the summary plot name
+        filename = 'summary_{0}_{1}'.format(pid, rname)
+        # make filename all lower case
+        filename = filename.lower()
+        # update these values
+        self.location = path
+        self.summary_filename = os.path.join(path, filename)
 
     def __call__(self, name, func=None, fiber=None, **kwargs):
         """
@@ -123,6 +148,10 @@ class Plotter:
         :return: Returns 1 if plot or 0 elsewise
         :rtype: int
         """
+        # ------------------------------------------------------------------
+        # deal with location not set
+        if self.location is None:
+            WLOG(self.params, 'error', TextEntry('00-100-00003'))
         # ------------------------------------------------------------------
         # deal with no plot needed
         if self.plotoption == -1:
@@ -175,7 +204,7 @@ class Plotter:
         # new instance of the plot object
         plot_inst = plot_obj.copy()
         # set output file name
-        plot_inst.set_filename(self.params, self.summary_location, fiber)
+        plot_inst.set_filename(self.params, self.location, fiber)
         # execute the plotting function
         plot_inst.func(self, plot_inst, kwargs)
         # ------------------------------------------------------------------
@@ -358,8 +387,6 @@ class Plotter:
                                  'Plotter')
         # get recipe short name
         name = self.recipe.name
-        pid = self.params['PID'].lower()
-        pid_dir = '{0}_{1}_{2}'.format(pid, name, iteration + 1)
         # deal with no stats
         if stats is None:
             # process stats
@@ -398,25 +425,6 @@ class Plotter:
             latexdoc.cleanup()
         if htmldoc is not None:
             htmldoc.cleanup()
-        # move all pid to a folder
-        files = glob.glob(self.summary_location + os.sep + '*')
-        # ------------------------------------------------------------------
-        # make pid directory
-        fullpath = os.path.join(self.summary_location, pid_dir)
-        if not os.path.exists(fullpath):
-            os.makedirs(fullpath)
-        # loop around files and move to pid directory
-        for filename in files:
-            # skip directories
-            if os.path.isdir(filename):
-                continue
-            # only look for files with pid in the name
-            if pid in filename:
-                # get new path
-                basename = os.path.basename(filename)
-                newfilename = os.path.join(fullpath, basename)
-                # move files
-                shutil.move(filename, newfilename)
 
     def summary_latex(self, qc_params, stats):
         # set up the latex document
@@ -488,8 +496,21 @@ class Plotter:
         qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
         # get qc_caption
         qc_caption = self.textdict['40-100-01005'].format(shortname)
-        # insert table
-        doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
+        # deal with have fiber
+        if 'Fiber' in qc_table.colnames:
+            # get unique fiber values
+            _, fmask = np.unique(qc_table['Fiber'], return_index=True)
+            fibers = qc_table['Fiber'][fmask]
+            # loop around fibers
+            for fiber in fibers:
+                # define a table mask
+                fiber_mask = qc_table['Fiber'] == fiber
+                # insert table
+                doc.insert_table(qc_table[fiber_mask], caption=qc_caption,
+                                 colormask=qc_mask[fiber_mask])
+        else:
+            # insert table
+            doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
     def summary_latex_stats(self, doc, stats):
         if stats is None:
@@ -504,8 +525,21 @@ class Plotter:
         caption = self.textdict['40-100-01010'].format(shortname)
         # copy table
         stats_latex = Table(stats)
-        # insert table
-        doc.insert_table(stats_latex, caption=caption)
+        # deal with have fiber
+        if 'FIBER' in stats_latex.colnames:
+            # get unique fiber values
+            _, fmask = np.unique(stats_latex['FIBER'], return_index=True)
+            fibers = stats_latex['FIBER'][fmask]
+            # loop around fibers
+            for fiber in fibers:
+                # define a table mask
+                fiber_mask = stats_latex['FIBER'] == fiber
+                # insert table
+                # insert table
+                doc.insert_table(stats_latex[fiber_mask], caption=caption)
+        else:
+            # insert table
+            doc.insert_table(stats_latex, caption=caption)
 
     def summary_html(self, qc_params, stats):
         summary_filename = self.summary_filename
@@ -558,22 +592,35 @@ class Plotter:
     def summary_html_qc_params(self, doc, qc_params):
         if qc_params is None and self.qc_params is None:
             return
+        # add qc_param table
+        qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
+
         # get recipe short name
         shortname = self.recipename
         # add qc_param section
         doc.section(self.textdict['40-100-01003'])
         # add qc_param text
         doc.add_text(self.textdict['40-100-01004'].format(shortname))
-        # add qc_param table
-        qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
         # get qc_caption
         qc_caption = self.textdict['40-100-01005'].format(shortname)
-        # insert table
-        doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
+
+        # deal with have fiber
+        if 'Fiber' in qc_table.colnames:
+            # get unique fiber values
+            _, fmask = np.unique(qc_table['Fiber'], return_index=True)
+            fibers = qc_table['Fiber'][fmask]
+            # loop around fibers
+            for fiber in fibers:
+                # define a table mask
+                fiber_mask = qc_table['Fiber'] == fiber
+                # insert table
+                doc.insert_table(qc_table[fiber_mask], caption=qc_caption,
+                                 colormask=qc_mask[fiber_mask])
+        else:
+            # insert table
+            doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
     def summary_html_stats(self, doc, stats):
-        if stats is None:
-            return
         if stats is None:
             return
         # get recipe short name
@@ -586,8 +633,20 @@ class Plotter:
         caption = self.textdict['40-100-01010'].format(shortname)
         # copy table
         stats_html = Table(stats)
-        # insert table
-        doc.insert_table(stats_html, caption=caption)
+        # deal with have fiber
+        if 'FIBER' in stats_html.colnames:
+            # get unique fiber values
+            _, fmask = np.unique(stats_html['FIBER'], return_index=True)
+            fibers = stats_html['FIBER'][fmask]
+            # loop around fibers
+            for fiber in fibers:
+                # define a table mask
+                fiber_mask = stats_html['FIBER'] == fiber
+                # insert table
+                doc.insert_table(stats_html[fiber_mask], caption=caption)
+        else:
+            # insert table
+            doc.insert_table(stats_html, caption=caption)
 
     def summary_stats(self):
         # storage of table columns
@@ -680,7 +739,7 @@ class Plotter:
         Get the plot names (stored in self.names)
         :return: None
         """
-        self.names = dict()
+        self.names = OrderedDict()
         # loop around plot objects
         for plot_obj in definitions:
             # get the plot object name
@@ -767,30 +826,6 @@ class Plotter:
         if self.backend == 'MacOSX':
             WLOG(self.params, 'error', TextEntry('09-100-00001'))
 
-    def _set_location(self):
-        # get pid
-        pid = self.params['PID']
-        if self.recipe is None:
-            rname = 'None'
-        else:
-            rname = self.recipe.name
-        # get root plot path
-        plot_path = self.params['DRS_DATA_PLOT']
-        # get night name (and deal with unset/other)
-        nightname = self.params['NIGHTNAME']
-        if nightname is None or nightname == '':
-            nightname = 'other'
-        # construct summary pdf
-        path = os.path.join(plot_path, nightname)
-        # create folder it if doesn't exist
-        drs_path.makedirs(self.params, path)
-        # create the summary plot name
-        filename = 'summary_{0}_{1}'.format(pid, rname)
-        # make filename all lower case
-        filename = filename.lower()
-        # update these values
-        self.summary_location = path
-        self.summary_filename = os.path.join(path, filename)
 
 
 # =============================================================================

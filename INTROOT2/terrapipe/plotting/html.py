@@ -67,6 +67,9 @@ class HtmlDocument:
         # set up flags
         self.started = False
         self.finished = False
+        # count the table and figure numbers
+        self.figurenum = 1
+        self.tablenum = 1
 
     # ----------------------------------------------------------------------
     # user functions
@@ -186,18 +189,24 @@ class HtmlDocument:
         lines = open_file(self.tablefile)
         # deal with colour mask defined
         lines = apply_colormask(lines, colormask, table)
-        # write to text
-        self.newline()
-        for line in lines:
-            self._t_ += line
+
+        # add caption
+        if caption is None:
+            caption = 'Table {0}'.format(self.tablenum)
+        else:
+            caption = 'Table {0}: {1}'.format(self.tablenum, caption)
         # add the caption
         self.newline()
         self.add_text(caption)
         self.newline()
 
-        # remove table file
-        # if os.path.exists(self.tablefile):
-        #     os.remove(self.tablefile)
+        # write to text
+        self.newline()
+        for line in lines:
+            self._t_ += line
+        # count tables
+        self.tablenum += 1
+
 
     def figure(self, filename, height=None, width=None, caption=None,
                label=None):
