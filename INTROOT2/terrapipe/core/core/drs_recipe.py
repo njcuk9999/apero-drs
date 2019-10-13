@@ -1532,6 +1532,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                      func_name)
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    # flag for having no file arguments
+    has_file_args = False
     # ----------------------------------------------------------------------
     # first loop around arguments
     for argname in argdict:
@@ -1540,6 +1542,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
         # deal with other parameters (not 'files' or 'file')
         if recipe.args[argname].dtype not in ['file', 'files']:
             continue
+        # flag that we have found a file argument
+        has_file_args = True
         # get file limit
         limit = recipe.args[argname].limit
         # deal with files (should be in drs groups)
@@ -1560,6 +1564,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
         # deal with other parameters (not 'files' or 'file')
         if recipe.kwargs[kwargname].dtype not in ['file', 'files']:
             continue
+        # flag that we have found a file argument
+        has_file_args = True
         # get file limit
         limit = recipe.kwargs[kwargname].limit
         # deal with files (should be in drs groups)
@@ -1579,17 +1585,17 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # brute force approach
     runs = []
     # ----------------------------------------------------------------------
-    # deal with no file found
-    all_none = True
-    for runarg in runorder:
-        if rundict[runarg] is not None:
-            for entry in rundict[runarg]:
-                if rundict[runarg][entry] is not None:
-                    all_none = False
-    # if all none is True then return no runs
-    if all_none:
-        return []
-
+    # deal with no file found (only if we expect to have files)
+    if has_file_args:
+        all_none = True
+        for runarg in runorder:
+            if rundict[runarg] is not None:
+                for entry in rundict[runarg]:
+                    if rundict[runarg][entry] is not None:
+                        all_none = False
+        # if all none is True then return no runs
+        if all_none:
+            return []
     # ----------------------------------------------------------------------
     # find first file argument
     fout = _find_first_filearg(params, runorder, argdict, kwargdict)
