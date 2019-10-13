@@ -122,6 +122,8 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # set up plotting (no plotting before this)
+        recipe.plot.set_location(it)
         # print file iteration progress
         core.file_processing_update(params, it, num_files)
         # ge this iterations file

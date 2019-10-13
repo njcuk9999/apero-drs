@@ -101,6 +101,8 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # set up plotting (no plotting before this)
+    recipe.plot.set_location()
     # get files
     hcfiles = params['INPUTS']['HCFILES'][1]
     fpfiles = params['INPUTS']['FPFILES'][1]
