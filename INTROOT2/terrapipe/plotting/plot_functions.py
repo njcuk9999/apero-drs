@@ -12,6 +12,7 @@ Created on 2019-10-03 at 10:51
 import numpy as np
 import copy
 import os
+import warnings
 
 from terrapipe.core import constants
 
@@ -142,6 +143,43 @@ def ulegend(frame=None, plotter=None, **kwargs):
             unique_h.append(all_h[it])
     # plot legend
     frame.legend(unique_h, unique_l, **kwargs)
+
+
+def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
+    """
+    Create a line coloured by vector "z"
+    From here:
+        https://matplotlib.org/3.1.1/gallery/lines_bars_and_markers/
+            multicolored_line.html
+
+    :param frame:
+    :param plt:
+    :param line:
+    :param x:
+    :param y:
+    :param z:
+    :param norm:
+    :param cmap:
+    :return:
+    """
+    # deal with no colormap
+    if cmap is None:
+        cmap = 'viridis'
+    # Create a continuous norm to map from data points to colors
+    if norm is None:
+        norm = plt.Normalize(np.nanmin(z), np.nanmax(z))
+    # Create a set of line segments so that we can color them individually
+    # This creates the points as a N x 1 x 2 array so that we can stack points
+    # together easily to get the segments. The segments array for line collection
+    # needs to be (numlines) x (points per line) x 2 (for x and y)
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    # plot the segments
+    lc = line(segments, cmap=cmap, norm=norm)
+    # Set the values used for colormapping
+    lc.set_array(z)
+    # return the line
+    return frame.add_collection(lc)
 
 
 # =============================================================================
@@ -907,12 +945,18 @@ shape_angle_offset_all = Graph('SHAPE_ANGLE_OFFSET_ALL', kind='debug',
                            func=plot_shape_angle_offset)
 shape_angle_offset = Graph('SHAPE_ANGLE_OFFSET', kind='debug',
                            func=plot_shape_angle_offset)
-sum_shape_angle_offset = Graph('SUM_SHAPE_ANGLE_OFFSET', kind='summary',
-                           func=plot_shape_angle_offset)
 shape_local_zoom_shift = Graph('SHAPEL_ZOOM_SHIFT', kind='debug',
                                func=plot_shape_local_zoom_shift)
+description = 'Plot to show angle and offset for each iteration'
+sum_shape_angle_offset = Graph('SUM_SHAPE_ANGLE_OFFSET', kind='summary',
+                           func=plot_shape_angle_offset,
+                               figsize=(16, 10),
+                               dpi=150, description=description)
+description = 'Zoom in to show before and after shape corrections.'
 sum_shape_local_zoom_shift = Graph('SUM_SHAPEL_ZOOM_SHIFT', kind='summary',
-                                   func=plot_shape_local_zoom_shift)
+                                   func=plot_shape_local_zoom_shift,
+                              figsize=(16, 10),
+                               dpi=150, description=description)
 # add to definitions
 definitions += [shape_dx, shape_angle_offset_all, shape_angle_offset,
                 sum_shape_angle_offset, shape_local_zoom_shift,
@@ -1133,10 +1177,253 @@ definitions += [flat_order_fit_edges1, flat_order_fit_edges2,
 # =============================================================================
 # Define thermal plotting functions
 # =============================================================================
+def plot_thermal_background(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    wave = kwargs['wave']
+    image = kwargs['image']
+    thermal = kwargs['thermal']
+    torder = kwargs['torder']
+    tmask = kwargs['tmask']
+    fiber = kwargs['fiber']
+    kind = kwargs['kind']
+    # get properties from params
+    startorder = params['THERMAL_PLOT_START_ORDER']
+    # correct data for graph
+    rwave = np.ravel(wave[startorder:])
+    rimage = np.ravel(image[startorder:])
+    rthermal = np.ravel(thermal[startorder:])
+    swave = wave[torder, tmask]
+    sthermal = thermal[torder][tmask]
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # plot data
+    frame.plot(rwave, rimage, color='k', label='input spectrum')
+    frame.plot(rwave, rthermal, color='r', label='scaled thermal')
+    frame.plot(swave, sthermal, color='b', marker='o', ls='None',
+               label='background sample region')
+    # set graph properties
+    frame.legend(loc=0)
+    title = 'Thermal scaled background ({0}Fiber {1})'.format(kind, fiber)
+    frame.set(xlabel='Wavelength [nm]', ylabel='Flux', title=title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+thermal_background = Graph('THERMAL_BACKGROUND', kind='debug',
+                           func=plot_thermal_background)
+# add to definitions
+definitions += [thermal_background]
+
 
 # =============================================================================
 # Define extraction plotting functions
 # =============================================================================
+def plot_extract_spectral_order(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    e2ds = kwargs['eprops']['E2DS']
+    e2dsff = kwargs['eprops']['E2DSFF']
+    blaze = kwargs['eprops']['BLAZE']
+    wave = kwargs['wave']
+    fiber = kwargs['fiber']
+    # get optional arguments
+    order = kwargs.get('order', None)
+    # get size from image
+    nbo = e2ds.shape[0]
+    # get blaze corrected values
+    with warnings.catch_warnings(record=True) as _:
+        e2dsb = e2ds/blaze
+        e2dsffb = e2dsff/blaze
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around order
+    for order_num in order_gen:
+        # set up plot
+        fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
+        # get normalised values
+        e2dsn = e2ds[order_num]/np.nanmedian(e2ds[order_num])
+        e2dsffn = e2dsff[order_num]/np.nanmedian(e2ds[order_num])
+        blazen = blaze[order_num]/np.nanmedian(blaze[order_num])
+        # plot fits
+        frames[0].plot(wave[order_num], e2dsn, label='e2ds')
+        frames[0].plot(wave[order_num], e2dsffn, label='e2dsff')
+        frames[0].plot(wave[order_num], blazen, label='blaze')
+        # plot blaze corrected
+        frames[1].plot(wave[order_num], e2dsb[order_num], label='e2ds')
+        frames[1].plot(wave[order_num], e2dsffb[order_num], label='e2dsff')
+        # add legends
+        frames[0].legend(loc=0)
+        frames[1].legend(loc=0)
+        # set title labels limits
+        title = 'Spectral order {0} fiber {1}'
+        frames[0].set(title=title.format(order_num, fiber), ylabel='flux')
+        frames[1].set(xlabel='Wavelength [nm]', ylabel='flux')
+        # ------------------------------------------------------------------
+        # adjust plot
+        plt.subplots_adjust(top=0.9, bottom=0.1, left=0.075, right=0.95,
+                            wspace=0, hspace=0)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_extract_s1d(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    LineCollection = plotter.matplotlib.collections.LineCollection
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    stable = kwargs['props']['S1DTABLE']
+    # get zoom in parameters from params
+    zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
+    zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
+    # get data from s1d table
+    wave = stable['wavelength']
+    flux = stable['flux']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1) + 1)
+    # get the normalised colours based on the full wavelength range
+    norm = plt.Normalize(np.nanmin(wave), np.nanmax(wave))
+    # plot full spectrum
+    frames[0].scatter(wave, flux, c=wave, marker='.', s=2, cmap='jet')
+    frames[0].set_title('Spectrum (1D)')
+    frames[0].set_ylim(np.nanpercentile(flux, 2), np.nanpercentile(flux, 98))
+    frames[0].set_ylabel('Flux')
+    # loop around frames
+    for row in range(1, len(zoom1)):
+        # get bounds
+        lowerbound = zoom1[row]
+        upperbound = zoom2[row]
+        # get frame
+        frame = frames[row]
+        # mask data between bounds
+        mask = (wave >= lowerbound) & (wave <= upperbound)
+        # plot 1d spectrum
+        mc_line(frame, plt, LineCollection, wave[mask], flux[mask],
+                z=wave[mask], norm=norm, cmap='jet')
+        frame.set_xlim(lowerbound, upperbound)
+        # set the y limits to 5 and 95 percentiles (to avoid outliers)
+        frame.set_ylim(np.nanpercentile(flux[mask], 2),
+                       np.nanpercentile(flux[mask], 98))
+        # set the ylabel
+        frame.set_ylabel('Flux')
+        # if last row then plot x label
+        if row == len(zoom1) - 1:
+            frame.set_xlabel('Wavelength [nm]')
+    # ------------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_extract_s1d_weights(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    wave = kwargs['wave']
+    flux = kwargs['flux']
+    weight = kwargs['weight']
+    kind = kwargs['kind']
+    # get zoom in parameters from params
+    zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
+    zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
+    # ------------------------------------------------------------------
+    # correct data for plotting
+    flux1 = flux / np.nanmedian(flux)
+    weight = weight / np.nanmedian(weight)
+    with warnings.catch_warnings(record=True) as _:
+        flux2 = (flux / weight) / np.nanmedian(flux / weight)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
+    # loop around frames
+    for row in range(len(zoom1)):
+        # get bounds
+        lowerbound = zoom1[row]
+        upperbound = zoom2[row]
+        # get frame
+        frame = frames[row]
+        # mask data between bounds
+        mask = (wave >= lowerbound) & (wave <= upperbound)
+        # plot 1d spectrum
+        frame.plot(wave[mask], weight[mask], label='weight vector')
+        frame.plot(wave[mask], flux1[mask], label='prior to division')
+        frame.plot(wave[mask], flux2[mask], label='after division')
+        # add legend (only for first row)
+        if row == 0:
+            frame.legend(loc=0, ncol=3)
+        # set lower bound
+        frame.set_xlim(lowerbound, upperbound)
+        # set the ylabel
+        frame.set_ylabel('Flux')
+        # if first row plot title
+        if row == 0:
+            frame.set_title('Producing the 1D spectrum (before and after with '
+                            'weights) Kind = {0}'.format(kind))
+        # if last row then plot x label
+        if row == len(zoom1) - 1:
+            frame.set_xlabel('Wavelength [nm]')
+    # ------------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+extract_spectral_order1 = Graph('EXTRACT_SPECTRAL_ORDER1', kind='debug',
+                           func=plot_extract_spectral_order)
+extract_spectral_order2 = Graph('EXTRACT_SPECTRAL_ORDER2', kind='debug',
+                           func=plot_extract_spectral_order)
+extract_s1d = Graph('EXTRACT_S1D', kind='debug', func=plot_extract_s1d)
+extract_s1d_weights = Graph('EXTRACT_S1D_WEIGHT', kind='debug',
+                            func=plot_extract_s1d_weights)
+description = ('Wavelength against spectrum top: non blaze-corrected, '
+               'bottom: blaze corrected')
+sum_extract_sp_order = Graph('SUM_EXTRACT_SP_ORDER', kind='summary',
+                             func=plot_extract_spectral_order,
+                             figsize=(16, 10), dpi=150,
+                             description=description)
+description = '1D spectrum after blaze weighting (S1D)'
+sum_extract_s1d = Graph('SUM_EXTRACT_S1D', kind='summary',
+                        func=plot_extract_s1d,
+                        figsize=(16, 10), dpi=150,
+                        description=description)
+# add to definitions
+definitions += [extract_spectral_order1, extract_spectral_order2,
+                extract_s1d, extract_s1d_weights, sum_extract_sp_order,
+                sum_extract_s1d]
+
 
 # =============================================================================
 # Define wave plotting functions
