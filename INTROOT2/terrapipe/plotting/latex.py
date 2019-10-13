@@ -20,10 +20,11 @@ from collections import OrderedDict
 # define known extensions
 KNOWN_EXTENSIONS = ['.pdf', '.tex', '.html']
 # define latex packages to add (with options)
-PACKAGELIST = dict()
+PACKAGELIST = OrderedDict()
 PACKAGELIST['graphicx'] = None
 PACKAGELIST['geometry'] = 'margin=1cm'
 PACKAGELIST['xcolor'] = 'table, xcdraw'
+PACKAGELIST['placeins'] = None
 # define colours
 GOOD_COLOUR = '67FD9A'
 BAD_COLOUR = 'FD6864'
@@ -249,7 +250,7 @@ class LatexDocument:
         # set up latex dictionary
         latexdict = dict(header_start=r'\hline', header_end=r'\hline',
                          data_end=r'\hline', col_align=col_align,
-                         tablealign='h!', preamble=r'\centering')
+                         preamble=r'\centering')
         if units is not None:
             latexdict['units'] = units
         if caption is not None:
@@ -270,6 +271,7 @@ class LatexDocument:
         self.newline()
         for line in lines:
             self._t_ += line
+        self.newline()
         # remove table file
         if os.path.exists(self.tablefile):
             os.remove(self.tablefile)
@@ -302,7 +304,7 @@ class LatexDocument:
                label=None):
         self.newline(2)
         # add equation start
-        self._t_ += cmd('begin', 'figure') + '[ht]'
+        self._t_ += cmd('begin', 'figure')
         self.newline()
         # add centering
         self._t_ += '\t' + cmd('centering')
@@ -331,6 +333,7 @@ class LatexDocument:
         # add equation end
         self._t_ += cmd('end', 'figure')
         self.newline(2)
+
 
 
 # =============================================================================

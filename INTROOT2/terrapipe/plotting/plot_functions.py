@@ -30,6 +30,8 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # set up definition storage
 definitions = []
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -340,10 +342,14 @@ dark_image_regions = Graph('DARK_IMAGE_REGIONS', kind='debug',
                            func=plot_dark_image_regions)
 dark_histogram = Graph('DARK_HISTOGRAM', kind='debug',
                        func=plot_dark_histogram)
+sum_desc = 'Plot to show dark image regions (blue, red and full)'
 summary_dark_image_regions = Graph('SUM_DARK_IMAGE_REGIONS', kind='summary',
-                                   func=plot_dark_image_regions)
+                                   func=plot_dark_image_regions, dpi=150,
+                                   description=sum_desc, figsize=(10, 10))
+sum_desc = 'Plot to show the dark image regions as histograms'
 summary_dark_histogram = Graph('SUM_DARK_HISTOGRAM', kind='summary',
-                               func=plot_dark_histogram)
+                               func=plot_dark_histogram, dpi=150,
+                               description=sum_desc, figsize=(10, 10))
 # add to definitions
 definitions += [dark_image_regions, dark_histogram,
                 summary_dark_image_regions, summary_dark_histogram]
@@ -380,8 +386,10 @@ def plot_badpix_map(plotter, graph, kwargs):
 
 # defined graphing instances
 badpix_map = Graph('BADPIX_MAP', kind='debug', func=plot_badpix_map)
+sum_desc = 'Bad pixel map'
 summary_badpix_map = Graph('SUM_BADPIX_MAP', kind='summary',
-                           func=plot_badpix_map)
+                           func=plot_badpix_map, description=sum_desc,
+                           figsize=(10, 10), dpi=150)
 # add to definitions
 definitions += [badpix_map, summary_badpix_map]
 
@@ -679,16 +687,16 @@ loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
                          func=plot_loc_im_sat_thres)
 loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
                        func=plot_loc_ord_vs_rms)
-description = ('Polynomial fits for localisation (overplotted on '
+sum_desc = ('Polynomial fits for localisation (overplotted on '
                'pre-processed image)')
 sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
                              func=plot_loc_im_sat_thres, figsize=(12, 8),
-                             dpi=300, description=description)
-description = ('Zoom in polynomial fits for localisation (overplotted on '
+                             dpi=300, description=sum_desc)
+sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
                'pre-processed image)')
 sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
                                func=plot_loc_im_corner, figsize=(16, 10),
-                               dpi=150, description=description)
+                               dpi=150, description=sum_desc)
 # add to definitions
 definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
                 loc_im_sat_thres, loc_ord_vs_rms, sum_loc_im_sat_thres,
@@ -911,9 +919,9 @@ def plot_shape_local_zoom_shift(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # set up plot
     fig1, frames1 = graph.set_figure(plotter, ncols=2, nrows=1,
-                                   sharex=True, sharey=True)
+                                     sharex=True, sharey=True)
     fig2, frames2 = graph.set_figure(plotter, ncols=2, nrows=1,
-                                   sharex=True, sharey=True)
+                                     sharex=True, sharey=True)
     # plot the image zooms
     frames1[0].imshow(image1, **skwargs1)
     frames1[1].imshow(simage1, **skwargs1)
@@ -942,21 +950,20 @@ def plot_shape_local_zoom_shift(plotter, graph, kwargs):
 
 shape_dx = Graph('SHAPE_DX', kind='debug', func=plot_shape_dx)
 shape_angle_offset_all = Graph('SHAPE_ANGLE_OFFSET_ALL', kind='debug',
-                           func=plot_shape_angle_offset)
+                               func=plot_shape_angle_offset)
 shape_angle_offset = Graph('SHAPE_ANGLE_OFFSET', kind='debug',
                            func=plot_shape_angle_offset)
 shape_local_zoom_shift = Graph('SHAPEL_ZOOM_SHIFT', kind='debug',
                                func=plot_shape_local_zoom_shift)
-description = 'Plot to show angle and offset for each iteration'
+sum_desc = 'Plot to show angle and offset for each iteration'
 sum_shape_angle_offset = Graph('SUM_SHAPE_ANGLE_OFFSET', kind='summary',
-                           func=plot_shape_angle_offset,
-                               figsize=(16, 10),
-                               dpi=150, description=description)
-description = 'Zoom in to show before and after shape corrections.'
+                               func=plot_shape_angle_offset,
+                               figsize=(16, 10), dpi=150, description=sum_desc)
+sum_desc = 'Zoom in to show before and after shape corrections.'
 sum_shape_local_zoom_shift = Graph('SUM_SHAPEL_ZOOM_SHIFT', kind='summary',
                                    func=plot_shape_local_zoom_shift,
-                              figsize=(16, 10),
-                               dpi=150, description=description)
+                                   figsize=(16, 10), dpi=150,
+                                   description=sum_desc)
 # add to definitions
 definitions += [shape_dx, shape_angle_offset_all, shape_angle_offset,
                 sum_shape_angle_offset, shape_local_zoom_shift,
@@ -981,7 +988,7 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
     # get the arguments from kwargs
     params = kwargs['params']
     image1 = kwargs['image1']
-    image2= kwargs['image2']
+    image2 = kwargs['image2']
     order = kwargs.get('order', None)
     coeffs1 = kwargs['coeffs1']
     coeffs2 = kwargs['coeffs2']
@@ -1018,7 +1025,7 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
         # get fit and edge fits (for straight image)
         yfit2 = np.polyval(ocoeffs2[::-1], xfit2)
         yfitlow2 = np.polyval((ocoeffs2)[::-1], xfit2) - range1
-        yfithigh2 = np.polyval((ocoeffs2)[::-1], xfit2)+ range2
+        yfithigh2 = np.polyval((ocoeffs2)[::-1], xfit2) + range2
         ylower2 = np.polyval((ocoeffs2)[::-1], xfit2) - 6 * range1
         yupper2 = np.polyval((ocoeffs2)[::-1], xfit2) + 6 * range2
         # get image bounds
@@ -1063,7 +1070,7 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
                  'order = {0} fiber = {1}'.format(order_num, fiber))
         # set the limits
         frame1.set(xlim=(0, imagezoom1.shape[1]), ylim=(ymin1, ymax1),
-                  title=title)
+                   title=title)
         frame2.set(xlim=(0, imagezoom2.shape[1]), ylim=(ymin2, ymax2))
         # ------------------------------------------------------------------
         # add legend
@@ -1101,11 +1108,10 @@ def plot_flat_blaze_order(plotter, graph, kwargs):
     # get the arguments from kwargs
     e2ds = kwargs['eprops']['E2DS']
     blaze = kwargs['eprops']['BLAZE']
-    flat =kwargs['eprops']['FLAT']
+    flat = kwargs['eprops']['FLAT']
     fiber = kwargs['fiber']
     nbo = e2ds.shape[0]
     order = kwargs.get('order', None)
-
 
     # get order generator
     if order is None:
@@ -1152,27 +1158,26 @@ def plot_flat_blaze_order(plotter, graph, kwargs):
 
 
 flat_order_fit_edges1 = Graph('FLAT_ORDER_FIT_EDGES1', kind='debug',
-                             func=plot_flat_order_fit_edges)
+                              func=plot_flat_order_fit_edges)
 flat_blaze_order1 = Graph('FLAT_BLAZE_ORDER1', kind='debug',
-                         func=plot_flat_blaze_order)
+                          func=plot_flat_blaze_order)
 flat_order_fit_edges2 = Graph('FLAT_ORDER_FIT_EDGES2', kind='debug',
-                             func=plot_flat_order_fit_edges)
+                              func=plot_flat_order_fit_edges)
 flat_blaze_order2 = Graph('FLAT_BLAZE_ORDER2', kind='debug',
-                         func=plot_flat_blaze_order)
-description = 'Image fit (before and after straightening)'
+                          func=plot_flat_blaze_order)
+sum_desc = 'Image fit (before and after straightening)'
 sum_flat_order_fit_edges = Graph('SUM_FLAT_ORDER_FIT_EDGES', kind='summary',
-                                 func=plot_flat_order_fit_edges,
-                                 figsize=(16, 10), dpi=150,
-                                 description=description)
-description = 'Blaze fit and e2ds (top) and resulting flat (bottom)'
+                                 func=plot_flat_order_fit_edges, dpi=150,
+                                 figsize=(16, 10), description=sum_desc)
+sum_desc = 'Blaze fit and e2ds (top) and resulting flat (bottom)'
 sum_flat_blaze_order = Graph('SUM_FLAT_BLAZE_ORDER', kind='summary',
                              func=plot_flat_blaze_order,
-                             figsize=(16, 10), dpi=150,
-                             description=description)
+                             figsize=(16, 10), dpi=150, description=sum_desc)
 # add to definitions
 definitions += [flat_order_fit_edges1, flat_order_fit_edges2,
                 flat_blaze_order1, flat_blaze_order2,
                 sum_flat_order_fit_edges, sum_flat_blaze_order]
+
 
 # =============================================================================
 # Define thermal plotting functions
@@ -1245,8 +1250,8 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
     nbo = e2ds.shape[0]
     # get blaze corrected values
     with warnings.catch_warnings(record=True) as _:
-        e2dsb = e2ds/blaze
-        e2dsffb = e2dsff/blaze
+        e2dsb = e2ds / blaze
+        e2dsffb = e2dsff / blaze
     # ------------------------------------------------------------------
     # get order generator
     if order is None:
@@ -1259,9 +1264,9 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
         # set up plot
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
         # get normalised values
-        e2dsn = e2ds[order_num]/np.nanmedian(e2ds[order_num])
-        e2dsffn = e2dsff[order_num]/np.nanmedian(e2ds[order_num])
-        blazen = blaze[order_num]/np.nanmedian(blaze[order_num])
+        e2dsn = e2ds[order_num] / np.nanmedian(e2ds[order_num])
+        e2dsffn = e2dsff[order_num] / np.nanmedian(e2ds[order_num])
+        blazen = blaze[order_num] / np.nanmedian(blaze[order_num])
         # plot fits
         frames[0].plot(wave[order_num], e2dsn, label='e2ds')
         frames[0].plot(wave[order_num], e2dsffn, label='e2dsff')
@@ -1296,6 +1301,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
     # get the arguments from kwargs
     params = kwargs['params']
     stable = kwargs['props']['S1DTABLE']
+    fiber = kwargs['fiber']
     # get zoom in parameters from params
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
@@ -1304,7 +1310,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
     flux = stable['flux']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1) + 1)
+    fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
     # get the normalised colours based on the full wavelength range
     norm = plt.Normalize(np.nanmin(wave), np.nanmax(wave))
     # loop around frames
@@ -1318,7 +1324,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
         mask = (wave >= lowerbound) & (wave <= upperbound)
         # if first figure add title
         if row == 0:
-            frame.set_title('Spectrum (1D)')
+            frame.set_title('Spectrum (1D) fiber {0}'.format(fiber))
         # plot 1d spectrum
         mc_line(frame, plt, LineCollection, wave[mask], flux[mask],
                 z=wave[mask], norm=norm, cmap='jet')
@@ -1352,6 +1358,7 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     flux = kwargs['flux']
     weight = kwargs['weight']
     kind = kwargs['kind']
+    fiber = kwargs['fiber']
     # get zoom in parameters from params
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
@@ -1386,8 +1393,9 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
         frame.set_ylabel('Flux')
         # if first row plot title
         if row == 0:
-            frame.set_title('Producing the 1D spectrum (before and after with '
-                            'weights) Kind = {0}'.format(kind))
+            title = ('Producing the 1D spectrum (before and after with '
+                     'weights) fiber {0} Kind = {1}')
+            frame.set_title(title.format(fiber, kind))
         # if last row then plot x label
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
@@ -1400,28 +1408,25 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
 
 
 extract_spectral_order1 = Graph('EXTRACT_SPECTRAL_ORDER1', kind='debug',
-                           func=plot_extract_spectral_order)
+                                func=plot_extract_spectral_order)
 extract_spectral_order2 = Graph('EXTRACT_SPECTRAL_ORDER2', kind='debug',
-                           func=plot_extract_spectral_order)
+                                func=plot_extract_spectral_order)
 extract_s1d = Graph('EXTRACT_S1D', kind='debug', func=plot_extract_s1d)
 extract_s1d_weights = Graph('EXTRACT_S1D_WEIGHT', kind='debug',
                             func=plot_extract_s1d_weights)
-description = ('Wavelength against spectrum top: non blaze-corrected, '
+sum_desc = ('Wavelength against spectrum top: non blaze-corrected, '
                'bottom: blaze corrected')
 sum_extract_sp_order = Graph('SUM_EXTRACT_SP_ORDER', kind='summary',
                              func=plot_extract_spectral_order,
-                             figsize=(16, 10), dpi=150,
-                             description=description)
-description = '1D spectrum after blaze weighting (S1D)'
+                             figsize=(16, 10), dpi=150, description=sum_desc)
+sum_desc = '1D spectrum after blaze weighting (S1D)'
 sum_extract_s1d = Graph('SUM_EXTRACT_S1D', kind='summary',
                         func=plot_extract_s1d,
-                        figsize=(16, 10), dpi=150,
-                        description=description)
+                        figsize=(16, 10), dpi=150, description=sum_desc)
 # add to definitions
 definitions += [extract_spectral_order1, extract_spectral_order2,
                 extract_s1d, extract_s1d_weights, sum_extract_sp_order,
                 sum_extract_s1d]
-
 
 # =============================================================================
 # Define wave plotting functions
