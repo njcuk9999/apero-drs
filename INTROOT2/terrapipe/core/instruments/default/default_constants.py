@@ -100,11 +100,13 @@ __all__ = [
     'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND', 'EXT_S1D_BIN_UWAVE',
     'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
+    'EXTRACT_PLOT_ORDER', 'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2',
     # thermal constants
     'THERMAL_ALWAYS_EXTRACT', 'THERMAL_CORRETION_TYPE1',
     'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
     'THERMAL_FILTER_WID', 'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
+    'THERMAL_PLOT_START_ORDER',
     # wave general constants
     'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
     'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
@@ -186,6 +188,9 @@ __all__ = [
     'PLOT_SHAPEL_ZOOM_SHIFT',
     'PLOT_FLAT_ORDER_FIT_EDGES1', 'PLOT_FLAT_ORDER_FIT_EDGES2',
     'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2',
+    'PLOT_THERMAL_BACKGROUND', 'PLOT_EXTRACT_SPECTRAL_ORDER1',
+    'PLOT_EXTRACT_SPECTRAL_ORDER2', 'PLOT_EXTRACT_S1D',
+    'PLOT_EXTRACT_S1D_WEIGHT',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -992,6 +997,20 @@ EXT_BERV_KIND = Const('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
 EXT_BERV_EST_ACC = Const('EXT_BERV_EST_ACC', value=None, dtype=float,
                          source=__NAME__)
 
+# Define the order to plot in summary plots
+EXTRACT_PLOT_ORDER = Const('EXTRACT_PLOT_ORDER', value=None, dtype=int,
+                           source=__NAME__)
+
+# Define the wavelength lower bounds for s1d plots
+#     (must be a string list of floats) defines the lower wavelength in nm
+EXTRACT_S1D_PLOT_ZOOM1 = Const('EXTRACT_S1D_PLOT_ZOOM1', value=None,
+                               dtype=str, source=__NAME__)
+
+# Define the wavelength upper bounds for s1d plots
+#     (must be a string list of floats) defines the upper wavelength in nm
+EXTRACT_S1D_PLOT_ZOOM2 = Const('EXTRACT_S1D_PLOT_ZOOM2', value=None,
+                               dtype=str, source=__NAME__)
+
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
@@ -1033,6 +1052,10 @@ THERMAL_THRES_TAPAS = Const('THERMAL_THRES_TAPAS', value=None, dtype=float,
 THERMAL_ENVELOPE_PERCENTILE = Const('THERMAL_ENVELOPE_PERCENTILE', value=None,
                                     dtype=float, source=__NAME__,
                                     minimum=0, maximum=100)
+
+# define the order to plot on the thermal debug plot
+THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
+                                 dtype=int, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
@@ -1786,7 +1809,7 @@ PLOT_DARK_HISTOGRAM = Const('PLOT_DARK_HISTOGRAM', value=False, dtype=bool,
 
 # turn on badpix map debug plot
 PLOT_BADPIX_MAP = Const('PLOT_BADPIX_MAP', value=False, dtype=bool,
-                            source=__NAME__)
+                        source=__NAME__)
 
 # turn on the localisation cent min max debug plot
 PLOT_LOC_MINMAX_CENTS = Const('PLOT_LOC_MINMAX_CENTS', value=False,
@@ -1798,7 +1821,7 @@ PLOT_LOC_MIN_CENTS_THRES = Const('PLOT_LOC_MIN_CENTS_THRES', value=False,
 
 # turn on the localisation finding orders debug plot
 PLOT_LOC_FINDING_ORDERS = Const('PLOT_LOC_FINDING_ORDERS', value=False,
-                                 dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__)
 
 # turn on the image above saturation threshold debug plot
 PLOT_LOC_IM_SAT_THRES = Const('PLOT_LOC_IM_SAT_THRES', value=False,
@@ -1821,7 +1844,7 @@ PLOT_SHAPE_ANGLE_OFFSET = Const('PLOT_SHAPE_ANGLE_OFFSET', value=False,
 
 # turn on the shape local zoom plot
 PLOT_SHAPEL_ZOOM_SHIFT = Const('PLOT_SHAPEL_ZOOM_SHIFT', value=False,
-                                dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__)
 
 # turn on the flat order fit edges debug plot (loop)
 PLOT_FLAT_ORDER_FIT_EDGES1 = Const('PLOT_FLAT_ORDER_FIT_EDGES1', value=False,
@@ -1839,6 +1862,25 @@ PLOT_FLAT_BLAZE_ORDER1 = Const('PLOT_FLAT_BLAZE_ORDER1', value=False,
 PLOT_FLAT_BLAZE_ORDER2 = Const('PLOT_FLAT_BLAZE_ORDER2', value=False,
                                dtype=bool, source=__NAME__)
 
+# turn on thermal background (in extract) debug plot
+PLOT_THERMAL_BACKGROUND = Const('PLOT_THERMAL_BACKGROUND', value=False,
+                                dtype=bool, source=__NAME__)
+
+# turn on the extraction spectral order debug plot (loop)
+PLOT_EXTRACT_SPECTRAL_ORDER1 = Const('PLOT_EXTRACT_SPECTRAL_ORDER1',
+                                     value=False, dtype=bool, source=__NAME__)
+
+# turn on the extraction spectral order debug plot (selected order)
+PLOT_EXTRACT_SPECTRAL_ORDER2 = Const('PLOT_EXTRACT_SPECTRAL_ORDER2',
+                                     value=False, dtype=bool, source=__NAME__)
+
+# turn on the extraction 1d spectrum debug plot
+PLOT_EXTRACT_S1D = Const('PLOT_EXTRACT_S1D', value=False, dtype=bool,
+                         source=__NAME__)
+
+# turn on the extraction 1d spectrum weight (before/after) debug plot
+PLOT_EXTRACT_S1D_WEIGHT = Const('PLOT_EXTRACT_S1D_WEIGHT', value=False,
+                                dtype=bool, source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS
