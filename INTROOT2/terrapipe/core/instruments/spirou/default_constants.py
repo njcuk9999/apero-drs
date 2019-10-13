@@ -837,12 +837,12 @@ EXTRACT_PLOT_ORDER.value = 4
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM1 = EXTRACT_S1D_PLOT_ZOOM1.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1245, 1570, 2000'
+EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1245, 1570, 2000, 2400'
 
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM2 = EXTRACT_S1D_PLOT_ZOOM2.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100'
+EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
 
 
 # =============================================================================
