@@ -32,6 +32,10 @@ order_profiles = general.order_profiles
 
 thermal_correction = general.thermal_correction
 
+qc_extraction = general.qc_extraction
+
+write_extraction_files = general.write_extraction_files
+
 # =============================================================================
 # End of code
 # =============================================================================

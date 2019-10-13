@@ -27,6 +27,7 @@ from terrapipe.science.calib import localisation
 from terrapipe.science.calib import shape
 from terrapipe.science.calib import wave
 from terrapipe.science.calib import general
+from terrapipe.science.extract import berv
 
 # =============================================================================
 # Define variables
@@ -190,15 +191,15 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         wargs = [fibertype, 1]
         WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
         # do thermal correction
-        e2ds = tcorrect1(params, e2ds, **tkwargs)
-        e2dsff = tcorrect1(params, e2dsff, flat=flat, **tkwargs)
+        e2ds = tcorrect1(params, recipe, e2ds, **tkwargs)
+        e2dsff = tcorrect1(params, recipe, e2dsff, flat=flat, **tkwargs)
     elif fibertype in corrtype2:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
         WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
         # do thermal correction
-        e2ds = tcorrect2(params, e2ds, **tkwargs)
-        e2dsff = tcorrect2(params, e2dsff, flat=flat, **tkwargs)
+        e2ds = tcorrect2(params, recipe, e2ds, **tkwargs)
+        e2dsff = tcorrect2(params, recipe, e2dsff, flat=flat, **tkwargs)
     else:
         # log that we are not correcting thermal
         WLOG(params, 'info', TextEntry('40-016-00013', args=[fibertype]))
@@ -232,8 +233,8 @@ def get_thermal(params, header, fiber, filename=None):
     return thermal_file, thermal
 
 
-def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
-              **kwargs):
+def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
+              flat=None, **kwargs):
     # get parameters from skwargs
     tapas_thres = kwargs.get('tapas_thres', None)
     filter_wid = kwargs.get('filter_wid', None)
@@ -249,6 +250,9 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
     # if we have a flat we should apply it to the thermal
     if flat is not None:
         thermal = thermal / flat
+        kind = 'FF '
+    else:
+        kind = ''
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
@@ -285,12 +289,10 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
     # scale thermal by ratio
     thermal = thermal / ratio
     # ----------------------------------------------------------------------
-    # plot debug plot
-    if params['DRS_DEBUG'] > 0 and params['DRS_PLOT'] > 0:
-        # TODO: Handle plots
-        pass
-        # data = [wavemap, image, thermal, torder, torder_mask]
-        # sPlt.thermal_background_debug_plot(p, *data, fiber=fiber)
+    # plot thermal background plot
+    recipe.plot('THERMAL_BACKGROUND', params=params, wave=wavemap, image=image,
+                thermal=thermal, torder=torder, tmask=torder_mask, fiber=fiber,
+                kind=kind)
     # ----------------------------------------------------------------------
     # correct image
     corrected_image = image - thermal
@@ -299,8 +301,8 @@ def tcorrect1(params, image, header, fiber, wavemap, thermal=None, flat=None,
     return corrected_image
 
 
-def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
-              **kwargs):
+def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
+              flat=None, **kwargs):
     envelope_percent = kwargs.get('envelope', None)
     filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
@@ -318,6 +320,9 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
     # if we have a flat we should apply it to the thermal
     if flat is not None:
         thermal = thermal / flat
+        kind = 'FF '
+    else:
+        kind = ''
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
@@ -355,12 +360,10 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
     # scale thermal by ratio
     thermal = thermal / ratio
     # ----------------------------------------------------------------------
-    # plot debug plot
-    if params['DRS_DEBUG'] > 0 and params['DRS_PLOT'] > 0:
-        # TODO: deal with plotting
-        pass
-        # data = [wavemap, image, thermal, torder, wavemask]
-        # sPlt.thermal_background_debug_plot(p, *data, fiber=fiber)
+    # plot thermal background plot
+    recipe.plot('THERMAL_BACKGROUND', params=params, wave=wave, image=image,
+                thermal=thermal, torder=torder, tmask=wavemask, fiber=fiber,
+                kind=kind)
     # ----------------------------------------------------------------------
     # correct image
     corrected_image = image - thermal
@@ -369,7 +372,7 @@ def tcorrect2(params, image, header, fiber, wavemap, thermal=None, flat=None,
     return corrected_image
 
 
-def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
+def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -484,13 +487,9 @@ def e2ds_to_s1d(params, wavemap, e2ds, blaze, wgrid='wave', **kwargs):
     zeroweights = weight == 0
     weight[zeroweights] = np.nan
 
-    # debug plot
-    if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 0:
-        # TODO: Add plots
-        pass
-        # sPlt.ext_1d_spectrum_debug_plot(params, wavegrid, out_spec,
-        #                                 weight, wgrid)
-
+    # plot the s1d weight/before/after plot
+    recipe.plot('EXTRACT_S1D_WEIGHT', params=params, wave=wavegrid,
+                flux=out_spec, weight=weight, kind=wgrid)
     # work out the weighted spectrum
     with warnings.catch_warnings(record=True) as _:
         w_out_spec = out_spec / weight
@@ -544,6 +543,245 @@ def add_s1d_keys(infile, props):
     infile.add_hkey('KW_S1D_SMOOTH', value=props['SMOOTH_SIZE'])
     infile.add_hkey('KW_S1D_BLAZET', value=props['BLAZE_THRES'])
     return infile
+
+
+# ===========================================================================
+# writing and qc functions
+# =============================================================================
+def qc_extraction(params, eprops):
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names = [], [], [],
+    qc_logic, qc_pass = [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # --------------------------------------------------------------
+    # if array is completely NaNs it shouldn't pass
+    if np.sum(np.isfinite(eprops['E2DS'])) == 0:
+        # add failed message to fail message list
+        fail_msg.append(textdict['40-016-00008'])
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append('NaN')
+    qc_names.append('image')
+    qc_logic.append('image is all NaN')
+    # --------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return
+    return qc_params, passed
+
+
+def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
+                           orderpfile, props, lprops, wprops, eprops, bprops,
+                           swprops, svprops, shapelocalfile, shapexfile,
+                           shapeyfile, shapelocal, flat_file, blaze_file,
+                           qc_params):
+    # ----------------------------------------------------------------------
+    # Store E2DS in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the e2ds file
+    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(recipe=recipe,
+                                                   fiber=fiber)
+    # construct the filename from file instance
+    e2dsfile.construct_filename(params, infile=infile)
+    # define header keys for output file
+    # copy keys from input file
+    e2dsfile.copy_original_keys(infile)
+    # add version
+    e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    e2dsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    e2dsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    e2dsfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    e2dsfile.add_hkey('KW_OUTPUT', value=e2dsfile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add the calibration files use
+    e2dsfile = general.add_calibs_to_header(e2dsfile, props)
+    e2dsfile.add_hkey('KW_FIBER', value=fiber)
+    # ----------------------------------------------------------------------
+    # add the other calibration files used
+    e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)
+    e2dsfile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
+    e2dsfile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
+    e2dsfile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
+    e2dsfile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
+    e2dsfile.add_hkey('KW_CDBFLAT', value=flat_file)
+    e2dsfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
+    e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
+    e2dsfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    # additional calibration keys
+    e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
+    # ----------------------------------------------------------------------
+    # add qc parameters
+    e2dsfile.add_qckeys(qc_params)
+    # ----------------------------------------------------------------------
+    # add shape transform parameters
+    e2dsfile.add_hkey('KW_SHAPE_DX', value=shapelocal[0])
+    e2dsfile.add_hkey('KW_SHAPE_DY', value=shapelocal[1])
+    e2dsfile.add_hkey('KW_SHAPE_A', value=shapelocal[2])
+    e2dsfile.add_hkey('KW_SHAPE_B', value=shapelocal[3])
+    e2dsfile.add_hkey('KW_SHAPE_C', value=shapelocal[4])
+    e2dsfile.add_hkey('KW_SHAPE_D', value=shapelocal[5])
+    # ----------------------------------------------------------------------
+    # add extraction type (does not change for future files)
+    e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
+    # add SNR parameters to header
+    e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
+                         dim1name='order')
+    # add start and end extraction order used
+    e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
+    e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
+    # add extraction ranges used
+    e2dsfile.add_hkey('KW_EXT_RANGE1', value=eprops['RANGE1'])
+    e2dsfile.add_hkey('KW_EXT_RANGE2', value=eprops['RANGE2'])
+    # add cosmic parameters used
+    e2dsfile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
+    e2dsfile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
+    e2dsfile.add_hkey('KW_COSMIC_THRES',
+                      value=eprops['COSMIC_THRESHOLD'])
+    # add saturation parameters used
+    e2dsfile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
+    with warnings.catch_warnings(record=True) as _:
+        max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
+    e2dsfile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
+    # ----------------------------------------------------------------------
+    # add loco parameters (using locofile)
+    locofile = lprops['LOCOOBJECT']
+    e2dsfile.copy_original_keys(locofile, group='loc')
+    # ----------------------------------------------------------------------
+    e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
+    # ----------------------------------------------------------------------
+    # add berv properties to header
+    e2dsfile = berv.add_berv_keys(params, e2dsfile, bprops)
+    # ----------------------------------------------------------------------
+    # copy data
+    e2dsfile.data = eprops['E2DS']
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [e2dsfile.filename]
+    WLOG(params, '', TextEntry('40-016-00005', args=wargs))
+    # write image to file
+    e2dsfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsfile)
+    # ----------------------------------------------------------------------
+    # Store E2DSFF in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the e2dsff file
+    e2dsfffile = recipe.outputs['E2DSFF_FILE'].newcopy(recipe=recipe,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    e2dsfffile.construct_filename(params, infile=infile)
+    # copy header from e2dsff file
+    e2dsfffile.copy_hdict(e2dsfile)
+    # add extraction type (does not change for future files)
+    e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # set output key
+    e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
+    # copy data
+    e2dsfffile.data = eprops['E2DSFF']
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [e2dsfffile.filename]
+    WLOG(params, '', TextEntry('40-016-00006', args=wargs))
+    # write image to file
+    e2dsfffile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsfffile)
+    # ----------------------------------------------------------------------
+    # Store E2DSLL in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the e2dsll file
+    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    e2dsllfile.construct_filename(params, infile=infile)
+    # copy header from e2dsll file
+    e2dsllfile.copy_hdict(e2dsfile)
+    # set output key
+    e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
+    # copy data
+    e2dsllfile.data = eprops['E2DSLL']
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [e2dsllfile.filename]
+    WLOG(params, '', TextEntry('40-016-00007', args=wargs))
+    # write image to file
+    e2dsllfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsllfile)
+    # ----------------------------------------------------------------------
+    # Store S1D_W in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the s1d_w file
+    s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    s1dwfile.construct_filename(params, infile=infile)
+    # copy header from e2dsll file
+    s1dwfile.copy_hdict(e2dsfile)
+    # set output key
+    s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
+    # add new header keys
+    s1dwfile = add_s1d_keys(s1dwfile, swprops)
+    # copy data
+    s1dwfile.data = swprops['S1DTABLE']
+    # must change the datatype to 'table'
+    s1dwfile.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = ['wave', s1dwfile.filename]
+    WLOG(params, '', TextEntry('40-016-00010', args=wargs))
+    # write image to file
+    s1dwfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(s1dwfile)
+    # ----------------------------------------------------------------------
+    # Store S1D_V in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the s1d_v file
+    s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
+    # construct the filename from file instance
+    s1dvfile.construct_filename(params, infile=infile)
+    # copy header from e2dsll file
+    s1dvfile.copy_hdict(e2dsfile)
+    # add new header keys
+    s1dvfile = add_s1d_keys(s1dvfile, svprops)
+    # set output key
+    s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
+    # copy data
+    s1dvfile.data = svprops['S1DTABLE']
+    # must change the datatype to 'table'
+    s1dvfile.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = ['velocity', s1dvfile.filename]
+    WLOG(params, '', TextEntry('40-016-00010', args=wargs))
+    # write image to file
+    s1dvfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(s1dvfile)
+    # ----------------------------------------------------------------------
+    # return e2ds files
+    return e2dsfile, e2dsfffile
 
 
 # =============================================================================
