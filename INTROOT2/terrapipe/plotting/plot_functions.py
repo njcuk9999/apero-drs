@@ -1307,13 +1307,8 @@ def plot_extract_s1d(plotter, graph, kwargs):
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1) + 1)
     # get the normalised colours based on the full wavelength range
     norm = plt.Normalize(np.nanmin(wave), np.nanmax(wave))
-    # plot full spectrum
-    frames[0].scatter(wave, flux, c=wave, marker='.', s=2, cmap='jet')
-    frames[0].set_title('Spectrum (1D)')
-    frames[0].set_ylim(np.nanpercentile(flux, 2), np.nanpercentile(flux, 98))
-    frames[0].set_ylabel('Flux')
     # loop around frames
-    for row in range(1, len(zoom1)):
+    for row in range(len(zoom1)):
         # get bounds
         lowerbound = zoom1[row]
         upperbound = zoom2[row]
@@ -1321,6 +1316,9 @@ def plot_extract_s1d(plotter, graph, kwargs):
         frame = frames[row]
         # mask data between bounds
         mask = (wave >= lowerbound) & (wave <= upperbound)
+        # if first figure add title
+        if row == 0:
+            frame.set_title('Spectrum (1D)')
         # plot 1d spectrum
         mc_line(frame, plt, LineCollection, wave[mask], flux[mask],
                 z=wave[mask], norm=norm, cmap='jet')
