@@ -1037,7 +1037,7 @@ class DrsFitsFile(DrsInputFile):
         # check suffix (after extension removed)
         if (self.suffix is not None) and valid:
             # if we have no fibers file should end with suffix
-            if fibers is None:
+            if fibers == [None]:
                 if not filename.endswith(self.suffix):
                     valid = False
                     # debug log that extension was incorrect
@@ -1046,7 +1046,7 @@ class DrsFitsFile(DrsInputFile):
             # ------------------------------------------------------------------
             # if we have fibers then file should end with one of them and
             # the suffix
-            elif (fibers is not None) and (len(fibers) > 0):
+            elif len(fibers) > 0:
                 # have to set up a new valid that should be True if any
                 #  fiber is present
                 valid1 = False
@@ -1056,8 +1056,6 @@ class DrsFitsFile(DrsInputFile):
                         valid1 |= True
                 # if valid1 is False debug log that fibers were not found
                 if not valid1:
-                    if fibers == [None]:
-                        fibers = ['None']
                     dargs = [', '.join(fibers), filename]
                     WLOG(params, 'debug', TextEntry('90-008-00006', args=dargs))
                 # put valid1 back into valid
