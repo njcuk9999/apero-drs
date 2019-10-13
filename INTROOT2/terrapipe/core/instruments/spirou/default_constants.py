@@ -830,6 +830,21 @@ EXT_BERV_KIND.value = 'barycorrpy'
 EXT_BERV_EST_ACC = EXT_BERV_EST_ACC.copy(__NAME__)
 EXT_BERV_EST_ACC.value = 10.0
 
+# Define the order to plot in summary plots
+EXTRACT_PLOT_ORDER = EXTRACT_PLOT_ORDER.copy(__NAME__)
+EXTRACT_PLOT_ORDER.value = 4
+
+# Define the wavelength lower bounds for s1d plots
+#     (must be a string list of floats) defines the lower wavelength in nm
+EXTRACT_S1D_PLOT_ZOOM1 = EXTRACT_S1D_PLOT_ZOOM1.copy(__NAME__)
+EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1245, 1570, 2000'
+
+# Define the wavelength upper bounds for s1d plots
+#     (must be a string list of floats) defines the upper wavelength in nm
+EXTRACT_S1D_PLOT_ZOOM2 = EXTRACT_S1D_PLOT_ZOOM2.copy(__NAME__)
+EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100'
+
+
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
@@ -871,6 +886,10 @@ THERMAL_THRES_TAPAS.value = 0.010
 # define the percentile to measure the background for correction type 2
 THERMAL_ENVELOPE_PERCENTILE = THERMAL_ENVELOPE_PERCENTILE.copy(__NAME__)
 THERMAL_ENVELOPE_PERCENTILE.value = 10
+
+# define the order to plot on the thermal debug plot
+THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
+THERMAL_PLOT_START_ORDER.value = 40
 
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
@@ -1695,6 +1714,25 @@ PLOT_FLAT_BLAZE_ORDER1.value = False
 PLOT_FLAT_BLAZE_ORDER2 = PLOT_FLAT_BLAZE_ORDER2.copy(__NAME__)
 PLOT_FLAT_BLAZE_ORDER2.value = True
 
+# turn on thermal background (in extract) debug plot
+PLOT_THERMAL_BACKGROUND = PLOT_THERMAL_BACKGROUND.copy(__NAME__)
+PLOT_THERMAL_BACKGROUND.value = True
+
+# turn on the extraction spectral order debug plot (loop)
+PLOT_EXTRACT_SPECTRAL_ORDER1 = PLOT_EXTRACT_SPECTRAL_ORDER1.copy(__NAME__)
+PLOT_EXTRACT_SPECTRAL_ORDER1.value = True
+
+# turn on the extraction spectral order debug plot (selected order)
+PLOT_EXTRACT_SPECTRAL_ORDER2 = PLOT_EXTRACT_SPECTRAL_ORDER2.copy(__NAME__)
+PLOT_EXTRACT_SPECTRAL_ORDER2.value = True
+
+# turn on the extraction 1d spectrum debug plot
+PLOT_EXTRACT_S1D = PLOT_EXTRACT_S1D.copy(__NAME__)
+PLOT_EXTRACT_S1D.value = True
+
+# turn on the extraction 1d spectrum weight (before/after) debug plot
+PLOT_EXTRACT_S1D_WEIGHT = PLOT_EXTRACT_S1D_WEIGHT.copy(__NAME__)
+PLOT_EXTRACT_S1D_WEIGHT.value = True
 
 # =============================================================================
 # TOOLS SETTINGS
