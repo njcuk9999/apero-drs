@@ -724,6 +724,8 @@ obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           TELLU_RECON=sf.out_tellu_recon,
                           RC1D_W_FILE=sf.out_tellu_rc1d_w,
                           RC1D_V_FILE=sf.out_tellu_rc1d_v)
+obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D')
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],

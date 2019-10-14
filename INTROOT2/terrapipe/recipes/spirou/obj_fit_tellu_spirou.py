@@ -238,15 +238,19 @@ def __main__(recipe, params):
         # Create 1d spectra (s1d) of the corrected E2DS file
         # ------------------------------------------------------------------
         scargs = [wprops['WAVEMAP'], cprops['CORRECTED_SP'], nprops['BLAZE']]
-        scwprops = extract.e2ds_to_s1d(params, *scargs, wgrid='wave')
-        scvprops = extract.e2ds_to_s1d(params, *scargs, wgrid='velocity')
+        scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
+                                       fiber=fiber)
+        scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
+                                       wgrid='velocity', fiber=fiber)
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
         rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
-        rcwprops = extract.e2ds_to_s1d(params, *rcargs, wgrid='wave')
-        rcvprops = extract.e2ds_to_s1d(params, *rcargs, wgrid='velocity')
+        rcwprops = extract.e2ds_to_s1d(params, recipe, *rcargs, wgrid='wave',
+                                       fiber=fiber)
+        rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
+                                       wgrid='velocity', fiber=fiber)
 
         # ------------------------------------------------------------------
         # Quality control
