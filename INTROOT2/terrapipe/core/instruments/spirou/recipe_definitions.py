@@ -332,7 +332,7 @@ cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     DEBUG_BACK=sf.debug_back)
 cal_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
                         'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
-                        'LOC_ORD_VS_RMS')
+                        'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS')
 cal_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
@@ -580,6 +580,8 @@ cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                      WAVE_FPMAP=sf.out_wave_fp,
                      WAVE_FPRESTAB=sf.out_wave_res_table,
                      WAVE_FPLLTAB=sf.out_wave_ll_table)
+cal_wave.set_debug_plots('WAVE_HC_GUESS')
+cal_wave.set_summary_plots()
 cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
@@ -912,7 +914,9 @@ limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 
 # telluric recipes
 limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+
+ftelludb_args = dict(cores='CORES', objname='SCIENCE_TARGETS')
+limited_run.add(obj_fit_tellu_db, arguments=ftelludb_args)
 
 # ccf
 limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
