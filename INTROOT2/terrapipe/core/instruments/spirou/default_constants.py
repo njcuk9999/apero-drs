@@ -476,6 +476,10 @@ LOC_BKGRD_THRESHOLD.value = 0.15  # 0.17  # 0.18
 LOC_ORDER_CURVE_DROP = LOC_ORDER_CURVE_DROP.copy(__NAME__)
 LOC_ORDER_CURVE_DROP.value = 2.0
 
+# set the sigma clipping cut off value for cleaning coefficients
+LOC_COEFF_SIGCLIP = LOC_COEFF_SIGCLIP.copy(__NAME__)
+LOC_COEFF_SIGCLIP.value = 7
+
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
 LOC_SAT_THRES.value = 1000  # 64536
@@ -515,6 +519,7 @@ LOC_PLOT_CORNER_YZOOM1.value = '0, 0, 2500, 2500'
 # set the zoom in levels for the plots (top right corners)
 LOC_PLOT_CORNER_YZOOM2 = LOC_PLOT_CORNER_YZOOM2.copy(__NAME__)
 LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
+
 
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
@@ -1682,6 +1687,10 @@ PLOT_LOC_IM_SAT_THRES.value = True
 PLOT_LOC_ORD_VS_RMS = PLOT_LOC_ORD_VS_RMS.copy(__NAME__)
 PLOT_LOC_ORD_VS_RMS.value = True
 
+# turn on the localisation check coeffs debug plot
+PLOT_LOC_CHECK_COEFFS = PLOT_LOC_CHECK_COEFFS.copy(__NAME__)
+PLOT_LOC_CHECK_COEFFS.value = True
+
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = PLOT_SHAPE_DX.copy(__NAME__)
 PLOT_SHAPE_DX.value = True
@@ -1733,6 +1742,10 @@ PLOT_EXTRACT_S1D.value = True
 # turn on the extraction 1d spectrum weight (before/after) debug plot
 PLOT_EXTRACT_S1D_WEIGHT = PLOT_EXTRACT_S1D_WEIGHT.copy(__NAME__)
 PLOT_EXTRACT_S1D_WEIGHT.value = True
+
+# turn on the wave solution hc guess debug plot (in loop)
+PLOT_WAVE_HC_GUESS = PLOT_WAVE_HC_GUESS.copy(__NAME__)
+PLOT_WAVE_HC_GUESS.value = True
 
 # =============================================================================
 # TOOLS SETTINGS
