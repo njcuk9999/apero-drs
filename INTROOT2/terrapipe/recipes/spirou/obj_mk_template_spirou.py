@@ -121,6 +121,8 @@ def __main__(recipe, params):
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
+    # set up plotting (no plotting before this)
+    recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # get objects that match this object name
     object_filenames = drs_fits.find_files(params, kind='red', fiber=fiber,
