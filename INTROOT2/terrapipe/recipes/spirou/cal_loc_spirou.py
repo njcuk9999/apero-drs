@@ -174,6 +174,13 @@ def __main__(recipe, params):
         max_signal, mean_backgrd = lout[17:]
 
         # ------------------------------------------------------------------
+        # Clean the coefficients (using a sanity check)
+        # ------------------------------------------------------------------
+
+        cent_coeffs = localisation.check_coeffs(params, cent_coeffs, fiber)
+        wid_coeffs = localisation.check_coeffs(params, wid_coeffs, fiber)
+
+        # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values
         # ------------------------------------------------------------------
         center_fits = mp.calculate_polyvals(cent_coeffs, image.shape[1])
