@@ -676,6 +676,65 @@ def plot_loc_im_corner(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_loc_check_coeffs(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    coeffs = kwargs['coeffs']
+    orders = kwargs['orders']
+    parity = kwargs['parity']
+    good = kwargs['good']
+    fit = kwargs['fit']
+    ncoeff = kwargs.get('ncoeff', None)
+    # get the shape of coefficients
+    nbo, nbcoeff = coeffs.shape
+    # ------------------------------------------------------------------
+    # get order generator
+    if ncoeff is None:
+        nbc_gen = plotter.plotloop(np.arange(nbcoeff).astype(int))
+    else:
+        nbc_gen = [ncoeff]
+    # ------------------------------------------------------------------
+    # get unique parity
+    uparity = np.unique(parity)
+    # ------------------------------------------------------------------
+    # loop around orders
+    for it in nbc_gen:
+        coeffs_i = coeffs[:, it]
+        # set up plot
+        fig, frames = graph.set_figure(plotter, ncols=len(uparity), nrows=1)
+        # loop through unique parity values
+        for jt in range(len(uparity)):
+            # get frame
+            frame = frames[jt]
+            # get values
+            good_i, fit_i = good[it][jt], fit[it][jt]
+            # plot
+            frame.plot(orders[good_i], coeffs_i[good_i], label='Original',
+                       color='g', marker='o', ls='None')
+            frame.plot(orders[good_i], coeffs_i[good_i] - fit_i[good_i],
+                       label='Residuals', color='r', marker='o', ls='Noone')
+            frame.plot(orders[good_i], fit_i[good_i], label='New',
+                       color='b', marker='o', ls='None')
+            # add legend
+            frame.legend(loc=0)
+            # add frame title
+            frame.set(title='Parity {0}'.format(jt), xlabel='Order number',
+                      ylabel='Coefficient value')
+        # add title
+        plt.suptitle('Coefficient {0}'.format(it))
+        # ------------------------------------------------------------------
+        # adjust plot
+        plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
 # define graphing instances
 loc_minmax_cents = Graph('LOC_MINMAX_CENTS', kind='debug',
                          func=plot_loc_minmax_cents)
@@ -687,6 +746,8 @@ loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
                          func=plot_loc_im_sat_thres)
 loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
                        func=plot_loc_ord_vs_rms)
+loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
+                         func=plot_loc_check_coeffs)
 sum_desc = ('Polynomial fits for localisation (overplotted on '
                'pre-processed image)')
 sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
@@ -1058,12 +1119,12 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
                             extent=[xmin, xmax, ymin2, ymax2])
         # ------------------------------------------------------------------
         # plot the fits and fit edges
-        frame1.plot(xfit1, yfit1, color='red', label='fit')
-        frame1.plot(xfit1, yfitlow1, ls='--', color='blue', label='fit edge')
-        frame1.plot(xfit1, yfithigh1, ls='--', color='blue', label='fit edge')
-        frame2.plot(xfit1, yfit2, color='red', label='fit')
-        frame2.plot(xfit1, yfitlow2, ls='--', color='blue', label='fit edge')
-        frame2.plot(xfit1, yfithigh2, ls='--', color='blue', label='fit edge')
+        frame1.plot(xfit1, yfit1, color='orange', label='fit')
+        frame1.plot(xfit1, yfitlow1, ls='--', color='orange', label='fit edge')
+        frame1.plot(xfit1, yfithigh1, ls='--', color='orange', label='fit edge')
+        frame2.plot(xfit1, yfit2, color='orange', label='fit')
+        frame2.plot(xfit1, yfitlow2, ls='--', color='orange', label='fit edge')
+        frame2.plot(xfit1, yfithigh2, ls='--', color='orange', label='fit edge')
         # ------------------------------------------------------------------
         # construct title
         title = ('Image fit (before and after straightening) for '
@@ -1098,10 +1159,6 @@ def plot_flat_blaze_order(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-
-    # TODO: remove break point
-    constants.breakpoint(plotter.params)
-
     # get plt
     plt = plotter.plt
     # ------------------------------------------------------------------
@@ -1428,9 +1485,87 @@ definitions += [extract_spectral_order1, extract_spectral_order2,
                 extract_s1d, extract_s1d_weights, sum_extract_sp_order,
                 sum_extract_s1d]
 
+
 # =============================================================================
 # Define wave plotting functions
 # =============================================================================
+def plot_wave_hc_guess(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    wave = kwargs['wave']
+    spec = kwargs['spec']
+    llprops = kwargs['llprops']
+    nbo = kwargs['nbo']
+    order = kwargs.get('order', None)
+    # get data from llprops
+    xfit = llprops['XPIX_INI']
+    gfit = llprops['GFIT_INI']
+    ofit = llprops['ORD_INI']
+    # deal with plot style
+    if 'dark' in params['DRS_PLOT_STYLE']:
+        black = 'white'
+    else:
+        black = 'black'
+    # ------------------------------------------------------------------
+    # define spectral order colours
+    col1 = [black, 'grey']
+    label1 = ['Even order data', 'Odd order data']
+    col2 = ['green', 'purple']
+    label2 = ['Even order fit', 'Odd order fit']
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # set up mask for the order
+        ordermask = ofit == order_num
+        # keep only lines for this order
+        oxfit = xfit[ordermask]
+        ogfit = gfit[ordermask]
+        # get colours from order parity
+        col1_1 = col1[np.mod(order_num, 2)]
+        col2_1 = col2[np.mod(order_num, 2)]
+        label1_1 = label1[np.mod(order_num, 2)]
+        label2_1 = label2[np.mod(order_num, 2)]
+        # plot spectrum for order
+        frame.plot(wave[order_num, :], spec[order_num, :], color=col1_1,
+                   label=label1_1)
+        # over plot all fits
+        for line_it in range(len(oxfit)):
+            xpix = oxfit[line_it]
+            g2 = ogfit[line_it]
+            frame.plot(wave[order_num, xpix], g2, color=col2_1, label=label2_1)
+        # plot unique legend
+        ulegend(frame, plotter, loc=0, fontsize=12)
+        # set title and labels
+        title = 'Fitted gaussians on spectrum (Order {0})'
+        frame.set(title=title.format(order_num),
+                  xlabel='Wavelength [nm]', ylabel='Normalized flux')
+        # ------------------------------------------------------------------
+        # adjust plot
+        plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+wave_hc_guess = Graph('WAVE_HC_GUESS', kind='debug',
+                      func=plot_wave_hc_guess)
+# add to definitions
+definitions += [wave_hc_guess]
 
 # =============================================================================
 # Define telluric plotting functions
