@@ -645,14 +645,10 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             for iw in range(width):
                 # for the hc data
                 norm_fp = mp.nanmedian(np.abs(ribbon_fp[iw, :]))
+                # deal with a row of zeros
+                if norm_fp == 0.0:
+                    continue
                 # deal with a zero norm_fp (means the order is out of bounds
-                #   here
-                # TODO: Problem here when norm_fp is zero
-                # TODO:  This can happen if the order goes off the egde of
-                # TODO:  the bottom/top before the left/right edge -->
-                # TODO:   a column of all zeros --> nanmedian = 0
-                # TODO:   ribbon --> NaN
-
                 ribbon_hc[iw, :] = ribbon_hc[iw, :] / norm_fp
                 # for the fp data
                 ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
