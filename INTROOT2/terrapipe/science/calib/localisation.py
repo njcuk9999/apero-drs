@@ -107,6 +107,96 @@ def calculate_order_profile(params, image, **kwargs):
     return newimage
 
 
+def check_coeffs(params, recipe, coeffs, fiber):
+    """
+    Check and correct the coefficients by rejecting misbehaving coefficients
+    and smoothing with a robust fit
+
+    :param coeffs:
+    :param nsigclip:
+    :return:
+    """
+    # get the sigma clipping cut off value
+    nsigclip = params['LOC_COEFF_SIGCLIP']
+    nsigpercent = params['LOC_COEFF_SIGPER'] + 1
+    maxsigdeg = params['LOC_COEFFSIG_MAXDEG']
+    # ----------------------------------------------------------------------
+    # get fiber params
+    pconst = constants.pload(params['INSTRUMENT'])
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+    max_num_orders = fiberparams['FIBER_MAX_NUM_ORDERS']
+    set_num_fibers = fiberparams['SET_NUM_FIBERS']
+    num_fibers = max_num_orders / set_num_fibers
+    # ----------------------------------------------------------------------
+    # make sure coeffs is a numpy array
+    coeffs = np.array(coeffs)
+    # get the shape of coefficients
+    nbo, nbcoeff = coeffs.shape
+    # get the index against which we'll fit the function
+    orders = np.arange(nbo, dtype=float)
+    # ----------------------------------------------------------------------
+    # if we have 2*N or 3*N we will fit per module N as to leave each fiber's
+    #    behaviour independent of the other fibers
+    parity = np.arange(nbo) % (nbo // num_fibers)
+    # ----------------------------------------------------------------------
+    # storage of output values
+    new_coeffs = np.zeros_like(coeffs)
+    # storage for debug plot
+    good_arr = []
+    fit_arr = []
+    # ----------------------------------------------------------------------
+    # loop through coefficients orders
+    for it in range(nbcoeff):
+        # get the coeffs
+        icoeffs = coeffs[:, it]
+        # storage for plot
+        good_arr_i = []
+        fit_arr_i = []
+        # ------------------------------------------------------------------
+        # loop through unique parity values
+        for uparity in np.unique(parity):
+            # find values that have the right parity
+            good = parity == uparity
+            # try fitting Nth order (N from 0 to 7) and keep the lowest
+            #    order fit that is within nsigpercent
+            n_degrees = np.arange(0, maxsigdeg, 1)
+            # set up storage for the rms
+            rms = np.zeros_like(n_degrees, dtype=float)
+            # --------------------------------------------------------------
+            # loop around degrees to fit
+            for n_deg in n_degrees:
+                # calculate the fit for this coefficent
+                fitcoeffs, keep = mp.robust_polyfit(orders[good], icoeffs[good],
+                                                    n_deg, nsigclip)
+                # calculate the values for the fit
+                fitvals = np.polyval(fitcoeffs, orders[good][keep])
+                # calculate the rms for this coefficient
+                rms[n_deg] = np.nanmedian(np.abs(icoeffs[good][keep] - fitvals))
+            # --------------------------------------------------------------
+            # keep only the rms values below nsigpercent
+            nfit = np.min( (np.where(rms < np.min(rms) * nsigpercent))[0])
+            # select the lowest order fit that has a good RMS and update the
+            #    coefficients
+            fitcoeffs, keep = mp.robust_polyfit(orders[good], icoeffs[good],
+                                                nfit, nsigclip)
+            # get new coeff values
+            new_coeff = np.polyval(fitcoeffs, orders[good])
+            # append values for plots
+            good_arr_i.append(good)
+            fit_arr_i.append(new_coeff)
+            # update the values
+            new_coeffs[good, it] = new_coeff
+        # append values for plots
+        good_arr.append(good_arr_i)
+        fit_arr.append(fit_arr_i)
+    # ----------------------------------------------------------------------
+    # plot of the coeffs
+    recipe.plot('LOC_CHECK_COEFFS', orders=orders, coeffs=coeffs, parity=parity,
+                good=good_arr, fit=fit_arr, ncoeff=None)
+    # ----------------------------------------------------------------------
+    return new_coeffs
+
+
 def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
