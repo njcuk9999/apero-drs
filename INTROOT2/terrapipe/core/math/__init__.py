@@ -76,6 +76,8 @@ linear_minimization = general.linear_minimization
 
 relativistic_waveshift = general.relativistic_waveshift
 
+robust_polyfit = general.robust_polyfit
+
 sigfig = general.sigfig
 
 # =============================================================================

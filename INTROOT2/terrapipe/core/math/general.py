@@ -213,6 +213,28 @@ def iuv_spline(x, y, **kwargs):
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
+def robust_polyfit(x, y, degree, nsigcut):
+    keep = np.isfinite(y)
+    # set the nsigmax to infinite
+    nsigmax = np.inf
+    # set the fit as unset at first
+    fit = None
+    # while sigma is greater than sigma cut keep fitting
+    while nsigmax > nsigcut:
+        # calculate the polynomial fit (of the non-NaNs)
+        fit = np.polyfit(x[keep], y[keep], degree)
+        # calculate the residuals of the polynomial fit
+        res = y - np.polyval(fit, x)
+        # work out the new sigma values
+        nsig = np.abs(res) / np.nanmedian(np.abs(res))
+        # work out the maximum sigma
+        nsigmax = np.max(nsig[keep])
+        # re-work out the keep criteria
+        keep = nsig < nsigcut
+    # return the fit and the mask of good values
+    return fit, keep
+
+
 def sigfig(x, n):
     """
     Produces x values to "n" significant figures
@@ -246,8 +268,6 @@ def sigfig(x, n):
         return list(xr)
     else:
         return xr[0]
-
-
 
 
 # =============================================================================
