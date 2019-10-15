@@ -64,7 +64,7 @@ __all__ = [
     'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
     'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
     'LOC_ORDER_CURVE_DROP', 'LOC_PLOT_CORNER_XZOOM1', 'LOC_PLOT_CORNER_XZOOM2',
-    'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2',
+    'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2', 'LOC_COEFF_SIGCLIP',
     # shape constants
     'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
     'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
@@ -184,13 +184,13 @@ __all__ = [
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
     'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
-    'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
-    'PLOT_SHAPEL_ZOOM_SHIFT',
+    'PLOT_LOC_CHECK_COEFFS', 'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL',
+    'PLOT_SHAPE_ANGLE_OFFSET', 'PLOT_SHAPEL_ZOOM_SHIFT',
     'PLOT_FLAT_ORDER_FIT_EDGES1', 'PLOT_FLAT_ORDER_FIT_EDGES2',
     'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2',
     'PLOT_THERMAL_BACKGROUND', 'PLOT_EXTRACT_SPECTRAL_ORDER1',
     'PLOT_EXTRACT_SPECTRAL_ORDER2', 'PLOT_EXTRACT_S1D',
-    'PLOT_EXTRACT_S1D_WEIGHT',
+    'PLOT_EXTRACT_S1D_WEIGHT', 'PLOT_WAVE_HC_GUESS',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -593,6 +593,10 @@ LOC_BKGRD_THRESHOLD = Const('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
 #    previous order center is missed (in finding the position)
 LOC_ORDER_CURVE_DROP = Const('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
+
+# set the sigma clipping cut off value for cleaning coefficients
+LOC_COEFF_SIGCLIP = Const('LOC_COEFF_SIGCLIP', value=None, dtype=float,
+                          source=__NAME__, minimum=0)
 
 # Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
@@ -1831,6 +1835,10 @@ PLOT_LOC_IM_SAT_THRES = Const('PLOT_LOC_IM_SAT_THRES', value=False,
 PLOT_LOC_ORD_VS_RMS = Const('PLOT_LOC_ORD_VS_RMS', value=False,
                             dtype=bool, source=__NAME__)
 
+# turn on the localisation check coeffs debug plot
+PLOT_LOC_CHECK_COEFFS = Const('PLOT_LOC_CHECK_COEFFS', value=False,
+                              dtype=bool, source=__NAME__)
+
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__)
 
@@ -1881,6 +1889,10 @@ PLOT_EXTRACT_S1D = Const('PLOT_EXTRACT_S1D', value=False, dtype=bool,
 # turn on the extraction 1d spectrum weight (before/after) debug plot
 PLOT_EXTRACT_S1D_WEIGHT = Const('PLOT_EXTRACT_S1D_WEIGHT', value=False,
                                 dtype=bool, source=__NAME__)
+
+# turn on the wave solution hc guess debug plot (in loop)
+PLOT_WAVE_HC_GUESS = Const('PLOT_WAVE_HC_GUESS', value=False,
+                           dtype=bool, source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS
