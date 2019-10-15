@@ -880,8 +880,15 @@ full_run.add(cal_ff, files=[sf.pp_flat_flat])
 full_run.add(cal_thermal)
 full_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
              fpfiles=[sf.pp_fp_fp])
-# extract all
+# extract all OBJ_DARK and OBJ_FP
 full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
+# telluric recipes
+full_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+full_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+
+# ccf on all OBJ_DARK / OBJ_FP
+full_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # limited run (master + nights)
@@ -942,15 +949,7 @@ limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
-# object run (extract )
-# -----------------------------------------------------------------------------
-science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
-# extract science
-science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
-                files=[sf.pp_obj_dark, sf.pp_obj_fp])
-
-# -----------------------------------------------------------------------------
-# hc run (extract )
+# hc run (extract all HC_HC)
 # -----------------------------------------------------------------------------
 hc_run = drs_recipe.DrsRunSequence('hc_run', __INSTRUMENT__)
 # master run
@@ -973,4 +972,4 @@ hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run, science_run, hc_run]
+sequences = [full_run, limited_run, hc_run]
