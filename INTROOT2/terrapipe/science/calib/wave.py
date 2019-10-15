@@ -512,16 +512,7 @@ def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
     # ------------------------------------------------------------------
     # Find Gaussian Peaks in HC spectrum
     # ------------------------------------------------------------------
-    llprops = find_hc_gauss_peaks(params, recipe, e2dsfile, fiber)
-
-    # ------------------------------------------------------------------
-    # Start plotting session
-    # ------------------------------------------------------------------
-    # TODO: Add plotting
-    if params['DRS_PLOT'] > 0:
-        # # start interactive plot
-        # sPlt.start_interactive_session(p)
-        pass
+    llprops = find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber)
     # ------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
     # ------------------------------------------------------------------
@@ -530,14 +521,6 @@ def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
     # Generate Resolution map and line profiles
     # ------------------------------------------------------------------
     llprops = generate_resolution_map(params, llprops, e2dsfile)
-    # ------------------------------------------------------------------
-    # End plotting session
-    # ------------------------------------------------------------------
-    # TODO: Add plotting
-    # end interactive session
-    if params['DRS_PLOT'] > 0:
-        # sPlt.end_interactive_session(p)
-        pass
     # ------------------------------------------------------------------
     # Set up all_lines storage
     # ------------------------------------------------------------------
@@ -1164,7 +1147,7 @@ def generate_shifted_wave_map(params, props, **kwargs):
     return props
 
 
-def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
+def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     """
     Find the first guess at the guass peaks in the HC image
 
@@ -1257,10 +1240,10 @@ def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
                 if keep:
                     # fit a gaussian with a slope
                     gargs = [xpix, segment, gfitmode]
-                    popt_left, g2 = mp.gauss_fit_nn(*gargs)
+                    popt_left, gfit = mp.gauss_fit_nn(*gargs)
                     # residual of the fit normalized by peak value similar to
                     #    an 1/SNR value
-                    gauss_rms_dev0 = mp.nanstd(segment - g2) / popt_left[0]
+                    gauss_rms_dev0 = mp.nanstd(segment - gfit) / popt_left[0]
                     # all values that will be added (if keep_peak=True) to the
                     #    vector of all line parameters
                     zp0 = popt_left[3]
@@ -1291,15 +1274,9 @@ def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
                         llprops['GAUSS_RMS_DEV_INI'].append(gauss_rms_dev0)
                         # add values for plotting
                         llprops['XPIX_INI'].append(xpix)
+                        llprops['GFIT_INI'].append(gfit)
             # display the number of peaks found
             WLOG(params, '', TextEntry('40-017-00005', args=[npeaks]))
-
-            # debug plot
-            if params['DRS_PLOT'] and params['DRS_DEBUG'] == 2:
-                # TODO: Add plot later
-                # if p['HC_EA_PLOT_PER_ORDER']:
-                #     sPlt.wave_ea_plot_per_order_hcguess(p, loc, order_num)
-                pass
         # ------------------------------------------------------------------
         # construct column names/values
         columnnames, columnvalues = llprops['HCLLCOLUMNS'], []
@@ -1314,10 +1291,8 @@ def find_hc_gauss_peaks(params, recipe, e2dsfile, fiber, **kwargs):
         drs_table.write_table(params, ini_table, llprops['HCLLFILENAME'],
                               fmt=filefmt)
         # plot all orders w/fitted gaussians
-        if params['DRS_PLOT'] > 0:
-            # TODO: Add plotting
-            # sPlt.wave_ea_plot_allorder_hcguess(p, loc)
-            pass
+        recipe.plot('WAVE_HC_GUESS', params=params, wave=iprops['WAVEMAP'],
+                    spec=hc_sp, llprops=llprops, nbo=nbo)
     # ----------------------------------------------------------------------
     # add constants to llprops
     llprops['NBO'] = nbo
@@ -1396,8 +1371,8 @@ def load_hc_init_linelist(params, recipe, e2dsfile, fiber, **kwargs):
     llprops.set_sources(keys, func_name)
     # add additional properties (for plotting)
     llprops['XPIX_INI'] = []
-    llprops['G2_INI'] = []
-    llprops.set_sources(['XPIX_INI', 'G2_INI'], func_name)
+    llprops['GFIT_INI'] = []
+    llprops.set_sources(['XPIX_INI', 'GFIT_INI'], func_name)
     # return properties param dict
     return llprops, exists
 
