@@ -221,6 +221,8 @@ def graph_test_plot_2(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the plot generator
     generator = plotter.plotloop(ord)
+    # prompt to start looper
+    plotter.close_plots(loop=True)
     # loop aroun the orders
     for ord_num in generator:
         fig, frame = graph.set_figure(plotter)
@@ -696,6 +698,8 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
     # get order generator
     if ncoeff is None:
         nbc_gen = plotter.plotloop(np.arange(nbcoeff).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     else:
         nbc_gen = [ncoeff]
     # ------------------------------------------------------------------
@@ -716,10 +720,10 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
             # plot
             frame.plot(orders[good_i], coeffs_i[good_i], label='Original',
                        color='g', marker='o', ls='None')
-            frame.plot(orders[good_i], coeffs_i[good_i] - fit_i[good_i],
-                       label='Residuals', color='r', marker='o', ls='Noone')
-            frame.plot(orders[good_i], fit_i[good_i], label='New',
-                       color='b', marker='o', ls='None')
+            frame.plot(orders[good_i], coeffs_i[good_i] - fit_i,
+                       label='Residuals', color='r', marker='o', ls='None')
+            frame.plot(orders[good_i], fit_i, label='New',
+                       color='b')
             # add legend
             frame.legend(loc=0)
             # add frame title
@@ -760,8 +764,8 @@ sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
                                dpi=150, description=sum_desc)
 # add to definitions
 definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
-                loc_im_sat_thres, loc_ord_vs_rms, sum_loc_im_sat_thres,
-                sum_plot_loc_im_corner]
+                loc_im_sat_thres, loc_ord_vs_rms, loc_check_coeffs,
+                sum_loc_im_sat_thres, sum_plot_loc_im_corner]
 
 
 # =============================================================================
@@ -880,10 +884,14 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     if bnum is None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
         banana_gen = [0]
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     # else we are loop around bnums for a selected order
     else:
         order_gen = [sorder]
         banana_gen = plotter.plotloop(np.arange(nbanana).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     # ------------------------------------------------------------------
     # loop around orders
     for order_num in order_gen:
@@ -1065,6 +1073,8 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
     # get order generator
     if order is None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     else:
         order_gen = [order]
     # ------------------------------------------------------------------
@@ -1173,6 +1183,8 @@ def plot_flat_blaze_order(plotter, graph, kwargs):
     # get order generator
     if order is None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     else:
         order_gen = [order]
 
@@ -1313,6 +1325,8 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
     # get order generator
     if order is None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     else:
         order_gen = [order]
     # ------------------------------------------------------------------
@@ -1522,6 +1536,8 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
     # get order generator
     if order is None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
     else:
         order_gen = [order]
     # ------------------------------------------------------------------
