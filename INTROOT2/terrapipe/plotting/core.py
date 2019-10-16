@@ -86,6 +86,8 @@ class Plotter:
         # ------------------------------------------------------------------
         # storage of debug plots
         self.debug_graphs = OrderedDict()
+        # flag for open plots
+        self.plots_active = False
         # ------------------------------------------------------------------
         # summary file location
         self.location = None
@@ -235,6 +237,8 @@ class Plotter:
                 self.interactive(False)
                 # add debug plots
                 self.debug_graphs[graph.name] = graph.copy()
+                # mark that we have plots active
+                self.plots_active = True
             # if plot = 2 we need to show the plot
             elif self.plotoption == 2:
                 self.plt.show()
@@ -333,9 +337,15 @@ class Plotter:
 
         :return None:
         """
+        # mark that we have plots active
+        self.plots_active = False
+        # close all plots
         self.plt.close('all')
 
     def close_plots(self, loop=False):
+        # make sure we have plots open
+        if not self.plots_active:
+            return
         # deal with closing loop plots
         if loop:
             WLOG(self.params, 'info', TextEntry('40-100-00006'), printonly=True)
