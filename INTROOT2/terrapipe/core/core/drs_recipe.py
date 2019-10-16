@@ -61,6 +61,8 @@ DRSArgumentParser = drs_argument.DRSArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
 pcheck = drs_log.find_param
+# define special keys
+SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 
 
 # =============================================================================
@@ -566,14 +568,17 @@ class DrsRecipe(object):
         # loop around arguments
         for argname in arguments:
             # get value
-            value = arguments[argname]
+            value = copy.deepcopy(arguments[argname])
             # check if value is a reference to a params value
             if isinstance(value, str):
+                # see if value is in parameter dictionary already
                 if value in params:
                     value = params[value]
-                # deal with science targets / telluric targets
-                if value in ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']:
+                # deal with SPECIAL_LIST_KEYS
+                if arguments[argname] in SPECIAL_LIST_KEYS:
+                    # these must be lists
                     value = value.split(',')
+                    # make sure there are no white spaces
                     value = np.char.strip(value)
             # check for argument in args
             if argname in self.args:
