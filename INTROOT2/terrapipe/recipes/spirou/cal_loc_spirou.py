@@ -176,9 +176,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Clean the coefficients (using a sanity check)
         # ------------------------------------------------------------------
-
-        cent_coeffs = localisation.check_coeffs(params, cent_coeffs, fiber)
-        wid_coeffs = localisation.check_coeffs(params, wid_coeffs, fiber)
+        cent_coeffs = localisation.check_coeffs(params, recipe, cent_coeffs,
+                                                fiber)
+        wid_coeffs = localisation.check_coeffs(params, recipe, wid_coeffs,
+                                               fiber)
 
         # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values

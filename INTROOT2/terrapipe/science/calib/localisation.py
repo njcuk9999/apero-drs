@@ -125,7 +125,7 @@ def check_coeffs(params, recipe, coeffs, fiber):
     pconst = constants.pload(params['INSTRUMENT'])
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
     max_num_orders = fiberparams['FIBER_MAX_NUM_ORDERS']
-    set_num_fibers = fiberparams['SET_NUM_FIBERS']
+    set_num_fibers = fiberparams['FIBER_SET_NUM_FIBERS']
     num_fibers = max_num_orders / set_num_fibers
     # ----------------------------------------------------------------------
     # make sure coeffs is a numpy array
