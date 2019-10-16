@@ -480,6 +480,17 @@ LOC_ORDER_CURVE_DROP.value = 2.0
 LOC_COEFF_SIGCLIP = LOC_COEFF_SIGCLIP.copy(__NAME__)
 LOC_COEFF_SIGCLIP.value = 7
 
+#   Defines the percentage (as a fraction) allowed in the coefficient
+#       cleaning to stop over fitting (i.e. any fit good to within this
+#       percentage of the largest fit degree
+LOC_COEFF_SIGPER = LOC_COEFF_SIGPER.copy(__NAME__)
+LOC_COEFF_SIGPER.value = 0.2
+
+#  Defines the maximum fit degree to fit in the coefficient cleaning
+#     these may be over fit but this is controlled by LOC_COEFF_SIGPER
+LOC_COEFFSIG_MAXDEG = LOC_COEFFSIG_MAXDEG.copy(__NAME__)
+LOC_COEFFSIG_MAXDEG.value = 8
+
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
 LOC_SAT_THRES.value = 1000  # 64536

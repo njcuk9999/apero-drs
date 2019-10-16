@@ -65,6 +65,7 @@ __all__ = [
     'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
     'LOC_ORDER_CURVE_DROP', 'LOC_PLOT_CORNER_XZOOM1', 'LOC_PLOT_CORNER_XZOOM2',
     'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2', 'LOC_COEFF_SIGCLIP',
+    'LOC_COEFF_SIGPER', 'LOC_COEFFSIG_MAXDEG',
     # shape constants
     'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
     'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
@@ -597,6 +598,17 @@ LOC_ORDER_CURVE_DROP = Const('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
 # set the sigma clipping cut off value for cleaning coefficients
 LOC_COEFF_SIGCLIP = Const('LOC_COEFF_SIGCLIP', value=None, dtype=float,
                           source=__NAME__, minimum=0)
+
+#   Defines the percentage (as a fraction) allowed in the coefficient
+#       cleaning to stop over fitting (i.e. any fit good to within this
+#       percentage of the largest fit degree
+LOC_COEFF_SIGPER = Const('LOC_COEFF_SIGPER', value=None, dtype=float,
+                         source=__NAME__, minimum=0)
+
+#  Defines the maximum fit degree to fit in the coefficient cleaning
+#     these may be over fit but this is controlled by LOC_COEFF_SIGPER
+LOC_COEFFSIG_MAXDEG = Const('LOC_COEFFSIG_MAXDEG', value=None, dtype=int,
+                            source=__NAME__, minimum=1)
 
 # Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
