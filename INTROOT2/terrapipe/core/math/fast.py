@@ -19,6 +19,13 @@ try:
 except Exception as e:
     HAS_BOTTLENECK = False
 
+try:
+    from numba import jit
+    HAS_NUMBA = True
+except:
+    jit = None
+    HAS_NUMBA = False
+
 from terrapipe.core import constants
 
 # =============================================================================
@@ -290,6 +297,73 @@ def medfilt_1d(a, window=None):
         return signal.medfilt(a, kernel_size=window)
 
 
+# =============================================================================
+# numba functions
+# =============================================================================
+def jitwrapper(**options):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if HAS_NUMBA:
+                return jit(func, **options)(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+# Set "nopython" mode for best performance, equivalent to @nji
+# note we use the @jitwrapper to avoid missing numba imports
+@jitwrapper(nopython=True)
+def lin_mini(vector,sample,mm,v,sz_sample,case,recon,amps):
+    #
+    # vector of N elements
+    # sample: matrix N * M each M column is adjusted in amplitude to minimize
+    # the chi2 according to the input vector
+    # output: vector of length M gives the amplitude of each column
+    #
+    if case == 1:
+        # fill-in the co-variance matrix
+        for i in range(sz_sample[0]):
+            for j in range(i, sz_sample[0]):
+                mm[i, j] = np.sum(sample[i, :] * sample[j, :])
+                # we know the matrix is symetric, we fill the other half
+                # of the diagonal directly
+                mm[j, i] = mm[i, j]
+            # dot-product of vector with sample columns
+            v[i] = np.sum(vector * sample[i, :])
+        # if the matrix cannot we inverted because the determinant is zero,
+        # then we return a NaN for all outputs
+        if np.linalg.det(mm) == 0:
+            amps = np.zeros(sz_sample[0]) + np.nan
+            recon = np.zeros_like(v)
+            return amps, recon
+        # invert coveriance matrix
+        inv = np.linalg.inv(mm)
+        # retrieve amplitudes
+        for i in range(len(v)):
+            for j in range(len(v)):
+                amps[i]+=inv[i,j]*v[j]
+        # reconstruction of the best-fit from the input sample and derived
+        # amplitudes
+        for i in range(sz_sample[0]):
+            recon += amps[i] * sample[i, :]
+        return amps, recon
+    if case == 2:
+        # same as for case 1 but with axis flipped
+        for i in range(sz_sample[1]):
+            for j in range(i, sz_sample[1]):
+                mm[i, j] = np.sum(sample[:, i] * sample[:, j])
+                mm[j, i] = mm[i, j]
+            v[i] = np.sum(vector * sample[:, i])
+        if np.linalg.det(mm) == 0:
+            return amps, recon
+        inv = np.linalg.inv(mm)
+        for i in range(len(v)):
+            for j in range(len(v)):
+                amps[i]+=inv[i,j]*v[j]
+        for i in range(sz_sample[1]):
+            recon += amps[i] * sample[:, i]
+        return amps, recon
 
 
 # =============================================================================

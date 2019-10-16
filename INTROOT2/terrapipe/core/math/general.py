@@ -128,13 +128,21 @@ def fwhm(sigma=1.0):
 
 # TODO: Required commenting and cleaning up
 def linear_minimization(vector, sample):
+    """
+    wrapper function that sets everything for the @jit later
+    In particular, we avoid the np.zeros that are not handled
+    by numba, size of input vectors and sample to be adjusted
+
+    :param vector: 2d matrix that is N x M or M x N
+    :param sample: 1d vector of length N
+    :return:
+    """
+    # setup function name
     func_name = __NAME__ + '.linear_minimization()'
 
-    vector = np.array(vector)
-    sample = np.array(sample)
-    sz_sample = sample.shape
-    sz_vector = vector.shape
-
+    sz_sample = sample.shape  # 1d vector of length N
+    sz_vector = vector.shape  # 2d matrix that is N x M or M x N
+    # define which way the sample is flipped relative to the input vector
     if sz_vector[0] == sz_sample[0]:
         case = 2
     elif sz_vector[0] == sz_sample[1]:
@@ -142,54 +150,70 @@ def linear_minimization(vector, sample):
     else:
         emsg = ('Neither vector[0]==sample[0] nor vector[0]==sample[1] '
                 '(function = {0})')
+        print(emsg)
+        raise ValueError(emsg.format(func_name))
+    # ----------------------------------------------------------------------
+    # Part A) we deal with NaNs
+    # ----------------------------------------------------------------------
+    # set up keep vector
+    keep = None
+    # we check if there are NaNs in the vector or the sample
+    # if there are NaNs, we'll fit the rest of the domain
+    isnan = (np.sum(np.isnan(vector)) != 0) or (np.sum(np.isnan(sample)) != 0)
+    # ----------------------------------------------------------------------
+    # case 1: sample is not flipped relative to the input vector
+    if case == 1:
+        if isnan:
+            # we create a mask of non-NaN
+            keep = np.isfinite(vector) * np.isfinite(np.sum(sample, axis=0))
+            # redefine the input vector to avoid NaNs
+            vector = vector[keep]
+            sample = sample[:, keep]
+        # matrix of covariances
+        mm = np.zeros([sz_sample[0], sz_sample[0]])
+        # cross-terms of vector and columns of sample
+        vec = np.zeros(sz_sample[0])
+        # reconstructed amplitudes
+        amps = np.zeros(sz_sample[0])
+        # reconstruted fit
+        recon = np.zeros(sz_sample[1])
+    # ----------------------------------------------------------------------
+    # case 2: sample is flipped relative to the input vector
+    elif case == 2:
+        # same as for case 1, but with axis flipped
+        if isnan:
+            # we create a mask of non-NaN
+            keep = np.isfinite(vector) * np.isfinite(np.sum(sample, axis=1))
+            vector = vector[keep]
+            sample = sample[keep, :]
+        mm = np.zeros([sz_sample[1], sz_sample[1]])
+        vec = np.zeros(sz_sample[1])
+        amps = np.zeros(sz_sample[1])
+        recon = np.zeros(sz_sample[0])
+    # ----------------------------------------------------------------------
+    # should not get here (so just repeat the raise from earlier)
+    else:
+        emsg = ('Neither vector[0]==sample[0] nor vector[0]==sample[1] '
+                '(function = {0})')
         raise ValueError(emsg.format(func_name))
 
-    # vector of N elements
-    # sample: matrix N * M each M column is adjusted in amplitude to minimize
-    # the chi2 according to the input vector
-    # output: vector of length M gives the amplitude of each column
+    # ----------------------------------------------------------------------
+    # Part B) pass to optimized linear minimization
+    # ----------------------------------------------------------------------
+    # pass all variables and pre-formatted vectors to the @jit part of the code
+    amp_out, recon_out = fast.lin_mini(vector, sample, mm, vec, sz_sample,
+                                       case, recon, amps)
+    # ----------------------------------------------------------------------
+    # if we had NaNs in the first place, we create a reconstructed vector
+    # that has the same size as the input vector, but pad with NaNs values
+    # for which we cannot derive a value
+    if isnan:
+        recon_out2 = np.zeros_like(keep) + np.nan
+        recon_out2[keep] = recon_out
+        recon_out = recon_out2
 
-    if case == 1:
-        # set up storage
-        mm = np.zeros([sz_sample[0], sz_sample[0]])
-        v = np.zeros(sz_sample[0])
-        for i in range(sz_sample[0]):
-            for j in range(i, sz_sample[0]):
-                mm[i, j] = fast.nansum(sample[i, :] * sample[j, :])
-                mm[j, i] = mm[i, j]
-            v[i] = fast.nansum(vector * sample[i, :])
+    return amp_out, recon_out
 
-        if np.linalg.det(mm) == 0:
-            amps = np.zeros(sz_sample[0]) + np.nan
-            recon = np.zeros_like(v)
-            return amps, recon
-
-        amps = np.matmul(np.linalg.inv(mm), v)
-        recon = np.zeros(sz_sample[1])
-        for i in range(sz_sample[0]):
-            recon += amps[i] * sample[i, :]
-        return amps, recon
-
-    if case == 2:
-        # set up storage
-        mm = np.zeros([sz_sample[1], sz_sample[1]])
-        v = np.zeros(sz_sample[1])
-        for i in range(sz_sample[1]):
-            for j in range(i, sz_sample[1]):
-                mm[i, j] = fast.nansum(sample[:, i] * sample[:, j])
-                mm[j, i] = mm[i, j]
-            v[i] = fast.nansum(vector * sample[:, i])
-
-        if np.linalg.det(mm) == 0:
-            amps = np.zeros(sz_sample[1]) + np.nan
-            recon = np.zeros_like(v)
-            return amps, recon
-
-        amps = np.matmul(np.linalg.inv(mm), v)
-        recon = np.zeros(sz_sample[0])
-        for i in range(sz_sample[1]):
-            recon += amps[i] * sample[:, i]
-        return amps, recon
 
 
 def iuv_spline(x, y, **kwargs):
