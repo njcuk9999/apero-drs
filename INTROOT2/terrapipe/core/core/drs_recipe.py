@@ -17,6 +17,7 @@ import sys
 import glob
 from collections import OrderedDict
 import copy
+import itertools
 
 from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.core import constants
@@ -110,7 +111,7 @@ class DrsRecipe(object):
         self.kwargs = OrderedDict()
         self.specialargs = OrderedDict()
         # list of strings of extra arguments to add / overwrite set values
-        self.extras = []
+        self.extras = OrderedDict()
         # define arg list
         self.arg_list = []
         self.str_arg_list = None
@@ -496,8 +497,8 @@ class DrsRecipe(object):
         for sargname in recipe.specialargs.keys():
             self.specialargs[sargname] = DrsArgument()
             self.specialargs[sargname].copy(recipe.specialargs[sargname])
-        for row in recipe.extras:
-            self.extras.append(str(recipe.extras[row]))
+        for arg in recipe.extras:
+            self.extras[arg] = recipe.extras[arg]
         # define arg list
         self.arg_list = list(recipe.arg_list)
         # get string arg list (may be None)
@@ -570,13 +571,16 @@ class DrsRecipe(object):
             if isinstance(value, str):
                 if value in params:
                     value = params[value]
+                # deal with science targets / telluric targets
+                if value in ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']:
+                    value = value.split(',')
+                    value = np.char.strip(value)
             # check for argument in args
             if argname in self.args:
-                self.extras.append(str(value))
+                self.extras[argname] = value
             # check for argument in kwargs
             elif argname in self.kwargs:
-                exargs = [self.kwargs[argname].argname, str(value)]
-                self.extras.append('{0} {1}'.format(*exargs))
+                self.extras[argname] = value
             # else raise an error
             else:
                 eargs = [argname, value, func_name]
@@ -1430,13 +1434,16 @@ def find_run_files(params, recipe, table, args, filters=None,
         if check_required:
             if not arg.required and not arg.reprocess:
                 continue
+        # see if we are over writing argument
+        if argname in recipe.extras:
+            filedict[argname] = recipe.extras[argname]
+            continue
         # make sure we are only dealing with dtype=files
         if arg.dtype not in ['file', 'files']:
             filedict[argname] = arg.default
             continue
-        else:
-            # add sub-dictionary for each drs file
-            filedict[argname] = OrderedDict()
+        # add sub-dictionary for each drs file
+        filedict[argname] = OrderedDict()
         # debug log: the argument being scanned
         WLOG(params, 'debug', TextEntry('90-503-00012', args=[argname]))
         # get drs file instances
@@ -1602,9 +1609,9 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # if fout is None means we have no file arguments
     if fout is None:
         # get new run
-        new_run = _gen_run(params, rundict=rundict, runorder=runorder)
+        new_runs = _gen_run(params, rundict=rundict, runorder=runorder)
         # finally add new_run to runs
-        runs.append(new_run)
+        runs += new_runs
     else:
         arg0, drsfiles0 = fout
         # ----------------------------------------------------------------------
@@ -1642,13 +1649,13 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 # _match_groups raises exception when finished so need a
                 #   try/except here to catch it
                 try:
-                    new_run = _gen_run(params, rundict, runorder, nightname,
-                                       meantime, arg0, gtable0, file_col)
+                    new_runs = _gen_run(params, rundict, runorder, nightname,
+                                        meantime, arg0, gtable0, file_col)
                 # catch exception
                 except DrsRecipeException:
                     break
                 # finally add new_run to runs
-                runs.append(new_run)
+                runs += new_runs
     # deal with master (should only be 1)
     if recipe.master:
         return [runs[0]]
@@ -1951,38 +1958,70 @@ def _get_runorder(recipe, argdict, kwargdict):
 
 def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
              arg0=None, gtable0=None, file_col=None):
-    new_run = dict()
+
     # deal with unset values (not used)
     if arg0 is None:
         arg0 = ''
     if gtable0 is None:
         gtable0 = dict(filecol=None)
-    if file_col is None:
-        file_col = 'filecol'
     if nightname is None:
         nightname = params['NIGHTNAME']
     if meantime is None:
         meantime = 0.0
-    # match files from grouptable0 to
+
+    # need to find any argument that is not files but is a list
+    pkeys, pvalues = [], []
     for argname in runorder:
-        # if we are dealing with the first argument we have this
-        #   groups files (gtable0)
-        if argname == arg0:
-            new_run[argname] = list(gtable0['OUT'])
-        # if we are dealing with 'directory' set it from nightname
-        elif argname == 'directory':
-            new_run[argname] = nightname
-        # if we are not dealing with a list of files just set value
-        elif not isinstance(rundict[argname], OrderedDict):
-            new_run[argname] = rundict[argname]
-        # else we are dealing with another list and must find the
-        #   best files (closetest in time) to add that match this
-        #   group
-        else:
-            margs = [params, argname, rundict, nightname, meantime]
-            new_run[argname] = _match_group(*margs)
+        # only do this for numpy arrays and lists (not files)
+        if isinstance(rundict[argname], (np.ndarray, list)):
+            # append values to storage
+            pvalues.append(list(rundict[argname]))
+            pkeys.append(argname)
+    # convert pkey to array
+    pkeys = np.array(pkeys)
+    # deal with no list values
+    if len(pkeys) == 0:
+        combinations = [None]
+    # else we assume we want every combination of arguments (otherwise it is
+    #   more complicated)
+    else:
+        combinations = list(itertools.product(*pvalues))
+    new_runs = []
+    # loop around combinations
+    for combination in combinations:
+        # get dictionary storage
+        new_run = dict()
+        # loop around argnames
+        for argname in runorder:
+            # deal with having combinations
+            if combination is not None and argname in pkeys:
+                # find position in combinations
+                pos = np.where(pkeys == argname)[0][0]
+                # get value from combinations
+                value = combination[pos]
+            else:
+                value = runorder[argname]
+            # ------------------------------------------------------------------
+            # if we are dealing with the first argument we have this
+            #   groups files (gtable0)
+            if argname == arg0:
+                new_run[argname] = list(gtable0['OUT'])
+            # if we are dealing with 'directory' set it from nightname
+            elif argname == 'directory':
+                new_run[argname] = nightname
+            # if we are not dealing with a list of files just set value
+            elif not isinstance(value, OrderedDict):
+                new_run[argname] = value
+            # else we are dealing with another list and must find the
+            #   best files (closeest in time) to add that match this
+            #   group
+            else:
+                margs = [params, argname, rundict, nightname, meantime]
+                new_run[argname] = _match_group(*margs)
+            # append new run to new runs
+            new_runs.append(new_run)
     # return new_run
-    return new_run
+    return new_runs
 
 
 def _find_first_filearg(params, runorder, argdict, kwargdict):
