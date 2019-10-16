@@ -576,10 +576,12 @@ class DrsRecipe(object):
                     value = params[value]
                 # deal with SPECIAL_LIST_KEYS
                 if arguments[argname] in SPECIAL_LIST_KEYS:
-                    # these must be lists
-                    value = value.split(',')
-                    # make sure there are no white spaces
-                    value = np.char.strip(value)
+                    # may not be strings (if set from params)
+                    if isinstance(value, str):
+                        # these must be lists
+                        value = value.split(',')
+                        # make sure there are no white spaces
+                        value = np.char.strip(value)
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
