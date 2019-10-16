@@ -951,6 +951,54 @@ limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
+# master run (for trigger)
+# -----------------------------------------------------------------------------
+master_run = drs_recipe.DrsRunSequence('master_run', __INSTRUMENT__)
+# master run
+master_run.add(cal_pp)
+master_run.add(cal_dark_master, master=True)
+master_run.add(cal_badpix, name='BADM', master=True)
+master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
+master_run.add(cal_shape_master, master=True)
+
+
+# -----------------------------------------------------------------------------
+# calibration run (for trigger)
+# -----------------------------------------------------------------------------
+calib_run = drs_recipe.DrsRunSequence('calib_run', __INSTRUMENT__)
+# night runs
+calib_run.add(cal_badpix)
+calib_run.add(cal_loc, files=[sf.pp_dark_flat])
+calib_run.add(cal_loc, files=[sf.pp_flat_dark])
+calib_run.add(cal_shape)
+calib_run.add(cal_ff, files=[sf.pp_flat_flat])
+calib_run.add(cal_thermal)
+calib_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
+calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
+                fpfiles=[sf.pp_fp_fp])
+
+# -----------------------------------------------------------------------------
+# science run (for trigger)
+# -----------------------------------------------------------------------------
+science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
+# extract science
+science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp])
+science_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+science_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+                arguments=dict(objname='SCIENCE_TARGETS'))
+science_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+# ccf
+science_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
+
+
+# -----------------------------------------------------------------------------
 # hc run (extract all HC_HC)
 # -----------------------------------------------------------------------------
 hc_run = drs_recipe.DrsRunSequence('hc_run', __INSTRUMENT__)
@@ -974,4 +1022,4 @@ hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run, hc_run]
+sequences = [full_run, limited_run, master_run, calib_run, science_run, hc_run]
