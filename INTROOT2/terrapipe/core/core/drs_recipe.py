@@ -1616,13 +1616,13 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
         arg0, drsfiles0 = fout
         # ----------------------------------------------------------------------
         # loop around drs files in first file argument
-        for drsfile in drsfiles0:
+        for drsfilekey in drsfiles0:
             # condition to stop trying to match files
             cond = True
             # set used groups
             usedgroups = dict()
             # get drs table
-            drstable = rundict[arg0][drsfile]
+            drstable = rundict[arg0][drsfilekey]
             # get group column from drstable
             groups = np.array(drstable['GROUPS']).astype(int)
             # get unique groups from groups
@@ -1634,7 +1634,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 drs_log.Printer(None, None, pmsg)
 
                 # check for None
-                if rundict[arg0][drsfile] is None:
+                if rundict[arg0][drsfilekey] is None:
                     break
                 # get first group
                 nargs = [arg0, drstable, usedgroups, groups, ugroups]
@@ -1986,6 +1986,7 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
     #   more complicated)
     else:
         combinations = list(itertools.product(*pvalues))
+    # storage for new runs
     new_runs = []
     # loop around combinations
     for combination in combinations:
@@ -2000,7 +2001,7 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
                 # get value from combinations
                 value = combination[pos]
             else:
-                value = runorder[argname]
+                value = rundict[argname]
             # ------------------------------------------------------------------
             # if we are dealing with the first argument we have this
             #   groups files (gtable0)
@@ -2018,9 +2019,9 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
             else:
                 margs = [params, argname, rundict, nightname, meantime]
                 new_run[argname] = _match_group(*margs)
-            # append new run to new runs
-            new_runs.append(new_run)
-    # return new_run
+        # append new run to new runs
+        new_runs.append(new_run)
+    # return new_runs
     return new_runs
 
 
