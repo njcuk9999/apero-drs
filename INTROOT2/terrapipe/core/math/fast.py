@@ -12,13 +12,15 @@ Created on 2019-09-18 at 10:53
 
 import numpy as np
 from scipy import signal
+from terrapipe.core import constants
 
+# try to import bottleneck module
 try:
     import bottleneck as bn
     HAS_BOTTLENECK = True
 except Exception as e:
     HAS_BOTTLENECK = False
-
+# try to import numba module
 try:
     from numba import jit
     HAS_NUMBA = True
@@ -26,7 +28,6 @@ except:
     jit = None
     HAS_NUMBA = False
 
-from terrapipe.core import constants
 
 # =============================================================================
 # Define variables
