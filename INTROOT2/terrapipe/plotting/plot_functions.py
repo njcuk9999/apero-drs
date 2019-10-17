@@ -15,6 +15,7 @@ import os
 import warnings
 
 from terrapipe.core import constants
+from terrapipe.core import math as mp
 
 # =============================================================================
 # Define variables
@@ -30,7 +31,11 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # set up definition storage
 definitions = []
-
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 # -----------------------------------------------------------------------------
 
@@ -104,17 +109,20 @@ class Graph:
         # construct absolute filename
         self.filename = os.path.join(location, filename)
 
-    def set_figure(self, plotter, **kwargs):
+    def set_figure(self, plotter, figsize=None, **kwargs):
         # get plt from plotter (for matplotlib set up)
         plt = plotter.plt
         # get figure and frame
         fig, frames = plt.subplots(**kwargs)
         # set figure parameters
-        fig.set_size_inches(self.figsize)
+        if figsize is None:
+            fig.set_size_inches(self.figsize)
+        else:
+            fig.set_size_inches(figsize)
         # return figure and frames
         return fig, frames
 
-    def set_grid(self, plotter, **kwargs):
+    def set_grid(self, plotter, figsize=None, **kwargs):
         # get plt from plotter (for matplotlib set up)
         plt = plotter.plt
         # get figure and frame
@@ -122,7 +130,10 @@ class Graph:
         # get grid
         gs = fig.add_gridspec(**kwargs)
         # set figure parameters
-        fig.set_size_inches(self.figsize)
+        if figsize is None:
+            fig.set_size_inches(self.figsize)
+        else:
+            fig.set_size_inches(figsize)
         # return figure and frames
         return fig, gs
 
@@ -182,6 +193,22 @@ def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
     lc.set_array(z)
     # return the line
     return frame.add_collection(lc)
+
+
+def remove_first_last_ticks(frame, axis='x'):
+    if axis == 'x' or axis == 'both':
+        xticks = frame.get_xticks()
+        xticklabels = xticks.astype(str)
+        xticklabels[0], xticklabels[-1] = '', ''
+        frame.set_xticks(xticks)
+        frame.set_xticklabels(xticklabels)
+    if axis == 'y' or axis == 'both':
+        yticks = frame.get_xticks()
+        yticklabels = yticks.astype(str)
+        yticklabels[0], yticklabels[-1] = '', ''
+        frame.set_xticks(yticks)
+        frame.set_xticklabels(yticklabels)
+    return frame
 
 
 # =============================================================================
@@ -1517,10 +1544,12 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
     llprops = kwargs['llprops']
     nbo = kwargs['nbo']
     order = kwargs.get('order', None)
+    # ------------------------------------------------------------------
     # get data from llprops
     xfit = llprops['XPIX_INI']
     gfit = llprops['GFIT_INI']
     ofit = llprops['ORD_INI']
+    # ------------------------------------------------------------------
     # deal with plot style
     if 'dark' in params['DRS_PLOT_STYLE']:
         black = 'white'
@@ -1578,10 +1607,697 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wave = kwargs['wave']
+    dv = kwargs['dv']
+    mask = kwargs['mask']
+    iteration = kwargs['iteration']
+    niters = kwargs['niters']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
+    # ------------------------------------------------------------------
+    # plot all lines
+    frame.scatter(wave[~mask], dv[~mask], color='g', s=5, label='All lines')
+    # plot brightest lines
+    frame.scatter(wave[mask], dv[mask], color='r', s=5, label='Brightest lines')
+    # plot legend
+    frame.legend(loc=0)
+    # plot title and labels
+    # plot title and labels
+    title = 'Delta-v error for matched lines (Iteration {0} of {1})'
+    frame.set(title=title.format(iteration + 1, niters),
+              xlabel='Wavelength [nm]', ylabel='dv [km/s]')
+    # ------------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    orders = kwargs['orders']
+    wave = kwargs['wave']
+    recon = kwargs['recon']
+    rms = kwargs['rms']
+    xgau = kwargs['xgau']
+    ew = kwargs['ew']
+    iteration = kwargs['iteration']
+    niters = kwargs['niters']
+    # ------------------------------------------------------------------
+    # get all orders
+    all_orders = np.unique(orders)
+    # calculate dv values
+    dv = ((wave / recon) - 1) * speed_of_light
+    # ------------------------------------------------------------------
+    # get colours
+    colours = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    # repeat colours to match all_orders
+    colours = np.tile(colours, len(all_orders))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, ncols=2, nrows=2)
+    # ------------------------------------------------------------------
+    # set up axis
+    frame1, frame2 = frames[0]
+    frame3, frame4 = frames[1]
+    # loop around orders
+    for order_num in all_orders:
+        # identify this orders good values
+        good = orders == order_num
+        # get colour for this order
+        colour = colours[order_num]
+        # plot frame1
+        frame1.scatter(wave[good], dv[good], s=5, color=colour)
+        # plot frame2
+        frame2.scatter(1.0 / rms[good], dv[good], s=5, color=colour)
+        # plot frame3
+        frame3.scatter(xgau[good] % 1, dv[good], s=5, color=colour)
+        # plot frame4
+        frame4.scatter(ew[good], dv[good], s=5, color=colour)
+    # set up labels
+    frame1.set(xlabel='Wavelength [nm]', ylabel='dv [km/s]')
+    frame2.set(xlabel='Line SNR estimate', ylabel='dv [km/s]')
+    frame3.set(xlabel='Modulo pixel position', ylabel='dv [km/s]')
+    frame4.set(xlabel='e-width of fitted line', ylabel='dv [km/s]')
+    # add title
+    plt.suptitle('Iteration {0} of {1}'.format(iteration + 1, niters))
+    # ------------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_hc_resmap(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # get matplotlib rectange
+    Rectangle = plotter.matplotlib.patches.Rectangle
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    resmap_size = kwargs['resmap_size']
+    map_dvs = kwargs['map_dvs']
+    map_lines = kwargs['map_lines']
+    map_params = kwargs['map_params']
+    res_map = kwargs['res_map']
+    nbo = kwargs['nbo']
+    nbpix = kwargs['nbpix']
+    # get parameters from params
+    fit_span = params['WAVE_HC_RESMAP_DV_SPAN']
+    xlim = params['WAVE_HC_RESMAP_XLIM']
+    ylim = params['WAVE_HC_RESMAP_YLIM']
+    # ------------------------------------------------------------------
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+    # get order and bin range
+    order_range = np.arange(0, nbo, bin_order)
+    x_range = np.arange(0, nbpix // bin_x)
+    # ------------------------------------------------------------------
+    # deal with plot style
+    if 'dark' in params['DRS_PLOT_STYLE']:
+        black = 'white'
+    else:
+        black = 'black'
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=resmap_size[0],
+                                   ncols=resmap_size[1], sharex=True,
+                                   sharey=True)
+    # ------------------------------------------------------------------
+    # loop around the order bins
+    for order_num in order_range:
+        # loop around the x position
+        for xpos in x_range:
+            # get the correct frame
+            frame = frames[order_num // bin_order, xpos]
+            # get the correct data
+            all_dvs = map_dvs[order_num // bin_order][xpos]
+            all_lines = map_lines[order_num // bin_order][xpos]
+            params = map_params[order_num // bin_order][xpos]
+            resolution = res_map[order_num // bin_order][xpos]
+            # get fit data
+            xfit = np.linspace(fit_span[0], fit_span[1], 100)
+            yfit = mp.gauss_fit_s(xfit, *params)
+            # plot data
+            frame.scatter(all_dvs, all_lines, color='g', s=5, marker='x')
+            frame.plot(xfit, yfit, color=black, ls='--')
+            # set frame limits
+            frame.set(xlim=xlim, ylim=ylim)
+            # add label in legend (for sticky position)
+            largs = [order_num, order_num + bin_order - 1, xpos, resolution]
+            handle = Rectangle((0, 0), 1, 1, fc="w", fill=False,
+                               edgecolor='none', linewidth=0)
+            label = 'Orders {0}-{1} region={2} R={3:.0f}'.format(*largs)
+            frame.legend([handle], [label], loc=9, fontsize=10)
+            # remove white space and some axis ticks
+            if order_num == 0:
+                frame = remove_first_last_ticks(frame, axis='x')
+                frame.xaxis.tick_top()
+                frame.xaxis.set_label_position('top')
+                frame.set_xlabel('dv [km/s]')
+            elif order_num == np.max(order_range):
+                frame = remove_first_last_ticks(frame, axis='x')
+                frame.set_xlabel('dv [km/s]')
+            else:
+                frame.set_xticklabels([])
+            if xpos == 0:
+                frame = remove_first_last_ticks(frame, axis='y')
+                frame.set_ylabel('Amp')
+            elif xpos == np.max(x_range):
+                frame = remove_first_last_ticks(frame, axis='y')
+                frame.yaxis.tick_right()
+                frame.yaxis.set_label_position('right')
+                frame.set_ylabel('Amp')
+            else:
+                frame.set_yticklabels([])
+    # add titles
+    plt.suptitle('Line Profiles for resolution grid')
+    # adjust spaces between plots
+    plt.subplots_adjust(hspace=0, wspace=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_littrow_check(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    llprops = kwargs['llprops']
+    iteration = kwargs['iteration']
+    fiber = kwargs['fiber']
+    # get values from params
+    ylower = -params['WAVE_LITTROW_QC_DEV_MAX']
+    yupper = params['WAVE_LITTROW_QC_DEV_MAX']
+    # ------------------------------------------------------------------
+    # get data from llprops
+    x_cut_points = llprops['X_CUT_POINTS_{0}'.format(iteration)]
+    littrow_xx = llprops['LITTROW_XX_{0}'.format(iteration)]
+    littrow_yy = llprops['LITTROW_YY_{0}'.format(iteration)]
+    # ------------------------------------------------------------------
+    # noinspection PyUnresolvedReferences
+    colors = cm.rainbow(np.linspace(0, 1, len(x_cut_points)))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    for it in range(len(x_cut_points)):
+        # get x and y data
+        xx = littrow_xx[it]
+        yy = littrow_yy[it]
+        # plot graph
+        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]),
+                   color=colors[it])
+        # get y limits
+        if np.min(yy) < ylower:
+            ylower = np.min(yy)
+        if np.max(yy) > yupper:
+            yupper = np.max(yy)
+    # set axis labels and title
+    title = 'Wavelength Solution Littrow Check {0} fiber {1}'
+    frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
+              title=title.format(iteration, fiber))
+    # set frame limits
+    frame.set(ylim=(ylower, yupper))
+    # add legend
+    frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_littrow_extrap(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    llprops = kwargs['llprops']
+    iteration = kwargs['iteration']
+    fiber = kwargs['fiber']
+    ydim, xdim = kwargs['image'].shape
+    # get data from llprops
+    x_cut_points = llprops['X_CUT_POINTS_{0}'.format(iteration)]
+    x_points = np.arange(xdim)
+    yfit_x_cut = llprops['LITTROW_EXTRAP_{0}'.format(iteration)]
+    yfit = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)]
+    # ------------------------------------------------------------------
+    # deal with plot style
+    if 'dark' in params['DRS_PLOT_STYLE']:
+        black = 'white'
+    else:
+        black = 'black'
+    # colours
+    colours = np.tile(['r', 'b', 'g', 'y', 'm', black, 'c'], ydim)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # loop around the orders and plot each line
+    for order_num in range(ydim):
+        # plot the solution for all x points
+        frame.plot(x_points, yfit[order_num],
+                   color=colours[order_num])
+        # plot the solution at the chosen cut points
+        frame.scatter(x_cut_points, yfit_x_cut[order_num],
+                      marker='o', s=10, color=colours[order_num])
+    # set title
+    title = 'Wavelength Solution Littrow Extrapolation {0} fiber {1}'
+    # set axis labels
+    frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]',
+              title=title.format(iteration, fiber))
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_final_order(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    llprops = kwargs['llprops']
+    fiber = kwargs['fiber']
+    iteration = kwargs['iteration']
+    selected_order = kwargs['end']
+
+    # get data from llprops
+    wave = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
+    fp_data = llprops['FPDATA'][selected_order]
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot
+    frame.plot(wave, fp_data)
+    # set title labels limits
+    title = 'spectral order {0} fiber {1} (iteration = {2})'
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux',
+              title=title.format(selected_order, fiber, iteration))
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_lwid_offset(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    llprops = kwargs['llprops']
+    # get data from llprops
+    fp_m = llprops['FP_M']
+    fp_dopd = llprops['FP_DOPD_OFFSET']
+    fp_dopd_coeff = llprops['FP_DOPD_OFFSET_COEFF']
+    # get fit values
+    fp_dopd_fit = np.polyval(fp_dopd_coeff[::-1], np.sort(fp_m))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot fits
+    frame.scatter(fp_m, fp_dopd, label='Measured')
+    frame.plot(np.sort(fp_m), fp_dopd_fit, label='fit', color='red')
+    # set title labels limits
+    title = 'FP cavity width offset'
+    frame.set(xlabel='FP peak number',
+              ylabel='Local cavity width offset [micron]',
+              title=title)
+    # Add legend
+    frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_wave_res(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    llprops = kwargs['llprops']
+    # get data from llprops
+    fp_ll = llprops['FP_LL_POS']
+    fp_ll_new = llprops['FP_LL_POS_NEW']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot fits
+    frame.scatter(fp_ll, fp_ll - fp_ll_new)
+    # set title labels limits
+    title = 'FP lines wavelength residuals'
+    frame.set(xlabel='Initial wavelength [nm]',
+              ylabel='New - Initial wavelength [nm]', title=title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_m_x_res(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    fp_order = kwargs['fp_order']
+    fp_xx = kwargs['fp_xx']
+    m_vec = kwargs['m_vec']
+    xm_mask = kwargs['xm_mask']
+    coeff_xm_all = kwargs['coeff_xm_all']
+    n_init = kwargs['n_init']
+    n_fin = kwargs['n_fin']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    for ord_num in range(n_fin - n_init):
+        # create order mask
+        ind_ord = np.where(np.concatenate(fp_order).ravel() == ord_num + n_init)
+        # get FP line pixel positions for the order
+        fp_x_ord = fp_xx[ord_num]
+        # get FP line numbers for the order
+        m_ord = m_vec[ind_ord]
+        # get m(x) mask for the order
+        mask = xm_mask[ord_num]
+        # get coefficients for the order
+        coeff_xm = coeff_xm_all[ord_num]
+        # plot residuals
+        frame.plot(fp_x_ord[mask], m_ord[mask] -
+                   np.polyval(coeff_xm, fp_x_ord[mask]) + 0.01 * ord_num, '.')
+    frame.set(xlabel='FP pixel position',
+              ylabel='m(x) residuals (shifted +0.01*Order)')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    one_m_d = kwargs['one_m_d']
+    d_arr = kwargs['d_arr']
+    m_init = kwargs['m_init']
+    fit_1m_d_func = kwargs['fit_1m_d_func']
+    res_d_final = kwargs['res_d_final']
+    dopd0 = kwargs['dopd0']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    frame1, frame2 = frames
+    # ------------------------------------------------------------------
+    # plot values
+    frame1.plot(one_m_d, d_arr, marker='.')
+    # plot initial cavity width value
+    frame1.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
+    # plot reference peak of reddest order
+    frame1.plot(1. / m_init, dopd0 / 2., 'D')
+    # plot fit
+    frame1.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
+    # plot residuals - separate subplot
+    frame2.plot(one_m_d, res_d_final, '.')
+    # set labels
+    frame1.set(xlabel='1/m', ylabel='cavity width d')
+    frame2.set(xlabel='1/m', ylabel='residuals [nm]')
+    # plot legend
+    frame1.legend(loc='best')
+    # add title
+    fig.suptitle('Interpolated cavity width vs 1/m for HC lines')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    hc_ll = kwargs['hc_ll']
+    fp_ll = kwargs['fp_ll']
+    fitval = kwargs['fitval']
+    d_arr = kwargs['d_arr']
+    dopd0 = kwargs['dopd0']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    frame1, frame2 = frames
+    # ------------------------------------------------------------------
+    frame1.plot(hc_ll, d_arr, '.')
+    # plot initial cavity width value
+    frame1.hlines(dopd0 / 2., min(hc_ll), max(hc_ll), label='original d')
+    # plot reference peak of reddest order
+    frame1.plot(fp_ll[-1][-1], dopd0 / 2., 'D')
+    # plot fit
+    frame1.plot(hc_ll, fitval, label='polynomial fit')
+    # plot residuals - separate subplot
+    frame2.plot(hc_ll, d_arr - fitval, '.')
+    # set labels
+    frame1.set(xlabel='wavelength', ylabel='cavity width d')
+    frame2.set(xlabel='wavelength', ylabel='residuals [nm]')
+    # plot legend
+    frame1.legend(loc='best')
+    # add title
+    fig.suptitle('Interpolated cavity width vs wavelength for HC lines')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_ll_diff(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    cm = plotter.matplotlib.cm
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    llprops = kwargs['llprops']
+    n_init = kwargs['n_init']
+    n_fin = kwargs['n_fin']
+    # get data from llprops
+    poly_wave_sol = llprops['POLY_WAVE_SOL']
+    fp_ord_new = llprops['FP_ORD_NEW']
+    fp_xx_new = llprops['FP_XX_NEW']
+    fp_ll_new = llprops['FP_LL_NEW']
+    # ------------------------------------------------------------------
+    # get colours
+    # noinspection PyUnresolvedReferences
+    col = cm.rainbow(np.linspace(0, 1, n_fin))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # loop through the orders
+    for ind_ord in range(n_fin - n_init):
+        # get parameters for initial wavelength solution
+        c_aux = np.poly1d(poly_wave_sol[ind_ord + n_init][::-1])
+        # order mask
+        ord_mask = np.where(fp_ord_new == ind_ord + n_init)
+        # get FP line pixel positions for the order
+        fp_x_ord = fp_xx_new[ord_mask]
+        # derive FP line wavelengths using initial solution
+        fp_ll_orig = c_aux(fp_x_ord)
+        # get new FP line wavelengths for the order
+        fp_ll_new_ord = fp_ll_new[ord_mask]
+        # plot old-new wavelengths
+        frame.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord,
+                   marker='.', color=col[ind_ord],
+                   label='order ' + str(ind_ord))
+    frame.set(xlabel='FP peak position [pix]',
+    ylabel='FP old-new wavelength difference [nm] (shifted +0.001 per order)')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_multi_order(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    hc_ll = kwargs['hc_ll']
+    hc_ord = kwargs['hc_ord']
+    hcdata = kwargs['hcdata']
+    wave_map = kwargs['wave']
+    n_plot_init = kwargs['init']
+    n_fin = kwargs['fin']
+    nbo = kwargs['nbo']
+    # compute final plotting order
+    n_plot_fin = np.min(n_plot_init + nbo, n_fin)
+    # ------------------------------------------------------------------
+    # deal with plot style
+    if 'dark' in params['DRS_PLOT_STYLE']:
+        black = 'white'
+    else:
+        black = 'black'
+    # define colours and line types for alternate order fitted lines
+    col = [black, 'grey']
+    lty = ['--', ':']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    for order_num in range(n_plot_init, n_plot_fin):
+        # select lines for the order
+        hc_ll_plot = hc_ll[hc_ord == order_num]
+        # get colour and style from order parity
+        col_plot = col[np.mod(order_num, 2)]
+        lty_plot = lty[np.mod(order_num, 2)]
+        # plot hc spectra
+        frame.plot(wave_map[order_num], hcdata[order_num])
+        # plot used HC lines
+        frame.vlines(hc_ll_plot, 0, np.nanmax(hcdata[order_num]),
+                     color=col_plot, linestyles=lty_plot)
+        # set axis labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='Normalised flux',
+              title='HC spectra + used HC lines')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fp_single_order(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    llprops = kwargs['llprops']
+    order = kwargs.get('order', None)
+    hcdata = kwargs['hcdata']
+    # get data from llprops
+    all_lines = llprops['ALL_LINES_1']
+    wave = llprops['LL_OUT_2']
+    # get number of orders
+    nbo = len(all_lines)
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+        # ------------------------------------------------------------------
+        # get the maximum point for this order
+        maxpoint = np.max(hcdata[order_num])
+        # plot order and flux
+        frame.plot(wave[order_num], hcdata[order_num], label='HC Spectrum')
+        # loop around lines in order
+        for it in range(0, len(all_lines[order_num])):
+            # get x and y
+            x = all_lines[order_num][it][0] + all_lines[order_num][it][3]
+            ymaxi = all_lines[order_num][it][2]
+            # plot lines to their corresponding amplitude
+            frame.vlines(x, 0, ymaxi, color='m', label='fitted lines')
+            # plot lines to the top of the figure
+            frame.vlines(x, 0, maxpoint, color='gray', linestyles='dotted')
+        # plot
+        ulegend(frame, plotter, loc=0)
+        # set limits and title
+        title = 'Order {0}'.format(order_num)
+        frame.set(xlabel='Wavelength', ylabel='Flux', title=title)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
 wave_hc_guess = Graph('WAVE_HC_GUESS', kind='debug',
                       func=plot_wave_hc_guess)
+wave_hc_brightest_lines = Graph('WAVE_HC_BRIGHTEST_LINES', kind='debug',
+                                func=plot_wave_hc_brightest_lines)
+wave_hc_tfit_grid = Graph('WAVE_HC_TFIT_GRID', kind='debug',
+                          func=plot_wave_hc_tfit_grid)
+wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
+                       func=plot_wave_hc_resmap,
+                       figsize=(20, 16))
+wave_littrow_check1 = Graph('WAVE_LITTROW_CHECK1', kind='debug',
+                           func=plot_wave_littrow_check)
+wave_littrow_extrap1 = Graph('WAVE_LITTROW_EXTRAP1', kind='debug',
+                            func=plot_wave_littrow_extrap)
+wave_littrow_check2 = Graph('WAVE_LITTROW_CHECK2', kind='debug',
+                           func=plot_wave_littrow_check)
+wave_littrow_extrap2 = Graph('WAVE_LITTROW_EXTRAP2', kind='debug',
+                            func=plot_wave_littrow_extrap)
+wave_fp_final_order = Graph('WAVE_FP_FINAL_ORDER', kind='debug',
+                            func=plot_wave_fp_final_order)
+wave_fp_lwid_offset = Graph('WAVE_FP_LWID_OFFSET', kind='debug',
+                            func=plot_wave_fp_lwid_offset)
+wave_fp_wave_res = Graph('WAVE_FP_WAVE_RES', kind='debug',
+                         func=plot_wave_fp_wave_res)
+wave_fp_m_x_res = Graph('WAVE_FP_M_X_RES', kind='debug',
+                        func=plot_wave_fp_m_x_res)
+wave_fp_ipt_cwid_1mhc = Graph('WAVE_FP_IPT_CWID_1MHC', kind='debug',
+                              func=plot_wave_fp_ipt_cwid_1mhc)
+wave_fp_ipt_cwid_llhc = Graph('WAVE_FP_IPT_CWID_LLHC', kind='debug',
+                              func=plot_wave_fp_ipt_cwid_llhc)
+wave_fp_ll_diff = Graph('WAVE_FP_LL_DIFF', kind='debug',
+                        func=plot_wave_fp_ll_diff)
+wave_fp_multi_order = Graph('WAVE_FP_MULTI_ORDER', kind='debug',
+                            func=plot_wave_fp_multi_order)
+wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
+                             func=plot_wave_fp_single_order)
+
 # add to definitions
-definitions += [wave_hc_guess]
+definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
+                wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
+                wave_littrow_check2, wave_littrow_extrap2, wave_fp_final_order,
+                wave_fp_lwid_offset, wave_fp_wave_res, wave_fp_m_x_res,
+                wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
+                wave_fp_multi_order, wave_fp_single_order]
+
 
 # =============================================================================
 # Define telluric plotting functions
@@ -1590,6 +2306,86 @@ definitions += [wave_hc_guess]
 # =============================================================================
 # Define velocity plotting functions
 # =============================================================================
+def plot_ccf_rv_fit(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    x = kwargs['x']
+    y = kwargs['y']
+    yfit = kwargs['yfit']
+    kind = kwargs['kind']
+    found_rv = kwargs['rv']
+    ccf_mask = kwargs['ccfmask']
+    order = kwargs.get('order', None)
+    orders = kwargs.get('orders', None)
+    # ------------------------------------------------------------------
+    # if orders is None we assume x, y and yfit are just one vector
+    if orders is None and order is None:
+        # set y, yfit to length-1 lists of themselves
+        y, yfit = [y], [yfit]
+        found_rv = [found_rv]
+        # order gen is just set to a list containing the first
+        #     (and only) element
+        order_gen = [0]
+    # else if orders is None we get all orders
+    elif order is None:
+        order_gen = plotter.plotloop(orders)
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we just deal with the order specified
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # deal with plot style
+    if 'dark' in params['DRS_PLOT_STYLE']:
+        black = 'white'
+    else:
+        black = 'black'
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # get this orders values
+        y_i = y[order_num]
+        yfit_i = yfit[order_num]
+        # work out the residuals
+        res = y_i - yfit_i
+        # ------------------------------------------------------------------
+        # set up plot
+        gs = dict(height_ratios=[2, 1])
+        fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex=True,
+                                       gridspec_kw=gs)
+        # ------------------------------------------------------------------
+        # plot x vs y and yfit
+        frames[0].plot(x, y_i, label='data', marker='x', ls='None',
+                       color=black)
+        frames[0].plot(x, yfit_i, label='fit')
+        # plot residuals
+        frames[1].plot(x, res, label='residuals')
+        # plot legends
+        frames[0].legend(loc=0)
+        frames[1].legend(loc=0)
+        # set labels and title
+        targs = ['({0})'.format(kind), found_rv[order_num], ccf_mask]
+        title = 'CCF plot {0}\n RV={1:.5f} km/s Mask={2}'.format(*targs)
+        if orders is not None:
+            title = 'RV Fit plot. Order {0}'.format(order_num)
+        frames[0].set(ylabel='CCF', title=title)
+        frames[1].set(xlabel='RV [km/s]', ylabel='CCF')
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+ccf_rv_fit_loop = Graph('CCF_RV_FIT_LOOP', kind='debug', func=plot_ccf_rv_fit)
+ccf_rv_fit = Graph('CCF_RV_FIT', kind='debug', func=plot_ccf_rv_fit)
+
+# add to definitions
+definitions += [ccf_rv_fit]
+
 
 # =============================================================================
 # Define polarisation plotting functions
