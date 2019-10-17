@@ -580,7 +580,16 @@ cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                      WAVE_FPMAP=sf.out_wave_fp,
                      WAVE_FPRESTAB=sf.out_wave_res_table,
                      WAVE_FPLLTAB=sf.out_wave_ll_table)
-cal_wave.set_debug_plots('WAVE_HC_GUESS')
+cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
+                         'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
+                         'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
+                         'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
+                         'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
+                         'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
+                         'WAVE_FP_IPT_CWID_1MHC', 'WAVE_FP_IPT_CWID_LLHC',
+                         'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
+                         'WAVE_FP_SINGLE_ORDER',
+                         'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 cal_wave.set_summary_plots()
 cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
@@ -637,6 +646,8 @@ cal_ccf.extension = 'fits'
 cal_ccf.description = Help['CCF_DESC']
 cal_ccf.epilog = Help['CCF_EXAMPLE']
 cal_ccf.set_outputs(CCF_RV=sf.out_ccf_fits)
+cal_wave.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+cal_wave.set_summary_plots()
 cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
