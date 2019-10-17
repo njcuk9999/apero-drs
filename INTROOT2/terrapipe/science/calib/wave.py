@@ -468,8 +468,8 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_1')
     wavell = llprops['LL_OUT_1']
     # run littrow test
-    llprops = littrow(params, llprops, start, end, wavell, e2dsfile,
-                      iteration=1)
+    llprops = littrow(params, recipe, llprops, start, end, wavell, e2dsfile,
+                      iteration=1, fiber=fiber)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
@@ -516,11 +516,12 @@ def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
     # ------------------------------------------------------------------
     # Fit Gaussian peaks (in triplets) to
     # ------------------------------------------------------------------
-    llprops = fit_gaussian_triplets(params, llprops, iprops, wavell, ampll)
+    llprops = fit_gaussian_triplets(params, recipe, llprops, iprops, wavell,
+                                    ampll)
     # ------------------------------------------------------------------
     # Generate Resolution map and line profiles
     # ------------------------------------------------------------------
-    llprops = generate_resolution_map(params, llprops, e2dsfile)
+    llprops = generate_resolution_map(params, recipe, llprops, e2dsfile)
     # ------------------------------------------------------------------
     # Set up all_lines storage
     # ------------------------------------------------------------------
@@ -555,7 +556,8 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
         wargs = [wave_mode_fp, 'Bauer 2015']
         WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
         # calculate wave solution
-        llprops = fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber)
+        llprops = fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze,
+                                   fiber)
     elif wave_mode_fp == 1:
         # ------------------------------------------------------------------
         # Using the C Lovis (WAVE_NEW_2) method:
@@ -564,7 +566,8 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
         wargs = [wave_mode_fp, 'Lovis Method']
         WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
         # calculate wave solution
-        llprops = fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber)
+        llprops = fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile,
+                                   hce2dsfile, blaze, fiber)
     else:
         # log that mode is not currently supported
         WLOG(params, 'error', TextEntry('09-017-00003', args=[wave_mode_fp]))
@@ -584,23 +587,19 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # set wavell
     wavell = llprops['LL_OUT_2']
     # run littrow test
-    llprops = littrow(params, llprops, start, end, wavell, fpe2dsfile,
-                      iteration=2)
-
+    llprops = littrow(params, recipe, llprops, start, end, wavell, fpe2dsfile,
+                      iteration=2, fiber=fiber)
     # ------------------------------------------------------------------
     # Join 0-47 and 47-49 solutions
     # ------------------------------------------------------------------
     start = pcheck(params, 'WAVE_N_ORD_START', 'n_ord_start', kwargs, func_name)
     end = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_ord_fin', kwargs, func_name)
     llprops = join_orders(llprops, start, end)
-
     # ------------------------------------------------------------------
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plots
-        # sPlt.wave_ea_plot_single_order(p, loc)
-        pass
+    recipe.plot('WAVE_FP_SINGLE_ORDER', order=None, llprops=llprops,
+                hcdata=hce2dsfile.data)
     # ----------------------------------------------------------------------
     # FP CCF COMPUTATION - common to all methods
     # ----------------------------------------------------------------------
@@ -650,7 +649,8 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     return llprops, wprops
 
 
-def fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
+def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
+                     **kwargs):
     func_name = __NAME__ + '.fp_wavesol_bauer()'
     # get parameters from params/kwargs
     start = pcheck(params, 'WAVE_N_ORD_START')
@@ -681,15 +681,11 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # ------------------------------------------------------------------
     # FP solution plots
     # ------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plots
-        # # Plot the FP extracted spectrum against wavelength solution
-        # sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
-        # # Plot the measured FP cavity width offset against line number
-        # sPlt.wave_local_width_offset_plot(p, loc)
-        # # Plot the FP line wavelength residuals
-        # sPlt.wave_fp_wavelength_residuals(p, loc)
-        pass
+    recipe.plot('WAVE_FP_FINAL_ORDER', llprops=llprops, fiber=fiber,
+                iteation=1, end=end)
+    recipe.plot('WAVE_FP_LWID_OFFSET', llprops=llprops)
+    recipe.plot('WAVE_FP_WAVE_RES', llprops=llprops)
+
     # ------------------------------------------------------------------
     # Create new wavelength solution
     # ------------------------------------------------------------------
@@ -733,7 +729,8 @@ def fp_wavesol_bauer(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     return llprops
 
 
-def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
+def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
+                     blaze, fiber, **kwargs):
     func_name = __NAME__ + '.fp_wavesol_lovis()'
     # get parameters from params/kwargs
     n_init = pcheck(params, 'WAVE_N_ORD_START', 'n_init', kwargs, func_name)
@@ -768,7 +765,6 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     wargs = [fpe2dsfile.filename]
     WLOG(params, '', TextEntry('40-017-00022', args=wargs))
 
-    # TODO: Work here
     # ------------------------------------------------------------------
     # Find FP lines
     # ------------------------------------------------------------------
@@ -807,23 +803,24 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # Derive d for each HC line
     # ----------------------------------------------------------------------
-    hout = get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
-                                 n_init, n_fin, wave_blaze_thres, dv_max,
-                                 ll_fit_degree)
-    one_m_d, d_arr, hc_ll_test = hout
+    hout = get_d_for_each_hcline(params, recipe, llprops, fp_order, fp_xx,
+                                 m_vec, blaze, n_init, n_fin, wave_blaze_thres,
+                                 dv_max, ll_fit_degree)
+    one_m_d, d_arr, hc_ll_test, hc_ord_test = hout
 
     # ----------------------------------------------------------------------
     # Fit (1/m) vs d
     # ----------------------------------------------------------------------
-    fout = fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity)
+    fout = fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test,
+                       update_cavity, m_init, fp_ll)
     fit_1m_d, fit_ll_d, one_m_d, d_arr = fout
 
     # ----------------------------------------------------------------------
     # Update FP peak wavelengths
     # ----------------------------------------------------------------------
-    llprops = update_fp_peak_wavelengths(params, llprops, fit_ll_d, m_vec,
-                                         fp_order, fp_xx, fp_amp,
-                                         fp_cavfit_mode)
+    llprops = update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d,
+                                         m_vec, fp_order, fp_xx, fp_amp,
+                                         fp_cavfit_mode, n_init, n_fin)
 
     # ----------------------------------------------------------------------
     # Fit wavelength solution from FP peaks
@@ -836,20 +833,18 @@ def fp_wavesol_lovis(params, llprops, fpe2dsfile, blaze, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # Multi-order HC lines plot
     # ----------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 0:
-        # TODO: Add plots
-        # # check the orders to be plotted are sensible
-        # if p['WAVE_PLOT_MULTI_INIT'] >= p['WAVE_N_ORD_FINAL']:
-        #     wmsg = 'First order for multi-order plot, {0}, higher than ' \
-        #            'final wavelength solution order {1}; no plot created'
-        #     WLOG(p, 'warning', wmsg.format(p['WAVE_PLOT_MULTI_INIT'],
-        #                                    p['WAVE_N_ORD_FINAL']))
-        # else:
-        #     sPlt.wave_plot_multi_order(p, hc_ll_test, hc_ord_test,
-        #                                loc['LL_OUT_2'], loc['HCDATA'])
-        pass
-
-    # # TODO test linmin fitting
+    # get graph starting point
+    n_plot_init = params['WAVE_FP_PLOT_MULTI_INIT']
+    # get the number of orders to plot
+    n_nbo = params['WAVE_FP_PLOT_MULTI_NBO']
+    # deal with n_plot_init being out of bounds
+    if n_plot_init >= n_fin:
+        wargs = [n_plot_init, n_fin, 'WAVE_FP_MULTI_ORDER']
+        WLOG(params, 'warning', TextEntry('10-017-00012', args=wargs))
+    else:
+        recipe.plot('WAVE_FP_MULTI_ORDER', hc_ll=hc_ll_test, hc_ord=hc_ord_test,
+                    hcdata=hce2dsfile.data, wave=llprops['LL_OUT_2'],
+                    init=n_plot_init, fin=n_fin, nbo=n_nbo, params=params)
 
     # ----------------------------------------------------------------------
     # Add constants to llprops (Needs to have all from fp_wavesol_bauer
@@ -1377,7 +1372,8 @@ def load_hc_init_linelist(params, recipe, e2dsfile, fiber, **kwargs):
     return llprops, exists
 
 
-def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
+def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
+                          **kwargs):
     """
     Fits the Gaussian peaks with sigma clipping
 
@@ -1626,12 +1622,9 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
-        if params['DRS_PLOT'] > 0:
-            # TODO: Add plots
-            # pargs = [wave_catalog, dv, brightest_lines, sol_iteration]
-            # sPlt.wave_ea_plot_wave_cat_all_and_brightest(p, *pargs)
-            pass
-
+        recipe.plot('WAVE_HC_BRIGHTEST_LINES', wave=wave_catalog, dv=dv,
+                    mask=brightest_lines, iteration=sol_iteration,
+                    niter=n_iterations)
         # ------------------------------------------------------------------
         # Keep only wave_catalog where values are finite
         # -----------------------------------------------------------------
@@ -1653,13 +1646,11 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             # log error that we have insufficient lines found
             eargs = [mp.nansum(good), min_tot_num_lines, func_name]
             WLOG(params, 'error', TextEntry('00-017-00003', args=eargs))
-
         # ------------------------------------------------------------------
         # Linear model slice generation
         # ------------------------------------------------------------------
         # storage for the linear model slice
         lin_mod_slice = np.zeros((len(xgau), mp.nansum(order_fit_cont)))
-
         # construct the unit vectors for wavelength model
         # loop around order fit continuity values
         ii = 0
@@ -1671,7 +1662,6 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
                 lin_mod_slice[:, ii] = part1 * part2
                 # iterate
                 ii += 1
-
         # ------------------------------------------------------------------
         # Sigma clipping
         # ------------------------------------------------------------------
@@ -1707,7 +1697,6 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             # calculate the standard deviation
             sig = mp.nanstd(dv)
             absdev = np.abs(dv / sig)
-
             # initialize lists for saving
             recon0_aux = []
             lin_mod_slice_aux = []
@@ -1719,7 +1708,6 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
             ew_aux = []
             gauss_rms_dev_aux = []
             peak2_aux = []
-
             # Sigma clip worst line per order
             for order_num in set(orders):
                 # mask for order
@@ -1772,12 +1760,9 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
-        if params['DRS_PLOT'] > 0:
-            # TODO: Add plots
-            # pargs = [orders, wave_catalog, recon0, gauss_rms_dev, xgau, ew,
-            #          sol_iteration]
-            # sPlt.wave_ea_plot_tfit_grid(p, *pargs)
-            pass
+        recipe.plot('WAVE_HC_TFIT_GRID', orders=orders, wave=wave_catalog,
+                    recon=recon0, rms=gauss_rms_dev, xgau=xgau, ew=ew,
+                    iteration=sol_iteration, niter=n_iterations)
 
         # ------------------------------------------------------------------
         # Construct wave map
@@ -1851,7 +1836,7 @@ def fit_gaussian_triplets(params, llprops, iprops, wavell, ampll, **kwargs):
     return llprops
 
 
-def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
+def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     func_name = __NAME__ + '.generate_resolution_map()'
 
     # get constants from params / kwargs
@@ -2020,10 +2005,9 @@ def generate_resolution_map(params, llprops, e2dsfile, **kwargs):
     WLOG(params, '', TextEntry('40-017-00012', args=wargs))
 
     # map line profile map
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plotting
-        # sPlt.wave_ea_plot_line_profiles(p, loc)
-        pass
+    recipe.plot('WAVE_HC_RESMAP', params=params, resmap_size=resmap_size,
+                map_dvs=map_dvs, map_lines=map_lines, map_params=map_params,
+                res_map=resolution_map, nbo=nbo, nbpix=nbpix)
 
     # return loc
     return llprops
@@ -2167,8 +2151,8 @@ def generate_res_files(params, llprops, outfile, **kwargs):
 # =============================================================================
 # Define littrow worker functions
 # =============================================================================
-def littrow(params, llprops, start, end, wavell, infile, iteration=1,
-            **kwargs):
+def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
+            fiber=None, **kwargs):
     func_name = __NAME__ + '.littrow_test()'
     # get parameters from params/kwargs
     t_order_start = pcheck(params, 'WAVE_T_ORDER_START', 't_order_start',
@@ -2189,11 +2173,9 @@ def littrow(params, llprops, start, end, wavell, infile, iteration=1,
     # Littrow test plot
     # ------------------------------------------------------------------
     # Plot wave solution littrow check
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plot
-        # plot littrow x pixels against fitted wavelength solution
-        # sPlt.wave_littrow_check_plot(p, loc, iteration=1)
-        pass
+    plotname = 'WAVE_LITTROW_CHECK{0}'.format(iteration)
+    recipe.plot(plotname, params=params, llprops=llprops,
+                iteration=iteration, fiber=fiber)
     # ------------------------------------------------------------------
     # extrapolate Littrow solution
     # ------------------------------------------------------------------
@@ -2203,12 +2185,9 @@ def littrow(params, llprops, start, end, wavell, infile, iteration=1,
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plot
-        # plot littrow x pixels against fitted wavelength solution
-        # sPlt.wave_littrow_extrap_plot(p, loc, iteration=1)
-        pass
-
+    plotname = 'WAVE_LITTROW_EXTRAP{0}'.format(iteration)
+    recipe.plot(plotname, params=params, llprops=llprops,
+                iteration=iteration, fiber=fiber, image=infile.data)
     # ------------------------------------------------------------------
     # add parameters to llprops
     llprops['LITTROW_START_{0}'.format(iteration)] = start
@@ -3599,8 +3578,8 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
     return m_vec
 
 
-def get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
-                          n_init, n_fin, wave_blaze_thres, dv_max,
+def get_d_for_each_hcline(params, recipe, llprops, fp_order, fp_xx, m_vec,
+                          blaze, n_init, n_fin, wave_blaze_thres, dv_max,
                           ll_fit_degree):
     func_name = __NAME__ + '.get_d_for_each_hcline()'
     # set up storage
@@ -3676,10 +3655,9 @@ def get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
         hc_ord_test.append((order_num + n_init) * np.ones_like(hc_x_ord))
 
     # residuals plot
-    if params['DRS_PLOT'] and params['DRS_DEBUG'] > 0:
-        # TODO: Add plot
-        # sPlt.fp_m_x_residuals(p, fp_order, fp_xx, m, xm_mask, coeff_xm_all)
-        pass
+    recipe.plot('WAVE_FP_M_X_RES', fp_order=fp_order, fp_xx=fp_xx, m_vec=m_vec,
+                xm_mask=xm_mask, coeff_xm_all=coeff_xm_all, n_init=n_init,
+                n_fin=n_fin)
 
     # flatten arrays
     one_m_d = np.concatenate(one_m_d).ravel()
@@ -3692,11 +3670,16 @@ def get_d_for_each_hcline(params, llprops, fp_order, fp_xx, m_vec, blaze,
     wargs = [round(m_d[0]), round(m_d[-1])]
     WLOG(params, '', TextEntry('40-017-00027', args=wargs))
 
-    return one_m_d, d_arr, hc_ll_test
+    return one_m_d, d_arr, hc_ll_test, hc_ord_test
 
 
-def fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity):
+def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
+                m_init, fp_ll, **kwargs):
+    # set function name
     func_name = __NAME__ + '.fit_1m_vs_d()'
+    # get params from params
+    dopd0 = pcheck(params, 'WAVE_FP_DOPD0', 'dopd0', kwargs, func_name)
+
     # load current cavity files
     fit_1m_d, fit_ll_d = drs_data.load_cavity_files(params, required=False)
     # check for exists (will be None if either file doesn't exist)
@@ -3714,16 +3697,15 @@ def fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity):
         d_arr = np.array(d_arr)[one_m_sort]
         # polynomial fit for d vs 1/m
         fit_1m_d = mp.nanpolyfit(one_m_d, d_arr, 9)
+        fit_1m_d_func = np.poly1d(fit_1m_d)
         res_d_final = d_arr - np.polyval(fit_1m_d, one_m_d)
         # fit d v wavelength w/sigma-clipping
         fit_ll_d, mask = sigclip_polyfit(params, hc_ll_test, d_arr, degree=9)
         # plot d vs 1/m fit and residuals
-        if params['DRS_PLOT']:
-            # TODO: Add plots
-            # sPlt.interpolated_cavity_width_one_m_hc(params, one_m_d, d_arr,
-            #                                         m_init, fit_1m_d_func,
-            #                                         res_d_final)
-            pass
+        recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
+                    m_init=m_init, fit_1m_d_func=fit_1m_d_func,
+                    res_d_final=res_d_final, dopd0=dopd0)
+
         # save the parameters
         drs_data.save_cavity_files(params, fit_1m_d, fit_ll_d)
     # else we need to shift values
@@ -3733,20 +3715,18 @@ def fit_1m_vs_d(params, one_m_d, d_arr, hc_ll_test, update_cavity):
         # update the coeffs with mean shift
         fit_ll_d[-1] += mp.nanmedian(residual)
 
-    if params['DRS_PLOT']:
-        # TODO: Add plots
-        # get the fitvalue
-        # fitval = np.polyval(fit_ll_d, hc_ll_test)
-        # plot wavelength vs d and the fitted polynomial
-        # sPlt.interpolated_cavity_width_ll_hc(p, hc_ll_test, d, fp_ll, fitval)
-        pass
-
+    # calculate the fit value
+    fitval = np.polyval(fit_ll_d, hc_ll_test)
+    # plot the interp cavity width ll hc and fp plot
+    recipe.plot('WAVE_FP_IPT_CWID_LLHC', hc_ll=hc_ll_test, fp_ll=fp_ll,
+                d_arr=d_arr, fitval=fitval, dopd0=dopd0)
     # return variables
     return fit_1m_d, fit_ll_d, one_m_d, d_arr
 
 
-def update_fp_peak_wavelengths(params, llprops, fit_ll_d, m_vec, fp_order,
-                               fp_xx, fp_amp, fp_cavfit_mode):
+def update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d, m_vec,
+                               fp_order, fp_xx, fp_amp, fp_cavfit_mode,
+                               n_init, n_fin):
     func_name = __NAME__ + '.update_fp_peak_wavelengths()'
     # define storage
     fp_ll_new = []
@@ -3773,18 +3753,13 @@ def update_fp_peak_wavelengths(params, llprops, fit_ll_d, m_vec, fp_order,
     llprops['FP_AMP_NEW'] = np.array(np.concatenate(fp_amp).ravel())
     # duplicate for saving
     llprops['FP_XX_INIT'] = np.array(np.concatenate(fp_xx).ravel())
-
     # set sources
     keys = ['FP_LL_NEW', 'FP_XX_NEW', 'FP_ORD_NEW', 'FP_AMP_NEW',
             'FP_XX_INIT']
     llprops.set_sources(keys, func_name)
-
     # plot old-new wavelength difference
-    if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 1:
-        # TODO: Add plots
-        # sPlt.fp_ll_difference(p, loc)
-        pass
-
+    recipe.plot('WAVE_FP_LL_DIFF', llprops=llprops, n_init=n_init, n_fin=n_fin)
+    # return ll props
     return llprops
 
 
