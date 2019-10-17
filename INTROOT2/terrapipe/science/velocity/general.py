@@ -608,7 +608,7 @@ def locate_reference_file(params, recipe, infile):
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================
-def compute_ccf_science(params, infile, image, blaze, wavemap, bprops,
+def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         fiber, **kwargs):
 
     func_name = __NAME__ + '.compute_ccf()'
@@ -765,18 +765,23 @@ def compute_ccf_science(params, infile, image, blaze, wavemap, bprops,
     # ------------------------------------------------------------------
     # rv ccf plot
     # ------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plotting
-        # sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit,
-        #                      kind=p['OBJNAME'], output_rv=loc['RV'])
-        pass
-
+    # loop around every order
+    recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
+                y=props['CCF'], yfit=props['CCF_FIT'], kind='SCIENCE',
+                found_rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
+                orders=np.arange(len(props['CCF'])), order=None)
+    # the mean ccf
+    recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
+                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                found_rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
+                orders=None, order=None)
     # ------------------------------------------------------------------
     # return property dictionary
     return props
 
 
-def compute_ccf_fp(params, infile, image, blaze, wavemap, fiber, **kwargs):
+def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
+                   **kwargs):
     func_name = __NAME__ + '.compute_ccf_fp()'
     # get constants from params/kwargs
     noise_sigdet = pcheck(params, 'WAVE_CCF_NOISE_SIGDET', 'sigdet', kwargs,
@@ -915,12 +920,16 @@ def compute_ccf_fp(params, infile, image, blaze, wavemap, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # rv ccf plot
     # ----------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plot
-        # # Plot rv vs ccf (and rv vs ccf_fit)
-        # p['OBJNAME'] = 'FP'
-        # sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
-        pass
+    # loop around every order
+    recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
+                y=props['CCF'], yfit=props['CCF_FIT'], kind='FP',
+                found_rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
+                orders=np.arange(len(props['CCF'])), order=None)
+    # the mean ccf
+    recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
+                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN FP',
+                found_rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
+                orders=None, order=None)
 
     # TODO : Add QC of the FP CCF once they are defined
 
