@@ -570,8 +570,6 @@ def do_fp_wavesol(p, loc):
         wmsg = 'Mode number span: {0} - {1}'
         WLOG(p, '', wmsg.format(*wargs))
 
-        # TODO: GOT TO HERE IN TERRAPIPE CONVERSION (2019-08-21)
-
         # ----------------------------------------------------------------------
         # Fit (1/m) vs d
         # ----------------------------------------------------------------------
