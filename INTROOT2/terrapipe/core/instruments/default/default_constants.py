@@ -142,7 +142,7 @@ __all__ = [
     'WAVE_FP_XDIF_MIN', 'WAVE_FP_XDIF_MAX', 'WAVE_FP_LL_OFFSET',
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
-    'WAVE_FP_SIGCLIP',
+    'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
     # wave ccf constantsCCF_N_ORD_MAX
     'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
@@ -191,7 +191,15 @@ __all__ = [
     'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2',
     'PLOT_THERMAL_BACKGROUND', 'PLOT_EXTRACT_SPECTRAL_ORDER1',
     'PLOT_EXTRACT_SPECTRAL_ORDER2', 'PLOT_EXTRACT_S1D',
-    'PLOT_EXTRACT_S1D_WEIGHT', 'PLOT_WAVE_HC_GUESS',
+    'PLOT_EXTRACT_S1D_WEIGHT', 'PLOT_WAVE_HC_GUESS', 'PLOT_WAVE_HC_TFIT_GRID',
+    'PLOT_WAVE_HC_BRIGHTEST_LINES', 'PLOT_WAVE_HC_RESMAP',
+    'PLOT_WAVE_LITTROW_CHECK1', 'PLOT_WAVE_LITTROW_EXTRAP1',
+    'PLOT_WAVE_LITTROW_CHECK2', 'PLOT_WAVE_LITTROW_EXTRAP2',
+    'PLOT_WAVE_FP_FINAL_ORDER', 'PLOT_WAVE_FP_LWID_OFFSET',
+    'PLOT_WAVE_FP_WAVE_RES', 'PLOT_WAVE_FP_M_X_RES', 'PLOT_WAVE_FP_LL_DIFF',
+    'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
+    'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
+    'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1406,6 +1414,14 @@ WAVE_FP_LLDIF_MAX = Const('WAVE_FP_LLDIF_MAX', value=None, dtype=float,
 WAVE_FP_SIGCLIP = Const('WAVE_FP_SIGCLIP', value=None, dtype=float,
                         source=__NAME__, minimum=0.0)
 
+# First order for multi-order wave fp plot
+WAVE_FP_PLOT_MULTI_INIT = Const('WAVE_FP_PLOT_MULTI_INIT', value=None,
+                                dtype=int, source=__NAME__, minimum=0)
+
+# Number of orders in multi-order wave fp plot
+WAVE_FP_PLOT_MULTI_NBO = Const('WAVE_FP_PLOT_MULTI_NBO', value=None, dtype=int,
+                               source=__NAME__, minimum=1)
+
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
@@ -1905,6 +1921,78 @@ PLOT_EXTRACT_S1D_WEIGHT = Const('PLOT_EXTRACT_S1D_WEIGHT', value=False,
 # turn on the wave solution hc guess debug plot (in loop)
 PLOT_WAVE_HC_GUESS = Const('PLOT_WAVE_HC_GUESS', value=False,
                            dtype=bool, source=__NAME__)
+
+# turn on the wave solution hc brightest lines debug plot
+PLOT_WAVE_HC_BRIGHTEST_LINES = Const('PLOT_WAVE_HC_BRIGHTEST_LINES',
+                                     value=False, dtype=bool, source=__NAME__)
+
+# turn on the wave solution hc triplet fit grid debug plot
+PLOT_WAVE_HC_TFIT_GRID = Const('PLOT_WAVE_HC_TFIT_GRID', value=False,
+                               dtype=bool, source=__NAME__)
+
+# turn on the wave solution hc resolution map debug plot
+PLOT_WAVE_HC_RESMAP = Const('PLOT_WAVE_HC_RESMAP', value=False,
+                            dtype=bool, source=__NAME__)
+
+# turn on the wave solution littrow check debug plot
+PLOT_WAVE_LITTROW_CHECK1 = Const('PLOT_WAVE_LITTROW_CHECK1', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the wave solution littrow extrapolation debug plot
+PLOT_WAVE_LITTROW_EXTRAP1 = Const('PLOT_WAVE_LITTROW_EXTRAP1', value=False,
+                                  dtype=bool, source=__NAME__)
+
+# turn on the wave solution littrow check debug plot
+PLOT_WAVE_LITTROW_CHECK2 = Const('PLOT_WAVE_LITTROW_CHECK2', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the wave solution littrow extrapolation debug plot
+PLOT_WAVE_LITTROW_EXTRAP2 = Const('PLOT_WAVE_LITTROW_EXTRAP2', value=False,
+                                  dtype=bool, source=__NAME__)
+
+# turn on the wave solution final fp order debug plot
+PLOT_WAVE_FP_FINAL_ORDER = Const('PLOT_WAVE_FP_FINAL_ORDER', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the wave solution fp local width offset debug plot
+PLOT_WAVE_FP_LWID_OFFSET = Const('PLOT_WAVE_FP_LWID_OFFSET', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the wave solution fp wave residual debug plot
+PLOT_WAVE_FP_WAVE_RES = Const('PLOT_WAVE_FP_WAVE_RES', value=False,
+                              dtype=bool, source=__NAME__)
+
+# turn on the wave solution fp fp_m_x residual debug plot
+PLOT_WAVE_FP_M_X_RES = Const('PLOT_WAVE_FP_M_X_RES', value=False,
+                             dtype=bool, source=__NAME__)
+
+# turn on the wave solution fp interp cavity width 1/m_d hc debug plot
+PLOT_WAVE_FP_IPT_CWID_1MHC = Const('PLOT_WAVE_FP_IPT_CWID_1MHC', value=False,
+                                   dtype=bool, source=__NAME__)
+
+# turn on the wave solution fp interp cavity width ll hc and fp debug plot
+PLOT_WAVE_FP_IPT_CWID_LLHC = Const('PLOT_WAVE_FP_IPT_CWID_LLHC', value=False,
+                                   dtype=bool, source=__NAME__)
+
+# turn on the wave solution old vs new wavelength difference debug plot
+PLOT_WAVE_FP_LL_DIFF = Const('PLOT_WAVE_FP_LL_DIFF', value=False, dtype=bool,
+                             source=__NAME__)
+
+# turn on the wave solution fp multi order debug plot
+PLOT_WAVE_FP_MULTI_ORDER = Const('PLOT_WAVE_FP_MULTI_ORDER', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the wave solution fp single order debug plot
+PLOT_WAVE_FP_SINGLE_ORDER = Const('PLOT_WAVE_FP_SINGLE_ORDER', value=False,
+                                  dtype=bool, source=__NAME__)
+
+# turn on the ccf rv fit debug plot (in a loop around orders)
+PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,
+                             dtype=bool, source=__NAME__)
+
+# turn on the ccf rv fit debug plot (for the mean order value)
+PLOT_CCF_RV_FIT = Const('PLOT_CCF_RV_FIT', value=False,
+                        dtype=bool, source=__NAME__)
 
 # =============================================================================
 # TOOLS SETTINGS
