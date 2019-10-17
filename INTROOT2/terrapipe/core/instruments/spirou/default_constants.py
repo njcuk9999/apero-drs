@@ -1142,6 +1142,15 @@ WAVE_FP_LLDIF_MAX.value = 1.25
 WAVE_FP_SIGCLIP = WAVE_FP_SIGCLIP.copy(__NAME__)
 WAVE_FP_SIGCLIP.value = 7
 
+# First order for multi-order wave fp plot
+WAVE_FP_PLOT_MULTI_INIT = WAVE_FP_PLOT_MULTI_INIT.copy(__NAME__)
+WAVE_FP_PLOT_MULTI_INIT.value = 20
+
+# Number of orders in multi-order wave fp plot
+WAVE_FP_PLOT_MULTI_NBO = WAVE_FP_PLOT_MULTI_NBO.copy(__NAME__)
+WAVE_FP_PLOT_MULTI_NBO.value = 5
+
+
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
@@ -1757,6 +1766,78 @@ PLOT_EXTRACT_S1D_WEIGHT.value = True
 # turn on the wave solution hc guess debug plot (in loop)
 PLOT_WAVE_HC_GUESS = PLOT_WAVE_HC_GUESS.copy(__NAME__)
 PLOT_WAVE_HC_GUESS.value = True
+
+# turn on the wave solution hc brightest lines debug plot
+PLOT_WAVE_HC_BRIGHTEST_LINES = PLOT_WAVE_HC_BRIGHTEST_LINES.copy(__NAME__)
+PLOT_WAVE_HC_BRIGHTEST_LINES.value = True
+
+# turn on the wave solution hc triplet fit grid debug plot
+PLOT_WAVE_HC_TFIT_GRID = PLOT_WAVE_HC_TFIT_GRID.copy(__NAME__)
+PLOT_WAVE_HC_TFIT_GRID.value = True
+
+# turn on the wave solution hc resolution map debug plot
+PLOT_WAVE_HC_RESMAP = PLOT_WAVE_HC_RESMAP.copy(__NAME__)
+PLOT_WAVE_HC_RESMAP.value = True
+
+# turn on the wave solution littrow check debug plot
+PLOT_WAVE_LITTROW_CHECK1 = PLOT_WAVE_LITTROW_CHECK1.copy(__NAME__)
+PLOT_WAVE_LITTROW_CHECK1.value = True
+
+# turn on the wave solution littrow extrapolation debug plot
+PLOT_WAVE_LITTROW_EXTRAP1 = PLOT_WAVE_LITTROW_EXTRAP1.copy(__NAME__)
+PLOT_WAVE_LITTROW_EXTRAP1.value = True
+
+# turn on the wave solution littrow check debug plot
+PLOT_WAVE_LITTROW_CHECK2 = PLOT_WAVE_LITTROW_CHECK2.copy(__NAME__)
+PLOT_WAVE_LITTROW_CHECK2.value = True
+
+# turn on the wave solution littrow extrapolation debug plot
+PLOT_WAVE_LITTROW_EXTRAP2 = PLOT_WAVE_LITTROW_EXTRAP2.copy(__NAME__)
+PLOT_WAVE_LITTROW_EXTRAP2.value = True
+
+# turn on the wave solution final fp order debug plot
+PLOT_WAVE_FP_FINAL_ORDER = PLOT_WAVE_FP_FINAL_ORDER.copy(__NAME__)
+PLOT_WAVE_FP_FINAL_ORDER.value = True
+
+# turn on the wave solution fp local width offset debug plot
+PLOT_WAVE_FP_LWID_OFFSET = PLOT_WAVE_FP_LWID_OFFSET.copy(__NAME__)
+PLOT_WAVE_FP_LWID_OFFSET.value = True
+
+# turn on the wave solution fp wave residual debug plot
+PLOT_WAVE_FP_WAVE_RES = PLOT_WAVE_FP_WAVE_RES.copy(__NAME__)
+PLOT_WAVE_FP_WAVE_RES.value = True
+
+# turn on the wave solution fp fp_m_x residual debug plot
+PLOT_WAVE_FP_M_X_RES = PLOT_WAVE_FP_M_X_RES.copy(__NAME__)
+PLOT_WAVE_FP_M_X_RES.value = True
+
+# turn on the wave solution fp interp cavity width 1/m_d hc debug plot
+PLOT_WAVE_FP_IPT_CWID_1MHC = PLOT_WAVE_FP_IPT_CWID_1MHC.copy(__NAME__)
+PLOT_WAVE_FP_IPT_CWID_1MHC.value = True
+
+# turn on the wave solution fp interp cavity width ll hc and fp debug plot
+PLOT_WAVE_FP_IPT_CWID_LLHC = PLOT_WAVE_FP_IPT_CWID_LLHC.copy(__NAME__)
+PLOT_WAVE_FP_IPT_CWID_LLHC.value = True
+
+# turn on the wave solution old vs new wavelength difference debug plot
+PLOT_WAVE_FP_LL_DIFF = PLOT_WAVE_FP_LL_DIFF.copy(__NAME__)
+PLOT_WAVE_FP_LL_DIFF.value = True
+
+# turn on the wave solution fp multi order debug plot
+PLOT_WAVE_FP_MULTI_ORDER = PLOT_WAVE_FP_MULTI_ORDER.copy(__NAME__)
+PLOT_WAVE_FP_MULTI_ORDER.value = True
+
+# turn on the wave solution fp single order debug plot
+PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
+PLOT_WAVE_FP_SINGLE_ORDER.value = True
+
+# turn on the ccf rv fit debug plot (in a loop around orders)
+PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)
+PLOT_CCF_RV_FIT_LOOP.value = True
+
+# turn on the ccf rv fit debug plot (for the mean order value)
+PLOT_CCF_RV_FIT = PLOT_CCF_RV_FIT.copy(__NAME__)
+PLOT_CCF_RV_FIT.value = True
 
 # =============================================================================
 # TOOLS SETTINGS
