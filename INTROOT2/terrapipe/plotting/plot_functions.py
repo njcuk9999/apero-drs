@@ -10,6 +10,8 @@ Created on 2019-10-03 at 10:51
 @author: cook
 """
 import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
 import copy
 import os
 import warnings
@@ -90,7 +92,7 @@ class Graph:
         # return new instance
         return Graph(name, **kwargs)
 
-    def set_filename(self, params, location, fiber=None):
+    def set_filename(self, params, location, suffix=None):
         """
         Set the file name for this Graph instance
         :param params:
@@ -104,8 +106,8 @@ class Graph:
         # make filename all lowercase
         filename = filename.lower()
         # deal with fiber
-        if fiber is not None:
-            filename += '_{0}'.format(fiber)
+        if suffix is not None:
+            filename += '_{0}'.format(suffix)
         # construct absolute filename
         self.filename = os.path.join(location, filename)
 
@@ -583,10 +585,9 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
         # get ypix
         ypix = np.polyval(coeffs[order_num][::-1], xpix)
         # plot full fit
-        frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', label='all',
-                   zorder=1)
+        frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', label='all')
         # plot valid fit
-        frame.plot(x, y, linewidth=1, color='red', label='valid', zorder=2)
+        frame.plot(x, y, linewidth=1, color='red', label='valid')
     # only keep unique labels
     ulegend(frame, loc=10, ncol=2)
     # create an axes on the right side of ax. The width of cax will be 5%
@@ -713,54 +714,91 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
     plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    coeffs = kwargs['coeffs']
-    orders = kwargs['orders']
-    parity = kwargs['parity']
-    good = kwargs['good']
-    fit = kwargs['fit']
-    ncoeff = kwargs.get('ncoeff', None)
-    # get the shape of coefficients
-    nbo, nbcoeff = coeffs.shape
+    good_arr = kwargs['good']
+    xpix = kwargs['xpix']
+    ypix = kwargs['ypix']
+    ypix0 = kwargs['ypix0']
+    image = kwargs['image']
+    order = kwargs.get('order', None)
+    kind = kwargs.get('kind', None)
     # ------------------------------------------------------------------
     # get order generator
-    if ncoeff is None:
-        nbc_gen = plotter.plotloop(np.arange(nbcoeff).astype(int))
+    # ------------------------------------------------------------------
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(len(good_arr)))
         # prompt to start looper
         plotter.close_plots(loop=True)
+    # else we just deal with the order specified
     else:
-        nbc_gen = [ncoeff]
-    # ------------------------------------------------------------------
-    # get unique parity
-    uparity = np.unique(parity)
+        order_gen = [order]
     # ------------------------------------------------------------------
     # loop around orders
-    for it in nbc_gen:
-        coeffs_i = coeffs[:, it]
+    for order_num in order_gen:
+        # get this iterations values
+        good = good_arr[order_num]
+        ypixgo = ypix[order_num, good]
+        ypix0go = ypix0[order_num, good]
+        residual = ypixgo - ypix0go
+        # get the y limits
+        ymax = np.ceil(np.nanmax([np.nanmax(ypixgo), np.nanmax(ypix0go)]))
+        ymin = np.floor(np.nanmin([np.nanmin(ypixgo), np.nanmin(ypix0go)]))
+        ydiff = np.ceil(ymax - ymin)
+        ymax = np.min([int(ymax + 0.25 * ydiff), image.shape[0]])
+        ymin = np.max([int(ymin - 0.25 * ydiff), 0])
+        # mask the image between y limits
+        imagezoom = image[ymin:ymax]
+        # normalise zoom image
+        imagezoom = imagezoom / np.nanpercentile(imagezoom, 95)
+        # ------------------------------------------------------------------
         # set up plot
-        fig, frames = graph.set_figure(plotter, ncols=len(uparity), nrows=1)
-        # loop through unique parity values
-        for jt in range(len(uparity)):
-            # get frame
-            frame = frames[jt]
-            # get values
-            good_i, fit_i = good[it][jt], fit[it][jt]
-            # plot
-            frame.plot(orders[good_i], coeffs_i[good_i], label='Original',
-                       color='g', marker='o', ls='None')
-            frame.plot(orders[good_i], coeffs_i[good_i] - fit_i,
-                       label='Residuals', color='r', marker='o', ls='None')
-            frame.plot(orders[good_i], fit_i, label='New',
-                       color='b')
-            # add legend
-            frame.legend(loc=0)
-            # add frame title
-            frame.set(title='Parity {0}'.format(jt), xlabel='Order number',
-                      ylabel='Coefficient value')
-        # add title
-        plt.suptitle('Coefficient {0}'.format(it))
+        if kind == 'center':
+            fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                           sharex=True)
+            frame1, frame2 = frames
+        else:
+            fig, frame2 = graph.set_figure(plotter, nrows=1, ncols=1)
+            frame1 = None
+        # ------------------------------------------------------------------
+        # plot the image fits (if we are dealing with a center plot)
+        if kind == 'center':
+            frame1.imshow(imagezoom, aspect='auto', origin='lower', zorder=0,
+                          cmap='gist_gray',
+                          extent=[0, image.shape[1], ymin, ymax])
+            frame1.plot(xpix[good], ypix0go, color='b', ls='--', label='old',
+                        zorder=2)
+            frame1.plot(xpix[good], ypixgo, color='r', ls='-', label='new',
+                        zorder=1)
+            frame1.legend(loc=0)
+            # force x limits
+            frame1.set_xlim(0, image.shape[1])
+        # ------------------------------------------------------------------
+        # plot the residuals
+        frame2.plot(xpix[good], residual, marker='x')
+        # add legend
+        frame2.legend(loc=0)
+        # force x limits
+        frame2.set_xlim(0, image.shape[1])
+        # ------------------------------------------------------------------
+        # construct frame title
+        if kind is None:
+            title = 'Coefficient Residuals (New - Original) Order={1}'
+        else:
+            title = '{0} coefficient residuals (New - Original) Order={1}'
+        # ------------------------------------------------------------------
+        # set title and labels
+        if kind == 'center':
+            frame1.set(title=title.format(kind, order_num),
+                       ylabel='y pixel position')
+            frame2.set(xlabel='x pixel position',
+                       ylabel='$\Delta$y pixel position')
+        else:
+            frame2.set(title=title.format(kind, order_num),
+                       xlabel='x pixel position',
+                       ylabel='$\Delta$y pixel position')
         # ------------------------------------------------------------------
         # adjust plot
-        plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+        plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
+                            hspace=0)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
@@ -1074,9 +1112,6 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-    # TODO: remove break point
-    constants.breakpoint(plotter.params)
-
     # get plt
     plt = plotter.plt
     axes_grid1 = plotter.axes_grid1
@@ -1724,9 +1759,9 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
     nbo = kwargs['nbo']
     nbpix = kwargs['nbpix']
     # get parameters from params
-    fit_span = params['WAVE_HC_RESMAP_DV_SPAN']
-    xlim = params['WAVE_HC_RESMAP_XLIM']
-    ylim = params['WAVE_HC_RESMAP_YLIM']
+    fit_span = params.listp('WAVE_HC_RESMAP_DV_SPAN', dtype=float)
+    xlim = params.listp('WAVE_HC_RESMAP_XLIM', dtype=float)
+    ylim = params.listp('WAVE_HC_RESMAP_YLIM', dtype=float)
     # ------------------------------------------------------------------
     # bin size in order direction
     bin_order = int(np.ceil(nbo / resmap_size[0]))
@@ -1806,6 +1841,8 @@ def plot_wave_littrow_check(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get matplotlib imports
+    cm = plotter.matplotlib.cm
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
@@ -1886,9 +1923,11 @@ def plot_wave_littrow_extrap(plotter, graph, kwargs):
         # plot the solution for all x points
         frame.plot(x_points, yfit[order_num],
                    color=colours[order_num])
+        # custom marker
+        marker = '$' + str(order_num) + '$'
         # plot the solution at the chosen cut points
         frame.scatter(x_cut_points, yfit_x_cut[order_num],
-                      marker='o', s=10, color=colours[order_num])
+                      marker=marker, s=75, color=colours[order_num])
     # set title
     title = 'Wavelength Solution Littrow Extrapolation {0} fiber {1}'
     # set axis labels
@@ -1910,10 +1949,11 @@ def plot_wave_fp_final_order(plotter, graph, kwargs):
     fiber = kwargs['fiber']
     iteration = kwargs['iteration']
     selected_order = kwargs['end']
+    fpdata = kwargs['fpdata']
 
     # get data from llprops
     wave = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
-    fp_data = llprops['FPDATA'][selected_order]
+    fp_data = fpdata[selected_order]
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -2168,7 +2208,7 @@ def plot_wave_fp_multi_order(plotter, graph, kwargs):
     n_fin = kwargs['fin']
     nbo = kwargs['nbo']
     # compute final plotting order
-    n_plot_fin = np.min(n_plot_init + nbo, n_fin)
+    n_plot_fin = np.min([n_plot_init + nbo, n_fin])
     # ------------------------------------------------------------------
     # deal with plot style
     if 'dark' in params['DRS_PLOT_STYLE']:
@@ -2302,6 +2342,85 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
+def plot_mktellu_wave_flux(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    keep = kwargs['keep']
+    wavemap = kwargs['wavemap']
+    tau1 = kwargs['tau1']
+    sp = kwargs['sp']
+    sed = kwargs['sed']
+    oimage = kwargs['oimage']
+    order = kwargs.get('order', None)
+    # ------------------------------------------------------------------
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(len(keep)))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we just deal with the order specified
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # get this orders values
+        good = keep[order_num]
+        x = wavemap[order_num]
+        y1 = tau1[order_num]
+        y2 = sp[order_num]
+        y3 = sp[order_num] / sed[order_num]
+        y4 = oimage[order_num]
+        y5 = sed[order_num]
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+        # ------------------------------------------------------------------
+        # plot data
+        frame.plot(x, y1, color='c', label='tapas fit')
+        frame.plot(x, y2, color='k', label='input spectrum')
+        frame.plot(x, y3, color='b', label='measured transmission')
+
+        frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
+                   label='SED calculation value')
+        frame.plot(x, y5, color='g', linestyle='--', label='SED best guess')
+
+        # get max / min y
+        values = list(y1[good]) + list(y2[good]) + list(y3[good])
+        values += list(y4[good]) + list(y5[good])
+        mins = 0.95 * np.nanmin([0, np.nanmin(values)])
+        maxs = 1.05 * np.nanmax(values)
+
+        # plot legend and set up labels / limits / title
+        frame.legend(loc=0)
+        frame.set(xlim=(np.min(x[good]), np.max(x[good])),
+                  ylim=(mins, maxs),
+                  xlabel='Wavelength [nm]', ylabel='Normalised flux',
+                  title='Order: {0}'.format(order_num))
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
+                           func=plot_mktellu_wave_flux)
+mktellu_wave_flux2 = Graph('MKTELLU_WAVE_FLUX2', kind='debug',
+                           func=plot_mktellu_wave_flux)
+sum_desc = ('Plot to show the measured transmission (and calcaulted SED for'
+            ' input rapidly rotating hot star')
+sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
+                              func=plot_mktellu_wave_flux,
+                              figsize=(16, 10), dpi=150, description=sum_desc)
+
+# add to definitions
+definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux]
+
 
 # =============================================================================
 # Define velocity plotting functions
@@ -2376,6 +2495,9 @@ def plot_ccf_rv_fit(plotter, graph, kwargs):
         frames[0].set(ylabel='CCF', title=title)
         frames[1].set(xlabel='RV [km/s]', ylabel='CCF')
         # ------------------------------------------------------------------
+        # adjust size
+        fig.subplots_adjust(hspace=0, wspace=0)
+        # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
@@ -2384,7 +2506,7 @@ ccf_rv_fit_loop = Graph('CCF_RV_FIT_LOOP', kind='debug', func=plot_ccf_rv_fit)
 ccf_rv_fit = Graph('CCF_RV_FIT', kind='debug', func=plot_ccf_rv_fit)
 
 # add to definitions
-definitions += [ccf_rv_fit]
+definitions += [ccf_rv_fit, ccf_rv_fit_loop]
 
 
 # =============================================================================

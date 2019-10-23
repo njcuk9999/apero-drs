@@ -269,7 +269,7 @@ def apply_colormask(lines, colormask, table):
         # make sure colormask is the same length as table
         if len(colormask) == len(table):
             # set the initial line number
-            row = 1
+            row = 0
             # set new lines storage
             newlines = []
             # loop around old lines
@@ -283,11 +283,11 @@ def apply_colormask(lines, colormask, table):
                 # if we have a line we need to edit it
                 if line.strip() == r'<tr>':
                     # skip the header
-                    if row > len(colormask):
+                    if row >= len(colormask):
                         newlines.append(line)
                         continue
                     # if true line is good
-                    if colormask[-row]:
+                    if colormask[row]:
                         newline = line.replace(r'<tr>', goodcmd)
                     # else line is bad
                     else:
