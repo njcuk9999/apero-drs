@@ -577,15 +577,20 @@ class Plotter:
         # set up section
         doc.section(self.textdict['40-100-01011'])
         doc.newline()
-        # add warnings
-        for it, warning in enumerate(self.warnings):
-            # get time and message
-            wtime, wmsg = warning
-            # clean message
-            message = clean(wmsg)
-            # add text
-            doc.add_text('{0}: {1}'.format(wtime, message))
+        # deal with no warnings
+        if len(self.warnings) == 0:
+            doc.add_text('None')
             doc.newline()
+        else:
+            # add warnings
+            for it, warning in enumerate(self.warnings):
+                # get time and message
+                wtime, wmsg = warning
+                # clean message
+                message = clean(wmsg)
+                # add text
+                doc.add_text('{0}: {1}'.format(wtime, message))
+                doc.newline()
         # return the doc
         return doc
 
@@ -741,15 +746,20 @@ class Plotter:
         # set up section
         doc.section(self.textdict['40-100-01011'])
         doc.newline()
-        # add warnings
-        for it, warning in enumerate(self.warnings):
-            # get time and message
-            wtime, wmsg = warning
-            # clean message
-            message = clean(wmsg)
-            # add text
-            doc.add_text('{0}: {1}'.format(wtime, message))
+        # deal with no warnings
+        if len(self.warnings) == 0:
+            doc.add_text('None')
             doc.newline()
+        else:
+            # add warnings
+            for it, warning in enumerate(self.warnings):
+                # get time and message
+                wtime, wmsg = warning
+                # clean message
+                message = clean(wmsg)
+                # add text
+                doc.add_text('{0}: {1}'.format(wtime, message))
+                doc.newline()
         # return the doc
         return doc
 
