@@ -394,31 +394,36 @@ class Logger:
             self.textdict = TextDict(self.instrument, self.language)
             self.helptext = HelpText(self.instrument, self.language)
 
-    def output_param_dict(self, paramdict):
+    def output_param_dict(self, paramdict, new=False):
         func_name = __NAME__ + '.Logger.output_param_dict()'
         # get the process id from paramdict
         pid = paramdict['PID']
+        # deal with new switch
+        if new:
+            pdict = ParamDict()
+        else:
+            pdict = paramdict
         # deal with no pid being set
         if pid not in self.pout:
             # get log storage keys
             storekey = self.pconstant.LOG_STORAGE_KEYS()
             for key in storekey:
-                paramdict[key] = []
+                pdict[key] = []
                 # set the source
-                paramdict.set_source(key, func_name)
+                pdict.set_source(key, func_name)
             # return the parameter dictionary
-            return paramdict
+            return pdict
         # loop around the keys in pout
         for key in self.pout[pid]:
             # get value
             value = self.pout[pid][key]
             # set value from pout (make sure it is copied)
-            paramdict[key] = type(value)(value)
+            pdict[key] = type(value)(value)
             # set source from pout
             psource = self.pout[pid].sources.get(key, func_name)
-            paramdict.set_source(key, psource)
+            pdict.set_source(key, psource)
         # return paramdict
-        return paramdict
+        return pdict
 
     def logger_storage(self, params, key, ttime, mess, printonly=False):
         func_name = __NAME__ + '.Logger.logger_storage()'
