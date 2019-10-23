@@ -2,6 +2,298 @@ Changelog
 =========
 
 
+0.5.097 (2019-10-23)
+--------------------
+- Science.velocity.general.py - change arguments (found_rv --> rv) [Neil
+  Cook]
+- Science.telluric.general.py - add recipe to inputs (for plotting)
+  [Neil Cook]
+- Science.calib.wave.py - fix plots + force wave modes to ints (were
+  strings) [Neil Cook]
+- Recipe.obj_mk_tellu_spirou.py - add debug and summary plots. [Neil
+  Cook]
+- Recipe.spirou.cal_loc_spirou.py - fix check coeffs (Etiennes fix)
+  [Neil Cook]
+- Plotting.*.py - add mktellu plots, fix ioff in pdb, fix mask order in
+  html, add warnings to summary document. [Neil Cook]
+- Plotting.*.py - add mktellu plots, fix ioff in pdb, fix mask order in
+  html, add warnings to summary document. [Neil Cook]
+- Update the language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add mktellu plot
+  outputs. [Neil Cook]
+- Core.instruments.*.default_constants.py - add wave and mktellu plot
+  constants. [Neil Cook]
+- Drs_log.py - allow use of output_param_dict without updating parameter
+  dictionary. [Neil Cook]
+
+
+0.5.096 (2019-10-17)
+--------------------
+- Update language database. [Neil Cook]
+- Science.velocity.general.py - add rv_fit plot. [Neil Cook]
+- Science.calib.wave.py - add plotting. [Neil Cook]
+- Plotting.plot_functions.py - add wave plotting functions. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add wave plots (and a
+  ccf plot) [Neil Cook]
+- Core.instruments.*.default_constants.py - add WAVE plot constants.
+  [Neil Cook]
+- SpirouWAVE2.py - remove todo statement. [Neil Cook]
+
+
+0.5.095 (2019-10-16)
+--------------------
+- Math.fast.py - rearrange imports. [Neil Cook]
+- Recipes/spirou/cal_loc_spirou.py - fix problems with clean loc coeffs.
+  [Neil Cook]
+- Lin_mini_upgrade.py - raw source code from Etienne. [Neil Cook]
+- Plotting.plot_functions.py - close plots if we have an open (before
+  plot loop) + fix loc ceoff plot. [Neil Cook]
+- Plotting.py - add self.plots_active (flag that is true when we have
+  plots open in interactive mode) [Neil Cook]
+- Core.math.fast.py + general.py - add linear minimisation speed up
+  using numba (if present on system) [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add master_run,
+  calib_run and science_run (for trigger?) [Neil Cook]
+- Core.instruments.*.default_constants.py - add loc plot/clean up coeff
+  constants. [Neil Cook]
+- Core.core.drs_recipe.py - in add_extras value can now be objects other
+  than string --> re-test instance. [Neil Cook]
+- Core.core.drs_recipe.py - fix how we identify special list keys
+  (arguments that come from params but are lists) [Neil Cook]
+- Core.core.drs_recipe.py - fix new_runs in _gen_run. [Neil Cook]
+- Core.core.drs_recipe.py + tools.module.setup.drs_reprocess.py - deal
+  with multiple extra arguments better (from sequences) [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - obj_mk_template need
+  objname arguments. [Neil Cook]
+
+
+0.5.094 (2019-10-15)
+--------------------
+- Core.instruemnts.spirou.recipe_definitions.py - fix the full run and
+  remove science run sequences. [Neil Cook]
+- Core.instruemnts.spirou.recipe_definitions.py - add back mk and fit
+  tellu limited run individual commands (for object specific) [Neil
+  Cook]
+- Science.calib.wave.py - remove interactive plot sections and add
+  WAVE_HC_GUESS plot. [Neil Cook]
+- Science.calib.shape.py - deal with norm_fp being zero (skip) [Neil
+  Cook]
+- Science.calib.localisation.py - add check_coeffs function. [Neil Cook]
+- Recipe.spirou.cal_loc_spirou.py - check coefficient and sigma clip /
+  smooth them between orders. [Neil Cook]
+- Plotting.plot_functions.py - add plot_loc_check_coeffs and
+  plot_wave_hc_guess. [Neil Cook]
+- Core.math.general.py - add robust_polyfit. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add loc and wave
+  plots. [Neil Cook]
+- Core.instruments.*.default_constants.py - add loc and wave plot
+  constants. [Neil Cook]
+- Plotting - make sure location is set in all recipes. [Neil Cook]
+
+
+0.5.093 (2019-10-14)
+--------------------
+- Core.instruments.spirou.recipe_definitions.py +
+  recipes.spirou.obj_fit_tellu_spirou.py - must add s1d plot args to
+  fit_tellu. [njcuk9999]
+
+
+0.5.092 (2019-10-13)
+--------------------
+- Plotting.core.py + latex.py - update layout for stat + qc tables + try
+  to latex floating orders. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.extract.general.py - add fiber to e2ds_to_s1d inputs (for
+  plotting) [Neil Cook]
+- Plotting.*.py - continue work on plotting. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - adjust extract s1d zoom
+  parameters. [Neil Cook]
+- Recipe.spirou.*.py - add recipe.plot.set_location (need iterator)
+  [Neil Cook]
+- Plotting.plot_functions.py - remove full spectrum plot (too big) [Neil
+  Cook]
+- Science.extract.general.py - move qc and file writing to functions.
+  [Neil Cook]
+- Cal_extract_spirou.py - add plots + summary document. [Neil Cook]
+- Plotting.plot_functions.py - add extraction plots. [Neil Cook]
+- Plotter.core.py - update test case. [Neil Cook]
+- Update object query list file. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add plot definitions
+  to recipe. [Neil Cook]
+- Core.instruments.*.default_constants.py - add extract plot constants.
+  [Neil Cook]
+- Core.core.drs_recipe.py - correct problem with recipes that have no
+  file arguments (were just being skipped) [Neil Cook]
+- Core.core.drs_file.py - correct a problem with using fibers = [None]
+  [Neil Cook]
+- Plotting.core.py - fix the addition of fibers to qc_params and stat
+  table. [Neil Cook]
+
+
+0.5.091 (2019-10-11)
+--------------------
+- Add a section to how to (to fill in later) [Neil Cook]
+- Science.calib.shape.py - move qc and file writing to module + todo
+  identified problem. [Neil Cook]
+- Science.calib.localisation.py - move qc and file writing to module.
+  [Neil Cook]
+- Science.calib.flat_blaze.py - move qc and file writing to module.
+  [Neil Cook]
+- Recipe.spirou. badpix, dark, flat, loc, shape, shape_master - add
+  plotting. [Neil Cook]
+- Plotting.*.py - continue adding plotting functionality. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add plots to shape and
+  flat recipes. [Neil Cook]
+- Core.math.general.py - fix sigfig (deal with zero and non-finites)
+  [Neil Cook]
+- Core.instruments.*.default_constants.py - add plotting constants.
+  [Neil Cook]
+
+
+0.5.090 (2019-10-10)
+--------------------
+- Recipe.spirou.cal_shape_master_spirou.py + science.calib.shape.py -
+  add plots. [Neil Cook]
+- Recipe.spirou.cal_loc_spirou.py - fix typo in qc. [Neil Cook]
+- Plotting.*.py - continue work on plotting functionality. [Neil Cook]
+- Core.math.general.py - add the sigfig function. [Neil Cook]
+- Update the language database. [Neil Cook]
+- Core.instruments.spirou.recipe_defintions.py - add some plots to
+  cal_shape_master. [Neil Cook]
+- Core.instruments.*.default_constants.py - add plot constants. [Neil
+  Cook]
+
+
+0.5.089 (2019-10-10)
+--------------------
+- Continue adding plotting. [Neil Cook]
+- Update how to terrapipe guide. [Neil Cook]
+- Update language database. [Neil Cook]
+- Data.core..pdbrc - need to go up two levels (up via exception) [Neil
+  Cook]
+- Core.isntruments.spirou.recipe_definitions.py - add loc graphs. [Neil
+  Cook]
+- Core.instruments.*.default_constants.py - add plot constants. [Neil
+  Cook]
+- Core.core.drs_startup.py - change plotter --> plot, move end plotting
+  to plotter. [Neil Cook]
+- Core.core.drs_recipe.py - change plotter --> plot. [Neil Cook]
+- Core.constants.param_functions.py - fix ipdb exception on exit. [Neil
+  Cook]
+
+
+0.5.088 (2019-10-08)
+--------------------
+- Tools.module.setup.drs_reprocess.py - add plot closing and fix bugs
+  with nightname/str_arg_list and self.recipe.args. [Neil Cook]
+- Reprocess.py + telluric_db recipes - change how process_run_list works
+  (now needs recipe) [Neil Cook]
+- Recipe.spirou.cal_dark_spirou.py - add plots. [Neil Cook]
+- Recipe.spirou.cal_badpix_spirou.py - add plots. [Neil Cook]
+- Plotting.*.py - add html, fix some latex issues and add dark/badpix
+  plot definitions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add debug/summary plot
+  definitions to cal_dark and cal_badpix. [Neil Cook]
+- Core.instruments.default.pseudo_const.py - fix night name in
+  index_lock_filename definition. [Neil Cook]
+- Core.instruments.output_filenames.py - fix nightname. [Neil Cook]
+- Core.instruments.*.defaul_* - add plotting constants. [Neil Cook]
+- How_to_terrapipe.md - add readme file on how to develop using
+  terrapipe. [Neil Cook]
+- Core.core.drs_recipe.py add set_debug_plots and set_summary_plots.
+  [Neil Cook]
+
+
+0.5.087 (2019-10-07)
+--------------------
+- Core.constants.param_functions.py - if breakpoints does not have
+  params force allow_breakpoints. [Neil Cook]
+
+
+0.5.086 (2019-10-06)
+--------------------
+- Tools.module.setup.drs_reprocess.py - deal with input nightname and
+  filename. [njcuk9999]
+- Science.calib.wave.py - change 'night_name' to nightname. [njcuk9999]
+- Update language database. [njcuk9999]
+- Core.core.drs_recipe.py - remove breakpoint. [njcuk9999]
+- Core.instruments.default.default_config.py - add allow_breakpoints
+  constant. [njcuk9999]
+- Core.core.drs_recipe.py + drs_startup.py - add breakpoint special
+  argument. [njcuk9999]
+- Core.core.drs_argument.py - add breakpoint special argument.
+  [njcuk9999]
+- Core.constants.constant_functions.py - add break point to allow
+  stopping at certain point in the code easily. [njcuk9999]
+- Core.constants.__init__.py - add break point to aliases. [njcuk9999]
+
+
+0.5.085 (2019-10-05)
+--------------------
+- Tools.module.setup.drs_reprocess.py - add filename and nightname from
+  inputs. [njcuk9999]
+- Replace . imports with terrapipe imports. [njcuk9999]
+- Plotting.core.py - replace . imports with terrapipe + store debug
+  plots. [njcuk9999]
+- Locale.core.*.py - replace . imports with terrapipe imports.
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- Io.*.py - replace . imports with terrapipe imports. [njcuk9999]
+- Core.__init__.py - replace . imports with terrapipe imports.
+  [njcuk9999]
+- Core.math.* - replace . imports with terrapipe imports. [njcuk9999]
+- Core.instruments.default.file_definitions.py - remove call to
+  output_filenames. [njcuk9999]
+- Core.instruments.*.recipe_definitions.py - remove drs_interactive and
+  add filename to reprocess definition. [njcuk9999]
+- Core.instruments.*.default_config - remove drs_interactive and add
+  drs_plot_ext and drs_summary_ext. [njcuk9999]
+- Core.core.* - remove . imports and add plotter to drs_startup.
+  [njcuk9999]
+- Core.core.__init__.py - remove imports. [njcuk9999]
+- Core.constants - move . imports to terrapipe imports. [njcuk9999]
+
+
+0.5.084 (2019-10-04)
+--------------------
+- Update language database. [Neil Cook]
+- Core.core.drs_recipe.py - record sys.argv to self.str_arg_list if not
+  from fkwargs. [Neil Cook]
+- Plotting - add in latex functions and summary plot. [Neil Cook]
+
+
+0.5.083 (2019-10-03)
+--------------------
+- Tools.modules.setup.drs_reprocess.py - change closeall (now in
+  plotter) [Neil Cook]
+- Modify inputs to core.post_main (tools) [Neil Cook]
+- Modify inputs to core.post_main (tools) [Neil Cook]
+- Continue work on plotting functions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_path.py - add makedirs function. [Neil Cook]
+- Core.core.drs_startup.py - remove call to plotter module (and get via
+  recipe) [Neil Cook]
+- Change inputs to core.post_main() [Neil Cook]
+- Start work on plotting. [Neil Cook]
+- Update the language database. [Neil Cook]
+- Core.instruments.spirou.py - only calculate ccf for science targets.
+  [Neil Cook]
+- Core.core.drs_file.py - fix type keyword in check_table_filename
+  should be "allowedfibers" not "fiber" [Neil Cook]
+- Core.instruments.spirou.default_constants.py - change default ccf
+  width to 300 km/s. [Neil Cook]
+- Update object list. [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - add ccf to limited
+  run. [Neil Cook]
+- Core.instruments.default.output_filenames.py - need to re-get insuffix
+  in fiber loop. [Neil Cook]
+- Core.core.drs_file.py - fix adding fiber to historic files. [Neil
+  Cook]
+- Update changelog/version/date. [Neil Cook]
+- Update object list. [njcuk9999]
+
+
 0.5.082 (2019-10-02)
 --------------------
 - Tools.module.setup.drs_reprocess.py - deal with traceback as a list or
@@ -189,6 +481,10 @@ Changelog
 - Core.core.drs_log.py - always have log file (put it in home directory)
   [Neil Cook]
 - Update changelog/date/version. [Neil Cook]
+
+
+0.5.075 (2019-09-20)
+--------------------
 - Tools.module.setup.drs_reprocess.py - set filemod and recipemod for
   srecipes that do not have them set. [Neil Cook]
 - Science.telluric.general.py - guess the sed that goes in (not just
