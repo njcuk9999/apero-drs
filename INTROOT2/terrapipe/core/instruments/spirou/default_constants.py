@@ -480,16 +480,9 @@ LOC_ORDER_CURVE_DROP.value = 2.0
 LOC_COEFF_SIGCLIP = LOC_COEFF_SIGCLIP.copy(__NAME__)
 LOC_COEFF_SIGCLIP.value = 7
 
-#   Defines the percentage (as a fraction) allowed in the coefficient
-#       cleaning to stop over fitting (i.e. any fit good to within this
-#       percentage of the largest fit degree
-LOC_COEFF_SIGPER = LOC_COEFF_SIGPER.copy(__NAME__)
-LOC_COEFF_SIGPER.value = 0.2
-
-#  Defines the maximum fit degree to fit in the coefficient cleaning
-#     these may be over fit but this is controlled by LOC_COEFF_SIGPER
-LOC_COEFFSIG_MAXDEG = LOC_COEFFSIG_MAXDEG.copy(__NAME__)
-LOC_COEFFSIG_MAXDEG.value = 8
+#  Defines the fit degree to fit in the coefficient cleaning
+LOC_COEFFSIG_DEG = LOC_COEFFSIG_DEG.copy(__NAME__)
+LOC_COEFFSIG_DEG.value = 7
 
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
@@ -1073,6 +1066,21 @@ WAVE_HC_RES_MAXDEV_THRES.value = 8
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = WAVE_HC_QC_SIGMA_MAX.copy(__NAME__)
 WAVE_HC_QC_SIGMA_MAX.value = 8
+
+# Defines the dv span for PLOT_WAVE_HC_RESMAP debug plot, should be a
+#    string list containing a min and max dv value
+WAVE_HC_RESMAP_DV_SPAN = WAVE_HC_RESMAP_DV_SPAN.copy(__NAME__)
+WAVE_HC_RESMAP_DV_SPAN.value = '-15, 15'
+
+# Defines the x limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
+#   string list containing a min and max x value
+WAVE_HC_RESMAP_XLIM = WAVE_HC_RESMAP_XLIM.copy(__NAME__)
+WAVE_HC_RESMAP_XLIM.value = '-8.0, 8.0'
+
+# Defines the y limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
+#   string list containing a min and max y value
+WAVE_HC_RESMAP_YLIM = WAVE_HC_RESMAP_YLIM.copy(__NAME__)
+WAVE_HC_RESMAP_YLIM.value = '-0.05, 0.7'
 
 # Define the minimum instrumental error
 WAVE_FP_ERRX_MIN = WAVE_FP_ERRX_MIN.copy(__NAME__)
@@ -1830,6 +1838,14 @@ PLOT_WAVE_FP_MULTI_ORDER.value = True
 # turn on the wave solution fp single order debug plot
 PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
 PLOT_WAVE_FP_SINGLE_ORDER.value = True
+
+# turn on the make tellu wave flux debug plot (in loop)
+PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
+PLOT_MKTELLU_WAVE_FLUX1.value = False
+
+# turn on the make tellu wave flux debug plot (single order)
+PLOT_MKTELLU_WAVE_FLUX2 = PLOT_MKTELLU_WAVE_FLUX2.copy(__NAME__)
+PLOT_MKTELLU_WAVE_FLUX2.value = True
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)

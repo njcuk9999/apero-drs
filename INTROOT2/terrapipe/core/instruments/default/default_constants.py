@@ -65,7 +65,7 @@ __all__ = [
     'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
     'LOC_ORDER_CURVE_DROP', 'LOC_PLOT_CORNER_XZOOM1', 'LOC_PLOT_CORNER_XZOOM2',
     'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2', 'LOC_COEFF_SIGCLIP',
-    'LOC_COEFF_SIGPER', 'LOC_COEFFSIG_MAXDEG',
+    'LOC_COEFFSIG_DEG',
     # shape constants
     'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
     'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
@@ -125,7 +125,8 @@ __all__ = [
     'WAVE_HC_TFIT_ORDER_FIT_CONT', 'WAVE_HC_TFIT_SIGCLIP_NUM',
     'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
     'WAVE_HC_TFIT_DVCUT_ALL', 'WAVE_HC_RESMAP_SIZE', 'WAVE_HC_RES_MAXDEV_THRES',
-    'WAVE_HC_QC_SIGMA_MAX',
+    'WAVE_HC_QC_SIGMA_MAX', 'WAVE_HC_RESMAP_DV_SPAN', 'WAVE_HC_RESMAP_XLIM',
+    'WAVE_HC_RESMAP_YLIM',
     # wave littrow parameters
     'WAVE_LITTROW_ORDER_INIT_1', 'WAVE_LITTROW_ORDER_INIT_2',
     'WAVE_LITTROW_ORDER_FINAL_1', 'WAVE_LITTROW_ORDER_FINAL_2',
@@ -199,6 +200,7 @@ __all__ = [
     'PLOT_WAVE_FP_WAVE_RES', 'PLOT_WAVE_FP_M_X_RES', 'PLOT_WAVE_FP_LL_DIFF',
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
+    'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
@@ -607,16 +609,9 @@ LOC_ORDER_CURVE_DROP = Const('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
 LOC_COEFF_SIGCLIP = Const('LOC_COEFF_SIGCLIP', value=None, dtype=float,
                           source=__NAME__, minimum=0)
 
-#   Defines the percentage (as a fraction) allowed in the coefficient
-#       cleaning to stop over fitting (i.e. any fit good to within this
-#       percentage of the largest fit degree
-LOC_COEFF_SIGPER = Const('LOC_COEFF_SIGPER', value=None, dtype=float,
-                         source=__NAME__, minimum=0)
-
-#  Defines the maximum fit degree to fit in the coefficient cleaning
-#     these may be over fit but this is controlled by LOC_COEFF_SIGPER
-LOC_COEFFSIG_MAXDEG = Const('LOC_COEFFSIG_MAXDEG', value=None, dtype=int,
-                            source=__NAME__, minimum=1)
+#  Defines the fit degree to fit in the coefficient cleaning
+LOC_COEFFSIG_DEG = Const('LOC_COEFFSIG_DEG', value=None, dtype=int,
+                         source=__NAME__, minimum=1)
 
 # Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
@@ -1244,6 +1239,21 @@ WAVE_HC_RES_MAXDEV_THRES = Const('WAVE_HC_RES_MAXDEV_THRES', value=None,
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
                              source=__NAME__, minimum=0.0)
+
+# Defines the dv span for PLOT_WAVE_HC_RESMAP debug plot, should be a
+#    string list containing a min and max dv value
+WAVE_HC_RESMAP_DV_SPAN = Const('WAVE_HC_RESMAP_DV_SPAN', value=None, dtype=str,
+                             source=__NAME__)
+
+# Defines the x limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
+#   string list containing a min and max x value
+WAVE_HC_RESMAP_XLIM = Const('WAVE_HC_RESMAP_XLIM', value=None, dtype=str,
+                             source=__NAME__)
+
+# Defines the y limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
+#   string list containing a min and max y value
+WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None, dtype=str,
+                             source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
@@ -1985,6 +1995,14 @@ PLOT_WAVE_FP_MULTI_ORDER = Const('PLOT_WAVE_FP_MULTI_ORDER', value=False,
 # turn on the wave solution fp single order debug plot
 PLOT_WAVE_FP_SINGLE_ORDER = Const('PLOT_WAVE_FP_SINGLE_ORDER', value=False,
                                   dtype=bool, source=__NAME__)
+
+# turn on the make tellu wave flux debug plot (in loop)
+PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
+                                dtype=bool, source=__NAME__)
+
+# turn on the make tellu wave flux debug plot (single order)
+PLOT_MKTELLU_WAVE_FLUX2 = Const('PLOT_MKTELLU_WAVE_FLUX2', value=False,
+                                dtype=bool, source=__NAME__)
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,
