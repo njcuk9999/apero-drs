@@ -497,9 +497,9 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
 # =============================================================================
 # Make telluric functions
 # =============================================================================
-def calculate_telluric_absorption(params, image, template, template_file,
-                                  header, wprops, tapas_props, bprops,
-                                  **kwargs):
+def calculate_telluric_absorption(params, recipe, image, template,
+                                  template_file, header, wprops, tapas_props,
+                                  bprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
     default_conv_width = pcheck(params, 'MKTELLU_DEFAULT_CONV_WIDTH',
@@ -676,8 +676,7 @@ def calculate_telluric_absorption(params, image, template, template_file,
 
     # set up empty arrays
     oimage2_arr = np.zeros((nbo, nbpix), dtype=float)
-    # sed_update_arr = np.zeros(nbpix, dtype=float)
-    # keep = np.zeros(nbpix, dtype=bool)
+    keep = np.zeros(nbpix, dtype=bool)
     # loop around until one condition not met
     while cond1 and cond2 and cond3:
         # ---------------------------------------------------------------------
@@ -859,22 +858,10 @@ def calculate_telluric_absorption(params, image, template, template_file,
             sed[order_num] = sed_update
             # append sp3
             oimage2_arr[order_num] = np.array(oimage2)
-            # -----------------------------------------------------------------
-            # debug plot
-            if params['DRS_PLOT'] and params['DRS_DEBUG'] and not skip:
-                # TODO: Add plotting
-                # # plot the transmission map plot
-                # pargs = [order_num, wavemap, tau1, image, oimage2,
-                #          sed, sed_update, keep]
-                # sPlt.mk_tellu_wave_flux_plot(params, *pargs)
-                # # get user input to continue or skip
-                # imsg = 'Press [Enter] for next or [s] for skip:\t'
-                # uinput = input(imsg)
-                # if 's' in uinput.lower():
-                #     skip = True
-                # # close plot
-                # sPlt.plt.close()
-                pass
+        # ---------------------------------------------------------------------
+        # debug wave flux plot
+        recipe.plot('MKTELLU_WAVE_FLUX1', keep=keep, wavemap=wavemap, tau1=tau1,
+                    sp=image, oimage=oimage2_arr, sed=sed, order=None)
         # ---------------------------------------------------------------------
         # update the iteration number
         iteration += 1
@@ -884,25 +871,15 @@ def calculate_telluric_absorption(params, image, template, template_file,
         cond2 = iteration < max_iteration
         cond3 = not fail
     # ---------------------------------------------------------------------
-    if params['DRS_PLOT'] and params['DRS_DEBUG']:
-        # TODO: Add plotting
-        # # if plot orders is 'all' plot all
-        # if plot_order_nums == 'all':
-        #     plot_order_nums = np.arange(nbo).astype(int)
-        #     # start non-interactive plot
-        #     sPlt.plt.ioff()
-        #     off = True
-        # else:
-        #     sPlt.plt.ion()
-        #     off = False
-        # # loop around the orders to show
-        # for order_num in plot_order_nums:
-        #     pargs = [order_num, wavemap, tau1, image, oimage2[order_num], sed,
-        #              sed[order_num], keep]
-        #     sPlt.mk_tellu_wave_flux_plot(params, *pargs)
-        # if off:
-        #     sPlt.plt.ion()
-        pass
+    # plot mk tellu wave flux plot for specified orders
+    for order_num in plot_order_nums:
+        # plot debug plot
+        recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=wavemap, tau1=tau1,
+                    sp=image, oimage=oimage2_arr, sed=sed, order=order_num)
+        # plot summary plot
+        recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=wavemap,
+                    tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
+                    order=order_num)
     # ---------------------------------------------------------------------
     # calculate transmission map
     transmission_map = image1 / sed
@@ -2121,7 +2098,8 @@ def mk_tellu_quality_control(params, tprops, infile, **kwargs):
     # add to qc header lists
     qc_values.append(recovered_water)
     qc_names.append('RECOV_WATER')
-    qc_logic.append('RECOV_WATER not between {0:.3f} & {1:.3f}'.format(*fargs))
+    qc_msg = 'RECOV_WATER not between {0:.3f} and {1:.3f}'
+    qc_logic.append(qc_msg.format(*fargs))
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
