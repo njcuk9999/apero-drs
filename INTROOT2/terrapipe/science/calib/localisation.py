@@ -107,7 +107,7 @@ def calculate_order_profile(params, image, **kwargs):
     return newimage
 
 
-def check_coeffs(params, recipe, coeffs, fiber):
+def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     """
     Check and correct the coefficients by rejecting misbehaving coefficients
     and smoothing with a robust fit
@@ -118,8 +118,7 @@ def check_coeffs(params, recipe, coeffs, fiber):
     """
     # get the sigma clipping cut off value
     nsigclip = params['LOC_COEFF_SIGCLIP']
-    nsigpercent = params['LOC_COEFF_SIGPER'] + 1
-    maxsigdeg = params['LOC_COEFFSIG_MAXDEG']
+    coeffdeg = params['LOC_COEFFSIG_DEG']
     # ----------------------------------------------------------------------
     # get fiber params
     pconst = constants.pload(params['INSTRUMENT'])
@@ -132,67 +131,60 @@ def check_coeffs(params, recipe, coeffs, fiber):
     coeffs = np.array(coeffs)
     # get the shape of coefficients
     nbo, nbcoeff = coeffs.shape
-    # get the index against which we'll fit the function
-    orders = np.arange(nbo, dtype=float)
+    # get the image shape
+    dim1, dim2 = image.shape
     # ----------------------------------------------------------------------
-    # if we have 2*N or 3*N we will fit per module N as to leave each fiber's
-    #    behaviour independent of the other fibers
-    parity = np.arange(nbo) % (nbo // num_fibers)
+    # define an x array and we'll determine the position along each order as a
+    # matrix of y values. These will be sanitized and used to compute new coeffs
+    xpix = np.linspace(0, dim2, nbcoeff * 10, dtype=float)
+    # y matrix full of zeros
+    ypix = np.zeros([nbo, len(xpix)])
+    # fill in ypix
+    for order_num in range(nbo):
+        ypix[order_num] = np.polyval(coeffs[order_num][::-1], xpix)
+    # sanity check
+    ypix_ini = np.array(ypix)
     # ----------------------------------------------------------------------
     # storage of output values
     new_coeffs = np.zeros_like(coeffs)
-    # storage for debug plot
-    good_arr = []
-    fit_arr = []
+    # we loop through fiber A and B and sanitize y position independently
+    for mod in range(int(nbo // num_fibers)):
+        # log progress
+        WLOG(params, '', TextEntry('40-013-00026', args=[mod]))
+        # index of Nth diffraction order
+        index = np.arange(nbo)
+        # keep either fiber A or B using modulo
+        index = index[(index % (nbo // num_fibers)) == mod]
+        # loop through xpix values and sanitize ypix values. y pix is fitted
+        # with a sigma-clipped 6 or 7th order polynomial
+        for it in range(len(xpix)):
+            # only use in the fit values falling on the science array. Otherwise
+            # the values are unconstrainted by flat field frames
+            good = (ypix[index, it] > 0) & (ypix[index, it] < dim2)
+            # robust polynomial fit
+            fit, keep = mp.robust_polyfit(index[good], ypix[index, it][good],
+                                          coeffdeg, nsigclip)
+            # put values back in the ypix matri
+            ypix[index, it] = np.polyval(fit, index)
     # ----------------------------------------------------------------------
-    # loop through coefficients orders
-    for it in range(nbcoeff):
-        # get the coeffs
-        icoeffs = coeffs[:, it]
-        # storage for plot
-        good_arr_i = []
-        fit_arr_i = []
-        # ------------------------------------------------------------------
-        # loop through unique parity values
-        for uparity in np.unique(parity):
-            # find values that have the right parity
-            good = parity == uparity
-            # try fitting Nth order (N from 0 to 7) and keep the lowest
-            #    order fit that is within nsigpercent
-            n_degrees = np.arange(0, maxsigdeg, 1)
-            # set up storage for the rms
-            rms = np.zeros_like(n_degrees, dtype=float)
-            # --------------------------------------------------------------
-            # loop around degrees to fit
-            for n_deg in n_degrees:
-                # calculate the fit for this coefficent
-                fitcoeffs, keep = mp.robust_polyfit(orders[good], icoeffs[good],
-                                                    n_deg, nsigclip)
-                # calculate the values for the fit
-                fitvals = np.polyval(fitcoeffs, orders[good][keep])
-                # calculate the rms for this coefficient
-                rms[n_deg] = np.nanmedian(np.abs(icoeffs[good][keep] - fitvals))
-            # --------------------------------------------------------------
-            # keep only the rms values below nsigpercent
-            nfit = np.min( (np.where(rms < np.min(rms) * nsigpercent))[0])
-            # select the lowest order fit that has a good RMS and update the
-            #    coefficients
-            fitcoeffs, keep = mp.robust_polyfit(orders[good], icoeffs[good],
-                                                nfit, nsigclip)
-            # get new coeff values
-            new_coeff = np.polyval(fitcoeffs, orders[good])
-            # append values for plots
-            good_arr_i.append(good)
-            fit_arr_i.append(new_coeff)
-            # update the values
-            new_coeffs[good, it] = new_coeff
-        # append values for plots
-        good_arr.append(good_arr_i)
-        fit_arr.append(fit_arr_i)
+    # storage for plotting
+    good_arr = []
+    # ----------------------------------------------------------------------
+    # re-fit the coefficients
+    for order_num in range(nbo):
+        # fit the order position using the sanitized ypix values
+        good = (ypix[order_num] > 0) & (ypix[order_num] < dim2)
+        # use the same order of coefficient
+        new_coeff_ord = np.polyfit(xpix[good], ypix[order_num, good], nbcoeff-1)
+        # push into new array
+        new_coeffs[order_num] = new_coeff_ord[::-1]
+        # storage for plotting
+        good_arr.append(good)
+
     # ----------------------------------------------------------------------
     # plot of the coeffs
-    recipe.plot('LOC_CHECK_COEFFS', orders=orders, coeffs=coeffs, parity=parity,
-                good=good_arr, fit=fit_arr, ncoeff=None)
+    recipe.plot('LOC_CHECK_COEFFS', ypix=ypix, ypix0=ypix_ini,
+                xpix=xpix, good=good_arr, kind=kind, image=image)
     # ----------------------------------------------------------------------
     return new_coeffs
 
