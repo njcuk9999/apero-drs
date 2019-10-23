@@ -176,10 +176,12 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Clean the coefficients (using a sanity check)
         # ------------------------------------------------------------------
-        cent_coeffs = localisation.check_coeffs(params, recipe, cent_coeffs,
-                                                fiber)
-        wid_coeffs = localisation.check_coeffs(params, recipe, wid_coeffs,
-                                               fiber)
+        # clean the center position fits
+        cargs = [image, cent_coeffs, fiber, 'center']
+        cent_coeffs = localisation.check_coeffs(params, recipe, *cargs)
+        # clean the width fits
+        wargs = [image, wid_coeffs, fiber, 'width']
+        wid_coeffs = localisation.check_coeffs(params, recipe, *wargs)
 
         # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values
@@ -193,6 +195,7 @@ def __main__(recipe, params):
         # get saturation threshold
         loc_sat_thres = params['LOC_SAT_THRES']
         sat_thres = loc_sat_thres * props['GAIN'] * num_files
+
         # plot image above saturation threshold
         recipe.plot('LOC_IM_SAT_THRES', image=image, xarr=xplot, yarr=yplot,
                     threshold=sat_thres, coeffs=cent_coeffs)
