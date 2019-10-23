@@ -433,7 +433,10 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     # get parameters from params / kwargs
     wave_mode_hc = pcheck(params, 'WAVE_MODE_HC', 'wave_mode_hc', kwargs,
                           func_name)
-
+    try:
+        wave_mode_hc = int(wave_mode_hc)
+    except ValueError:
+        pass
     # log the mode which is being used
     WLOG(params, 'info', TextEntry('40-017-00014', args=[wave_mode_hc]))
 
@@ -538,6 +541,10 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # get parameters from params / kwargs
     wave_mode_fp = pcheck(params, 'WAVE_MODE_FP', 'wave_mode_fp', kwargs,
                           func_name)
+    try:
+        wave_mode_fp = int(wave_mode_fp)
+    except ValueError:
+        pass
     # ----------------------------------------------------------------------
     # deep copy hcprops into llprops
     llprops = ParamDict()
@@ -607,8 +614,8 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     pconst = constants.pload(params['INSTRUMENT'])
     sfiber, rfiber = pconst.FIBER_CCF()
     # compute the ccf
-    rvprops = velocity.compute_ccf_fp(params, fpe2dsfile, fpe2dsfile.data,
-                                      blaze, llprops['LL_FINAL'], rfiber)
+    ccfargs = [fpe2dsfile, fpe2dsfile.data, blaze, llprops['LL_FINAL'], rfiber]
+    rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
     # merge rvprops into llprops (shallow copy)
     llprops.merge(rvprops)
     # ------------------------------------------------------------------
@@ -682,7 +689,7 @@ def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
     # FP solution plots
     # ------------------------------------------------------------------
     recipe.plot('WAVE_FP_FINAL_ORDER', llprops=llprops, fiber=fiber,
-                iteation=1, end=end)
+                iteration=1, end=end, fpdata=fpe2dsfile.data)
     recipe.plot('WAVE_FP_LWID_OFFSET', llprops=llprops)
     recipe.plot('WAVE_FP_WAVE_RES', llprops=llprops)
 
@@ -1286,8 +1293,12 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
         drs_table.write_table(params, ini_table, llprops['HCLLFILENAME'],
                               fmt=filefmt)
         # plot all orders w/fitted gaussians
-        recipe.plot('WAVE_HC_GUESS', params=params, wave=iprops['WAVEMAP'],
-                    spec=hc_sp, llprops=llprops, nbo=nbo)
+        # TODO: remove breakpoint
+        print('wave.py Line 1298')
+        constants.breakpoint(params)
+        if 0:
+            recipe.plot('WAVE_HC_GUESS', params=params, wave=iprops['WAVEMAP'],
+                        spec=hc_sp, llprops=llprops, nbo=nbo)
     # ----------------------------------------------------------------------
     # add constants to llprops
     llprops['NBO'] = nbo
@@ -1624,7 +1635,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         recipe.plot('WAVE_HC_BRIGHTEST_LINES', wave=wave_catalog, dv=dv,
                     mask=brightest_lines, iteration=sol_iteration,
-                    niter=n_iterations)
+                    niters=n_iterations)
         # ------------------------------------------------------------------
         # Keep only wave_catalog where values are finite
         # -----------------------------------------------------------------
@@ -1762,7 +1773,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         recipe.plot('WAVE_HC_TFIT_GRID', orders=orders, wave=wave_catalog,
                     recon=recon0, rms=gauss_rms_dev, xgau=xgau, ew=ew,
-                    iteration=sol_iteration, niter=n_iterations)
+                    iteration=sol_iteration, niters=n_iterations)
 
         # ------------------------------------------------------------------
         # Construct wave map
@@ -2174,8 +2185,8 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
     # ------------------------------------------------------------------
     # Plot wave solution littrow check
     plotname = 'WAVE_LITTROW_CHECK{0}'.format(iteration)
-    recipe.plot(plotname, params=params, llprops=llprops,
-                iteration=iteration, fiber=fiber)
+    recipe.plot(plotname, params=params, llprops=llprops, iteration=iteration,
+                fiber=fiber)
     # ------------------------------------------------------------------
     # extrapolate Littrow solution
     # ------------------------------------------------------------------
@@ -3702,9 +3713,13 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
         # fit d v wavelength w/sigma-clipping
         fit_ll_d, mask = sigclip_polyfit(params, hc_ll_test, d_arr, degree=9)
         # plot d vs 1/m fit and residuals
-        recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
-                    m_init=m_init, fit_1m_d_func=fit_1m_d_func,
-                    res_d_final=res_d_final, dopd0=dopd0)
+        # TODO: remove breakpoint
+        print('wave.py Line 3742')
+        constants.breakpoint(params)
+        if 0:
+            recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
+                        m_init=m_init, fit_1m_d_func=fit_1m_d_func,
+                        res_d_final=res_d_final, dopd0=dopd0)
 
         # save the parameters
         drs_data.save_cavity_files(params, fit_1m_d, fit_ll_d)
@@ -3718,6 +3733,7 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
     # calculate the fit value
     fitval = np.polyval(fit_ll_d, hc_ll_test)
     # plot the interp cavity width ll hc and fp plot
+    # TODO: original d needs fixing I think
     recipe.plot('WAVE_FP_IPT_CWID_LLHC', hc_ll=hc_ll_test, fp_ll=fp_ll,
                 d_arr=d_arr, fitval=fitval, dopd0=dopd0)
     # return variables
@@ -4121,7 +4137,7 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
     wavefile.construct_filename(params, infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
-    columnnames = ['nightname', 'file_name', 'fiber', 'mean', 'rms',
+    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
