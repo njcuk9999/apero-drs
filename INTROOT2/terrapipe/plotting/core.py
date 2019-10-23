@@ -80,6 +80,7 @@ class Plotter:
         self.stat_dict = OrderedDict()
         self.stats = None
         self.qc_params = OrderedDict()
+        self.warnings = None
         # get the text dictionary
         self.textdict = TextDict(self.params['INSTRUMENT'],
                                  self.params['LANGUAGE'])
@@ -262,7 +263,7 @@ class Plotter:
         if self.plotoption == 1:
             current_mode = 1
             self.plotoption = 2
-            self.plt.ioff()
+            self.interactive(False)
         else:
             current_mode = None
         # check that looplist is a valid list
@@ -284,7 +285,7 @@ class Plotter:
                 # must set the mode back to original (if changed)
                 if current_mode is not None:
                     self.plotoption = current_mode
-                    self.plt.ion()
+                    self.interactive(True)
                 # break out of while
                 break
             # if this is the first iteration do not print message
@@ -392,9 +393,13 @@ class Plotter:
     # ------------------------------------------------------------------
     # summary methods
     # ------------------------------------------------------------------
-    def summary_document(self, iteration, qc_params=None, stats=None):
+    def summary_document(self, iteration=None, qc_params=None, stats=None,
+                         warnings=True):
         func_name = display_func(self.params, 'summary_document', __NAME__,
                                  'Plotter')
+        # deal with iteration set
+        if iteration is not None:
+            self.set_location(iteration)
         # get recipe short name
         name = self.recipe.name
         # deal with no stats
@@ -409,7 +414,7 @@ class Plotter:
             # log progress
             WLOG(self.params, 'info', TextEntry('40-100-00004'))
             # latex document
-            latexdoc = self.summary_latex(qc_params, stats)
+            latexdoc = self.summary_latex(qc_params, stats, warnings)
         except Exception as e:
             # log error as warning
             wargs = [type(e), e, func_name]
@@ -422,7 +427,7 @@ class Plotter:
             # log progress
             WLOG(self.params, 'info', TextEntry('40-100-00005'))
             # latex document
-            htmldoc = self.summary_html(qc_params, stats)
+            htmldoc = self.summary_html(qc_params, stats, warnings)
         except Exception as e:
             # log error as warning
             wargs = [type(e), e, func_name]
@@ -436,7 +441,7 @@ class Plotter:
         if htmldoc is not None:
             htmldoc.cleanup()
 
-    def summary_latex(self, qc_params, stats):
+    def summary_latex(self, qc_params, stats, warnings):
         # set up the latex document
         doc = latex.LatexDocument(self.summary_filename)
         # get recipe short name
@@ -487,6 +492,12 @@ class Plotter:
         latex.cmd('clearpage')
         # add stats section
         self.summary_latex_stats(doc, stats)
+        # add warnings sections
+        if warnings:
+            # get warnings
+            self.add_warnings()
+            # populate latex document with warnings
+            self.summary_latex_warnings(doc)
         # end the document properly
         doc.end()
         # write and compile latex file
@@ -494,6 +505,10 @@ class Plotter:
         # get log file
         logfile = drs_log.get_logfilepath(WLOG, self.params)
         doc.compile(logfile + '.latex')
+        # check that pdf was created
+        if not os.path.exists(doc.pdffilename):
+            wargs = [doc.pdffilename]
+            WLOG(self.params, 'warning', TextEntry('', args=wargs))
         # return the doc
         return doc
 
@@ -555,7 +570,26 @@ class Plotter:
             # insert table
             doc.insert_table(stats_latex, caption=caption)
 
-    def summary_html(self, qc_params, stats):
+    def summary_latex_warnings(self, doc):
+        # deal with warnings unset
+        if self.warnings is None:
+            return doc
+        # set up section
+        doc.section(self.textdict['40-100-01011'])
+        doc.newline()
+        # add warnings
+        for it, warning in enumerate(self.warnings):
+            # get time and message
+            wtime, wmsg = warning
+            # clean message
+            message = clean(wmsg)
+            # add text
+            doc.add_text('{0}: {1}'.format(wtime, message))
+            doc.newline()
+        # return the doc
+        return doc
+
+    def summary_html(self, qc_params, stats, warnings):
         summary_filename = self.summary_filename
         # set up the latex document
         doc = html.HtmlDocument(summary_filename)
@@ -596,6 +630,12 @@ class Plotter:
         self.summary_html_qc_params(doc, qc_params)
         # add stats section
         self.summary_html_stats(doc, stats)
+        # add warnings sections
+        if warnings:
+            # get warnings
+            self.add_warnings()
+            # populate latex document with warnings
+            self.summary_html_warnings(doc)
         # end the document properly
         doc.end()
         # write and compile latex file
@@ -694,6 +734,25 @@ class Plotter:
         if has_fibers:
             self.stats['FIBER'] = fibers
 
+    def summary_html_warnings(self, doc):
+        # deal with warnings unset
+        if self.warnings is None:
+            return doc
+        # set up section
+        doc.section(self.textdict['40-100-01011'])
+        doc.newline()
+        # add warnings
+        for it, warning in enumerate(self.warnings):
+            # get time and message
+            wtime, wmsg = warning
+            # clean message
+            message = clean(wmsg)
+            # add text
+            doc.add_text('{0}: {1}'.format(wtime, message))
+            doc.newline()
+        # return the doc
+        return doc
+
     def add_stat(self, key, value, comment=None, fiber=None):
 
         if fiber is None:
@@ -723,6 +782,15 @@ class Plotter:
     def add_qc_params(self, qc_params, fiber):
         # add qc_params for this fiber
         self.qc_params[fiber] = qc_params
+
+    def add_warnings(self, params=None):
+        # deal with unset params
+        if params is None:
+            params = self.params
+        # add the logger messages to params
+        odict = WLOG.output_param_dict(params, new=True)
+        # set warnings
+        self.warnings = odict['LOGGER_WARNING']
 
     # ------------------------------------------------------------------
     # internal methods
