@@ -923,12 +923,12 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # loop around every order
     recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
                 y=props['CCF'], yfit=props['CCF_FIT'], kind='FP',
-                found_rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
+                rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
                 y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN FP',
-                found_rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
+                rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
                 orders=None, order=None)
 
     # TODO : Add QC of the FP CCF once they are defined
