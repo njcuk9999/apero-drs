@@ -619,9 +619,9 @@ cal_wave.set_kwarg(**shapeyfile)
 cal_wave.set_kwarg(**shapelfile)
 cal_wave.set_kwarg(**wavefile)
 cal_wave.set_kwarg(name='-hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
-                   options=[0], default_ref='WAVE_MODE_HC')
+                   options=['0'], default_ref='WAVE_MODE_HC')
 cal_wave.set_kwarg(name='-fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
-                   options=[0, 1], default_ref='WAVE_MODE_FP')
+                   options=['0', '1'], default_ref='WAVE_MODE_FP')
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -646,8 +646,8 @@ cal_ccf.extension = 'fits'
 cal_ccf.description = Help['CCF_DESC']
 cal_ccf.epilog = Help['CCF_EXAMPLE']
 cal_ccf.set_outputs(CCF_RV=sf.out_ccf_fits)
-cal_wave.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-cal_wave.set_summary_plots()
+cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+cal_ccf.set_summary_plots()
 cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
@@ -680,6 +680,8 @@ obj_mk_tellu.description = Help['MKTELL_DESC']
 obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
 obj_mk_tellu.set_outputs(TELLU_CONV=sf.out_tellu_conv,
                          TELLU_TRANS=sf.out_tellu_trans)
+obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2')
+obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX')
 obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
