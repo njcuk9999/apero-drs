@@ -164,126 +164,15 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Quality control
         # ----------------------------------------------------------------------
-        # set passed variable and fail message list
-        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-        # ------------------------------------------------------------------
-        # check that transform is not None
-        if transform is None:
-            fail_msg.append(textdict['40-014-00034'])
-            qc_pass.append(0)
-        else:
-            qc_pass.append(1)
-        qc_values.append('None')
-        qc_names.append('Image Quality')
-        qc_logic.append('Image too poor')
-        # ------------------------------------------------------------------
-        # check that the x and y residuals are low enough
-        qc_res = params['SHAPE_QC_LTRANS_RES_THRES']
-        # assess quality of x residuals
-        if xres > qc_res:
-            fail_msg.append(textdict['40-014-00035'].format(xres, qc_res))
-            qc_pass.append(0)
-        else:
-            qc_pass.append(1)
-        qc_values.append(xres)
-        qc_names.append('XRES')
-        qc_logic.append('XRES > {0}'.format(qc_res))
-        # assess quality of x residuals
-        if yres > qc_res:
-            fail_msg.append(textdict['40-014-00036'].format(yres, qc_res))
-            qc_pass.append(0)
-        else:
-            qc_pass.append(1)
-        qc_values.append(yres)
-        qc_names.append('YRES')
-        qc_logic.append('YRES > {0}'.format(qc_res))
-        # ------------------------------------------------------------------
-        # finally log the failed messages and set QC = 1 if we pass the
-        # quality control QC = 0 if we fail quality control
-        if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', TextEntry('40-005-10001'))
-            passed = 1
-        else:
-            for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-            passed = 0
-        # store in qc_params
-        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+        qc_params, passed = shape.shape_local_qc(params, transform, xres, yres)
 
         # ------------------------------------------------------------------
         # Writing shape to file
         # ------------------------------------------------------------------
-        # define outfile
-        outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(recipe=recipe)
-        # construct the filename from file instance
-        outfile.construct_filename(params, infile=infile)
-        # ------------------------------------------------------------------
-        # define header keys for output file
-        # copy keys from input file
-        outfile.copy_original_keys(infile)
-        # add version
-        outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        outfile.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        outfile.add_hkey('KW_OUTPUT', value=outfile.name)
-        # add input files (and deal with combining or not combining)
-        if combine:
-            hfiles = rawfiles
-        else:
-            hfiles = [infile.basename]
-        outfile.add_hkey_1d('KW_INFILE1', values=hfiles,
-                             dim1name='hcfiles')
-        # add the calibration files use
-        outfile = general.add_calibs_to_header(outfile, props)
-        # add qc parameters
-        outfile.add_qckeys(qc_params)
-        # add shape transform parameters
-        outfile.add_hkey('KW_SHAPE_DX', value=transform[0])
-        outfile.add_hkey('KW_SHAPE_DY', value=transform[1])
-        outfile.add_hkey('KW_SHAPE_A', value=transform[2])
-        outfile.add_hkey('KW_SHAPE_B', value=transform[3])
-        outfile.add_hkey('KW_SHAPE_C', value=transform[4])
-        outfile.add_hkey('KW_SHAPE_D', value=transform[5])
-        # copy data
-        outfile.data = [transform]
-        # ------------------------------------------------------------------
-        # log that we are saving dxmap to file
-        WLOG(params, '', TextEntry('40-014-00037', args=[outfile.filename]))
-        # write image to file
-        outfile.write()
-        # add to output files (for indexing)
-        recipe.add_output_file(outfile)
-        # ----------------------------------------------------------------------
-        # Writing DEBUG files
-        # ----------------------------------------------------------------------
-        if params['SHAPE_DEBUG_OUTPUTS']:
-            # log progress (writing debug outputs)
-            WLOG(params, '', TextEntry('40-014-00029'))
-            # in file
-            shapel_in_fp_file = recipe.outputs['SHAPEL_IN_FP_FILE']
-            debugfile1 = shapel_in_fp_file.newcopy(recipe=recipe)
-            debugfile1.construct_filename(params, infile=infile)
-            debugfile1.copy_hdict(outfile)
-            debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
-            debugfile1.data = image
-            debugfile1.write()
-            # add to output files (for indexing)
-            recipe.add_output_file(debugfile1)
-            # out file
-            shapel_out_fp_file = recipe.outputs['SHAPEL_OUT_FP_FILE']
-            debugfile2 = shapel_out_fp_file.newcopy(recipe=recipe)
-            debugfile2.construct_filename(params, infile=infile)
-            debugfile2.copy_hdict(outfile)
-            debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
-            debugfile2.data = image2
-            debugfile2.write()
-            # add to output files (for indexing)
-            recipe.add_output_file(debugfile2)
+        outfile = shape.write_shape_local_files(params, recipe, infile, combine,
+                                                rawfiles, props, transform,
+                                                image, image2, qc_params)
+
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
@@ -303,17 +192,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
-        # add stats
-        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-        recipe.plot.add_stat('KW_SHAPE_DX', value=transform[0])
-        recipe.plot.add_stat('KW_SHAPE_DY', value=transform[1])
-        recipe.plot.add_stat('KW_SHAPE_A', value=transform[2])
-        recipe.plot.add_stat('KW_SHAPE_B', value=transform[3])
-        recipe.plot.add_stat('KW_SHAPE_C', value=transform[4])
-        recipe.plot.add_stat('KW_SHAPE_D', value=transform[5])
-        # construct summary
-        recipe.plot.summary_document(it, qc_params)
+        shape.write_shape_local_summary(recipe, params, qc_params, it,
+                                        transform)
 
 
     # ----------------------------------------------------------------------

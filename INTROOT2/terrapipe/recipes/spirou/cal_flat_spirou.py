@@ -242,33 +242,9 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # Construct summary document
             # ------------------------------------------------------------------
-            # add qc params (fiber specific)
-            recipe.plot.add_qc_params(qc_params, fiber=fiber)
-            # add stats
-            recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_START', value=eprops['START_ORDER'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_END', value=eprops['END_ORDER'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_RANGE1', value=eprops['RANGE1'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_RANGE2', value=eprops['RANGE2'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_COSMIC', value=eprops['COSMIC'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
-                                 value=eprops['COSMIC_THRESHOLD'])
-            recipe.plot.add_stat('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'],
-                                 fiber=fiber)
+            flat_blaze.flat_blaze_summary(recipe, params, qc_params, eprops,
+                                          fiber)
+
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)
 

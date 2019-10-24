@@ -234,27 +234,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    # TODO: Decide on some extra quality control?
-    # set passed variable and fail message list
-    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # no quality control currently
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
-    # ------------------------------------------------------------------
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
-        passed = 1
-    else:
-        for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-        passed = 0
-    # store in qc_params
-    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    qc_params, passed = shape.shape_master_qc(params)
 
     # ------------------------------------------------------------------
     # write files
@@ -278,14 +258,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------
-    # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-    recipe.plot.add_stat('NFPMASTER', value=len(fp_table),
-                         comment='Number FP in Master')
-    # TODO: Add more stats?
-    # construct summary
-    recipe.plot.summary_document(0, qc_params)
+    shape.write_shape_master_summary(recipe, params, fp_table, qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code

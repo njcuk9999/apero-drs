@@ -233,9 +233,10 @@ def __main__(recipe, params):
             # create 1d spectra (s1d) of the e2ds file
             sargs = [wprops['WAVEMAP'], eprops['E2DSFF'], eprops['BLAZE']]
             swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
-                                          fiber=fiber)
+                                          fiber=fiber, kind='E2DSFF')
             svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                          wgrid='velocity', fiber=fiber)
+                                          wgrid='velocity', fiber=fiber,
+                                          kind='E2DSFF')
 
             # --------------------------------------------------------------
             # Plots
@@ -259,7 +260,7 @@ def __main__(recipe, params):
                         wave=wprops['WAVEMAP'], fiber=fiber)
             # plot the s1d plot
             recipe.plot('EXTRACT_S1D', params=params, props=svprops,
-                        fiber=fiber)
+                        fiber=fiber, kind='E2DSFF')
             # --------------------------------------------------------------
             # Quality control
             # --------------------------------------------------------------
@@ -304,41 +305,9 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # Construct summary document
             # ------------------------------------------------------------------
-            # add qc params (fiber specific)
-            recipe.plot.add_qc_params(qc_params, fiber=fiber)
-            # add stats
-            recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_TYPE', value=e2dsfile.name,
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_SHAPE_DX', value=shapelocal[0],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_SHAPE_DY', value=shapelocal[1],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_SHAPE_A', value=shapelocal[2],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_SHAPE_B', value=shapelocal[3],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_SHAPE_C', value=shapelocal[4],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_SHAPE_D', value=shapelocal[5],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_START', value=eprops['START_ORDER'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_END', value=eprops['END_ORDER'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_RANGE1', value=eprops['RANGE1'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_EXT_RANGE2', value=eprops['RANGE2'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_COSMIC', value=eprops['COSMIC'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'],
-                                 fiber=fiber)
-            recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
-                                 value=eprops['COSMIC_THRESHOLD'])
+            extract.extract_summary(recipe, params, qc_params, e2dsfile,
+                                    shapelocal, eprops, fiber)
+
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)
 

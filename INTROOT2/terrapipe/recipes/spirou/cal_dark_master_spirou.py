@@ -139,63 +139,24 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    # set passed variable and fail message list
-    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # no quality control currently
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
-    # ------------------------------------------------------------------
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
-        passed = 1
-    else:
-        for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-        passed = 0
-    # store in qc_params
-    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    qc_params, passed = dark.master_qc(params)
 
     # ----------------------------------------------------------------------
     # Save master dark to file
     # ----------------------------------------------------------------------
-    # define outfile
-    outfile = recipe.outputs['DARK_MASTER_FILE'].newcopy(recipe=recipe)
-    # construct the filename from file instance
-    outfile.construct_filename(params, infile=reffile)
-    # ------------------------------------------------------------------
-    # define header keys for output file
-    # copy keys from input file
-    outfile.copy_original_keys(reffile)
-    # add version
-    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    outfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
-    # add qc parameters
-    outfile.add_qckeys(qc_params)
-    # ------------------------------------------------------------------
-    # copy data
-    outfile.data = master_dark
-    # log that we are saving master dark to file
-    WLOG(params, '', TextEntry('40-011-10006', args=[outfile.filename]))
-    # write data and header list to file
-    outfile.write_multi(data_list=[dark_table])
-    # add to output files (for indexing)
-    recipe.add_output_file(outfile)
+    outfile = dark.write_master_files(params, recipe, reffile, master_dark,
+                                      dark_table, qc_params)
+
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
     if passed:
         drs_database.add_file(params, outfile)
+
+    # ------------------------------------------------------------------
+    # Construct summary document
+    # ------------------------------------------------------------------
+    dark.master_summary(recipe, params, qc_params, dark_table)
 
     # ----------------------------------------------------------------------
     # End of main code
