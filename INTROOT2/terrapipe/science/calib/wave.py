@@ -504,7 +504,23 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
             'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
             'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
     wprops.set_sources(keys, func_name)
-
+    # ----------------------------------------------------------------------
+    # Add constants to llprops
+    # ----------------------------------------------------------------------
+    llprops['USED_N_INIT'] = start
+    llprops['USED_N_FIN'] = end
+    # define keys
+    keys = ['USED_N_INIT', 'USED_N_FIN', 'USED_BLAZE_THRES', 'USED_CAVFIT_DEG',
+            'USED_XDIFF_MIN', 'USED_XDIFF_MAX', 'USED_DOPD0', 'USED_LARGE_JUMP',
+            'USED_LL_OFFSET', 'USED_DV_MAX', 'USED_LL_FIT_DEG', 'USED_CM_INDEX',
+            'USED_DV_MAX', 'USED_LL_FIT_DEG', 'USED_UPDATE_CAV',
+            'USED_FP_CAV_MODE', 'USED_LL_FIT_MODE', 'USED_ERRX_MIN',
+            'USED_MAX_LL_FIT_RMS', 'USED_T_ORD_START', 'USED_WEIGHT_THRES']
+    # deal with fp keys (that arent used in hcwave sol)
+    for key in keys:
+        if key not in llprops:
+            llprops[key] = 'None'
+    llprops.set_sources(keys, func_name)
     # ------------------------------------------------------------------
     # return llprops
     # ------------------------------------------------------------------
