@@ -3759,10 +3759,10 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
     # plot the interp cavity width ll hc and fp plot
     # TODO: original d needs fixing I think
     recipe.plot('WAVE_FP_IPT_CWID_LLHC', hc_ll=hc_ll_test, fp_ll=fp_ll,
-                d_arr=d_arr, fitval=fitval, dopd0=dopd0)
+                d_arr=d_arr, fitval=fitval, dopd0=dopd0, fiber=fiber)
     # summary plot interp cavity width ll hc and fp plot
     recipe.plot('SUM_WAVE_FP_IPT_CWID_LLHC', hc_ll=hc_ll_test, fp_ll=fp_ll,
-                d_arr=d_arr, fitval=fitval, dopd0=dopd0)
+                d_arr=d_arr, fitval=fitval, dopd0=dopd0, fiber=fiber)
     # return variables
     return fit_1m_d, fit_ll_d, one_m_d, d_arr
 
