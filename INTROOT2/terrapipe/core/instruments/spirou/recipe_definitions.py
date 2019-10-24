@@ -590,7 +590,8 @@ cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                          'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
                          'WAVE_FP_SINGLE_ORDER',
                          'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-cal_wave.set_summary_plots()
+cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
+                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP')
 cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
