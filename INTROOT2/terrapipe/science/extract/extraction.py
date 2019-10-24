@@ -68,12 +68,24 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                            kwargs, func_name)
     cosmic_thres = pcheck(params, 'EXT_COSMIC_THRESHOLD', 'cosmic_thres',
                           kwargs, func_name)
+    # TODO: is blaze_size needed with sinc function?
     blaze_size = pcheck(params, 'FF_BLAZE_HALF_WINDOW', 'blaze_size',
                         kwargs, func_name)
+    # TODO: is blaze_cut needed with sinc function?
     blaze_cut = pcheck(params, 'FF_BLAZE_THRESHOLD', 'blaze_cut', kwargs,
                        func_name)
+    # TODO: is blaze_deg needed with sinc function?
     blaze_deg = pcheck(params, 'FF_BLAZE_DEGREE', 'blaze_deg', kwargs,
                        func_name)
+    blaze_scut = pcheck(params, 'FF_BLAZE_SCUT', 'blaze_scut', kwargs,
+                        func_name)
+    blaze_sigfit = pcheck(params, 'FF_BLAZE_SIGFIT', 'blaze_sigfit', kwargs,
+                          func_name)
+    blaze_bpercentile = pcheck(params, 'FF_BLAZE_BPERCENTILE',
+                               'blaze_bpercentile', kwargs, func_name)
+    blaze_niter = pcheck(params, 'FF_BLAZE_NITER', 'blaze_niter', kwargs,
+                         func_name)
+
     qc_ext_flux_max = pcheck(params, 'QC_EXT_FLUX_MAX', 'qc_ext_flux_max',
                              kwargs, func_name)
     # ----------------------------------------------------------------------
@@ -148,8 +160,11 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # --------------------------------------------------------------
             # if kind is flat remove low blaze edges, calculate blaze and flat
             if kind == 'flat':
-                fargs = [e2dsi, fluxi, blaze_cut, blaze_deg]
-                fout = flat_blaze.calculate_blaze_flat(*fargs)
+                # fargs = [e2dsi, fluxi, blaze_cut, blaze_deg]
+                # fout = flat_blaze.calculate_blaze_flat(*fargs)
+                fargs = [e2dsi, blaze_scut, blaze_sigfit, blaze_bpercentile,
+                         blaze_niter]
+                fout = flat_blaze.calculate_blaze_flat_sinc(*fargs)
                 e2dsi, flati, blazei, rmsi = fout
                 # log process (for fiber # and order # S/N = , FF rms = )
                 wargs = [fiber, order_num, snri, rmsi]
@@ -226,12 +241,18 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['BLAZE_DEG'] = blaze_deg
     props['SAT_QC'] = qc_ext_flux_max
     props['SAT_LEVEL'] = sat_level
+    props['BLAZE_SCUT'] = blaze_scut
+    props['BLAZE_SIGFIT'] = blaze_sigfit
+    props['BLAZE_BPERCENTILE'] = blaze_bpercentile
+    props['BLAZE_NITER'] = blaze_niter
+
     # add source
     keys = ['E2DS', 'E2DSFF', 'E2DSLL', 'SNR', 'N_COSMIC', 'RMS',
             'FLAT', 'BLAZE', 'FLUX_VAL', 'FIBER',
             'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
             'GAIN', 'SIGDET', 'COSMIC', 'COSMIC_SIGCUT', 'COSMIC_THRESHOLD',
-            'BLAZE_SIZE', 'BLAZE_CUT', 'BLAZE_DEG', 'SAT_QC', 'SAT_LEVEL']
+            'BLAZE_SIZE', 'BLAZE_CUT', 'BLAZE_DEG', 'SAT_QC', 'SAT_LEVEL',
+            'BLAZE_SCUT', 'BLAZE_SIGFIT', 'BLAZE_BPERCENTILE', 'BLAZE_NITER']
     props.set_sources(keys, func_name)
     # return property parameter dictionary
     return props
