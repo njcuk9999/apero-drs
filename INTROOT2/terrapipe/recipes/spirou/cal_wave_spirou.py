@@ -226,8 +226,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update header of current file with HC solution
             # --------------------------------------------------------------
-            # TODO: Add the database criteria or have another options
-            if passed:
+            if passed and params['INPUTS']['DATABASE']:
                 # log that we are updating the HC file with wave params
                 wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
                 WLOG(params, '', TextEntry('40-017-00038', args=wargs))
@@ -282,7 +281,7 @@ def __main__(recipe, params):
                 # ----------------------------------------------------------
                 # Update header of current file with FP solution
                 # ----------------------------------------------------------
-                if passed:
+                if passed and params['INPUTS']['DATABASE']:
                     # log that we are updating the HC file with wave params
                     wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
                     WLOG(params, '', TextEntry('40-017-00038', args=wargs))
@@ -306,10 +305,23 @@ def __main__(recipe, params):
             # If the HC solution failed QCs we do not compute FP-HC solution
             elif (fp_e2ds_file is not None) and (not passed):
                 WLOG(params, 'warning', TextEntry('10-017-00006'))
+                fpprops = None
             # If there is no FP file we log that
             else:
                 # log warning: No FP files given. FP wave solution not generated
                 WLOG(params, 'warning', TextEntry('10-017-00007'))
+                fpprops = None
+
+            # ------------------------------------------------------------------
+            # Construct summary document
+            # ------------------------------------------------------------------
+            if (fp_e2ds_file is not None) and passed:
+                wave.wave_summary(recipe, params, fpprops, fiber, qc_params)
+            else:
+                wave.wave_summary(recipe, params, hcprops, fiber, qc_params)
+
+        # construct summary (outside fiber loop)
+        recipe.plot.summary_document(it)
 
     # ----------------------------------------------------------------------
     # End of main code
