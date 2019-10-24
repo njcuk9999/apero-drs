@@ -2098,7 +2098,9 @@ def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
     dopd0 = kwargs['dopd0']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    gs = dict(height_ratios=[2, 1])
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                   gridspec_kw=gs, sharex=True)
     frame1, frame2 = frames
     # ------------------------------------------------------------------
     # plot values
@@ -2112,12 +2114,16 @@ def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
     # plot residuals - separate subplot
     frame2.plot(one_m_d, res_d_final, '.')
     # set labels
-    frame1.set(xlabel='1/m', ylabel='cavity width d')
+    frame1.set(ylabel='cavity width d')
     frame2.set(xlabel='1/m', ylabel='residuals [nm]')
     # plot legend
     frame1.legend(loc='best')
     # add title
     fig.suptitle('Interpolated cavity width vs 1/m for HC lines')
+    # ------------------------------------------------------------------
+    # adjust plot
+    fig.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95,
+                        hspace=0, wspace=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2137,7 +2143,9 @@ def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
     dopd0 = kwargs['dopd0']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    gs = dict(height_ratios=[2, 1])
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                   gridspec_kw=gs, sharex=True)
     frame1, frame2 = frames
     # ------------------------------------------------------------------
     frame1.plot(hc_ll, d_arr, '.')
@@ -2150,12 +2158,16 @@ def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
     # plot residuals - separate subplot
     frame2.plot(hc_ll, d_arr - fitval, '.')
     # set labels
-    frame1.set(xlabel='wavelength', ylabel='cavity width d')
+    frame1.set(ylabel='cavity width d')
     frame2.set(xlabel='wavelength', ylabel='residuals [nm]')
     # plot legend
     frame1.legend(loc='best')
     # add title
     fig.suptitle('Interpolated cavity width vs wavelength for HC lines')
+    # ------------------------------------------------------------------
+    # adjust plot
+    fig.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95,
+                        hspace=0, wspace=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2325,8 +2337,16 @@ wave_littrow_extrap1 = Graph('WAVE_LITTROW_EXTRAP1', kind='debug',
                             func=plot_wave_littrow_extrap)
 wave_littrow_check2 = Graph('WAVE_LITTROW_CHECK2', kind='debug',
                            func=plot_wave_littrow_check)
+sum_desc = 'Littrow check for the final solution'
+sum_wave_littrow_check = Graph('SUM_WAVE_LITTROW_CHECK', kind='summary',
+                           func=plot_wave_littrow_check,
+                              figsize=(16, 10), dpi=150, description=sum_desc)
 wave_littrow_extrap2 = Graph('WAVE_LITTROW_EXTRAP2', kind='debug',
                             func=plot_wave_littrow_extrap)
+sum_desc = 'Littrow extrapolation for the final solution'
+sum_wave_littrow_extrap = Graph('SUM_WAVE_LITTROW_EXTRAP', kind='summary',
+                                func=plot_wave_littrow_extrap,
+                                figsize=(16, 10), dpi=150, description=sum_desc)
 wave_fp_final_order = Graph('WAVE_FP_FINAL_ORDER', kind='debug',
                             func=plot_wave_fp_final_order)
 wave_fp_lwid_offset = Graph('WAVE_FP_LWID_OFFSET', kind='debug',
@@ -2339,20 +2359,26 @@ wave_fp_ipt_cwid_1mhc = Graph('WAVE_FP_IPT_CWID_1MHC', kind='debug',
                               func=plot_wave_fp_ipt_cwid_1mhc)
 wave_fp_ipt_cwid_llhc = Graph('WAVE_FP_IPT_CWID_LLHC', kind='debug',
                               func=plot_wave_fp_ipt_cwid_llhc)
+sum_desc = 'FP peak number against cavity width offset'
+sum_wave_fp_ipt_cwid_1mhc = Graph('SUM_WAVE_FP_IPT_CWID_LLHC', kind='summary',
+                                  func=plot_wave_fp_ipt_cwid_llhc,
+                                  figsize=(16, 10), dpi=150,
+                                  description=sum_desc)
 wave_fp_ll_diff = Graph('WAVE_FP_LL_DIFF', kind='debug',
                         func=plot_wave_fp_ll_diff)
 wave_fp_multi_order = Graph('WAVE_FP_MULTI_ORDER', kind='debug',
                             func=plot_wave_fp_multi_order)
 wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
                              func=plot_wave_fp_single_order)
-
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
                 wave_littrow_check2, wave_littrow_extrap2, wave_fp_final_order,
                 wave_fp_lwid_offset, wave_fp_wave_res, wave_fp_m_x_res,
                 wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
-                wave_fp_multi_order, wave_fp_single_order]
+                wave_fp_multi_order, wave_fp_single_order,
+                sum_wave_littrow_check, sum_wave_littrow_extrap,
+                sum_wave_fp_ipt_cwid_1mhc]
 
 
 # =============================================================================

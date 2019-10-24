@@ -974,6 +974,8 @@ def qc_param_table(qc_params, qc_param_dict):
                 # deal with no value
                 if value == 'None':
                     values.append(qc_names[it])
+                    passed.append(qc_pass[it] == 1)
+                    fibers.append(key)
                     continue
                 # check if value is float and round if needed
                 value = _sigfig(value, digits=5)
