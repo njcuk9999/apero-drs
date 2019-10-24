@@ -739,8 +739,12 @@ obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           TELLU_RECON=sf.out_tellu_recon,
                           RC1D_W_FILE=sf.out_tellu_rc1d_w,
                           RC1D_V_FILE=sf.out_tellu_rc1d_v)
-obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
-obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D')
+obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
+                              'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
+                              'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
+                              'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
+                              'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2')
+obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO')
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
@@ -799,6 +803,8 @@ obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
                             TELLU_BIGCUBE0=sf.out_tellu_bigcube0,
                             TELLU_TEMP_S1D=sf.out_tellu_s1d_template,
                             TELLU_BIGCUBE_S1D=sf.out_tellu_s1d_bigcube)
+obj_mk_template.set_debug_plots('EXTRACT_S1D')
+obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D')
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
 obj_mk_template.set_kwarg(name='-filetype', dtype=str,
