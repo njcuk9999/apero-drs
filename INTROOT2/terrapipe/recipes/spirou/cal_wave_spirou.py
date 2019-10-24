@@ -315,7 +315,8 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # Construct summary document
             # ------------------------------------------------------------------
-            if (fp_e2ds_file is not None) and passed:
+            # if we have a wave solution wave summary from fpprops
+            if fp_e2ds_file is not None:
                 wave.wave_summary(recipe, params, fpprops, fiber, qc_params)
             else:
                 wave.wave_summary(recipe, params, hcprops, fiber, qc_params)
