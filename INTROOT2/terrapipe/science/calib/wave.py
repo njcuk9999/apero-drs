@@ -2187,6 +2187,10 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
     plotname = 'WAVE_LITTROW_CHECK{0}'.format(iteration)
     recipe.plot(plotname, params=params, llprops=llprops, iteration=iteration,
                 fiber=fiber)
+    # only plot summary plot for final iteration
+    if iteration == 2:
+        recipe.plot('SUM_WAVE_LITTROW_CHECK', params=params, llprops=llprops,
+                    iteration=iteration, fiber=fiber)
     # ------------------------------------------------------------------
     # extrapolate Littrow solution
     # ------------------------------------------------------------------
@@ -2198,6 +2202,10 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
     # ------------------------------------------------------------------
     plotname = 'WAVE_LITTROW_EXTRAP{0}'.format(iteration)
     recipe.plot(plotname, params=params, llprops=llprops,
+                iteration=iteration, fiber=fiber, image=infile.data)
+    # only plot summary plot for final iteration
+    if iteration == 2:
+        recipe.plot('SUM_WAVE_LITTROW_EXTRAP', params=params, llprops=llprops,
                 iteration=iteration, fiber=fiber, image=infile.data)
     # ------------------------------------------------------------------
     # add parameters to llprops
@@ -3736,6 +3744,9 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
     # TODO: original d needs fixing I think
     recipe.plot('WAVE_FP_IPT_CWID_LLHC', hc_ll=hc_ll_test, fp_ll=fp_ll,
                 d_arr=d_arr, fitval=fitval, dopd0=dopd0)
+    # summary plot interp cavity width ll hc and fp plot
+    recipe.plot('SUM_WAVE_FP_IPT_CWID_LLHC', hc_ll=hc_ll_test, fp_ll=fp_ll,
+                d_arr=d_arr, fitval=fitval, dopd0=dopd0)
     # return variables
     return fit_1m_d, fit_ll_d, one_m_d, d_arr
 
@@ -4061,8 +4072,8 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     # ------------------------------------------------------------------
     # add constants used (for reproduction)
     wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
-    wavefile.add_hkey('KW_WAVE_MODE_HC', value=llprops['WAVE_MODE_HC'])
-    wavefile.add_hkey('KW_WAVE_MODE_FP', value=llprops['WAVE_MODE_FP'])
+    wavefile.add_hkey('KW_WAVE_MODE_HC', value=params['WAVE_MODE_HC'])
+    wavefile.add_hkey('KW_WAVE_MODE_FP', value=params['WAVE_MODE_FP'])
     # from fp_wavesol
     wavefile.add_hkey('KW_WFP_ORD_START', value=llprops['USED_N_INIT'])
     wavefile.add_hkey('KW_WFP_ORD_FINAL', value=llprops['USED_N_FIN'])
@@ -4207,9 +4218,9 @@ def wave_summary(recipe, params, llprops, fiber, qc_params):
     # add constants used (for reproduction)
     recipe.plot.add_stat('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_WAVE_MODE_HC', value=llprops['WAVE_MODE_HC'],
+    recipe.plot.add_stat('KW_WAVE_MODE_HC', value=params['WAVE_MODE_HC'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_WAVE_MODE_FP', value=llprops['WAVE_MODE_FP'],
+    recipe.plot.add_stat('KW_WAVE_MODE_FP', value=params['WAVE_MODE_FP'],
                          fiber=fiber)
     # from fp_wavesol
     recipe.plot.add_stat('KW_WFP_ORD_START', value=llprops['USED_N_INIT'],
