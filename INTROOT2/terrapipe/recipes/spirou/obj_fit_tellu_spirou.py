@@ -221,7 +221,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ----------------------------------------------------------------------
-        pargs = [image2, trans_files, fiber]
+        pargs = [image2, trans_files, fiber, wprops]
         pca_props = telluric.gen_abso_pca_calc(params, recipe, *pargs)
         # ------------------------------------------------------------------
         # Shift the template/pca components and tapas spectrum to correct
@@ -229,30 +229,41 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         sargs = [image2, template, bprops, mprops, wprops, pca_props,
                  tapas_props]
-        sprops = telluric.shift_all_to_frame(params, *sargs)
+        sprops = telluric.shift_all_to_frame(params, recipe, *sargs)
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption + correct E2DS file
         # ------------------------------------------------------------------
         cargs = [image2, wprops, pca_props, sprops, nprops]
-        cprops = telluric.calc_recon_and_correct(params, *cargs)
+        cprops = telluric.calc_recon_and_correct(params, recipe, *cargs)
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the corrected E2DS file
         # ------------------------------------------------------------------
         scargs = [wprops['WAVEMAP'], cprops['CORRECTED_SP'], nprops['BLAZE']]
         scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
-                                       fiber=fiber)
+                                       fiber=fiber, kind='corrected sp')
         scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
-                                       wgrid='velocity', fiber=fiber)
+                                       wgrid='velocity', fiber=fiber,
+                                       kind='corrected sp')
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
         rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
         rcwprops = extract.e2ds_to_s1d(params, recipe, *rcargs, wgrid='wave',
-                                       fiber=fiber)
+                                       fiber=fiber, kind='recon')
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
-                                       wgrid='velocity', fiber=fiber)
+                                       wgrid='velocity', fiber=fiber,
+                                       kind='recon')
+
+        # ------------------------------------------------------------------
+        # s1d plots
+        # ------------------------------------------------------------------
+        # plot the s1d plot
+        recipe.plot('EXTRACT_S1D', params=params, props=scwprops,
+                    fiber=fiber, kind='corrected sp')
+        recipe.plot('EXTRACT_S1D', params=params, props=rcwprops,
+                    fiber=fiber, kind='recon')
 
         # ------------------------------------------------------------------
         # Quality control
@@ -286,6 +297,20 @@ def __main__(recipe, params):
             drs_database.add_file(params, corrfile)
             # copy the tellu_rcon file to database
             drs_database.add_file(params, reconfile)
+
+        # ------------------------------------------------------------------
+        # Summary plots
+        # ------------------------------------------------------------------
+        # plot the s1d plot
+        recipe.plot('SUM_EXTRACT_S1D', params=params, props=scwprops,
+                    fiber=fiber, kind='corrected sp')
+        recipe.plot('SUM_EXTRACT_S1D', params=params, props=rcwprops,
+                    fiber=fiber, kind='recon')
+        # ------------------------------------------------------------------
+        # Construct summary document
+        # ------------------------------------------------------------------
+        telluric.fit_tellu_summary(recipe, it, params, qc_params, pca_props,
+                                   sprops, cprops, fiber)
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -121,8 +121,6 @@ def __main__(recipe, params):
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
-    # set up plotting (no plotting before this)
-    recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # get objects that match this object name
     object_filenames = drs_fits.find_files(params, kind='red', fiber=fiber,
@@ -146,6 +144,9 @@ def __main__(recipe, params):
     # get night name
     nightname = drs_path.get_nightname(params, infile.filename)
     params.set(key='NIGHTNAME', value=nightname, source=mainname)
+    # set up plotting (no plotting before this) -- must be after setting
+    #   night name
+    recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # load master wavelength solution
     mkwargs = dict(header=infile.header, master=True, fiber=fiber)
@@ -189,36 +190,19 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
-    # set passed variable and fail message list
-    fail_msg, qc_values, qc_names = [], [], [],
-    qc_logic, qc_pass = [], []
-    # ----------------------------------------------------------------------
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
-        passed = 1
-    else:
-        for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-        passed = 0
-    # add to qc header lists
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
-    # store in qc_params
-    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    qc_params, passed = telluric.mk_template_qc(params)
+
     # ----------------------------------------------------------------------
     # Write cubes and median to file
     # ----------------------------------------------------------------------
     # write e2ds cubes + median
     margs = [infile, cprops, filetype, fiber, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
+    props1d = None
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
         sargs = [infile, s1d_props, infile.s1d[it], fiber, qc_params]
-        telluric.mk_1d_template_write(params, recipe, *sargs)
+        props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
 
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
@@ -226,6 +210,20 @@ def __main__(recipe, params):
     if passed:
         # copy the big cube median to the calibDB
         drs_database.add_file(params, template_file, night=nightname)
+
+    # ----------------------------------------------------------------------
+    # plots
+    # ----------------------------------------------------------------------
+    # plot debug plot
+    recipe.plot('EXTRACT_S1D', params=params, props=props1d, fiber=fiber,
+                kind='Template')
+    # plot summary plot
+    recipe.plot('SUM_EXTRACT_S1D', params=params, props=props1d, fiber=fiber,
+                kind='Template')
+    # ----------------------------------------------------------------------
+    # Construct summary document
+    # ----------------------------------------------------------------------
+    telluric.mk_template_summary(recipe, params, cprops, qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code
