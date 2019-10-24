@@ -247,7 +247,7 @@ def nansum(a, axis=None, **kwargs):
         return np.nansum(a, axis=axis, **kwargs)
 
 
-def median(a, axis, **kwargs):
+def median(a, axis=None, **kwargs):
     """
     Bottleneck or numpy implementation of median depending on imports
 
