@@ -30,6 +30,8 @@ fit_tellu_write_recon = general.fit_tellu_write_recon
 
 fit_tellu_quality_control = general.fit_tellu_quality_control
 
+fit_tellu_summary = general.fit_tellu_summary
+
 gen_abso_pca_calc = general.gen_abso_pca_calc
 
 get_blacklist = general.get_blacklist
@@ -54,9 +56,15 @@ mk_tellu_quality_control = general.mk_tellu_quality_control
 
 mk_tellu_write_trans_file = general.mk_tellu_write_trans_file
 
+mk_tellu_summary = general.mk_tellu_summary
+
 mk_1d_template_write = general.mk_1d_template_write
 
+mk_template_qc = general.mk_template_qc
+
 mk_template_write = general.mk_template_write
+
+mk_template_summary = general.mk_template_summary
 
 normalise_by_pblaze = general.normalise_by_pblaze
 

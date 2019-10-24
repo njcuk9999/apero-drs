@@ -244,51 +244,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
-        # add qc params (fiber specific)
-        recipe.plot.add_qc_params(qc_params, fiber=fiber)
-        # add stats
-        recipe.plot.add_stat('KW_MKTELL_DEF_CONV_WID',
-                             value=tellu_props['DEFAULT_CWIDTH'])
-        recipe.plot.add_stat('KW_MKTELL_FIN_CONV_WID',
-                             value=tellu_props['FINER_CWIDTH'])
-        recipe.plot.add_stat('KW_MKTELL_TEMP_MEDFILT',
-                             value=tellu_props['TEMP_MED_FILT'])
-        recipe.plot.add_stat('KW_MKTELL_DPARAM_THRES',
-                             value=tellu_props['DPARAM_THRES'])
-        recipe.plot.add_stat('KW_MKTELL_MAX_ITER',
-                             value=tellu_props['MAX_ITERATIONS'])
-        recipe.plot.add_stat('KW_MKTELL_THRES_TFIT',
-                             value=tellu_props['THRES_TRANSFIT'])
-        recipe.plot.add_stat('KW_MKTELL_MIN_WATERCOL',
-                             value=tellu_props['MIN_WATERCOL'])
-        recipe.plot.add_stat('KW_MKTELL_MAX_WATERCOL',
-                             value=tellu_props['MAX_WATERCOL'])
-        recipe.plot.add_stat('KW_MKTELL_MIN_NUM_GOOD',
-                             value=tellu_props['MIN_NUM_GOOD'])
-        recipe.plot.add_stat('KW_MKTELL_BTRANS_PERC',
-                             value=tellu_props['BTRANS_PERCENT'])
-        recipe.plot.add_stat('KW_MKTELL_NSIGCLIP',
-                             value=tellu_props['NSIGCLIP'])
-        recipe.plot.add_stat('KW_MKTELL_TRANS_TMFILT',
-                             value=tellu_props['TRANS_TMEDFILT'])
-        recipe.plot.add_stat('KW_MKTELL_SMALL_W_ERR',
-                             value=tellu_props['SMALL_W_ERR'])
-        recipe.plot.add_stat('KW_MKTELL_IM_PSIZE',
-                             value=tellu_props['IMAGE_PIXEL_SIZE'])
-        recipe.plot.add_stat('KW_MKTELL_TAU_WATER_U',
-                             value=tellu_props['TAU_WATER_UPPER'])
-        recipe.plot.add_stat('KW_MKTELL_TAU_OTHER_L',
-                             value=tellu_props['TAU_OTHER_LOWER'])
-        recipe.plot.add_stat('KW_MKTELL_TAU_OTHER_U',
-                             value=tellu_props['TAU_OTHER_UPPER'])
-        recipe.plot.add_stat('KW_MKTELL_TAPAS_SNUM',
-                             value=tellu_props['TAPAS_SMALL_NUM'])
-        recipe.plot.add_stat('KW_MKTELL_AIRMASS',
-                             value=tellu_props['RECOV_AIRMASS'])
-        recipe.plot.add_stat('KW_MKTELL_WATER',
-                             value=tellu_props['RECOV_WATER'])
-        # construct summary (outside fiber loop)
-        recipe.plot.summary_document(it)
+        telluric.mk_tellu_summary(recipe, it, params, qc_params, tellu_props,
+                                  fiber)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

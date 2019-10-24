@@ -935,7 +935,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
 # =============================================================================
 # Fit telluric functions
 # =============================================================================
-def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
+def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
+                      **kwargs):
     func_name = __NAME__ + '.gen_abso_pca_calc()'
     # ----------------------------------------------------------------------
     # get constants from params/kwargs
@@ -1072,6 +1073,14 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     else:
         fit_pc = np.array(pc)
     # ----------------------------------------------------------------------
+    # pca components plot (in loop)
+    recipe.plot('FTELLU_PCA_COMP1', image=image, wavemap=wprops['WAVEMAP'],
+                pc=pc, add_deriv_pc=add_deriv_pc, npc=npc, order=None)
+    # pca components plot (single order)
+    recipe.plot('FTELLU_PCA_COMP2', image=image, wavemap=wprops['WAVEMAP'],
+                pc=pc, add_deriv_pc=add_deriv_pc, npc=npc,
+                order=params['FTELLU_SPLOT_ORDER'])
+    # ----------------------------------------------------------------------
     # set up properties
     # ----------------------------------------------------------------------
     props = ParamDict()
@@ -1093,7 +1102,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, **kwargs):
     return props
 
 
-def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
+def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
                        pca_props, tapas_props, **kwargs):
     func_name = __NAME__ + '.shift_all_to_frame()'
     # ------------------------------------------------------------------
@@ -1151,12 +1160,14 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
                 start = order_num * xdim
                 end = order_num * xdim + xdim
                 template2[start:end] = spline(waveshift)
-        # debug plot
-        if params['DRS_PLOT'] and (params['DRS_DEBUG'] > 1):
-            # TODO: Add plottng
-            # plot the transmission map plot
-            # sPlt.tellu_fit_tellu_spline_plot(p, loc)
-            pass
+
+        # debug plot - reconstructed spline (in loop)
+        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                    template=template2, order=None)
+        # debug plot - reconstructed spline (selected order)
+        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                    template=template2, order=params['FTELLU_SPLOT_ORDER'])
+
         # ------------------------------------------------------------------
         # Shift the template to correct wave frame
         # ------------------------------------------------------------------
@@ -1200,16 +1211,16 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     tapas_water2 = tapas_all_species2[1, :]
     # other is defined as the product of the other columns
     tapas_other2 = np.prod(tapas_all_species2[2:, :], axis=0)
-
-
     # ------------------------------------------------------------------
     # Shift comparison plot
     # ------------------------------------------------------------------
-    # Debug plot to test shifting
-    if params['DRS_PLOT'] and params['DRS_DEBUG'] > 1:
-        # TODO: Add plotting
-        # sPlt.tellu_fit_debug_shift_plot(p, loc)
-        pass
+    # Debug plot to test shifting (in loop)
+    recipe.plot('FTELLU_WAVE_SHIFT1', image=image, tapas0=tapas_all_species,
+                tapas1=tapas_all_species2, pc0=pc, pc1=pc2, order=None)
+    # Debug plot to test shifting (single order)
+    recipe.plot('FTELLU_WAVE_SHIFT2', image=image, tapas0=tapas_all_species,
+                tapas1=tapas_all_species2, pc0=pc, pc1=pc2,
+                order=params['FTELLU_SPLOT_ORDER'])
     # ------------------------------------------------------------------
     # Save shifted props
     # ------------------------------------------------------------------
@@ -1228,8 +1239,8 @@ def shift_all_to_frame(params, image, template, bprops, mprops, wprops,
     return props
 
 
-def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
-                           **kwargs):
+def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
+                           nprops, **kwargs):
     func_name = __NAME__ + '.calc_recon_and_correct()'
     # ------------------------------------------------------------------
     # get constants from params/kwargs
@@ -1432,13 +1443,20 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
                 abso2 += pc2[:, ipc] * amps[ipc]
             recon_abso *= np.exp(abso2)
     # ------------------------------------------------------------------
-    # debug plot
+    # reconstructed absorption plot
     # ------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Add plotting
-        # plot the recon abso plot
-        # sPlt.tellu_fit_recon_abso_plot(p, loc)
-        pass
+    # plot recon abso in loop
+    recipe.plot('FTELLU_RECON_ABSO1', params=params, image=image, order=None,
+                wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso)
+
+    # plot recon abso (single order)
+    recipe.plot('FTELLU_RECON_ABSO2', params=params, image=image,
+                wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
+                order=params['FTELLU_SPLOT_ORDER'])
+    # plot recon abso (summary plot)
+    recipe.plot('SUM_FTELLU_RECON_ABSO', params=params, image=image,
+                wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
+                orders=params.listp('FTELLU_PLOT_ORDER_NUMS', dtype=int))
     # ------------------------------------------------------------------
     # calculate molecular absorption
     # ------------------------------------------------------------------
@@ -1506,7 +1524,6 @@ def calc_recon_and_correct(params, image, wprops, pca_props, sprops, nprops,
     props['RECON_ABSO_SP'] = recon_abso2
     props['AMPS_ABSO_TOTAL'] = amps_abso_total
     props['TAU_MOLECULES'] = molecule_data
-    # TODO: Etienne says these values are the wrong way round?
     props['TAU_H2O'] = amps2[0]
     props['TAU_REST'] = amps2[1]
     # set sources
@@ -2460,6 +2477,31 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     return reconfile
 
 
+def mk_template_qc(params):
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names = [], [], [],
+    qc_logic, qc_pass = [], []
+    # ----------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc params and passed
+    return qc_params, passed
+
+
 def mk_template_write(params, recipe, infile, cprops, filetype,
                       fiber, qc_params):
 
@@ -2632,6 +2674,110 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'])
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
+
+    # return props
+    props = ParamDict()
+    props['S1DTABLE'] = s1dtable
+    return props
+
+
+def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
+    # add qc params (fiber specific)
+    recipe.plot.add_qc_params(qc_params, fiber=fiber)
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_MKTELL_DEF_CONV_WID',
+                         value=tellu_props['DEFAULT_CWIDTH'])
+    recipe.plot.add_stat('KW_MKTELL_FIN_CONV_WID',
+                         value=tellu_props['FINER_CWIDTH'])
+    recipe.plot.add_stat('KW_MKTELL_TEMP_MEDFILT',
+                         value=tellu_props['TEMP_MED_FILT'])
+    recipe.plot.add_stat('KW_MKTELL_DPARAM_THRES',
+                         value=tellu_props['DPARAM_THRES'])
+    recipe.plot.add_stat('KW_MKTELL_MAX_ITER',
+                         value=tellu_props['MAX_ITERATIONS'])
+    recipe.plot.add_stat('KW_MKTELL_THRES_TFIT',
+                         value=tellu_props['THRES_TRANSFIT'])
+    recipe.plot.add_stat('KW_MKTELL_MIN_WATERCOL',
+                         value=tellu_props['MIN_WATERCOL'])
+    recipe.plot.add_stat('KW_MKTELL_MAX_WATERCOL',
+                         value=tellu_props['MAX_WATERCOL'])
+    recipe.plot.add_stat('KW_MKTELL_MIN_NUM_GOOD',
+                         value=tellu_props['MIN_NUM_GOOD'])
+    recipe.plot.add_stat('KW_MKTELL_BTRANS_PERC',
+                         value=tellu_props['BTRANS_PERCENT'])
+    recipe.plot.add_stat('KW_MKTELL_NSIGCLIP',
+                         value=tellu_props['NSIGCLIP'])
+    recipe.plot.add_stat('KW_MKTELL_TRANS_TMFILT',
+                         value=tellu_props['TRANS_TMEDFILT'])
+    recipe.plot.add_stat('KW_MKTELL_SMALL_W_ERR',
+                         value=tellu_props['SMALL_W_ERR'])
+    recipe.plot.add_stat('KW_MKTELL_IM_PSIZE',
+                         value=tellu_props['IMAGE_PIXEL_SIZE'])
+    recipe.plot.add_stat('KW_MKTELL_TAU_WATER_U',
+                         value=tellu_props['TAU_WATER_UPPER'])
+    recipe.plot.add_stat('KW_MKTELL_TAU_OTHER_L',
+                         value=tellu_props['TAU_OTHER_LOWER'])
+    recipe.plot.add_stat('KW_MKTELL_TAU_OTHER_U',
+                         value=tellu_props['TAU_OTHER_UPPER'])
+    recipe.plot.add_stat('KW_MKTELL_TAPAS_SNUM',
+                         value=tellu_props['TAPAS_SMALL_NUM'])
+    recipe.plot.add_stat('KW_MKTELL_AIRMASS',
+                         value=tellu_props['RECOV_AIRMASS'])
+    recipe.plot.add_stat('KW_MKTELL_WATER',
+                         value=tellu_props['RECOV_WATER'])
+    # construct summary (outside fiber loop)
+    recipe.plot.summary_document(it)
+
+
+def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
+                      cprops, fiber):
+    # add qc params (fiber specific)
+    recipe.plot.add_qc_params(qc_params, fiber=fiber)
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_FTELLU_NPC', value=pca_props['NPC'])
+    recipe.plot.add_stat('KW_FTELLU_ADD_DPC',
+                         value=pca_props['ADD_DERIV_PC'])
+    recipe.plot.add_stat('KW_FTELLU_FIT_DPC',
+                         value=pca_props['FIT_DERIV_PC'])
+    recipe.plot.add_stat('KW_FTELLU_ABSO_SRC',
+                         value=pca_props['ABSO_SOURCE'])
+    recipe.plot.add_stat('KW_FTELLU_FIT_KEEP_NUM',
+                         value=sprops['FIT_KEEP_NUM'])
+    recipe.plot.add_stat('KW_FTELLU_FIT_MIN_TRANS',
+                         value=cprops['FIT_MIN_TRANS'])
+    recipe.plot.add_stat('KW_FTELLU_LAMBDA_MIN',
+                         value=cprops['LAMBDA_MIN'])
+    recipe.plot.add_stat('KW_FTELLU_LAMBDA_MAX',
+                         value=cprops['LAMBDA_MAX'])
+    recipe.plot.add_stat('KW_FTELLU_KERN_VSINI',
+                         value=cprops['KERNEL_VSINI'])
+    recipe.plot.add_stat('KW_FTELLU_IM_PX_SIZE',
+                         value=cprops['IMAGE_PIXEL_SIZE'])
+    recipe.plot.add_stat('KW_FTELLU_FIT_ITERS',
+                         value=cprops['FIT_ITERATIONS'])
+    recipe.plot.add_stat('KW_FTELLU_RECON_LIM',
+                         value=cprops['RECON_LIMIT'])
+    # construct summary
+    recipe.plot.summary_document(it)
+
+
+def mk_template_summary(recipe, params, cprops, qc_params):
+    # count number of files
+    nfiles = len(cprops['BIG_COLS']['RowNum'])
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+
+    recipe.plot.add_stat('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
+    recipe.plot.add_stat('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
+    recipe.plot.add_stat('NTMASTER', value=nfiles,
+                         comment='Number files in template')
+    # construct summary
+    recipe.plot.summary_document(0, qc_params)
 
 
 # =============================================================================
