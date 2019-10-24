@@ -2141,6 +2141,7 @@ def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
     fitval = kwargs['fitval']
     d_arr = kwargs['d_arr']
     dopd0 = kwargs['dopd0']
+    fiber = kwargs['fiber']
     # ------------------------------------------------------------------
     # set up plot
     gs = dict(height_ratios=[2, 1])
@@ -2163,7 +2164,8 @@ def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
     # plot legend
     frame1.legend(loc='best')
     # add title
-    fig.suptitle('Interpolated cavity width vs wavelength for HC lines')
+    fig.suptitle('Interpolated cavity width vs wavelength for HC lines. '
+                 'Fiber={0}'.format(fiber))
     # ------------------------------------------------------------------
     # adjust plot
     fig.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95,
