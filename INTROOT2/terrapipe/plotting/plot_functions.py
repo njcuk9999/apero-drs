@@ -1435,6 +1435,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
     params = kwargs['params']
     stable = kwargs['props']['S1DTABLE']
     fiber = kwargs['fiber']
+    kind = kwargs.get('kind', None)
     # get zoom in parameters from params
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
@@ -1457,7 +1458,11 @@ def plot_extract_s1d(plotter, graph, kwargs):
         mask = (wave >= lowerbound) & (wave <= upperbound)
         # if first figure add title
         if row == 0:
-            frame.set_title('Spectrum (1D) fiber {0}'.format(fiber))
+            if kind is not None:
+                title = 'Spectrum {0} (1D) fiber {1}'
+            else:
+                title = 'Spectrum (1D) fiber {1}'
+            frame.set_title(title.format(kind, fiber))
         # plot 1d spectrum
         mc_line(frame, plt, LineCollection, wave[mask], flux[mask],
                 z=wave[mask], norm=norm, cmap='jet')
@@ -1470,6 +1475,9 @@ def plot_extract_s1d(plotter, graph, kwargs):
         # if last row then plot x label
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
+    # update filename (adding order_num to end)
+    suffix = kind.lower()
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
@@ -1492,6 +1500,7 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     weight = kwargs['weight']
     kind = kwargs['kind']
     fiber = kwargs['fiber']
+    stype = kwargs['stype']
     # get zoom in parameters from params
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
@@ -1526,12 +1535,19 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
         frame.set_ylabel('Flux')
         # if first row plot title
         if row == 0:
-            title = ('Producing the 1D spectrum (before and after with '
-                     'weights) fiber {0} Kind = {1}')
-            frame.set_title(title.format(fiber, kind))
+            if stype is not None:
+                title = ('Producing the 1D spectrum for {0} '
+                         '(before and after with weights) fiber={1} grid={2}')
+            else:
+                title = ('Producing the 1D spectrum '
+                         '(before and after with weights) fiber={1} grid={2}')
+            frame.set_title(title.format(stype, fiber, kind))
         # if last row then plot x label
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
+    # update filename (adding order_num to end)
+    suffix = stype.lower()
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
@@ -2408,6 +2424,248 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_ftellu_pca_comp(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    image = kwargs['image']
+    wavemap = kwargs['wavemap']
+    pc = kwargs['pc']
+    add_deriv_pc = kwargs['add_deriv_pc']
+    npc = kwargs['npc']
+    order = kwargs.get('order', None)
+    # get shape from image
+    nbo, nbpix = image.shape
+    # ------------------------------------------------------------------
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we just deal with the order specified
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders in order generator
+    for order_num in order_gen:
+        # get wave map for this order
+        swave = wavemap[order_num]
+        # get start and end points
+        start, end = order_num * nbpix, order_num * nbpix + nbpix
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+        # ------------------------------------------------------------------
+        # plot principle components
+        for it in range(npc):
+            # define the label for the component
+            if add_deriv_pc:
+                if it == npc - 2:
+                    label = 'd[pc1]'
+                elif it == npc - 1:
+                    label = 'd[pc2]'
+                else:
+                    label = 'pc {0}'.format(it + 1)
+            else:
+                label = 'pc {0}'.format(it + 1)
+            # plot the component with correct label
+            frame.plot(swave, pc[start:end, it], label=label)
+        # add legend
+        frame.legend(loc=0)
+        # add labels
+        title = 'Principle component plot. Order = {0}'.format(order_num)
+        frame.set(title=title, xlabel='Wavelength [nm]',
+                  ylabel='Principle component power')
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_ftellu_recon_spline(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    image = kwargs['image']
+    wavemap = kwargs['wavemap']
+    template = kwargs['template']
+    order = kwargs.get('order', None)
+    # get shape from image
+    nbo, nbpix = image.shape
+    # ------------------------------------------------------------------
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we just deal with the order specified
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders in order generator
+    for order_num in order_gen:
+        # get selected order wave lengths
+        swave = wavemap[order_num, :]
+        # get selected order for sp
+        simage = image[order_num, :]
+        # get template2 at selected order
+        start, end = order_num * nbpix, order_num * nbpix + nbpix
+        stemp = np.array(template[start: end])
+        # recovered absorption
+        srecov = simage / stemp
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+        # ------------------------------------------------------------------
+        # plot spectra for selected order
+        frame.plot(swave, simage / np.nanmedian(simage), label='Observed SP')
+        frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
+        frame.plot(swave, srecov / np.nanmedian(srecov), label='Recov abso SP')
+        # add legend
+        frame.legend(loc=0)
+        # add labels
+        title = 'Reconstructed Spline Plot (Order = {0})'
+        frame.set(title=title.format(order_num),
+                  xlabel='Wavelength [nm]', ylabel='Normalised flux')
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_ftellu_wave_shift(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    image = kwargs['image']
+    tapas_before = kwargs['tapas0'][0]
+    tapas_after = kwargs['tapas1'][0]
+    pc_before = kwargs['pc0'][:, 0]
+    pc_after = kwargs['pc1'][:, 0]
+    order = kwargs.get('order', None)
+    # get shape from image
+    nbo, nbpix = image.shape
+    # ------------------------------------------------------------------
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we just deal with the order specified
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders in order generator
+    for order_num in order_gen:
+        # get start and end points
+        start, end = order_num * nbpix, order_num * nbpix + nbpix
+        # get this orders data
+        tdata_s = image[order_num, :] / np.nanmedian(image[order_num, :])
+        tapas_before_s = tapas_before[start:end]
+        tapas_after_s = tapas_after[start:end]
+        pc1_before_s = pc_before[start:end]
+        pc1_after_s = pc_after[start:end]
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+        # ------------------------------------------------------------------
+        # plot the data vs pixel number
+        frame.plot(tdata_s, color='k', label='Spectrum')
+        frame.plot(pc1_before_s, color='g', marker='x', label='PC (before)')
+        frame.plot(tapas_before_s, color='0.5', marker='o',
+                   label='TAPAS (before)')
+        frame.plot(pc1_after_s, color='r', label='PC (After)')
+        frame.plot(tapas_after_s, color='b', label='TAPAS (After)')
+
+        frame.legend(loc=0)
+        title = ('Wavelength shift (Before and after) compared to the data '
+                 '(Order {0})')
+        frame.set(title=title.format(order_num), xlabel='Pixel number',
+                  ylabel='Normalised flux')
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_ftellu_recon_abso(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    image = kwargs['image']
+    wavemap = kwargs['wavemap']
+    sp2 = kwargs['sp2']
+    template = kwargs['template']
+    recon = kwargs['recon']
+    orders = kwargs.get('orders', None)
+    order = kwargs.get('order', None)
+    # get shape from image
+    nbo, nbpix = image.shape
+    # ------------------------------------------------------------------
+    if order is None and orders is None:
+        order_gen = plotter.plotloop(np.arange(nbo))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we check whether orders is set
+    elif orders is not None:
+        order_gen = list(orders)
+    # else we just deal with the order specified
+    elif order is not None:
+        order_gen = [order]
+    else:
+        order_gen = [0]
+    # ------------------------------------------------------------------
+    # deal with plot style
+    if 'dark' in params['DRS_PLOT_STYLE']:
+        black = 'white'
+    else:
+        black = 'black'
+    # ------------------------------------------------------------------
+    # loop around orders in order generator
+    for order_num in order_gen:
+        # get selected order wave lengths
+        swave = wavemap[order_num, :]
+        # get the data for order
+        start, end = order_num * nbpix, order_num * nbpix + nbpix
+        ssp = np.array(image[order_num, :])
+        ssp2 = np.array(sp2[start:end])
+        stemp2 = np.array(template[start:end])
+        srecon_abso = np.array(recon[start:end])
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+        # ------------------------------------------------------------------
+        # plot spectra for selected order
+        frame.plot(swave, ssp / np.nanmedian(ssp), color=black,
+                   label='input SP')
+        frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
+                   label='Cleaned SP')
+        frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
+                   label='Template')
+        frame.plot(swave, srecon_abso, color='r', label='recon abso')
+        # add legend
+        frame.legend(loc=0)
+        # add labels
+        title = 'Reconstructed Absorption (Order = {0})'
+        frame.set(title=title.format(order_num),
+                  xlabel='Wavelength [nm]', ylabel='Normalised flux')
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+# make telluric graph instances
 mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
                            func=plot_mktellu_wave_flux)
 mktellu_wave_flux2 = Graph('MKTELLU_WAVE_FLUX2', kind='debug',
@@ -2417,9 +2675,32 @@ sum_desc = ('Plot to show the measured transmission (and calcaulted SED for'
 sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               func=plot_mktellu_wave_flux,
                               figsize=(16, 10), dpi=150, description=sum_desc)
-
+# fit tellu grpah instances
+ftellu_pca_comp1 = Graph('FTELLU_PCA_COMP1', kind='debug',
+                        func=plot_ftellu_pca_comp)
+ftellu_pca_comp2 = Graph('FTELLU_PCA_COMP2', kind='debug',
+                        func=plot_ftellu_pca_comp)
+ftellu_recon_spline1 = Graph('FTELLU_RECON_SPLINE1', kind='debug',
+                            func=plot_ftellu_recon_spline)
+ftellu_recon_spline2 = Graph('FTELLU_RECON_SPLINE2', kind='debug',
+                            func=plot_ftellu_recon_spline)
+ftellu_wave_shift1 = Graph('FTELLU_WAVE_SHIFT1', kind='debug',
+                          func=plot_ftellu_wave_shift)
+ftellu_wave_shift2 = Graph('FTELLU_WAVE_SHIFT2', kind='debug',
+                          func=plot_ftellu_wave_shift)
+ftellu_recon_abso1 = Graph('FTELLU_RECON_ABSO1', kind='debug',
+                          func=plot_ftellu_recon_abso)
+ftellu_recon_abso2 = Graph('FTELLU_RECON_ABSO2', kind='debug',
+                          func=plot_ftellu_recon_abso)
+sum_desc = 'Results from the telluric fit'
+sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
+                              func=plot_ftellu_recon_abso, figsize=(16, 10),
+                              dpi=150, description=sum_desc)
 # add to definitions
-definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux]
+definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
+                ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
+                ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
+                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso]
 
 
 # =============================================================================
@@ -2497,6 +2778,10 @@ def plot_ccf_rv_fit(plotter, graph, kwargs):
         # ------------------------------------------------------------------
         # adjust size
         fig.subplots_adjust(hspace=0, wspace=0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
