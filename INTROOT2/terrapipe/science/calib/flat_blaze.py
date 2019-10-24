@@ -11,6 +11,7 @@ Created on 2019-07-10 at 09:30
 """
 from __future__ import division
 import numpy as np
+from scipy.optimize import curve_fit
 import warnings
 
 from terrapipe import core
@@ -92,6 +93,78 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     # ----------------------------------------------------------------------
     rms = mp.nanstd(flat)
 
+    # ----------------------------------------------------------------------
+    # return values
+    return e2ds, flat, blaze, rms
+
+
+def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
+    # ----------------------------------------------------------------------
+    # defnie the x positions
+    xpix = np.arange(len(e2ds))
+    # ------------------------------------------------------------------
+    # region over which we will fit
+    keep = np.isfinite(e2ds)
+    # ------------------------------------------------------------------
+    # guess of peak value, we do not take the max as there may be a
+    #     hot/bad pix in the order
+    thres = np.nanpercentile(e2ds, badpercentile)
+    # ------------------------------------------------------------------
+    # how many points above 50% of peak value?
+    # The period should be a factor of about 2.0 more than the domain
+    # that is above the 5th percentile
+    nthres = mp.nansum(e2ds[keep] > thres / 2.0)
+    # median position of points above threshold
+    pospeak = mp.median(xpix[e2ds > thres])
+    # bounds
+    xlower = mp.nanmin(xpix[e2ds > thres])
+    xupper = mp.nanmax(xpix[e2ds > thres])
+    # ------------------------------------------------------------------
+    # starting point for the fit to the blaze sinc model
+    # we start with :
+    #
+    # peak value is == threshold percentile
+    # period of sinc is == 2x the width of pixels above 50% of the peak
+    # the peak position is == the median x value of pixels above
+    #                         95th percent.
+    # no quadratic term
+    # no SED slope
+    fit_guess = [thres, nthres * 2.0, pospeak, 0, 0]
+    # ------------------------------------------------------------------
+    # we set reasonable bounds
+    bounds = [(thres * 0.5, nthres * 0.1, xlower, -1e-4, -1e-2),
+              (thres * 1.5, nthres * 10, xupper, 1e-4, 1e-2)]
+    # we optimize over pixels that are not NaN
+    popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
+                           bounds=bounds)
+    # ------------------------------------------------------------------
+    # set the model to zeros at first
+    blaze = np.zeros_like(e2ds)
+    # now we iterate using a sigma clip
+    for _ in range(niter):
+        # we construct a model with the peak cut-off
+        blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
+                        peak_cut=peak_cut)
+        # we find residuals to the fit and normalize them
+        residual = (e2ds - blaze)
+        residual /= mp.nanmedian(np.abs(residual))
+        # we keep only non-NaN model points (i.e. above peak_cut) and
+        # within +- Nsigfit dispersion elements
+        keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
+        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                               p0=fit_guess, bounds=bounds)
+    # ----------------------------------------------------------------------
+    # remove nan in the blaze also in the e2ds
+    # ----------------------------------------------------------------------
+    blazemask = np.isnan(blaze)
+    e2ds[blazemask] = np.nan
+    # calculate the flat
+    with warnings.catch_warnings(record=True) as _:
+        flat = e2ds / blaze
+    # ----------------------------------------------------------------------
+    # calculate the rms
+    # ----------------------------------------------------------------------
+    rms = mp.nanstd(flat)
     # ----------------------------------------------------------------------
     # return values
     return e2ds, flat, blaze, rms
@@ -227,9 +300,17 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     blazefile.add_hkey('KW_COSMIC_THRES',
                        value=eprops['COSMIC_THRESHOLD'])
     # add blaze parameter used
+    # TODO: is blaze_size needed with sinc function?
     blazefile.add_hkey('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'])
+    # TODO: is blaze_cut needed with sinc function?
     blazefile.add_hkey('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'])
+    # TODO: is blaze_deg needed with sinc function?
     blazefile.add_hkey('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'])
+    # add blaze sinc parameters used
+    blazefile.add_hkey('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'])
+    blazefile.add_hkey('KW_BLAZE_SIGFIG', value=eprops['BLAZE_SIGFIT'])
+    blazefile.add_hkey('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'])
+    blazefile.add_hkey('KW_BLAZE_NITER', value=eprops['BLAZE_NITER'])
     # add saturation parameters used
     blazefile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
     with warnings.catch_warnings(record=True) as _:
@@ -292,6 +373,46 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     recipe.add_output_file(e2dsllfile)
     # return out file
     return blazefile, flatfile
+
+
+def flat_blaze_summary(recipe, params, qc_params, eprops, fiber):
+    # alias to eprops
+    epp = eprops
+    # add qc params (fiber specific)
+    recipe.plot.add_qc_params(qc_params, fiber=fiber)
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'], fiber=fiber)
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'], fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_START', value=epp['START_ORDER'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_END', value=epp['END_ORDER'], fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_RANGE1', value=epp['RANGE1'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_RANGE2', value=epp['RANGE2'], fiber=fiber)
+    recipe.plot.add_stat('KW_COSMIC', value=epp['COSMIC'], fiber=fiber)
+    recipe.plot.add_stat('KW_COSMIC_CUT', value=epp['COSMIC_SIGCUT'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
+                         value=epp['COSMIC_THRESHOLD'])
+    # add blaze parameter used
+    # TODO: is blaze_size needed with sinc function?
+    recipe.plot.add_stat('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'],
+                         fiber=fiber)
+    # TODO: is blaze_cut needed with sinc function?
+    recipe.plot.add_stat('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'],
+                         fiber=fiber)
+    # TODO: is blaze_deg needed with sinc function?
+    recipe.plot.add_stat('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'],
+                         fiber=fiber)
+    # add blaze sinc parameters used
+    recipe.plot.add_stat('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_SIGFIG', value=eprops['BLAZE_SIGFIT'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_NITER', value=eprops['BLAZE_NITER'],
+                         fiber=fiber)
 
 
 # =============================================================================

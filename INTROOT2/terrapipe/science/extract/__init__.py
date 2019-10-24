@@ -36,6 +36,8 @@ qc_extraction = general.qc_extraction
 
 write_extraction_files = general.write_extraction_files
 
+extract_summary = general.extract_summary
+
 # =============================================================================
 # End of code
 # =============================================================================

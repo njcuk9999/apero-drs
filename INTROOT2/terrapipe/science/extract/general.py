@@ -373,7 +373,7 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
 
 
 def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
-                **kwargs):
+                kind=None, **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -429,7 +429,7 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
     # for each order find the sloping weight vector
     for order_num in range(nord):
         # get the blaze for this order
-        oblaze = blaze[order_num]
+        oblaze = np.array(blaze[order_num])
         # find the valid pixels
         cond1 = np.isfinite(oblaze) & np.isfinite(e2ds[order_num])
         with warnings.catch_warnings(record=True) as _:
@@ -445,8 +445,8 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
         slopevector[order_num] = oweight
 
     # multiple the spectrum and blaze by the sloping vector
-    blaze = blaze * slopevector
-    e2ds = e2ds * slopevector
+    sblaze = np.array(blaze) * slopevector
+    se2ds = np.array(e2ds) * slopevector
 
     # -------------------------------------------------------------------------
     # Perform a weighted mean of overlapping orders
@@ -458,15 +458,15 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
     # loop around all orders
     for order_num in range(nord):
         # identify the valid pixels
-        valid = np.isfinite(e2ds[order_num]) & np.isfinite(blaze[order_num])
+        valid = np.isfinite(se2ds[order_num]) & np.isfinite(sblaze[order_num])
         valid_float = valid.astype(float)
         # if we have no valid points we need to skip
         if np.sum(valid) == 0:
             continue
         # get this orders vectors
         owave = wavemap[order_num]
-        oe2ds = e2ds[order_num, valid]
-        oblaze = blaze[order_num, valid]
+        oe2ds = se2ds[order_num, valid]
+        oblaze = sblaze[order_num, valid]
         # create the splines for this order
         spline_sp = mp.iuv_spline(owave[valid], oe2ds, k=5, ext=1)
         spline_bl = mp.iuv_spline(owave[valid], oblaze, k=5, ext=1)
@@ -490,7 +490,8 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
 
     # plot the s1d weight/before/after plot
     recipe.plot('EXTRACT_S1D_WEIGHT', params=params, wave=wavegrid,
-                flux=out_spec, weight=weight, kind=wgrid, fiber=fiber)
+                flux=out_spec, weight=weight, kind=wgrid, fiber=fiber,
+                stype=kind)
     # work out the weighted spectrum
     with warnings.catch_warnings(record=True) as _:
         w_out_spec = out_spec / weight
@@ -783,6 +784,45 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # return e2ds files
     return e2dsfile, e2dsfffile
+
+
+def extract_summary(recipe, params, qc_params, e2dsfile, shapelocal, eprops,
+                    fiber):
+    # add qc params (fiber specific)
+    recipe.plot.add_qc_params(qc_params, fiber=fiber)
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_TYPE', value=e2dsfile.name,
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_SHAPE_DX', value=shapelocal[0],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_SHAPE_DY', value=shapelocal[1],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_SHAPE_A', value=shapelocal[2],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_SHAPE_B', value=shapelocal[3],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_SHAPE_C', value=shapelocal[4],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_SHAPE_D', value=shapelocal[5],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_START', value=eprops['START_ORDER'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_END', value=eprops['END_ORDER'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_RANGE1', value=eprops['RANGE1'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_RANGE2', value=eprops['RANGE2'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_COSMIC', value=eprops['COSMIC'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
+                         value=eprops['COSMIC_THRESHOLD'])
 
 
 # =============================================================================
