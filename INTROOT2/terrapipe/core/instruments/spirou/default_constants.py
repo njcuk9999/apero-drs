@@ -752,6 +752,23 @@ FF_BLAZE_THRESHOLD.value = 16.0
 FF_BLAZE_DEGREE = FF_BLAZE_DEGREE.copy(__NAME__)
 FF_BLAZE_DEGREE.value = 10
 
+# Define the threshold, expressed as the fraction of the maximum peak, below
+#    this threshold the blaze (and e2ds) is set to NaN
+FF_BLAZE_SCUT = FF_BLAZE_SCUT.copy(__NAME__)
+FF_BLAZE_SCUT.value = 0.3
+
+# Define the rejection threshold for the blaze sinc fit
+FF_BLAZE_SIGFIT = FF_BLAZE_SIGFIT.copy(__NAME__)
+FF_BLAZE_SIGFIT.value = 4.0
+
+# Define the hot bad pixel percentile level (using in blaze sinc fit)
+FF_BLAZE_BPERCENTILE = FF_BLAZE_BPERCENTILE.copy(__NAME__)
+FF_BLAZE_BPERCENTILE.value = 95
+
+# Define the number of times to iterate around blaze sinc fit
+FF_BLAZE_NITER = FF_BLAZE_NITER.copy(__NAME__)
+FF_BLAZE_NITER.value = 2
+
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
@@ -1457,9 +1474,8 @@ MKTELLU_TRANS_TEMPLATE_MEDFILT.value = 31
 MKTELLU_SMALL_WEIGHTING_ERROR = MKTELLU_SMALL_WEIGHTING_ERROR.copy(__NAME__)
 MKTELLU_SMALL_WEIGHTING_ERROR.value = 0.01
 
-# Define the orders to plot (not too many) - but can put 'all' to show all
-#    'all' are shown one-by-one and then closed (in non-interactive mode)
-#    values should be a string list separated by commas (unless = 'all')
+# Define the orders to plot (not too many)
+#    values should be a string list separated by commas
 MKTELLU_PLOT_ORDER_NUMS = MKTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
 MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
 
@@ -1550,6 +1566,15 @@ FTELLU_FIT_ITERS.value = 4
 #     calculation
 FTELLU_FIT_RECON_LIMIT = FTELLU_FIT_RECON_LIMIT.copy(__NAME__)
 FTELLU_FIT_RECON_LIMIT.value = -0.5
+
+# Define the orders to plot (not too many) for recon abso plot
+#    values should be a string list separated by commas
+FTELLU_PLOT_ORDER_NUMS = FTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
+FTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
+
+# Define the selected fit telluric order for debug plots (when not in loop)
+FTELLU_SPLOT_ORDER = FTELLU_SPLOT_ORDER.copy(__NAME__)
+FTELLU_SPLOT_ORDER.value = 30
 
 # =============================================================================
 # CALIBRATION: MAKE TEMPLATE SETTINGS
@@ -1846,6 +1871,38 @@ PLOT_MKTELLU_WAVE_FLUX1.value = False
 # turn on the make tellu wave flux debug plot (single order)
 PLOT_MKTELLU_WAVE_FLUX2 = PLOT_MKTELLU_WAVE_FLUX2.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX2.value = True
+
+# turn on the fit tellu pca component debug plot (in loop)
+PLOT_FTELLU_PCA_COMP1 = PLOT_FTELLU_PCA_COMP1.copy(__NAME__)
+PLOT_FTELLU_PCA_COMP1.value = False
+
+# turn on the fit tellu pca component debug plot (single order)
+PLOT_FTELLU_PCA_COMP2 = PLOT_FTELLU_PCA_COMP2.copy(__NAME__)
+PLOT_FTELLU_PCA_COMP2.value = True
+
+# turn on the fit tellu reconstructed spline debug plot (in loop)
+PLOT_FTELLU_RECON_SPLINE1 = PLOT_FTELLU_RECON_SPLINE1.copy(__NAME__)
+PLOT_FTELLU_RECON_SPLINE1.value = False
+
+# turn on the fit tellu reconstructed spline debug plot (single order)
+PLOT_FTELLU_RECON_SPLINE2 = PLOT_FTELLU_RECON_SPLINE2.copy(__NAME__)
+PLOT_FTELLU_RECON_SPLINE2.value = True
+
+# turn on the fit tellu wave shift debug plot (in loop)
+PLOT_FTELLU_WAVE_SHIFT1 = PLOT_FTELLU_WAVE_SHIFT1.copy(__NAME__)
+PLOT_FTELLU_WAVE_SHIFT1.value = False
+
+# turn on the fit tellu wave shift debug plot (single order)
+PLOT_FTELLU_WAVE_SHIFT2 = PLOT_FTELLU_WAVE_SHIFT2.copy(__NAME__)
+PLOT_FTELLU_WAVE_SHIFT2.value = True
+
+# turn on the fit tellu reconstructed absorption debug plot (in loop)
+PLOT_FTELLU_RECON_ABSO1 = PLOT_FTELLU_RECON_ABSO1.copy(__NAME__)
+PLOT_FTELLU_RECON_ABSO1.value = False
+
+# turn on the fit tellu reconstructed absorption debug plot (single order)
+PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)
+PLOT_FTELLU_RECON_ABSO2.value = True
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)

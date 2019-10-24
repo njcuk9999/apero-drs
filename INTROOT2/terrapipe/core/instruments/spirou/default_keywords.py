@@ -442,17 +442,38 @@ KW_EXT_RANGE2.set(key='EXTR2', comment='Extract: width2 for order extraction')
 KW_COSMIC = KW_COSMIC.copy(__NAME__)
 KW_COSMIC.set(key='EXTCOS', comment='Extract: Whether cosmics were rejected')
 
+# TODO: is blaze_size needed with sinc function?
 # the blaze with used
 KW_BLAZE_WID = KW_BLAZE_WID.copy(__NAME__)
 KW_BLAZE_WID.set(key='BLAZEWID', comment='Extract: Blaze width used')
 
+# TODO: is blaze_cut needed with sinc function?
 # the blaze cut used
 KW_BLAZE_CUT = KW_BLAZE_CUT.copy(__NAME__)
 KW_BLAZE_CUT.set(key='BLAZECUT', comment='Extract: Blaze cut used')
 
+# TODO: is blaze_deg needed with sinc function?
 # the blaze degree used (to fit)
 KW_BLAZE_DEG = KW_BLAZE_DEG.copy(__NAME__)
 KW_BLAZE_DEG.set(key='BLAZEDEG', comment='Extract: Blaze fit degree used')
+
+# The blaze sinc cut threshold used
+KW_BLAZE_SCUT = KW_BLAZE_SCUT.copy(__NAME__)
+KW_BLAZE_SCUT.set(key='BLAZSCUT', comment='Extract: Blaze sinc cut thres used')
+
+# The blaze sinc sigma clip (rejection threshold) used
+KW_BLAZE_SIGFIG = KW_BLAZE_SIGFIG.copy(__NAME__)
+KW_BLAZE_SIGFIG.set(key='BLAZSIGF',
+                    comment='Extract: Blaze sinc reject thres used')
+
+# The blaze sinc bad percentile value used
+KW_BLAZE_BPRCNTL = KW_BLAZE_BPRCNTL.copy(__NAME__)
+KW_BLAZE_BPRCNTL.set(key='BLAZBPTL',
+                     comment='Extract: Blaze sinc bad percentile used')
+
+# The number of iterations used in the blaze sinc fit
+KW_BLAZE_NITER = KW_BLAZE_NITER.copy(__NAME__)
+KW_BLAZE_NITER.set(key='BLAZNITR', comment='Extract: Blaze sinc no. iters used')
 
 # the cosmic cut criteria
 KW_COSMIC_CUT = KW_COSMIC_CUT.copy(__NAME__)
