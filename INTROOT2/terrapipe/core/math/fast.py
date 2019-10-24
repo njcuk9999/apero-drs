@@ -301,20 +301,18 @@ def medfilt_1d(a, window=None):
 # =============================================================================
 # numba functions
 # =============================================================================
-def jitwrapper(**options):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            if HAS_NUMBA:
-                return jit(func, **options)(*args, **kwargs)
-            else:
+# must catch if we do not have the jit decorator and define our own
+if not HAS_NUMBA:
+    def jit(**options):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
-        return wrapper
-    return decorator
+            return wrapper
+        return decorator
 
 
 # Set "nopython" mode for best performance, equivalent to @nji
-# note we use the @jitwrapper to avoid missing numba imports
-@jitwrapper(nopython=True)
+@jit(nopython=True)
 def lin_mini(vector,sample,mm,v,sz_sample,case,recon,amps):
     #
     # vector of N elements
