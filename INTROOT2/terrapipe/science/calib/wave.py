@@ -835,7 +835,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     # Fit (1/m) vs d
     # ----------------------------------------------------------------------
     fout = fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test,
-                       update_cavity, m_init, fp_ll)
+                       update_cavity, m_init, fp_ll, fiber)
     fit_1m_d, fit_ll_d, one_m_d, d_arr = fout
 
     # ----------------------------------------------------------------------
@@ -1312,7 +1312,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
         # TODO: remove breakpoint
         print('wave.py Line 1298')
         constants.breakpoint(params)
-        if 0:
+        if __name__ == '__main__':
             recipe.plot('WAVE_HC_GUESS', params=params, wave=iprops['WAVEMAP'],
                         spec=hc_sp, llprops=llprops, nbo=nbo)
     # ----------------------------------------------------------------------
@@ -3709,7 +3709,7 @@ def get_d_for_each_hcline(params, recipe, llprops, fp_order, fp_xx, m_vec,
 
 
 def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
-                m_init, fp_ll, **kwargs):
+                m_init, fp_ll, fiber, **kwargs):
     # set function name
     func_name = __NAME__ + '.fit_1m_vs_d()'
     # get params from params
@@ -3740,7 +3740,7 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
         # TODO: remove breakpoint
         print('wave.py Line 3742')
         constants.breakpoint(params)
-        if 0:
+        if __name__ == '__main__':
             recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
                         m_init=m_init, fit_1m_d_func=fit_1m_d_func,
                         res_d_final=res_d_final, dopd0=dopd0)
