@@ -769,15 +769,15 @@ class Plotter:
             doc.add_text('None')
             doc.newline()
         else:
+            warn_lines = []
             # add warnings
             for it, warning in enumerate(self.warnings):
                 # get time and message
                 wtime, wmsg = warning
-                # clean message
-                message = clean(wmsg)
-                # add text
-                doc.add_text('{0}: {1}'.format(wtime, message))
-                doc.newline()
+                # append lines
+                warn_lines.append('{0}: {1}'.format(wtime, wmsg))
+            # add text
+            doc.add_text(warn_lines)
         # return the doc
         return doc
 
