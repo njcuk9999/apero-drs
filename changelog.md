@@ -2,6 +2,31 @@ Changelog
 =========
 
 
+0.5.098 (2019-10-24)
+--------------------
+- Recipe.spirou.cal_wave_spirou.py + sciecne.calib.wave.py - add summary
+  plot functionality. [Neil Cook]
+- Plotting.* - add summary plots. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add wave solution
+  summary plots. [Neil Cook]
+- Flat_blaze.py and extraction.py - add sloping sinc fit for blaze and
+  move summary/qc to modules. [Neil Cook]
+- Obj_fit_tellu_spirou, obj_mk_tellu_spirou and obj_mk_template_spirou -
+  add telluric plotting. [Neil Cook]
+- Move summary + qc + writing to modules (not in main recipes) [Neil
+  Cook]
+- Plotting.* - add telluric plots. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.math.general.py - add sloped sinc function. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add fit_tellu plots
+  and mk_template plots. [Neil Cook]
+- Core.instruments.*.default_*.py - add blaze sinc constants + plotting
+  constants for fit_tellu. [Neil Cook]
+- Misc - copy of Etiennes sinc function for blaze correction. [Neil
+  Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.097 (2019-10-23)
 --------------------
 - Science.velocity.general.py - change arguments (found_rv --> rv) [Neil
