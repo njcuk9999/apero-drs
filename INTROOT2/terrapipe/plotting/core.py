@@ -246,9 +246,8 @@ class Plotter:
                 self.plt.close()
         # deal with summary plots
         elif graph.kind == 'summary':
-            # TODO: Add summary options
             # 1. save to file
-            self.interactive(False)
+            self.interactive(False, show=False)
             self.plt.savefig(graph.filename + '.png', dpi=graph.dpi)
             self.plt.savefig(graph.filename + '.pdf', dpi=graph.dpi)
             self.plt.close()
@@ -364,7 +363,7 @@ class Plotter:
             # close any open plots properly
             self.closeall()
 
-    def interactive(self, switch=False):
+    def interactive(self, switch=False, show=True):
         """
         plt.ion()/plt.ioff() sometimes does not work in debug mode
         therefore we must catch it.
@@ -387,8 +386,11 @@ class Plotter:
             try:
                 self.plt.ioff()
             except:
-                self.plt.show()
-                self.plt.close()
+                if show:
+                    self.plt.show()
+                    self.plt.close()
+                else:
+                    pass
 
     # ------------------------------------------------------------------
     # summary methods
@@ -416,6 +418,9 @@ class Plotter:
             # latex document
             latexdoc = self.summary_latex(qc_params, stats, warnings)
         except Exception as e:
+            # do not skip if in debug mode
+            if self.params['DRS_DEBUG']:
+                raise e
             # log error as warning
             wargs = [type(e), e, func_name]
             WLOG(self.params, 'warning', TextEntry('10-100-01001', args=wargs))
@@ -429,6 +434,9 @@ class Plotter:
             # latex document
             htmldoc = self.summary_html(qc_params, stats, warnings)
         except Exception as e:
+            # do not skip if in debug mode
+            if self.params['DRS_DEBUG']:
+                raise e
             # log error as warning
             wargs = [type(e), e, func_name]
             WLOG(self.params, 'warning', TextEntry('10-100-01002', args=wargs))
@@ -508,7 +516,7 @@ class Plotter:
         # check that pdf was created
         if not os.path.exists(doc.pdffilename):
             wargs = [doc.pdffilename]
-            WLOG(self.params, 'warning', TextEntry('', args=wargs))
+            WLOG(self.params, 'warning', TextEntry('10-100-01003', args=wargs))
         # return the doc
         return doc
 
@@ -519,12 +527,18 @@ class Plotter:
         shortname = clean(self.recipename)
         # add qc_param section
         doc.section(self.textdict['40-100-01003'])
-        # add qc_param text
-        doc.add_text(self.textdict['40-100-01004'].format(shortname))
         # add qc_param table
         qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
-        # get qc_caption
-        qc_caption = self.textdict['40-100-01005'].format(shortname)
+        # deal with no qc_table
+        if qc_table is None:
+            doc.add_text(self.textdict['40-100-01012'])
+            return
+        # else add qc section text
+        else:
+            # add qc_param text
+            doc.add_text(self.textdict['40-100-01004'].format(shortname))
+            # get qc_caption
+            qc_caption = self.textdict['40-100-01005'].format(shortname)
         # deal with have fiber
         if 'Fiber' in qc_table.colnames:
             # get unique fiber values
@@ -653,16 +667,20 @@ class Plotter:
             return
         # add qc_param table
         qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
-
         # get recipe short name
         shortname = self.recipename
         # add qc_param section
         doc.section(self.textdict['40-100-01003'])
-        # add qc_param text
-        doc.add_text(self.textdict['40-100-01004'].format(shortname))
-        # get qc_caption
-        qc_caption = self.textdict['40-100-01005'].format(shortname)
-
+        # deal with no qc_table
+        if qc_table is None:
+            doc.add_text(self.textdict['40-100-01012'])
+            return
+        # else add qc section text
+        else:
+            # add qc_param text
+            doc.add_text(self.textdict['40-100-01004'].format(shortname))
+            # get qc_caption
+            qc_caption = self.textdict['40-100-01005'].format(shortname)
         # deal with have fiber
         if 'Fiber' in qc_table.colnames:
             # get unique fiber values
