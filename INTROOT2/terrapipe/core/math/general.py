@@ -126,7 +126,6 @@ def fwhm(sigma=1.0):
     return 2 * np.sqrt(2 * np.log(2)) * sigma
 
 
-# TODO: Required commenting and cleaning up
 def linear_minimization(vector, sample):
     """
     wrapper function that sets everything for the @jit later
@@ -215,7 +214,6 @@ def linear_minimization(vector, sample):
     return amp_out, recon_out
 
 
-
 def iuv_spline(x, y, **kwargs):
     # check whether weights are set
     w = kwargs.get('w', None)
@@ -257,6 +255,63 @@ def robust_polyfit(x, y, degree, nsigcut):
         keep = nsig < nsigcut
     # return the fit and the mask of good values
     return fit, keep
+
+
+def sinc(x, amp, period, lin_center, quad_scale, slope, peak_cut=0.0):
+    """
+    Calculates the sinc function with a slope (and position threshold cut)
+
+    y = A * (sin(x)/x)^2 * (1 + C*x)
+
+    x = 2*pi*(X - dx + q*dx^2) / P
+
+    where X is a position along the x pixel axis. This assumes
+    that the blaze follows an airy pattern and that there may be a slope
+    to the spectral energy distribution.
+
+    if peak_cut is non-zero:
+        y < A * peak_cut = NaN
+
+    :param x: numpy array (1D), the x position vector y (X)
+    :param amp: float, the amplitude of the sinc function (A)
+    :param period: float, the period of the sinc function (P)
+    :param lin_center: float, the linear center of the sinc (dx)
+    :param quad_scale: float, the quad scale of the sinc (q)
+    :param slope: the slope of the sinc function (C)
+    :param peak_cut: float, if non-zero if the threshold below the maximum
+                     amplitude to set to NaNs
+
+    :type x: np.ndarray
+    :type amp: float
+    :type period: float
+    :type lin_center: float
+    :type quad_scale: float
+    :type slope: float
+    :type peak_cut: float
+
+    :return: the sinc function (with a slope) and if peak_cut non-zero NaN
+             filled before this fraction of the sinc max amplitude
+    :rtype: np.ndarray
+    """
+    # Transform the x expressed in pixels into a stretched version
+    # expressed in phase. The quadratic terms allows for a variation of
+    # dispersion along the other
+    deltax = x - lin_center
+    xp = 2 * np.pi * ((deltax + quad_scale * deltax ** 2) / period)
+    # this avoids a division by zero
+    if np.min(np.abs(xp) / period) < 1e-9:
+        small_x = (np.abs(xp) / period) < 1e-9
+        xp[small_x] = 1e-9
+    # calculate the sinc function
+    yy = amp * (np.sin(xp) / xp) ** 2
+    # if we set a peak_cut threshold then values below that fraction of the
+    # peak sinc value are set to NaN.
+    if peak_cut != 0:
+        yy[yy < (peak_cut * amp)] = np.nan
+    # multiplicative slope in the SED
+    yy *= (1 + slope * (x - lin_center))
+    # return the adjusted yy
+    return yy
 
 
 def sigfig(x, n):
