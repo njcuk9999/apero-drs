@@ -94,6 +94,8 @@ __all__ = [
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
+    'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
+    'FF_BLAZE_NITER',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -170,7 +172,7 @@ __all__ = [
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
     'FTELLU_LAMBDA_MAX', 'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS',
-    'FTELLU_FIT_RECON_LIMIT',
+    'FTELLU_FIT_RECON_LIMIT', 'FTELLU_PLOT_ORDER_NUMS', 'FTELLU_SPLOT_ORDER',
     # make template constants
     'MKTEMPLATE_SNR_ORDER', 'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
@@ -201,6 +203,10 @@ __all__ = [
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
+    'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
+    'PLOT_FTELLU_RECON_SPLINE1', 'PLOT_FTELLU_RECON_SPLINE2',
+    'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
+    'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
@@ -921,17 +927,37 @@ SHAPEL_PLOT_ZOOM2 = Const('SHAPEL_PLOT_ZOOM2', value=None, dtype=str,
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
+# TODO: is blaze_size needed with sinc function?
 #  Half size blaze smoothing window
 FF_BLAZE_HALF_WINDOW = Const('FF_BLAZE_HALF_WINDOW', value=None, dtype=int,
                              source=__NAME__)
 
+# TODO: is blaze_cut needed with sinc function?
 # Minimum relative e2ds flux for the blaze computation
 FF_BLAZE_THRESHOLD = Const('FF_BLAZE_THRESHOLD', value=None, dtype=float,
                            source=__NAME__)
 
+# TODO: is blaze_deg needed with sinc function?
 #  The blaze polynomial fit degree
 FF_BLAZE_DEGREE = Const('FF_BLAZE_DEGREE', value=None, dtype=int,
                         source=__NAME__)
+
+# Define the threshold, expressed as the fraction of the maximum peak, below
+#    this threshold the blaze (and e2ds) is set to NaN
+FF_BLAZE_SCUT = Const('FF_BLAZE_SCUT', value=None, dtype=float,
+                        source=__NAME__)
+
+# Define the rejection threshold for the blaze sinc fit
+FF_BLAZE_SIGFIT = Const('FF_BLAZE_SIGFIT', value=None, dtype=float,
+                        source=__NAME__)
+
+# Define the hot bad pixel percentile level (using in blaze sinc fit)
+FF_BLAZE_BPERCENTILE = Const('FF_BLAZE_BPERCENTILE', value=None, dtype=float,
+                             source=__NAME__)
+
+# Define the number of times to iterate around blaze sinc fit
+FF_BLAZE_NITER = Const('FF_BLAZE_BPERCENTILE', value=None, dtype=int,
+                       source=__NAME__, minimum=0)
 
 # Define the orders not to plot on the RMS plot should be a string
 #     containing a list of integers
@@ -1612,9 +1638,8 @@ MKTELLU_TRANS_TEMPLATE_MEDFILT = Const('MKTELLU_TRANS_TEMPLATE_MEDFILT',
 MKTELLU_SMALL_WEIGHTING_ERROR = Const('MKTELLU_SMALL_WEIGHTING_ERROR',
                                       value=None, dtype=float, source=__NAME__)
 
-# Define the orders to plot (not too many) - but can put 'all' to show all
-#    'all' are shown one-by-one and then closed (in non-interactive mode)
-#    values should be a string list separated by commas (unless = 'all')
+# Define the orders to plot (not too many)
+#    values should be a string list separated by commas
 MKTELLU_PLOT_ORDER_NUMS = Const('MKTELLU_PLOT_ORDER_NUMS', value=None,
                                 dtype=str, source=__NAME__)
 
@@ -1705,6 +1730,15 @@ FTELLU_FIT_ITERS = Const('FTELLU_FIT_ITERS', value=None, dtype=int,
 #     calculation
 FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
                                dtype=float, source=__NAME__)
+
+# Define the orders to plot (not too many) for recon abso plot
+#    values should be a string list separated by commas
+FTELLU_PLOT_ORDER_NUMS = Const('FTELLU_PLOT_ORDER_NUMS', value=None,
+                               dtype=str, source=__NAME__)
+
+# Define the selected fit telluric order for debug plots (when not in loop)
+FTELLU_SPLOT_ORDER = Const('FTELLU_SPLOT_ORDER', value=None,
+                           dtype=int, source=__NAME__)
 
 # =============================================================================
 # CALIBRATION: MAKE TEMPLATE SETTINGS
@@ -2003,6 +2037,38 @@ PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
 # turn on the make tellu wave flux debug plot (single order)
 PLOT_MKTELLU_WAVE_FLUX2 = Const('PLOT_MKTELLU_WAVE_FLUX2', value=False,
                                 dtype=bool, source=__NAME__)
+
+# turn on the fit tellu pca component debug plot (in loop)
+PLOT_FTELLU_PCA_COMP1 = Const('PLOT_FTELLU_PCA_COMP1', value=False,
+                             dtype=bool, source=__NAME__)
+
+# turn on the fit tellu pca component debug plot (single order)
+PLOT_FTELLU_PCA_COMP2 = Const('PLOT_FTELLU_PCA_COMP2', value=False,
+                             dtype=bool, source=__NAME__)
+
+# turn on the fit tellu reconstructed spline debug plot (in loop)
+PLOT_FTELLU_RECON_SPLINE1 = Const('PLOT_FTELLU_RECON_SPLINE1', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the fit tellu reconstructed spline debug plot (single order)
+PLOT_FTELLU_RECON_SPLINE2 = Const('PLOT_FTELLU_RECON_SPLINE2', value=False,
+                                 dtype=bool, source=__NAME__)
+
+# turn on the fit tellu wave shift debug plot (in loop)
+PLOT_FTELLU_WAVE_SHIFT1 = Const('PLOT_FTELLU_WAVE_SHIFT1', value=False,
+                               dtype=bool, source=__NAME__)
+
+# turn on the fit tellu wave shift debug plot (single order)
+PLOT_FTELLU_WAVE_SHIFT2 = Const('PLOT_FTELLU_WAVE_SHIFT2', value=False,
+                               dtype=bool, source=__NAME__)
+
+# turn on the fit tellu reconstructed absorption debug plot (in loop)
+PLOT_FTELLU_RECON_ABSO1 = Const('PLOT_FTELLU_RECON_ABSO1', value=False,
+                               dtype=bool, source=__NAME__)
+
+# turn on the fit tellu reconstructed absorption debug plot (single order)
+PLOT_FTELLU_RECON_ABSO2 = Const('PLOT_FTELLU_RECON_ABSO12', value=False,
+                               dtype=bool, source=__NAME__)
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,

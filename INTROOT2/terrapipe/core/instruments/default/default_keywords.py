@@ -41,7 +41,8 @@ __all__ = [# input keys
            'KW_SHAPE_DX', 'KW_SHAPE_DY', 'KW_SHAPE_A', 'KW_SHAPE_B',
            'KW_SHAPE_C', 'KW_SHAPE_D',
            # flat values
-           'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG',
+           'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG', 'KW_BLAZE_SCUT',
+           'KW_BLAZE_SIGFIG', 'KW_BLAZE_BPRCNTL', 'KW_BLAZE_NITER',
            # extraction values
            'KW_EXT_TYPE', 'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END',
            'KW_EXT_RANGE1', 'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT',
@@ -444,6 +445,20 @@ KW_BLAZE_CUT = Keyword('KW_BLAZE_CUT', key='', dtype=float, source=__NAME__)
 
 # the blaze degree used (to fit)
 KW_BLAZE_DEG = Keyword('KW_BLAZE_DEG', key='', dtype=int, source=__NAME__)
+
+# The blaze sinc cut threshold used
+KW_BLAZE_SCUT = Keyword('KW_BLAZE_SCUT', key='', dtype=float, source=__NAME__)
+
+# The blaze sinc sigma clip (rejection threshold) used
+KW_BLAZE_SIGFIG = Keyword('KW_BLAZE_SIGFIG', key='', dtype=float,
+                          source=__NAME__)
+
+# The blaze sinc bad percentile value used
+KW_BLAZE_BPRCNTL = Keyword('KW_BLAZE_BPRCNTL', key='', dtype=float,
+                           source=__NAME__)
+
+# The number of iterations used in the blaze sinc fit
+KW_BLAZE_NITER = Keyword('KW_BLAZE_NITER', key='', dtype=int, source=__NAME__)
 
 # the saturation QC limit
 KW_SAT_QC = Keyword('KW_SAT_QC', key='', dtype=int, source=__NAME__)
