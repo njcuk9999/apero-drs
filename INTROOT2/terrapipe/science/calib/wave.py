@@ -4062,7 +4062,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     # add constants used (for reproduction)
     wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
     wavefile.add_hkey('KW_WAVE_MODE_HC', value=llprops['WAVE_MODE_HC'])
-    wavefile.add_hkey('KW_WAVE_MODE_FP', value='None')
+    wavefile.add_hkey('KW_WAVE_MODE_FP', value=llprops['WAVE_MODE_FP'])
     # from fp_wavesol
     wavefile.add_hkey('KW_WFP_ORD_START', value=llprops['USED_N_INIT'])
     wavefile.add_hkey('KW_WFP_ORD_FINAL', value=llprops['USED_N_FIN'])
@@ -4194,6 +4194,91 @@ def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
     WLOG(params, '', TextEntry('40-017-00035', args=[wavefile.filename]))
     # merge table
     drs_table.write_table(params, table, wavefile.filename, fmt='ascii.rst')
+
+
+def wave_summary(recipe, params, llprops, fiber, qc_params):
+    # add qc params (fiber specific)
+    recipe.plot.add_qc_params(qc_params, fiber=fiber)
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
+                         fiber=fiber)
+    # add constants used (for reproduction)
+    recipe.plot.add_stat('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WAVE_MODE_HC', value=llprops['WAVE_MODE_HC'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WAVE_MODE_FP', value=llprops['WAVE_MODE_FP'],
+                         fiber=fiber)
+    # from fp_wavesol
+    recipe.plot.add_stat('KW_WFP_ORD_START', value=llprops['USED_N_INIT'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_ORD_FINAL', value=llprops['USED_N_FIN'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_BLZ_THRES', value=llprops['USED_BLAZE_THRES'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_XDIFF_MIN', value=llprops['USED_XDIFF_MIN'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_XDIFF_MAX', value=llprops['USED_XDIFF_MAX'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_DOPD0', value=llprops['USED_DOPD0'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_LL_OFFSET', value=llprops['USED_LL_OFFSET'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_DVMAX', value=llprops['USED_DV_MAX'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_LLFITDEG', value=llprops['USED_LL_FIT_DEG'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_UPDATECAV', value=llprops['USED_UPDATE_CAV'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_FPCAV_MODE', value=llprops['USED_FP_CAV_MODE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_LLFIT_MODE', value=llprops['USED_LL_FIT_MODE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_ERRX_MIN', value=llprops['USED_ERRX_MIN'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_MAXLL_FIT_RMS', fiber=fiber,
+                         value=llprops['USED_MAX_LL_FIT_RMS'])
+    recipe.plot.add_stat('KW_WFP_T_ORD_START', fiber=fiber,
+                         value=llprops['USED_T_ORD_START'])
+    recipe.plot.add_stat('KW_WFP_WEI_THRES', value=llprops['USED_WEIGHT_THRES'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_CAVFIT_DEG', value=llprops['USED_CAVFIT_DEG'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_LARGE_JUMP', value=llprops['USED_LARGE_JUMP'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_CM_INDX', value=llprops['USED_CM_INDEX'],
+                         fiber=fiber)
+    # from find_fp_lines_new
+    recipe.plot.add_stat('KW_WFP_BORDER', value=llprops['USED_BORDER'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_BSIZE', value=llprops['USED_BOX_SIZE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_SIGLIM', value=llprops['USED_SIGLIM'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_LAMP', value=llprops['USED_LAMP'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_IPEAK_SPACE', fiber=fiber,
+                         value=llprops['USED_IPEAK_SPACE'])
+    recipe.plot.add_stat('KW_WFP_EXPWIDTH', value=llprops['USED_EXPWIDTH'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_CUTWIDTH', value=llprops['USED_CUTWIDTH'],
+                         fiber=fiber)
+    # from fp ccf calculation (compute_fp_ccf)
+    recipe.plot.add_stat('KW_WFP_SIGDET', value=llprops['CCF_SIGDET'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_BOXSIZE', value=llprops['CCF_BOXSIZE'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_MAXFLUX', value=llprops['CCF_MAXFLUX'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_NMAX', value=llprops['CCF_NMAX'], fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_MASKMIN', value=llprops['MASK_MIN'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_MASKWID', value=llprops['MASK_WIDTH'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WFP_MASKUNITS', value=llprops['MASK_UNITS'],
+                         fiber=fiber)
 
 
 # =============================================================================

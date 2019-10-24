@@ -211,100 +211,15 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        # set passed variable and fail message list
-        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-        # ------------------------------------------------------------------
-        # TODO: Needs quality control doing
-        # add to qc header lists
-        qc_values.append('None')
-        qc_names.append('None')
-        qc_logic.append('None')
-        qc_pass.append(1)
-        # ------------------------------------------------------------------
-        # finally log the failed messages and set QC = 1 if we pass the
-        # quality control QC = 0 if we fail quality control
-        if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', TextEntry('40-005-10001'))
-            passed = 1
-        else:
-            for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
-            passed = 0
-        # store in qc_params
-        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+        qc_params, passed = badpix.quality_control(params)
 
         # ----------------------------------------------------------------------
         # Save bad pixel mask
         # ----------------------------------------------------------------------
-        badpixfile = recipe.outputs['BADPIX'].newcopy(recipe=recipe)
-        # construct the filename from file instance
-        badpixfile.construct_filename(params, infile=flatfile)
-        # ------------------------------------------------------------------
-        # define header keys for output file
-        # copy keys from input file
-        badpixfile.copy_original_keys(flatfile)
-        # add version
-        badpixfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        badpixfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        badpixfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        badpixfile.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        badpixfile.add_hkey('KW_OUTPUT', value=badpixfile.name)
-        # add input files
-        if combine:
-            hfiles1, hfiles2 = rawflatfiles, rawdarkfiles
-        else:
-            hfiles1, hfiles2 = [flatfile.basename], [darkfile.basename]
-        badpixfile.add_hkey_1d('KW_INFILE1', values=hfiles1,
-                               dim1name='flatfile')
-        badpixfile.add_hkey_1d('KW_INFILE2', values=hfiles2,
-                               dim1name='darkfile')
-        # add qc parameters
-        badpixfile.add_qckeys(qc_params)
-        # add background statistics
-        badpixfile.add_hkey('KW_BHOT', value=bstats_a[0])
-        badpixfile.add_hkey('KW_BBFLAT', value=bstats_a[1])
-        badpixfile.add_hkey('KW_BNDARK', value=bstats_a[2])
-        badpixfile.add_hkey('KW_BNFLAT', value=bstats_a[3])
-        badpixfile.add_hkey('KW_BBAD', value=bstats_a[4])
-        badpixfile.add_hkey('KW_BNILUM', value=bstats_b)
-        badpixfile.add_hkey('KW_BTOT', value=btotal)
-        # write to file
-        bad_pixel_map1 = np.array(bad_pixel_map1, dtype=int)
-        # copy data
-        badpixfile.data = bad_pixel_map1
-        # ------------------------------------------------------------------
-        # log that we are saving rotated image
-        WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
-        # write image to file
-        badpixfile.write()
-        # add to output files (for indexing)
-        recipe.add_output_file(badpixfile)
-        # ----------------------------------------------------------------------
-        # Save background map file
-        # ----------------------------------------------------------------------
-        backmapfile = recipe.outputs['BACKMAP'].newcopy(recipe=recipe)
-        # construct the filename from file instance
-        backmapfile.construct_filename(params, infile=flatfile)
-        # ------------------------------------------------------------------
-        # define header keys for output file (copy of badpixfile)
-        backmapfile.copy_hdict(badpixfile)
-        # add output tag
-        backmapfile.add_hkey('KW_OUTPUT', value=backmapfile.name)
-        # write to file
-        backmap = np.array(backmap, dtype=int)
-        # copy data
-        backmapfile.data = backmap
-        # ------------------------------------------------------------------
-        # log that we are saving rotated image
-        WLOG(params, '', TextEntry('40-012-00014', args=[backmapfile.filename]))
-        # write image to file
-        backmapfile.write()
-        # add to output files (for indexing)
-        recipe.add_output_file(backmapfile)
+        wargs = [flatfile, darkfile, backmap, combine, rawflatfiles,
+                 rawdarkfiles, bstats_a, bstats_b, btotal, bad_pixel_map1,
+                 qc_params]
+        badpixfile, backmapfile = badpix.write_files(params, recipe, *wargs)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
@@ -318,18 +233,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
-        # add stats
-        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-        recipe.plot.add_stat('KW_BHOT', value=bstats_a[0])
-        recipe.plot.add_stat('KW_BBFLAT', value=bstats_a[1])
-        recipe.plot.add_stat('KW_BNDARK', value=bstats_a[2])
-        recipe.plot.add_stat('KW_BNFLAT', value=bstats_a[3])
-        recipe.plot.add_stat('KW_BBAD', value=bstats_a[4])
-        recipe.plot.add_stat('KW_BNILUM', value=bstats_b)
-        recipe.plot.add_stat('KW_BTOT', value=btotal)
-        # construct summary
-        recipe.plot.summary_document(it)
+        badpix.summary(recipe, it, params, bstats_a, bstats_b, btotal)
 
     # ----------------------------------------------------------------------
     # End of main code

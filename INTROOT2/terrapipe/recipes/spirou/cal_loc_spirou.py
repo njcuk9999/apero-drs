@@ -239,25 +239,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
-        # add stats
-        recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-        recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-        recipe.plot.add_stat('KW_DPRTYPE', value=props['DPRTYPE'])
-        recipe.plot.add_stat('KW_LOC_BCKGRD', value=mean_backgrd)
-        recipe.plot.add_stat('KW_LOC_NBO', value=rorder_num)
-        recipe.plot.add_stat('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
-        recipe.plot.add_stat('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
-        recipe.plot.add_stat('KW_LOC_MAXFLX', value=max_signal)
-        recipe.plot.add_stat('KW_LOC_SMAXPTS_CTR',
-                             value=params['QC_LOC_MAXFIT_REMOVED_CTR'])
-        recipe.plot.add_stat('KW_LOC_SMAXPTS_WID',
-                             value=params['QC_LOC_MAXFIT_REMOVED_WID'])
-        recipe.plot.add_stat('KW_LOC_RMS_CTR',
-                             value=params['QC_LOC_RMSMAX_CTR'])
-        recipe.plot.add_stat('KW_LOC_RMS_WID',
-                             value=params['QC_LOC_RMSMAX_WID'])
-        # construct summary
-        recipe.plot.summary_document(it, qc_params)
+        localisation.loc_summary(recipe, it, params, qc_params, props,
+                                 mean_backgrd, rorder_num, max_signal)
 
     # ----------------------------------------------------------------------
     # End of main code

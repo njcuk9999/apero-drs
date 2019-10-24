@@ -368,6 +368,210 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
 
 
 # =============================================================================
+# write files and qc functions
+# =============================================================================
+def master_qc(params):
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def write_master_files(params, recipe, reffile, master_dark, dark_table,
+                       qc_params):
+    # define outfile
+    outfile = recipe.outputs['DARK_MASTER_FILE'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    outfile.construct_filename(params, infile=reffile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from input file
+    outfile.copy_original_keys(reffile)
+    # add version
+    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+    # add qc parameters
+    outfile.add_qckeys(qc_params)
+    # ------------------------------------------------------------------
+    # copy data
+    outfile.data = master_dark
+    # log that we are saving master dark to file
+    WLOG(params, '', TextEntry('40-011-10006', args=[outfile.filename]))
+    # write data and header list to file
+    outfile.write_multi(data_list=[dark_table])
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
+    # return out file
+    return outfile
+
+
+def master_summary(recipe, params, qc_params, dark_table):
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('NDMASTER', value=len(dark_table),
+                         comment='Number DARK in Master')
+    # construct summary (outside fiber loop)
+    recipe.plot.summary_document(0, qc_params)
+
+
+def dark_qc(params, med_full, dadeadall, baddark):
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # ------------------------------------------------------------------
+    # check that med < qc_max_darklevel
+    if med_full > params['QC_MAX_DARKLEVEL']:
+        # add failed message to fail message list
+        fargs = [med_full, params['QC_MAX_DARKLEVEL']]
+        fail_msg.append(textdict['40-011-00008'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(med_full)
+    qc_names.append('MED_FULL')
+    qc_logic.append('MED_FULL > {0:.2f}'.format(params['QC_MAX_DARKLEVEL']))
+    # ------------------------------------------------------------------
+    # check that fraction of dead pixels < qc_max_dead
+    if dadeadall > params['QC_MAX_DEAD']:
+        # add failed message to fail message list
+        fargs = [dadeadall, params['QC_MAX_DEAD']]
+        fail_msg.append(textdict['40-011-00009'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(dadeadall)
+    qc_names.append('DADEADALL')
+    qc_logic.append('DADEADALL > {0:.2f}'.format(params['QC_MAX_DEAD']))
+    # ----------------------------------------------------------------------
+    # checl that the precentage of dark pixels < qc_max_dark
+    if baddark > params['QC_MAX_DARK']:
+        fargs = [params['DARK_CUTLIMIT'], baddark, params['QC_MAX_DARK']]
+        fail_msg.append(textdict['40-011-00010'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(baddark)
+    qc_names.append('baddark')
+    qc_logic.append('baddark > {0:.2f}'.format(params['QC_MAX_DARK']))
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
+                     dadead_full, med_full, dadead_blue, med_blue,
+                     dadead_red, med_red, qc_params, image0):
+    # define outfile
+    if dprtype == 'DARK_DARK':
+        outfile = recipe.outputs['DARK_FILE'].newcopy(recipe=recipe)
+    elif dprtype == 'SKY_DARK':
+        outfile = recipe.outputs['SKY_FILE'].newcopy(recipe=recipe)
+    else:
+        outfile = None
+    # construct the filename from file instance
+    outfile.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # define header keys for output file
+    # copy keys from input file
+    outfile.copy_original_keys(infile)
+    # add version
+    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    outfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='darkfile')
+    # add qc parameters
+    outfile.add_qckeys(qc_params)
+    # add blue/red/full detector parameters
+    outfile.add_hkey('KW_DARK_DEAD', value=dadead_full)
+    outfile.add_hkey('KW_DARK_MED', value=med_full)
+    outfile.add_hkey('KW_DARK_B_DEAD', value=dadead_blue)
+    outfile.add_hkey('KW_DARK_B_MED', value=med_blue)
+    outfile.add_hkey('KW_DARK_R_DEAD', value=dadead_red)
+    outfile.add_hkey('KW_DARK_R_MED', value=med_red)
+    # add the cut limit
+    outfile.add_hkey('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
+    # ------------------------------------------------------------------
+    # Set to zero dark value > dark_cutlimit
+    cutmask = image0 > params['DARK_CUTLIMIT']
+    image0c = np.where(cutmask, np.zeros_like(image0), image0)
+    # copy data
+    outfile.data = image0c
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    WLOG(params, '', TextEntry('40-011-00012', args=[outfile.filename]))
+    # write image to file
+    outfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
+    # return outfile
+    return outfile
+
+def dark_summary(recipe, it, params, dadead_full, med_full, dadead_blue,
+                 med_blue, dadead_red, med_red, qc_params):
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_DARK_DEAD', value=dadead_full)
+    recipe.plot.add_stat('KW_DARK_MED', value=med_full)
+    recipe.plot.add_stat('KW_DARK_B_DEAD', value=dadead_blue)
+    recipe.plot.add_stat('KW_DARK_B_MED', value=med_blue)
+    recipe.plot.add_stat('KW_DARK_R_DEAD', value=dadead_red)
+    recipe.plot.add_stat('KW_DARK_R_MED', value=med_red)
+    recipe.plot.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
+    # construct summary
+    recipe.plot.summary_document(it, qc_params)
+
+
+# =============================================================================
 # Define worker functions
 # =============================================================================
 def get_dark_file(params, header, **kwargs):
