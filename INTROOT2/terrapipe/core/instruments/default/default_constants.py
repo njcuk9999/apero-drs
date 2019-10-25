@@ -184,6 +184,8 @@ __all__ = [
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
+    # polar constants
+    'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES',
     # debug plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
@@ -1520,7 +1522,7 @@ WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1)
 
 # =============================================================================
-# CALIBRATION: TELLURIC SETTINGS
+# OBJECT: TELLURIC SETTINGS
 # =============================================================================
 # Define the name of the tapas file to use
 TAPAS_FILE = Const('TAPAS_FILE', value=None, dtype=str, source=__NAME__)
@@ -1550,7 +1552,7 @@ TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__)
 
 # =============================================================================
-# CALIBRATION: MAKE TELLURIC SETTINGS
+# OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
 # value below which the blaze in considered too low to be useful
 #     for all blaze profiles, we normalize to the 95th percentile.
@@ -1681,7 +1683,7 @@ MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
                                 dtype=float, source=__NAME__)
 
 # =============================================================================
-# CALIBRATION: FIT TELLURIC SETTINGS
+# OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
@@ -1741,7 +1743,7 @@ FTELLU_SPLOT_ORDER = Const('FTELLU_SPLOT_ORDER', value=None,
                            dtype=int, source=__NAME__)
 
 # =============================================================================
-# CALIBRATION: MAKE TEMPLATE SETTINGS
+# OBJECT: MAKE TEMPLATE SETTINGS
 # =============================================================================
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
@@ -1871,6 +1873,19 @@ CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__)
 #     if 1 then we have an emission line
 CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
                      options=[0, 1])
+
+# =============================================================================
+# OBJECT: POLARISATION SETTINGS
+# =============================================================================
+#  Define all possible fibers used for polarimetry
+#     (define as a string list)
+POLAR_VALID_FIBERS = Const('POLAR_VALID_FIBERS', value=None, dtype=str,
+                           source=__NAME__)
+
+#  Define all possible stokes parameters  used for polarimetry
+#      (define as a string list)
+POLAR_VALID_STOKES = Const('POLAR_VALID_STOKES', value=None, dtype=str,
+                           source=__NAME__)
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
