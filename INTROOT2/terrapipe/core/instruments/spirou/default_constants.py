@@ -1345,7 +1345,7 @@ WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
 
 # =============================================================================
-# CALIBRATION: TELLURIC SETTINGS
+# OBJECT: TELLURIC SETTINGS
 # =============================================================================
 # Define the name of the tapas file used
 TAPAS_FILE = TAPAS_FILE.copy(__NAME__)
@@ -1386,7 +1386,7 @@ TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 
 # =============================================================================
-# CALIBRATION: MAKE TELLURIC SETTINGS
+# OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
 # value below which the blaze in considered too low to be useful
 #     for all blaze profiles, we normalize to the 95th percentile.
@@ -1517,7 +1517,7 @@ MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
 MKTELLU_QC_AIRMASS_DIFF.value = 0.1
 
 # =============================================================================
-# CALIBRATION: FIT TELLURIC SETTINGS
+# OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
@@ -1577,7 +1577,7 @@ FTELLU_SPLOT_ORDER = FTELLU_SPLOT_ORDER.copy(__NAME__)
 FTELLU_SPLOT_ORDER.value = 30
 
 # =============================================================================
-# CALIBRATION: MAKE TEMPLATE SETTINGS
+# OBJECT: MAKE TEMPLATE SETTINGS
 # =============================================================================
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
@@ -1704,6 +1704,19 @@ CCF_FIT_TYPE.value = 0
 #     to calculate the CCF and RV
 CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
 CCF_N_ORD_MAX.value = 48
+
+# =============================================================================
+# OBJECT: POLARISATION SETTINGS
+# =============================================================================
+#  Define all possible fibers used for polarimetry
+#     (define as a string list)
+POLAR_VALID_FIBERS = POLAR_VALID_FIBERS.copy(__NAME__)
+POLAR_VALID_FIBERS.value = 'A, B'
+
+#  Define all possible stokes parameters  used for polarimetry
+#      (define as a string list)
+POLAR_VALID_STOKES = POLAR_VALID_STOKES.copy(__NAME__)
+POLAR_VALID_STOKES.value = 'V, Q, U'
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
