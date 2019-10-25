@@ -338,6 +338,10 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
 
         n_terms = len(x1)
         xrecon, yrecon = None, None
+
+        # TODO: remove breakpoints
+        constants.breakpoint(params)
+
         while nbad != 0:
             # define vectory
             vvv = np.zeros([3, len(x1)])
