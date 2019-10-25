@@ -257,6 +257,9 @@ def graph_test_plot_2(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter)
         frame.plot(x_arr[ord_num], y_arr[ord_num], color=colour)
         frame.set_title('Order {0}'.format(ord_num))
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(ord_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
@@ -549,6 +552,10 @@ def plot_loc_finding_orders(plotter, graph, kwargs):
         plt.subplots_adjust(hspace=0, wspace=0, top=0.95, bottom=0.05,
                             left=0.05, right=0.975)
         # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
@@ -800,6 +807,10 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
                             hspace=0)
         # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
@@ -949,12 +960,14 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     if bnum is not None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
         banana_gen = [0]
+        banana_numbers = [bnum]
         # prompt to start looper
         plotter.close_plots(loop=True)
     # else we are loop around bnums for a selected order
     else:
         order_gen = [sorder]
-        banana_gen = plotter.plotloop(np.arange(nbanana).astype(int))
+        banana_numbers = np.arange(nbanana).astype(int)
+        banana_gen = plotter.plotloop(banana_numbers)
         # prompt to start looper
         plotter.close_plots(loop=True)
     # ------------------------------------------------------------------
@@ -962,6 +975,8 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     for order_num in order_gen:
         # iterating the correction, from coarser to finer
         for banana_num in banana_gen:
+            # get this iterations banana_numbers
+            bnum_it = banana_numbers[banana_num]
             # --------------------------------------------------------------
             # get this iterations parameters
             slope_deg = slope_deg_arr[banana_num][order_num]
@@ -983,7 +998,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame1, frame2, frame3 = frames
             # title
             title = 'Iteration {0}/{1} - Order {2}'
-            plt.suptitle(title.format(banana_num + 1, nbanana, order_num))
+            plt.suptitle(title.format(bnum_it + 1, nbanana, order_num))
             # --------------------------------------------------------------
             # frame 1
             # --------------------------------------------------------------
@@ -1013,6 +1028,10 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
                         label='fit to err pix')
             frame3.set(xlabel='Pixel', ylabel='Err Pixel')
             frame3.legend(loc=0)
+            # ------------------------------------------------------------------
+            # update filename (adding order_num to end)
+            suffix = 'bnum{0}_order{1}'.format(bnum_it, order_num)
+            graph.set_filename(plotter.params, plotter.location, suffix=suffix)
             # --------------------------------------------------------------
             # wrap up using plotter
             plotter.plotend(graph)
@@ -1222,6 +1241,10 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
         plt.subplots_adjust(top=0.95, bottom=0.05, left=0.075, right=0.925,
                             hspace=0.05)
         # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
@@ -1283,6 +1306,10 @@ def plot_flat_blaze_order(plotter, graph, kwargs):
         # adjust plot
         plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95,
                             wspace=0, hspace=0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
@@ -1418,6 +1445,10 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
         # adjust plot
         plt.subplots_adjust(top=0.9, bottom=0.1, left=0.075, right=0.95,
                             wspace=0, hspace=0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
@@ -1653,6 +1684,10 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
         # ------------------------------------------------------------------
         # adjust plot
         plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
@@ -2320,6 +2355,10 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         title = 'Order {0}'.format(order_num)
         frame.set(xlabel='Wavelength', ylabel='Flux', title=title)
         # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
@@ -2507,6 +2546,10 @@ def plot_ftellu_pca_comp(plotter, graph, kwargs):
         frame.set(title=title, xlabel='Wavelength [nm]',
                   ylabel='Principle component power')
         # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
@@ -2558,6 +2601,10 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         title = 'Reconstructed Spline Plot (Order = {0})'
         frame.set(title=title.format(order_num),
                   xlabel='Wavelength [nm]', ylabel='Normalised flux')
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
@@ -2614,6 +2661,10 @@ def plot_ftellu_wave_shift(plotter, graph, kwargs):
                  '(Order {0})')
         frame.set(title=title.format(order_num), xlabel='Pixel number',
                   ylabel='Normalised flux')
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
