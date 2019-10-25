@@ -115,10 +115,12 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     # that is above the 5th percentile
     nthres = mp.nansum(e2ds[keep] > thres / 2.0)
     # median position of points above threshold
-    pospeak = mp.median(xpix[e2ds > thres])
+    with warnings.catch_warnings(record=True) as _:
+        pospeak = mp.median(xpix[e2ds > thres])
     # bounds
-    xlower = mp.nanmin(xpix[e2ds > thres])
-    xupper = mp.nanmax(xpix[e2ds > thres])
+    with warnings.catch_warnings(record=True) as _:
+        xlower = mp.nanmin(xpix[e2ds > thres])
+        xupper = mp.nanmax(xpix[e2ds > thres])
     # ------------------------------------------------------------------
     # starting point for the fit to the blaze sinc model
     # we start with :
@@ -129,11 +131,11 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     #                         95th percent.
     # no quadratic term
     # no SED slope
-    fit_guess = [thres, nthres * 2.0, pospeak, 0, 0]
+    fit_guess = [thres, nthres * 2.0, pospeak, 0, 0, 0]
     # ------------------------------------------------------------------
     # we set reasonable bounds
-    bounds = [(thres * 0.5, nthres * 0.1, xlower, -1e-4, -1e-2),
-              (thres * 1.5, nthres * 10, xupper, 1e-4, 1e-2)]
+    bounds = [(thres * 0.5, nthres * 0.1, xlower, -1e-4, -1e-4, -1e-2),
+              (thres * 1.5, nthres * 10, xupper, 1e-4, 1e-4, 1e-2)]
     # we optimize over pixels that are not NaN
     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
                            bounds=bounds)
@@ -144,13 +146,14 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     for _ in range(niter):
         # we construct a model with the peak cut-off
         blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-                        peak_cut=peak_cut)
+                        popt[5], peak_cut=peak_cut)
         # we find residuals to the fit and normalize them
         residual = (e2ds - blaze)
         residual /= mp.nanmedian(np.abs(residual))
         # we keep only non-NaN model points (i.e. above peak_cut) and
         # within +- Nsigfit dispersion elements
-        keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
+        with warnings.catch_warnings(record=True) as _:
+            keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
         popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
                                p0=fit_guess, bounds=bounds)
     # ----------------------------------------------------------------------
@@ -164,7 +167,7 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     # ----------------------------------------------------------------------
     # calculate the rms
     # ----------------------------------------------------------------------
-    rms = mp.nanstd(flat)
+    rms = mp.nanstd(flat[keep])
     # ----------------------------------------------------------------------
     # return values
     return e2ds, flat, blaze, rms

@@ -755,7 +755,7 @@ FF_BLAZE_DEGREE.value = 10
 # Define the threshold, expressed as the fraction of the maximum peak, below
 #    this threshold the blaze (and e2ds) is set to NaN
 FF_BLAZE_SCUT = FF_BLAZE_SCUT.copy(__NAME__)
-FF_BLAZE_SCUT.value = 0.3
+FF_BLAZE_SCUT.value = 0.1
 
 # Define the rejection threshold for the blaze sinc fit
 FF_BLAZE_SIGFIT = FF_BLAZE_SIGFIT.copy(__NAME__)
