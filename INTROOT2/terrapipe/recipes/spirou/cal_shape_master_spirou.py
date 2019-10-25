@@ -190,6 +190,10 @@ def __main__(recipe, params):
     WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
     # sum the cube to make fp data
     master_fp = np.sum(fpcube, axis=0)
+    # TODO: remove after testing
+    np.save('master_fp', master_fp)
+    # TODO: remove break point
+    constants.breakpoint(params)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map
