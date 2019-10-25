@@ -560,7 +560,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     map_orders = np.zeros_like(fpdata) - 1
     order_overlap = np.zeros_like(fpdata)
     slope_all_ord = np.zeros((nbo, dim2))
-    corr_dx_from_fp = np.zeros((nbanana, nbo, dim2))
     # -------------------------------------------------------------------------
     # create the x pixel vector (used with polynomials to find
     #    order center)
@@ -601,6 +600,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
         dypix_arr_i, cckeep_arr_i = [], []
         xpeak2, peakval2, ewval2, err_pix, good_mask = [], [], [], [], []
+        corr_dx_from_fp = np.zeros((nbo, dim2))
         # get dx array (NaN)
         dx = np.zeros((nbo, width)) + np.nan
         # ------------------------------------------------------------------
@@ -757,15 +757,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             slope_arr_i.append(np.rad2deg(np.arctan(slope_all_ord[order_num])))
             skeep_arr_i.append(np.array(keep))
 
-            # -----------------------------------------------------------------
-            # append to new loc
-            loc2 = ParamDict()
-            if params['DRS_PLOT'] and params['DRS_DEBUG'] >= 2:
-                # add temp keys for debug plot
-                slope_deg = np.rad2deg(np.arctan(dxsection))
-                slope = np.rad2deg(np.arctan(slope_all_ord[order_num]))
-                s_keep = np.array(keep)
-
             # -------------------------------------------------------------
             # correct for the slope the ribbons and look for the
             #    slicer profile in the fp
@@ -843,17 +834,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 keep = np.abs(dx[order_num] - mp.nanmedian(dx[order_num])) < 1
             keep &= np.isfinite(dx[order_num])
             # -------------------------------------------------------------
-            # if the first pixel is nan and the second is OK,
-            #    then for continuity, pad
-            # if (not keep[0]) and keep[1]:
-            #     keep[0] = True
-            #     dx[0] = dx[1]
-            # # same at the other end
-            # if (not keep[-1]) and keep[-2]:
-            #     keep[-1] = True
-            #     dx[-1] = dx[-2]
-
-            # -------------------------------------------------------------
             # append to storage for plotting
             ccor_arr_i.append(np.array(ccor))
             ddx_arr_i.append(np.array(ddx))
@@ -879,8 +859,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         nanmask = ~np.isfinite(dx2)
         dx2[nanmask] = dx2_long[nanmask]
         # ---------------------------------------------------------------------
-        # TODO: remove break point
-        constants.breakpoint(params)
         # dx plot
         recipe.plot('SHAPE_DX', dx=dx, dx2=dx2, bnum=banana_num,
                     nbanana=nbanana)
