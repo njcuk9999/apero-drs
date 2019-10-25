@@ -168,6 +168,8 @@ def linear_minimization(vector, sample):
             # redefine the input vector to avoid NaNs
             vector = vector[keep]
             sample = sample[:, keep]
+            # re-find shapes
+            sz_sample = sample.shape  # 1d vector of length N
         # matrix of covariances
         mm = np.zeros([sz_sample[0], sz_sample[0]])
         # cross-terms of vector and columns of sample
@@ -185,6 +187,8 @@ def linear_minimization(vector, sample):
             keep = np.isfinite(vector) * np.isfinite(np.sum(sample, axis=1))
             vector = vector[keep]
             sample = sample[keep, :]
+            # re-find shapes
+            sz_sample = sample.shape  # 1d vector of length N
         mm = np.zeros([sz_sample[1], sz_sample[1]])
         vec = np.zeros(sz_sample[1])
         amps = np.zeros(sz_sample[1])
