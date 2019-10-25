@@ -9,12 +9,14 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
+from terrapipe.science.polar import general
 
-__all__ = []
+__all__ = ['validate_polar_files']
 
 # =============================================================================
 # Define functions
 # =============================================================================
+validate_polar_files = general.validate_polar_files
 
 
 # =============================================================================
