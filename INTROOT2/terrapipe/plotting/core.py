@@ -89,6 +89,8 @@ class Plotter:
         self.debug_graphs = OrderedDict()
         # flag for open plots
         self.plots_active = False
+        # flag for allowing loops in plotting (not allowed for summary)
+        self.loop_allowed = True
         # ------------------------------------------------------------------
         # summary file location
         self.location = None
@@ -216,13 +218,20 @@ class Plotter:
 
     def plotstart(self, graph):
         if graph.kind == 'debug':
+            # if we are in interactive mode turn it on
             if self.plotoption == 1:
                 self.interactive(True)
+            # if we are in any mode that is non-zero turn plotting on
             if self.plotoption > 0:
                 return True
+            # else turn plotting off
             else:
                 return False
+        # if we are dealing with a summary plot return true
         elif graph.kind == 'summary':
+            # must make sure we are not asking user to see plot in
+            #   summary mode
+            self.loop_allowed = False
             return True
         else:
             return False
@@ -246,6 +255,8 @@ class Plotter:
                 self.plt.close()
         # deal with summary plots
         elif graph.kind == 'summary':
+            # now we are finished with summary plot allow loops again
+            self.loop_allowed = True
             # 1. save to file
             self.interactive(False, show=False)
             self.plt.savefig(graph.filename + '.png', dpi=graph.dpi)
@@ -294,6 +305,12 @@ class Plotter:
                 # increase the iterator value
                 it += 1
                 first = False
+            # deal with loops not being allowed to have user input
+            #    (for summary plots)
+            elif not self.loop_allowed:
+                yield looplist[it]
+                # increase the iterator value
+                it += 1
             # else we need to ask to go to previous, next or end
             else:
                 # get user input
