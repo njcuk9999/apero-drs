@@ -2,6 +2,49 @@ Changelog
 =========
 
 
+0.5.099 (2019-10-25)
+--------------------
+- Science.polar.general.py - add PolarObj class and validate_polar_files
+  + valid_polar_file functions. [Neil Cook]
+- Recipes.spirou.obj_pol_spirou.py - first commit - start filling out
+  polar recipe. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add obj_pol_spirou.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.*.default_constants.py - add polar constants. [Neil
+  Cook]
+- Plotting - fix loop_allowed switch. [Neil Cook]
+- Plotting.* - fix summary plots using plotloop. [Neil Cook]
+- Plotting.plot_functions.py - make sure all plots in loops update the
+  filename. [Neil Cook]
+- Plotting.plot_functions.py - fix generators in
+  plot_shape_angle_offset. [Neil Cook]
+- Flat_blaze - fix problem with SHAPE_ANGLE_OFFSET_ALL arguments. [Neil
+  Cook]
+- Flat_blaze - make threshold for scut = 0.1 + add a cubic term to sinc
+  function + adjust the flat/blaze rms calculation. [Neil Cook]
+- Science.calib.shape.py - try to fix bug with corr_dx_from_fp. [Neil
+  Cook]
+- Science.calib.shape.py - remove breakpoint for lin_mini. [Neil Cook]
+- Cal_shape_master_spirou.py - add in breakpoint to address bug. [Neil
+  Cook]
+- Core.math.general.py - fix linear_minimization (need to re-calculate
+  shapes after masking) [Neil Cook]
+- Recipe.spirou.cal_shape_master_spirou.py + science.calib.shape.py -
+  add breakpoint to identify crash. [Neil Cook]
+- Plotting.core.py - do not clean html warning messages and add text in
+  one paragraph. [Neil Cook]
+- Science.calib.wave.py and plotting.plot_functions.py - add fiber to
+  WAVE_FP_IPT_CWD_LLHC and SUM_WAVE_FP_IPT_CWID_LLHC plots. [Neil Cook]
+- Science.calib.wave.py and plotting.plot_functions.py - add fiber to
+  WAVE_FP_IPT_CWD_LLHC and SUM_WAVE_FP_IPT_CWID_LLHC plots. [Neil Cook]
+- Cal_wave_spirou.py - fix hcprops not having fpprops values (for
+  summary) + don't base summary plot on pass/fail just fp_e2ds_file
+  being set. [Neil Cook]
+- Core.math.fast.py - fix and catch jit (numba) [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.098 (2019-10-24)
 --------------------
 - Recipe.spirou.cal_wave_spirou.py + sciecne.calib.wave.py - add summary
