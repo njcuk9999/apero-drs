@@ -971,17 +971,15 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        return dxmap, max_dxmap_std, max_dxmap_info
+                        # return dxmap, max_dxmap_std, max_dxmap_info
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
-        pkwargs = dict(slope_deg_arr=[slope_deg_arr_i], slope_arr=[slope_arr_i],
-                       skeep_arr=[skeep_arr_i], xsection_arr=[xsec_arr_i],
-                       ccor_arr=[ccor_arr_i], ddx_arr=[ddx_arr_i],
-                       dx_arr=[dx_arr_i], dypix_arr=[dypix_arr_i],
-                       ckeep_arr=[cckeep_arr_i], corr_dx_fp=[corr_dx_from_fp],
+        pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
+                       skeep=[skeep_arr_i], xsection=[xsec_arr_i],
+                       ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
+                       dypix=[dypix_arr_i], ckeep=[cckeep_arr_i],
+                       corr_dx_fp=[corr_dx_from_fp],
                        xpeak2=[xpeak2], err_pix=[err_pix], good=[good_mask])
-        # TODO: remove break point
-        constants.breakpoint(params)
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
                     nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
@@ -996,14 +994,11 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         err_pix_arr.append(err_pix), good_mask_arr.append(good_mask)
     # ---------------------------------------------------------------------
     # plot selected order angle_offset plot
-    pkwargs = dict(slope_deg_arr=slope_deg_arr, slope_arr=slope_arr,
-                   skeep_arr=skeep_arr, xsection_arr=xsec_arr,
-                   ccor_arr=ccor_arr, ddx_arr=ddx_arr, dx_arr=dx_arr,
-                   dypix_arr=dypix_arr, ckeep_arr=cckeep_arr,
+    pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
+                   skeep=skeep_arr, xsection=xsec_arr, ccor=ccor_arr,
+                   ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr,
                    corr_dx_fp=corr_dx_from_fp_arr, xpeak2=xpeak2_arr,
                    err_pix=err_pix_arr, good=good_mask_arr)
-    # TODO: remove break point
-    constants.breakpoint(params)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
                 nbpix=dim2, **pkwargs)
