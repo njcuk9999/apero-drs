@@ -946,7 +946,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     width = params['SHAPE_ORDER_WIDTH']
     # ------------------------------------------------------------------
     # if we have a bnum set get the plot loop generator (around orders)
-    if bnum is None:
+    if bnum is not None:
         order_gen = plotter.plotloop(np.arange(nbo).astype(int))
         banana_gen = [0]
         # prompt to start looper
@@ -983,7 +983,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame1, frame2, frame3 = frames
             # title
             title = 'Iteration {0}/{1} - Order {2}'
-            plt.suptitle(title.format(banana_num, nbanana, order_num))
+            plt.suptitle(title.format(banana_num + 1, nbanana, order_num))
             # --------------------------------------------------------------
             # frame 1
             # --------------------------------------------------------------
@@ -994,7 +994,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             # --------------------------------------------------------------
             # frame 2
             # --------------------------------------------------------------
-            frame2.imshow(ccor, aspect=0.2, cmap='viridis')
+            frame2.imshow(ccor, aspect='auto', origin='lower', cmap='viridis')
             frame2.plot(dx - np.min(ddx), dypix, color='r', marker='o',
                         ls='None')
             frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
