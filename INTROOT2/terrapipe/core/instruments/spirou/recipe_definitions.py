@@ -146,7 +146,8 @@ obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_mk_template = DrsRecipe(__INSTRUMENT__, )
+obj_mk_template = DrsRecipe(__INSTRUMENT__)
+obj_pol_spirou = DrsRecipe(__INSTRUMENT__)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__)
@@ -155,7 +156,7 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
-           obj_mk_tellu_db, obj_fit_tellu_db,
+           obj_mk_tellu_db, obj_fit_tellu_db, obj_pol_spirou,
            test]
 
 # =============================================================================
@@ -821,8 +822,26 @@ obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# pol_spirou
+# obj_pol_spirou
 # -----------------------------------------------------------------------------
+obj_pol_spirou.name = 'obj_pol_spirou.py'
+obj_pol_spirou.shortname = 'POLAR'
+obj_pol_spirou.instrument = __INSTRUMENT__
+obj_pol_spirou.outputdir = 'reduced'
+obj_pol_spirou.inputdir = 'reduced'
+obj_pol_spirou.inputtype = 'reduced'
+obj_pol_spirou.extension = 'fits'
+obj_pol_spirou.description = Help['FTELLU_DESC']
+obj_pol_spirou.epilog = Help['FTELLU_EXAMPLE']
+obj_pol_spirou.set_outputs()
+obj_pol_spirou.set_debug_plots()
+obj_pol_spirou.set_arg(pos=0, **directory)
+obj_pol_spirou.set_arg(name='files', dtype='files', pos='1+',
+                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                       helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
+                       limit=1)
+obj_pol_spirou.set_kwarg(**plot)
+
 
 # -----------------------------------------------------------------------------
 # cal_exposure_meter
