@@ -218,6 +218,9 @@ class Plotter:
 
     def plotstart(self, graph):
         if graph.kind == 'debug':
+            # must make sure we are not asking user to see plot in
+            #   summary mode
+            self.loop_allowed = True
             # if we are in interactive mode turn it on
             if self.plotoption == 1:
                 self.interactive(True)
@@ -234,6 +237,10 @@ class Plotter:
             self.loop_allowed = False
             return True
         else:
+            # must make sure we are not asking user to see plot in
+            #   summary mode
+            self.loop_allowed = True
+            # return False --> plot not allowed
             return False
 
     def plotend(self, graph):
@@ -255,8 +262,6 @@ class Plotter:
                 self.plt.close()
         # deal with summary plots
         elif graph.kind == 'summary':
-            # now we are finished with summary plot allow loops again
-            self.loop_allowed = True
             # 1. save to file
             self.interactive(False, show=False)
             self.plt.savefig(graph.filename + '.png', dpi=graph.dpi)
@@ -269,7 +274,6 @@ class Plotter:
 
     def plotloop(self, looplist):
         # must run in plot mode 2
-
         if self.plotoption == 1:
             current_mode = 1
             self.plotoption = 2

@@ -271,8 +271,9 @@ test_plot1 = Graph('TEST1', kind='summary', func=graph_test_plot_1,
                    figsize=(10, 10), dpi=150)
 test_plot2 = Graph('TEST2', kind='debug', func=graph_test_plot_1)
 test_plot3 = Graph('TEST3', kind='debug', func=graph_test_plot_2)
+test_plot4 = Graph('TEST4', kind='summary', func=graph_test_plot_2)
 # add to definitions
-definitions += [test_plot1, test_plot2, test_plot3]
+definitions += [test_plot1, test_plot2, test_plot3, test_plot4]
 
 
 # =============================================================================
