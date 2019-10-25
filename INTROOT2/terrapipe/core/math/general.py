@@ -261,13 +261,14 @@ def robust_polyfit(x, y, degree, nsigcut):
     return fit, keep
 
 
-def sinc(x, amp, period, lin_center, quad_scale, slope, peak_cut=0.0):
+def sinc(x, amp, period, lin_center, quad_scale, cube_scale, slope,
+         peak_cut=0.0):
     """
     Calculates the sinc function with a slope (and position threshold cut)
 
     y = A * (sin(x)/x)^2 * (1 + C*x)
 
-    x = 2*pi*(X - dx + q*dx^2) / P
+    x = 2*pi*(X - dx + q2*dx^2 + q3*dx^3) / P
 
     where X is a position along the x pixel axis. This assumes
     that the blaze follows an airy pattern and that there may be a slope
@@ -280,7 +281,8 @@ def sinc(x, amp, period, lin_center, quad_scale, slope, peak_cut=0.0):
     :param amp: float, the amplitude of the sinc function (A)
     :param period: float, the period of the sinc function (P)
     :param lin_center: float, the linear center of the sinc (dx)
-    :param quad_scale: float, the quad scale of the sinc (q)
+    :param quad_scale: float, the quad scale of the sinc (q2)
+    :param cube_scale: float, the cubic scale of the sinc (q3)
     :param slope: the slope of the sinc function (C)
     :param peak_cut: float, if non-zero if the threshold below the maximum
                      amplitude to set to NaNs
@@ -290,6 +292,7 @@ def sinc(x, amp, period, lin_center, quad_scale, slope, peak_cut=0.0):
     :type period: float
     :type lin_center: float
     :type quad_scale: float
+    :type cube_scale: float
     :type slope: float
     :type peak_cut: float
 
@@ -301,7 +304,8 @@ def sinc(x, amp, period, lin_center, quad_scale, slope, peak_cut=0.0):
     # expressed in phase. The quadratic terms allows for a variation of
     # dispersion along the other
     deltax = x - lin_center
-    xp = 2 * np.pi * ((deltax + quad_scale * deltax ** 2) / period)
+    cent = deltax + quad_scale * deltax ** 2 + cube_scale * deltax ** 3
+    xp = 2 * np.pi * ((cent) / period)
     # this avoids a division by zero
     if np.min(np.abs(xp) / period) < 1e-9:
         small_x = (np.abs(xp) / period) < 1e-9
