@@ -1508,8 +1508,9 @@ def plot_extract_s1d(plotter, graph, kwargs):
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
     # update filename (adding order_num to end)
-    suffix = kind.lower()
-    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    if kind is not None:
+        suffix = kind.lower()
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
