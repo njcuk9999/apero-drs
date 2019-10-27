@@ -33,7 +33,9 @@ import numpy as np
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.science.calib import wave
 from terrapipe.science import polar
+
 
 # =============================================================================
 # Define variables
@@ -126,8 +128,17 @@ def __main__(recipe, params):
     # Validate polar files
     # ----------------------------------------------------------------------
     pobjects, props = polar.validate_polar_files(params, infiles)
+    # get first file
+    pobj = pobjects['A_1']
     # ----------------------------------------------------------------------
-
+    # load wavelength solution for this fiber
+    # ----------------------------------------------------------------------
+    wprops = wave.get_wavesolution(params, recipe, fiber=pobj.fiber,
+                                   infile=pobj.infile)
+    # ----------------------------------------------------------------------
+    # polarimetry computation
+    # ----------------------------------------------------------------------
+    polar.calculate_polarimetry(params, pobjects, props, wprops)
 
 
     # ----------------------------------------------------------------------

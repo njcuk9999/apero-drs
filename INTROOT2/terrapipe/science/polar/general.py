@@ -190,6 +190,30 @@ def validate_polar_files(params, infiles, **kwargs):
     return pobjects, props
 
 
+def calculate_polarimetry(params, pobjs, props, wprops, **kwargs):
+    # set function name
+    func_name = display_func(params, 'calculate_polarimetry', __NAME__)
+    # get parameters from params/kwargs
+    method = pcheck(params, 'POLAR_METHOD', 'method', kwargs, func_name)
+    # if method is not a string then break here
+    if not isinstance(method, str):
+        eargs = [method]
+        WLOG(params, 'error', TextEntry('09-021-00006', args=eargs))
+    # decide which method to use
+    if method.lower() == 'difference':
+        return polar_diff_method(params, pobjs, props, wprops, **kwargs)
+    elif method.lower() == 'ratio':
+        return polar_ratio_method(params, pobjs, props, wprops, **kwargs)
+    else:
+        eargs = [method]
+        WLOG(params, 'error', TextEntry('09-021-00007', args=eargs))
+        return 0
+
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
 def valid_polar_file(params, infile, **kwargs):
     """
     Read and extract parameters from cmmtseq string from header key at
@@ -282,6 +306,52 @@ def valid_polar_file(params, infile, **kwargs):
     else:
         return stoke_parameter, exposure, sequence, total, fiber, valid
 
+
+def polar_diff_method(params, pobjs, props, wprops, **kwargs):
+
+    # log start of polarimetry calculations
+    wmsg = 'Running function {0} to calculate polarization'
+    # get parameters from props
+    nexp = props['NEXPOSURES']
+    # get the first file for reference
+    pobj = pobjs['A_1']
+    # ---------------------------------------------------------------------
+    # set up storage
+    # ---------------------------------------------------------------------
+    pol = np.zeros(pobj.infile.shape)
+    pol_err = np.zeros(pobj.infile.shape)
+    null1 = np.zeros(pobj.infile.shape)
+    null2 = np.zeros(pobj.infile.shape)
+
+    # loop around exposures and combine A and B
+    gg, gvar = [], []
+    for it in range(1, int(nexp) + 1):
+
+        # get a and b data
+        data_a = pobjs['A_{0}'.format(it)].data
+        data_b = pobjs['B_{0}'.format(it)].data
+
+        # ---------------------------------------------------------------------
+        # STEP 1 - calculate the quantity Gn (Eq #12-14 on page 997 of
+        #          Bagnulo et al. 2009), n being the pair of exposures
+        # ---------------------------------------------------------------------
+        part1 = data_a - data_b
+        part2 = data_a + data_b
+        gg.append(part1 / part2)
+
+        # Calculate the variances for fiber A and B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension of e2ds files.
+        a_var = data['A_{0}'.format(i)]
+        b_var = data['B_{0}'.format(i)]
+
+
+
+
+    pass
+
+def polar_ratio_method(params, pobjs, props, wprops, **kwargs):
+    pass
 
 
 
