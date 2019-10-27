@@ -16,6 +16,8 @@ __all__ = ['validate_polar_files']
 # =============================================================================
 # Define functions
 # =============================================================================
+calculate_polarimetry = general.calculate_polarimetry
+
 validate_polar_files = general.validate_polar_files
 
 
