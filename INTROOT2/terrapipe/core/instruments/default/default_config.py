@@ -100,7 +100,7 @@ DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__)
 # General properites
 # =============================================================================
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.5.099', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value='0.5.100', dtype=str,
                     source=__NAME__)
 
 # Authors
@@ -114,7 +114,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__)
 
 # Date
-DRS_DATE = Const('DATE', value='2019-10-25', dtype=str, source=__NAME__)
+DRS_DATE = Const('DATE', value='2019-10-28', dtype=str, source=__NAME__)
 
 # Language
 LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],

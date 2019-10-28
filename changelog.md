@@ -2,6 +2,35 @@ Changelog
 =========
 
 
+0.5.100 (2019-10-28)
+--------------------
+- Science.telluric.general.py - catch all berv = nan (not allowed) [Neil
+  Cook]
+- Science.telluric.general.py - should be using USE_BERV not BERV. [Neil
+  Cook]
+- Berv update - add in additional barycorrpy parameters. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.telluric.general.py - catch bad berv value. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.extract.berv.py - correct setting use_berv from estimate.
+  [Neil Cook]
+- Science.telluric.general.py - add break point to identify bug in
+  _wave_to_wave. [Neil Cook]
+- Science.calib.wave.py - hc only solution has no CCF --> set CCF used
+  keys to None. [Neil Cook]
+- Science.calib.wave.py - deal with header not having fiber kwarg (is a
+  pp file header) [Neil Cook]
+- Science.calib.wave.py - need to add more empty constants for hc only
+  wave sol. [Neil Cook]
+- Obj_pol_spirou.py - start filling out polarisation code (from SPIRou
+  DRS) [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.calib.wave.py - fix differing fiber values from header vs
+  usefiber. [Neil Cook]
+- Plot_functions.py - only add suffix if kind is not None. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.099 (2019-10-25)
 --------------------
 - Science.polar.general.py - add PolarObj class and validate_polar_files
