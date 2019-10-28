@@ -359,9 +359,9 @@ def assign_properties(params, props=None, use=True, **kwargs):
     # -------------------------------------------------------------------------
     # need to decide which values should be used (and report if we are using
     #   estimate)
-    cond = oprops['BERV'] is not None
-    cond &= oprops['BJD'] is not None
-    cond &= oprops['BERV_MAX'] is not None
+    cond = (oprops['BERV'] is not None and np.isfinite(oprops['BERV']))
+    cond &= (oprops['BJD'] is not None and np.isfinite(oprops['BJD']))
+    cond &= (oprops['BERV_MAX'] is not None and np.isfinite(oprops['BERV_MAX']))
 
     # Case 1: Not BERV used
     if not use:
