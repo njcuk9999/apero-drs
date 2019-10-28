@@ -160,8 +160,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         force = force or (params['KW_WAVE_DEG'][0] not in header)
         force = force or (params['KW_CDBWAVE'][0] not in header)
     # deal with header having different fiber value that usefiber
-    if header[params['KW_FIBER'][0]] != usefiber:
-        force = True
+    if not force and (params['KW_FIBER'][0] in header):
+        if header[params['KW_FIBER'][0]] != usefiber:
+            force = True
     # ------------------------------------------------------------------------
     # deal with master = True
     if master is True:
