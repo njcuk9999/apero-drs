@@ -521,7 +521,10 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
             'USED_IPEAK_SPACE', 'USED_EXPWIDTH', 'USED_CUTWIDTH',
             'USED_DV_MAX', 'USED_LL_FIT_DEG', 'USED_UPDATE_CAV',
             'USED_FP_CAV_MODE', 'USED_LL_FIT_MODE', 'USED_ERRX_MIN',
-            'USED_MAX_LL_FIT_RMS', 'USED_T_ORD_START', 'USED_WEIGHT_THRES']
+            'USED_MAX_LL_FIT_RMS', 'USED_T_ORD_START', 'USED_WEIGHT_THRES',
+            'CCF_SIGDET', 'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_MIN',
+            'MASK_WIDTH', 'MASK_UNITS']
+
     # deal with fp keys (that arent used in hcwave sol)
     for key in keys:
         if key not in llprops:
