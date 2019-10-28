@@ -103,7 +103,9 @@ __all__ = [
     'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND', 'EXT_S1D_BIN_UWAVE',
     'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
-    'EXTRACT_PLOT_ORDER', 'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2',
+    'EXT_BERV_BARYCORRPY_DIR', 'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
+    'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
+    'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2',
     # thermal constants
     'THERMAL_ALWAYS_EXTRACT', 'THERMAL_CORRETION_TYPE1',
     'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
@@ -1039,6 +1041,26 @@ EXT_ALLOWED_BERV_DPRTYPES = Const('EXT_ALLOWED_BERV_DPRTYPES', value=None,
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = Const('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
                       options=['barycorrpy', 'estimate', 'None'])
+
+#   Define the barycorrpy data directory
+EXT_BERV_BARYCORRPY_DIR = Const('EXT_BERV_BARYCORRPY_DIR', value=None,
+                                dtype=str, source=__NAME__)
+
+#   Define the barycorrpy iers file
+EXT_BERV_IERSFILE = Const('EXT_BERV_IERSFILE', value=None, dtype=str,
+                          source=__NAME__)
+
+#   Define the barycorrpy iers a url
+EXT_BERV_IERS_A_URL = Const('EXT_BERV_IERS_A_URL', value=None, dtype=str,
+                            source=__NAME__)
+
+#   Define barycorrpy leap directory
+EXT_BERV_LEAPDIR = Const('EXT_BERV_LEAPDIR', value=None, dtype=str,
+                         source=__NAME__)
+
+#   Define whether to update leap seconds if older than 6 months
+EXT_BERV_LEAPUPDATE = Const('EXT_BERV_LEAPUPDATE', value=None, dtype=bool,
+                            source=__NAME__)
 
 #    Define the accuracy of the estimate (for logging only) [m/s]
 EXT_BERV_EST_ACC = Const('EXT_BERV_EST_ACC', value=None, dtype=float,

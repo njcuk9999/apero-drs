@@ -22,6 +22,7 @@ from terrapipe.core import constants
 from terrapipe.core import math as mp
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_lock
+from terrapipe.io import drs_path
 from terrapipe.science.extract import bervest
 from terrapipe.science.extract import crossmatch
 
@@ -182,19 +183,45 @@ def use_barycorrpy(params, times, **kwargs):
     func_name = __NAME__ + '.use_barycorrpy()'
     # get estimate accuracy
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
+    # get barycorrpy directory
+    bc_dir = pcheck(params, 'EXT_BERV_BARYCORRPY_DIR', 'bc_dir', kwargs,
+                    func_name)
+    iersfile = pcheck(params, 'EXT_BERV_IERSFILE', 'iersfile', kwargs,
+                      func_name)
+    # iers_a_url = pcheck(params, 'EXT_BERV_IERS_A_URL', 'iers_a_url', kwargs,
+    #                     func_name)
+    leap_dir = pcheck(params, 'EXT_BERV_LEAPDIR', 'leap_dir', kwargs, func_name)
+    leap_update = pcheck(params, 'EXT_BERV_LEAPUPDATE', 'leap_update', kwargs,
+                         func_name)
+    package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
     # get text dictionary
     tdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
 
     # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
     kwargs = ParamDict(kwargs)
+    # make leap_dir an absolute path
+    leap_dir = drs_path.get_relative_folder(params, package, leap_dir)
+    # make barycorrpy directory an absolute path
+    bc_dir = drs_path.get_relative_folder(params, package, bc_dir)
+
     # get args
     bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
                    epoch=kwargs['epoch'], px=kwargs['plx'],
                    pmra=kwargs['pmra'], pmdec=kwargs['pmde'],
                    lat=kwargs['lat'], longi=kwargs['long'],
                    alt=kwargs['alt'], rv=kwargs['rv'] * 1000)
+    # bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
+    #                epoch=kwargs['epoch'], px=kwargs['plx'],
+    #                pmra=kwargs['pmra'], pmdec=kwargs['pmde'],
+    #                lat=kwargs['lat'], longi=kwargs['long'],
+    #                alt=kwargs['alt'], rv=kwargs['rv'] * 1000,
+    #                leap_dir=leap_dir, leap_update=leap_update)
     # try to import barycorrpy
     try:
+        from astropy.utils import iers
+        # iers.IERS_A_URL = iers_a_url
+        iers_a_file = os.path.join(bc_dir, iersfile)
+        iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
         import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]

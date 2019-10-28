@@ -852,6 +852,26 @@ EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
 EXT_BERV_KIND.value = 'barycorrpy'
 
+#   Define the barycorrpy data directory
+EXT_BERV_BARYCORRPY_DIR = EXT_BERV_BARYCORRPY_DIR.copy(__NAME__)
+EXT_BERV_BARYCORRPY_DIR.value = './data/core/barycorrpy/'
+
+#   Define the barycorrpy iers file
+EXT_BERV_IERSFILE = EXT_BERV_IERSFILE.copy(__NAME__)
+EXT_BERV_IERSFILE.value = 'finals2000A.all'
+
+#   Define the barycorrpy iers a url
+EXT_BERV_IERS_A_URL = EXT_BERV_IERS_A_URL.copy(__NAME__)
+EXT_BERV_IERS_A_URL.value = 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'
+
+#   Define barycorrpy leap directory
+EXT_BERV_LEAPDIR = EXT_BERV_LEAPDIR.copy(__NAME__)
+EXT_BERV_LEAPDIR.value = './data/core/barycorrpy/'
+
+#   Define whether to update leap seconds if older than 6 months
+EXT_BERV_LEAPUPDATE = EXT_BERV_LEAPUPDATE.copy(__NAME__)
+EXT_BERV_LEAPUPDATE.value = True
+
 #    Define the accuracy of the estimate (for logging only) [m/s]
 EXT_BERV_EST_ACC = EXT_BERV_EST_ACC.copy(__NAME__)
 EXT_BERV_EST_ACC.value = 10.0
