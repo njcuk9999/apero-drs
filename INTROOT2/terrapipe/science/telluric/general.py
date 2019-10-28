@@ -1672,6 +1672,10 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         bprops = extract.get_berv(params, infile, dprtype=dprtype, log=False)
         # get berv from bprops
         berv = bprops['USE_BERV']
+        # deal with bad berv (nan or None)
+        if berv in [np.nan, None] or not isinstance(berv, (int, float)):
+            eargs = [berv, func_name]
+            WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         # ------------------------------------------------------------------
