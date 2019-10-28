@@ -550,7 +550,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
     # copy image
     image1 = np.array(image)
     # get berv from bprops
-    berv = bprops['BERV']
+    berv = bprops['USE_BERV']
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
     # get wave map
