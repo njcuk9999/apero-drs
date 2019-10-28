@@ -551,6 +551,10 @@ def calculate_telluric_absorption(params, recipe, image, template,
     image1 = np.array(image)
     # get berv from bprops
     berv = bprops['USE_BERV']
+    # deal with bad berv (nan or None)
+    if berv in [np.nan, None] or not isinstance(berv, (int, float)):
+        eargs = [berv, func_name]
+        WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
     # get wave map
@@ -1115,6 +1119,10 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     # ------------------------------------------------------------------
     # Get the Barycentric correction from berv props
     dv = bprops['USE_BERV']
+    # deal with bad berv (nan or None)
+    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
+        eargs = [dv, func_name]
+        WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
     # Get the master wavemap from master wave props
     masterwavemap = mprops['WAVEMAP']
     masterwavefile = os.path.basename(mprops['WAVEFILE'])
@@ -1920,6 +1928,10 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         bprops = extract.get_berv(params, infile, dprtype=dprtype, log=False)
         # get berv from bprops
         berv = bprops['USE_BERV']
+        # deal with bad berv (nan or None)
+        if berv in [np.nan, None] or not isinstance(berv, (int, float)):
+            eargs = [berv, func_name]
+            WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
         # ------------------------------------------------------------------
         # append to table lists
         # ------------------------------------------------------------------
