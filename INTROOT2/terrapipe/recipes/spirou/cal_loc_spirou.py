@@ -176,6 +176,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Clean the coefficients (using a sanity check)
         # ------------------------------------------------------------------
+
+        constants.breakpoint(params)
+
         # clean the center position fits
         cargs = [image, cent_coeffs, fiber, 'center']
         cent_coeffs = localisation.check_coeffs(params, recipe, *cargs)

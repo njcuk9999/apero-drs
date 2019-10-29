@@ -169,6 +169,7 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     # ----------------------------------------------------------------------
     # storage for plotting
     good_arr = []
+    ypix2 = []
     # ----------------------------------------------------------------------
     # re-fit the coefficients
     for order_num in range(nbo):
@@ -178,12 +179,15 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
         new_coeff_ord = np.polyfit(xpix[good], ypix[order_num, good], nbcoeff-1)
         # push into new array
         new_coeffs[order_num] = new_coeff_ord[::-1]
+        # add update y values (for plotting)
+        ypix2.append(np.polyval(new_coeff_ord, xpix))
         # storage for plotting
         good_arr.append(good)
-
+    # make ypix2 an array
+    ypix2 = np.array(ypix2)
     # ----------------------------------------------------------------------
     # plot of the coeffs
-    recipe.plot('LOC_CHECK_COEFFS', ypix=ypix, ypix0=ypix_ini,
+    recipe.plot('LOC_CHECK_COEFFS', ypix=ypix2, ypix0=ypix_ini,
                 xpix=xpix, good=good_arr, kind=kind, image=image)
     # ----------------------------------------------------------------------
     return new_coeffs
