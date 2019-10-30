@@ -1660,7 +1660,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                                         meantime, arg0, gtable0, file_col)
                 # catch exception
                 except DrsRecipeException:
-                    break
+                    continue
                 # finally add new_run to runs
                 runs += new_runs
     # deal with master (should only be 1)
