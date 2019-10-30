@@ -622,6 +622,7 @@ def load_orderp(params, header, fiber, filename=None):
     # return the master image
     return orderp_file, orderp
 
+
 # =============================================================================
 # write files and qc functions
 # =============================================================================
