@@ -1005,6 +1005,9 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 continue
             else:
                 sys.exit()
+        # filer out engineering
+        if not params['ENGINEERING']:
+            fdata = _remove_engineering(ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
         # get fiber filter
@@ -1561,6 +1564,30 @@ def _group_tasks(runlist, cores):
         out_names.append(out_name)
     # return output groups
     return out_groups, out_names
+
+
+def _remove_engineering(ftable):
+    # get nightnames
+    nightnames = ftable['__NIGHTNAME']
+    obstypes = ftable['KW_OBSTYPE']
+    # get unique nights
+    u_nights = np.unique(nightnames)
+    # get the object mask
+    objmask = obstypes == 'OBJECT'
+    # define empty keep mask
+    keepmask = np.zeros(len(ftable), dtype=bool)
+    # loop around nights
+    for night in u_nights:
+        # get night mask
+        nightmask = nightnames == night
+        # joint mask
+        nightobjmask = nightmask & objmask
+        # if we find objects then keep these files
+        if np.sum(nightobjmask) > 0:
+            # add to keep mask
+            keepmask[nightobjmask] = True
+    # return masked ftable
+    return ftable[keepmask]
 
 
 # =============================================================================
