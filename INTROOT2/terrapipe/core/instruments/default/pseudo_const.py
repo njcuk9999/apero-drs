@@ -129,7 +129,7 @@ class PseudoConstants:
                        'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
                        'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
                        'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
-                       'KW_VERSION', 'KW_PPVERSION']
+                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME']
         # return output_keys
         return output_keys
 

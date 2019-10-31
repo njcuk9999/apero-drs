@@ -1324,7 +1324,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
                             kwargs, func_name)
     # get the file filter (should be None unless we want specific files)
-    filefilter = params['FILENAME']
+    filefilter = params.get('FILENAME', None)
     if filefilter is not None:
         filefilter = list(params['FILENAME'])
     # ----------------------------------------------------------------------
