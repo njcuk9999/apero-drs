@@ -139,7 +139,7 @@ class PseudoConstants:
         output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
                        'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
                        'KW_EXPTIME', 'KW_DPRTYPE', 'KW_CCAS', 'KW_CREF',
-                       'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP']
+                       'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME']
         # return these keys
         return output_keys
 

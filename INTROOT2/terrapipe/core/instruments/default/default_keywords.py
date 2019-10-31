@@ -10,8 +10,9 @@ __all__ = [# input keys
            'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
            'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS',
            'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
-           'KW_CMPLTEXP', 'KW_NEXP', 'KW_PLX', 'KW_WEATHER_TOWER_TEMP',
-           'KW_CASS_TEMP', 'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV',
+           'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX',
+           'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY', 'KW_GAIA_ID',
+           'KW_INPUTRV',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
            'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -180,6 +181,9 @@ KW_CMPLTEXP = Keyword('KW_CMPLTEXP', key='', dtype=int, source=__NAME__)
 
 # define the total number of exposures HEADER key
 KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__)
+
+# define the pi name HEADER key
+KW_PI_NAME = Keyword('KW_PI_NAME', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)

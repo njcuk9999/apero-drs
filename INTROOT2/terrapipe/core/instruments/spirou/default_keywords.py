@@ -76,6 +76,10 @@ KW_CMPLTEXP.set(key='CMPLTEXP')
 KW_NEXP = KW_NEXP.copy(__NAME__)
 KW_NEXP.set(key='NEXP')
 
+# define the pi name HEADER key
+KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
+KW_PI_NAME.set(key='PI_NAME')
+
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
