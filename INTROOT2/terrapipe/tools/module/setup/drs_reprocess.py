@@ -1007,7 +1007,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 sys.exit()
         # filer out engineering
         if not params['ENGINEERING']:
-            fdata = _remove_engineering(ftable)
+            ftable = _remove_engineering(ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
         # get fiber filter
