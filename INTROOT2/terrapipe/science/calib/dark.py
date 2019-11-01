@@ -340,11 +340,26 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         # log progress group g_it + 1 of len(u_groups)
         wargs = [bin_it + 1, num_bins]
         WLOG(params, '', TextEntry('40-011-10004', args=wargs))
-        # get the dark for this bin
-        bindark = np.array(dark_cube[bin_it])
         # performing a median filter of the image with [-med_size, med_size]
         #     box in x and 1 pixel wide in y. Skips the pixel considered,
         #     so this is equivalent of a 2*med_size boxcar
+        # high frequency image
+        dark_cube1[bin_it % n_smart_median] +=  np.array(dark_cube[bin_it])
+        n_dark_cube1[bin_it % n_smart_median] += 1
+
+    # clean out
+    del dark_cube
+
+    # loop around the start median
+    for it in range(n_smart_median):
+        # TODO: Update text entry
+        # log progress group g_it + 1 of len(u_groups)
+        wargs = [it + 1, n_smart_median]
+        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
+
+        dark_cube1[it] /= n_dark_cube1[it]
+        bindark = np.array(dark_cube1[it])
+
         tmp = []
         for jt in range(-med_size, med_size + 1):
             if jt != 0:
@@ -352,19 +367,12 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         # low frequency image
         with warnings.catch_warnings(record=True) as _:
             lf_dark = mp.nanmedian(tmp, axis=0)
-        # high frequency image
-        dark_cube1[bin_it % n_smart_median] += np.array(bindark - lf_dark)
-        n_dark_cube1[bin_it % n_smart_median] += 1
+        dark_cube1[it] -= lf_dark
+
         # clean out
         del bindark
         del tmp
         del lf_dark
-
-    # loop around the start median
-    for it in range(n_smart_median):
-        dark_cube1[it] /= np.array(n_dark_cube1[it])
-    # clean out
-    del dark_cube
 
     # -------------------------------------------------------------------------
     # log process
