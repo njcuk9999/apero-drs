@@ -317,10 +317,12 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # loop through groups
     for bin_it in range(num_bins):
         # log progress group g_it + 1 of len(u_groups)
-        wargs = [g_it + 1, len(u_groups)]
+        wargs = [bin_it + 1, len(u_groups)]
         WLOG(params, '', TextEntry('40-011-10004', args=wargs))
         # normalise
-        dark_cube[bin_it] /= bin_cube[bin_it]
+        dark_cube[bin_it] /= np.array(bin_cube[bin_it])
+    # clean up data
+    del bin_cube
 
     # -------------------------------------------------------------------------
     # we perform a median filter over a +/- "med_size" pixel box
@@ -339,7 +341,7 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         wargs = [bin_it + 1, num_bins]
         WLOG(params, '', TextEntry('40-011-10004', args=wargs))
         # get the dark for this bin
-        bindark = dark_cube[bin_it]
+        bindark = np.array(dark_cube[bin_it])
         # performing a median filter of the image with [-med_size, med_size]
         #     box in x and 1 pixel wide in y. Skips the pixel considered,
         #     so this is equivalent of a 2*med_size boxcar
@@ -351,11 +353,18 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         with warnings.catch_warnings(record=True) as _:
             lf_dark = mp.nanmedian(tmp, axis=0)
         # high frequency image
-        dark_cube1[bin_it % n_smart_median] += bindark - lf_dark
+        dark_cube1[bin_it % n_smart_median] += np.array(bindark - lf_dark)
         n_dark_cube1[bin_it % n_smart_median] += 1
+        # clean out
+        del bindark
+        del tmp
+        del lf_dark
+
     # loop around the start median
     for it in range(n_smart_median):
-        dark_cube1[it] /= n_dark_cube1[it]
+        dark_cube1[it] /= np.array(n_dark_cube1[it])
+    # clean out
+    del dark_cube
 
     # -------------------------------------------------------------------------
     # log process
@@ -363,7 +372,8 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # median the dark cube to create the master dark
     with warnings.catch_warnings(record=True) as _:
         master_dark = mp.nanmedian(dark_cube1, axis=0)
-
+    # clean out
+    del dark_cube1
     # -------------------------------------------------------------------------
     # get infile from filetype
     infile = core.get_file_definition(filetype, params['INSTRUMENT'],
