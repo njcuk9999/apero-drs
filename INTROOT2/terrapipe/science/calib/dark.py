@@ -327,8 +327,12 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # -------------------------------------------------------------------------
     # log process
     WLOG(params, 'info', TextEntry('40-011-10005', args=[num_bins]))
-    # storage of output dark cube
-    dark_cube1 = np.zeros([num_bins, dim1, dim2])
+    # storage of output dark cube. we construct a cube that is
+    # smaller than num_bins but can still be median-ed. Within each
+    # slice, we will take a mean
+    n_smart_median = 11
+    dark_cube1 = np.zeros([n_smart_median, dim1, dim2])
+    n_dark_cube1 = np.zeros(n_smart_median)
     # loop around the bins
     for bin_it in range(num_bins):
         # log progress group g_it + 1 of len(u_groups)
@@ -347,7 +351,12 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
         with warnings.catch_warnings(record=True) as _:
             lf_dark = mp.nanmedian(tmp, axis=0)
         # high frequency image
-        dark_cube1[bin_it] = bindark - lf_dark
+        dark_cube1[bin_it % n_smart_median] += bindark - lf_dark
+        n_dark_cube1[bin_it % n_smart_median] += 1
+    # loop around the start median
+    for it in range(n_smart_median):
+        dark_cube1[it] /= n_dark_cube1[it]
+
     # -------------------------------------------------------------------------
     # log process
     WLOG(params, 'info', TextEntry('40-011-10008'))
