@@ -536,10 +536,10 @@ def deal_with_missing_end_card(p, filename, e, func_name):
     """
     hdu = fits.open(filename, ignore_missing_end=True)
     ext = None
-    if hdu.data[0] is not None:
+    if hdu[0].data is not None:
         data = hdu[0].data
         ext = 0
-    elif hdu.data[1] is not None:
+    elif hdu[1].data is not None:
         data = hdu[1].data
         ext = 1
     else:
