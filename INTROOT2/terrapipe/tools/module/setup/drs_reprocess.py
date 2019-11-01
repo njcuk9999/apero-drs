@@ -1585,7 +1585,7 @@ def _remove_engineering(ftable):
         # if we find objects then keep these files
         if np.sum(nightobjmask) > 0:
             # add to keep mask
-            keepmask[nightobjmask] = True
+            keepmask[nightmask] = True
     # return masked ftable
     return ftable[keepmask]
 
