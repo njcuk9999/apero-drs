@@ -32,7 +32,7 @@ from terrapipe.plotting import html
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'tools.module.setup.drs_reprocess.py'
+__NAME__ = 'plotting.core.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
