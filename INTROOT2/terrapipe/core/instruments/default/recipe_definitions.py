@@ -118,9 +118,9 @@ reset.set_kwarg(name='-warn', dtype='bool', default=True,
                 helpstr=Help['RESET_WARN_HELP'])
 
 # -----------------------------------------------------------------------------
-# reprocess.py
+# processing.py
 # -----------------------------------------------------------------------------
-reprocess.name = 'reprocess.py'
+reprocess.name = 'processing.py'
 reprocess.instrument = __INSTRUMENT__
 reprocess.description = Help['REPROCESS_DESCRIPTION']
 reprocess.set_arg(pos=0, name='instrument', dtype='options',

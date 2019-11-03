@@ -35,7 +35,7 @@ from terrapipe.science import telluric
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'tools.module.setup.drs_reprocess.py'
+__NAME__ = 'tools.module.setup.drs_processing.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
