@@ -98,7 +98,7 @@ mode2['alt'] = Property(name='obs_alt', unit=uu.deg)
 # Define user functions
 # =============================================================================
 def get_berv(params, infile=None, header=None, props=None, log=True,
-             warn=False, **kwargs):
+             warn=False, force=False, **kwargs):
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
@@ -122,8 +122,11 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
         # all entries returns are empty
         return assign_properties(params, use=False)
     # ----------------------------------------------------------------------
-    # check if we already have berv (or bervest)
-    bprops = get_outputs(params, infile, header, props, kwargs)
+    # check if we already have berv (or bervest) if not forced
+    if force:
+        bprops = None
+    else:
+        bprops = get_outputs(params, infile, header, props, kwargs)
     # if we have berv already then just return these
     if bprops is not None:
         # log that we are skipping due to user
