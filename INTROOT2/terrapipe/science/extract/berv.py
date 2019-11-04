@@ -163,7 +163,9 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
                                      props=bprops, dberv=dberv)
         except BaryCorrpyException as bce:
             if warn:
-                WLOG(params, 'warning', bce)
+                WLOG(params, 'warning', str(bce))
+            else:
+                pass
     # --------------------------------------------------------------
     # if we are still here must use pyasl BERV estimate
     # ----------------------------------------------------------------------
@@ -227,6 +229,10 @@ def use_barycorrpy(params, times, **kwargs):
         # iers.IERS_A_URL = iers_a_url
         iers_a_file = os.path.join(bc_dir, iersfile)
         iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
+    except Exception as e:
+        print(e)
+
+    try:
         import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
