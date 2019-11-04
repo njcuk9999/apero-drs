@@ -151,13 +151,14 @@ obj_pol_spirou = DrsRecipe(__INSTRUMENT__)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__)
+cal_update_berv = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
            obj_mk_tellu_db, obj_fit_tellu_db, obj_pol_spirou,
-           test]
+           test, cal_update_berv]
 
 # =============================================================================
 # Recipe definitions
@@ -860,6 +861,25 @@ obj_pol_spirou.set_kwarg(**plot)
 # -----------------------------------------------------------------------------
 # visu_E2DS_spirou
 # -----------------------------------------------------------------------------
+
+
+
+# cal_update_berv
+
+cal_update_berv.name = 'cal_update_berv.py'
+cal_update_berv.shortname = 'UBERV'
+cal_update_berv.instrument = __INSTRUMENT__
+cal_update_berv.outputdir = 'reduced'
+cal_update_berv.inputdir = 'reduced'
+cal_update_berv.inputtype = 'reduced'
+cal_update_berv.extension = 'fits'
+cal_update_berv.description = Help['FTELLU_DESC']
+cal_update_berv.epilog = Help['FTELLU_EXAMPLE']
+cal_update_berv.set_outputs()
+cal_update_berv.set_debug_plots()
+cal_update_berv.set_kwarg(**plot)
+
+
 
 
 # =============================================================================
