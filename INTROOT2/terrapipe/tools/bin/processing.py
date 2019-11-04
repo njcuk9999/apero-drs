@@ -15,13 +15,13 @@ import sys
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.tools.module.setup import drs_reprocess
+from terrapipe.tools.module.setup import drs_processing
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'reprocess.py'
+__NAME__ = 'processing.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -97,7 +97,7 @@ def __main__(recipe, params):
     # Deal with run file
     # ----------------------------------------------------------------------
     # deal with run file
-    params, runtable = drs_reprocess.read_runfile(params, runfile)
+    params, runtable = drs_processing.read_runfile(params, runfile)
     # reset sys.argv so it doesn't mess with recipes
     sys.argv = [__NAME__]
 
@@ -105,45 +105,45 @@ def __main__(recipe, params):
     # Send email about starting
     # ----------------------------------------------------------------------
     # send email if configured
-    drs_reprocess.send_email(params, kind='start')
+    drs_processing.send_email(params, kind='start')
 
     # ----------------------------------------------------------------------
     # Deal with reset options
     # ----------------------------------------------------------------------
-    drs_reprocess.reset_files(params)
+    drs_processing.reset_files(params)
 
     # ----------------------------------------------------------------------
     # find all raw files
     # ----------------------------------------------------------------------
     # get raw files
-    rawtable, rawpath = drs_reprocess.find_raw_files(params, recipe)
+    rawtable, rawpath = drs_processing.find_raw_files(params, recipe)
 
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    rlist = drs_reprocess.generate_run_list(params, rawtable, runtable)
+    rlist = drs_processing.generate_run_list(params, rawtable, runtable)
 
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
-    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
+    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
 
     # ----------------------------------------------------------------------
     # Print timing
     # ----------------------------------------------------------------------
-    drs_reprocess.display_timing(params, outlist)
+    drs_processing.display_timing(params, outlist)
 
     # ----------------------------------------------------------------------
     # Print out any errors
     # ----------------------------------------------------------------------
     if has_errors:
-        drs_reprocess.display_errors(params, outlist)
+        drs_processing.display_errors(params, outlist)
 
     # ----------------------------------------------------------------------
     # Send email about finishing
     # ----------------------------------------------------------------------
     # send email if configured
-    drs_reprocess.send_email(params, kind='end')
+    drs_processing.send_email(params, kind='end')
 
     # ----------------------------------------------------------------------
     # End of main code

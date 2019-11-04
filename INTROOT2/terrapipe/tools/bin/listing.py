@@ -17,7 +17,7 @@ from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core.core import drs_startup
 from terrapipe.tools.module import listing
-from terrapipe.tools.module.setup import drs_reprocess
+from terrapipe.tools.module.setup import drs_processing
 
 # =============================================================================
 # Define variables
@@ -108,7 +108,7 @@ def __main__(recipe, params):
     # deal with kind
     if kind.lower() == 'raw':
         # push files in to runs/raw_index
-        _ = drs_reprocess.find_raw_files(params, recipe)
+        _ = drs_processing.find_raw_files(params, recipe)
 
         return core.return_locals(params, locals())
     elif kind.lower() == 'tmp':
