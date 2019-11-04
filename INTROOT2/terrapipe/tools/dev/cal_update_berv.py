@@ -119,6 +119,8 @@ def __main__(recipe, params):
                                         KW_OUTPUT=intype)
         # loop around filenames
         for filename in filenames:
+            # print file currently processing
+            WLOG(params, 'info', 'Processing file {0}'.format(filename))
             # get new copy of file definition
             infile = infiletype.newcopy(recipe=recipe)
             # set reference filename
