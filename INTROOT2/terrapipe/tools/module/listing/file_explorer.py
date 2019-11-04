@@ -31,6 +31,7 @@ else:
 from terrapipe.core import constants
 from terrapipe.core import math as mp
 from terrapipe import core
+from terrapipe.tools.module.gui import widgets
 
 
 # =============================================================================
@@ -58,89 +59,6 @@ INSTRUMENTS = ['SPIROU', 'NIRPS']
 MIN_TABLE_COL_WIDTH = 25
 # TODO: This needs moving to some setup file to work per installation
 DS9PATH = '~/bin/ds9/ds9'
-
-
-# =============================================================================
-# Define new widgets
-# =============================================================================
-class DropDown(tk.OptionMenu):
-    """
-    Classic drop down entry
-
-    Example use:
-        # create the dropdown and grid
-        dd = DropDown(root, ['one', 'two', 'three'])
-        dd.grid()
-
-        # define a callback function that retrieves the currently selected option
-        def callback():
-            print(dd.get())
-
-        # add the callback function to the dropdown
-        dd.add_callback(callback)
-    """
-    def __init__(self, parent, options: list, initial_value: str=None):
-        """
-        Constructor for drop down entry
-
-        :param parent: the tk parent frame
-        :param options: a list containing the drop down options
-        :param initial_value: the initial value of the dropdown
-        """
-        self.var = tk.StringVar(parent)
-        self.var.set(initial_value if initial_value else options[0])
-
-        self.option_menu = tk.OptionMenu.__init__(self, parent, self.var,
-                                                  *options)
-
-        self.callback = None
-
-    def add_callback(self, callback: callable):
-        """
-        Add a callback on change
-
-        :param callback: callable function
-        :return:
-        """
-        def internal_callback(*args):
-            callback()
-
-        self.var.trace("w", internal_callback)
-
-    def get(self):
-        """
-        Retrieve the value of the dropdown
-
-        :return:
-        """
-        return self.var.get()
-
-    def set(self, value: str):
-        """
-        Set the value of the dropdown
-
-        :param value: a string representing the
-        :return:
-        """
-        self.var.set(value)
-
-
-class StatusBar(tk.Frame):
-    def __init__(self, master):
-        tk.Frame.__init__(self, master)
-
-        self.frame = tk.Frame(self, relief=tk.SUNKEN)
-
-        self.status=tk.StringVar()
-        self.label=tk.Label(self.frame, bd=1, relief=tk.SUNKEN, anchor=tk.W,
-                           textvariable=self.status,
-                           font=('arial',10,'normal'))
-        self.status.set('')
-        self.label.pack(side=tk.LEFT)
-
-        self.frame.pack(fill=tk.X, expand=tk.YES, side=tk.BOTTOM)
-
-        self.pack(fill=tk.X, expand=tk.YES, side=tk.BOTTOM)
 
 
 # =============================================================================
@@ -681,7 +599,7 @@ class App(tk.Tk):
                            sticky=(tk.E, tk.W, tk.N, tk.S))
         # ---------------------------------------------------------------------
         # add status bar
-        self.status_bar = StatusBar(self.main_end)
+        self.status_bar = widgets.StatusBar(self.main_end)
         # ---------------------------------------------------------------------
         # add progress bar to status bar
         self.progress = ttk.Progressbar(self.status_bar.frame,

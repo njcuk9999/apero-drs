@@ -18,7 +18,7 @@ from terrapipe.core import constants
 from terrapipe.io import drs_fits
 from terrapipe.io import drs_path
 from terrapipe.science import telluric
-from terrapipe.tools.module.setup import drs_reprocess
+from terrapipe.tools.module.setup import drs_processing
 
 from terrapipe.core.instruments.spirou import recipe_definitions as rd
 
@@ -133,15 +133,15 @@ def __main__(recipe, params):
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTELLU1'
     # generate run table (dictionary from reprocessing)
-    runtable = drs_reprocess.generate_run_table(params, obj_mk_tellu, *gargs,
-                                                **gkwargs)
+    runtable = drs_processing.generate_run_table(params, obj_mk_tellu, *gargs,
+                                                 **gkwargs)
     # Generate run list
-    rlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_processing.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
+    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
-        drs_reprocess.display_errors(params, outlist)
+        drs_processing.display_errors(params, outlist)
         # terminate here
         eargs = [obj_mk_tellu.name, recipe.name]
         WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
@@ -154,15 +154,15 @@ def __main__(recipe, params):
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
     # generate run table (dictionary from reprocessing)
-    runtable = drs_reprocess.generate_run_table(params, obj_fit_tellu, *gargs,
-                                                **gkwargs)
+    runtable = drs_processing.generate_run_table(params, obj_fit_tellu, *gargs,
+                                                 **gkwargs)
     # Generate run list
-    rlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_processing.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
+    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
-        drs_reprocess.display_errors(params, outlist)
+        drs_processing.display_errors(params, outlist)
         # terminate here
         eargs = [obj_fit_tellu.name, recipe.name]
         WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
@@ -175,15 +175,15 @@ def __main__(recipe, params):
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTEMP'
     # generate run table (dictionary from reprocessing)
-    runtable = drs_reprocess.generate_run_table(params, obj_mk_template, *gargs,
-                                                **gkwargs)
+    runtable = drs_processing.generate_run_table(params, obj_mk_template, *gargs,
+                                                 **gkwargs)
     # Generate run list
-    rlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_processing.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
+    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
-        drs_reprocess.display_errors(params, outlist)
+        drs_processing.display_errors(params, outlist)
         # terminate here
         eargs = [obj_mk_template.name, recipe.name]
         WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
@@ -196,15 +196,15 @@ def __main__(recipe, params):
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTELLU2'
     # generate run table (dictionary from reprocessing)
-    runtable = drs_reprocess.generate_run_table(params, obj_mk_tellu, *gargs,
-                                                **gkwargs)
+    runtable = drs_processing.generate_run_table(params, obj_mk_tellu, *gargs,
+                                                 **gkwargs)
     # Generate run list
-    rlist = drs_reprocess.generate_run_list(params, None, runtable)
+    rlist = drs_processing.generate_run_list(params, None, runtable)
     # Process run list
-    outlist, has_errors = drs_reprocess.process_run_list(params, recipe, rlist)
+    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
-        drs_reprocess.display_errors(params, outlist)
+        drs_processing.display_errors(params, outlist)
         # terminate here
         eargs = [obj_mk_tellu.name, recipe.name]
         WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
