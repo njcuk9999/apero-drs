@@ -12,6 +12,7 @@ Created on 2019-07-23 at 09:29
 from __future__ import division
 import numpy as np
 import os
+import warnings
 from astropy import units as uu
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import SkyCoord
@@ -223,17 +224,18 @@ def use_barycorrpy(params, times, **kwargs):
     #                lat=kwargs['lat'], longi=kwargs['long'],
     #                alt=kwargs['alt'], rv=kwargs['rv'] * 1000,
     #                leap_dir=leap_dir, leap_update=leap_update)
-    # try to import barycorrpy
+    # try to set iers file
     try:
         from astropy.utils import iers
         # iers.IERS_A_URL = iers_a_url
         iers_a_file = os.path.join(bc_dir, iersfile)
         iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
     except Exception as e:
-        print(e)
-
+        WLOG(params, 'warning', 'IERS_A_FILE Warning:' + str(e))
+    # try to import barycorrpy
     try:
-        import barycorrpy
+        with warnings.catch_warnings(record=True) as _:
+            import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
         WLOG(params, 'warning', TextEntry('10-016-00003', args=wargs))
