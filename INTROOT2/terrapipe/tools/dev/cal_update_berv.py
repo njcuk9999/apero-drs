@@ -106,42 +106,38 @@ def __main__(recipe, params):
 
     # find all OBJ_DARK and OBJ_FP files
     filetypes = ['OBJ_FP', 'OBJ_DARK']
-    fibers = ['AB', 'A', 'B', 'C']
-    outtype = 'EXT_E2DS_FF'
+    intype = 'EXT_E2DS_FF'
 
     # loop around files and update BERV
     for filetype in filetypes:
         # Get filetype definition
-        infiletype = core.get_file_definition(filetype, params['INSTRUMENT'],
+        infiletype = core.get_file_definition(intype, params['INSTRUMENT'],
                                               kind='red')
-        # loop around fibers
-        for fiber in fibers:
-            # get files of this type
-            filenames = drs_fits.find_files(params, kind='tmp',
-                                            KW_DPRTYPE=filetypes,
-                                            KW_OUTPUT=outtype,
-                                            KW_FIBER=fiber)
-            # loop around filenames
-            for filename in filenames:
-                # get new copy of file definition
-                infile = infiletype.newcopy(recipe=recipe, fiber=fiber)
-                # set reference filename
-                infile.set_filename(filename)
-                # read data
-                infile.read()
-                # ----------------------------------------------------------
-                # get header from file instance
-                header = infile.header
-                # ----------------------------------------------------------
-                # Calculate Barycentric correction
-                # ----------------------------------------------------------
-                props = ParamDict()
-                props['DPRTYPE'] = infile.get_key('KW_DPRTYPE', dtype=float)
-                bprops = extract.get_berv(params, infile, header, props)
+        # get files of this type
+        filenames = drs_fits.find_files(params, kind='red',
+                                        KW_DPRTYPE=filetypes,
+                                        KW_OUTPUT=intype)
+        # loop around filenames
+        for filename in filenames:
+            # get new copy of file definition
+            infile = infiletype.newcopy(recipe=recipe)
+            # set reference filename
+            infile.set_filename(filename)
+            # read data
+            infile.read()
+            # ----------------------------------------------------------
+            # get header from file instance
+            header = infile.header
+            # ----------------------------------------------------------
+            # Calculate Barycentric correction
+            # ----------------------------------------------------------
+            props = ParamDict()
+            props['DPRTYPE'] = infile.get_key('KW_DPRTYPE', dtype=float)
+            bprops = extract.get_berv(params, infile, header, props, warn=True)
 
 
-                args = [infile.basename, bprops['USE_BERV']]
-                print('{0} USE_BERV: {1}'.format(*args))
+            args = [infile.basename, bprops['USE_BERV']]
+            print('{0} USE_BERV: {1}'.format(*args))
 
 
     # ----------------------------------------------------------------------

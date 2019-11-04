@@ -97,7 +97,8 @@ mode2['alt'] = Property(name='obs_alt', unit=uu.deg)
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_berv(params, infile=None, header=None, props=None, log=True, **kwargs):
+def get_berv(params, infile=None, header=None, props=None, log=True,
+             warn=False, **kwargs):
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
@@ -157,8 +158,9 @@ def get_berv(params, infile=None, header=None, props=None, log=True, **kwargs):
             return assign_properties(params, berv=bervs[0], bjd=bjds[0],
                                      bervmax=bervmax, source='barycorrpy',
                                      props=bprops, dberv=dberv)
-        except BaryCorrpyException:
-            pass
+        except BaryCorrpyException as bce:
+            if warn:
+                WLOG(params, 'warning', bce)
     # --------------------------------------------------------------
     # if we are still here must use pyasl BERV estimate
     # ----------------------------------------------------------------------
