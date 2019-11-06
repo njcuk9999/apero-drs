@@ -1738,6 +1738,31 @@ POLAR_VALID_FIBERS.value = 'A, B'
 POLAR_VALID_STOKES = POLAR_VALID_STOKES.copy(__NAME__)
 POLAR_VALID_STOKES.value = 'V, Q, U'
 
+#  Define the polarimetry calculation method
+#    currently must be either:
+#         - Ratio
+#         - Difference
+POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
+POLAR_METHOD.value = 'Ratio'
+
+#  Define the polarimetry continuum bin size (for plotting)
+POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
+POLAR_CONT_BINSIZE.value = 1000
+
+#  Define the polarimetry continuum overlap size (for plotting)
+POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
+POLAR_CONT_OVERLAP.value = 0
+
+#  Define the telluric mask for calculation of continnum lower limits
+#    (string list)
+POLAR_CONT_TELLMASK_LOWER = POLAR_CONT_TELLMASK_LOWER.copy(__NAME__)
+POLAR_CONT_TELLMASK_LOWER.value = '930, 1109, 1326, 1782, 1997, 2047'
+
+#  Define the telluric mask for calculation of continnum upper limits
+#    (string list)
+POLAR_CONT_TELLMASK_UPPER = POLAR_CONT_TELLMASK_UPPER.copy(__NAME__)
+POLAR_CONT_TELLMASK_UPPER.value = '967, 1167, 1491, 1979, 2027, 2076'
+
 # =============================================================================
 # DEBUG PLOT SETTINGS
 # =============================================================================
