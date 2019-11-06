@@ -17,6 +17,7 @@ from terrapipe.core.math import fast
 # =============================================================================
 # Define functions
 # =============================================================================
+continuum = general.continuum
 
 calculate_polyvals = general.calculate_polyvals
 
