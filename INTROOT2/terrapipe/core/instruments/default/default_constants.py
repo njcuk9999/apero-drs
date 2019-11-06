@@ -187,7 +187,9 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     # polar constants
-    'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES',
+    'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
+    'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
+    'POLAR_CONT_TELLMASK_UPPER',
     # debug plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
@@ -1908,6 +1910,31 @@ POLAR_VALID_FIBERS = Const('POLAR_VALID_FIBERS', value=None, dtype=str,
 #      (define as a string list)
 POLAR_VALID_STOKES = Const('POLAR_VALID_STOKES', value=None, dtype=str,
                            source=__NAME__)
+
+#  Define the polarimetry calculation method
+#    currently must be either:
+#         - Ratio
+#         - Difference
+POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__)
+
+#  Define the polarimetry continuum bin size (for plotting)
+POLAR_CONT_BINSIZE = Const('POLAR_CONT_BINSIZE', value=None, dtype=int,
+                           source=__NAME__)
+
+#  Define the polarimetry continuum overlap size (for plotting)
+POLAR_CONT_OVERLAP = Const('POLAR_CONT_OVERLAP', value=None, dtype=int,
+                           source=__NAME__)
+
+#  Define the telluric mask for calculation of continnum lower limits
+#    (string list)
+POLAR_CONT_TELLMASK_LOWER = Const('POLAR_CONT_TELLMASK_LOWER', value=None,
+                                  dtype=float, source=__NAME__)
+
+#  Define the telluric mask for calculation of continnum upper limits
+#    (string list)
+POLAR_CONT_TELLMASK_UPPER = Const('POLAR_CONT_TELLMASK_UPPER', value=None,
+                                  dtype=float, source=__NAME__)
+
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
