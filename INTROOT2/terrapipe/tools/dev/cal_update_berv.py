@@ -97,48 +97,74 @@ def __main__(recipe, params):
     # find all OBJ_DARK and OBJ_FP files
     filetypes = ['OBJ_FP', 'OBJ_DARK']
     intypes = ['EXT_E2DS', 'EXT_E2DS_FF']
+    fibers = ['AB', 'A', 'B', 'C']
     # ----------------------------------------------------------------------
     # get all combinations
     combinations = list(itertools.product(filetypes, intypes))
     # ----------------------------------------------------------------------
     # loop around files and update BERV
-    for jt in range(len(combinations)):
+    for filetype in range(len(filetypes)):
         # ------------------------------------------------------------------
         # get this combination
-        filetype, intype = combinations[jt]
+        intype0 = intypes[0]
+        fiber0 = fibers[0]
         # ------------------------------------------------------------------
         # log progress
         WLOG(params, 'info', params['DRS_HEADER'])
-        wargs = [filetype, intype]
+        wargs = [filetype, intype0]
         WLOG(params, 'info', 'FILETYPE = {0}   INTYPE = {1}'.format(*wargs))
         WLOG(params, 'info', params['DRS_HEADER'])
         # ------------------------------------------------------------------
-        # Get filetype definition
-        infiletype = core.get_file_definition(intype, params['INSTRUMENT'],
-                                              kind='red')
-        # ------------------------------------------------------------------
-        # get files of this type
-        filenames = drs_fits.find_files(params, kind='red', KW_OUTPUT=intype,
-                                        KW_DPRTYPE=filetypes)
+        # get files of this type and the intypes
+        filenames, infiletypes = dict(), dict()
+        for intype in intypes:
+            # get the in file type
+            infiletype = core.get_file_definition(intype, params['INSTRUMENT'],
+                                                  kind='red')
+            # get the files for this filetype
+            filenames1 = drs_fits.find_files(params, kind='red',
+                                             KW_OUTPUT=intype,
+                                             KW_DPRTYPE=filetype)
+            # append to storage
+            filenames[intype] = filenames1
+            infiletypes[intype] = infiletype
         # ------------------------------------------------------------------
         # loop around files
-        for it, filename in enumerate(filenames):
+        for it, filename in enumerate(filenames[intype0]):
             # print file currently processing
             wmsg = 'Processing file {1} of {2} \n\t File: {0}'
             wargs = [filename, it + 1, len(filenames)]
             WLOG(params, 'info', wmsg.format(*wargs))
-            # get new copy of file definition
-            infile = infiletype.newcopy(recipe=recipe)
-            # set reference filename
-            infile.set_filename(filename)
-            # read data
-            infile.read()
             # ----------------------------------------------------------
+            # skip if already using barycorppy
+            skip = False
+            infiles = dict()
+            for intype in intypes:
+                # get new copy of file definition
+                infile1 = infiletypes[intype].newcopy(recipe=recipe)
+                # set filename
+                infile1.set_filename(filenames[intype])
+                # read data
+                infile1.read()
+                # get header from file instance
+                header1 = infile1.header
+                # append to list
+                infiles[intype] = infile1
+                # ----------------------------------------------------------
+                # skip if already using barycorppy
+                if header1['BERVSRCE'] != 'barycorrpy':
+                    skip = True
+            if skip:
+                continue
+            # --------------------------------------------------------------
+            # get the first infile
+            infile = infiles[intypes[0]]
+            # --------------------------------------------------------------
             # get header from file instance
             header = infile.header
-            # ----------------------------------------------------------
+            # --------------------------------------------------------------
             # Calculate Barycentric correction
-            # ----------------------------------------------------------
+            # --------------------------------------------------------------
             props = ParamDict()
             props['DPRTYPE'] = infile.get_key('KW_DPRTYPE', dtype=float)
             bprops = extract.get_berv(params, infile, header, props,
@@ -150,16 +176,28 @@ def __main__(recipe, params):
             else:
                 wargs = ['Barycorrpy', bprops['USE_BERV']]
             WLOG(params, '', '{0} BERV: {1}'.format(*wargs))
-            # ----------------------------------------------------------
-            # overwrite file
-            # ----------------------------------------------------------
-            # log progress
-            WLOG(params, '', 'Writing to file: {0}'.format(infile.filename))
-            # update header
-            infile.copy_original_keys(infile, forbid_keys=False, allkeys=True)
-            extract.add_berv_keys(params, infile, bprops)
-            # write data to file
-            infile.write()
+            # --------------------------------------------------------------
+            # overwrite file(s)
+            # --------------------------------------------------------------
+            for intype in intypes:
+                # get infile from storage
+                infile1 = infiles[intype]
+                # get header from file instance
+                header1 = infile1.header
+                # ----------------------------------------------------------
+                # skip if already using barycorppy
+                if header1['BERVSRCE'] == 'barycorrpy':
+                    continue
+                # ----------------------------------------------------------
+                # log progress
+                wmsg = 'Writing to file: {0}'.format(infile1.filename)
+                WLOG(params, '', wmsg)
+                # update header
+                infile1.copy_original_keys(infile1, forbid_keys=False,
+                                          allkeys=True)
+                extract.add_berv_keys(params, infile1, bprops)
+                # write data to file
+                # infile1.write()
 
     # ----------------------------------------------------------------------
     # End of main code
