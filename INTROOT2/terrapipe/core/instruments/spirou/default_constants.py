@@ -1763,6 +1763,101 @@ POLAR_CONT_TELLMASK_LOWER.value = '930, 1109, 1326, 1782, 1997, 2047'
 POLAR_CONT_TELLMASK_UPPER = POLAR_CONT_TELLMASK_UPPER.copy(__NAME__)
 POLAR_CONT_TELLMASK_UPPER.value = '967, 1167, 1491, 1979, 2027, 2076'
 
+#  Define the spectral lsd mask directory for lsd polar calculations
+POLAR_LSD_PATH = POLAR_LSD_PATH.copy(__NAME__)
+POLAR_LSD_PATH.value = './data/spirou/lsd/'
+
+#  Define the file regular expression key to lsd mask files
+POLAR_LSD_FILE_KEY = POLAR_LSD_FILE_KEY.copy(__NAME__)
+POLAR_LSD_FILE_KEY.value = 'marcs_t*g50_all'
+
+#  Define mask for selecting lines to be used in the LSD analysis
+#      lower bounds (string list)
+POLAR_LSF_WL_LOWER = POLAR_LSF_WL_LOWER.copy(__NAME__)
+POLAR_LSF_WL_LOWER.value = '983, 1163, 1280, 1490, 1975, 2030'
+
+#  Define mask for selecting lines to be used in the LSD analysis
+#      upper bounds (string list)
+POLAR_LSF_WL_UPPER = POLAR_LSF_WL_UPPER.copy(__NAME__)
+POLAR_LSF_WL_UPPER.value = '1116, 1260, 1331, 1790, 1995, 2047.5'
+
+#  Define initial velocity (km/s) for output LSD profile
+POLAR_LSD_VINIT = POLAR_LSD_VINIT.copy(__NAME__)
+POLAR_LSD_VINIT.value = -150.0
+
+#  Define final velocity (km/s) for output LSD profile
+POLAR_LSD_VFINAL = POLAR_LSD_VFINAL.copy(__NAME__)
+POLAR_LSD_VFINAL.value = 150.0
+
+#  Define the order wavelength mask filename
+POLAR_LSD_ORDER_MASK = POLAR_LSD_ORDER_MASK.copy(__NAME__)
+POLAR_LSD_ORDER_MASK.value = 'lsd_order_mask.dat'
+
+#  Define whether to normalise by stokei by the continuum in lsd process
+POLAR_LSD_NORM = POLAR_LSD_NORM.copy(__NAME__)
+POLAR_LSD_NORM.value = True
+
+#  Define the normalise by continuum lsd binsize
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NBIN1 = POLAR_LSD_NBIN1.copy(__NAME__)
+POLAR_LSD_NBIN1.value = 30
+
+#  Define the normalise by continuum lsd overlap with adjacent bins
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NOVERLAP1 = POLAR_LSD_NOVERLAP1.copy(__NAME__)
+POLAR_LSD_NOVERLAP1.value = 15
+
+#  Define the normalise by continuum lsd sigma clip value
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NSIGCLIP1 = POLAR_LSD_NSIGCLIP1.copy(__NAME__)
+POLAR_LSD_NSIGCLIP1.value = 3
+
+#  Define the normalise by continuum lsd window size (local fit size)
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NWINDOW1 = POLAR_LSD_NWINDOW1.copy(__NAME__)
+POLAR_LSD_NWINDOW1.value = 2
+
+#  Define the normalise by continuum lsd mode (mean/median/max)
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NMODE1 = POLAR_LSD_NMODE1.copy(__NAME__)
+POLAR_LSD_NMODE1.value = 'median'
+
+#  Define whether to use a linear fit in the normalise by continuum lsd calc
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NLFIT1 = POLAR_LSD_NLFIT1.copy(__NAME__)
+POLAR_LSD_NLFIT1.value = True
+
+#  Define the normalise by continuum lsd binsize
+#    used in the profile calculation
+POLAR_LSD_NBIN2 = POLAR_LSD_NBIN2.copy(__NAME__)
+POLAR_LSD_NBIN2.value = 20
+
+#  Define the normalise by continuum lsd overlap with adjacent bins
+#    used in the profile calculation
+POLAR_LSD_NOVERLAP2 = POLAR_LSD_NOVERLAP2.copy(__NAME__)
+POLAR_LSD_NOVERLAP2.value = 5
+
+#  Define the normalise by continuum lsd sigma clip value
+#    used in the profile calculation
+POLAR_LSD_NSIGCLIP2 = POLAR_LSD_NSIGCLIP2.copy(__NAME__)
+POLAR_LSD_NSIGCLIP2.value = 3
+
+#  Define the normalise by continuum lsd window size (local fit size)
+#    used in the profile calculation
+POLAR_LSD_NWINDOW2 = POLAR_LSD_NWINDOW2.copy(__NAME__)
+POLAR_LSD_NWINDOW2.value = 2
+
+#  Define the normalise by continuum lsd mode (mean/median/max)
+#    used in the profile calculation
+POLAR_LSD_NMODE2 = POLAR_LSD_NMODE2.copy(__NAME__)
+POLAR_LSD_NMODE2.value = 'median'
+
+#  Define whether to use a linear fit in the normalise by continuum lsd calc
+#    used in the profile calculation
+POLAR_LSD_NLFIT2 = POLAR_LSD_NLFIT2.copy(__NAME__)
+POLAR_LSD_NLFIT2.value = False
+
+
 # =============================================================================
 # DEBUG PLOT SETTINGS
 # =============================================================================
