@@ -13,6 +13,7 @@ Created on 2019-07-02 at 09:24
 from __future__ import division
 import numpy as np
 import os
+import glob
 
 from terrapipe import core
 from terrapipe.core import constants
@@ -79,7 +80,7 @@ def load_linelist(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
     # split table columns
     tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
     # add back to kwargs
@@ -120,7 +121,7 @@ def load_cavity_file(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
     # split table columns
     tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
     # add back to kwargs
@@ -161,10 +162,10 @@ def load_cavity_files(params, required=True, **kwargs):
     filename_ll = pcheck(params, 'CAVITY_LL_FILE', 'filename', kwargs,
                          func_name)
     # construct absolute filenames
-    absfilename_1m = construct_filename(params, filename_1m, relfolder,
-                                        func=func_name)
-    absfilename_ll = construct_filename(params, filename_ll, relfolder,
-                                        func=func_name)
+    absfilename_1m = construct_path(params, filename_1m, relfolder,
+                                    func=func_name)
+    absfilename_ll = construct_path(params, filename_ll, relfolder,
+                                    func=func_name)
     # check for absolute path existence
     exists1 = os.path.exists(absfilename_1m)
     exists2 = os.path.exists(absfilename_ll)
@@ -209,7 +210,7 @@ def load_full_flat_badpix(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
     # return image
     try:
         image, outf = load_fits_file(params, filename, relfolder, func_name)
@@ -230,7 +231,7 @@ def load_full_flat_pp(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
     # return image
     try:
         image, outf = load_fits_file(params, filename, relfolder, func_name)
@@ -252,7 +253,7 @@ def load_tapas(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
     # add back to kwargs
     kwargs['fmt'] = tablefmt
     # return image
@@ -277,7 +278,7 @@ def load_object_list(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
 
     # add back to kwargs
     kwargs['fmt'] = tablefmt
@@ -304,7 +305,7 @@ def load_ccf_mask(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
-        return construct_filename(params, filename, relfolder, func=func_name)
+        return construct_path(params, filename, relfolder, func=func_name)
     # add back to kwargs
     kwargs['fmt'] = tablefmt
     kwargs['colnames'] = ['ll_mask_s', 'll_mask_e', 'w_mask']
@@ -320,6 +321,102 @@ def load_ccf_mask(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
 
 
+def load_sp_mask_lsd(params, temperature, **kwargs):
+    # get parameters from params/kwargs
+    func_name = kwargs.get('func', __NAME__ + '.load_sp_mask_lsd()')
+    relfolder = pcheck(params, 'POLAR_LSD_PATH', 'directory', kwargs,
+                       func_name)
+    filekey = pcheck(params, 'POLAR_LSD_FILE_KEY', 'filekey', kwargs,
+                     func_name)
+    filename = kwargs.get('filename', None)
+    return_filename = kwargs.get('return_filename', False)
+    # ------------------------------------------------------------------
+    # get filename if None
+    if filename is None:
+        # get path to directory
+        fulldir = construct_path(params, directory=relfolder, func=func_name)
+        # get all files
+        allfiles = glob.glob('{0}/{1}'.format(fulldir, filekey))
+        # loop around files and get their temperatures
+        file_temperatures, basenames = [], []
+        for filename in allfiles:
+            # get file basename
+            basename = os.path.basename(filename)
+            # find prefix and suffix to the temperature key
+            prefix, suffix = filekey.split('*')
+            # get the temperature
+            file_temperature = basename.split(prefix)[-1].split(suffix)[0]
+            # try to convert to float
+            try:
+                file_temperatures.append(float(file_temperature))
+                basenames.append(basename)
+            except Exception as e:
+                # log error
+                eargs = [filename, type(e), e]
+                WLOG(params, 'error', TextEntry('', args=eargs))
+        # ------------------------------------------------------------------
+        # now we have the temperatures find the closest to the input
+        #     temperature
+        # ------------------------------------------------------------------
+        # find the temperature difference
+        diff = temperature - np.array(file_temperatures)
+        # find the position in our list of files closest in temperature
+        pos = int(np.argmin(abs(diff)))
+        # get filename from this
+        filename = basenames[pos]
+    # ----------------------------------------------------------------------
+    # deal with return_filename
+    if return_filename:
+        return construct_path(params, filename, relfolder, func=func_name)
+    # ----------------------------------------------------------------------
+    # file currently must be an ascii file and must start on line 1
+    kwargs['fmt'] = 'ascii'
+    kwargs['colnames'] = ['wavec', 'znum', 'depth', 'lande', '_1', '_2']
+    kwargs['datastart'] = 1
+    # ----------------------------------------------------------------------
+    # return image
+    try:
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                      func_name)
+        WLOG(params, '', TextEntry('40-020-00002', args=outf))
+        return table, outf
+
+    except LoadException:
+        eargs = [filename, relfolder]
+        WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
+
+
+def load_order_mask(params, **kwargs):
+    # get parameters from params/kwargs
+    func_name = kwargs.get('func', __NAME__ + '.load_sp_mask_lsd()')
+    relfolder = pcheck(params, 'POLAR_LSD_PATH', 'directory', kwargs,
+                       func_name)
+    filename = pcheck(params, 'POLAR_LSD_ORDER_MASK', 'filename', kwargs,
+                     func_name)
+    return_filename = kwargs.get('return_filename', False)
+    # ----------------------------------------------------------------------
+    # deal with return_filename
+    if return_filename:
+        return construct_path(params, filename, relfolder, func=func_name)
+    # ----------------------------------------------------------------------
+    # file currently must be an ascii file and must start on line 1
+    kwargs['fmt'] = 'ascii'
+    kwargs['colnames'] = ['order', 'lower', 'upper']
+    kwargs['datastart'] = 1
+    # ----------------------------------------------------------------------
+    # return image
+    try:
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                      func_name)
+        WLOG(params, '', TextEntry('40-020-00002', args=outf))
+        return table, outf
+
+    except LoadException:
+        eargs = [filename, relfolder]
+        WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
+
+
+
 # =============================================================================
 # Worker functions
 # =============================================================================
@@ -327,8 +424,8 @@ def load_fits_file(params, filename, directory, func_name):
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # construct filename
-    absfilename = construct_filename(params, filename, directory,
-                                     func=func_name)
+    absfilename = construct_path(params, filename, directory,
+                                 func=func_name)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(absfilename):
         eargs = [absfilename, func_name]
@@ -343,8 +440,8 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # construct filename
-    absfilename = construct_filename(params, filename, directory,
-                                     func=func_name)
+    absfilename = construct_path(params, filename, directory,
+                                 func=func_name)
     # extra parameters
     fmt = kwargs.get('fmt', None)
     colnames = kwargs.get('colnames', None)
@@ -367,8 +464,8 @@ def load_text_file(params, filename, directory, kwargs, func_name=None,
     # load text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # construct filename
-    absfilename = construct_filename(params, filename, directory,
-                                     func=func_name)
+    absfilename = construct_path(params, filename, directory,
+                                 func=func_name)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(absfilename):
         eargs = [absfilename, func_name]
@@ -387,14 +484,13 @@ def save_text_file(params, filename, directory, array, func_name):
     if func_name is None:
         func_name = __NAME__ + '.save_text_file()'
     # construct filename
-    absfilename = construct_filename(params, filename, directory,
-                                     func=func_name)
+    absfilename = construct_path(params, filename, directory,
+                                 func=func_name)
     # save text file
     drs_text.save_text_file(params, absfilename, array, func_name)
 
 
-
-def construct_filename(params, filename=None, directory=None, **kwargs):
+def construct_path(params, filename=None, directory=None, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.construct_filename()')
     # deal with no filename
     if filename is None:
