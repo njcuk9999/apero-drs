@@ -45,6 +45,8 @@ TextDict = locale.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
+
+
 # =============================================================================
 # Define class
 # =============================================================================
@@ -263,7 +265,8 @@ def calculate_stokes_i(params, pobjs, pprops):
         stokes_i += flux[it]
         stokes_i_err += var[it]
     # Calcualte errors -> sigma = sqrt(variance)
-    stokes_i_err = np.sqrt(stokes_i_err)
+    with warnings.catch_warnings(record=True) as _:
+        stokes_i_err = np.sqrt(stokes_i_err)
 
     # update the polar properties with stokes parameters
     pprops['STOKESI'] = stokes_i
@@ -353,16 +356,16 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
     pprops['FLAT_X'] = flat_x
     pprops['FLAT_POL'] = flat_pol
     pprops['FLAT_POLERR'] = flat_polerr
-    pprops['FLAT_STOKESI'] = flat_stokes_i
-    pprops['FLAT_STOKESIERR'] = flat_stokes_i_err
+    pprops['FLAT_STOKE_I'] = flat_stokes_i
+    pprops['FLAT_STOKE_I_ERR'] = flat_stokes_i_err
     pprops['FLAT_NULL1'] = flat_null1
     pprops['FLAT_NULL2'] = flat_null2
     pprops['CONT_POL'] = contpol
     pprops['CONT_XBIN'] = xbin
     pprops['CONT_YBIN'] = ybin
     # set sources
-    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
-            'FLAT_STOKEIERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
+    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKE_I',
+            'FLAT_STOKE_I_ERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
             'CONT_XBIN', 'CONT_YBIN']
     pprops.set_sources(keys, func_name)
     # add constants
@@ -375,14 +378,17 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
     return pprops
 
 
+# =============================================================================
+# Define quality control and writing functions
+# =============================================================================
 def quality_control(params):
 
-    # --------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # --------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # TODO: Need some quality control
     qc_values.append('None')
     qc_names.append('None')
@@ -764,7 +770,8 @@ def polar_ratio_method(params, pobjs, props):
             denom_part1 = ((r1 * r2) ** (1.0 / 4.0) + 1.0) ** 4.0
             part1 = numer_part1 / (denom_part1 * 4.0)
         sumvar = var_term[0] + var_term[1] + var_term[2] + var_term[3]
-        pol_err = np.sqrt(part1 * sumvar)
+        with warnings.catch_warnings(record=True) as _:
+            pol_err = np.sqrt(part1 * sumvar)
     # ---------------------------------------------------------------------
     # else if we have 2 exposures
     elif nexp == 2:
