@@ -787,7 +787,7 @@ Changelog
 - Core.core.drs_log.py - add display_func and put debug numbers into
   params (not hard coded) [Neil Cook]
 - Core.core.drs_file.py - add generate_reqfiles (for checking infile
-  name in construct_filename) [Neil Cook]
+  name in construct_path) [Neil Cook]
 - Science.calib.dark.py - add some extra print outs. [Neil Cook]
 - Core.instruments.spirou.file_definitions.py - fix bad shape intypes
   (some should be hc1_hc1 not fp_fp) [Neil Cook]
@@ -1549,7 +1549,7 @@ Changelog
   Cook]
 - Cal_dark_master_spirou.py - deal with no dark files being found. [Neil
   Cook]
-- Drs_data.py - construct_filename function all filename/directory name
+- Drs_data.py - construct_path function all filename/directory name
   to be unset. [Neil Cook]
 - Data.spirou.reset - update MASTER_WAVE.fits (new header keys) [Neil
   Cook]
@@ -1581,7 +1581,7 @@ Changelog
   (including dberv and rv when present) [Neil Cook]
 - Cal_loc_spirou.py - add calibs to header. [Neil Cook]
 - Cal_extract_spirou.py - add rest of the cdb keywords. [Neil Cook]
-- Drs_data.py - correct problems with construct_filename and add unique
+- Drs_data.py - correct problems with construct_path and add unique
   error message for obj_list function. [Neil Cook]
 - Core.math.general.py - apply fix #567 by @melissa-hobson. [Neil Cook]
 - Update language database. [Neil Cook]
