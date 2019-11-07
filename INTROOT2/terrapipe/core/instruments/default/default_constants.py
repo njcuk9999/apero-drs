@@ -189,7 +189,13 @@ __all__ = [
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
-    'POLAR_CONT_TELLMASK_UPPER',
+    'POLAR_CONT_TELLMASK_UPPER', 'POLAR_LSD_PATH', 'POLAR_LSD_FILE_KEY',
+    'POLAR_LSF_WL_LOWER', 'POLAR_LSF_WL_UPPER', 'POLAR_LSD_VINIT',
+    'POLAR_LSD_VFINAL', 'POLAR_LSD_ORDER_MASK', 'POLAR_LSD_NORM',
+    'POLAR_LSD_NBIN1', 'POLAR_LSD_NOVERLAP1', 'POLAR_LSD_NSIGCLIP1',
+    'POLAR_LSD_NWINDOW1', 'POLAR_LSD_NMODE1', 'POLAR_LSD_NLFIT1',
+    'POLAR_LSD_NBIN2', 'POLAR_LSD_NOVERLAP2', 'POLAR_LSD_NSIGCLIP2',
+    'POLAR_LSD_NWINDOW2', 'POLAR_LSD_NMODE2', 'POLAR_LSD_NLFIT2',
     # debug plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
@@ -1935,6 +1941,98 @@ POLAR_CONT_TELLMASK_LOWER = Const('POLAR_CONT_TELLMASK_LOWER', value=None,
 POLAR_CONT_TELLMASK_UPPER = Const('POLAR_CONT_TELLMASK_UPPER', value=None,
                                   dtype=float, source=__NAME__)
 
+#  Define the spectral lsd mask directory for lsd polar calculations
+POLAR_LSD_PATH = Const('POLAR_LSD_PATH', value=None, dtype=str, source=__NAME__)
+
+#  Define the file regular expression key to lsd mask files
+POLAR_LSD_FILE_KEY = Const('POLAR_LSD_FILE_KEY', value=None,
+                           dtype=str, source=__NAME__)
+
+#  Define mask for selecting lines to be used in the LSD analysis
+#      lower bounds (string list)
+POLAR_LSF_WL_LOWER = Const('POLAR_LSF_WL_LOWER', value=None,
+                           dtype=str, source=__NAME__)
+
+#  Define mask for selecting lines to be used in the LSD analysis
+#      upper bounds (string list)
+POLAR_LSF_WL_UPPER = Const('POLAR_LSF_WL_UPPER', value=None,
+                           dtype=str, source=__NAME__)
+
+#  Define initial velocity (km/s) for output LSD profile
+POLAR_LSD_VINIT = Const('POLAR_LSD_VINIT', value=None, dtype=float,
+                        source=__NAME__)
+
+#  Define final velocity (km/s) for output LSD profile
+POLAR_LSD_VFINAL = Const('POLAR_LSD_VFINAL', value=None, dtype=float,
+                         source=__NAME__)
+
+#  Define the order wavelength mask filename
+POLAR_LSD_ORDER_MASK = Const('POLAR_LSD_ORDER_MASK', value=None, dtype=str,
+                             source=__NAME__)
+
+#  Define whether to normalise by stokei by the continuum in lsd process
+POLAR_LSD_NORM = Const('POLAR_LSD_NORM', value=None, dtype=bool,
+                       source=__NAME__)
+
+#  Define the normalise by continuum lsd binsize
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NBIN1 = Const('POLAR_LSD_NBIN1', value=None, dtype=int,
+                       source=__NAME__, minimum=1)
+
+#  Define the normalise by continuum lsd overlap with adjacent bins
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NOVERLAP1 = Const('POLAR_LSD_NOVERLAP1', value=None, dtype=int,
+                           source=__NAME__, minimum=0)
+
+#  Define the normalise by continuum lsd sigma clip value
+#    used in the profile calculation
+POLAR_LSD_NSIGCLIP1 = Const('POLAR_LSD_NSIGCLIP1', value=None, dtype=float,
+                           source=__NAME__, minimum=0)
+
+#  Define the normalise by continuum lsd window size (local fit size)
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NWINDOW1 = Const('POLAR_LSD_NWINDOW1', value=None, dtype=int,
+                          source=__NAME__, minimum=1)
+
+#  Define the normalise by continuum lsd mode (mean/median/max)
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NMODE1 = Const('POLAR_LSD_NWINDOW1', value=None, dtype=str,
+                          source=__NAME__, options=['mean', 'median', 'max'])
+
+#  Define whether to use a linear fit in the normalise by continuum lsd calc
+#     used in the normalization with POLAR_LSD_NORM = True
+POLAR_LSD_NLFIT1 = Const('POLAR_LSD_NLFIT1', value=None, dtype=bool,
+                          source=__NAME__)
+
+#  Define the normalise by continuum lsd binsize
+#    used in the profile calculation
+POLAR_LSD_NBIN2 = Const('POLAR_LSD_NBIN2', value=None, dtype=int,
+                       source=__NAME__, minimum=1)
+
+#  Define the normalise by continuum lsd overlap with adjacent bins
+#    used in the profile calculation
+POLAR_LSD_NOVERLAP2 = Const('POLAR_LSD_NOVERLAP2', value=None, dtype=int,
+                           source=__NAME__, minimum=0)
+
+#  Define the normalise by continuum lsd sigma clip value
+#    used in the profile calculation
+POLAR_LSD_NSIGCLIP2 = Const('POLAR_LSD_NSIGCLIP2', value=None, dtype=float,
+                           source=__NAME__, minimum=0)
+
+#  Define the normalise by continuum lsd window size (local fit size)
+#    used in the profile calculation
+POLAR_LSD_NWINDOW2 = Const('POLAR_LSD_NWINDOW2', value=None, dtype=int,
+                          source=__NAME__, minimum=1)
+
+#  Define the normalise by continuum lsd mode (mean/median/max)
+#    used in the profile calculation
+POLAR_LSD_NMODE2 = Const('POLAR_LSD_NWINDOW2', value=None, dtype=str,
+                          source=__NAME__, options=['mean', 'median', 'max'])
+
+#  Define whether to use a linear fit in the normalise by continuum lsd calc
+#    used in the profile calculation
+POLAR_LSD_NLFIT2 = Const('POLAR_LSD_NLFIT2', value=None, dtype=bool,
+                          source=__NAME__)
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
