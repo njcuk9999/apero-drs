@@ -639,6 +639,9 @@ def calculate_telluric_absorption(params, recipe, image, template,
 
     # define function for curve_fit
     def tapas_fit(kp, tau_water, tau_others):
+        # TODO: remove breakpoint
+        constants.breakpoint(params)
+
         return _calc_tapas_abso(kp, tau_water, tau_others, **tapas_fit_kwargs)
 
     # starting point for the optical depth of water and other gasses
