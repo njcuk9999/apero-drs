@@ -124,7 +124,7 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True):
     # get reset directory location
     # -------------------------------------------------------------------------
     # get absolute folder path from package and relfolder
-    absfolder = drs_data.construct_filename(params, directory=reset_path)
+    absfolder = drs_data.construct_path(params, directory=reset_path)
     # check that absfolder exists
     if not os.path.exists(absfolder):
         eargs = [name, absfolder]
