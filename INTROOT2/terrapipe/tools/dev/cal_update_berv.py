@@ -11,6 +11,7 @@ Created on 2019-07-05 at 16:46
 """
 from __future__ import division
 import itertools
+import os
 
 from terrapipe import core
 from terrapipe import locale
@@ -103,21 +104,16 @@ def __main__(recipe, params):
     combinations = list(itertools.product(filetypes, intypes))
     # ----------------------------------------------------------------------
     # loop around files and update BERV
-    for filetype in range(len(filetypes)):
-        # ------------------------------------------------------------------
-        # get this combination
-        intype0 = intypes[0]
-        fiber0 = fibers[0]
-        # ------------------------------------------------------------------
-        # log progress
-        WLOG(params, 'info', params['DRS_HEADER'])
-        wargs = [filetype, intype0]
-        WLOG(params, 'info', 'FILETYPE = {0}   INTYPE = {1}'.format(*wargs))
-        WLOG(params, 'info', params['DRS_HEADER'])
+    for filetype in filetypes:
         # ------------------------------------------------------------------
         # get files of this type and the intypes
         filenames, infiletypes = dict(), dict()
         for intype in intypes:
+            # log progress
+            WLOG(params, 'info', params['DRS_HEADER'])
+            wargs = [filetype, intype]
+            WLOG(params, 'info', 'FILETYPE = {0}   INTYPE = {1}'.format(*wargs))
+            WLOG(params, 'info', params['DRS_HEADER'])
             # get the in file type
             infiletype = core.get_file_definition(intype, params['INSTRUMENT'],
                                                   kind='red')
@@ -125,40 +121,57 @@ def __main__(recipe, params):
             filenames1 = drs_fits.find_files(params, kind='red',
                                              KW_OUTPUT=intype,
                                              KW_DPRTYPE=filetype)
-            # append to storage
-            filenames[intype] = filenames1
-            infiletypes[intype] = infiletype
+            # group files
+            for filename in filenames1:
+                odocode = os.path.basename(filename).split('_pp')[0]
+                if odocode in filename:
+                    if odocode in filenames:
+                        filenames[odocode].append(filename)
+                        infiletypes[odocode].append(infiletype)
+                    else:
+                        filenames[odocode] = [filename]
+                        infiletypes[odocode] = [infiletype]
+
         # ------------------------------------------------------------------
         # loop around files
-        for it, filename in enumerate(filenames[intype0]):
+        for it, odocode in enumerate(list(filenames.keys())):
             # print file currently processing
             wmsg = 'Processing file {1} of {2} \n\t File: {0}'
-            wargs = [filename, it + 1, len(filenames)]
+            wargs = [odocode, it + 1, len(list(filenames.keys()))]
             WLOG(params, 'info', wmsg.format(*wargs))
             # ----------------------------------------------------------
+            # get files associated with this odocode
+            ofiles = filenames[odocode]
+            ointypes = infiletypes[odocode]
+            # -------------------------------------------
             # skip if already using barycorppy
-            skip = False
-            infiles = dict()
-            for intype in intypes:
+            skip = True
+            infiles = []
+            # loop around ofiles
+            for jt, filename in enumerate(ofiles):
                 # get new copy of file definition
-                infile1 = infiletypes[intype].newcopy(recipe=recipe)
+                infile1 = ointypes[jt].newcopy(recipe=recipe)
                 # set filename
-                infile1.set_filename(filenames[intype])
+                infile1.set_filename(ofiles[jt])
                 # read data
                 infile1.read()
                 # get header from file instance
                 header1 = infile1.header
                 # append to list
-                infiles[intype] = infile1
+                infiles.append(infile1)
                 # ----------------------------------------------------------
                 # skip if already using barycorppy
                 if header1['BERVSRCE'] != 'barycorrpy':
-                    skip = True
+                    skip = False
+            # deal with skip
             if skip:
+                for jt, filename in enumerate(ofiles):
+                    wmsg = 'Skipping file {0}'.format(filename)
+                    WLOG(params, '', 'Skipping file {0}'.format(filename))
                 continue
             # --------------------------------------------------------------
             # get the first infile
-            infile = infiles[intypes[0]]
+            infile = infiles[0]
             # --------------------------------------------------------------
             # get header from file instance
             header = infile.header
@@ -179,15 +192,11 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # overwrite file(s)
             # --------------------------------------------------------------
-            for intype in intypes:
+            for jt, filename in enumerate(ofiles):
                 # get infile from storage
-                infile1 = infiles[intype]
+                infile1 = infiles[jt]
                 # get header from file instance
                 header1 = infile1.header
-                # ----------------------------------------------------------
-                # skip if already using barycorppy
-                if header1['BERVSRCE'] == 'barycorrpy':
-                    continue
                 # ----------------------------------------------------------
                 # log progress
                 wmsg = 'Writing to file: {0}'.format(infile1.filename)
@@ -197,7 +206,7 @@ def __main__(recipe, params):
                                           allkeys=True)
                 extract.add_berv_keys(params, infile1, bprops)
                 # write data to file
-                # infile1.write()
+                infile1.write()
 
     # ----------------------------------------------------------------------
     # End of main code
