@@ -144,7 +144,7 @@ def __main__(recipe, params):
             # continue
             continue
         # flag whether calibration fiber is FP
-        has_fp =  dprtype.upper().split('_')[1] == 'FP'
+        has_fp = dprtype.upper().split('_')[1] == 'FP'
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
@@ -216,8 +216,9 @@ def __main__(recipe, params):
             WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
             # --------------------------------------------------------------
             # Compute CCF on reference channel
-            cargs = [infile_r.data, blaze, wprops_r['WAVEMAP'], rfiber]
-            rv_props2 = velocity.compute_ccf_fp(params, infile_r, *cargs)
+            cargs = [infile_r, infile_r.data, blaze, wprops_r['WAVEMAP'],
+                     rfiber]
+            rv_props2 = velocity.compute_ccf_fp(params, recipe, *cargs)
             # --------------------------------------------------------------
             # compute the rv output stats
             # --------------------------------------------------------------
