@@ -773,7 +773,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
                 y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
-                found_rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
+                found_rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
     # ------------------------------------------------------------------
     # return property dictionary
