@@ -58,14 +58,17 @@ class PolarObj:
         self.stoke = kwargs.get('stoke', 'NAN')
         self.sequence = kwargs.get('seqs', 'NAN')
         self.sequencetot = kwargs.get('seqtot', 'NAN')
-        self.data = kwargs.get('data', None)
-        self.filename = kwargs.get('filename', None)
-        self.basename = kwargs.get('basename', None)
         # if infile is set, set data from infile
         if self.infile is not None:
             self.data = self.infile.data
             self.filename = self.infile.filename
             self.basename = self.infile.basename
+            self.header = self.infile.header
+        else:
+            self.data = kwargs.get('data', None)
+            self.filename = kwargs.get('filename', None)
+            self.basename = kwargs.get('basename', None)
+            self.header = kwargs.get('header', None)
         # set name
         self.name = self.__gen_key__()
 
