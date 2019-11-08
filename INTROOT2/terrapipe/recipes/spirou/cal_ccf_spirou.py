@@ -190,8 +190,8 @@ def __main__(recipe, params):
         # log progress: Computing CCF on fiber
         WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
         # compute ccf
-        cargs = [image, blaze, wprops['WAVEMAP'], bprops, fiber]
-        rv_props1 = velocity.compute_ccf_science(params, infile, *cargs)
+        cargs = [infile, image, blaze, wprops['WAVEMAP'], bprops, fiber]
+        rv_props1 = velocity.compute_ccf_science(params, recipe, *cargs)
 
         # ------------------------------------------------------------------
         # Compute CCF on reference fiber (FP only)
