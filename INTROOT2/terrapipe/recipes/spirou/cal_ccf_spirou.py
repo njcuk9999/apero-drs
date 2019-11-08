@@ -237,7 +237,7 @@ def __main__(recipe, params):
                 rv_obj = rv_props1['MEAN_RV']
                 rv_corrected = rv_obj - rv_drift
         # need to deal with no drift from wave solution and no simultaneous FP
-        elif wprops['WFP_DRIFT']:
+        elif wprops['WFP_DRIFT'] is None:
             # set rv_props2
             rv_props2 = ParamDict()
             # compute the stats
