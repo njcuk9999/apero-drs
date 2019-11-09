@@ -138,7 +138,7 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
         baddark /= np.product(image.shape)
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]
-    WLOG(params, 'info', TextEntry('', args=wargs))
+    WLOG(params, 'info', TextEntry('40-011-00006', args=wargs))
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
         datacutmask = ~((image > darkcutlimit) | nanmask)
