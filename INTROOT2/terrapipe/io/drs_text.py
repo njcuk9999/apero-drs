@@ -120,7 +120,7 @@ def save_text_file(params, filename, array, func_name=None):
             np.savetxt(filename, array)
         except Exception as e:
             eargs = [filename, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('', args=eargs))
+            WLOG(params, 'error', TextEntry('00-008-00020', args=eargs))
 
 
 # =============================================================================
