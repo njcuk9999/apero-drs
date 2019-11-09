@@ -72,6 +72,8 @@ class Header(fits.Header):
     def __setitem__(self, key, item):
         if key.startswith('@@@'):
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
+        elif key == '':
+            pass
         else:
             nan_filtered = self.__nan_check(item)
             super().__setitem__(key, nan_filtered)
@@ -176,7 +178,7 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0,
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
-        WLOG(params, 'error', TextEntry('', args=eargs))
+        WLOG(params, 'error', TextEntry('00-008-00019', args=eargs))
         data, header = None, None
     # -------------------------------------------------------------------------
     # deal with return
