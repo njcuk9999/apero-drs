@@ -131,6 +131,9 @@ def __main__(recipe, params):
     # get first file
     pobj = pobjects['A_1']
     # ----------------------------------------------------------------------
+    # generate timing statistics
+    polstats = polar.generate_statistics(params, pobjects)
+    # ----------------------------------------------------------------------
     # load wavelength solution for this fiber
     # ----------------------------------------------------------------------
     wprops = wave.get_wavesolution(params, recipe, fiber=pobj.fiber,
@@ -139,25 +142,33 @@ def __main__(recipe, params):
     # polarimetry computation
     # ----------------------------------------------------------------------
     pprops = polar.calculate_polarimetry(params, pobjects, props)
-
     # ----------------------------------------------------------------------
     # Stokes I computation
     # ----------------------------------------------------------------------
     pprops = polar.calculate_stokes_i(params, pobjects, pprops)
-
     # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
     pprops = polar.calculate_continuum(params, pprops, wprops)
-
     # ---------------------------------------------------------------------
     # LSD Analysis
     # ---------------------------------------------------------------------
-    pprops = polar.lsd_analysis_wrapper(params, pprops, wprops)
-
+    lprops = polar.lsd_analysis_wrapper(params, pobjects, pprops, wprops)
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
+    # plot continuum plots
+    recipe.plot('POLAR_CONTINUUM', props=pprops)
+    # plot polarimetry results
+    recipe.plot('POLAR_RESULTS', props=pprops)
+    # plot total flux (Stokes I)
+    recipe.plot('POLAR_STOKES_I', props=pprops)
+    # plot LSD analysis
+    if lprops['LSD_ANALYSIS']:
+        recipe.plot('POLAR_LSD', pprops=pprops, lprops=lprops)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -167,9 +178,8 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Store polarimetry in files
     # ------------------------------------------------------------------
-
-
-
+    polar.write_files(params, recipe, pobjects, rawfiles, pprops, lprops,
+                      wprops, polstats, qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code

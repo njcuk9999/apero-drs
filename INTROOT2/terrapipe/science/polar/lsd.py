@@ -28,7 +28,7 @@ from terrapipe.io import drs_data
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'polar.general.py'
+__NAME__ = 'polar.lsd.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -59,7 +59,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define user functions
 # =============================================================================
-def lsd_analysis_wrapper(params, pprops, wprops, **kwargs):
+def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     """
     Function to call functions to perform Least Squares Deconvolution (LSD)
     analysis on the polarimetry data.
@@ -73,16 +73,18 @@ def lsd_analysis_wrapper(params, pprops, wprops, **kwargs):
     # set function name
     func_name = display_func(params, 'lsd_analysis', __NAME__)
     # get parameters from params/kwargs
-    wl_lower = pcheck(params, 'POLAR_LSF_WL_LOWER', 'wl_lower', kwargs,
+    do_lsd = pcheck(params, 'POLAR_LSD_ANALYSIS', 'do_lsd', kwargs, func_name)
+    wl_lower = pcheck(params, 'POLAR_LSD_WL_LOWER', 'wl_lower', kwargs,
                       func_name, mapf='list', dtype=float)
-    wl_upper = pcheck(params, 'POLAR_LSF_WL_UPPER', 'wl_lower', kwargs,
+    wl_upper = pcheck(params, 'POLAR_LSD_WL_UPPER', 'wl_lower', kwargs,
                       func_name, mapf='list', dtype=float)
     min_depth = pcheck(params, 'POLAR_LSD_MIN_LINEDEPTH', 'min_depth', kwargs,
                        func_name)
     vinit = pcheck(params, 'POLAR_LSD_VINIT', 'vinit', kwargs, func_name)
     vfinal = pcheck(params, 'POLAR_LSD_VFINAL', 'vfinal', kwargs, func_name)
     normalize = pcheck(params, 'POLAR_LSD_NORM', 'normalize', kwargs, func_name)
-    nbinsize1 = pcheck(params, 'POLAR_LSD_NBIN1', 'nbinsize1', kwargs, func_name)
+    nbinsize1 = pcheck(params, 'POLAR_LSD_NBIN1', 'nbinsize1', kwargs,
+                       func_name)
     noverlap1 = pcheck(params, 'POLAR_LSD_NOVERLAP1', 'noverlap1', kwargs,
                       func_name)
     nsigclip1 = pcheck(params, 'POLAR_LSD_NSIGCLIP1', 'nsigclip1', kwargs,
@@ -93,26 +95,54 @@ def lsd_analysis_wrapper(params, pprops, wprops, **kwargs):
     nlfit1 = pcheck(params, 'POLAR_LSD_NLFIT1', 'nlfit1', kwargs, func_name)
     npoints = pcheck(params, 'POLAR_LSD_NPOINTS', 'npoints', kwargs, func_name)
 
-    nbinsize2 = pcheck(params, 'POLAR_LSD_NBIN2', 'nbinsize2', kwargs, func_name)
+    nbinsize2 = pcheck(params, 'POLAR_LSD_NBIN2', 'nbinsize2', kwargs,
+                       func_name)
     noverlap2 = pcheck(params, 'POLAR_LSD_NOVERLAP2', 'noverlap2', kwargs,
                       func_name)
     nsigclip2 = pcheck(params, 'POLAR_LSD_NSIGCLIP1', 'nsigclip1', kwargs,
                       func_name)
-    nwindow2 = pcheck(params, 'POLAR_LSD_NWINDOW2', 'nwindow2', kwargs, func_name)
+    nwindow2 = pcheck(params, 'POLAR_LSD_NWINDOW2', 'nwindow2', kwargs,
+                      func_name)
     nmode2 = pcheck(params, 'POLAR_LSD_NMODE2', 'nmode2', kwargs, func_name)
     nlfit2 = pcheck(params, 'POLAR_LSD_NLFIT2', 'nlfit2', kwargs, func_name)
-
+    # define outputs
+    lprops = ParamDict()
+    # ----------------------------------------------------------------------
+    # log progress
+    WLOG(params, '', TextEntry('40-021-00004'))
+    # ----------------------------------------------------------------------
+    # deal with not running lsd
+    if not do_lsd:
+        oargs = [lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
+                 vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,
+                 nwindow1, nmode1, nlfit1, npoints, nbinsize2, noverlap2,
+                 nsigclip2, nwindow2, nmode2, nlfit2]
+        return add_outputs(*oargs)
+    # ----------------------------------------------------------------------
     # get data from pprops
     pol = pprops['POL']
     polerr = pprops['POLERR']
     null = pprops['NULL2']
     stokesi = pprops['STOKESI']
     stokesierr = pprops['STOKESIERR']
-
+    # get data from wprops
     wavemap = wprops['WAVEMAP']
-
+    # get first file as reference
+    pobj = pobjects['A_1']
+    # ----------------------------------------------------------------------
     # get temperature from file
-    temperature =
+    temperature = pobj.infile.get_key('KW_OBJ_TEMP', dtype=float,
+                                      required=False)
+    # deal with no temperature
+    if temperature is None:
+        eargs = [pobj.filename, params['KW_OBJTEMP'][0], func_name]
+        WLOG(params, 'warning', TextEntry('09-021-00008', args=eargs))
+        # return outputs
+        oargs = [lprops, func_name, False, wl_lower, wl_upper, min_depth,
+                 vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,
+                 nwindow1, nmode1, nlfit1, npoints, nbinsize2, noverlap2,
+                 nsigclip2, nwindow2, nmode2, nlfit2]
+        return add_outputs(*oargs)
     # ----------------------------------------------------------------------
     # load the spectral lines
     # ----------------------------------------------------------------------
@@ -132,10 +162,11 @@ def lsd_analysis_wrapper(params, pprops, wprops, **kwargs):
     nparams = dict(binsize=nbinsize1, overlap=noverlap1, sigmaclip=nsigclip1,
                    window=nwindow1, mode=nmode1, use_linear_fit=nlfit1)
     # prepare data
-    out = prepare_polarimetry_data(wavemap, wavemap, stokesi, stokesierr, pol,
+    out = prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol,
                                    polerr, null, fwave_lower, fwave_upper,
                                    normalize, nparams)
-    lsd_wave, lsd_stokesi, lsd_stokesierr, lsd_pol, lsd_polerr, lsd_null = out
+    spfile, lsd_wave, lsd_stokesi, lsd_stokesierr, lsd_pol = out[:5]
+    lsd_polerr, lsd_null = out[5:]
 
     # ----------------------------------------------------------------------
     # call function to perform lsd analysis
@@ -149,64 +180,41 @@ def lsd_analysis_wrapper(params, pprops, wprops, **kwargs):
                        vfinal, npoints, nparams)
     # ----------------------------------------------------------------------
     # push into storage
-    lprops = ParamDict()
     lprops['LSD_WAVE'] = lsd_wave
-    lprops['LSD_STOKES_I'] = out[0]
+    lprops['LSD_VELOCITIES'] = out[0]
+    lprops['LSD_STOKES_I'] = out[1]
     lprops['LSD_STOKES_I_ERR'] = lsd_stokesierr
-    lprops['LSD_STOKES_I_MODEL'] = out[1]
-    lprops['LSD_STOKES_I_FIT_RV'] = out[2]
-    lprops['LSD_STOKES_FIT_RESOL'] = out[3]
+    lprops['LSD_STOKES_I_MODEL'] = out[2]
+    lprops['LSD_STOKES_I_FIT_RV'] = out[3]
+    lprops['LSD_STOKES_FIT_RESOL'] = out[4]
     lprops['LSD_POL'] = lsd_pol
     lprops['LSD_POLERR'] = lsd_polerr
-    lprops['LSD_POL_MEAN'] = out[4]
-    lprops['LSD_POL_STD'] = out[5]
-    lprops['LSD_POL_MEDIAN'] = out[6]
-    lprops['LSD_POL_MED_ABS_DEV'] = out[7]
-    lprops['LSD_STOKES_VQU'] = out[8]
-    lprops['LSD_STOKES_VQU_MEAN'] = out[9]
-    lprops['LSD_STOKES_VQU_STD'] = out[10]
-    lprops['LSD_NULL'] = out[10]
-    lprops['LSD_NULL_MEAN'] = out[11]
-    lprops['LSD_NULL_STD'] = out[12]
+    lprops['LSD_POL_MEAN'] = out[5]
+    lprops['LSD_POL_STD'] = out[6]
+    lprops['LSD_POL_MEDIAN'] = out[7]
+    lprops['LSD_POL_MED_ABS_DEV'] = out[8]
+    lprops['LSD_STOKES_VQU'] = out[9]
+    lprops['LSD_STOKES_VQU_MEAN'] = out[10]
+    lprops['LSD_STOKES_VQU_STD'] = out[11]
+    lprops['LSD_NULL'] = out[12]
+    lprops['LSD_NULL_MEAN'] = out[13]
+    lprops['LSD_NULL_STD'] = out[14]
+    lprops['LSD_MASK'] = spfile
     # set source
-    keys = ['LSD_WAVE', 'LSD_STOKES_I', 'LSD_STOKES_I_ERR',
+    keys = ['LSD_WAVE', 'LSD_VELOCITIES', 'LSD_STOKES_I', 'LSD_STOKES_I_ERR',
             'LSD_STOKES_I_MODEL', 'LSD_STOKES_I_FIT_RV', 'LSD_STOKES_FIT_RESOL',
             'LSD_POL', 'LSD_POLERR', 'LSD_POL_MEAN', 'LSD_POL_STD',
             'LSD_POL_MEDIAN', 'LSD_POL_MED_ABS_DEV', 'LSD_STOKES_VQU',
             'LSD_STOKES_VQU_MEAN', 'LSD_STOKES_VQU_STD', 'LSD_NULL',
-            'LSD_NULL_MEAN', 'LSD_NULL_STD']
+            'LSD_NULL_MEAN', 'LSD_NULL_STD', 'LSD_MASK']
     lprops.set_sources(keys, func_name)
-    # add constants
-    lprops['POLAR_LSF_WL_LOWER'] = wl_lower
-    lprops['POLAR_LSF_WL_UPPER'] = wl_upper
-    lprops['POLAR_LSD_MIN_LINEDEPTH'] = min_depth
-    lprops['POLAR_LSD_VINIT'] = vinit
-    lprops['POLAR_LSD_VFINAL'] = vfinal
-    lprops['POLAR_LSD_NORM'] = normalize
-    lprops['POLAR_LSD_NBIN1'] = nbinsize1
-    lprops['POLAR_LSD_NOVERLAP1'] = noverlap1
-    lprops['POLAR_LSD_NSIGCLIP1'] = nsigclip1
-    lprops['POLAR_LSD_NWINDOW1'] = nwindow1
-    lprops['POLAR_LSD_NMODE1'] = nmode1
-    lprops['POLAR_LSD_NLFIT1'] = nlfit1
-    lprops['POLAR_LSD_NPOINTS'] = npoints
-    lprops['POLAR_LSD_NBIN2'] = nbinsize2
-    lprops['POLAR_LSD_NOVERLAP2'] = noverlap2
-    lprops['POLAR_LSD_NSIGCLIP1'] = nsigclip2
-    lprops['POLAR_LSD_NWINDOW2'] = nwindow2
-    lprops['POLAR_LSD_NMODE2'] = nmode2
-    lprops['POLAR_LSD_NLFIT2'] = nlfit2
-    # set sources
-    keys = ['POLAR_LSF_WL_LOWER', 'POLAR_LSF_WL_UPPER',
-            'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_VINIT', 'POLAR_LSD_VFINAL',
-            'POLAR_LSD_NORM', 'POLAR_LSD_NBIN1', 'POLAR_LSD_NOVERLAP1',
-            'POLAR_LSD_NSIGCLIP1', 'POLAR_LSD_NWINDOW1', 'POLAR_LSD_NMODE1',
-            'POLAR_LSD_NLFIT1', 'POLAR_LSD_NPOINTS', 'POLAR_LSD_NBIN2',
-            'POLAR_LSD_NOVERLAP2', 'POLAR_LSD_NSIGCLIP1', 'POLAR_LSD_NWINDOW2',
-            'POLAR_LSD_NMODE2', 'POLAR_LSD_NLFIT2']
-    lprops.set_sources(keys, func_name)
+
     # return lsd properties
-    return lprops
+    oargs = [lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
+             vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,
+             nwindow1, nmode1, nlfit1, npoints, nbinsize2, noverlap2,
+             nsigclip2, nwindow2, nmode2, nlfit2]
+    return add_outputs(*oargs)
 
 
 # =============================================================================
@@ -247,7 +255,7 @@ def load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
     lande = sp_data['lande']
     # ----------------------------------------------------------------------
     # set up mask for wl ranges
-    wl_mask = np.zeros(wavec, dtype=bool)
+    wl_mask = np.zeros(len(wavec), dtype=bool)
     # loop over spectral ranges to select only spectral lines within ranges
     for it in range(len(wl_lower)):
         wl_mask |= (wavec > wl_lower[it]) & (wavec < wl_upper[it])
@@ -336,7 +344,7 @@ def prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol, polerr,
     nord, nbpix = wavemap.shape
     # get the wavelength mask (per order)
     # TODO: Question: Why do we need this?
-    owltable = drs_data.load_order_mask(params)
+    owltable, owlfilename = drs_data.load_order_mask(params)
     owl_lower = owltable['lower']
     owl_upper = owltable['upper']
     # ------------------------------------------------------------------
@@ -348,7 +356,7 @@ def prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol, polerr,
     for order_num in range(nord):
         # ------------------------------------------------------------------
         # mask the nan values
-        nanmask = np.isfinite(stokesi) & np.isfinite(pol)
+        nanmask = np.isfinite(stokesi[order_num]) & np.isfinite(pol[order_num])
         # ------------------------------------------------------------------
         # mask by wavelength
         wavemask  = wavemap[order_num] > owl_lower[order_num]
@@ -379,7 +387,7 @@ def prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol, polerr,
         lsd_stokesierr += list(stokesierr[order_num][mask])
         lsd_pol += list(pol[order_num][mask])
         lsd_polerr += list(polerr[order_num][mask])
-        lsd_null += list(null)
+        lsd_null += list(null[order_num][mask])
     # ----------------------------------------------------------------------
     # sort by wavelength
     sortmask = np.argsort(lsd_wave)
@@ -409,13 +417,13 @@ def prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol, polerr,
     lsd_null = lsd_null[lsdmask]
     # ----------------------------------------------------------------------
     # return data
-    return lsd_wave, lsd_stokesi, lsd_stokesierr, lsd_pol, lsd_polerr, lsd_null
+    return (owlfilename, lsd_wave, lsd_stokesi, lsd_stokesierr, lsd_pol,
+            lsd_polerr, lsd_null)
 
 
 def lsd_analysis(lsd_wave, lsd_stokesi, lsd_stokesierr, lsd_pol, lsd_polerr,
                  lsd_null, wavec, depths, weight, vinit, vfinal, npoints,
                  nparams):
-    # ----------------------------------------------------------------------
     # create velocity vector for output LSD profile
     velocities = np.linspace(vinit, vfinal, npoints)
     # ----------------------------------------------------------------------
@@ -451,9 +459,9 @@ def lsd_analysis(lsd_wave, lsd_stokesi, lsd_stokesierr, lsd_pol, lsd_polerr,
     null_mean = mp.nanmean(null)
     null_std = mp.nanstd(null)
     # return all lsd values
-    return (stokesi, stokesi_model, fit_rv, fit_resol, pol_mean, pol_std,
-            pol_median, pol_medabsdev, stokes_vqu, stokesvqu_mean,stokesvqu_std,
-            null, null_mean, null_std)
+    return (velocities, stokesi, stokesi_model, fit_rv, fit_resol, pol_mean,
+            pol_std, pol_median, pol_medabsdev, stokes_vqu, stokesvqu_mean,
+            stokesvqu_std, null, null_mean, null_std)
 
 
 def line_pattern_matrix(wl, wlc, depth, weight, vels):
@@ -599,6 +607,44 @@ def fit_gauss_lsd_profile(vels, zz):
     rv = popt[1]
     # return z_gauss, RV, resolving_power
     return z_gauss, rv, resolving_power
+
+
+def add_outputs(lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
+                vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,
+                nwindow1, nmode1, nlfit1, npoints, nbinsize2, noverlap2,
+                nsigclip2, nwindow2, nmode2, nlfit2):
+    # add constants
+    lprops['LSD_ANALYSIS'] = do_lsd
+    lprops['LSD_WL_LOWER'] = wl_lower
+    lprops['LSD_WL_UPPER'] = wl_upper
+    lprops['LSD_MIN_LINEDEPTH'] = min_depth
+    lprops['LSD_VINIT'] = vinit
+    lprops['LSD_VFINAL'] = vfinal
+    lprops['LSD_NORM'] = normalize
+    lprops['LSD_NBIN1'] = nbinsize1
+    lprops['LSD_NOVERLAP1'] = noverlap1
+    lprops['LSD_NSIGCLIP1'] = nsigclip1
+    lprops['LSD_NWINDOW1'] = nwindow1
+    lprops['LSD_NMODE1'] = nmode1
+    lprops['LSD_NLFIT1'] = nlfit1
+    lprops['LSD_NPOINTS'] = npoints
+    lprops['LSD_NBIN2'] = nbinsize2
+    lprops['LSD_NOVERLAP2'] = noverlap2
+    lprops['LSD_NSIGCLIP2'] = nsigclip2
+    lprops['LSD_NWINDOW2'] = nwindow2
+    lprops['LSD_NMODE2'] = nmode2
+    lprops['LSD_NLFIT2'] = nlfit2
+    # set sources
+    keys = ['LSD_ANALYSIS', 'LSD_WL_LOWER', 'LSD_WL_UPPER',
+            'LSD_MIN_LINEDEPTH', 'LSD_VINIT', 'LSD_VFINAL',
+            'LSD_NORM', 'LSD_NBIN1', 'LSD_NOVERLAP1',
+            'LSD_NSIGCLIP1', 'LSD_NWINDOW1', 'LSD_NMODE1',
+            'LSD_NLFIT1', 'LSD_NPOINTS', 'LSD_NBIN2',
+            'LSD_NOVERLAP2', 'LSD_NSIGCLIP2', 'LSD_NWINDOW2',
+            'LSD_NMODE2', 'LSD_NLFIT2']
+    lprops.set_sources(keys, func_name)
+    # return lprops
+    return lprops
 
 
 # =============================================================================
