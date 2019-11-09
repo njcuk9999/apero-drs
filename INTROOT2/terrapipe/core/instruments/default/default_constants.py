@@ -189,24 +189,37 @@ __all__ = [
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
-    'POLAR_CONT_TELLMASK_UPPER', 'POLAR_LSD_PATH', 'POLAR_LSD_FILE_KEY',
-    'POLAR_LSF_WL_LOWER', 'POLAR_LSF_WL_UPPER', 'POLAR_LSD_VINIT',
+    'POLAR_CONT_TELLMASK_UPPER',
+    # polar lsd constants
+    'POLAR_LSD_ANALYSIS', 'POLAR_LSD_PATH', 'POLAR_LSD_FILE_KEY',
+    'POLAR_LSD_WL_LOWER', 'POLAR_LSD_WL_UPPER', 'POLAR_LSD_VINIT',
     'POLAR_LSD_VFINAL', 'POLAR_LSD_ORDER_MASK', 'POLAR_LSD_NORM',
     'POLAR_LSD_NBIN1', 'POLAR_LSD_NOVERLAP1', 'POLAR_LSD_NSIGCLIP1',
     'POLAR_LSD_NWINDOW1', 'POLAR_LSD_NMODE1', 'POLAR_LSD_NLFIT1',
     'POLAR_LSD_NBIN2', 'POLAR_LSD_NOVERLAP2', 'POLAR_LSD_NSIGCLIP2',
     'POLAR_LSD_NWINDOW2', 'POLAR_LSD_NMODE2', 'POLAR_LSD_NLFIT2',
-    # debug plot settings
-    'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM', 'PLOT_BADPIX_MAP',
+    'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_NPOINTS',
+    # debug dark plot settings
+    'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM',
+    # debug badpix plot settings
+    'PLOT_BADPIX_MAP',
+    # debug loc plot settings
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
     'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
-    'PLOT_LOC_CHECK_COEFFS', 'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL',
-    'PLOT_SHAPE_ANGLE_OFFSET', 'PLOT_SHAPEL_ZOOM_SHIFT',
+    'PLOT_LOC_CHECK_COEFFS',
+    # debug shape plot settings
+    'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
+    'PLOT_SHAPEL_ZOOM_SHIFT', 'PLOT_SHAPE_LINEAR_TPARAMS',
+    # debug flat plot settings
     'PLOT_FLAT_ORDER_FIT_EDGES1', 'PLOT_FLAT_ORDER_FIT_EDGES2',
     'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2',
-    'PLOT_THERMAL_BACKGROUND', 'PLOT_EXTRACT_SPECTRAL_ORDER1',
-    'PLOT_EXTRACT_SPECTRAL_ORDER2', 'PLOT_EXTRACT_S1D',
-    'PLOT_EXTRACT_S1D_WEIGHT', 'PLOT_WAVE_HC_GUESS', 'PLOT_WAVE_HC_TFIT_GRID',
+    # debug thermal plot settings
+    'PLOT_THERMAL_BACKGROUND',
+    # debug extract plot settings
+    'PLOT_EXTRACT_SPECTRAL_ORDER1', 'PLOT_EXTRACT_SPECTRAL_ORDER2',
+    'PLOT_EXTRACT_S1D', 'PLOT_EXTRACT_S1D_WEIGHT',
+    # debug wave plot settings
+    'PLOT_WAVE_HC_GUESS', 'PLOT_WAVE_HC_TFIT_GRID',
     'PLOT_WAVE_HC_BRIGHTEST_LINES', 'PLOT_WAVE_HC_RESMAP',
     'PLOT_WAVE_LITTROW_CHECK1', 'PLOT_WAVE_LITTROW_EXTRAP1',
     'PLOT_WAVE_LITTROW_CHECK2', 'PLOT_WAVE_LITTROW_EXTRAP2',
@@ -214,12 +227,17 @@ __all__ = [
     'PLOT_WAVE_FP_WAVE_RES', 'PLOT_WAVE_FP_M_X_RES', 'PLOT_WAVE_FP_LL_DIFF',
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
+    # debug telluric plot settings
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
     'PLOT_FTELLU_RECON_SPLINE1', 'PLOT_FTELLU_RECON_SPLINE2',
     'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
     'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
+    # debug ccf plot settings
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT',
+    # debug plar plot settings
+    'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS', 'PLOT_POLAR_STOKES_I',
+    'PLOT_POLAR_LSD',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -1941,6 +1959,9 @@ POLAR_CONT_TELLMASK_LOWER = Const('POLAR_CONT_TELLMASK_LOWER', value=None,
 POLAR_CONT_TELLMASK_UPPER = Const('POLAR_CONT_TELLMASK_UPPER', value=None,
                                   dtype=float, source=__NAME__)
 
+#  Perform LSD analysis
+POLAR_LSD_ANALYSIS = Const('POLAR_LSD_ANALYSIS', value=None, dtype=str, source=__NAME__)
+
 #  Define the spectral lsd mask directory for lsd polar calculations
 POLAR_LSD_PATH = Const('POLAR_LSD_PATH', value=None, dtype=str, source=__NAME__)
 
@@ -1950,13 +1971,17 @@ POLAR_LSD_FILE_KEY = Const('POLAR_LSD_FILE_KEY', value=None,
 
 #  Define mask for selecting lines to be used in the LSD analysis
 #      lower bounds (string list)
-POLAR_LSF_WL_LOWER = Const('POLAR_LSF_WL_LOWER', value=None,
+POLAR_LSD_WL_LOWER = Const('POLAR_LSD_WL_LOWER', value=None,
                            dtype=str, source=__NAME__)
 
 #  Define mask for selecting lines to be used in the LSD analysis
 #      upper bounds (string list)
-POLAR_LSF_WL_UPPER = Const('POLAR_LSF_WL_UPPER', value=None,
+POLAR_LSD_WL_UPPER = Const('POLAR_LSD_WL_UPPER', value=None,
                            dtype=str, source=__NAME__)
+
+# Define minimum line depth to be used in the LSD analyis
+POLAR_LSD_MIN_LINEDEPTH = Const('POLAR_LSD_MIN_LINEDEPTH', value=None,
+                                dtype=float, source=__NAME__)
 
 #  Define initial velocity (km/s) for output LSD profile
 POLAR_LSD_VINIT = Const('POLAR_LSD_VINIT', value=None, dtype=float,
@@ -2002,6 +2027,10 @@ POLAR_LSD_NMODE1 = Const('POLAR_LSD_NWINDOW1', value=None, dtype=str,
 #  Define whether to use a linear fit in the normalise by continuum lsd calc
 #     used in the normalization with POLAR_LSD_NORM = True
 POLAR_LSD_NLFIT1 = Const('POLAR_LSD_NLFIT1', value=None, dtype=bool,
+                          source=__NAME__)
+
+#  Define number of points for output LSD profile
+POLAR_LSD_NPOINTS = Const('POLAR_LSD_NPOINTS', value=None, dtype=int,
                           source=__NAME__)
 
 #  Define the normalise by continuum lsd binsize
@@ -2087,6 +2116,10 @@ PLOT_SHAPE_ANGLE_OFFSET = Const('PLOT_SHAPE_ANGLE_OFFSET', value=False,
 # turn on the shape local zoom plot
 PLOT_SHAPEL_ZOOM_SHIFT = Const('PLOT_SHAPEL_ZOOM_SHIFT', value=False,
                                dtype=bool, source=__NAME__)
+
+# turn on the shape linear transform params plot
+PLOT_SHAPE_LINEAR_TPARAMS = Const('PLOT_SHAPE_LINEAR_TPARAMS', value=False,
+                                  dtype=bool, source=__NAME__)
 
 # turn on the flat order fit edges debug plot (loop)
 PLOT_FLAT_ORDER_FIT_EDGES1 = Const('PLOT_FLAT_ORDER_FIT_EDGES1', value=False,
@@ -2238,6 +2271,22 @@ PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,
 
 # turn on the ccf rv fit debug plot (for the mean order value)
 PLOT_CCF_RV_FIT = Const('PLOT_CCF_RV_FIT', value=False,
+                        dtype=bool, source=__NAME__)
+
+# turn on the polar continuum debug plot
+PLOT_POLAR_CONTINUUM = Const('PLOT_POLAR_CONTINUUM', value=False,
+                        dtype=bool, source=__NAME__)
+
+# turn on the polar results debug plot
+PLOT_POLAR_RESULTS = Const('PLOT_POLAR_RESULTS', value=False,
+                        dtype=bool, source=__NAME__)
+
+# turn on the polar stokes i debug plot
+PLOT_POLAR_STOKES_I = Const('PLOT_POLAR_STOKES_I', value=False,
+                        dtype=bool, source=__NAME__)
+
+# turn on the polar lsd debug plot
+PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
                         dtype=bool, source=__NAME__)
 
 # =============================================================================

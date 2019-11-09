@@ -1763,6 +1763,10 @@ POLAR_CONT_TELLMASK_LOWER.value = '930, 1109, 1326, 1782, 1997, 2047'
 POLAR_CONT_TELLMASK_UPPER = POLAR_CONT_TELLMASK_UPPER.copy(__NAME__)
 POLAR_CONT_TELLMASK_UPPER.value = '967, 1167, 1491, 1979, 2027, 2076'
 
+#  Perform LSD analysis
+POLAR_LSD_ANALYSIS = POLAR_LSD_ANALYSIS.copy(__NAME__)
+POLAR_LSD_ANALYSIS.value = True
+
 #  Define the spectral lsd mask directory for lsd polar calculations
 POLAR_LSD_PATH = POLAR_LSD_PATH.copy(__NAME__)
 POLAR_LSD_PATH.value = './data/spirou/lsd/'
@@ -1773,13 +1777,17 @@ POLAR_LSD_FILE_KEY.value = 'marcs_t*g50_all'
 
 #  Define mask for selecting lines to be used in the LSD analysis
 #      lower bounds (string list)
-POLAR_LSF_WL_LOWER = POLAR_LSF_WL_LOWER.copy(__NAME__)
-POLAR_LSF_WL_LOWER.value = '983, 1163, 1280, 1490, 1975, 2030'
+POLAR_LSD_WL_LOWER = POLAR_LSD_WL_LOWER.copy(__NAME__)
+POLAR_LSD_WL_LOWER.value = '983, 1163, 1280, 1490, 1975, 2030'
 
 #  Define mask for selecting lines to be used in the LSD analysis
 #      upper bounds (string list)
-POLAR_LSF_WL_UPPER = POLAR_LSF_WL_UPPER.copy(__NAME__)
-POLAR_LSF_WL_UPPER.value = '1116, 1260, 1331, 1790, 1995, 2047.5'
+POLAR_LSD_WL_UPPER = POLAR_LSD_WL_UPPER.copy(__NAME__)
+POLAR_LSD_WL_UPPER.value = '1116, 1260, 1331, 1790, 1995, 2047.5'
+
+# Define minimum line depth to be used in the LSD analyis
+POLAR_LSD_MIN_LINEDEPTH = POLAR_LSD_MIN_LINEDEPTH.copy(__NAME__)
+POLAR_LSD_MIN_LINEDEPTH.value = 0.175
 
 #  Define initial velocity (km/s) for output LSD profile
 POLAR_LSD_VINIT = POLAR_LSD_VINIT.copy(__NAME__)
@@ -1826,6 +1834,10 @@ POLAR_LSD_NMODE1.value = 'median'
 #     used in the normalization with POLAR_LSD_NORM = True
 POLAR_LSD_NLFIT1 = POLAR_LSD_NLFIT1.copy(__NAME__)
 POLAR_LSD_NLFIT1.value = True
+
+#  Define number of points for output LSD profile
+POLAR_LSD_NPOINTS = POLAR_LSD_NPOINTS.copy(__NAME__)
+POLAR_LSD_NPOINTS.value = 201
 
 #  Define the normalise by continuum lsd binsize
 #    used in the profile calculation
@@ -1900,6 +1912,10 @@ PLOT_LOC_CHECK_COEFFS.value = True
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = PLOT_SHAPE_DX.copy(__NAME__)
 PLOT_SHAPE_DX.value = True
+
+# turn on the shape linear transform params plot
+PLOT_SHAPE_LINEAR_TPARAMS = PLOT_SHAPE_LINEAR_TPARAMS.copy(__NAME__)
+PLOT_SHAPE_LINEAR_TPARAMS.value = True
 
 # turn on the shape angle offset (all orders in loop) debug plot
 PLOT_SHAPE_ANGLE_OFFSET_ALL = PLOT_SHAPE_ANGLE_OFFSET_ALL.copy(__NAME__)
@@ -2064,6 +2080,22 @@ PLOT_CCF_RV_FIT_LOOP.value = True
 # turn on the ccf rv fit debug plot (for the mean order value)
 PLOT_CCF_RV_FIT = PLOT_CCF_RV_FIT.copy(__NAME__)
 PLOT_CCF_RV_FIT.value = True
+
+# turn on the polar continuum debug plot
+PLOT_POLAR_CONTINUUM = PLOT_POLAR_CONTINUUM.copy(__NAME__)
+PLOT_POLAR_CONTINUUM.value = True
+
+# turn on the polar results debug plot
+PLOT_POLAR_RESULTS = PLOT_POLAR_RESULTS.copy(__NAME__)
+PLOT_POLAR_RESULTS.value = True
+
+# turn on the polar stokes i debug plot
+PLOT_POLAR_STOKES_I = PLOT_POLAR_STOKES_I.copy(__NAME__)
+PLOT_POLAR_STOKES_I.value = True
+
+# turn on the polar lsd debug plot
+PLOT_POLAR_LSD = PLOT_POLAR_LSD.copy(__NAME__)
+PLOT_POLAR_LSD.value = True
 
 # =============================================================================
 # TOOLS SETTINGS
