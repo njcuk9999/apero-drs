@@ -181,7 +181,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
             # --------------------------------------------------------------
             # shift group to master
-            gout = get_linear_transform_params(params, image_ref, groupfp)
+            targs = [image_ref, groupfp]
+            gout = get_linear_transform_params(params, recipe, *targs)
             transforms, xres, yres = gout
             # quality control on group
             if transforms is None:
@@ -235,7 +236,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     return fp_cube, valid_fp_table
 
 
-def get_linear_transform_params(params, image1, image2, **kwargs):
+def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     func_name = __NAME__ + '.get_linear_transform_params()'
     # get parameters from params/kwargs
     maxn_percent = pcheck(params, 'SHAPE_MASTER_VALIDFP_PERCENTILE',
@@ -278,7 +279,7 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
     WLOG(params, '', wmsg)
     # outputs
     xres, yres = np.nan, np.nan
-
+    x1, x2, y1, y2 = None, None, None, None
     # loop around iterations
     for n_it in range(niterations):
         # log progress
@@ -386,10 +387,14 @@ def get_linear_transform_params(params, image1, image2, **kwargs):
         wmsg += '\n\t{0}C={1:.6f}\t{0}(D-1)={2:.6f}'.format(*wargs2)
         WLOG(params, '', wmsg)
 
+
+
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
     # plot if in debug mode
-    if params['DRS_DEBUG'] > 0 and params['DRS_PLOT'] > 0:
-        # TODO: Add plot
-        pass
+    recipe.plot('SHAPE_LINEAR_TPARAMS', image=image1, x1=x1, x2=x2,
+                y1=y1, y2=y2)
+
     # return linear transform vector
     return lin_transform_vect, xres, yres
 

@@ -118,7 +118,6 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -133,46 +132,39 @@ def __main__(recipe, params):
         header = infile.header
         # get calibrations for this data
         drs_database.copy_calibrations(params, header)
-
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
         props, image = general.calibrate_ppfile(params, recipe, infile)
-
         # ------------------------------------------------------------------
         # Load master fp, shape dxmap and dymap
         # ------------------------------------------------------------------
         masterfp_file, masterfp_image = shape.get_master_fp(params, header)
         dxmap_file, dxmap = shape.get_shapex(params, header)
         dymap_file, dymap = shape.get_shapey(params, header)
-
         # ----------------------------------------------------------------------
         # Get transform parameters (transform image onto fpmaster)
         # ----------------------------------------------------------------------
         # log progress
         WLOG(params, '', TextEntry('40-014-00033'))
         # transform
-        targs = [params, masterfp_image, image]
+        targs = [params, recipe, masterfp_image, image]
         transform, xres, yres = shape.get_linear_transform_params(*targs)
-
         # ----------------------------------------------------------------------
         # For debug purposes straighten the image
         # ----------------------------------------------------------------------
         image2 = shape.ea_transform(params, image, transform, dxmap=dxmap,
                                     dymap=dymap)
-
         # ----------------------------------------------------------------------
         # Quality control
         # ----------------------------------------------------------------------
         qc_params, passed = shape.shape_local_qc(params, transform, xres, yres)
-
         # ------------------------------------------------------------------
         # Writing shape to file
         # ------------------------------------------------------------------
         outfile = shape.write_shape_local_files(params, recipe, infile, combine,
                                                 rawfiles, props, transform,
                                                 image, image2, qc_params)
-
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
@@ -183,8 +175,6 @@ def __main__(recipe, params):
         # plot a zoom in of non-shifted vs shifted
         # ------------------------------------------------------------------
         pkwargs = dict(params=params, image=image, simage=image2)
-        # TODO: remove breakpoint
-        constants.breakpoint(params)
         # debug plot
         recipe.plot('SHAPEL_ZOOM_SHIFT', **pkwargs)
         # summary plot
@@ -194,7 +184,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         shape.write_shape_local_summary(recipe, params, qc_params, it,
                                         transform)
-
 
     # ----------------------------------------------------------------------
     # End of main code
