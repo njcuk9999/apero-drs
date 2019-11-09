@@ -609,7 +609,7 @@ def end_plotting(params, recipe):
     plotter = recipe.plot
     if plotter is not None:
         if len(plotter.debug_graphs) > 0:
-            plotter.close_plots(params)
+            plotter.close_plots()
 
 
 # =============================================================================
