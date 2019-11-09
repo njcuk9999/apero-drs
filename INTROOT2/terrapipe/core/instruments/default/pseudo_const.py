@@ -610,6 +610,25 @@ class Colors:
             self.fail = self.RED2
             self.debug = self.GREEN2
 
+    def print(self, message, colour):
+        if colour in ['b', 'blue']:
+            start = self.BLUE1
+        elif colour in ['r', 'red']:
+            start = self.RED1
+        elif colour in ['g', 'green']:
+            start = self.GREEN1
+        elif colour in ['y', 'yellow']:
+            start = self.YELLOW1
+        elif colour in ['m', 'magenta']:
+            start = self.MAGENTA1
+        elif colour in ['k', 'black', 'grey']:
+            start = self.BLACK1
+        else:
+            start = self.endc
+        # return colour mesage
+        return start + message + self.endc
+
+
 # =============================================================================
 # End of code
 # =============================================================================
