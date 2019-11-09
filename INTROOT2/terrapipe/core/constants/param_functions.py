@@ -605,6 +605,12 @@ class ParamDict(CaseInsensitiveDict):
         return return_keys
 
     def copy(self):
+        """
+        Copy a parameter dictionary (deep copy parameters)
+
+        :return: the copy of the parameter dictionary
+        :rtype: ParamDict
+        """
         # make new copy of param dict
         pp = ParamDict()
         keys = list(self.keys())
