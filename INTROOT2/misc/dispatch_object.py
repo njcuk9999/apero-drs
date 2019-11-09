@@ -22,7 +22,6 @@ from tqdm import tqdm
 # =============================================================================
 STORED_OBJECTS = ['TOI-442', 'Gl436', 'Gl699', 'Gl15A', 'HD189733',
                   'GJ1002', 'GJ1214', 'Trappist-1']
-STORED_OBJECTS = ['TOI-442']
 # -----------------------------------------------------------------------------
 INPUT_DIR = '/spirou/cfht_nights/cfht_oct1/reduced/'
 DESTINATION = '/spirou/sandbox/per_object/'
