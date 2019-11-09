@@ -302,6 +302,55 @@ def get_constants_from_file(filename):
     return keys, values
 
 
+def update_file(filename, dictionary):
+
+    func_name = __NAME__ + '.update_file()'
+    # open file
+    try:
+        # open the file
+        f = open(filename, 'r')
+        # read the lines
+        lines = f.readlines()
+        # close the opened file
+        f.close()
+    except Exception as e:
+        emsg = ('\n\t\t {0}: File "{1}" cannot be read by {2}. '
+                '\n\t\t Error was: {3}')
+        raise ConfigError(emsg.format(type(e), filename, func_name, e))
+
+    # convert lines to char array
+    clines = np.char.array(lines).strip()
+
+    # loop through keys in dictionary
+    for key in dictionary:
+        # get value
+        value = dictionary[key]
+        # create replacement string
+        rstring = '{0} = {1}\n'.format(key, value)
+        # find any line that starts with
+        mask = clines.startswith(key)
+        # if we have this entry update it
+        if np.sum(mask) > 0:
+            # get line numbers
+            linenumbers = np.where(mask)[0]
+            # loop around line numbers and replace
+            for linenumber in linenumbers:
+                lines[linenumber] = rstring
+
+    # open file
+    try:
+        # open the file
+        f = open(filename, 'w')
+        # write the lines
+        f.writelines(lines)
+        # close the opened file
+        f.close()
+    except Exception as e:
+        emsg = ('\n\t\t {0}: File "{1}" cannot be written to by {2}. '
+                '\n\t\t Error was: {3}')
+        raise ConfigError(emsg.format(type(e), filename, func_name, e))
+
+
 # =============================================================================
 # Define private functions
 # =============================================================================
