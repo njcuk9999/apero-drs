@@ -40,6 +40,8 @@ get_relative_folder = param_functions.get_relative_folder
 # import modules
 import_module = constant_functions.import_module
 
+get_constants_from_file = constant_functions.get_constants_from_file
+
 # get file names
 get_filenames = param_functions.get_file_names
 
@@ -60,6 +62,8 @@ gen_all = param_functions.get_config_all
 
 # update param dicts
 uparamdicts = param_functions.update_paramdicts
+
+update_file = constant_functions.update_file
 
 # generate a drs breakpoint
 breakpoint = param_functions.breakpoint
