@@ -375,7 +375,7 @@ cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
                              SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx,
                              DEBUG_BACK=sf.debug_back)
 cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
-                                 'SHAPE_ANGLE_OFFSET')
+                                 'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
 cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
@@ -414,7 +414,7 @@ cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
                       SHAPEL_IN_FP_FILE=sf.out_shapel_debug_ifp,
                       SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp,
                       DEBUG_BACK=sf.debug_back)
-cal_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT')
+cal_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 cal_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 cal_shape.set_arg(pos=0, **directory)
 cal_shape.set_arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+',
@@ -834,15 +834,19 @@ obj_pol_spirou.inputtype = 'reduced'
 obj_pol_spirou.extension = 'fits'
 obj_pol_spirou.description = Help['FTELLU_DESC']
 obj_pol_spirou.epilog = Help['FTELLU_EXAMPLE']
-obj_pol_spirou.set_outputs()
-obj_pol_spirou.set_debug_plots()
+obj_pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
+                           POL_NULL1=sf.out_pol_null1,
+                           POL_NULL2=sf.out_pol_null2,
+                           POL_STOKESI=sf.out_pol_stokesi,
+                           POL_LSD=sf.out_pol_lsd)
+obj_pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
+                               'POLAR_STOKES_I', 'POLAR_LSD')
 obj_pol_spirou.set_arg(pos=0, **directory)
 obj_pol_spirou.set_arg(name='files', dtype='files', pos='1+',
                        files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
                        helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                        limit=1)
 obj_pol_spirou.set_kwarg(**plot)
-
 
 # -----------------------------------------------------------------------------
 # cal_exposure_meter
@@ -863,7 +867,6 @@ obj_pol_spirou.set_kwarg(**plot)
 # -----------------------------------------------------------------------------
 
 
-
 # cal_update_berv
 
 cal_update_berv.name = 'cal_update_berv.py'
@@ -878,9 +881,6 @@ cal_update_berv.epilog = Help['FTELLU_EXAMPLE']
 cal_update_berv.set_outputs()
 cal_update_berv.set_debug_plots()
 cal_update_berv.set_kwarg(**plot)
-
-
-
 
 # =============================================================================
 # Run order
@@ -984,7 +984,7 @@ limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
 limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                files = [sf.out_ext_e2dsff], fiber='AB',
+                files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 limited_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
@@ -1004,7 +1004,6 @@ limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
 limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
-
 # ccf
 limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
@@ -1021,7 +1020,6 @@ master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 master_run.add(cal_shape_master, master=True)
 
-
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
 # -----------------------------------------------------------------------------
@@ -1035,7 +1033,7 @@ calib_run.add(cal_ff, files=[sf.pp_flat_flat])
 calib_run.add(cal_thermal)
 calib_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
 calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-                fpfiles=[sf.pp_fp_fp])
+              fpfiles=[sf.pp_fp_fp])
 
 # -----------------------------------------------------------------------------
 # science run (for trigger)
@@ -1055,7 +1053,6 @@ science_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
 # ccf
 science_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
-
 
 # -----------------------------------------------------------------------------
 # hc run (extract all HC_HC)
