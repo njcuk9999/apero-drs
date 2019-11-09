@@ -136,6 +136,10 @@ KW_PLX.set(key='OBJPLX', unit=uu.mas)
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
 KW_INPUTRV.set(key='OBSRV', unit=uu.km / uu.s)
 
+# define the object temperature HEADER key
+KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
+KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
@@ -1232,24 +1236,26 @@ KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
 KW_FTELLU_AMP_PC.set(key='AMPPC{0:03d}',
-                     comment='Principle Component Amplitudes')
+                     comment='ftellu Principle Component Amplitudes')
 
 # Telluric principle component first derivative
 KW_FTELLU_DVTELL1 = KW_FTELLU_DVTELL1.copy(__NAME__)
-KW_FTELLU_DVTELL1.set(key='DV_TELL1', comment='Principle Component first der.')
+KW_FTELLU_DVTELL1.set(key='DV_TELL1',
+                      comment='ftellu Principle Component first der.')
 
 # Telluric principle component second derivative
 KW_FTELLU_DVTELL2 = KW_FTELLU_DVTELL2.copy(__NAME__)
-KW_FTELLU_DVTELL2.set(key='DV_TELL1', comment='Principle Component second der.')
+KW_FTELLU_DVTELL2.set(key='DV_TELL1',
+                      comment='ftellu Principle Component second der.')
 
 # Tau Water depth calculated in fit tellu
 KW_FTELLU_TAU_H2O = KW_FTELLU_TAU_H2O.copy(__NAME__)
-KW_FTELLU_TAU_H2O.set(key='TAU_H20', comment='TAPAS tau H2O')
+KW_FTELLU_TAU_H2O.set(key='TAU_H20', comment='ftellu TAPAS tau H2O')
 
 # Tau Rest depth calculated in fit tellu
 KW_FTELLU_TAU_REST = KW_FTELLU_TAU_REST.copy(__NAME__)
 KW_FTELLU_TAU_REST.set(key='TAU_OTHE',
-                       comment='TAPAS tau for O2,O3,CH4,N2O,CO2')
+                       comment='ftellu TAPAS tau for O2,O3,CH4,N2O,CO2')
 
 # -----------------------------------------------------------------------------
 # Define make template variables
@@ -1356,18 +1362,268 @@ KW_CCF_RV_SIMU_FP.set(key='RV_SIMFP',
 #   if simulataneous FP not present this is just the wave solution FP CCF value
 KW_CCF_RV_DRIFT = KW_CCF_RV_DRIFT.copy(__NAME__)
 KW_CCF_RV_DRIFT.set(key='RV_DRIFT',
-                    comment='RV drift between wave sol and sim. FP [km/s]')
+                    comment='RV drift between wave sol and sim. FP CCF [km/s]')
 
 # The radial velocity measured from the object CCF against the CCF MASK
 KW_CCF_RV_OBJ = KW_CCF_RV_OBJ.copy(__NAME__)
 KW_CCF_RV_OBJ.set(key='RV_OBJ',
-                  comment='RV measured in the object CCF (non corr.) [km/s]')
+                  comment='RV calc in the object CCF (non corr.) [km/s]')
 
 # the corrected radial velocity of the object (taking into account the FP RVs)
 KW_CCF_RV_CORR = KW_CCF_RV_CORR.copy(__NAME__)
 KW_CCF_RV_CORR.set(key='RV_CORR',
-                   comment='RV corrected for FP drift [km/s]')
+                   comment='RV corrected for FP CCF drift [km/s]')
 
+# -----------------------------------------------------------------------------
+# Define polar variables
+# -----------------------------------------------------------------------------
+# define the Stokes paremeter: Q, U, V, or I
+KW_POL_STOKES = KW_POL_STOKES.copy(__NAME__)
+KW_POL_STOKES.set(key='STOKES', comment='POLAR Stokes paremeter: Q, U, V, or I')
+
+# define Number of exposures for polarimetry
+KW_POL_NEXP = KW_POL_NEXP.copy(__NAME__)
+KW_POL_NEXP.set(key='POLNEXP',
+                comment='POLAR Number of exposures for polarimetry')
+
+# defines the Polarimetry method
+KW_POL_METHOD = KW_POL_METHOD.copy(__NAME__)
+KW_POL_METHOD.set(key='POLMETHO', comment='POLAR Polarimetry method')
+
+# define the base file name exposure list
+KW_POL_FILES = KW_POL_FILES.copy(__NAME__)
+KW_POL_FILES.set(key='P_IN{0:02d}', comment='POLAR Base filename of')
+
+# define the exposure times of exposure list
+KW_POL_EXPS = KW_POL_EXPS.copy(__NAME__)
+KW_POL_EXPS.set(key='P_EX{0:02d}', comment='POLAR EXPTIME [s] of')
+
+# define the mjds at start for exposure list
+KW_POL_MJDS = KW_POL_MJDS.copy(__NAME__)
+KW_POL_MJDS.set(key='P_MJD{0:02d}', comment='POLAR MJD at start of')
+
+# define the mjdends at end for exposure list
+KW_POL_MJDENDS = KW_POL_MJDENDS.copy(__NAME__)
+KW_POL_MJDENDS.set(key='P_MJDE{0:02d}', comment='POLAR MJDEND at end of ')
+
+# define the bjds for exposure list
+KW_POL_BJDS = KW_POL_BJDS.copy(__NAME__)
+KW_POL_BJDS.set(key='P_BJD{0:02d}', comment='POLAR BJD for ')
+
+# define the bervs for exposure list
+KW_POL_BERVS = KW_POL_BERVS.copy(__NAME__)
+KW_POL_BERVS.set(key='P_BERV{0:02d}', comment='POLAR BERV for')
+
+# define the Total exposure time (sec)
+KW_POL_EXPTIME = KW_POL_EXPTIME.copy(__NAME__)
+KW_POL_EXPTIME.set(key='POLTTIME', comment='POLAR Total exposure time (sec)')
+
+# define the Elapsed time of observation (sec)
+KW_POL_ELAPTIME = KW_POL_ELAPTIME.copy(__NAME__)
+KW_POL_ELAPTIME.set(key='POLETIME',
+                    comment='POLAR Elapsed time of observation (sec)')
+
+# define the MJD at center of observation
+KW_POL_MJDCEN = KW_POL_MJDCEN.copy(__NAME__)
+KW_POL_MJDCEN.set(key='POLMJDC', comment='POLAR MJD at center of observation')
+
+# define the BJD at center of observation
+KW_POL_BJDCEN = KW_POL_BJDCEN.copy(__NAME__)
+KW_POL_BJDCEN.set(key='POLBJDC', comment='POLAR BJD at center of observation')
+
+# define the BERV at center of observation
+KW_POL_BERVCEN = KW_POL_BERVCEN.copy(__NAME__)
+KW_POL_BERVCEN.set(key='POLBERVC',
+                   comment='POLAR BERV at center of observation')
+
+# define the Mean BJD for polar sequence
+KW_POL_MEANBJD = KW_POL_MEANBJD.copy(__NAME__)
+KW_POL_MEANBJD.set(key='POLMNBJD', comment='POLAR Mean BJD for polar sequence')
+
+# define the minimum number of files used
+KW_USED_MIN_FILES = KW_USED_MIN_FILES.copy(__NAME__)
+KW_USED_MIN_FILES.set(key='POLMINFL', comment='POLAR Min no. files used')
+
+# define all possible fibers for polarimetry used
+KW_USED_VALID_FIBERS = KW_USED_VALID_FIBERS.copy(__NAME__)
+KW_USED_VALID_FIBERS.set(key='P_VFIB{0:02d}', comment='POLAR valid fibers used')
+
+# define all possible stokes parameters used
+KW_USED_VALID_STOKES = KW_USED_VALID_STOKES.copy(__NAME__)
+KW_USED_VALID_STOKES.set(key='P_VSTK{0:02d}', comment='POLAR valid stokes used')
+
+# define the continuum bin size used
+KW_USED_CONT_BINSIZE = KW_USED_CONT_BINSIZE.copy(__NAME__)
+KW_USED_CONT_BINSIZE.set(key='POLUCBIN',
+                         comment='POLAR continuum binsize used')
+
+# define the continuum overlap used
+KW_USED_CONT_OVERLAP = KW_USED_CONT_OVERLAP.copy(__NAME__)
+KW_USED_CONT_OVERLAP.set(key='POLUCOVL',
+                         comment='POLAR continuum overlap used')
+
+# define the LSD mask filename
+KW_POLAR_LSD_MASK = KW_POLAR_LSD_MASK.copy(__NAME__)
+KW_POLAR_LSD_MASK.set(key='PLSDMASK', comment='POLAR LSD mask filename')
+
+# define the Radial velocity (km/s) from gaussian fit from polar lsd
+KW_POLAR_LSD_FIT_RV = KW_POLAR_LSD_FIT_RV.copy(__NAME__)
+KW_POLAR_LSD_FIT_RV.set(key='PLSD_FRV',
+                        comment='POLAR LSD RV [km/s] from gaussfit')
+
+# define the Resolving power from gaussian fit from polar lsd
+KW_POLAR_LSD_FIT_RESOL = KW_POLAR_LSD_FIT_RESOL.copy(__NAME__)
+KW_POLAR_LSD_FIT_RESOL.set(key='PLSD_FRE',
+                           comment='POLAR LSD Resolving power from gaussfit')
+
+# define the Mean polarization of data in LSD
+KW_POLAR_LSD_MEANPOL = KW_POLAR_LSD_MEANPOL.copy(__NAME__)
+KW_POLAR_LSD_MEANPOL.set(key='PLSDMN_P',
+                         comment='POLAR LSD Mean polarization in data')
+
+# define the Std dev polarization of data in LSD
+KW_POLAR_LSD_STDPOL = KW_POLAR_LSD_STDPOL.copy(__NAME__)
+KW_POLAR_LSD_STDPOL.set(key='PLSDST_P',
+                        comment='POLAR LSD Std dev polarization of dataD')
+
+# define the Median polarization of data in LSD
+KW_POLAR_LSD_MEDPOL = KW_POLAR_LSD_MEDPOL.copy(__NAME__)
+KW_POLAR_LSD_MEDPOL.set(key='PLSDME_P',
+                        comment='POLAR LSD Median polarization of data')
+
+# define the Med abs dev polarization of data in LSD
+KW_POLAR_LSD_MEDABSDEV = KW_POLAR_LSD_MEDABSDEV.copy(__NAME__)
+KW_POLAR_LSD_MEDABSDEV.set(key='PLSDMADP',
+                           comment='POLAR LSD Med absdev polarization of data')
+
+# define the mean of pol LSD profile
+KW_POLAR_LSD_MEANSVQU = KW_POLAR_LSD_MEANSVQU.copy(__NAME__)
+KW_POLAR_LSD_MEANSVQU.set(key='PLSDMVQU',
+                          comment='POLAR LSD mean of pol LSD profile')
+
+# define the Std dev of pol LSD profile
+KW_POLAR_LSD_STDSVQU = KW_POLAR_LSD_STDSVQU.copy(__NAME__)
+KW_POLAR_LSD_STDSVQU.set(key='PLSDSVQU',
+                         comment='POLAR LSD Std dev of pol LSD profile')
+
+# define the Mean of null LSD profile
+KW_POLAR_LSD_MEANNULL = KW_POLAR_LSD_MEANNULL.copy(__NAME__)
+KW_POLAR_LSD_MEANNULL.set(key='PLSDMNUL',
+                          comment='POLAR LSD Mean of null LSD profile')
+
+# define the Std dev of null LSD profile
+KW_POLAR_LSD_STDNULL = KW_POLAR_LSD_STDNULL.copy(__NAME__)
+KW_POLAR_LSD_STDNULL.set(key='PLSDSNUL',
+                         comment='POLAR LSD Std dev of null LSD profile')
+
+# define the lsd column: Velocities (km/s)
+KW_POL_LSD_COL1 = KW_POL_LSD_COL1.copy(__NAME__)
+KW_POL_LSD_COL1.set(key='PLSDCOL1', comment='POLAR LSD COL: Velocities (km/s)')
+
+# define the lsd column: Stokes I LSD profile
+KW_POL_LSD_COL2 = KW_POL_LSD_COL2.copy(__NAME__)
+KW_POL_LSD_COL2.set(key='PLSDCOL2',
+                    comment='POLAR LSD COL: Stokes I LSD profile')
+
+# define the lsd column: Gaussian fit to Stokes I LSD profile
+KW_POL_LSD_COL3 = KW_POL_LSD_COL3.copy(__NAME__)
+KW_POL_LSD_COL3.set(key='PLSDCOL3',
+                    comment='POLAR LSD COL: Gaussfit to Stokes I LSD profile')
+
+# define the lsd column: Stokes V, U, or Q LSD profile
+KW_POL_LSD_COL4 = KW_POL_LSD_COL4.copy(__NAME__)
+KW_POL_LSD_COL4.set(key='PLSDCOL4',
+                    comment='POLAR LSD COL: Stokes V, U, or Q LSD profile')
+
+# define the lsd column: Null polarization LSD profile
+KW_POL_LSD_COL5 = KW_POL_LSD_COL5.copy(__NAME__)
+KW_POL_LSD_COL5.set(key='PLSDCOL5',
+                    comment='POLAR LSD COL: Null polarization LSD profile')
+
+# define the minimum line depth value used in LSD analysis
+KW_POLAR_LSD_MLDEPTH = KW_POLAR_LSD_MLDEPTH.copy(__NAME__)
+KW_POLAR_LSD_MLDEPTH.set(key='PLSDMLSP',
+                         comment='POLAR LSD minimum line depth used')
+
+# Define initial velocity value used in LSD analysis
+KW_POLAR_LSD_VINIT = KW_POLAR_LSD_VINIT.copy(__NAME__)
+KW_POLAR_LSD_VINIT.set(key='PLSD_V0',
+                       comment='POLAR LSD Initial velocity [km/s]')
+
+# Define final velocity value used in LSD analysis
+KW_POLAR_LSD_VFINAL = KW_POLAR_LSD_VFINAL.copy(__NAME__)
+KW_POLAR_LSD_VFINAL.set(key='PLSD_VF',
+                        comment='POLAR LSD Final velocity [km/s]')
+
+# Define whether stokesI was normalised by continuum
+KW_POLAR_LSD_NORM = KW_POLAR_LSD_NORM.copy(__NAME__)
+KW_POLAR_LSD_NORM.set(key='PLSDNCONT',
+                      comment='POLAR LSD whether stokesI norm by continuum')
+
+# define the bin size used for norm continuum
+KW_POLAR_LSD_NBIN1 = KW_POLAR_LSD_NBIN1.copy(__NAME__)
+KW_POLAR_LSD_NBIN1.set(key='PLSDNBIN',
+                       comment='POLAR LSD bin size used for norm continuum')
+
+# define the overlap used for norm continuum
+KW_POLAR_LSD_NLAP1 = KW_POLAR_LSD_NLAP1.copy(__NAME__)
+KW_POLAR_LSD_NLAP1.set(key='PLSDNLAP',
+                       comment='POLAR LSD overlap used for norm continuum')
+
+# define the sig clip used for norm continuum
+KW_POLAR_LSD_NSIG1 = KW_POLAR_LSD_NSIG1.copy(__NAME__)
+KW_POLAR_LSD_NSIG1.set(key='PLSDNSIG',
+                       comment='POLAR LSD sigclip used for norm continuum')
+
+# define the window size used for norm continuum
+KW_POLAR_LSD_NWIN1 = KW_POLAR_LSD_NWIN1.copy(__NAME__)
+KW_POLAR_LSD_NWIN1.set(key='PLSDNWIN',
+                       comment='POLAR LSD window size used for norm continuum')
+
+# define the mode used for norm continuum
+KW_POLAR_LSD_NMODE1 = KW_POLAR_LSD_NMODE1.copy(__NAME__)
+KW_POLAR_LSD_NMODE1.set(key='PLSDNMOD',
+                        comment='POLAR LSD mode used for norm continuum')
+
+# define whether a linear fit was used for norm continuum
+KW_POLAR_LSD_NLFIT1 = KW_POLAR_LSD_NLFIT1.copy(__NAME__)
+KW_POLAR_LSD_NLFIT1.set(key='PLSDNLFT',
+                        comment='POLAR LSD whether linfit used norm continuum')
+
+# define the Number of points for LSD profile
+KW_POLAR_LSD_NPOINTS = KW_POLAR_LSD_NPOINTS.copy(__NAME__)
+KW_POLAR_LSD_NORM.set(key='PLSD_NP',
+                      comment='POLAR LSD Number of points for LSD profile')
+
+# define the bin sized used in profile calc
+KW_POLAR_LSD_NBIN2 = KW_POLAR_LSD_NBIN2.copy(__NAME__)
+KW_POLAR_LSD_NBIN2.set(key='PLSDPBIN',
+                       comment='POLAR LSD bin size used for profile calc.')
+
+# define the overlap used in profile calc
+KW_POLAR_LSD_NLAP2 = KW_POLAR_LSD_NLAP2.copy(__NAME__)
+KW_POLAR_LSD_NLAP2.set(key='PLSDPLAP',
+                       comment='POLAR LSD overlap used for profile calc.')
+
+# define the sigma clip used in profile calc
+KW_POLAR_LSD_NSIG2 = KW_POLAR_LSD_NSIG2.copy(__NAME__)
+KW_POLAR_LSD_NSIG2.set(key='PLSDPSIG',
+                       comment='POLAR LSD sigclip used for profile calc.')
+
+# define the window size used in profile calc
+KW_POLAR_LSD_NWIN2 = KW_POLAR_LSD_NWIN2.copy(__NAME__)
+KW_POLAR_LSD_NWIN2.set(key='PLSDPWIN',
+                       comment='POLAR LSD window size used for profile calc.')
+
+# define the mode used in profile calc
+KW_POLAR_LSD_NMODE2 = KW_POLAR_LSD_NMODE2.copy(__NAME__)
+KW_POLAR_LSD_NMODE2.set(key='PLSDPMOD',
+                        comment='POLAR LSD mode used for profile calc.')
+
+# define whether a linear fit was used in profile calc
+KW_POLAR_LSD_NLFIT2 = KW_POLAR_LSD_NLFIT2.copy(__NAME__)
+KW_POLAR_LSD_NLFIT2.set(key='PLSDPLFT',
+                        comment='POLAR LSD whether linfit used profile calc.')
 
 # =============================================================================
 #  End of configuration file

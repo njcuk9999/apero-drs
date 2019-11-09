@@ -12,7 +12,7 @@ __all__ = [# input keys
            'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
            'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX',
            'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY', 'KW_GAIA_ID',
-           'KW_INPUTRV',
+           'KW_INPUTRV', 'KW_OBJ_TEMP',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
            'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -125,6 +125,25 @@ __all__ = [# input keys
            'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
            'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
            'KW_CCF_RV_CORR',
+           # polar values
+           'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
+           'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
+           'KW_POL_BERVS', 'KW_POL_EXPTIME', 'KW_POL_ELAPTIME', 'KW_POL_MJDCEN',
+           'KW_POL_BJDCEN', 'KW_POL_BERVCEN', 'KW_POL_MEANBJD',
+           'KW_USED_MIN_FILES', 'KW_USED_VALID_FIBERS', 'KW_USED_VALID_STOKES',
+           'KW_USED_CONT_BINSIZE', 'KW_USED_CONT_OVERLAP', 'KW_POLAR_LSD_MASK',
+           'KW_POLAR_LSD_FIT_RV', 'KW_POLAR_LSD_FIT_RESOL',
+           'KW_POLAR_LSD_MEANPOL', 'KW_POLAR_LSD_STDPOL', 'KW_POLAR_LSD_MEDPOL',
+           'KW_POLAR_LSD_MEDABSDEV', 'KW_POLAR_LSD_MEANSVQU',
+           'KW_POLAR_LSD_STDSVQU', 'KW_POLAR_LSD_MEANNULL',
+           'KW_POLAR_LSD_STDNULL', 'KW_POL_LSD_COL1', 'KW_POL_LSD_COL2',
+           'KW_POL_LSD_COL3', 'KW_POL_LSD_COL4', 'KW_POL_LSD_COL5',
+           'KW_POLAR_LSD_MLDEPTH', 'KW_POLAR_LSD_VINIT', 'KW_POLAR_LSD_VFINAL',
+           'KW_POLAR_LSD_NORM', 'KW_POLAR_LSD_NBIN1', 'KW_POLAR_LSD_NLAP1',
+           'KW_POLAR_LSD_NSIG1', 'KW_POLAR_LSD_NWIN1', 'KW_POLAR_LSD_NMODE1',
+           'KW_POLAR_LSD_NLFIT1', 'KW_POLAR_LSD_NPOINTS', 'KW_POLAR_LSD_NBIN2',
+           'KW_POLAR_LSD_NLAP2', 'KW_POLAR_LSD_NSIG2', 'KW_POLAR_LSD_NWIN2',
+           'KW_POLAR_LSD_NMODE2', 'KW_POLAR_LSD_NLFIT2',
 ]
 
 # set name
@@ -227,6 +246,9 @@ KW_PLX = Keyword('KW_PLX', key='', dtype=float, source=__NAME__)
 
 # define the rv HEADER key
 KW_INPUTRV = Keyword('KW_RV', key='', dtype=float, source=__NAME__)
+
+# define the object temperature HEADER key
+KW_OBJ_TEMP = Keyword('KW_OBJ_TEMP', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -1173,6 +1195,203 @@ KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)
 
 # the corrected radial velocity of the object (taking into account the FP RVs)
 KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define polar variables
+# -----------------------------------------------------------------------------
+
+# define the Stokes paremeter: Q, U, V, or I
+KW_POL_STOKES = Keyword('KW_POL_STOKES', key='', dtype=str, source=__NAME__)
+
+# define Number of exposures for polarimetry
+KW_POL_NEXP = Keyword('KW_POL_NEXP', key='', dtype=int, source=__NAME__)
+
+# defines the Polarimetry method
+KW_POL_METHOD = Keyword('KW_POL_METHOD', key='', dtype=str, source=__NAME__)
+
+# define the base file name exposure list
+KW_POL_FILES = Keyword('KW_POL_FILES', key='', dtype=str, source=__NAME__)
+
+# define the exposure times of exposure list
+KW_POL_EXPS = Keyword('KW_POL_EXPS', key='', dtype=float, source=__NAME__)
+
+# define the mjds at start for exposure list
+KW_POL_MJDS = Keyword('KW_POL_MJDS', key='', dtype=float, source=__NAME__)
+
+# define the mjdends at end for exposure list
+KW_POL_MJDENDS = Keyword('KW_POL_MJDENDS', key='', dtype=float, source=__NAME__)
+
+# define the bjds for exposure list
+KW_POL_BJDS = Keyword('KW_POL_BJDS', key='', dtype=float, source=__NAME__)
+
+# define the bervs for exposure list
+KW_POL_BERVS = Keyword('KW_POL_BERVS', key='', dtype=float, source=__NAME__)
+
+# define the Total exposure time (sec)
+KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='', dtype=float, source=__NAME__)
+
+# define the Elapsed time of observation (sec)
+KW_POL_ELAPTIME = Keyword('KW_POL_ELAPTIME', key='', dtype=float,
+                          source=__NAME__)
+
+# define the MJD at center of observation
+KW_POL_MJDCEN = Keyword('KW_POL_MJDCEN', key='', dtype=float, source=__NAME__)
+
+# define the BJD at center of observation
+KW_POL_BJDCEN = Keyword('KW_POL_BJDCEN', key='', dtype=float, source=__NAME__)
+
+# define the BERV at center of observation
+KW_POL_BERVCEN = Keyword('KW_POL_BERVCEN', key='', dtype=float, source=__NAME__)
+
+# define the Mean BJD for polar sequence
+KW_POL_MEANBJD = Keyword('KW_POL_MEANBJD', key='', dtype=float, source=__NAME__)
+
+# define the minimum number of files used
+KW_USED_MIN_FILES = Keyword('KW_USED_MIN_FILES', key='', dtype=int,
+                            source=__NAME__)
+
+# define all possible fibers for polarimetry used
+KW_USED_VALID_FIBERS = Keyword('KW_USED_VALID_FIBERS', key='', dtype=str,
+                               source=__NAME__)
+
+# define all possible stokes parameters used
+KW_USED_VALID_STOKES = Keyword('KW_USED_VALID_STOKES', key='', dtype=str,
+                               source=__NAME__)
+
+# define the continuum bin size used
+KW_USED_CONT_BINSIZE = Keyword('KW_USED_CONT_BINSIZE', key='', dtype=int,
+                               source=__NAME__)
+
+# define the continuum overlap used
+KW_USED_CONT_OVERLAP = Keyword('KW_USED_CONT_OVERLAP', key='', dtype=int,
+                               source=__NAME__)
+
+# define the LSD mask filename
+KW_POLAR_LSD_MASK = Keyword('KW_POLAR_LSD_MASK', key='', dtype=str,
+                            source=__NAME__)
+
+# define the Radial velocity (km/s) from gaussian fit from polar lsd
+KW_POLAR_LSD_FIT_RV = Keyword('KW_POLAR_LSD_FIT_RV', key='', dtype=float,
+                              source=__NAME__)
+
+# define the Resolving power from gaussian fit from polar lsd
+KW_POLAR_LSD_FIT_RESOL = Keyword('KW_POLAR_LSD_FIT_RESOL', key='', dtype=float,
+                                 source=__NAME__)
+
+# define the Mean polarization of data in LSD
+KW_POLAR_LSD_MEANPOL = Keyword('KW_POLAR_LSD_MEANPOL', key='', dtype=float,
+                               source=__NAME__)
+
+# define the Std dev polarization of data in LSD
+KW_POLAR_LSD_STDPOL = Keyword('KW_POLAR_LSD_STDPOL', key='', dtype=float,
+                              source=__NAME__)
+
+# define the Median polarization of data in LSD
+KW_POLAR_LSD_MEDPOL = Keyword('KW_POLAR_LSD_MEDPOL', key='', dtype=float,
+                              source=__NAME__)
+
+# define the Med abs dev polarization of data in LSD
+KW_POLAR_LSD_MEDABSDEV = Keyword('KW_POLAR_LSD_MEDABSDEV', key='', dtype=float,
+                                 source=__NAME__)
+
+# define the mean of pol LSD profile
+KW_POLAR_LSD_MEANSVQU = Keyword('KW_POLAR_LSD_MEANSVQU', key='', dtype=float,
+                                source=__NAME__)
+
+# define the Std dev of pol LSD profile
+KW_POLAR_LSD_STDSVQU = Keyword('KW_POLAR_LSD_STDSVQU', key='', dtype=float,
+                               source=__NAME__)
+
+# define the Mean of null LSD profile
+KW_POLAR_LSD_MEANNULL = Keyword('KW_POLAR_LSD_MEANNULL', key='', dtype=float,
+                                source=__NAME__)
+
+# define the Std dev of null LSD profile
+KW_POLAR_LSD_STDNULL = Keyword('KW_POLAR_LSD_STDNULL', key='', dtype=float,
+                               source=__NAME__)
+
+# define the lsd column: Velocities (km/s)
+KW_POL_LSD_COL1 = Keyword('KW_POL_LSD_COL1', key='', dtype=str, source=__NAME__)
+
+# define the lsd column: Stokes I LSD profile
+KW_POL_LSD_COL2 = Keyword('KW_POL_LSD_COL2', key='', dtype=str, source=__NAME__)
+
+# define the lsd column: Gaussian fit to Stokes I LSD profile
+KW_POL_LSD_COL3 = Keyword('KW_POL_LSD_COL3', key='', dtype=str, source=__NAME__)
+
+# define the lsd column: Stokes V, U, or Q LSD profile
+KW_POL_LSD_COL4 = Keyword('KW_POL_LSD_COL4', key='', dtype=str, source=__NAME__)
+
+# define the lsd column: Null polarization LSD profile
+KW_POL_LSD_COL5 = Keyword('KW_POL_LSD_COL5', key='', dtype=str, source=__NAME__)
+
+# define the minimum line depth value used in LSD analysis
+KW_POLAR_LSD_MLDEPTH = Keyword('KW_POLAR_LSD_MLDEPTH', key='', dtype=float,
+                               source=__NAME__)
+
+# Define initial velocity value used in LSD analysis
+KW_POLAR_LSD_VINIT = Keyword('KW_POLAR_LSD_VINIT', key='', dtype=float,
+                             source=__NAME__)
+
+# Define final velocity value used in LSD analysis
+KW_POLAR_LSD_VFINAL = Keyword('KW_POLAR_LSD_VFINAL', key='', dtype=float,
+                              source=__NAME__)
+
+# Define whether stokesI was normalised by continuum
+KW_POLAR_LSD_NORM = Keyword('KW_POLAR_LSD_NORM', key='', dtype=bool,
+                            source=__NAME__)
+
+# define the bin size used for norm continuum
+KW_POLAR_LSD_NBIN1 = Keyword('KW_POLAR_LSD_NBIN1', key='', dtype=int,
+                             source=__NAME__)
+
+# define the overlap used for norm continuum
+KW_POLAR_LSD_NLAP1 = Keyword('KW_POLAR_LSD_NLAP1', key='', dtype=int,
+                             source=__NAME__)
+
+# define the sig clip used for norm continuum
+KW_POLAR_LSD_NSIG1 = Keyword('KW_POLAR_LSD_NSIG1', key='', dtype=float,
+                             source=__NAME__)
+
+# define the window size used for norm continuum
+KW_POLAR_LSD_NWIN1 = Keyword('KW_POLAR_LSD_NWIN1', key='', dtype=int,
+                             source=__NAME__)
+
+# define the mode used for norm continuum
+KW_POLAR_LSD_NMODE1 = Keyword('KW_POLAR_LSD_NMODE1', key='', dtype=str,
+                              source=__NAME__)
+
+# define whether a linear fit was used for norm continuum
+KW_POLAR_LSD_NLFIT1 = Keyword('KW_POLAR_LSD_NLFIT1', key='', dtype=bool,
+                              source=__NAME__)
+
+# define the Number of points for LSD profile
+KW_POLAR_LSD_NPOINTS = Keyword('KW_POLAR_LSD_NPOINTS', key='', dtype=int,
+                               source=__NAME__)
+
+# define the bin sized used in profile calc
+KW_POLAR_LSD_NBIN2 = Keyword('KW_POLAR_LSD_NBIN2', key='', dtype=int,
+                             source=__NAME__)
+
+# define the overlap used in profile calc
+KW_POLAR_LSD_NLAP2 = Keyword('KW_POLAR_LSD_NLAP2', key='', dtype=int,
+                             source=__NAME__)
+
+# define the sigma clip used in profile calc
+KW_POLAR_LSD_NSIG2 = Keyword('KW_POLAR_LSD_NSIG2', key='', dtype=float,
+                             source=__NAME__)
+
+# define the window size used in profile calc
+KW_POLAR_LSD_NWIN2 = Keyword('KW_POLAR_LSD_NWIN2', key='', dtype=int,
+                             source=__NAME__)
+
+# define the mode used in profile calc
+KW_POLAR_LSD_NMODE2 = Keyword('KW_POLAR_LSD_NMODE2', key='', dtype=str,
+                              source=__NAME__)
+
+# define whether a linear fit was used in profile calc
+KW_POLAR_LSD_NLFIT2 = Keyword('KW_POLAR_LSD_NLFIT2', key='', dtype=bool,
+                              source=__NAME__)
 
 # =============================================================================
 #  End of configuration file
