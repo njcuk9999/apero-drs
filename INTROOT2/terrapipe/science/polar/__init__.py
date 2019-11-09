@@ -23,11 +23,15 @@ calculate_stokes_i = general.calculate_stokes_i
 
 calculate_continuum = general.calculate_continuum
 
+generate_statistics = general.generate_statistics
+
 lsd_analysis_wrapper = lsd.lsd_analysis_wrapper
 
 validate_polar_files = general.validate_polar_files
 
 quality_control = general.quality_control
+
+write_files = general.write_files
 
 # =============================================================================
 # End of code

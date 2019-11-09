@@ -19,6 +19,8 @@ from terrapipe import locale
 from terrapipe.core import constants
 from terrapipe.core.core import drs_log
 from terrapipe.core.core import drs_file
+from terrapipe.io import drs_table
+from terrapipe.science import extract
 
 # =============================================================================
 # Define variables
@@ -51,29 +53,50 @@ pcheck = core.pcheck
 # Define class
 # =============================================================================
 class PolarObj:
-    def __init__(self, **kwargs):
+    def __init__(self, params, **kwargs):
         self.infile = kwargs.get('infile', None)
         self.fiber = kwargs.get('fiber', 'NOFIBER')
         self.exposure = kwargs.get('exposure', 'NAN')
         self.stoke = kwargs.get('stoke', 'NAN')
         self.sequence = kwargs.get('seqs', 'NAN')
         self.sequencetot = kwargs.get('seqtot', 'NAN')
+        # infile related properties
+        self.data = kwargs.get('data', None)
+        self.filename = kwargs.get('filename', None)
+        self.basename = kwargs.get('basename', None)
+        self.header = kwargs.get('header', None)
+        self.exptime = None
+        self.mjd = None
+        self.mjdend = None
+        self.dprtype = None
+        self.berv = None
+        self.bjd = None
+        self.bervmax = None
         # if infile is set, set data from infile
         if self.infile is not None:
-            self.data = self.infile.data
-            self.filename = self.infile.filename
-            self.basename = self.infile.basename
-            self.header = self.infile.header
-        else:
-            self.data = kwargs.get('data', None)
-            self.filename = kwargs.get('filename', None)
-            self.basename = kwargs.get('basename', None)
-            self.header = kwargs.get('header', None)
+            self._get_properites(params)
         # set name
         self.name = self.__gen_key__()
 
     def __gen_key__(self):
         return '{0}_{1}'.format(self.fiber, self.exposure)
+
+    def _get_properites(self, params):
+        self.data = self.infile.data
+        self.filename = self.infile.filename
+        self.basename = self.infile.basename
+        self.header = self.infile.header
+        # get keys from header
+        self.exptime = self.infile.get_key('KW_EXPTIME', dtype=float)
+        self.mjd = self.infile.get_key('KW_ACQTIME', dtype=float)
+        self.mjdend = self.infile.get_key('KW_MJDEND', dtype=float)
+        self.dprtype = self.infile.get_key('KW_DPRTYPE', dtype=str)
+        # get berv properties
+        bprops = extract.get_berv(params, self.infile, dprtype=self.dprtype)
+        # store berv properties
+        self.berv = bprops['USE_BERV']
+        self.bjd = bprops['USE_BJD']
+        self.bervmax = bprops['USE_BERV_MAX']
 
     def __str__(self):
         return 'PolarObj[{0}]'.format(self.name)
@@ -128,8 +151,8 @@ def validate_polar_files(params, infiles, **kwargs):
         WLOG(params, '', TextEntry('40-021-00001', args=wargs))
         # ------------------------------------------------------------------
         # get polar object for each
-        pobj = PolarObj(infile=infile, fiber=fiber, exposure=exp, stoke=stoke,
-                        seq=seq, seqtot=seqtot)
+        pobj = PolarObj(params, infile=infile, fiber=fiber, exposure=exp,
+                        stoke=stoke, seq=seq, seqtot=seqtot)
         # get name
         name = pobj.name
         # push into storage dictionary
@@ -359,16 +382,16 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
     pprops['FLAT_X'] = flat_x
     pprops['FLAT_POL'] = flat_pol
     pprops['FLAT_POLERR'] = flat_polerr
-    pprops['FLAT_STOKE_I'] = flat_stokes_i
-    pprops['FLAT_STOKE_I_ERR'] = flat_stokes_i_err
+    pprops['FLAT_STOKES_I'] = flat_stokes_i
+    pprops['FLAT_STOKES_I_ERR'] = flat_stokes_i_err
     pprops['FLAT_NULL1'] = flat_null1
     pprops['FLAT_NULL2'] = flat_null2
     pprops['CONT_POL'] = contpol
     pprops['CONT_XBIN'] = xbin
     pprops['CONT_YBIN'] = ybin
     # set sources
-    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKE_I',
-            'FLAT_STOKE_I_ERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
+    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKES_I',
+            'FLAT_STOKES_I_ERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
             'CONT_XBIN', 'CONT_YBIN']
     pprops.set_sources(keys, func_name)
     # add constants
@@ -412,6 +435,320 @@ def quality_control(params):
     # return qc_params
     return qc_params, passed
 
+
+def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
+                polstats, qc_params):
+
+    # use the first file as reference
+    pobj = pobjects['A_1']
+    # get the infile from pobj
+    infile = pobj.infile
+
+    # ----------------------------------------------------------------------
+    # Store pol in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    polfile.construct_filename(params, infile=infile)
+    # define header keys for output file
+    # copy keys from input file
+    polfile.copy_original_keys(infile)
+    # add version
+    polfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    polfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    polfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    polfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    polfile.add_hkey('KW_OUTPUT', value=polfile.name)
+    # add input files
+    polfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
+    # ----------------------------------------------------------------------
+    # add the wavelength solution used
+    polfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    # ----------------------------------------------------------------------
+    # add qc parameters
+    polfile.add_qckeys(qc_params)
+    # ----------------------------------------------------------------------
+    # add the stokes parameters
+    polfile.add_hkey('KW_POL_STOKES', value=pprops['STOKES'])
+    polfile.add_hkey('KW_POL_NEXP', value=pprops['NEXPOSURES'])
+    polfile.add_hkey('KW_POL_METHOD', value=pprops['METHOD'])
+    # ----------------------------------------------------------------------
+    # add polar statistics
+    polfile.add_hkey_1d('KW_POL_FILES', values=polstats['FILES'], 
+                        dim1name='exposure')
+    polfile.add_hkey_1d('KW_POL_EXPS', values=polstats['EXPS'], 
+                        dim1name='exposure')
+    polfile.add_hkey_1d('KW_POL_MJDS', values=polstats['MJDS'], 
+                        dim1name='exposure')
+    polfile.add_hkey_1d('KW_POL_MJDENDS', values=polstats['MJDENDS'], 
+                        dim1name='exposure')
+    polfile.add_hkey_1d('KW_POL_BJDS', values=polstats['BJDS'], 
+                        dim1name='exposure')
+    polfile.add_hkey_1d('KW_POL_BERVS', values=polstats['BERVS'], 
+                        dim1name='exposure')
+    polfile.add_hkey('KW_POL_EXPTIME', value=polstats['TOTAL_EXPTIME'])
+    polfile.add_hkey('KW_POL_ELAPTIME', value=polstats['ELAPSED_TIME'])
+    polfile.add_hkey('KW_POL_MJDCEN', value=polstats['MJD_CEN'])
+    polfile.add_hkey('KW_POL_BJDCEN', value=polstats['BJD_CEN'])
+    polfile.add_hkey('KW_POL_BERVCEN', value=polstats['BERV_CEN'])
+    polfile.add_hkey('KW_POL_MEANBJD', value=polstats['MEAN_BJD'])
+    # update exposure time
+    polfile.add_hkey('KW_EXPTIME', value=polstats['TOTAL_EXPTIME'])
+    # update acqtime
+    # TODO: This should be MJD_MID?
+    polfile.add_hkey('KW_ACQTIME', value=polstats['MJD_CEN'])
+    # update bjd
+    # TODO: This should be either BJD or BJD_EST based on BERVSRCE
+    polfile.add_hkey('KW_BJD', value=polstats['BJD_CEN'])
+    # update berv
+    # TODO: this should be either BERV or BERV_EST based on BERVSRCE
+    polfile.add_hkey('KW_BERV', value=polstats['BERV_CEN'])
+    # update bervmax
+    # TODO: this should be either BERVMAX or BERVMAXEST based on BERVSRCE
+    polfile.add_hkey('KW_BERVMAX', value=polstats['BERVMAX'])
+    # ----------------------------------------------------------------------
+    # add constants
+    polfile.add_hkey('KW_USED_MIN_FILES', value=pprops['MIN_FILES'])
+    polfile.add_hkey_1d('KW_USED_VALID_FIBERS', values=pprops['VALID_FIBERS'],
+                        dim1name='entry')
+    polfile.add_hkey_1d('KW_USED_VALID_STOKES', values=pprops['VALID_STOKES'],
+                        dim1name='entry')
+    polfile.add_hkey('KW_USED_CONT_BINSIZE', value=pprops['CONT_BINSIZE'])
+    polfile.add_hkey('KW_USED_CONT_OVERLAP', value=pprops['CONT_OVERLAP'])
+    # ----------------------------------------------------------------------
+    # set data
+    polfile.data = pprops['POL']
+    # ----------------------------------------------------------------------
+    # log that we are saving pol file
+    WLOG(params, '', TextEntry('40-021-00005', args=[polfile.filename]))
+    # write image to file
+    polfile.write_multi(data_list=[pprops['POLERR']])
+    # add to output files (for indexing)
+    recipe.add_output_file(polfile)
+    
+    # ----------------------------------------------------------------------
+    # Store null1 in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    null1file = recipe.outputs['POL_NULL1'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    null1file.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    null1file.copy_hdict(polfile)
+    # add output tag
+    null1file.add_hkey('KW_OUTPUT', value=null1file.name)
+    # set data
+    null1file.data = pprops['NULL1']
+    # log that we are saving null1 file
+    WLOG(params, '', TextEntry('40-021-00006', args=[null1file.filename]))
+    # write image to file
+    null1file.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(null1file)
+    
+    # ----------------------------------------------------------------------
+    # Store null2 in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    null2file = recipe.outputs['POL_NULL2'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    null2file.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    null2file.copy_hdict(polfile)
+    # add output tag
+    null2file.add_hkey('KW_OUTPUT', value=null2file.name)
+    # set data
+    null2file.data = pprops['NULL2']
+    # log that we are saving null1 file
+    WLOG(params, '', TextEntry('40-021-00007', args=[null2file.filename]))
+    # write image to file
+    null2file.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(null2file)
+
+    # ----------------------------------------------------------------------
+    # Store null2 in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    stokesfile = recipe.outputs['POL_STOKESI'].newcopy(recipe=recipe)
+    # construct the filename from file instance
+    stokesfile.construct_filename(params, infile=infile)
+    # copy header from corrected e2ds file
+    stokesfile.copy_hdict(polfile)
+    # add output tag
+    stokesfile.add_hkey('KW_OUTPUT', value=stokesfile.name)
+    # add the stokes parameters
+    stokesfile.add_hkey('KW_POL_STOKES', value='I')
+    # set data
+    stokesfile.data = pprops['STOKESI']
+    # log that we are saving pol file
+    WLOG(params, '', TextEntry('40-021-00008', args=[stokesfile.filename]))
+    # write image to file
+    stokesfile.write_multi(data_list=[pprops['STOKESIERR']])
+    # add to output files (for indexing)STOKES_I
+    recipe.add_output_file(stokesfile)
+
+    # ----------------------------------------------------------------------
+    # Store lsd file
+    # ----------------------------------------------------------------------
+    if lprops['LSD_ANALYSIS']:
+        # ------------------------------------------------------------------
+        # make lsd table
+        columns = ['velocities', 'stokesI', 'stokesI_model', 'stokesVQU',
+                   'Null']
+        values = [lprops['LSD_VELOCITIES'], lprops['LSD_STOKES_I'],
+                  lprops['LSD_STOKES_I_MODEL'], lprops['LSD_STOKES_VQU'],
+                  lprops['LSD_NULL']]
+        comments = ['LSD_VELOCITIES', 'LSD_STOKESI', 'LSD_STOKESI_MODEL',
+                    'LSD_STOKESVQU', 'LSD_NULL']
+        # construct table
+        lsd_table = drs_table.make_table(params, columns=columns, values=values)
+        # ------------------------------------------------------------------
+        # get a new copy of the pol file
+        lsd_file = recipe.outputs['POL_LSD'].newcopy(recipe=recipe)
+        # construct the filename from file instance
+        lsd_file.construct_filename(params, infile=infile)
+        # copy header from corrected e2ds file
+        lsd_file.copy_hdict(polfile)
+        # add output tag
+        lsd_file.add_hkey('KW_OUTPUT', value=lsd_file.name)
+        # ------------------------------------------------------------------
+        # add lsd data
+        lsd_file.add_hkey('KW_POLAR_LSD_MASK', value=lprops['LSD_MASK'])
+        lsd_file.add_hkey('KW_POLAR_LSD_FIT_RV',
+                          value=lprops['LSD_STOKES_I_FIT_RV'])
+        lsd_file.add_hkey('KW_POLAR_LSD_FIT_RESOL',
+                          value=lprops['LSD_STOKES_FIT_RESOL'])
+        lsd_file.add_hkey('KW_POLAR_LSD_MEANPOL', value=lprops['LSD_POL_MEAN'])
+        lsd_file.add_hkey('KW_POLAR_LSD_STDPOL', value=lprops['LSD_POL_STD'])
+        lsd_file.add_hkey('KW_POLAR_LSD_MEDPOL', value=lprops['LSD_POL_MEDIAN'])
+        lsd_file.add_hkey('KW_POLAR_LSD_MEDABSDEV',
+                          value=lprops['LSD_POL_MED_ABS_DEV'])
+        lsd_file.add_hkey('KW_POLAR_LSD_MEANSVQU',
+                          value=lprops['LSD_STOKES_VQU_MEAN'])
+        lsd_file.add_hkey('KW_POLAR_LSD_STDSVQU',
+                          value=lprops['LSD_STOKES_VQU_STD'])
+        lsd_file.add_hkey('KW_POLAR_LSD_MEANNULL',
+                          value=lprops['LSD_NULL_MEAN'])
+        lsd_file.add_hkey('KW_POLAR_LSD_STDNULL', value=lprops['LSD_NULL_STD'])
+        # add information about the meaning of the data columns
+        lsd_file.add_hkey('KW_POL_LSD_COL1', value=comments[0])
+        lsd_file.add_hkey('KW_POL_LSD_COL2', value=comments[1])
+        lsd_file.add_hkey('KW_POL_LSD_COL3', value=comments[2])
+        lsd_file.add_hkey('KW_POL_LSD_COL4', value=comments[3])
+        lsd_file.add_hkey('KW_POL_LSD_COL5', value=comments[4])
+        # add lsd constants
+        lsd_file.add_hkey('KW_POLAR_LSD_MLDEPTH',
+                          value=lprops['LSD_MIN_LINEDEPTH'])
+        lsd_file.add_hkey('KW_POLAR_LSD_VINIT', value=lprops['LSD_VINIT'])
+        lsd_file.add_hkey('KW_POLAR_LSD_VFINAL', value=lprops['LSD_VFINAL'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NORM', value=lprops['LSD_NORM'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NBIN1', value=lprops['LSD_NBIN1'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NLAP1', value=lprops['LSD_NOVERLAP1'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NSIG1', value=lprops['LSD_NSIGCLIP1'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NWIN1', value=lprops['LSD_NWINDOW1'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NMODE1', value=lprops['LSD_NMODE1'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NLFIT1', value=lprops['LSD_NLFIT1'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NPOINTS', value=lprops['LSD_NPOINTS'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NBIN2', value=lprops['LSD_NBIN2'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NLAP2', value=lprops['LSD_NOVERLAP2'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NSIG2', value=lprops['LSD_NSIGCLIP2'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NWIN2', value=lprops['LSD_NWINDOW2'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NMODE2', value=lprops['LSD_NMODE2'])
+        lsd_file.add_hkey('KW_POLAR_LSD_NLFIT2', value=lprops['LSD_NLFIT2'])
+        # ------------------------------------------------------------------
+        # set data
+        lsd_file.data = lsd_table
+        # update the data type
+        lsd_file.datatype = 'table'
+        # log that we are saving lsd file
+        WLOG(params, '', TextEntry('40-021-00009', args=[lsd_file.filename]))
+        # write image to file
+        lsd_file.write()
+        # add to output files (for indexing)
+        recipe.add_output_file(lsd_file)
+
+
+def generate_statistics(params, pobjects):
+    # set function name
+    func_name = display_func(params, 'sort_polar_outputs', __NAME__)
+    # storage
+    files, exps, mjds, mjdends = [], [], [], []
+    bjds, bervs, bervmaxs = [], [], []
+    # ----------------------------------------------------------------------
+    for key in pobjects:
+        # get this instance
+        pobj = pobjects[key]
+        # only add fiber A files
+        if pobj.fiber == 'A':
+            # add filename
+            files.append(pobj.filename)
+            # add exposure time
+            exps.append(pobj.exptime)
+            # add mj dates
+            mjds.append(pobj.mjd)
+            mjdends.append(pobj.mjdend)
+            # add berv
+            bjds.append(pobj.bjd)
+            bervs.append(pobj.berv)
+            bervmaxs.append(pobj.bervmax)
+    # ----------------------------------------------------------------------
+    # sort by bjd time
+    sort = np.argsort(np.array(bjds))
+    files = np.array(files)[sort]
+    exps = np.array(exps)[sort]
+    mjds = np.array(mjds)[sort]
+    mjdends = np.array(mjdends)[sort]
+    bjds = np.array(bjds)[sort]
+    bervs = np.array(bervs)[sort]
+    bervmaxs = np.array(bervmaxs)[sort]
+    # ----------------------------------------------------------------------
+    # TODO: Review this whole section now we have MID-MJD calculated
+    # work out total exposure time
+    total_exptime = np.sum(exps)
+    # work out elapsed time
+    elapsed_time = 86400.0 * (bjds[-1] - bjds[0]) + exps[-1]
+    # work out mean bjd
+    mean_bjd = mp.nanmean(bjds)
+    # calculate MJD at center of polarimetric sequence
+    mjd_cen = mjds[0] + 0.5 * (mjds[-1] - mjds[0] + exps[-1]/86400.0)
+    # calculate BJD at center of polarimetric sequence
+    bjd_cen = bjds[0] + 0.5 * (bjds[-1] - bjds[0] + exps[-1]/86400.0)
+    # calculate BERV at center by linear interpolation
+    berv_slope = (bervs[-1] - bervs[0]) / (bjds[-1] - bjds[0])
+    berv_intercept = bervs[0] - (berv_slope * bjds[0])
+    berv_cen = berv_intercept + (berv_slope * bjd_cen)
+    # calculate maximum bervmax
+    bervmax = np.max(bervmaxs)
+    # ----------------------------------------------------------------------
+    polstats = ParamDict()
+    
+    polstats['FILES'] = files
+    polstats['EXPS'] = exps
+    polstats['MJDS'] = mjds
+    polstats['MJDENDS'] = mjdends
+    polstats['BJDS'] = bjds
+    polstats['BERVS'] = bervs
+    polstats['BERVMAXS'] = bervmaxs
+    polstats['TOTAL_EXPTIME'] = total_exptime
+    polstats['ELAPSED_TIME'] = elapsed_time
+    polstats['MEAN_BJD'] = mean_bjd
+    polstats['MJD_CEN'] = mjd_cen
+    polstats['BJD_CEN'] = bjd_cen
+    polstats['BERV_CEN'] = berv_cen
+    polstats['BERVMAX'] = bervmax
+    # set source
+    keys = ['FILES', 'EXPS', 'MJDS', 'MJDENDS', 'BJDS', 'BERVS', 
+            'TOTAL_EXPTIME', 'ELAPSED_TIME', 'MEAN_BJD', 'MJD_CEN', 
+            'MJD_CEN', 'BJD_CEN', 'BERV_CEN', 'BERVMAX']
+    polstats.set_sources(keys, func_name)
+    # return pol stats
+    return polstats
+    
 
 # =============================================================================
 # Define worker functions
@@ -635,15 +972,14 @@ def polar_diff_method(params, pobjs, props):
         WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
     # ---------------------------------------------------------------------
     # populate the polar properties
-    pprops = ParamDict()
+    pprops = props.copy()
     pprops['POL'] = pol
     pprops['NULL1'] = null1
     pprops['NULL2'] = null2
     pprops['POLERR'] = pol_err
     pprops['METHOD'] = 'Difference'
-    pprops['NEXPOSURES'] = nexp
     # set sources
-    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD', 'NEXPOSURES']
+    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD']
     pprops.set_sources(keys, func_name)
     # return the properties
     return pprops
@@ -816,15 +1152,14 @@ def polar_ratio_method(params, pobjs, props):
         WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
     # ---------------------------------------------------------------------
     # populate the polar properties
-    pprops = ParamDict()
+    pprops = props.copy()
     pprops['POL'] = pol
     pprops['NULL1'] = null1
     pprops['NULL2'] = null2
     pprops['POLERR'] = pol_err
     pprops['METHOD'] = 'Difference'
-    pprops['NEXPOSURES'] = nexp
     # set sources
-    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD', 'NEXPOSURES']
+    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD']
     pprops.set_sources(keys, func_name)
     # return the properties
     return pprops
