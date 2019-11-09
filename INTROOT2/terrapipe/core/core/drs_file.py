@@ -1508,8 +1508,8 @@ class DrsFitsFile(DrsInputFile):
                 data = mp.nanmedian(datacube, axis=0)
         # else we have an error in math
         else:
-            eargs = [math, available_math, func_name]
-            WLOG(params, 'error', TextEntry('', args=eargs))
+            eargs = [math, ', '.join(available_math), func_name]
+            WLOG(params, 'error', TextEntry('00-001-00042', args=eargs))
         # --------------------------------------------------------------------
         # construct keys for new DrsFitsFile
         # set empty file attributes
@@ -2036,6 +2036,10 @@ class DrsFitsFile(DrsInputFile):
             keyname = test_for_formatting(okey, it)
             # get the value
             value = values[it]
+            # deal with paths (should only contain filename for header)
+            if isinstance(value, str):
+                if os.path.isfile(value):
+                    value = os.path.basename(value)
             # construct the comment name
             comm = '{0} {1}={2}'.format(comment, dim1name, it)
             # add to header dictionary
@@ -2117,6 +2121,10 @@ class DrsFitsFile(DrsInputFile):
                 keyname = test_for_formatting(key, it * dim2 + jt)
                 # get the value
                 value = values[it, jt]
+                # deal with paths (should only contain filename for header)
+                if isinstance(value, str):
+                    if os.path.isfile(value):
+                        value = os.path.basename(value)
                 # construct the comment name
                 cargs = [comment, dim1name, it, dim2name, jt]
                 comm = '{0} {1}={2} {3}={4}'.format(*cargs)
@@ -2275,7 +2283,7 @@ class DrsNpyFile(DrsInputFile):
                 self.data = np.load(self.filename)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
-                WLOG(params, 'error', TextEntry('', args=eargs))
+                WLOG(params, 'error', TextEntry('00-008-00018', args=eargs))
         # cause error if file name is not set
         else:
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
