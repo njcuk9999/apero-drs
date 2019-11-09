@@ -766,6 +766,8 @@ out_file.addset(out_tellu_s1d_bigcube)
 
 # -----------------------------------------------------------------------------
 # ccf
+# -----------------------------------------------------------------------------
+# ccf out file
 out_ccf_fits = drs_finput('CCF_RV', KW_OUTPUT='CCF_RV',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
@@ -778,12 +780,42 @@ out_file.addset(out_ccf_fits)
 
 # -----------------------------------------------------------------------------
 # polarisation
-# TODO: fill in definitions
-# out_pol_deg = drs_finput('DEG_POL', KW_OUTPUT='POL_DEG')
-# out_pol_stokesi = drs_finput('STOKESI_POL', KW_OUTPUT='POL_STOKES_I')
-# out_pol_null1 = drs_finput('NULL_POL1', KW_OUTPUT='POL_NULL_POL1')
-# out_pol_null2 = drs_finput('NULL_POL2', KW_OUTPUT='POL_NULL_POL2')
-# out_pol_lsd = drs_finput('LSD_POL', KW_OUTPUT='POL_LSD')
+# -----------------------------------------------------------------------------
+# pol deg file
+out_pol_deg = drs_finput('POL_DEG', KW_OUTPUT='POL_DEG',
+                         filetype='.fits',
+                         suffix='_pol',
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# stokes i file
+out_pol_stokesi = drs_finput('STOKESI_POL', KW_OUTPUT='POL_STOKES_I',
+                         filetype='.fits',
+                         suffix='_StokesI',
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# null 1 file
+out_pol_null1 = drs_finput('NULL_POL1', KW_OUTPUT='POL_NULL_POL1',
+                         filetype='.fits',
+                         suffix='_null1_pol',
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# null 2 file
+out_pol_null2 = drs_finput('NULL_POL2', KW_OUTPUT='POL_NULL_POL2',
+                         filetype='.fits',
+                         suffix='_null2_pol',
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# lsd file
+out_pol_lsd = drs_finput('LSD_POL', KW_OUTPUT='POL_LSD',
+                         filetype='.fits',
+                         suffix='_lsd_pol',
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
 # -----------------------------------------------------------------------------
 # exposure map
 # TODO: fill in definitions
