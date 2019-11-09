@@ -353,7 +353,7 @@ def load_sp_mask_lsd(params, temperature, **kwargs):
             except Exception as e:
                 # log error
                 eargs = [filename, type(e), e]
-                WLOG(params, 'error', TextEntry('', args=eargs))
+                WLOG(params, 'error', TextEntry('09-021-00009', args=eargs))
         # ------------------------------------------------------------------
         # now we have the temperatures find the closest to the input
         #     temperature
@@ -414,7 +414,6 @@ def load_order_mask(params, **kwargs):
     except LoadException:
         eargs = [filename, relfolder]
         WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
-
 
 
 # =============================================================================
