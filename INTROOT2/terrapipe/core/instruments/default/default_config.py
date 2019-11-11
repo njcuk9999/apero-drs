@@ -105,7 +105,7 @@ DRS_VERSION = Const('DRS_VERSION', value='0.5.100', dtype=str,
 
 # Authors
 AUTHORS = Const('AUTHOR',
-                value=['N. Cook', 'F. Bouchy', 'E. Artigau', 'M. Hobson',
+                value=['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson',
                        'C. Moutou', 'I. Boisse', 'E. Martioli'],
                 dtype=list, dtypei=str, source=__NAME__)
 
