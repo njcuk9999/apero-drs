@@ -838,7 +838,15 @@ obj_pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
                            POL_NULL1=sf.out_pol_null1,
                            POL_NULL2=sf.out_pol_null2,
                            POL_STOKESI=sf.out_pol_stokesi,
-                           POL_LSD=sf.out_pol_lsd)
+                           POL_LSD=sf.out_pol_lsd,
+                           S1DW_POL=sf.out_pol_s1dw,
+                           S1DV_POL=sf.out_pol_s1dv,
+                           S1DW_NULL1=sf.out_null1_s1dw,
+                           S1DV_NULL1=sf.out_null1_s1dv,
+                           S1DW_NULL2=sf.out_null2_s1dw,
+                           S1DV_NULL2=sf.out_null2_s1dv,
+                           S1DW_STOKESI=sf.out_stokesi_s1dw,
+                           S1DV_STOKESI=sf.out_stokesi_s1dv)
 obj_pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
                                'POLAR_STOKES_I', 'POLAR_LSD')
 obj_pol_spirou.set_arg(pos=0, **directory)

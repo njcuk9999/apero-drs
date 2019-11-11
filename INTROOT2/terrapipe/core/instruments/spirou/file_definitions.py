@@ -816,6 +816,54 @@ out_pol_lsd = drs_finput('LSD_POL', KW_OUTPUT='POL_LSD',
                          intype=[out_ext_e2dsff, out_tellu_obj],
                          outfunc=out.general_file)
 
+# pol s1d files
+out_pol_s1dw = drs_finput('S1DW_POL', KW_OUTPUT='S1DW_POL',
+                         filetype='.fits',
+                         suffix='_s1d_w_pol', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+out_pol_s1dv = drs_finput('S1DV_POL', KW_OUTPUT='S1DV_POL',
+                         filetype='.fits',
+                         suffix='_s1d_v_pol', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# null1 s1d files
+out_null1_s1dw = drs_finput('S1DW_NULL1', KW_OUTPUT='S1DW_NULL1',
+                         filetype='.fits',
+                         suffix='_s1d_w_null1', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+out_null1_s1dv = drs_finput('S1DV_NULL1', KW_OUTPUT='S1DV_NULL1',
+                         filetype='.fits',
+                         suffix='_s1d_v_null1', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# null2 s1d files
+out_null2_s1dw = drs_finput('S1DW_NULL2', KW_OUTPUT='S1DW_NULL1',
+                         filetype='.fits',
+                         suffix='_s1d_w_null2', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+out_null2_s1dv = drs_finput('S1DV_NULL2', KW_OUTPUT='S1DV_NULL2',
+                         filetype='.fits',
+                         suffix='_s1d_v_null2', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
+# stokes I s1d files
+out_stokesi_s1dw = drs_finput('S1DW_STOKESI', KW_OUTPUT='S1DW_STOKESI',
+                         filetype='.fits',
+                         suffix='_s1d_w_stokesi', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+out_stokesi_s1dv = drs_finput('S1DV_STOKESI', KW_OUTPUT='S1DV_STOKESI',
+                         filetype='.fits',
+                         suffix='_s1d_v_stokesi', remove_insuffix=True,
+                         intype=[out_ext_e2dsff, out_tellu_obj],
+                         outfunc=out.general_file)
+
 # -----------------------------------------------------------------------------
 # exposure map
 # TODO: fill in definitions
