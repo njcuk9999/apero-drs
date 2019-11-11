@@ -1033,7 +1033,7 @@
 "40-021-00007","ALL","prints that we are saving null2 file","{0} = filename","Saving NULL2 file: {0}","",""
 "40-021-00008","ALL","prints that we are saving stokes I file","{0} = filename","Saving Stokes I file: {0}","",""
 "40-021-00009","ALL","prints that we are saving lsd file","{0} = filename","Saving LSD file: {0}","",""
-"40-021-00010","ALL","","","","",""
+"40-021-00010","ALL","prints that we are saving the s1d to file","{0} = kind; {1} = filename","Saving S1D {0} to file: {1}","",""
 "40-021-00011","ALL","","","","",""
 "","","","","","",""
 "","","","","","",""
