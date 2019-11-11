@@ -15,6 +15,7 @@ import sys
 import os
 import glob
 from tqdm import tqdm
+import argparse
 
 
 # =============================================================================
@@ -40,7 +41,7 @@ RDEST = 'cpapir@genesis.astro.umontreal.ca:/home/cpapir/www/per_object/'
 
 # object to be retrieved
 
-def dispatch_object(obj='Gl436'):
+def dispatch_object(obj='Gl436', write=True):
     # path on MAESTRIA in the SPIROU account
     if INPUT_DIR.endswith(os.sep):
         path = INPUT_DIR
@@ -73,11 +74,11 @@ def dispatch_object(obj='Gl436'):
     for it in range(len(tbl)):
         odometer = tbl['FILE'][it].split('.')[0]
         date = tbl['DATE'][it]
-
         cmd = 'cp {0}/{1}/{2}*.fits {3}/'
         cmd = cmd.format(path, date, odometer, destination)
         print(it, '/', len(tbl), ' ', cmd)
-        os.system(cmd)
+        if write:
+            os.system(cmd)
         # append odometer
         odometers.append(odometer)
 
@@ -85,11 +86,12 @@ def dispatch_object(obj='Gl436'):
     timestamp = timestamp.replace(' ', '').split('.')[0]
 
     tarname = '{0}_{1}.tar'.format(obj, timestamp)
-    os.system('tar -cvf ' + tarname + ' ' + obj + '/* ')
-
+    if write:
+        os.system('tar -cvf ' + tarname + ' ' + obj + '/* ')
 
     rsync_cmd = 'rsync -av -e "ssh -oport=5822" {0} {1}'
-    rsync_cmd = rsync_cmd.format(tarname, RDEST)
+    if write:
+        rsync_cmd = rsync_cmd.format(tarname, RDEST)
 
     os.system(rsync_cmd)
 
@@ -121,13 +123,17 @@ def analysis(path, odocodes):
     return types
 
 
-def dispatch_objects(objs):
+def dispatch_objects(objs, write=True):
     # storage of columns
     object_dict = dict()
     # loop around objects and add
     for obj in objs:
+        # log progress
+        print('='*50)
+        print('Processing object {0}'.format(obj))
+        print('=' * 50)
         # dispatch objects
-        path, odocodes = dispatch_object(obj=obj)
+        path, odocodes = dispatch_object(obj=obj, write=write)
         # analysis for table
         types = analysis(path, odocodes)
         # append to object dict
@@ -135,22 +141,32 @@ def dispatch_objects(objs):
     # tidy up and save to table
     columns = []
     # get columns
+    print('=' * 50)
+    print('Getting columns')
+    print('=' * 50)
+    # loop around object_dict
     for obj in object_dict:
         for col in (object_dict[obj].keys()):
             if col not in columns:
                 columns.append(col)
     # now make table dict
+    print('=' * 50)
+    print('Constructing table')
+    print('=' * 50)
     tabledict = dict()
     tabledict['name'] = list(object_dict.keys())
     # loop around columns and add values
     for col in columns:
-        tabledict[col] = []
+        # new col name
+        newcol = col.replace('_', '').replace('pp', '').replace('.fits', '')
+        # create new column
+        tabledict[newcol] = []
         # all all objects
         for obj in object_dict:
             if col in object_dict[obj]:
-                tabledict[col] = object_dict[obj][col]
+                tabledict[newcol].append(object_dict[obj][col])
             else:
-                tabledict[col] = 0
+                tabledict[newcol].append(0)
     # convert to table
     outtable = Table()
     for col in tabledict:
@@ -171,19 +187,28 @@ def dispatch_objects(objs):
 # Main code here
 if __name__ == "__main__":
     # get command line arguments
-    args = sys.argv
-    # deal with no arguments
-    if len(args) == 1:
-        print('Please specify object argument(s)')
+    parser = argparse.ArgumentParser(description='Create batch object outputs')
+
+
+    helpmsg = ('object to dispatch (if left blank does the following: '
+               '{0}'.format(' '.join(STORED_OBJECTS)))
+    parser.add_argument('--objects', dest='objects', type=str,
+                        default='all', help=helpmsg, nargs='+')
+    parser.add_argument('--write', dest='write', type=bool,
+                        default=False, help='Whether to write/copy/tar objs')
+    args = parser.parse_args()
+
+    if args.write in [True, 'True', 1, '1']:
+        args.write = True
+    else:
+        args.write = False
+
     # deal with 'all' as argument
-    elif args[1] == 'all':
-        dispatch_objects(STORED_OBJECTS)
-    # if one object just do one dispatch
-    elif len(args) == 2:
-        dispatch_object(sys.argv[1])
+    if 'all' in args.objects:
+        dispatch_objects(STORED_OBJECTS, write=args.write)
     # else assume we have multiple arguments
     else:
-        dispatch_objects(sys.argv[1:])
+        dispatch_objects(args.objects)
 
 
 
