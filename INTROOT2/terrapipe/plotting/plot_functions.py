@@ -1620,7 +1620,7 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     flux = kwargs['flux']
     weight = kwargs['weight']
     kind = kwargs['kind']
-    fiber = kwargs['fiber']
+    fiber = kwargs.get('fiber', None)
     stype = kwargs['stype']
     # get zoom in parameters from params
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
@@ -1654,15 +1654,20 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
         frame.set_xlim(lowerbound, upperbound)
         # set the ylabel
         frame.set_ylabel('Flux')
+        # deal with fiber string
+        if fiber is None:
+            fiberstr = ''
+        else:
+            fiberstr = 'fiber={0} '.format(fiber)
         # if first row plot title
         if row == 0:
             if stype is not None:
                 title = ('Producing the 1D spectrum for {0} '
-                         '(before and after with weights) fiber={1} grid={2}')
+                         '(before and after with weights) {1}grid={2}')
             else:
                 title = ('Producing the 1D spectrum '
-                         '(before and after with weights) fiber={1} grid={2}')
-            frame.set_title(title.format(stype, fiber, kind))
+                         '(before and after with weights) {1}grid={2}')
+            frame.set_title(title.format(stype, fiberstr, kind))
         # if last row then plot x label
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
