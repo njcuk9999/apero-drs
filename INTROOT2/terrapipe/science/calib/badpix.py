@@ -304,6 +304,12 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
     # deal with no image (when return map is False)
     if (not return_map) and (image is None):
         WLOG(params, 'error', TextEntry('00-012-00003', args=[func_name]))
+
+    # get loco file instance
+    badinst = core.get_file_definition('BADPIX', params['INSTRUMENT'],
+                                       kind='red')
+    # get calibration key
+    badkey = badinst.get_dbkey(func=func_name)
     # -------------------------------------------------------------------------
     # get filename
     if filename is not None:
@@ -314,7 +320,7 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
         # get filename col
         filecol = cdb.file_col
         # get the badpix entries
-        badpixentries = drs_database.get_key_from_db(params, 'BADPIX', cdb,
+        badpixentries = drs_database.get_key_from_db(params, badkey, cdb,
                                                      header, n_ent=1)
         # get badpix filename
         badpixfilename = badpixentries[filecol][0]
