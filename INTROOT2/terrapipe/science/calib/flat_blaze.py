@@ -173,28 +173,40 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     return e2ds, flat, blaze, rms
 
 
-def get_flat(params, header, fiber):
+def get_flat(params, header, fiber, filename=None):
     # get file definition
-    out_shape_dymap = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
-                                               kind='red')
+    out_flat = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
+                                        kind='red')
     # get key
-    key = out_shape_dymap.get_dbkey(fiber=fiber)
+    key = out_flat.get_dbkey(fiber=fiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'FLATFILE', key, header,
+                                       filename)
+    # ------------------------------------------------------------------------
     # load calib file
-    flat, flat_file = general.load_calib_file(params, key, header)
+    flat, flat_file = general.load_calib_file(params, key, header,
+                                              filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
     # return the master image
     return flat_file, flat
 
 
-def get_blaze(params, header, fiber):
+def get_blaze(params, header, fiber, filename=None):
     # get file definition
-    out_shape_dymap = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
-                                               kind='red')
+    out_blaze = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
+                                         kind='red')
     # get key
-    key = out_shape_dymap.get_dbkey(fiber=fiber)
+    key = out_blaze.get_dbkey(fiber=fiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'BLAZEFILE', key, header,
+                                       filename)
+    # ------------------------------------------------------------------------
     # load calib file
-    blaze, blaze_file = general.load_calib_file(params, key, header)
+    blaze, blaze_file = general.load_calib_file(params, key, header,
+                                              filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-015-00007', args=[blaze_file]))
     # return the master image
