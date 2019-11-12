@@ -537,13 +537,16 @@ def get_coefficients(params, recipe, header, fiber, **kwargs):
     filename = kwargs.get('filename', None)
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'LOCOFILE', filename)
     # -------------------------------------------------------------------------
     # get loco file instance
     locofile = core.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
                                         kind='red')
+    # get calibration key
+    key = locofile.get_dbkey(func=func_name, fiber=usefiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'LOCOFILE', key, header,
+                                       filename)
     # ------------------------------------------------------------------------
     # get loco filename
     if filename is not None:
@@ -554,8 +557,6 @@ def get_coefficients(params, recipe, header, fiber, **kwargs):
         # get filename col
         filecol = cdb.file_col
 
-        # get calibration key
-        key = locofile.get_dbkey(func=func_name, fiber=usefiber)
         # get the badpix entries
         locoentries = drs_database.get_key_from_db(params, key, cdb, header,
                                                    n_ent=1)
