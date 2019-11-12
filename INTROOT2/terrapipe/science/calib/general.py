@@ -117,16 +117,31 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     cleanhotpix = kwargs.get('cleanhotpix', True)
     n_percentile = kwargs.get('n_percentile', None)
 
-    # get user input arguments
-    darkfile = get_input_files(params, 'DARKFILE', None)
-    badpixfile = get_input_files(params, 'BADPIXFILE', None)
-    backfile = get_input_files(params, 'BACKFILE', None)
-
     # get image and header
     if image is None:
         image = np.array(infile.data)
     if header is None:
         header = infile.header
+
+    # -------------------------------------------------------------------------
+    # get loco file instance
+    darkinst = core.get_file_definition('DARKM', params['INSTRUMENT'],
+                                        kind='red')
+    badinst = core.get_file_definition('BADPIX', params['INSTRUMENT'],
+                                        kind='red')
+    backinst = core.get_file_definition('BKGRD_MAP', params['INSTRUMENT'],
+                                        kind='red')
+
+    # get calibration key
+    darkkey = darkinst.get_dbkey(func=func_name)
+    badkey = badinst.get_dbkey(func=func_name)
+    backkey = backinst.get_dbkey(func=func_name)
+
+    # get user input arguments
+    darkfile = get_input_files(params, 'DARKFILE', darkkey, header, None)
+    badpixfile = get_input_files(params, 'BADPIXFILE', badkey, header, None)
+    backfile = get_input_files(params, 'BACKFILE', backkey, header, None)
+
     # Get basic image properties
     sigdet = infile.get_key('KW_RDNOISE')
     exptime = infile.get_key('KW_EXPTIME')
@@ -276,7 +291,8 @@ def add_calibs_to_header(outfile, props):
 
 
 def load_calib_file(params, key=None, inheader=None, filename=None,
-                    get_image=True, get_header=False, **kwargs):
+                    get_image=True, get_header=False,
+                    return_filename=False, **kwargs):
     func_name = kwargs.get('func', __NAME__ + '.load_calib_file()')
     # get keys from params/kwargs
     n_entries = kwargs.get('n_entries', 1)
@@ -293,6 +309,10 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
     if filename is not None:
         # get db fits file
         abspath = drs_database.get_db_abspath(params, filename, where='guess')
+        # if we just want the filename return it
+        if return_filename:
+            return abspath
+        # load file
         image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
                                                  get_image, get_header)
         # return here
@@ -323,13 +343,26 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
                                               where='calibration')
         # append to storage
         abspaths.append(abspath)
-        # load image/header
-        image, header = drs_database.get_db_file(params, abspath, ext, fmt, kind,
-                                                 get_image, get_header)
-        # append to storage
-        images.append(image)
-        # append to storage
-        headers.append(header)
+
+        # deal with loading the file
+        if not return_filename:
+            # load image/header
+            image, header = drs_database.get_db_file(params, abspath, ext,
+                                                     fmt, kind, get_image,
+                                                     get_header)
+            # append to storage
+            images.append(image)
+            # append to storage
+            headers.append(header)
+    # ----------------------------------------------------------------------
+    # deal with just a file return
+    if return_filename:
+        if not required and len(abspaths) == 0:
+            return None
+        if n_entries == 1:
+            return abspaths[-1]
+        else:
+            return abspaths
     # ----------------------------------------------------------------------
     # deal with returns with and without header
     if get_header:
@@ -363,14 +396,22 @@ def clean_strings(strings):
         return outstrings
 
 
-def get_input_files(params, inputkey, default=None):
+def get_input_files(params, inputkey, key, header, default=None):
     # check for input key in inputs
     if inputkey in params['INPUTS']:
         value = params['INPUTS'][inputkey]
         # if it is unset or 'None' then return the default
         if value is None or value == 'None':
             return default
-        # else return the value
+        # else check that path exists
+        elif not os.path.exists(value):
+            # try to load from value (using the calibdb path)
+            filename = load_calib_file(params, key, header, filename=value,
+                                       return_filename=True, required=False)
+            # deal with filename not existing
+            if filename is None or not os.path.exists(filename):
+                eargs = [inputkey, value]
+                WLOG(params, 'error', TextEntry('09-001-00031', args=eargs))
         else:
             return value
     # if we don't have the value return the default
