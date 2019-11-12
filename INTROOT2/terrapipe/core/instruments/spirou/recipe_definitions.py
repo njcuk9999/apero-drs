@@ -848,7 +848,9 @@ obj_pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
                            S1DW_STOKESI=sf.out_stokesi_s1dw,
                            S1DV_STOKESI=sf.out_stokesi_s1dv)
 obj_pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
-                               'POLAR_STOKES_I', 'POLAR_LSD')
+                               'POLAR_STOKES_I', 'POLAR_LSD',
+                               'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+obj_pol_spirou.set_summary_plots('SUM_EXTRACT_S1D')
 obj_pol_spirou.set_arg(pos=0, **directory)
 obj_pol_spirou.set_arg(name='files', dtype='files', pos='1+',
                        files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
