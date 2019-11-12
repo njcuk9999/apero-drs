@@ -121,14 +121,14 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     func_name = __NAME__ + '.get_wavesolution()'
     # get parameters from params/kwargs
     filename = kwargs.get('filename', None)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'WAVEFILE', filename)
-    # ------------------------------------------------------------------------
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
                    func_name)
+
+
+    # ------------------------------------------------------------------------
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
+
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
@@ -140,6 +140,12 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # get calibration key
     key_fp = out_wave_fp.get_dbkey(fiber=usefiber)
     key_hc = out_wave_hc.get_dbkey(fiber=usefiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'WAVEFILE', key_fp, filename)
+    # then check hc solution (if we don't have an fp solution filename
+    if filename is None:
+        filename = general.get_input_files(params, 'WAVEFILE', key_hc, filename)
     # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
