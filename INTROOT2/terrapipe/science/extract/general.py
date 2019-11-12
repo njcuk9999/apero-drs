@@ -372,7 +372,7 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     return corrected_image
 
 
-def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber, wgrid='wave',
+def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
                 kind=None, **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p

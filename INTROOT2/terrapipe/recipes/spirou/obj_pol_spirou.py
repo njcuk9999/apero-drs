@@ -33,7 +33,9 @@ import numpy as np
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
+from terrapipe.science.calib import flat_blaze
 from terrapipe.science.calib import wave
+from terrapipe.science import extract
 from terrapipe.science import polar
 
 
@@ -139,6 +141,11 @@ def __main__(recipe, params):
     wprops = wave.get_wavesolution(params, recipe, fiber=pobj.fiber,
                                    infile=pobj.infile)
     # ----------------------------------------------------------------------
+    # load the blaze file for this fiber
+    # ----------------------------------------------------------------------
+    blaze_file, blaze = flat_blaze.get_blaze(params, fiber=pobj.fiber,
+                                             header=pobj.infile.header)
+    # ----------------------------------------------------------------------
     # polarimetry computation
     # ----------------------------------------------------------------------
     pprops = polar.calculate_polarimetry(params, pobjects, props)
@@ -154,12 +161,37 @@ def __main__(recipe, params):
     # LSD Analysis
     # ---------------------------------------------------------------------
     lprops = polar.lsd_analysis_wrapper(params, pobjects, pprops, wprops)
+
+
+    # ----------------------------------------------------------------------
+    # Create 1d soectra (s1d) of all products [pol, null1, null2, stokesi]
+    # ----------------------------------------------------------------------
+    # store s1d props
+    s1dprops = dict()
+    # loop around the s1d files
+    for s1dfile in ['POL', 'NULL1', 'NULL2', 'STOKESI']:
+        # loop around s1d grids
+        for grid in ['wave', 'velocity']:
+            # compute s1d
+            sargs = [wprops['WAVEMAP'], pprops[s1dfile], blaze]
+            sprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid=grid,
+                                         kind=s1dfile)
+            # store s1d
+            skey = 'S1D{0}_{1}'.format(grid[0].upper(), s1dfile)
+            s1dprops[skey] = sprops
+            # ------------------------------------------------------------------
+            # plot only for wave grid
+            if grid == 'wave':
+                # plot the debug plot
+                recipe.plot('EXTRACT_S1D', params=params, props=sprops,
+                            fiber=None, kind=s1dfile)
+                # plot the summary plot
+                recipe.plot('SUM_EXTRACT_S1D', params=params, props=sprops,
+                            fiber=None, kind=s1dfile)
+
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
-
     # plot continuum plots
     recipe.plot('POLAR_CONTINUUM', props=pprops)
     # plot polarimetry results
@@ -179,7 +211,7 @@ def __main__(recipe, params):
     # Store polarimetry in files
     # ------------------------------------------------------------------
     polar.write_files(params, recipe, pobjects, rawfiles, pprops, lprops,
-                      wprops, polstats, qc_params)
+                      wprops, polstats, s1dprops, qc_params)
 
     # ----------------------------------------------------------------------
     # End of main code
