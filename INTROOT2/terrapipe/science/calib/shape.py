@@ -1091,15 +1091,16 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
 
 
 def get_master_fp(params, header, filename=None):
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'FPMASTER', filename)
-    # ------------------------------------------------------------------------
     # get file definition
     out_fpmaster = core.get_file_definition('MASTER_FP', params['INSTRUMENT'],
                                             kind='red')
     # get key
     key = out_fpmaster.dbkey
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'FPMASTER', key, header,
+                                       filename)
+    # ------------------------------------------------------------------------
     # load calib file
     fpmaster, fpmaster_file = general.load_calib_file(params, key, header,
                                                       filename=filename)
@@ -1110,15 +1111,15 @@ def get_master_fp(params, header, filename=None):
 
 
 def get_shapex(params, header, filename=None):
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'SHAPEX', filename)
-    # ------------------------------------------------------------------------
     # get file definition
     out_shape_dxmap = core.get_file_definition('SHAPE_X', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_dxmap.dbkey
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'SHAPEX', key, header, filename)
+    # ------------------------------------------------------------------------
     # load calib file
     dxmap, shapex_file = general.load_calib_file(params, key, header,
                                                  filename=filename)
@@ -1129,15 +1130,15 @@ def get_shapex(params, header, filename=None):
 
 
 def get_shapey(params, header, filename=None):
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'SHAPEY', filename)
-    # ------------------------------------------------------------------------
     # get file definition
     out_shape_dymap = core.get_file_definition('SHAPE_Y', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_dymap.dbkey
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'SHAPEY', key, header, filename)
+    # ------------------------------------------------------------------------
     # load calib file
     dymap, shapey_file = general.load_calib_file(params, key, header,
                                                  filename=filename)
@@ -1148,15 +1149,15 @@ def get_shapey(params, header, filename=None):
 
 
 def get_shapelocal(params, header, filename=None):
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'SHAPEL', filename)
-    # ------------------------------------------------------------------------
     # get file definition
     out_shape_local = core.get_file_definition('SHAPEL', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_local.dbkey
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'SHAPEL', key, header, filename)
+    # ------------------------------------------------------------------------
     # load calib file
     shapel, shapel_file = general.load_calib_file(params, key, header,
                                                   filename=filename)
