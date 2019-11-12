@@ -82,16 +82,14 @@ backfile = dict(name='--backfile', dtype='file', default='None',
 badfile = dict(name='--badpixfile', dtype='file', default='None',
                files=[sf.out_badpix], helpstr=Help['BADFILE_HELP'])
 # -----------------------------------------------------------------------------
-# TODO: Need to add blaze
-# blazefile = dict(name='--blazefile', dtype='file', default='None',
-#                  files=[sf.out_ff_blaze], helpstr=Help['BLAZEFILE_HELP'])
+blazefile = dict(name='--blazefile', dtype='file', default='None',
+                 files=[sf.out_ff_blaze], helpstr=Help['BLAZEFILE_HELP'])
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
                 files=[sf.out_dark], helpstr=Help['DARKFILE_HELP'])
 # -----------------------------------------------------------------------------
-# TODO: Need to add flat
-# flatfile = dict(name='--flatfile', dtype='file', default='None',
-#                 files=[sf.out_ff_flat], helpstr=Help['FLATFILE_HELP'])
+flatfile = dict(name='--flatfile', dtype='file', default='None',
+                files=[sf.out_ff_flat], helpstr=Help['FLATFILE_HELP'])
 # -----------------------------------------------------------------------------
 fpmaster = dict(name='--fpmaster', dtype='file', default='None',
                 files=[sf.out_shape_fpmaster],
@@ -112,10 +110,9 @@ shapeyfile = dict(name='--shapey', dtype='file', default='None',
 shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[sf.out_shape_local], helpstr=Help['SHAPELFILE_HELP'])
 # -----------------------------------------------------------------------------
-# TODO: Need to add thermal
-# thermalfile = dict(name='--thermal', dtype='file', default='None',
-#                    files=[sf.out_thermal_e2ds],
-#                    helpstr=Help['THERMALFILE_HELP'])
+thermalfile = dict(name='--thermal', dtype='file', default='None',
+                   files=[sf.out_thermal_e2ds],
+                   helpstr=Help['THERMALFILE_HELP'])
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
                 files=[sf.out_wave_hc, sf.out_wave_fp, sf.out_wave_master],
@@ -546,6 +543,7 @@ cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
 cal_extract.set_kwarg(**badfile)
 cal_extract.set_kwarg(**dobad)
 cal_extract.set_kwarg(**backsub)
+cal_extract.set_kwarg(**blazefile)
 cal_extract.set_kwarg(default=False, **combine)
 cal_extract.set_kwarg(**objname)
 cal_extract.set_kwarg(**dprtype)
@@ -554,6 +552,7 @@ cal_extract.set_kwarg(**dodark)
 cal_extract.set_kwarg(**fiber)
 cal_extract.set_kwarg(**flipimage)
 cal_extract.set_kwarg(**fluxunits)
+cal_extract.set_kwarg(**flatfile)
 cal_extract.set_kwarg(**locofile)
 cal_extract.set_kwarg(**orderpfile)
 cal_extract.set_kwarg(**plot)
@@ -561,6 +560,7 @@ cal_extract.set_kwarg(**resize)
 cal_extract.set_kwarg(**shapexfile)
 cal_extract.set_kwarg(**shapeyfile)
 cal_extract.set_kwarg(**shapelfile)
+cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
@@ -607,6 +607,7 @@ cal_wave.set_kwarg(**add_db)
 cal_wave.set_kwarg(**badfile)
 cal_wave.set_kwarg(**dobad)
 cal_wave.set_kwarg(**backsub)
+cal_wave.set_kwarg(**blazefile)
 cal_wave.set_kwarg(default=True, **combine)
 cal_wave.set_kwarg(**darkfile)
 cal_wave.set_kwarg(**dodark)
@@ -667,6 +668,7 @@ cal_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
 cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
                   helpstr=Help['CCF_STEP_HELP'])
 cal_ccf.set_kwarg(**add_db)
+cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
@@ -691,6 +693,7 @@ obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      helpstr=Help['FILES_HELP'] + Help['MKTELL_FILES_HELP'],
                      limit=1)
 obj_mk_tellu.set_kwarg(**add_db)
+obj_mk_tellu.set_kwarg(**blazefile)
 obj_mk_tellu.set_kwarg(**plot)
 obj_mk_tellu.set_kwarg(**wavefile)
 
@@ -719,7 +722,7 @@ obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
                           helpstr=Help['MKTELLDB_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
 obj_mk_tellu_db.set_kwarg(**add_db)
-obj_mk_tellu_db.set_kwarg(**add_db)
+obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
 obj_mk_tellu_db.set_kwarg(**wavefile)
 
@@ -754,6 +757,7 @@ obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                       limit=1)
 obj_fit_tellu.set_kwarg(**add_db)
+obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**wavefile)
 
@@ -819,6 +823,7 @@ obj_mk_template.set_kwarg(name='-fiber', dtype=str,
                           helpstr=Help['MKTEMP_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
 obj_mk_template.set_kwarg(**add_db)
+obj_mk_template.set_kwarg(**blazefile)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
 
@@ -856,7 +861,9 @@ obj_pol_spirou.set_arg(name='files', dtype='files', pos='1+',
                        files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
                        helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                        limit=1)
+obj_pol_spirou.set_kwarg(**blazefile)
 obj_pol_spirou.set_kwarg(**plot)
+obj_pol_spirou.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_exposure_meter
