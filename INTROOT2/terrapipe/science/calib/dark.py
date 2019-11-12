@@ -611,15 +611,23 @@ def get_dark_file(params, header, **kwargs):
     comptype = pcheck(params, 'CALIB_DB_MATCH', 'comptype', kwargs, func_name)
     # create the text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+
+    # get loco file instance
+    darkinst = core.get_file_definition('DARKM', params['INSTRUMENT'],
+                                        kind='red')
+    skyinst = core.get_file_definition('SKY', params['INSTRUMENT'], kind='red')
+    # get calibration key
+    darkkey = darkinst.get_dbkey(func=func_name)
+    skykey = skyinst.get_dbkey(func=func_name)
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col
     filecol, timecol = cdb.file_col, cdb.time_col
     # get the dark entries
-    darkentries = drs_database.get_key_from_db(params, 'DARKM', cdb, header,
+    darkentries = drs_database.get_key_from_db(params, darkkey, cdb, header,
                                                n_ent=1, required=False)
     # get the sky entries
-    skyentries = drs_database.get_key_from_db(params, 'SKYDARK', cdb, header,
+    skyentries = drs_database.get_key_from_db(params, skykey, cdb, header,
                                               n_ent=1, required=False)
     # get the time used from header
     usetime = drs_database.get_header_time(params, cdb, header)
@@ -651,15 +659,15 @@ def get_dark_file(params, header, **kwargs):
         # find closest to obs time
         pos = np.argmin(abs(np.array([skytime, darktime]) - usetime))
         if pos == 0:
-            use_file, use_type = str(skydarkfile), 'SKY'
+            use_file, use_type = str(skydarkfile), skykey
         else:
-            use_file, use_type = str(darkfile),  'DARKM'
+            use_file, use_type = str(darkfile),  darkkey
     # else if we only have sky
     elif use_sky and cond1:
-        use_file, use_type = str(skydarkfile), 'SKY'
+        use_file, use_type = str(skydarkfile), skykey
     # else if only have a dark
     elif cond2:
-        use_file, use_type = str(darkfile), 'DARKM'
+        use_file, use_type = str(darkfile), darkkey
     # else we don't have either --> error
     else:
         # deal with extra constrain on file from "closer/older"
