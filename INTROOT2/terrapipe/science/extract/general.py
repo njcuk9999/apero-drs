@@ -224,6 +224,11 @@ def get_thermal(params, header, fiber, filename=None):
                                            kind='red')
     # get key
     key = out_thermal.get_dbkey(fiber=fiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'THERMAL', key, header,
+                                       filename)
+    # ------------------------------------------------------------------------
     # load calib file
     thermal, thermal_file = general.load_calib_file(params, key, header,
                                                     filename=filename)
