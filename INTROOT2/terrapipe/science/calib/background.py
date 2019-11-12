@@ -174,13 +174,18 @@ def correction(recipe, params, infile, image, header, return_map=False,
         local_background_correction = scattered_light / amp_ker
         # correct the image for local background
         image1 = image - local_background_correction
+        # get file instance
+        backinst = core.get_file_definition('BKGRD_MAP', params['INSTRUMENT'],
+                                            kind='red')
+        # get calibration key
+        backkey = backinst.get_dbkey(func=func_name)
         # --------------------------------------------------------------------
         # get filename
         if filename is not None:
             bkgrdfile = filename
         else:
             # get background entries
-            bkgrdentries = drs_database.get_key_from_db(params, 'BKGRDMAP', cdb,
+            bkgrdentries = drs_database.get_key_from_db(params, backkey, cdb,
                                                         header, n_ent=1)
             # get background map filename
             bkgrdfilename = bkgrdentries[filecol][0]
