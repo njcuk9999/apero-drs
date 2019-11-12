@@ -437,7 +437,7 @@ def quality_control(params):
 
 
 def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
-                polstats, qc_params):
+                polstats, s1dprops, qc_params):
 
     # use the first file as reference
     pobj = pobjects['A_1']
@@ -591,6 +591,30 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     stokesfile.write_multi(data_list=[pprops['STOKESIERR']])
     # add to output files (for indexing)STOKES_I
     recipe.add_output_file(stokesfile)
+
+    # ----------------------------------------------------------------------
+    # Store s1d files
+    # ----------------------------------------------------------------------
+    for s1dkey in s1dprops:
+        # get a new copy of the pol file
+        s1dfile = recipe.outputs[s1dkey].newcopy(recipe=recipe)
+        # construct the filename from file instance
+        s1dfile.construct_filename(params, infile=infile)
+        # copy header from corrected e2ds file
+        s1dfile.copy_hdict(polfile)
+        # add output tag
+        s1dfile.add_hkey('KW_OUTPUT', value=s1dfile.name)
+        # copy data
+        s1dfile.data = s1dprops[s1dkey]['S1DTABLE']
+        # must change the datatpye to 'table'
+        s1dfile.datatype = 'table'
+        # log that we are saving s1d table
+        wargs = [s1dkey, s1dfile.filename]
+        WLOG(params, '', TextEntry('40-021-00010', args=wargs))
+        # write image to file
+        s1dfile.write()
+        # add to output files (for indexing)
+        recipe.add_output_file(s1dfile)
 
     # ----------------------------------------------------------------------
     # Store lsd file
