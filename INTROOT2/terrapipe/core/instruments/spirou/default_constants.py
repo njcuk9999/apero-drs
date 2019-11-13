@@ -297,20 +297,11 @@ HISTO_RANGE_LOW.value = -0.2
 HISTO_RANGE_HIGH = HISTO_RANGE_HIGH.copy(__NAME__)
 HISTO_RANGE_HIGH.value = 0.8
 
-#    Define whether to use SKYDARK for dark corrections
-USE_SKYDARK_CORRECTION = USE_SKYDARK_CORRECTION.copy(__NAME__)
-USE_SKYDARK_CORRECTION.value = False
-
-#    If use_skydark_correction is True define whether we use
-#       the SKYDARK only or use SKYDARK/DARK (whichever is closest)
-USE_SKYDARK_ONLY = USE_SKYDARK_ONLY.copy(__NAME__)
-USE_SKYDARK_ONLY.value = False
-
 #    Define the allowed DPRTYPES for finding files for DARK_MASTER will
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
-ALLOWED_DARK_TYPES.value = 'DARK_DARK'
+ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
@@ -898,6 +889,11 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
 THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
 THERMAL_ALWAYS_EXTRACT.value = True
 
+# define the type of file to use for wave solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+THERMAL_EXTRACT_TYPE = THERMAL_EXTRACT_TYPE.copy(__NAME__)
+THERMAL_EXTRACT_TYPE.value = 'E2DSFF'
+
 # define DPRTYPEs we need to correct thermal background using
 #    telluric absorption (TAPAS)  (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE1 = THERMAL_CORRETION_TYPE1.copy(__NAME__)
@@ -906,7 +902,7 @@ THERMAL_CORRETION_TYPE1.value = 'OBJ'
 # define DPRTYPEs we need to correct thermal background using
 #     method 2 (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
-THERMAL_CORRETION_TYPE2.value = 'FP, HC'
+THERMAL_CORRETION_TYPE2.value = 'FP, HC, FLAT'
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
