@@ -107,8 +107,8 @@ __all__ = [
     'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
     'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2',
     # thermal constants
-    'THERMAL_ALWAYS_EXTRACT', 'THERMAL_CORRETION_TYPE1',
-    'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
+    'THERMAL_CORRECT', 'THERMAL_ALWAYS_EXTRACT', 'THERMAL_EXTRACT_TYPE',
+    'THERMAL_CORRETION_TYPE1', 'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
     'THERMAL_FILTER_WID', 'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
     'THERMAL_PLOT_START_ORDER',
@@ -1109,9 +1109,18 @@ EXTRACT_S1D_PLOT_ZOOM2 = Const('EXTRACT_S1D_PLOT_ZOOM2', value=None,
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
+# whether to apply the thermal correction to extractions
+THERMAL_CORRECT = Const('THERMAL_CORRECT', value=None, dtype=bool,
+                        source=__NAME__)
+
 # define whether to always extract thermals (i.e. overwrite existing files)
 THERMAL_ALWAYS_EXTRACT = Const('THERMAL_ALWAYS_EXTRACT', value=None,
                                dtype=bool, source=__NAME__)
+
+# define the type of file to use for wave solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+THERMAL_EXTRACT_TYPE = Const('THERMAL_EXTRACT_TYPE', value=None, dtype=str,
+                             source=__NAME__)
 
 # define DPRTYPEs we need to correct thermal background using
 #  telluric absorption (TAPAS)
