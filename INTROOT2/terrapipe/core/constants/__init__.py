@@ -68,6 +68,9 @@ update_file = constant_functions.update_file
 # generate a drs breakpoint
 breakpoint = param_functions.breakpoint
 
+catch_sigint = param_functions.catch_sigint
+
+
 # =============================================================================
 # End of code
 # =============================================================================

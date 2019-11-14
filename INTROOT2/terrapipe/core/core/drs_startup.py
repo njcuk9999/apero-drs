@@ -15,7 +15,7 @@ from astropy.time import Time
 import traceback
 import sys
 import os
-import shutil
+from signal import signal, SIGINT
 from collections import OrderedDict
 
 from terrapipe.locale import drs_text
@@ -100,6 +100,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     :rtype: tuple[DrsRecipe, ParamDict]
     """
     func_name = __NAME__ + '.setup()'
+    # catch sigint
+    signal(SIGINT, constants.catch_sigint)
     # deal with unset instrument
     if instrument == 'None':
         instrument = None
