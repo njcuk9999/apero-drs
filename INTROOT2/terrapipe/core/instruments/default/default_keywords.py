@@ -10,9 +10,9 @@ __all__ = [# input keys
            'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
            'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS',
            'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
-           'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX',
-           'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP', 'KW_HUMIDITY', 'KW_GAIA_ID',
-           'KW_INPUTRV', 'KW_OBJ_TEMP',
+           'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
+           'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
+           'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
            'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -188,6 +188,12 @@ KW_CCAS = Keyword('KW_CCAS', key='', dtype=str, source=__NAME__)
 
 # define the reference fiber type HEADER key
 KW_CREF = Keyword('KW_CREF', key='', dtype=str, source=__NAME__)
+
+# define the calibration wheel position
+KW_CALIBWH = Keyword('KW_CALIBWH', key='', dtype=str, source=__NAME__)
+
+# define the target type (object/sky)
+KW_TARGET_TYPE = Keyword('KW_TARGET_TYPE', key='', dtype=str, source=__NAME__)
 
 # define the density HEADER key
 KW_CDEN = Keyword('KW_CDEN', key='', dtype=str, source=__NAME__)

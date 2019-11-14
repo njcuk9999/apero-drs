@@ -60,6 +60,14 @@ KW_CCAS.set(key='SBCCAS_P')
 KW_CREF = KW_CREF.copy(__NAME__)
 KW_CREF.set(key='SBCREF_P')
 
+# define the calibration wheel position
+KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
+KW_CALIBWH.set(key='SBCALI_P')
+
+# define the target type (object/sky)
+KW_TARGET_TYPE = KW_TARGET_TYPE.copy(__NAME__)
+KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object')
+
 # define the density HEADER key
 KW_CDEN = KW_CDEN.copy(__NAME__)
 KW_CDEN.set(key='SBCDEN_P')
