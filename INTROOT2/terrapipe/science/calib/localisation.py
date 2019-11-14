@@ -628,7 +628,7 @@ def load_orderp(params, header, fiber, filename=None):
 # write files and qc functions
 # =============================================================================
 def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
-                        mean_rms_cent, mean_rms_wid, rorder_num):
+                        mean_rms_cent, mean_rms_wid, rorder_num, cent_fits):
 
     # set function name
     func_name = display_func(params, 'localisation_quality_control', __NAME__)
@@ -717,6 +717,24 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     qc_values.append(rorder_num)
     qc_names.append('rorder_num')
     qc_logic.append('rorder_num != {0}'.format(required_norders))
+    # ------------------------------------------------------------------
+    # all positions in any pixel column should be positive
+    #   (i.e. one order should not cross another)
+    # find the difference between every order for every column
+    diff = np.diff(cent_fits, axis=0)
+    negative_diff = np.min(diff) < 0
+    # if any value is negative QC fails
+    if negative_diff:
+        # add failed message to fail message list
+        fargs = [' ']
+        fail_msg.append(textdict['40-013-00027'].format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(negative_diff)
+    qc_names.append('YCENT')
+    qc_logic.append('min(diff(YCENT)) < 0')
     # ------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #    quality control QC = 0 if we fail quality control
