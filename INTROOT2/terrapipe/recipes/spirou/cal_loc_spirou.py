@@ -209,7 +209,8 @@ def __main__(recipe, params):
         # Quality control
         # ------------------------------------------------------------------
         qargs = [fiber, cent_max_rmpts, wid_max_rmpts, mean_rms_cent,
-                 mean_rms_wid, rorder_num]
+                 mean_rms_wid, rorder_num, center_fits]
+
         qc_params, passed = localisation.loc_quality_control(params, *qargs)
 
         # ------------------------------------------------------------------
