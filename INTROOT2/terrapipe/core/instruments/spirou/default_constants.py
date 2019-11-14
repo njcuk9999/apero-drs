@@ -1655,6 +1655,11 @@ CCF_MASK_MIN_WEIGHT.value = 0.0
 CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
 CCF_MASK_WIDTH.value = 1.7
 
+#  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
+#     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
+CCF_MAX_CCF_WID_STEP_RATIO = CCF_MAX_CCF_WID_STEP_RATIO.copy(__NAME__)
+CCF_MAX_CCF_WID_STEP_RATIO.value = 10.0
+
 # Define the width of the CCF range [km/s]
 CCF_DEFAULT_WIDTH = CCF_DEFAULT_WIDTH.copy(__NAME__)
 CCF_DEFAULT_WIDTH.value = 300.0

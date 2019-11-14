@@ -186,6 +186,7 @@ __all__ = [
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
+    'CCF_MAX_CCF_WID_STEP_RATIO',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
@@ -1871,6 +1872,11 @@ CCF_MASK_MIN_WEIGHT = Const('CCF_MASK_MIN_WEIGHT', value=None, dtype=float,
 #  Define the width of the template line (if 0 use natural)
 CCF_MASK_WIDTH = Const('CCF_MASK_WIDTH', value=None, dtype=float,
                        source=__NAME__, minimum=0.0)
+
+#  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
+#     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
+CCF_MAX_CCF_WID_STEP_RATIO = Const('CCF_MAX_CCF_WID_STEP_RATIO', value=None,
+                                   dtype=float, source=__NAME__, minimum=1.0)
 
 # Define the width of the CCF range [km/s]
 CCF_DEFAULT_WIDTH = Const('CCF_DEFAULT_WIDTH', value=None, dtype=float,
