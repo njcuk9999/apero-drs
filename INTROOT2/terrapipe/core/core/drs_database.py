@@ -515,7 +515,7 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None):
     hdict, header = _get_hdict(params, dbname, outfile)
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, dbname, hdict)
+    header_time = _get_time(params, dbname, header, hdict)
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey)
@@ -549,7 +549,7 @@ def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None):
     hdict, header = _get_hdict(params, dbname, outfile)
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, dbname, hdict, header)
+    header_time = _get_time(params, dbname, header, hdict)
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey)
@@ -613,10 +613,10 @@ def _get_dbshort(params, dbname):
 def _get_hdict(params, dbname, outfile):
     func_name = __NAME__ + '._get_hdict()'
     # get hdict
-    if hasattr(outfile, 'hdict'):
+    if hasattr(outfile, 'hdict') and len(list(outfile.hdict.keys())) != 0:
         hdict = outfile.hdict
         header = None
-    elif hasattr(outfile, 'header'):
+    elif hasattr(outfile, 'header') and len(list(outfile.header.keys())) != 0:
         hdict = None
         header = outfile.header
     else:
@@ -691,7 +691,7 @@ def _copy_db_file(params, dbname, inpath, outpath):
     drs_lock.close_lock_file(params, lock2, lock_file2, outpath)
 
 
-def _get_time(params, dbname, hdict=None, header=None, kind=None):
+def _get_time(params, dbname, header=None, hdict=None, kind=None):
     func_name = __NAME__ + '._get_time()'
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
