@@ -53,6 +53,8 @@ pp_file = drs_finput('DRS_PP', ext='pp.fits')
 # =============================================================================
 # generic out file
 out_file = drs_finput('DRS_OUTPUT')
+calib_file = drs_finput('DRS_OUTPUT')
+
 
 # =============================================================================
 # End of code
