@@ -1033,6 +1033,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add output tag
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
+    wavefile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawhcfiles
@@ -4083,6 +4084,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wavefile.copy_hdict(hcwavefile)
     # set output key
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
+    wavefile.add_hkey('KW_FIBER', value=fiber)
     # add input hc files (and deal with combining or not combining)
     if combine:
         hfiles = rawhcfiles

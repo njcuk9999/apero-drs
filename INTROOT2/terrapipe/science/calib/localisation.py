@@ -821,6 +821,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     loco1file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add output tag
     loco1file.add_hkey('KW_OUTPUT', value=loco1file.name)
+    loco1file.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
