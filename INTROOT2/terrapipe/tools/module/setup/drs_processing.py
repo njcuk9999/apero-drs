@@ -31,6 +31,7 @@ from terrapipe.io import drs_path
 from terrapipe.io import drs_fits
 from terrapipe.tools.module.setup import drs_reset
 from terrapipe.science import telluric
+from terrapipe.science import preprocessing
 
 # =============================================================================
 # Define variables
@@ -1418,22 +1419,12 @@ def _get_files(params, recipe, path, rpath, **kwargs):
             if filename.endswith('.fits') and not rfound:
                 # read the header
                 header = drs_fits.read_header(params, abspath)
+                # fix the headers
+                header = preprocessing.fix_header(params, recipe, header)
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
-                    # need to work out mid exposure time (this comes from pp)
-                    if key == 'KW_MID_OBS_TIME':
-                        # get mid obstime as astropy.Time object
-                        value, _ = drs_fits.get_mid_obs_time(params, header)
-                        # append to list (as float)
-                        kwargs[key].append(value.mjd)
-                    # need to work out dprtpye (this comes from pp)
-                    elif key == 'KW_DPRTYPE':
-                        # get DPRTYPE (have to calculate it here)
-                        value = drs_fits.get_dprtype(recipe, header)
-                        # append string value to list
-                        kwargs[key].append(value)
-                    elif rkey in header:
+                    if rkey in header:
                         kwargs[key].append(header[rkey])
                     else:
                         kwargs[key].append('')
