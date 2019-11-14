@@ -768,12 +768,12 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # loop around every order
     recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
                 y=props['CCF'], yfit=props['CCF_FIT'], kind='SCIENCE',
-                found_rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
+                rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
                 y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
-                found_rv=ccf_rv, ccfmask=ccfmask,
+                rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
     # ------------------------------------------------------------------
     # return property dictionary
