@@ -36,9 +36,10 @@ drs_changelog = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 reprocess = drs_recipe(__INSTRUMENT__)
+remake_cbd = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, reprocess, listing]
+recipes = [test, drs_changelog, reset, reprocess, remake_cbd, listing]
 
 # =============================================================================
 # Recipe definitions
@@ -140,9 +141,18 @@ listing.name = 'listing.py'
 listing.instrument = __INSTRUMENT__
 listing.description = 'None'
 listing.set_arg(pos=0, name='instrument', dtype='options',
-                  helpstr='None', options=['SPIROU', 'NIRPS'])
+                helpstr='None', options=['SPIROU', 'NIRPS'])
 listing.set_kwarg(name='--nightname', dtype=str, default='',
-                    helpstr='None')
+                  helpstr='None')
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
-                    options=['raw', 'tmp', 'red'],
-                    helpstr='None')
+                  options=['raw', 'tmp', 'red'],
+                  helpstr='None')
+
+# -----------------------------------------------------------------------------
+# remake_calibdb.py
+# -----------------------------------------------------------------------------
+remake_cbd.name = 'remake_calibdb.py'
+remake_cbd.instrument = __INSTRUMENT__
+remake_cbd.description = 'None'
+remake_cbd.set_arg(pos=0, name='instrument', dtype='options',
+                   helpstr='None', options=['SPIROU', 'NIRPS'])
