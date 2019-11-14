@@ -717,6 +717,9 @@ class DrsFitsFile(DrsInputFile):
             self.check_recipe()
         else:
             self.recipe = kwargs['recipe']
+        # must check recipe of drsfile
+        if drsfile.recipe is None:
+            drsfile.recipe = self.recipe
         # get parameters
         params = self.recipe.drs_params
         # set function name
@@ -781,6 +784,10 @@ class DrsFitsFile(DrsInputFile):
         cond3, msg3 = self.has_correct_hkeys()
         if not cond3:
             return False, msg3
+
+        # 4. check if we have a fiber defined
+        self.has_fiber()
+
         # if 1, 2 and 3 pass return True
         return True, None
 
@@ -933,6 +940,46 @@ class DrsFitsFile(DrsInputFile):
             errors[key] = (found, argname, rvalue, value)
         # return found (bool) and errors
         return found, errors
+
+    def has_fiber(self, header=None):
+        # -----------------------------------------------------------------
+        # check whether fiber already set (in which case ignore)
+        if self.fiber is not None:
+            return
+        # -----------------------------------------------------------------
+        # check recipe has been set
+        self.check_recipe()
+        # deal with no input header
+        if header is None:
+            # check file has been read
+            self.check_read(header_only=True, load=True)
+            # get header
+            header = self.header
+        # get recipe and parameters
+        params = self.recipe.drs_params
+        # -----------------------------------------------------------------
+        kw_fiber = params['KW_FIBER'][0]
+        # -----------------------------------------------------------------
+        # deal with fiber
+        if kw_fiber in self.header:
+            fiber = header[kw_fiber]
+        # TODO: remove elif when fiber is always in header if file
+        # TODO:     has a fiber
+        # TODO: START OF REMOVE ------------------------------------------------
+        elif 'AB' in self.basename.split('_')[-1]:
+            fiber = 'AB'
+        elif 'A' in self.basename.split('_')[-1]:
+            fiber = 'A'
+        elif 'B' in self.basename.split('_')[-1]:
+            fiber = 'B'
+        elif 'C' in self.basename.split('_')[-1]:
+            fiber = 'C'
+        # TODO: END OF REMOVE --------------------------------------------------
+        else:
+            fiber = None
+        # update fiber value
+        if fiber is not None:
+            self.fiber = fiber
 
     # -------------------------------------------------------------------------
     # table checking
