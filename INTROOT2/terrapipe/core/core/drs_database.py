@@ -519,11 +519,11 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     header_time = _get_time(params, dbname, header, hdict)
     # ----------------------------------------------------------------------
     # get properties for database
-    key = str(dbkey)
-    nightname = night
-    filename = outfile.basename
-    human_time = str(header_time.iso).replace(' ', '_')
-    unix_time = str(header_time.unix)
+    key = str(dbkey).strip()
+    nightname = str(night).strip()
+    filename = str(outfile.basename).strip()
+    human_time = str(header_time.iso).replace(' ', '_').strip()
+    unix_time = str(header_time.unix).strip()
     # ----------------------------------------------------------------------
     # push into list
     largs = [key, nightname, filename, human_time, unix_time]
@@ -554,11 +554,11 @@ def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
     header_time = _get_time(params, dbname, header, hdict)
     # ----------------------------------------------------------------------
     # get properties for database
-    key = str(dbkey)
-    nightname = night
-    filename = outfile.basename
-    human_time = str(header_time.iso).replace(' ', '_')
-    unix_time = str(header_time.unix)
+    key = str(dbkey).strip()
+    nightname = str(night).strip()
+    filename = str(outfile.basename).strip()
+    human_time = str(header_time.iso).replace(' ', '_').strip()
+    unix_time = str(header_time.unix).strip()
     # ----------------------------------------------------------------------
     # push into list
     largs = [key, nightname, filename, human_time, unix_time, objname]
