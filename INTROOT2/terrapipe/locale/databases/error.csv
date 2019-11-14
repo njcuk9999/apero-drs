@@ -649,6 +649,8 @@
 "10-020-00001","WARNING","Means that an all NaN array was found when trying to fit the CCF","{0} = order number","All NaN slice found when fitting CCF (Order = {0}). Returning NaNs instead of fit.","",""
 "10-020-00002","WARNING","Means that we found NaNs and need to replace the NaNs by something","None","NaNs found in image. Replacing NaNs with values smoothed by kernel.","",""
 "10-020-00003","WARNING","Means that the reference wave solution did not match the science wave solution in time","{0} = reference wave time; {1} = science wave time; {2} = reference wave file; {3} = science wave file","Reference wave solution time did not match science wave solution time. Using science wave solution for reference fiber. \n\t Reference wave time = {0}   science wave time = {1} \n\t Reference wave file: {2} \n\t Science wave file: {3}","",""
+"10-020-00004","WARNING","Means that whole order is full of NaNS so CCF will be NaN","{0} = order number","Order {0} has no finite values. CCF set to NaNs.","",""
+"10-020-00005","WARNING","Means that the CCF had NaNs in","{0} = order number","Order {0} CCF generated a non-finite value. CCF set to NaNs.","",""
 "","","","","","",""
 "","","","","","",""
 "10-021-00000","WARNING","User Polarimetry Warning","None","","",""
