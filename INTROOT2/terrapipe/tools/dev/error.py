@@ -19,6 +19,10 @@ from tqdm import tqdm
 import warnings
 
 
+# TODO: This code should do the following
+# TODO:     Load up the error finder
+# TODO:     Allow to add error
+
 # =============================================================================
 # Define variables
 # =============================================================================
