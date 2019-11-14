@@ -12,7 +12,10 @@ from __future__ import division
 
 from terrapipe.core import constants
 from terrapipe import core
-from terrapipe import locale
+from terrapipe.core.core import drs_file
+from terrapipe.core.core import drs_recipe
+from terrapipe.locale import drs_text
+
 
 # =============================================================================
 # Define variables
@@ -30,16 +33,16 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 # get param dict
 ParamDict = constants.ParamDict
-DrsFitsFile = core.core.drs_file.DrsFitsFile
-DrsRecipe = core.core.drs_recipe.DrsRecipe
+DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = drs_text.TextEntry
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_infile_id(params, given_drs_file):
+def drs_infile_id(params, recipe, given_drs_file):
     """
     Given a generic drs file (i.e. "raw_file") -- must have a fileset --
     identifies which sub-file (from fileset) this file is (based on
@@ -68,9 +71,11 @@ def drs_infile_id(params, given_drs_file):
     kind = given_drs_file.completecopy(given_drs_file)
     # loop around files
     for drs_file in fileset:
+        # debug
+        dargs = [str(drs_file)]
+        WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
         # copy info from given_drs_file into drs_file
-        file_in = drs_file.copyother(given_drs_file,
-                                     recipe=given_drs_file.recipe)
+        file_in = drs_file.copyother(given_drs_file, recipe=recipe)
         # check this file is valid
         cond, _ = file_in.check_file()
         # if True we have found our file
@@ -139,8 +144,34 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     return found, kind
 
 
+def fix_header(params, infile=None, header=None, **kwargs):
+    """
+    Instrument specific header fixes are define in pseudo_const.py for an
+    instrument and called here (function in pseudo_const.py is HEADER_FIXES)
+    :param params:
+    :param infile:
+    :return:
+    """
+    # deal with no header
+    if header is None:
+        header = infile.header
+        has_infile = True
+    else:
+        has_infile = False
 
+    # load pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # use pseudo constant to apply any header fixes required (specific to
+    #   a specific instrument) and update the header
+    header = pconst.HEADER_FIXES(params=params, header=header, **kwargs)
 
+    if has_infile:
+        # return the updated infile
+        infile.header = header
+        return infile.header
+    else:
+        # else return the header
+        return infile
 
 
 # =============================================================================
