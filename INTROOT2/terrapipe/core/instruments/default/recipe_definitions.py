@@ -36,10 +36,10 @@ drs_changelog = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 reprocess = drs_recipe(__INSTRUMENT__)
-remake_cbd = drs_recipe(__INSTRUMENT__)
+remake_db = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, reprocess, remake_cbd, listing]
+recipes = [test, drs_changelog, reset, reprocess, remake_db, listing]
 
 # =============================================================================
 # Recipe definitions
@@ -138,21 +138,27 @@ reprocess.set_kwarg(name='--filename', dtype=str, default='None',
 # listing.py
 # -----------------------------------------------------------------------------
 listing.name = 'listing.py'
-listing.instrument = __INSTRUMENT__
-listing.description = 'None'
+listing.instrument = Help['LISTING_DESC']
+listing.description = 'Remakes index files'
 listing.set_arg(pos=0, name='instrument', dtype='options',
-                helpstr='None', options=['SPIROU', 'NIRPS'])
+                helpstr=Help['LISTING_HELP_INSTRUMENT'],
+                options=['SPIROU', 'NIRPS'])
 listing.set_kwarg(name='--nightname', dtype=str, default='',
-                  helpstr='None')
+                  helpstr=Help['LISTING_HELP_NIGHTNAME'])
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   options=['raw', 'tmp', 'red'],
-                  helpstr='None')
+                  helpstr=Help['LISTING_HELP_KIND'])
 
 # -----------------------------------------------------------------------------
-# remake_calibdb.py
+# remake_db.py
 # -----------------------------------------------------------------------------
-remake_cbd.name = 'remake_calibdb.py'
-remake_cbd.instrument = __INSTRUMENT__
-remake_cbd.description = 'None'
-remake_cbd.set_arg(pos=0, name='instrument', dtype='options',
-                   helpstr='None', options=['SPIROU', 'NIRPS'])
+remake_db.name = 'remake_db.py'
+remake_db.instrument = __INSTRUMENT__
+remake_db.description = Help['REMAKE_DESC']
+remake_db.set_arg(pos=0, name='instrument', dtype='options',
+                   helpstr=Help['REMAKE_HELP_INSTRUMENT'],
+                  options=['SPIROU', 'NIRPS'])
+remake_db.set_kwarg(name='--kind', dtype='options',
+                  options=['calibration', 'telluric'],
+                  default_ref='REMAKE_DATABASE_DEFAULT',
+                  helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
