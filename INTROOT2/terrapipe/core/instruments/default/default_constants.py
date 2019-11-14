@@ -2333,6 +2333,11 @@ REPROCESS_SEQCOL = Const('REPROCESS_SEQCOL', value=None, dtype=str,
 REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
                           source=__NAME__)
 
+# define the default database to remake
+REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
+                                dtype=str, source=__NAME__)
+
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================
