@@ -157,6 +157,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                        func_name, mapf='list', dtype=str)
 
     thermal_file = kwargs.get('thermal_file', None)
+    thermal_correct = pcheck(params, 'THERMAL_CORRECT', 'thermal_correct',
+                             kwargs, func_name)
     # ----------------------------------------------------------------------
     # get pconstant from p
     pconst = constants.pload(params['INSTRUMENT'])
@@ -170,21 +172,41 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
     # get the wave solution
     wavemap = wprops['WAVEMAP']
+
+    # ----------------------------------------------------------------------
+    # deal with skipping thermal correction
+    if not thermal_correct:
+        # add / update eprops
+        eprops['E2DS'] = e2ds
+        eprops['E2DSFF'] = e2dsff
+        eprops['FIBERTYPE'] = fibertype
+        eprops['THERMALFILE'] = 'None'
+        # update source
+        keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE']
+        eprops.set_sources(keys, func_name)
+        # return eprops
+        return eprops
     # ----------------------------------------------------------------------
     # get thermal (only if in one of the correction lists)
-    if fibertype in list(corrtype1) + list(corrtype2):
+    if fibertype in corrtype1:
         thermalfile, thermal = get_thermal(params, header, fiber=fiber,
-                                           filename=thermal_file)
-        # ----------------------------------------------------------------------
-        # thermal correction kwargs
-        tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
-                       tapas_thres=tapas_thres, envelope=envelope,
-                       filter_wid=filter_wid, torder=torder,
-                       red_limit=red_limt, blue_limit=blue_limit,
-                       thermal=thermal)
+                                           filename=thermal_file,
+                                           kind='THERMALT_E2DS')
+    elif fibertype in corrtype2:
+        thermalfile, thermal = get_thermal(params, header, fiber=fiber,
+                                           filename=thermal_file,
+                                           kind='THERMALI_E2DS')
     else:
-        tkwargs = dict()
+        thermal = None
         thermalfile = 'None'
+    # ----------------------------------------------------------------------
+    # thermal correction kwargs
+    tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
+                   tapas_thres=tapas_thres, envelope=envelope,
+                   filter_wid=filter_wid, torder=torder,
+                   red_limit=red_limt, blue_limit=blue_limit,
+                   thermal=thermal)
+
     # base thermal correction on fiber type
     if fibertype in corrtype1:
         # log progress: doing thermal correction
@@ -203,7 +225,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     else:
         # log that we are not correcting thermal
         WLOG(params, 'info', TextEntry('40-016-00013', args=[fibertype]))
-
         thermalfile = 'None'
     # ----------------------------------------------------------------------
     # add / update eprops
@@ -218,9 +239,9 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     return eprops
 
 
-def get_thermal(params, header, fiber, filename=None):
+def get_thermal(params, header, fiber, kind, filename=None):
     # get file definition
-    out_thermal = core.get_file_definition('THERMAL_E2DS', params['INSTRUMENT'],
+    out_thermal = core.get_file_definition(kind, params['INSTRUMENT'],
                                            kind='red')
     # get key
     key = out_thermal.get_dbkey(fiber=fiber)
@@ -250,7 +271,8 @@ def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
     # deal with no thermal
     if thermal is None:
         # get thermal
-        _, thermal = get_thermal(params, header, fiber=fiber)
+        _, thermal = get_thermal(params, header, fiber=fiber,
+                                 kind='THERMALT_E2DS')
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
@@ -320,7 +342,8 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     # deal with no thermal
     if thermal is None:
         # get thermal
-        _, thermal = get_thermal(params, header, fiber=fiber)
+        _, thermal = get_thermal(params, header, fiber=fiber,
+                                 kind='THERMALI_E2DS')
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:

@@ -137,6 +137,19 @@ def __main__(recipe, params):
         eargs = [params, recipe, EXTRACT_NAME, infile]
         thermal_files = extractother.extract_thermal_files(*eargs)
 
+        # TODO: deal with sky darks here
+
+        # ------------------------------------------------------------------
+        # Write thermal files to file
+        # ------------------------------------------------------------------
+        # loop around fiber types
+        for fiber in fiber_types:
+            # log that we are writing thermal files to file
+            wargs = [thermal_files[fiber].filename]
+            WLOG(params, '', TextEntry('', args=wargs))
+            # write thermal files
+            thermal_files[fiber].write()
+
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
