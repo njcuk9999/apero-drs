@@ -111,11 +111,16 @@ def __main__(recipe, params):
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
+        # Fix the spirou header
+        # ------------------------------------------------------------------
+        # certain keys may not be in some spirou files
+        file_instance = preprocessing.fix_header(params, recipe, file_instance)
+        # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = preprocessing.drs_infile_id(params, file_instance)
-
+        cond, infile = preprocessing.drs_infile_id(params, recipe,
+                                                   file_instance)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
