@@ -2,6 +2,291 @@ Changelog
 =========
 
 
+0.5.115 (2019-11-14)
+--------------------
+- Update language database. [Neil Cook]
+- Science.velocity.general.py - add break point to test crash. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Io.drs_lock.py - add way to get out of lock loop (Ctrl + C) will now
+  delete file - elsewise Ctrl + C goes to debugger (and then exits)
+  [Neil Cook]
+- Core.core.drs_database.py - deal with not having a night name. [Neil
+  Cook]
+- Core.core.drs_database.py - make sure all strings are stripped of
+  whitespaces (before and after) [Neil Cook]
+- Add new ccf mask. [Neil Cook]
+- Rename error.py --> language_db.py. [Neil Cook]
+- Tools.bin.remake_db.py -fix db_time. [Neil Cook]
+- Tools.bin.remake_db.py - do not open all files at once (save to master
+  one by one) [Neil Cook]
+- Tools.modeul.setup.drs_reset.py - split reset_dbdir to allow accessing
+  copy_default_db. [Neil Cook]
+- Tools.dev.error.py - add a TODO here. [Neil Cook]
+- Tools.bin.remake_db.py - add code to remake databases. [Neil Cook]
+- Science.preprocessing.py - replace drs_infile_id with call to
+  fits.drs_fits. [Neil Cook]
+- Science.extract.general.py - add fiber. [Neil Cook]
+- Science.calib.flat_blaze.py + localisation + wave - add fiber to
+  outputs. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py - add id_drs_file to identify any filename in a
+  drs_file_set (and return its DrsInputFile/DrsFitsFile instance) [Neil
+  Cook]
+- Core.instruments.default.recipe_definitions.py - add remake_db
+  (generalised remake_cdb) [Neil Cook]
+- Core.instruments.default.default_constants.py -
+  remake_database_default. [Neil Cook]
+- Core.instruments.spirou.pseudo_const.py - pep8 clean up. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add remake_cdb recipe
+  definition. [Neil Cook]
+- Core.instruments.*.file_definitions.py - add calib_file set and clean
+  up (pep8 wise) [Neil Cook]
+- Core.core.drs_file.py - check if drsfile has recipe (and if not set it
+  to self.recipe) [Neil Cook]
+- Core.core.drs_database.py - make _get_time more specific to using
+  header/hdict. [Neil Cook]
+- Core.instrument.spirou.default_constants.py - change to gl581. [Neil
+  Cook]
+- Science.velocity.general.py - correct plot keyword found_rv --> rv.
+  [Neil Cook]
+
+
+0.5.114 (2019-11-14)
+--------------------
+- Science.preprocessing.identification - add the fix_headers wrapper
+  (passes it to instrument pseudo constants) + add a debug in id process
+  to show which drs file we are currently looking at. [Neil Cook]
+- Tools.module.setup.drs_processing - add header keys via fix_header
+  (non-instrument specific) [Neil Cook]
+- Science.calib.dark.py - make sure get dark is getting dark master only
+  (dark master is DARK_DARK_TEL by default) [Neil Cook]
+- Cal_thermal_spirou.py - deal with different types of darks (OBJ -->
+  dark_tel, HC,FP--> dark_int) + add switch to turn off thermal
+  correction. [Neil Cook]
+- Recipe.spirou.cal_loc_spirou.py - add center_fits to qc (diff of order
+  cols must be positive) [Neil Cook]
+- Recipe.spirou.cal_preprocessing.py - add fix_header to fix keys before
+  drs_infile_id. [Neil Cook]
+- Io.drs_fits.py - change get_mid_obs_time assuming it is now always
+  present in header. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.file_definitions + recipe_definitions - split
+  dark_dark in to dark_dark_int, dark_dark_tel, dark_dark_sky. [Neil
+  Cook]
+- Core.instruments.*.pseudo_const.py - add HEADER_FIXES (to control
+  instrument specific header fixes required) [Neil Cook]
+- Core.instruments.*.default_keywords.py - add calibwh and target_type
+  keywords. [Neil Cook]
+- Core.core.drs_file.py - fix how we check read before copying. [Neil
+  Cook]
+- Core.instruments.*.default_constants.py - remove skydark references
+  and update references to DARK_DARK --> DARK_DARK_INT, DARK_DARK_TEL,
+  DARK_DARK_SKY. [Neil Cook]
+
+
+0.5.113 (2019-11-12)
+--------------------
+- Core.instruments.spirou.recipe_defintions.py - add blazefile, flatfile
+  and thermal file arguments to required recipes. [Neil Cook]
+- Science.calib.flat_blaze.py - allow user to set flat and blaze file.
+  [Neil Cook]
+- Calib.general.py - allow user defined thermal file to come from
+  calibDB. [Neil Cook]
+- Calib.general.py - allow user defined file to come from calibDB. [Neil
+  Cook]
+- Calib.wave.py - allow user defined file to come from calibDB. [Neil
+  Cook]
+- Calib.shape.py - allow user defined file to come from calibDB. [Neil
+  Cook]
+- Calib.localisation.py - allow user defined file to come from calibDB.
+  [Neil Cook]
+- Calib.dark.py - allow user defined file to come from calibDB. [Neil
+  Cook]
+- Calib.badpix.py - allow user defined file to come from calibDB. [Neil
+  Cook]
+- Calib.background.py - allow user defined file to come from calibDB.
+  [Neil Cook]
+
+
+0.5.112 (2019-11-12)
+--------------------
+- Recipes/spirou/obj_pol_spirou.py and science/polar/general.py - add
+  polar s1d (calculation, file writing and plotting) [Neil Cook]
+- Core.instruments.spirou.py - add s1d plotting. [Neil Cook]
+- Plotting.plot_functions.py - allow s1d plot to not have fiber
+  argument. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py recipe_definitions.py -
+  add polar s1d outputs. [Neil Cook]
+- Core.instruments.default.default_config.py - update author list. [Neil
+  Cook]
+- Misc/dispatch_object.py - add argparse arguments. [Neil Cook]
+
+
+0.5.111 (2019-11-09)
+--------------------
+- Tools.module.setup.drs_installation.py - add user_interface,
+  copy_configs and update_configs. [njcuk9999]
+- Core.constants.constant_functions.py - add get_constants_from_file and
+  update_file functions. [njcuk9999]
+- Core.instruments.default.pseudo_const.py - add print function to Color
+  class (to print in colour) [njcuk9999]
+- Tools.module.setup.drs_installation.py - first commit of the
+  installation script. [njcuk9999]
+
+
+0.5.110 (2019-11-09)
+--------------------
+- Obj_pol_spirou.py - add generate stats + plotting + writing of files.
+  [Neil Cook]
+- Science.calib.dark.py - add text entry for error 40-011-00006. [Neil
+  Cook]
+- Recipe.spirou.cal_shape_spirou.py - add recipe to args + add new debug
+  plot. [Neil Cook]
+- Plotting.plot_functions.py - add polar plots. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_text.py - add text entry for error 00-008-00020. [Neil Cook]
+- Io.drs_fits.py - add text entry for error 00-008-00019. [Neil Cook]
+- Io.drs_data.py - add text entry for error 09-021-00009. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py + file_definitions.py -
+  add plot and file definitions for polar + extra debug plot for
+  shape/shape_master. [Neil Cook]
+- Core.instruments.spirou.py - add file_definitions for polar outputs.
+  [Neil Cook]
+- Core.core.drs_startup.py - remove input params from
+  plotter.close_plots. [Neil Cook]
+- Core.core.drs_file.py - make sure all filenames in add_hkey_1d and 2d
+  are basenames only. [Neil Cook]
+- Instruments.*.default_constants.py and default_keywords.py - add polar
+  keywords/constants/plot constants. [Neil Cook]
+- Core.constants.param_functions.py - ParamDict.copy - add doc string
+  (with return type) [Neil Cook]
+- Misc.dispatch_object.py - code to process tar of objects. [Neil Cook]
+- Misc.dispatch_object.py - code to process tar of objects. [Neil Cook]
+- Recipes/spirou/cal_ccf_spirou.py - fix that we need to check whether
+  wprops['WFP_DRIFT'] is None. [Neil Cook]
+- Science.velocity.general.py - fix bug in plotting. [Neil Cook]
+- Recipes/spirou/cal_ccf_spirou.py - fix bug with compute_ccf_fp. [Neil
+  Cook]
+- Recipes/spirou/cal_ccf_spirou.py - fix bug with compute_ccf_fp. [Neil
+  Cook]
+- Science.polar.general.py - update polar class. [Neil Cook]
+
+
+0.5.109 (2019-11-07)
+--------------------
+- Update construct_filename --> construct_path. [Neil Cook]
+- Tools.module.setup.drs_reset.py - change call to construct_filename
+  --> construct_path. [Neil Cook]
+- Science.polar.* - add whole lsd module. [Neil Cook]
+- Recipes/spirou/obj_pol_spirou.py - add call to lsd analysis wrapper.
+  [Neil Cook]
+- Io.drs_data.py - add lsd mask getting. [Neil Cook]
+- Data/spirou/lsd/lsd_order_mask.dat - add order wavelength file for
+  lsd. [Neil Cook]
+- Core.instruments.*.default_constants.py - add polar lsd constants.
+  [Neil Cook]
+- Data/spirou/lsd - add lsd masks and meta data. [Neil Cook]
+
+
+0.5.108 (2019-11-07)
+--------------------
+- Science.telluric.general.py - curve fit forces floats - cast kp as
+  bool after it was forced to floats. [Neil Cook]
+- Science.telluric.general.py - add breakpoint to investigate bug. [Neil
+  Cook]
+- Tools.dev.cal_update_berv.py - re-fix erv measurement - group all
+  files by odometer code. [Neil Cook]
+- Tools.dev.cal_update_berv.py - need to group files to make this
+  quicker + skip those that use barycorrpy already. [Neil Cook]
+
+
+0.5.107 (2019-11-06)
+--------------------
+- Recipe/spirou/obj_pol_spirou.py - continue adding to polar recipe.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.maths.*.py - add continuum calculation function. [Neil Cook]
+- Core.instruments.*.default_constants.py - add polar constants. [Neil
+  Cook]
+
+
+0.5.106 (2019-11-05)
+--------------------
+- Berv.py - set leap_update to False, add file update to
+  cal_update_berv.py. [njcuk9999]
+- Update object_query_list. [njcuk9999]
+- Cal_update_berv.py - print filename processing. [njcuk9999]
+- Science.extract.berv.py - catch iers warning and display. [njcuk9999]
+- Science.extract.berv.py - split exception in barycorrpy and iers.
+  [njcuk9999]
+- Science.extract.berv.py - add force=False (force recalculation of
+  berv) [njcuk9999]
+- Science.extract.berv.py - add warn=False (when True prints exception
+  when barycorrpy fails) [njcuk9999]
+- Merge remote-tracking branch 'origin/dev' into dev. [njcuk9999]
+
+  pirou_py3 into dev
+
+  # Please enter a commit message to explain why this merge is necessary,
+  # especially if it merges an updated upstream into a topic branch.
+  #
+  # Lines starting with '#' will be ignored, and an empty message aborts
+  # the commit.
+- Add cal_update_berv.py - to update bervs. [njcuk9999]
+- Add gui stuff. [njcuk9999]
+
+
+0.5.105 (2019-11-03)
+--------------------
+- First commit of a gui module. [njcuk9999]
+- Add trigger place-holders. [njcuk9999]
+- Rename drs_reprocess --> drs_processing. [njcuk9999]
+- Rename drs_reprocess --> drs_processing. [njcuk9999]
+- Plotting.core.py - fix __NAME__ [njcuk9999]
+- Core.instruments.default.recipe_definitions.py - rename reprocess.py
+  to processing.py. [njcuk9999]
+
+
+0.5.104 (2019-11-01)
+--------------------
+- Science.calib.dark.py - rearrange steps. [njcuk9999]
+- Science.calib.dark.py - clean out data. [njcuk9999]
+- Science.calib.dark.py - replace median with a smart median (smaller)
+  [njcuk9999]
+
+
+0.5.103 (2019-11-01)
+--------------------
+- Io.drs_table.py - fix problem with hdu lists. [njcuk9999]
+- Tools.modules.setup.drs_reprocess.py - fix bug in keepmask for
+  engineering files. [njcuk9999]
+- Drs_reprocess.py - fix error in remove engineering (fdata-->ftable)
+  [Neil Cook]
+- Add option to listing code to regenerate rawindex.fits (for all raw
+  files) [Neil Cook]
+- Add PI_NAME to raw columns in index files. [Neil Cook]
+
+
+0.5.102 (2019-10-30)
+--------------------
+- Merge remote-tracking branch 'origin/dev' into dev. [njcuk9999]
+- Module.setup.drs_reprocess.py - add _remove_engineering option.
+  [njcuk9999]
+- Core.core.drs_recipe.py - change break for continue if
+  DrsRecipeException. [njcuk9999]
+
+
+0.5.101 (2019-10-29)
+--------------------
+- Science.calib.localisation.py - remove break point. [Neil Cook]
+- Science.calib.localisation.py - pep8 add second blank line. [Neil
+  Cook]
+- Test changes to localisation. [njcuk9999]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.100 (2019-10-28)
 --------------------
 - Science.telluric.general.py - catch all berv = nan (not allowed) [Neil
@@ -787,7 +1072,7 @@ Changelog
 - Core.core.drs_log.py - add display_func and put debug numbers into
   params (not hard coded) [Neil Cook]
 - Core.core.drs_file.py - add generate_reqfiles (for checking infile
-  name in construct_path) [Neil Cook]
+  name in construct_filename) [Neil Cook]
 - Science.calib.dark.py - add some extra print outs. [Neil Cook]
 - Core.instruments.spirou.file_definitions.py - fix bad shape intypes
   (some should be hc1_hc1 not fp_fp) [Neil Cook]
@@ -1549,7 +1834,7 @@ Changelog
   Cook]
 - Cal_dark_master_spirou.py - deal with no dark files being found. [Neil
   Cook]
-- Drs_data.py - construct_path function all filename/directory name
+- Drs_data.py - construct_filename function all filename/directory name
   to be unset. [Neil Cook]
 - Data.spirou.reset - update MASTER_WAVE.fits (new header keys) [Neil
   Cook]
@@ -1581,7 +1866,7 @@ Changelog
   (including dberv and rv when present) [Neil Cook]
 - Cal_loc_spirou.py - add calibs to header. [Neil Cook]
 - Cal_extract_spirou.py - add rest of the cdb keywords. [Neil Cook]
-- Drs_data.py - correct problems with construct_path and add unique
+- Drs_data.py - correct problems with construct_filename and add unique
   error message for obj_list function. [Neil Cook]
 - Core.math.general.py - apply fix #567 by @melissa-hobson. [Neil Cook]
 - Update language database. [Neil Cook]
