@@ -55,6 +55,7 @@ class PseudoConstants(DefaultConstants):
         module_name = 'terrapipe.core.instruments.spirou.recipe_definitions'
         return importlib.import_module(module_name)
 
+
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
