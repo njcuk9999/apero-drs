@@ -50,9 +50,9 @@ pcheck = core.pcheck
 def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
     func_name = __NAME__ + '.extract_thermal_files()'
     # get parameters from params/kwargs
-    therm_always_extract = pcheck(params, 'WAVE_ALWAYS_EXTRACT',
+    therm_always_extract = pcheck(params, 'THERMAL_ALWAYS_EXTRACT',
                                   'always_extract', kwargs, func_name)
-    therm_extract_type = pcheck(params, 'WAVE_EXTRACT_TYPE', 'extract_type',
+    therm_extract_type = pcheck(params, 'THERMAL_EXTRACT_TYPE', 'extract_type',
                                 kwargs, func_name)
     # get nightname
     nightname = params['INPUTS']['DIRECTORY']
@@ -60,15 +60,28 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
     # ----------------------------------------------------------------------
-    # extract hc files
+    # extract thermal files
     # ----------------------------------------------------------------------
-    # get output filetype
+    # get output e2ds filetype
     thfileinst = recipe.outputs['THERMAL_E2DS_FILE']
     # get outputs
     thermal_outputs = extract_files(params, recipe, thermalfile, thfileinst,
                                     therm_always_extract, extrecipe, nightname,
                                     therm_extract_type, kind='thermal',
                                     func_name=func_name)
+
+    # Need to figure out the thermal output
+    dprtype = thermalfile.get_key('KW_DPRTYPE', dtype=str)
+    # TODO: Add sky dark here
+    if dprtype == 'DARK_DARK_INT':
+        thoutinst = recipe.outputs['THERMALI_FILE']
+    elif dprtype == 'DARK_DARK_TEL':
+        thoutinst = recipe.outputs['THERMALT_FILE']
+    else:
+        eargs = [dprtype, func_name]
+        WLOG(params, 'error', TextEntry('40-016-00022', args=eargs))
+        thoutinst = None
+
     # ----------------------------------------------------------------------
     # Need to push properties to thermal e2ds file (thermal_outputs are
     #     regular e2ds files)
@@ -78,12 +91,16 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
     # loop around fibers
     for fiber in thermal_outputs:
         # get copy file instance
-        thermal_file = thfileinst.newcopy(recipe=recipe, fiber=fiber)
-        # construct the filename from file instance
+        thermal_file = thoutinst.newcopy(recipe=recipe, fiber=fiber)
+        # construct the filename from e2ds file (it is the same file)
         thermal_file.construct_filename(params, infile=thermalfile)
         # copy header and hdict
         thermal_file.hdict = thermal_outputs[fiber].header
         thermal_file.header = thermal_outputs[fiber].header
+        # add data from thermal_outputs
+        thermal_file.datatype = thermal_outputs[fiber].datatype
+        thermal_file.dtype = thermal_outputs[fiber].datatype
+        thermal_file.data = thermal_outputs[fiber].data
         # append to list
         thermal_files[fiber] = thermal_file
 
