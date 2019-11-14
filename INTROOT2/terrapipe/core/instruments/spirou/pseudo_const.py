@@ -11,6 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import importlib
 import numpy as np
+from astropy.time import Time, TimeDelta
 
 from terrapipe.core import constants
 from terrapipe.core.instruments.default import pseudo_const
@@ -72,6 +73,53 @@ class PseudoConstants(DefaultConstants):
                           'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
         # return keys
         return forbidden_keys
+
+    def HEADER_FIXES(self, **kwargs):
+        """
+        For SPIRou the following keys may or may not be present (older data
+        may need these adding):
+
+
+        KW_TARGET_TYPE:   if KW_OBSTYPE=="OBJECT"
+                                    TRG_TYPE = "SKY" if a sky observation
+                                    TRG_TYPE = "TARGET" if not a sky
+                          if KW_OBSTYPE!="OBJECT"
+                                    TRG_TYPE = ""
+
+        :param header: DrsFitsFile header
+
+        :return: the fixed header
+        """
+        # get arguments from kwargs
+        params = kwargs.get('params')
+        recipe = kwargs.get('recipe')
+        header = kwargs.get('header')
+        # get keys from params
+        kwtrgtype = params['KW_TARGET_TYPE'][0]
+        kwmidobstime = params['KW_MID_OBS_TIME'][0]
+        kwdprtype = params['KW_DPRTYPE'][0]
+        # ------------------------------------------------------------------
+        # Deal with TRG_TYPE
+        # ------------------------------------------------------------------
+        if kwtrgtype not in header:
+            header = get_trg_type(params, header)
+
+        # ------------------------------------------------------------------
+        # Deal with MIDMJD
+        # ------------------------------------------------------------------
+        if kwmidobstime not in header:
+            header = get_mid_obs_time(params, header)
+
+        # ------------------------------------------------------------------
+        # Deal with dprtype
+        # ------------------------------------------------------------------
+        if kwdprtype not in header:
+            header = get_dprtype(params, recipe, header)
+
+        # ------------------------------------------------------------------
+        # Return header
+        # ------------------------------------------------------------------
+        return header
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -282,6 +330,131 @@ class PseudoConstants(DefaultConstants):
                                       'KW_BERV_OBSTIME_METHOD', 'header', str]
         # return outputs
         return outputs
+
+
+
+# =============================================================================
+# Functions used by pseudo const (instrument specific)
+# =============================================================================
+def get_trg_type(params, header):
+    # get keys from params
+    kwobjname = params['KW_OBJNAME'][0]
+    kwobstype = params['KW_OBSTYPE'][0]
+    kwtrgtype = params['KW_TARGET_TYPE'][0]
+    kwtrgcomment = params['KW_TARGET_TYPE'][2]
+    # get objname and obstype
+    objname = header[kwobjname]
+    obstype = header[kwobstype]
+    # deal with setting value
+    if obstype != 'OBJECT':
+        trg_type = ''
+    elif 'sky' in objname:
+        trg_type = 'SKY'
+    else:
+        trg_type = 'TARGET'
+    # update header
+    header[kwtrgtype] = (trg_type, kwtrgcomment)
+    # return header
+    return header
+
+def get_mid_obs_time(params, header):
+    func_name = __NAME__ + '.get_mid_obs_time()'
+    kwmidobstime = params['KW_MID_OBS_TIME'][0]
+    kwmidcomment = params['KW_MID_OBS_TIME'][2]
+    kwmidmethod = params['KW_BERV_OBSTIME_METHOD'][0]
+    methodcomment = params['KW_BERV_OBSTIME_METHOD'][2]
+
+    timefmt = params.instances['KW_MID_OBS_TIME'].datatype
+    timetype = params.instances['KW_MID_OBS_TIME'].dataformat
+    exp_timekey = params['KW_EXPTIME'][0]
+    exp_timeunit = params.instances['KW_EXPTIME'].unit
+    exptime = timetype(header[exp_timekey])
+    # -------------------------------------------------------------------
+    # get header time
+    endtime = get_header_end_time(params, header)
+    # get the time after start of the observation
+    timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
+    # calculate observation time
+    obstime = endtime - timedelta
+    # set the method for getting mid obs time
+    method = 'mjdend-exp/2'
+    # -------------------------------------------------------------------
+    # return time in requested format
+    if timefmt is None:
+        header[kwmidobstime] = (obstime.iso, kwmidcomment)
+    elif timefmt == 'mjd':
+        header[kwmidobstime] = (float(obstime.mjd), kwmidcomment)
+    elif timefmt == 'jd':
+        header[kwmidobstime] = (float(obstime.jd), kwmidcomment)
+    elif timefmt == 'iso' or timefmt == 'human':
+        header[kwmidobstime] = (obstime.iso, kwmidcomment)
+    elif timefmt == 'unix':
+        header[kwmidobstime] = (float(obstime.unix), kwmidcomment)
+    elif timefmt == 'decimalyear':
+        header[kwmidobstime] = (float(obstime.decimalyear), kwmidcomment)
+    # -------------------------------------------------------------------
+    # add method
+    header[kwmidmethod] = (method, methodcomment)
+    # return the header
+    return header
+
+
+def get_header_end_time(params, header):
+    """
+    Get acquisition time from header
+
+    :param params:
+    :param hdr:
+    :param out_fmt:
+    :param func: str, input function name
+    :param name:
+
+    :type params: ParamDict
+    :type hdr: Header
+    :type out_fmt: str
+
+    :return:
+    """
+    # ----------------------------------------------------------------------
+    # get acqtime
+    time_key = params['KW_MJDEND'][0]
+    timefmt = params.instances['KW_MJDEND'].datatype
+    timetype = params.instances['KW_MJDEND'].dataformat
+    rawtime = header[time_key]
+    # ----------------------------------------------------------------------
+    # get astropy time
+    return Time(timetype(rawtime), format=timefmt)
+
+
+def get_dprtype(params, recipe, header):
+    # set key
+    kwdprtype = params['KW_DPRTYPE'][0]
+    kwdprcomment = params['KW_DPRTYPE'][1]
+    # get the drs files and raw_prefix
+    drsfiles = recipe.filemod.raw_file.fileset
+    raw_prefix = recipe.filemod.raw_prefix
+    # set up inname
+    dprtype = 'Unknown'
+    # loop around drs files
+    for drsfile in drsfiles:
+        # set recipe
+        drsfile.set_recipe(recipe)
+        # find out whether file is valid
+        valid, _ = drsfile.has_correct_hkeys(header, log=False)
+        # if valid the assign dprtype
+        if valid:
+            # remove prefix if not None
+            if raw_prefix is not None:
+                dprtype = drsfile.name.split(raw_prefix)[-1]
+            else:
+                dprtype = drsfile.name
+            # we have found file so break
+            break
+    # update header
+    header[kwdprtype] = (dprtype, kwdprcomment)
+    # return header
+    return header
+
 
 # =============================================================================
 # End of code
