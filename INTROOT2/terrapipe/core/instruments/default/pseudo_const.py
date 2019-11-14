@@ -90,6 +90,17 @@ class PseudoConstants:
         # return keys
         return forbidden_keys
 
+    # noinspection PyPep8Naming
+    def HEADER_FIXES(self, **kwargs):
+        """
+        This should do nothing unless an instrument header needs fixing
+
+        :param header: DrsFitsFile header
+
+        :return: the fixed header
+        """
+        return header
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
