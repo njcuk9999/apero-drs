@@ -86,7 +86,7 @@ blazefile = dict(name='--blazefile', dtype='file', default='None',
                  files=[sf.out_ff_blaze], helpstr=Help['BLAZEFILE_HELP'])
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[sf.out_dark], helpstr=Help['DARKFILE_HELP'])
+                files=[sf.out_dark_master], helpstr=Help['DARKFILE_HELP'])
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[sf.out_ff_flat], helpstr=Help['FLATFILE_HELP'])
@@ -111,7 +111,7 @@ shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[sf.out_shape_local], helpstr=Help['SHAPELFILE_HELP'])
 # -----------------------------------------------------------------------------
 thermalfile = dict(name='--thermal', dtype='file', default='None',
-                   files=[sf.out_thermal_e2ds],
+                   files=[sf.out_thermal_e2ds_int, sf.out_thermal_e2ds_tel],
                    helpstr=Help['THERMALFILE_HELP'])
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
@@ -207,7 +207,7 @@ test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
 test.set_arg(pos=0, **directory)
 test.set_kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
-               files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive',
+               files=[sf.pp_dark_dark_int, sf.pp_flat_flat], filelogic='inclusive',
                helpstr=Help['TEST_FILELIST1_HELP'], required=True)
 test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
                files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
@@ -261,7 +261,8 @@ cal_badpix.set_arg(pos=0, **directory)
 cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
-cal_badpix.set_kwarg(name='-darkfiles', dtype='files', files=[sf.pp_dark_dark],
+cal_badpix.set_kwarg(name='-darkfiles', dtype='files',
+                     files=[sf.pp_dark_dark_tel],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
 cal_badpix.set_kwarg(**add_db)
@@ -283,11 +284,16 @@ cal_dark.intputtype = 'pp'
 cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
-cal_dark.set_outputs(DARK_FILE=sf.out_dark, SKY_FILE=sf.out_sky)
+cal_dark.set_outputs(DARK_INT_FILE=sf.out_dark_int,
+                     DARK_TEL_FIEL=sf.out_dark_tel,
+                     DARK_SKY_FILE=sf.out_dark_sky)
 cal_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 cal_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 cal_dark.set_arg(pos=0, **directory)
-cal_dark.set_arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
+cal_dark.set_arg(name='files', dtype='files',
+                 files=[sf.pp_dark_dark_int, sf.pp_dark_dark_tel,
+                        sf.pp_dark_dark_sky],
+                 pos='1+', filelogic='exclusive',
                  helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
 cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
@@ -307,7 +313,10 @@ cal_dark_master.extension = 'fits'
 cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
 cal_dark_master.set_outputs(DARK_MASTER_FILE=sf.out_dark_master)
-cal_dark_master.set_kwarg(name='--filetype', dtype=str, default='DARK_DARK',
+cal_dark_master.set_kwarg(name='--filetype', dtype=str,
+                          default='DARK_DARK_TEL',
+                          options=['DARK_DARK_INT', 'DARK_DARK_TEL',
+                                   'DARK_DARK_SKY'],
                           helpstr=Help['DARK_MASTER_FILETYPE'])
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
@@ -485,10 +494,16 @@ cal_thermal.inputtype = 'pp'
 cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
-cal_thermal.set_outputs(THERMAL_E2DS_FILE=sf.out_thermal_e2ds)
+# TODO: Need to add THERMALS_FILE once thermal code can handle it
+# TODO:    (Need to correct Sky lines)
+cal_thermal.set_outputs(THERMAL_E2DS_FILE=sf.out_ext_e2dsff,
+                        THERMALI_FILE=sf.out_thermal_e2ds_int,
+                        THERMALT_FILE=sf.out_thermal_e2ds_tel)
 cal_thermal.set_arg(pos=0, **directory)
+# TODO: Need to add sf.pp_dark_dark_sky
 cal_thermal.set_arg(name='files', dtype='files', pos='1+',
-                    files=[sf.pp_dark_dark],
+                    files=[sf.pp_dark_dark_int, sf.pp_dark_dark_tel],
+                    filelogic='exclusive',
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                     limit=1)
 cal_thermal.set_kwarg(**add_db)
@@ -560,6 +575,9 @@ cal_extract.set_kwarg(**resize)
 cal_extract.set_kwarg(**shapexfile)
 cal_extract.set_kwarg(**shapeyfile)
 cal_extract.set_kwarg(**shapelfile)
+cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
+                      helpstr=Help['THERMAL_HELP'],
+                      default_ref='THERMAL_CORRECT')
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 

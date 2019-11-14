@@ -50,11 +50,45 @@ raw_file = drs_finput('DRS_RAW', iletype='.fits', suffix='',
                       outfunc=out.blank)
 # -----------------------------------------------------------------------------
 # raw dark files
-raw_dark_dark = drs_finput('RAW_DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                           KW_OBSTYPE='DARK',
-                           filetype='.fits', suffix='', inext='d.fits',
-                           outfunc=out.blank)
-raw_file.addset(raw_dark_dark)
+# raw_dark_dark = drs_finput('RAW_DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
+#                            KW_OBSTYPE='DARK',
+#                            filetype='.fits', suffix='', inext='d.fits',
+#                            outfunc=out.blank)
+# raw_file.addset(raw_dark_dark)
+
+# raw dark in P4 (internal dark)
+raw_dark_dark_int = drs_finput('RAW_DARK_DARK_INT', KW_CCAS='pos_pk',
+                               KW_CREF='pos_pk', KW_OBSTYPE='DARK',
+                               KW_CALIBWH='P4',
+                               filetype='.fits', suffix='', inext='d.fits',
+                               outfunc=out.blank)
+raw_file.addset(raw_dark_dark_int)
+
+# raw dark in P5 (telescope dark)
+raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', KW_CCAS='pos_pk',
+                               KW_CREF='pos_pk', KW_OBSTYPE='DARK',
+                               KW_CALIBWH='P5',
+                               filetype='.fits', suffix='', inext='d.fits',
+                               outfunc=out.blank)
+raw_file.addset(raw_dark_dark_tel)
+
+
+# sky observation (sky dark) -- note this is a placeholder and will not exist
+# raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', KW_CCAS='PLACEHOLDER',
+#                                KW_CREF='PLACEHOLDER', KW_OBSTYPE='OBJECT',
+#                                filetype='.fits', suffix='', inext='o.fits',
+#                                outfunc=out.blank)
+# raw_file.addset(raw_dark_dark_sky)
+# TODO: Once all objects have TRG_TYPE we need to filter out sky observations
+# TODO: with the following
+# sky observation (sky dark)
+raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', KW_CCAS='pos_pk',
+                               KW_CREF='pos_pk',
+                               KW_OBSTYPE='OBJECT',
+                               KW_TARGET_TYPE='SKY',
+                               filetype='.fits', suffix='', inext='o.fits',
+                               outfunc=out.blank)
+raw_file.addset(raw_dark_dark_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -102,23 +136,50 @@ raw_file.addset(raw_fp_fp)
 
 # -----------------------------------------------------------------------------
 # raw object files
+# raw_obj_dark = drs_finput('RAW_OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
+#                           KW_OBSTYPE='OBJECT', outfunc=out.blank,
+#                           filetype='.fits', suffix='', inext='o.fits')
+# raw_file.addset(raw_obj_dark)
+#
+# raw_obj_fp = drs_finput('RAW_OBJ_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
+#                         KW_OBSTYPE='OBJECT', outfunc=out.blank,
+#                         filetype='.fits', suffix='', inext='o.fits')
+# raw_file.addset(raw_obj_fp)
+#
+# raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
+#                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
+#                          filetype='.fits', suffix='', inext='o.fits')
+# raw_file.addset(raw_obj_hc1)
+#
+# raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
+#                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
+#                          filetype='.fits', suffix='', inext='o.fits')
+# raw_file.addset(raw_obj_hc2)
+
+# TODO: Once all objects have TRG_TYPE we need to filter out sky observations
+# TODO: with the following
+# raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                           KW_OBSTYPE='OBJECT', outfunc=out.blank,
+                          KW_TARGET_TYPE='TARGET',
                           filetype='.fits', suffix='', inext='o.fits')
 raw_file.addset(raw_obj_dark)
 
 raw_obj_fp = drs_finput('RAW_OBJ_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
                         KW_OBSTYPE='OBJECT', outfunc=out.blank,
+                        KW_TARGET_TYPE='TARGET',
                         filetype='.fits', suffix='', inext='o.fits')
 raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
+                          KW_TARGET_TYPE='TARGET',
                          filetype='.fits', suffix='', inext='o.fits')
 raw_file.addset(raw_obj_hc1)
 
 raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
+                         KW_TARGET_TYPE='TARGET',
                          filetype='.fits', suffix='', inext='o.fits')
 raw_file.addset(raw_obj_hc2)
 
@@ -182,11 +243,31 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
                      outfunc=out.general_file, intype=raw_file)
 # -----------------------------------------------------------------------------
 # dark
-pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK',
+# pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK',
+#                           filetype='.fits',
+#                           suffix='_pp', intype=raw_dark_dark,
+#                           inext='.fits', outfunc=out.general_file)
+# pp_file.addset(pp_dark_dark)
+
+pp_dark_dark_int = drs_finput('DARK_DARK_INT', KW_DPRTYPE='DARK_DARK_INT',
                           filetype='.fits',
-                          suffix='_pp', intype=raw_dark_dark,
+                          suffix='_pp', intype=raw_dark_dark_int,
                           inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_dark_dark)
+pp_file.addset(pp_dark_dark_int)
+
+pp_dark_dark_tel = drs_finput('DARK_DARK_TEL', KW_DPRTYPE='DARK_DARK_TEL',
+                          filetype='.fits',
+                          suffix='_pp', intype=raw_dark_dark_tel,
+                          inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_dark_dark_tel)
+
+pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', KW_DPRTYPE='DARK_DARK_SKY',
+                          filetype='.fits',
+                          suffix='_pp', intype=raw_dark_dark_sky,
+                          inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_dark_dark_sky)
+
+
 # -----------------------------------------------------------------------------
 # flat
 pp_flat_dark = drs_finput('FLAT_DARK', KW_DPRTYPE='FLAT_DARK',
@@ -319,25 +400,41 @@ out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 # dark files
 # -----------------------------------------------------------------------------
 # dark out file
-out_dark = drs_finput('DARK', KW_OUTPUT='DARK',
-                      filetype='.fits', intype=pp_dark_dark,
-                      suffix='',
+# out_dark = drs_finput('DARK', KW_OUTPUT='DARK',
+#                       filetype='.fits', intype=pp_dark_dark,
+#                       suffix='',
+#                       outfunc=out.calib_file,
+#                       dbname='calibration', dbkey='DARK')
+
+out_dark_int = drs_finput('DARKI', KW_OUTPUT='DARKI',
+                      filetype='.fits', intype=pp_dark_dark_int,
+                      suffix='darki',
                       outfunc=out.calib_file,
-                      dbname='calibration', dbkey='DARK')
-out_sky = drs_finput('SKY', KW_OUTPUT='SKY',
-                     filetype='.fits', intype=pp_dark_dark,
-                     suffix='',
-                     outfunc=out.calib_file,
-                     dbname='calibration', dbkey='SKYDARK')
+                      dbname='calibration', dbkey='DARKI')
+
+out_dark_tel = drs_finput('DARKT', KW_OUTPUT='DARKT',
+                      filetype='.fits', intype=pp_dark_dark_tel,
+                      suffix='darkt',
+                      outfunc=out.calib_file,
+                      dbname='calibration', dbkey='DARKT')
+
+out_dark_sky = drs_finput('DARKS', KW_OUTPUT='DARKS',
+                      filetype='.fits', intype=pp_dark_dark_sky,
+                      suffix='darks',
+                      outfunc=out.calib_file,
+                      dbname='calibration', dbkey='DARKS')
+
 out_dark_master = drs_finput('DARKM', KW_OUTPUT='DARKM',
-                             filetype='.fits', intype=pp_dark_dark,
+                             filetype='.fits', intype=pp_dark_dark_tel,
                              suffix='_dark_master',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='DARKM')
 # add dark outputs to output fileset
-out_file.addset(out_dark)
-out_file.addset(out_sky)
+out_file.addset(out_dark_int)
+out_file.addset(out_dark_tel)
+out_file.addset(out_dark_sky)
 out_file.addset(out_dark_master)
+
 # -----------------------------------------------------------------------------
 # Bad pixel / background files
 # -----------------------------------------------------------------------------
@@ -361,6 +458,7 @@ debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
 out_file.addset(out_badpix)
 out_file.addset(out_backmap)
 out_file.addset(debug_back)
+
 # -----------------------------------------------------------------------------
 # localisation files
 # -----------------------------------------------------------------------------
@@ -537,15 +635,25 @@ out_file.addset(out_ext_s1d_v)
 # -----------------------------------------------------------------------------
 # thermal files
 # -----------------------------------------------------------------------------
-# thermal
-out_thermal_e2ds = drs_finput('THERMAL_E2DS', KW_OUTPUT='THERMAL_E2DS',
+# thermal from internal dark
+out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
                               fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits', intype=pp_dark_dark,
-                              suffix='_e2ds',
-                              dbname='calibration', dbkey='THERMAL',
+                              filetype='.fits', intype=pp_dark_dark_int,
+                              suffix='thermal_e2ds_int',
+                              dbname='calibration', dbkey='THERMALI',
                               outfunc=out.general_file)
+
+# thermal from telescope dark
+out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.fits', intype=pp_dark_dark_tel,
+                              suffix='thermal_e2ds_tel',
+                              dbname='calibration', dbkey='THERMALT',
+                              outfunc=out.general_file)
+
 # add thermal outputs to output fileset
-out_file.addset(out_thermal_e2ds)
+out_file.addset(out_thermal_e2ds_int)
+out_file.addset(out_thermal_e2ds_tel)
 
 # -----------------------------------------------------------------------------
 # wave files
