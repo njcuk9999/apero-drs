@@ -148,6 +148,8 @@ def __main__(recipe, params):
     for it, db_file in enumerate(db_files):
         # get the modified time of the file
         modtime = os.path.getmtime(db_file)
+        # append to db_times
+        db_times.append(modtime)
     # ----------------------------------------------------------------------
     # sort by time
     sortmask = np.argsort(db_times)
