@@ -630,6 +630,9 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                      func_name)
     image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
+
+    maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
+                    func_name)
     # get parameters from inputs
     ccfstep = params['INPUTS']['STEP']
     ccfwidth = params['INPUTS']['WIDTH']
@@ -642,6 +645,14 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         ccfmask = params['INPUTS']['MASK']
     # get the berv
     berv = bprops['USE_BERV']
+
+    # ----------------------------------------------------------------------
+    # Need some sanity checking on width and step
+    # ----------------------------------------------------------------------
+    if ccfstep > (ccfwidth / maxwsr):
+        eargs = [ccfwidth, ccfstep, maxwsr, func_name]
+        WLOG(params, 'error', TextEntry('09-020-00005', args=eargs))
+
     # ----------------------------------------------------------------------
     # Check we are using correct fiber
     # ----------------------------------------------------------------------
@@ -978,6 +989,10 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # deal with all nan
         if np.sum(nanmask) == nbpix:
+            # log all NaN
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00004', args=wargs))
+            # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
@@ -1014,6 +1029,10 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
         if np.sum(np.isnan(ccf_ord)) > 0:
+            # log all NaN
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00005', args=wargs))
+            # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
