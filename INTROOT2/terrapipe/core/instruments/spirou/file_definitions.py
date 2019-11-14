@@ -72,7 +72,6 @@ raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', KW_CCAS='pos_pk',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_tel)
 
-
 # sky observation (sky dark) -- note this is a placeholder and will not exist
 # raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', KW_CCAS='PLACEHOLDER',
 #                                KW_CREF='PLACEHOLDER', KW_OBSTYPE='OBJECT',
@@ -173,7 +172,7 @@ raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
-                          KW_TARGET_TYPE='TARGET',
+                         KW_TARGET_TYPE='TARGET',
                          filetype='.fits', suffix='', inext='o.fits')
 raw_file.addset(raw_obj_hc1)
 
@@ -250,23 +249,22 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
 # pp_file.addset(pp_dark_dark)
 
 pp_dark_dark_int = drs_finput('DARK_DARK_INT', KW_DPRTYPE='DARK_DARK_INT',
-                          filetype='.fits',
-                          suffix='_pp', intype=raw_dark_dark_int,
-                          inext='.fits', outfunc=out.general_file)
+                              filetype='.fits',
+                              suffix='_pp', intype=raw_dark_dark_int,
+                              inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_dark_int)
 
 pp_dark_dark_tel = drs_finput('DARK_DARK_TEL', KW_DPRTYPE='DARK_DARK_TEL',
-                          filetype='.fits',
-                          suffix='_pp', intype=raw_dark_dark_tel,
-                          inext='.fits', outfunc=out.general_file)
+                              filetype='.fits',
+                              suffix='_pp', intype=raw_dark_dark_tel,
+                              inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_dark_tel)
 
 pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', KW_DPRTYPE='DARK_DARK_SKY',
-                          filetype='.fits',
-                          suffix='_pp', intype=raw_dark_dark_sky,
-                          inext='.fits', outfunc=out.general_file)
+                              filetype='.fits',
+                              suffix='_pp', intype=raw_dark_dark_sky,
+                              inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_dark_sky)
-
 
 # -----------------------------------------------------------------------------
 # flat
@@ -396,6 +394,13 @@ pp_file.addset(pp_hc2_dark)
 # generic out file
 out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
                       intype=pp_file)
+# calib out file
+calib_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+                        intype=pp_file)
+# telluric out file
+tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+                        intype=pp_file)
+
 # -----------------------------------------------------------------------------
 # dark files
 # -----------------------------------------------------------------------------
@@ -407,22 +412,22 @@ out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 #                       dbname='calibration', dbkey='DARK')
 
 out_dark_int = drs_finput('DARKI', KW_OUTPUT='DARKI',
-                      filetype='.fits', intype=pp_dark_dark_int,
-                      suffix='darki',
-                      outfunc=out.calib_file,
-                      dbname='calibration', dbkey='DARKI')
+                          filetype='.fits', intype=pp_dark_dark_int,
+                          suffix='darki',
+                          outfunc=out.calib_file,
+                          dbname='calibration', dbkey='DARKI')
 
 out_dark_tel = drs_finput('DARKT', KW_OUTPUT='DARKT',
-                      filetype='.fits', intype=pp_dark_dark_tel,
-                      suffix='darkt',
-                      outfunc=out.calib_file,
-                      dbname='calibration', dbkey='DARKT')
+                          filetype='.fits', intype=pp_dark_dark_tel,
+                          suffix='darkt',
+                          outfunc=out.calib_file,
+                          dbname='calibration', dbkey='DARKT')
 
 out_dark_sky = drs_finput('DARKS', KW_OUTPUT='DARKS',
-                      filetype='.fits', intype=pp_dark_dark_sky,
-                      suffix='darks',
-                      outfunc=out.calib_file,
-                      dbname='calibration', dbkey='DARKS')
+                          filetype='.fits', intype=pp_dark_dark_sky,
+                          suffix='darks',
+                          outfunc=out.calib_file,
+                          dbname='calibration', dbkey='DARKS')
 
 out_dark_master = drs_finput('DARKM', KW_OUTPUT='DARKM',
                              filetype='.fits', intype=pp_dark_dark_tel,
@@ -434,6 +439,10 @@ out_file.addset(out_dark_int)
 out_file.addset(out_dark_tel)
 out_file.addset(out_dark_sky)
 out_file.addset(out_dark_master)
+calib_file.addset(out_dark_int)
+calib_file.addset(out_dark_tel)
+calib_file.addset(out_dark_sky)
+calib_file.addset(out_dark_master)
 
 # -----------------------------------------------------------------------------
 # Bad pixel / background files
@@ -458,6 +467,8 @@ debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
 out_file.addset(out_badpix)
 out_file.addset(out_backmap)
 out_file.addset(debug_back)
+calib_file.addset(out_badpix)
+calib_file.addset(out_backmap)
 
 # -----------------------------------------------------------------------------
 # localisation files
@@ -491,6 +502,8 @@ out_file.addset(out_loc_orderp)
 out_file.addset(out_loc_loco)
 out_file.addset(out_loc_fwhm)
 out_file.addset(out_loc_sup)
+calib_file.addset(out_loc_orderp)
+calib_file.addset(out_loc_loco)
 
 # -----------------------------------------------------------------------------
 # shape files (master)
@@ -540,6 +553,11 @@ out_file.addset(out_shape_debug_ofp)
 out_file.addset(out_shape_debug_ihc)
 out_file.addset(out_shape_debug_ohc)
 out_file.addset(out_shape_debug_bdx)
+
+calib_file.addset(out_shape_dxmap)
+calib_file.addset(out_shape_dymap)
+calib_file.addset(out_shape_fpmaster)
+
 # -----------------------------------------------------------------------------
 # shape files (per night)
 # -----------------------------------------------------------------------------
@@ -562,6 +580,7 @@ out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP', KW_OUTPUT='SHAPEL_OUT_FP',
 out_file.addset(out_shape_local)
 out_file.addset(out_shapel_debug_ifp)
 out_file.addset(out_shapel_debug_ofp)
+calib_file.addset(out_shape_local)
 
 # -----------------------------------------------------------------------------
 # flat files
@@ -589,6 +608,9 @@ out_orderp_straight = drs_ninput('ORDERP_STRAIGHT', KW_OUTPUT='ORDERP_STRAIGHT',
 # add flat outputs to output fileset
 out_file.addset(out_ff_blaze)
 out_file.addset(out_ff_flat)
+out_file.addset(out_orderp_straight)
+calib_file.addset(out_ff_blaze)
+calib_file.addset(out_ff_flat)
 
 # -----------------------------------------------------------------------------
 # extract files
@@ -637,23 +659,44 @@ out_file.addset(out_ext_s1d_v)
 # -----------------------------------------------------------------------------
 # thermal from internal dark
 out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
-                              fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits', intype=pp_dark_dark_int,
-                              suffix='thermal_e2ds_int',
-                              dbname='calibration', dbkey='THERMALI',
-                              outfunc=out.general_file)
+                                  fibers=['AB', 'A', 'B', 'C'],
+                                  filetype='.fits', intype=pp_dark_dark_int,
+                                  suffix='thermal_e2ds_int',
+                                  dbname='calibration', dbkey='THERMALI',
+                                  outfunc=out.general_file)
 
 # thermal from telescope dark
 out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
-                              fibers=['AB', 'A', 'B', 'C'],
-                              filetype='.fits', intype=pp_dark_dark_tel,
-                              suffix='thermal_e2ds_tel',
-                              dbname='calibration', dbkey='THERMALT',
-                              outfunc=out.general_file)
+                                  fibers=['AB', 'A', 'B', 'C'],
+                                  filetype='.fits', intype=pp_dark_dark_tel,
+                                  suffix='thermal_e2ds_tel',
+                                  dbname='calibration', dbkey='THERMALT',
+                                  outfunc=out.general_file)
 
+# TODO: Remove these later
+# thermal from internal dark
+out_thermal_e2ds_old = drs_finput('THERMAL_E2DS', KW_OUTPUT='EXT_E2DS',
+                                  fibers=['AB', 'A', 'B', 'C'],
+                                  filetype='.fits', intype=pp_dark_dark_int,
+                                  suffix='_e2ds',
+                                  dbname='calibration', dbkey='THERMAL',
+                                  outfunc=out.general_file)
+# TODO: Remove these later
+# thermal from telescope dark
+out_thermal_e2dsff_old = drs_finput('THERMAL_E2DSFF', KW_OUTPUT='EXT_E2DSFF',
+                                    fibers=['AB', 'A', 'B', 'C'],
+                                    filetype='.fits', intype=pp_dark_dark_int,
+                                    suffix='_e2dsff',
+                                    dbname='calibration', dbkey='THERMAL',
+                                    outfunc=out.general_file)
 # add thermal outputs to output fileset
 out_file.addset(out_thermal_e2ds_int)
 out_file.addset(out_thermal_e2ds_tel)
+calib_file.addset(out_thermal_e2ds_int)
+calib_file.addset(out_thermal_e2ds_tel)
+# TODO: Remove these later
+calib_file.addset(out_thermal_e2ds_old)
+calib_file.addset(out_thermal_e2dsff_old)
 
 # -----------------------------------------------------------------------------
 # wave files
@@ -724,6 +767,9 @@ out_file.addset(out_wave_hcres)
 out_file.addset(out_wave_res_table)
 out_file.addset(out_wave_ll_table)
 out_file.addset(out_wave_master)
+calib_file.addset(out_wave_hc)
+calib_file.addset(out_wave_fp)
+calib_file.addset(out_wave_master)
 
 # -----------------------------------------------------------------------------
 # TODO: fill in definitions
@@ -759,6 +805,8 @@ out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
 # add make_telluric outputs to output fileset
 out_file.addset(out_tellu_conv)
 out_file.addset(out_tellu_trans)
+tellu_file.addset(out_tellu_conv)
+tellu_file.addset(out_tellu_trans)
 
 # -----------------------------------------------------------------------------
 # fit telluric
@@ -819,6 +867,8 @@ out_file.addset(out_tellu_sc1d_v)
 out_file.addset(out_tellu_recon)
 out_file.addset(out_tellu_rc1d_w)
 out_file.addset(out_tellu_rc1d_v)
+tellu_file.addset(out_tellu_obj)
+tellu_file.addset(out_tellu_recon)
 
 # -----------------------------------------------------------------------------
 # make template files
@@ -849,21 +899,22 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
                                 outfunc=out.set_file)
 
 # s1d template file (median)
-out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D', KW_OUTPUT='TELLU_TEMP_S1D',
-                                   fibers=['AB', 'A', 'B', 'C'],
-                                   filetype='.fits',
-                                   intype=[out_ext_e2dsff, out_tellu_obj],
-                                   filename='Template_s1d', datatype='table',
-                                   outfunc=out.set_file)
-
-# s1d cibe file (after shift)
-out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
-                                    KW_OUTPUT='TELLU_BIGCUBE_S1D',
+out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
+                                    KW_OUTPUT='TELLU_TEMP_S1D',
                                     fibers=['AB', 'A', 'B', 'C'],
                                     filetype='.fits',
                                     intype=[out_ext_e2dsff, out_tellu_obj],
-                                    filename='BigCube_s1d',
+                                    filename='Template_s1d', datatype='table',
                                     outfunc=out.set_file)
+
+# s1d cibe file (after shift)
+out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
+                                   KW_OUTPUT='TELLU_BIGCUBE_S1D',
+                                   fibers=['AB', 'A', 'B', 'C'],
+                                   filetype='.fits',
+                                   intype=[out_ext_e2dsff, out_tellu_obj],
+                                   filename='BigCube_s1d',
+                                   outfunc=out.set_file)
 
 # add make template outputs to output fileset
 out_file.addset(out_tellu_template)
@@ -871,6 +922,7 @@ out_file.addset(out_tellu_bigcube)
 out_file.addset(out_tellu_bigcube0)
 out_file.addset(out_tellu_s1d_template)
 out_file.addset(out_tellu_s1d_bigcube)
+tellu_file.addset(out_tellu_template)
 
 # -----------------------------------------------------------------------------
 # ccf
@@ -898,24 +950,24 @@ out_pol_deg = drs_finput('POL_DEG', KW_OUTPUT='POL_DEG',
 
 # stokes i file
 out_pol_stokesi = drs_finput('STOKESI_POL', KW_OUTPUT='POL_STOKES_I',
-                         filetype='.fits',
-                         suffix='_StokesI',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                             filetype='.fits',
+                             suffix='_StokesI',
+                             intype=[out_ext_e2dsff, out_tellu_obj],
+                             outfunc=out.general_file)
 
 # null 1 file
 out_pol_null1 = drs_finput('NULL_POL1', KW_OUTPUT='POL_NULL_POL1',
-                         filetype='.fits',
-                         suffix='_null1_pol',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                           filetype='.fits',
+                           suffix='_null1_pol',
+                           intype=[out_ext_e2dsff, out_tellu_obj],
+                           outfunc=out.general_file)
 
 # null 2 file
 out_pol_null2 = drs_finput('NULL_POL2', KW_OUTPUT='POL_NULL_POL2',
-                         filetype='.fits',
-                         suffix='_null2_pol',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                           filetype='.fits',
+                           suffix='_null2_pol',
+                           intype=[out_ext_e2dsff, out_tellu_obj],
+                           outfunc=out.general_file)
 
 # lsd file
 out_pol_lsd = drs_finput('LSD_POL', KW_OUTPUT='POL_LSD',
@@ -926,51 +978,51 @@ out_pol_lsd = drs_finput('LSD_POL', KW_OUTPUT='POL_LSD',
 
 # pol s1d files
 out_pol_s1dw = drs_finput('S1DW_POL', KW_OUTPUT='S1DW_POL',
-                         filetype='.fits',
-                         suffix='_s1d_w_pol', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                          filetype='.fits',
+                          suffix='_s1d_w_pol', remove_insuffix=True,
+                          intype=[out_ext_e2dsff, out_tellu_obj],
+                          outfunc=out.general_file)
 out_pol_s1dv = drs_finput('S1DV_POL', KW_OUTPUT='S1DV_POL',
-                         filetype='.fits',
-                         suffix='_s1d_v_pol', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                          filetype='.fits',
+                          suffix='_s1d_v_pol', remove_insuffix=True,
+                          intype=[out_ext_e2dsff, out_tellu_obj],
+                          outfunc=out.general_file)
 
 # null1 s1d files
 out_null1_s1dw = drs_finput('S1DW_NULL1', KW_OUTPUT='S1DW_NULL1',
-                         filetype='.fits',
-                         suffix='_s1d_w_null1', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                            filetype='.fits',
+                            suffix='_s1d_w_null1', remove_insuffix=True,
+                            intype=[out_ext_e2dsff, out_tellu_obj],
+                            outfunc=out.general_file)
 out_null1_s1dv = drs_finput('S1DV_NULL1', KW_OUTPUT='S1DV_NULL1',
-                         filetype='.fits',
-                         suffix='_s1d_v_null1', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                            filetype='.fits',
+                            suffix='_s1d_v_null1', remove_insuffix=True,
+                            intype=[out_ext_e2dsff, out_tellu_obj],
+                            outfunc=out.general_file)
 
 # null2 s1d files
 out_null2_s1dw = drs_finput('S1DW_NULL2', KW_OUTPUT='S1DW_NULL1',
-                         filetype='.fits',
-                         suffix='_s1d_w_null2', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                            filetype='.fits',
+                            suffix='_s1d_w_null2', remove_insuffix=True,
+                            intype=[out_ext_e2dsff, out_tellu_obj],
+                            outfunc=out.general_file)
 out_null2_s1dv = drs_finput('S1DV_NULL2', KW_OUTPUT='S1DV_NULL2',
-                         filetype='.fits',
-                         suffix='_s1d_v_null2', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                            filetype='.fits',
+                            suffix='_s1d_v_null2', remove_insuffix=True,
+                            intype=[out_ext_e2dsff, out_tellu_obj],
+                            outfunc=out.general_file)
 
 # stokes I s1d files
 out_stokesi_s1dw = drs_finput('S1DW_STOKESI', KW_OUTPUT='S1DW_STOKESI',
-                         filetype='.fits',
-                         suffix='_s1d_w_stokesi', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                              filetype='.fits',
+                              suffix='_s1d_w_stokesi', remove_insuffix=True,
+                              intype=[out_ext_e2dsff, out_tellu_obj],
+                              outfunc=out.general_file)
 out_stokesi_s1dv = drs_finput('S1DV_STOKESI', KW_OUTPUT='S1DV_STOKESI',
-                         filetype='.fits',
-                         suffix='_s1d_v_stokesi', remove_insuffix=True,
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                              filetype='.fits',
+                              suffix='_s1d_v_stokesi', remove_insuffix=True,
+                              intype=[out_ext_e2dsff, out_tellu_obj],
+                              outfunc=out.general_file)
 
 # -----------------------------------------------------------------------------
 # exposure map
