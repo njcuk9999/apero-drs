@@ -511,6 +511,8 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     # deal with no night name
     if night is None:
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
+    if night == '' or night is None:
+        night = 'None'
     # ----------------------------------------------------------------------
     # get the hdict
     hdict, header = _get_hdict(params, dbname, outfile)
@@ -543,6 +545,8 @@ def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
     # deal with no night name
     if night is None:
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
+    if night == '' or night is None:
+        night = 'None'
     # deal with no object name
     if objname is None:
         objname = 'Unknown'
