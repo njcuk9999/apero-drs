@@ -230,12 +230,21 @@ class DrsInputFile:
         self.filesetnames.append(drsfile.name)
 
     def copyother(self, drsfile, **kwargs):
+        # check recipe has been set
+        if 'recipe' not in kwargs:
+            self.check_recipe()
+        else:
+            self.recipe = kwargs['recipe']
+        # get parameters
+        params = self.recipe.drs_params
+        # set function name
+        func_name = display_func(params, 'copyother', __NAME__, 'DrsInputFile')
         # check file has been read (if 'read' not equal to False)
         if kwargs.get('read', True):
-            # check recipe has been set
-            if 'recipe' not in kwargs:
-                self.check_recipe()
-            drsfile.read()
+            if drsfile.data is None:
+                dargs = [drsfile.filename, func_name]
+                WLOG(params, 'debug', TextEntry('90-008-00010', args=dargs))
+                drsfile.read()
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -329,12 +338,12 @@ class DrsInputFile:
         if not cond1:
             return False, msg1
         # 2. check file header keys exist
-        cond2, msg2 = self.header_keys_exist()
+        cond2, msg2 = self.hkeys_exist()
         if not cond2:
             return False, msg2
         # 3. check file header keys are correct
-        cond3, msg3 = self.has_correct_header_keys()
-        if not cond2:
+        cond3, msg3 = self.has_correct_hkeys()
+        if not cond3:
             return False, msg3
         # if 1, 2 and 3 pass return True
         return True, None
@@ -703,12 +712,18 @@ class DrsFitsFile(DrsInputFile):
 
     # TODO: Merge/combine with completecopy and copyother
     def copyother(self, drsfile, **kwargs):
+        # check recipe has been set
+        if 'recipe' not in kwargs:
+            self.check_recipe()
+        else:
+            self.recipe = kwargs['recipe']
+        # get parameters
+        params = self.recipe.drs_params
+        # set function name
+        func_name = display_func(params, 'copyother', __NAME__, 'DrsFitsFile')
         # check file has been read (if 'read' not equal to False)
         if kwargs.get('read', True):
-            # check recipe has been set
-            if 'recipe' not in kwargs:
-                self.check_recipe()
-            drsfile.read()
+            drsfile.check_read(header_only=True, load=True)
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -816,7 +831,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with no input header
         if header is None:
             # check file has been read
-            self.read()
+            self.check_read(header_only=True, load=True)
             # get header
             header = self.header
         # deal with no input filename
@@ -853,27 +868,33 @@ class DrsFitsFile(DrsInputFile):
             if key not in header:
                 eargs = [argname, key]
                 emsg = TextEntry('09-001-00007', args=eargs)
+                WLOG(params, 'debug', emsg)
                 return False, emsg
             else:
                 dargs = [argname, key, basename]
                 WLOG(params, 'debug', TextEntry('90-001-00010', args=dargs),
                      wrap=False)
-
+        # if we have got to this point return True (success) and no error
+        #   messages
         return True, None
 
     def has_correct_hkeys(self, header=None, argname=None, log=True):
-        func_name = __NAME__ + 'DrsFitsFile.has_correct_header_keys()'
-        # deal with no input header
-        if header is None:
-            # check file has been read
-            self.read()
-            # get header
-            header = self.header
         # -----------------------------------------------------------------
         # check recipe has been set
         self.check_recipe()
         # get recipe and parameters
         params = self.recipe.drs_params
+        # -----------------------------------------------------------------
+        # set function name
+        func_name = display_func(params, 'has_correct_hkeys', __NAME__,
+                                 'DrsFitsFile')
+        # deal with no input header
+        if header is None:
+            # check file has been read
+            self.check_read(header_only=True, load=True)
+            # get header
+            header = self.header
+        # get short hand to required header keys
         rkeys = self.required_header_keys
         # -----------------------------------------------------------------
         # deal with no argument name
@@ -910,7 +931,7 @@ class DrsFitsFile(DrsInputFile):
                          wrap=False)
             # store info
             errors[key] = (found, argname, rvalue, value)
-
+        # return found (bool) and errors
         return found, errors
 
     # -------------------------------------------------------------------------
@@ -1286,10 +1307,12 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.header = header
 
-    def check_read(self, header_only=False):
+    def check_read(self, header_only=False, load=False):
         # deal with only wanting to check if header is read
         if header_only:
             if self.header is None:
+                if load:
+                    return self.read()
                 func = self.__repr__()
                 eargs = [func, func + '.read()']
                 self.__error__(TextEntry('00-001-00004', args=eargs))
@@ -1297,6 +1320,8 @@ class DrsFitsFile(DrsInputFile):
                 return 1
         # check that data/header/comments is not None
         if self.data is None:
+            if load:
+                return self.read()
             func = self.__repr__()
             eargs = [func, func + '.read()']
             self.__error__(TextEntry('00-001-00004', args=eargs))
@@ -1569,7 +1594,7 @@ class DrsFitsFile(DrsInputFile):
         # check that recipe is set
         self.check_recipe()
         # check that data is read
-        self.check_read(header_only=True)
+        self.check_read(header_only=True, load=True)
         # check key is valid
         drskey = self._check_key(key)
         # if we have a default key try to get key else use default value
@@ -1625,7 +1650,7 @@ class DrsFitsFile(DrsInputFile):
         # check that recipe is set
         self.check_recipe()
         # check that data is read
-        self.check_read(header_only=True)
+        self.check_read(header_only=True, load=True)
         # make sure keys is a list
         try:
             keys = list(keys)
@@ -1668,7 +1693,7 @@ class DrsFitsFile(DrsInputFile):
         """
         func_name = __NAME__ + '.DrsFitsFile.read_header_key_1d_list()'
         # check that data is read
-        self.check_read(header_only=True)
+        self.check_read(header_only=True, load=True)
         # check key is valid
         drskey = self._check_key(key)
         # ------------------------------------------------------------------
@@ -1724,7 +1749,7 @@ class DrsFitsFile(DrsInputFile):
         """
         func_name = __NAME__ + '.read_key_2d_list()'
         # check that data is read
-        self.check_read(header_only=True)
+        self.check_read(header_only=True, load=True)
         # check key is valid
         drskey = self._check_key(key)
         # create 2d list
@@ -1805,11 +1830,11 @@ class DrsFitsFile(DrsInputFile):
         pconstant = self.recipe.drs_pconstant
         # get drs_file header/comments
         if drs_file is None:
-            self.check_read(header_only=True)
+            self.check_read(header_only=True, load=True)
             fileheader = self.header
         else:
             # check that data/header is read
-            drs_file.check_read(header_only=True)
+            drs_file.check_read(header_only=True, load=True)
             fileheader = drs_file.header
 
         def __keep_card(card):
