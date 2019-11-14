@@ -123,6 +123,90 @@ class Header(fits.Header):
 # =============================================================================
 # Define read functions
 # =============================================================================
+def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
+                required=True):
+
+    func_name = __NAME__ + '.id_drs_file()'
+    # ----------------------------------------------------------------------
+    # deal with list vs no list for drs_file_sets
+    if isinstance(drs_file_sets, list):
+        pass
+    else:
+        drs_file_sets = [drs_file_sets]
+    # ----------------------------------------------------------------------
+    # storage
+    found = False
+    kinds = []
+    names = []
+    # ----------------------------------------------------------------------
+    # loop around file set
+    for file_set in drs_file_sets:
+        # get the names of the file_set
+        names.append(file_set.name)
+        # ------------------------------------------------------------------
+        # check we have entries
+        if len(file_set.fileset) == 0:
+            continue
+        # ------------------------------------------------------------------
+        # check we have a recipe set
+        if file_set.recipe is None:
+            file_set.recipe = recipe
+        # ------------------------------------------------------------------
+        # check we ahve a file set
+        if file_set.filename is None:
+            if filename is None:
+                WLOG(params, 'error', 'filename is not set')
+            else:
+                file_set.set_filename(filename)
+        # ------------------------------------------------------------------
+        # get the associated files with this generic drs file
+        fileset = list(file_set.fileset)
+        # ------------------------------------------------------------------
+        # loop around files
+        for drs_file in fileset:
+            # --------------------------------------------------------------
+            # debug
+            dargs = [str(drs_file)]
+            WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
+            # --------------------------------------------------------------
+            # copy info from given_drs_file into drs_file
+            file_in = drs_file.copyother(file_set, recipe=recipe)
+            # --------------------------------------------------------------
+            # check this file is valid
+            cond, _ = file_in.check_file()
+            # --------------------------------------------------------------
+            # if True we have found our file
+            if cond:
+                # ----------------------------------------------------------
+                found = True
+                kind = file_in
+                # ----------------------------------------------------------
+                # append to list
+                kinds.append(kind)
+                # ----------------------------------------------------------
+                # if we only want one entry break here
+                if nentries == 1:
+                    break
+    # ----------------------------------------------------------------------
+    # deal with no files found
+    if len(kinds) == 0 and required:
+        eargs = [' '.join(names), func_name]
+        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
+    # ----------------------------------------------------------------------
+    # return found and the drs_file instance
+    if len(kinds) == 0:
+        return found, kinds
+    elif nentries == None:
+        return found, kinds
+    elif nentries == 1:
+        return found, kinds[0]
+    else:
+        return found, kinds[:nentries]
+
+
+# =============================================================================
+# Define read functions
+# =============================================================================
 def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0,
          func=None):
     """
