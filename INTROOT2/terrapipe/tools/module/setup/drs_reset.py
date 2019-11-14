@@ -120,6 +120,11 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True):
     WLOG(params, '', TextEntry('40-502-00003', args=[name]))
     # loop around files and folders in calib_dir
     remove_all(params, db_dir, log)
+    # copy default data back
+    copy_default_db(params, name, db_dir, reset_path, log)
+
+
+def copy_default_db(params, name, db_dir, reset_path, log=True):
     # -------------------------------------------------------------------------
     # get reset directory location
     # -------------------------------------------------------------------------
