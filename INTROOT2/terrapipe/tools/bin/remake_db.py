@@ -142,8 +142,16 @@ def __main__(recipe, params):
     filemod = pconst.FILEMOD()
     # ----------------------------------------------------------------------
     # define storage of found files
-    db_data, db_times, db_paths = [], [], []
     db_times = []
+    # ----------------------------------------------------------------------
+    # loop around all calib files and get the modified times
+    for it, db_file in enumerate(db_files):
+        # get the modified time of the file
+        modtime = os.path.getmtime(db_file)
+    # ----------------------------------------------------------------------
+    # sort by time
+    sortmask = np.argsort(db_times)
+    db_files = np.array(db_files)[sortmask]
     # ----------------------------------------------------------------------
     # loop around all calib files and try to find the kinds
     for it, db_file in enumerate(db_files):
@@ -166,32 +174,17 @@ def __main__(recipe, params):
                                            filename=db_file,
                                            nentries=1, required=False)
         # ------------------------------------------------------------------
-        # get the modified time of the file
-        modtime = os.path.getmtime(db_file)
-        # ------------------------------------------------------------------
         # append to cdb_data
         if found:
             # log that we found i
             WLOG(params, '', TextEntry('40-505-00002', args=[kind]))
-            # add to lists
-            db_data.append(kind)
-            db_times.append(modtime)
-            db_paths.append(db_file)
-    # ----------------------------------------------------------------------
-    # sort by time
-    sortmask = np.argsort(db_times)
-    db_data = np.array(db_data)[sortmask]
-    db_paths = np.array(db_paths)[sortmask]
-    # ----------------------------------------------------------------------
-    # loop around and get
-    for it, db_file in enumerate(db_paths):
+            # --------------------------------------------------------------
+            # add the files back to the database
+            drs_database.add_file(params, kind, copy_files=False, log=False)
         # ------------------------------------------------------------------
-        # log progress
-        wargs = [it + 1, len(db_files), os.path.basename(db_file)]
-        WLOG(params, 'info', TextEntry('40-505-00001', args=wargs))
-        # ------------------------------------------------------------------
-        # add the files back to the database
-        drs_database.add_file(params, db_data[it])
+        # delete file
+        del kind, db_out_file
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

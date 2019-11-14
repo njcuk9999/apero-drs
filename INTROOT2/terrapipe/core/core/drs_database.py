@@ -292,7 +292,7 @@ class Database():
 # =============================================================================
 # Define functions
 # =============================================================================
-def add_file(params, outfile, night=None):
+def add_file(params, outfile, night=None, copy_files=True, log=True):
     func_name = __NAME__ + '.add_file()'
     # ------------------------------------------------------------------
     # get properties from outfile
@@ -321,7 +321,8 @@ def add_file(params, outfile, night=None):
     abs_outpath = os.path.join(outpath, infile)
     # ------------------------------------------------------------------
     # first copy file to database folder
-    _copy_db_file(params, dbname, inpath, abs_outpath)
+    if copy_files:
+        _copy_db_file(params, dbname, inpath, abs_outpath)
     # ------------------------------------------------------------------
     # update database with key
     if dbname.lower() == 'telluric':
@@ -331,10 +332,10 @@ def add_file(params, outfile, night=None):
         else:
             objname = 'None'
         # update telluric database
-        update_telludb(params, dbname, dbkey, outfile, night, objname)
+        update_telludb(params, dbname, dbkey, outfile, night, objname, log)
     elif dbname.lower() == 'calibration':
         # update calibration database
-        update_calibdb(params, dbname, dbkey, outfile, night)
+        update_calibdb(params, dbname, dbkey, outfile, night, log)
 
 
 def copy_calibrations(params, header, **kwargs):
@@ -505,7 +506,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
 # Define calibration database functions
 # =============================================================================
 # TODO: Redo to use Database class
-def update_calibdb(params, dbname, dbkey, outfile, night=None):
+def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     func_name = __NAME__ + '.update_calibdb()'
     # deal with no night name
     if night is None:
@@ -530,13 +531,14 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None):
     line = '\n{0} {1} {2} {3} {4}'.format(*largs)
     # ----------------------------------------------------------------------
     # write to file
-    _write_line_to_database(params, key, dbname, outfile, line)
+    _write_line_to_database(params, key, dbname, outfile, line, log)
 
 
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
-def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None):
+def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
+                   log=True):
     func_name = __NAME__ + '.update_calibdb()'
     # deal with no night name
     if night is None:
@@ -564,7 +566,7 @@ def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None):
     line = '\n{0} {1} {2} {3} {4} {5}'.format(*largs)
     # ----------------------------------------------------------------------
     # write to file
-    _write_line_to_database(params, key, dbname, outfile, line)
+    _write_line_to_database(params, key, dbname, outfile, line, log)
 
 
 # =============================================================================
@@ -773,7 +775,7 @@ def _read_lines_from_database(params, dbname):
     return database
 
 
-def _write_line_to_database(params, key, dbname, outfile, line):
+def _write_line_to_database(params, key, dbname, outfile, line, log=True):
     func_name = __NAME__ + '._write_line_to_database()'
     # get outpath
     outpath = _get_outpath(params, dbname, outfile)
@@ -791,7 +793,8 @@ def _write_line_to_database(params, key, dbname, outfile, line):
         f.close()
         # print progress
         wargs = [dbname, key]
-        WLOG(params, 'info', TextEntry('40-006-00001', args=wargs))
+        if log:
+            WLOG(params, 'info', TextEntry('40-006-00001', args=wargs))
     except Exception as e:
         # must close lock file
         drs_lock.close_lock_file(params, lock, lock_file, abspath)
