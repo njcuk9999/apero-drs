@@ -281,6 +281,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     blazefile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     blazefile.add_hkey('KW_OUTPUT', value=blazefile.name)
+    blazefile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
