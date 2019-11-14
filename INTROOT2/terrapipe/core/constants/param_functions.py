@@ -998,6 +998,11 @@ def breakpoint(params=None, allow=None):
     _remove_pdb_rc(params)
 
 
+def catch_sigint(signal_received, frame):
+    breakpoint()
+    raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
+
+
 # =============================================================================
 # Config loading private functions
 # =============================================================================
