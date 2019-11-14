@@ -15,6 +15,7 @@ from terrapipe import core
 from terrapipe.core.core import drs_file
 from terrapipe.core.core import drs_recipe
 from terrapipe.locale import drs_text
+from terrapipe.io import drs_fits
 
 
 # =============================================================================
@@ -60,30 +61,10 @@ def drs_infile_id(params, recipe, given_drs_file):
     :rtype: tuple[bool, DrsFitsFile]
     """
     func_name = __NAME__ + '.drs_file_id()'
-    # check we have entries
-    if len(given_drs_file.fileset) == 0:
-        eargs = [given_drs_file.name, func_name]
-        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
-    # get the associated files with this generic drs file
-    fileset = list(given_drs_file.fileset)
-    # set found to False
-    found = False
-    kind = given_drs_file.completecopy(given_drs_file)
-    # loop around files
-    for drs_file in fileset:
-        # debug
-        dargs = [str(drs_file)]
-        WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
-        # copy info from given_drs_file into drs_file
-        file_in = drs_file.copyother(given_drs_file, recipe=recipe)
-        # check this file is valid
-        cond, _ = file_in.check_file()
-        # if True we have found our file
-        if cond:
-            found = True
-            kind = file_in
-            break
-    # return found and the drs_file instance
+    # ID DRS FILE
+    found, kind = drs_fits.id_drs_file(params, recipe, given_drs_file,
+                                       nentries=1)
+    # return found and drs file that matches the correct type
     return found, kind
 
 
