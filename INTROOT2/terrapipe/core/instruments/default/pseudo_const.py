@@ -99,6 +99,11 @@ class PseudoConstants:
 
         :return: the fixed header
         """
+        # get arguments from kwargs
+        params = kwargs.get('params')
+        recipe = kwargs.get('recipe')
+        header = kwargs.get('header')
+        # return header
         return header
 
     # =========================================================================

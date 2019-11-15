@@ -432,6 +432,9 @@ def get_dprtype(params, recipe, header):
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
     # get the drs files and raw_prefix
+
+
+
     drsfiles = recipe.filemod.raw_file.fileset
     raw_prefix = recipe.filemod.raw_prefix
     # set up inname
