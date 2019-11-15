@@ -153,7 +153,7 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
         return infile.header
     else:
         # else return the header
-        return infile
+        return header
 
 
 # =============================================================================
