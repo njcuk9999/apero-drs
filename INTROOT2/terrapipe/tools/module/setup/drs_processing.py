@@ -1420,7 +1420,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 # read the header
                 header = drs_fits.read_header(params, abspath)
                 # fix the headers
-                header = preprocessing.fix_header(params, recipe, header)
+                header = preprocessing.fix_header(params, recipe, header=header)
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
