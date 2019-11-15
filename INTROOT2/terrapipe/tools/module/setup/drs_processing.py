@@ -67,6 +67,12 @@ RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
 RUN_KEYS['ENGINEERING'] = False
 RUN_KEYS['RESET_ALLOWED'] = False
+RUN_KEYS['RESET_TMP'] = False
+RUN_KEYS['RESET_REDUCED'] = False
+RUN_KEYS['RESET_CALIB'] = False
+RUN_KEYS['RESET_TELLU'] = False
+RUN_KEYS['RESET_LOG'] = False
+RUN_KEYS['RESET_PLOT'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 
@@ -228,6 +234,9 @@ def read_runfile(params, runfile, **kwargs):
         if not os.path.exists(runfile):
             WLOG(params, 'error', TextEntry('09-503-00002', args=[runfile]))
     # ----------------------------------------------------------------------
+    # try to fix file
+    fix_run_file(runfile)
+    # ----------------------------------------------------------------------
     # now try to load run file
     try:
         keys, values = np.genfromtxt(runfile, delimiter='=', comments='#',
@@ -316,6 +325,30 @@ def read_runfile(params, runfile, **kwargs):
     # ----------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
+
+
+def fix_run_file(runfile):
+    # only do this if we have a runfile
+    if os.path.exists(runfile):
+        # open run file
+        runf = open(runfile, 'r')
+        # read all lines
+        lines = runf.readlines()
+        # close file
+        runf.close()
+        # convert to character array
+        lines = np.char.array(lines)
+        # replace all equal signs
+        lines = lines.replace('=', '@'*50, 1)
+        lines = lines.replace('=', ' ')
+        lines = lines.replace('@'*50, '=')
+        # open run file
+        runf = open(runfile, 'w')
+        # write to file
+        for line in lines:
+            runf.write(line + '\n')
+        # close file
+        runf.close()
 
 
 def send_email(params, kind):
