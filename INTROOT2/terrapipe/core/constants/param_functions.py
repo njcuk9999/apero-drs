@@ -53,6 +53,10 @@ BLOG = drs_exceptions.basiclogger
 REL_CACHE = dict()
 CONFIG_CACHE = dict()
 PCONFIG_CACHE = dict()
+# cache some settings
+SETTINGS_CACHE_KEYS = ['DRS_DEBUG', 'ALLOW_BREAKPOINTS']
+SETTINGS_CACHE = dict()
+
 
 # =============================================================================
 # Define Custom classes
@@ -180,7 +184,10 @@ class ParamDict(CaseInsensitiveDict):
         :param kw: keyword arguments passed to dict
         """
         self.sources = CaseInsensitiveDict()
+        self.source_history = CaseInsensitiveDict()
         self.instances = CaseInsensitiveDict()
+        self.pfmt = '\t{0:30s}{1:45s} # {2}'
+        self.pfmt_ns = '\t{1:45s}'
         self.locked = False
         super(ParamDict, self).__init__(*arg, **kw)
 
@@ -210,6 +217,8 @@ class ParamDict(CaseInsensitiveDict):
         :param source: string, the source for the parameter
         :return:
         """
+        global SETTINGS_CACHE
+
         if self.locked:
             emsg = 'ParamDict locked. \n\t Cannot add \'{0}\'=\'{1}\''
             raise ConfigError(emsg.format(key, value))
@@ -222,6 +231,11 @@ class ParamDict(CaseInsensitiveDict):
         elif source is not None:
             self.sources[key] = source
             self.instances[key] = instance
+
+        # if setting in cached settings add
+        if key in SETTINGS_CACHE_KEYS:
+            SETTINGS_CACHE[key] = copy.deepcopy(value)
+
         # then do the normal dictionary setting
         super(ParamDict, self).__setitem__(key, value)
 
@@ -324,6 +338,11 @@ class ParamDict(CaseInsensitiveDict):
         # only add if key is in main dictionary
         if key in self.keys():
             self.sources[key] = source
+            # add to history
+            if key in self.source_history:
+                self.source_history[key].append(source)
+            else:
+                self.source_history[key] = [source]
         else:
             emsg1 = 'Source cannot be added for key "{0}" '.format(key)
             emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
@@ -628,9 +647,14 @@ class ParamDict(CaseInsensitiveDict):
                     pp[key] = type(value)(value)
             # copy source
             if key in self.sources:
-                pp.set_source(key, self.sources[key])
+                pp.set_source(key, str(self.sources[key]))
             else:
                 pp.set_source(key, None)
+            # copy source history
+            if key in self.source_history:
+                pp.source_history[key] = list(self.source_history[key])
+            else:
+                pp.source_history[key] = []
             # copy instance
             if key in self.instances:
                 pp.set_instance(key, self.instances[key])
@@ -656,8 +680,6 @@ class ParamDict(CaseInsensitiveDict):
             self.set(key, paramdict[key], ksource, kinst)
 
     def _string_print(self):
-        pfmt = '\t{0:30s}{1:45s} # {2}'
-
         # get keys and values
         keys = list(self.keys())
         values = list(self.values())
@@ -674,16 +696,16 @@ class ParamDict(CaseInsensitiveDict):
                 self.sources[key] = 'None'
             # print value
             if type(value) in [list, np.ndarray]:
-                sargs = [key, list(value), self.sources[key], pfmt]
+                sargs = [key, list(value), self.sources[key], self.pfmt]
                 strvalues  += _string_repr_list(*sargs)
             elif type(value) in [dict, OrderedDict, ParamDict]:
                 strvalue = list(value.keys()).__repr__()[:40]
                 sargs = [key + '[DICT]', strvalue, self.sources[key]]
-                strvalues += [pfmt.format(*sargs)]
+                strvalues += [self.pfmt.format(*sargs)]
             else:
                 strvalue = str(value)[:40]
                 sargs = [key + ':', strvalue, self.sources[key]]
-                strvalues += [pfmt.format(*sargs)]
+                strvalues += [self.pfmt.format(*sargs)]
         # combine list into single string
         for string_value in strvalues:
             return_string += '\n {0}'.format(string_value)
@@ -724,6 +746,50 @@ class ParamDict(CaseInsensitiveDict):
         # return keyworddict
         return keyworddict
 
+    def info(self, key):
+        # deal with key not existing
+        if key not in self.keys():
+            print('Key not found')
+            return
+        # print key
+        print('Information for key={0}'.format(key))
+        # print value stats
+        value = self.__getitem__(key)
+        # print the data type
+        print('\tData Type: ', type(value).__name__)
+        # deal with lists and numpy array
+        if isinstance(value, (list, np.ndarray)):
+            print('\tMin Value: ', np.nanmin(value))
+            print('\tMax Value: ', np.nanmax(value))
+            print('\tHas NaNs: ', np.sum(np.isnan(value)) > 0)
+            sargs = [key, list(value), None, self.pfmt_ns]
+            print('\tValues: ', _string_repr_list(*sargs))
+        # deal with dictionaries
+        elif isinstance(value, (dict, OrderedDict, ParamDict)):
+            print('\t No. Keys: ', len(list(value.keys())))
+            strvalue = list(value.keys()).__repr__()[:40]
+            sargs = [key + '[DICT]', strvalue, None]
+            print('\tValues: ', self.pfmt_ns.format(*sargs))
+        # deal with everything else
+        else:
+            strvalue = str(value)[:40]
+            sargs = [key + ':', strvalue, None]
+            print('\tValue: ', self.pfmt_ns.format(*sargs))
+        # add source info
+        if key in self.sources:
+            print('\tSource: {0}'.format(self.sources[key]))
+        # add instances info
+        if key in self.instances:
+            print('\tInstance: {0}'.format(self.instances[key]))
+
+    def history(self, key):
+        if key in self.source_history:
+            print('History for key={0}'.format(key))
+
+            for it, entry in enumerate(self.source_history[key]):
+                print('{0}: {1}'.format(it + 1, entry))
+        else:
+            print('No history found for key={0}'.format(key))
 
 # =============================================================================
 # Define functions
@@ -743,7 +809,7 @@ def load_config(instrument=None):
     global CONFIG_CACHE
     # check config cache
     if instrument in CONFIG_CACHE:
-        return CONFIG_CACHE[instrument]
+        return CONFIG_CACHE[instrument].copy()
     # deal with instrument set to 'None'
     if isinstance(instrument, str):
         if instrument.upper() == 'NONE':
@@ -755,6 +821,7 @@ def load_config(instrument=None):
         keys, values, sources, instances = _load_from_module(modules, True)
     except ConfigError:
         sys.exit(1)
+
     params = ParamDict(zip(keys, values))
     # Set the source
     params.set_sources(keys=keys, sources=sources)
@@ -999,7 +1066,14 @@ def breakpoint(params=None, allow=None):
 
 
 def catch_sigint(signal_received, frame):
-    breakpoint()
+    # test cached settings
+    if 'ALLOW_BREAKPOINTS' in SETTINGS_CACHE:
+        if SETTINGS_CACHE['ALLOW_BREAKPOINTS']:
+            breakpoint()
+    if 'DRS_DEBUG' in SETTINGS_CACHE:
+        if SETTINGS_CACHE['DRS_DEBUG'] > 0:
+            breakpoint()
+    # raise Keyboard Interrupt
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
 
