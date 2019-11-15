@@ -723,10 +723,6 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
     inrecipelist = list(inrecipes[sortmask])
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
-
-
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
