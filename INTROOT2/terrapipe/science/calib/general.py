@@ -116,6 +116,9 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     correctback = kwargs.get('correctback', True)
     cleanhotpix = kwargs.get('cleanhotpix', True)
     n_percentile = kwargs.get('n_percentile', None)
+    darkfile = kwargs.get('darkfile', None)
+    badpixfile = kwargs.get('badpixfile', None)
+    backfile = kwargs.get('backfile', None)
 
     # get image and header
     if image is None:
@@ -138,9 +141,10 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     backkey = backinst.get_dbkey(func=func_name)
 
     # get user input arguments
-    darkfile = get_input_files(params, 'DARKFILE', darkkey, header, None)
-    badpixfile = get_input_files(params, 'BADPIXFILE', badkey, header, None)
-    backfile = get_input_files(params, 'BACKFILE', backkey, header, None)
+    darkfile = get_input_files(params, 'DARKFILE', darkkey, header, darkfile)
+    badpixfile = get_input_files(params, 'BADPIXFILE', badkey, header,
+                                 badpixfile)
+    backfile = get_input_files(params, 'BACKFILE', backkey, header, backfile)
 
     # Get basic image properties
     sigdet = infile.get_key('KW_RDNOISE')
