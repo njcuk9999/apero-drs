@@ -245,11 +245,6 @@ def read_runfile(params, runfile, **kwargs):
     # unlock params
     params.unlock()
     # ----------------------------------------------------------------------
-    # push default values (incase we don't have values in run file
-    for key in RUN_KEYS:
-        params[key] = RUN_KEYS[key]
-        params.set_source(key, __NAME__ + '.RUN_KEYS')
-    # ----------------------------------------------------------------------
     # sort out keys into id keys and values for params
     for it in range(len(keys)):
         # get this iterations values
@@ -282,12 +277,22 @@ def read_runfile(params, runfile, **kwargs):
             elif value.upper() == 'NONE':
                 value = None
             # log if we are overwriting value
-            if key in params:
+            if (key in params):
                 wargs = [key, params[key], value]
                 WLOG(params, 'warning', TextEntry('10-503-00002', args=wargs))
             # add to params
             params[key] = value
             params.set_source(key, func_name)
+    # ----------------------------------------------------------------------
+    # push default values (incase we don't have values in run file
+    for key in RUN_KEYS:
+        if key not in params:
+            # warning that we are using default settings
+            wargs = [key, RUN_KEYS[key]]
+            WLOG(params, 'warning', TextEntry('10-503-00005', args=wargs))
+            # push keys to params
+            params[key] = RUN_KEYS[key]
+            params.set_source(key, __NAME__ + '.RUN_KEYS')
 
     # ----------------------------------------------------------------------
     # deal with arguments from command line (params['INPUTS'])
