@@ -226,10 +226,10 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         # construct new infile instance (first fp solution then hc solutions)
         if out_wave_fp.suffix in os.path.basename(wavefilepath):
             wavefile = out_wave_fp.newcopy(filename=wavefilepath, recipe=recipe,
-                                        fiber=usefiber)
+                                           fiber=usefiber)
         else:
             wavefile = out_wave_hc.newcopy(filename=wavefilepath, recipe=recipe,
-                                        fiber=usefiber)
+                                           fiber=usefiber)
         # read data/header
         wavefile.read()
         # get wave map
