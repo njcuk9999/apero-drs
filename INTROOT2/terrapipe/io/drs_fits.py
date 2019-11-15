@@ -138,6 +138,7 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
     found = False
     kinds = []
     names = []
+    file_set = None
     # ----------------------------------------------------------------------
     # loop around file set
     for file_set in drs_file_sets:
@@ -190,7 +191,18 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
     # ----------------------------------------------------------------------
     # deal with no files found
     if len(kinds) == 0 and required:
-        eargs = [' '.join(names), func_name]
+        # get header keys for info purposes
+        keys = ['KW_CCAS', 'KW_CREF', 'KW_OBSTYPE', 'KW_TARGET_TYPE',
+                'KW_OBJNAME']
+        argstr = ''
+        for key in keys:
+            if file_set is not None and file_set.header is not None:
+                value = file_set.get_key(key)
+            else:
+                value = None
+            argstr += '\t{0}: {1}\n'.format(key, value)
+
+        eargs = [' '.join(names), file_set.filename, argstr, func_name]
         WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
     # ----------------------------------------------------------------------
     # return found and the drs_file instance
