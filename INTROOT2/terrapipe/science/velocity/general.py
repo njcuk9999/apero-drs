@@ -1187,9 +1187,9 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     suffix = ccf_file.suffix
     mask_file = os.path.basename(props['CCF_MASK']).replace('.mas', '')
     if suffix is not None:
-        suffix += '_{0}'.format(mask_file)
+        suffix += '_{0}'.format(mask_file).lower()
     else:
-        suffix = '_ccf_{0}'.format(mask_file)
+        suffix = '_ccf_{0}'.format(mask_file).lower()
     # construct the filename from file instance
     ccf_file.construct_filename(params, infile=infile, suffix=suffix)
     # define header keys for output file
