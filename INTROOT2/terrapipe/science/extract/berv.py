@@ -212,9 +212,6 @@ def use_barycorrpy(params, times, **kwargs):
     # make barycorrpy directory an absolute path
     bc_dir = drs_path.get_relative_folder(params, package, bc_dir)
 
-    # TODO: Remove breakpoint
-    constants.breakpoint(params)
-
     # get args
     # TODO: Add back in leap seconds (when barycorrpy works)
     bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
