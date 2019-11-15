@@ -146,11 +146,12 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
     #   a specific instrument) and update the header
     header = pconst.HEADER_FIXES(params=params, recipe=recipe, header=header,
                                  **kwargs)
-
+    # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile
         infile.header = header
-        return infile.header
+        return infile
+    # else return the header (assuming input was a header only)
     else:
         # else return the header
         return header
