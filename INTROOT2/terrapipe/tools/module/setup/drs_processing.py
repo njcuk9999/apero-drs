@@ -122,14 +122,37 @@ class Run:
             kwarg = self.recipe.kwargs[kwargname]
             # only do this for arguments with filetype 'files' or 'file'
             if kwarg.dtype in ['files', 'file']:
+                # deal with arguments that are required:
+                #   - always = kwarg.required
+                #   - for reprocessing = kwarg.reprocessing
                 if kwarg.required or kwarg.reprocess:
-
+                    # if we have no arguments then as they are required we
+                    #   need to give a blank list (this will then have to be
+                    #   handled by recipes where this is the case -
+                    #   for kwargs.required this will be an error
+                    #   for kwargs.reprocess the recipe must deal with a blank
+                    #   set of files for this argument
                     if len(self.kwargs[kwargname]) == 0:
                         self.kwargs[kwargname] = []
+                    # else we have arguments (user does not enter the
+                    #     DrsFitsFile instance therefore we just keep the
+                    #     string filename
                     else:
                         self.kwargs[kwargname] = self.kwargs[kwargname][0]
+                # else we do not require the files options thus we need to sort
+                #   through possible options
                 else:
-                    del self.kwargs[kwargname]
+                    # option 1: the argument is None --> del argument
+                    if self.kwargs[kwargname] in [None, 'None']:
+                        del self.kwargs[kwargname]
+                    # option 2: the argument is empty --> del argument
+                    elif len(self.kwargs[kwargname]) == 0:
+                        del self.kwargs[kwargname]
+                    # option 3: we have an arugment --> use argument (but
+                    #           remove DrsFitsFile instance - we only need the
+                    #           string filename
+                    else:
+                        self.kwargs[kwargname] = self.kwargs[kwargname][0]
 
     def find_recipe(self, mod=None):
         """
@@ -700,6 +723,10 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
     inrecipelist = list(inrecipes[sortmask])
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
+
+
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
