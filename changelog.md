@@ -2,6 +2,49 @@ Changelog
 =========
 
 
+0.5.116 (2019-11-15)
+--------------------
+- Tools.module.setup.drs_processing.py - remove breakpoint. [Neil Cook]
+- Science.extract.general.py - fix input to get_input_files. [Neil Cook]
+- Science.extract.berv.py - remove breakpoint. [Neil Cook]
+- Science.calib.wave.py - correct pep8. [Neil Cook]
+- Science.calib.general.py - add darkfile, abdpixfile, backfile from
+  kwargs. [Neil Cook]
+- Core.constants.param_functions.py - disable the Ctrl+C --> breakpoint
+  functionality it doesn't work well. [Neil Cook]
+- Tools.module.setup.drs_processing.py - deal with optional file args
+  being requested. [Neil Cook]
+- Tools.module.setup.drs_processing.py - add extra keys to default run
+  keys. [Neil Cook]
+- Core.core.drs_startup.py - set the source when debug mode taken from
+  arguments. [Neil Cook]
+- Core.constants.param_functions.py - add info and history functions to
+  ParamDict and cache some settings for immediate use. [Neil Cook]
+- Science.preprocessing.identification.py - fix return to fix_header
+  (for case where we have an input infile) [Neil Cook]
+- Tools.module.setup.drs_processing.py - add defaults after only if not
+  found and warn user. [Neil Cook]
+- Update language database. [Neil Cook]
+- Tools.module.setup.drs_processing.py - add default run keys (for when
+  values are not in files) [Neil Cook]
+- Science.velocity.general.py - add ccf mask to suffix of output file.
+  [Neil Cook]
+- Science.velocity.general.py - add ccf mask to suffix of output file.
+  [Neil Cook]
+- Add masks from Andres. [Neil Cook]
+- Science.prprocessing.identification.py - fix_header: fix return when
+  no infile given. [Neil Cook]
+- Tools.module.setup.drs_processing.py - fix_header make sure header
+  comes in as keyword argument. [Neil Cook]
+- Science.preprocessing - add recipe as arg in fix_header (and push to
+  pseudo_const.py) [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+- Science.velocity.general.py - make sure users input of ccf step and
+  width is good (ccfstep < ccfwidth / 10) [Neil Cook]
+- Core.instruments.default.*.default_constants.py - add
+  CCF_MAX_CCF_WID_STEP_RATIO. [Neil Cook]
+
+
 0.5.115 (2019-11-14)
 --------------------
 - Update language database. [Neil Cook]
