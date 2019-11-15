@@ -64,15 +64,16 @@ speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 # Define functions
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
-                   shapey, orderpfile, **kwargs):
+                   shapey, orderpfile, filenames=None):
     func_name = __NAME__ + '.order_profiles()'
+    # filenames must be a dictionary
+    if not isinstance(filenames, dict):
+        filenames = dict()
+        for fiber in fibertypes:
+            filenames[fiber] = None
+    # ------------------------------------------------------------------------
     # get header from infile
     header = infile.header
-    # look for filename in kwargs
-    filename = kwargs.get('filename', None)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'ORDERPFILE', filename)
     # ------------------------------------------------------------------------
     # storage for order profiles
     orderprofiles = dict()
@@ -81,6 +82,14 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     for fiber in fibertypes:
         # log progress (straightening orderp)
         WLOG(params, 'info', TextEntry('40-016-00003', args=[fiber]))
+
+        # get key
+        key = orderpfile.get_dbkey(fiber=fiber)
+        # ------------------------------------------------------------------
+        # check for filename in inputs
+        filename = general.get_input_files(params, 'ORDERPFILE', key, header,
+                                           default=filenames[fiber])
+        # ------------------------------------------------------------------
         # construct order profile file
         orderpsfile = orderpfile.newcopy(recipe=recipe, fiber=fiber)
         orderpsfile.construct_filename(params, infile=infile)
@@ -247,8 +256,7 @@ def get_thermal(params, header, fiber, kind, filename=None):
     key = out_thermal.get_dbkey(fiber=fiber)
     # ------------------------------------------------------------------------
     # check for filename in inputs
-    filename = general.get_input_files(params, 'THERMAL', key, header,
-                                       filename)
+    filename = general.get_input_files(params, 'THERMAL', key, header, filename)
     # ------------------------------------------------------------------------
     # load calib file
     thermal, thermal_file = general.load_calib_file(params, key, header,
