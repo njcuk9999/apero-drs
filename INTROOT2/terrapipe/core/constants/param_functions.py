@@ -1067,12 +1067,13 @@ def breakpoint(params=None, allow=None):
 
 def catch_sigint(signal_received, frame):
     # test cached settings
-    if 'ALLOW_BREAKPOINTS' in SETTINGS_CACHE:
-        if SETTINGS_CACHE['ALLOW_BREAKPOINTS']:
-            breakpoint()
-    if 'DRS_DEBUG' in SETTINGS_CACHE:
-        if SETTINGS_CACHE['DRS_DEBUG'] > 0:
-            breakpoint()
+    # TODO: See if you can get this working
+    # if 'ALLOW_BREAKPOINTS' in SETTINGS_CACHE:
+    #     if SETTINGS_CACHE['ALLOW_BREAKPOINTS']:
+    #         breakpoint()
+    # if 'DRS_DEBUG' in SETTINGS_CACHE:
+    #     if SETTINGS_CACHE['DRS_DEBUG'] > 0:
+    #         breakpoint()
     # raise Keyboard Interrupt
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
