@@ -1389,6 +1389,9 @@ def _set_debug_from_input(recipe, fkwargs):
     :returns: the DrsRecipe with updated parameter dictionary
     :rtype: DrsRecipe
     """
+    # set function name
+    func_name = __NAME__ + '._set_debug_from_input()'
+
     debug_key = '--debug'
     # assume debug is not there
     debug_mode = None
@@ -1426,8 +1429,7 @@ def _set_debug_from_input(recipe, fkwargs):
     if debug_mode is not None:
         # set the drs debug level to 1
         recipe.drs_params['DRS_DEBUG'] = debug_mode
-        # update the constants file
-        # # # spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
+        recipe.drs_params.set_source('DRS_DEBUG', func_name)
     # return recipe
     return recipe
 
