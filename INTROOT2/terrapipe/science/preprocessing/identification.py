@@ -125,7 +125,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     return found, kind
 
 
-def fix_header(params, infile=None, header=None, **kwargs):
+def fix_header(params, recipe, infile=None, header=None, **kwargs):
     """
     Instrument specific header fixes are define in pseudo_const.py for an
     instrument and called here (function in pseudo_const.py is HEADER_FIXES)
@@ -144,7 +144,8 @@ def fix_header(params, infile=None, header=None, **kwargs):
     pconst = constants.pload(params['INSTRUMENT'])
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
-    header = pconst.HEADER_FIXES(params=params, header=header, **kwargs)
+    header = pconst.HEADER_FIXES(params=params, recipe=recipe, header=header,
+                                 **kwargs)
 
     if has_infile:
         # return the updated infile
