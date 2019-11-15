@@ -1157,8 +1157,8 @@ def fit_ccf(params, order_num, rv, ccf, fit_type):
 # =============================================================================
 # Define writing functions
 # =============================================================================
-def write_ccf(params, recipe, infile, props, rawfiles, combine,
-                      qc_params, fiber):
+def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
+              fiber):
     # ----------------------------------------------------------------------
     # produce CCF table
     table1 = Table()
@@ -1183,8 +1183,15 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine,
     # ----------------------------------------------------------------------
     # get a new copy of the ccf file
     ccf_file = recipe.outputs['CCF_RV'].newcopy(recipe=recipe, fiber=fiber)
+    # push mask to suffix
+    suffix = ccf_file.suffix
+    mask_file = os.path.basename(props['CCF_MASK']).replace('.mas', '')
+    if suffix is not None:
+        suffix += '_{0}'.format(mask_file)
+    else:
+        suffix = '_ccf_{0}'.format(mask_file)
     # construct the filename from file instance
-    ccf_file.construct_filename(params, infile=infile)
+    ccf_file.construct_filename(params, infile=infile, suffix=suffix)
     # define header keys for output file
     # copy keys from input file
     ccf_file.copy_original_keys(infile)
