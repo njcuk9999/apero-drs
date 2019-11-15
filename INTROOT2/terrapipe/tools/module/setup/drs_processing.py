@@ -55,6 +55,21 @@ TextDict = locale.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
+# Run keys
+RUN_KEYS = dict()
+RUN_KEYS['RUN_NAME'] = 'Run Unknown'
+RUN_KEYS['SEND_EMAIL'] = 'False'
+RUN_KEYS['EMAIL_ADDRESS'] = None
+RUN_KEYS['NIGHT_NAME'] = None
+RUN_KEYS['MASTER_NIGHT'] = None
+RUN_KEYS['CORES'] = 1
+RUN_KEYS['STOP_AT_EXCEPTION'] = False
+RUN_KEYS['TEST_RUN'] = False
+RUN_KEYS['ENGINEERING'] = False
+RUN_KEYS['RESET_ALLOWED'] = False
+RUN_KEYS['TELLURIC_TARGETS'] = None
+RUN_KEYS['SCIENCE_TARGETS'] = None
+
 
 # =============================================================================
 # Define classes
@@ -226,8 +241,15 @@ def read_runfile(params, runfile, **kwargs):
     # table storage
     runtable = OrderedDict()
     keytable = OrderedDict()
+    # ----------------------------------------------------------------------
     # unlock params
     params.unlock()
+    # ----------------------------------------------------------------------
+    # push default values (incase we don't have values in run file
+    for key in RUN_KEYS:
+        params[key] = RUN_KEYS[key]
+        params.set_source(key, __NAME__ + '.RUN_KEYS')
+    # ----------------------------------------------------------------------
     # sort out keys into id keys and values for params
     for it in range(len(keys)):
         # get this iterations values
