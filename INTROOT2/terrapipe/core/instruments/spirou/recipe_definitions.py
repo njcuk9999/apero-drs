@@ -144,7 +144,9 @@ obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
+pol_spirou = DrsRecipe(__INSTRUMENT__)
 obj_pol_spirou = DrsRecipe(__INSTRUMENT__)
+obj_spec_spirou = DrsRecipe(__INSTRUMENT__)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__)
@@ -154,8 +156,8 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
            cal_shape, cal_shape_master, cal_thermal, cal_wave,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
-           obj_mk_tellu_db, obj_fit_tellu_db, obj_pol_spirou,
-           test, cal_update_berv]
+           obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec_spirou,
+           obj_pol_spirou, test, cal_update_berv]
 
 # =============================================================================
 # Recipe definitions
@@ -207,7 +209,8 @@ test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
 test.set_arg(pos=0, **directory)
 test.set_kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
-               files=[sf.pp_dark_dark_int, sf.pp_flat_flat], filelogic='inclusive',
+               files=[sf.pp_dark_dark_int, sf.pp_flat_flat],
+               filelogic='inclusive',
                helpstr=Help['TEST_FILELIST1_HELP'], required=True)
 test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
                files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
@@ -844,42 +847,67 @@ obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
+# pol_spirou
+# -----------------------------------------------------------------------------
+pol_spirou.name = 'pol_spirou.py'
+pol_spirou.shortname = 'POLAR'
+pol_spirou.instrument = __INSTRUMENT__
+pol_spirou.outputdir = 'reduced'
+pol_spirou.inputdir = 'reduced'
+pol_spirou.inputtype = 'reduced'
+pol_spirou.extension = 'fits'
+pol_spirou.description = Help['FTELLU_DESC']
+pol_spirou.epilog = Help['FTELLU_EXAMPLE']
+pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
+                       POL_NULL1=sf.out_pol_null1,
+                       POL_NULL2=sf.out_pol_null2,
+                       POL_STOKESI=sf.out_pol_stokesi,
+                       POL_LSD=sf.out_pol_lsd,
+                       S1DW_POL=sf.out_pol_s1dw,
+                       S1DV_POL=sf.out_pol_s1dv,
+                       S1DW_NULL1=sf.out_null1_s1dw,
+                       S1DV_NULL1=sf.out_null1_s1dv,
+                       S1DW_NULL2=sf.out_null2_s1dw,
+                       S1DV_NULL2=sf.out_null2_s1dv,
+                       S1DW_STOKESI=sf.out_stokesi_s1dw,
+                       S1DV_STOKESI=sf.out_stokesi_s1dv)
+pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
+                           'POLAR_STOKES_I', 'POLAR_LSD',
+                           'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+pol_spirou.set_summary_plots('SUM_EXTRACT_S1D')
+pol_spirou.set_arg(pos=0, **directory)
+pol_spirou.set_arg(name='files', dtype='files', pos='1+',
+                   files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                   helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
+                   limit=1)
+pol_spirou.set_kwarg(**blazefile)
+pol_spirou.set_kwarg(**plot)
+pol_spirou.set_kwarg(**wavefile)
+
+# -----------------------------------------------------------------------------
+# obj_spec_spirou
+# -----------------------------------------------------------------------------
+obj_spec_spirou.name = 'obj_spec_spirou.py'
+obj_spec_spirou.shortname = 'OBJ_SPEC'
+obj_spec_spirou.instrument = __INSTRUMENT__
+obj_spec_spirou.outputdir = 'reduced'
+obj_spec_spirou.inputdir = 'tmp'
+obj_spec_spirou.inputtype = 'reduced'
+obj_spec_spirou.extension = 'fits'
+obj_spec_spirou.description = ''
+obj_spec_spirou.epilog = ''
+obj_spec_spirou.set_arg(pos=0, **directory)
+obj_spec_spirou.set_arg(name='files', dtype='files', pos='1+',
+                        files=[sf.pp_file],
+                        helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                        limit=1)
+obj_spec_spirou.set_kwarg(**plot)
+obj_spec_spirou.set_kwarg(name='--cores', dtype=int, default=1,
+                          helpstr='')
+
+# -----------------------------------------------------------------------------
 # obj_pol_spirou
 # -----------------------------------------------------------------------------
-obj_pol_spirou.name = 'obj_pol_spirou.py'
-obj_pol_spirou.shortname = 'POLAR'
-obj_pol_spirou.instrument = __INSTRUMENT__
-obj_pol_spirou.outputdir = 'reduced'
-obj_pol_spirou.inputdir = 'reduced'
-obj_pol_spirou.inputtype = 'reduced'
-obj_pol_spirou.extension = 'fits'
-obj_pol_spirou.description = Help['FTELLU_DESC']
-obj_pol_spirou.epilog = Help['FTELLU_EXAMPLE']
-obj_pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
-                           POL_NULL1=sf.out_pol_null1,
-                           POL_NULL2=sf.out_pol_null2,
-                           POL_STOKESI=sf.out_pol_stokesi,
-                           POL_LSD=sf.out_pol_lsd,
-                           S1DW_POL=sf.out_pol_s1dw,
-                           S1DV_POL=sf.out_pol_s1dv,
-                           S1DW_NULL1=sf.out_null1_s1dw,
-                           S1DV_NULL1=sf.out_null1_s1dv,
-                           S1DW_NULL2=sf.out_null2_s1dw,
-                           S1DV_NULL2=sf.out_null2_s1dv,
-                           S1DW_STOKESI=sf.out_stokesi_s1dw,
-                           S1DV_STOKESI=sf.out_stokesi_s1dv)
-obj_pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
-                               'POLAR_STOKES_I', 'POLAR_LSD',
-                               'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
-obj_pol_spirou.set_summary_plots('SUM_EXTRACT_S1D')
-obj_pol_spirou.set_arg(pos=0, **directory)
-obj_pol_spirou.set_arg(name='files', dtype='files', pos='1+',
-                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                       helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
-                       limit=1)
-obj_pol_spirou.set_kwarg(**blazefile)
-obj_pol_spirou.set_kwarg(**plot)
-obj_pol_spirou.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_exposure_meter
@@ -900,8 +928,9 @@ obj_pol_spirou.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 
 
+# -----------------------------------------------------------------------------
 # cal_update_berv
-
+# -----------------------------------------------------------------------------
 cal_update_berv.name = 'cal_update_berv.py'
 cal_update_berv.shortname = 'UBERV'
 cal_update_berv.instrument = __INSTRUMENT__
