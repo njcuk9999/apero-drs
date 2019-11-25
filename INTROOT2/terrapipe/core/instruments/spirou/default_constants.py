@@ -301,7 +301,7 @@ HISTO_RANGE_HIGH.value = 0.8
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
-ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL'
+ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
