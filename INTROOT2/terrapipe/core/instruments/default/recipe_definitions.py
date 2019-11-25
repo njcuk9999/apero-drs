@@ -133,9 +133,9 @@ processing.set_kwarg(name='--nightname', dtype=str, default='None',
                     helpstr=Help['PROCESS_NIGHTNAME_HELP'])
 processing.set_kwarg(name='--filename', dtype=str, default='None',
                     helpstr=Help['PROCESS_FILENAME_HELP'])
-processing.set_kwarg(name='--bnightname', dtype=str, default='None',
+processing.set_kwarg(name='--bnightnames', dtype=str, default='None',
                      helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
-processing.set_kwarg(name='--wnightname', dtype=str, default='None',
+processing.set_kwarg(name='--wnightnames', dtype=str, default='None',
                      helpstr=Help['PROCESS_WNIGHTNAMES_HELP'])
 processing.set_kwarg(name='--cores', dtype=str, default='None',
                      helpstr=Help['PROCESS_CORES_HELP'])
