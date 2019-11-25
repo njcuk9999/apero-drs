@@ -244,6 +244,32 @@ class Run:
 # =============================================================================
 # Define user functions
 # =============================================================================
+def group_name(params, recipe):
+    # set function name
+    func_name = __NAME__ + '.group_name()'
+    # ----------------------------------------------------------------------
+    # deal with no PID
+    if 'PID' not in params:
+        pid = 'UNKNOWN-PID'
+    else:
+        pid = str(params['PID'])
+    # ----------------------------------------------------------------------
+    # deal with no recipe
+    if 'RECIPE' not in params:
+        recipename = 'UNKNOWN-RECIPE'
+    else:
+        recipename = str(params['RECIPE'].replace('.py', ''))
+    # ----------------------------------------------------------------------
+    # Get the HOST name (if it does not exist host = 'HOST')
+    host = os.environ.get('HOST', 'HOST')
+    # ----------------------------------------------------------------------
+    args = [host, pid, recipename, 'group']
+    # construct group name
+    groupname = 'DRS-{0}_{1}_{2}_{3}'.format(*args)
+    # return group name
+    return groupname
+
+
 def read_runfile(params, runfile, **kwargs):
     func_name = __NAME__ + '.read_runfile()'
     # ----------------------------------------------------------------------
@@ -560,7 +586,7 @@ def generate_run_list(params, table, runtable):
     return generate_ids(params, runtable, recipemod, rlist)
 
 
-def process_run_list(params, recipe, runlist):
+def process_run_list(params, recipe, runlist, group=None):
     # get number of cores
     cores = _get_cores(params)
     # pipe to correct module
@@ -568,12 +594,12 @@ def process_run_list(params, recipe, runlist):
         # log process: Running with 1 core
         WLOG(params, 'info', TextEntry('40-503-00016'))
         # run as linear process
-        rdict = _linear_process(params, recipe, runlist)
+        rdict = _linear_process(params, recipe, runlist, group)
     else:
         # log process: Running with N cores
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, recipe, runlist, cores)
+        rdict = _multi_process(params, recipe, runlist, cores, group)
     # convert to ParamDict and set all sources
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
@@ -1213,7 +1239,7 @@ def prompt(params):
 # Define processing functions
 # =============================================================================
 def _linear_process(params, recipe, runlist, return_dict=None, number=0,
-                    cores=1, event=None):
+                    cores=1, event=None, group=None):
     # get textdict
     textdict = TextDict(params['instrument'], params['LANGUAGE'])
     # deal with empty return_dict
@@ -1239,6 +1265,9 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         pp['NIGHTNAME'] = str(run_item.nightname)
         pp['ARGS'] = kwargs
         pp['RUNSTRING'] = str(run_item.runstring)
+        # ------------------------------------------------------------------
+        # add drs group to keyword arguments
+        pp['ARGS']['DRS_GROUP'] = group
         # ------------------------------------------------------------------
         # log what we are running
         if cores > 1:
@@ -1348,7 +1377,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
     return return_dict
 
 
-def _multi_process(params, recipe, runlist, cores):
+def _multi_process(params, recipe, runlist, cores, groupname=None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks(runlist, cores)
     # start process manager
@@ -1369,7 +1398,7 @@ def _multi_process(params, recipe, runlist, cores):
         for r_it, runlist_group in enumerate(group):
             # get args
             args = [params, recipe, runlist_group, return_dict, r_it + 1,
-                    cores, event]
+                    cores, event, groupname]
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
