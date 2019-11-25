@@ -244,6 +244,24 @@ class Run:
 # =============================================================================
 # Define user functions
 # =============================================================================
+def run_process(params, recipe, module, *gargs, **gkwargs):
+    # generate run table (dictionary from reprocessing)
+    runtable = generate_run_table(params, module, *gargs, **gkwargs)
+    # Generate run list
+    rlist = generate_run_list(params, None, runtable)
+    # Process run list
+    outlist, has_errors = process_run_list(params, recipe, rlist)
+    # display errors
+    if has_errors:
+        display_errors(params, outlist)
+        # terminate here
+        eargs = [module.name, recipe.name]
+        WLOG(params, 'error', TextEntry('00-001-00043', args=eargs))
+    # return outlist
+    return outlist
+
+
+
 def read_runfile(params, runfile, **kwargs):
     func_name = __NAME__ + '.read_runfile()'
     # ----------------------------------------------------------------------
@@ -1098,6 +1116,20 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 mask &= (ftable[night_col] != blacklist_night)
             # apply mask to table
             ftable = ftable[mask]
+            # log blacklist
+            wargs = [' ,'.join(blacklist_nights)]
+            WLOG(params, '', TextEntry('40-503-00026', args=wargs))
+
+            # deal with empty ftable
+            if len(ftable) == 0:
+                WLOG(params, 'warning', TextEntry('10-503-00006'))
+                # get response for how to continue (skip or exit)
+                response = prompt(params)
+                if response:
+                    continue
+                else:
+                    sys.exit()
+        # ------------------------------------------------------------------
         # white list
         if params['WNIGHTNAMES'] not in ['', 'None', None]:
             # start by assuming we want to keep nothing
@@ -1109,6 +1141,18 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 mask |= (ftable[night_col] == whitelist_night)
             # apply mask to table
             ftable = ftable[mask]
+            # log blacklist
+            wargs = [' ,'.join(whitelist_nights)]
+            WLOG(params, '', TextEntry('40-503-00027', args=wargs))
+            # deal with empty ftable
+            if len(ftable) == 0:
+                WLOG(params, 'warning', TextEntry('10-503-00007'))
+                # get response for how to continue (skip or exit)
+                response = prompt(params)
+                if response:
+                    continue
+                else:
+                    sys.exit()
 
         # ------------------------------------------------------------------
         # deal with a night name
