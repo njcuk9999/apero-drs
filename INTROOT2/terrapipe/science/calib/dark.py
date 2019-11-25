@@ -213,7 +213,7 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
 def construct_dark_table(params, filenames):
     # define storage for table columns
     dark_time, dark_exp, dark_pp_version = [], [], []
-    basenames, nightnames = [], []
+    basenames, nightnames, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
     # log that we are reading all dark files
     WLOG(params, '', TextEntry('40-011-10001'))
@@ -232,6 +232,7 @@ def construct_dark_table(params, filenames):
         wt_temp = hdr[params['KW_WEATHER_TOWER_TEMP'][0]]
         cass_temp = hdr[params['KW_CASS_TEMP'][0]]
         humidity = hdr[params['KW_HUMIDITY'][0]]
+        dprtype = hdr[params['KW_DPRTYPE'][0]]
         # append to lists
         dark_time.append(float(acqtime))
         dark_exp.append(float(exptime))
@@ -243,16 +244,17 @@ def construct_dark_table(params, filenames):
         dark_humidity.append(float(humidity))
     # convert lists to table
     columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
-               'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY']
+               'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE']
     values = [nightnames, basenames, filenames, dark_time, dark_exp,
-              dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity]
+              dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
+              dprtypes]
     # make table using columns and values
     dark_table = drs_table.make_table(params, columns, values)
     # return table
     return dark_table
 
 
-def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
+def construct_master_dark(params, recipe, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
     # get constants from p
     time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
@@ -263,6 +265,7 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # get col data from dark_table
     filenames = dark_table['FILENAME']
     dark_times = dark_table['MJDATE']
+    filetypes = dark_table['DPRTYPE']
 
     # ----------------------------------------------------------------------
     # match files by date
@@ -383,6 +386,8 @@ def construct_master_dark(params, recipe, filetype, dark_table, **kwargs):
     # clean out
     del dark_cube1
     # -------------------------------------------------------------------------
+    # get file type of last file
+    filetype = filetypes[lastpos]
     # get infile from filetype
     infile = core.get_file_definition(filetype, params['INSTRUMENT'],
                                       kind='tmp')
