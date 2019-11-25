@@ -35,11 +35,11 @@ test = drs_recipe(__INSTRUMENT__)
 drs_changelog = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
-reprocess = drs_recipe(__INSTRUMENT__)
+processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, reprocess, remake_db, listing]
+recipes = [test, drs_changelog, reset, processing, remake_db, listing]
 
 # =============================================================================
 # Recipe definitions
@@ -121,18 +121,27 @@ reset.set_kwarg(name='-warn', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 # processing.py
 # -----------------------------------------------------------------------------
-reprocess.name = 'processing.py'
-reprocess.instrument = __INSTRUMENT__
-reprocess.description = Help['REPROCESS_DESCRIPTION']
-reprocess.set_arg(pos=0, name='instrument', dtype='options',
-                  helpstr=Help['REPROCESS_INST_HELP'],
+processing.name = 'processing.py'
+processing.instrument = __INSTRUMENT__
+processing.description = Help['PROCESS_DESCRIPTION']
+processing.set_arg(pos=0, name='instrument', dtype='options',
+                  helpstr=Help['PROCESS_INST_HELP'],
                   options=['SPIROU', 'NIRPS'])
-reprocess.set_arg(pos=1, name='runfile', dtype=str,
-                  helpstr=Help['REPROCESS_RUNFILE_HELP'])
-reprocess.set_kwarg(name='--nightname', dtype=str, default='None',
-                    helpstr=Help['REPROCESS_NIGHTNAME_HELP'])
-reprocess.set_kwarg(name='--filename', dtype=str, default='None',
-                    helpstr=Help['REPROCESS_FILENAME_HELP'])
+processing.set_arg(pos=1, name='runfile', dtype=str,
+                  helpstr=Help['PROCESS_RUNFILE_HELP'])
+processing.set_kwarg(name='--nightname', dtype=str, default='None',
+                    helpstr=Help['PROCESS_NIGHTNAME_HELP'])
+processing.set_kwarg(name='--filename', dtype=str, default='None',
+                    helpstr=Help['PROCESS_FILENAME_HELP'])
+processing.set_kwarg(name='--bnightname', dtype=str, default='None',
+                     helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
+processing.set_kwarg(name='--wnightname', dtype=str, default='None',
+                     helpstr=Help['PROCESS_WNIGHTNAMES_HELP'])
+processing.set_kwarg(name='--cores', dtype=int, default=None,
+                     helpstr=Help['PROCESS_CORES_HELP'])
+processing.set_kwarg(name='--test', dtype=str, default='None',
+                     options=['True', 'False', '1', '0', 'None'],
+                     helpstr=Help['PROCESS_TEST_HELP'])
 
 # -----------------------------------------------------------------------------
 # listing.py
