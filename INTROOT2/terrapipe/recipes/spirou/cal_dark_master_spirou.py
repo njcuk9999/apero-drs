@@ -97,7 +97,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # extract file type from inputs
     filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
-
+    # get allowed dark types
+    allowedtypes = params.listp('ALLOWED_DARK_TYPES', dtype=str)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
 
@@ -105,11 +106,12 @@ def __main__(recipe, params):
     # Get all preprocessed dark files
     # ----------------------------------------------------------------------
     filenames = []
+
     # check file type
     for filetype in filetypes:
-        if filetype not in params['ALLOWED_DARK_TYPES']:
+        if filetype not in allowedtypes:
             emsg = TextEntry('01-001-00020', args=[filetype, mainname])
-            for allowedtype in params['ALLOWED_DARK_TYPES']:
+            for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
         # get all "filetype" filenames
