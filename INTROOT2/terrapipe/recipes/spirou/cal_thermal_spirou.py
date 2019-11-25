@@ -148,8 +148,6 @@ def __main__(recipe, params):
             wargs = [thermal_files[fiber].filename]
             WLOG(params, '', TextEntry('', args=wargs))
             # write thermal files
-            # TODO: Remove breakpoint
-            constants.breakpoint(params)
             thermal_files[fiber].write()
 
         # ------------------------------------------------------------------
