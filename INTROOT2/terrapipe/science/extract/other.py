@@ -196,9 +196,6 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         # append to storage
         e2ds_files[fiber] = e2ds_file
 
-    # TODO: Remove breakpoint
-    constants.breakpoint(params)
-
     # ------------------------------------------------------------------
     # extract the hc (AB, A, B and C) or read hc e2ds header
     # ------------------------------------------------------------------
@@ -218,7 +215,17 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         data_dict['rawfiles'] = [infile.basename]
         data_dict['combine'] = params['INPUT_COMBINE_IMAGES']
         kwargs['DATA_DICT'] = data_dict
-        kwargs['DRS_GROUP'] = groupname
+        # ------------------------------------------------------------------
+        # deal with adding group name
+        if groupname is not None:
+            # if we don't have a group already
+            if params['DRS_GROUP'] is None:
+                kwargs['DRS_GROUP'] = groupname
+            # if we do have a sub-folder
+            else:
+                groupname = os.path.join(params['DRS_GROUP'], groupname)
+                kwargs['DRS_GROUP'] = groupname
+        # ------------------------------------------------------------------
         # pipe into cal_extract
         llout = extrecipe.main(**kwargs)
         # check success
