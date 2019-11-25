@@ -94,7 +94,7 @@ def __main__(recipe, params):
     # get run file from inputs
     runfile = params['INPUTS']['RUNFILE']
     # set up drs group (for logging)
-    groupname = drs_processing.group_name(params, recipe)
+    groupname = core.group_name(params)
 
     # ----------------------------------------------------------------------
     # Deal with run file
