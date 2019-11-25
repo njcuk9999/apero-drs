@@ -244,32 +244,6 @@ class Run:
 # =============================================================================
 # Define user functions
 # =============================================================================
-def group_name(params, recipe):
-    # set function name
-    func_name = __NAME__ + '.group_name()'
-    # ----------------------------------------------------------------------
-    # deal with no PID
-    if 'PID' not in params:
-        pid = 'UNKNOWN-PID'
-    else:
-        pid = str(params['PID'])
-    # ----------------------------------------------------------------------
-    # deal with no recipe
-    if 'RECIPE' not in params:
-        recipename = 'UNKNOWN-RECIPE'
-    else:
-        recipename = str(params['RECIPE'].replace('.py', ''))
-    # ----------------------------------------------------------------------
-    # Get the HOST name (if it does not exist host = 'HOST')
-    host = os.environ.get('HOST', 'HOST')
-    # ----------------------------------------------------------------------
-    args = [host, pid, recipename, 'group']
-    # construct group name
-    groupname = 'DRS-{0}_{1}_{2}_{3}'.format(*args)
-    # return group name
-    return groupname
-
-
 def read_runfile(params, runfile, **kwargs):
     func_name = __NAME__ + '.read_runfile()'
     # ----------------------------------------------------------------------
