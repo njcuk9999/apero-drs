@@ -127,15 +127,26 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     recipe.recipemod = recipemod
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
+    # -------------------------------------------------------------------------
+    # need to deal with drs group
+    if 'DRS_GROUP' in fkwargs:
+        drsgroup = fkwargs['DRS_GROUP']
+        del fkwargs['DRS_GROUP']
+    else:
+        drsgroup = None
+    # set DRS_GROUP
+    recipe.drs_params.set('DRS_GROUP', drsgroup, func_name)
+    # -------------------------------------------------------------------------
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
+    # -------------------------------------------------------------------------
     # do not need to display if we have special keywords
     quiet = _special_keys_present(recipe, quiet, fkwargs)
     # -------------------------------------------------------------------------
     # display
     if (not quiet) and ('instrument' not in recipe.args):
         # display title
-        _display_drs_title(recipe.drs_params)
+        _display_drs_title(recipe.drs_params, drsgroup)
     # -------------------------------------------------------------------------
     # display loading message
     TLOG(recipe.drs_params, '', 'Loading Arguments. Please wait...')
@@ -161,6 +172,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
         pconst = constants.pload(recipe.instrument)
         recipe.filemod = pconst.FILEMOD()
         recipe.recipemod = pconst.RECIPEMOD()
+        # need to set DRS_GROUP
+        recipe.drs_params.set('DRS_GROUP', drsgroup, func_name)
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
         # do not need to display if we have special keywords
@@ -645,13 +658,13 @@ def _special_keys_present(recipe, quiet, fkwargs):
     return quiet
 
 
-def _display_drs_title(p):
+def _display_drs_title(params, group=None):
     """
     Display title for this execution
 
-    :param p: dictionary, parameter dictionary
+    :param params: dictionary, parameter dictionary
 
-    :type p: ParamDict
+    :type params: ParamDict
 
     :returns: None
     """
@@ -663,14 +676,14 @@ def _display_drs_title(p):
     title += colors.RED1 + ' {INSTRUMENT} ' + colors.okgreen + '@{PID}'
     title += ' (' + colors.BLUE1 + 'V{DRS_VERSION}' + colors.okgreen + ')'
     title += colors.ENDC
-    title = title.format(**p)
+    title = title.format(**params)
 
     # Log title
-    _display_title(p, title)
-    _display_logo(p)
+    _display_title(params, title, group)
+    _display_logo(params)
 
 
-def _display_title(p, title):
+def _display_title(params, title, group=None):
     """
     Display any title between HEADER bars via the WLOG command
 
@@ -683,9 +696,14 @@ def _display_title(p, title):
     :returns: None
     """
     # print and log
-    WLOG(p, '', p['DRS_HEADER'], wrap=False)
-    WLOG(p, '', ' *\n{0}\n *'.format(title), wrap=False)
-    WLOG(p, '', p['DRS_HEADER'], wrap=False)
+    WLOG(params, '', params['DRS_HEADER'], wrap=False)
+    # add title
+    WLOG(params, '', ' *\n{0}\n *'.format(title), wrap=False)
+    # add group if defined
+    if group is not None:
+        WLOG(params, '', '\tGroup: {0}'.format(group), wrap=False)
+    # end header
+    WLOG(params, '', params['DRS_HEADER'], wrap=False)
 
 
 def _display_logo(p):
