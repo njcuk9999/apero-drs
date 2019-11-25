@@ -727,7 +727,7 @@ def _display_title(params, title, group=None):
     WLOG(params, '', ' *\n{0}\n *'.format(title), wrap=False)
     # add group if defined
     if group is not None:
-        WLOG(params, '', '\tGroup: {0}'.format(group), wrap=False)
+        WLOG(params, '', ' * \tGroup: {0}'.format(group), wrap=False)
     # end header
     WLOG(params, '', params['DRS_HEADER'], wrap=False)
 
