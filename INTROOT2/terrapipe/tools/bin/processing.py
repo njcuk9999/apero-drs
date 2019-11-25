@@ -90,8 +90,11 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
+    mainname = __NAME__ + '._main()'
     # get run file from inputs
     runfile = params['INPUTS']['RUNFILE']
+    # set up drs group (for logging)
+    groupname = drs_processing.group_name(params, recipe)
 
     # ----------------------------------------------------------------------
     # Deal with run file
@@ -126,7 +129,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
-    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
+    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist,
+                                                          group=groupname)
 
     # ----------------------------------------------------------------------
     # Print timing
