@@ -887,7 +887,7 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
 # =============================================================================
 # define whether to always extract thermals (i.e. overwrite existing files)
 THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
-THERMAL_ALWAYS_EXTRACT.value = True
+THERMAL_ALWAYS_EXTRACT.value = False
 
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF'
