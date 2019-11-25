@@ -48,6 +48,8 @@ setup = drs_startup.setup
 # The logging script
 wlog = drs_log.wlog
 
+# the group name (based on pid)
+group_name = drs_startup.group_name
 
 
 # =============================================================================
