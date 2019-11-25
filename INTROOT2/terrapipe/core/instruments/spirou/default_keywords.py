@@ -104,10 +104,6 @@ KW_OBJDEC.set(key='OBJDEC', unit=uu.deg)
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
 KW_OBJNAME.set(key='OBJECT')
 
-# define the gaia id
-KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
-KW_GAIA_ID.set(key='GAIA_ID')
-
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
 KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear')
@@ -136,6 +132,17 @@ KW_CASS_TEMP.set(key='SB_POL_T')
 KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
 KW_HUMIDITY.set(key='RELHUMID')
 
+# define the object temperature HEADER key
+KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
+KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
+
+# -----------------------------------------------------------------------------
+# Wanted header keys (related to science object)
+# -----------------------------------------------------------------------------
+# define the gaia id
+KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
+KW_GAIA_ID.set(key='GAIA_ID')
+
 # define the parallax HEADER key
 KW_PLX = KW_PLX.copy(__NAME__)
 KW_PLX.set(key='OBJPLX', unit=uu.mas)
@@ -143,10 +150,6 @@ KW_PLX.set(key='OBJPLX', unit=uu.mas)
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
 KW_INPUTRV.set(key='OBSRV', unit=uu.km / uu.s)
-
-# define the object temperature HEADER key
-KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
-KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
