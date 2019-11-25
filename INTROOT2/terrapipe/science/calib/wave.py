@@ -142,10 +142,12 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     key_hc = out_wave_hc.get_dbkey(fiber=usefiber)
     # ------------------------------------------------------------------------
     # check for filename in inputs
-    filename = general.get_input_files(params, 'WAVEFILE', key_fp, filename)
+    filename = general.get_input_files(params, 'WAVEFILE', key_fp, header,
+                                       filename)
     # then check hc solution (if we don't have an fp solution filename
     if filename is None:
-        filename = general.get_input_files(params, 'WAVEFILE', key_hc, filename)
+        filename = general.get_input_files(params, 'WAVEFILE', key_hc, header,
+                                           filename)
     # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
