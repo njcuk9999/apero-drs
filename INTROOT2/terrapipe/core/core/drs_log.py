@@ -839,8 +839,16 @@ def get_logfilepath(logobj, params):
     :return lpath: string, the path and filename for the log file to be used
     :return warning: bool, if True print warnings about log file path
     """
+    # -------------------------------------------------------------------------
+    # deal with group
+    if 'DRS_GROUP' in params:
+        group = params['DRS_GROUP']
+    else:
+        group = None
+    # -------------------------------------------------------------------------
     # get dir_data_msg key
-    dir_data_msg = get_drs_data_msg(params)
+    dir_data_msg = get_drs_data_msg(params, group)
+    # -------------------------------------------------------------------------
     # add log file to path
     lpath = logobj.pconstant.LOG_FILE_NAME(params, dir_data_msg)
     # return the logpath and the warning
@@ -1149,9 +1157,23 @@ def _clean_message(message):
     return message
 
 
-def get_drs_data_msg(params):
+def get_drs_data_msg(params, group=None):
     # get from params
     dir_data_msg = params.get('DRS_DATA_MSG', None)
+    # ----------------------------------------------------------------------
+    # deal with a group directory
+    if (group is not None) and (dir_data_msg is not None):
+        # check that dir_data_msg exists before joining
+        if os.path.exists(dir_data_msg):
+            # join to group name
+            dir_data_msg = os.path.join(dir_data_msg, group)
+            # try to create group directory
+            try:
+                os.makedirs(dir_data_msg)
+            # if we have an exception continue
+            except Exception as _:
+                pass
+    # ----------------------------------------------------------------------
     # if None use we have to create it
     if dir_data_msg is None:
         # create default path
@@ -1162,6 +1184,7 @@ def get_drs_data_msg(params):
         create = True
     else:
         return dir_data_msg
+    # ----------------------------------------------------------------------
     # if we have reached here then we need to create a default drs_data_msg
     if create:
         # get the users home directory
