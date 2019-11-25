@@ -1399,6 +1399,10 @@ def _string_repr_list(key, values, source, fmt):
 def _map_listparameter(value, separator=',', dtype=None):
 
     func_name = __NAME__ + '._map_listparameter()'
+    # return list if already a list
+    if isinstance(value, (list, np.ndarray)):
+        return list(value)
+
     # try evaulating as a list
     try:
         rawvalue = eval(value)
