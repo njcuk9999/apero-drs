@@ -146,7 +146,7 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # log that we are writing thermal files to file
             wargs = [thermal_files[fiber].filename]
-            WLOG(params, '', TextEntry('', args=wargs))
+            WLOG(params, '', TextEntry('40-016-00022', args=wargs))
             # write thermal files
             thermal_files[fiber].write()
 
