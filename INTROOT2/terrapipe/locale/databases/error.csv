@@ -303,6 +303,8 @@
 "00-503-00010","ERROR","Means that in generate_run_table kwargs or args were lists but not the same length","{0} = Argument name; {1} = length; {2} = function name","Run table generation error: argument '{0}' was a list but not the correct length (needs to be {1}) \n\t Function = {2}","",""
 "00-503-00011","ERROR","Means that recipe (from run table) was not valid for instrument","{0} = recipe name; {1} = instrument; {2} = function name","Run table generation error: recipe '{0}' is not valid for instrument '{1}'. \n\t Please check instruments: \n\t - recipe definitions \n\t - 'recipes' list \n\t - sequences definitions \n\t - 'sequences' list. \n Function = {2}","",""
 "00-503-00012","ERROR","Means that overwrite “arguments” was set but we could not add argument ","{0} = Argument name; {1} = Argument value; {2} = function name","Overwrite argument: Argument {0} not found in args/kwargs. Correct DrsSequence. \n\t {0} = {1} \n\t Function = {2}","",""
+"00-503-00013","ERROR","Means that 'cores'  was defiend by user but was not an integer and caused a value error","{0} = cores value; {1} = error type; {2} = error message","User input error: '--cores'='{0}' must be an integer \n\t Error {1}: {2}","",""
+"00-503-00014","ERROR","Means that 'cores' was defined by user and lead to an error","{0} = cores value; {1} = error type; {2} = error message","User input error: '--cores' must be an integer \n\t Error {1}: {2}","",""
 "","","","","","",""
 "","","","","","",""
 "00-505-00000","ERROR","Remake calib db user error messages","None","","",""
