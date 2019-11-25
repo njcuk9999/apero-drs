@@ -262,7 +262,7 @@ cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
 cal_badpix.set_kwarg(name='-darkfiles', dtype='files',
-                     files=[sf.pp_dark_dark_tel],
+                     files=[sf.pp_dark_dark_tel, sf.pp_dark_dark_int],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
 cal_badpix.set_kwarg(**add_db)
@@ -314,9 +314,7 @@ cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
 cal_dark_master.set_outputs(DARK_MASTER_FILE=sf.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str,
-                          default='DARK_DARK_TEL',
-                          options=['DARK_DARK_INT', 'DARK_DARK_TEL',
-                                   'DARK_DARK_SKY'],
+                          default='DARK_DARK_TEL, DARK_DARK_INT',
                           helpstr=Help['DARK_MASTER_FILETYPE'])
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
