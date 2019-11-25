@@ -137,7 +137,7 @@ processing.set_kwarg(name='--bnightname', dtype=str, default='None',
                      helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
 processing.set_kwarg(name='--wnightname', dtype=str, default='None',
                      helpstr=Help['PROCESS_WNIGHTNAMES_HELP'])
-processing.set_kwarg(name='--cores', dtype=int, default=None,
+processing.set_kwarg(name='--cores', dtype=int, default='None',
                      helpstr=Help['PROCESS_CORES_HELP'])
 processing.set_kwarg(name='--test', dtype=str, default='None',
                      options=['True', 'False', '1', '0', 'None'],
