@@ -28,7 +28,7 @@ from terrapipe.core.core import drs_log
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'database.database.py'
+__NAME__ = 'core.core.drs_database.py'
 __INSTRUMENT__ = None
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -39,6 +39,8 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+# Get function string
+display_func = drs_log.display_func
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 # alias pcheck
@@ -394,6 +396,8 @@ def copy_calibrations(params, header, **kwargs):
 
 
 def get_header_time(params, database, header):
+    # set function name
+    func_name = display_func(params, 'get_header_time', __NAME__)
     # get time from header
     return _get_time(params, database.dbname, header=header)
 
@@ -508,6 +512,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
 # TODO: Redo to use Database class
 def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     func_name = __NAME__ + '.update_calibdb()'
+    func_name = display_func
     # deal with no night name
     if night is None:
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
@@ -518,7 +523,7 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     hdict, header = _get_hdict(params, dbname, outfile)
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, dbname, header, hdict)
+    header_time = _get_time(params, dbname, header=header, hdict=hdict)
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey).strip()
@@ -555,7 +560,7 @@ def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
     hdict, header = _get_hdict(params, dbname, outfile)
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, dbname, header, hdict)
+    header_time = _get_time(params, dbname, header=header, hdict=hdict)
     # ----------------------------------------------------------------------
     # get properties for database
     key = str(dbkey).strip()
@@ -577,7 +582,8 @@ def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
 # Define worker functions
 # =============================================================================
 def get_dbkey(params, outfile):
-    func_name = __NAME__ + '.get_dbkey()'
+    # set function name
+    func_name = display_func(params, 'get_dbkey', __NAME__)
     # get database key (if it exists)
     if hasattr(outfile, 'dbkey'):
         dbkey = outfile.get_dbkey()
@@ -585,14 +591,16 @@ def get_dbkey(params, outfile):
         eargs = [outfile.name, func_name]
         WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
         dbkey = ''
-
     # return dbkey
     return dbkey
 
 
 def _get_dbname(params, outfile):
-    func_name = __NAME__ + '._get_dbname()'
+    # set function name
+    func_name = display_func(params, '_get_dbname', __NAME__)
+    # get database names
     dbnames = ['telluric', 'calibration']
+    # deal with each database name
     if hasattr(outfile, 'dbname'):
         dbname = outfile.dbname.capitalize()
     else:
@@ -603,8 +611,11 @@ def _get_dbname(params, outfile):
 
 
 def _get_dbshort(params, dbname):
-    func_name = __NAME__ + '._get_dbshort()'
+    # set function name
+    func_name = display_func(params, '_get_dbshort', __NAME__)
+    # get database names
     dbnames = ['telluric', 'calibration']
+    # deal with each database name
     if dbname == 'calibration':
         dbshort = 'calibdb'
     elif dbname == 'telluric':
@@ -617,7 +628,8 @@ def _get_dbshort(params, dbname):
 
 
 def _get_hdict(params, dbname, outfile):
-    func_name = __NAME__ + '._get_hdict()'
+    # set function name
+    func_name = display_func(params, '_get_hdict', __NAME__)
     # get hdict
     if hasattr(outfile, 'hdict') and len(list(outfile.hdict.keys())) != 0:
         hdict = outfile.hdict
@@ -633,7 +645,8 @@ def _get_hdict(params, dbname, outfile):
 
 
 def _get_outpath(params, dbname, outfile=None):
-    func_name = __NAME__ + '._get_outpath()'
+    # set function name
+    func_name = display_func(params, '_get_outpath', __NAME__)
     # test database name
     if dbname.lower() == 'telluric':
         outpath = params['DRS_TELLU_DB']
@@ -652,7 +665,8 @@ def _get_outpath(params, dbname, outfile=None):
 
 
 def _get_database_file(params, dbname, outfile=None):
-    func_name = __NAME__ + '._get_database_file()'
+    # set function name
+    func_name = display_func(params, '_get_database_file', __NAME__)
     # test database name
     if dbname.lower() == 'telluric':
         outpath = params['TELLU_DB_NAME']
@@ -671,7 +685,8 @@ def _get_database_file(params, dbname, outfile=None):
 
 
 def _copy_db_file(params, dbname, inpath, outpath):
-    func_name = __NAME__ + '._copy_file()'
+    # set function name
+    func_name = display_func(params, '_copy_file', __NAME__)
     # remove file if already present
     if inpath == outpath:
         return 0
@@ -698,7 +713,8 @@ def _copy_db_file(params, dbname, inpath, outpath):
 
 
 def _get_time(params, dbname, header=None, hdict=None, kind=None):
-    func_name = __NAME__ + '._get_time()'
+    # set function name
+    func_name = display_func(params, '_get_time', __NAME__)
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
@@ -713,7 +729,8 @@ def _get_time(params, dbname, header=None, hdict=None, kind=None):
 
 
 def _read_lines_from_database(params, dbname):
-    func_name = __NAME__ + '._read_lines_from_database()'
+    # set function name
+    func_name = display_func(params, '_read_lines_from_database', __NAME__)
     # get outpath
     outpath = _get_outpath(params, dbname)
     # get file name
@@ -780,7 +797,8 @@ def _read_lines_from_database(params, dbname):
 
 
 def _write_line_to_database(params, key, dbname, outfile, line, log=True):
-    func_name = __NAME__ + '._write_line_to_database()'
+    # set function name
+    func_name = display_func(params, '_write_line_to_database', __NAME__)
     # get outpath
     outpath = _get_outpath(params, dbname, outfile)
     # get file name
