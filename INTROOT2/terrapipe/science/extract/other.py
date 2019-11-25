@@ -99,7 +99,6 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
         thermal_file.header = thermal_outputs[fiber].header
         # add data from thermal_outputs
         thermal_file.datatype = thermal_outputs[fiber].datatype
-        thermal_file.dtype = thermal_outputs[fiber].datatype
         thermal_file.data = thermal_outputs[fiber].data
         # append to list
         thermal_files[fiber] = thermal_file
@@ -170,6 +169,12 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
+
+    # ------------------------------------------------------------------
+    # Get the output hc e2ds filename (and check if it exists)
+    # ------------------------------------------------------------------
+    # set up drs group (for logging)
+    groupname = core.group_name(params, suffix='extract')
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
@@ -190,6 +195,10 @@ def extract_files(params, recipe, infile, outfile, always_extract,
             exists = exists and False
         # append to storage
         e2ds_files[fiber] = e2ds_file
+
+    # TODO: Remove breakpoint
+    constants.breakpoint(params)
+
     # ------------------------------------------------------------------
     # extract the hc (AB, A, B and C) or read hc e2ds header
     # ------------------------------------------------------------------
@@ -209,6 +218,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         data_dict['rawfiles'] = [infile.basename]
         data_dict['combine'] = params['INPUT_COMBINE_IMAGES']
         kwargs['DATA_DICT'] = data_dict
+        kwargs['DRS_GROUP'] = groupname
         # pipe into cal_extract
         llout = extrecipe.main(**kwargs)
         # check success
