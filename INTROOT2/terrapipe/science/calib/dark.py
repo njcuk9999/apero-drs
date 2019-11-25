@@ -242,6 +242,7 @@ def construct_dark_table(params, filenames):
         dark_wt_temp.append(float(wt_temp))
         dark_cass_temp.append(float(cass_temp))
         dark_humidity.append(float(humidity))
+        dprtypes.append(str(dprtype))
     # convert lists to table
     columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE']
