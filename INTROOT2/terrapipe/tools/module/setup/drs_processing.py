@@ -61,6 +61,8 @@ RUN_KEYS['RUN_NAME'] = 'Run Unknown'
 RUN_KEYS['SEND_EMAIL'] = 'False'
 RUN_KEYS['EMAIL_ADDRESS'] = None
 RUN_KEYS['NIGHT_NAME'] = None
+RUN_KEYS['BNIGHTNAMES'] = None
+RUN_KEYS['WNIGHTNAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
@@ -328,12 +330,25 @@ def read_runfile(params, runfile, **kwargs):
 
     # ----------------------------------------------------------------------
     # deal with arguments from command line (params['INPUTS'])
+    # ----------------------------------------------------------------------
+    # nightname
     if 'NIGHTNAME' in params['INPUTS']:
         if params['INPUTS']['NIGHTNAME'] not in ['None', '', None]:
             params['NIGHTNAME'] = params['INPUTS']['NIGHTNAME']
     # make sure nightname is str or None
     if params['NIGHTNAME'] in ['None', '']:
         params['NIGHTNAME'] = None
+    # ----------------------------------------------------------------------
+    # nightname blacklist
+    if 'BNIGHTNAMES' in params['INPUTS']:
+        if params['INPUTS']['BNIGHTNAMES'] not in ['None', '', None]:
+            params['BNIGHTNAMES'] = params['INPUTS'].listp('BNIGHTNAMES')
+    # ----------------------------------------------------------------------
+    # nightname whitelist
+    if 'WNIGHTNAMES' in params['INPUTS']:
+        if params['INPUTS']['WNIGHTNAMES'] not in ['None', '', None]:
+            params['WNIGHTNAMES'] = params['INPUTS'].listp('WNIGHTNAMES')
+    # ----------------------------------------------------------------------
     # deal with having a file specified
     params['FILENAME'] = None
     if 'FILENAME' in params['INPUTS']:
@@ -342,6 +357,16 @@ def read_runfile(params, runfile, **kwargs):
                 params['FILENAME'] = params['INPUTS'].listp('FILENAME')
             else:
                 params['FILENAME'] = params['INPUTS']['FILENAME']
+    # ----------------------------------------------------------------------
+    # deal with getting test run from user input
+    if 'TEST' in params['INPUTS']:
+        test = params['INPUTS']['TEST']
+        if test not in ['', 'None', None]:
+            if test.upper() in ['TRUE', '1']:
+                params['TEST_RUN'] = True
+            else:
+                params['TEST_RUN'] = False
+
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
@@ -1054,11 +1079,45 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             srecipe.recipemod = recipemod
         if srecipe.filemod is None:
             srecipe.filemod = filemod
+        # ------------------------------------------------------------------
+        # copy table
+        # ------------------------------------------------------------------
+        ftable = Table(table)
+
+        # ------------------------------------------------------------------
+        # deal with black and white lists
+        # ------------------------------------------------------------------
+        # black list
+        if params['BNIGHTNAMES'] not in ['', 'None', None]:
+            # start by assuming we want to keep everything
+            mask = np.ones(len(ftable), dtype=bool)
+            # get black list from params
+            blacklist_nights = params.listp('BNIGHTNAMES', dtype=str)
+            # loop around black listed nights and set them to False
+            for blacklist_night in blacklist_nights:
+                mask &= (ftable[night_col] != blacklist_night)
+            # apply mask to table
+            ftable = ftable[mask]
+        # white list
+        if params['WNIGHTNAMES'] not in ['', 'None', None]:
+            # start by assuming we want to keep nothing
+            mask = np.zeros(len(ftable), dtype=bool)
+            # get black list from params
+            whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
+            # loop around black listed nights and set them to False
+            for whitelist_night in whitelist_nights:
+                mask |= (ftable[night_col] == whitelist_night)
+            # apply mask to table
+            ftable = ftable[mask]
+
+        # ------------------------------------------------------------------
+        # deal with a night name
+        # ------------------------------------------------------------------
         # deal with nightname
         if srecipe.master:
             nightname = params['MASTER_NIGHT']
             # check if master night name is valid (in table)
-            if nightname not in table[night_col]:
+            if nightname not in ftable[night_col]:
                 wargs = [nightname]
                 WLOG(params, 'warning', TextEntry('10-503-00004', args=wargs))
                 # get response for how to continue (skip or exit)
@@ -1068,17 +1127,17 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 else:
                     sys.exit()
             # mask table by nightname
-            mask = table[night_col] == nightname
-            ftable = Table(table[mask])
+            mask = ftable[night_col] == nightname
+            ftable = Table(ftable[mask])
 
         elif params['NIGHTNAME'] not in ['', 'None', None]:
             nightname = params['NIGHTNAME']
             # mask table by nightname
-            mask = table[night_col] == nightname
-            ftable = Table(table[mask])
+            mask = ftable[night_col] == nightname
+            ftable = ftable[mask]
         else:
             nightname = 'all'
-            ftable = Table(table)
+        # ------------------------------------------------------------------
         # deal with empty ftable
         if len(ftable) == 0:
             wargs = [nightname]
@@ -1554,6 +1613,25 @@ def _split_string_list(string):
 
 
 def _get_cores(params):
+    # get cores from inputs
+    if 'CORES' in params['INPUTS']:
+        # get value from inputs
+        cores = params['INPUTS']['CORES']
+        # only update params if cores is not None
+        if cores not in ['', 'None', None]:
+            try:
+                cores = int(cores)
+            except ValueError as e:
+                eargs = [params['CORES'], type(e), e]
+                WLOG(params, 'error', TextEntry('00-503-00013', args=eargs))
+                cores = 1
+            except Exception as e:
+                eargs = [type(e), e]
+                WLOG(params, 'error', TextEntry('00-503-00014', args=eargs))
+                cores = 1
+            # update the value in params
+            params.set('CORES', value=cores, source='USER INPUT')
+
     # get number of cores
     if 'CORES' in params:
         try:
