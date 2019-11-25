@@ -137,19 +137,9 @@ def __main__(recipe, params):
     gargs = [night_names, obj_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
-    # generate run table (dictionary from reprocessing)
-    runtable = drs_processing.generate_run_table(params, obj_fit_tellu, *gargs,
-                                                 **gkwargs)
-    # Generate run list
-    rlist = drs_processing.generate_run_list(params, None, runtable)
-    # Process run list
-    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
-    # display errors
-    if has_errors:
-        drs_processing.display_errors(params, outlist)
-        # terminate here
-        eargs = [obj_fit_tellu.name, recipe.name]
-        WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
+    # run obj_fit_tellu
+    outlist = drs_processing.run_process(params, recipe, obj_fit_tellu,
+                                         *gargs, **gkwargs)
 
     # -------------------------------------------------------------------------
     # step 2: Run mk_obj_template on obj_stars
@@ -158,19 +148,9 @@ def __main__(recipe, params):
     gargs = [obj_names]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTEMP'
-    # generate run table (dictionary from reprocessing)
-    runtable = drs_processing.generate_run_table(params, obj_mk_template, *gargs,
-                                                 **gkwargs)
-    # Generate run list
-    rlist = drs_processing.generate_run_list(params, None, runtable)
-    # Process run list
-    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
-    # display errors
-    if has_errors:
-        drs_processing.display_errors(params, outlist)
-        # terminate here
-        eargs = [obj_mk_template.name, recipe.name]
-        WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
+    # run obj_fit_tellu
+    outlist = drs_processing.run_process(params, recipe, obj_mk_template,
+                                         *gargs, **gkwargs)
 
     # -------------------------------------------------------------------------
     # step 3: Run fit tellu on obj_stars
@@ -179,19 +159,9 @@ def __main__(recipe, params):
     gargs = [night_names, obj_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
-    # generate run table (dictionary from reprocessing)
-    runtable = drs_processing.generate_run_table(params, obj_fit_tellu, *gargs,
-                                                 **gkwargs)
-    # Generate run list
-    rlist = drs_processing.generate_run_list(params, None, runtable)
-    # Process run list
-    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist)
-    # display errors
-    if has_errors:
-        drs_processing.display_errors(params, outlist)
-        # terminate here
-        eargs = [obj_fit_tellu.name, recipe.name]
-        WLOG(params, 'error', TextEntry('00-019-00001', args=eargs))
+    # run obj_fit_tellu
+    outlist = drs_processing.run_process(params, recipe, obj_fit_tellu,
+                                         *gargs, **gkwargs)
 
     # ----------------------------------------------------------------------
     # End of main code
