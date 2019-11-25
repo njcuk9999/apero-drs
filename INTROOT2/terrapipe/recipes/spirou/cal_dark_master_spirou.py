@@ -96,21 +96,26 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # extract file type from inputs
-    filetype = params['INPUTS']['FILETYPE']
+    filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
+
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
 
     # ----------------------------------------------------------------------
     # Get all preprocessed dark files
     # ----------------------------------------------------------------------
+    filenames = []
     # check file type
-    if filetype not in params['ALLOWED_DARK_TYPES']:
-        emsg = TextEntry('01-001-00020', args=[filetype, mainname])
-        for allowedtype in params['ALLOWED_DARK_TYPES']:
-            emsg += '\n\t - "{0}"'.format(allowedtype)
-        WLOG(params, 'error', emsg)
-    # get all "filetype" filenames
-    filenames = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype)
+    for filetype in filetypes:
+        if filetype not in params['ALLOWED_DARK_TYPES']:
+            emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+            for allowedtype in params['ALLOWED_DARK_TYPES']:
+                emsg += '\n\t - "{0}"'.format(allowedtype)
+            WLOG(params, 'error', emsg)
+        # get all "filetype" filenames
+        files = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype)
+        # append to filenames
+        filenames += list(files)
     # convert to numpy array
     filenames = np.array(filenames)
 
@@ -127,7 +132,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # match files by date and median to produce master dark
     # ----------------------------------------------------------------------
-    cargs = [params, recipe, filetype, dark_table]
+    cargs = [params, recipe, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
     # get reference file night name
     nightname = drs_path.get_nightname(params, reffile.filename)
