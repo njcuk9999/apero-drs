@@ -244,7 +244,7 @@ class Run:
 # =============================================================================
 # Define user functions
 # =============================================================================
-def run_process(params, recipe, module, *gargs, **gkwargs):
+def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
@@ -253,13 +253,27 @@ def run_process(params, recipe, module, *gargs, **gkwargs):
     outlist, has_errors = process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
-        display_errors(params, outlist)
         # terminate here
-        eargs = [module.name, recipe.name]
-        WLOG(params, 'error', TextEntry('00-001-00043', args=eargs))
+        if terminate:
+            display_errors(params, outlist)
+            eargs = [module.name, recipe.name]
+            WLOG(params, 'error', TextEntry('00-001-00043', args=eargs))
+        else:
+            eargs = [module.name, recipe.name]
+            WLOG(params, 'warning', TextEntry('00-001-00043', args=eargs))
     # return outlist
     return outlist
 
+
+def combine_outlist(name, goutlist, outlist):
+    # loop around keys in outlist
+    for key in outlist:
+        # construct new unique key using name
+        newkey = '{0}_{1}'.format(name, key)
+        # add to global outlist
+        goutlist[newkey] = outlist[key]
+    # return global outlist
+    return goutlist
 
 
 def read_runfile(params, runfile, **kwargs):
