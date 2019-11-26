@@ -2,6 +2,84 @@ Changelog
 =========
 
 
+0.5.117 (2019-11-26)
+--------------------
+- Recipes.spirou.obj_fit_tellu_db_spirou.py + obj_mk_tellu_db_spirou.py
+  + obj_spec_spirou.py - add global output list for displaying errors at
+  the end. [Neil Cook]
+- Recipes.spirou.obj_fit_tellu_db_spirou.py + obj_mk_tellu_db_spirou.py
+  + obj_spec_spirou.py - add global output list for displaying errors at
+  the end. [Neil Cook]
+- Tools.module.setup.drs_processing.py - run_process and
+  combine_outlist. [Neil Cook]
+- Tools.module.setup.drs_processing.py - add run_process function to run
+  a recipe. [Neil Cook]
+- Science.extract.other.py - remove breakpoint. [Neil Cook]
+- Recipes.spirou - change pol_spirou name + add place holders for
+  obj_spec_spirou and obj_pol_spirou. [Neil Cook]
+- Recipes.spirou.obj_fit_tellu_db_spirou.py obj_mk_tellu_db_spirou.py -
+  add new functions to run_process. [Neil Cook]
+- Recipes.spirou.obj_fit_tellu_db_spirou.py obj_mk_tellu_db_spirou.py -
+  add new functions to run_process. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add obj_spec_spirou
+  and obj_pol_spirou. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add white/black list
+  kwarg to processing. [Neil Cook]
+- Core.core.drs_startup.py - Add a group title to header (if in group)
+  [Neil Cook]
+- Core.constants.param_functions.py - if we have a list then just return
+  (map_listparameter function) [Neil Cook]
+- Recipes.spirou.cal_thermal_spirou.py - add log message for writing
+  thermal files. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - set
+  thermal_always_extract to False. [Neil Cook]
+- Tools.module.setup.drs_processing.py - move group_name to drs_startup.
+  [Neil Cook]
+- Tools.bin.processing.py - update link to group_name (now in
+  drs_startup) [Neil Cook]
+- Science.extract.other.py - add breakpoint to test code. [Neil Cook]
+- Recipes.spirou.cal_thermal_spirou.py - remove breakpoint. [Neil Cook]
+- Core.core.drs_startup.py - move group_name construct from processing
+  to drs_startup. [Neil Cook]
+- Tools.module.setup.drs_processing.py - construct group name and pass
+  it to recipe via linear_process. [Neil Cook]
+- Tools.bin.processing.py - generate group name. [Neil Cook]
+- Recipes.spirou.cal_thermal_spirou.py - add breakpoint for debugging.
+  [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - change order to reflect
+  current and wanted input header keys. [Neil Cook]
+- Core.core.drs_log.py - add group handling. [Neil Cook]
+- Core.core.drs_startup.py - add group handling. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - update the dtype
+  setting for --cores in processing recipe. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - update the default
+  setting for --cores in processing recipe. [Neil Cook]
+- Tools.module.setup.drs_processing.py - add blacklist, whitelist, cores
+  and test run arguments from user input. [Neil Cook]
+- Tools.bins.processing.py - update instrument name. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add arguments to
+  processing recipe. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.calib.wave.py - correct input to get_input_files. [Neil Cook]
+- Core.core.drs_database.py - add in debug function names to find
+  problem. [Neil Cook]
+- Science.calib.dark.py - add dprtype to dprtypes for dark master table.
+  [Neil Cook]
+- Recipes.spirou.cal_dark_master_spirou.py - get allowed types as a
+  list. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - add DARK_DARK_INT to
+  dark master allowed types. [Neil Cook]
+- Science.calib.dark.py - add dprtype to dark table. [Neil Cook]
+- Recipes.spirou.cal_dark_master_spirou.py - allow dark master to use
+  multiple dark_dark types. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - allow cal_badpix to
+  use dark_dark_tel and dark_dark_int. [Neil Cook]
+- Io.drs_fits.py - improve id file error. [Neil Cook]
+- Update language database. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.116 (2019-11-15)
 --------------------
 - Tools.module.setup.drs_processing.py - remove breakpoint. [Neil Cook]
