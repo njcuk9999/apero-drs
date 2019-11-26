@@ -11,11 +11,11 @@ Created on 2019-11-25 at 16:44
 """
 from __future__ import division
 import os
+from collections import OrderedDict
 
 from terrapipe import core
 from terrapipe import locale
 from terrapipe.core import constants
-from terrapipe.io import drs_fits
 from terrapipe.io import drs_path
 from terrapipe.io import drs_image
 from terrapipe.tools.module.setup import drs_processing
@@ -124,6 +124,11 @@ def __main__(recipe, params):
         # append base names
         pp_basenames.append(ppfile.basename)
 
+    # -------------------------------------------------------------------------
+    # setup global outlist
+    # -------------------------------------------------------------------------
+    goutlist = OrderedDict()
+
     # ----------------------------------------------------------------------
     # Extraction
     # ----------------------------------------------------------------------
@@ -135,6 +140,8 @@ def __main__(recipe, params):
     # run extraction
     outlist = drs_processing.run_process(params, recipe, CAL_EXTRACT,
                                          *gargs, **gkwargs)
+    # add to global list
+    goutlist = drs_processing.combine_outlist('EXTRACT', goutlist, outlist)
     # ----------------------------------------------------------------------
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
