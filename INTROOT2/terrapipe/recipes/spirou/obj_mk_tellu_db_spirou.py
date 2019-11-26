@@ -11,6 +11,7 @@ Created on 2019-09-16 at 13:22
 """
 from __future__ import division
 import os
+from collections import OrderedDict
 
 from terrapipe import core
 from terrapipe import locale
@@ -126,15 +127,23 @@ def __main__(recipe, params):
         tellu_basenames.append(os.path.basename(filename))
 
     # -------------------------------------------------------------------------
+    # setup global outlist
+    # -------------------------------------------------------------------------
+    goutlist = OrderedDict()
+
+    # -------------------------------------------------------------------------
     # Step 1: Run mk_tellu on all telluric stars
     # -------------------------------------------------------------------------
     # arguments are: directory and telluric files
     gargs = [night_names, tellu_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTELLU1'
+    gkwargs['terminate'] = False
     # run obj_mk_template
     outlist = drs_processing.run_process(params, recipe, obj_mk_tellu,
                                          *gargs, **gkwargs)
+    # add to global list
+    goutlist = drs_processing.combine_outlist('DBMKTELLU1', goutlist, outlist)
 
     # -------------------------------------------------------------------------
     # Step 2: Run fit tellu on all telluric stars
@@ -143,9 +152,12 @@ def __main__(recipe, params):
     gargs = [night_names, tellu_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
+    gkwargs['terminate'] = False
     # run obj_fit_tellu
     outlist = drs_processing.run_process(params, recipe, obj_fit_tellu,
                                          *gargs, **gkwargs)
+    # add to global list
+    goutlist = drs_processing.combine_outlist('DBFTELLU', goutlist, outlist)
 
     # -------------------------------------------------------------------------
     # step 3: Run mk_obj_template on each telluric star obj name
@@ -154,9 +166,12 @@ def __main__(recipe, params):
     gargs = [objnames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTEMP'
+    gkwargs['terminate'] = False
     # run obj_mk_template
     outlist = drs_processing.run_process(params, recipe, obj_mk_template,
                                          *gargs, **gkwargs)
+    # add to global list
+    goutlist = drs_processing.combine_outlist('DBMKTEMP', goutlist, outlist)
 
     # -------------------------------------------------------------------------
     # step 4: Run mk_tellu on all telluric stars
@@ -165,9 +180,17 @@ def __main__(recipe, params):
     gargs = [night_names, tellu_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTELLU2'
+    gkwargs['terminate'] = False
     # run obj_mk_template
     outlist = drs_processing.run_process(params, recipe, obj_mk_tellu,
                                          *gargs, **gkwargs)
+    # add to global list
+    goutlist = drs_processing.combine_outlist('DBMKTELLU2', goutlist, outlist)
+
+    # -------------------------------------------------------------------------
+    # Display Errors
+    # -------------------------------------------------------------------------
+    drs_processing.display_errors(params, goutlist)
 
     # ----------------------------------------------------------------------
     # End of main code
