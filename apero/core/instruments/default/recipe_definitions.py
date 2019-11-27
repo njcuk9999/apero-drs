@@ -37,10 +37,12 @@ listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
+req_check = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, processing, remake_db, listing, validate]
+recipes = [test, drs_changelog, reset, processing, remake_db, req_check,
+           listing, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -162,6 +164,14 @@ listing.set_kwarg(name='--kind', dtype=str, default='raw',
 # -----------------------------------------------------------------------------
 # remake_db.py
 # -----------------------------------------------------------------------------
+req_check.name = 'requirements_check.py'
+req_check.instrument = __INSTRUMENT__
+# TODO: Add description
+req_check.description = ''
+
+# -----------------------------------------------------------------------------
+# remake_db.py
+# -----------------------------------------------------------------------------
 remake_db.name = 'remake_db.py'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = Help['REMAKE_DESC']
@@ -183,6 +193,3 @@ validate.description = ''
 validate.set_arg(pos=0, name='instrument', dtype='options',
                   helpstr=Help['REMAKE_HELP_INSTRUMENT'],
                   options=['SPIROU', 'NIRPS'])
-# TODO: Add HelpStr
-validate.set_kwarg(name='--mode', dtype='options',
-                  options=[0, 1], default=0, helpstr='')
