@@ -37,9 +37,10 @@ listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
+validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, processing, remake_db, listing]
+recipes = [test, drs_changelog, reset, processing, remake_db, listing, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -147,8 +148,8 @@ processing.set_kwarg(name='--test', dtype=str, default='None',
 # listing.py
 # -----------------------------------------------------------------------------
 listing.name = 'listing.py'
-listing.instrument = Help['LISTING_DESC']
-listing.description = 'Remakes index files'
+listing.instrument = __INSTRUMENT__
+listing.description = Help['LISTING_DESC']
 listing.set_arg(pos=0, name='instrument', dtype='options',
                 helpstr=Help['LISTING_HELP_INSTRUMENT'],
                 options=['SPIROU', 'NIRPS'])
@@ -171,3 +172,17 @@ remake_db.set_kwarg(name='--kind', dtype='options',
                   options=['calibration', 'telluric'],
                   default_ref='REMAKE_DATABASE_DEFAULT',
                   helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
+
+# -----------------------------------------------------------------------------
+# validate.py
+# -----------------------------------------------------------------------------
+validate.name = 'validate.py'
+validate.instrument = __INSTRUMENT__
+# TODO: Add description
+validate.description = ''
+validate.set_arg(pos=0, name='instrument', dtype='options',
+                  helpstr=Help['REMAKE_HELP_INSTRUMENT'],
+                  options=['SPIROU', 'NIRPS'])
+# TODO: Add HelpStr
+validate.set_kwarg(name='--mode', dtype='options',
+                  options=[0, 1], default=0, helpstr='')
