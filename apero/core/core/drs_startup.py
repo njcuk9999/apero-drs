@@ -343,7 +343,7 @@ def return_locals(params, ll):
 
 
 def main_end_script(params, llmain, recipe, success, outputs='reduced',
-                    end=True):
+                    end=True, quiet=False):
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -368,6 +368,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :rtype: ParamDict
     """
     func_name = __NAME__ + '.main_end_script()'
+    # -------------------------------------------------------------------------
     # get params/plotter from llmain if present
     #     (from __main__ function not main)
     if llmain is not None:
@@ -377,6 +378,14 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     pconstant = constants.pload(params['INSTRUMENT'])
     # construct a lock file name
     opath = pconstant.INDEX_LOCK_FILENAME(params)
+    # -------------------------------------------------------------------------
+    # get quiet from inputs
+    if 'QUIET' in params['INPUTS']:
+        quiet = params['INPUTS'].get('QUIET', False)
+        # deal with quiet being unset
+        if quiet is None:
+            quiet = False
+    # -------------------------------------------------------------------------
     # index if we have outputs
     if (outputs is not None) and (outputs != 'None') and success:
         # get and check for file lock file
@@ -405,12 +414,12 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     # -------------------------------------------------------------------------
     # log end message
     if end:
-        if success:
+        if success and (not quiet):
             iargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'])
             WLOG(params, 'info', TextEntry('40-003-00001', args=iargs))
             WLOG(params, 'info', params['DRS_HEADER'])
-        else:
+        elif not quiet:
             wargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
             WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs),
@@ -680,6 +689,9 @@ def _special_keys_present(recipe, quiet, fkwargs):
             found_key = _search_for_key(skey, fkwargs)
             if found_key:
                 quiet = True
+    # deal with quiet key (special case)
+    if _search_for_key('quiet', fkwargs):
+        quiet = True
     # return the updated quiet flag
     return quiet
 
