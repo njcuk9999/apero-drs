@@ -1,0 +1,35 @@
+# ======================================
+# name, ocode, obstype, ccas, cref, dprtype
+# ======================================
+# Dark
+dark_dark, d, DARK, pos_pk, pos_pk, DARK_DARK
+
+# Flat
+dark_flat, f, FLAT, pos_pk, pos_wl, DARK_FLAT
+flat_dark, f, FLAT, pos_wl, pos_pk, FLAT_DARK
+flat_flat, f, FLAT, pos_wl, pos_wl, FLAT_FLAT
+flat_fp, f, FLAT, pos_wl, pos_fp, FLAT_FP
+
+# Align
+dark_fp, a, ALIGN, pos_pk, pos_fp, DARK_FP
+fp_dark, a, ALIGN, pos_fp, pos_pk, FP_DARK
+fp_flat, a, ALIGN, pos_fp, pos_wl, FP_FLAT
+fp_fp, a, ALIGN, pos_fp, pos_fp, FP_FP
+
+# OBJECT
+object_dark, o, OBJECT, pos_pk, pos_pk, OBJ_DARK
+object_fp, o, OBJECT, pos_pk, pos_fp, OBJ_FP
+object_hc1, o, OBJECT, pos_pk, pos_hc1, OBJ_HCONE
+object_hc2, o, OBJECT, pos_pk, pos_hc2, OBJ_HCTWO
+
+# COMPARISON
+dark_hc1, c, COMPARISON, pos_pk, pos_hc1
+dark_hc2, c, COMPARISON, pos_pk, pos_hc2
+fp_hc1, c, COMPARISON, pos_fp, pos_hc1, FP_HCONE
+fp_hc2, c, COMPARISON, pos_fp, pos_hc2, FP_HCTWO
+hc1_fp, c, COMPARISON, pos_hc1, pos_fp, HCONE_FP
+hc2_fp, c, COMPARISON, pos_hc2, pos_fp, HCTWO_FP
+hc1_hc1, c, COMPARISON, pos_hc1, pos_hc1, HCONE_HCONE
+hc2_hc2, c, COMPARISON, pos_hc2, pos_hc2, HCTWO_HCTWO
+hc1_dark, c, COMPARISON, pos_hc1, pos_pk, HCONE_DARK
+hc2_dark, c, COMPARISON, pos_hc2, pos_pk, HCTWO_DARK

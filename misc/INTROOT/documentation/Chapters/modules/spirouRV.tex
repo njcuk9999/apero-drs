@@ -1,0 +1,646 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\noindent\begin{minipage}{\textwidth}
+\section{The spirouRV module}
+\label{ch:the_module:spirouRV}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+\subsection{CalcRVdrift2D}
+
+Defined in \spirouRV\path{.spirouRV.calculate_rv_drifts_2d}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.CalcRVdrift2D(speref, spe, wave, sigdet, threshold, size)
+spirouRV.spirouRV.calculate_rv_drifts_2d(speref, spe, wave, sigdet, threshold, size)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Calculate the RV drift between the REFERENCE (speref) and COMPARISON (spe)
+extracted spectra.
+
+:param speref: numpy array (2D), the REFERENCE extracted spectrum
+               size = (number of orders by number of columns (x-axis))
+:param spe:  numpy array (2D), the COMPARISON extracted spectrum
+             size = (number of orders by number of columns (x-axis))
+:param wave: numpy array (2D), the wave solution for each pixel
+:param sigdet: float, the read noise (sigdet) for calculating the
+               noise array
+:param threshold: float, upper limit for pixel values, above this limit
+                  pixels are regarded as saturated
+:param size: int, size (in pixels) around saturated pixels to also regard
+             as bad pixels
+
+:return rvdrift: numpy array (1D), the RV drift between REFERENCE and
+                 COMPARISON spectrum for each order
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{Coravelation}
+
+Defined in \spirouRV\path{.spirouRV.coravelation}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.Coravelation(p, loc)
+spirouRV.spirouRV.coravelation(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Calculate the CCF and fit it with a Gaussian profile
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            ccf_berv: float, the barycentric Earth RV (berv)
+            ccf_berv_max: float, the maximum barycentric Earth RV
+            target_rv: float, the target RV
+            ccf_width: float, the CCF width
+            ccf_step: float, the CCF step
+            ccf_det_noise: float, the detector noise to use in the ccf
+            ccf_fit_type: int, the type of fit for the CCF fit
+            log_opt: string, log option, normally the program name
+            DRS_DEBUG: int, Whether to run in debug mode
+                            0: no debug
+                            1: basic debugging on errors
+                            2: recipes specific (plots and some code runs)
+            DRS_PLOT: bool, Whether to plot (True to plot)
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            wave_ll: numpy array (1D), the line list values
+            param_ll: numpy array (1d), the line list fit coefficients
+                      (used to generate line list - read from file defined)
+            ll_mask_d: numpy array (1D), the size of each line
+                       (in wavelengths)
+            ll_mask_ctr: numpy array (1D), the central point of each line
+                         (in wavelengths)
+            w_mask: numpy array (1D), the weight mask
+            e2dsff: numpy array (2D), the flat fielded E2DS spectrum
+                    shape = (number of orders x number of columns in image
+                                                  (x-axis dimension) )
+            blaze: numpy array (2D), the blaze function
+                    shape = (number of orders x number of columns in image
+                                                  (x-axis dimension) )
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            rv_ccf: numpy array (1D), the radial velocities for the CCF
+            ccf: numpy array (2D), the CCF for each order and each RV
+                 shape = (number of orders x number of RV points)
+            ccf_max: float, numpy array (1D), the max value of the CCF for
+                     each order
+            pix_passed_all: numpy array (1D), the weighted line list
+                            position for each order?
+            tot_line: numpy array (1D), the total number of lines for each
+                      order
+            ll_range_all: numpy array (1D), the weighted line list width for
+                      each order
+            ccf_noise: numpy array (2D), the CCF noise for each order and
+                       each RV
+                       shape = (number of orders x number of RV points)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{CreateDriftFile}
+
+Defined in \spirouRV\path{.spirouRV.create_drift_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.CreateDriftFile(p, loc)
+spirouRV.spirouRV.create_drift_file(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Creates a reference ascii file that contains the positions of the FP peaks
+Returns the pixels positions and Nth order of each FP peak
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            drift_peak_border_size: int, the border size (edges in
+                                    x-direction) for the FP fitting
+                                    algorithm
+            drift_peak_fpbox_size: int, the box half-size (in pixels) to
+                                   fit an individual FP peak to - a
+                                   Gaussian will be fit to +/- this size
+                                   from the centre of the FP peak
+            drift_peak_peak_sig_lim: dictionary, the sigma above the median
+                                     that a peak must have to be recognised
+                                     as a valid peak (before fitting a
+                                     Gaussian) dictionary must have keys
+                                     equal to the lamp types (hc, fp)
+            drift_peak_inter_peak_spacing: int, the minimum spacing between
+                                           peaks in order to be recognised
+                                           as a valid peak (before fitting
+                                           a Gaussian)
+            log_opt: string, log option, normally the program name
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            speref: numpy array (2D), the reference spectrum
+            wave: numpy array (2D), the wave solution image
+            lamp: string, the lamp type (either 'hc' or 'fp')
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{DeltaVrms2D}
+
+Defined in \spirouRV\path{.spirouRV.delta_v_rms_2d}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.DeltaVrms2D(spe, wave, sigdet, threshold, size)
+spirouRV.spirouRV.delta_v_rms_2d(spe, wave, sigdet, threshold, size)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Compute the photon noise uncertainty for all orders (for the 2D image)
+
+:param spe: numpy array (2D), the extracted spectrum
+            size = (number of orders by number of columns (x-axis))
+:param wave: numpy array (2D), the wave solution for each pixel
+:param sigdet: float, the read noise (sigdet) for calculating the
+               noise array
+:param threshold: float, upper limit for pixel values, above this limit
+                  pixels are regarded as saturated
+:param size: int, size (in pixels) around saturated pixels to also regard
+             as bad pixels
+
+:return dvrms2: numpy array (1D), the photon noise for each pixel (squared)
+:return weightedmean: float, weighted mean photon noise across all orders
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{DriftPerOrder}
+
+Defined in \spirouRV\path{.spirouRV.drift_per_order}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.DriftPerOrder(loc, fileno)
+spirouRV.spirouRV.drift_per_order(loc, fileno)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{DriftAllOrders}
+
+Defined in \spirouRV\path{.spirouRV.drift_all_orders}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.DriftAllOrders(loc, fileno, nomin, nomax)
+spirouRV.spirouRV.drift_all_orders(loc, fileno, nomin, nomax)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Work out the weighted mean drift across all orders
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            drift: numpy array (2D), the median drift values for each
+                   file and each order
+                   shape = (number of files x number of orders)
+            drift_left: numpy array (2D), the median drift values for the
+                        left half of each order (for each file and each
+                        order)
+                        shape = (number of files x number of orders)
+            drift_right: numpy array (2D), the median drift values for the
+                         right half of each order (for each file and each
+                         order)
+                         shape = (number of files x number of orders)
+            errdrift: numpy array (2D), the error in the drift for each
+                      file and each order
+                      shape = (number of files x number of orders)
+
+:param fileno: int, the file number (iterator number)
+:param nomin: int, the first order to use (i.e. from nomin to nomax)
+:param nomax: int, the last order to use (i.e. from nomin to nomax)
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            meanrv: numpy array (1D), the weighted mean drift, for each file
+                    shape = (number of files)
+            meanrv_left: numpy array (1D), the weighted mean drift for the
+                         left half of each order, for each file
+                         shape = (number of files)
+            meanrv_right: numpy array (1D), the weighted mean drift for the
+                          right half of each order, for each file
+                          shape = (number of files)
+            merrdrift: numpy array (1D), the error in weighted mean for
+                       each file
+                       shape = (number of files)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{FitCCF}
+
+Defined in \spirouRV\path{.spirouRV.fit_ccf}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.FitCCF(rv, ccf, fit_type)
+spirouRV.spirouRV.fit_ccf(rv, ccf, fit_type)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Fit the CCF to a guassian function
+
+:param rv: numpy array (1D), the radial velocities for the line
+:param ccf: numpy array (1D), the CCF values for the line
+:param fit_type: int, if "0" then we have an absorption line
+                      if "1" then we have an emission line
+
+:return result: numpy array (1D), the fit parameters in the
+                following order:
+
+            [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+:return ccf_fit: numpy array (1D), the fit values, i.e. the Gaussian values
+                 for the fit parameters in "result"
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetDrift}
+
+Defined in \spirouRV\path{.spirouRV.get_drift}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.GetDrift(p, sp, ordpeak, xpeak0, gaussfit=False)
+spirouRV.spirouRV.get_drift(p, sp, ordpeak, xpeak0, gaussfit=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the centroid of all peaks provided an input peak position
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            drift_peak_fpbox_size: int, the box half-size (in pixels) to
+                                   fit an individual FP peak to - a
+                                   Gaussian will be fit to +/- this size
+                                   from the centre of the FP peak
+            drift_peak_exp_width: float, the expected width of FP peaks -
+                                  used to "normalise" peaks (which are then
+                                  subsequently removed if >
+                                  drift_peak_norm_width_cut
+            log_opt: string, log option, normally the program name
+
+:param sp: numpy array (2D), E2DS fits file with FP peaks
+           size = (number of orders x number of pixels in x-dim of image)
+:param ordpeak: numpy array (1D), order of each peak
+:param xpeak0: numpy array (1D), position in the x dimension of all peaks
+:param gaussfit: bool, if True uses a Gaussian fit to get each centroid
+                 (slow) or adjusts a barycentre (gaussfit=False)
+
+:return xpeak: numpy array (1D), the central positions of the peaks
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetCCFMask}
+
+Defined in \spirouRV\path{.spirouRV.get_ccf_mask}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.GetCCFMask(p, loc, filename=None)
+spirouRV.spirouRV.get_ccf_mask(p, loc, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the CCF mask
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            ccf_mask: string, the name (and or location) of the CCF
+                      mask file
+            ic_w_mask_min: float, the weight of the CCF mask (if 1 force
+                           all weights equal)
+            ic_mask_width: float, the width of the template line
+                           (if 0 use natural
+            log_opt: string, log option, normally the program name
+
+:param loc: parameter dictionary, ParamDict containing data
+
+:param filename: string or None, the filename and location of the ccf mask
+                 file, if None then file names is gotten from p["ccf_mask"]
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            ll_mask_d: numpy array (1D), the size of each pixel
+                       (in wavelengths)
+            ll_mask_ctr: numpy array (1D), the central point of each pixel
+                         (in wavelengths)
+            w_mask: numpy array (1D), the weight mask
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{PearsonRtest}
+
+Defined in \spirouRV\path{.spirouRV.pearson_rtest}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.PearsonRtest(nbo, spe, speref)
+spirouRV.spirouRV.spirouRV.pearson_rtest(nbo, spe, speref)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Perform a Pearson R test on each order in spe against speref
+
+:param nbo: int, the number of orders
+:param spe: numpy array (2D), the extracted array for this iteration
+            size = (number of orders x number of pixels in x-dim)
+:param speref: numpy array (2D), the extracted array for the reference
+               image, size = (number of orders x number of pixels in x-dim)
+
+:return cc_orders: numpy array (1D), the Pearson correlation coefficients
+                   for each order, size = (number of orders)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{RemoveWidePeaks}
+
+Defined in \spirouRV\path{.spirouRV.remove_wide_peaks}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.RemoveWidePeaks(p, loc, expwidth=None, cutwidth=None)
+spirouRV.spirouRV.remove_wide_peaks(p, loc, expwidth=None, cutwidth=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Remove peaks that are too wide
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            drift_peak_exp_width: float, the expected width of FP peaks -
+                                  used to "normalise" peaks (which are then
+                                  subsequently removed if >
+                                  drift_peak_norm_width_cut
+            drift_peak_norm_width_cut: float, the "normalised" width of
+                                       FP peaks that is too large
+                                       normalised width = FP FWHM -
+                                       drift_peak_exp_width cut is
+                                       essentially:=
+                                       FP FWHM < (drift_peak_exp_width +
+                                       drift_peak_norm_width_cut)
+            log_opt: string, log option, normally the program name
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+
+:param expwidth: float or None, the expected width of FP peaks - used to
+                 "normalise" peaks (which are then subsequently removed
+                 if > "cutwidth") if expwidth is None taken from
+                 p["drift_peak_exp_width"]
+:param cutwidth: float or None, the normalised width of FP peaks that is too
+                 large normalised width FP FWHM - expwidth
+                 cut is essentially: FP FWHM < (expwidth + cutwidth), if
+                 cutwidth is None taken from p["drift_peak_norm_width_cut"]
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak (masked to remove wide peaks)
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak (masked to remove wide peaks)
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak (masked to remove wide peaks)
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak (masked to remove wide peaks)
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak (masked to remove wide peaks)
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+                     (masked to remove wide peaks)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{RemoveZeroPeaks}
+
+Defined in \spirouRV\path{.remove_zero_peaks}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.RemoveZeroPeaks(p, loc)
+spirouRV.spirouRV.remove_zero_peaks(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Remove peaks that have a value of zero
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            xref: numpy array (1D), the central positions of the peaks
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            xref: numpy array (1D), the central positions of the peaks
+                  (masked with zero peaks removed)
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak (masked with zero peaks removed)
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak (masked with zero peaks removed)
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak (masked with zero peaks removed)
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak (masked with zero peaks removed)
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak (masked with zero peaks removed)
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+                     (masked with zero peaks removed)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReNormCosmic2D}
+
+Defined in \spirouRV\path{.spirouRV.remove_zero_peaks}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.ReNormCosmic2D(p, loc)
+spirouRV.spirouRV.remove_zero_peaks(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Remove peaks that have a value of zero
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            xref: numpy array (1D), the central positions of the peaks
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            xref: numpy array (1D), the central positions of the peaks
+                  (masked with zero peaks removed)
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak (masked with zero peaks removed)
+            xpeak: numpy array (1D), the central position each Gaussian fit
+                   to valid FP peak (masked with zero peaks removed)
+            ewpeak: numpy array (1D), the FWHM of each Gaussian fit
+                    to valid FP peak (masked with zero peaks removed)
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak (masked with zero peaks removed)
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak (masked with zero peaks removed)
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+                     (masked with zero peaks removed)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReNormCosmic2D}
+
+Defined in \spirouRV\path{.spirouRV.renormalise_cosmic2d}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.ReNormCosmic2D(speref, spe, threshold, size, cut)
+spirouRV.spirouRV.renormalise_cosmic2d(speref, spe, threshold, size, cut)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Correction of the cosmics and re-normalisation by comparison with
+reference spectrum (for the 2D image)
+
+:param speref: numpy array (2D), the REFERENCE extracted spectrum
+               size = (number of orders by number of columns (x-axis))
+:param spe:  numpy array (2D), the COMPARISON extracted spectrum
+             size = (number of orders by number of columns (x-axis))
+:param threshold: float, upper limit for pixel values, above this limit
+                  pixels are regarded as saturated
+:param size: int, size (in pixels) around saturated pixels to also regard
+             as bad pixels
+:param cut: float, define the number of standard deviations cut at in             -                  cosmic renormalisation
+
+:return spen: numpy array (2D), the corrected normalised COMPARISON
+              extracted spectrum
+:return cnormspe: numpy array (1D), the flux ratio for each order between
+                  corrected normalised COMPARISON extracted spectrum and
+                  REFERENCE extracted spectrum
+:return cpt: float, the total flux above the "cut" parameter
+             (cut * standard deviations above median)
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{SigmaClip}
+
+Defined in \spirouRV\path{.spirouRV.sigma_clip}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.SigmaClip(loc, sigma=1.0)
+spirouRV.spirouRV.sigma_clip(loc, sigma=1.0)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Perform a sigma clip on dv
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            dv: numpy array (1D), the drift values
+            ordpeak: numpy array (1D), the order number for each drift
+                     value
+
+:param sigma: float, the sigma of the clip (away from the median)
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            dvc: numpy array (1D), the sigma clipped drift values
+            orderpeakc: numpy array (1D), the order numbers for the sigma
+                        clipped drift values
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------

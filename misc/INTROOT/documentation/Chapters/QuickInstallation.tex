@@ -1,0 +1,223 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\ifquickguide
+\begin{center}
+{{\Huge SPIRou Quick Installation Guide} \\ {\small Version \MyVersionDev \\ For DRS \instrument \MyCodeVersion}}
+\end{center}
+\else
+\chapter{Quick Install Guide}
+\label{chapter:quickinstallation}
+\fi
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Linux}
+\label{chapter:quickinstallation:linux}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using BASH.
+
+
+\begin{enumerate}
+
+\item Get the latest version of the DRS (for \instrument version \MyCodeVersion) from here: \url{https://github.com/njcuk9999/spirou_py3}
+
+\item Download the test data from here: \url{http://genesis.astro.umontreal.ca/neil/spirou_test_data_alpha0.1.003.zip} (if required).
+
+\item Extract the DRS (make a note of the path, hereinafter \InstallDIR).
+
+\item Copy \InstallDIR\path{/INTROOT/config/config.py} to a user directory (e.g. \path{/home/user/spirou/}) hereinafter \userDIR.
+
+\item Add the following paths to your PATH and PYTHON PATH environmental variables
+
+	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
+	@export@ <PATH>="(*\InstallDIR*)/INTROOT/bin/":(*\$*)PATH
+	@export@ <PYTHONPATH>="(*\InstallDIR*)/INTROOT/":"(*\InstallDIR*)/INTROOT/bin/":(*\$*)PYTHONPATH
+	@export@ <DRS_UCONFIG>="(*\userDIR*)"
+	\end{bashbox}
+
+\item make sure your paths are set
+	\begin{cmdbox}
+	source (*$\sim$*)/.bashrc
+	echo (*\$*)PATH
+	\end{cmdbox}
+
+\item Make recipes executable (found in the \InstallDIR/bin folder) - to use from the command line.
+
+\item Setup the DRS paths (edit the file: `\configtxtfile'):
+\begin{thighlight}
+\begin{table}[H]
+{\footnotesize
+\begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
+\definevariable{text:drs_root}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory \\
+\definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
+\definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
+\definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\
+\definevariable{text:drs_data_msg}{DRS\_DATA\_MSG}     & = & /drs/data/msg     & / & Define the directory that the log messages are stored in \\
+\definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & /drs/data/tmp/    & / & Define the working directory \\
+\end{tabular}
+}
+\end{table}
+\end{thighlight}
+where \definevariable{text:drs_root}{DRS\_ROOT} should be ``\InstallDIR/INTROOT''.
+
+
+\item validate the DRS installation:
+\begin{cmdbox}
+(*\calvalidate*).py
+\end{cmdbox}
+Select ``Yes'' when prompted to setup the calibration database.
+
+\end{enumerate}
+
+The DRS is now installed and set-up. To run \ifquickguide see the full documentation \else see section \ref{chapter:using_the_drs} \fi.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Mac}
+\label{chapter:quickinstallation:mac}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using \textcolor{red}{BASH}.
+
+
+\begin{enumerate}
+
+\item Get the latest version of the DRS (for \instrument version \MyCodeVersion). from here: \url{https://github.com/njcuk9999/spirou_py3}
+
+\item Download the test data from here: \url{http://genesis.astro.umontreal.ca/neil/spirou_test_data_alpha0.1.003.zip} (if required).
+
+\item Extract the DRS (make a note of the path, hereinafter \InstallDIR)
+
+\item Copy \InstallDIR\path{/INTROOT/config/config.py} to a user directory (e.g. \path{/Users/user/spirou/}) hereinafter \userDIR.
+
+\item Add the following paths to your PATH and PYTHON PATH environmental variables
+
+	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+	@export@ <PATH>=.:"(*\InstallDIR*)/INTROOT/bin/":{(*\$*)PATH}
+	@export@ <PYTHONPATH>=.:"(*\InstallDIR*)/INTROOT/":"(*\InstallDIR*)/INTROOT/bin/":{(*\$*)PYTHONPATH}
+	@export@ <DRS_UCONFIG>="(*\userDIR*)"
+	\end{bashbox}
+
+\item make sure your paths are set
+	\begin{cmdbox}
+	source (*$\sim$*)/.bashrc
+	echo (*\$*)PATH
+	\end{cmdbox}
+
+\item Make recipes executable (found in the \InstallDIR/bin folder) - to use from the command line.
+
+\item Setup the DRS paths (edit the file: `\configtxtfile'):
+\begin{thighlight}
+\begin{table}[H]
+{\footnotesize
+\begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
+\definevariable{text:drs_root}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory \\
+\definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
+\definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
+\definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\
+\definevariable{text:drs_data_msg}{DRS\_DATA\_MSG}     & = & /drs/data/msg     & / & Define the directory that the log messages are stored in \\
+\definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & /drs/data/tmp/    & / & Define the working directory \\
+\end{tabular}
+}
+\end{table}
+\end{thighlight}
+where \definevariable{text:drs_root}{DRS\_ROOT} should be ``\InstallDIR/INTROOT''.
+
+\item validate the DRS installation:
+\begin{cmdbox}
+(*\calvalidate*).py
+\end{cmdbox}
+Select ``Yes'' when prompted to setup the calibration database. 
+
+\end{enumerate}
+
+The DRS is now installed and set-up. To run \ifquickguide see the full documentation \else see section \ref{chapter:using_the_drs} \fi.
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Windows}
+\label{chapter:quickinstallation:windows}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2)
+
+
+\begin{enumerate}
+
+\item Get the latest version of the DRS (for \instrument version \MyCodeVersion). from here: \url{https://github.com/njcuk9999/spirou_py3}
+
+\item Download the test data from here: \url{http://genesis.astro.umontreal.ca/neil/spirou_test_data_alpha0.1.003.zip} (if required).
+
+\item Extract the DRS (make a note of the path, hereinafter \InstallDIR)
+
+
+\item Copy \InstallDIR\path{\INTROOT\config\config.py} to a user directory (e.g. \path{C:\Users\user\spirou\}) hereinafter \userDIR.
+
+
+\item Add the following paths to your PATH environmental variable
+\begin{textbox}[title={In "Environmental Variables"}]
+(*\InstallDIR*)\INTROOT\bin\;
+\end{textbox}
+
+\item Add the following paths to your PYTHONPATH environmental variable
+\begin{textbox}[title={In "Environmental Variables"}]
+%PYTHONPATH%;(*\InstallDIR*)\INTROOT\;(*\InstallDIR*)\INTROOT\bin\;
+\end{textbox}
+
+\item Add the following path to a new environmental variable
+\begin{textbox}[title={In "Environmental Variables"}]
+%DRS_UCONFIG%;(*\userDIR*);
+\end{textbox}
+
+\item Setup the DRS paths (edit the file: `\configtxtfile'):
+\begin{thighlight}
+\begin{table}[H]
+{\footnotesize
+\begin{tabular}{p{3cm} p{0.025cm} p{4.0cm} p{0.025cm} p{5.0cm}}
+\definevariable{text:drs_root}{TDATA}            & = & \path{C:\\Users\\User\Documents\\drs\\data}        & / & Define the DATA directory\\
+&&&&\\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & \path{C:\\Users\\User\\Documents\\drs\\INTROOT}     & / & Define the installation directory \\
+\definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\raw}    & / & Define the folder with the raw data files in \\
+\definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & \path{C:\\Users\\User\\Documents\\drs\\data\\reduced} & / & Define the directory that the reduced data should be saved to/read from \\
+\definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\calibDB} & / & Define the directory that the calibration files should be saved to/read from \\
+\definevariable{text:drs_data_msg}{DRS\_DATA\_MSG}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\msg}    & / & Define the directory that the log messages are stored in \\
+\definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & \path{C:\\Users\\User\\Documents\\drs\\data\\tmp}    & / & Define the working directory \\
+\end{tabular}
+}
+\end{table}
+\end{thighlight}
+\begin{note}
+Note paths in windows must have a `\textbackslash\textbackslash' also the python files must be open with a valid editor such as Sublime Text, Notepad++, Spyder or Pycharm for example
+\end{note}
+where \definevariable{text:drs_root}{DRS\_ROOT} should be ``\InstallDIR\path{\INTROOT}''.
+
+\item validate the DRS installation:
+\begin{cmdbox}
+python (*\calvalidate*)
+\end{cmdbox}
+Select ``Yes'' when prompted to setup the calibration database. 
+
+\end{enumerate}
+
+The DRS is now installed and set-up. To run \ifquickguide see the full documentation \else see section \ref{chapter:using_the_drs} \fi.

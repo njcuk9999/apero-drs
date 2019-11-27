@@ -1,0 +1,102 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Current to do list}
+\label{ch:todo}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Below is the current to do list and any things that need to be addressed before release.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{General}
+\label{ch:todo:general}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item Remove H2RG requirements
+	\item Write help files for each recipe (In \InstallDIR/man filenames should be `recipe name'.info)
+	\item Need to sort out public and private variables (and keywords), some variables not needed to be changed by user -- private and public configuration files
+	\item \textcolor{red}{Can we remove `special\_config\_SPIROU' configuration file call as the file does not exist?}
+	\item \textcolor{red}{fitsfilename is the last file in a group of files - is this correct or should it be the first (as initially defined)?}
+	\item Write a set-up.py installer / checker for prerequisites (Last step)
+	\item Need axis labels for all plots
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Documentation}
+\label{ch:todo:documentation}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item Write introduction (leading paragraph) \dotfill Dev
+	\item Update output keywords
+	\item Update recipes chapter \dotfill User + Dev
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_SLIT\_spirou recipe}
+\label{ch:todo:cal_SLIT_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{itemize}
+	\item fiber loop overwrites loc
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_FF\_RAW\_spirou recipe}
+\label{ch:todo:cal_FF_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted  -- background set to zero.
+	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_extract\_RAW\_spirou recipes}
+\label{ch:todo:cal_extract_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted -- background set to zero.
+	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
+	\item \textcolor{red}{Quality control test \definevariable{text:qc_max_signal}{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_HC\_E2DS\_spirou recipe}
+\label{ch:todo:cal_HC_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item replace Fortran `fitgaus.f' routine with python (including testing different versions)
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_WAVE\_E2DS\_spirou recipe}
+\label{ch:todo:cal_WAVE_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item compare cal\_WAVE to cal\_WAVE\_NEW
+	\item see Section \ref{ch:todo:cal_HC_E2DS_spirou}
+\end{itemize}

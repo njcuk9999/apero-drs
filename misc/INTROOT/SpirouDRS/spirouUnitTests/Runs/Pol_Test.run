@@ -1,0 +1,37 @@
+# define run
+#    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
+# runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
+
+# pre-processing
+run000a = ['cal_preprocess_spirou', 'TEST3/20180526', '*.fits']
+
+# Calibrations
+run001 = ['cal_DARK_spirou', 'TEST3/20180526', '2279303d_pp.fits']
+run002 = ['cal_BADPIX_spirou', 'TEST3/20180526', '2279321f_pp.fits', '2279303d_pp.fits']
+run003a = ['cal_loc_RAW_spirou', 'TEST3/20180526', '2279312f_pp.fits']
+run003b = ['cal_loc_RAW_spirou', 'TEST3/20180526', '2279307f_pp.fits']
+run005a = ['cal_SLIT_spirou', 'TEST3/20180526', '2279327a_pp.fits']
+run005b = ['cal_SHAPE_spirou', 'TEST3/20180526', '2279330c_pp.fits', '2279327a_pp.fits']
+run006 = ['cal_FF_RAW_spirou', 'TEST3/20180526', '2279321f_pp.fits']
+
+# Extract the HC's/FP's
+run007a = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279327a_pp.fits']
+run007b = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279330c_pp.fits']
+
+# Run Wave solution analysis
+run008a = ['cal_HC_E2DS_EA_spirou', 'TEST3/20180526', '2279330c_pp_e2ds_AB.fits']
+run008b = ['cal_HC_E2DS_EA_spirou', 'TEST3/20180526', '2279330c_pp_e2ds_C.fits']
+run009a = ['cal_WAVE_E2DS_EA_spirou', 'TEST3/20180526', '2279327a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
+run009b = ['cal_WAVE_E2DS_EA_spirou', 'TEST3/20180526', '2279327a_pp_e2ds_C.fits', '2279330c_pp_e2ds_C.fits']
+
+# Extract the tellurics
+run010a = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279383o_pp.fits']
+run010b = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279384o_pp.fits']
+run010c = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279385o_pp.fits']
+run010d = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279386o_pp.fits']
+run010e = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279327a_pp.fits']
+run010f = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279330c_pp.fits']
+
+# Run Polar recipe
+run011 = ['pol_spirou', 'TEST3/20180526', '2279383o_pp_e2dsff_A.fits', '2279383o_pp_e2dsff_B.fits', '2279384o_pp_e2dsff_A.fits', '2279384o_pp_e2dsff_B.fits', '2279385o_pp_e2dsff_A.fits', '2279385o_pp_e2dsff_B.fits', '2279386o_pp_e2dsff_A.fits', '2279386o_pp_e2dsff_B.fits']
+

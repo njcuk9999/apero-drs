@@ -1,0 +1,64 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Introduction}
+\label{chapter:intro}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This documentation will cover the installation, data architecture, \ifdevguide the changes between the previous versions and this version\fi, using the DRS (with a working example), descriptions of the variables \ifdevguide and keywords for input and output FITS rec headers \fi, and the recipes \ifdevguide and module code \fi.
+
+\noindent Variables are defined in detail in section \ref{ch:variables} and will be defined throughout via the following syntax: \definevariable{text:variable}{VARIABLE}. When referred to, one should take it as using the value set in section \ref{ch:variables} by default or in the file described in the variables description `Defined in' section. Clicking these variables will go to the appropriate variable description.
+
+\noindent Certain sections will be written in code blocks, these imply text that is written into a text editor, the command shell console, or a python terminal/script. Below explains how one can distinguish these in this document. \\
+
+\noindent The following denotes a line of text (or lines of text) that are to be edited in a text editor.
+\begin{textbox}[title={Generic text file}]
+<# A variable name that can be changes to a specific value>
+@VARIABLE_NAME@ = "Variable Value"
+\end{textbox}
+\vspace{0.5cm}
+
+\noindent These can also be shell scripts in a certain language:
+\begin{bashbox}[title={For example in $\sim$/.bashrc}]
+#!/usr/bin/bash
+# Find out which console you are using
+echo $0
+# Set environment Hello
+export Hello="Hello"
+\end{bashbox}
+\begin{cshbox}[title={For example in $\sim$/.tcshrc}]
+#!/usr/bin/tcsh
+# Find out which console you are using
+echo $0
+# Set environment Hello
+setenv Hello "Hello"
+\end{cshbox}
+\vspace{0.5cm}
+
+\noindent The following denotes a command to run in the command shell console 
+\begin{cmdbox}
+cd (*$\sim$*)/Downloads
+\end{cmdbox}
+\vspace{0.5cm}
+
+\noindent The following denotes a command line print out
+\begin{cmdboxprint}
+ This is a print out in the command line
+ produced by using the echo command
+\end{cmdboxprint}
+\vspace{0.5cm}
+
+\noindent The following denotes a python terminal or python script
+\begin{pythonbox}
+import numpy as np
+print("Hello world")
+print("{0} seconds".format(np.sqrt(25)))
+\end{pythonbox}
+\vspace{0.5cm}
+
+\ifdevguide
+\noindent The following denotes \LaTeX code (in raw form and then compiled form) - this is used in Section \ref{ch:documentation}.
+\begin{latexbox}
+This is my \LaTeX code.
+\end{latexbox}
+\fi

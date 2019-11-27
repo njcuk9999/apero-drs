@@ -1,0 +1,445 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Output header keywords}
+\label{ch:output_keywords}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ------------------------------------------------------------------------
+
+Keywords are defined as a list of three strings, the first key is the HEADER key, the second is the HEADER value and the last is the HEADER comment i.e.
+\begin{pythonbox}
+kw_KEYWORD = [key, value, comment]
+\end{pythonbox}
+\noindent and in a FITS rec would product the following:
+\begin{cmdboxprint}
+key     = value              / comment
+\end{cmdboxprint}
+
+\vspace{1cm}
+\noindent To better understand the keywords in the DRS we have laid out each keyword in the following way:
+\begin{itemize}
+\item \KeywordEntry{Keyword title}
+{Description of the keyword}
+{kw\_variable}{HEADER key}
+{Default HEADER value}{HEADER comment}
+{The recipe the keyword is used in}
+{The place where the keyword is defined}
+{The code where the keyword is used.}
+\end{itemize}
+
+\begin{note}
+All keywords are (and should be) loaded into the main parameter dictionary `p' in all recipes and thus are accessed via: 
+\begin{pythonbox}
+variable = p["(*\textcolor{red}{kw\_variable}*)"]
+\end{pythonbox}
+\end{note}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Global keywords}
+\label{ch:output_keywords:global}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% VERSION
+\item \namedlabel{text:kw_version} \KeywordEntry{DRS Version}
+{The current name and version of the DRS}
+{kw\_version}{VERSION}
+{\definevariable{text:drs_name}{DRS\_NAME}\_\definevariable{text:drs_version}{DRS\_VERSION}}
+{DRS version}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+
+% root_drs_loc
+\item \namedlabel{text:root_drs_loc} \ParameterEntry{Root for localization keywords}
+{The root (prefix) for localization keywords}
+{kw\_root\_drs\_loc}{LO}
+{\calextractRAW, \spirouKeywords}{\spirouKeywords}{\calextractRAW.\progMAIN, \spirouKeywords}{Private}
+
+
+% root_drs_flat
+\item \namedlabel{text:root_drs_flat} \ParameterEntry{Root for flat field keywords}
+{The root (prefix) for flat field keywords}
+{kw\_root\_drs\_flat}{FF}
+{\spirouKeywords}{\spirouKeywords}{\spirouKeywords}{Private}
+
+
+% root_drs_hc
+\item \ParameterEntry{Root for HC keywords}
+{The root (prefix) for the HC keywords}
+{kw\_root\_drs\_hc}{LMP}
+{\spirouKeywords}{\spirouKeywords}{\spirouKeywords}{Private}
+\DevNote{Not currently used}
+
+
+% DPRTYPE
+\item \KeywordEntry{File Type}
+{The data fits file type}
+{kw\_DPRTYPE}
+{DPRTYPE}{0}{The type of file (from pre-process)}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+
+\end{itemize}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Dark calibration keywords}
+\label{ch:output_keywords:dark}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% DADEAD
+\item \KeywordEntry{Fraction of dead pixels}
+{Percentage of dead pixels on image}
+{kw\_DARK\_DEAD}
+{DADEAD}{0}{Fraction dead pixels [\%]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+% DAMED
+\item \KeywordEntry{Median dark level}
+{Median dark level of the image in ADU/s}
+{kw\_DARK\_MED}
+{DAMED}{0}{median dark level [ADU/s]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+% DABDEAD
+\item \KeywordEntry{Fraction of dead pixels (blue part)}
+{Percentage of dead pixels on image on the blue part of the image}
+{kw\_DARK\_B\_DEAD}
+{DABDEAD}{0}{Fraction dead pixels blue part [\%]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+% DABMED
+\item \KeywordEntry{Median dark level (blue part)}
+{Median dark level of the image in ADU/s on the blue part of the image}
+{kw\_DARK\_B\_MED}
+{DABMED}{0}{median dark level blue part [ADU/s]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+% DARDEAD
+\item \KeywordEntry{Fraction of dead pixels (red part)}
+{Percentage of dead pixels on image on the red part of the image}
+{kw\_DARK\_R\_DEAD}
+{DARDEAD}{0}{Fraction dead pixels red part [\%]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+% DARMED
+\item \KeywordEntry{Median dark level (red part)}
+{Median dark level of the image in ADU/s on the red part of the image}
+{kw\_DARK\_R\_MED}
+{DARMED}{0}{median dark level red part [ADU/s]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+% DACUT
+\item \KeywordEntry{Dark level threshold}
+{The dark level threshold in ADU/s}
+{kw\_DARK\_CUT}
+{DACUT}{\definevariable{text:dark_cutlimit}{dark\_cutlimit}}
+{Threshold of dark level retain [ADU/s]}
+{\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
+
+\end{itemize}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Localization calibration keywords}
+\label{ch:output_keywords:localization}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% BCKGRD
+\item \KeywordEntry{Mean packground}
+{The mean background of an image (as a percentage).}
+{kw\_LOCO\_BCKGRD}
+{\rootdrsloc{BCKGRD}}{0}{mean background [\%]}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% CONAD
+\item \KeywordEntry{Image conversion factor}
+{Image conversion factor [e-/ADU]}
+{kw\_CCD\_CONAD}
+{CONAD}{0}{CCD conv factor [e-/ADU]}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+\DevNote{Currently not set}
+
+
+% SIGDET
+\item \namedlabel{text:kw_ccd_sigdet} \KeywordEntry{CCD Readout Noise}
+{The image readout noise in e-}
+{kw\_CCD\_SIGDET}
+{SIGDET}{0}{CCD Readout Noise [e-]}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% CTR
+\item \KeywordEntry{Coefficients position fits for orders}
+{The coefficients of the position fits}
+{kw\_LOCO\_CTR\_COEFF}
+{\rootdrsloc{CTR}}{0}{'Coeff center'}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% DEGCTR
+\item \KeywordEntry{Degree of the fitting polynomial for localization position}
+{The fit degree used in the position fit during localization}
+{kw\_LOCO\_DEG\_C}
+{\rootdrsloc{DEGCTR}}{\definevariable{text:ic_locdfitc}{ic\_locdfitc}}{degree fit ctr ord}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% DEGFWH
+\item \KeywordEntry{Degree of the fitting polynomial for localization width}
+{The fit degree used in the width fit during localization}
+{kw\_LOCO\_DEG\_W}
+{\rootdrsloc{DEGFWH}}{0}{degree fit width ord}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% DEGERR
+\item \KeywordEntry{Degree of the fitting polynomial for localization position error}
+{The fit degree used in the position error fit during localization}
+{kw\_LOCO\_DEG\_E}
+{\rootdrsloc{DEGERR}}{0}{degree fit profile error}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+\DevNote{Currently not set}
+
+
+% PRODEL
+\item \KeywordEntry{Delta width 3 convolve shape model}
+{The delta width used in pixels for the 3 convolve shape model}
+{kw\_LOCO\_DELTA}
+{\rootdrsloc{PRODEL}}{IC\_LOC\_DELTA\_WIDTH}{param model 3gau}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% FW
+\item \KeywordEntry{Coefficients width fits for orders}
+{The coefficients of the width fits}
+{kw\_LOCO\_FWHM\_COEFF}
+{\rootdrsloc{FW}}{0}{'Coeff fwhm'}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% NBO
+\item \namedlabel{text:kw_loco_nbo} \KeywordEntry{Number of orders localized}
+{The number of orders obtained during localization}
+{kw\_LOCO\_NBO}
+{\rootdrsloc{NBO}}{0}{nb orders localized}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% FLXMAX
+\item \KeywordEntry{Max image flux}
+{The maximum flux in the image in ADU}
+{kw\_LOC\_MAXFLX}
+{\rootdrsloc{FLXMAX}}{0}{max flux in order [ADU]}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% CTRMAX
+\item \KeywordEntry{Max removed points - position fit}
+{Maximum number of removed points allowed for location fit}
+{kw\_LOC\_SMAXPTS\_CTR}
+{\rootdrsloc{CTRMAX}}{0}{max rm pts ctr}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% WIDMAX
+\item \KeywordEntry{Max removed points - width fit}
+{Maximum number of removed points allowed for width fit}
+{kw\_LOC\_SMAXPTS\_WID}
+{\rootdrsloc{WIDMAX}}{0}{max rm pts width}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+\DevNote{Formally this was called `kw\_LOC\_Smaxpts\_width'}
+
+% RMSCTR
+\item \KeywordEntry{Maximum RMS position fit}
+{Maximum rms allowed for location fit}
+{kw\_LOC\_RMS\_CTR}
+{\rootdrsloc{RMSCTR}}{0}{max rms ctr}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+
+
+% RMSWID
+\item \KeywordEntry{Maximum RMS width fit}
+{Maximum rms allowed for width fit}
+{kw\_LOC\_RMS\_WID}
+{\rootdrsloc{RMSWID}}{0}{max rms width}
+{\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
+\DevNote{Formally this was called `kw\_LOC\_rms\_fwhm'}
+
+\end{itemize}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Slit calibration keywords}
+\label{ch:output_keywords:slit}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% TILT
+\item \KeywordEntry{Tilt order prefix}
+{Tilt order keyword prefix}
+{kw\_TILT}
+{\rootdrsloc{TILT}}{0}{Tilt order}
+{\calSLIT}{\spirouKeywords}{\calSLIT.\progMAIN}
+
+\end{itemize}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Flat fielding calibration keywords}
+\label{ch:output_keywords:flatfielding}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% EXTSN
+\item \KeywordEntry{SNR}
+{Signal to noise ratio for order centre}
+{kw\_EXTRA\_SN}
+{EXTSN}{0}{S\_N order center}
+{\calFFraw}{\spirouKeywords}{\calFFraw.\progMAIN}
+
+
+% RMS
+\item \KeywordEntry{Flat field RMS}
+{Flat field RMS for order}
+{kw\_FLAT\_RMS}
+{\rootdrsloc{RMS}}{0}{FF RMS order}
+{\calFFraw}{\spirouKeywords}{\calFFraw.\progMAIN}
+
+\end{itemize}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Extraction calibration keywords}
+\label{ch:output_keywords:extraction}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% FILE
+\item \KeywordEntry{Localization filename}
+{localization file used in extraction process}
+{kw\_LOCO\_FILE}
+{\rootdrsloc{FILE}}{0}{Localization file used}
+{\calextractRAW}{\spirouKeywords}{\calextractRAW.\progMAIN}
+
+% E2DS_EXTM
+\item \KeywordEntry{Extraction Method}
+{Defines the extraction method used.}
+{kw\_E2DS\_EXTM}
+{EXTMETH}{0}{Extraction method}
+{\calextractRAW}{\spirouKeywords}{\calextractRAW.\progMAIN}
+
+% E2DS_FUNC
+\item \KeywordEntry{Extraction function}
+{Defines the extraction function (in \spirouEXTOR)}
+{kw\_E2DS\_FUNC}
+{EXTFUNC}{0}{Extraction function}
+{\calextractRAW}{\spirouKeywords}{\calextractRAW.\progMAIN}
+
+% E2DS_SNR
+\item \KeywordEntry{Extraction SNR}
+{The extraction signal to noise ratio}
+{kw\_E2DS\_SNR}
+{SNR}{0}{Singal to Noise Ratio}
+{\calextractRAW}{\spirouKeywords}{\calextractRAW.\progMAIN}
+
+\end{itemize}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Bad pixel calibration keywords}
+\label{ch:output_keywords:badpix}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+	% BHOT
+	\item \KeywordEntry{Fraction of hot pixels}
+	{The Fraction of hot pixels on dark image (as a percentage)}
+	{kw\_BHOT}
+	{BHOT}{0}{Frac of hot px [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BBFLAT
+	\item \KeywordEntry{Fraction of bad pixels from flat}
+	{The Fraction of bad pixels from flat image (as a percentage)}
+	{kw\_BBFLAT}
+	{BBFLAT}{0}{Frac of bad px from flat [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BNDARK
+	\item \KeywordEntry{Fraction of non-finite pixels from dark}
+	{The Fraction of non-finite pixels from dark image (as a percentage)}
+	{kw\_BNDARK}
+	{BNDARK}{0}{Frac of non-finite px in dark [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BNFLAT
+	\item \KeywordEntry{Fraction of non-finite pixels from flat}
+	{The Fraction of non-finite pixels from flat image (as a percentage)}
+	{kw\_BNFLAT}
+	{BNFLAT}{0}{Frac of non-finite px in flat [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BBAD
+	\item \KeywordEntry{Fraction of bad pixels}
+	{The Fraction of bad pixels conforming to all criteria (as a percentage)}
+	{kw\_BBAD}
+	{BBAD}{0}{Frac of bad px with all criteria [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+\end{itemize}

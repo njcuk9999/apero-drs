@@ -1,0 +1,193 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\noindent\begin{minipage}{\textwidth}
+\section{The spirouEXTOR module}
+\label{ch:the_module:spirouEXTOR}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%----------------------------------------------------------------------------------------
+\subsection{Extraction}
+
+Defined in \spirouEXTOR\path{.spirouEXTOR.extraction_wrapper}
+
+\begin{pythonbox}
+from SpirouDRS import spirouEXTOR
+spirouEXTOR.Extraction(p, loc, image, rnum, mode=0, order_profile=None, **kwargs)
+spirouEXTOR.spirouEXTOR.extract_wrapper(p, loc, image, rnum, mode=0, order_profile=None, **kwargs)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Extraction wrapper - takes in p, loc, image, rnum (order number) and mode
+and decides which extract method to run (based on mode), checks all
+required inputs are present and valid else displays a helpful error.
+
+:param p: parameter dictionary, ParamDict containing constants
+        Required parameters depends on mode selected
+:param loc: parameter dictionary, ParamDict containing data
+        Required parameters depends on mode selected
+
+:param image: numpy array (2D), the image
+:param rnum: int, the order number for this iteration
+:param mode: string, the extraction mode, currently supported modes are:
+
+        0 - Simple extraction
+                (function = spirouEXTOR.extract_const_range)
+
+        1 - weighted extraction
+                (function = spirouEXTOR.extract_weight)
+
+        2 - tilt extraction
+                (function = spirouEXTOR.extract_tilt)
+
+        3a - tilt weight extraction (old 1)
+                (function = spirouEXTOR.extract_tilt_weight)
+
+        3b - tilt weight extraction 2 (old)
+                (function = spirouEXTOR.extract_tilt_weight_old2)
+
+        3c - tilt weight extraction 2
+                (function = spirouEXTOR.extract_tilt_weight2)
+
+        3d - tilt weight extraction 2 (cosmic correction)
+                (function = spirouEXTOR.extract_tilt_weight2cosm)
+
+:param order_profile: numpy array (2D) or None, the order profile image.
+                      Can be none if not used by extraction method.
+
+:param kwargs: keyword arguments, any value used from "p" or "loc" can be
+               overwritten with this parameter (which parameters depends on
+               which mode selected)
+:return: the outputs of extraction method function (see mode functions)
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{ExtractABOrderOffset}
+
+Defined in \spirouEXTOR\path{.spirouEXTOR.extract_AB_order}
+
+\begin{pythonbox}
+from SpirouDRS import spirouEXTOR
+spirouEXTOR.ExtractABOrderOffset(pp, loc, image, rnum)
+spirouEXTOR.spirouEXTOR.extract_AB_order(pp, loc, image, rnum)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Perform the extraction on the AB fibers separately using the summation
+over constant range
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            IC_CENT_COL: int, the column number (x-axis) of the central
+                         column
+            IC_FACDEC: float, the offset multiplicative factor for width
+            IC_EXTOPT: int, the extraction option
+            gain: float, the gain of the image
+            IC_EXTNBSIG: float, distance away from centre to extract
+                         out to +/- (in rows or y-axis direction)
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ass: numpy array (2D), the fit coefficients array for
+                  the widths fit
+                  shape = (number of orders x number of fit coefficients)
+            acc: numpy array (2D), the fit coefficients array for
+                  the centres fit
+                  shape = (number of orders x number of fit coefficients)
+
+
+:param image: numpy array (2D), the image
+:param rnum: int, the order number for this iteration
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            offset: numpy array (1D), the centre values with the
+                    offset in 'IC_CENT_COL' added
+            cent1: numpy array (2D), the extraction for A, updated is
+                   the order "rnum"
+            nbcos: int, 0 (constant)
+            cent2: numpy array (2D), the extraction for B, updated is
+                   the order "rnum"
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetValidOrders}
+
+Defined in \spirouEXTOR\path{.spirouEXTOR.get_valid_orders}
+\begin{pythonbox}
+from SpirouDRS import spirouEXTOR
+spirouEXTOR.GetValidOrders(p, loc)
+spirouEXTOR.spirouEXTOR.get_valid_orders(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get valid order range (from min to max) from constants
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        EXT_START_ORDER: int or None, the order number to start with, if
+                         None this is set to zero
+        EXT_END_ORDER: int or None, the order number to end with, if None
+                       this is set to the last order number
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+:return valid_ordesr: list, all integer values between the start order and
+                      end order
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetExtMethod}
+
+Defined in \spirouEXTOR\path{.spirouEXTOR.get_extraction_method}
+\begin{pythonbox}
+from SpirouDRS import spirouEXTOR
+spirouEXTOR.GetExtMethod(p, mode)
+spirouEXTOR.spirouEXTOR.get_extraction_method(p, mode)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the extraction method key and function
+
+:param mode: string, the mode
+
+    0 - Simple extraction
+            (function = spirouEXTOR.extract_const_range)
+
+    1 - weighted extraction
+            (function = spirouEXTOR.extract_weight)
+
+    2 - tilt extraction
+            (function = spirouEXTOR.extract_tilt)
+
+    3a - tilt weight extraction (old 1)
+            (function = spirouEXTOR.extract_tilt_weight)
+
+    3b - tilt weight extraction 2 (old)
+            (function = spirouEXTOR.extract_tilt_weight_old2)
+
+    3c - tilt weight extraction 2
+            (function = spirouEXTOR.extract_tilt_weight2)
+
+    3d - tilt weight extraction 2 (cosmic correction)
+            (function = spirouEXTOR.extract_tilt_weight2cosm)
+
+:return: string the mode and function
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------

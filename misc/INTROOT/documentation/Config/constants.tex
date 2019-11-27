@@ -1,0 +1,189 @@
+% ----------------------------------------------
+% Program constants that can be changed through-out the document
+
+% ----------------------------------------------
+% Manual version, authors and dates
+% ----------------------------------------------
+% the current versions of the manuals
+\newcommand{\MyVersion}{0.3.004}
+\newcommand{\MyVersionUser}{\MyVersion}
+\newcommand{\MyVersionDev}{\MyVersion}
+
+% the last date modified for the manuals
+\newcommand{\MyDate}{2018-07-03}
+\newcommand{\MyDateUser}{\MyDate}
+\newcommand{\MyDateDev}{\MyDate}
+
+% the author list of the manuals
+\newcommand{\MyAuthors}{N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli}
+
+% the id of the manuals
+\newcommand{\MyID}{SPIROU-4800-LAM-UM-00961}
+\newcommand{\MyIDuser}{\MyID}
+\newcommand{\MyIDdev}{\MyID}
+% ----------------------------------------------
+% DRS variables
+% ----------------------------------------------
+% The version of the DRS code
+\newcommand{\MyCodeVersion}{0.2.058 (alpha pre-release)}
+
+% The instrument
+\newcommand{\instrument}{SPIRou\,}
+
+% The latest download links
+\newcommand{\DRSLatestURL}{https://github.com/njcuk9999/spirou\_py3\,}
+
+\newcommand{\DRSGitURL}{https://github.com/njcuk9999/spirou\_py3.git\,}
+
+\newcommand{\DRSsshURL}{git@github.com:njcuk9999/spirou\_py3.git\,}
+
+% ----------------------------------------------
+% Commonly used variables
+% ----------------------------------------------
+
+% short cuts to the recipe names
+\newcommand{\calDARK}{\definevariable{ch:the_recipes:cal_DARK_spirou}{cal\_DARK\_spirou}\,}
+
+\newcommand{\calDRIFTRAW}{\definevariable{ch:the_recipes:cal_DRIFT_RAW_spirou}{cal\_DRIFT\_RAW\_spirou}\,}
+
+\newcommand{\calDRIFTE}{\definevariable{ch:the_recipes:cal_DRIFT_RAW_spirou}{cal\_DRIFT\_E2DS\_spirou}\,}
+
+\newcommand{\calDRIFTPEAK}{\definevariable{ch:the_recipes:cal_DRIFT_RAW_spirou}{cal\_DRIFTPEAK\_E2DS\_spirou}\,}
+
+\newcommand{\calextractRAW}{\definevariable{ch:the_recipes:cal_extract_RAW_spirou}{cal\_extract\_RAW{\hskip 0pt}\_spirou}\,}
+
+\newcommand{\calextractRAWALL}{\definevariable{ch:the_recipes:cal_extract_RAW_spirou}{cal\_extract\_RAW{\hskip 0pt}\_spirouALL}\,}
+
+\newcommand{\calextractRAWAB}{\definevariable{ch:the_recipes:cal_extract_RAW_spirou}{cal\_extract\_RAW{\hskip 0pt}\_spirouAB}\,}
+
+\newcommand{\calextractRAWC}{\definevariable{ch:the_recipes:cal_extract_RAW_spirou}{cal\_extract\_RAW{\hskip 0pt}\_spirouC}\,}
+
+\newcommand{\calFFraw}{\definevariable{ch:the_recipes:cal_FF_RAW_spirou}{cal\_FF\_RAW\_spirou}\,}
+
+\newcommand{\callocRAW}{\definevariable{ch:the_recipes:cal_loc_RAW_spirou}{cal\_loc\_RAW\_spirou}\,}
+
+\newcommand{\calSLIT}{\definevariable{ch:the_recipes:cal_SLIT_spirou}{cal\_SLIT\_spirou}\,}
+
+\newcommand{\calbadpix}{\definevariable{ch:the_recipes:cal_BADPIX_spirou}{cal\_BADPIX\_spirou}\,}
+
+\newcommand{\calCCF}{\definevariable{ch:the_recipes:cal_CCF_E2DS_spirou}{cal\_CCF\_E2DS\_spirou}\,}
+
+\newcommand{\calWAVE}{\definevariable{ch:the_recipes:cal_WAVE_E2DS_spirou}{cal\_WAVE\_E2DS\_spirou}\,}
+
+\newcommand{\calHC}{\definevariable{ch:the_recipes:cal_HC_E2DS_spirou}{cal\_HC\_E2DS\_spirou}\,}
+
+\newcommand{\polspirou}{\definevariable{ch:the_recipes:pol_spirou}{pol\_spirou}\,}
+
+\newcommand{\calpreprocess}{\definevariable{ch:the_recipes}{cal\_preprocess\_spirou}\,}
+
+\newcommand{\calreset}{\definevariable{ch:the_recipes}{cal\_reset}\,}
+
+\newcommand{\calexometer}{\definevariable{ch:the_recipes}{cal\_exposure\_meter}\,}
+
+\newcommand{\offlisting}{\definevariable{ch:the_recipes}{off\_listing\_RAW\_spioru}\,}
+
+\newcommand{\visuEDS}{\definevariable{ch:the_recipes}{visu\_E2DS\_spirou}\,}
+
+\newcommand{\visuRAW}{\definevariable{ch:the_recipes}{visu\_RAW\_spirou}\,}
+
+\newcommand{\visuWAVE}{\definevariable{ch:the_recipes}{visu\_WAVE\_spirou}\,}
+
+\newcommand{\calvalidate}{\definevariable{ch:the_recipes:cal_validate_spirou}{cal\_validate\_spirou}\,}
+
+% Define all recipes
+\newcommand{\AllRecipes}{All Recipes\,}
+
+% Define modules
+\newcommand{\progMAIN}{\textcolor{blue}{main()}\,}
+
+\newcommand{\spirouBACK}{\definevariable{ch:the_module:spirouBACK}{SpirouDRS{\hskip 0pt}.spirouBACK{\hskip 0pt}.spirouBACK}\,}
+
+\newcommand{\spirouCDB}{\definevariable{ch:the_module:spirouDB}{SpirouDRS{\hskip 0pt}.spirouDB{\hskip 0pt}.spirouDB}\,}
+
+\newcommand{\spirouConfig}{\definevariable{ch:the_module:spirouConfig}{SpirouDRS{\hskip 0pt}.spirouConfig{\hskip 0pt}.spirouConfig}\,}
+
+\newcommand{\spirouConst}{\definevariable{ch:the_module:spirouConfig}{SpirouDRS{\hskip 0pt}.spirouConfig{\hskip 0pt}.spirouConst}\,}
+
+\newcommand{\spirouCore}{\definevariable{ch:the_module:spirouCore}{SpirouDRS{\hskip 0pt}.spirouCore{\hskip 0pt}.spirouCore}\,}
+
+\newcommand{\spirouLog}{\definevariable{ch:the_module:spirouCore}{SpirouDRS{\hskip 0pt}.spirouCore{\hskip 0pt}.spirouLog}\,}
+
+\newcommand{\spirouPlot}{\definevariable{ch:the_module:spirouCore}{SpirouDRS{\hskip 0pt}.spirouCore{\hskip 0pt}.spirouPlot}\,}
+
+\newcommand{\spirouEXTOR}{\definevariable{ch:the_module:spirouEXTOR}{SpirouDRS{\hskip 0pt}.spirouEXTOR{\hskip 0pt}.spirouEXTOR}\,}
+
+\newcommand{\spirouFLAT}{\definevariable{ch:the_module:spirouFLAT}{SpirouDRS{\hskip 0pt}.spirouFLAT{\hskip 0pt}.spirouFLAT}\,}
+
+\newcommand{\spirouFITS}{\definevariable{ch:the_module:spirouImage}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouFITS}\,}
+
+\newcommand{\spirouImage}{\definevariable{ch:the_module:spirouImage}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouImage}\,}
+
+\newcommand{\spirouFile}{\definevariable{ch:the_module:spirouImage}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouFile}\,}
+
+\newcommand{\spirouExposeMeter}{\definevariable{ch:the_module:spirouImage}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouExposeMeter}\,}
+
+\newcommand{\spirouLOCOR}{\definevariable{ch:the_module:spirouLOCOR}{SpirouDRS{\hskip 0pt}.spirouLOCOR{\hskip 0pt}.spirouLOCOR}\,}
+
+\newcommand{\spirouRV}{\definevariable{ch:the_module:spirouRV}{SpirouDRS{\hskip 0pt}.spirouRV{\hskip 0pt}.spirouRV}\,}
+
+\newcommand{\spirouStartup}{\definevariable{ch:the_module:spirouStartup}{SpirouDRS{\hskip 0pt}.spirouStartup{\hskip 0pt}.spirouStartup}\,}
+
+\newcommand{\spirouTHORCA}{\definevariable{ch:the_module:spirouTHORCA}{SpirouDRS{\hskip 0pt}.spirouTHORCA{\hskip 0pt}.spirouTHORCA}\,}
+
+\newcommand{\spirouWAVE}{\definevariable{ch:the_module:spirouTHORCA}{SpirouDRS{\hskip 0pt}.spirouTHORCA{\hskip 0pt}.spirouWAVE}\,}
+
+\newcommand{\spirouPOLAR}{\definevariable{ch:the_module:spirouPOLAR}{SpirouDRS{\hskip 0pt}.spirouPOLAR{\hskip 0pt}.spirouPOLAR}\,}
+
+% python specifics
+\newcommand{\MAIN}{\twound{main}\twound{()}\,}
+
+\newcommand{\INIT}{\twound{init}\twound{()}\,}
+
+\newcommand{\WLOG}{\definevariable{ch:the_module:spirouCore:logger}{WLOG}\,}
+
+\newcommand{\ParamDict}{\definevariable{ch:the_module:spirouConfig:ParamDict}{ParamDict}\,}
+
+\newcommand{\ConfigError}{\definevariable{ch:the_module:spirouConfig:ConfigError}{ConfigError}\,}
+
+% variable the user should identify with their installation directory
+\newcommand{\InstallDIR}{\definevariable{text:drs_root}{DRS\_DIR}\,}
+
+\newcommand{\userDIR}{USER\_DIR\,}
+
+\newcommand{\reduceddir}{\definevariable{text:reduced_dir}{reduced\_dir}\,}
+
+\newcommand{\argnightname}{\definevariable{text:arg_night_name}{arg\_night\_name}\,}
+
+\newcommand{\argfilenames}{\definevariable{text:arg_file_names}{arg\_file\_names}\,}
+
+\newcommand{\calibdb}{\definevariable{ch:data_architecture:calibDB}{calibration database}\,}
+
+% keyword commands
+\newcommand{\rootdrsloc}{\defineoutkeyword{text:root_drs_loc}{kw\_root\_drs\_loc}\,}
+
+\newcommand{\rootdrsflat}{\defineoutkeyword{text:root_drs_flat}{kw\_root\_drs\_flat}\,}
+
+% name for mac operating system
+\newcommand{\mac}{macOS\,}
+
+% name of the master calibDB file
+\newcommand{\masterCALIBDBfile}{\definevariable{text:ic_calibDB_filename}{ic\_calibDB\_filename}\,}
+
+% name of the config directory
+\newcommand{\configdir}{config\,}
+\newcommand{\configdirrelpath}{\userDIR/\configdir\,}
+% name of the main config file
+\newcommand{\configtxtfile}{\configdirrelpath/config.py\,}
+\newcommand{\configtxtfilerelpath}{\configtxtfile}
+\newcommand{\configtxtfilepath}{\InstallDIR/{\hskip 0pt}\configdir/{\hskip 0pt}\configtxtfile}
+% name of the user constants file
+\newcommand{\constantsfile}{constants\_SPIROU\_H4RG.py}
+\newcommand{\constantsfilepath}{\InstallDIR/{\hskip 0pt}\configdir/{\hskip 0pt}\constantsfile}
+% name of the spirou constants file
+\newcommand{\spirouCONST}{SpirouDRS.spirouConfig{\hskip 0pt}.spirouConst\,}
+% name of the spirou keywords file
+\newcommand{\spirouKeywords}{SpirouDRS.spirouConfig{\hskip 0pt}.spirouKeywords\,}
+% This sets the header value for the time in calibDB
+\newcommand{\constantAcqtimeKey}{ACQTIME1\,}
+% This sets the folder name date format
+\newcommand{\constantFolderDateFormat}{YYYYMMDD\,}
