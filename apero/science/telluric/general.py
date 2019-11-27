@@ -1036,8 +1036,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
     # ----------------------------------------------------------------------
     # determining the pixels relevant for PCA construction
     keep = np.isfinite(np.sum(abso, axis=0))
-    keep &= (np.min(abso, axis=0) > thres_transfit_low)
-    keep &= (np.max(abso, axis=0) < thres_transfit_upper)
+    with warnings.catch_warnings(record=True) as _:
+        keep &= (np.min(abso, axis=0) > thres_transfit_low)
+        keep &= (np.max(abso, axis=0) < thres_transfit_upper)
 
     # log fraction of valid (non NaN) pixels
     fraction = mp.nansum(keep) / len(keep)
@@ -1435,9 +1436,9 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
         # TODO: abso, so a value of 1 is equivalent to a 2.7x difference
         # TODO: in residual.
 
-        sigma = 1.0 #mp.nanmedian(np.abs(fit_dd))
-        print('sigma = ',sigma)
-        keep &= (np.abs(fit_dd) < sigma)
+        sigma = 1.0 # mp.nanmedian(np.abs(fit_dd))
+        with warnings.catch_warnings(record=True) as _:
+            keep &= (np.abs(fit_dd) < sigma)
 
         # log number of kept pixels
         wargs = [mp.nansum(keep)]
@@ -1508,8 +1509,9 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # ------------------------------------------------------------------
     # remove all bad tranmission
     # ------------------------------------------------------------------
-    badmask = recon_abso < thres_transfit_low
-    badmask |= recon_abso > thres_transfit_upper
+    with warnings.catch_warnings(record=True) as _:
+        badmask = recon_abso < thres_transfit_low
+        badmask |= recon_abso > thres_transfit_upper
     # set bad values in sp2 to NaN
     sp2[badmask] = np.nan
 

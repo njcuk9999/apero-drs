@@ -313,7 +313,8 @@ if not HAS_NUMBA:
 
 # Set "nopython" mode for best performance, equivalent to @nji
 @jit(nopython=True)
-def lin_mini(vector,sample,mm,v,sz_sample,case,recon,amps):
+def lin_mini(vector, sample, mm, v, sz_sample, case, recon, amps,
+             no_recon=False):
     #
     # vector of N elements
     # sample: matrix N * M each M column is adjusted in amplitude to minimize
@@ -344,24 +345,36 @@ def lin_mini(vector,sample,mm,v,sz_sample,case,recon,amps):
                 amps[i]+=inv[i,j]*v[j]
         # reconstruction of the best-fit from the input sample and derived
         # amplitudes
-        for i in range(sz_sample[0]):
-            recon += amps[i] * sample[i, :]
+        if not no_recon:
+            for i in range(sz_sample[0]):
+                recon += amps[i] * sample[i, :]
         return amps, recon
+    # same as for case 1 but with axis flipped
     if case == 2:
-        # same as for case 1 but with axis flipped
+        # fill-in the co-variance matrix
         for i in range(sz_sample[1]):
             for j in range(i, sz_sample[1]):
                 mm[i, j] = np.sum(sample[:, i] * sample[:, j])
+                # we know the matrix is symetric, we fill the other half
+                # of the diagonal directly
                 mm[j, i] = mm[i, j]
+            # dot-product of vector with sample columns
             v[i] = np.sum(vector * sample[:, i])
+        # if the matrix cannot we inverted because the determinant is zero,
+        # then we return a NaN for all outputs
         if np.linalg.det(mm) == 0:
             return amps, recon
+        # invert coveriance matrix
         inv = np.linalg.inv(mm)
+        # retrieve amplitudes
         for i in range(len(v)):
             for j in range(len(v)):
                 amps[i]+=inv[i,j]*v[j]
-        for i in range(sz_sample[1]):
-            recon += amps[i] * sample[:, i]
+        # reconstruction of the best-fit from the input sample and derived
+        # amplitudes
+        if not no_recon:
+            for i in range(sz_sample[1]):
+                recon += amps[i] * sample[:, i]
         return amps, recon
 
 

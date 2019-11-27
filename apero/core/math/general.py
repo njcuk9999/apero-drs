@@ -129,7 +129,7 @@ def fwhm(sigma=1.0):
     return 2 * np.sqrt(2 * np.log(2)) * sigma
 
 
-def linear_minimization(vector, sample):
+def linear_minimization(vector, sample, no_recon=False):
     """
     wrapper function that sets everything for the @jit later
     In particular, we avoid the np.zeros that are not handled
@@ -208,7 +208,7 @@ def linear_minimization(vector, sample):
     # ----------------------------------------------------------------------
     # pass all variables and pre-formatted vectors to the @jit part of the code
     amp_out, recon_out = fast.lin_mini(vector, sample, mm, vec, sz_sample,
-                                       case, recon, amps)
+                                       case, recon, amps, no_recon=no_recon)
     # ----------------------------------------------------------------------
     # if we had NaNs in the first place, we create a reconstructed vector
     # that has the same size as the input vector, but pad with NaNs values
