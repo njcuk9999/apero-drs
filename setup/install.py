@@ -10,12 +10,10 @@ Created on 2019-11-26 at 15:54
 @author: cook
 """
 import importlib
-import readline
 import glob
 import os
 import sys
-from signal import signal, SIGINT
-
+import signal
 
 # =============================================================================
 # Define variables
@@ -26,10 +24,120 @@ DRS_PATH = 'apero'
 CONSTANTS_PATH = 'core.constants'
 # define the place where the installation recipes are
 INSTALL_PATH = 'tools.module.setup.drs_installation'
+# set modules required
+REQ_MODULES = dict()
+REQ_MODULES['astropy'] = [2, 0, 3]
+REQ_MODULES['matplotlib'] = [2, 1, 2]
+REQ_MODULES['numpy'] = [1, 14, 0]
+REQ_MODULES['scipy'] = [1, 0, 0]
+REC_MODULES = dict()
+REC_MODULES['astroquery'] = [0, 3, 9]
+REC_MODULES['barycorrpy'] = [0, 2, 2, 1]
+REC_MODULES['bottleneck'] = [1, 2, 1]
+REC_MODULES['ipdb'] = None
+REC_MODULES['numba'] = [0, 41, 0]
+REC_MODULES['pandas'] = [0, 23, 4]
+REC_MODULES['PIL'] = [5, 3, 0]
+REC_MODULES['tqdm'] = [4, 28, 1]
+REC_MODULES['yagmail'] = [0, 11, 220]
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def validate():
+    # log check
+    print('Module check:')
+    # ------------------------------------------------------------------
+    # loop around required modules to check
+    # ------------------------------------------------------------------
+    for module in REQ_MODULES:
+        # get required minimum version
+        rversionlist = REQ_MODULES[module]
+        # ------------------------------------------------------------------
+        # test importing module
+        try:
+            imod = importlib.import_module(module)
+        except:
+            print('\tFatal Error: {0} requires module {1} to be installed'
+                  ''.format(DRS_PATH, module))
+            sys.exit()
+        # --------------------------------------------------------------
+        # check the version
+        check_version(module, imod, rversionlist, required=True)
+
+    # ------------------------------------------------------------------
+    # loop around required modules to check
+    # ------------------------------------------------------------------
+    for module in REC_MODULES:
+        # get required minimum version
+        rversionlist = REC_MODULES[module]
+        # --------------------------------------------------------------
+        # test importing module
+        try:
+            imod = importlib.import_module(module)
+        except:
+            print('\t{0} recommends {1} to be installed'
+                  ''.format(DRS_PATH, module))
+            continue
+        # --------------------------------------------------------------
+        # check the version
+        check_version(module, imod, rversionlist, required=False)
+
+
+def check_version(module, imod, rversionlist, required=True):
+    # test version
+    passed = False
+    # ------------------------------------------------------------------
+    # if we don't have a required version to test don't test passed here
+    if rversionlist is None:
+        return True, None
+    # ------------------------------------------------------------------
+    # test minimum version of module
+    if hasattr(imod, '__version__'):
+        # get the version
+        version = getattr(imod, '__version__').split('.')
+        # loop around rversion list
+        for v_it, rversion in enumerate(rversionlist):
+            # if we don't have a level this deep break
+            if len(version) < (v_it - 1):
+                break
+            # try to make an integer
+            try:
+                version[v_it] = int(version[v_it])
+            except:
+                break
+            # if version is higher pass
+            if version[v_it] > rversion:
+                passed = True
+                break
+            # if version is the same skip to lower level
+            elif version[v_it] == rversion:
+                passed = True
+                continue
+            # if version is lower fail
+            else:
+                passed = False
+                break
+        # --------------------------------------------------------------
+        # get string lists
+        rstrlist = list(map(lambda x: str(x), rversionlist))
+        strlist = list(map(lambda x: str(x), version))
+        # --------------------------------------------------------------
+        # get args
+        args = [DRS_PATH, module, '.'.join(rstrlist), '.'.join(strlist)]
+        # if we have not passed print fail message
+        if not passed and not required:
+            print('\t{0} recommends {1} to be updated ({3} < {2})'
+                  ''.format(*args))
+        elif not passed:
+            print('\tFatal Error: {0} requires module {1} ({3} < {2})'
+                  ''.format(*args))
+            sys.exit()
+        else:
+            print('\tPassed: {1} ({3} >= {2})'.format(*args))
+
+
 def catch_sigint(signal_received, frame):
     print('\n\nExiting installation script')
     # raise Keyboard Interrupt
@@ -42,23 +150,25 @@ class PathCompleter(object):
     """
     def __init__(self, root=None):
         self.root = root
+        try:
+            self.readline = importlib.import_module('readline')
+        except:
+            self.readline = None
 
     def pathcomplete(self, text, state):
         """
         This is the tab completer for systems paths.
         Only tested on *nix systems
         """
-        line = readline.get_line_buffer().split()
-
+        line = self.readline.get_line_buffer().split()
         # replace ~ with the user's home dir.
         # See https://docs.python.org/2/library/os.path.html
         if '~' in text:
             text = os.path.expanduser('~')
-
         # deal with having a root folder
         if self.root is not None:
             text = os.path.join(self.root, text)
-
+        # return list
         return [x for x in glob.glob(text + '*')][state]
 
 
@@ -69,6 +179,15 @@ def tab_input(message, root=None):
     :param root:
     :return:
     """
+    # try to import readline (unix only)
+    try:
+        readline = importlib.import_module('readline')
+    except:
+        readline = None
+    # deal with no readline module
+    if readline is None:
+        return input(message + '\n\t>> ')
+    # ----------------------------------------------------------------------
     # Register our completer function
     readline.set_completer(PathCompleter(root).pathcomplete)
     # for MAC users
@@ -86,11 +205,21 @@ def tab_input(message, root=None):
     return uinput
 
 
+
+
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
+
+    # ----------------------------------------------------------------------
+    # Validate modules
+    # ----------------------------------------------------------------------
+    validate()
+
     # ----------------------------------------------------------------------
     # Importing DRS paths
     # ----------------------------------------------------------------------
@@ -101,7 +230,7 @@ if __name__ == "__main__":
     # set modules to None
     constants, install = None, None
     # catch Ctrl+C
-    signal(SIGINT, catch_sigint)
+    signal.signal(signal.SIGINT, catch_sigint)
     # loop until we can import modules
     while cond:
         # try to import the drs
@@ -164,9 +293,9 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # print installing title
     print('\n\n\n')
-    install.cprint('=' * 50, 'm')
+    install.cprint(install.printheader(), 'm')
     install.cprint('Installing', 'm')
-    install.cprint('=' * 50, 'm')
+    install.cprint(install.printheader(), 'm')
     print('\n')
     # ----------------------------------------------------------------------
     # get binary paths
@@ -185,23 +314,19 @@ if __name__ == "__main__":
     install.cprint('\n- Creating shell script(s)', 'm')
     allparams = install.create_shell_scripts(params, allparams)
     # ----------------------------------------------------------------------
-    # everything should now be set up - time to validate installation
-    install.cprint('\n- Validating installation\n\n', 'm')
-    allparams = install.validate_install(allparams)
-    # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
     install.cprint('\n- Copying files\n\n', 'm')
     allparams = install.clean_install(allparams)
     # ----------------------------------------------------------------------
     # create sym links for all recipes
     install.cprint('\n- Creating symlinks\n', 'm')
-    allparams = install.create_symlinks(allparams)
+    allparams = install.create_symlinks(params, allparams)
     # ----------------------------------------------------------------------
     # log that installation is complete
     print('\n\n\n')
-    install.cprint('=' * 50, 'm')
+    install.cprint(install.printheader(), 'm')
     install.cprint('Installation complete', 'm')
-    install.cprint('=' * 50, 'm')
+    install.cprint(install.printheader(), 'm')
     print('\n')
 
 # =============================================================================
