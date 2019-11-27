@@ -430,7 +430,8 @@ out_dark_sky = drs_finput('DARKS', KW_OUTPUT='DARKS',
                           dbname='calibration', dbkey='DARKS')
 
 out_dark_master = drs_finput('DARKM', KW_OUTPUT='DARKM',
-                             filetype='.fits', intype=pp_dark_dark_tel,
+                             filetype='.fits',
+                             intype=[pp_dark_dark_tel, pp_dark_dark_int],
                              suffix='_dark_master',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='DARKM')
