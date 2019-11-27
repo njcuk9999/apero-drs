@@ -8,13 +8,8 @@ Created on 2019-11-02 12:51
 @author: ncook
 Version 0.0.1
 """
-import numpy as np
 import os
-from astropy.table import Table
-from collections import OrderedDict
-import pandas as pd
 import sys
-import threading
 
 # try to deal with python 2/3 compatibility
 if sys.version_info.major > 2:
