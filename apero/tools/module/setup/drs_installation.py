@@ -203,9 +203,9 @@ def user_interface(params):
     # storage of answers
     all_params = dict()
     # title
-    cprint('=' * 50, 'm')
+    cprint(printheader(), 'm')
     cprint('Installation for {0}'.format(package), 'm')
-    cprint('=' * 50, 'm')
+    cprint(printheader(), 'm')
     print('\n')
     # ------------------------------------------------------------------
     # Step 1: Ask for user config path
@@ -214,9 +214,9 @@ def user_interface(params):
     # ------------------------------------------------------------------
     for instrument in INSTRUMENTS:
         # ------------------------------------------------------------------
-        cprint('\n' + '=' * 50, 'm')
+        cprint('\n' + printheader(), 'm')
         cprint('Settings for {0}'.format(instrument), 'm')
-        cprint('=' * 50, 'm')
+        cprint(printheader(), 'm')
         # ------------------------------------------------------------------
         # set up blank dictionary
         iparams = ParamDict()
@@ -225,7 +225,7 @@ def user_interface(params):
         install = ask('Install {0}?'.format(instrument), dtype='YN')
         if not install:
             continue
-        cprint('=' * 50, 'g')
+        cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # set user config
         iparams['USERCONFIG'] = os.path.join(userconfig, instrument.lower())
@@ -236,7 +236,7 @@ def user_interface(params):
         # ------------------------------------------------------------------
         # Step 3: Ask for data paths
         advanced = ask('Setup paths invidiually?', dtype='YN')
-        cprint('=' * 50, 'g')
+        cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # if advanced then loop through all options
         if advanced:
@@ -248,7 +248,7 @@ def user_interface(params):
                 # ask question and assign path
                 iparams[path] = ask(question, 'path', default=defaultpath)
                 iparams.set_source(path, __NAME__)
-                cprint('=' * 50, 'g')
+                cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         else:
             directory = ask('Data directory', 'path', default=DEFAULT_DATA_PATH)
@@ -268,10 +268,10 @@ def user_interface(params):
                     if create:
                         if not os.path.exists(iparams[path]):
                             os.makedirs(iparams[path])
-                        cprint('=' * 50, 'g')
+                        cprint(printheader(), 'g')
                         created = True
             if not created:
-                cprint('=' * 50, 'g')
+                cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # Step 4: Ask for plot mode
         plot = ask('Plot mode required', dtype='int', options=[0, 1, 2],
@@ -281,6 +281,8 @@ def user_interface(params):
                    default=0)
         iparams['DRS_PLOT'] = plot
         iparams.set_source('DRS_PLOT', __NAME__)
+        # add header line
+        cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # Step 5: Ask whether we want a clean install
         iparams['CLEAN_INSTALL'] = ask('Clean install?', dtype='YN')
@@ -289,7 +291,7 @@ def user_interface(params):
         # add iparams to all params
         all_params[instrument] = iparams
 
-    cprint('=' * 50, 'm')
+    cprint(printheader(), 'm')
     # ----------------------------------------------------------------------
     # return all parameters
     return all_params
@@ -400,6 +402,8 @@ def create_shell_scripts(params, all_params):
         cprint(emsg.format(os.name), 'red')
         sys.exit()
 
+    # construct validation code absolute path
+    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], 'validate.py')
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
@@ -440,6 +444,18 @@ def create_shell_scripts(params, all_params):
             # add to new lines
             out_lines.append(out_line)
         # ------------------------------------------------------------------
+        # add instrument tests
+        for instrument in INSTRUMENTS:
+            out_lines.append('\n')
+            if instrument in all_params:
+                # run the validation script (just to print splash)
+                comment = ('# run the validation script for {0}'
+                           ''.format(instrument))
+                command = 'python {0} {1}'.format(valid_path, instrument)
+                # add to out lines
+                out_lines.append(comment + '\n')
+                out_lines.append(command + '\n')
+        # ------------------------------------------------------------------
         # open output setup file
         out_setup = open(outpath, 'w')
         # write lines to out setup file
@@ -459,27 +475,9 @@ def clean_install(all_params):
         if instrument not in all_params:
             continue
         # add to environment
-        os.environ[ENV_CONFIG] = all_params['USERCONFIG']
+        add_paths(all_params)
         # construct reset command
-        cmd = 'python {0}/reset.py {1}'.format(binpath, instrument)
-        # run command
-        os.system(cmd)
-    # return all params
-    return all_params
-
-
-def validate_install(all_params):
-    # get root directory
-    binpath = all_params['DRS_TOOL_PATH']
-    # loop around instruments
-    for instrument in INSTRUMENTS:
-        # skip is we are not installing instrument
-        if instrument not in all_params:
-            continue
-        # add to environment
-        os.environ[ENV_CONFIG] = all_params['USERCONFIG']
-        # construct reset command
-        cmd = 'python {0}/validate.py'.format(binpath, instrument)
+        cmd = 'python {0}/reset.py {1} --quiet'.format(binpath, instrument)
         # run command
         os.system(cmd)
     # return all params
@@ -517,6 +515,43 @@ def create_symlinks(params, all_params):
             os.symlink(filename, newpath)
             # make executable
             os.chmod(newpath, stat.S_IRWXO)
+
+
+def add_paths(all_params):
+    # get paths
+    bin_path = all_params['DRS_BIN_PATH']
+    tool_path = all_params['DRS_TOOL_PATH']
+    # ----------------------------------------------------------------------
+    # set USERCONFIG
+    os.environ[ENV_CONFIG] = all_params['USERCONFIG']
+    # ----------------------------------------------------------------------
+    if os.name == 'posix':
+        sep = ':'
+    else:
+        sep = ';'
+    # ----------------------------------------------------------------------
+    # add to PATH
+    if 'PATH' in os.environ:
+        oldpath = os.environ['PATH']
+        args = [sep, bin_path, tool_path, oldpath]
+        os.environ['PATH'] = '{1}{0}{2}{0}{3}'.format(*args)
+    else:
+        args = [sep, bin_path, tool_path]
+        os.environ['PATH'] = '{1}{0}{2}'.format(*args)
+    # add to PYTHON PATH
+    if 'PYTHONPATH' in os.environ:
+        oldpath = os.environ['PYTHONPATH']
+        args = [sep, bin_path, tool_path, oldpath]
+        os.environ['PYTHONPATH'] = '{1}{0}{2}{0}{3}'.format(*args)
+    else:
+        args = [sep, bin_path, tool_path]
+        os.environ['PYTHONPATH'] = '{1}{0}{2}'.format(*args)
+
+
+def printheader():
+    rows, columns = constants.param_functions.window_size()
+    return '=' * (columns - 1)
+
 
 # =============================================================================
 # Define functions
