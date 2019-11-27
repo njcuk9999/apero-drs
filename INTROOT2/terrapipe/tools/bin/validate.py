@@ -5,7 +5,7 @@
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-03-04 at 15:12
+Created on 2019-11-26 at 18:10
 
 @author: cook
 """
@@ -28,18 +28,17 @@ import warnings
 # =============================================================================
 # Define functions
 # =============================================================================
-def function1():
+def main(*args, **kwargs):
+    # TODO: Fill in code here
     return 0
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
 
 # =============================================================================
 # End of code
