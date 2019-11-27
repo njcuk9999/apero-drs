@@ -176,4 +176,4 @@ fabric.properties
 *.npy
 *.~lock*
 *.lock
-/INTROOT2/bin/*.py
+/bin/*.py
