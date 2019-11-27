@@ -192,6 +192,9 @@ if __name__ == "__main__":
     # perform clean install on each instrument if requested
     install.cprint('\n- Copying files\n\n', 'm')
     allparams = install.clean_install(allparams)
+
+    # TODO: need to copy instrument files to the bin folder (symbolic links?)
+
     # ----------------------------------------------------------------------
     # log that installation is complete
     print('\n\n\n')
