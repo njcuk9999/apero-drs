@@ -914,6 +914,34 @@ class _Breakpoints(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+class _SetQuiet(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def _set_return(self, values):
+        func_name = __NAME__ + '._SetProgram._set_program()'
+        # debug message: setting program to: "strvalue"
+        dmsg = TextEntry('90-001-00034')
+        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        # return strvalue
+        return True
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        self.recipe = parser.recipe
+        # display version
+        value = self._set_return(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+
+
+
 # =============================================================================
 # Define Argument Class
 # =============================================================================
@@ -1650,7 +1678,6 @@ def set_ipython_return(p):
     return props
 
 
-
 def breakpoints(p):
     htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
     props = OrderedDict()
@@ -1660,6 +1687,19 @@ def breakpoints(p):
     props['nargs'] = 0
     props['help'] = htext['BREAKPOINTS_HELP']
     return props
+
+
+def set_quiet(p):
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    props = OrderedDict()
+    props['name'] = '--quiet'
+    props['altnames'] = ['--q']
+    props['action'] = _SetQuiet
+    props['nargs'] = 0
+    # TODO: add help string
+    props['help'] = ''
+    return props
+
 
 # =============================================================================
 # End of code

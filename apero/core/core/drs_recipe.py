@@ -724,6 +724,9 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set ipython return functionality
         self._make_special(drs_argument.breakpoints, skip=False)
+        # ---------------------------------------------------------------------
+        # set ipython return functionality
+        self._make_special(drs_argument.set_quiet, skip=False)
 
 
     def _make_special(self, function, skip=False):
