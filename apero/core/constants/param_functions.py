@@ -1078,6 +1078,36 @@ def catch_sigint(signal_received, frame):
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
 
+def window_size(drows=80, dcols=80):
+    # only works on unix operating systems
+    if os.name == 'posix':
+        try:
+            rows, columns = os.popen('stty size', 'r').read().split()
+            return int(rows), int(columns)
+        except:
+            pass
+    elif os.name == 'nt':
+        # taken from: https://gist.github.com/jtriley/1108174
+        try:
+            import struct
+            from ctypes import windll, create_string_buffer
+            # stdin handle is -10
+            # stdout handle is -11
+            # stderr handle is -12
+            h = windll.kernel32.GetStdHandle(-12)
+            csbi = create_string_buffer(22)
+            res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
+            if res:
+                out = struct.unpack("hhhhHhhhhhh", csbi.raw)
+                left, top, right, bottom = out[5:9]
+                sizex = right - left + 1
+                sizey = bottom - top + 1
+                return int(sizey), int(sizex)
+        except:
+            pass
+    return drows, dcols
+
+
 # =============================================================================
 # Config loading private functions
 # =============================================================================
