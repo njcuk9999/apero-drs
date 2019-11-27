@@ -12,12 +12,12 @@ import numpy as np
 import sys
 import os
 import shutil
+import readline
 import glob
 
 from terrapipe.core import constants
 from terrapipe.core.instruments.default import pseudo_const
 from terrapipe.locale import drs_exceptions
-
 
 # =============================================================================
 # Define variables
@@ -47,6 +47,13 @@ ConfigWarning = drs_exceptions.ConfigWarning
 INSTRUMENTS = ['SPIROU', 'NIRPS']
 DEFAULT_USER_PATH = '~/terrapipe/config/'
 DEFAULT_DATA_PATH = '~/terrapipe/data/'
+
+BINPATH = '../bin/'
+TOOLPATH = '../terrapipe/tools/bin/'
+ENV_CONFIG = 'DRS_UCONFIG'
+SETUP_PATH = './tools/resources/setup/'
+
+
 DATA_PATHS = dict()
 DATA_PATHS['DRS_DATA_RAW'] = ['Raw data directory', 'raw']
 DATA_PATHS['DRS_DATA_WORKING'] = ['Temporary data directory', 'tmp']
@@ -92,6 +99,9 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
     if isinstance(dtype, str) and dtype.upper() == 'YN':
         options = ['Y', 'N']
         optiondesc = ['[Y]es or [N]o']
+    # deal with paths (expand)
+    if isinstance(dtype, str) and dtype.upper() == 'PATH':
+        default = os.path.expanduser(default)
     # loop around until check is passed
     while check:
         # ask question
@@ -102,8 +112,11 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
             print('\t' + '\n\t'.join(np.array(optiondesc, dtype=str)))
         if default is not None:
             cprint('\tDefault is: {0}'.format(default), 'b')
-        # record responce
-        uinput = input(' >>\t')
+        # record response
+        if dtype == 'path':
+            uinput = tab_input('')
+        else:
+            uinput = input(' >>\t')
         # deal with ints, floats, logic
         if dtype in ['int', 'float', 'bool']:
             try:
@@ -147,9 +160,9 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
                     continue
         # deal with Yes/No questions
         elif dtype == 'YN':
-            if 'Y' in uinput:
+            if 'Y' in uinput.upper():
                 return True
-            elif 'N' in uinput:
+            elif 'N' in uinput.upper():
                 return False
             else:
                 cprint('Response must be [Y]es or [N]o', 'y')
@@ -181,7 +194,8 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
 
 
 def user_interface(params):
-
+    # set function name
+    func_name = __NAME__ + '.user_interface()'
     # get default from params
     package = params['DRS_PACKAGE']
     # storage of answers
@@ -191,11 +205,10 @@ def user_interface(params):
     cprint('Installation for {0}'.format(package), 'm')
     cprint('=' * 50, 'm')
     print('\n')
-
     # ------------------------------------------------------------------
     # Step 1: Ask for user config path
     userconfig = ask('User config path', 'path', default=DEFAULT_USER_PATH)
-    all_params['userconfig'] = userconfig
+    all_params['USERCONFIG'] = userconfig
     # ------------------------------------------------------------------
     for instrument in INSTRUMENTS:
         # ------------------------------------------------------------------
@@ -213,10 +226,11 @@ def user_interface(params):
         cprint('=' * 50, 'g')
         # ------------------------------------------------------------------
         # set user config
-        iparams['userconfig'] = os.path.join(userconfig, instrument.lower())
+        iparams['USERCONFIG'] = os.path.join(userconfig, instrument.lower())
+        iparams.set_source('USERCONFIG', func_name)
         # make instrument user config directory
-        if not os.path.exists(iparams['userconfig']):
-            os.mkdir(iparams['userconfig'])
+        if not os.path.exists(iparams['USERCONFIG']):
+            os.mkdir(iparams['USERCONFIG'])
         # ------------------------------------------------------------------
         # Step 3: Ask for data paths
         advanced = ask('Setup paths invidiually?', dtype='YN')
@@ -268,6 +282,7 @@ def user_interface(params):
         # ------------------------------------------------------------------
         # Step 5: Ask whether we want a clean install
         iparams['CLEAN_INSTALL'] = ask('Clean install?', dtype='YN')
+        iparams.set_source('CLEAN_INSTALL', func_name)
         # ------------------------------------------------------------------
         # add iparams to all params
         all_params[instrument] = iparams
@@ -279,6 +294,14 @@ def user_interface(params):
 
 
 def copy_configs(params, all_params):
+    # set function name
+    func_name = __NAME__ + '.copy_configs()'
+
+    # get properties from iparams
+    duser_config = params['DRS_USER_DEFAULT']
+    package = params['DRS_PACKAGE']
+    # get installation root
+    all_params['DRS_ROOT'] = constants.get_relative_folder(package, '')
     # loop around instruments
     for instrument in INSTRUMENTS:
         # only deal with instrument user wants to set up
@@ -286,11 +309,8 @@ def copy_configs(params, all_params):
             continue
         # get iparams
         iparams = all_params[instrument]
-        # get properties from iparams
-        duser_config = params['DRS_USER_DEFAULT']
-        package = params['DRS_PACKAGE']
-        # get installation root
-        iparams['DRS_ROOT'] = constants.get_relative_folder(package, '')
+        iparams['DRS_ROOT'] = all_params['DRS_ROOT']
+        iparams.set_source('DRS_ROOT', func_name)
         # get config path
         configpath = constants.get_relative_folder(package, duser_config)
         # get instrument config path
@@ -311,6 +331,7 @@ def copy_configs(params, all_params):
             newfiles.append(newpath)
         # store filenames in iparams
         iparams['CONFIGFILES'] = newfiles
+        iparams.set_source('CONFIGFILES', func_name)
     # return all_params
     return all_params
 
@@ -343,35 +364,181 @@ def update_configs(all_params):
     return all_params
 
 
+def bin_paths(params, all_params):
+    # get package
+    package = params['DRS_PACKAGE']
+    # add bin path
+    bin_path = constants.get_relative_folder(package, BINPATH)
+    # add tools bin path
+    tool_path = constants.get_relative_folder(package, TOOLPATH)
+    # add to all_params
+    all_params['DRS_BIN_PATH'] = bin_path
+    all_params['DRS_TOOL_PATH'] = tool_path
+    # return the updated all params
+    return all_params
+
+
+def create_shell_scripts(params, all_params):
+    # get package
+    package = params['DRS_PACKAGE']
+    # find setup files
+    setup_path = constants.get_relative_folder(package, SETUP_PATH)
+
+    # deal with windows
+    if os.name == 'nt':
+        setup_files = ['{0}.win.setup'.format(package.lower())]
+    # deal with unix
+    elif os.name == 'posix':
+        setup_files = ['{0}.bash.setup'.format(package.lower())]
+        setup_files += ['{0}.sh.setup'.format(package.lower())]
+    # else generate error message
+    else:
+        # print error message
+        emsg = 'Error {0} does not support OS (OS = {0})'
+        cprint(emsg.format(os.name), 'red')
+        sys.exit()
+
+    # ----------------------------------------------------------------------
+    # setup text dictionary
+    text = dict()
+    text['BIN_PATH'] = all_params['DRS_BIN_PATH']
+    text['TOOL_PATH'] = all_params['DRS_TOOL_PATH']
+    text['USER_CONFIG'] = all_params['USERCONFIG']
+    text['ROOT_PATH'] = os.path.dirname(all_params['DRS_ROOT'])
+    # ----------------------------------------------------------------------
+    # loop around setup files
+    for setup_file in setup_files:
+        # get absolute path
+        inpath = os.path.join(setup_path, setup_file)
+        # get output path
+        outpath = os.path.join(all_params['USERCONFIG'], setup_file)
+        # ------------------------------------------------------------------
+        # make sure in path exists
+        if not os.path.exists(inpath):
+            emsg = 'Error setup file "{0}" does not exist'
+            cprint(emsg.format(inpath), 'red')
+            sys.exit()
+        # ------------------------------------------------------------------
+        # make sure out path does not exist
+        if os.path.exists(outpath):
+            os.remove(outpath)
+        # ------------------------------------------------------------------
+        # read setup file
+        in_setup = open(inpath, 'r')
+        # read setup lines
+        in_lines = in_setup.readlines()
+        # close setup file
+        in_setup.close()
+        # ------------------------------------------------------------------
+        # loop around lines and update parameters
+        out_lines = []
+        for in_line in in_lines:
+            # construct new line
+            out_line = in_line.format(**text)
+            # add to new lines
+            out_lines.append(out_line)
+        # ------------------------------------------------------------------
+        # open output setup file
+        out_setup = open(outpath, 'w')
+        # write lines to out setup file
+        out_setup.writelines(out_lines)
+        # close out setup file
+        out_setup.close()
+    # return all params
+    return all_params
+
+
+def clean_install(all_params):
+    # get root directory
+    binpath = all_params['DRS_TOOL_PATH']
+    # loop around instruments
+    for instrument in INSTRUMENTS:
+        # skip is we are not installing instrument
+        if instrument not in all_params:
+            continue
+        # add to environment
+        os.environ[ENV_CONFIG] = all_params['USERCONFIG']
+        # construct reset command
+        cmd = 'python {0}/reset.py {1}'.format(binpath, instrument)
+        # run command
+        os.system(cmd)
+    # return all params
+    return all_params
+
+
+def validate_install(all_params):
+    # get root directory
+    binpath = all_params['DRS_TOOL_PATH']
+    # loop around instruments
+    for instrument in INSTRUMENTS:
+        # skip is we are not installing instrument
+        if instrument not in all_params:
+            continue
+        # add to environment
+        os.environ[ENV_CONFIG] = all_params['USERCONFIG']
+        # construct reset command
+        cmd = 'python {0}/validate.py'.format(binpath, instrument)
+        # run command
+        os.system(cmd)
+    # return all params
+    return all_params
+
+
+# =============================================================================
+# Define functions
+# =============================================================================
+class PathCompleter(object):
+    """
+    Copy of
+    """
+    def __init__(self, root=None):
+        self.root = root
+
+    def pathcomplete(self, text, state):
+        """
+        This is the tab completer for systems paths.
+        Only tested on *nix systems
+        """
+        line = readline.get_line_buffer().split()
+
+        # replace ~ with the user's home dir.
+        # See https://docs.python.org/2/library/os.path.html
+        if '~' in text:
+            text = os.path.expanduser('~')
+
+        # deal with having a root folder
+        if self.root is not None:
+            text = os.path.join(self.root, text)
+
+        return [x for x in glob.glob(text + '*')][state]
+
+
+def tab_input(message, root=None):
+    # Register our completer function
+    readline.set_completer(PathCompleter(root).pathcomplete)
+    # for MAC users
+    if sys.platform == 'darwin':
+        # Apple uses libedit.
+        readline.parse_and_bind("bind -e")
+        readline.parse_and_bind("bind '\t' rl_complete")
+    # for everyone else
+    elif sys.platform == 'linux':
+        # Use the tab key for completion
+        readline.parse_and_bind('tab: complete')
+        readline.set_completer_delims(' \t\n`~!@#$%^&*()-=+[{]}\\|;:\'",<>?')
+    uinput = input(message + '\n\t>> ')
+    # return uinput
+    return uinput
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    # get arguments
-    args = sys.argv
-    # get global parameters
-    params = constants.load()
-    # ----------------------------------------------------------------------
-    # if gui pass for now
-    if '--gui' in args:
-        raise NotImplementedError('GUI features not implemented yet.')
-    else:
-        allparams = user_interface(params)
-    # ----------------------------------------------------------------------
-    # TODO: need to update DRS_UCONFIG environmental variable
-
-    # ----------------------------------------------------------------------
-    # copy config files to config dir
-    allparams = copy_configs(params, allparams)
-    # ----------------------------------------------------------------------
-    # update config values from iparams
-    allparams = update_configs(allparams)
-    # ----------------------------------------------------------------------
-    # copy initial files to drs (and prompt if not empty)
-
-
+    # print 'Hello World!'
+    print("Hello World!")
 
 
 # =============================================================================
