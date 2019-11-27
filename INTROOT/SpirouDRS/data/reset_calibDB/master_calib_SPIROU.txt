@@ -1,6 +1,0 @@
-# H4RG File (Copied from SpirouDRS data folder)
-TELL_MOLE None tapas_all_sp.fits.gz 1970-01-01_00:00:00.000000 0.0
-WAVE_AB None MASTER_WAVE.fits 1970-01-01_00:00:00.000000 0.0
-WAVE_C None MASTER_WAVE.fits 1970-01-01_00:00:00.000000 0.0
-
-# DRS processed
