@@ -1,0 +1,454 @@
+
+\lstdefinestyle{text}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    moredelim=**[is][\color{OliveGreen}]{<}{>},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+	  literate={\\@}{{\unichar{"0040}}}1
+			 {\\<}{{\unichar{"003C}}}1 
+			 {\\>}{{\unichar{"003E}}}1
+}
+
+\lstdefinestyle{bashstyle}{
+	language=bash,  
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    moredelim=**[is][\color{OliveGreen}]{<}{>},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+       {\\<}{{\unichar{"003C}}}1 
+       {\\>}{{\unichar{"003E}}}1
+}
+
+
+\lstdefinestyle{cshstyle}{
+  language=sh,  
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    moredelim=**[is][\color{OliveGreen}]{<}{>},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+       {\\<}{{\unichar{"003C}}}1 
+       {\\>}{{\unichar{"003E}}}1
+}
+
+\lstdefinestyle{cmdstyle}{
+    language=command.com,
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{black}{\bfseries},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{black},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    extendedchars=false,
+    columns=fullflexible,
+    morekeywords={chmod, unzip},
+    escapeinside={(*}{*)},%
+}
+
+\lstdefinestyle{cmdstyleprint}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{black}{\bfseries},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{black},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    extendedchars=false,
+    columns=fullflexible,
+    morekeywords={chmod, unzip},
+    escapeinside={(*}{*)},%
+}
+
+\lstdefinestyle{cmdstyleprintspecial}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{black}{\bfseries},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{black},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@r}{@r},
+    moredelim=**[is][\color{yellow}]{@y}{@y},
+    moredelim=**[is][\color{green}]{@g}{@g},
+    moredelim=**[is][\color{blue}]{@b}{@b},
+    extendedchars=false,
+    columns=fullflexible,
+    morekeywords={chmod, unzip},
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+}
+
+\lstdefinestyle{pythondocstringstyle}{
+    commentstyle=\color{black},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1}\ttfamily,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,   
+    morekeywords={param, return, def, int, float, bool, ParamDict, str, string, numpy, array, parameter, dictionary, dict, list, object, None},              
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    extendedchars=false,
+    columns=fullflexible,
+    literate={\\@}{{\unichar{"0040}}}1
+}
+
+
+\lstdefinestyle{pythoninline}{
+    language=Python,
+    backgroundcolor=\color{backcolour3},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+}
+
+\tcbuselibrary{listings}
+\tcbuselibrary{breakable}
+
+% example:
+% \newtcblisting{mylisting}{
+%       arc=0pt,
+%       top=0mm,
+%       bottom=0mm,
+%       left=0mm,
+%       right=0mm,
+%       boxrule=0pt,
+%       colback=black,
+%       listing only,
+%       listing options={style=mystyle},
+%       hbox
+% }
+
+
+\NewTCBListing{textbox}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=0mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=backcolour1,
+      colframe=backcolour1!75!black,
+      fonttitle={\tiny\bfseries},
+      title={text},  % Fixed title
+      listing only,
+      listing options={style=text},
+      #1
+}
+
+\NewTCBListing{bashbox}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=backcolour1,
+      colframe=backcolour1!75!black,
+      fonttitle={\tiny\bfseries},
+      title={bash},  % Fixed title
+      listing only,
+      listing options={style=bashstyle},
+      #1
+}
+
+\NewTCBListing{cshbox}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=0mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=backcolour1,
+      colframe=backcolour1!50!black,
+      fonttitle={\tiny\bfseries},
+      title={tcsh/csh},  % Fixed title
+      listing only,
+      listing options={style=cshstyle},
+      #1
+}
+
+\NewTCBListing{cmdbox}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=darkgray!25!white,
+      colframe=darkgray!75!black,
+      fonttitle={\tiny\bfseries},
+      listing only,
+      listing options={style=cmdstyle},
+      every listing line={\textcolor{red}{\small\ttfamily\bfseries \textgreater{\textgreater}\,\,\,}},
+      #1
+}
+
+\NewTCBListing{cmdboxprint}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=darkgray!25!white,
+      colframe=darkgray!75!black,
+      fonttitle={\tiny\bfseries},
+      listing only,
+      listing options={style=cmdstyleprint},
+      #1
+}
+
+\NewTCBListing{cmdboxprintspecial}{ O{} }{
+      breakable,
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=darkgray!95!white,
+      colframe=darkgray!75!black,
+      fonttitle={\tiny\bfseries},
+      listing only,
+      listing options={style=cmdstyleprintspecial},
+      #1
+}
+
+\NewTCBListing{pythonbox}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=backcolour3,
+      colframe=backcolour3!75!black,
+      fonttitle={\tiny\bfseries},
+      title={Python/Ipython},  % Fixed title
+      listing only,
+      listing options={style=pythonstyle},
+      #1
+}
+
+\NewTCBListing{pythondocstring}{ O{} }{
+      before skip=0pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=white,
+      colframe=backcolour3!75!black,
+      listing only,
+      listing options={style=pythondocstringstyle},
+      #1
+}
+
+\newtcolorbox{note}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  borderline west={2pt}{0pt}{red}, % straigh vertical line at the left edge
+  sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  fonttitle={\large\bfseries},
+  coltitle={black},  % Black colour for title
+  title={Note:\ },  % Fixed title
+  attach title to upper, % Move the title into the box
+  #1
+}
+
+\newtcolorbox{todo}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  borderline west={2pt}{0pt}{green}, % straigh vertical line at the left edge
+  sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  fonttitle={\large\bfseries},
+  coltitle={black},  % Black colour for title
+  title={TODO:\ },  % Fixed title
+  attach title to upper, % Move the title into the box
+  #1
+}
+
+
+\newtcolorbox{thighlight}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  before skip=3pt,
+  after skip=6pt,
+  borderline west={2pt}{0pt}{orange}, % straigh vertical line at the left edge
+  sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  colback=yellow!10!white,
+  attach title to upper, % Move the title into the box
+  {#1}
+}
+
+\newtcolorbox{tcustomdir}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  before skip=3pt,
+  after skip=6pt,
+  borderline west={2pt}{0pt}{blue}, % straigh vertical line at the left edge
+  %sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  colback=blue!10!white,
+  attach title to upper, % Move the title into the box
+  #1
+}
+
+\NewTCBListing{pythonboxblank}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      listing only,
+      listing options={style=pythonstyle},
+      #1
+}
+
+\NewTCBListing{latexbox}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=red!5!white,
+      colframe=red!75!black,
+      fonttitle={\tiny\bfseries},
+      title={\LaTeX},  % Fixed title
+      #1,
+}
+
+
+
+
+
+
+
+% only used to show example latexbox code in Documentation/Code formatting section
+% DO NOT USE IN GENERAL (use latexbox)
+\NewTCBListing{latexbox1}{ O{} }{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=red!5!white,
+      colframe=red!75!black,
+      fonttitle={\tiny\bfseries},
+      title={\LaTeX},  % Fixed title
+      #1,
+}

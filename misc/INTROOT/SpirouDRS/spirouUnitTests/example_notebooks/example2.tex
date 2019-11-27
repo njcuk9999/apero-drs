@@ -1,0 +1,799 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+
+
+    
+\documentclass[11pt]{article}
+
+    
+    
+    \usepackage[T1]{fontenc}
+    % Nicer default font (+ math font) than Computer Modern for most use cases
+    \usepackage{mathpazo}
+
+    % Basic figure setup, for now with no caption control since it's done
+    % automatically by Pandoc (which extracts ![](path) syntax from Markdown).
+    \usepackage{graphicx}
+    % We will generate all images so they have a width \maxwidth. This means
+    % that they will get their normal width if they fit onto the page, but
+    % are scaled down if they would overflow the margins.
+    \makeatletter
+    \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+    \else\Gin@nat@width\fi}
+    \makeatother
+    \let\Oldincludegraphics\includegraphics
+    % Set max figure width to be 80% of text width, for now hardcoded.
+    \renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=.8\maxwidth]{#1}}
+    % Ensure that by default, figures have no caption (until we provide a
+    % proper Figure object with a Caption API and a way to capture that
+    % in the conversion process - todo).
+    \usepackage{caption}
+    \DeclareCaptionLabelFormat{nolabel}{}
+    \captionsetup{labelformat=nolabel}
+
+    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{xcolor} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage{textcomp} % defines textquotesingle
+    % Hack from http://tex.stackexchange.com/a/47451/13684:
+    \AtBeginDocument{%
+        \def\PYZsq{\textquotesingle}% Upright quotes in Pygmentized code
+    }
+    \usepackage{upquote} % Upright quotes for verbatim code
+    \usepackage{eurosym} % defines \euro
+    \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
+    \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics 
+                         % to support a larger range 
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
+    \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
+                                % normalem makes italics be italics, not underlines
+    
+
+    
+    
+    % Colors for the hyperref package
+    \definecolor{urlcolor}{rgb}{0,.145,.698}
+    \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+    \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+    % ANSI colors
+    \definecolor{ansi-black}{HTML}{3E424D}
+    \definecolor{ansi-black-intense}{HTML}{282C36}
+    \definecolor{ansi-red}{HTML}{E75C58}
+    \definecolor{ansi-red-intense}{HTML}{B22B31}
+    \definecolor{ansi-green}{HTML}{00A250}
+    \definecolor{ansi-green-intense}{HTML}{007427}
+    \definecolor{ansi-yellow}{HTML}{DDB62B}
+    \definecolor{ansi-yellow-intense}{HTML}{B27D12}
+    \definecolor{ansi-blue}{HTML}{208FFB}
+    \definecolor{ansi-blue-intense}{HTML}{0065CA}
+    \definecolor{ansi-magenta}{HTML}{D160C4}
+    \definecolor{ansi-magenta-intense}{HTML}{A03196}
+    \definecolor{ansi-cyan}{HTML}{60C6C8}
+    \definecolor{ansi-cyan-intense}{HTML}{258F8F}
+    \definecolor{ansi-white}{HTML}{C5C1B4}
+    \definecolor{ansi-white-intense}{HTML}{A1A6B2}
+
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \providecommand{\tightlist}{%
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+    
+    % Additional commands for more recent versions of Pandoc
+    \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
+    \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{{#1}}}
+    \newcommand{\ImportTok}[1]{{#1}}
+    \newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{{#1}}}}
+    \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{{#1}}}
+    \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{{#1}}}
+    \newcommand{\BuiltInTok}[1]{{#1}}
+    \newcommand{\ExtensionTok}[1]{{#1}}
+    \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{{#1}}}
+    \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
+    \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    
+    
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatability definitions
+    \def\gt{>}
+    \def\lt{<}
+    % Document parameters
+    \title{example2}
+    
+    
+    
+
+    % Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@fm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sa\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@dl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@mb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ch\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cpf\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % Exact colors from NB
+    \definecolor{incolor}{rgb}{0.0, 0.0, 0.5}
+    \definecolor{outcolor}{rgb}{0.545, 0.0, 0.0}
+
+
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy 
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=linkcolor,
+      citecolor=citecolor,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+    \begin{document}
+    
+    
+    \maketitle
+    
+    
+
+    
+    \section{What is a parameter
+dictionary?}\label{what-is-a-parameter-dictionary}
+
+    In the main recipes a variable "p" is used often. This is a instance of
+a custom dictionary called a parameter dictionary or "ParamDict" for
+short.
+
+We use this to store all constants and keep track (as a developer) of
+where constants were defined or modified.
+
+Below we explore "p" in more detail.
+
+    First we begin as if we were in cal\_DARK\_spirou, importing all modules
+required to run the "set up" procedure.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}21}]:} \PY{c+c1}{\PYZsh{} imports as in cal\PYZus{}DARK\PYZus{}spirou.py}
+         \PY{k+kn}{from} \PY{n+nn}{\PYZus{}\PYZus{}future\PYZus{}\PYZus{}} \PY{k+kn}{import} \PY{n}{division}
+         
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouConfig}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouCore}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouStartup}
+         
+         \PY{c+c1}{\PYZsh{} ========================================}
+         \PY{c+c1}{\PYZsh{} Define variables}
+         \PY{c+c1}{\PYZsh{} ========================================}
+         \PY{c+c1}{\PYZsh{} Name of program}
+         \PY{n}{\PYZus{}\PYZus{}NAME\PYZus{}\PYZus{}} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}DARK\PYZus{}spirou.py}\PY{l+s+s1}{\PYZsq{}}
+         \PY{c+c1}{\PYZsh{} Get version and author}
+         \PY{n}{\PYZus{}\PYZus{}version\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{VERSION}\PY{p}{(}\PY{p}{)}
+         \PY{n}{\PYZus{}\PYZus{}author\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{AUTHORS}\PY{p}{(}\PY{p}{)}
+         \PY{n}{\PYZus{}\PYZus{}date\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{LATEST\PYZus{}EDIT}\PY{p}{(}\PY{p}{)}
+         \PY{n}{\PYZus{}\PYZus{}release\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{RELEASE}\PY{p}{(}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} Get Logging function}
+         \PY{n}{WLOG} \PY{o}{=} \PY{n}{spirouCore}\PY{o}{.}\PY{n}{wlog}
+         \PY{c+c1}{\PYZsh{} Get plotting functions}
+         \PY{n}{sPlt} \PY{o}{=} \PY{n}{spirouCore}\PY{o}{.}\PY{n}{sPlt}
+\end{Verbatim}
+
+
+    The next section is generally inside the "main" function of a recipe,
+here we keep it outside so we can show the features easily. The setup of
+normal routines uses three functions "Begin", "LoadArguments" and
+"InitialFileSetup". We will go through each using cal\_DARK\_spirou.py
+as an example.
+
+    \subsection{The begin function}\label{the-begin-function}
+
+    This is the first function that will be run in any recipe "main"
+function. It loads all the primary constants (from the config.py file)
+as well as displaying the startup title and paths defined in the
+config.py file.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}2}]:} \PY{c+c1}{\PYZsh{} Begin function}
+        \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{Begin}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   || * SPIROU @(\#) Geneva Observatory (0.1.029)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(dir\_data\_raw)      DRS\_DATA\_RAW=/scratch/Projects/spirou\_py3/data/raw}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(dir\_data\_reduc)    DRS\_DATA\_REDUC=/scratch/Projects/spirou\_py3/data/reduced}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(dir\_calib\_db)      DRS\_CALIB\_DB=/scratch/Projects/spirou\_py3/data/calibDB}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(dir\_data\_msg)      DRS\_DATA\_MSG=/scratch/Projects/spirou\_py3/data/msg}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(print\_level)       PRINT\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(log\_level)         LOG\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(plot\_graph)        DRS\_PLOT=1            \%(def/undef/trigger)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(used\_date)         DRS\_USED\_DATE=undefined}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||(working\_dir)       DRS\_DATA\_WORKING=/scratch/Projects/spirou\_py3/data/tmp}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||                    DRS\_INTERACTIVE is not set, running on-line mode}}
+\textcolor{ansi-green-intense}{\textbf{12:05:18.0 -   ||                    DRS\_DEBUG is set, debug mode level:1}}
+
+    \end{Verbatim}
+
+    Taking a look at what is contained in "p" at this point is shown below.
+It should be representative of the constants defined in constants.py
+where type casting to floats/ints and booleans has been done where
+possible.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}3}]:} \PY{n}{p}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}3}]:} \{'COLOURED\_LOG': True,
+         'DRS\_CALIB\_DB': '/scratch/Projects/spirou\_py3/data/calibDB',
+         'DRS\_CONFIG': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/',
+         'DRS\_DATA\_MSG': '/scratch/Projects/spirou\_py3/data/msg',
+         'DRS\_DATA\_RAW': '/scratch/Projects/spirou\_py3/data/raw',
+         'DRS\_DATA\_REDUC': '/scratch/Projects/spirou\_py3/data/reduced',
+         'DRS\_DATA\_WORKING': '/scratch/Projects/spirou\_py3/data/tmp',
+         'DRS\_DEBUG': 1,
+         'DRS\_INTERACTIVE': 0,
+         'DRS\_MAN': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/man/',
+         'DRS\_NAME': 'SPIROU',
+         'DRS\_PLOT': 1,
+         'DRS\_ROOT': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/',
+         'DRS\_USED\_DATE': 'undefined',
+         'DRS\_VERSION': '0.1.029',
+         'ICDP\_NAME': 'constants\_SPIROU.py',
+         'LOG\_LEVEL': 'all',
+         'PRINT\_LEVEL': 'all',
+         'SPECIAL\_NAME': 'special\_config\_SPIROU.py',
+         'TDATA': '/scratch/Projects/spirou\_py3/data/'\}
+\end{Verbatim}
+            
+    Note we can also look at where each key was defined:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}4}]:} \PY{n}{p}\PY{o}{.}\PY{n}{sources}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}4}]:} \{'COLOURED\_LOG': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_CALIB\_DB': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_CONFIG': 'spirouConfig.py.check\_params()',
+         'DRS\_DATA\_MSG': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_DATA\_RAW': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_DATA\_REDUC': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_DATA\_WORKING': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_DEBUG': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_INTERACTIVE': 'spirouConfig.py.check\_params()',
+         'DRS\_MAN': 'spirouConfig.py.check\_params()',
+         'DRS\_NAME': 'spirouConfig.Constants',
+         'DRS\_PLOT': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_ROOT': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'DRS\_USED\_DATE': 'spirouConfig.py.check\_params()',
+         'DRS\_VERSION': 'spirouConfig.Constants',
+         'ICDP\_NAME': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'LOG\_LEVEL': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'PRINT\_LEVEL': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'SPECIAL\_NAME': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py',
+         'TDATA': '/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/config.py'\}
+\end{Verbatim}
+            
+    \subsection{LoadArguments}\label{loadarguments}
+
+    This function is the second argument to run. It deals with loading of
+the arguments both from the recipes main() arguments and from run time
+(i.e. after the file name when called from python/ipython or a console).
+
+By default the user will either have to define arguements from the
+command line or in the function call to the recipes "main" function.
+
+i.e. for cal\_DARK\_spirou.py one could call the following from the
+command line: \textgreater{}\textgreater{} cal\_DARK\_Spirou.py 20170710
+dark\_dark
+
+or in python:
+
+cal\_DARK\_spirou.main(night\_name=nightname, files=filenames)
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}5}]:} \PY{c+c1}{\PYZsh{} we will assume we are inside the cal\PYZus{}DARK\PYZus{}Spirou.main function and have called }
+        \PY{c+c1}{\PYZsh{}   the arguments correctly:}
+        \PY{n}{night\PYZus{}name} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}
+        \PY{n}{files} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}dark02d406.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{c+c1}{\PYZsh{} Notebook only code}
+        \PY{k+kn}{import} \PY{n+nn}{sys}
+        \PY{n}{sys}\PY{o}{.}\PY{n}{argv} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}DARK\PYZus{}spirou.py}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+\end{Verbatim}
+
+
+    we can then call the LoadArguments function
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}6}]:} \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{LoadArguments}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{night\PYZus{}name}\PY{p}{,} \PY{n}{files}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{12:05:27.0 -   |cal\_DARK\_spirou|Now running : cal\_DARK\_spirou on file(s): }}
+\textcolor{ansi-green-intense}{\textbf{12:05:27.0 -   |cal\_DARK\_spirou|On directory /scratch/Projects/spirou\_py3/data/raw/20170710}}
+\textcolor{ansi-green-intense}{\textbf{12:05:27.0 -   |cal\_DARK\_spirou|ICDP\_NAME loaded from: /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU.py}}
+
+    \end{Verbatim}
+
+    Taking a look a "p" now we can see it has added the "run time"
+arguements and additional constants from the constants\_SPIROU.py file.
+Note below we only print the key names.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}7}]:} \PY{k}{print}\PY{p}{(}\PY{n+nb}{list}\PY{p}{(}\PY{n}{p}\PY{o}{.}\PY{n}{keys}\PY{p}{(}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+['DRS\_PLOT', 'DRS\_DEBUG', 'TDATA', 'DRS\_ROOT', 'DRS\_DATA\_RAW', 'DRS\_DATA\_REDUC', 'DRS\_CALIB\_DB', 'DRS\_DATA\_MSG', 'DRS\_DATA\_WORKING', 'PRINT\_LEVEL', 'LOG\_LEVEL', 'COLOURED\_LOG', 'SPECIAL\_NAME', 'ICDP\_NAME', 'DRS\_NAME', 'DRS\_VERSION', 'DRS\_CONFIG', 'DRS\_MAN', 'DRS\_USED\_DATE', 'DRS\_INTERACTIVE', 'ARG\_NIGHT\_NAME', 'PROGRAM', 'ARG\_FILE\_NAMES', 'STR\_FILE\_NAMES', 'FITSFILENAME', 'LOG\_OPT', 'NBFRAMES', 'REDUCED\_DIR', 'RAW\_DIR', 'IC\_DISPLAY\_TIMEOUT', 'IC\_CCDX\_BLUE\_LOW', 'IC\_CCDX\_BLUE\_HIGH', 'IC\_CCDY\_BLUE\_LOW', 'IC\_CCDY\_BLUE\_HIGH', 'IC\_CCDX\_RED\_LOW', 'IC\_CCDX\_RED\_HIGH', 'IC\_CCDY\_RED\_LOW', 'IC\_CCDY\_RED\_HIGH', 'IC\_CCDX\_LOW', 'IC\_CCDX\_HIGH', 'IC\_CCDY\_LOW', 'IC\_CCDY\_HIGH', 'FIBER\_TYPES', 'NBFIB\_FPALL', 'IC\_FIRST\_ORDER\_JUMP\_FPALL', 'IC\_LOCNBMAXO\_FPALL', 'QC\_LOC\_NBO\_FPALL', 'FIB\_TYPE\_FPALL', 'IC\_EXT\_RANGE1\_FPALL', 'IC\_EXT\_RANGE2\_FPALL', 'IC\_EXT\_RANGE\_FPALL', 'LOC\_FILE\_FPALL', 'ORDERP\_FILE\_FPALL', 'IC\_EXT\_D\_RANGE\_FPALL', 'DARK\_QMIN', 'DARK\_QMAX', 'HISTO\_BINS', 'HISTO\_RANGE\_LOW', 'HISTO\_RANGE\_HIGH', 'DARK\_CUTLIMIT', 'LOC\_BOX\_SIZE', 'IC\_OFFSET', 'IC\_CENT\_COL', 'IC\_EXT\_WINDOW', 'IC\_IMAGE\_GAP', 'IC\_LOCSTEPC', 'IC\_WIDTHMIN', 'IC\_LOCNBPIX', 'IC\_MIN\_AMPLITUDE', 'IC\_LOCSEUIL', 'IC\_SATSEUIL', 'IC\_LOCDFITC', 'IC\_LOCDFITW', 'IC\_LOCDFITP', 'IC\_MAX\_RMS\_CENTER', 'IC\_MAX\_PTP\_CENTER', 'IC\_PTPORMS\_CENTER', 'IC\_MAX\_RMS\_FWHM', 'IC\_MAX\_PTP\_FRACFWHM', 'IC\_LOC\_DELTA\_WIDTH', 'IC\_LOCOPT1', 'IC\_TILT\_COI', 'IC\_FACDEC', 'IC\_TILT\_FIT', 'IC\_SLIT\_ORDER\_PLOT', 'IC\_DO\_BKGR\_SUBTRACTION', 'IC\_BKGR\_WINDOW', 'IC\_TILT\_NBO', 'IC\_FF\_SIGDET', 'IC\_EXTFBLAZ', 'IC\_BLAZE\_FITN', 'IC\_FF\_ORDER\_PLOT', 'IC\_FF\_PLOT\_ALL\_ORDERS', 'IC\_EXTOPT', 'IC\_EXTNBSIG', 'IC\_EXTRACT\_TYPE', 'IC\_EXT\_SIGDET', 'IC\_EXT\_ORDER\_PLOT', 'IC\_DRIFT\_NOISE', 'IC\_DRIFT\_MAXFLUX', 'IC\_DRIFT\_BOXSIZE', 'DRIFT\_NLARGE', 'DRIFT\_FILE\_SKIP', 'DRIFT\_E2DS\_FILE\_SKIP', 'DRIFT\_PEAK\_FILE\_SKIP', 'IC\_DRIFT\_CUT\_RAW', 'IC\_DRIFT\_CUT\_E2DS', 'IC\_DRIFT\_N\_ORDER\_MAX', 'IC\_DRIFT\_PEAK\_N\_ORDER\_MIN', 'IC\_DRIFT\_PEAK\_N\_ORDER\_MAX', 'DRIFT\_TYPE\_RAW', 'DRIFT\_TYPE\_E2DS', 'IC\_DRIFT\_ORDER\_PLOT', 'DRIFT\_PEAK\_MINMAX\_BOXSIZE', 'DRIFT\_PEAK\_BORDER\_SIZE', 'DRIFT\_PEAK\_FPBOX\_SIZE', 'DRIFT\_PEAK\_PEAK\_SIG\_LIM', 'DRIFT\_PEAK\_INTER\_PEAK\_SPACING', 'DRIFT\_PEAK\_EXP\_WIDTH', 'DRIFT\_PEAK\_NORM\_WIDTH\_CUT', 'DRIFT\_PEAK\_GETDRIFT\_GAUSSFIT', 'DRIFT\_PEAK\_PEARSONR\_CUT', 'DRIFT\_PEAK\_SIGMACLIP', 'DRIFT\_PEAK\_PLOT\_LINE\_LOG\_AMP', 'DRIFT\_PEAK\_SELECTED\_ORDER', 'BADPIX\_FLAT\_MED\_WID', 'BADPIX\_ILLUM\_CUT', 'BADPIX\_FLAT\_CUT\_RATIO', 'BADPIX\_MAX\_HOTPIX', 'BADPIX\_NORM\_PERCENTILE', 'IC\_CCF\_WIDTH', 'IC\_CCF\_STEP', 'IC\_W\_MASK\_MIN', 'IC\_MASK\_WIDTH', 'CCF\_BERV', 'CCF\_BERV\_MAX', 'CCF\_DET\_NOISE', 'CCF\_FIT\_TYPE', 'CCF\_NUM\_ORDERS\_MAX', 'QC\_MAX\_DARKLEVEL', 'QC\_MAX\_DEAD', 'QC\_MAX\_DARK', 'QC\_DARK\_TIME', 'QC\_LOC\_MAXLOCFIT\_REMOVED\_CTR', 'QC\_LOC\_MAXLOCFIT\_REMOVED\_WID', 'QC\_LOC\_RMSMAX\_CENTER', 'QC\_LOC\_RMSMAX\_FWHM', 'QC\_FF\_RMS', 'QC\_LOC\_FLUMAX', 'QC\_SLIT\_RMS', 'QC\_SLIT\_MIN', 'QC\_SLIT\_MAX', 'QC\_MAX\_SIGNAL', 'IC\_CALIBDB\_FILENAME', 'CALIB\_MAX\_WAIT', 'CALIB\_DB\_MATCH', 'KW\_ACQTIME\_KEY', 'KW\_ACQTIME\_KEY\_UNIX', 'KW\_BBAD', 'KW\_BBFLAT', 'KW\_BHOT', 'KW\_BNDARK', 'KW\_BNFLAT', 'KW\_CCD\_CONAD', 'KW\_CCD\_SIGDET', 'KW\_CCF\_CDELT', 'KW\_CCF\_CONTRAST', 'KW\_CCF\_CRVAL', 'KW\_CCF\_CTYPE', 'KW\_CCF\_FWHM', 'KW\_CCF\_LINES', 'KW\_CCF\_MASK', 'KW\_CCF\_MAXCPP', 'KW\_CCF\_RV', 'KW\_CCF\_RVC', 'KW\_DARK\_B\_DEAD', 'KW\_DARK\_B\_MED', 'KW\_DARK\_CUT', 'KW\_DARK\_DEAD', 'KW\_DARK\_MED', 'KW\_DARK\_R\_DEAD', 'KW\_DARK\_R\_MED', 'KW\_DPRTYPE', 'KW\_EXPTIME', 'KW\_EXTRA\_SN', 'KW\_FLAT\_RMS', 'KW\_GAIN', 'KW\_LOCO\_BCKGRD', 'KW\_LOCO\_CTR\_COEFF', 'KW\_LOCO\_DEG\_C', 'KW\_LOCO\_DEG\_E', 'KW\_LOCO\_DEG\_W', 'KW\_LOCO\_DELTA', 'KW\_LOCO\_FILE', 'KW\_LOCO\_FWHM\_COEFF', 'KW\_LOCO\_NBO', 'KW\_LOC\_MAXFLX', 'KW\_LOC\_RMS\_CTR', 'KW\_LOC\_RMS\_WID', 'KW\_LOC\_SMAXPTS\_CTR', 'KW\_LOC\_SMAXPTS\_WID', 'KW\_RDNOISE', 'KW\_TH\_COEFF\_PREFIX', 'KW\_TH\_LL\_D', 'KW\_TH\_NAXIS1', 'KW\_TH\_NAXIS2', 'KW\_TH\_ORD\_N', 'KW\_TILT', 'KW\_DRS\_QC', 'KW\_ROOT\_DRS\_FLAT', 'KW\_ROOT\_DRS\_HC', 'KW\_ROOT\_DRS\_LOC', 'KW\_VERSION']
+
+    \end{Verbatim}
+
+    Sources are set for all variables, some examples are shown below. Note
+that strings are evaluated (i.e. "IC\_CCDX\_RED\_LOW = 2028" value is a
+int not a string.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}8}]:} \PY{n}{keys} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{DRS\PYZus{}NAME}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{IC\PYZus{}CCDX\PYZus{}RED\PYZus{}LOW}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{IC\PYZus{}CCDX\PYZus{}BLUE\PYZus{}LOW}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{KW\PYZus{}VERSION}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{k}{for} \PY{n}{key} \PY{o+ow}{in} \PY{n}{keys}\PY{p}{:}
+            \PY{n}{args} \PY{o}{=} \PY{p}{[}\PY{n}{key}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{n}{key}\PY{p}{]}\PY{p}{,} \PY{n+nb}{type}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{n}{key}\PY{p}{]}\PY{p}{)}\PY{p}{,} \PY{n}{p}\PY{o}{.}\PY{n}{sources}\PY{p}{[}\PY{n}{key}\PY{p}{]}\PY{p}{]}
+            \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{ \PYZhy{} key = }\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{\PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{value=\PYZob{}1\PYZcb{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{type=\PYZob{}2\PYZcb{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{source=\PYZob{}3\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{n}{args}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+ - key = "DRS\_NAME"
+	value=SPIROU
+	type=<class 'str'>
+	source=spirouConfig.Constants
+
+ - key = "IC\_CCDX\_RED\_LOW"
+	value=2028
+	type=<class 'int'>
+	source=/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU.py
+
+ - key = "IC\_CCDX\_BLUE\_LOW"
+	value=1848
+	type=<class 'int'>
+	source=/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU.py
+
+ - key = "KW\_VERSION"
+	value=['VERSION', 'SPIROU\_0.1.029', 'DRS version']
+	type=<class 'list'>
+	source=spirouKeywords.py
+
+    \end{Verbatim}
+
+    \section{InitialFileSetup}\label{initialfilesetup}
+
+    This is used to set up files and check them for required prefixes, and
+loads the calibration database if it is reuiqred. Below we use the
+example of cal\_loc\_RAW\_spirou.py where either "dark\_flat" or
+"flat\_dark" is required (and a set of different fiber parameter are
+required for each - i.e. "dark\_flat" means we are using fiber "C" and
+"flat\_dark" means we are using fibers "AB")
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}10}]:} \PY{c+c1}{\PYZsh{} cal\PYZus{}loc\PYZus{}RAW requires some additional imports}
+         \PY{k+kn}{from} \PY{n+nn}{\PYZus{}\PYZus{}future\PYZus{}\PYZus{}} \PY{k+kn}{import} \PY{n}{division}
+         
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouImage}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouLOCOR}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouStartup}
+         
+         \PY{c+c1}{\PYZsh{} redefine arguments}
+         \PY{n}{night\PYZus{}name} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}
+         \PY{n}{files} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark03f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                  \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark04f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark05f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                  \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark06f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} Set up}
+         \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} get parameters from config files/run time args/load paths + calibdb}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{Begin}\PY{p}{(}\PY{p}{)}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{LoadArguments}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{night\PYZus{}name}\PY{p}{,} \PY{n}{files}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} run specific start up}
+         \PY{n}{params2add} \PY{o}{=} \PY{n+nb}{dict}\PY{p}{(}\PY{p}{)}
+         \PY{n}{params2add}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{spirouLOCOR}\PY{o}{.}\PY{n}{FiberParams}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{C}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{params2add}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{spirouLOCOR}\PY{o}{.}\PY{n}{FiberParams}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AB}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{InitialFileSetup}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{kind}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{localisation}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                                            \PY{n}{prefixes}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}
+                                            \PY{n}{add\PYZus{}to\PYZus{}p}\PY{o}{=}\PY{n}{params2add}\PY{p}{,} \PY{n}{calibdb}\PY{o}{=}\PY{n+nb+bp}{True}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   || * SPIROU @(\#) Geneva Observatory (0.1.029)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(dir\_data\_raw)      DRS\_DATA\_RAW=/scratch/Projects/spirou\_py3/data/raw}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(dir\_data\_reduc)    DRS\_DATA\_REDUC=/scratch/Projects/spirou\_py3/data/reduced}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(dir\_calib\_db)      DRS\_CALIB\_DB=/scratch/Projects/spirou\_py3/data/calibDB}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(dir\_data\_msg)      DRS\_DATA\_MSG=/scratch/Projects/spirou\_py3/data/msg}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(print\_level)       PRINT\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(log\_level)         LOG\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(plot\_graph)        DRS\_PLOT=1            \%(def/undef/trigger)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(used\_date)         DRS\_USED\_DATE=undefined}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||(working\_dir)       DRS\_DATA\_WORKING=/scratch/Projects/spirou\_py3/data/tmp}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||                    DRS\_INTERACTIVE is not set, running on-line mode}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   ||                    DRS\_DEBUG is set, debug mode level:1}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   |cal\_DARK\_spirou|Now running : cal\_DARK\_spirou on file(s): }}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   |cal\_DARK\_spirou|On directory /scratch/Projects/spirou\_py3/data/raw/20170710}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 -   |cal\_DARK\_spirou|ICDP\_NAME loaded from: /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU.py}}
+\textcolor{ansi-green-intense}{\textbf{12:05:37.0 - * |cal\_DARK\_spirou|Correct type of image for localisation (dark\_flat or flat\_dark)}}
+\textcolor{ansi-green-intense}{\textbf{12:05:38.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_flat\_flat02f10\_badpixel.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:38.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_flat\_dark02f10\_blaze\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:38.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_dark\_flat02f10\_blaze\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:39.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_dark\_dark02d406.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:39.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_flat\_dark02f10\_flat\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:39.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_dark\_flat02f10\_flat\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:39.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_flat\_dark02f10\_loco\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:39.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_dark\_flat02f10\_loco\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:39.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_flat\_dark02f10\_order\_profile\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:40.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_dark\_flat02f10\_order\_profile\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:40.0 -   |cal\_DARK\_spirou|Calibration file: 20170710\_fp\_fp02a203\_tilt.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:40.0 -   |cal\_DARK\_spirou|Calibration file: spirou\_wave\_ini3.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:40.0 -   |cal\_DARK\_spirou|Calibration file: 2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:40.0 -   |cal\_DARK\_spirou|Calibration file: spirou\_wave\_ini3.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{12:05:40.0 -   |cal\_DARK\_spirou|Calibration file: 2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_C.fits already exists - not copied}}
+
+    \end{Verbatim}
+
+    The DRS is now set up and if "calibdb" was True then we have access to
+the full calibration database (using "fitsfilename" as the reference to
+sort between files)
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}12}]:} \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{fitsfilename: \PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fitsfilename}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+         \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{arg\PYZus{}file\PYZus{}names: \PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{arg\PYZus{}file\PYZus{}names}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+         \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{calib db: \PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{calibdb}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+fitsfilename: /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark02f10.fits
+
+arg\_file\_names: ['flat\_dark02f10.fits', 'flat\_dark03f10.fits', 'flat\_dark04f10.fits', 'flat\_dark05f10.fits', 'flat\_dark06f10.fits']
+
+calib db: \{'BADPIX': ['20170710', '20170710\_flat\_flat02f10\_badpixel.fits'], 'BLAZE\_AB': ['20170710', '20170710\_flat\_dark02f10\_blaze\_AB.fits'], 'BLAZE\_C': ['20170710', '20170710\_dark\_flat02f10\_blaze\_C.fits'], 'DARK': ['20170710', '20170710\_dark\_dark02d406.fits'], 'FLAT\_AB': ['20170710', '20170710\_flat\_dark02f10\_flat\_AB.fits'], 'FLAT\_C': ['20170710', '20170710\_dark\_flat02f10\_flat\_C.fits'], 'LOC\_AB': ['20170710', '20170710\_flat\_dark02f10\_loco\_AB.fits'], 'LOC\_C': ['20170710', '20170710\_dark\_flat02f10\_loco\_C.fits'], 'ORDER\_PROFILE\_AB': ['20170710', '20170710\_flat\_dark02f10\_order\_profile\_AB.fits'], 'ORDER\_PROFILE\_C': ['20170710', '20170710\_dark\_flat02f10\_order\_profile\_C.fits'], 'TILT': ['20170710', '20170710\_fp\_fp02a203\_tilt.fits'], 'WAVE\_A': ['20170710', 'spirou\_wave\_ini3.fits'], 'WAVE\_AB': ['AT4-04/2017-10-11\_21-32-17', '2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_AB.fits'], 'WAVE\_B': ['20170710', 'spirou\_wave\_ini3.fits'], 'WAVE\_C': ['AT4-04/2017-10-11\_21-32-17', '2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_C.fits']\}
+
+    \end{Verbatim}
+
+    \subsection{Defining and updating variables using
+ParamDict}\label{defining-and-updating-variables-using-paramdict}
+
+One will need to update and set variables in the parameter dictionary at
+various points in a recipe. When one does this one should update the
+source(s). This is shown below. It is also possible to update/add
+multiple variables with one source.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}13}]:} \PY{c+c1}{\PYZsh{} set new variable}
+         \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MY\PYZus{}NEW\PYZus{}VARIABLE}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+m+mf}{3.141592}
+         \PY{n}{p}\PY{o}{.}\PY{n}{set\PYZus{}source}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MY\PYZus{}NEW\PYZus{}VARIABLE}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{myprogram.myfunction1()}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} update current variable and append source}
+         \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{FITSFILENAME}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{newfile2}\PY{l+s+s1}{\PYZsq{}}
+         \PY{n}{p}\PY{o}{.}\PY{n}{append\PYZus{}source}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{FITSFILENAME}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{myprogram.myfunction2()}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} add multiple variables with same source name}
+         \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+m+mi}{1}
+         \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+m+mi}{2}
+         \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+m+mi}{3}
+         \PY{n}{p}\PY{o}{.}\PY{n}{set\PYZus{}sources}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{myprogram.myfunction3()}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{p}\PY{o}{.}\PY{n}{append\PYZus{}sources}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{myprogram.main()}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+
+
+    Below we show the output of each new key in "p"
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}14}]:} \PY{n}{keys} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MY\PYZus{}NEW\PYZus{}VARIABLE}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{FITSFILENAME}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{VAR3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{k}{for} \PY{n}{key} \PY{o+ow}{in} \PY{n}{keys}\PY{p}{:}
+             \PY{n}{args} \PY{o}{=} \PY{p}{[}\PY{n}{key}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{n}{key}\PY{p}{]}\PY{p}{,} \PY{n+nb}{type}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{n}{key}\PY{p}{]}\PY{p}{)}\PY{p}{,} \PY{n}{p}\PY{o}{.}\PY{n}{sources}\PY{p}{[}\PY{n}{key}\PY{p}{]}\PY{p}{]}
+             \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{ \PYZhy{} key = }\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{\PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{value=\PYZob{}1\PYZcb{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{type=\PYZob{}2\PYZcb{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{source=\PYZob{}3\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{n}{args}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+ - key = "MY\_NEW\_VARIABLE"
+	value=3.141592
+	type=<class 'float'>
+	source=myprogram.myfunction1()
+
+ - key = "FITSFILENAME"
+	value=newfile2
+	type=<class 'str'>
+	source=spirouStarup.py.get\_call\_arg\_files\_fitsfilename() myprogram.myfunction2() myprogram.myfunction2()
+
+ - key = "VAR1"
+	value=1
+	type=<class 'int'>
+	source=myprogram.myfunction3() myprogram.main()
+
+ - key = "VAR2"
+	value=2
+	type=<class 'int'>
+	source=myprogram.myfunction3()
+
+ - key = "VAR3"
+	value=3
+	type=<class 'int'>
+	source=myprogram.myfunction3() myprogram.main()
+
+    \end{Verbatim}
+
+    \subsection{Error and exception
+handling}\label{error-and-exception-handling}
+
+Constants and variables is one large area where errors and exceptions
+can be caused, be it from incorrectly defined constants entered by the
+users in the confirugations files, configuration files missing, illegal
+characters or a developer trying to access a key that does not exist.
+The parameter dictionary was designed with this in mind. It will use a
+special custom exception class (ConfigError) to guide the user/developer
+to a solution when an error/exception is generated, it is also designed
+to work with the WLOG logging function to provide easy feedback to the
+user.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}15}]:} \PY{c+c1}{\PYZsh{} try to access a undefined variable}
+         \PY{n}{my\PYZus{}var} \PY{o}{=} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{random}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+        ---------------------------------------------------------------------------
+
+        KeyError                                  Traceback (most recent call last)
+
+        /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/SpirouDRS/spirouConfig/spirouConfig.py in \_\_getitem\_\_(self, key)
+        145         try:
+    --> 146             return super(ParamDict, self).\_\_getitem\_\_(key)
+        147         except KeyError:
+
+
+        KeyError: 'RANDOM'
+
+        
+    During handling of the above exception, another exception occurred:
+
+
+        ConfigError                               Traceback (most recent call last)
+
+        <ipython-input-15-9d5ebfbc5eff> in <module>()
+          1 \# try to access a undefined variable
+    ----> 2 my\_var = p['random']
+    
+
+        /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/SpirouDRS/spirouConfig/spirouConfig.py in \_\_getitem\_\_(self, key)
+        148             emsg = ('Config Error: Parameter "\{0\}" not found in parameter '
+        149                     'dictionary')
+    --> 150             raise ConfigError(emsg.format(oldkey), level='error')
+        151 
+        152     def \_\_setitem\_\_(self, key, value, source=None):
+
+
+        ConfigError: level=error: Config Error: Parameter "random" not found in parameter dictionary
+
+    \end{Verbatim}
+
+    This can be caught and piped cleanly to the logging system as below.
+
+When a ConfigError is raise it has two attributes: "level" and "message"
+
+(i.e. ConfigError as e -\/-\textgreater{} e.level and e.message)
+
+Note that the "level" of an exception is set to "error" and thus WLOG
+will exit.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}22}]:} \PY{k+kn}{from} \PY{n+nn}{SpirouDRS.spirouConfig} \PY{k+kn}{import} \PY{n}{ConfigError}
+         
+         \PY{c+c1}{\PYZsh{} try to get a constant}
+         \PY{k}{try}\PY{p}{:}
+             \PY{n}{my\PYZus{}var} \PY{o}{=} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{random}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         \PY{c+c1}{\PYZsh{} catch the ConfigError}
+         \PY{k}{except} \PY{n}{ConfigError} \PY{k}{as} \PY{n}{e}\PY{p}{:}
+             \PY{k}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{level = \PYZob{}0\PYZcb{}}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{e}\PY{o}{.}\PY{n}{level}\PY{p}{)}\PY{p}{)}
+             \PY{k}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{message = \PYZob{}0\PYZcb{}}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{e}\PY{o}{.}\PY{n}{message}\PY{p}{)}\PY{p}{)}
+             \PY{c+c1}{\PYZsh{} using with log}
+             \PY{k}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{ Log message:}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+             \PY{n}{WLOG}\PY{p}{(}\PY{n}{e}\PY{o}{.}\PY{n}{level}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{program}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{e}\PY{o}{.}\PY{n}{message}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+level = error
+
+message = Config Error: Parameter "random" not found in parameter dictionary
+
+ Log message:
+
+\textcolor{ansi-red-intense}{\textbf{12:06:54.0 - ! |program|Config Error: Parameter "random" not found in parameter dictionary}}
+\textcolor{ansi-red-intense}{\textbf{
+
+	Error found and running in DEBUG mode
+}}
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+        An exception has occurred, use \%tb to see the full traceback.
+
+
+        SystemExit: 1
+
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+/scratch/bin/anaconda3/lib/python3.6/site-packages/IPython/core/interactiveshell.py:2918: UserWarning: To exit: use 'exit', 'quit', or Ctrl-D.
+  warn("To exit: use 'exit', 'quit', or Ctrl-D.", stacklevel=1)
+
+    \end{Verbatim}
+
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+    \end{document}

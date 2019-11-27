@@ -1,0 +1,155 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%  New colours
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{darkgray}{rgb}{0.20,0.20,0.20}
+\definecolor{backcolour1}{rgb}{0.95,0.95,0.92}
+\definecolor{backcolour2}{rgb}{1,0.977,0.801}
+\definecolor{backcolour3}{rgb}{0.79,0.88,1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%  formatting constants
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% formatting the named variables (from user setup)
+\newcommand{\definevariable}[2]{\hyperref[#1]{{#2}}}
+\newcommand{\definevariablecmd}[1]{\textcolor{cyan}{{#1}}}
+
+% --------------------------------------------------------
+% formatting the named keywords 
+\newcommand{\defineinkeyword}[2]{\hyperref[#1]{{#2}}}
+\newcommand{\defineoutkeyword}[2]{\hyperref[#1]{{#2}}}
+\newcommand{\defineskeyword}[1]{\textcolor{red}{{#1}}}
+
+% --------------------------------------------------------
+% Program should be in small caps
+\newcommand{\defineprogram}[1]{\textcolor{blue}{\Program{#1}}}
+\newcommand{\Program}[1]{\textsc{#1}}
+
+% --------------------------------------------------------
+% Double underscore
+\newlength\dunder
+\settowidth{\dunder}{\_}
+\newcommand{\twound}{\rule{1.25\dunder}{0.2pt}}
+
+% --------------------------------------------------------
+% formatting for the directories trees
+\newcommand{\customdirtree}[1]{
+\renewcommand*\DTstylecomment{\ttfamily\textcolor{black}}
+\renewcommand*\DTstyle{\ttfamily\textcolor{blue}}
+\dirtree{%
+#1}
+}
+
+% --------------------------------------------------------
+\newcommand{\namedlabel}[1]{\begingroup
+    \phantomsection\label{#1}\endgroup
+    }
+
+% --------------------------------------------------------
+% Parameters
+% \ParameterEntry{Name}{Description}{variable}{default value}{used in}{location}{level (if dev)}
+\newcommand{\ParameterEntry}[8]{
+	\begin{minipage}[t]{\textwidth}
+
+	\textbf{#1 (\textcolor{red}{#3})}
+
+	\begin{thighlight}
+	\textcolor{brown}{#2} 
+
+	\begin{tabular}{>{\color{red}}l c l}
+	&&\\
+	#3 & = & #4 \\
+	&&\\
+	\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{#5} \\
+	\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{#6} \\
+	\ifdevguide
+	\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{#7}} \\
+	\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{#8} \\
+	\fi
+	\end{tabular}
+	\end{thighlight}
+	\end{minipage}
+}
+
+
+\newcommand{\PseudoParamEntry}[6]{
+	\begin{minipage}[t]{\textwidth}
+
+	\textbf{#1 (\textcolor{red}{#3})}
+
+	\begin{thighlight}
+	\textcolor{codegreen}{#2} 
+
+	\begin{tabular}{>{\color{red}}l c l}
+	&&\\
+	#3 && \\
+	&&\\
+	\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{#4} \\
+	\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{#5} \\
+	\ifdevguide
+	\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{#6}} \\
+	\fi
+	\end{tabular}
+	\end{thighlight}
+	\end{minipage}
+}
+
+
+\newcommand{\KeywordEntry}[9]{
+	\begin{minipage}[t]{\textwidth}
+
+	\textbf{#1 (\textcolor{red}{#3})}
+
+	\begin{thighlight}
+	\textcolor{brown}{#2 \\} 
+
+	\textcolor{red}{#3} = \textbf{[}\textcolor{magenta}{"#4"}, \textcolor{magenta}{"#5"}, \textcolor{magenta}{"#6"}\textbf{]}
+
+	\vspace{0.5cm}
+
+	\textcolor{brown}{HEADER file entry:} 
+
+	\begin{tabular}{l c r c l}
+	&&\\
+	#4 & = & #5 & \textbackslash & #6 \\
+	&&\\
+	\textcolor{blue}{Used in:}  & \multicolumn{4}{p{10cm}}{#7} \\
+	\textcolor{blue}{Defined in:} & \multicolumn{4}{p{10cm}}{#8} \\
+	\ifdevguide
+	\textcolor{blue}{Called in:} & \multicolumn{4}{p{10cm}}{\textcolor{codegreen}{#9}} \\
+	\fi
+	\end{tabular}
+	\end{thighlight}
+	\end{minipage}
+}
+
+
+
+% --------------------------------------------------------
+% define dev sections notes etc
+
+\newcommand{\devsection}[2]{
+\ifdevguide
+\section{#1}
+
+#2
+\fi
+}
+
+
+\newcommand{\DevNote}[1]{
+\ifdevguide
+\begin{note}
+#1
+\end{note}
+\fi
+}

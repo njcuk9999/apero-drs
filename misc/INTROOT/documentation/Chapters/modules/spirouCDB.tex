@@ -1,0 +1,233 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\noindent\begin{minipage}{\textwidth}
+\section{The spirouDB module}
+\label{ch:the_module:spirouDB}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+\subsection{CopyCDBfiles}
+
+Defined in \spirouCDB\path{.copy_files}
+
+\begin{pythonbox}
+from SpirouDRS import spirouDB
+spirouDB.CopyCDBfiles(p, header=None)
+spirouDB.spirouDB.copy_files(p, header=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Copy the files from calibDB to the reduced folder
+   p['DRS_DATA_REDUC']/p['arg_night_name']
+based on the latest calibDB files from header, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            calibDB: dictionary, the calibration database dictionary
+            reduced_dir: string, the reduced data directory
+                         (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+            log_opt: string, log option, normally the program name
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetAcqTime}
+
+Defined in \spirouCDB\path{.get_acquisition_time}
+
+\begin{pythonbox}
+from SpirouDRS import spirouDB
+spirouDB.GetAcqTime(p, header=None, kind='human', filename=None)
+spirouDB.spirouDB.get_acquisition_time(p, header=None, kind='human', filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the acquision time from the header file, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+            log_opt: string, log option, normally the program name
+            kw_ACQTIME_KEY: list, the keyword store for acquisition time
+                            (string time-stamp)
+                        [name, value, comment] = [string, object, string]
+            kw_ACQTIME_KEY_UNIX: list, the keyword store fore acquisition
+                                 time (float unixtime)
+                        [name, value, comment] = [string, object, string]
+:param header: dictionary or None, the header dictionary created by
+               spirouFITS.ReadImage, if header is None code tries to get
+               header from p['arg_file_names'][0]
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
+             for time since 1970-01-01
+:param filename: string or None, location of the file if header is None
+
+:return acqtime: string, the human or unix time from header file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetCalibDatabase}
+
+Defined in \spirouCDB\path{.get_database}
+
+\begin{pythonbox}
+from SpirouDRS import spirouDB
+spirouDB.GetCalibDatabase(p, max_time=None, update=False)
+spirouDB.spirouDB.get_database(p, max_time=None, update=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Gets all entries from calibDB where unix time <= max_time.
+If update is False then will first search for and use 'calibDB' in p
+(if it exists)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            calibDB: dictionary, the calibration database dictionary
+            log_opt: string, log option, normally the program name
+:param max_time: str, maximum time allowed for all calibDB entries
+                 format = (YYYY-MM-DD HH:MM:SS.MS)
+:param update: bool, if False looks for "calibDB' in p, and if found does
+               not load new database
+
+:return c_database: dictionary, the calibDB database in form:
+                c_database[key] = [dirname, filename]
+    lines in calibDB must be in form:
+        {key} {dirname} {filename} {human_time} {unix_time}
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            max_time_human: string, maximum time from "max_time"
+            max_time_unix: float, maximum time from "max_time"
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetCalibFile}
+
+Defined in \spirouCDB\path{.get_file_name}
+
+\begin{pythonbox}
+from SpirouDRS import spirouDB
+spirouDB.GetCalibFile(p, key, hdr=None, filename=None)
+spirouDB.spirouDB.get_file_name(p, key, hdr=None, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the filename for "key" in the calibration database (for use when
+the calibration database is not needed for more than one use and does
+not exist already (i.e. called via spirouDB.GetCalibDatabase() )
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+            calibDB: dictionary, the calibration database dictionary
+            max_time_human: string, maximum time from "max_time"
+            log_opt: string, log option, normally the program name
+            reduced_dir: string, the reduced data directory
+                         (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+:param key: string, the key to look for in the calibration database
+:param hdr: dict or None, the header dictionary to use to get the
+            acquisition time, if hdr is None code tries to get
+            header from p['arg_file_names'][0]
+:param filename: string or None, if defined this is the filename returned
+                 (means calibration database is not used)
+
+:return read_file: string, the filename in calibration database for
+                   "key" (selected via unix_time in calibDB)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{PutCalibFile}
+
+Defined in \spirouCDB\path{.put_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouDB
+spirouDB.PutCalibFile(p, inputfile)
+spirouDB.spirouDB.put_file(p, inputfile)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Copies the "inputfile" to the calibration database folder
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+            log_opt: string, log option, normally the program name
+:param inputfile: string, the input file path and file name
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{UpdateCalibMaster}
+
+Defined in \spirouCDB\path{.update_datebase}
+
+\begin{pythonbox}
+from SpirouDRS import spirouDB
+spirouDB.UpdateCalibMaster(p, keys, filenames, hdrs, timekey=None)
+spirouDB.spirouDB.update_datebase(p, keys, filenames, hdrs, timekey=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Updates (or creates) the calibDB with an entry or entries in the form:
+
+    {key} {arg_night_name} {filename} {human_time} {unix_time}
+
+where arg_night_name comes from p["arg_night_name']
+where "human_time" and "unix_time" come from the filename headers (hdrs)
+    using HEADER_KEY = timekey (or "ACQTIME1" if timekey=None)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            arg_night_name: string, the folder within data raw directory
+                            containing files (also reduced directory) i.e.
+                            /data/raw/20170710 would be "20170710"
+            log_opt: string, log option, normally the program name
+            kw_ACQTIME_KEY: list, the keyword store for acquisition time
+                            (string time-stamp)
+                        [name, value, comment] = [string, object, string]
+            kw_ACQTIME_KEY_UNIX: list, the keyword store fore acquisition
+                                 time (float unixtime)
+:param keys: string or list of strings, keys to add to the calibDB
+:param filenames: string or list of strings, filenames to add to the
+                  calibDB, if keys is a list must be a list of same length
+                  as "keys"
+:param hdrs: dictionary or list of dictionaries, header dictionary/
+             dictionaries to find 'timekey' in - the acquisition time,
+             if keys is a list must be a list of same length  as "keys"
+:param timekey: string, key to find acquisition time in header "hdr" if
+                None defaults to the program default ('ACQTIME1')
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------

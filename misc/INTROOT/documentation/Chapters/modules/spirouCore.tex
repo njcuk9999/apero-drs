@@ -1,0 +1,453 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\noindent\begin{minipage}{\textwidth}
+\section{The spirouCore module}
+\label{ch:the_module:spirouCore}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+\subsection{wlog}
+\label{ch:the_module:spirouCore:logger}
+
+Defined in \spirouCore\path{.spirouLog.logger}, also aliased in code to `WLOG'.
+
+See Section \ref{ch:rules:drs_specific:logger} for usage details.
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.wlog(key='', option='', message='', printonly=False, logonly=False)
+spirouCore.spirouLog.logger(key='', option='', message='', printonly=False, logonly=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Parses a key (error/warning/info/graph), an option and a message to the
+stdout and the log file.
+
+keys are controlled by "spirouConfig.Constants.LOG_TRIG_KEYS()"
+printing to screen is controlled by "PRINT_LEVEL" constant (config.py)
+printing to log file is controlled by "LOG_LEVEL" constant (config.py)
+based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
+
+:param key: string, either "error" or "warning" or "info" or graph, this
+            gives a character code in output
+:param option: string, option code
+:param message: string or list of strings, message to display or messages
+                to display (1 line for each message in list)
+:param printonly: bool, print only do not save to log (default = False)
+:param logonly: bool, log only do not save to log (default = False)
+
+output to stdout/log is as follows:
+
+    HH:MM:SS.S - CODE |option|message
+
+time is output in UTC to nearest .1 seconds
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{WarnLog}
+
+Defined in \spirouCore\path{.spirouLog.warninglogger}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.warnlog(w, funcname=None)
+spirouCore.spirouLog.warninglogger(w, funcname=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Warning logger - takes "w" - a list of caught warnings and pipes them on
+to the log functions.
+If "funcname" is not None then "funcname" is printed with the line reference
+(intended to be used to identify the code/function/module warning was
+generated in)
+
+to catch warnings use the following:
+
+>>> import warnings
+>>> with warnings.catch_warnings(record=True) as w:
+>>>     code_to_generate_warnings()
+>>> warninglogger(w, 'some name for logging')
+
+:param w: list of warnings, the list of warnings from
+           warnings.catch_warnings
+:param funcname: string or None, if string then also pipes "funcname" to the
+                 warning message (intended to be used to identify the code/
+                 function/module warning was generated in)
+:return:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GaussFunction}
+
+Defined in \spirouCore\path{.spirouMath.gauss_function}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.GaussFunction(x, a, x0, sigma, dc)
+spirouCore.spirouMath.gauss_function(x, a, x0, sigma, dc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+A standard 1D Gaussian function (for fitting against)]=
+
+:param x: numpy array (1D), the x data points
+:param a: float, the amplitude
+:param x0: float, the mean of the Gaussian
+:param sigma: float, the standard deviation (FWHM) of the Gaussian
+:param dc: float, the constant level below the Gaussian
+
+:return gauss: numpy array (1D), size = len(x), the output Gaussian
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetTimeNowUnix}
+
+Defined in \spirouCore\path{.spirouMath.get_time_now_unix}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.GetTimeNowUnix(zone='UTC')
+spirouCore.spirouMath.get_time_now_unix(zone='UTC')
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the unix_time now.
+
+Default is to return unix_time in UTC/GMT time
+
+:param zone: string, if UTC displays the time in UTC else displays local
+             time
+
+:return unix_time: float, the unix_time
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetTimeNowString}
+
+Defined in \spirouCore\path{.spirouMath.get_time_now_string}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.GetTimeNowString(fmt=TIME_FMT, zone='UTC')
+spirouCore.spirouMath.get_time_now_string(fmt=TIME_FMT, zone='UTC')
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the time now (in string format = "fmt")
+
+Default is to return string time in UTC/GMT time
+
+    Commonly used format codes:
+
+    %Y  Year with century as a decimal number.
+    %m  Month as a decimal number [01,12].
+    %d  Day of the month as a decimal number [01,31].
+    %H  Hour (24-hour clock) as a decimal number [00,23].
+    %M  Minute as a decimal number [00,59].
+    %S  Second as a decimal number [00,61].
+    %z  Time zone offset from UTC.
+    %a  Locale's abbreviated weekday name.
+    %A  Locale's full weekday name.
+    %b  Locale's abbreviated month name.
+    %B  Locale's full month name.
+    %c  Locale's appropriate date and time representation.
+    %I  Hour (12-hour clock) as a decimal number [01,12].
+    %p  Locale's equivalent of either AM or PM.
+
+
+:param fmt: string, the format code for the returned time
+:param zone: string, if UTC displays the time in UTC else displays local
+             time
+
+:return stringtime: string, the time in a string in format = "fmt"
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{PrintLog}
+
+Defined in \spirouCore\path{.spirouMath.printlog}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.PrintLog(message, key='all')
+spirouCore.spirouCore.printlog(message, key='all')
+\end{pythonbox}
+
+\begin{pythondocstring}
+print message to stdout (if level is correct - set by PRINT_LEVEL)
+is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
+
+:param message: string, the formatted log line to write to stdout
+:param key: string, either "error" or "warning" or "info" or "graph" or
+            "all", this gives a character code in output
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{PrintColours}
+
+Defined in \spirouCore\path{.spirouMath.printlog}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.PrintColour(key='all', func_name=None)
+spirouCore.spirouCore.printcolour(key='all', func_name=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the print colour (start and end) based on "key".
+This should be used as follows:
+    >> c1, c2 = printcolour(key='all')
+    >> print(c1 + message + c2)
+
+:param key: string, either "error" or "warning" or "info" or "graph" or
+            "all", this gives a character code in output
+:param func_name: string or None, if not None then defines the function to
+                  report in the error
+:return colour1: string or None, if key is found and we are using coloured
+                 log returns the starting colour, if not returns empty
+                 string if key is not accepted does not print
+:return colour2: string or None, if key is found and we are using coloured
+                 log returns the ending colour, if not returns empty
+                 string if key is not accepted does not print
+\end{pythondocstring}
+\end{minipage}
+
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{Unix2stringTime}
+
+Defined in \spirouCore\path{.spirouMath.unixtime2stringtime}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.Unix2stringTime(ts, fmt=DATE_FMT, zone='UTC')
+spirouCore.spirouMath.unixtime2stringtime(ts, fmt=DATE_FMT, zone='UTC')
+\end{pythonbox}
+
+\begin{pythondocstring}
+Convert a unix time (seconds since  1970-01-01 00:00:00 GMT) into a
+string in format "fmt". Currently supported time-zones are UTC and local
+(i.e. your current time zone).
+
+Default is to return string time in UTC/GMT time
+
+Commonly used format codes:
+
+    %Y  Year with century as a decimal number.
+    %m  Month as a decimal number [01,12].
+    %d  Day of the month as a decimal number [01,31].
+    %H  Hour (24-hour clock) as a decimal number [00,23].
+    %M  Minute as a decimal number [00,59].
+    %S  Second as a decimal number [00,61].
+    %z  Time zone offset from UTC.
+    %a  Locale's abbreviated weekday name.
+    %A  Locale's full weekday name.
+    %b  Locale's abbreviated month name.
+    %B  Locale's full month name.
+    %c  Locale's appropriate date and time representation.
+    %I  Hour (12-hour clock) as a decimal number [01,12].
+    %p  Locale's equivalent of either AM or PM.
+
+:param ts: float or int, the unix time (seconds since 1970-01-01 00:00:00
+           GMT)
+:param fmt: string, the format of the string to convert
+:param zone: string, the time zone for the input string
+                      (currently supported =  "UTC" or "local")
+
+:return stringtime: string, the time in format "fmt"
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{String2unixTime}
+
+Defined in \spirouCore\path{.spirouMath.stringtime2unixtime}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.String2unixTime(string, fmt=DATE_FMT, zone='UTC')
+spirouCore.spirouMath.stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC')
+\end{pythonbox}
+
+\begin{pythondocstring}
+Convert a string in format "fmt" into a float Unix time (seconds since
+1970-01-01 00:00:00 GMT). Currently supported time-zones are UTC and local
+(i.e. your current time zone).
+
+Default is to assume string is in UTC/GMT time
+
+Commonly used format codes:
+
+    %Y  Year with century as a decimal number.
+    %m  Month as a decimal number [01,12].
+    %d  Day of the month as a decimal number [01,31].
+    %H  Hour (24-hour clock) as a decimal number [00,23].
+    %M  Minute as a decimal number [00,59].
+    %S  Second as a decimal number [00,61].
+    %z  Time zone offset from UTC.
+    %a  Locale's abbreviated weekday name.
+    %A  Locale's full weekday name.
+    %b  Locale's abbreviated month name.
+    %B  Locale's full month name.
+    %c  Locale's appropriate date and time representation.
+    %I  Hour (12-hour clock) as a decimal number [01,12].
+    %p  Locale's equivalent of either AM or PM.
+
+:param string: string, the time string to convert
+:param fmt: string, the format of the string to convert
+:param zone: string, the time zone for the input string
+                      (currently supported =  "UTC" or "local")
+
+:return unix_time: float, Unix time (seconds since 1970-01-01 00:00:00 GMT)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{sPlt}
+
+Defined in \spirouCore\path{.spirouPlot} (alias to the plotting module).
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.sPlt
+spirouCore.spirouPlot
+\end{pythonbox}
+
+\begin{pythondocstring}
+Spirou Plotting functions available:
+
+start_interactive_session(interactive=False)
+    Start interactive plot session, if required and if
+    spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
+
+    :param interactive: bool, if True start interactive session
+
+    :return None:
+
+end_interactive_session(interactive=False)
+    End interactive plot session, if required and if
+    spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
+
+    :param interactive: bool, if True end interactive session
+
+    :return None:
+
+
+define_figure
+    Define a figure number (mostly for use in interactive mode)
+
+    :param num: int, a figure number
+
+    :return figure: plt.figure instance
+
+closeall()
+    Close all matplotlib plots currently open
+
+    :return None:
+
+And all plotting functions from specific recipes.
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{Getll}
+
+Defined in \spirouCore\path{.spirouMath.get_ll_from_coefficients}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.Getll(params, nx, nbo)
+spirouCore.spirouMath.get_ll_from_coefficients(params, nx, nbo)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Use the coefficient matrix "params" to construct fit values for each order
+(dimension 0 of coefficient matrix) for values of x from 0 to nx
+(interger steps)
+
+:param params: numpy array (2D), the coefficient matrix
+               size = (number of orders x number of fit coefficients)
+
+:param nx: int, the number of values and the maximum value of x to use
+           the coefficients for, where x is such that
+
+            yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+            N = number of fit coefficients
+            and p is the coefficients for one order
+            (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+:param nbo: int, the number of orders to use
+
+:return ll: numpy array (2D): the yfit values for each order
+            (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{Getdll}
+
+Defined in \spirouTHORCA\path{.spirouTHORCA.get_dll_from_coefficients}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.Getdll(params, nx, nbo)
+spirouCore.spirouMath.get_dll_from_coefficients(params, nx, nbo)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Derivative of the coefficients, using the coefficient matrix "params"
+to construct the derivative of the fit values for each order
+(dimension 0 of coefficient matrix) for values of x from 0 to nx
+(interger steps)
+
+:param params: numpy array (2D), the coefficient matrix
+               size = (number of orders x number of fit coefficients)
+
+:param nx: int, the number of values and the maximum value of x to use
+           the coefficients for, where x is such that
+
+            yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+            dyfit = p[0]*(N-1)*x**(N-2) + p[1]*(N-2)*x**(N-3) + ... +
+                    p[N-3]*x + p[N-2]
+
+            N = number of fit coefficients
+            and p is the coefficients for one order
+            (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+:param nbo: int, the number of orders to use
+
+:return ll: numpy array (2D): the yfit values for each order
+            (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
+\end{pythondocstring}
+\end{minipage}

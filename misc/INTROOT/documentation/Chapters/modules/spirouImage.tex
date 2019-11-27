@@ -1,0 +1,1994 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\noindent\begin{minipage}{\textwidth}
+\section{The spirouImage module}
+\label{ch:the_module:spirouImage}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+\subsection{AddKey}
+
+Defined in \spirouImage\path{.}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.AddKey(hdict=None, keywordstore=None, value=None)
+spirouImage.spirouFITS.add_new_key(hdict=None, keywordstore=None, value=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Add a new key to hdict from keywordstore, if value is not None then the
+keywordstore value is updated. Each keywordstore is in form:
+        [key, value, comment]    where key and comment are strings
+if hdict is None creates a new dictionary
+
+:param hdict: dictionary or None, storage for adding to FITS rec
+:param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                     must be in form [string, value, string]
+:param value: object or None, if any python object (other than None) will
+              replace the value in keywordstore (i.e. keywordstore[1]) with
+              value, if None uses the value = keywordstore[1]
+
+:return hdict: dictionary, storage for adding to FITS rec
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{AddKey1DList}
+
+Defined in \spirouImage\path{.pirouFITS.add_key_1d_list}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.AddKey1DList(p, hdict, keywordstore, values=None, dim1name='order')
+spirouImage.pirouFITS.add_key_1d_list(hdict, keywordstore, values=None, dim1name='order')
+\end{pythonbox}
+
+\begin{pythondocstring}
+Add a new 1d list to key using the keywordstorage[0] as prefix in form
+keyword = kewordstoreage + row number
+
+:param hdict: dictionary, storage for adding to FITS rec
+:param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                     must be in form [string, value, string]
+:param values: numpy array or 1D list of keys or None
+
+              if numpy array or 1D list will create a set of keys in form
+              keyword = kewordstoreage + row number
+              where row number is the position in values
+              with value = values[row number][column number]
+
+              if None uses the value = keywordstore[1]
+:param dim1name: string, the name for dimension 1 (rows), used in FITS rec
+                 HEADER comments in form:
+      COMMENT = keywordstore[2] dim1name={row number}
+
+:return hdict: dictionary, storage for adding to FITS rec
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{AddKey2DList}
+
+Defined in \spirouImage\path{.spirouFITS.add_key_2d_list}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.AddKey2DList
+spirouImage.spirouFITS.add_key_2d_list
+\end{pythonbox}
+
+\begin{pythondocstring}
+Add a new 2d list to key using the keywordstorage[0] as prefix in form
+keyword = kewordstoreage + number
+
+where number = (row number * number of columns) + column number
+
+:param hdict: dictionary, storage for adding to FITS rec
+:param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                     must be in form [string, value, string]
+:param values: numpy array or 2D list of keys or None
+
+              if numpy array or 2D list will create a set of keys in form
+              keyword = kewordstoreage + number
+              where number = (row number*number of columns)+column number
+              with value = values[row number][column number]
+
+              if None uses the value = keywordstore[1]
+:param dim1name: string, the name for dimension 1 (rows), used in FITS rec
+                 HEADER comments in form:
+      COMMENT = keywordstore[2] dim1name={row number} dim2name={col number}
+:param dim2name: string, the name for dimension 2 (cols), used in FITS rec
+                 HEADER comments in form:
+      COMMENT = keywordstore[2] dim1name={row number} dim2name={col number}
+
+:return hdict: dictionary, storage for adding to FITS rec
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CheckFile}
+
+Defined in \spirouFile\path{.check_file_id}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CheckFile(p, filename, recipe, hdr=None, **kwargs)
+spirouImage.spirouFile.check_file_id(p, filename, recipe, hdr=None, **kwargs)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Checks the "filename" against the "recipe" (using recipe control)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_FORCE_PREPROCESS: bool, if True only allows pre-processed files
+        PROCESSED_SUFFIX: string, the processed suffix
+        DRS_DATA_RAW: string, the directory that the raw data should
+                      be saved to/read from
+            DRS_DATA_REDUC: string, the directory that the reduced data
+                            should be saved to/read from
+        ARG_NIGHT_NAME: string, the folder within data raw directory
+                        containing files (also reduced directory) i.e.
+                        /data/raw/20170710 would be "20170710"
+        
+:param filename: string, the filename to check 
+:param recipe: string, the recipe name to check
+:param hdr: dictionary or None, if defined must be a HEADER dictionary if
+            none loaded from filename
+:param kwargs: keyword arguments. Current allowed keys are:
+                - return_path: bool, if True returns the path as well as p
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            PREPROCESSED: bool, flag whether file is detected as 
+                          pre-processed
+            DPRTYPE: string, the type from the recipe control file 
+            FIBER: string, if recipe control entry for this file has a
+                   fiber defined, fiber is set to this
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CheckFiles}
+
+Defined in \spirouFile\path{.check_files_id}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CheckFiles(p, files, recipe, hdr=None, **kwargs)
+spirouImage.spirouFile.check_files_id(p, files, recipe, hdr=None, **kwargs)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Wrapper for spirouFile.check_file_id
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_FORCE_PREPROCESS: bool, if True only allows pre-processed files
+        PROCESSED_SUFFIX: string, the processed suffix
+        DRS_DATA_RAW: string, the directory that the raw data should
+                      be saved to/read from
+            DRS_DATA_REDUC: string, the directory that the reduced data
+                            should be saved to/read from
+        ARG_NIGHT_NAME: string, the folder within data raw directory
+                        containing files (also reduced directory) i.e.
+                        /data/raw/20170710 would be "20170710"
+:param files: list of strings, the files to check with check_file_id
+:param recipe: string, the recipe name to check
+:param hdr: dictionary or None, if defined must be a HEADER dictionary if
+            none loaded from filename
+:param kwargs: keyword arguments. Current allowed keys are:
+                - return_path: bool, if True returns the path as well as p
+:return p: parameter dictionary, the updated parameter dictionary
+    Adds the following:
+        PREPROCESSED: bool, flag whether file is detected as 
+                      pre-processed
+        DPRTYPE: string, the type from the recipe control file 
+        DPRTYPES: list of stings, the DPRTYPE for each file in "files"
+        FIBER: string, if recipe control entry for this file has a
+               fiber defined, fiber is set to this
+\end{pythondocstring}
+\end{minipage}
+
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ConvertToE}
+
+Defined in \spirouImage\path{.convert_to_e}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ConvertToE(image, p=None, gain=None, exptime=None)
+spirouImage.spirouImage.convert_to_e(image, p=None, gain=None, exptime=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Converts image from ADU/s into e-
+
+:param image:
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least: (if exptime is None)
+            exptime: float, the exposure time of the image
+            gain: float, the gain of the image
+
+:param gain: float, if p is None, used as the gain to multiple the image by
+:param exptime: float, if p is None, used as the exposure time the image
+                is multiplied by
+
+:return newimage: numpy array (2D), the image in e-
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{ConvertToADU}
+
+Defined in \spirouImage\path{.spirouImage.convert_to_adu}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ConvertToADU(image, p=None, exptime=None)
+spirouImage.spirouImage.convert_to_adu(image, p=None, exptime=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Converts image from ADU/s into ADU
+
+:param image:
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least: (if exptime is None)
+        exptime: float, the exposure time of the image
+
+:param exptime: float, if p is None, used as the exposure time the image
+                is multiplied by
+
+:return newimage: numpy array (2D), the image in e-
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CopyOriginalKeys}
+
+Defined in \spirouImage\path{.spirouFITS.copy_original_keys}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CopyOriginalKeys(header, comments, hdict=None, forbid_keys=True)
+spirouImage.spirouFITS.copy_original_keys(header, comments, hdict=None, forbid_keys=True)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Copies keys from hdr dictionary to hdict, if forbid_keys is True some
+keys will not be copies (defined in python code)
+
+:param header: header dictionary from readimage (ReadImage) function
+
+:param comments: comment dictionary from readimage (ReadImage) function
+
+:param hdict: dictionary or None, header dictionary to write to fits file
+              if None hdict is created
+
+            Must be in form:
+
+                    hdict[key] = (value, comment)
+            or
+                    hdict[key] = value     (comment will be equal to
+                                            "UNKNOWN"
+:param forbid_keys: bool, if True uses the forbidden copy keys (defined in
+                    spirouConfig.Constants.FORBIDDEN_COPY_KEYS() to remove
+                    certain keys from those being copied, if False copies
+                    all keys from input header
+
+:return hdict: dictionary, (updated or new) header dictionary containing
+               key/value pairs from the header (that are NOT in
+               spirouConfig.spirouConst.FORBIDDEN_COPY_KEY)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CopyRootKeys}
+
+Defined in \spirouImage\path{.spirouFITS.copy_root_keys}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CopyRootKeys(hdict=None, filename=None, root=None, ext=0)
+spirouImage.spirouFITS.copy_root_keys(hdict=None, filename=None, root=None, ext=0)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Copy keys from a filename to hdict
+
+:param hdict: dictionary or None, header dictionary to write to fits file
+              if None hdict is created
+:param filename: string, location and filename of the FITS rec to open
+
+:param ext: int, the extension of the FITS rec to open header from
+            (defaults to 0)
+:return:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CorrectForDark}
+
+Defined in \spirouImage\path{.spirouImage.correct_for_dark}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CorrectForDark(p, image, header, nfiles=None, return_dark=False)
+spirouImage.spirouImage.correct_for_dark(p, image, header, nfiles=None, return_dark=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Corrects "image" for "dark" using calibDB file (header must contain
+value of p['ACQTIME_KEY'] as a keyword)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            nbframes: int, the number of frames/files (usually the length
+                      of "arg_file_names")
+            calibDB: dictionary, the calibration database dictionary
+                     (if not in "p" we construct it and need "max_time_unix"
+            max_time_unix: float, the unix time to use as the time of
+                            reference (used only if calibDB is not defined)
+            log_opt: string, log option, normally the program name
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+
+:param image: numpy array (2D), the image
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+:param nfiles: int or None, number of files that created image (need to
+               multiply by this to get the total dark) if None uses
+               p['nbframes']
+:param return_dark: bool, if True returns corrected_image and dark
+                    if False (default) returns corrected_image
+
+:return corrected_image: numpy array (2D), the dark corrected image
+                         only returned if return_dark = True:
+:return darkimage: numpy array (2D), the dark
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CorrectForBadPix}
+
+Defined in \spirouImage\path{.spirouImage.correct_for_badpix}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CorrectForBadPix(p, image, header)
+spirouImage.spirouImage.correct_for_badpix(p, image, header)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Corrects "image" for "BADPIX" using calibDB file (header must contain
+value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            calibDB: dictionary, the calibration database dictionary
+                     (if not in "p" we construct it and need "max_time_unix"
+            max_time_unix: float, the unix time to use as the time of
+                            reference (used only if calibDB is not defined)
+            log_opt: string, log option, normally the program name
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+
+:param image: numpy array (2D), the image
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+
+:return corrected_image: numpy array (2D), the corrected image where all
+                         bad pixels are set to zeros
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{FiberParams}
+
+Defined in \spirouImage\path{.spirouFile.fiber_params}
+
+\begin{pythonbox}
+from SpirouDRS import spirouLOCOR
+spirouImage.FiberParams(pp, fiber, merge=False)
+spirouImage.spirouFile.fiber_params(pp, fiber, merge=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Takes the parameters defined in FIBER_PARAMS from parameter dictionary
+(i.e. from config files) and adds the correct parameter to a fiber
+parameter dictionary
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param fiber: string, the fiber type (and suffix used in configuration file)
+              i.e. for fiber AB fiber="AB" and nbfib_AB should be present
+              in config if "nbfib" is in FIBER_PARAMS
+:param merge: bool, if True merges with pp and returns
+
+:return fparam: dictionary, the fiber parameter dictionary (if merge False)
+:treun pp: dictionary, parameter dictionary (if merge True)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FitTilt}
+
+Defined in \spirouImage\path{.spirouImage.fit_tilt}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.FitTilt(pp, lloc)
+spirouImage.spirouImage.fit_tilt(pp, lloc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
+return the coefficients, fit and residual rms in lloc dictionary
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_TILT_FIT: int, Order of polynomial to fit for tilt
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+            tilt: numpy array (1D), the tilt angle of each order
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            xfit_tilt: numpy array (1D), the order numbers
+            yfit_tilt: numpy array (1D), the fit for the tilt angle of each
+                       order
+            a_tilt: numpy array (1D), the fit coefficients (generated by
+                    numpy.polyfit but IN REVERSE ORDER)
+            rms_tilt: float, the RMS (np.std) of the residuals of the
+                      tilt - tilt fit values
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FixNonPreProcess}
+
+Defined in \spirouImage\path{.spirouImage.fix_non_preprocessed}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.FixNonPreProcess
+spirouImage.spirouImage.fix_non_preprocessed
+\end{pythonbox}
+
+\begin{pythondocstring}
+Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
+return the coefficients, fit and residual rms in lloc dictionary
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_TILT_FIT: int, Order of polynomial to fit for tilt
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+            tilt: numpy array (1D), the tilt angle of each order
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            xfit_tilt: numpy array (1D), the order numbers
+            yfit_tilt: numpy array (1D), the fit for the tilt angle of each
+                       order
+            a_tilt: numpy array (1D), the fit coefficients (generated by
+                    numpy.polyfit but IN REVERSE ORDER)
+            rms_tilt: float, the RMS (np.std) of the residuals of the
+                      tilt - tilt fit values
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FlipImage}
+
+Defined in \spirouImage\path{.spirouImage.flip_image}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.FlipImage(image, fliprows=True, flipcols=True)
+spirouImage.spirouImage.flip_image(image, fliprows=True, flipcols=True)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Flips the image in the x and/or the y direction
+
+:param image: numpy array (2D), the image
+:param fliprows: bool, if True reverses row order (axis = 0)
+:param flipcols: bool, if True reverses column order (axis = 1)
+
+:return newimage: numpy array (2D), the flipped image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FixNonPreProcess}
+
+Defined in \spirouImage\path{.spirouImage.fix_non_preprocessed}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.FixNonPreProcess(p, image, filename=None)
+spirouImage.spirouImage.fix_non_preprocessed(p, image, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+If a raw file is not preprocessed, then fix it (i.e. rotate it) so
+it conforms to DRS standards
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        PROCESSED_SUFFIX: string, the processed suffix
+        PREPROCESSED: bool, flag whether file is detected as
+                      pre-processed
+        IC_IMAGE_TYPE: string, the detector type
+        RAW_TO_PP_ROTATION: int, rotation angle in degrees (in degrees,
+                            counter-clockwise direction) must be a multiple
+                            of 90 degrees
+:param image: numpy array (2D), the image to manipulate
+:param filename: string, if p['PREPROCESSED'] is not defined the file
+                 is checked (can be done if PREPROCESSED in p
+
+:return newimage: numpy array (2D), the new image that emulates a pre-
+                  processed file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetBadPixMap}
+
+Defined in \spirouImage\path{.spirouImage.get_badpixel_map}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetBadPixMap(p, header=None)
+spirouImage.spirouImage.get_badpixel_map(p, header=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the bad pixel map from the calibDB
+
+    Must contain at least:
+            calibDB: dictionary, the calibration database dictionary
+                     (if not in "p" we construct it and need "max_time_unix"
+            max_time_unix: float, the unix time to use as the time of
+                            reference (used only if calibDB is not defined)
+            log_opt: string, log option, normally the program name
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+
+:return: badpixmask: numpy array (2D), the bad pixel mask
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetAllSimilarFiles}
+
+Defined in \spirouImage\path{.spirouImage.get_all_similar_files}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetAllSimilarFiles(p, directory, prefix=None, suffix=None)
+spirouImage.spirouImage.get_all_similar_files(p, directory, prefix=None, suffix=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get all similar files in a directory with matching prefix and suffix defined
+either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+            log_opt: string, log option, normally the program name
+
+:param directory: string, the directory to search for files
+:param prefix: string or None, if not None the prefix to search for, if
+               None defines the prefix from the first 5 characters of
+               p["ARG_FILE_NAMES"][0]
+:param suffix: string  or None, if not None the suffix to search for, if
+               None defines the prefix from the last 8 characters of
+               p["ARG_FILE_NAMES"][0]
+
+:return filelist: list of strings, the full paths of all files that are in
+                  "directory" with the matching prefix and suffix defined
+                  either by "prefix" and "suffix" or by
+                  p["ARG_FILE_NAMES"][0]
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetSigdet}
+
+Defined in \spirouImage\path{.spirouImage.get_sigdet}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetSigdet(p, hdr, name=None, return_value=False)
+spirouImage.spirouImage.get_sigdet(p, hdr, name=None, return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get sigdet from HEADER. Wrapper for spirouImage.get_param
+
+:param p: parameter dictionary, ParamDict of constants
+:param hdr: dictionary, header dictionary to extract
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds
+                     parameter to "p" parameter dictionary (and sets source)
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetExpTime}
+
+Defined in \spirouImage\path{.spirouImage.get_exptime}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetExpTime(p, hdr, name=None, return_value=False)
+spirouImage.spirouImage.get_exptime(p, hdr, name=None, return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get Exposure time from HEADER. Wrapper for spirouImage.get_param
+
+:param p: parameter dictionary, ParamDict of constants
+:param hdr: dictionary, header dictionary to extract
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds
+                     parameter to "p" parameter dictionary (and sets source)
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetGain}
+
+Defined in \spirouImage\path{.spirouImage.get_gain}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetGain(p, hdr, name=None, return_value=False)
+spirouImage.spirouImage.get_gain(p, hdr, name=None, return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get Gain from HEADER. Wrapper for spirouImage.get_param
+
+:param p: parameter dictionary, ParamDict of constants
+:param hdr: dictionary, header dictionary to extract
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds
+                     parameter to "p" parameter dictionary (and sets source)
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetAcqTime}
+
+Defined in \spirouImage\path{.spirouImage.get_acqtime}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetAcqTime(p, hdr, name=None, kind='human', return_value=False)
+spirouImage.spirouImage.get_acqtime(p, hdr, name=None, kind='human', return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the acquision time from the header file, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        "name" defined in call
+        parameter dictionary to give to value
+
+:param hdr: dictionary, the header dictionary created by
+            spirouFITS.ReadImage
+:param name: string, the name in parameter dictionary to give to value
+             if return_value is False (i.e. p[name] = value)
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
+             for time since 1970-01-01
+:param return_value: bool, if False value is returned in p as p[name]
+                     if True value is returned
+
+:return p or value: dictionary or string or float, if return_value is False
+                    parameter dictionary is returned, if return_value is
+                    True and kind=='human' returns a string, if return_value
+                    is True and kind=='Unix' returns a float
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{IdentifyUnProFile}
+
+Defined in \spirouImage\path{.spirouImage.identify_unprocessed_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.IdentifyUnProFile(p, filename, hdr=None, cdr=None)
+spirouImage.spirouImage.identify_unprocessed_file(p, filename, hdr=None, cdr=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Identify a unprocessed raw file (from recipe control file), adds suffix
+and header key (DPRTYPE) accordingly
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            DRS_DEBUG: int, if 0 not in debug mode else in various levels of
+                       debug
+            KW_DPRTYPE: list, keyword list [key, value, comment]
+            
+:param filename: string, the filename to check
+:param hdr: dictionary or None, the HEADER dictionary to check for keys and
+            associated values, if None attempt to open HEADER from filename
+:param cdr: dictionary or None, the HEADER dictionary to check for keys and
+            associated comments, if None attempt to open HEADER from 
+            filename
+            
+:return newfn: string, the new filename with added suffix
+:return hdr: dictionary, the HEADER with added HEADER key/value pair 
+             (DPRTYPE)
+:return cdr: dictionary, the HEADER with added HEADER key/comment pair
+             (DPRTYPE)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{InterpolateBadRegions}
+
+Defined in \spirouImage\path{.spirouImage.identify_unprocessed_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.InterpolateBadRegions
+spirouImage.spirouImage.interp_bad_regions
+\end{pythonbox}
+
+\begin{pythondocstring}
+Interpolate over the bad regions to fill in holes on image (only to be used
+for image localization)
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_IMAGE_TYPE: string, the type of detector (H2RG or H4RG)
+            BAD_REGION_FIT: list of floats, the fit to the curvature
+            BAD_REGION_MED_SIZE: int, the median filter box size
+            BAD_REGION_THRESHOLD: float, the threshold below which the
+                                  image (normalised) should be regarded as
+                                  bad (and the pixels in the image that
+                                  should be set to the norm value)
+            BAD_REGION_KERNAL_SIZE: int, the box size used to do the
+                                    convolution
+            BAD_REGION_MED_SIZE2: int, the median filter box size used
+                                  during the convolution
+            BAD_REGION_GOOD_VALUE: float, the final good ratio value
+                                   (ratio between the original image and
+                                    the interpolated image) to accept
+                                    pixels as good pixels
+
+            BAD_REGION_BAD_VALUE: float, the final bad ratio value
+                                   (ratio between the original image and
+                                    the interpolated image) to reject
+                                    pixels as bad pixels
+
+:param image: numpy array (2D), the image
+
+:return image3: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetKey}
+
+Defined in \spirouImage\path{.spirouFITS.keylookup}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetKey(p, d=None, key=None, has_default=False, default=None)
+spirouImage.spirouFITS.keylookup(p, d=None, key=None, has_default=False, default=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Looks for a key in dictionary "p" or "d", if has_default is True sets
+value of key to 'default' if not found else logs an error
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            "key": if d is None must contain key="key" or error is raised
+:param d: dictionary, any dictionary, if None uses parameter dictionary
+          if "d" is not None then must contain key="key" or error is raised
+:param key: string, key in the dictionary to find
+:param has_default: bool, if True uses "default" as the value if key
+                    not found
+:param default: object, value of the key if not found and
+                has_default is True
+
+:return value: object, value of p[key] or default (if has_default=True)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetKeys}
+
+Defined in \spirouImage\path{.spirouFITS.keyslookup}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetKeys(p, d=None, keys=None, has_default=False, defaults=None)
+spirouImage.spirouFITS.keyslookup(p, d=None, keys=None, has_default=False, defaults=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Looks for keys in dictionary "p" or "d", if has_default is True sets
+value of key to 'default' if not found else logs an error
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            "key": if d is None must contain key="key" or error is raised
+:param d: dictionary, any dictionary, if None uses parameter dictionary
+          if "d" is not None then must contain key="key" or error is raised
+:param keys: list of strings, keys in the dictionary to find
+:param has_default: bool, if True uses "default" as the value if key
+                    not found
+:param defaults: list of objects or None, values of the keys if not
+                 found and has_default is True
+
+:return values: list of objects, values of p[key] for key in keys
+                or default value for each key (if has_default=True)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetTilt}
+
+Defined in \spirouImage\path{.}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetTilt(pp, lloc, image)
+spirouImage.spirouImage.get_tiltspirouImage.get_tilt(pp, lloc, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the tilt by correlating the extracted fibers
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            ic_tilt_coi: int, oversampling factor
+            log_opt: string, log option, normally the program name
+
+:param lloc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+            cent1: numpy array (2D), the extraction for A, updated is
+                   the order "rnum"
+            cent2: numpy array (2D), the extraction for B, updated is
+                   the order "rnum"
+            offset: numpy array (1D), the centre values with the
+                    offset in 'IC_CENT_COL' added
+
+:param image: numpy array (2D), the image
+
+:return lloc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            nbcos: numpy array, zero array  (length of "number_orderes")
+            tilt: numpy array (1D), the tilt angle of each order
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetTypeFromHeader}
+
+Defined in \spirouImage\path{.spirouFITS.get_type_from_header}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetTypeFromHeader(p, keywordstore, hdict=None, filename=None)
+spirouImage.spirouFITS.get_type_from_header(p, keywordstore, hdict=None, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Special FITS HEADER keyword - get the type of file from a FITS file HEADER
+using "keywordstore"
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+
+:param keywordstore: list, a keyword store in the form
+                     [name, value, comment] where the format is
+                     [string, object, string]
+:param hdict: dictionary or None, the HEADER dictionary containing
+              key/value pairs from a FITS HEADER, if None uses the
+              header from "FITSFILENAME" in "p", unless filename is not None
+              This hdict is used to get the type of file
+:param filename: string or None, if not None and hdict is None, this is the
+                 file which is used to extract the HEADER from to get
+                 the type of file
+
+:return ftype: string, the type of file (extracted from a HEADER dictionary/
+               file) if undefined set to 'UNKNOWN'
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{LocateBadPixels}
+
+Defined in \spirouImage\path{.spirouImage.locate_bad_pixels}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.LocateBadPixels(p, fimage, fmed, dimage, wmed=None)
+spirouImage.spirouImage.locate_bad_pixels(p, fimage, fmed, dimage, wmed=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Locate the bad pixels in the flat image and the dark image
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            BADPIX_FLAT_MED_WID: float, the median image in the x
+                                 dimension over a boxcar of this width
+            BADPIX_FLAT_CUT_RATIO: float, the maximum differential pixel
+                                   cut ratio
+            BADPIX_ILLUM_CUT: float, the illumination cut parameter
+            BADPIX_MAX_HOTPIX: float, the maximum flux in ADU/s to be
+                               considered too hot to be used
+
+:param fimage: numpy array (2D), the flat normalised image
+:param fmed: numpy array (2D), the flat median normalised image
+:param dimage: numpy array (2D), the dark image
+:param wmed: float or None, if not None defines the median filter width
+             if None uses p["BADPIX_MED_WID", see
+             scipy.ndimage.filters.median_filter "size" for more details
+
+:return bad_pix_mask: numpy array (2D), the bad pixel mask image
+:return badpix_stats: list of floats, the statistics array:
+                        Fraction of hot pixels from dark [%]
+                        Fraction of bad pixels from flat [%]
+                        Fraction of NaN pixels in dark [%]
+                        Fraction of NaN pixels in flat [%]
+                        Fraction of bad pixels with all criteria [%]
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{LocateFullBadPixels}
+
+Defined in \spirouImage\path{.spirouImage.locate_bad_pixels_full}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.LocateFullBadPixels(p, image)
+spirouImage.spirouImage.locate_bad_pixels_full(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Locate the bad pixels identified from the full engineering flat image
+(location defined from p['BADPIX_FULL_FLAT'])
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_IMAGE_TYPE: string, the detector type (this step is only for
+                       H4RG)
+        LOG_OPT: string, log option, normally the program name
+        BADPIX_FULL_FLAT: string, the full engineering flat filename
+        BADPIX_FULL_THRESHOLD: float, the threshold on the engineering
+                               above which the data is good
+:param image: numpy array (2D), the image to correct (for size only)
+
+:return newimage: numpy array (2D), the mask of the bad pixels
+:return stats: float, the fraction of un-illuminated pixels (percentage)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{MakeTable}
+
+Defined in \spirouImage\path{.spirouTable.make_table}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.MakeTable
+spirouImage.spirouTable.make_table
+\end{pythonbox}
+
+\begin{pythondocstring}
+Construct an astropy table from columns and values
+
+:param columns: list of strings, the list of column names
+:param values: list of lists or numpy array (2D), the list of lists/array
+               of values, first dimension must have same length as number
+               of columns, there must be the same number of values in each
+               column
+:param formats: list of strings, the astropy formats for each column
+                i.e. 0.2f  for a float with two decimal places, must have
+                same length as number of columns
+:param units: list of strings, the units for each column, must have
+              same length as number of columns
+
+:return table: astropy.table.Table instance, the astropy table containing
+               all columns and data
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{MeasureDark}
+
+Defined in \spirouImage\path{.spirouImage.measure_dark}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.MeasureDark(pp, image, image_name, short_name)
+spirouImage.spirouImage.measure_dark(pp, image, image_name, short_name)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Measure the dark pixels in "image"
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            DARK_QMIN: int, The lower percentile (0 - 100)
+            DARK_QMAX: int, The upper percentile (0 - 100)
+            HISTO_BINS: int,  The number of bins in dark histogram
+            HISTO_RANGE_LOW: float, the lower extent of the histogram
+                             in ADU/s
+            HISTO_RANGE_HIGH: float, the upper extent of the histogram
+                              in ADU/s
+
+:param image: numpy array (2D), the image
+:param image_name: string, the name of the image (for logging)
+:param short_name: string, suffix (for parameter naming -
+                    parameters added to pp with suffix i)
+
+:return pp: parameter dictionary, the updated parameter dictionary
+        Adds the following: (based on "short_name")
+            histo_full: numpy.histogram tuple (hist, bin_edges) for
+                        the full image
+            histo_blue: numpy.histogram tuple (hist, bin_edges) for
+                        the blue part of the image
+            histo_red: numpy.histogram tuple (hist, bin_edges) for
+                        the red part of the image
+            med_full: float, the median value of the non-Nan image values
+                      for the full image
+            med_blue: float, the median value of the non-Nan image values
+                      for the blue part of the image
+            med_red: float, the median value of the non-Nan image values
+                     for the red part of the image
+            dadead_full: float, the fraction of dead pixels as a percentage
+                         for the full image
+            dadead_blue: float, the fraction of dead pixels as a percentage
+                         for the blue part of the image
+            dadead_red: float, the fraction of dead pixels as a percentage
+                        for the red part of the image
+
+      where:
+          hist : numpy array (1D) The values of the histogram.
+          bin_edges : numpy array (1D) of floats, the bin edges
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{MergeTable}
+
+Defined in \spirouImage\path{.spirouTable.merge_table}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.MergeTable(table, filename, fmt='fits')
+spirouImage.spirouTable.merge_table(table, filename, fmt='fits')
+\end{pythonbox}
+
+\begin{pythondocstring}
+If a file already exists for "filename" try to merge this new table with
+the old one (requires all columns/formats to be the same).
+If filename does not exist writes "table" as if new table
+
+:param table:  astropy table, the new table to be merged to existing file
+:param filename: string, the filename and location of the table
+                 to written to
+:param fmt: string, the format of the table to read from (must be valid
+            for astropy.table to read)
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{NormMedianFlat}
+
+Defined in \spirouImage\path{.spirouImage.normalise_median_flat}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.NormMedianFlat(p, image, method='new', wmed=None, percentile=None)
+spirouImage.spirouImage.normalise_median_flat(p, image, method='new', wmed=None, percentile=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Applies a median filter and normalises. Median filter is applied with width
+"wmed" or p["BADPIX_FLAT_MED_WID"] if wmed is None) and then normalising by
+the 90th percentile
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            BADPIX_FLAT_MED_WID: float, the median image in the x
+                                 dimension over a boxcar of this width
+            BADPIX_NORM_PERCENTILE: float, the percentile to normalise
+                                    to when normalising and median
+                                    filtering image
+            log_opt: string, log option, normally the program name
+
+:param image: numpy array (2D), the image to median filter and normalise
+:param method: string, "new" or "old" if "new" uses np.percentile else
+               sorts the flattened image and takes the "percentile" (i.e.
+               90th) pixel value to normalise
+:param wmed: float or None, if not None defines the median filter width
+             if None uses p["BADPIX_MED_WID", see
+             scipy.ndimage.filters.median_filter "size" for more details
+:param percentile: float or None, if not None defines the percentile to
+                   normalise the image at, if None used from
+                   p["BADPIX_NORM_PERCENTILE"]
+
+:return norm_med_image: numpy array (2D), the median filtered and normalised
+                        image
+:return norm_image: numpy array (2D), the normalised image
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{PPCorrectTopBottom}
+
+Defined in \spirouImage\path{.spirouImage.ref_top_bottom}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.PPCorrectTopBottom(p, image)
+spirouImage.spirouImage.ref_top_bottom(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Correction for the top and bottom reference pixels
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                           detector
+            NUMBER_REF_TOP: int, the number of reference pixels at the top
+                            of the image (highest y pixel values)
+            NUMBER_REF_BOTTOM: int, the number of reference pixels at the
+                               bottom of the image (lowest y pixel values)
+:param image: numpy array (2D), the image
+
+:return image: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{PPMedianFilterDarkAmps}
+
+Defined in \spirouImage\path{.spirouImage.median_filter_dark_amp}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.PPMedianFilterDarkAmps(p, image)
+spirouImage.spirouImage.median_filter_dark_amp(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Use the dark amplifiers to produce a median pattern and apply this to the
+image
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                           detector
+            NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                             amplifiers on the detector
+            DARK_MED_BINNUM: int, the number of bins to use in the median
+                             filter binning process (higher number = finer
+                             bins, lower number = bigger bins)
+:param image: numpy array (2D), the image
+
+:return image: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{PPMedianOneOverfNoise}
+
+Defined in \spirouImage\path{.spirouImage.median_one_over_f_noise}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.PPMedianOneOverfNoise(p, image)
+spirouImage.spirouImage.median_one_over_f_noise(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Use the top and bottom reference pixels to create a map of the 1/f noise
+and apply it to the image
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            NUMBER_REF_TOP: int, the number of reference pixels at the top
+                            of the image (highest y pixel values)
+            NUMBER_REF_BOTTOM: int, the number of reference pixels at the
+                               bottom of the image (lowest y pixel values)
+            NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                             amplifiers on the detector
+            DARK_MED_BINNUM: int, the number of bins to use in the median
+                             filter binning process (higher number = finer
+                             bins, lower number = bigger bins)
+:param image: numpy array (2D), the image
+
+:return image: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadData}
+
+Defined in \spirouImage\path{.spirouFITS.readdata}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadData(p, filename, log=True, return_header=True, return_shape=True)
+spirouImage.spirouFITS.readdata(p, filename, log=True, return_header=True, return_shape=True)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the image 'fitsfilename' defined in p and adds files defined in
+'arg_file_names' if add is True
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param filename: string, filename of the image to read
+:param log: bool, if True logs opening and size
+:param return_header: bool, if True returns header
+:param return_shape: bool, if True returns shape
+
+:return image: numpy array (2D), the image
+
+if return_header also returns:
+    :return header: dictionary, the header file of the image
+    :return comments: dictionary, the header comment file
+
+if return_shape also returns:
+    if len(data.shape)==2
+        :return nx: int, the shape in the first dimension,
+                    i.e. data.shape[0]
+        :return ny: int, the shape in the second dimension,
+                    i.e. data.shape[1]
+    if len(data.shape)!=2
+        :return shape: tuple, data.shape
+        :return empty: None, blank entry
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadLineList}
+
+Defined in \spirouImage\path{.spirouImage.read_line_list}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadLineList
+spirouImage.spirouImage.read_line_list
+\end{pythonbox}
+
+\begin{pythondocstring}
+Read the line list file (if filename is None construct file from
+p['IC_LL_LINE_FILE']
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        log_opt: string, log option, normally the program name
+
+    May contain
+        IC_LL_LINE_FILE: string, the file name of the line list to use
+                         (required if filename is None)
+
+:param filename: string or None, if defined the filename
+
+:return ll: numpy array (1D), the wavelengths of the lines from line list
+:return amp: numpy array (1D), the amplitudes of the lines from line list
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadParam}
+
+Defined in \spirouImage\path{.spirouImage.get_param}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadParam(p, hdr, name=None, kind='human', return_value=False)
+spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the acquisition time from the header file, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        "name" defined in call
+        parameter dictionary to give to value
+
+:param hdr: dictionary, the header dictionary created by
+            spirouFITS.ReadImage
+:param name: string, the name in parameter dictionary to give to value
+             if return_value is False (i.e. p[name] = value)
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
+             for time since 1970-01-01
+:param return_value: bool, if False value is returned in p as p[name]
+                     if True value is returned
+
+:return p or value: dictionary or string or float, if return_value is False
+                    parameter dictionary is returned, if return_value is
+                    True and kind=='human' returns a string, if return_value
+                    is True and kind=='Unix' returns a float
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadImage}
+
+Defined in \spirouImage\path{.spirouFITS.readimage}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadImage(p, filename=None, log=True, kind=None)
+spirouImage.spirouFITS.readimage(p, filename=None, log=True, kind=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the image 'fitsfilename' defined in p and adds files defined in
+'arg_file_names' if add is True
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            fitsfilename: string, the full path of for the main raw fits
+                  file for a recipe
+                  i.e. /data/raw/20170710/filename.fits
+            log_opt: string, log option, normally the program name
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+
+:param filename: string or None, filename of the image to read, if None
+                 then p['fitsfilename'] is used
+:param log: bool, if True logs opening and size
+:param kind: string or None, if defined names the image else just image,
+             used in logging (if log = True)
+
+:return image: numpy array (2D), the image
+:return header: dictionary, the header file of the image
+:return nx: int, the shape in the first dimension, i.e. data.shape[0]
+:return ny: int, the shape in the second dimension, i.e. data.shape[1]
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadTable}
+
+Defined in \spirouImage\path{.spirouTable.read_table}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadTable(filename, fmt, colnames=None)
+spirouImage.spirouTable.read_table(filename, fmt, colnames=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads a table from file "filename" in format "fmt", if colnames are defined
+renames the columns to these name
+
+:param filename: string, the filename and location of the table to read
+:param fmt: string, the format of the table to read from (must be valid
+            for astropy.table to read - see below)
+:param colnames: list of strings or None, if not None renames all columns
+                 to these strings, must be the same length as columns
+                 in file that is read
+
+:return None:
+
+astropy.table readable formats are as follows:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadImageAndCombine}
+
+Defined in \spirouImage\path{.spirouFITS.readimage_and_combine}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadImageAndCombine(p, framemath='+', filename=None, filenames=None, log=True)
+spirouImage.spirouFITS.readimage_and_combine(p, framemath='+', filename=None, filenames=None, log=True)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the image 'fitsfilename' defined in p and adds files defined in
+'arg_file_names' if add is True
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            
+            optional:
+            fitsfilename: string, the full path of for the main raw fits
+                  file for a recipe i.e. /data/raw/20170710/filename.fits
+                  (if filename is None this is required)
+                  
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+                  (if filenames is None this is required)
+
+:param framemath: string, controls how files should be added
+
+            currently supported are:
+            'add' or '+'           - adds the frames
+            'sub' or '-'           - subtracts the frames
+            'average' or 'mean'    - averages the frames
+            'multiply' or '*'      - multiplies the frames
+            'divide' or '/'        - divides the frames
+            'none'                 - does not add
+            
+:param filename: string or None, filename of the image to read, if None
+                 then p['fitsfilename'] is used
+
+:param filenames: list of strings or None, filenames to combine with 
+                  "filename", if None then p['arg_file_names'] is used
+
+:param log: bool, if True logs opening and size
+
+:return image: numpy array (2D), the image
+:return header: dictionary, the header file of the image
+:return nx: int, the shape in the first dimension, i.e. data.shape[0]
+:return ny: int, the shape in the second dimension, i.e. data.shape[1]
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadFlatFile}
+
+Defined in \spirouImage\path{.spirouFITS.read_flat_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadFlatFile(p, hdr=None, filename=None, key=None)
+spirouImage.spirouFITS.read_flat_file(p, hdr=None, filename=None, key=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the flat file (from calib database or filename)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+            log_opt: string, log option, normally the program name
+
+:param hdr: dictionary or None, the header dictionary to look for the
+                 acquisition time in, if None loads the header from
+                 p['fitsfilename']
+:param filename: string or None, the filename and path of the tilt file,
+                 if None gets the FLAT file from the calib database
+                 keyword "FLAT_{fiber}"
+:param key: string or None, if None key='FLAT_{fiber}' else uses string 
+            as key from calibDB (first entry) to get wave file
+
+:return wave: numpy array (2D), the flat image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadBlazeFile}
+
+Defined in \spirouImage\path{.spirouFITS.read_blaze_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadBlazeFile(p, hdr=None, filename=None, key=None)
+spirouImage.spirouFITS.read_blaze_file(p, hdr=None, filename=None, key=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the blaze file (from calib database or filename)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+:param hdr: dictionary or None, the header dictionary to look for the
+                 acquisition time in, if None loads the header from
+                 p['fitsfilename']
+:param filename: string or None, the filename and path of the tilt file,
+                 if None gets the WAVE file from the calib database
+                 keyword "BLAZE_{fiber}"
+:param key: string or None, if None key='BLAZE_{fiber}' else uses string
+            as key from calibDB (first entry) to get wave file
+
+:param return_header: bool, if True returns header file else just returns
+                      wave file
+:return blaze: numpy array (2D), the blaze function (along x-direction)
+              for each order
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadHeader}
+
+Defined in \spirouImage\path{.spirouFITS.read_header}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadHeader(p=None, filepath=None, ext=0)
+spirouImage.spirouFITS.read_header(p=None, filepath=None, ext=0)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Read the header from a file at "filepath" with extention "ext" (default=0)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param filepath: string, filename and path of FITS file to open
+:param ext: int, extension in FITS rec to open (default = 0)
+
+:return hdict: dictionary, the dictionary with key value pairs
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadKey}
+
+Defined in \spirouImage\path{.spirouFITS.read_key}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadKey(p, hdict=None, key=None)
+spirouImage.spirouFITS.read_key(p, hdict=None, key=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Read a key from hdict (or p if hdict is not defined) and return it's
+value.
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param hdict: dictionary or None, the dictionary to add the key to once
+              found, if None creates a new dictionary
+:param key: string, key in the dictionary to find
+
+:return value: object, the value of the key from hdict
+               (or p if hdict is None)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{Read2Dkey}
+
+Defined in \spirouImage\path{.spirouFITS.read_key_2d_list}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.Read2Dkey(p, hdict, key, dim1, dim2)
+spirouImage.spirouFITS.read_key_2d_list(p, hdict, key, dim1, dim2)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Read a set of header keys that were created from a 2D list
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param hdict: dictionary, HEADER dictionary to extract key/value pairs from
+:param key: string, prefix of HEADER key to construct 2D list from
+             key[number]
+
+             where number = (row number * number of columns) + column number
+             where column number = dim2 and row number = range(0, dim1)
+:param dim1: int, the number of elements in dimension 1 (number of rows)
+:param dim2: int, the number of columns in dimension 2 (number of columns)
+
+:return value: numpy array (2D), the reconstructed 2D list of variables
+               from the HEADER dictionary keys
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadTiltFile}
+
+Defined in \spirouImage\path{.spirouFITS.read_tilt_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadTiltFile(p, hdr=None, filename=None, key=None, return_filename=False)
+spirouImage.spirouFITS.read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+  Reads the tilt file (from calib database or filename) and using the
+  'kw_TILT' keyword-store extracts the tilts for each order
+
+  :param p: parameter dictionary, ParamDict containing constants
+      Must contain at least:
+              fitsfilename: string, the full path of for the main raw fits
+                            file for a recipe
+                            i.e. /data/raw/20170710/filename.fits
+              kw_TILT: list, the keyword list for kw_TILT (defined in
+                       spirouKeywords.py)
+              IC_TILT_NBO: int, Number of orders in tilt file
+
+  :param hdr: dictionary or None, the header dictionary to look for the
+                   acquisition time in, if None loads the header from
+                   p['fitsfilename']
+  :param filename: string or None, the filename and path of the tilt file,
+                   if None gets the TILT file from the calib database
+                   keyword "TILT"
+  :param key: string or None, if None key='TILT' else uses string as key
+              from calibDB (first entry) to get tilt file
+  :param return_filename: bool, if true return the filename only
+
+  if return_filename is False
+      :return tilt: numpy array (1D), the tilts for each order
+  else
+      :return read_file: string, name of tilt file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadWaveFile}
+
+Defined in \spirouImage\path{.spirouFITS.read_wave_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadWaveFile(p, hdr=None, filename=None, key=None, return_header=False,
+                         return_filename=False)
+spirouImage.spirouFITS.read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
+                                      return_filename=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the wave file (from calib database or filename)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+:param hdr: dictionary or None, the header dictionary to look for the
+                 acquisition time in, if None loads the header from
+                 p['fitsfilename']
+:param filename: string or None, the filename and path of the tilt file,
+                 if None gets the WAVE file from the calib database
+                 keyword "WAVE_{fiber}"
+:param key: string or None, if None key='WAVE' else uses string as key
+            from calibDB (first entry) to get wave file
+:param return_header: bool, if True returns header file else just returns
+                      wave file
+:param return_filename: bool, if true return the filename only
+
+
+if return_filename is False and return header is False
+                      
+    :return wave: numpy array (2D), the wavelengths for each pixel 
+                  (x-direction) for each order
+elif return_filename is False:
+    :return wave: numpy array (2D), the wavelengths for each pixel 
+                  (x-direction) for each order
+    :return hdict: dictionary, the header file of the wavelength solution
+else:
+    :return read_file: string, the file name associated with the wavelength
+                       solution
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadOrderProfile}
+
+Defined in \spirouImage\path{.spirouFITS.read_order_profile_superposition}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadOrderProfile(p, hdr=None, filename=None)
+spirouImage.spirouFITS.read_order_profile_superposition(p, hdr=None, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Read the order profile superposition image from either "filename" (if not
+None) or get filename from the calibration database using "p"
+
+"ORDER_PROFILE_{X}" must be in calibration database if filename is None
+where X is either p["ORDERP_FILE"] or p["FIBER"] (precedence in that order)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            ORDERP_FILE: string, the suffix for the order profile
+                         calibration database key (usually the fiber type)
+                         - read from "orderp_file_fpall"
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+            log_opt: string, log option, normally the program name
+
+:param hdr: dictionary or None, header dictionary (used to get the
+            acquisition time if trying to get "ORDER_PROFILE_{X}" from
+            the calibration database, if None uses the header from the
+            first file in "ARG_FILE_NAMES" i.e. "FITSFILENAME"
+:param filename: string or None, if defined no need for "hdr" or keys from
+                 "p" the order profile is read straight from "filename"
+
+:return orderp: numpy array (2D), the order profile image read from file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ResizeImage}
+
+Defined in \spirouImage\path{.spirouImage.resize}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ResizeImage(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None, getshape=True)
+spirouImage.spirouImage.resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None, getshape=True)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Resize an image based on a pixel values
+
+:param image: numpy array (2D), the image
+:param x: None or numpy array (1D), the list of x pixels
+:param y: None or numpy array (1D), the list of y pixels
+:param xlow: int, x pixel value (x, y) in the bottom left corner,
+             default = 0
+:param xhigh:  int, x pixel value (x, y) in the top right corner,
+             if None default is image.shape(1)
+:param ylow: int, y pixel value (x, y) in the bottom left corner,
+             default = 0
+:param yhigh: int, y pixel value (x, y) in the top right corner,
+             if None default is image.shape(0)
+:param getshape: bool, if True returns shape of newimage with newimage
+
+if getshape = True
+:return newimage: numpy array (2D), the new resized image
+:return nx: int, the shape in the first dimension, i.e. data.shape[0]
+:return ny: int, the shape in the second dimension, i.e. data.shape[1]
+
+if getshape = False
+:return newimage: numpy array (2D), the new resized image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{WriteImage}
+
+Defined in \spirouImage\path{.spirouFITS.writeimage}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.WriteImage(filename, image, hdict=None, dtype=None)
+spirouImage.spirouFITS.writeimage(filename, image, hdict=None, dtype=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Writes an image and its header to file
+
+:param filename: string, filename to save the fits file to
+:param image: numpy array (2D), the image
+:param hdict: dictionary or None, header dictionary to write to fits file
+
+            Must be in form:
+
+                    hdict[key] = (value, comment)
+            or
+                    hdict[key] = value     (comment will be equal to
+                                            "UNKNOWN"
+            if None does not write header to fits file                      
+                            
+:param dtype: None or hdu format type, forces the image to be in the
+              format type specified (if not None)
+
+              valid formats are for example: 'int32', 'float64'
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{WriteTable}
+
+Defined in \spirouImage\path{.spirouTable.write_table}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.WriteTable(table, filename, fmt='fits')
+spirouImage.spirouTable.write_table(table, filename, fmt='fits')
+\end{pythonbox}
+
+\begin{pythondocstring}
+Writes a table to file "filename" with format "fmt"
+
+:param filename: string, the filename and location of the table to read
+:param fmt: string, the format of the table to read from (must be valid
+            for astropy.table to read - see below)
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+

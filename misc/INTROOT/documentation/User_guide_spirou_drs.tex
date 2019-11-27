@@ -1,0 +1,162 @@
+ 
+%%% DOCUMENTCLASS 
+%%%-------------------------------------------------------------------------------
+
+\documentclass[
+a4paper, % Stock and paper size.
+10pt, % Type size.
+% article,
+% oneside, 
+onecolumn, % Only one column of text on a page.
+% openright, % Each chapter will start on a recto page.
+% openleft, % Each chapter will start on a verso page.
+openany, % A chapter may start on either a recto or verso page.
+]{memoir}
+
+%%% PACKAGES 
+%%%------------------------------------------------------------------------------
+\input{Config/packages}
+
+
+%%% Developer or User doc
+%%%-------------------------------------------------------------------------------
+\newif\ifdevguide
+\devguidefalse
+
+\newif\ifquickguide
+\quickguidefalse
+
+%%% Preample
+%%%-------------------------------------------------------------------------------
+\input{Config/preamble}
+
+%%% INTERNAL HYPERLINKS
+%%%-------------------------------------------------------------------------------
+
+\hypersetup{
+    pdfauthor={Neil James Cook},
+    pdfcreator={Neil James Cook},
+    pdftitle={SPIRou User Guide},
+    pdfsubject={SPIRou DRS},
+    pdfkeywords={SPIRou, DRS, Pipeline},
+    colorlinks=true,         % false: boxed links; true: colored links
+    linkcolor=blue,          % color of internal links (change box color with linkbordercolor)
+    citecolor=Maroon,        % color of links to bibliography
+    filecolor=blue,          % color of file links
+    urlcolor=blue,           % color of external links
+    plainpages=false,
+    bookmarksnumbered,    
+}
+
+%%% MARGIN TEXT
+%%%------------------------------------------------------------------------------
+\SetBgContents{\textcolor{blue}{\MyIDuser}}% Set contents
+\SetBgPosition{-1.5cm,-0.3\textheight}% Select location
+\SetBgOpacity{1.0}% Select opacity
+\SetBgAngle{90.0}% Select rotation of logo
+\SetBgScale{1.25}% Select scale factor of logo
+
+
+%%% MARGIN COLOR
+%%%------------------------------------------------------------------------------
+
+\newlength\myborder
+\myborder=40pt%please adjust the border width :-)
+
+\pagecolor{red!10}
+
+\AddToShipoutPictureBG
+{%
+    \AtPageLowerLeft
+    {%
+        \color{white}%
+    \hspace{\myborder}%
+    \rule[\myborder]{\paperwidth-2\myborder}{\paperheight-2\myborder}%
+  }%
+}
+
+%%% THE DOCUMENT
+%%% Where all the important stuff is included!
+%%%-------------------------------------------------------------------------------
+
+\author{\MyAuthors}
+\title{{\Huge SPIRou Data Reduction Software} \vspace{1cm} \\ \HUGE{User Guide} \\ {\small \MyVersionUser} \\ For DRS \instrument \MyCodeVersion}
+\date{\MyDateUser}
+
+% \usepackage{lipsum} % Just to put in some text
+
+\begin{document}
+
+\frontmatter
+
+\maketitle
+
+% Add logo to title page
+\vspace{1cm}
+\begin{center}
+\includegraphics[width=.5\textwidth]{Figures/Logo_SPIRou-22.pdf}
+\end{center}
+\vspace{1cm}
+
+\begin{abstract}
+\noindent This is the guide to installing, running, and using the SPIRou DRS. 
+\end{abstract}
+\clearpage
+\newpage
+
+\pdfbookmark[1]{\contentsname}{toc}
+\tableofcontents*
+
+
+\clearpage
+
+
+
+%%%-------------------------------------------------------------------------------
+\mainmatter
+% Define the chapters here
+%%%-------------------------------------------------------------------------------
+
+% Chapter: Introduction
+\input{Chapters/Introduction}
+
+% Chapter: Installation guide
+\input{Chapters/QuickInstallation}
+
+% Chapter: Installation guide
+\input{Chapters/Installation}
+
+% Chapter: Data Architecture
+\input{Chapters/Data_Architecture}
+
+% Chapter: Using the DRS
+\input{Chapters/Using_the_DRS}
+
+% Chapter: Required input header keywords
+\input{Chapters/Input_keywords}
+
+% Chapter: User Modifiable Variables
+\input{Chapters/Variables}
+
+% Chapter: The Recipes
+\input{Chapters/The_recipes}
+
+% % Appendi
+% \appendix
+
+% % \addtocontents{toc}{\setlength\cftchapternumwidth{1em}}
+
+% % Appendix A: env_setup.sh
+% \input{Chapters/appendix_env_setup_sh}
+
+%%%-------------------------------------------------------------------------------
+
+\backmatter
+
+%%% BIBLIOGRAPHY
+%%% -------------------------------------------------------------
+
+% \bibliographystyle{utphysics}
+% \bibliography{ref}
+
+\end{document}

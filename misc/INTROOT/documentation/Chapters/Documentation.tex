@@ -1,0 +1,392 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Writing the documentation}
+\label{ch:documentation}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Documentation Architecture}
+\label{ch:documentation:architecture}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The documentation is written in \LaTeX and to ease writing many packages and customizations are used. The documentation is located in the \textcolor{blue}{./documentation} folder. Both the user documentation and the developer documentation (this document) are written together. 
+
+The main \textcolor{blue}{.tex} files are \textcolor{blue}{User\_guide\_spirou\_drs.tex} and \textcolor{blue}{Dev\_guide\_spirou\_drs.tex} these are the files that should be compiled by \LaTeX. As well as this file there are four directories, the `Chapters' directory (containing the content of each chapter), the `Config' directory (containing custom commands, formatting and constants - see Section \ref{ch:documentation:commands}, Section \ref{ch:documentation:constants}, and Section \ref{ch:documentation:code_format}), the `Figures' directory (containing all figures and graphics) and the `Tables' directory containing table \textcolor{blue}{.tex} files. \\
+
+\noindent The documentation is currently written using the `memoir' class file (\url{texdoc.net/texmf-dist/doc/latex/memoir/memman.pdf}) and uses custom chapter styles from \url{ctan.org/pkg/memoirchapterstyles} (Contained within the \textcolor{blue}{.documentation/Config/preamble.tex} file). 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Required \LaTeX packages}
+\label{ch:documentation:packages}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To compile in \LaTeX one needs the following document class:
+\begin{itemize}
+	\item memoir \dotfill Typeset fiction, non-fiction and mathematical books
+\end{itemize}
+
+To compile in \LaTeX\, one needs the following packages:
+\begin{itemize}
+	\item inputenc \dotfill utf8 encoding
+	\item fontenc \dotfill Standard package for selecting font encodings
+	\item babel \dotfill Multilingual support for Plain \TeX or \LaTeX
+	\item microtype \dotfill Sublim­i­nal re­fine­ments to­wards ty­po­graph­i­cal per­fec­tion
+	\item amsmath \dotfill AMS mathematical facilities for \LaTeX
+	\item amssymb \dotfill AMS symbols for \LaTeX
+	\item mathtools \dotfill Mathematical tools to use with amsmath
+	\item memhfixc \dotfill Adjustment for using hyperref in memoir documents
+	\item graphicx \dotfill Enhanced support for graphics
+	\item listings \dotfill Typeset source code listings using \LaTeX
+	\item xcolor \dotfill Driver-independent colour extensions for \LaTeX\, and pdf\LaTeX
+	\item hyperref \dotfill Extensive support for hypertext in \LaTeX
+	\item dirtree \dotfill Display trees in the style of windows explorer
+	\item framed \dotfill Framed or shaded regions that can break across pages
+	\item multirow \dotfill Create tabular cells spanning multiple rows
+	\item float \dotfill Improved interface for floating objects
+	\item background \dotfill Placement of background material on pages of a document
+	\item tcolorbox \dotfill Coloured boxes, for \LaTeX\, examples and theorems
+	\item eso-pic \dotfill Add picture commands (or backgrounds) to every page
+	\item ulem \dotfill Package for underlining
+	\item tocloft \dotfill Con­trol ta­ble of con­tents, fig­ures, etc
+	\item caption \dotfill Cus­tomis­ing cap­tions in float­ing en­vi­ron­ments
+	\item pdflscape \dotfill Make land­scape pages dis­play as land­scape
+	\item xifthen \dotfill Ex­tended con­di­tional com­mands
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Developer documentation content}
+\label{ch:documentation:devguide}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As mentioned above we write the developer documentation and user guide using the same files, for this reason one needs a way to distinguish content that is unique to the user documentation or the developer documentation. This is done using the boolean statement `\textcolor{red}{\textbackslash{ifdevguide}}' (defined in the main \textcolor{blue}{.tex} files for the user documentation - \textcolor{red}{\textbackslash{devguidefalse}} - and developer documentation \textcolor{red}{\textbackslash{devguidetrue}}). 
+
+\noindent An example of a different content for each type of documentation is below:
+\begin{latexbox}
+\ifdevguide
+This is the developer guide.
+\else
+This is the user guide.
+\fi
+\end{latexbox}
+
+\noindent an example of content only for the developer guide is below:
+\begin{latexbox}
+\ifdevguide
+This section is only for developers
+\fi
+\end{latexbox}
+
+\noindent an example of content only for the user guide is below:
+\begin{latexbox}
+\ifdevguide
+\else
+This section is only for developers
+\fi
+\end{latexbox}
+\begin{note}
+As this is the developer guide the content for the user guide only will not be present.
+\end{note}
+\begin{note}
+It is probably never the case where the user documentation will have content that the developer documentation does not need.
+\end{note}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Custom Commands}
+\label{ch:documentation:commands}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To ease writing the documentation some custom commands are defined in \textcolor{blue}{./documentation/Config/commands.tex}. These include the following:
+\begin{itemize}
+	
+	\item \namedlabel{text:definevariable} \textcolor{red}{\textbackslash{definevariable}\{label reference\}\{text\}} - used to create in-text variables (that link to the variables chapter) i.e.:
+	\begin{latexbox}
+	The variable \definevariable{ch:variables}{VARIABLE} can be used.
+	\end{latexbox}
+
+	
+	\item \namedlabel{text:defineinkeyword} \textcolor{red}{\textbackslash{defineinkeyword}\{label reference\}\{text\}}, \textcolor{red}{\textbackslash{defineoutkeyword}\{label reference\}\{text\}} - used to create in-text keywords (that link to the keywords chapter) i.e.:
+	\begin{latexbox}
+	The keyword \defineinkeyword{ch:input_keywords}{IN\_KEYWORD} can be used.
+	The keyword \defineoutkeyword{ch:output_keywords}{OUT\_KEYWORD} can be used.
+	\end{latexbox}
+
+	\item \textcolor{red}{\textbackslash{Program}} - used to highligh a program (writen in small caps). i.e.:
+	\begin{latexbox}
+	The program \Program{AstroPy} can be used.
+	\end{latexbox}
+
+	\newpage
+
+	\item \begin{minipage}[t]{\textwidth}
+	\namedlabel{text:variable_name1}
+	\textcolor{red}{\textbackslash{ParameterEntry}} - used to define a parameter entry. It requires 8 arguments (Variable title, Description, variable name, default value, which recipe it is used in, the place the variable is defined, the code/module/function it is used in -- dev only, and the visibility level -- dev only). i.e.:
+	\begin{latexbox}
+	\namedlabel{text:variablename1}
+	\ParameterEntry{Variable title}
+	{Description of the variable}
+	{VARIABLE\_NAME}
+	{Default Value}{The recipe used the variable is used in.}
+	{The place where the variable is defined.}
+	{The code (module + function) where variable is used.}
+	{
+	Who should be able to change this variable, levels are as follows:
+	\begin{itemize}
+		\item Public: Everyone (including the user)
+		\item Private: Only the developer
+	\end{itemize}
+	}
+	\end{latexbox}
+	\begin{note}
+	the \textcolor{red}{\textbackslash{label}} here is used to link variables with this name (i.e. via \definevariable{text:definevariable}{definevariable})
+	\end{note}
+	\end{minipage}
+
+	\item \begin{minipage}[t]{\textwidth}
+	\namedlabel{text:variable_name2}
+	\textcolor{red}{\textbackslash{PseudoParamEntry}} - used to define a pseudo parameter entry. It requires 6 arguments (Variable title, Description, variable name, which recipe it is used in, the place the variable is defined, the code/module/function it is used in). It is only available for the developer guide. i.e.:
+	\begin{latexbox}
+	\namedlabel{text:variablename2}
+	\PseudoParamEntry{Variable title}
+	{Description of the variable}
+	{VARIABLE\_NAME}
+	{The recipe used the variable is used in.}
+	{The place where the variable is defined.}
+	{The code (module + function) where variable is used.}
+	\end{latexbox}
+	\begin{note}
+	\textcolor{red}{\textbackslash{PseudoParamEntry}} is identical to \textcolor{red}{\textbackslash{ParameterEntry}} other than not requiring a default value and not requiring a visibility level (as it is generally used for code thus a simple value can not be given cleanly and will always be a private variable).
+	\end{note}
+	\begin{note}
+	the \textcolor{red}{\textbackslash{label}} here is used to link variables with this name (i.e. via \definevariable{text:definevariable}{definevariable})
+	\end{note}
+	\end{minipage}
+
+	\item \begin{minipage}[t]{\textwidth}
+	\namedlabel{text:definekeyword}
+	\textcolor{red}{\textbackslash{KeywordEntry}} - used to define a keyword entry. It requires 9 arguments (Keyword title, Description, keyword name, HEADER key name, default HEADER value, HEADER comment, which recipe it is used in, the place the variable is defined, the code/module/function it is used in). It is only available for the developer guide.
+	\begin{latexbox}
+	\namedlabel{text:keywordname}
+	\KeywordEntry{Keyword title}
+	{Description of the keyword}
+	{kw\_variable}{HEADER key}
+	{Default HEADER value}{HEADER comment}
+	{The recipe the keyword is used in}
+	{The place where the keyword is defined}
+	{The code where the keyword is used.}
+	\end{latexbox}
+	\begin{note}
+	the \textcolor{red}{\textbackslash{label}} here is used to link variables with this name (i.e. via \definevariable{text:definekeyword}{definekeyword})
+	\end{note}
+	\end{minipage}
+
+	\item \begin{minipage}[t]{\textwidth} 
+	\textcolor{red}{\textbackslash{customdirtree}} - used to create a directory tree, so add background use with the \textcolor{red}{tcustomdir} environment (see \ref{ch:documentation:code_format}). The format of each line is 
+	\begin{textbox}
+	.{level} {directory}.
+	\end{textbox}
+	\noindent each line must start with a period and end with a period, comments can be added using the \textcolor{red}{\textbackslash{DTcomment}} command.
+
+	\noindent an example is shown below:
+	\begin{latexbox}
+	The file structure should look as follows:
+\begin{tcustomdir}
+\customdirtree{%
+.1 home.
+.2 user1.
+.3 Downloads\DTcomment{User 1 downloads}.
+.3 Documents.
+.4 \DTcomment{Many documents in here}.
+.2 user2.
+.3 Downloads.
+.3 Documents\DTcomment{User 2 documents}.
+}
+\end{tcustomdir}
+	\end{latexbox}
+	\end{minipage}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Constants}
+\label{ch:documentation:constants}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Many constants are setup to ease the writing of this documentation. These can be found in the \textcolor{blue}{./documentation/Config/constants.tex} file. These are defined and use in the form:
+\begin{latexbox}
+% define constant
+\newcommand{\ConstantName}{ConstantName}
+% user constant
+The constant is called \ConstantName
+\end{latexbox}
+
+\noindent Please check out the \textcolor{blue}{constants.tex} file for the list of which constants are currently defined.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Code formatting}
+\label{ch:documentation:code_format}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This section deals with the textbox, cmdbox, pythonbox and \LaTeX boxes seen throughout the documentation. These are defined in \textcolor{blue}{./documentation/Config/code\_format.tex} along with many style definitions (that only need to be changed to change colours/box styles) - this is left out of this guide for berivity.
+
+\begin{itemize}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+A line/lines of text (that are to be edited in a text editor):
+\begin{latexbox}
+\begin{textbox}
+<# A variable name that can be changes to a specific value>
+@VARIABLE_NAME@ = "Variable Value"
+\end{textbox}
+\end{latexbox}
+\end{minipage}
+
+\begin{note}
+A custom title can be added to any code box and any other tcolorbox parameters can be overwritten as follows:
+
+\begin{latexbox}
+\begin{textbox}[title={Custom title}, colback=blue!30!white]
+<# A variable name that can be changes to a specific value>
+@VARIABLE_NAME@ = "Variable Value"
+\end{textbox}
+\end{latexbox}
+
+For keywords and options see the \Program{tcolorbox} documentation here: \url{http://texdoc.net/texmf-dist/doc/latex/tcolorbox/tcolorbox.pdf}. 
+\end{note}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+A line/lines of text (that are to be edited in bash):
+\begin{latexbox}
+\begin{bashbox}
+#!/usr/bin/bash
+# Find out which console you are using
+echo $0
+# Set environment Hello
+export Hello="Hello"
+\end{bashbox}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth}
+A line/lines of text (that are to be edited in bash):
+\begin{latexbox}
+\begin{cshbox}
+#!/usr/bin/tcsh
+# Find out which console you are using
+echo $0
+# Set environment Hello
+setenv Hello "Hello"
+\end{cshbox}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+A line/lines of text to be run in the command shell:
+\begin{latexbox}
+\begin{cmdbox}
+cd (*$\sim$*)/Downloads
+\end{cmdbox}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+A line/lines of text that is print out to the screen (standard output):
+\begin{latexbox}
+\begin{cmdboxprint}
+ This is a print out in the command line
+ produced by using the echo command
+\end{cmdboxprint}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+A line/lines of text in the python terminal or python script
+\begin{latexbox}
+\begin{pythonbox}
+import numpy as np
+print("Hello world")
+print("{0} seconds".format(np.sqrt(25)))
+\end{pythonbox}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+A line/lines of text in \LaTeX code (in raw form and then compiled form).
+\begin{latexbox1}
+\begin{latexbox}[colframe=blue!75!black,]
+This is my \LaTeX code.
+\end{latexbox}
+\end{latexbox1}
+\end{minipage}
+
+\item \begin{minipage}[t]{\textwidth} 
+highlighted textbox:
+\begin{latexbox}
+\begin{thighlight}
+Highlighted section
+\end{thighlight}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+Custom directory tree (highlighted section):
+\begin{latexbox}
+\begin{tcustomdir}
+\customdirtree{%
+.1 home.
+.2 user1\DTcomment{User directories here}.
+.3 Downloads\DTcomment{Sub-directories have increasing numbers}.
+.2 user2 \DTcomment{Each line needs terminating period (`.')}.
+}
+\end{tcustomdir}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+note box:
+\begin{latexbox}
+\begin{note}
+This is a Note
+\end{note}
+\end{latexbox}
+\end{minipage}
+
+
+\item \begin{minipage}[t]{\textwidth} 
+todo box:
+\begin{latexbox}
+\begin{todo}
+This is a to do statement (temporary)
+\end{todo}
+\end{latexbox}
+\end{minipage}
+
+\end{itemize}
