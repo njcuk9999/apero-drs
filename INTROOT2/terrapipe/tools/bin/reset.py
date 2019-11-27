@@ -99,37 +99,54 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     reset1, reset2, reset3 = True, True, True
     reset4, reset5, reset6 = True, True, True
-
+    # ----------------------------------------------------------------------
+    # tmp folder
     if warn:
-        reset1 = drs_reset.reset_confirmation(params, 'Tmp')
+        reset1 = drs_reset.reset_confirmation(params, 'Tmp',
+                                              params['DRS_DATA_WORKING'])
     if reset1:
         drs_reset.reset_tmp_folders(params, log)
     else:
         WLOG(params, '', 'Not resetting tmp folders.')
+    # ----------------------------------------------------------------------
+    # reduced folder
     if warn:
-        reset2 = drs_reset.reset_confirmation(params, 'Reduced')
+        reset2 = drs_reset.reset_confirmation(params, 'Reduced',
+                                              params['DRS_DATA_REDUC'])
     if reset2:
         drs_reset.reset_reduced_folders(params, log)
     else:
         WLOG(params, '', 'Not resetting reduced folders.')
+    # ----------------------------------------------------------------------
+    # calibration folder
     if warn:
-        reset3 = drs_reset.reset_confirmation(params, 'CalibDB')
+        reset3 = drs_reset.reset_confirmation(params, 'CalibDB',
+                                              params['DRS_CALIB_DB'])
     if reset3:
         drs_reset.reset_calibdb(params, log)
     else:
         WLOG(params, '', 'Not resetting CalibDB files.')
+    # ----------------------------------------------------------------------
+    # telluric folder
     if warn:
-        reset4 = drs_reset.reset_confirmation(params, 'TelluDB')
+        reset4 = drs_reset.reset_confirmation(params, 'TelluDB',
+                                              params['DRS_TELLU_DB'])
     if reset4:
         drs_reset.reset_telludb(params, log)
     else:
         WLOG(params, '', 'Not resetting TelluDB files.')
+    # ----------------------------------------------------------------------
+    # log folder
     if warn:
-        reset5 = drs_reset.reset_confirmation(params, 'Log')
+        reset5 = drs_reset.reset_confirmation(params, 'Log',
+                                              params['DRS_DATA_MSG'])
     if reset5:
         drs_reset.reset_log(params)
+    # ----------------------------------------------------------------------
+    # plot folder
     if warn:
-        reset6 = drs_reset.reset_confirmation(params, 'Plot')
+        reset6 = drs_reset.reset_confirmation(params, 'Plot',
+                                              params['DRS_DATA_PLOT'])
     if reset6:
         drs_reset.reset_plot(params)
     else:
