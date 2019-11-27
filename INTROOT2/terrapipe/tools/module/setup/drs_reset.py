@@ -45,13 +45,29 @@ DEBUG = False
 # =============================================================================
 # Define functions
 # =============================================================================
-def reset_confirmation(params, name):
+def is_empty(directory):
+    if os.path.exists(directory):
+        files = os.listdir(directory)
+        if len(files) == 0:
+            return True
+    return False
 
+
+def reset_confirmation(params, name, directory=None):
+    # ----------------------------------------------------------------------
+    if directory is not None:
+        # test if empty
+        empty = is_empty(params['DRS_DATA_WORKING'])
+        if empty:
+            return True
+    # ----------------------------------------------------------------------
     # get the text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # Ask if user wants to reset
     WLOG(params, '', TextEntry('40-502-00001', args=[name]), colour='yellow')
+    if directory is not None:
+        WLOG(params, '', '\t({0})'.format(directory), colour='yellow')
     # ----------------------------------------------------------------------
     # line break
     print('\n')
