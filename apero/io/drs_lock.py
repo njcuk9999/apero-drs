@@ -110,6 +110,9 @@ def check_lock_file(p, filename):
     if wait_time > max_wait_time:
         eargs = [filename, lock_file]
         WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
+    else:
+        # TODO: move to db or remove
+        WLOG(p, '', 'Unlocking checkfile: {0}'.format(lock_file))
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     lock = open_lock_file(p, lock_file, filename)
@@ -181,6 +184,9 @@ def open_lock_file(p, lock_file, filename):
     if wait_time > p['LOCKOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
         WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
+    # TODO: move to db or remove
+    WLOG(p, '', 'Unlocking openfile: {0}'.format(lock_file))
+
     return lock
 
 
@@ -250,7 +256,8 @@ def close_lock_file(p, lock, lock_file, filename):
     if wait_time > p['LOCKOPEN_MAX_WAIT']:
         eargs = [filename, lock_file]
         WLOG(p, 'error', TextEntry('01-001-00002', args=eargs))
-
+    # TODO: move to db or remove
+    WLOG(p, '', 'Unlocking closefile: {0}'.format(lock_file))
 
 # =============================================================================
 # End of code
