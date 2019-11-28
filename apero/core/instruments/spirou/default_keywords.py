@@ -1172,12 +1172,12 @@ KW_MKTELL_TAPAS_SNUM.set(key='MKTTAPSN',
 
 # The recovered airmass value calculated in mktellu calculation
 KW_MKTELL_AIRMASS = KW_MKTELL_AIRMASS.copy(__NAME__)
-KW_MKTELL_AIRMASS.set(key='TAU_OTHE',
+KW_MKTELL_AIRMASS.set(key='MTAUOTHE',
                       comment='mktellu recovered airmass (tau other)')
 
 # The recovered water optical depth calculated in mktellu calculation
 KW_MKTELL_WATER = KW_MKTELL_WATER.copy(__NAME__)
-KW_MKTELL_WATER.set(key='TAU_H2O',
+KW_MKTELL_WATER.set(key='MTAUH2O',
                     comment='mktellu recovered water depth (tau H2O)')
 
 # -----------------------------------------------------------------------------
@@ -1261,7 +1261,7 @@ KW_FTELLU_DVTELL2.set(key='DV_TELL1',
 
 # Tau Water depth calculated in fit tellu
 KW_FTELLU_TAU_H2O = KW_FTELLU_TAU_H2O.copy(__NAME__)
-KW_FTELLU_TAU_H2O.set(key='TAU_H20', comment='ftellu TAPAS tau H2O')
+KW_FTELLU_TAU_H2O.set(key='TAU_H2O', comment='ftellu TAPAS tau H2O')
 
 # Tau Rest depth calculated in fit tellu
 KW_FTELLU_TAU_REST = KW_FTELLU_TAU_REST.copy(__NAME__)
