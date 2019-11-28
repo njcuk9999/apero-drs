@@ -691,7 +691,10 @@ def _special_keys_present(recipe, quiet, fkwargs):
                 quiet = True
     # deal with quiet key (special case)
     if _search_for_key('quiet', fkwargs):
-        quiet = True
+        if 'quiet' in fkwargs and fkwargs['quiet'] is None:
+            quiet = False
+        else:
+            quiet = True
     # return the updated quiet flag
     return quiet
 
