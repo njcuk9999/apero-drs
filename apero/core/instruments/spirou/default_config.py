@@ -49,7 +49,7 @@ DRS_DEBUG.value = 0
 # -----------------------------------------------------------------------------
 # path settings
 # -----------------------------------------------------------------------------
-#   Define the root installation directory (INTROOT)
+#   Define the root installation directory
 DRS_ROOT = DRS_ROOT.copy(__NAME__)
 DRS_ROOT.value = '/drs/spirou/drs/'
 
