@@ -151,10 +151,25 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     exptime = infile.get_key('KW_EXPTIME')
     gain = infile.get_key('KW_GAIN')
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+    saturate = infile.get_key('KW_SATURATE', dtype=float)
+    frmtime = infile.get_jey('KW_FRMTIME', dtype=float)
     nfiles = infile.numfiles
 
     # log that we are calibrating a file
     WLOG(params, 'info', TextEntry('40-014-00038', args=[infile.filename]))
+
+    # ----------------------------------------------------------------------
+    # image 0 remove pixels that are out of bounds
+    # ----------------------------------------------------------------------
+    # Pixel values need to be within reasonable bounds considering the
+    # physics of the IR array, and if they are not, we set them to NaN.
+    # Upper bound is the saturation/frame time (we express things as slope).
+    # A pixel with a value greater than can be recorded by the array is
+    # nonphysical. The lower bound is set at -10 * readout noise.
+    upperlim = saturate / frmtime
+    lowerlim = -10 * (sigdet * gain) / frmtime
+    mask = (image > upperlim) | (image < lowerlim)
+    image[mask] = np.nan
 
     # ----------------------------------------------------------------------
     # image 1 is corrected for dark
@@ -178,6 +193,10 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     if converte:
         image2 = drs_image.convert_to_e(params, image2, gain=gain,
                                         exptime=exptime)
+        # convert limits
+        upperlim = upperlim / gain
+        lowerlim = lowerlim / gain
+
     # ----------------------------------------------------------------------
     # image 2 is resized (if required)
     # ----------------------------------------------------------------------
@@ -232,6 +251,17 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
         image5 = drs_image.clean_hotpix(image4, badpixmask)
     else:
         image5 = np.array(image4)
+
+    # ----------------------------------------------------------------------
+    # image 5 remove pixels that are out of bounds
+    # ----------------------------------------------------------------------
+    # Pixel values need to be within reasonable bounds considering the
+    # physics of the IR array, and if they are not, we set them to NaN.
+    # Upper bound is the saturation/frame time (we express things as slope).
+    # A pixel with a value greater than can be recorded by the array is
+    # nonphysical. The lower bound is set at -10 * readout noise.
+    mask = (image5 > upperlim) | (image5 < lowerlim)
+    image5[mask] = np.nan
 
     # ----------------------------------------------------------------------
     # make properties dictionary
