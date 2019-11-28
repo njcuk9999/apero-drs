@@ -60,7 +60,7 @@ raw_file = drs_finput('DRS_RAW', iletype='.fits', suffix='',
 raw_dark_dark_int = drs_finput('RAW_DARK_DARK_INT', KW_CCAS='pos_pk',
                                KW_CREF='pos_pk', KW_OBSTYPE='DARK',
                                KW_CALIBWH='P4',
-                               filetype='.fits', suffix='', inext='d.fits',
+                               filetype='.fits', suffix='', inext='.fits',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_int)
 
@@ -68,26 +68,28 @@ raw_file.addset(raw_dark_dark_int)
 raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', KW_CCAS='pos_pk',
                                KW_CREF='pos_pk', KW_OBSTYPE='DARK',
                                KW_CALIBWH='P5',
-                               filetype='.fits', suffix='', inext='d.fits',
+                               filetype='.fits', suffix='', inext='.fits',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_tel)
 
-# sky observation (sky dark) -- note this is a placeholder and will not exist
-# raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', KW_CCAS='PLACEHOLDER',
-#                                KW_CREF='PLACEHOLDER', KW_OBSTYPE='OBJECT',
-#                                filetype='.fits', suffix='', inext='o.fits',
-#                                outfunc=out.blank)
-# raw_file.addset(raw_dark_dark_sky)
-# TODO: Once all objects have TRG_TYPE we need to filter out sky observations
-# TODO: with the following
 # sky observation (sky dark)
 raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', KW_CCAS='pos_pk',
                                KW_CREF='pos_pk',
                                KW_OBSTYPE='OBJECT',
                                KW_TARGET_TYPE='SKY',
-                               filetype='.fits', suffix='', inext='o.fits',
+                               filetype='.fits', suffix='', inext='.fits',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_sky)
+
+
+# sky observations (with fp)
+raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY', KW_CCAS='pos_pk',
+                               KW_CREF='pos_fp',
+                               KW_OBSTYPE='OBJECT',
+                               KW_TARGET_TYPE='SKY',
+                               filetype='.fits', suffix='', inext='.fits',
+                               outfunc=out.blank)
+raw_file.addset(raw_dark_fp_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -134,6 +136,12 @@ raw_fp_fp = drs_finput('RAW_FP_FP', KW_CCAS='pos_fp', KW_CREF='pos_fp',
 raw_file.addset(raw_fp_fp)
 
 # -----------------------------------------------------------------------------
+# raw LFC files
+raw_lfc_lfc = drs_finput('RAW_LFC_LFC', KW_CCAS='pos_rs', KW_CREF='pos_rs',
+                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+raw_file.addset(raw_lfc_lfc)
+
+# -----------------------------------------------------------------------------
 # raw object files
 # raw_obj_dark = drs_finput('RAW_OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
 #                           KW_OBSTYPE='OBJECT', outfunc=out.blank,
@@ -161,25 +169,25 @@ raw_file.addset(raw_fp_fp)
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                           KW_OBSTYPE='OBJECT', outfunc=out.blank,
                           KW_TARGET_TYPE='TARGET',
-                          filetype='.fits', suffix='', inext='o.fits')
+                          filetype='.fits', suffix='', inext='.fits')
 raw_file.addset(raw_obj_dark)
 
 raw_obj_fp = drs_finput('RAW_OBJ_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
                         KW_OBSTYPE='OBJECT', outfunc=out.blank,
                         KW_TARGET_TYPE='TARGET',
-                        filetype='.fits', suffix='', inext='o.fits')
+                        filetype='.fits', suffix='', inext='.fits')
 raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
                          KW_TARGET_TYPE='TARGET',
-                         filetype='.fits', suffix='', inext='o.fits')
+                         filetype='.fits', suffix='', inext='.fits')
 raw_file.addset(raw_obj_hc1)
 
 raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
                          KW_TARGET_TYPE='TARGET',
-                         filetype='.fits', suffix='', inext='o.fits')
+                         filetype='.fits', suffix='', inext='.fits')
 raw_file.addset(raw_obj_hc2)
 
 # -----------------------------------------------------------------------------
@@ -266,6 +274,13 @@ pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', KW_DPRTYPE='DARK_DARK_SKY',
                               inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_dark_sky)
 
+pp_dark_fp_sky = drs_finput('DARK_FP_SKY', KW_DPRTYPE='DARK_FP_SKY',
+                              filetype='.fits',
+                              suffix='_pp', intype=raw_dark_fp_sky,
+                              inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_dark_fp_sky)
+
+
 # -----------------------------------------------------------------------------
 # flat
 pp_flat_dark = drs_finput('FLAT_DARK', KW_DPRTYPE='FLAT_DARK',
@@ -313,6 +328,13 @@ pp_fp_fp = drs_finput('FP_FP', KW_DPRTYPE='FP_FP',
                       suffix='_pp', intype=raw_fp_fp,
                       inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_fp)
+
+# -----------------------------------------------------------------------------
+# LFC
+pp_lfc_lfc = drs_finput('LFC_LFC', KW_DPRTYPE='LFC_LFC',
+                        filetype='.fits', suffix='_pp', intype=raw_lfc_lfc,
+                        inext='.fits', outfunc=out.general_file)
+
 # -----------------------------------------------------------------------------
 #  object
 pp_obj_dark = drs_finput('OBJ_DARK', KW_DPRTYPE='OBJ_DARK',
