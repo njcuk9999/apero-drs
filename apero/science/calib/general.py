@@ -152,7 +152,7 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     gain = infile.get_key('KW_GAIN')
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
     saturate = infile.get_key('KW_SATURATE', dtype=float)
-    frmtime = infile.get_jey('KW_FRMTIME', dtype=float)
+    frmtime = infile.get_key('KW_FRMTIME', dtype=float)
     nfiles = infile.numfiles
 
     # log that we are calibrating a file
