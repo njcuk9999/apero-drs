@@ -109,19 +109,26 @@ __NOTE__: these three are equivalent only do __one__
 ##### i) source environmental variables directly
 
  `source {DRS_UCONFIG}/apero.{SYSTEM}.setup`
+ and type this command every time you open a new terminal
 
 where: 
  - `{DRS_UCONFIG}` is the config path set up in step __A__
  - `{SYSTEM}` is either `bash` or `sh` depending on your shell
 
-##### ii) alias to environmental variables
+##### ii) alias to apero to your startup script 
+For example 
 
 `alias apero "source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`  (tcsh/csh)
 `alias apero=""source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`  (bash)
 
+to `~/.bashrc` or `~/.bash_profile` or  `~/.tcshrc` or `~/.profile`
+
+and type `apero` every time you open a new terminal 
+
 ##### iii) add the contents of `{DRS_UCONFIG}/apero.{SYSTEM}.setup` to your startup script
 
 i.e. one of the following `~/.bashrc`, `~/.bash_profile`, `~/.tcshrc`, `~/.profile`
+(apero will be ready to use in every new terminal).
 
 For example adding to `~/.bashrc`:
 ```bash
