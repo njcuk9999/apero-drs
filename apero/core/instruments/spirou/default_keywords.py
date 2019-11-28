@@ -22,47 +22,60 @@ __NAME__ = 'config.instruments.spirou.default_keywords.py'
 #     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
 #     'jyear', 'byear_str', 'jyear_str'
 KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
-KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float)
+KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float,
+               comment='Modified Julian Date at start of observation')
 
 # define the MJ end date HEADER key
 KW_MJDEND = KW_MJDEND.copy(__NAME__)
-KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float)
+KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float,
+              comment='Modified Julian Date at end of observation')
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
-KW_DATE_OBS.set(key='DATE-OBS')
+KW_DATE_OBS.set(key='DATE-OBS', comment='Date at start of observation (UTC)')
 
 # define the observation time HEADER key
 KW_UTC_OBS = KW_UTC_OBS.copy(__NAME__)
-KW_UTC_OBS.set(key='UTC-OBS')
+KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
-KW_RDNOISE.set(key='RDNOISE')
+KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-KW_GAIN.set(key='GAIN')
+KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)')
+
+# define the saturation limit HEADER key
+KW_SATURATE = KW_SATURATE.copy(__NAME__)
+KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ')
+
+# define the frame time HEADER key
+KW_FRMTIME = KW_FRMTIME.copy(__NAME__)
+KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads')
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='EXPTIME', unit=uu.s)
+KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
-KW_OBSTYPE.set(key='OBSTYPE')
+KW_OBSTYPE.set(key='OBSTYPE', comment='Observation / Exposure type')
 
 # define the science fiber type HEADER key
 KW_CCAS = KW_CCAS.copy(__NAME__)
-KW_CCAS.set(key='SBCCAS_P')
+KW_CCAS.set(key='SBCCAS_P',
+            comment='SPIRou Cassegrain Fiber Position (predefined)')
 
 # define the reference fiber type HEADER key
 KW_CREF = KW_CREF.copy(__NAME__)
-KW_CREF.set(key='SBCREF_P')
+KW_CREF.set(key='SBCREF_P',
+            comment='SPIRou Reference Fiber Position (predefined)')
 
 # define the calibration wheel position
 KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
-KW_CALIBWH.set(key='SBCALI_P')
+KW_CALIBWH.set(key='SBCALI_P',
+               comment='SPIRou calibwh predefined position or angle')
 
 # define the target type (object/sky)
 KW_TARGET_TYPE = KW_TARGET_TYPE.copy(__NAME__)
@@ -70,7 +83,7 @@ KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object')
 
 # define the density HEADER key
 KW_CDEN = KW_CDEN.copy(__NAME__)
-KW_CDEN.set(key='SBCDEN_P')
+KW_CDEN.set(key='SBCDEN_P', comment='SPIRou Calib-Reference density (0 to 3.3)')
 
 # define polarisation HEADER key
 KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
@@ -78,59 +91,65 @@ KW_CMMTSEQ.set(key='CMMTSEQ')
 
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
-KW_CMPLTEXP.set(key='CMPLTEXP')
+KW_CMPLTEXP.set(key='CMPLTEXP',
+                comment='Exposure number within the exposure sequence ')
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
-KW_NEXP.set(key='NEXP')
+KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence')
 
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
-KW_PI_NAME.set(key='PI_NAME')
+KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA', unit=uu.hourangle)
+KW_OBJRA.set(key='OBJRA', unit=uu.hourangle, comment='Target right ascension')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC', unit=uu.deg)
+KW_OBJDEC.set(key='OBJDEC', unit=uu.deg, comment='Target declination ')
 
 # define the observation name
-# Todo: Change to OBJECT?
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='OBJECT')
+KW_OBJNAME.set(key='OBJECT', comment='Target name')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
-KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear')
+KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear',
+                comment='Target equinox ')
 
 # define the observation proper motion in ra HEADER key
 KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
-KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec / uu.yr)
+KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec / uu.yr,
+               comment='Target right ascension proper motion in as/yr ')
 
 # define the observation proper motion in dec HEADER key
 KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
-KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr)
+KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr,
+                comment='Target declination proper motion in as/yr')
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
-KW_AIRMASS.set(key='AIRMASS')
+KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation')
 
 # define the weather tower temperature HEADER key
 KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
-KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT')
+KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
+                          comment='86 temp, air, weather tower deg C  ')
 
 # define the cassegrain temperature HEADER key
 KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
-KW_CASS_TEMP.set(key='SB_POL_T')
+KW_CASS_TEMP.set(key='SB_POL_T',
+                 comment='SPIRou tpolar temp at start of exp (deg C)  ')
 
 # define the humidity HEADER key
 KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
-KW_HUMIDITY.set(key='RELHUMID')
+KW_HUMIDITY.set(key='RELHUMID',
+                comment='87 relative humidity, weather tower % ')
 
 # define the object temperature HEADER key
 KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
