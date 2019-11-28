@@ -387,10 +387,6 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
         wmsg += '\n\t{0}C={1:.6f}\t{0}(D-1)={2:.6f}'.format(*wargs2)
         WLOG(params, '', wmsg)
 
-
-
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
     # plot if in debug mode
     recipe.plot('SHAPE_LINEAR_TPARAMS', image=image1, x1=x1, x2=x2,
                 y1=y1, y2=y2)
