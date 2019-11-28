@@ -280,10 +280,10 @@ def clean_hotpix(image, badpix):
     # within the +-N sigma rejection
     badpix = badpix | bad | ~np.isfinite(image)
     # we remove bad pixels at the periphery of the image
-    badpix[0, :] = False
-    badpix[-1, :] = False
-    badpix[:, 0] = False
-    badpix[:, -1] = False
+    # badpix[0, :] = False
+    # badpix[-1, :] = False
+    # badpix[:, 0] = False
+    # badpix[:, -1] = False
     # find the pixel locations where we have bad pixels
     x, y = np.where(badpix)
     # set up the boxes
@@ -291,12 +291,17 @@ def clean_hotpix(image, badpix):
     keep3d = np.zeros([len(x), 3, 3], dtype=bool)
     # centering on zero
     yy, xx = np.indices([3, 3]) - 1
+
+    sz = image.shape
     # loop around the pixels in x and y
     for ix in range(-1, 2):
         for iy in range(-1, 2):
             # fill in the values for box and keep
-            box3d[:, ix + 1, iy + 1] = image[x + ix, y + iy]
-            keep3d[:, ix + 1, iy + 1] = ~badpix[x + ix, y + iy]
+            # box3d[:, ix + 1, iy + 1] = image[x + ix, y + iy]
+            # keep3d[:, ix + 1, iy + 1] = ~badpix[x + ix, y + iy]
+            box3d[:,ix+1,iy+1] = image[(x+ix) % sz[0], (y+iy) % sz[1]]
+            keep3d[:,ix+1,iy+1] = ~badpix[(x+ix)% sz[0], (y+iy) % sz[1]]
+
     # find valid neighbours
     nvalid = np.sum(np.sum(keep3d, axis=1), axis=1)
     # keep only points with >5 valid neighbours
