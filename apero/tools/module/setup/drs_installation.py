@@ -474,6 +474,11 @@ def clean_install(all_params):
         # skip is we are not installing instrument
         if instrument not in all_params:
             continue
+        # check if user wants a clean install
+        if not all_params[instrument]['CLEAN_INSTALL']:
+            continue
+        # log that we are performing clean install
+        cprint('\t - Performing clean installation', 'm')
         # add to environment
         add_paths(all_params)
         # construct reset command
