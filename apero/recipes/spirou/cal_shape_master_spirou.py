@@ -178,7 +178,7 @@ def __main__(recipe, params):
     from astropy.table import Table
     import os
     master_fp_file1 = 'DEBUG_FP_MASTER_CUBE_{0}.npy'.format(fpfile.basename)
-    master_fp_file2 = 'DEBUG_FP_MASTER_CUBE_{0}.npy'.format(fpfile.basename)
+    master_fp_file2 = 'DEBUG_FP_MASTER_CUBE_{0}'.format(fpfile.basename)
 
     if os.path.exists(master_fp_file1):
         fpcube = np.load(master_fp_file1)
