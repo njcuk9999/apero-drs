@@ -1025,6 +1025,10 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
+
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
