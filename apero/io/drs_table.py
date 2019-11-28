@@ -487,14 +487,10 @@ def write_fits_table(p, astropy_table, output_filename):
     try:
         # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
-        # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, output_filename)
         # remove backup file
         if os.path.exists(output_filename) and os.path.exists(backup_file):
             os.remove(backup_file)
     except Exception as e:
-        # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, output_filename)
         # cond 1 output file exists
         cond1 = os.path.exists(output_filename)
         # remove backup file
@@ -503,10 +499,13 @@ def write_fits_table(p, astropy_table, output_filename):
         # if index file does not exist take it from the backup file
         elif not cond1 and os.path.exists(backup_file):
             shutil.copy(backup_file, output_filename)
+        # close lock file
+        drs_lock.close_lock_file(p, lock, lock_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
-
+    # close lock file
+    drs_lock.close_lock_file(p, lock, lock_file, output_filename)
 
 # TODO: Find cause of this problem and fix properly
 def deal_with_missing_end_card(p, filename, e, func_name):
