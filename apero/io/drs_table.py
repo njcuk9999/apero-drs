@@ -482,7 +482,7 @@ def write_fits_table(p, astropy_table, output_filename):
             drs_lock.close_lock_file(p, lock, lock_file, output_filename)
             # log error
             eargs = [output_filename, type(e), e, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
+            WLOG(p, 'error', TextEntry('01-002-00023', args=eargs))
     # write data
     try:
         # write file
@@ -495,9 +495,14 @@ def write_fits_table(p, astropy_table, output_filename):
     except Exception as e:
         # close lock file
         drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+        # cond 1 output file exists
+        cond1 = os.path.exists(output_filename)
         # remove backup file
-        if os.path.exists(output_filename) and os.path.exists(backup_file):
+        if cond1 and os.path.exists(backup_file):
             os.remove(backup_file)
+        # if index file does not exist take it from the backup file
+        elif not cond1 and os.path.exists(backup_file):
+            shutil.copy(backup_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
