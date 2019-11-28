@@ -539,6 +539,10 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
                                 'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
+
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
@@ -1021,10 +1025,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
-
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
-
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
