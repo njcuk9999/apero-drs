@@ -151,8 +151,8 @@ def correct_local_background(params, image, **kwargs):
     sz = image1.shape
     # size of the smaller image. It is an integer divider of the input image
     # 4088 on an axis and wN_ker = 9 would lead to an 8x scale-down (8*511)
-    sz_small = [sz[1] // largest_divisor_below(sz[1], wy_ker),
-                sz[0] // largest_divisor_below(sz[0], wx_ker)]
+    sz_small = [sz[0] // largest_divisor_below(sz[0], wy_ker),
+                sz[1] // largest_divisor_below(sz[1], wx_ker)]
 
     # downsizing image prior to convolution
     # bins an image from its shape down to a smaller shape, say 4096x4096 to
