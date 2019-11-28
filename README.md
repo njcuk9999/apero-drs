@@ -102,9 +102,9 @@ are not empty you will be prompted to reset them one-by-one
 
 #### 4. Running apero
 
-To run apero you need to do one of the following
+To run apero you need to do __one__ of the following
 
-__NOTE__ 
+__NOTE__: these three are equivalent only do __one__
 
 ##### i) source environmental variables directly
 
@@ -116,7 +116,8 @@ where:
 
 ##### ii) alias to environmental variables
 
-`alias apero "source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`
+`alias apero "source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`  (tcsh/csh)
+`alias apero=""source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`  (bash)
 
 ##### iii) add the contents of `{DRS_UCONFIG}/apero.{SYSTEM}.setup` to your startup script
 
