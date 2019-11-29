@@ -16,6 +16,7 @@ import rules:
 from __future__ import division
 import os
 import time
+import random
 from signal import signal, SIGINT
 
 from apero.core import constants
@@ -306,7 +307,11 @@ def synchronized(lock, func_name=None):
                 lock.func_name = func_name
             # while the lock is active do not run function
             while lock.active:
-                time.sleep(1)
+                # randomise the wait time (so multiple hits don't wait
+                #   the exact same amount of time)
+                wait = random.randint(1000, 5000)
+                # sleep
+                time.sleep(wait / 10000)
             # activate the lock
             lock.activate()
             # now try to run the function
