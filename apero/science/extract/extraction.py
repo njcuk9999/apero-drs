@@ -157,6 +157,10 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # calculate the signal to noise ratio
             snri, fluxi = calculate_snr(e2dsi, blaze_size, range1, range2,
                                         sigdet)
+
+            # TODO: remove breakpoint
+            constants.breakpoint(params)
+
             # --------------------------------------------------------------
             # if kind is flat remove low blaze edges, calculate blaze and flat
             if kind == 'flat':
