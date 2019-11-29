@@ -37,7 +37,7 @@ WLOG = core.wlog
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
 # -----------------------------------------------------------------------------
-rargs = [Constants, Constants['DRS_PACKAGE'], '../../']
+rargs = [Constants, Constants['DRS_PACKAGE'], '../']
 PATH = drs_path.get_relative_folder(*rargs)
 FILENAME = os.path.join(PATH, 'changelog.md')
 VERSIONFILE = os.path.join(PATH, 'VERSION.txt')
