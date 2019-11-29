@@ -16,6 +16,7 @@ from astropy import units as uu
 from astropy.table import vstack, Table
 from astropy.time import Time
 import os
+import sys
 import warnings
 
 from apero import core
@@ -71,74 +72,89 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
     # ----------------------------------------------------------------------
     # get lookuptablename
     lookuptablename = drs_data.load_object_list(params, return_filename=True)
-    # set source
-    source, fail, row = None, True, None
     # ----------------------------------------------------------------------
-    # lock look up and query
-    lockfile, lockfilename = drs_lock.check_lock_file(params, lookuptablename)
-    # ----------------------------------------------------------------------
-    if os.path.exists(lookuptablename):
-        # load lookup table from file
-        lookuptable = drs_data.load_object_list(params)
-        # make sure all columns are lower case
-        for col in lookuptable.colnames:
-            lookuptable[col].name = col.lower()
-        # check if props are in lookup table
-        # TODO: fix problem row is blank
-        intable, row = inlookuptable(params, lookuptable, gaiaid, objname,
-                                     ra, dec)
-        source = 'GAIA [TABLE]'
-    else:
-        intable = False
-        lookuptable = None
-    # ----------------------------------------------------------------------
-    # if not then try to query gaia
-    if not intable:
-        # get row via query to gaia
-        row, fail = query_gaia(params, gaiaid, objname, ra, dec)
-        # push row into lookup table for future use
-        if not fail:
-            updatelookuptable(params, lookuptable, lookuptablename, row)
-        # set source
-        source = 'GAIA [QUERY]'
-    else:
-        fail = False
-    # ----------------------------------------------------------------------
-    # update props with row
-    if not fail:
-        # loop around properties
-        for prop in row.colnames:
-            # update each properties
-            props[prop] = row[prop]
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(lookuptablename)
+    lockfile = os.path.basename(lookuptablename)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
+
+    # make locked lookuptable function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_lookuptable():
+        # ----------------------------------------------------------------------
+        if os.path.exists(lookuptablename):
+            # load lookup table from file
+            lookuptable = drs_data.load_object_list(params)
+            # make sure all columns are lower case
+            for col in lookuptable.colnames:
+                lookuptable[col].name = col.lower()
+            # check if props are in lookup table
+            # TODO: fix problem row is blank
+            intable, row = inlookuptable(params, lookuptable, gaiaid, objname,
+                                         ra, dec)
+            source = 'GAIA [TABLE]'
+        else:
+            intable = False
+            lookuptable = None
+            source, row = None, None
+        # ----------------------------------------------------------------------
+        # if not then try to query gaia
+        if not intable:
+            # get row via query to gaia
+            row, fail = query_gaia(params, gaiaid, objname, ra, dec)
+            # push row into lookup table for future use
+            if not fail:
+                updatelookuptable(params, lookuptable, lookuptablename, row)
             # set source
-            sourcename = '{0} [{1}]'.format(func_name, source)
-            props.set_source(prop, sourcename)
-    # ----------------------------------------------------------------------
-    # set the input source
-    if source is not None:
-        props['INPUTSOURCE'] = source
-        props.set_source('INPUTSOURCE', func_name)
-    # ----------------------------------------------------------------------
-    # set the limits used
-    props['GAIA_MAG_LIM'] = mag_cut
-    props['GAIA_PLX_LIM'] = parallax_cut
-    props.set_sources(['GAIA_MAG_LIM', 'GAIA_PLX_LIM'], func_name)
-    # ----------------------------------------------------------------------
-    # deal with NaN values
-    unsetvalues = ['PMRA', 'PMDE', 'PLX', 'RV']
-    for unsetvalue in unsetvalues:
-        if np.isnan(props[unsetvalue]):
-            # debug log message
-            dargs = [unsetvalue, func_name]
-            WLOG(params, 'debug', TextEntry('90-016-00001', args=dargs))
-            # set to zero
-            props[unsetvalue] = 0.0
-    # ----------------------------------------------------------------------
-    # unlock look up and query
-    drs_lock.close_lock_file(params, lockfile, lockfilename, lookuptablename)
-    # ----------------------------------------------------------------------
-    # return props and fail criteria
-    return props, fail
+            source = 'GAIA [QUERY]'
+        else:
+            fail = False
+        # ----------------------------------------------------------------------
+        # update props with row
+        if not fail:
+            # loop around properties
+            for prop in row.colnames:
+                # update each properties
+                props[prop] = row[prop]
+                # set source
+                sourcename = '{0} [{1}]'.format(func_name, source)
+                props.set_source(prop, sourcename)
+        # ----------------------------------------------------------------------
+        # set the input source
+        if source is not None:
+            props['INPUTSOURCE'] = source
+            props.set_source('INPUTSOURCE', func_name)
+        # ----------------------------------------------------------------------
+        # set the limits used
+        props['GAIA_MAG_LIM'] = mag_cut
+        props['GAIA_PLX_LIM'] = parallax_cut
+        props.set_sources(['GAIA_MAG_LIM', 'GAIA_PLX_LIM'], func_name)
+        # ----------------------------------------------------------------------
+        # deal with NaN values
+        unsetvalues = ['PMRA', 'PMDE', 'PLX', 'RV']
+        for unsetvalue in unsetvalues:
+            if np.isnan(props[unsetvalue]):
+                # debug log message
+                dargs = [unsetvalue, func_name]
+                WLOG(params, 'debug', TextEntry('90-016-00001', args=dargs))
+                # set to zero
+                props[unsetvalue] = 0.0
+        # ----------------------------------------------------------------------
+        # return props and fail criteria
+        return props, fail
+    # -------------------------------------------------------------------------
+    # try to run locked makedirs
+    try:
+        return locked_lookuptable()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
 
 
 # =============================================================================

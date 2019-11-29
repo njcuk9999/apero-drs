@@ -15,6 +15,7 @@ import rules:
 from __future__ import division
 import numpy as np
 import os
+import sys
 import shutil
 from astropy.table import Table, vstack
 from astropy.table import TableMergeError
@@ -55,11 +56,11 @@ TextEntry = drs_text.TextEntry
 # =============================================================================
 # Define usable table functions
 # =============================================================================
-def make_table(p, columns, values, formats=None, units=None):
+def make_table(params, columns, values, formats=None, units=None):
     """
     Construct an astropy table from columns and values
 
-    :param p: dictionary, parameter dictionary containing constants
+    :param params: dictionary, parameter dictionary containing constants
     :param columns: list of strings, the list of column names
     :param values: list of lists or numpy array (2D), the list of lists/array
                    of values, first dimension must have same length as number
@@ -71,7 +72,7 @@ def make_table(p, columns, values, formats=None, units=None):
     :param units: list of strings, the units for each column, must have
                   same length as number of columns
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type columns: list[str]
     :type values: list[list]
     :type formats: list[str]
@@ -92,24 +93,24 @@ def make_table(p, columns, values, formats=None, units=None):
     # make sure we have as many columns as we do values
     if lcol != len(values):
         eargs = [lcol, len(values), func_name]
-        WLOG(p, 'error', TextEntry('01-002-00001', args=eargs))
+        WLOG(params, 'error', TextEntry('01-002-00001', args=eargs))
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
             eargs = [lcol, len(formats), func_name]
-            WLOG(p, 'error', TextEntry('01-002-00002', args=eargs))
+            WLOG(params, 'error', TextEntry('01-002-00002', args=eargs))
     else:
         formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
             eargs = [lcol, len(units), func_name]
-            WLOG(p, 'error', TextEntry('01-002-00003', args=eargs))
+            WLOG(params, 'error', TextEntry('01-002-00003', args=eargs))
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
-            WLOG(p, 'error', TextEntry('01-002-00004', args=[func_name]))
+            WLOG(params, 'error', TextEntry('01-002-00004', args=[func_name]))
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -122,7 +123,7 @@ def make_table(p, columns, values, formats=None, units=None):
                 table[col].format = formats[c_it]
             else:
                 eargs = [formats[c_it], col, func_name]
-                WLOG(p, 'error', TextEntry('01-002-00005', args=eargs))
+                WLOG(params, 'error', TextEntry('01-002-00005', args=eargs))
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -130,11 +131,11 @@ def make_table(p, columns, values, formats=None, units=None):
     return table
 
 
-def write_table(p, table, filename, fmt='fits', header=None):
+def write_table(params, table, filename, fmt='fits', header=None):
     """
     Writes a table to file "filename" with format "fmt"
 
-    :param p: dictionary, parameter dictionary containing constants
+    :param params: dictionary, parameter dictionary containing constants
     :param table: astropy table, the table to be writen to file
     :param filename: string, the filename and location of the table
                      to written to
@@ -146,7 +147,7 @@ def write_table(p, table, filename, fmt='fits', header=None):
                        i.e. header[key] = [value, comment]
                    which will be put into the header
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type table: astropy.table.Table
     :type filename: str
     :type fmt: str
@@ -173,48 +174,59 @@ def write_table(p, table, filename, fmt='fits', header=None):
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00006', args=eargs))
+        WLOG(params, 'error', TextEntry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['write?'][pos]:
             eargs = [fmt, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00007', args=eargs))
-    # get and check for file lock file
-    lock, lock_file = drs_lock.check_lock_file(p, filename)
-    # try to write table to file
-    try:
-        # write file
-        table.write(filename, format=fmt, overwrite=True)
-        # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, filename)
-    except Exception as e:
-        # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, filename)
-        # log error
-        eargs = [type(e), e, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00008', args=eargs))
+            WLOG(params, 'error', TextEntry('01-002-00007', args=eargs))
+    # ----------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(filename)
+    lockfile = os.path.basename(filename)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
 
-    if (fmt == 'fits') and (header is not None):
-        # reload fits data
-        data, filehdr = fits.getdata(filename, header=True)
-        # push keys into file header (value, comment tuple)
-        for key in list(header.keys()):
-            filehdr[key] = tuple(header[key])
-        # get and check for file lock file
-        lock, lock_file = drs_lock.check_lock_file(p, filename)
+    # make locked write function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_write():
         # try to write table to file
         try:
-            # save data
-            fits.writeto(filename, data, filehdr, overwrite=True)
-            # close lock file
-            drs_lock.close_lock_file(p, lock, lock_file, filename)
+            # write file
+            table.write(filename, format=fmt, overwrite=True)
         except Exception as e:
-            # close lock file
-            drs_lock.close_lock_file(p, lock, lock_file, filename)
             # log error
             eargs = [type(e), e, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00009', args=eargs))
+            WLOG(params, 'error', TextEntry('01-002-00008', args=eargs))
+
+        if (fmt == 'fits') and (header is not None):
+            # reload fits data
+            data, filehdr = fits.getdata(filename, header=True)
+            # push keys into file header (value, comment tuple)
+            for key in list(header.keys()):
+                filehdr[key] = tuple(header[key])
+            # try to write table to file
+            try:
+                # save data
+                fits.writeto(filename, data, filehdr, overwrite=True)
+            except Exception as e:
+                # log error
+                eargs = [type(e), e, func_name]
+                WLOG(params, 'error', TextEntry('01-002-00009', args=eargs))
+    # -------------------------------------------------------------------------
+    # try to run locked makedirs
+    try:
+        locked_write()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
+
 
 
 def merge_table(p, table, filename, fmt='fits'):

@@ -392,7 +392,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     lockfile = os.path.basename(opath)
     # start a lock
     lock = drs_lock.Lock(params, lockfile, lockdir)
-
+    # make locked indexing function
     @drs_lock.synchronized(lock, params['PID'])
     def locked_indexing():
         # Must now deal with errors and make sure we close the lock file
@@ -412,7 +412,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
             # log error
             eargs = [type(e), e, func_name]
             WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-
+    # -------------------------------------------------------------------------
     # index if we have outputs
     if (outputs is not None) and (outputs != 'None') and success:
         # this is where we run the function
@@ -1561,36 +1561,49 @@ def _make_dirs(params, path):
     if os.path.exists(path):
         # return
         return
-
+    # ----------------------------------------------------------------------
     # make sure that directory exists in path
     if not os.path.exists(os.path.dirname(path)):
         _make_dirs(params, os.path.dirname(path))
+    # ----------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(path)
+    lockfile = os.path.basename(path)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
 
-    # need lock file
-    lock, lockfilename = drs_lock.check_lock_file(params, path)
-
-    # check again path already exists
-    if os.path.exists(path):
-        # close the lock file
-        drs_lock.close_lock_file(params, lock, lockfilename, path)
-        # return
-        return
-    # if path doesn't exist try to make it
-    try:
+    # make locked makedirs function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_makedirs():
+        # check again path already exists
+        if os.path.exists(path):
+            return
         # log making directory
         WLOG(params, '', TextEntry('40-001-00023', args=[path]))
         # make directory
-        os.makedirs(path)
-        # close the lock file
-        drs_lock.close_lock_file(params, lock, lockfilename, path)
+        try:
+            os.makedirs(path)
+        except Exception as e:
+            # log error
+            string_trackback = traceback.format_exc()
+            emsg = TextEntry('01-000-00001', args=[path, type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
+            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+
+    # -------------------------------------------------------------------------
+    # try to run locked makedirs
+    try:
+        locked_makedirs()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
     except Exception as e:
-        # close the lock file
-        drs_lock.close_lock_file(params, lock, lockfilename, path)
-        # log error
-        string_trackback = traceback.format_exc()
-        emsg = TextEntry('01-000-00001', args=[path, type(e)])
-        emsg += '\n\n' + TextEntry(string_trackback)
-        WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+        # reset lock
+        lock.reset()
+        raise e
+
+
 
 # =============================================================================
 # End of code

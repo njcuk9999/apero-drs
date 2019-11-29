@@ -14,6 +14,7 @@ import numpy as np
 from astropy.time import Time
 from astropy.table import Table, vstack
 import os
+import sys
 import shutil
 from collections import OrderedDict
 
@@ -121,78 +122,91 @@ class Database():
         :return:
         """
         func_name = __NAME__ + '.Database.read()'
-        # lock the master file
-        lock, lock_file = drs_lock.check_lock_file(self.params, self.abspath)
-        # ---------------------------------------------------------------------
-        # try to open the master file
-        try:
-            f = open(self.abspath, 'r')
-            lines = list(f.readlines())
-            f.close()
-        except Exception as e:
-            # must close lock file
-            drs_lock.close_lock_file(self.params, lock, lock_file, self.abspath)
-            # error message
-            eargs = [self.dbname, type(e), e, self.abspath, func_name]
-            WLOG(self.params, 'error', TextEntry('01-001-00019', args=eargs))
-            lines = []
-        # ---------------------------------------------------------------------
-        # make dict storage to append to
-        rstorage, storage = OrderedDict(), OrderedDict()
-        for col in ['rkey', 'rtime', 'rfile']:
-            rstorage[col] = []
-        for col in self.colnames:
-            storage[col] = []
-        # ---------------------------------------------------------------------
-        # clean up database and add to storage
-        for l_it, line in enumerate(lines):
-            # ignore blank lines or lines starting with '#'
-            if len(line) == 0:
-                continue
-            if line == '\n':
-                continue
-            if line.strip()[0] == '#':
-                continue
-            # split line to reveal values
-            values = line.split()
-            # make sure values has correct length and cause error if not
-            if len(values) != len(self.colnames):
-                eargs = [self.dbname, l_it, line,
-                         ', '.join(self.colnames), self.abspath, func_name]
-                emsg = TextEntry('00-002-00005', args=eargs)
-                WLOG(self.params, 'error', emsg)
-            # append rkey and rfile to rstorage
-            rstorage['rkey'].append(values[self.key_pos])
-            rstorage['rfile'].append(values[self.time_pos])
-            # convert time to astropy time and append to rstorage
+        # ------------------------------------------------------------------
+        # define a synchoronized lock for indexing (so multiple instances do not
+        #  run at the same time)
+        lockdir = os.path.dirname(self.abspath)
+        lockfile = os.path.basename(self.abspath)
+        # start a lock
+        lock = drs_lock.Lock(self.params, lockfile, lockdir)
+        # make locked read function
+        @drs_lock.synchronized(lock, self.params['PID'])
+        def locked_read():
+            # --------------------------------------------------------------
+            # try to open the master file
             try:
-                rtime = Time(float(values[self.time_pos]), format='unix')
+                f = open(self.abspath, 'r')
+                lines = list(f.readlines())
+                f.close()
             except Exception as e:
-                # must close lock file
-                drs_lock.close_lock_file(self.params, lock, lock_file,
-                                         self.abspath)
-                # log error
-                eargs = [self.dbname, l_it, line, type(e), str(e),
-                         self.abspath, func_name]
-                emsg = TextEntry('00-002-00007', args=eargs)
+                # error message
+                eargs = [self.dbname, type(e), e, self.abspath, func_name]
+                emsg = TextEntry('01-001-00019', args=eargs)
                 WLOG(self.params, 'error', emsg)
-                rtime = None
-            rstorage['rtime'].append(rtime)
-            # append all values to storage
-            for col_it, col in enumerate(self.colnames):
-                storage[col].append(values[col_it])
-        # make full tables
-        self.rdata, self.data = Table(), Table()
-        # read dict into tables
-        for col in storage.keys():
-            self.data[col] = np.array(storage[col])
-        # create required table in good format
-        for col in rstorage.keys():
-            self.rdata[col] = np.array(rstorage[col])
-        # finally get a list of unique keys
-        self.unique_keys = np.unique(self.rdata['rkey'])
-        # must close lock file
-        drs_lock.close_lock_file(self.params, lock, lock_file, self.abspath)
+                lines = []
+            # --------------------------------------------------------------
+            # make dict storage to append to
+            rstorage, storage = OrderedDict(), OrderedDict()
+            for col in ['rkey', 'rtime', 'rfile']:
+                rstorage[col] = []
+            for col in self.colnames:
+                storage[col] = []
+            # --------------------------------------------------------------
+            # clean up database and add to storage
+            for l_it, line in enumerate(lines):
+                # ignore blank lines or lines starting with '#'
+                if len(line) == 0:
+                    continue
+                if line == '\n':
+                    continue
+                if line.strip()[0] == '#':
+                    continue
+                # split line to reveal values
+                values = line.split()
+                # make sure values has correct length and cause error if not
+                if len(values) != len(self.colnames):
+                    eargs = [self.dbname, l_it, line,
+                             ', '.join(self.colnames), self.abspath, func_name]
+                    emsg = TextEntry('00-002-00005', args=eargs)
+                    WLOG(self.params, 'error', emsg)
+                # append rkey and rfile to rstorage
+                rstorage['rkey'].append(values[self.key_pos])
+                rstorage['rfile'].append(values[self.time_pos])
+                # convert time to astropy time and append to rstorage
+                try:
+                    rtime = Time(float(values[self.time_pos]), format='unix')
+                except Exception as e:
+                    # log error
+                    eargs = [self.dbname, l_it, line, type(e), str(e),
+                             self.abspath, func_name]
+                    emsg = TextEntry('00-002-00007', args=eargs)
+                    WLOG(self.params, 'error', emsg)
+                    rtime = None
+                rstorage['rtime'].append(rtime)
+                # append all values to storage
+                for col_it, col in enumerate(self.colnames):
+                    storage[col].append(values[col_it])
+            # make full tables
+            self.rdata, self.data = Table(), Table()
+            # read dict into tables
+            for col in storage.keys():
+                self.data[col] = np.array(storage[col])
+            # create required table in good format
+            for col in rstorage.keys():
+                self.rdata[col] = np.array(rstorage[col])
+            # finally get a list of unique keys
+            self.unique_keys = np.unique(self.rdata['rkey'])
+        # ------------------------------------------------------------------
+        # try to run locked read function
+        try:
+            locked_read()
+        except KeyboardInterrupt:
+            lock.reset()
+            sys.exit()
+        except Exception as e:
+            # reset lock
+            lock.reset()
+            raise e
 
     def write(self):
         pass
@@ -690,26 +704,38 @@ def _copy_db_file(params, dbname, inpath, outpath):
     # remove file if already present
     if inpath == outpath:
         return 0
-    # lock the input and output files
-    lock1, lock_file1 = drs_lock.check_lock_file(params, inpath)
-    lock2, lock_file2 = drs_lock.check_lock_file(params, outpath)
-    # noinspection PyExceptClausesOrder
+    # -------------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(inpath)
+    lockfile = os.path.basename(inpath)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
+    # make locked copy function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_copy():
+        # noinspection PyExceptClausesOrder
+        try:
+            shutil.copyfile(inpath, outpath)
+            os.chmod(outpath, 0o0644)
+        except IOError as e:
+            # log and raise error
+            eargs = [dbname, inpath, outpath, type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
+        except OSError as e:
+            wargs = [dbname, outpath, type(e), e, func_name]
+            WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
+    # -------------------------------------------------------------------------
+    # try to run locked copy function
     try:
-        shutil.copyfile(inpath, outpath)
-        os.chmod(outpath, 0o0644)
-    except IOError as e:
-        # close input and output lock files
-        drs_lock.close_lock_file(params, lock1, lock_file1, inpath)
-        drs_lock.close_lock_file(params, lock2, lock_file2, outpath)
-        # log and raise error
-        eargs = [dbname, inpath, outpath, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
-    except OSError as e:
-        wargs = [dbname, outpath, type(e), e, func_name]
-        WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
-    # close input and output lock files
-    drs_lock.close_lock_file(params, lock1, lock_file1, inpath)
-    drs_lock.close_lock_file(params, lock2, lock_file2, outpath)
+        locked_copy()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
 
 
 def _get_time(params, dbname, header=None, hdict=None, kind=None):
@@ -737,61 +763,77 @@ def _read_lines_from_database(params, dbname):
     db_file = _get_database_file(params, dbname)
     # construct absolute path
     abspath = os.path.join(outpath, db_file)
-    # lock the master file
-    lock, lock_file = drs_lock.check_lock_file(params, abspath)
     # ----------------------------------------------------------------------
-    # try to open the master file
-    try:
-        f = open(abspath, 'a')
-        lines = list(f.readlines())
-        f.close()
-    except Exception as e:
-        # must close lock file
-        drs_lock.close_lock_file(params, lock, lock_file, abspath)
-        # error message
-        eargs = [dbname, type(e), e, abspath, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00019', args=eargs))
-        lines = []
-    # ----------------------------------------------------------------------
-    # database storage
-    database = OrderedDict()
-    # clean up database
-    for l_it, line in enumerate(lines):
-        # ignore blank lines or lines starting with '#'
-        if len(line) == 0:
-            continue
-        if line == '\n':
-            continue
-        if line.strip()[0] == '#':
-            continue
-        # get elements from database
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(abspath)
+    lockfile = os.path.basename(abspath)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
+    # make locked readlines function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_readlines():
+        # ------------------------------------------------------------------
+        # try to open the master file
         try:
-            # need to get key. Must be first entry in line (separated by spaces)
-            key = line.split()[0]
-            # check if key already in database
-            if key in database:
-                # noinspection PyTypeChecker
-                database[key].append([l_it] + line.split()[1:])
-            else:
-                # noinspection PyTypeChecker
-                database[key] = [[l_it] + line.split()[1:]]
-        except ValueError:
-            # must close lock file
-            drs_lock.close_lock_file(params, lock, lock_file, abspath)
+            f = open(abspath, 'a')
+            lines = list(f.readlines())
+            f.close()
+        except Exception as e:
+            # error message
+            eargs = [dbname, type(e), e, abspath, func_name]
+            WLOG(params, 'error', TextEntry('01-001-00019', args=eargs))
+            lines = []
+        # ------------------------------------------------------------------
+        # database storage
+        database = OrderedDict()
+        # clean up database
+        for l_it, line in enumerate(lines):
+            # ignore blank lines or lines starting with '#'
+            if len(line) == 0:
+                continue
+            if line == '\n':
+                continue
+            if line.strip()[0] == '#':
+                continue
+            # get elements from database
+            try:
+                # need to get key. Must be first entry in line
+                #     (separated by spaces)
+                key = line.split()[0]
+                # check if key already in database
+                if key in database:
+                    # noinspection PyTypeChecker
+                    database[key].append([l_it] + line.split()[1:])
+                else:
+                    # noinspection PyTypeChecker
+                    database[key] = [[l_it] + line.split()[1:]]
+            except ValueError:
+                # error message
+                eargs = [dbname, abspath, func_name]
+                WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
+        # ------------------------------------------------------------------
+        # Need to check if lists are empty after loop
+        if len(database) == 0:
             # error message
             eargs = [dbname, abspath, func_name]
-            WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
-    # ----------------------------------------------------------------------
-    # Need to check if lists are empty after loop
-    if len(database) == 0:
-        # must close lock file
-        drs_lock.close_lock_file(params, lock, lock_file, abspath)
-        # error message
-        eargs = [dbname, abspath, func_name]
-        WLOG(params, 'error', TextEntry('09-002-00003', args=eargs))
-        # ----------------------------------------------------------------------
-    # must close lock file
-    drs_lock.close_lock_file(params, lock, lock_file, abspath)
+            WLOG(params, 'error', TextEntry('09-002-00003', args=eargs))
+        # --------------------------------------------------------------
+        # return database
+        return database
+
+    # -------------------------------------------------------------------------
+    # try to run locked makedirs
+    try:
+        database = locked_readlines()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
+    # -------------------------------------------------------------------------
     # return database
     return database
 
@@ -805,27 +847,41 @@ def _write_line_to_database(params, key, dbname, outfile, line, log=True):
     db_file = _get_database_file(params, dbname, outfile)
     # construct absolute path
     abspath = os.path.join(outpath, db_file)
-    # lock the master file
-    lock, lock_file = drs_lock.check_lock_file(params, abspath)
+    # -------------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(abspath)
+    lockfile = os.path.basename(abspath)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
+    # make locked writelines function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_writelines():
+        # ------------------------------------------------------------------
+        # try to open the master file
+        try:
+            f = open(abspath, 'a')
+            f.writelines([line])
+            f.close()
+            # print progress
+            wargs = [dbname, key]
+            if log:
+                WLOG(params, 'info', TextEntry('40-006-00001', args=wargs))
+        except Exception as e:
+            # error message
+            eargs = [dbname, key, type(e), e, abspath, func_name]
+            WLOG(params, 'error', TextEntry('01-001-00018', args=eargs))
     # ----------------------------------------------------------------------
-    # try to open the master file
+    # try to run locked makedirs
     try:
-        f = open(abspath, 'a')
-        f.writelines([line])
-        f.close()
-        # print progress
-        wargs = [dbname, key]
-        if log:
-            WLOG(params, 'info', TextEntry('40-006-00001', args=wargs))
+        locked_writelines()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
     except Exception as e:
-        # must close lock file
-        drs_lock.close_lock_file(params, lock, lock_file, abspath)
-        # error message
-        eargs = [dbname, key, type(e), e, abspath, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00018', args=eargs))
-    # ----------------------------------------------------------------------
-    # must close lock file
-    drs_lock.close_lock_file(params, lock, lock_file, abspath)
+        # reset lock
+        lock.reset()
+        raise e
 
 
 # =============================================================================

@@ -12,6 +12,7 @@ Created on 2019-07-23 at 09:29
 from __future__ import division
 import numpy as np
 import os
+import sys
 import warnings
 from astropy import units as uu
 from astropy.time import Time, TimeDelta
@@ -245,24 +246,41 @@ def use_barycorrpy(params, times, **kwargs):
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
     lfilename = os.path.join(lpath, 'barycorrpy')
-    lock, lockfile = drs_lock.check_lock_file(params, lfilename)
-    # try to calculate bervs and bjds
+    # ----------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockdir = os.path.dirname(lfilename)
+    lockfile = os.path.basename(lfilename)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
+
+    # make locked bervcalc function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_bervcalc():
+        # try to calculate bervs and bjds
+        try:
+            out1 = barycorrpy.get_BC_vel(JDUTC=times, zmeas=0.0, **bkwargs)
+            out2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(times, **bkwargs)
+        except Exception as e:
+            # log error
+            wargs = [type(e), str(e), estimate, func_name]
+            WLOG(params, 'warning', TextEntry('10-016-00004', args=wargs))
+            raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
+        # return the bervs and bjds
+        bervs = out1[0] / 1000.0
+        bjds = out2[0]
+        return bervs, bjds
+    # -------------------------------------------------------------------------
+    # try to run locked makedirs
     try:
-        out1 = barycorrpy.get_BC_vel(JDUTC=times, zmeas=0.0, **bkwargs)
-        out2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(times, **bkwargs)
+        return locked_bervcalc()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
     except Exception as e:
-        # unlock barycorrpy
-        drs_lock.close_lock_file(params, lock, lockfile, lfilename)
-        # log error
-        wargs = [type(e), str(e), estimate, func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00004', args=wargs))
-        raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
-    # unlock barycorrpy
-    drs_lock.close_lock_file(params, lock, lockfile, lfilename)
-    # return the bervs and bjds
-    bervs = out1[0] / 1000.0
-    bjds = out2[0]
-    return bervs, bjds
+        # reset lock
+        lock.reset()
+        raise e
 
 
 def use_pyasl(params, times, **kwargs):
