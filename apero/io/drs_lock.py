@@ -281,14 +281,14 @@ class Lock:
         if self.func_name is None:
             print('lock started')
         else:
-            print('lock started for {0}'.format(self.func_name))
+            print('lock started for {0}:{1}'.format(self.func_name, name))
         self.queue.append(name)
 
-    def dequeue(self):
+    def dequeue(self, name):
         if self.func_name is None:
             print('lock ended')
         else:
-            print('lock ended for {0}'.format(self.func_name))
+            print('lock ended for {0}:{1}'.format(self.func_name, name))
         self.queue.pop(0)
 
     def myturn(self, name):
@@ -296,7 +296,7 @@ class Lock:
             if self.func_name is None:
                 print('lock unlocked')
             else:
-                print('lock unlocked for {0}'.format(self.func_name))
+                print('lock unlocked for {0}:{1}'.format(self.func_name, name))
 
             return True
         else:
@@ -327,7 +327,7 @@ def synchronized(lock, name, func_name=None):
                 return f(*args, **kw)
             # finally deactivate the lock
             finally:
-                lock.dequeue()
+                lock.dequeue(name)
         # return the new function (wrapped)
         return newFunction
     # return the wrapped function
