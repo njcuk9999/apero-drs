@@ -307,6 +307,11 @@ class Lock:
                     time.sleep(0.1)
                     # add to the timer
                     timer += 1
+                    # update user every 10 seconds file is locked
+                    if timer % 100 == 0:
+                        wargs = [self.lockname]
+                        wmsg = 'Lock: Make lock dir waiting {0}'
+                        WLOG(params, 'warning', wmsg.format(*wargs))
             # if path does exist just skip
             else:
                 break
@@ -339,6 +344,11 @@ class Lock:
                     time.sleep(0.1)
                     # add to the timer
                     timer += 1
+                    # update user every 10 seconds file is locked
+                    if timer % 100 == 0:
+                        wargs = [self.lockname, name]
+                        wmsg = 'Lock: Make lock file waiting {0} {1}'
+                        WLOG(params, 'warning', wmsg.format(*wargs))
             # if path does exist just skip
             else:
                 break
