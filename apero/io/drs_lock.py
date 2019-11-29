@@ -272,6 +272,7 @@ class Lock:
     Class to control locking of decorated functions
     """
     def __init__(self):
+        print('lock activated')
         self.active = False
         self.func_name = None
 
@@ -309,9 +310,9 @@ def synchronized(lock, func_name=None):
             while lock.active:
                 # randomise the wait time (so multiple hits don't wait
                 #   the exact same amount of time)
-                wait = random.randint(1000, 5000)
+                wait = random.randint(500, 2500)
                 # sleep
-                time.sleep(wait / 10000)
+                time.sleep(wait / 1000)
             # activate the lock
             lock.activate()
             # now try to run the function
