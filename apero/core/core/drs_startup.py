@@ -391,7 +391,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     # index if we have outputs
     if (outputs is not None) and (outputs != 'None') and success:
 
-        @drs_lock.synchronized(lock, __NAME__ + '_index_pp()')
+        @drs_lock.synchronized(lock, __NAME__ + '._index_pp()')
         def locked_indexing():
             # Must now deal with errors and make sure we close the lock file
             try:
