@@ -159,7 +159,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                                         sigdet)
 
             # TODO: remove breakpoint
-            constants.breakpoint(params)
+            if fiber == 'C' and order_num == 45:
+                constants.breakpoint(params)
 
             # --------------------------------------------------------------
             # if kind is flat remove low blaze edges, calculate blaze and flat
