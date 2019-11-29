@@ -408,7 +408,7 @@ def read_fits_table(p, filename, return_dict=False):
     """
     func_name = __NAME__ + '.read_fits_table()'
     # get and check for file lock file
-    lock, lock_file = drs_lock.check_lock_file(p, filename)
+    #TODO: lock, lock_file = drs_lock.check_lock_file(p, filename)
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
@@ -418,18 +418,18 @@ def read_fits_table(p, filename, return_dict=False):
         astropy_table = Table.read(filename)
     except OSError as e:
         # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, filename)
+        #TODO: drs_lock.close_lock_file(p, lock, lock_file, filename)
         # try to deal with missing card issue
         astropy_table = deal_with_missing_end_card(p, filename, e, func_name)
     except Exception as e:
         # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, filename)
+        #TODO: drs_lock.close_lock_file(p, lock, lock_file, filename)
         # display error
         eargs = [filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00015', args=eargs))
         astropy_table = None
     # close lock file
-    drs_lock.close_lock_file(p, lock, lock_file, filename)
+    #TODO: drs_lock.close_lock_file(p, lock, lock_file, filename)
     # return dict if return_dict is True
     if return_dict:
         # set up dictionary for storage
