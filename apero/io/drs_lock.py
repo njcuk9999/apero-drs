@@ -277,9 +277,10 @@ class Lock:
         :param lockname:
         :param lockpath:
         """
+        # set the bad characters to clean
+        self.bad_chars = ['/', '\\' , '.', ',']
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
-        self.bad_chars = ['/', '\\' , '.', ',']
         self.params = params
         self.maxwait = params.get('DB_MAX_WAIT', 100)
         self.path = os.path.join(lockpath, self.lockname)
