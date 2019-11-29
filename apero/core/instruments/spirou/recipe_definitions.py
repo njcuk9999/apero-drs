@@ -1098,6 +1098,26 @@ calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
               fpfiles=[sf.pp_fp_fp])
 
 # -----------------------------------------------------------------------------
+# telluric run (for trigger)
+# -----------------------------------------------------------------------------
+tellu_run = drs_recipe.DrsRunSequence('telluric_run', __INSTRUMENT__)
+# extract science
+tellu_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
+                files=[sf.pp_obj_dark, sf.pp_obj_fp])
+# other telluric recipes
+tellu_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+tellu_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+tellu_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+                arguments=dict(objname='TELLURIC_TARGETS'))
+tellu_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
+                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+
+# -----------------------------------------------------------------------------
 # science run (for trigger)
 # -----------------------------------------------------------------------------
 science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
@@ -1140,4 +1160,5 @@ hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run, master_run, calib_run, science_run, hc_run]
+sequences = [full_run, limited_run, master_run, calib_run, tellu_run,
+             science_run, hc_run]
