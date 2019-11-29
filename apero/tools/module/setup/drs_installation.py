@@ -96,7 +96,10 @@ message4 = """
     i) Add an alias in your ~/.bashrc or ~/.bash_profile or 
        ~/.tcshrc or ~/.profile 
        and then type "apero" every time you wish to run apero.
-       i.e. alias apero "source {DRS_UCONFIG}config/apero.{SYSTEM}.setup"
+       i.e. for bash
+            alias apero="source {DRS_UCONFIG}config/apero.bash.setup"
+       i.e. for sh
+            alias apero "source {DRS_UCONFIG}config/apero.sh.setup"
     
     
     ii) Add the contents of {DRS_UCONFIG}config/apero.{SYSTEM}.setup 
