@@ -465,7 +465,7 @@ class Lock:
             os.removedirs(self.path)
 
 
-def synchronized(params, lock, name):
+def synchronized(lock, name):
     """
     Synchroisation decorator - wraps the function to lock
     calls to function are added to a queue based on the lock given and
@@ -489,7 +489,7 @@ def synchronized(params, lock, name):
                 if timer % 10 == 0:
                     wargs = [lock.path, name]
                     wmsg = 'Lock: Waiting {0} {1}'
-                    WLOG(params, 'warning', wmsg.format(*wargs))
+                    WLOG(lock.params, 'warning', wmsg.format(*wargs))
                 # increase timer
                 timer += 1
             # now try to run the function
