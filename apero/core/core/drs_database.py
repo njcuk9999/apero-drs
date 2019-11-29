@@ -117,7 +117,7 @@ class Database():
 
     def read(self):
         """
-        Read the database from file and stroe in astropy.table format
+        Read the database from file and store in astropy.table format
         :return:
         """
         func_name = __NAME__ + '.Database.read()'
