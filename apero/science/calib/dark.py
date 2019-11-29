@@ -623,14 +623,11 @@ def get_dark_master_file(params, header):
     filecol, timecol = cdb.file_col, cdb.time_col
     # get the dark entries
     darkentries = drs_database.get_key_from_db(params, darkkey, cdb, header,
-                                               n_ent=1, required=False)
+                                               n_ent=1, required=True)
     # -------------------------------------------------------------------------
     # try to read 'DARKM' from cdb
-    if len(darkentries) > 0:
-        darkfilename = darkentries[filecol][0]
-        darkfile = os.path.join(params['DRS_CALIB_DB'], darkfilename)
-    else:
-        darkfile = None
+    darkfilename = darkentries[filecol][0]
+    darkfile = os.path.join(params['DRS_CALIB_DB'], darkfilename)
 
     # return use_file and use_type
     return darkfile, darkkey
