@@ -276,9 +276,12 @@ class Lock:
         :param lockname:
         :param lockpath:
         """
+        # replace all . and whitespace with _
+        self.lockname = self.__clean_name(lockname)
+
         self.params = params
         self.maxwait = params.get('DB_MAX_WAIT', 100)
-        self.path = os.path.join(lockpath, lockname)
+        self.path = os.path.join(lockpath, self.lockname)
         self.queue = []
         # make the lock directory
         self.__makelockdir()
@@ -315,6 +318,8 @@ class Lock:
         :param name:
         :return:
         """
+        # clean name
+        name = self.__clean_name(name)
         # get absolute path
         abspath = os.path.join(self.path, name + '.lock')
         # set up a timer
@@ -369,11 +374,20 @@ class Lock:
         :param name:
         :return:
         """
+        # clean name
+        name = self.__clean_name(name)
         # get the absolute path
         abspath = os.path.join(self.path, name + '.lock')
         # if the file exists remove it
         if os.path.exists(abspath):
             os.remove(abspath)
+
+    def __clean_name(self, name):
+        BAD_CHARS = ['/', '\\' , '.', ',']
+        # loop around bad characters and replace them
+        for char in BAD_CHARS:
+            name = name.replace(char, '_')
+        return name
 
     def enqueue(self, name):
         """
@@ -382,6 +396,9 @@ class Lock:
         :param name:
         :return:
         """
+        # clean name
+        name = self.__clean_name(name)
+        # log progress
         WLOG(self.params, '', 'Lock: File added to queue: {0}'.format(name))
         # add unique name to queue
         self.__makelockfile(name)
@@ -396,6 +413,8 @@ class Lock:
         :param name:
         :return:
         """
+        # clean name
+        name = self.__clean_name(name)
         # if the unique name is first in the list then we can unlock this file
         if name + '.lock' == self.__getfirst():
             WLOG(self.params, '', 'Lock: File unlocked: {0}'.format(name))
@@ -436,7 +455,7 @@ class Lock:
             os.removedirs(self.path)
 
 
-def synchronized(lock, name):
+def synchronized(params, lock, name):
     """
     Synchroisation decorator - wraps the function to lock
     calls to function are added to a queue based on the lock given and
@@ -450,10 +469,19 @@ def synchronized(lock, name):
         def newFunction(*args, **kw):
             # add to the queue
             lock.enqueue(name)
+            # timer
+            timer = 0
             # while the lock is active do not run function
             while not lock.myturn(name):
                 # sleep
                 time.sleep(1)
+                # update user every 10 seconds file is locked
+                if timer % 10 == 0:
+                    wargs = [lock.path, name]
+                    wmsg = 'Lock: Waiting {0} {1}'
+                    WLOG(params, 'warning', wmsg.format(*wargs))
+                # increase timer
+                timer += 1
             # now try to run the function
             try:
                 return f(*args, **kw)
