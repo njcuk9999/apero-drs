@@ -469,7 +469,7 @@ def write_fits_table(p, astropy_table, output_filename):
     # get backup file name
     backup_file = output_filename.replace('.fits', '.fits.back')
     # get and check for file lock file
-    lock, lock_file = drs_lock.check_lock_file(p, output_filename)
+    #TODO: lock, lock_file = drs_lock.check_lock_file(p, output_filename)
     # deal with file already existing
     if os.path.exists(output_filename):
         try:
@@ -479,7 +479,7 @@ def write_fits_table(p, astropy_table, output_filename):
             os.remove(output_filename)
         except Exception as e:
             # close lock file
-            drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+            #TODO: drs_lock.close_lock_file(p, lock, lock_file, output_filename)
             # log error
             eargs = [output_filename, type(e), e, func_name]
             WLOG(p, 'error', TextEntry('01-002-00023', args=eargs))
@@ -500,12 +500,13 @@ def write_fits_table(p, astropy_table, output_filename):
         elif not cond1 and os.path.exists(backup_file):
             shutil.copy(backup_file, output_filename)
         # close lock file
-        drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+        # TODO: drs_lock.close_lock_file(p, lock, lock_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
         WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
     # close lock file
-    drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+    # TODO: drs_lock.close_lock_file(p, lock, lock_file, output_filename)
+
 
 # TODO: Find cause of this problem and fix properly
 def deal_with_missing_end_card(p, filename, e, func_name):
