@@ -143,9 +143,6 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     # set the model to zeros at first
     blaze = np.zeros_like(e2ds)
 
-    # TODO: remove breakpoint
-    constants.breakpoint()
-
     # now we iterate using a sigma clip
     for _ in range(niter):
         # we construct a model with the peak cut-off
