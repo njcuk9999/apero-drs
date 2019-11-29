@@ -194,8 +194,8 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
         image2 = drs_image.convert_to_e(params, image2, gain=gain,
                                         exptime=exptime)
         # convert limits
-        upperlim = upperlim / gain
-        lowerlim = lowerlim / gain
+        upperlim = upperlim * gain * exptime
+        lowerlim = lowerlim * gain * exptime
 
     # ----------------------------------------------------------------------
     # image 2 is resized (if required)
