@@ -8,7 +8,7 @@ import apero
 
 ## Contains:
 
-- ## core
+- core
 
     Core scripts for controlling APERO
 
