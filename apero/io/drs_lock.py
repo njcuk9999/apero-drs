@@ -308,7 +308,7 @@ class Lock:
                     # add to the timer
                     timer += 1
                     # update user every 10 seconds file is locked
-                    if timer % 100 == 0:
+                    if (timer % 100 == 0) and (timer != 0):
                         wargs = [self.lockname]
                         wmsg = 'Lock: Make lock dir waiting {0}'
                         WLOG(params, 'warning', wmsg.format(*wargs))
@@ -345,7 +345,7 @@ class Lock:
                     # add to the timer
                     timer += 1
                     # update user every 10 seconds file is locked
-                    if timer % 100 == 0:
+                    if (timer % 100 == 0) and (timer != 0):
                         wargs = [self.lockname, name]
                         wmsg = 'Lock: Make lock file waiting {0} {1}'
                         WLOG(params, 'warning', wmsg.format(*wargs))
@@ -486,7 +486,7 @@ def synchronized(lock, name):
                 # sleep
                 time.sleep(1)
                 # update user every 10 seconds file is locked
-                if timer % 10 == 0:
+                if (timer % 10 == 0) and (timer != 0):
                     wargs = [lock.path, name]
                     wmsg = 'Lock: Waiting {0} {1}'
                     WLOG(lock.params, 'warning', wmsg.format(*wargs))
