@@ -420,6 +420,11 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
             locked_indexing()
         except KeyboardInterrupt:
             lock.reset()
+            sys.exit()
+        except Exception as e:
+            lock.reset()
+            # re-raise error
+            raise e
 
     # -------------------------------------------------------------------------
     # log end message
