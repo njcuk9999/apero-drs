@@ -388,6 +388,28 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         if quiet is None:
             quiet = False
     # -------------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    @drs_lock.synchronized(lock, params['PID'], __NAME__ + '.locked_indexing()')
+    def locked_indexing(params, recipe, outputs, func_name):
+        # Must now deal with errors and make sure we close the lock file
+        try:
+            if outputs == 'pp':
+                # index outputs to pp dir
+                _index_pp(params, recipe)
+            elif outputs == 'reduced':
+                # index outputs to reduced dir
+                _index_outputs(params, recipe)
+        # Must close lock file
+        except drs_exceptions.LogExit as e:
+            # log error
+            eargs = [type(e), e.errormessage, func_name]
+            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+        except Exception as e:
+            # log error
+            eargs = [type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+
     # index if we have outputs
     if (outputs is not None) and (outputs != 'None') and success:
         locked_indexing(params, recipe, outputs, func_name)
@@ -451,28 +473,6 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
             outdict['e2dsoutputs'] = llmain['e2dsoutputs']
         # return outdict
         return outdict
-
-
-@drs_lock.synchronized(lock, __NAME__ + '.locked_indexing()')
-def locked_indexing(params, recipe, outputs, func_name):
-    # Must now deal with errors and make sure we close the lock file
-    try:
-        if outputs == 'pp':
-            # index outputs to pp dir
-            _index_pp(params, recipe)
-        elif outputs == 'reduced':
-            # index outputs to reduced dir
-            _index_outputs(params, recipe)
-    # Must close lock file
-    except drs_exceptions.LogExit as e:
-        # log error
-        eargs = [type(e), e.errormessage, func_name]
-        WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-    except Exception as e:
-        # log error
-        eargs = [type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,

@@ -275,25 +275,35 @@ class Lock:
         print('lock activated')
         self.active = False
         self.func_name = None
+        self.queue = []
 
-    def activate(self):
-
+    def enqueue(self, name):
         if self.func_name is None:
             print('lock started')
         else:
             print('lock started for {0}'.format(self.func_name))
-        self.active = True
+        self.queue.append(name)
 
-    def deactivate(self):
+    def dequeue(self):
         if self.func_name is None:
             print('lock ended')
         else:
             print('lock ended for {0}'.format(self.func_name))
-        self.active = False
+        self.queue.pop(0)
+
+    def myturn(self, name):
+        if self.queue[0] == name:
+            if self.func_name is None:
+                print('lock unlocked')
+            else:
+                print('lock unlocked for {0}'.format(self.func_name))
+
+            return True
+        else:
+            return False
 
 
-
-def synchronized(lock, func_name=None):
+def synchronized(lock, name, func_name=None):
     """
     Synchroisation decorator - wraps the function to lock
     :param lock:
@@ -306,21 +316,18 @@ def synchronized(lock, func_name=None):
             # set the function name
             if func_name is not None:
                 lock.func_name = func_name
+            # add to the queue
+            lock.enqueue(name)
             # while the lock is active do not run function
-            while lock.active:
-                # randomise the wait time (so multiple hits don't wait
-                #   the exact same amount of time)
-                wait = random.randint(500, 2500)
+            while not lock.myturn(name):
                 # sleep
-                time.sleep(wait / 1000)
-            # activate the lock
-            lock.activate()
+                time.sleep(1)
             # now try to run the function
             try:
                 return f(*args, **kw)
             # finally deactivate the lock
             finally:
-                lock.deactivate()
+                lock.dequeue()
         # return the new function (wrapped)
         return newFunction
     # return the wrapped function
