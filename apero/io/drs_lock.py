@@ -48,6 +48,7 @@ HelpText = drs_text.HelpDict
 # define a constant to check while breaks
 BREAKWHILE = False
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -278,7 +279,7 @@ class Lock:
         """
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
-
+        self.bad_chars = ['/', '\\' , '.', ',']
         self.params = params
         self.maxwait = params.get('DB_MAX_WAIT', 100)
         self.path = os.path.join(lockpath, self.lockname)
@@ -300,7 +301,8 @@ class Lock:
             if not os.path.exists(self.path):
                 try:
                     os.mkdir(self.path)
-                    WLOG(params, '', 'Lock: Activated {0}'.format(self.path))
+                    wmsg = 'Lock: Activated {0}'.format(self.path)
+                    WLOG(self.params, '', wmsg)
                     break
                 except:
                     # whatever the problem sleep for a second
@@ -311,7 +313,7 @@ class Lock:
                     if (timer % 100 == 0) and (timer != 0):
                         wargs = [self.lockname]
                         wmsg = 'Lock: Make lock dir waiting {0}'
-                        WLOG(params, 'warning', wmsg.format(*wargs))
+                        WLOG(self.params, 'warning', wmsg.format(*wargs))
             # if path does exist just skip
             else:
                 break
@@ -348,7 +350,7 @@ class Lock:
                     if (timer % 100 == 0) and (timer != 0):
                         wargs = [self.lockname, name]
                         wmsg = 'Lock: Make lock file waiting {0} {1}'
-                        WLOG(params, 'warning', wmsg.format(*wargs))
+                        WLOG(self.params, 'warning', wmsg.format(*wargs))
             # if path does exist just skip
             else:
                 break
@@ -393,9 +395,8 @@ class Lock:
             os.remove(abspath)
 
     def __clean_name(self, name):
-        BAD_CHARS = ['/', '\\' , '.', ',']
         # loop around bad characters and replace them
-        for char in BAD_CHARS:
+        for char in self.bad_chars:
             name = name.replace(char, '_')
         return name
 
@@ -425,13 +426,19 @@ class Lock:
         """
         # clean name
         name = self.__clean_name(name)
+        # try to get the first file (this could fail if a file is removed by
+        #   another process) - if it fails it is not your turn so wait longer
+        try:
+            first = self.__getfirst()
+        except Exception as e:
+            return False, e
         # if the unique name is first in the list then we can unlock this file
-        if name + '.lock' == self.__getfirst():
+        if name + '.lock' == first:
             WLOG(self.params, '', 'Lock: File unlocked: {0}'.format(name))
-            return True
+            return True, None
         # else we return False (and ask whether it is my turn later)
         else:
-            return False
+            return False, None
 
     def dequeue(self, name):
         """
@@ -450,7 +457,7 @@ class Lock:
 
         :return:
         """
-        WLOG(params, '', 'Lock: Deactivated {0}'.format(self.path))
+        WLOG(self.params, '', 'Lock: Deactivated {0}'.format(self.path))
         # get the raw list
         rawlist = os.listdir(self.path)
         # loop around files
@@ -472,17 +479,19 @@ def synchronized(lock, name):
     the name for this call to the function (must be unique)
 
     :param lock:
-    :param func_name:
+    :param name:
     :return:
     """
-    def wrap(f):
-        def newFunction(*args, **kw):
+    def wrap(func):
+        def wrapperfunc(*args, **kw):
             # add to the queue
             lock.enqueue(name)
             # timer
             timer = 0
+            # find whether it is this name's turn
+            cond, error = lock.myturn(name)
             # while the lock is active do not run function
-            while not lock.myturn(name):
+            while not cond:
                 # sleep
                 time.sleep(1)
                 # update user every 10 seconds file is locked
@@ -490,17 +499,23 @@ def synchronized(lock, name):
                     wargs = [lock.path, name]
                     wmsg = 'Lock: Waiting {0} {1}'
                     WLOG(lock.params, 'warning', wmsg.format(*wargs))
+                # find whether it is this name's turn
+                cond, error = lock.myturn(name)
+                if error is not None:
+                    wargs = [lock.path, name, error]
+                    wmsg = 'Lock: Waiting {0} {1} (Error: {2})'
+                    WLOG(lock.params, 'warning', wmsg.format(*wargs))
                 # increase timer
                 timer += 1
             # now try to run the function
             try:
-                return f(*args, **kw)
+                return func(*args, **kw)
             # finally deactivate the lock
             finally:
                 # unlock file
                 lock.dequeue(name)
         # return the new function (wrapped)
-        return newFunction
+        return wrapperfunc
     # return the wrapped function
     return wrap
 
@@ -515,11 +530,11 @@ if __name__ == "__main__":
     from multiprocessing import Process
     import string
 
-    params = constants.load()
+    _params = constants.load()
 
     def printfunc(i, j):
         # set up the lock file (usually a file or function)
-        mylock = Lock(params, 'printfunc', './')
+        mylock = Lock(_params, 'printfunc', './')
 
         # this is where we define the locked function
         @synchronized(mylock, '{0}-{1}'.format(i, j))
@@ -534,12 +549,12 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             mylock.reset()
 
-    for jt in range(2):
+    for jjjt in range(2):
         jobs = []
         # loop around sub groups (to be run at same time)
-        for it in range(10):
+        for iiit in range(10):
             # get parallel process
-            process = Process(target=printfunc, args=[it, jt])
+            process = Process(target=printfunc, args=[iiit, jjjt])
             process.start()
             jobs.append(process)
         # do not continue until finished
