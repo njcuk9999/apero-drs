@@ -72,8 +72,6 @@ INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
 PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
 CURRENT_PATH = ''
-# start a lock
-lock = drs_lock.Lock()
 
 
 # =============================================================================
@@ -390,7 +388,12 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     # -------------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    @drs_lock.synchronized(lock, params['PID'], __NAME__ + '.locked_indexing()')
+    lockdir = os.path.dirname(opath)
+    lockfile = os.path.basename(opath)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile, lockdir)
+
+    @drs_lock.synchronized(lock, params['PID'])
     def locked_indexing(params, recipe, outputs, func_name):
         # Must now deal with errors and make sure we close the lock file
         try:
