@@ -394,7 +394,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     lock = drs_lock.Lock(params, lockfile, lockdir)
 
     @drs_lock.synchronized(lock, params['PID'])
-    def locked_indexing(params, recipe, outputs, func_name):
+    def locked_indexing():
         # Must now deal with errors and make sure we close the lock file
         try:
             if outputs == 'pp':
@@ -415,7 +415,12 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
 
     # index if we have outputs
     if (outputs is not None) and (outputs != 'None') and success:
-        locked_indexing(params, recipe, outputs, func_name)
+        # this is where we run the function
+        try:
+            locked_indexing()
+        except KeyboardInterrupt:
+            lock.reset()
+
     # -------------------------------------------------------------------------
     # log end message
     if end:
