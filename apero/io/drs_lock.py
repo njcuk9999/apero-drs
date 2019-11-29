@@ -16,7 +16,7 @@ import rules:
 from __future__ import division
 import os
 import time
-import random
+import numpy as np
 from signal import signal, SIGINT
 
 from apero.core import constants
@@ -261,9 +261,6 @@ def close_lock_file(p, lock, lock_file, filename):
     WLOG(p, '', 'Unlocking closefile: {0}'.format(lock_file))
 
 
-
-
-
 # =============================================================================
 # Define new functions
 # =============================================================================
@@ -271,51 +268,186 @@ class Lock:
     """
     Class to control locking of decorated functions
     """
-    def __init__(self):
-        print('lock activated')
-        self.active = False
-        self.func_name = None
+    def __init__(self, params, lockname, lockpath):
+        """
+        Construct the lock instance
+
+        :param params:
+        :param lockname:
+        :param lockpath:
+        """
+        self.params = params
+        self.maxwait = params.get('DB_MAX_WAIT', 100)
+        self.path = os.path.join(lockpath, lockname)
         self.queue = []
+        # make the lock directory
+        self.__makelockdir()
+
+    def __makelockdir(self):
+        """
+        Internal use only: make the lock directory
+
+        :return:
+        """
+        # set up a timer
+        timer = 0
+        # keep trying to create the folder
+        while timer < self.maxwait:
+            # if path does not exist try to create it
+            if not os.path.exists(self.path):
+                try:
+                    os.mkdir(self.path)
+                    WLOG(params, '', 'Lock: Activated {0}'.format(self.path))
+                    break
+                except:
+                    # whatever the problem sleep for a second
+                    time.sleep(0.1)
+                    # add to the timer
+                    timer += 1
+            # if path does exist just skip
+            else:
+                break
+
+    def __makelockfile(self, name):
+        """
+        Internal use only: make the lock file "name.lock"
+
+        :param name:
+        :return:
+        """
+        # get absolute path
+        abspath = os.path.join(self.path, name + '.lock')
+        # set up a timer
+        timer = 0
+        # keep trying to create the folder
+        while timer < self.maxwait:
+            # if path does not exist try to create it
+            if not os.path.exists(abspath):
+                try:
+
+                    f = open(abspath, 'w')
+                    f.write(name)
+                    f.close()
+                    break
+                except:
+                    # whatever the problem sleep for a second
+                    time.sleep(0.1)
+                    # add to the timer
+                    timer += 1
+            # if path does exist just skip
+            else:
+                break
+
+    def __getfirst(self):
+        """
+        Internal use only: get the first (based on creation time) file in
+        self.path
+
+        :return:
+        """
+        path = self.path
+        # get the raw list
+        rawlist = os.listdir(path)
+        # get times
+        pos, mintime = np.nan, np.inf
+        for it in range(len(rawlist)):
+            # get the absolute path
+            abspath = os.path.join(path, rawlist[it])
+            # get the creation time for the file
+            filetime = os.path.getctime(abspath)
+            # check if it is older than mintime
+            if filetime < mintime:
+                mintime = filetime
+                pos = it
+        # return list
+        return rawlist[pos]
+
+    def __remove_file(self, name):
+        """
+        Internal use only: Remove file "name.lock"
+
+        :param name:
+        :return:
+        """
+        # get the absolute path
+        abspath = os.path.join(self.path, name + '.lock')
+        # if the file exists remove it
+        if os.path.exists(abspath):
+            os.remove(abspath)
 
     def enqueue(self, name):
-        if self.func_name is None:
-            print('lock started')
-        else:
-            print('lock started for {0}:{1}'.format(self.func_name, name))
-        self.queue.append(name)
+        """
+        Used to add "name" to the queue
 
-    def dequeue(self, name):
-        if self.func_name is None:
-            print('lock ended')
-        else:
-            print('lock ended for {0}:{1}'.format(self.func_name, name))
-        self.queue.pop(0)
+        :param name:
+        :return:
+        """
+        WLOG(self.params, '', 'Lock: File added to queue: {0}'.format(name))
+        # add unique name to queue
+        self.__makelockfile(name)
+        # put in just to see if we are appending too quickly
+        time.sleep(0.1)
 
     def myturn(self, name):
-        if self.queue[0] == name:
-            if self.func_name is None:
-                print('lock unlocked')
-            else:
-                print('lock unlocked for {0}:{1}'.format(self.func_name, name))
+        """
+        Used to check whether it is time to run function for "name" (based on
+        position in queue)
 
+        :param name:
+        :return:
+        """
+        # if the unique name is first in the list then we can unlock this file
+        if name + '.lock' == self.__getfirst():
+            WLOG(self.params, '', 'Lock: File unlocked: {0}'.format(name))
             return True
+        # else we return False (and ask whether it is my turn later)
         else:
             return False
 
+    def dequeue(self, name):
+        """
+        Used to remove "name" from queue
 
-def synchronized(lock, name, func_name=None):
+        :param name:
+        :return:
+        """
+        WLOG(self.params, '', 'Lock: File removed from queue: {0}'.format(name))
+        # once we are finished with a lock we remove it from the queue
+        self.__remove_file(name)
+
+    def reset(self):
+        """
+        Used to remove all entries from a queue (and start again)
+
+        :return:
+        """
+        WLOG(params, '', 'Lock: Deactivated {0}'.format(self.path))
+        # get the raw list
+        rawlist = os.listdir(self.path)
+        # loop around files
+        for it in range(len(rawlist)):
+            # get the absolute path
+            abspath = os.path.join(self.path, rawlist[it])
+            # remove files
+            if os.path.exists(abspath):
+                os.remove(abspath)
+        # now remove directory
+        if os.path.exists(self.path):
+            os.removedirs(self.path)
+
+
+def synchronized(lock, name):
     """
     Synchroisation decorator - wraps the function to lock
+    calls to function are added to a queue based on the lock given and
+    the name for this call to the function (must be unique)
+
     :param lock:
     :param func_name:
     :return:
     """
-    """ Synchronization decorator. """
     def wrap(f):
         def newFunction(*args, **kw):
-            # set the function name
-            if func_name is not None:
-                lock.func_name = func_name
             # add to the queue
             lock.enqueue(name)
             # while the lock is active do not run function
@@ -327,6 +459,7 @@ def synchronized(lock, name, func_name=None):
                 return f(*args, **kw)
             # finally deactivate the lock
             finally:
+                # unlock file
                 lock.dequeue(name)
         # return the new function (wrapped)
         return newFunction
@@ -334,6 +467,46 @@ def synchronized(lock, name, func_name=None):
     return wrap
 
 
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+
+    # testing the locking mechanism
+    from multiprocessing import Process
+    import string
+
+    params = constants.load()
+
+    def printfunc(i, j):
+        # set up the lock file (usually a file or function)
+        mylock = Lock(params, 'printfunc', './')
+
+        # this is where we define the locked function
+        @synchronized(mylock, '{0}-{1}'.format(i, j))
+        def lockprint():
+            for k in list(string.ascii_lowercase):
+                print('{0}-{1}-{2}'.format(i, j, k))
+            time.sleep(0.1)
+
+        # this is where we run the function
+        try:
+            lockprint()
+        except KeyboardInterrupt:
+            mylock.reset()
+
+    for jt in range(2):
+        jobs = []
+        # loop around sub groups (to be run at same time)
+        for it in range(10):
+            # get parallel process
+            process = Process(target=printfunc, args=[it, jt])
+            process.start()
+            jobs.append(process)
+        # do not continue until finished
+        for proc in jobs:
+            proc.join()
 
 
 # =============================================================================
