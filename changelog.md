@@ -2,6 +2,140 @@ Changelog
 =========
 
 
+0.5.120 (2019-11-29)
+--------------------
+- Replace old locking mechanism with new one. [Neil Cook]
+- Science.calib.general.py - fix upper and lower limit after conversion
+  to electrons. [Neil Cook]
+- Science.extract.extraction.py - change breakpoint location. [Neil
+  Cook]
+- Change breakpoint location. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.calib.flat_blaze.py - add breakpoint. [Neil Cook]
+- Tools.module.setup.drs_installation.py - correct install messages.
+  [Neil Cook]
+- Apero/tools/module/setup/drs_installation.py + setup.install.py -
+  update the installation after Etienne's first attempt. [Neil Cook]
+- Update README.md. [Neil Cook]
+- Processing add to README.md. [Neil Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Drs_startup + drs_lock - continue to test the locking mechanism. [Neil
+  Cook]
+- Core.core.drs_database.py - correct typo. [Neil Cook]
+
+
+0.5.119 (2019-11-29)
+--------------------
+- Io.drs_lock.py - change name of function in @sync call. [Neil Cook]
+- Drs_startup + drs_lock - try to improve locking. [Neil Cook]
+- Core.core.drs_startup.py - correct name of function. [Neil Cook]
+- Io.drs_table.py - remove use of locking (for debug) [Neil Cook]
+- Io.drs_lock.py - add a randomisation to the wait time (so multiple
+  hits don't start at the same time) [Neil Cook]
+- Add to readme. [Neil Cook]
+- Test out new lock. [Neil Cook]
+- Add more readme.md. [Neil Cook]
+- Merge remote-tracking branch 'origin/dev' into dev. [Neil Cook]
+- Update README.md. [Neil Cook]
+- Update readme.md. [Neil Cook]
+- Update readme.md. [Neil Cook]
+- Io.drs_lock.py - add a printout when file unlocks (debug?) [Neil Cook]
+- Update language database. [Neil Cook]
+- Update the README.md with new installation instructions. [Neil Cook]
+- Tools.module.setup.drs_installation.py - add in skipping of reset if
+  not clean_install (and print that we are doing reset) [Neil Cook]
+- Update data_example. [Neil Cook]
+- Science.calib.general.py shape.py - fix typo and remove breakpoint.
+  [Neil Cook]
+- Scence.calib.general.py - remove unphysical pixel values (set to NaN)
+  [Neil Cook]
+- Io.drs_image.py - fix for high bad pixels (clean with border) [Neil
+  Cook]
+- Core.instruments.*.default_keywords.py - add frmtime and saturate +
+  add comments for input header keys. [Neil Cook]
+- Io.drs_table.py - change the locking order. [Neil Cook]
+- Science.calib.shape.py - move breakpoint. [Neil Cook]
+- Update debug table. [Neil Cook]
+- Science.calib.shape.py - remove old breakpoint. [Neil Cook]
+- Add breakpoints and saving of fpcube for debug. [Neil Cook]
+- Science.calib.background.py - correct axis order in sz_small. [Neil
+  Cook]
+- Add dark_fp_sky and lfc_lfc file types. [Neil Cook]
+- Core.core.drs_startup.py - fix for quiet always being found (even when
+  None) [Neil Cook]
+- Core.instruments.spirou.default_config.py - remove INTROOT references.
+  [Neil Cook]
+- Io.drs_table.py - try to add more informative error in write_table
+  (index.fits is not saving every time in parallel) [Neil Cook]
+
+
+0.5.118 (2019-11-27)
+--------------------
+- Etiennes speed up codes. [Neil Cook]
+- Tools.module.setup.drs_reset.py - update __NAME__ [Neil Cook]
+- Tools.module.setup.drs_installation.py - add print headers, add
+  validation command, add quiet mode to reset, add paths before
+  executing os.system commands. [Neil Cook]
+- Tools.dev.requirement_check.py - add code (from SpirouDRS) to check
+  requirements. [Neil Cook]
+- Tools.bin.validate.py - add code to validate (for now just a splash
+  screen) [Neil Cook]
+- Setup.install.py - add validation check for required/recommended
+  modules. [Neil Cook]
+- Remove unused imports. [Neil Cook]
+- Misc.fast_convolve_correct_local_background.py - etiennes correct to
+  add (speed up) [Neil Cook]
+- Remove unused imports. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add required_check
+  program (in tools) [Neil Cook]
+- Update permissions. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.core.*.py - add quiet option so setup info/splash is not
+  displayed. [Neil Cook]
+- Core.constants.param_functions.py - add window size function. [Neil
+  Cook]
+- Tools.resources.setup - rename from terrapipe --> apero. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - fix problem with
+  listing.instrument name and add validate placeholder. [Neil Cook]
+- Update .gitignore. [Neil Cook]
+- Terrapipe --> apero, move INTROOT2 to .., move INTROOT to misc. [Neil
+  Cook]
+- Terrapipe --> apero, move INTROOT2 to .., move INTROOT to misc. [Neil
+  Cook]
+- Terrapipe --> apero, move INTROOT2 to .., move INTROOT to misc. [Neil
+  Cook]
+- Core.instruments.spirou.file_definitions.py - correct out_dark_master
+  (accept dark_dark_tel and dark_dark_int) [Neil Cook]
+- Setup.install.py - add a todo (need to make sym links) [Neil Cook]
+- Tools.module.setup.drs_reset.py - add functionality to skip warning if
+  folder is empty (there is no point warning if we have an empty folder)
+  [Neil Cook]
+- Tools.module.setup.drs_installation.py - add functionality to install
+  drs. [Neil Cook]
+- Setup/install.py - fill out the installation code (formally in
+  drs_installation.py) [Neil Cook]
+- Tools.bin.reset.py - add directory to reset_confirmation. [Neil Cook]
+- Tools.bin.validate.py - add placeholder (needs filling out) [Neil
+  Cook]
+- Tools.resources.setup/* - add env setup codes. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.117 (2019-11-26)
 --------------------
 - Recipes.spirou.obj_fit_tellu_db_spirou.py + obj_mk_tellu_db_spirou.py
