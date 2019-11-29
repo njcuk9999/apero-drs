@@ -453,7 +453,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         return outdict
 
 
-@drs_lock.synchronized(lock, __NAME__ + '._index_pp()')
+@drs_lock.synchronized(lock, __NAME__ + '.locked_indexing()')
 def locked_indexing(params, recipe, outputs, func_name):
     # Must now deal with errors and make sure we close the lock file
     try:
