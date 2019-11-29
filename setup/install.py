@@ -40,6 +40,37 @@ REC_MODULES['pandas'] = [0, 23, 4]
 REC_MODULES['PIL'] = [5, 3, 0]
 REC_MODULES['tqdm'] = [4, 28, 1]
 REC_MODULES['yagmail'] = [0, 11, 220]
+# the help message
+HELP_MESSAGE = """
+ ***************************************************************************
+ Help for: 'setup/install.py'
+ ***************************************************************************
+	NAME: setup/install.py
+	AUTHORS: N. Cook, E. Artigau, F. Bouchy, M. Hobson, C. Moutou, 
+	         I. Boisse, E. Martioli
+
+ Usage: install.p [options]
+
+
+ ***************************************************************************
+ Description:
+ ***************************************************************************
+
+ Install {0} software for reducing observational data
+ 
+ ***************************************************************************
+
+Optional Arguments:
+
+--gui          use GUI to install (Not yet supported)  
+
+--skip         skip the python module checks (Not recommended)
+
+--help, -h     show this help message and exit
+
+ ***************************************************************************
+
+"""
 
 
 # =============================================================================
@@ -215,10 +246,21 @@ def tab_input(message, root=None):
 # Main code here
 if __name__ == "__main__":
 
+
+    # get arguments
+    args = sys.argv
+    # ----------------------------------------------------------------------
+    # Help
+    # ----------------------------------------------------------------------
+    if '--help' in args or '-h' in args:
+        print(HELP_MESSAGE.format(DRS_PATH))
+        sys.exit()
+
     # ----------------------------------------------------------------------
     # Validate modules
     # ----------------------------------------------------------------------
-    validate()
+    if '--skip' not in args:
+        validate()
 
     # ----------------------------------------------------------------------
     # Importing DRS paths
@@ -270,8 +312,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # start up
     # ----------------------------------------------------------------------
-    # get arguments
-    args = sys.argv
     # get global parameters
     params = constants.load()
 
@@ -321,6 +361,9 @@ if __name__ == "__main__":
     # create sym links for all recipes
     install.cprint('\n- Creating symlinks\n', 'm')
     allparams = install.create_symlinks(params, allparams)
+    # ----------------------------------------------------------------------
+    # display message
+    install.print_options(params, allparams)
     # ----------------------------------------------------------------------
     # log that installation is complete
     print('\n\n\n')

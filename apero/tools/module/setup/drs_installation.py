@@ -14,7 +14,6 @@ import os
 import shutil
 import readline
 import glob
-import stat
 
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
@@ -65,6 +64,53 @@ DATA_PATHS['DRS_TELLU_DB'] = ['Telluric DB data directory', 'telluDB']
 DATA_PATHS['DRS_DATA_PLOT'] = ['Plotting directory', 'plot']
 DATA_PATHS['DRS_DATA_RUN'] = ['Run directory', 'runs']
 DATA_PATHS['DRS_DATA_MSG'] = ['Log directory', 'msg']
+
+# Messages for user interface
+message1 = """
+User config path: 
+
+    This is the path where your user configuration will be saved.
+    If it doesn't exist you will be prompted to create it. 
+"""
+message2 = """
+Setup paths invidiually? [Y]es or [N]o
+    
+    If [Y]es it will allow you to set each path separately
+    (i.e. for raw, tmp, reduced, calibDB etc). 
+    If [N]o you will just set one path and all folders 
+    (raw, tmp, reduced, calibDB etc)) will be created under this 
+    directory.
+"""
+message3 = """
+Clean install? [Y]es or [N]o
+
+    WARNING: If you type [Y]es you will be prompted (later) to reset
+    the directories this means any previous data in these directories 
+    will be removed.
+    
+Note you can always say later to individual cases.
+"""
+
+message4 = """
+
+    i) Add an alias in your ~/.bashrc or ~/.bash_profile or 
+       ~/.tcshrc or ~/.profile 
+       and then type "apero" every time you wish to run apero.
+       i.e. alias apero "source {DRS_UCONFIG}config/apero.{SYSTEM}.setup"
+    
+    
+    ii) Add the contents of {DRS_UCONFIG}config/apero.{SYSTEM}.setup 
+        to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
+    
+    
+    iii) type "source {DRS_UCONFIG}config/apero.{SYSTEM}.setup" every 
+         time you wish to run apero.
+
+
+Note: here {SYSTEM} is "bash" or "sh" or "win" depending on your system.
+
+
+"""
 
 
 # =============================================================================
@@ -209,7 +255,7 @@ def user_interface(params):
     print('\n')
     # ------------------------------------------------------------------
     # Step 1: Ask for user config path
-    userconfig = ask('User config path', 'path', default=DEFAULT_USER_PATH)
+    userconfig = ask(message1, 'path', default=DEFAULT_USER_PATH)
     all_params['USERCONFIG'] = userconfig
     # ------------------------------------------------------------------
     for instrument in INSTRUMENTS:
@@ -235,7 +281,7 @@ def user_interface(params):
             os.mkdir(iparams['USERCONFIG'])
         # ------------------------------------------------------------------
         # Step 3: Ask for data paths
-        advanced = ask('Setup paths invidiually?', dtype='YN')
+        advanced = ask(message2, dtype='YN')
         cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # if advanced then loop through all options
@@ -285,7 +331,7 @@ def user_interface(params):
         cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # Step 5: Ask whether we want a clean install
-        iparams['CLEAN_INSTALL'] = ask('Clean install?', dtype='YN')
+        iparams['CLEAN_INSTALL'] = ask(message3, dtype='YN')
         iparams.set_source('CLEAN_INSTALL', func_name)
         # ------------------------------------------------------------------
         # add iparams to all params
@@ -519,7 +565,12 @@ def create_symlinks(params, all_params):
             # make symlink
             os.symlink(filename, newpath)
             # make executable
-            os.chmod(newpath, stat.S_IRWXO)
+            try:
+                os.chmod(newpath, 0o777)
+            except:
+                cprint('Error: Cannot chmod 777', 'r')
+    # return all_params
+    return all_params
 
 
 def add_paths(all_params):
@@ -556,6 +607,19 @@ def add_paths(all_params):
 def printheader():
     rows, columns = constants.param_functions.window_size()
     return '=' * (columns - 1)
+
+
+def print_options(params, all_params):
+    # set up the text dictionary
+    text = dict()
+    text['DRS_UCONFIG'] = all_params['USERCONFIG']
+    text['SYSTEM'] = '{SYSTEM}'
+    # print the messages
+    print('\n\n')
+    cprint(printheader(), 'm')
+    cprint(' To run apero do one of the following:', 'm')
+    cprint(printheader(), 'm')
+    cprint(message4.format(**text), 'g')
 
 
 # =============================================================================
