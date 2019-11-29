@@ -70,7 +70,7 @@ python setup/install.py
 
 A. `User config path`: This is the path where your configuration will be saved.
 If it doesn't exist you will be prompted to create it. 
-(This will be referred to as `DRS_UCONFIG` from now on)
+(This will be referred to as `DRS_UCONFIG` from now on (default is `/home/user/apero/`)
 
 B. `Settings for {INSTRUMENT}`: Install {INSTRUMENT}. If yes it will install the 
 instrument if not then it will not install the instrument. Currently only 
@@ -106,26 +106,29 @@ To run apero you need to do __one__ of the following
 
 __NOTE__: these three are equivalent only do __one__
 
-##### i) source environmental variables directly
 
- `source {DRS_UCONFIG}/apero.{SYSTEM}.setup`
- and type this command every time you open a new terminal
-
-where: 
- - `{DRS_UCONFIG}` is the config path set up in step __A__
- - `{SYSTEM}` is either `bash` or `sh` depending on your shell
-
-##### ii) alias to apero to your startup script 
+##### i) alias to apero to your startup script (RECOMMENDED)
 For example 
 
-`alias apero "source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`  (tcsh/csh)
-`alias apero=""source {DRS_UCONFIG}/apero.{SYSTEM}.setup"`  (bash)
+`alias apero "source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (tcsh/csh)
+`alias apero=""source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash)
 
 to `~/.bashrc` or `~/.bash_profile` or  `~/.tcshrc` or `~/.profile`
 
 and type `apero` every time you open a new terminal 
 
-##### iii) add the contents of `{DRS_UCONFIG}/apero.{SYSTEM}.setup` to your startup script
+
+##### ii) source environmental variables directly
+
+ `source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup`
+ and type this command every time you open a new terminal
+
+where: 
+ - `{DRS_UCONFIG}` is the config path set up in step __2A__
+ - `{SYSTEM}` is either `bash` or `sh` depending on your shell
+
+
+##### iii) add the contents of `{DRS_UCONFIG}/config/apero.{SYSTEM}.setup` to your startup script
 
 i.e. one of the following `~/.bashrc`, `~/.bash_profile`, `~/.tcshrc`, `~/.profile`
 (apero will be ready to use in every new terminal).
