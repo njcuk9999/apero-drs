@@ -10,6 +10,7 @@ Created on 2019-06-27 at 10:48
 from __future__ import division
 import numpy as np
 import os
+import warnings
 
 from apero import core
 from apero import locale
@@ -17,7 +18,6 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
-from apero.io import drs_table
 from apero.science.calib import dark
 from apero.science.calib import badpix
 from apero.science.calib import background
@@ -168,7 +168,8 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # nonphysical. The lower bound is set at -10 * readout noise.
     upperlim = saturate / frmtime
     lowerlim = -10 * (sigdet * gain) / frmtime
-    mask = (image > upperlim) | (image < lowerlim)
+    with warnings.catch_warnings(record=True) as _:
+        mask = (image > upperlim) | (image < lowerlim)
     image[mask] = np.nan
 
     # ----------------------------------------------------------------------
@@ -260,7 +261,8 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # Upper bound is the saturation/frame time (we express things as slope).
     # A pixel with a value greater than can be recorded by the array is
     # nonphysical. The lower bound is set at -10 * readout noise.
-    mask = (image5 > upperlim) | (image5 < lowerlim)
+    with warnings.catch_warnings(record=True) as _:
+        mask = (image5 > upperlim) | (image5 < lowerlim)
     image5[mask] = np.nan
 
     # ----------------------------------------------------------------------
