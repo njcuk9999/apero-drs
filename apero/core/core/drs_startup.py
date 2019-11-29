@@ -72,6 +72,8 @@ INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
 PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
 CURRENT_PATH = ''
+# start a lock
+lock = drs_lock.Lock()
 
 
 # =============================================================================
@@ -388,29 +390,28 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     # -------------------------------------------------------------------------
     # index if we have outputs
     if (outputs is not None) and (outputs != 'None') and success:
-        # get and check for file lock file
-        lock, lock_file = drs_lock.check_lock_file(params, opath)
-        # Must now deal with errors and make sure we close the lock file
-        try:
-            if outputs == 'pp':
-                # index outputs to pp dir
-                _index_pp(params, recipe)
-            elif outputs == 'reduced':
-                # index outputs to reduced dir
-                _index_outputs(params, recipe)
-            # close lock file
-            drs_lock.close_lock_file(params, lock, lock_file, opath)
-        # Must close lock file
-        except drs_exceptions.LogExit as e:
-            drs_lock.close_lock_file(params, lock, lock_file, opath)
-            # log error
-            eargs = [type(e), e.errormessage, func_name]
-            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-        except Exception as e:
-            drs_lock.close_lock_file(params, lock, lock_file, opath)
-            # log error
-            eargs = [type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+
+        @drs_lock.synchronized(lock, __NAME__ + '_index_pp()')
+        def locked_indexing():
+            # Must now deal with errors and make sure we close the lock file
+            try:
+                if outputs == 'pp':
+                    # index outputs to pp dir
+                    _index_pp(params, recipe)
+                elif outputs == 'reduced':
+                    # index outputs to reduced dir
+                    _index_outputs(params, recipe)
+            # Must close lock file
+            except drs_exceptions.LogExit as e:
+                # log error
+                eargs = [type(e), e.errormessage, func_name]
+                WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+            except Exception as e:
+                # log error
+                eargs = [type(e), e, func_name]
+                WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+
+        locked_indexing()
     # -------------------------------------------------------------------------
     # log end message
     if end:

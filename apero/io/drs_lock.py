@@ -259,6 +259,70 @@ def close_lock_file(p, lock, lock_file, filename):
     # TODO: move to db or remove
     WLOG(p, '', 'Unlocking closefile: {0}'.format(lock_file))
 
+
+
+
+
+# =============================================================================
+# Define new functions
+# =============================================================================
+class Lock:
+    """
+    Class to control locking of decorated functions
+    """
+    def __init__(self):
+        self.active = False
+        self.func_name = None
+
+    def activate(self):
+
+        if self.func_name is None:
+            print('lock started')
+        else:
+            print('lock started for {0}'.format(self.func_name))
+        self.active = True
+
+    def deactivate(self):
+        if self.func_name is None:
+            print('lock ended')
+        else:
+            print('lock ended for {0}'.format(self.func_name))
+        self.active = False
+
+
+
+def synchronized(lock, func_name=None):
+    """
+    Synchroisation decorator - wraps the function to lock
+    :param lock:
+    :param func_name:
+    :return:
+    """
+    """ Synchronization decorator. """
+    def wrap(f):
+        def newFunction(*args, **kw):
+            # set the function name
+            if func_name is not None:
+                lock.func_name = func_name
+            # while the lock is active do not run function
+            while lock.active:
+                time.sleep(1)
+            # activate the lock
+            lock.activate()
+            # now try to run the function
+            try:
+                return f(*args, **kw)
+            # finally deactivate the lock
+            finally:
+                lock.deactivate()
+        # return the new function (wrapped)
+        return newFunction
+    # return the wrapped function
+    return wrap
+
+
+
+
 # =============================================================================
 # End of code
 # =============================================================================
