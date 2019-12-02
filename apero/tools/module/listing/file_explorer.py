@@ -38,7 +38,7 @@ from apero.tools.module.gui import widgets
 # Define variables
 # =============================================================================
 __NAME__ = 'file_explorer.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
@@ -670,40 +670,6 @@ class App(tk.Tk):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def main(instrument=None):
-    """
-    Main function - takes the instrument name, index the databases and python
-    script (in real time due to any changes in code) and then runs the
-    application to find errors
-
-    :param instrument: string, the instrument name
-    :type: str
-    :return: returns the local namespace as a dictionary
-    :rtype: dict
-    """
-    # get parameters from apero
-    _, params = core.setup('None', instrument, quiet=True)
-    # define allowed instruments
-    if instrument not in INSTRUMENTS:
-        emsgs = ['Instrument = "{0}" not valid.'.format(instrument),
-                 '\nAllowed instruments: ']
-        for instrument_option in INSTRUMENTS:
-            emsgs.append('\n\t{0}'.format(instrument_option))
-        WLOG(params, 'error', emsgs)
-    # Log that we are running indexing
-    WLOG(params, '', 'Indexing files at {0}'.format(params[ALLOWED_PATHS[0]]))
-    # load data
-    datastore = LoadData(instrument)
-    # Log that we are running indexing
-    WLOG(params, '', 'Running file explorer application')
-    # Main code here
-    app = App(datastore=datastore)
-    app.geometry("1024x768")
-    app.mainloop()
-    # end with a log message
-    WLOG(datastore.params, '', 'Program has completed successfully')
-    # return a copy of locally defined variables in the memory
-    return core.return_locals(params, locals())
 
 
 class LoadData:
@@ -737,8 +703,7 @@ class LoadData:
         self.lengths = OrderedDict()
         self.options = OrderedDict()
         # get parameters from apero
-        _, params = core.setup('None', self.instrument, quiet=True)
-        self.params = params
+        self.params = constants.load(self.instrument)
         self.pconstant = constants.pload(self.instrument)
         # set path from parameters
         if (path is None) and (self.path is None):
