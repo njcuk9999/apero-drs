@@ -138,10 +138,16 @@ DRS_WAVE_DATA = DRS_WAVE_DATA.copy(__NAME__)
 DRS_WAVE_DATA.value = './data/spirou/calib/'
 
 # where the reset data are stored
+# for calibDB
 DRS_RESET_CALIBDB_PATH = DRS_RESET_CALIBDB_PATH.copy(__NAME__)
 DRS_RESET_CALIBDB_PATH.value = './data/spirou/reset/calibdb/'
+# for telluDB
 DRS_RESET_TELLUDB_PATH = DRS_RESET_TELLUDB_PATH.copy(__NAME__)
 DRS_RESET_TELLUDB_PATH.value = './data/spirou/reset/telludb/'
+# for run files
+DRS_RESET_RUN_PATH = DRS_RESET_RUN_PATH.copy(__NAME__)
+DRS_RESET_RUN_PATH.value = './data/spirou/reset/runs/'
+
 
 # =============================================================================
 #  End of configuration file
