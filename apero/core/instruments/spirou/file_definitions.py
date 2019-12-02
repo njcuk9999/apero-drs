@@ -334,6 +334,7 @@ pp_file.addset(pp_fp_fp)
 pp_lfc_lfc = drs_finput('LFC_LFC', KW_DPRTYPE='LFC_LFC',
                         filetype='.fits', suffix='_pp', intype=raw_lfc_lfc,
                         inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_lfc_lfc)
 
 # -----------------------------------------------------------------------------
 #  object
