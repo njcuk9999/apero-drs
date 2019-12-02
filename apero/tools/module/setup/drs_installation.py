@@ -23,7 +23,7 @@ from apero.locale import drs_exceptions
 # Define variables
 # =============================================================================
 __NAME__ = 'tools.module.setup.drs_installation.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
@@ -49,8 +49,13 @@ DEFAULT_USER_PATH = '~/apero/config/'
 DEFAULT_DATA_PATH = '~/apero/data/'
 
 BINPATH = '../bin/'
-TOOLPATH = '../apero/tools/bin/'
+TOOLPATH = '../tools/bin/'
+DEVPATH = '../tools/dev/'
+
 RECIPEPATH = './recipes/{0}/'
+TOOL_RECIPEPATH = '../apero/tools/module/recipes/general/'
+DEV_RECIPEPATH = '../apero/tools/module/recipes/dev/'
+
 ENV_CONFIG = 'DRS_UCONFIG'
 SETUP_PATH = './tools/resources/setup/'
 
@@ -430,9 +435,12 @@ def bin_paths(params, all_params):
     bin_path = constants.get_relative_folder(package, BINPATH)
     # add tools bin path
     tool_path = constants.get_relative_folder(package, TOOLPATH)
+    # add tools dev path
+    dev_path = constants.get_relative_folder(package, DEVPATH)
     # add to all_params
     all_params['DRS_BIN_PATH'] = bin_path
     all_params['DRS_TOOL_PATH'] = tool_path
+    all_params['DRS_DEV_PATH'] = dev_path
     # return the updated all params
     return all_params
 
@@ -456,9 +464,9 @@ def create_shell_scripts(params, all_params):
         emsg = 'Error {0} does not support OS (OS = {0})'
         cprint(emsg.format(os.name), 'red')
         sys.exit()
-
+    # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], 'validate.py')
+    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], 'apero-validate.py')
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
@@ -521,9 +529,11 @@ def create_shell_scripts(params, all_params):
     return all_params
 
 
-def clean_install(all_params):
+def clean_install(params, all_params):
+    # get package
+    package = params['DRS_PACKAGE']
     # get root directory
-    binpath = all_params['DRS_TOOL_PATH']
+    tool_path = constants.get_relative_folder(package, TOOL_RECIPEPATH)
     # loop around instruments
     for instrument in INSTRUMENTS:
         # skip is we are not installing instrument
@@ -537,9 +547,9 @@ def clean_install(all_params):
         # add to environment
         add_paths(all_params)
         # construct reset command
-        cmd = 'python {0}/reset.py {1} --quiet'.format(binpath, instrument)
+        cmd = 'python {0}/apero-reset.py {1} --quiet'
         # run command
-        os.system(cmd)
+        os.system(cmd.format(tool_path, instrument))
     # return all params
     return all_params
 
@@ -547,39 +557,79 @@ def clean_install(all_params):
 def create_symlinks(params, all_params):
     # get root directory
     binpath = all_params['DRS_BIN_PATH']
+    toolpath = all_params['DRS_TOOL_PATH']
+    devpath = all_params['DRS_DEV_PATH']
     # get package
     package = params['DRS_PACKAGE']
+
+    # ------------------------------------------------------------------
+    # Copy bin files (for each instrument)
+    # ------------------------------------------------------------------
+    # log which directory we are populating
+    cprint('\n\t Populating {0} directory\n'.format(binpath), 'm')
+
     # loop around instruments
     for instrument in INSTRUMENTS:
         # skip is we are not installing instrument
         if instrument not in all_params:
             continue
+
         # find recipe folder for this instrument
         recipe_raw = RECIPEPATH.format(instrument.lower())
         recipe_dir = constants.get_relative_folder(package, recipe_raw)
         # define suffix
         suffix = '*_{0}.py'.format(instrument.lower())
-        # get all python files in recipe folder
-        files = glob.glob(os.path.join(recipe_dir, suffix))
-        # loop around files and create symbolic links in bin path
-        for filename in files:
-            # get file base name
-            basename = os.path.basename(filename)
-            # construct new path
-            newpath = os.path.join(binpath, basename)
-            cprint('\tMoving {0}'.format(basename))
-            # remove link already present
-            if os.path.exists(newpath):
-                os.remove(newpath)
-            # make symlink
-            os.symlink(filename, newpath)
-            # make executable
-            try:
-                os.chmod(newpath, 0o777)
-            except:
-                cprint('Error: Cannot chmod 777', 'r')
+        # create sym links
+        _create_link(recipe_dir, suffix, binpath)
+
+    # ------------------------------------------------------------------
+    # Copy general tools
+    # ------------------------------------------------------------------
+    # log which directory we are populating
+    cprint('\n\t Populating {0} directory\n'.format(binpath), 'm')
+    # get default directory
+    tools_dir = constants.get_relative_folder(package, TOOL_RECIPEPATH)
+    # define suffix
+    suffix = '*.py'
+    # create sym links
+    _create_link(tools_dir, suffix, toolpath)
+
+    # ------------------------------------------------------------------
+    # Copy dev tools files
+    # ------------------------------------------------------------------
+    # get default directory
+    dev_dir = constants.get_relative_folder(package, DEV_RECIPEPATH)
+    # define suffix
+    suffix = '*.py'
+    # create sym links
+    _create_link(dev_dir, suffix, devpath, log=False)
+
+    # ------------------------------------------------------------------
     # return all_params
     return all_params
+
+
+def _create_link(recipe_dir, suffix, new_path, log=True):
+    # get all python files in recipe folder
+    files = glob.glob(os.path.join(recipe_dir, suffix))
+    # loop around files and create symbolic links in bin path
+    for filename in files:
+        # get file base name
+        basename = os.path.basename(filename)
+        # construct new path
+        newpath = os.path.join(new_path, basename)
+        if log:
+            cprint('\t\tMoving {0}'.format(basename))
+        # remove link already present
+        if os.path.exists(newpath):
+            os.remove(newpath)
+        # make symlink
+        os.symlink(filename, newpath)
+        # make executable
+        try:
+            os.chmod(newpath, 0o777)
+        except:
+            cprint('Error: Cannot chmod 777', 'r')
 
 
 def add_paths(all_params):

@@ -35,7 +35,7 @@ from apero.io import drs_lock
 # =============================================================================
 # Name of program
 __NAME__ = 'drs_table.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

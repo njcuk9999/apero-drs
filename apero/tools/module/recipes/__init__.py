@@ -1,27 +1,35 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+# CODE NAME HERE
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-11-02 10:10
-@author: ncook
-Version 0.0.1
+Created on 2019-12-02 at 11:58
+
+@author: cook
 """
+
+import numpy as np
+import matplotlib.pyplot as plt
+from astropy.io import fits
+from astropy.table import Table
+from astropy import units as u
+from tqdm import tqdm
+import warnings
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WORKSPACE = './'
-
 
 # -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def function():
-    pass
+def function1():
+    return 0
 
 
 # =============================================================================
@@ -30,8 +38,8 @@ def function():
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    # Main code here
-    pass
+    # print 'Hello World!'
+    print("Hello World!")
 
 # =============================================================================
 # End of code

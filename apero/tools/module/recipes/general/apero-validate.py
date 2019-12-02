@@ -18,7 +18,7 @@ from apero.core import constants
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'validate.py'
+__NAME__ = 'apero-validate.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)

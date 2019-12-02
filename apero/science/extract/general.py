@@ -33,7 +33,7 @@ from apero.science.extract import berv
 # Define variables
 # =============================================================================
 __NAME__ = 'science.extraction.general.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

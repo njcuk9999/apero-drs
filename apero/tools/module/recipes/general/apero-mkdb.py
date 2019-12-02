@@ -27,7 +27,7 @@ from apero.tools.module.setup import drs_reset
 # Define variables
 # =============================================================================
 __NAME__ = 'remake_db.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

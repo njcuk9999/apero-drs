@@ -23,7 +23,7 @@ from apero.core import math as mp
 # Define variables
 # =============================================================================
 __NAME__ = 'core.plotting.plot_functions.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

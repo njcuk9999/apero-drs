@@ -1,27 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-07-26 at 09:47
-
-@author: cook
+Created on 2019-11-02 10:10
+@author: ncook
+Version 0.0.1
 """
-import numpy as np
-import sys
+from __future__ import division
 
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.tools.module.setup import drs_processing
+
+# TODO: Alll functionality should be in tools/module/setup/drs_trigger.py
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'processing.py'
+__NAME__ = 'apero-trigger.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -40,13 +39,13 @@ TextDict = locale.drs_text.TextDict
 # =============================================================================
 # Define functions
 # =============================================================================
-# All recipe code goes in _main
+# All recipe code goes in __main__
 #    Only change the following from here:
 #     1) function calls  (i.e. main(arg1, arg2, **kwargs)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(runfile=None, **kwargs):
+def main(instrument=None, **kwargs):
     """
     Main function for cal_dark_spirou.py
 
@@ -63,7 +62,7 @@ def main(runfile=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(runfile=runfile, **kwargs)
+    fkwargs = dict(instrument=instrument, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -90,64 +89,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    mainname = __NAME__ + '._main()'
-    # get run file from inputs
-    runfile = params['INPUTS']['RUNFILE']
-    # set up drs group (for logging)
-    groupname = core.group_name(params)
 
-    # ----------------------------------------------------------------------
-    # Deal with run file
-    # ----------------------------------------------------------------------
-    # deal with run file
-    params, runtable = drs_processing.read_runfile(params, runfile)
-    # reset sys.argv so it doesn't mess with recipes
-    sys.argv = [__NAME__]
-
-    # ----------------------------------------------------------------------
-    # Send email about starting
-    # ----------------------------------------------------------------------
-    # send email if configured
-    drs_processing.send_email(params, kind='start')
-
-    # ----------------------------------------------------------------------
-    # Deal with reset options
-    # ----------------------------------------------------------------------
-    drs_processing.reset_files(params)
-
-    # ----------------------------------------------------------------------
-    # find all raw files
-    # ----------------------------------------------------------------------
-    # get raw files
-    rawtable, rawpath = drs_processing.find_raw_files(params, recipe)
-
-    # ----------------------------------------------------------------------
-    # Generate run list
-    # ----------------------------------------------------------------------
-    rlist = drs_processing.generate_run_list(params, rawtable, runtable)
-
-    # ----------------------------------------------------------------------
-    # Process run list
-    # ----------------------------------------------------------------------
-    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist,
-                                                          group=groupname)
-
-    # ----------------------------------------------------------------------
-    # Print timing
-    # ----------------------------------------------------------------------
-    drs_processing.display_timing(params, outlist)
-
-    # ----------------------------------------------------------------------
-    # Print out any errors
-    # ----------------------------------------------------------------------
-    if has_errors:
-        drs_processing.display_errors(params, outlist)
-
-    # ----------------------------------------------------------------------
-    # Send email about finishing
-    # ----------------------------------------------------------------------
-    # send email if configured
-    drs_processing.send_email(params, kind='end')
+    # TODO: Main code here
 
     # ----------------------------------------------------------------------
     # End of main code

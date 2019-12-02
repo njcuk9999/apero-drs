@@ -5,25 +5,24 @@
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-09-16 at 13:48
+Created on 2019-07-26 at 09:39
 
 @author: cook
 """
 from __future__ import division
-import os
+import numpy as np
 
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.core.core import drs_startup
-from apero.tools.module import listing
-from apero.tools.module.setup import drs_processing
+from apero.tools.module.setup import drs_reset
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'listing.py'
-__INSTRUMENT__ = None
+__NAME__ = 'apero-reset.py'
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
@@ -31,8 +30,6 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
@@ -51,7 +48,7 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(instrument=None, **kwargs):
     """
-    Main function for cal_extract_spirou.py
+    Main function for cal_dark_spirou.py
 
     :param directory: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -79,7 +76,7 @@ def main(instrument=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return core.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -93,77 +90,78 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    mainname = __NAME__ + '._main()'
-    # get the night name from inputs
-    nightname = params['INPUTS']['NIGHTNAME']
-    # get the kidn from inputs
-    kind = params['INPUTS']['KIND']
-    # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get index file name
-    index_file_name = pconst.INDEX_OUTPUT_FILENAME()
-    # ----------------------------------------------------------------------
-    # Deal with kind
-    # ----------------------------------------------------------------------
-    # deal with kind
-    if kind.lower() == 'raw':
-        # push files in to runs/raw_index
-        _ = drs_processing.find_raw_files(params, recipe)
+    # get log and warn from inputs
+    log = params['INPUTS']['log']
+    warn = params['INPUTS']['warn']
 
-        return core.return_locals(params, locals())
-    elif kind.lower() == 'tmp':
-        path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
-    elif kind.lower() == 'red':
-        path = params['DRS_DATA_REDUC']
-        columns = pconst.REDUC_OUTPUT_KEYS()
+    # ----------------------------------------------------------------------
+    # Perform resets
+    # ----------------------------------------------------------------------
+    reset1, reset2, reset3 = True, True, True
+    reset4, reset5, reset6 = True, True, True
+    reset7 = True
+    # ----------------------------------------------------------------------
+    # tmp folder
+    if warn:
+        reset1 = drs_reset.reset_confirmation(params, 'Tmp',
+                                              params['DRS_DATA_WORKING'])
+    if reset1:
+        drs_reset.reset_tmp_folders(params, log)
     else:
-        path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
+        WLOG(params, '', 'Not resetting tmp folders.')
     # ----------------------------------------------------------------------
-    # Deal with night name
-    # ----------------------------------------------------------------------
-    if (nightname is None) or (nightname == ''):
-        nightnames = listing.get_nightnames(params, path)
+    # reduced folder
+    if warn:
+        reset2 = drs_reset.reset_confirmation(params, 'Reduced',
+                                              params['DRS_DATA_REDUC'])
+    if reset2:
+        drs_reset.reset_reduced_folders(params, log)
     else:
-        nightnames = [nightname]
+        WLOG(params, '', 'Not resetting reduced folders.')
     # ----------------------------------------------------------------------
-    # Loop over night name
+    # calibration folder
+    if warn:
+        reset3 = drs_reset.reset_confirmation(params, 'CalibDB',
+                                              params['DRS_CALIB_DB'])
+    if reset3:
+        drs_reset.reset_calibdb(params, log)
+    else:
+        WLOG(params, '', 'Not resetting CalibDB files.')
     # ----------------------------------------------------------------------
-    # loop around night names
-    for nightname in nightnames:
-        # construct path
-        path1 = os.path.join(path, nightname)
-        # test path exists
-        if not os.path.exists(path1):
-            # log error and exit
-            eargs = [nightname, path]
-            WLOG(params, 'error', TextEntry('09-504-00001', args=eargs))
-        # else log the progress
-        else:
-            WLOG(params, 'info', TextEntry('40-504-00005', args=[nightname]))
-        # ----------------------------------------------------------------------
-        # Find all index files and remove them (we are remaking them)
-        # ----------------------------------------------------------------------
-        listing.remove_index_files(params, path1)
-        # ----------------------------------------------------------------------
-        # Get all files in this directory
-        # ----------------------------------------------------------------------
-        files = listing.get_all_files(params, path1)
-        # ----------------------------------------------------------------------
-        # Read header outputs for all these files
-        # ----------------------------------------------------------------------
-        output_dictionary = listing.get_outputs(params, files)
-        # ----------------------------------------------------------------------
-        # Create indexing for all these files
-        # ----------------------------------------------------------------------
-        # get the index path
-        index_path = os.path.join(path1, index_file_name)
-        # index
-        istore = drs_startup.indexing(params, output_dictionary, columns,
-                                      index_path)
-        # save to file
-        drs_startup.save_index_file(params, istore, index_path)
+    # telluric folder
+    if warn:
+        reset4 = drs_reset.reset_confirmation(params, 'TelluDB',
+                                              params['DRS_TELLU_DB'])
+    if reset4:
+        drs_reset.reset_telludb(params, log)
+    else:
+        WLOG(params, '', 'Not resetting TelluDB files.')
+    # ----------------------------------------------------------------------
+    # log folder
+    if warn:
+        reset5 = drs_reset.reset_confirmation(params, 'Log',
+                                              params['DRS_DATA_MSG'])
+    if reset5:
+        drs_reset.reset_log(params)
+    # ----------------------------------------------------------------------
+    # plot folder
+    if warn:
+        reset6 = drs_reset.reset_confirmation(params, 'Plot',
+                                              params['DRS_DATA_PLOT'])
+    if reset6:
+        drs_reset.reset_plot(params)
+    else:
+        WLOG(params, '', 'Not resetting Log files.')
+    # ----------------------------------------------------------------------
+    # plot folder
+    if warn:
+        reset7 = drs_reset.reset_confirmation(params, 'Run',
+                                              params['DRS_DATA_RUN'])
+    if reset7:
+        drs_reset.reset_run(params)
+    else:
+        WLOG(params, '', 'Not resetting run files.')
+
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -8,7 +8,7 @@ from apero.core.instruments.default import file_definitions as sf
 # Define variables
 # =============================================================================
 __NAME__ = 'config.core.default.recipe_definitions.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = param_functions.load_config(__INSTRUMENT__)
 # Get Help
@@ -32,17 +32,18 @@ drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
 test = drs_recipe(__INSTRUMENT__)
-drs_changelog = drs_recipe(__INSTRUMENT__)
+changelog = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
+explorer = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, drs_changelog, reset, processing, remake_db, req_check,
-           listing, validate]
+recipes = [test, changelog, explorer, reset, processing,
+           remake_db, req_check, listing, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -102,16 +103,29 @@ test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
 # -----------------------------------------------------------------------------
 # changelog.py
 # -----------------------------------------------------------------------------
-drs_changelog.name = 'drs_changelog.py'
-drs_changelog.instrument = __INSTRUMENT__
-drs_changelog.description = Help['CHANGELOG_DESCRIPTION']
-drs_changelog.set_arg(pos=0, name='preview', dtype='bool',
+changelog.name = 'apero-changelog.py'
+changelog.instrument = __INSTRUMENT__
+changelog.description = Help['CHANGELOG_DESCRIPTION']
+changelog.set_arg(pos=0, name='preview', dtype='bool',
                       helpstr=Help['PREVIEW_HELP'])
 
 # -----------------------------------------------------------------------------
-# reset.py
+# changelog.py
 # -----------------------------------------------------------------------------
-reset.name = 'reset.py'
+
+explorer.name = 'apero-explorer.py'
+explorer.instrument = __INSTRUMENT__
+# TODO: Add description
+explorer.description = ''
+# TODO: Add instrument help
+explorer.set_arg(pos=0, name='instrument', dtype='options',
+                 helpstr='', options=['SPIROU', 'NIRPS'])
+
+
+# -----------------------------------------------------------------------------
+# apero-reset.py
+# -----------------------------------------------------------------------------
+reset.name = 'apero-reset.py'
 reset.instrument = __INSTRUMENT__
 reset.description = Help['RESET_DESCRIPTION']
 reset.set_arg(pos=0, name='instrument', dtype='options',
@@ -122,9 +136,9 @@ reset.set_kwarg(name='-warn', dtype='bool', default=True,
                 helpstr=Help['RESET_WARN_HELP'])
 
 # -----------------------------------------------------------------------------
-# processing.py
+# apero-processing.py
 # -----------------------------------------------------------------------------
-processing.name = 'processing.py'
+processing.name = 'apero-processing.py'
 processing.instrument = __INSTRUMENT__
 processing.description = Help['PROCESS_DESCRIPTION']
 processing.set_arg(pos=0, name='instrument', dtype='options',
@@ -147,9 +161,9 @@ processing.set_kwarg(name='--test', dtype=str, default='None',
                      helpstr=Help['PROCESS_TEST_HELP'])
 
 # -----------------------------------------------------------------------------
-# listing.py
+# apero-listing.py
 # -----------------------------------------------------------------------------
-listing.name = 'listing.py'
+listing.name = 'apero-listing.py'
 listing.instrument = __INSTRUMENT__
 listing.description = Help['LISTING_DESC']
 listing.set_arg(pos=0, name='instrument', dtype='options',
@@ -162,17 +176,17 @@ listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   helpstr=Help['LISTING_HELP_KIND'])
 
 # -----------------------------------------------------------------------------
-# remake_db.py
+# apero-requirements-check.py
 # -----------------------------------------------------------------------------
-req_check.name = 'requirements_check.py'
+req_check.name = 'apero-dependencies.py'
 req_check.instrument = __INSTRUMENT__
 # TODO: Add description
 req_check.description = ''
 
 # -----------------------------------------------------------------------------
-# remake_db.py
+# apero-mkdb.py
 # -----------------------------------------------------------------------------
-remake_db.name = 'remake_db.py'
+remake_db.name = 'apero-mkdb.py'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = Help['REMAKE_DESC']
 remake_db.set_arg(pos=0, name='instrument', dtype='options',
@@ -184,9 +198,9 @@ remake_db.set_kwarg(name='--kind', dtype='options',
                   helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
 
 # -----------------------------------------------------------------------------
-# validate.py
+# apero-validate.py
 # -----------------------------------------------------------------------------
-validate.name = 'validate.py'
+validate.name = 'apero-validate.py'
 validate.instrument = __INSTRUMENT__
 # TODO: Add description
 validate.description = ''

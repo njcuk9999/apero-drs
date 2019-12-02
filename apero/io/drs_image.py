@@ -24,7 +24,7 @@ from apero import locale
 # Define variables
 # =============================================================================
 __NAME__ = 'io.drs_path.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

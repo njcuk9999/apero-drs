@@ -35,7 +35,7 @@ from . import drs_file
 # =============================================================================
 # Name of program
 __NAME__ = 'drs_startup.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Define package name
@@ -77,7 +77,8 @@ CURRENT_PATH = ''
 # =============================================================================
 # Define functions
 # =============================================================================
-def setup(name='None', instrument='None', fkwargs=None, quiet=False):
+def setup(name='None', instrument='None', fkwargs=None, quiet=False,
+          threaded=False, enable_plotter=True):
     """
     Recipe setup script for recipe "name" and "instrument"
 
@@ -100,8 +101,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     :rtype: tuple[DrsRecipe, ParamDict]
     """
     func_name = __NAME__ + '.setup()'
-    # catch sigint
-    signal(SIGINT, constants.catch_sigint)
+    # catch sigint (if not threaded) -- if threaded can only be in main thread
+    if not threaded:
+        signal(SIGINT, constants.catch_sigint)
     # deal with unset instrument
     if instrument == 'None':
         instrument = None
@@ -249,7 +251,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False):
     recipe.drs_params = params.copy()
     WLOG.pin = params.copy()
     # add in the plotter
-    recipe.plot = plotting.Plotter(params, recipe)
+    if enable_plotter:
+        recipe.plot = plotting.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params

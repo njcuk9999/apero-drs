@@ -23,8 +23,8 @@ from apero.io import drs_path
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'listing.py'
-__INSTRUMENT__ = None
+__NAME__ = 'apero-listing.py'
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

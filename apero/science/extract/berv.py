@@ -32,7 +32,7 @@ from apero.science.extract import crossmatch
 # Define variables
 # =============================================================================
 __NAME__ = 'science.extract.berv.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

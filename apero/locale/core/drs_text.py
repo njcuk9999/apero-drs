@@ -22,7 +22,7 @@ from apero.locale.core import drs_exceptions
 # =============================================================================
 # Name of program
 __NAME__ = 'drs_text.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Define package name
 PACKAGE = 'apero'
 # file locations

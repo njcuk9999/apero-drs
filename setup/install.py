@@ -356,7 +356,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
     install.cprint('\n- Copying files\n\n', 'm')
-    allparams = install.clean_install(allparams)
+    allparams = install.clean_install(params, allparams)
     # ----------------------------------------------------------------------
     # create sym links for all recipes
     install.cprint('\n- Creating symlinks\n', 'm')
