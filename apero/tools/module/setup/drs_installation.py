@@ -78,7 +78,7 @@ Setup paths invidiually? [Y]es or [N]o
     If [Y]es it will allow you to set each path separately
     (i.e. for raw, tmp, reduced, calibDB etc). 
     If [N]o you will just set one path and all folders 
-    (raw, tmp, reduced, calibDB etc)) will be created under this 
+    (raw, tmp, reduced, calibDB etc) will be created under this 
     directory.
 """
 message3 = """
@@ -97,17 +97,21 @@ message4 = """
        ~/.tcshrc or ~/.profile 
        and then type "apero" every time you wish to run apero.
        i.e. for bash
-            alias apero="source {DRS_UCONFIG}config/apero.bash.setup"
+            alias apero="source {DRS_UCONFIG}apero.bash.setup"
        i.e. for sh
-            alias apero "source {DRS_UCONFIG}config/apero.sh.setup"
+            alias apero "source {DRS_UCONFIG}apero.sh.setup"
     
     
-    ii) Add the contents of {DRS_UCONFIG}config/apero.{SYSTEM}.setup 
+    ii) Add the contents of {DRS_UCONFIG}apero.{SYSTEM}.setup 
         to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
     
-    
-    iii) type "source {DRS_UCONFIG}config/apero.{SYSTEM}.setup" every 
+
+    iii) type "source {DRS_UCONFIG}apero.{SYSTEM}.setup" every 
          time you wish to run apero.
+           i.e. for bash
+                source {DRS_UCONFIG}apero.bash.setup
+           i.e. for sh
+                source {DRS_UCONFIG}apero.sh.setup
 
 
 Note: here {SYSTEM} is "bash" or "sh" or "win" depending on your system.
@@ -166,6 +170,8 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
         # record response
         if dtype == 'path':
             uinput = tab_input('')
+            # strip spaces
+            uinput = uinput.strip()
         else:
             uinput = input(' >>\t')
         # deal with ints, floats, logic
