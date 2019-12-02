@@ -177,3 +177,5 @@ fabric.properties
 *.~lock*
 *.lock
 /bin/*.py
+/tools/bin/*.py
+/tools/dev/*.py

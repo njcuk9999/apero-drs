@@ -28,7 +28,7 @@ from apero.core.core import drs_log
 # =============================================================================
 # Name of program
 __NAME__ = 'drs_lock.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

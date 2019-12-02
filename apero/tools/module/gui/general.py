@@ -29,7 +29,7 @@ from apero.tools.module.gui import widgets
 # Define variables
 # =============================================================================
 __NAME__ = 'gui.general.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

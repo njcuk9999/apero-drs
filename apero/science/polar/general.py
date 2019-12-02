@@ -26,7 +26,7 @@ from apero.science import extract
 # Define variables
 # =============================================================================
 __NAME__ = 'polar.general.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

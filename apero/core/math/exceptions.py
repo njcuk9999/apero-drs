@@ -16,7 +16,7 @@ from apero.core import constants
 # Define variables
 # =============================================================================
 __NAME__ = 'core.math.general.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 PConstants = constants.pload(__INSTRUMENT__)

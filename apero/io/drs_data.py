@@ -30,7 +30,7 @@ from apero.io import drs_text
 # Define variables
 # =============================================================================
 __NAME__ = 'io.drs_data.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

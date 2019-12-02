@@ -29,7 +29,7 @@ from apero.core.core import drs_argument
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_recipe.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

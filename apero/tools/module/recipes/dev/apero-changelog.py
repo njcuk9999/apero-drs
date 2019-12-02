@@ -22,8 +22,8 @@ from apero.tools.module.documentation import drs_changelog
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'drs_changelog.py'
-__INSTRUMENT__ = None
+__NAME__ = 'apero-changelog.py'
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

@@ -22,7 +22,7 @@ from apero.core.math import fast
 # Define variables
 # =============================================================================
 __NAME__ = 'core.math.gauss.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 PConstants = constants.pload(__INSTRUMENT__)

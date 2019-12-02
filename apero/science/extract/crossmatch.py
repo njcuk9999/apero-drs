@@ -29,7 +29,7 @@ from apero.io import drs_data
 # Define variables
 # =============================================================================
 __NAME__ = 'science.extract.crossmatch.py'
-__INSTRUMENT__ = None
+__INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
