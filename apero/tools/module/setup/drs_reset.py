@@ -131,11 +131,13 @@ def reset_telludb(params, log=True):
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
 
 
-def reset_dbdir(params, name, db_dir, reset_path, log=True):
+def reset_dbdir(params, name, db_dir, reset_path, log=True,
+                empty_first=True):
     # log progress
     WLOG(params, '', TextEntry('40-502-00003', args=[name]))
     # loop around files and folders in calib_dir
-    remove_all(params, db_dir, log)
+    if empty_first:
+        remove_all(params, db_dir, log)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path, log)
 
@@ -176,7 +178,7 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
                 WLOG(params, 'warning', TextEntry('10-502-00001', args=wargs))
 
 
-def reset_log(params):
+def reset_log(params, log=True):
     # log progress
     WLOG(params, '', TextEntry('40-502-00003', args=['log']))
     # remove files from reduced folder
@@ -184,16 +186,24 @@ def reset_log(params):
     # get current log file (must be skipped)
     current_logfile = drs_log.get_logfilepath(WLOG, params)
     # loop around files and folders in reduced dir
-    remove_all(params, log_dir, skipfiles=[current_logfile])
+    remove_all(params, log_dir, skipfiles=[current_logfile], log=log)
 
 
-def reset_plot(params):
+def reset_plot(params, log=True):
     # log progress
     WLOG(params, '', TextEntry('40-502-00003', args=['plot']))
     # remove files from reduced folder
     plot_dir = params['DRS_DATA_PLOT']
     # loop around files and folders in reduced dir
-    remove_all(params, plot_dir)
+    remove_all(params, plot_dir, log=log)
+
+
+def reset_run(params, log=True):
+    name = 'run files'
+    run_dir = params['DRS_DATA_RUN']
+    reset_path = params['DRS_RESET_RUN_PATH']
+    # loop around files and folders in reduced dir
+    reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
 def remove_all(params, path, log=True, skipfiles=None):

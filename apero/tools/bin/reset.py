@@ -99,6 +99,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     reset1, reset2, reset3 = True, True, True
     reset4, reset5, reset6 = True, True, True
+    reset7 = True
     # ----------------------------------------------------------------------
     # tmp folder
     if warn:
@@ -151,6 +152,16 @@ def __main__(recipe, params):
         drs_reset.reset_plot(params)
     else:
         WLOG(params, '', 'Not resetting Log files.')
+    # ----------------------------------------------------------------------
+    # plot folder
+    if warn:
+        reset7 = drs_reset.reset_confirmation(params, 'Run',
+                                              params['DRS_DATA_RUN'])
+    if reset7:
+        drs_reset.reset_run(params)
+    else:
+        WLOG(params, '', 'Not resetting run files.')
+
 
     # ----------------------------------------------------------------------
     # End of main code
