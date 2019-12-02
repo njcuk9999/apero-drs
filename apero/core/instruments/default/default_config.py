@@ -23,6 +23,7 @@ __all__ = [# global settings
            'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
            'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
            'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
+           'DRS_RESET_RUN_PATH',
            # DRS INDEXING SETTINGS
            'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
            # DATABASE SETTINGS
@@ -197,10 +198,14 @@ DRS_CALIB_DATA = Const('DRS_CALIB_DATA', dtype=str, source=__NAME__)
 DRS_WAVE_DATA = Const('DRS_WAVE_DATA', dtype=str, source=__NAME__)
 
 # where the reset data are stored
+# for calibDB
 DRS_RESET_CALIBDB_PATH = Const('DRS_RESET_CALIBDB_PATH', dtype=str,
                                source=__NAME__)
+# for telluDB
 DRS_RESET_TELLUDB_PATH = Const('DRS_RESET_TELLUDB_PATH', dtype=str,
                                source=__NAME__)
+# for run files
+DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__)
 
 # where the pdb rc file is
 DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/.pdbrc',
