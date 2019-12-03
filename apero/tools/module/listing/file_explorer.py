@@ -57,8 +57,6 @@ ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 INSTRUMENTS = ['SPIROU', 'NIRPS']
 # define min column length
 MIN_TABLE_COL_WIDTH = 25
-# TODO: This needs moving to some setup file to work per installation
-DS9PATH = '~/bin/ds9/ds9'
 
 
 # =============================================================================
@@ -495,7 +493,9 @@ class TableSection:
         # update status
         self.master.status_bar.status.set('Opening DS9...')
         # construct command
-        ds9path = DS9PATH
+        ds9path = self.master.datastore.params['DRS_DS9_PATH']
+        if ds9path in [None, 'None', '']:
+            print('ds9 not found. Define path in DRS_DS9_PATH')
         command = '{0} {1} &'.format(ds9path, abspath)
         try:
             os.system(command)
@@ -670,8 +670,6 @@ class App(tk.Tk):
 # =============================================================================
 # Worker functions
 # =============================================================================
-
-
 class LoadData:
     def __init__(self, instrument):
         self.instrument = instrument
@@ -829,8 +827,8 @@ class LoadData:
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    # run app
-    ll = main('SPIROU')
+    # print 'Hello World!'
+    print("Hello World!")
 
 # =============================================================================
 # End of code

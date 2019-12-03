@@ -472,7 +472,7 @@ class Plotter:
 
     def summary_latex(self, qc_params, stats, warnings):
         # set up the latex document
-        doc = latex.LatexDocument(self.summary_filename)
+        doc = latex.LatexDocument(self.params, self.summary_filename)
         # get recipe short name
         shortname = clean(self.recipename)
         pid = self.params['PID'].lower()
@@ -632,7 +632,7 @@ class Plotter:
     def summary_html(self, qc_params, stats, warnings):
         summary_filename = self.summary_filename
         # set up the latex document
-        doc = html.HtmlDocument(summary_filename)
+        doc = html.HtmlDocument(self.params, summary_filename)
         # get recipe short name
         shortname = self.recipename
         pid = self.params['PID'].lower()

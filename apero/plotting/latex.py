@@ -36,14 +36,15 @@ SYMBOLS['_'] = r'\_'
 SYMBOLS['>'] = r'$>$'
 SYMBOLS['<'] = r'$<$'
 SYMBOLS['%'] = r'\%'
-# LATEX COMMAND
-LATEX_CMD = 'pdflatex -halt-on-error'
+
 
 # =============================================================================
 # Define classes
 # =============================================================================
 class LatexDocument:
-    def __init__(self, filename, extension='.pdf'):
+    def __init__(self, params, filename, extension='.pdf'):
+        # save params
+        self.params = params
         # remove extensions
         if extension in filename:
             self.filename = filename[:-len(extension)]
@@ -79,13 +80,20 @@ class LatexDocument:
         write_file(self.latexfilename, self._t_)
 
     def compile(self, logfile):
+        # get latex command
+        latex_cmd = self.params['DRS_PDFLATEX_PATH']
+        # deal with not having a latex command
+        if latex_cmd in ['None', None, '']:
+            raise ValueError('pdflatex not defined in DRS_PDFLATEX_PATH')
+        # add arguments
+        latex_cmd += ' -halt-on-error'
         # get current working directory
         cwd = os.getcwd()
         if os.path.dirname(self.latexfilename) != '':
             # change to path
             os.chdir(os.path.dirname(self.latexfilename))
         # compile the tex file
-        cargs = [LATEX_CMD, self.latexfilename, logfile]
+        cargs = [latex_cmd, self.latexfilename, logfile]
         os.system('{0} {1} >> {2}'.format(*cargs))
         # change back to original directory
         if os.path.dirname(self.latexfilename) != '':
