@@ -296,6 +296,14 @@ def run(func, recipe, params):
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
+        except SystemExit as e:
+            string_trackback = traceback.format_exc()
+            success = False
+            emsg = TextEntry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
+            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+            llmain = dict(e=e, tb=string_trackback, params=params,
+                          recipe=recipe)
         except drs_exceptions.LogExit as e:
             string_trackback = traceback.format_exc()
             success = False
