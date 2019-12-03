@@ -716,8 +716,9 @@ def tab_input(message, root=None):
     # for MAC users
     if sys.platform == 'darwin':
         # Apple uses libedit.
-        readline.parse_and_bind("bind -e")
-        readline.parse_and_bind("bind '\t' rl_complete")
+        # readline.parse_and_bind("bind -e")
+        # readline.parse_and_bind("bind '\t' rl_complete")
+        pass
     # for everyone else
     elif sys.platform == 'linux':
         # Use the tab key for completion
