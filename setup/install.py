@@ -77,6 +77,12 @@ Optional Arguments:
 # Define functions
 # =============================================================================
 def validate():
+
+
+    # python version check
+    if sys.version_info.major < 3:
+        print('\tFatal Error: Python 2 is not supported')
+        sys.exit()
     # log check
     print('Module check:')
     # ------------------------------------------------------------------
