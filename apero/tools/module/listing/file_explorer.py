@@ -23,16 +23,18 @@ if sys.version_info.major > 2:
     from tkinter import ttk
     from tkinter import messagebox
     import tkinter.font as tkFont
+    from tkinter import filedialog
 else:
     import Tkinter as tk
     import tkFont
     import ttk
+    import tkFileDialog as filedialog
 
 from apero.core import constants
 from apero.core import math as mp
 from apero import core
 from apero.tools.module.gui import widgets
-
+from apero.tools.module.setup import drs_processing
 
 # =============================================================================
 # Define variables
@@ -52,9 +54,11 @@ WLOG = core.wlog
 # define the program name
 PROGRAM_NAME = 'DRS File Explorer'
 # define the default path
-ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
+ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC', 'DRS_DATA_RAW']
 # Define allowed instruments
+# TODO: get instruments from params?
 INSTRUMENTS = ['SPIROU', 'NIRPS']
+INSTRUMENTS = ['SPIROU']
 # define min column length
 MIN_TABLE_COL_WIDTH = 25
 
@@ -80,6 +84,7 @@ class Navbar:
         # ---------------------------------------------------------------------
         # add file menu
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
+        self.filemenu.add_command(label='Export', command=self.export)
         self.filemenu.add_command(label='Quit', command=self.quit)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
         self.clickmenu = tk.Menu(self.menubar, tearoff=0)
@@ -127,10 +132,51 @@ class Navbar:
         abouttitle = 'About {0}'.format(PROGRAM_NAME)
         # write about message
         message = ('File Explorer for the DRS. \n'
-                   'Choose the Location to explore (TMP or REDUCED) \n'
+                   'Choose the Location to explore \n'
                    'Choose filters to filter the files by.')
         # make message box
         messagebox.showinfo(abouttitle, message)
+
+    def export(self):
+
+        listfiletypes = ['.csv', '.fits', '.txt']
+        filetypes = [['csv', '.csv'],
+                     ['fits-table', '.fits'],
+                     ['ascii', '.txt']]
+        # set up kwargs
+        kwargs = dict()
+        kwargs['initialdir'] = os.getcwd()
+        kwargs['title'] = 'Save file'
+        kwargs['filetypes'] = filetypes
+
+        # set initial cond
+        cond = True
+        # loop until cond broken
+        while cond:
+            # get filename
+            filename = filedialog.asksaveasfilename(**kwargs)
+            # --------------------------------------------------------------
+            # check if string
+            if isinstance(filename, str):
+                # ----------------------------------------------------------
+                # write file
+                if filename.endswith('csv'):
+                    self.master.datastore.write(filename, 'csv')
+                    cond = False
+                elif filename.endswith('txt'):
+                    self.master.datastore.write(filename, 'ascii')
+                    cond = False
+                elif filename.endswith('fits'):
+                    self.master.datastore.write(filename, 'fits')
+                    cond = False
+                else:
+                    alltypes = ', '.join(listfiletypes)
+                    emsg = 'Extension must be: {0}'.format(alltypes)
+                    messagebox.showerror('Error', emsg)
+            # --------------------------------------------------------------
+            else:
+                cond = False
+
 
     def quit(self):
         """
@@ -163,10 +209,12 @@ class LocationSection:
         # add location element
         self.label2 = tk.Label(self.frame2, text='Location: ', anchor=tk.W)
         self.label2.pack(side=tk.LEFT, anchor=tk.W)
+        # -----------------------------------------------------------------
         # define choices
         choices = []
         for path in ALLOWED_PATHS:
             choices.append(self.master.datastore.params[path])
+        # -----------------------------------------------------------------
         self.box2 = ttk.Combobox(self.frame2, values=choices,
                                  state="readonly", width=75)
         self.box2.current(0)
@@ -671,10 +719,11 @@ class App(tk.Tk):
 # Worker functions
 # =============================================================================
 class LoadData:
-    def __init__(self, instrument):
+    def __init__(self, instrument, recipe=None, params=None):
         self.instrument = instrument
         # define empty storage
-        self.params = None
+        self.params = params
+        self.recipe = recipe
         self.pconstant = None
         self.path = None
         self.index_filename = None
@@ -715,14 +764,33 @@ class LoadData:
         self.get_index_files()
 
     def get_index_files(self):
-        # walk through all sub-directories
-        for root, dirs, files in os.walk(self.path):
-            # loop around files in current sub-directory
-            for filename in files:
-                # only save index files
-                if filename == self.index_filename:
-                    # append to storage
-                    self.index_files.append(os.path.join(root, filename))
+
+        # raw is a special case
+        if self.path == self.params['DRS_DATA_RAW']:
+            # get run path
+            runpath = self.params['DRS_DATA_RUN']
+            runfile = self.params['REPROCESS_RAWINDEXFILE']
+            # construct absolute path
+            abspath = os.path.join(runpath, runfile)
+            # add to index files if index file exists
+            if os.path.exists(abspath):
+                self.index_files.append(abspath)
+            else:
+                _, _ = drs_processing.find_raw_files(self.params, self.recipe)
+
+        else:
+            # walk through all sub-directories
+            for root, dirs, files in os.walk(self.path):
+                # loop around files in current sub-directory
+                for filename in files:
+                    # only save index files
+                    if filename == self.index_filename:
+                        # construct absolute path
+                        abspath = os.path.join(root, filename)
+                        # add to index files if index file exists
+                        if os.path.exists(abspath):
+                            # append to storage
+                            self.index_files.append(abspath)
 
     def combine_files(self):
         # define storage
@@ -749,6 +817,19 @@ class LoadData:
             outdir = outdir.split(self.index_filename)[0]
             # append source to file
             storage['SOURCE'] += [outdir] * len(data)
+
+        # deal with having a night name column (source column)
+        nightcols = ['NIGHTNAME', '__NIGHTNAME']
+        for nightcol in nightcols:
+            if nightcol in storage:
+                storage['SOURCE'] = np.array(storage[nightcol])
+                del storage[nightcol]
+
+        # remove hidden columns
+        keys = list(storage.keys())
+        for col in keys:
+            if col.startswith('__'):
+                del storage[col]
 
         # deal with column names being different lengths
         current_length = 0
@@ -819,6 +900,17 @@ class LoadData:
                     if element is not None:
                         mask_k |= (self.clean_data[kwarg] == self.clean(element))
                 self.mask &= mask_k
+
+    def write(self, filename, fmt='fits'):
+        if self.data is None:
+            return
+        # convert data from panda to table
+        print('Converting to table')
+        table = Table.from_pandas(self.data)
+        # write table
+        print('Writing {0}'.format(filename))
+        table.write(filename, format=fmt, overwrite=True)
+        print('Writing complete.')
 
 
 # =============================================================================

@@ -1507,7 +1507,10 @@ def _get_path_and_check(params, key):
         WLOG(params, 'error', '{0} not found in params'.format(key))
     # get top level path to search
     rpath = params[key]
-    if params['NIGHTNAME'] not in ['', 'None', None]:
+    # deal with not having nightname
+    if 'NIGHTNAME' not in params:
+        path = str(rpath)
+    elif params['NIGHTNAME'] not in ['', 'None', None]:
         path = os.path.join(rpath, params['NIGHTNAME'])
     else:
         path = str(rpath)
