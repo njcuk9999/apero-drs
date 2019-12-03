@@ -154,7 +154,8 @@ def cprint(message, colour='g'):
     print(Colors.print(message, colour))
 
 
-def ask(question, dtype=None, options=None, optiondesc=None, default=None):
+def ask(question, dtype=None, options=None, optiondesc=None, default=None,
+        required=True):
     """
     Ask a question
 
@@ -164,6 +165,8 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
     :param optiondesc: list, list of option descriptions
     :param default: object, if set the default value, if unset a value
                     if required
+    :param required: bool, if False and dtype=path does not create a path
+                     else does not change anything
     :return:
     """
     # set up check criteria as True at first
@@ -221,6 +224,13 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None):
             # check whether path exists
             if os.path.exists(uinput):
                 check = False
+            elif not required:
+                if uinput in ['None', '', None]:
+                    check = False
+                else:
+                    cprint('Response must be a valid path or "None"', 'y')
+                    check = True
+                    continue
             # if path does not exist ask to make it (if create)
             else:
                 # check whether to create path
@@ -377,7 +387,7 @@ def user_interface(params):
         # deal with no ds9 path found
         if ds9path is None:
             iparams['DRS_DS9_PATH'] = ask(message5, dtype='path',
-                                          default='None')
+                                          default='None', required=False)
         else:
             iparams['DRS_DS9_PATH'] = ds9path
             cprint('\n\t - Found ds9', 'g')
@@ -392,7 +402,7 @@ def user_interface(params):
         # deal with no ds9 path found
         if latexpath is None:
             iparams['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
-                                               default='None')
+                                               default='None', required=False)
         else:
             iparams['DRS_PDFLATEX_PATH'] = latexpath
             cprint('\n\t - Found pdflatex', 'g')
