@@ -385,7 +385,7 @@ def user_interface(params):
         all_params['DRS_DS9_PATH'] = ds9path
         # ------------------------------------------------------------------
         # get pdflatex
-        if 'DRS_DS9_PATH' in all_params:
+        if 'DRS_PDFLATEX_PATH' in all_params:
             latexpath = all_params['DRS_PDFLATEX_PATH']
         else:
             latexpath = shutil.which('pdflatex')
