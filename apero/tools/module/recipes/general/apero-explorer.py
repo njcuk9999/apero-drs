@@ -88,7 +88,7 @@ def __main__(recipe, params):
     # Log that we are running indexing
     WLOG(params, '', 'Indexing files at {0}'.format(params[ALLOWED_PATHS[0]]))
     # load data
-    datastore = file_explorer.LoadData(instrument)
+    datastore = file_explorer.LoadData(instrument, recipe, params)
     # Log that we are running indexing
     WLOG(params, '', 'Running file explorer application')
     # Main code here
