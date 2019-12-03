@@ -1272,6 +1272,7 @@ def prompt(params):
 # =============================================================================
 def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                     cores=1, event=None, group=None):
+
     # get textdict
     textdict = TextDict(params['instrument'], params['LANGUAGE'])
     # deal with empty return_dict
@@ -1321,9 +1322,28 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             pp['TIMING'] = None
             # flag finished
             finished = True
+        # --------------------------------------------------------------
+        # deal with an event set -- skip
+        # --------------------------------------------------------------
+        elif event is not None and event.is_set():
+                    emsg = 'LINEAR PROCESS: Event set - skipping ID{0:05d}'
+                    WLOG(params, 'debug', emsg.format(priority))
+                    # deal with returns
+                    pp = dict()
+                    pp['ERROR'] = []
+                    pp['WARNING'] = []
+                    pp['OUTPUTS'] = dict()
+                    pp['TRACEBACK'] = ''
+                    pp['SUCCESS'] = False
+                    finished = False
+        # --------------------------------------------------------------
+        # deal with an event set -- skip
+        # --------------------------------------------------------------
         else:
+            # --------------------------------------------------------------
             # log message
             WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
+            # --------------------------------------------------------------
             # start time
             starttime = time.time()
             # try to run the main function
@@ -1351,7 +1371,45 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 finished = pp['SUCCESS']
             # --------------------------------------------------------------
             # Manage unexpected errors
+            except KeyboardInterrupt:
+                # TODO: Remove or add to language database
+                WLOG(params, 'debug', 'LINEAR PROCESS: Ctrl+C detected')
+                # deal with returns
+                pp['ERROR'] = []
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = ''
+                # flag not finished
+                finished = False
+                event.set()
+            # --------------------------------------------------------------
+            # Manage unexpected errors
             except Exception as e:
+                # TODO: Remove or add to language database
+                WLOG(params, 'debug',
+                     'LINEAR PROCESS: Error {0}: {1}'.format(type(e), e))
+                # noinspection PyBroadException
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except Exception as _:
+                    string_traceback = ''
+                emsgs = [textdict['00-503-00004'].format(priority)]
+                for emsg in str(e).split('\n'):
+                    emsgs.append('\n' + emsg)
+                WLOG(params, 'warning', emsgs)
+                pp['ERROR'] = emsgs
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = str(string_traceback)
+                # flag not finished
+                finished = False
+            # --------------------------------------------------------------
+            # Manage unexpected errors
+            except SystemExit as e:
+                # TODO: Remove or add to language database
+                WLOG(params, 'debug',
+                     'LINEAR PROCESS: SystemExit {0}: {1}'.format(type(e), e))
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1371,6 +1429,9 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:
+                # TODO: Remove or add to language database
+                WLOG(params, 'debug',
+                     'LINEAR PROCESS: drs exception log exit')
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1392,6 +1453,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             endtime = time.time()
             # add timing to pp
             pp['TIMING'] = endtime - starttime
+
         # ------------------------------------------------------------------
         # set finished flag
         pp['FINISHED'] = finished
@@ -1418,10 +1480,6 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
     return_dict = manager.dict()
     # loop around groups
     for g_it, group in enumerate(grouplist):
-        # skip if event is set
-        if event.is_set():
-            WLOG(params, 'debug', TextEntry('90-503-00009', args=[g_it]))
-            continue
         # process storage
         jobs = []
         # log progress
@@ -1436,18 +1494,17 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
             process.start()
             jobs.append(process)
         # do not continue until finished
-        for proc in jobs:
+        for pit, proc in enumerate(jobs):
+            WLOG(params, 'debug', 'MULTIPROCESS - joining job {0}'.format(pit))
             proc.join()
-            if event.is_set():
-                _terminate_jobs(jobs)
+
+
+    if event.is_set():
+        WLOG(params, 'warning', 'Skipping all')
+
 
     # return return_dict
     return dict(return_dict)
-
-
-def _terminate_jobs(jobs):
-    for job in jobs:
-        job.terminate()
 
 
 # =============================================================================
