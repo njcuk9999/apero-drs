@@ -10,6 +10,7 @@ __all__ = [# global settings
            # path settings
            'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
            'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_DATA_RUN',
+           'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 
            # General properites
            'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
            # Instrument/Observatory Constants
@@ -90,6 +91,11 @@ DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__)
 #   Define the run directory
 DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__)
 
+#   Define ds9 path (optional)
+DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype='path', source=__NAME__)
+
+#   Define latex path (optional)
+DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype='path', source=__NAME__)
 
 # =============================================================================
 # =============================================================================
