@@ -124,6 +124,21 @@ Note: here {SYSTEM} is "bash" or "sh" or "win" depending on your system.
 
 """
 
+message5 = """
+
+ds9 not found (optional). 
+
+Please enter path to ds9 or leave blank to skip
+
+"""
+
+message6 = """
+
+pdflatex not found (optional). 
+
+Please enter path to pdflatex or leave blank to skip
+
+"""
 
 # =============================================================================
 # Define functions
@@ -347,6 +362,42 @@ def user_interface(params):
         # Step 5: Ask whether we want a clean install
         iparams['CLEAN_INSTALL'] = ask(message3, dtype='YN')
         iparams.set_source('CLEAN_INSTALL', func_name)
+
+        # ------------------------------------------------------------------
+        # Step 6: Check for programs
+        # ------------------------------------------------------------------
+        # add header line
+        cprint(printheader(), 'g')
+        cprint('Recommended external programs (optional)')
+        # get ds9
+        if 'DRS_DS9_PATH' in all_params:
+            ds9path = all_params['DRS_DS9_PATH']
+        else:
+            ds9path = shutil.which('ds9')
+        # deal with no ds9 path found
+        if ds9path is None:
+            iparams['DRS_DS9_PATH'] = ask(message5, dtype='path',
+                                          default='None')
+        else:
+            iparams['DRS_DS9_PATH'] = ds9path
+            cprint('\n\t - Found ds9', 'g')
+        # add it/update all_params
+        all_params['DRS_DS9_PATH'] = ds9path
+        # ------------------------------------------------------------------
+        # get pdflatex
+        if 'DRS_DS9_PATH' in all_params:
+            latexpath = all_params['DRS_PDFLATEX_PATH']
+        else:
+            latexpath = shutil.which('pdflatex')
+        # deal with no ds9 path found
+        if latexpath is None:
+            iparams['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
+                                               default='None')
+        else:
+            iparams['DRS_PDFLATEX_PATH'] = latexpath
+            cprint('\n\t - Found pdflatex', 'g')
+        # add it/update all_params
+        all_params['DRS_PDFLATEX_PATH'] = latexpath
         # ------------------------------------------------------------------
         # add iparams to all params
         all_params[instrument] = iparams

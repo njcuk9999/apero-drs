@@ -48,7 +48,8 @@ table, td, th {
 # Define class
 # =============================================================================
 class HtmlDocument:
-    def __init__(self, filename, extension='.pdf'):
+    def __init__(self, params, filename, extension='.pdf'):
+        self.params = params
         # remove extensions
         if extension in filename:
             self.filename = filename[:-len(extension)]
