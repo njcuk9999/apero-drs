@@ -1326,16 +1326,16 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         # deal with an event set -- skip
         # --------------------------------------------------------------
         elif event is not None and event.is_set():
-                    emsg = 'LINEAR PROCESS: Event set - skipping ID{0:05d}'
-                    WLOG(params, 'debug', emsg.format(priority))
-                    # deal with returns
-                    pp = dict()
-                    pp['ERROR'] = []
-                    pp['WARNING'] = []
-                    pp['OUTPUTS'] = dict()
-                    pp['TRACEBACK'] = ''
-                    pp['SUCCESS'] = False
-                    finished = False
+            emsg = 'LINEAR PROCESS: Event set - skipping ID{0:05d}'
+            WLOG(params, 'debug', emsg.format(priority))
+            # deal with returns
+            pp = dict()
+            pp['ERROR'] = []
+            pp['WARNING'] = []
+            pp['OUTPUTS'] = dict()
+            pp['TRACEBACK'] = ''
+            pp['SUCCESS'] = False
+            finished = False
         # --------------------------------------------------------------
         # deal with an event set -- skip
         # --------------------------------------------------------------
@@ -1473,18 +1473,22 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
 
 def _multi_process(params, recipe, runlist, cores, groupname=None):
     # first try to group tasks
-    grouplist, groupnames = _group_tasks(runlist, cores)
+    grouplist, groupnames = _group_tasks1(runlist, cores)
     # start process manager
     manager = Manager()
     event = Event()
     return_dict = manager.dict()
     # loop around groups
+    #   - each group is a unique recipe
     for g_it, group in enumerate(grouplist):
         # process storage
         jobs = []
         # log progress
         _group_progress(params, g_it, grouplist, groupnames)
-        # loop around sub groups (to be run at same time)
+
+        # loop around sub groups
+        #    - each sub group is a set of runs of the same recipe
+        #    - there are "number of cores" number of these subgroups
         for r_it, runlist_group in enumerate(group):
             # get args
             args = [params, recipe, runlist_group, return_dict, r_it + 1,
@@ -1495,6 +1499,7 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
             jobs.append(process)
         # do not continue until finished
         for pit, proc in enumerate(jobs):
+            # TODO: remove or add to language db
             WLOG(params, 'debug', 'MULTIPROCESS - joining job {0}'.format(pit))
             proc.join()
 
@@ -1822,6 +1827,60 @@ def _group_tasks(runlist, cores):
     out_groups = []
     out_names = []
 
+    # loop around the different reipce groups
+    for groupkey in groups:
+
+        out_group = []
+        group = groups[groupkey]
+        out_name = names[groupkey]
+
+        for it in range(cores):
+            sub_group = group[it::cores]
+            if len(sub_group) > 0:
+                out_group.append(sub_group)
+
+        out_groups.append(out_group)
+        out_names.append(out_name)
+    # return output groups
+    return out_groups, out_names
+
+
+# TODO: Remove or replace with _group_tasks
+def _group_tasks1(runlist, cores):
+
+    # individual runs of the same recipe are independent of each other
+
+    # get all recipe names
+    recipenames = []
+    for it, run_item in enumerate(runlist):
+        recipenames.append(run_item.shortname)
+    # storage of groups
+    groups = dict()
+    names = dict()
+    group_number = 0
+    # loop around runlist
+    for it, run_item in enumerate(runlist):
+        # get recipe name
+        recipe = run_item.shortname
+        # if it is the first item must have a new group
+        if it == 0:
+            groups[group_number] = [run_item]
+        else:
+            cond1 = recipe == recipenames[it - 1]
+            cond2 = len(groups[group_number]) < cores
+
+            if cond1 and cond2:
+                groups[group_number].append(run_item)
+            else:
+                group_number += 1
+                groups[group_number] = [run_item]
+        # add the names
+        names[group_number] = recipe
+    # now we have the groups we can push into the core sub-groups
+    out_groups = []
+    out_names = []
+
+    # loop around the different reipce groups
     for groupkey in groups:
 
         out_group = []
