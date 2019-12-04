@@ -13,7 +13,7 @@ import numpy as np
 import warnings
 import os
 import sys
-
+import string
 
 # ------------------------------------------------------------------------------
 # constants
@@ -22,11 +22,14 @@ import sys
 #  we also add +/- 25% to this time so they do not all finish at the same time
 MAXTIME = 10
 # a high number of cores (way higher than normal)
-CORES = 100
+CORES = 20
 # number of groups (we have multiple groups of parallel processes
 #                   one group (with X cores) starts after another
 #                   finishes (with X cores))
-GROUPS = 3
+GROUPS = 1
+# number of sub groups (within a group we have the recipe runs) these
+#   sub-groups are all the same recipe and divided by the number of cores
+SUBGROUPS = 5
 
 # On error what should we do
 STOP_AT_ERROR = False
@@ -34,24 +37,24 @@ STOP_AT_ERROR = False
 # ------------------------------------------------------------------------------
 # This is to test a sys.exit()
 TEST_SYS_EXIT = False
-# this is the group num + core num to exit in [group num, core num]
-TEST_SYS_NUMS = [1, 1]
+# this is the group num + core num to exit in [group num, core num, sub group]
+TEST_SYS_NUMS = [0, 1, 'b']
 # ------------------------------------------------------------------------------
 # this is to test a ValueError exit (a standard python exit)
 TEST_VALUE_ERROR = False
-# this is the group num + core num to exit in [group num, core num]
-TEST_VALUE_NUMS = [1, 1]
+# this is the group num + core num to exit in [group num, core num, sub group]
+TEST_VALUE_NUMS = [0, 1, 'b']
 # ------------------------------------------------------------------------------
 # This is to test a sys.exit()
-TEST_OS_EXIT = False
-# this is the group num + core num to exit in [group num, core num]
-TEST_OS_NUMS = [1, 1]
+TEST_OS_EXIT = True
+# this is the group num + core num to exit in [group num, core num, sub group]
+TEST_OS_NUMS = [0, 1, 'b']
 
 
 # ------------------------------------------------------------------------------
 # functions
 # ------------------------------------------------------------------------------
-def taxing(it, jt):
+def taxing(it, jt, kt):
     """
     This simulates running a recipe
     (nothing in here should change)
@@ -76,15 +79,16 @@ def taxing(it, jt):
     # --------------------------------------------------------------------------
     # deal with sys exit tests
     if TEST_SYS_EXIT:
-        if TEST_SYS_NUMS[0] == it and TEST_SYS_NUMS[1] == jt:
+        if TEST_SYS_NUMS[0] == it and TEST_SYS_NUMS[1] == jt and TEST_SYS_NUMS[2] == kt:
             sys.exit(0)
     # deal with value error tests
     if TEST_VALUE_ERROR:
-        if TEST_VALUE_NUMS[0] == it and TEST_VALUE_NUMS[1] == jt:
-            raise ValueError('ValueError {0}-{1}'.format(it, jt))
+        if TEST_VALUE_NUMS[0] == it and TEST_VALUE_NUMS[1] == jt and TEST_SYS_NUMS[2] == kt:
+            raise ValueError('ValueError {0}-{1}-{2}'.format(it, jt, kt))
     # deal with os exit tests
     if TEST_OS_EXIT:
-        if TEST_OS_NUMS[0] == it and TEST_OS_NUMS[1] == jt:
+        if TEST_OS_NUMS[0] == it and TEST_OS_NUMS[1] == jt and TEST_SYS_NUMS[2] == kt:
+            print('EXIT {0}-{1}-{2}'.format(it, jt, kt))
             os._exit(0)
 
 
@@ -94,27 +98,36 @@ def myfunc(it, jt, event, rdict):
     This is what is ran by multiprocessing.Process
     this should not change (other than how we call event)
     """
-    if event.is_set():
-        print('Skip group={0} core={1}'.format(it, jt))
-        return rdict
-    try:
-        # run a function that does something
-        print('Run: group={0} core={1}'.format(it, jt))
-        taxing(it, jt)
-        print('Finish: group={0} core={1}'.format(it, jt))
-        # add to rdict after
-        rdict[(it, jt)] = True
-    except KeyboardInterrupt:
-        print('KeyboardInterrupt group={0} core={1}'.format(it, jt))
-        event.set()
-    except Exception as e:
-        print('Exception group={0} core={1}'.format(it, jt))
-        if STOP_AT_ERROR:
+    letters = string.ascii_lowercase
+
+    for kit in range(SUBGROUPS):
+        if SUBGROUPS < len(letters):
+            kt = letters[kit]
+        else:
+            kt = kit
+
+        if event.is_set():
+            print('Skip group={0} core={1} sub={2}'.format(it, jt, kt))
+            return rdict
+        try:
+            # run a function that does something
+            print('Run: group={0} core={1} sub={2}'.format(it, jt, kt))
+            taxing(it, jt, kt)
+            print('Finish: group={0} core={1} sub={2}'.format(it, jt, kt))
+            # add to rdict after
+            rdict[(it, jt, kt)] = True
+        except KeyboardInterrupt:
+            print('KeyboardInterrupt group={0} core={1} sub={2}'
+                  ''.format(it, jt, kt))
             event.set()
-    except SystemExit:
-        print('SystemExit group={0} core={1}'.format(it, jt))
-        if STOP_AT_ERROR:
-            event.set()
+        except Exception as e:
+            print('Exception group={0} core={1} sub={2}'.format(it, jt, kt))
+            if STOP_AT_ERROR:
+                event.set()
+        except SystemExit:
+            print('SystemExit group={0} core={1} sub={2}'.format(it, jt, kt))
+            if STOP_AT_ERROR:
+                event.set()
     # rdict is return and multiprocessing manages combining
     # the dictionary between parallel processes
     return rdict
@@ -150,7 +163,7 @@ if __name__ == '__main__':
             proc.join()
 
     # as a check
-    print('Number of runs expected: {0}'.format(GROUPS * CORES))
+    print('Number of runs expected: {0}'.format(GROUPS * CORES * SUBGROUPS))
     print('Number of runs processed: {0}'.format(len(return_dict.keys())))
 
 
@@ -169,4 +182,6 @@ if __name__ == '__main__':
 #                                     (if STOP_AT_ERROR=False)
 #
 #        TEST_OS_EXIT is not caught - we lose 1 entry from rdict
+#
+#
 #
