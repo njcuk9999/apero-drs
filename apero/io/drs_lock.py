@@ -86,6 +86,7 @@ class Lock:
             if not os.path.exists(self.path):
                 try:
                     os.mkdir(self.path)
+                    # TODO: Add to lanuage dictionary
                     wmsg = 'Lock: Activated {0}'.format(self.path)
                     WLOG(self.params, '', wmsg)
                     break
@@ -97,6 +98,7 @@ class Lock:
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
                         wargs = [self.lockname]
+                        # TODO: Add to lanuage dictionary
                         wmsg = 'Lock: Make lock dir waiting {0}'
                         WLOG(self.params, 'warning', wmsg.format(*wargs))
             # if path does exist just skip
@@ -134,13 +136,14 @@ class Lock:
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
                         wargs = [self.lockname, name]
+                        # TODO: Add to lanuage dictionary
                         wmsg = 'Lock: Make lock file waiting {0} {1}'
                         WLOG(self.params, 'warning', wmsg.format(*wargs))
             # if path does exist just skip
             else:
                 break
 
-    def __getfirst(self):
+    def __getfirst(self, name):
         """
         Internal use only: get the first (based on creation time) file in
         self.path
@@ -148,8 +151,21 @@ class Lock:
         :return:
         """
         path = self.path
+
+        # check path exists
+        if not os.path.exists(path):
+            # TODO: Add to lanuage dictionary
+            emsg = ('Directory {0} does not exist. '
+                    'Please create directory to continue.')
+            raise ValueError(emsg.format(path))
+
         # get the raw list
         rawlist = os.listdir(path)
+
+        # if we don't have this file add it to the end of the list
+        if name + '.lock' not in rawlist:
+            self.enqueue(name)
+
         # get times
         pos, mintime = np.nan, np.inf
         for it in range(len(rawlist)):
@@ -161,6 +177,12 @@ class Lock:
             if filetime < mintime:
                 mintime = filetime
                 pos = it
+
+        if np.isnan(pos):
+            # TODO: Add to lanuage dictionary
+            eargs = [name + '.lock', path]
+            raise ValueError('Impossible Error: {0} not in {1}'.format(*eargs))
+
         # return list
         return rawlist[pos]
 
@@ -195,6 +217,7 @@ class Lock:
         # clean name
         name = self.__clean_name(name)
         # log progress
+        # TODO: Add to lanuage dictionary
         WLOG(self.params, '', 'Lock: File added to queue: {0}'.format(name))
         # add unique name to queue
         self.__makelockfile(name)
@@ -214,11 +237,12 @@ class Lock:
         # try to get the first file (this could fail if a file is removed by
         #   another process) - if it fails it is not your turn so wait longer
         try:
-            first = self.__getfirst()
+            first = self.__getfirst(name)
         except Exception as e:
             return False, e
         # if the unique name is first in the list then we can unlock this file
         if name + '.lock' == first:
+            # TODO: Add to lanuage dictionary
             WLOG(self.params, '', 'Lock: File unlocked: {0}'.format(name))
             return True, None
         # else we return False (and ask whether it is my turn later)
@@ -232,6 +256,7 @@ class Lock:
         :param name:
         :return:
         """
+        # TODO: Add to lanuage dictionary
         WLOG(self.params, '', 'Lock: File removed from queue: {0}'.format(name))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
@@ -242,9 +267,13 @@ class Lock:
 
         :return:
         """
+        # TODO: Add to lanuage dictionary
         WLOG(self.params, '', 'Lock: Deactivated {0}'.format(self.path))
         # get the raw list
-        rawlist = os.listdir(self.path)
+        if os.path.exists(self.path):
+            rawlist = os.listdir(self.path)
+        else:
+            return
         # loop around files
         for it in range(len(rawlist)):
             # get the absolute path
@@ -282,12 +311,14 @@ def synchronized(lock, name):
                 # update user every 10 seconds file is locked
                 if (timer % 10 == 0) and (timer != 0):
                     wargs = [lock.path, name]
+                    # TODO: Add to lanuage dictionary
                     wmsg = 'Lock: Waiting {0} {1}'
                     WLOG(lock.params, 'warning', wmsg.format(*wargs))
                 # find whether it is this name's turn
                 cond, error = lock.myturn(name)
                 if error is not None:
                     wargs = [lock.path, name, error]
+                    # TODO: Add to lanuage dictionary
                     wmsg = 'Lock: Waiting {0} {1} (Error: {2})'
                     WLOG(lock.params, 'warning', wmsg.format(*wargs))
                 # increase timer
