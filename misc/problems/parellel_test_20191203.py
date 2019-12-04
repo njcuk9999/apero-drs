@@ -33,7 +33,7 @@ STOP_AT_ERROR = False
 
 # ------------------------------------------------------------------------------
 # This is to test a sys.exit()
-TEST_SYS_EXIT = True
+TEST_SYS_EXIT = False
 # this is the group num + core num to exit in [group num, core num]
 TEST_SYS_NUMS = [1, 1]
 # ------------------------------------------------------------------------------
@@ -170,37 +170,3 @@ if __name__ == '__main__':
 #
 #        TEST_OS_EXIT is not caught - we lose 1 entry from rdict
 #
-#
-#
-#
-#
-#
-#        This is what I think I'm getting in the drs (cannot reproduce)
-#        and does not make sense
-#
-#        for groups=6   cores=4
-#
-#        Run:  group=0 core=0
-#        Run:  group=0 core=1
-#        Run:  group=0 core=2
-#        Run:  group=0 core=3
-#        Run:  group=1 core=0
-#        Run:  group=1 core=1   <--- something happens after this printout
-#        Run:  group=1 core=2
-#        Run:  group=1 core=3
-#        Run:  group=2 core=0
-#                               <--- no group=2 core=1
-#        Run:  group=2 core=2
-#        Run:  group=2 core=3
-#        Run:  group=3 core=0
-#                               <--- no group=3 core=1
-#        Run:  group=3 core=2
-#        Run:  group=3 core=3
-#        Run:  group=4 core=0
-#                               <--- no group=4 core=1
-#        Run:  group=4 core=2
-#        Run:  group=4 core=3
-#        Run:  group=5 core=0
-#                               <--- no group=5 core=1
-#        Run:  group=5 core=2
-#        Run:  group=5 core=3
