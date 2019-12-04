@@ -230,7 +230,7 @@ def __main__(recipe, params):
             passed = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10001') + farg)
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
             passed = 0
             continue
         # store in qc_params
