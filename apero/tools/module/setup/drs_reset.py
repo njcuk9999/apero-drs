@@ -57,7 +57,7 @@ def reset_confirmation(params, name, directory=None):
     # ----------------------------------------------------------------------
     if directory is not None:
         # test if empty
-        empty = is_empty(params['DRS_DATA_WORKING'])
+        empty = is_empty(directory)
         if empty:
             return True
     # ----------------------------------------------------------------------
