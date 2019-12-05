@@ -18,7 +18,7 @@ import time
 from astropy.table import Table
 from collections import OrderedDict
 import multiprocessing
-from multiprocessing import Process, Manager, Event
+from multiprocessing import Pool, Process, Manager, Event
 
 from apero import core
 from apero.core.core import drs_startup
@@ -605,7 +605,7 @@ def process_run_list(params, recipe, runlist, group=None):
         # log process: Running with N cores
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, recipe, runlist, cores, group)
+        rdict = _multi_process1(params, recipe, runlist, cores, group)
     # convert to ParamDict and set all sources
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
@@ -1383,6 +1383,29 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 finished = False
                 event.set()
             # --------------------------------------------------------------
+            # Manage expected errors
+            except drs_exceptions.LogExit as e:
+                # TODO: Remove or add to language database
+                WLOG(params, 'debug',
+                     'LINEAR PROCESS: drs exception log exit')
+                # noinspection PyBroadException
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except Exception as _:
+                    string_traceback = ''
+                emsgs = [textdict['00-503-00005'].format(priority)]
+                for emsg in e.errormessage.split('\n'):
+                    emsgs.append('\n' + emsg)
+                WLOG(params, 'warning', emsgs)
+                pp['ERROR'] = emsgs
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                # expected error does not need traceback
+                pp['TRACEBACK'] = []
+                # flag not finished
+                finished = False
+            # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
                 # TODO: Remove or add to language database
@@ -1416,7 +1439,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                     string_traceback = traceback.format_exc()
                 except Exception as _:
                     string_traceback = ''
-                emsgs = [textdict['00-503-00004'].format(priority)]
+                emsgs = [textdict['00-503-00015'].format(priority)]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
@@ -1427,33 +1450,10 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
-            # Manage expected errors
-            except drs_exceptions.LogExit as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: drs exception log exit')
-                # noinspection PyBroadException
-                try:
-                    import traceback
-                    string_traceback = traceback.format_exc()
-                except Exception as _:
-                    string_traceback = ''
-                emsgs = [textdict['00-503-00005'].format(priority)]
-                for emsg in e.errormessage.split('\n'):
-                    emsgs.append('\n' + emsg)
-                WLOG(params, 'warning', emsgs)
-                pp['ERROR'] = emsgs
-                pp['WARNING'] = []
-                pp['OUTPUTS'] = dict()
-                # expected error does not need traceback
-                pp['TRACEBACK'] = []
-                # flag not finished
-                finished = False
             # end time
             endtime = time.time()
             # add timing to pp
             pp['TIMING'] = endtime - starttime
-
         # ------------------------------------------------------------------
         # set finished flag
         pp['FINISHED'] = finished
@@ -1484,8 +1484,12 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
         # process storage
         jobs = []
         # log progress
-        _group_progress(params, g_it, grouplist, groupnames)
-
+        _group_progress(params, g_it, grouplist, groupnames[g_it])
+        # skip groups if event is set
+        if event.is_set():
+            # TODO: Add to language db
+            WLOG(params, 'warning', '\tSkipping group')
+            continue
         # loop around sub groups
         #    - each sub group is a set of runs of the same recipe
         #    - there are "number of cores" number of these subgroups
@@ -1502,12 +1506,40 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
             # TODO: remove or add to language db
             WLOG(params, 'debug', 'MULTIPROCESS - joining job {0}'.format(pit))
             proc.join()
+    # return return_dict
+    return dict(return_dict)
 
 
-    if event.is_set():
-        WLOG(params, 'warning', 'Skipping all')
-
-
+# TODO: remove or replace _multi_process
+def _multi_process1(params, recipe, runlist, cores, groupname=None):
+    # first try to group tasks (now just by recipe)
+    grouplist, groupnames = _group_tasks2(runlist, cores)
+    # start process manager
+    manager = Manager()
+    event = manager.event()
+    return_dict = manager.dict()
+    # loop around groups
+    #   - each group is a unique recipe
+    for g_it, groupnum in enumerate(grouplist):
+        # get this groups values
+        group = grouplist[groupnum]
+        # log progress
+        _group_progress(params, g_it, grouplist, groupnames[groupnum])
+        # skip groups if event is set
+        if event.is_set():
+            # TODO: Add to language db
+            WLOG(params, 'warning', '\tSkipping group')
+            continue
+        # list of params for each entry
+        params_per_process = []
+        # populate params for each sub group
+        for r_it, runlist_group in enumerate(group):
+            args = [params, recipe, runlist_group, return_dict, r_it + 1,
+                    cores, event, groupname]
+            params_per_process.append(args)
+        # start parellel jobs
+        pool = Pool(cores)
+        pool.starmap(_linear_process, params_per_process)
     # return return_dict
     return dict(return_dict)
 
@@ -1784,9 +1816,9 @@ def _get_cores(params):
     return cores
 
 
-def _group_progress(params, g_it, grouplist, groupnames):
+def _group_progress(params, g_it, grouplist, groupname):
     # get message
-    wargs = [' * ', g_it + 1, len(grouplist), groupnames[g_it]]
+    wargs = [' * ', g_it + 1, len(grouplist), groupname]
     # log
     WLOG(params, 'info', '', colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
@@ -1896,6 +1928,40 @@ def _group_tasks1(runlist, cores):
         out_names.append(out_name)
     # return output groups
     return out_groups, out_names
+
+
+
+# TODO: Remove or replace with _group_tasks
+def _group_tasks2(runlist, cores):
+
+    # individual runs of the same recipe are independent of each other
+
+    # get all recipe names
+    recipenames = []
+    for it, run_item in enumerate(runlist):
+        recipenames.append(run_item.shortname)
+    # storage of groups
+    groups = dict()
+    names = dict()
+    group_number = 0
+    # loop around runlist
+    for it, run_item in enumerate(runlist):
+        # get recipe name
+        recipe = run_item.shortname
+        # if it is the first item must have a new group
+        if it == 0:
+            groups[group_number] = [run_item]
+        else:
+            if recipe == recipenames[it - 1]:
+                groups[group_number].append(run_item)
+            else:
+                group_number += 1
+                groups[group_number] = [run_item]
+        # add the names
+        names[group_number] = recipe
+
+    # return output groups
+    return groups, names
 
 
 def _remove_engineering(ftable):
