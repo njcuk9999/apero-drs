@@ -1516,7 +1516,7 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
     grouplist, groupnames = _group_tasks2(runlist, cores)
     # start process manager
     manager = Manager()
-    event = manager.event()
+    event = manager.Event()
     return_dict = manager.dict()
     # loop around groups
     #   - each group is a unique recipe
