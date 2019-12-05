@@ -22,7 +22,7 @@ from apero.tools.module.documentation import drs_changelog
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero-changelog.py'
+__NAME__ = 'apero_changelog.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)

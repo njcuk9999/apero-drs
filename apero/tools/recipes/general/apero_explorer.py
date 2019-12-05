@@ -16,7 +16,7 @@ from apero.tools.module.listing import file_explorer
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero-explorer.py'
+__NAME__ = 'apero_explorer.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)

@@ -21,7 +21,7 @@ from apero.tools.module.setup import drs_reset
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero-reset.py'
+__NAME__ = 'apero_reset.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)

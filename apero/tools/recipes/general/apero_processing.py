@@ -21,7 +21,7 @@ from apero.tools.module.setup import drs_processing
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero-processing.py'
+__NAME__ = 'apero_processing.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
