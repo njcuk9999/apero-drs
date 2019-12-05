@@ -30,9 +30,9 @@ WORKSPACE = '/spirou/cfht_nights/cfht_nov1/msg'
 
 MASTER_PID = '00015755092069301272'
 
-MASTER_LOG_FILE = 'DRS-HOST_PID-{0}_apero-processing'.format(MASTER_PID)
+MASTER_LOG_FILE = 'APEROL_PID-{0}_apero-processing'.format(MASTER_PID)
 LOG_RECIPE = 'cal_preprocess_spirou'
-GROUP_DIR = 'DRS-HOST_PID-{0}_apero-processing_group'.format(MASTER_PID)
+GROUP_DIR = 'APEROG-{0}_apero-processing_group'.format(MASTER_PID)
 
 PASSED_STR = 'has been successfully completed'
 FAILED_STR = 'has NOT been successfully completed'
