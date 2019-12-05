@@ -26,7 +26,7 @@ from apero.tools.module.setup import drs_reset
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'remake_db.py'
+__NAME__ = 'apero_mkdb.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)

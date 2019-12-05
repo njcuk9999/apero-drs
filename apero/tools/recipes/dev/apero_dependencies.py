@@ -21,7 +21,7 @@ from apero.core import constants
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero-dependencies.py'
+__NAME__ = 'apero_dependencies.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
