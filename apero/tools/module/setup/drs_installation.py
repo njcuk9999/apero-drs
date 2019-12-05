@@ -53,8 +53,8 @@ TOOLPATH = '../tools/bin/'
 DEVPATH = '../tools/dev/'
 
 RECIPEPATH = './recipes/{0}/'
-TOOL_RECIPEPATH = '../apero/tools/module/recipes/general/'
-DEV_RECIPEPATH = '../apero/tools/module/recipes/dev/'
+TOOL_RECIPEPATH = '../apero/tools/recipes/general/'
+DEV_RECIPEPATH = '../apero/tools/recipes/dev/'
 
 ENV_CONFIG = 'DRS_UCONFIG'
 SETUP_PATH = './tools/resources/setup/'
