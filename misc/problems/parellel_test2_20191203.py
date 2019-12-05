@@ -32,11 +32,11 @@ GROUPS = 1
 SUBGROUPS = 5
 
 # On error what should we do
-STOP_AT_ERROR = False
+STOP_AT_ERROR = True
 
 # ------------------------------------------------------------------------------
 # This is to test a sys.exit()
-TEST_SYS_EXIT = False
+TEST_SYS_EXIT = True
 # this is the group num + core num to exit in [group num, core num, sub group]
 TEST_SYS_NUMS = [0, 1, 'b']
 # ------------------------------------------------------------------------------
@@ -131,11 +131,12 @@ def myfunc(it, jt, kt, event, rdict):
 if __name__ == '__main__':
 
     # event handling (using .is_set and set)
-    event = Event()
+    # event = Event()
     # shared data between processes
     manager = Manager()
     # just a dictionary
     return_dict = manager.dict()
+    event = manager.Event()
 
     letters = string.ascii_lowercase
 
@@ -183,62 +184,4 @@ if __name__ == '__main__':
 #        TEST_OS_EXIT is not caught - we lose 1 entry from rdict
 #
 #
-"""
-RuntimeError                              Traceback (most recent call last)
-<ipython-input-3-f63ece165a01> in <module>
-    160         # start parellel jobs
-    161         pool = Pool(CORES)
---> 162         pool.starmap(myfunc, params_per_process)
-    163 
-    164     # as a check
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/pool.py in starmap(self, func, iterable, chunksize)
-    296         `func` and (a, b) becomes func(a, b).
-    297         '''
---> 298         return self._map_async(func, iterable, starmapstar, chunksize).get()
-    299 
-    300     def starmap_async(self, func, iterable, chunksize=None, callback=None,
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/pool.py in get(self, timeout)
-    681             return self._value
-    682         else:
---> 683             raise self._value
-    684 
-    685     def _set(self, i, obj):
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/pool.py in _handle_tasks(taskqueue, put, outqueue, pool, cache)
-    455                         break
-    456                     try:
---> 457                         put(task)
-    458                     except Exception as e:
-    459                         job, idx = task[:2]
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/connection.py in send(self, obj)
-    204         self._check_closed()
-    205         self._check_writable()
---> 206         self._send_bytes(_ForkingPickler.dumps(obj))
-    207 
-    208     def recv_bytes(self, maxlength=None):
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/reduction.py in dumps(cls, obj, protocol)
-     49     def dumps(cls, obj, protocol=None):
-     50         buf = io.BytesIO()
----> 51         cls(buf, protocol).dump(obj)
-     52         return buf.getbuffer()
-     53 
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/synchronize.py in __getstate__(self)
-    218 
-    219     def __getstate__(self):
---> 220         context.assert_spawning(self)
-    221         return (self._lock, self._sleeping_count,
-    222                 self._woken_count, self._wait_semaphore)
-
-/scratch/bin/anaconda3/envs/spirou_py3/lib/python3.7/multiprocessing/context.py in assert_spawning(obj)
-    354         raise RuntimeError(
-    355             '%s objects should only be shared between processes'
---> 356             ' through inheritance' % type(obj).__name__
-    357             )
-
-RuntimeError: Condition objects should only be shared between processes through inheritance
-"""
+#
