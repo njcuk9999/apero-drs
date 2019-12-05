@@ -1,5 +1,15 @@
 # APERO - A PipelinE to Reduce Observations
 
+## Contents
+
+1) [Latest version](https://github.com/njcuk9999/apero-drs#Latest-version)
+2) [Pre-Installation](https://github.com/njcuk9999/apero-drs#Pre-Installation)
+3) [Installation](https://github.com/njcuk9999/apero-drs#Installation) 
+4) [To Do](https://github.com/njcuk9999/apero-drs#TODO) 
+5) [Known Issues](https://github.com/njcuk9999/apero-drs#Currently-known-issues)
+6) [Using APERO](https://github.com/njcuk9999/apero-drs#Using-APERO)
+
+
 ##  Latest version
 
 - master (long term stable) V0.5.000
@@ -53,7 +63,9 @@ git checkout working
 ---
 ---
 
-## Installation (Currently only for `developer` and `working` versions)
+## Installation 
+
+(Currently only for `developer` and `working` versions)
 
 Make sure pre-installation is done first!
 
