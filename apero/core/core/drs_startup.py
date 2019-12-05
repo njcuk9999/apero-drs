@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 from astropy.time import Time
 import traceback
+import string
 import time
 import sys
 import os
@@ -73,6 +74,8 @@ INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
 PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
 CURRENT_PATH = ''
+# get all chars
+CHARS = string.ascii_uppercase + string.digits
 
 
 # =============================================================================
@@ -1235,19 +1238,20 @@ def _assign_pid():
     :return: the process id and the human time at creation
     :rtype: tuple[str, str]
     """
-    # wait a random amount of time (to avoid starting at the same time)
-    #   it has happened at least once (in parallelisation)
-    rint = np.random.randint(1, 9999, 1)
-    # sleep max of 0.1 seconds
-    time.sleep(rint/100000)
-
+    # generate a random number (in case time is too similar)
+    #  -- happens a lot in multiprocessing
+    rint = np.random.randint(1000, 9999, 1) / 1e7
+    # wait a fraction of time (between 1us and 1ms)
+    time.sleep(rint)
+    # generate random four characters to make sure pid is unique
+    rval = ''.join(np.random.choice(list(CHARS), size=4))
     # get the time now from astropy
     timenow = Time.now()
     # get unix and human time from astropy time now
     unixtime = timenow.unix * 1e7
     humantime = timenow.iso
     # write pid
-    pid = 'PID-{0:020d}'.format(int(unixtime))
+    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
     # return pid and human time
     return pid, humantime
 
