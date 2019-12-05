@@ -305,7 +305,7 @@
 "00-503-00012","ERROR","Means that overwrite “arguments” was set but we could not add argument ","{0} = Argument name; {1} = Argument value; {2} = function name","Overwrite argument: Argument {0} not found in args/kwargs. Correct DrsSequence. \n\t {0} = {1} \n\t Function = {2}","",""
 "00-503-00013","ERROR","Means that 'cores'  was defiend by user but was not an integer and caused a value error","{0} = cores value; {1} = error type; {2} = error message","User input error: '--cores'='{0}' must be an integer \n\t Error {1}: {2}","",""
 "00-503-00014","ERROR","Means that 'cores' was defined by user and lead to an error","{0} = cores value; {1} = error type; {2} = error message","User input error: '--cores' must be an integer \n\t Error {1}: {2}","",""
-"","","","","","",""
+"00-503-00015","ERROR","Means that an system exit error was caught","{0} = run id","System exit occurred in run '{0}'","",""
 "","","","","","",""
 "00-505-00000","ERROR","Remake calib db user error messages","None","","",""
 "00-505-00001","ERROR","Means that instrument does not have 'file_set_name' defined","{0} = name of database; {1} = file set name; {2} = file module used; {3} = function name","Instrument does not have {0} sequence defined. \n\t Please define '{1}' in '{2}'. \n\t Function = {3}","",""
