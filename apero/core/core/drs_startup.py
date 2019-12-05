@@ -682,12 +682,9 @@ def group_name(params, suffix='group'):
     else:
         recipename = str(params['RECIPE'].replace('.py', ''))
     # ----------------------------------------------------------------------
-    # Get the HOST name (if it does not exist host = 'HOST')
-    host = os.environ.get('HOST', 'HOST')
-    # ----------------------------------------------------------------------
-    args = [host, pid, recipename, suffix]
+    args = [pid, recipename, suffix]
     # construct group name
-    groupname = 'DRS-{0}_{1}_{2}_{3}'.format(*args)
+    groupname = 'APEROG-{0}_{1}_{2}'.format(*args)
     # return group name
     return groupname
 

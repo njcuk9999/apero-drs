@@ -288,12 +288,9 @@ class PseudoConstants:
             recipe = 'UNKNOWN-RECIPE'
         else:
             recipe = str(params['RECIPE'].replace('.py', ''))
-
-        # Get the HOST name (if it does not exist host = 'HOST')
-        host = os.environ.get('HOST', 'HOST')
         # construct the logfile path
-        largs = [host, pid, recipe]
-        lpath = os.path.join(dir_data_msg, 'DRS-{0}_{1}_{2}'.format(*largs))
+        largs = [pid, recipe]
+        lpath = os.path.join(dir_data_msg, 'APEROL-{0}_{1}'.format(*largs))
 
         # return lpath
         return lpath
