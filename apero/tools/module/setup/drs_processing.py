@@ -605,7 +605,7 @@ def process_run_list(params, recipe, runlist, group=None):
         # log process: Running with N cores
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process1(params, recipe, runlist, cores, group)
+        rdict = _multi_process(params, recipe, runlist, cores, group)
     # convert to ParamDict and set all sources
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
