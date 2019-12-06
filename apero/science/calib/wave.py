@@ -1691,6 +1691,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # log error that we have insufficient lines found
             eargs = [mp.nansum(good), min_tot_num_lines, func_name]
             WLOG(params, 'error', TextEntry('00-017-00003', args=eargs))
+
         # ------------------------------------------------------------------
         # Linear model slice generation
         # ------------------------------------------------------------------
@@ -1986,6 +1987,9 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
             init_guess = [0.3, 0.0, 1.0, 0.0, 0.0]
             # loop around until criteria met
             n_it = 0
+
+            # Todo: remove breakpoint
+            constants.breakpoint(params)
 
             # fit the merged line profile and do some sigma-clipping
             while maxdev > max_dev_thres:
