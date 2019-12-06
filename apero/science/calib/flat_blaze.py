@@ -134,8 +134,8 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     fit_guess = [thres, nthres * 2.0, pospeak, 0, 0, 0]
     # ------------------------------------------------------------------
     # we set reasonable bounds
-    bounds = [(thres * 0.5, nthres * 0.1, xlower, -1e-4, -1e-4, -1e-2),
-              (thres * 1.5, nthres * 10, xupper, 1e-4, 1e-4, 1e-2)]
+    bounds = [(thres * 0.5, nthres * 0.1, xlower, -np.inf, -np.inf, -1e-2),
+              (thres * 1.5, nthres * 10, xupper, np.inf, np.inf, 1e-2)]
     # we optimize over pixels that are not NaN
     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
                            bounds=bounds)
