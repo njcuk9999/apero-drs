@@ -200,6 +200,10 @@ class Lock:
         # if the file exists remove it
         if os.path.exists(abspath):
             os.remove(abspath)
+        # if path is empty remove the folder
+        if len(os.listdir(self.path)) == 0:
+            os.removedirs(self.path)
+
 
     def __clean_name(self, name):
         # loop around bad characters and replace them
