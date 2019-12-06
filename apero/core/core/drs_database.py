@@ -125,10 +125,9 @@ class Database():
         # ------------------------------------------------------------------
         # define a synchoronized lock for indexing (so multiple instances do not
         #  run at the same time)
-        lockdir = os.path.dirname(self.abspath)
         lockfile = os.path.basename(self.abspath)
         # start a lock
-        lock = drs_lock.Lock(self.params, lockfile, lockdir)
+        lock = drs_lock.Lock(self.params, lockfile)
         # make locked read function
         @drs_lock.synchronized(lock, self.params['PID'])
         def locked_read():
@@ -707,10 +706,9 @@ def _copy_db_file(params, dbname, inpath, outpath):
     # -------------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockdir = os.path.dirname(inpath)
     lockfile = os.path.basename(inpath)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
     # make locked copy function
     @drs_lock.synchronized(lock, params['PID'])
     def locked_copy():
@@ -769,7 +767,7 @@ def _read_lines_from_database(params, dbname):
     lockdir = os.path.dirname(abspath)
     lockfile = os.path.basename(abspath)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
     # make locked readlines function
     @drs_lock.synchronized(lock, params['PID'])
     def locked_readlines():
@@ -850,10 +848,9 @@ def _write_line_to_database(params, key, dbname, outfile, line, log=True):
     # -------------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockdir = os.path.dirname(abspath)
     lockfile = os.path.basename(abspath)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
     # make locked writelines function
     @drs_lock.synchronized(lock, params['PID'])
     def locked_writelines():

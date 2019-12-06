@@ -404,10 +404,9 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     # -------------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockdir = os.path.dirname(opath)
     lockfile = os.path.basename(opath)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
     # make locked indexing function
     @drs_lock.synchronized(lock, params['PID'])
     def locked_indexing():
@@ -1593,7 +1592,7 @@ def _make_dirs(params, path):
     lockdir = os.path.dirname(path)
     lockfile = os.path.basename(path)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
 
     # make locked makedirs function
     @drs_lock.synchronized(lock, params['PID'])

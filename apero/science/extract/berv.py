@@ -249,10 +249,9 @@ def use_barycorrpy(params, times, **kwargs):
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockdir = os.path.dirname(lfilename)
     lockfile = os.path.basename(lfilename)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
 
     # make locked bervcalc function
     @drs_lock.synchronized(lock, params['PID'])
