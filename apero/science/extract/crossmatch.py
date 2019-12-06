@@ -75,10 +75,9 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockdir = os.path.dirname(lookuptablename)
     lockfile = os.path.basename(lookuptablename)
     # start a lock
-    lock = drs_lock.Lock(params, lockfile, lockdir)
+    lock = drs_lock.Lock(params, lockfile)
 
     # make locked lookuptable function
     @drs_lock.synchronized(lock, params['PID'])
