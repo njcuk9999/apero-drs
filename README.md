@@ -2,12 +2,12 @@
 
 ## Contents
 
-1) [Latest version](https://github.com/njcuk9999/apero-drs#Latest-version)
-2) [Pre-Installation](https://github.com/njcuk9999/apero-drs#Pre-Installation)
-3) [Installation](https://github.com/njcuk9999/apero-drs#Installation) 
-4) [To Do](https://github.com/njcuk9999/apero-drs#TODO) 
-5) [Known Issues](https://github.com/njcuk9999/apero-drs#Currently-known-issues)
-6) [Using APERO](https://github.com/njcuk9999/apero-drs#Using-APERO)
+1) [Latest version](#Latest-version)
+2) [Pre-Installation](#Pre-Installation)
+3) [Installation](#Installation) 
+4) [To Do](#TODO) 
+5) [Known Issues](#Currently-known-issues)
+6) [Using APERO](#Using-APERO)
 
 
 ##  Latest version
