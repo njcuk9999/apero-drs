@@ -1740,11 +1740,6 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # ------------------------------------------------------------------
         # get velocity shift due to berv
         dvshift = mp.relativistic_waveshift(berv, units='km/s')
-
-        # TODO: remove breakpoint
-        print('Line 1728')
-        constants.breakpoint(params)
-
         # shift the image
         simage = _wave_to_wave(params, image2, wavemap * dvshift, mwavemap)
         # ------------------------------------------------------------------

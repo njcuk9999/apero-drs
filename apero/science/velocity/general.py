@@ -969,10 +969,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_all_results = []
     ccf_lines = []
     ccf_all_snr = []
-
-    # TODO: Remove break point
-    constants.breakpoint(params)
-
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):

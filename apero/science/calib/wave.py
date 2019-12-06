@@ -1327,9 +1327,6 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
         drs_table.write_table(params, ini_table, llprops['HCLLFILENAME'],
                               fmt=filefmt)
         # plot all orders w/fitted gaussians
-        # TODO: remove breakpoint
-        print('wave.py Line 1298')
-        constants.breakpoint(params)
         if __name__ == '__main__':
             recipe.plot('WAVE_HC_GUESS', params=params, wave=iprops['WAVEMAP'],
                         spec=hc_sp, llprops=llprops, nbo=nbo)
@@ -1987,9 +1984,6 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
             init_guess = [0.3, 0.0, 1.0, 0.0, 0.0]
             # loop around until criteria met
             n_it = 0
-
-            # Todo: remove breakpoint
-            constants.breakpoint(params)
 
             # fit the merged line profile and do some sigma-clipping
             while maxdev > max_dev_thres:
@@ -3759,9 +3753,6 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
         # fit d v wavelength w/sigma-clipping
         fit_ll_d, mask = sigclip_polyfit(params, hc_ll_test, d_arr, degree=9)
         # plot d vs 1/m fit and residuals
-        # TODO: remove breakpoint
-        print('wave.py Line 3742')
-        constants.breakpoint(params)
         if __name__ == '__main__':
             recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
                         m_init=m_init, fit_1m_d_func=fit_1m_d_func,
