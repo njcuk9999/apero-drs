@@ -973,7 +973,7 @@ def hc_quality_control(params, hcprops):
     else:
         fail_msg.append(textdict['40-017-00017'])
         qc_pass.append(0)
-        badvalues = list(np.where(~ord_check)[0])
+        badvalues = np.where(~ord_check)[0].astype(str)
         qc_values.append(','.join(list(badvalues)))
     # add to qc header lists
     qc_names.append('WAVE DIFF ALONG ORDER HC')
