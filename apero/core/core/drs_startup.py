@@ -17,6 +17,7 @@ import string
 import time
 import sys
 import os
+import random
 from signal import signal, SIGINT
 from collections import OrderedDict
 
@@ -1235,18 +1236,20 @@ def _assign_pid():
     :return: the process id and the human time at creation
     :rtype: tuple[str, str]
     """
+    # we need a random seed
+    np.random.seed(random.randint(1, 2**30))
     # generate a random number (in case time is too similar)
     #  -- happens a lot in multiprocessing
     rint = np.random.randint(1000, 9999, 1) / 1e7
     # wait a fraction of time (between 1us and 1ms)
     time.sleep(rint)
-    # generate random four characters to make sure pid is unique
-    rval = ''.join(np.random.choice(list(CHARS), size=4))
     # get the time now from astropy
     timenow = Time.now()
     # get unix and human time from astropy time now
     unixtime = timenow.unix * 1e7
     humantime = timenow.iso
+    # generate random four characters to make sure pid is unique
+    rval = ''.join(np.random.choice(list(CHARS), size=4))
     # write pid
     pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
     # return pid and human time
