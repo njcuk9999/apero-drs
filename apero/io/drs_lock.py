@@ -17,6 +17,7 @@ from __future__ import division
 import os
 import time
 import numpy as np
+import glob
 
 from apero.core import constants
 from apero.locale import drs_text
@@ -53,7 +54,7 @@ class Lock:
     """
     Class to control locking of decorated functions
     """
-    def __init__(self, params, lockname, lockpath):
+    def __init__(self, params, lockname):
         """
         Construct the lock instance
 
@@ -66,6 +67,11 @@ class Lock:
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
         self.params = params
+        # get the lock path
+        lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+        if not os.path.exists(lockpath):
+            os.mkdir(lockpath)
+
         self.maxwait = params.get('DB_MAX_WAIT', 100)
         self.path = os.path.join(lockpath, self.lockname)
         self.queue = []
@@ -152,12 +158,9 @@ class Lock:
         """
         path = self.path
 
-        # check path exists
+        # check path exists - if it doesn't then create it
         if not os.path.exists(path):
-            # TODO: Add to lanuage dictionary
-            emsg = ('Directory {0} does not exist. '
-                    'Please create directory to continue.')
-            raise ValueError(emsg.format(path))
+            self.enqueue(name)
 
         # get the raw list
         rawlist = os.listdir(path)
@@ -200,10 +203,6 @@ class Lock:
         # if the file exists remove it
         if os.path.exists(abspath):
             os.remove(abspath)
-        # if path is empty remove the folder
-        if len(os.listdir(self.path)) == 0:
-            os.removedirs(self.path)
-
 
     def __clean_name(self, name):
         # loop around bad characters and replace them
@@ -340,6 +339,42 @@ def synchronized(lock, name):
     return wrap
 
 
+def reset_lock_dir(params, log=False):
+    # get the lock path
+    lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+    if not os.path.exists(lockpath):
+        return
+    # get contents head directory (we will loop through these sub directories)
+    contents = glob.glob(os.path.join(lockpath, '*'))
+    # walk through folder and remove empty directories
+    for item in contents:
+        if os.path.isdir(item):
+            __remove_empty__(item, log=log)
+
+
+def __remove_empty__(directory, remove_head=True, log=False):
+    # get the contents of the directory
+    contents = glob.glob(os.path.join(directory, '*'))
+    # if we have an empty directory remove it
+    if len(contents) == 0 and remove_head:
+        if log:
+            print('Removing empty directory: {0}'.format(directory))
+        os.rmdir(directory)
+        return True
+    # assume the directory is empty
+    empty = True
+    # loop around i
+    for item in contents:
+        # if item is a directory then empty this directory first
+        if os.path.isdir(item):
+            empty &= __remove_empty__(item, log=log)
+        # if item is a file this directory is not empty
+        if os.path.isfile(item):
+            empty &= False
+    # return whether folder is empty
+    return empty
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -354,7 +389,7 @@ if __name__ == "__main__":
 
     def printfunc(i, j):
         # set up the lock file (usually a file or function)
-        mylock = Lock(_params, 'printfunc', './')
+        mylock = Lock(_params, 'printfunc')
 
         # this is where we define the locked function
         @synchronized(mylock, '{0}-{1}'.format(i, j))

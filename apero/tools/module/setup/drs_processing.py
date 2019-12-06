@@ -29,9 +29,11 @@ from apero import plotting
 from apero.io import drs_table
 from apero.io import drs_path
 from apero.io import drs_fits
+from apero.io import drs_lock
 from apero.tools.module.setup import drs_reset
 from apero.science import telluric
 from apero.science import preprocessing
+
 
 # =============================================================================
 # Define variables
@@ -606,6 +608,10 @@ def process_run_list(params, recipe, runlist, group=None):
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process(params, recipe, runlist, cores, group)
+
+    # remove lock files
+    drs_lock.reset_lock_dir(params)
+
     # convert to ParamDict and set all sources
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
@@ -1506,6 +1512,7 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
             # TODO: remove or add to language db
             WLOG(params, 'debug', 'MULTIPROCESS - joining job {0}'.format(pit))
             proc.join()
+
     # return return_dict
     return dict(return_dict)
 
