@@ -2,6 +2,108 @@ Changelog
 =========
 
 
+0.6.001 (2019-12-06)
+--------------------
+- Remove old breakpoints. [Neil Cook]
+- Science.calib.wave.py - add breakpoint for debugging. [Neil Cook]
+- Flat_blaze.py - fix bug with sinc fitting (bounds for quad and cube
+  parameters to constraining) [Neil Cook]
+- Add error dumps directory. [Neil Cook]
+- Io.drs_lock.py - make all lock files go to the log/lock dir and add a
+  way to remove all empty ones of these (after processing is complete)
+  using drs_lock.reset_lock_dir. [Neil Cook]
+- Update the Lock (not longer need lockdir --> will all go to log
+  directory (under the a lock dir) [Neil Cook]
+- Update README.md. [Neil Cook]
+- Update README.md. [Neil Cook]
+- Io.drs_lock.py - remove the lock directory if directory is empty.
+  [Neil Cook]
+- Science.calib.wave.py - badvalues must be a string list. [Neil Cook]
+- Core.core.drs_startup.py - random seed needs to be set to randomise
+  the cores. [Neil Cook]
+
+
+0.5.124 (2019-12-05)
+--------------------
+- Tools.module.setup.drs_processing.py - set multi_process back to group
+  by core (Process) [Neil Cook]
+- Tools.module.setup.drs_processing.py - correct typo manager.event -->
+  manger.Event. [Neil Cook]
+- Update language database. [Neil Cook]
+- Parallel test2 - test out Pool (from @cusher) [Neil Cook]
+- Tools.modules.setup.drs_processing.py - test out Pool (from @cusher)
+  [Neil Cook]
+- Add second parallel check based on @cusher example. [Neil Cook]
+- Update log and group names (slightly shorter - no host) [Neil Cook]
+- Update analyse_logs.py. [Neil Cook]
+- Core.core.drs_startup.py - add a random set of charaters to the end of
+  pid to make unique. [Neil Cook]
+- Add contents to main README.md. [Neil Cook]
+- Update default run scripts. [Neil Cook]
+- Tools.module.setup.drs_reset.py - change empty dir param (typo) [Neil
+  Cook]
+- Update paths given changes to tool name/location. [Neil Cook]
+- Update paths given changes to tool name/location. [Neil Cook]
+- Remove dashes from program names to allow importing. [Neil Cook]
+
+
+0.5.123 (2019-12-05)
+--------------------
+- Core.drs_startup.py - make sure pids are really unlikely to be the
+  same (add random component) [Neil Cook]
+- Io.drs_lock.py - deal with folder/queue files disappear during lock
+  process. [Neil Cook]
+- Misc/problems/* - add copy to analyse log files for preprocessing +
+  modify the parallel test. [Neil Cook]
+- Tools.module.setup.drs_processing.py - change grouping --> only number
+  of cores files per group (instead of total/cores per group  per
+  recipe) [Neil Cook]
+- Recipe/spirou/cal_preprocess_spirou.py - change error message. [Neil
+  Cook]
+
+
+0.5.122 (2019-12-04)
+--------------------
+- Misc.problems.parellel_test_20191203.py - minimum working version of
+  parallisation problem. [Neil Cook]
+- Misc.problems.parellel_test_20191203.py - minimum working version of
+  parallisation problem. [Neil Cook]
+- Core.core.drs_startup.py - add SystemExit to the possible exceptions
+  to catch. [Neil Cook]
+- Add an export command to file_explorer. [Neil Cook]
+- Tools.module.setup.drs_installation.py - make optional programs not
+  create "None" path. [Neil Cook]
+- Tools.module.setup.drs_installation.py - fix typo. [Neil Cook]
+- Setup/install.py - check for python 3. [Neil Cook]
+- Add ds9/pdflatex to the codes. [Neil Cook]
+- Add DRS_DS9_PATH and DRS_PDFLATEX_PATH to constants. [Neil Cook]
+- Tools.module.setup.drs_installation.py - macs still suck. [Neil Cook]
+- Tools.module.setup.drs_installation.py - macs suck. [Neil Cook]
+
+
+0.5.121 (2019-12-02)
+--------------------
+- Add README.md to bin and dev tool folders. [Neil Cook]
+- Change __INSTRUMENT__ = None to __INSTRUMENT__ = 'None' and move
+  tools/bin and tools/dev to the new loc + add chmod + symlinks. [Neil
+  Cook]
+- - make file_explorer.py work again. [Neil Cook]
+- Add runs to default user config files. [Neil Cook]
+- Add README.md to reset run files. [Neil Cook]
+- Tools.bin.reset.py + drs_reset.py - add run files to reset. [Neil
+  Cook]
+- Core.instruments.*.default_config.py - add DRS_RESET_RUN_PATH. [Neil
+  Cook]
+- Add reset run files. [Neil Cook]
+- Science.preprocessing.identification.py - fileset must be string to go
+  into .join. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - add the pp_lfc_lfc to
+  pp_file set. [Neil Cook]
+- Science.calib.general.py - catch warnings for unphysical pixel nan
+  setting. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.5.120 (2019-11-29)
 --------------------
 - Replace old locking mechanism with new one. [Neil Cook]
