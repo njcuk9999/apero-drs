@@ -528,7 +528,8 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 
 ### RAW FILES 
 
-- `4096 x 4096` `{ODOCODE}`
+- `4096 x 4096` 
+- PP files use `DPRTYPE` to identify files
 
 | DPRTYPE       | SBCCAS_P	| SBCREF_P	| SBCALI_P | OBSTYPE    |	TRG_TYPE	| EXT.    |
 | --------------|-----------|-----------|----------|------------|---------------|---------|
@@ -553,6 +554,8 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 ---
 
 ### Preprocessing Recipe
+
+Cleans file of detector effects.
 
 #### *Run*: 
 ```
@@ -583,6 +586,8 @@ None
 ---
 
 ### Dark Master Recipe
+
+Collects all dark files and creates a master dark image to use for correction.
 
 #### *Run*: 
 ```
@@ -622,6 +627,8 @@ Does not require a master night choice - finds darks from all preprocessed night
 ---
 
 ### Bad Pixel Correction Recipe
+
+Creates a bad pixel mask for identifying and deal with bad pixels.
 
 #### *Run*: 
 ```
@@ -665,6 +672,7 @@ BADPIX_MAP
 
 ### Localisation Recipe
 
+Finds the orders on the image.
 
 #### *Run*: 
 ```
@@ -711,6 +719,9 @@ LOC_ORD_VS_RMS, LOC_CHECK_COEFFS
 
 ### Shape Master Recipe
 
+Creates a master FP image from all FPs processed. Uses this to work out the
+required shifts due to the FP master image, slicer pupil geometry and the
+bending of the orders (found in localisation).
 
 #### *Run*: 
 ```
@@ -761,6 +772,10 @@ SHAPE_DX, SHAPE_ANGLE_OFFSET_ALL, SHAPE_ANGLE_OFFSET, SHAPE_LINEAR_TPARAMS
 
 ### Shape (per night) Recipe
 
+Takes the shape master outputs (shapex, shapey and fpmaster) and applies
+these transformations to shift the image to the master fp frame, unbend images
+and shift to correct for slicer pupil geometry.
+
 #### *Run*: 
 ```
 cal_shape_spirou.py [DIRECTORY] [FP_FP]
@@ -801,6 +816,9 @@ SHAPE_DX, SHAPE_ANGLE_OFFSET_ALL, SHAPE_ANGLE_OFFSET, SHAPE_LINEAR_TPARAMS
 
 ---
 ### Flat/Blaze Correction Recipe
+
+Extracts out flat images in order to measure the blaze and produced blaze
+correction and flat correction images.
 
 #### *Run*: 
 ```
@@ -847,6 +865,8 @@ FLAT_BLAZE_ORDER2
 ---
 ### Thermal Correction Recipe
 
+Extracts dark frames in order to provide correction for the thermal background
+after extraction of science / calibration frames.
 
 #### *Run*: 
 ```
@@ -894,6 +914,8 @@ None
 ---
 ### Wavelength solution Recipe
 
+Creates a wavelength solution and measures drifts (via CCF) of the FP relative 
+to the FP master
 
 #### *Run*: 
 ```
@@ -949,7 +971,7 @@ WAVE_FP_SINGLE_ORDER, CCF_RV_FIT, CCF_RV_FIT_LOOP
 ---
 ### Extraction Recipe
 
-
+Extracts any preprocessed image using all the calibrations required.
 
 #### *Run*: 
 ```
@@ -995,6 +1017,7 @@ EXTRACT_SPECTRAL_ORDER2, EXTRACT_S1D, EXTRACT_S1D_WEIGHT
 ---
 ### Make Telluric Recipe
 
+Takes a hot star and calculates telluric transmission
 
 #### *Run*: 
 ```
@@ -1038,6 +1061,8 @@ MKTELLU_WAVE_FLUX1, MKTELLU_WAVE_FLUX2
 ---
 ### Fit Telluric Recipe
 
+Using the telluric tramission calculates principle components (PCA) to
+correct input images of atmospheric absorption.
 
 #### *Run*: 
 ```
@@ -1086,6 +1111,13 @@ FTELLU_WAVE_SHIFT2, FTELLU_RECON_ABSO1, FTELLU_RECON_ABSO2
 ---
 ### Make Template Recipe
 
+Uses all telluric corrected images of a certain object name to create
+and BERV and wavelength corrected template in order to server as a better 
+model SED for telluric correction. 
+
+`obj_mk_tellu_spirou.py` and `obj_fit_tellu_spirou.py` need to be rerun after
+template generation.
+
 #### *Run*: 
 ```
 obj_mk_template_spirou.py [OBJNAME]
@@ -1128,6 +1160,10 @@ EXTRACT_S1D
 ---
 ### CCF Recipe
 
+Cross correlates the input image against a mask and measures a radial velocity
+per order, and combines to give an over all radial velocity measurement.
+Also (where possible) takes into account the FP drift measured by a CCF in the
+wave solution (when wave solution used a FP)
 
 #### *Run*: 
 ```
@@ -1171,6 +1207,7 @@ CCF_RV_FIT, CCF_RV_FIT_LOOP
 ---
 ### Polarimetry Recipe
 
+Produces all polarimetry outputs.
 
 #### *Run*: 
 ```
