@@ -8,7 +8,7 @@
 4) [To Do](#TODO) 
 5) [Known Issues](#Currently-known-issues)
 6) [Using APERO](#Using-APERO)
-7) [APERO run order](#APERO-run-order]
+7) [APERO run order](#apero-run-order)
 8) [APERO outputs](#APERO-outputs)
 
 ##  Latest version
