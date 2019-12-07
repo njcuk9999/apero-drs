@@ -8,7 +8,8 @@
 4) [To Do](#TODO) 
 5) [Known Issues](#Currently-known-issues)
 6) [Using APERO](#Using-APERO)
-
+7) [APERO run order](#APERO-run-order]
+8) [APERO outputs](#APERO-outputs)
 
 ##  Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
@@ -32,10 +33,16 @@ git clone https://github.com/njcuk9999/apero-drs
 This may take some time (in future most of the data required will be a separate download),
 and we still have many (now redundant) files from the spirou_py3 repository
 
-Note if you have a git from the spirou_py3 you need to redirect it:
+
+##### Upgrading from the spirou_py3
+
+This is not recommended. A clean install is recommended.
+
+Note if you must do this you need to redirect github:
 ```bash
-cd ./apero-drs
+cd ./spirou-drs
 git remote set-url origin https://github.com/njcuk9999/apero-drs
+mv ../spirou-drs ../apero-drs
 ```
 
 ---
@@ -431,5 +438,782 @@ obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 ```
+
+---
+---
+
+# APERO run order
+[Back to top](#apero---a-pipeline-to-reduce-observations)
+
+As mentioned above this depends on what sequence you wish to use but as
+an overview the steps are as follows
+
+## 1) Choose a master night
+
+(i.e. 2018-09-25)
+
+If using the processing script one must set this in that file else
+when choosing arguments one must use them from the master night choosen.
+
+Note one has to run `cal_badpix` and `cal_loc` calibrations for the master night
+in order to run the shape master recipe.
+
+2) Run all the preprocessing
+
+Note one must preprocess ALL nights for the master to work) - it will only 
+combine darks(for the master dark) and fps (for the master shape) from 
+preprocessed data.
+
+3) Run the master sequence
+i.e. 
+```
+cal_preprocessing
+cal_dark_master
+cal_badpix [master night]
+cal_loc [DARK_FLAT; master night]
+cal_loc [FLAT_DARK; master night]
+cal_shape_master
+```
+
+4) Run the night sequences
+
+These must be in this order but could be night-by-night or
+all of one then all of the other) - the order here only matters when a file is 
+missed/corrupt or does not pass quality control. If all badpix are run first
+then the loc will have the best chance at having bad pixel correction from a
+night close to it. If one runs night by night then the next step will only 
+have access to calibrations from nights already processed.
+
+Note again one should extract all telluric stars and run the telluric sequence
+(to create a telluric database) BEFORE correcting any science extraction.
+
+The calibration sequence is as follows:
+```
+cal_badpix [every night]
+cal_loc [DARK_FLAT; every night]
+cal_loc [FLAT_DARK; every night]
+cal_shape [every night]
+cal_ff [every night]
+cal_thermal [every night]
+cal_wave [HCONE_HCONE + FP_FP; every night]
+```
+
+The telluric star sequence is as follows:
+```
+cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+```
+
+The science star sequence is as follows:
+```
+cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
+obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
+obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
+obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
+cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
+```
+
+--- 
+---
+
+# APERO outputs
+[Back to top](#apero---a-pipeline-to-reduce-observations)
+
+---
+
+## Files
+
+### RAW FILES 
+
+- `4096 x 4096` `{ODOCODE}`
+
+| DPRTYPE       | SBCCAS_P	| SBCREF_P	| SBCALI_P | OBSTYPE    |	TRG_TYPE	| EXT.    |
+| --------------|-----------|-----------|----------|------------|---------------|---------|
+| DARK_DARK_INT	| pos_pk	| pos_pk	| P4	   | DARK	    | CALIBRATION	| d.fits  |
+| DARK_DARK_TEL	| pos_pk	| pos_pk	| P5	   | DARK	    | CALIBRATION	| d.fits  |
+| OBJ_DARK	    | pos_pk	| pos_pk	| ?	       | OBJECT	    | TARGET		| o.fits  |
+| DARK_DARK_SKY	| pos_pk	| pos_pk	| ?	       | OBJECT	    | SKY			| o.fits  |
+| OBJ_FP	    | pos_pk	| pos_fp	| ?	       | OBJECT	    | TARGET		| o.fits  |
+| FP_FP	        | pos_fp	| pos_fp	| ?	       | ALIGN	    | CALIBRATION	| a.fits  |
+| FLAT_DARK	    | pos_wl	| pos_pk	| ?	       | FLAT	    | CALIBRATION	| f.fits  |
+| DARK_FLAT	    | pos_pk	| pos_wl	| ?	       | FLAT	    | CALIBRATION	| f.fits  |
+| FLAT_FLAT	    | pos_wl	| pos_wl	| ?	       | FLAT	    | CALIBRATION	| f.fits  |
+| HCONE_DARK	| pos_hc1	| pos_pk	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
+| DARK_HCONE    | pos_pk	| pos_hc1	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
+| HCONE_HCONE	| pos_hc1	| pos_hc1	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
+
+
+---
+
+## Recipes
+
+---
+
+### Preprocessing Recipe
+
+#### *Run*: 
+```
+cal_preprocessing_spirou.py [DIRECTORY] [RAW_FILES]
+```
+#### *Optional Arguments*: 
+```
+    --skip, --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```      
+#### *Output Dir*: 
+```
+DRS_DATA_WORKING   \\ default: "tmp" directory
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp.fits  \\ preprocessed files (4096x4096)
+```
+
+#### *Plots*:
+
+None
+
+
+
+
+
+---
+
+### Dark Master Recipe
+
+#### *Run*: 
+```
+cal_dark_master_spirou.py
+```
+#### *Optional Arguments*: 
+```
+    --filetype, --database, --plot,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+DARKM {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_dark_master.fits  \\ dark master file (4096x4096) + FITS-TABLE
+```
+
+#### *Plots*:
+
+None
+
+#### *Notes*:
+
+Does not require a master night choice - finds darks from all preprocessed nights.
+
+
+
+
+
+---
+
+### Bad Pixel Correction Recipe
+
+#### *Run*: 
+```
+cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_TEL]
+cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_INT]
+```
+#### *Optional Arguments*: 
+```
+    --database, --combine, --flipimage, --fluxunits, --plot, --resize,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+BADPIX {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+BKGRDMAP {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_badpixel.fits  \\ bad pixel map file (3100x4088)
+{ODOMETER_CODE}_pp_bmap.fits      \\ background mask file (3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
+```
+
+#### *Plots*:
+
+```
+BADPIX_MAP
+```
+
+
+
+
+
+
+---
+
+### Localisation Recipe
+
+
+#### *Run*: 
+```
+cal_loc_spirou.py [DIRECTORY] [FLAT_DARK]
+cal_loc_spirou.py [DIRECTORY] [DARK_FLAT]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --darkfile, --darkcorr,  --flipimage, --fluxunits, --plot, --resize,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+ORDER_PROFILE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+LOC_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_order_profile_C.fits  \\ order profile file (3100x4088)
+{ODOMETER_CODE}_pp_loco_C.fits           \\ localisation centers map file (49x4088)
+{ODOMETER_CODE}_pp_fwhm-order_C.fits     \\ localisation widths map file (49x4088)
+{ODOMETER_CODE}_pp_with-order_C.fits     \\ localisation superposition file (3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
+```
+
+#### *Plots*:
+
+```
+LOC_MINMAX_CENTS, LOC_MIN_CENTS_THRES, LOC_FINDING_ORDERS, LOC_IM_SAT_THRES,
+LOC_ORD_VS_RMS, LOC_CHECK_COEFFS
+```
+
+
+
+
+
+---
+
+### Shape Master Recipe
+
+
+#### *Run*: 
+```
+cal_shape_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --darkfile, --darkcorr,  --flipimage, --fluxunits, --locofile,
+    --plot, --resize,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+SHAPEX {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+SHAPEY {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+FPMASTER {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_shapex.fits            \\ dx shape map (3100x4088)
+{ODOMETER_CODE}_pp_shapey.fits            \\ dy shape map (3100x4088)
+{ODOMETER_CODE}_pp_fpmaster.fits          \\ fp master file (3100x4088) + FITS-TABLE
+DEBUG_{ODOMETER_CODE}_shape_out_bdx.fits  \\ dx map before dy map (3100x4088)
+DEBUG_{ODOMETER_CODE}_shape_in_fp.fits    \\ input fp before shape corr (3100x4088)
+DEBUG_{ODOMETER_CODE}_shape_out_fp.fits   \\ input fp after shape corr (3100x4088)
+DEBUG_{ODOMETER_CODE}_shape_in_hc.fits    \\ input hc before shape corr (3100x4088)
+DEBUG_{ODOMETER_CODE}_shape_out_hc.fits   \\ input hc after shape corr (3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
+```
+
+#### *Plots*:
+
+```
+SHAPE_DX, SHAPE_ANGLE_OFFSET_ALL, SHAPE_ANGLE_OFFSET, SHAPE_LINEAR_TPARAMS
+```
+
+
+
+
+
+---
+
+### Shape (per night) Recipe
+
+#### *Run*: 
+```
+cal_shape_spirou.py [DIRECTORY] [FP_FP]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --darkfile, --darkcorr,  --flipimage, --fluxunits, --fpmaster,
+    --plot, --resize, --shapex, --shapey, 
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+SHAPEL {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_shapel.fits            \\ local shape map (3100x4088)
+DEBUG_{ODOMETER_CODE}_shape_in_fp.fits    \\ input fp before shape corr (3100x4088)
+DEBUG_{ODOMETER_CODE}_shape_out_fp.fits   \\ input fp after shape corr (3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
+```
+
+#### *Plots*:
+
+```
+SHAPE_DX, SHAPE_ANGLE_OFFSET_ALL, SHAPE_ANGLE_OFFSET, SHAPE_LINEAR_TPARAMS
+```
+
+
+
+
+
+---
+### Flat/Blaze Correction Recipe
+
+#### *Run*: 
+```
+cal_flat_spirou.py [DIRECTORY] [FLAT_FLAT]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --darkfile, --darkcorr,  --fiber, --flipimage, --fluxunits, 
+    --locofile, --orderpfile, --plot, --resize,
+    --shapex, --shapey, --shapel,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+FLAT_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+BLAZE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_blaze_{FIBER}.fits          \\ blaze correction file (49x4088)
+{ODOMETER_CODE}_pp_flat_{FIBER}.fits           \\ blaze correction file (49x4088)
+DEBUG_{ODOMETER_CODE}_pp_e2dsll_{FIBER}.fits   \\ debug pre extract file (7x3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits       \\ debug background file (7x3100x4088)
+```
+
+#### *Plots*:
+
+```
+FLAT_ORDER_FIT_EDGES1, FLAT_ORDER_FIT_EDGES2, FLAT_BLAZE_ORDER1,
+FLAT_BLAZE_ORDER2
+```
+
+
+
+
+
+
+---
+### Thermal Correction Recipe
+
+
+#### *Run*: 
+```
+cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_INT]
+cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_TEL]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --darkfile, --darkcorr,  --fiber, --flipimage, --fluxunits, 
+    --locofile, --orderpfile, --plot, --resize,
+    --shapex, --shapey, --shapel, --wavefile,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+THERMALT_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+THERMALI_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_s1d_w_{FIBER}.fits             \\ s1d constant in pixel space (FITS-TABLE)
+{ODOMETER_CODE}_pp_s1d_v_{FIBER}.fits             \\ s1d constant in velocity space (FITS-TABLE)
+DEBUG_{ODOMETER_CODE}_pp_e2dsll_{FIBER}.fits      \\ debug pre extract file (7x3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits       \\ debug background file (7x3100x4088)
+{ODOMETER_CODE}_pp_thermal_e2ds_int_{FIBER}.fits  \\ extracted thermal for dark_dark_int (49x4088)
+{ODOMETER_CODE}_pp_thermal_e2ds_tel_{FIBER}.fits  \\ extracted thermal for dark_dark_tel (49x4088)
+```
+
+#### *Plots*:
+
+None
+
+
+
+
+
+---
+### Wavelength solution Recipe
+
+
+#### *Run*: 
+```
+cal_wave_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE]
+cal_wave_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --blazefile, 
+    --combine, --darkfile, --darkcorr,  --fiber, --flipimage, 
+    --fluxunits,  --locofile, --orderpfile, --plot, --resize,
+    --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+WAVE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_s1d_w_{FIBER}.fits             \\ s1d constant in pixel space (FITS-TABLE)
+{ODOMETER_CODE}_pp_s1d_v_{FIBER}.fits             \\ s1d constant in velocity space (FITS-TABLE)
+DEBUG_{ODOMETER_CODE}_pp_e2dsll_{FIBER}.fits      \\ debug pre extract file (7x3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits       \\ debug background file (7x3100x4088)
+{ODOMETER_CODE}_pp_e2dsff_AB_linelist_AB.dat      \\ wave stats hc line list
+{ODOMETER_CODE}_pp_e2dsff_AB_wave_hc_AB.fits      \\ wave hc only wave solution (49x4088)
+{ODOMETER_CODE}_pp_e2dsff_AB_waveres_AB.fits      \\ wave res table (multi extension fits)
+{ODOMETER_CODE}_pp_e2dsff_AB_wave_fp_AB.fit       \\ wave hc + fp wave solution (49x4088)
+{ODOMETER_CODE}_pp_e2dsff_AB_hc_lines_AB.tbl      \\ hv lines list
+```
+
+#### *Plots*:
+
+```
+WAVE_HC_GUESS, WAVE_HC_BRIGHTEST_LINES, WAVE_HC_TFIT_GRID, WAVE_HC_RESMAP, 
+WAVE_LITTROW_CHECK1, WAVE_LITTROW_EXTRAP1, WAVE_LITTROW_CHECK2, 
+WAVE_LITTROW_EXTRAP2, WAVE_FP_FINAL_ORDER, WAVE_FP_LWID_OFFSET, 
+WAVE_FP_WAVE_RES, WAVE_FP_M_X_RES, WAVE_FP_IPT_CWID_1MHC, 
+WAVE_FP_IPT_CWID_LLHC, WAVE_FP_LL_DIFF, WAVE_FP_MULTI_ORDER, 
+WAVE_FP_SINGLE_ORDER, CCF_RV_FIT, CCF_RV_FIT_LOOP
+```
+
+
+
+
+---
+### Extraction Recipe
+
+
+
+#### *Run*: 
+```
+cal_extract_spirou.py [DIRECTORY] [PP_FILE]
+
+```
+#### *Optional Arguments*: 
+```
+    --badpixfile, --badcorr, --backsub, --blazefile, 
+    --combine, --objname, --dprtype, --darkfile, --darkcorr,  
+    --fiber, --flipimage, --fluxunits, --flatfile, 
+    --locofile, --orderpfile, --plot, --resize,
+    --shapex, --shapey, --shapel, --thermal, --wavefile,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_s1d_w_{FIBER}.fits             \\ s1d constant in pixel space (FITS-TABLE)
+{ODOMETER_CODE}_pp_s1d_v_{FIBER}.fits             \\ s1d constant in velocity space (FITS-TABLE)
+DEBUG_{ODOMETER_CODE}_pp_e2dsll_{FIBER}.fits      \\ debug pre extract file (7x3100x4088)
+DEBUG_{ODOMETER_CODE}_pp_background.fits       \\ debug background file (7x3100x4088)
+```
+
+#### *Plots*:
+
+```
+FLAT_ORDER_FIT_EDGES1, FLAT_ORDER_FIT_EDGES2, FLAT_BLAZE_ORDER1,
+FLAT_BLAZE_ORDER2, THERMAL_BACKGROUND, EXTRACT_SPECTRAL_ORDER1, 
+EXTRACT_SPECTRAL_ORDER2, EXTRACT_S1D, EXTRACT_S1D_WEIGHT
+```
+
+
+
+
+---
+### Make Telluric Recipe
+
+
+#### *Run*: 
+```
+obj_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
+obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
+obj_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
+obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
+```
+#### *Optional Arguments*: 
+```
+    --database, --blazefile, --plot, --wavefile
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Telluric database entry*:
+```
+TELLU_CONV_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+TELLU_TRANS_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_tellu_trans_{FIBER}.fits    \\ telluric transmission file (49x4088)
+{WAVEFILE}_tellu_conv_{FIBER}.npy              \\ tapas convolved with wave file (49x4088)
+```
+
+#### *Plots*:
+
+```
+MKTELLU_WAVE_FLUX1, MKTELLU_WAVE_FLUX2
+```
+
+
+
+
+
+
+---
+### Fit Telluric Recipe
+
+
+#### *Run*: 
+```
+obj_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
+obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
+obj_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
+obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
+```
+#### *Optional Arguments*: 
+```
+    --database, --blazefile, --plot, --wavefile
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Telluric database entry*:
+```
+TELLU_CONV_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+TELLU_TRANS_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_e2dsff_tcorr_{FIBER}.fits    \\ telluric corrected e2dsff file (49x4088)
+{ODOMETER_CODE}_pp_s1d_w_tcorr_{FIBER}.fits     \\ telluric corrected s1d constant in pixel space (FITS-TABLE)
+{ODOMETER_CODE}_pp_s1d_v_tcorr_{FIBER}.fits     \\ telluric corrected s1d constant in velocity space (FITS-TABLE)
+{ODOMETER_CODE}_pp_e2dsff_recon_{FIBER}.fits    \\ reconstructed transmission e2dsff file (49x4088)
+{ODOMETER_CODE}_pp_s1d_w_recon_{FIBER}.fits     \\ reconstructed transmission s1d constant in pixel space (FITS-TABLE)
+{ODOMETER_CODE}_pp_s1d_v_recon_{FIBER}.fits     \\ reconstructed transmission s1d constant in velocity space (FITS-TABLE)
+```
+
+#### *Plots*:
+
+```
+EXTRACT_S1D, EXTRACT_S1D_WEIGHT, FTELLU_PCA_COMP1, FTELLU_PCA_COMP2,
+FTELLU_RECON_SPLINE1, FTELLU_RECON_SPLINE2, FTELLU_WAVE_SHIFT1,
+FTELLU_WAVE_SHIFT2, FTELLU_RECON_ABSO1, FTELLU_RECON_ABSO2
+```
+
+
+
+
+
+---
+### Make Template Recipe
+
+#### *Run*: 
+```
+obj_mk_template_spirou.py [OBJNAME]
+```
+#### *Optional Arguments*: 
+```
+    --filetype, -fiber,
+    --database, --blazefile, --plot, --wavefile
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Telluric database entry*:
+```
+TELLU_CONV_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+TELLU_TRANS_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+Template_{OBJNAME}_{filetype}_{FIBER}.fits  \\ Template for object (3100x4088) + FITS TABLE
+Template_s1d_{OBJNAME}_sc1d_w_{FIBER}.fits  \\ Template s1d constant in pixel space for object FITS TABLE + FITS TABLE
+Template_s1d_{OBJNAME}_sc1d_v_{FIBER}.fits  \\ Template s1d constant in velocity space for object FITS TABLE + FITS TABLE
+BigCube0_{OBJNAME}_{filetype}_{FIBER}.fits  \\ Cube of obs making template earth reference (49 x N x 4088)
+BigCube_{OBJNAME}_{filetype}_{FIBER}.fits   \\ Cube of obs making template star reference (49 x N x 4088)
+```
+
+#### *Plots*:
+
+```
+EXTRACT_S1D
+```
+
+
+
+
+
+---
+### CCF Recipe
+
+
+#### *Run*: 
+```
+cal_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
+cal_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
+cal_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_FP]
+cal_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_FP]
+cal_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
+cal_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
+cal_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_DARK]
+cal_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_DARK]
+```
+#### *Optional Arguments*: 
+```
+    --mask, --rv, --width, --step
+    --database, --blazefile, --plot
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_{INTYPE}_{FIBER}_ccf_{mask}_{FIBER}.fits  \\ CCF for science channel file (FITS-TABLE)
+{ODOMETER_CODE}_pp_{INTYPE}_{FIBER}_ccf_fp_{FIBER}.fits      \\ CCF for reference channel file (FITS-TABLE)
+
+```
+
+#### *Plots*:
+
+```
+CCF_RV_FIT, CCF_RV_FIT_LOOP
+```
+
+
+
+
+---
+### Polarimetry Recipe
+
+
+#### *Run*: 
+```
+pol_spirou.py [DIRECTORY] [E2DSFF]
+pol_spirou.py [DIRECTORY] [E2DSFF_CORR]
+```
+#### *Optional Arguments*: 
+```
+    --blazefile, --plot, --wavefile,
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_{INTYPE}_pol.fits               // polar file 
+{ODOMETER_CODE}_pp_{INTYPE}_StokesI.fits           // stokes file
+{ODOMETER_CODE}_pp_{INTYPE}_null1_pol.fits         // null 1 file
+{ODOMETER_CODE}_pp_{INTYPE}_null2_pol.fits         // null 2 file
+{ODOMETER_CODE}_pp_{INTYPE}_lsd_pol.fits           // lsd file
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_pol.fits         // s1d polar file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_v_pol.fits         // s1d polar file constant in velocity space
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_null1.fits       // s1d null 1 file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_v_null1.fits       // s1d null 1 file constant in velocity space
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_null2.fits       // s1d null 2 file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_v_null2.fits       // s1d null 2 file constant in velocity space
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_stokesi.fits     // s1d stokes file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_v_stokesi.fits     // s1d stokes file constant in velocity space
+```
+
+#### *Plots*:
+
+```
+POLAR_CONTINUUM, POLAR_RESULTS, POLAR_STOKES_I, POLAR_LSD,
+EXTRACT_S1D, EXTRACT_S1D_WEIGHT
+```
+
+
+
+
 
 [Back to top](#apero---a-pipeline-to-reduce-observations)
