@@ -81,14 +81,13 @@ raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', KW_CCAS='pos_pk',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_sky)
 
-
 # sky observations (with fp)
 raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY', KW_CCAS='pos_pk',
-                               KW_CREF='pos_fp',
-                               KW_OBSTYPE='OBJECT',
-                               KW_TARGET_TYPE='SKY',
-                               filetype='.fits', suffix='', inext='.fits',
-                               outfunc=out.blank)
+                             KW_CREF='pos_fp',
+                             KW_OBSTYPE='OBJECT',
+                             KW_TARGET_TYPE='SKY',
+                             filetype='.fits', suffix='', inext='.fits',
+                             outfunc=out.blank)
 raw_file.addset(raw_dark_fp_sky)
 
 # -----------------------------------------------------------------------------
@@ -275,11 +274,10 @@ pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', KW_DPRTYPE='DARK_DARK_SKY',
 pp_file.addset(pp_dark_dark_sky)
 
 pp_dark_fp_sky = drs_finput('DARK_FP_SKY', KW_DPRTYPE='DARK_FP_SKY',
-                              filetype='.fits',
-                              suffix='_pp', intype=raw_dark_fp_sky,
-                              inext='.fits', outfunc=out.general_file)
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_dark_fp_sky,
+                            inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_fp_sky)
-
 
 # -----------------------------------------------------------------------------
 # flat
@@ -485,7 +483,7 @@ out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
 # background debug file
 debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
                         filetype='.fits', intype=pp_flat_flat,
-                        suffix='background.fits', outfunc=out.debug_file)
+                        suffix='_background.fits', outfunc=out.debug_file)
 
 # add badpix outputs to output fileset
 out_file.addset(out_badpix)
@@ -502,7 +500,7 @@ out_loc_orderp = drs_finput('LOC_ORDERP', KW_OUTPUT='LOC_ORDERP',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
                             intype=[pp_flat_dark, pp_dark_flat],
-                            suffix='_order_profile.fits',
+                            suffix='_order_profile',
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', KW_OUTPUT='LOC_LOCO',
@@ -685,7 +683,7 @@ out_file.addset(out_ext_s1d_v)
 out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
                                   fibers=['AB', 'A', 'B', 'C'],
                                   filetype='.fits', intype=pp_dark_dark_int,
-                                  suffix='thermal_e2ds_int',
+                                  suffix='_thermal_e2ds_int',
                                   dbname='calibration', dbkey='THERMALI',
                                   outfunc=out.general_file)
 
@@ -693,7 +691,7 @@ out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
 out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
                                   fibers=['AB', 'A', 'B', 'C'],
                                   filetype='.fits', intype=pp_dark_dark_tel,
-                                  suffix='thermal_e2ds_tel',
+                                  suffix='_thermal_e2ds_tel',
                                   dbname='calibration', dbkey='THERMALT',
                                   outfunc=out.general_file)
 
@@ -771,7 +769,7 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               fibers=['AB', 'A', 'B', 'C'],
                               filetype='.tbl',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
-                              suffix='hc_lines',
+                              suffix='_hc_lines',
                               outfunc=out.calib_file)
 
 # wave master
