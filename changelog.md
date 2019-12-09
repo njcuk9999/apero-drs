@@ -2,6 +2,58 @@ Changelog
 =========
 
 
+0.6.002 (2019-12-09)
+--------------------
+- Core.core.drs_recipe.py - change souce of tellurics (shouldn't be
+  here) [Neil Cook]
+- Get whitelist for tellurics in drs_processing.py. [Neil Cook]
+- Tools.module.setup.drs_processing.py - add a pre-run test to test if
+  files exist before running. [Neil Cook]
+- Tools.module.listing.file_explorer.py - update plotting function and
+  check before loading ds9. [Neil Cook]
+- Science.velocity.general.py - remove old function (create_drift_file)
+  [Neil Cook]
+- Science.extract.crossmatch.py - add simbad query (when we have no ra
+  and dec and only have object name) [Neil Cook]
+- Science.calib.wave.py - remove todo. [Neil Cook]
+- Science.calib.localisation.py - add rorder to params (for plotting)
+  [Neil Cook]
+- Science.calib.flat_blaze.py - make it clear calculate_blaze_flat
+  should not be used. [Neil Cook]
+- Recipes.spirou.cal_shape_master_spirou.py - remove master cube npy
+  debug. [Neil Cook]
+- Plotting - add general use image/plot functions + add cursor + add
+  main() and allow use without recipe defined + add new graph type
+  "show" [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_table.py - remove redundant lock checks (new system works
+  better) [Neil Cook]
+- Io.drs_lock.py - push messages into language database. [Neil Cook]
+- Io.drs_data.py - remove todo. [Neil Cook]
+- Core.math.gauss.py - remove todo here. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add plots that were
+  missing. [Neil Cook]
+- Core.instruments.default.file_defintions.py - remove unused file
+  objects. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add Help strings.
+  [Neil Cook]
+- Core.instruments.*.default_*.py - add config/constants/keyword args.
+  [Neil Cook]
+- Core.core.drs_recipe.py - deal with TELLURIC_TARGETS being set to None
+  (get all) [Neil Cook]
+- Core.core.drs_log.py - remove old WLOG string warning. [Neil Cook]
+- Core.core.drs_database.py - set Database constants from constants
+  files. [Neil Cook]
+- Core.core.drs_argument.py - add help string for set_quiet. [Neil Cook]
+- Convert readme.md to pdf. [Neil Cook]
+- Add subsections to contents in README.md. [Neil Cook]
+- Add descriptions for each recipe in the README.md. [Neil Cook]
+- Correct typo in readme. [Neil Cook]
+- Update changelog/version/date. [Neil Cook]
+- Correct typos in file_definitions. [Neil Cook]
+- Update the read me with recipe + output descriptions. [Neil Cook]
+
+
 0.6.001 (2019-12-06)
 --------------------
 - Remove old breakpoints. [Neil Cook]

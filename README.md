@@ -33,7 +33,7 @@
 
 - master (long term stable) V0.5.000
 - developer (tested) V0.6.001
-- working (untested) V0.6.001
+- working (untested) V0.6.002
 
 ---
 ---
@@ -725,7 +725,7 @@ DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
 
 ```
 LOC_MINMAX_CENTS, LOC_MIN_CENTS_THRES, LOC_FINDING_ORDERS, LOC_IM_SAT_THRES,
-LOC_ORD_VS_RMS, LOC_CHECK_COEFFS
+LOC_ORD_VS_RMS, LOC_CHECK_COEFFS, LOC_FIT_RESIDUALS
 ```
 
 
@@ -1215,7 +1215,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 #### *Plots*:
 
 ```
-CCF_RV_FIT, CCF_RV_FIT_LOOP
+CCF_RV_FIT, CCF_RV_FIT_LOOP, CCF_SWAVE_REF, CCF_PHOTON_UNCERT
 ```
 
 
