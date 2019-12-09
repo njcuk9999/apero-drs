@@ -61,11 +61,6 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-# TODO: remove alias once not needed (here as a reminder of name change)
-def create_drift_file(*args, **kwargs):
-    return measure_fp_peaks(*args, **kwargs)
-
-
 def measure_fp_peaks(params, props, **kwargs):
     """
     Measure the positions of the FP peaks
@@ -633,6 +628,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
 
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
+    # get image size
+    nbo, nbpix = image.shape
     # get parameters from inputs
     ccfstep = params['INPUTS']['STEP']
     ccfwidth = params['INPUTS']['WIDTH']
@@ -677,14 +674,13 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # Reference plots
     # ----------------------------------------------------------------------
-    if params['DRS_PLOT'] > 0:
-        # TODO: Do plotting
-        # # plot FP spectral order
-        # sPlt.drift_plot_selected_wave_ref(p, loc, x=loc['WAVE_LL'],
-        #                                   y=loc['E2DS'])
-        # # plot photon noise uncertainty
-        # sPlt.drift_plot_photon_uncertainty(p, loc)
-        pass
+    # the image vs wavelength for an order
+    recipe.plot('CCF_SWAVE_REF', wavemap=wavemap, image=image, fiber=fiber,
+                nbo=nbo)
+    # the photon noise uncertainty plot
+    recipe.plot('CCF_PHOTON_UNCERT', x=np.arange(nbo), y=dvrmsref)
+    # as a summary plot
+    recipe.plot('SUM_CCF_PHOTON_UNCERT', x=np.arange(nbo), y=dvrmsref)
     # ----------------------------------------------------------------------
     # Do the CCF calculations
     # ----------------------------------------------------------------------
@@ -786,6 +782,12 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                 y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
                 rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
+    # the mean ccf for summary
+    recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
+                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                rv=ccf_rv, ccfmask=ccfmask,
+                orders=None, order=None)
+
     # ------------------------------------------------------------------
     # return property dictionary
     return props
@@ -940,6 +942,11 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
                 y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN FP',
                 rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
+                orders=None, order=None)
+    # the mean ccf for summary
+    recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
+                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
 
     # TODO : Add QC of the FP CCF once they are defined
