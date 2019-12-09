@@ -175,14 +175,6 @@ class Logger:
             msg_obj = TextEntry('00-005-00001', args=[message])
             key = 'error'
         # ---------------------------------------------------------------------
-        # TODO: Remove deprecation warning (once all code changed)
-        if type(params) is str:
-            # Cannot add this to language pack - no p defined!
-            emsg = ('Need to update WLOG function call. New format required:'
-                    '\n\n\tNew format: WLOG(p, level_key, message)'
-                    '\n\n\tOld format: WLOG(level_key, option, message)')
-            raise DeprecationWarning(emsg)
-        # ---------------------------------------------------------------------
         # deal with no p and pid
         if params is None:
             params = self.pin
