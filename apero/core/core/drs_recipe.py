@@ -584,10 +584,10 @@ class DrsRecipe(object):
                         # make sure there are no white spaces
                         value = np.char.strip(value)
                 # deal with telluric targets being None
-                cond1 = value in ['None', None, '']
-                cond2 = arguments[argname] == 'TELLURIC_TARGETS'
-                if cond1 and cond2:
-                    value = tstars
+                if arguments[argname] == 'TELLURIC_TARGETS':
+                    if isinstance(value, (type(None), str)):
+                        if value in ['None', None, '']:
+                            value = tstars
 
             # check for argument in args
             if argname in self.args:
