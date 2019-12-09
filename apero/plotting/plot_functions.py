@@ -50,7 +50,7 @@ class Graph:
                  description=None, figsize=None, dpi=None):
         self.name = name
         # set kind
-        if kind in ['debug', 'summary']:
+        if kind in ['debug', 'summary', 'show']:
             self.kind = kind
         else:
             self.kind = None
@@ -138,6 +138,53 @@ class Graph:
             fig.set_size_inches(figsize)
         # return figure and frames
         return fig, gs
+
+
+class CrossCursor(object):
+    def __init__(self, frame, color='r', alpha=0.5):
+        self.frame = frame
+        # the horizontal line
+        self.lx = frame.axhline(color=color, alpha=alpha)
+        # the vertical line
+        self.ly = frame.axvline(color=color, alpha=alpha)
+        # set up the text box
+        bbox = dict(facecolor='white', edgecolor='blue', pad=5.0)
+        # text location in axes coords
+        self.txt = frame.text(0.8, 0.9, '', horizontalalignment='center',
+                              verticalalignment='center', color='blue',
+                              transform=frame.transAxes, bbox=bbox)
+        # start off the text without values
+        self.txt.set_text('x=NaN, y=NaN')
+
+
+    def mouse_move(self, event):
+        if not event.inaxes:
+            return
+        # get the new x and y locations
+        x, y = event.xdata, event.ydata
+        # update the line positions
+        self.lx.set_ydata(y)
+        self.ly.set_xdata(x)
+        # set the text
+        self.txt.set_text('x={0:.2f}, y={1:.2f}'.format(x, y))
+        # update canvas
+        self.frame.figure.canvas.draw()
+
+
+class ClickCursor(object):
+    def __init__(self, fig, frame):
+        self.fig = fig
+        self.frame = frame
+
+    def mouse_click(self, event):
+        if self.fig.canvas.manager.toolbar._active:
+            return
+        if not event.inaxes:
+            return
+        # get the new x and y locations
+        x, y = event.xdata, event.ydata
+        # print the position of the cursor
+        print('PLOT x={0:.2f}, y={1:.2f}'.format(x, y))
 
 
 # =============================================================================
@@ -610,6 +657,39 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_loc_fit_residuals(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    axes_grid1 = plotter.axes_grid1
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = kwargs['x']
+    y = kwargs['y']
+    xo = kwargs['xo']
+    rnum = kwargs['rnum']
+    kind = kwargs['kind']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # plot residuals of data - fit
+    frame.plot(x, y, marker='_')
+    # set title and limits
+    frame.set(title='{0} fit residual of order {1}'.format(kind, rnum),
+              xlim=(0, len(xo)), ylim=(np.min(y), np.max(y)))
+    # ------------------------------------------------------------------
+    # update suffix
+    suffix = 'kind{0}_order{1}'.format(kind, rnum)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_loc_ord_vs_rms(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -825,6 +905,8 @@ loc_finding_orders = Graph('LOC_FINDING_ORDERS', kind='debug',
                            func=plot_loc_finding_orders)
 loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
                          func=plot_loc_im_sat_thres)
+loc_fit_residuals = Graph('LOC_FIT_RESIDUALS', kind='debug',
+                         func=plot_loc_fit_residuals)
 loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
                        func=plot_loc_ord_vs_rms)
 loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
@@ -842,6 +924,7 @@ sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
 # add to definitions
 definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
                 loc_im_sat_thres, loc_ord_vs_rms, loc_check_coeffs,
+                loc_fit_residuals,
                 sum_loc_im_sat_thres, sum_plot_loc_im_corner]
 
 
@@ -2961,11 +3044,91 @@ def plot_ccf_rv_fit(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_ccf_swave_ref(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wavemap = kwargs['wavemap']
+    image = kwargs['image']
+    fiber = kwargs['fiber']
+    nbo = kwargs['nbo']
+    # optional arguments
+    order = kwargs.get('order', None)
+    orders = kwargs.get('orders', None)
+    # ------------------------------------------------------------------
+    if order is None and orders is None:
+        order_gen = plotter.plotloop(np.arange(nbo))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we check whether orders is set
+    elif orders is not None:
+        order_gen = list(orders)
+    # else we just deal with the order specified
+    elif order is not None:
+        order_gen = [order]
+    else:
+        order_gen = [0]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter)
+        # ------------------------------------------------------------------
+        # plot fits
+        frame.plot(wavemap[order_num], image[order_num])
+        # set title labels limits
+        title = 'spectral order {0} fiber {1}'
+        frame.set(xlabel='Wavelength [nm]', ylabel='flux',
+                  title=title.format(order_num, fiber))
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_ccf_photon_uncert(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = kwargs.get('x')
+    y = kwargs.get('y')
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # plot fits
+    frame.plot(x, y)
+    # set title labels limits
+    title = 'Photon noise uncertainty versus spectral order'
+    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
+              title=title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 ccf_rv_fit_loop = Graph('CCF_RV_FIT_LOOP', kind='debug', func=plot_ccf_rv_fit)
 ccf_rv_fit = Graph('CCF_RV_FIT', kind='debug', func=plot_ccf_rv_fit)
+ccf_swave_ref = Graph('CCF_SWAVE_REF', kind='debug', func=plot_ccf_swave_ref)
+ccf_photon_uncert = Graph('CCF_PHOTON_UNCERT', kind='debug',
+                          func=plot_ccf_photon_uncert)
+sum_ccf_rv_fit = Graph('SUM_CCF_RV_FIT', kind='summary', func=plot_ccf_rv_fit)
+sum_ccf_photon_uncert = Graph('SUM_CCF_PHOTON_UNCERT', kind='summary',
+                          func=plot_ccf_photon_uncert)
 
 # add to definitions
-definitions += [ccf_rv_fit, ccf_rv_fit_loop]
+definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
+                ccf_photon_uncert, sum_ccf_rv_fit, sum_ccf_photon_uncert]
 
 
 # =============================================================================
@@ -3155,6 +3318,118 @@ polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 
 # add to definitions
 definitions += [polar_continuum, polar_results, polar_stokes_i, polar_lsd]
+
+
+# =============================================================================
+# Define other plotting functions
+# =============================================================================
+def plot_image(plotter, graph, kwargs):
+    """
+    Generic image plotter
+
+    :param plotter:
+    :param graph:
+    :param kwargs:
+    :return:
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    image = kwargs['image']
+    origin = kwargs.get('origin', 'lower')
+    aspect = kwargs.get('aspect', 'auto')
+    vmin = kwargs.get('vmin', None)
+    vmax = kwargs.get('vmax', None)
+    xlabel = kwargs.get('xlabel', None)
+    ylabel = kwargs.get('ylabel', None)
+    title = kwargs.get('title', None)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # add cursor
+    cursor = ClickCursor(fig, frame)
+    fig.canvas.mpl_connect('button_press_event', cursor.mouse_click)
+    # ------------------------------------------------------------------
+    # plot image
+    frame.imshow(image, origin=origin, aspect=aspect, vmin=vmin,
+                 vmax=vmax)
+    # ------------------------------------------------------------------
+    # adjust axes
+    if xlabel is not None:
+        frame.set_xlabel(xlabel)
+    if ylabel is not None:
+        frame.set_ylabel(ylabel)
+    if title is not None:
+        frame.set_title(title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_plot(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # copy kwargs
+    kwargs = dict(kwargs)
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = np.array(kwargs['x'])
+    del kwargs['x']
+    y = np.array(kwargs['y'])
+    del kwargs['y']
+    # ------------------------------------------------------------------
+    # we don't want fiber in kwargs
+    if 'fiber' in kwargs:
+        del kwargs['fiber']
+
+    # ------------------------------------------------------------------
+    # get the xlabel and clean from keyword args
+    xlabel = kwargs.get('xlabel', None)
+    if 'xlabel' in kwargs:
+        del kwargs['xlabel']
+    # get the ylabel and clean from keyword args
+    ylabel = kwargs.get('ylabel', None)
+    if 'ylabel' in kwargs:
+        del kwargs['ylabel']
+    # get the title (and clean from keyword args)
+    title = kwargs.get('title', None)
+    if 'title' in kwargs:
+        del kwargs['title']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # add cursor
+    cursor = ClickCursor(fig, frame)
+    fig.canvas.mpl_connect('button_press_event', cursor.mouse_click)
+    # ------------------------------------------------------------------
+    # plot image
+    frame.plot(x, y, **kwargs)
+    # ------------------------------------------------------------------
+    # adjust axes
+    if xlabel is not None:
+        frame.set_xlabel(xlabel)
+    if ylabel is not None:
+        frame.set_ylabel(ylabel)
+    if title is not None:
+        frame.set_title(title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+general_image = Graph('IMAGE', kind='show', func=plot_image)
+general_plot = Graph('PLOT', kind='show', func=plot_plot)
+
+# add to definitions
+definitions += [general_image, general_plot]
+
 
 
 # =============================================================================

@@ -15,8 +15,11 @@ from apero.plotting import core
 # =============================================================================
 # Core functionality
 # =============================================================================
-# close all plots
+# Plotter class
 Plotter = core.Plotter
+
+# Individual plotter
+main = core.main
 
 # =============================================================================
 # End of code
