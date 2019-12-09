@@ -341,7 +341,8 @@ cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     DEBUG_BACK=sf.debug_back)
 cal_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
                         'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
-                        'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS')
+                        'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS',
+                        'LOC_FIT_RESIDUALS')
 cal_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
@@ -495,8 +496,7 @@ cal_thermal.inputtype = 'pp'
 cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
-# TODO: Need to add THERMALS_FILE once thermal code can handle it
-# TODO:    (Need to correct Sky lines)
+# TODO: Need to add out_thermal_e2ds_sky
 cal_thermal.set_outputs(THERMAL_E2DS_FILE=sf.out_ext_e2dsff,
                         THERMALI_FILE=sf.out_thermal_e2ds_int,
                         THERMALT_FILE=sf.out_thermal_e2ds_tel)
@@ -612,7 +612,8 @@ cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                          'WAVE_FP_SINGLE_ORDER',
                          'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
-                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP')
+                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP',
+                           'SUM_CCF_RV_FIT')
 cal_wave.set_arg(pos=0, **directory)
 cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
@@ -669,8 +670,9 @@ cal_ccf.extension = 'fits'
 cal_ccf.description = Help['CCF_DESC']
 cal_ccf.epilog = Help['CCF_EXAMPLE']
 cal_ccf.set_outputs(CCF_RV=sf.out_ccf_fits)
-cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-cal_ccf.set_summary_plots()
+cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
+                        'CCF_PHOTON_UNCERT')
+cal_ccf.set_summary_plots('SUM_CCF_PHOTON_UNCERT', 'SUM_CCF_RV_FIT')
 cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
