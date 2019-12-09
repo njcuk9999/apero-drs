@@ -3975,8 +3975,6 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     # iterate through Littrow test cut values
     lit_it = 2
     # checks every other value
-    # TODO: This QC check (or set of QC checks needs re-writing it is
-    # TODO:    nearly impossible to understand
     for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
         # get x cut point
         x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
