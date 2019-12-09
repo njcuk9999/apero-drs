@@ -7,10 +7,8 @@ Created on 2019-01-17
 """
 from apero.core.instruments.default.default_config import *
 
-# TODO: Note: If variables are not showing up MUST CHECK __all__ definition
-# TODO:    in import * module
-
-
+# Note: If variables are not showing up MUST CHECK __all__ definition
+#       in import * module
 __NAME__ = 'config.instruments.spirou.default_config.py'
 
 # -----------------------------------------------------------------------------
@@ -125,6 +123,33 @@ CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
 #         calibDB file will be used
 CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
 CALIB_DB_MATCH.value = 'closest'
+
+# define the calibration database columns
+CALIB_DB_COLS = CALIB_DB_COLS.copy(__NAME__)
+CALIB_DB_COLS.value = 'key, nightname, filename, humantime, unixtime'
+# define the calibration database key column
+CALIB_DB_KEY_COL = CALIB_DB_KEY_COL.copy(__NAME__)
+CALIB_DB_KEY_COL.value = 'key'
+# define the calibration database time column
+CALIB_DB_TIME_COL = CALIB_DB_TIME_COL.copy(__NAME__)
+CALIB_DB_TIME_COL.value = 'unixtime'
+# define the calibration database filename column
+CALIB_DB_FILE_COL = CALIB_DB_FILE_COL.copy(__NAME__)
+CALIB_DB_FILE_COL.value = 'filename'
+
+# define the telluric database columns (must contain "key")
+TELLU_DB_COLS = TELLU_DB_COLS.copy(__NAME__)
+TELLU_DB_COLS.value = 'key, nightname, filename, humantime, unixtime, objname'
+# define the telluric database key column
+TELLU_DB_KEY_COL = TELLU_DB_KEY_COL.copy(__NAME__)
+TELLU_DB_KEY_COL.value = 'key'
+# define the telluric database time column
+TELLU_DB_TIME_COL = TELLU_DB_TIME_COL.copy(__NAME__)
+TELLU_DB_TIME_COL.value = 'unixtime'
+# define the telluric database filename column
+TELLU_DB_FILE_COL = TELLU_DB_FILE_COL.copy(__NAME__)
+TELLU_DB_FILE_COL.value = 'filename'
+
 
 # =============================================================================
 # DRS INTERNAL PATHS

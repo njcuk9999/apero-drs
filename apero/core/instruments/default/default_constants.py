@@ -207,7 +207,7 @@ __all__ = [
     # debug loc plot settings
     'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
     'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
-    'PLOT_LOC_CHECK_COEFFS',
+    'PLOT_LOC_CHECK_COEFFS', 'PLOT_LOC_FIT_RESIDUALS',
     # debug shape plot settings
     'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
     'PLOT_SHAPEL_ZOOM_SHIFT', 'PLOT_SHAPE_LINEAR_TPARAMS',
@@ -235,7 +235,8 @@ __all__ = [
     'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
     'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
     # debug ccf plot settings
-    'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT',
+    'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
+    'PLOT_CCF_PHOTON_UNCERT',
     # debug plar plot settings
     'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS', 'PLOT_POLAR_STOKES_I',
     'PLOT_POLAR_LSD',
@@ -2117,6 +2118,10 @@ PLOT_LOC_ORD_VS_RMS = Const('PLOT_LOC_ORD_VS_RMS', value=False,
 PLOT_LOC_CHECK_COEFFS = Const('PLOT_LOC_CHECK_COEFFS', value=False,
                               dtype=bool, source=__NAME__)
 
+# turn on the localisation fit residuals plot (warning: done many times)
+PLOT_LOC_FIT_RESIDUALS = Const('PLOT_LOC_FIT_RESIDUALS', value=False,
+                               dtype=bool, source=__NAME__)
+
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__)
 
@@ -2287,6 +2292,14 @@ PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,
 # turn on the ccf rv fit debug plot (for the mean order value)
 PLOT_CCF_RV_FIT = Const('PLOT_CCF_RV_FIT', value=False,
                         dtype=bool, source=__NAME__)
+
+# turn on the ccf spectral order vs wavelength debug plot
+PLOT_CCF_SWAVE_REF = Const('PLOT_CCF_SWAVE_REF', value=False,
+                           dtype=bool, source=__NAME__)
+
+# turn on the ccf photon uncertainty debug plot
+PLOT_CCF_PHOTON_UNCERT = Const('PLOT_CCF_PHOTON_UNCERT', value=False,
+                               dtype=bool, source=__NAME__)
 
 # turn on the polar continuum debug plot
 PLOT_POLAR_CONTINUUM = Const('PLOT_POLAR_CONTINUUM', value=False,
