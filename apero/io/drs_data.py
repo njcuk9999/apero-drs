@@ -180,7 +180,6 @@ def load_cavity_files(params, required=True, **kwargs):
     fit_ll, _ = load_text_file(params, filename_ll, relfolder, kwargs,
                                func_name, dtype=float)
     # return arrays from text files
-    # TODO: are these strings?
     return np.array(fit_1m), np.array(fit_ll)
 
 
