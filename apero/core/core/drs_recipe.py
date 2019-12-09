@@ -24,6 +24,8 @@ from apero.core import constants
 from apero.locale import drs_text
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
+from apero.science import telluric
+
 
 # =============================================================================
 # Define variables
@@ -582,6 +584,13 @@ class DrsRecipe(object):
                         value = value.split(',')
                         # make sure there are no white spaces
                         value = np.char.strip(value)
+                # deal with telluric targets being None
+                cond1 = value in ['None', None, '']
+                cond2 = arguments[argname] == 'TELLURIC_TARGETS'
+                if cond1 and cond2:
+                    wlist, wfilename = telluric.get_whitelist(params)
+                    value = list(wlist)
+
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
