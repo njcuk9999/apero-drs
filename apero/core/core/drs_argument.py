@@ -1696,8 +1696,7 @@ def set_quiet(p):
     props['altnames'] = ['--q']
     props['action'] = _SetQuiet
     props['nargs'] = 0
-    # TODO: add help string
-    props['help'] = ''
+    props['help'] = htext['QUIET_HELP']
     return props
 
 
