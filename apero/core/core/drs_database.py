@@ -53,19 +53,29 @@ pcheck = drs_log.find_param
 # =============================================================================
 class Database():
     def __init__(self, params, dbname):
-        # set constant values
-        # TODO: move to params?
-        # TODO:   must contain "key"
-        self.calib_cols = ['key', 'nightname', 'filename', 'humantime',
-                           'unixtime']
-        self.tellu_cols = ['key', 'nightname', 'filename', 'humantime',
-                           'unixtime', 'objname']
-        self.key_col = 'key'
-        self.time_col = 'unixtime'
-        self.file_col = 'filename'
+        # set function name
+        func_name = display_func(params, __NAME__, '__init__', 'Database')
         # set value from construction
         self.params = params
         self.dbname = dbname
+        # set column names
+        if self.dbname == 'telluric':
+            self.colnames = params.listp('TELLU_DB_COLS', dtype=str)
+            self.key_col = params['TELLU_DB_KEY_COL']
+            self.time_col = params['TELLU_DB_TIME_COL']
+            self.file_col = params['TELLU_DB_FILE_COL']
+        elif self.dbname == 'calibration':
+            self.colnames = params.listp('CALIB_DB_COLS', dtype=str)
+            self.key_col = params['CALIB_DB_KEY_COL']
+            self.time_col = params['CALIB_DB_TIME_COL']
+            self.file_col = params['CALIB_DB_FILE_COL']
+        else:
+            eargs = [self.dbname, 'calibration or telluric', func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00001', args=eargs))
+            self.colnames = []
+            self.key_col = None
+            self.time_col = None
+            self.file_col = None
         # empty to fill later
         self.key_pos = None
         self.time_pos = None
@@ -86,15 +96,8 @@ class Database():
         :return:
         """
         func_name = __NAME__ + '.Database.get_colnames()'
-        # set colnames based on databasename
-        if self.dbname == 'calibration':
-            colnames = self.calib_cols
-        elif self.dbname == 'telluric':
-            colnames = self.tellu_cols
-        else:
-            eargs = [self.dbname, 'calibration or telluric', func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00001', args=eargs))
-            colnames = []
+        # get column names
+        colnames = self.colnames
         # check required columns are present
         if self.key_col not in colnames:
             eargs = [self.key_col, self.dbname, colnames, func_name]
