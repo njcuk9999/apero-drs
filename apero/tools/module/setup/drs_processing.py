@@ -98,6 +98,7 @@ class Run:
         self.master = False
         self.recipemod = None
         self.kwargs = dict()
+        self.fileargs = dict()
         # set parameters
         self.kind = None
         self.nightname = None
@@ -235,6 +236,87 @@ class Run:
         # get properties
         self.get_recipe_kind()
         self.get_night_name()
+
+    def prerun_test(self):
+        """
+        Just before running test that all files required are present
+        Due to the way users can skip tests this is needed and this
+        knowledge will not be known apriori
+
+        :return:
+        """
+        # get params and recipe
+        params, recipe = self.params, self.recipe
+        # ------------------------------------------------------------------
+        # get the input directory
+        input_dir = recipe.get_input_dir()
+        # check whether input directory exists
+        if not os.path.exists(input_dir):
+            wargs = [input_dir]
+            WLOG(params, 'warning', TextEntry('10-503-00008', args=wargs))
+            return False
+        # ------------------------------------------------------------------
+        # if we have a directory add it to the input dir
+        if 'directory' in self.kwargs:
+            input_dir = os.path.join(input_dir, self.kwargs['directory'])
+            # check whether directory exists (if present)
+            if not os.path.exists(input_dir):
+                wargs = [self.kwargs['directory'], input_dir]
+                WLOG(params, 'warning', TextEntry('10-503-00009', args=wargs))
+                return False
+        # ------------------------------------------------------------------
+        # loop around positional arguments
+        for argname in recipe.args:
+            # skip if not present in kwargs
+            if argname not in self.kwargs:
+                continue
+            # get arg instance
+            arg = recipe.args[argname]
+            # only do this for arguments with filetype 'files' or 'file'
+            if arg.dtype in ['files', 'file']:
+                files = self.kwargs[argname]
+                # make sure we have a list of files
+                if not isinstance(files, list):
+                    files = [files]
+                # loop around files
+                for filename in files:
+                    # construct path
+                    abspath = os.path.join(input_dir, filename)
+                    # check if path exists
+                    if not os.path.exists(abspath):
+                        # log warning
+                        wargs = [argname, abspath]
+                        wmsg = TextEntry('10-503-00010', args=wargs)
+                        WLOG(params, 'warning', wmsg)
+                        return False
+        # ------------------------------------------------------------------
+        # loop around optional arguments
+        for kwargname in self.recipe.kwargs:
+            # skip if not present in kwargs
+            if kwargname not in self.kwargs:
+                continue
+            # get arg instance
+            kwarg = self.recipe.kwargs[kwargname]
+            # only do this for arguments with filetype 'files' or 'file'
+            if kwarg.dtype in ['files', 'file']:
+                files = self.kwargs[kwargname]
+                # make sure we have a list of files
+                if not isinstance(files, list):
+                    files = [files]
+                # loop around files
+                for filename in files:
+                    # construct path
+                    abspath = os.path.join(input_dir, filename)
+                    # check if path exists
+                    if not os.path.exists(abspath):
+                        # log warning
+                        wargs = [kwargname, abspath]
+                        wmsg = TextEntry('10-503-00010', args=wargs)
+                        WLOG(params, 'warning', wmsg)
+                        return False
+        # ------------------------------------------------------------------
+        # if all have passed we return True
+        return True
 
     def __str__(self):
         return self.__repr__()
@@ -1350,6 +1432,21 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # log message
             WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
             # --------------------------------------------------------------
+            # do a final test that files exist
+            passed, reason = run_item.prerun_test()
+            # --------------------------------------------------------------
+            # deal with pre run test failing (file(s) not found)
+            if not passed:
+                # deal with returns
+                pp['ERROR'] = []
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = ''
+                pp['TIMING'] = 0
+                pp['FINISHED'] = True
+                return_dict[priority] = pp
+                continue
+            # --------------------------------------------------------------
             # start time
             starttime = time.time()
             # try to run the main function
@@ -1378,8 +1475,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage unexpected errors
             except KeyboardInterrupt:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug', 'LINEAR PROCESS: Ctrl+C detected')
                 # deal with returns
                 pp['ERROR'] = []
                 pp['WARNING'] = []
@@ -1391,9 +1486,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: drs exception log exit')
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1414,9 +1506,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: Error {0}: {1}'.format(type(e), e))
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1436,9 +1525,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage unexpected errors
             except SystemExit as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: SystemExit {0}: {1}'.format(type(e), e))
                 # noinspection PyBroadException
                 try:
                     import traceback
