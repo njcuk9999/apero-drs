@@ -142,29 +142,6 @@ raw_file.addset(raw_lfc_lfc)
 
 # -----------------------------------------------------------------------------
 # raw object files
-# raw_obj_dark = drs_finput('RAW_OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
-#                           KW_OBSTYPE='OBJECT', outfunc=out.blank,
-#                           filetype='.fits', suffix='', inext='o.fits')
-# raw_file.addset(raw_obj_dark)
-#
-# raw_obj_fp = drs_finput('RAW_OBJ_FP', KW_CCAS='pos_pk', KW_CREF='pos_fp',
-#                         KW_OBSTYPE='OBJECT', outfunc=out.blank,
-#                         filetype='.fits', suffix='', inext='o.fits')
-# raw_file.addset(raw_obj_fp)
-#
-# raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', KW_CCAS='pos_pk', KW_CREF='pos_hc1',
-#                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
-#                          filetype='.fits', suffix='', inext='o.fits')
-# raw_file.addset(raw_obj_hc1)
-#
-# raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', KW_CCAS='pos_pk', KW_CREF='pos_hc2',
-#                          KW_OBSTYPE='OBJECT', outfunc=out.blank,
-#                          filetype='.fits', suffix='', inext='o.fits')
-# raw_file.addset(raw_obj_hc2)
-
-# TODO: Once all objects have TRG_TYPE we need to filter out sky observations
-# TODO: with the following
-# raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
                           KW_OBSTYPE='OBJECT', outfunc=out.blank,
                           KW_TARGET_TYPE='TARGET',
@@ -695,30 +672,11 @@ out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
                                   dbname='calibration', dbkey='THERMALT',
                                   outfunc=out.general_file)
 
-# TODO: Remove these later
-# thermal from internal dark
-out_thermal_e2ds_old = drs_finput('THERMAL_E2DS', KW_OUTPUT='EXT_E2DS',
-                                  fibers=['AB', 'A', 'B', 'C'],
-                                  filetype='.fits', intype=pp_dark_dark_int,
-                                  suffix='_e2ds',
-                                  dbname='calibration', dbkey='THERMAL',
-                                  outfunc=out.general_file)
-# TODO: Remove these later
-# thermal from telescope dark
-out_thermal_e2dsff_old = drs_finput('THERMAL_E2DSFF', KW_OUTPUT='EXT_E2DSFF',
-                                    fibers=['AB', 'A', 'B', 'C'],
-                                    filetype='.fits', intype=pp_dark_dark_int,
-                                    suffix='_e2dsff',
-                                    dbname='calibration', dbkey='THERMAL',
-                                    outfunc=out.general_file)
 # add thermal outputs to output fileset
 out_file.addset(out_thermal_e2ds_int)
 out_file.addset(out_thermal_e2ds_tel)
 calib_file.addset(out_thermal_e2ds_int)
 calib_file.addset(out_thermal_e2ds_tel)
-# TODO: Remove these later
-calib_file.addset(out_thermal_e2ds_old)
-calib_file.addset(out_thermal_e2dsff_old)
 
 # -----------------------------------------------------------------------------
 # wave files
