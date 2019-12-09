@@ -1170,12 +1170,14 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    # get all telluric stars
+    tstars, wfilename = telluric.get_whitelist(params)
     # get filemod and recipe mod
     pconst = constants.pload(params['INSTRUMENT'])
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
-    sequence[1].process_adds(params)
+    sequence[1].process_adds(params, tstars=list(tstars))
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # storage for new runs to add
