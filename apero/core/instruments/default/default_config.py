@@ -10,7 +10,7 @@ __all__ = [# global settings
            # path settings
            'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
            'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_DATA_RUN',
-           'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 
+           'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH',
            # General properites
            'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
            # Instrument/Observatory Constants
@@ -24,12 +24,14 @@ __all__ = [# global settings
            'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
            'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
            'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
-           'DRS_RESET_RUN_PATH',
+           'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS',
            # DRS INDEXING SETTINGS
            'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
            # DATABASE SETTINGS
            'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
-           'CALIB_DB_MATCH',
+           'CALIB_DB_MATCH', 'CALIB_DB_COLS', 'CALIB_DB_KEY_COL',
+           'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL', 'TELLU_DB_COLS',
+           'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL', 'TELLU_DB_FILE_COL',
            # DISPLAY/LOGGING SETTINGS
            'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
            'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
@@ -128,23 +130,8 @@ LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
                  source=__NAME__)
 
 # =============================================================================
-# Instrument/Observatory Constants
-# =============================================================================
-# Instrument Name
-INSTRUMENT = Const('INSTRUMENT', value=None, dtype=str,
-                   options=['None', 'SPIROU', 'NIRPS'], source=__NAME__)
-
-# Defines the longitude West is negative
-OBS_LONG = Const('OBS_LONG', value=None, dtype=float, source=__NAME__)
-#  Defines the latitude North (deg)
-OBS_LAT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__)
-#  Defines the CFHT altitude (m)
-OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__)
-
-# =============================================================================
 # DRS SETTINGS
 # =============================================================================
-
 #   The top-level package name (i.e. import PACKAGE)
 DRS_PACKAGE = Const('DRS_PACKAGE', value='apero', dtype=str,
                     source=__NAME__)
@@ -163,6 +150,27 @@ IPYTHON_RETURN = Const('IPYTHON_RETURN', value=False, dtype=bool,
 # whether to allow break points
 ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
                           source=__NAME__)
+
+# Currently installed instruments
+# TODO: This needs to be updated with new instruments
+DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS', value=['SPIROU'],
+                        dtype=list, source=__NAME__)
+
+
+# =============================================================================
+# Instrument/Observatory Constants
+# =============================================================================
+# Instrument Name
+INSTRUMENT = Const('INSTRUMENT', value=None, dtype=str,
+                   options=DRS_INSTRUMENTS.value, source=__NAME__)
+
+# Defines the longitude West is negative
+OBS_LONG = Const('OBS_LONG', value=None, dtype=float, source=__NAME__)
+#  Defines the latitude North (deg)
+OBS_LAT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__)
+#  Defines the CFHT altitude (m)
+OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__)
+
 
 # =============================================================================
 # DRS INTERNAL PATHS
@@ -261,6 +269,24 @@ CALIB_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
 #         calibDB file will be used
 CALIB_DB_MATCH = Const('CALIB_DB_MATCH', dtype=str, source=__NAME__,
                        value='closest')
+
+# define the calibration database columns
+CALIB_DB_COLS = Const('CALIB_DB_COLS', dtype=str, source=__NAME__)
+# define the calibration database key column
+CALIB_DB_KEY_COL = Const('CALIB_DB_KEY_COL', dtype=str, source=__NAME__)
+# define the calibration database time column
+CALIB_DB_TIME_COL = Const('CALIB_DB_TIME_COL', dtype=str, source=__NAME__)
+# define the calibration database filename column
+CALIB_DB_FILE_COL = Const('CALIB_DB_FILE_COL', dtype=str, source=__NAME__)
+
+# define the telluric database columns (must contain "key")
+TELLU_DB_COLS = Const('TELLU_DB_COLS', dtype=str, source=__NAME__)
+# define the telluric database key column
+TELLU_DB_KEY_COL = Const('TELLU_DB_KEY_COL', dtype=str, source=__NAME__)
+# define the telluric database time column
+TELLU_DB_TIME_COL = Const('TELLU_DB_TIME_COL', dtype=str, source=__NAME__)
+# define the telluric database filename column
+TELLU_DB_FILE_COL = Const('TELLU_DB_FILE_COL', dtype=str, source=__NAME__)
 
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
