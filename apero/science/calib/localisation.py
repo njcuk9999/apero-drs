@@ -434,8 +434,8 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             WLOG(params, '', TextEntry('40-013-00007', args=wargs))
             # --------------------------------------------------------------
             # sigma fit params for center
-            sigfargs = [params, xpix, cent_y, cf_data, cent_poly_deg,
-                        cent_max_rmpts[rorder_num]]
+            sigfargs = [params, recipe, xpix, cent_y, cf_data, cent_poly_deg,
+                        cent_max_rmpts[rorder_num], rorder_num]
             sigfkwargs = dict(ic_max_ptp=max_ptp_cent, ic_max_ptp_frac=None,
                               ic_ptporms=ptporms_cent, ic_max_rms=max_rms_cent,
                               kind='center')
@@ -449,8 +449,8 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             cent_max_rmpts[rorder_num] = cf_data['max_rmpts']
             # --------------------------------------------------------------
             # sigma fit params for width
-            sigfargs = [params, xpix, wid_y, wf_data, wid_poly_deg,
-                        wid_max_rmpts[rorder_num]]
+            sigfargs = [params, recipe, xpix, wid_y, wf_data, wid_poly_deg,
+                        wid_max_rmpts[rorder_num], rorder_num]
             sigfkwargs = dict(ic_max_ptp=-np.inf, ic_max_ptp_frac=max_ptp_wid,
                               ic_ptporms=None, ic_max_rms=max_rms_wid,
                               kind='fwhm')
@@ -1131,9 +1131,9 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
     return fitdata
 
 
-def sigmaclip_order_fit(params, x, y, fitdata, f_order, max_rmpts,
-                        ic_max_ptp, ic_max_ptp_frac, ic_ptporms, ic_max_rms,
-                        kind):
+def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
+                        rnum, ic_max_ptp, ic_max_ptp_frac, ic_ptporms,
+                        ic_max_rms, kind):
     """
     Performs a sigma clip fit for this order, uses the ctro positions or
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
@@ -1230,10 +1230,8 @@ def sigmaclip_order_fit(params, x, y, fitdata, f_order, max_rmpts,
         wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
         WLOG(params, '', TextEntry('40-013-00008', args=wargs))
         # add residuals to loc
-        # debug plot
-        if params['DRS_PLOT'] and params['DRS_DEBUG'] == 2:
-            # TODO: Add sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)
-            pass
+        recipe.plot('LOC_FIT_RESIDUALS', x=x, y=res, xo=xo, rnum=rnum,
+                    kind=kind)
         # add one to the max rmpts
         max_rmpts += 1
         # remove the largest residual (set wmask = 0 at that position)
