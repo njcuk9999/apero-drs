@@ -107,7 +107,7 @@ changelog.name = 'apero_changelog.py'
 changelog.instrument = __INSTRUMENT__
 changelog.description = Help['CHANGELOG_DESCRIPTION']
 changelog.set_arg(pos=0, name='preview', dtype='bool',
-                      helpstr=Help['PREVIEW_HELP'])
+                  helpstr=Help['PREVIEW_HELP'])
 
 # -----------------------------------------------------------------------------
 # changelog.py
@@ -115,12 +115,10 @@ changelog.set_arg(pos=0, name='preview', dtype='bool',
 
 explorer.name = 'apero_explorer.py'
 explorer.instrument = __INSTRUMENT__
-# TODO: Add description
-explorer.description = ''
-# TODO: Add instrument help
+explorer.description = Help['EXPLORER_DESCRIPTION']
 explorer.set_arg(pos=0, name='instrument', dtype='options',
-                 helpstr='', options=['SPIROU', 'NIRPS'])
-
+                 helpstr=Help['EXPLORER_INST_HEPL'],
+                 options=['SPIROU', 'NIRPS'])
 
 # -----------------------------------------------------------------------------
 # apero-reset.py
@@ -142,14 +140,14 @@ processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
 processing.description = Help['PROCESS_DESCRIPTION']
 processing.set_arg(pos=0, name='instrument', dtype='options',
-                  helpstr=Help['PROCESS_INST_HELP'],
-                  options=['SPIROU', 'NIRPS'])
+                   helpstr=Help['PROCESS_INST_HELP'],
+                   options=['SPIROU', 'NIRPS'])
 processing.set_arg(pos=1, name='runfile', dtype=str,
-                  helpstr=Help['PROCESS_RUNFILE_HELP'])
+                   helpstr=Help['PROCESS_RUNFILE_HELP'])
 processing.set_kwarg(name='--nightname', dtype=str, default='None',
-                    helpstr=Help['PROCESS_NIGHTNAME_HELP'])
+                     helpstr=Help['PROCESS_NIGHTNAME_HELP'])
 processing.set_kwarg(name='--filename', dtype=str, default='None',
-                    helpstr=Help['PROCESS_FILENAME_HELP'])
+                     helpstr=Help['PROCESS_FILENAME_HELP'])
 processing.set_kwarg(name='--bnightnames', dtype=str, default='None',
                      helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
 processing.set_kwarg(name='--wnightnames', dtype=str, default='None',
@@ -180,8 +178,7 @@ listing.set_kwarg(name='--kind', dtype=str, default='raw',
 # -----------------------------------------------------------------------------
 req_check.name = 'apero_dependencies.py'
 req_check.instrument = __INSTRUMENT__
-# TODO: Add description
-req_check.description = ''
+req_check.description = Help['DEPENDENCIES_DESCRIPTION']
 
 # -----------------------------------------------------------------------------
 # apero-mkdb.py
@@ -190,20 +187,19 @@ remake_db.name = 'apero_mkdb.py'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = Help['REMAKE_DESC']
 remake_db.set_arg(pos=0, name='instrument', dtype='options',
-                   helpstr=Help['REMAKE_HELP_INSTRUMENT'],
+                  helpstr=Help['REMAKE_HELP_INSTRUMENT'],
                   options=['SPIROU', 'NIRPS'])
 remake_db.set_kwarg(name='--kind', dtype='options',
-                  options=['calibration', 'telluric'],
-                  default_ref='REMAKE_DATABASE_DEFAULT',
-                  helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
+                    options=['calibration', 'telluric'],
+                    default_ref='REMAKE_DATABASE_DEFAULT',
+                    helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
 
 # -----------------------------------------------------------------------------
 # apero-validate.py
 # -----------------------------------------------------------------------------
 validate.name = 'apero_validate.py'
 validate.instrument = __INSTRUMENT__
-# TODO: Add description
-validate.description = ''
+validate.description = Help['VALIDATE_DESCRIPTION']
 validate.set_arg(pos=0, name='instrument', dtype='options',
-                  helpstr=Help['REMAKE_HELP_INSTRUMENT'],
-                  options=['SPIROU', 'NIRPS'])
+                 helpstr=Help['VALIDATE_INST_HELP'],
+                 options=['SPIROU', 'NIRPS'])
