@@ -24,7 +24,6 @@ from apero.core import constants
 from apero.locale import drs_text
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
-from apero.science import telluric
 
 
 # =============================================================================
@@ -564,7 +563,7 @@ class DrsRecipe(object):
         # return the runlist
         return runlist
 
-    def add_extra(self, params, arguments):
+    def add_extra(self, params, arguments, tstars=None):
         # set function name
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
         # loop around arguments
@@ -588,8 +587,7 @@ class DrsRecipe(object):
                 cond1 = value in ['None', None, '']
                 cond2 = arguments[argname] == 'TELLURIC_TARGETS'
                 if cond1 and cond2:
-                    wlist, wfilename = telluric.get_whitelist(params)
-                    value = list(wlist)
+                    value = tstars
 
             # check for argument in args
             if argname in self.args:
@@ -1134,10 +1132,12 @@ class DrsRunSequence(object):
     def add(self, recipe, **kwargs):
         self.adds.append([recipe, dict(kwargs)])
 
-    def process_adds(self, params):
+    def process_adds(self, params, tstars=None):
         # set function name
         func_name = display_func(params, 'process_adds', __NAME__,
                                  class_name='DrsRunSequence')
+        # set telluric stars (may be needed)
+        self.tstars = tstars
         # get filemod and recipe mod
         pconst = constants.pload(self.instrument)
         filemod = pconst.FILEMOD()
@@ -1181,7 +1181,7 @@ class DrsRunSequence(object):
     def update_args(self, params, frecipe, fargs):
         # deal with arguments overwrite
         if 'arguments' in fargs:
-            frecipe.add_extra(params, fargs['arguments'])
+            frecipe.add_extra(params, fargs['arguments'], tstars=self.tstars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
         frecipe.args = self._update_arg(frecipe.args, fargs)
