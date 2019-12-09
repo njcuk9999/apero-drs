@@ -49,7 +49,19 @@ pcheck = core.pcheck
 # =============================================================================
 # Define functions
 # =============================================================================
+# TODO: not used!
 def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
+    """
+    do not use -- old function here for comparison
+    :param e2ds:
+    :param flux:
+    :param blaze_cut:
+    :param blaze_deg:
+    :return:
+    """
+    # do not use -- old function here for comparison
+    args = [__NAME__ + '.calculate_blaze_flat_sinc()']
+    warnings.warn('Do not use - Use {0} instead'.format(*args))
     # ----------------------------------------------------------------------
     # remove edge of orders at low S/N
     # ----------------------------------------------------------------------
@@ -74,9 +86,6 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     nanxpix = np.array(xpix).astype(float)
     nanxpix[~good] = np.nan
     minpos, maxpos = mp.nanargmin(nanxpix), mp.nanargmax(nanxpix)
-
-    # TODO: need a way to remove cluster of pixels that are outliers above
-    # TODO:    the cut off (blaze mask region)
 
     # set these bad values to NaN
     blaze[:minpos] = np.nan
