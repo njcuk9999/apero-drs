@@ -183,7 +183,8 @@ def __main__(recipe, params):
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
-            # load intial wavelength solution (start point) for this fiber
+            # load initial wavelength solution (start point) for this fiber
+            #    this should only be a master wavelength solution
             iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                             fiber=fiber)
             # check that wave parameters are consistent with required number
