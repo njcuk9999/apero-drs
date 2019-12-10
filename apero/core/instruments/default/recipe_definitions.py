@@ -94,10 +94,10 @@ test.extension = 'fits'
 test.description = Help['TEST_DESCRIPTION']
 test.epilog = Help['TEST_EXAMPLE']
 test.set_arg(pos=0, **directory)
-test.set_kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
                files=[sf.pp_file], filelogic='inclusive',
                helpstr='test 1', required=True)
-test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
                files=[sf.pp_file], helpstr='test 2', required=True)
 
 # -----------------------------------------------------------------------------
@@ -128,9 +128,9 @@ reset.instrument = __INSTRUMENT__
 reset.description = Help['RESET_DESCRIPTION']
 reset.set_arg(pos=0, name='instrument', dtype='options',
               helpstr=Help['RESET_INST_HELP'], options=['SPIROU', 'NIRPS'])
-reset.set_kwarg(name='-log', dtype='bool', default=True,
+reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=Help['RESET_LOG_HELP'])
-reset.set_kwarg(name='-warn', dtype='bool', default=True,
+reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=Help['RESET_WARN_HELP'])
 
 # -----------------------------------------------------------------------------

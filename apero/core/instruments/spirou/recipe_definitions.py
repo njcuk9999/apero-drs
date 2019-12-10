@@ -209,11 +209,11 @@ test.extension = 'fits'
 test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
 test.set_arg(pos=0, **directory)
-test.set_kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
                files=[sf.pp_dark_dark_int, sf.pp_flat_flat],
                filelogic='inclusive',
                helpstr=Help['TEST_FILELIST1_HELP'], required=True)
-test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
                files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
                required=True)
 test.set_kwarg(**plot)
@@ -262,10 +262,10 @@ cal_badpix.set_outputs(BADPIX=sf.out_badpix, BACKMAP=sf.out_backmap)
 cal_badpix.set_debug_plots('BADPIX_MAP')
 cal_badpix.set_summary_plots('SUM_BADPIX_MAP')
 cal_badpix.set_arg(pos=0, **directory)
-cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
+cal_badpix.set_kwarg(name='--flatfiles', dtype='files', files=[sf.pp_flat_flat],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
-cal_badpix.set_kwarg(name='-darkfiles', dtype='files',
+cal_badpix.set_kwarg(name='--darkfiles', dtype='files',
                      files=[sf.pp_dark_dark_tel, sf.pp_dark_dark_int],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
@@ -387,11 +387,11 @@ cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
-cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
+cal_shape_master.set_kwarg(name='--hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
-cal_shape_master.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(**add_db)
@@ -616,12 +616,12 @@ cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                            'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP',
                            'SUM_CCF_RV_FIT')
 cal_wave.set_arg(pos=0, **directory)
-cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+cal_wave.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
                    helpstr=Help['WAVE_HCFILES_HELP'], default=[])
 # note required is False (so we don't need fpfiles but reprocess is True
 #    so reprocessing script will fill both hc and fp files
-cal_wave.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+cal_wave.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
                    nargs='+', filelogic='exclusive', reprocess=True,
                    helpstr=Help['WAVE_FPFILES_HELP'], default=[])
 cal_wave.set_kwarg(**add_db)
@@ -643,9 +643,9 @@ cal_wave.set_kwarg(**shapexfile)
 cal_wave.set_kwarg(**shapeyfile)
 cal_wave.set_kwarg(**shapelfile)
 cal_wave.set_kwarg(**wavefile)
-cal_wave.set_kwarg(name='-hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
+cal_wave.set_kwarg(name='--hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
                    options=['0'], default_ref='WAVE_MODE_HC')
-cal_wave.set_kwarg(name='-fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
+cal_wave.set_kwarg(name='--fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
                    options=['0', '1'], default_ref='WAVE_MODE_FP')
 
 # -----------------------------------------------------------------------------
@@ -686,10 +686,10 @@ cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_EXTRAP',
                                   'SUM_CCF_RV_FIT')
 cal_wave_master.set_arg(pos=0, **directory)
-cal_wave_master.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+cal_wave_master.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                           nargs='+', filelogic='exclusive', required=True,
                           helpstr=Help['WAVE_HCFILES_HELP'], default=[])
-cal_wave_master.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+cal_wave_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
                           nargs='+', filelogic='exclusive', required=True,
                           helpstr=Help['WAVE_FPFILES_HELP'], default=[])
 cal_wave_master.set_kwarg(**add_db)
@@ -711,10 +711,10 @@ cal_wave_master.set_kwarg(**shapexfile)
 cal_wave_master.set_kwarg(**shapeyfile)
 cal_wave_master.set_kwarg(**shapelfile)
 cal_wave_master.set_kwarg(**wavefile)
-cal_wave_master.set_kwarg(name='-hcmode', dtype='options',
+cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
                           helpstr=Help['HCMODE_HELP'], options=['0'],
                           default_ref='WAVE_MODE_HC')
-cal_wave_master.set_kwarg(name='-fpmode', dtype='options',
+cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=Help['FPMODE_HELP'], options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
 
@@ -906,11 +906,11 @@ obj_mk_template.set_debug_plots('EXTRACT_S1D')
 obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D')
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
-obj_mk_template.set_kwarg(name='-filetype', dtype=str,
+obj_mk_template.set_kwarg(name='--filetype', dtype=str,
                           default_ref='MKTEMPLATE_FILETYPE',
                           helpstr=Help['MKTEMP_FILETYPE'],
                           options=['EXT_E2DS', 'EXT_E2DS_FF'])
-obj_mk_template.set_kwarg(name='-fiber', dtype=str,
+obj_mk_template.set_kwarg(name='--fiber', dtype=str,
                           default_ref='MKTEMPLATE_FIBER_TYPE',
                           helpstr=Help['MKTEMP_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
