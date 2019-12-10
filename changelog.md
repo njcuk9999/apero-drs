@@ -2,6 +2,39 @@ Changelog
 =========
 
 
+0.6.003 (2019-12-10)
+--------------------
+- Update README.md. [Neil Cook]
+- Tools.module.listing.file_explorer.py - deal with no ds9 path set
+  (Issue #576) [Neil Cook]
+- Fix typos for apero_validate and apero_reset (Issue #577) [Neil Cook]
+- Core.instruments.default.pseudo_const.py - modify logfile to have .log
+  and latex to replace .log (make unique) [Neil Cook]
+- Core.instruments.default.default_config.py - DRS_DS0_PATH and
+  DRS_PDFLATEX_PATH should be str not 'path' (Issue #576) [Neil Cook]
+- Localisation - remove breakpoints. [Neil Cook]
+- Update readme (cal_preprocessing --> cal_preprocess) [Neil Cook]
+- Localisation.py - fix bug with loc order 0. [Neil Cook]
+- Science.calib.localisation.py - move break point. [Neil Cook]
+- Science.calib.localisation.py - changes to fix loc. [Neil Cook]
+- Cal_loc_spirou.py - move break point. [Neil Cook]
+- Cal_loc_spirou.py - add breakpoint to test qc failure. [Neil Cook]
+- Tools.module.setup.py - drs_installation.py - add to clean install
+  message. [Neil Cook]
+- README.md - update read me with extra comments. [Neil Cook]
+- Prepare cal_wave_master_spirou.py. [Neil Cook]
+- Tools.module.setup.drs_installation.py - update 'apero-validate.py'
+  --> 'apero_validate.py' [Neil Cook]
+- Recipes.spirou.cal_wave_spirou.py - correct typo in comment. [Neil
+  Cook]
+- Science.calib.wave.py - add a TODO. [Neil Cook]
+- Tools.modules.setup.drs_processing.py - correct returns for
+  prerun_test() [Neil Cook]
+- Change the file_explorer name. [Neil Cook]
+- Core.core.drs_recipe.py - fix telluric test. [Neil Cook]
+- Update config/changelog/readme/version. [Neil Cook]
+
+
 0.6.002 (2019-12-09)
 --------------------
 - Core.core.drs_recipe.py - change souce of tellurics (shouldn't be
