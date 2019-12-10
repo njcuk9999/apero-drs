@@ -340,7 +340,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
         # "central col+locstep" pixel (first column calculated) then we
         # calculate row centers to the LEFT edge - hence the order of columns
         columns = list(range(central_col + locstep, nx2 - locstep, locstep))
-        columns += list(range(central_col, locstep, -locstep))
+        columns += list(range(central_col - locstep, locstep, -locstep))
         # ------------------------------------------------------------------
         # storage for plotting
         col_vals, maxycc, minxcc, maxxcc = [], -np.inf, np.inf, -np.inf
@@ -369,44 +369,27 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             # now make sure our extraction isn't out of bounds
             if rowtop <= 0 or rowbottom >= nx2:
                 break
-            # TODO: This value may need changing - What does it do?
-            # # if col <= (800 - order_num*30):
-            # if col <= (750 - rowcenter * 0.7):
-            #     break
-            # # make sure we are not in the image_gap
-            # if (rowtop < image_gap) and (rowbottom > image_gap):
-            #     break
             # get the pixel values between row bottom and row top for
             # this column
-            ovalues = mp.nanmedian(image[rowtop:rowbottom, col:col+locstep],axis = 1)
-
-            # only use if max - min above threshold = 100 * sigdet
-            # truethres = nm_thres * sigdet
-            # cond = mp.nanmax(ovalues) - mp.nanmin(ovalues) > truethres
-            cond = True
-            if cond:
-                # as we are not normalised threshold needs multiplying by
-                # the maximum value
-                threshold = mp.nanmax(ovalues) * back_thres
-                # find the row center position and the width of the order
-                # for this column
-                lkwargs = dict(values=ovalues, threshold=threshold,
-                               min_width=widthmin)
-                center, width = locate_order_center(**lkwargs)
-                # need to add on row top (as centers are relative positions)
-                center = center + rowtop
-                # if the width is zero set the position back to the original
-                # position
-                if width == 0:
-                    # to force the order curvature
-                    center = float(rowcenter) - center_drop
-            else:
-                width = 0
+            # median over whole box of pixels to avoid outliers
+            imagebox = image[rowtop:rowbottom, col:col+locstep]
+            # get the values
+            ovalues = mp.nanmedian(imagebox, axis=1)
+            # as we are not normalised threshold needs multiplying by
+            # the maximum value
+            threshold = mp.nanmax(ovalues) * back_thres
+            # find the row center position and the width of the order
+            # for this column
+            lkwargs = dict(values=ovalues, threshold=threshold,
+                           min_width=widthmin)
+            center, width = locate_order_center(**lkwargs)
+            # need to add on row top (as centers are relative positions)
+            center = center + rowtop
+            # if the width is zero set the position back to the original
+            # position
+            if width == 0:
                 # to force the order curvature
                 center = float(rowcenter) - center_drop
-
-            print('row={0} center={1} width={2}'.format(col, center, width))
-
             # add these positions to storage
             cent_0[order_num, col] = center
             wid_0[order_num, col] = width
