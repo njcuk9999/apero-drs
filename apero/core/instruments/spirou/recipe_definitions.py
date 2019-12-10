@@ -139,6 +139,7 @@ cal_shape = DrsRecipe(__INSTRUMENT__)
 cal_shape_master = DrsRecipe(__INSTRUMENT__)
 cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_wave = DrsRecipe(__INSTRUMENT__)
+cal_wave_master = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
@@ -154,7 +155,7 @@ cal_update_berv = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
-           cal_shape, cal_shape_master, cal_thermal, cal_wave,
+           cal_shape, cal_shape_master, cal_thermal, cal_wave, cal_wave_master,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
            obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec_spirou,
            obj_pol_spirou, test, cal_update_berv]
@@ -583,7 +584,7 @@ cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# cal_WAVE_E2DS_spirou
+# cal_wave_spirou
 # -----------------------------------------------------------------------------
 cal_wave.name = 'cal_wave_spirou.py'
 cal_wave.shortname = 'WAVE'
@@ -646,6 +647,76 @@ cal_wave.set_kwarg(name='-hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
                    options=['0'], default_ref='WAVE_MODE_HC')
 cal_wave.set_kwarg(name='-fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
                    options=['0', '1'], default_ref='WAVE_MODE_FP')
+
+# -----------------------------------------------------------------------------
+# cal_wave_master
+# -----------------------------------------------------------------------------
+cal_wave_master.name = 'cal_wave_master_spirou.py'
+cal_wave_master.shortname = 'WAVE'
+cal_wave_master.instrument = __INSTRUMENT__
+cal_wave_master.outputdir = 'reduced'
+cal_wave_master.inputdir = 'tmp'
+cal_wave_master.inputtype = 'pp'
+cal_wave_master.extension = 'fits'
+cal_wave_master.description = Help['WAVE_DESC']
+cal_wave_master.epilog = Help['WAVE_EXAMPLE']
+cal_wave_master.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
+                            WAVE_HCLL=sf.out_wave_hcline,
+                            WAVE_HCRES=sf.out_wave_hcres,
+                            WAVE_HCMAP=sf.out_wave_hc,
+                            WAVE_FPMAP=sf.out_wave_fp,
+                            WAVE_MAP=sf.out_wave_master,
+                            WAVE_FPRESTAB=sf.out_wave_res_table,
+                            WAVE_FPLLTAB=sf.out_wave_ll_table,
+                            WAVE_HCLIST=sf.out_wave_hclist_master,
+                            WAVE_FPLIST=sf.out_wave_fplist_master)
+cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
+                                'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
+                                'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
+                                'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
+                                'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
+                                'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
+                                'WAVE_FP_IPT_CWID_1MHC',
+                                'WAVE_FP_IPT_CWID_LLHC',
+                                'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
+                                'WAVE_FP_SINGLE_ORDER',
+                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
+                                  'SUM_WAVE_LITTROW_CHECK',
+                                  'SUM_WAVE_LITTROW_EXTRAP',
+                                  'SUM_CCF_RV_FIT')
+cal_wave_master.set_arg(pos=0, **directory)
+cal_wave_master.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+                          nargs='+', filelogic='exclusive', required=True,
+                          helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+cal_wave_master.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                          nargs='+', filelogic='exclusive', required=True,
+                          helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+cal_wave_master.set_kwarg(**add_db)
+cal_wave_master.set_kwarg(**badfile)
+cal_wave_master.set_kwarg(**dobad)
+cal_wave_master.set_kwarg(**backsub)
+cal_wave_master.set_kwarg(**blazefile)
+cal_wave_master.set_kwarg(default=True, **combine)
+cal_wave_master.set_kwarg(**darkfile)
+cal_wave_master.set_kwarg(**dodark)
+cal_wave_master.set_kwarg(**fiber)
+cal_wave_master.set_kwarg(**flipimage)
+cal_wave_master.set_kwarg(**fluxunits)
+cal_wave_master.set_kwarg(**locofile)
+cal_wave_master.set_kwarg(**orderpfile)
+cal_wave_master.set_kwarg(**plot)
+cal_wave_master.set_kwarg(**resize)
+cal_wave_master.set_kwarg(**shapexfile)
+cal_wave_master.set_kwarg(**shapeyfile)
+cal_wave_master.set_kwarg(**shapelfile)
+cal_wave_master.set_kwarg(**wavefile)
+cal_wave_master.set_kwarg(name='-hcmode', dtype='options',
+                          helpstr=Help['HCMODE_HELP'], options=['0'],
+                          default_ref='WAVE_MODE_HC')
+cal_wave_master.set_kwarg(name='-fpmode', dtype='options',
+                          helpstr=Help['FPMODE_HELP'], options=['0', '1'],
+                          default_ref='WAVE_MODE_FP')
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -1105,19 +1176,19 @@ calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
 tellu_run = drs_recipe.DrsRunSequence('telluric_run', __INSTRUMENT__)
 # extract science
 tellu_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.pp_obj_dark, sf.pp_obj_fp])
+              files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # other telluric recipes
 tellu_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              files=[sf.out_ext_e2dsff], fiber='AB',
+              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 tellu_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              files=[sf.out_ext_e2dsff], fiber='AB',
+              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 tellu_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-                arguments=dict(objname='TELLURIC_TARGETS'))
+              fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+              arguments=dict(objname='TELLURIC_TARGETS'))
 tellu_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # science run (for trigger)

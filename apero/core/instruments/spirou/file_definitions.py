@@ -730,6 +730,24 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               suffix='_hc_lines',
                               outfunc=out.calib_file)
 
+# hc line file from master
+out_wave_hclist_master = drs_input('WAVE_HCLIST_MASTER',
+                                   KW_OUTPUT='WAVE_HCLIST_MASTER',
+                                   fibers=['AB', 'A', 'B', 'C'],
+                                   filetype='.fits',
+                                   intype=[out_ext_e2ds, out_ext_e2dsff],
+                                   suffix='_wavem_hclines',
+                                   outfunc=out.calib_file)
+
+# fp line file from master
+out_wave_fplist_master = drs_input('WAVE_FPLIST_MASTER',
+                                   KW_OUTPUT='WAVE_FPLIST_MASTER',
+                                   fibers=['AB', 'A', 'B', 'C'],
+                                   filetype='.fits',
+                                   intype=[out_ext_e2ds, out_ext_e2dsff],
+                                   suffix='_wavem_fplines',
+                                   outfunc=out.calib_file)
+
 # wave master
 out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
                              fibers=['AB', 'A', 'B', 'C'],
