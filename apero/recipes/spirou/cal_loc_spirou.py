@@ -159,8 +159,6 @@ def __main__(recipe, params):
         order_profile = localisation.calculate_order_profile(params, image)
 
 
-        # TODO: remove breakpoint
-        constants.breakpoint(params)
 
 
         # ------------------------------------------------------------------
