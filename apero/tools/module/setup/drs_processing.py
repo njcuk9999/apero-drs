@@ -1435,7 +1435,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
             # --------------------------------------------------------------
             # do a final test that files exist
-            passed, reason = run_item.prerun_test()
+            passed = run_item.prerun_test()
             # --------------------------------------------------------------
             # deal with pre run test failing (file(s) not found)
             if not passed:
