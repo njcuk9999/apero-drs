@@ -59,6 +59,7 @@ DEV_RECIPEPATH = '../apero/tools/recipes/dev/'
 ENV_CONFIG = 'DRS_UCONFIG'
 SETUP_PATH = './tools/resources/setup/'
 
+VALIDATE_CODE = 'apero_validate.py'
 
 DATA_PATHS = dict()
 DATA_PATHS['DRS_DATA_RAW'] = ['Raw data directory', 'raw']
@@ -527,7 +528,7 @@ def create_shell_scripts(params, all_params):
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], 'apero-validate.py')
+    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], VALIDATE_CODE)
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
