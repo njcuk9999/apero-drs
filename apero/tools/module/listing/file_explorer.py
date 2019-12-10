@@ -552,6 +552,7 @@ class TableSection:
         ds9path = self.master.datastore.params['DRS_DS9_PATH']
         if ds9path in [None, 'None', '']:
             print('ds9 not found. Define path in DRS_DS9_PATH')
+            return
         command = '{0} {1} &'.format(ds9path, abspath)
         try:
             os.system(command)
