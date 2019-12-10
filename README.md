@@ -590,7 +590,7 @@ Cleans file of detector effects.
 
 #### *Run*: 
 ```
-cal_preprocessing_spirou.py [DIRECTORY] [RAW_FILES]
+cal_preprocess_spirou.py [DIRECTORY] [RAW_FILES]
 ```
 #### *Optional Arguments*: 
 ```
