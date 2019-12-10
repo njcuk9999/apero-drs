@@ -460,6 +460,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     # Generate wave map from wave solution
     #     (with possible intercept/slope shift)
     # ----------------------------------------------------------------------
+    # TODO: Revisit use of this
     iprops = generate_shifted_wave_map(params, iprops, **kwargs)
     # ----------------------------------------------------------------------
     # Create new wavelength solution (method 0, old cal_HC_E2DS_EA)
