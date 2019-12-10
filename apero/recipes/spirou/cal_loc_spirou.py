@@ -158,6 +158,11 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         order_profile = localisation.calculate_order_profile(params, image)
 
+
+        # TODO: remove breakpoint
+        constants.breakpoint(params)
+
+
         # ------------------------------------------------------------------
         # Localization of orders on central column
         # ------------------------------------------------------------------
@@ -212,9 +217,6 @@ def __main__(recipe, params):
                  mean_rms_wid, rorder_num, center_fits]
 
         qc_params, passed = localisation.loc_quality_control(params, *qargs)
-
-        # TODO: remove breakpoint
-        constants.breakpoint(params)
 
         # ------------------------------------------------------------------
         # write files
