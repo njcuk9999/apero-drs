@@ -555,7 +555,7 @@ class Plotter:
         doc.write_latex()
         # get log file
         logfile = drs_log.get_logfilepath(WLOG, self.params)
-        doc.compile(logfile + '.latex')
+        doc.compile(logfile.replace('.log', '.latex'))
         # check that pdf was created
         if not os.path.exists(doc.pdffilename):
             wargs = [doc.pdffilename]
