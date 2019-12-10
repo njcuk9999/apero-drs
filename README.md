@@ -32,9 +32,23 @@
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
 - master (long term stable) V0.5.000
+    ```
+    This is the version currently recommended for all general use. It may not
+    contain the most up-to-date features until long term support and stability can
+    be verified.
+    ```
 - developer (tested) V0.6.001
-- working (untested) V0.6.002
-
+    ```
+    Note the developer version should have been tested and semi-stable but not
+    ready for full sets of processing and defintely not for release for 
+    non-developers or for data put on archives. Some changes may not be
+    in this version that are in the working version.
+    ```
+- working (untested) V0.6.003
+    ```
+    Note the working version will be the most up-to-date version but has not been
+    tested for stability - use at own risk.
+    ```
 ---
 ---
 
@@ -77,14 +91,18 @@ cd ./apero-drs
 ```
 git checkout master
 ```
+
+
 - For Developer version:
 ```
 git checkout developer
 ```
+
 - For Working version:
 ```
 git checkout working
 ```
+
 
 ---
 ---
@@ -153,7 +171,7 @@ __NOTE__: these three are equivalent only do __one__
 For example 
 
 `alias apero "source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (tcsh/csh)
-`alias apero=""source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash)
+`alias apero="source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash)
 
 to `~/.bashrc` or `~/.bash_profile` or  `~/.tcshrc` or `~/.profile`
 
