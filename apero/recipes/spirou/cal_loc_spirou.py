@@ -158,9 +158,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         order_profile = localisation.calculate_order_profile(params, image)
 
-
-
-
         # ------------------------------------------------------------------
         # Localization of orders on central column
         # ------------------------------------------------------------------
