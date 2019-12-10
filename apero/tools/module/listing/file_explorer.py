@@ -56,7 +56,7 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 # -----------------------------------------------------------------------------
 # define the program name
-PROGRAM_NAME = 'DRS File Explorer'
+PROGRAM_NAME = 'APERO File Explorer'
 # define the default path
 ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC', 'DRS_DATA_RAW']
 # define min column length
