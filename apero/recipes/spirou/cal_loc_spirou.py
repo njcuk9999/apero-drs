@@ -213,6 +213,9 @@ def __main__(recipe, params):
 
         qc_params, passed = localisation.loc_quality_control(params, *qargs)
 
+        # TODO: remove breakpoint
+        constants.breakpoint(params)
+
         # ------------------------------------------------------------------
         # write files
         # ------------------------------------------------------------------
