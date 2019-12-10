@@ -94,10 +94,10 @@ DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__)
 DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__)
 
 #   Define ds9 path (optional)
-DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype='path', source=__NAME__)
+DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype=str, source=__NAME__)
 
 #   Define latex path (optional)
-DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype='path', source=__NAME__)
+DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__)
 
 # =============================================================================
 # =============================================================================
