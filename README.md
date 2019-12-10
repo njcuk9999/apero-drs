@@ -126,6 +126,9 @@ E. `Clean install?` __WARNING__: If you type [Y]es you will be prompted (later) 
 the directories this means any previous data in these directories will be removed.
 Note you can always say later to individual cases.
 
+Note if you have given empty directories you MUST run a clean install to copy
+the required files to the given directories.
+
 
 F. This process will then repeat for all instruments. __NOTE: Currently only SPIRou is supported__
 
@@ -492,6 +495,11 @@ cal_loc [FLAT_DARK; master night]
 cal_shape_master
 ```
 
+
+Note if any step in the master sequence fails you cannot continue with the
+night runs.
+
+
 4) Run the night sequences
 
 These must be in this order but could be night-by-night or
@@ -569,6 +577,12 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 ## Recipes
 
 ---
+
+
+Note These are not in the required run order.
+Please do not run them in this order.
+See [APERO run order](#APERO-run-order) for the correct order.
+
 
 ### Preprocessing Recipe
 
