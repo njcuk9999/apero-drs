@@ -23,7 +23,7 @@ from apero.io import drs_path
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero-listing.py'
+__NAME__ = 'apero_listing.py'
 __INSTRUMENT__ = 'None'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)

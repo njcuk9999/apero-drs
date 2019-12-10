@@ -60,7 +60,9 @@ ENV_CONFIG = 'DRS_UCONFIG'
 SETUP_PATH = './tools/resources/setup/'
 
 VALIDATE_CODE = 'apero_validate.py'
-
+RESET_CODE = 'apero_reset.py'
+# set descriptions for data paths
+# TODO: these should be in the constants file?
 DATA_PATHS = dict()
 DATA_PATHS['DRS_DATA_RAW'] = ['Raw data directory', 'raw']
 DATA_PATHS['DRS_DATA_WORKING'] = ['Temporary data directory', 'tmp']
@@ -70,6 +72,10 @@ DATA_PATHS['DRS_TELLU_DB'] = ['Telluric DB data directory', 'telluDB']
 DATA_PATHS['DRS_DATA_PLOT'] = ['Plotting directory', 'plot']
 DATA_PATHS['DRS_DATA_RUN'] = ['Run directory', 'runs']
 DATA_PATHS['DRS_DATA_MSG'] = ['Log directory', 'msg']
+# set the reset paths (must be checked for empty)
+RESET_PATHS = ['DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_RUN']
+
+
 
 # Messages for user interface
 message1 = """
@@ -606,17 +612,26 @@ def clean_install(params, all_params):
         # skip is we are not installing instrument
         if instrument not in all_params:
             continue
+        # check if all directories are empty
+        cond1 = not reset_paths_empty(params, all_params)
+        cond2 = not all_params[instrument]['CLEAN_INSTALL']
         # check if user wants a clean install
-        if not all_params[instrument]['CLEAN_INSTALL']:
+        if cond1 and cond2:
             continue
+        # if we are forcing clean install let the user know
+        if not cond1:
+            cprint('\t - Empty directory found -- forcing clean install.', 'y')
         # log that we are performing clean install
         cprint('\t - Performing clean installation', 'm')
         # add to environment
         add_paths(all_params)
         # construct reset command
-        cmd = 'python {0}/apero-reset.py {1} --quiet'
+        if not cond1:
+            cmd = 'python {0}/{1} {2} --quiet --warn'
+        else:
+            cmd = 'python {0}/{1} {2} --quiet'
         # run command
-        os.system(cmd.format(tool_path, instrument))
+        os.system(cmd.format(tool_path, RESET_CODE, instrument))
     # return all params
     return all_params
 
@@ -746,6 +761,26 @@ def print_options(params, all_params):
     cprint(' To run apero do one of the following:', 'm')
     cprint(printheader(), 'm')
     cprint(message4.format(**text), 'g')
+
+
+def reset_paths_empty(params, all_params):
+    # loop around instruments
+    for instrument in params['DRS_INSTRUMENTS']:
+        # skip if we are not installing instrument
+        if instrument not in all_params:
+            continue
+        # get instrument params
+        iparams = all_params[instrument]
+        # look for paths
+        for path in RESET_PATHS:
+            # get instrument path
+            ipath = iparams[path]
+            # check for empty
+            if len(os.listdir(ipath)) == 0:
+                return True
+    # if we have got here return False --> none are empty
+    return False
+
 
 
 # =============================================================================

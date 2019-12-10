@@ -121,7 +121,7 @@ explorer.set_arg(pos=0, name='instrument', dtype='options',
                  options=['SPIROU', 'NIRPS'])
 
 # -----------------------------------------------------------------------------
-# apero-reset.py
+# apero_reset.py
 # -----------------------------------------------------------------------------
 reset.name = 'apero_reset.py'
 reset.instrument = __INSTRUMENT__
@@ -134,7 +134,7 @@ reset.set_kwarg(name='-warn', dtype='bool', default=True,
                 helpstr=Help['RESET_WARN_HELP'])
 
 # -----------------------------------------------------------------------------
-# apero-processing.py
+# apero_processing.py
 # -----------------------------------------------------------------------------
 processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
@@ -159,7 +159,7 @@ processing.set_kwarg(name='--test', dtype=str, default='None',
                      helpstr=Help['PROCESS_TEST_HELP'])
 
 # -----------------------------------------------------------------------------
-# apero-listing.py
+# apero_listing.py
 # -----------------------------------------------------------------------------
 listing.name = 'apero_listing.py'
 listing.instrument = __INSTRUMENT__
@@ -174,14 +174,14 @@ listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   helpstr=Help['LISTING_HELP_KIND'])
 
 # -----------------------------------------------------------------------------
-# apero-requirements-check.py
+# apero_requirements-check.py
 # -----------------------------------------------------------------------------
 req_check.name = 'apero_dependencies.py'
 req_check.instrument = __INSTRUMENT__
 req_check.description = Help['DEPENDENCIES_DESCRIPTION']
 
 # -----------------------------------------------------------------------------
-# apero-mkdb.py
+# apero_mkdb.py
 # -----------------------------------------------------------------------------
 remake_db.name = 'apero_mkdb.py'
 remake_db.instrument = __INSTRUMENT__
@@ -195,7 +195,7 @@ remake_db.set_kwarg(name='--kind', dtype='options',
                     helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
 
 # -----------------------------------------------------------------------------
-# apero-validate.py
+# apero_validate.py
 # -----------------------------------------------------------------------------
 validate.name = 'apero_validate.py'
 validate.instrument = __INSTRUMENT__
