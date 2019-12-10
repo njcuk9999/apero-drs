@@ -324,6 +324,11 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     plimits = OrderedDict()
     # loop around each order
     rorder_num = 0
+
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
+
     for order_num in range(num_orders):
         # get the shape of the image
         nx2 = image.shape[1]
