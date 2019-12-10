@@ -78,6 +78,7 @@ User config path:
     This is the path where your user configuration will be saved.
     If it doesn't exist you will be prompted to create it. 
 """
+
 message2 = """
 Setup paths invidiually? [Y]es or [N]o
     
@@ -87,6 +88,7 @@ Setup paths invidiually? [Y]es or [N]o
     (raw, tmp, reduced, calibDB etc) will be created under this 
     directory.
 """
+
 message3 = """
 Clean install? [Y]es or [N]o
 
@@ -95,6 +97,9 @@ Clean install? [Y]es or [N]o
     will be removed.
     
 Note you can always say later to individual cases.
+
+Note if you have given empty directories you MUST run a clean install to copy
+the required files to the given directories.
 """
 
 message4 = """
