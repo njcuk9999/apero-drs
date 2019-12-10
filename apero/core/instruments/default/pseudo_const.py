@@ -290,7 +290,7 @@ class PseudoConstants:
             recipe = str(params['RECIPE'].replace('.py', ''))
         # construct the logfile path
         largs = [pid, recipe]
-        lpath = os.path.join(dir_data_msg, 'APEROL-{0}_{1}'.format(*largs))
+        lpath = os.path.join(dir_data_msg, 'APEROL-{0}_{1}.log'.format(*largs))
 
         # return lpath
         return lpath
