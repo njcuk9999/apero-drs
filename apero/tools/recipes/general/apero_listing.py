@@ -165,6 +165,14 @@ def __main__(recipe, params):
         # save to file
         drs_startup.save_index_file(params, istore, index_path)
 
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    # no quality control --> so set passed qc to True
+    recipe.log.no_qc(params)
+    # update log
+    recipe.log.end(params)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

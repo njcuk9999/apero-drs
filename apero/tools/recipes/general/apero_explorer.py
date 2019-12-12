@@ -95,8 +95,13 @@ def __main__(recipe, params):
     app = file_explorer.App(datastore=datastore)
     app.geometry("1024x768")
     app.mainloop()
-    # end with a log message
-    WLOG(datastore.params, '', 'Program has completed successfully')
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    # no quality control --> so set passed qc to True
+    recipe.log.no_qc(params)
+    # update log
+    recipe.log.end(params)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

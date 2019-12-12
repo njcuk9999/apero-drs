@@ -162,6 +162,13 @@ def __main__(recipe, params):
     else:
         WLOG(params, '', 'Not resetting run files.')
 
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    # no quality control --> so set passed qc to True
+    recipe.log.no_qc(params)
+    # update log
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code
