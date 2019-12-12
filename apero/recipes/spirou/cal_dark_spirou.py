@@ -119,6 +119,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -198,6 +202,8 @@ def __main__(recipe, params):
         # Quality control
         # ------------------------------------------------------------------
         qc_params, passed = dark.dark_qc(params, med_full, dadeadall, baddark)
+        # update recipe log
+        log1.add_qc(params, qc_params, passed)
 
         # ------------------------------------------------------------------
         # Save dark to file
@@ -223,6 +229,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         dark.dark_summary(recipe, it, params, dadead_full, med_full,
                           dadead_blue, med_blue, dadead_red, med_red, qc_params)
+        # ------------------------------------------------------------------
+        # update recipe log file
+        # ------------------------------------------------------------------
+        log1.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

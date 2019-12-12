@@ -191,6 +191,8 @@ def __main__(recipe, params):
     # Quality control
     # ----------------------------------------------------------------------
     qc_params, passed = telluric.mk_template_qc(params)
+    # update recipe log
+    recipe.log.add_qc(params, qc_params, passed)
 
     # ----------------------------------------------------------------------
     # Write cubes and median to file
@@ -224,6 +226,11 @@ def __main__(recipe, params):
     # Construct summary document
     # ----------------------------------------------------------------------
     telluric.mk_template_summary(recipe, params, cprops, qc_params)
+
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -149,6 +149,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -172,6 +176,10 @@ def __main__(recipe, params):
         # Loop around fibers
         # ------------------------------------------------------------------
         for fiber in fiber_types:
+            # ------------------------------------------------------------------
+            # add level to recipe log
+            log_hc = log1.add_level(params, 'mode=hc fiber', fiber)
+            # ------------------------------------------------------------------
             # log fiber process
             core.fiber_processing_update(params, fiber)
             # get hc and fp outputs
@@ -201,6 +209,9 @@ def __main__(recipe, params):
             qc_params = wave.hc_quality_control(params, hcprops)
             # passed if all qc passed
             passed = np.all(qc_params[-1])
+            # update recipe log
+            log_hc.add_qc(params, qc_params, passed)
+
             # --------------------------------------------------------------
             # log the global stats
             # --------------------------------------------------------------
@@ -239,11 +250,20 @@ def __main__(recipe, params):
                 hc_update.write()
                 # add to output files (for indexing)
                 recipe.add_output_file(hc_update)
+
+            # --------------------------------------------------------------
+            # update recipe log file for hc fiber
+            # --------------------------------------------------------------
+            log_hc.end(params)
+
             # --------------------------------------------------------------
             # FP addition to wavelength solution
             # --------------------------------------------------------------
             # check if there's a FP input and if HC solution passed QCs
             if (fp_e2ds_file is not None) and passed:
+                # ----------------------------------------------------------
+                # add level to recipe log
+                log_fp = log1.add_level(params, 'mode=fp fiber', fiber)
                 # ----------------------------------------------------------
                 # FP wavelength solution
                 # ----------------------------------------------------------
@@ -256,6 +276,9 @@ def __main__(recipe, params):
                 qc_params = wave.fp_quality_control(params, fpprops, qc_params)
                 # passed if all qc passed
                 passed = np.all(qc_params[-1])
+                # update recipe log
+                log_fp.add_qc(params, qc_params, passed)
+
                 # ----------------------------------------------------------
                 # write FP wavelength solution to file
                 # ----------------------------------------------------------
@@ -303,6 +326,11 @@ def __main__(recipe, params):
                     fp_update.write()
                     # add to output files (for indexing)
                     recipe.add_output_file(fp_update)
+                # ----------------------------------------------------------
+                # update recipe log file for fp fiber
+                # ----------------------------------------------------------
+                log_fp.end(params)
+
             # If the HC solution failed QCs we do not compute FP-HC solution
             elif (fp_e2ds_file is not None) and (not passed):
                 WLOG(params, 'warning', TextEntry('10-017-00006'))

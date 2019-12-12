@@ -184,12 +184,25 @@ def __main__(recipe, params):
     # Quality control
     # ----------------------------------------------------------------------
     qc_params, passed = polar.quality_control(params)
+    # update recipe log
+    recipe.log.add_qc(params, qc_params, passed)
 
     # ------------------------------------------------------------------
     # Store polarimetry in files
     # ------------------------------------------------------------------
     polar.write_files(params, recipe, pobjects, rawfiles, pprops, lprops,
                       wprops, polstats, s1dprops, qc_params)
+
+    # ------------------------------------------------------------------
+    # Add summary pdf
+    # ------------------------------------------------------------------
+    # construct summary (outside fiber loop)
+    recipe.plot.summary_document(0, qc_params)
+
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

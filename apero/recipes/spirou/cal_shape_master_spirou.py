@@ -232,6 +232,8 @@ def __main__(recipe, params):
     # Quality control
     # ------------------------------------------------------------------
     qc_params, passed = shape.shape_master_qc(params)
+    # update recipe log
+    recipe.log.add_qc(params, qc_params, passed)
 
     # ------------------------------------------------------------------
     # write files
@@ -256,6 +258,10 @@ def __main__(recipe, params):
     # Construct summary document
     # ------------------------------------------------------------------
     shape.write_shape_master_summary(recipe, params, fp_table, qc_params)
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

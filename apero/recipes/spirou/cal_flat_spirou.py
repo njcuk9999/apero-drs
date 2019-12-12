@@ -122,6 +122,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -168,6 +172,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # loop around fiber types
         for fiber in fibertypes:
+            # ------------------------------------------------------------------
+            # add level to recipe log
+            log2 = log1.add_level(params, 'fiber', fiber)
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
@@ -211,6 +218,8 @@ def __main__(recipe, params):
             # Quality control
             # --------------------------------------------------------------
             qc_params, passed = flat_blaze.flat_blaze_qc(params, eprops, fiber)
+            # update recipe log
+            log2.add_qc(params, qc_params, passed)
             # --------------------------------------------------------------
             # write files
             # --------------------------------------------------------------
@@ -244,6 +253,10 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             flat_blaze.flat_blaze_summary(recipe, params, qc_params, eprops,
                                           fiber)
+            # ------------------------------------------------------------------
+            # update recipe log file
+            # ------------------------------------------------------------------
+            log2.end(params)
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)
