@@ -132,8 +132,10 @@ class DrsRecipe(object):
         self.output_files = dict()
         self.debug_plots = []
         self.summary_plots = []
-        # the plotter
+        # the plotter class
         self.plot = None
+        # set the log class
+        self.log = None
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
         # get drs params
@@ -527,6 +529,8 @@ class DrsRecipe(object):
                 self.outputs[output] = newouput
         # copy plotter
         self.plot = recipe.plot
+        # copy logger
+        self.log = recipe.log
         # plot options
         self.debug_plots = list(recipe.debug_plots)
         self.summary_plots = list(recipe.summary_plots)
