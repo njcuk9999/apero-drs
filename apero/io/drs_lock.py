@@ -120,8 +120,9 @@ class Lock:
         """
         # clean name
         name = self.__clean_name(name)
+        filename = name + '.lock'
         # get absolute path
-        abspath = os.path.join(self.path, name + '.lock')
+        abspath = os.path.join(self.path, filename)
         # set up a timer
         timer = 0
         # keep trying to create the folder
@@ -131,7 +132,7 @@ class Lock:
                 try:
 
                     f = open(abspath, 'w')
-                    f.write(name)
+                    f.write(filename)
                     f.close()
                     break
                 except:
@@ -141,7 +142,7 @@ class Lock:
                     timer += 1
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
-                        wargs = [self.lockname, name]
+                        wargs = [self.lockname, filename]
                         # warn that lock is waiting due to making the lock file
                         wmsg = TextEntry('10-101-00002', args=wargs)
                         WLOG(self.params, 'warning', wmsg)
@@ -198,7 +199,8 @@ class Lock:
         # clean name
         name = self.__clean_name(name)
         # get the absolute path
-        abspath = os.path.join(self.path, name + '.lock')
+        filename = name + '.lock'
+        abspath = os.path.join(self.path, filename)
         # if the file exists remove it
         if os.path.exists(abspath):
             os.remove(abspath)
@@ -219,7 +221,8 @@ class Lock:
         # clean name
         name = self.__clean_name(name)
         # log progress: lock file added to queue
-        WLOG(self.params, '', TextEntry('40-101-00002', args=[name]))
+        filename = name + '.lock'
+        WLOG(self.params, '', TextEntry('40-101-00002', args=[filename]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
@@ -235,6 +238,7 @@ class Lock:
         """
         # clean name
         name = self.__clean_name(name)
+        filename = name + '.lock'
         # try to get the first file (this could fail if a file is removed by
         #   another process) - if it fails it is not your turn so wait longer
         try:
@@ -242,9 +246,9 @@ class Lock:
         except Exception as e:
             return False, e
         # if the unique name is first in the list then we can unlock this file
-        if name + '.lock' == first:
+        if filename == first:
             # log that lock file is unlocked
-            WLOG(self.params, '', TextEntry('40-101-00003', args=[name]))
+            WLOG(self.params, '', TextEntry('40-101-00003', args=[filename]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -258,7 +262,8 @@ class Lock:
         :return:
         """
         # log that lock file has been removed from the queue
-        WLOG(self.params, '', TextEntry('40-101-00004', args=[name]))
+        filename = name + '.lock'
+        WLOG(self.params, '', TextEntry('40-101-00004', args=[filename]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
