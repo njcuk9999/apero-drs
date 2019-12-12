@@ -255,9 +255,22 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # update params in log / and recipes after locking
     recipe.drs_params = params.copy()
     WLOG.pin = params.copy()
+    # -------------------------------------------------------------------------
     # add in the plotter
     if enable_plotter:
         recipe.plot = plotting.Plotter(params, recipe)
+    # -------------------------------------------------------------------------
+    # add the recipe log
+    recipe.log = drs_log.RecipeLog(recipe.name, params)
+    # add log file to log
+    recipe.log.set_log_file(drs_log.get_logfilepath(WLOG, params))
+    # add inputs to log
+    recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
+                          recipe.specialargs)
+    # set lock function
+    recipe.log.set_lock_func(drs_lock.locker)
+    # write recipe log
+    recipe.log.write(params)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
