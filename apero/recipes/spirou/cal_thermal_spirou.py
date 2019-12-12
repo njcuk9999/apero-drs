@@ -10,17 +10,14 @@ Created on 2019-07-05 at 16:46
 @author: cook
 """
 from __future__ import division
-import os
 
 from apero import core
 from apero import locale
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_startup
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.extract import other as extractother
-from apero.science.calib import thermal
 
 
 # =============================================================================
@@ -147,9 +144,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        qc_params, passed = thermal.quality_control(params)
-        # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        # no quality control --> set passed_qc to True
+        log1.no_qc(params)
 
         # ------------------------------------------------------------------
         # Write thermal files to file
