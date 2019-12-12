@@ -85,7 +85,7 @@ def main(directory=None, files=None, **kwargs):
     return core.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipes, params):
+def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # define DRS path
     drs_path = constants.get_relative_folder(params['DRS_PACKAGE'], '')
@@ -116,6 +116,13 @@ def __main__(recipes, params):
             WLOG(params, '', '\t{0: <16}({1})'.format(*args))
         else:
             WLOG(params, '', '\t{0}'.format(*args))
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    # no quality control --> so set passed qc to True
+    recipe.log.no_qc(params)
+    # update log
+    recipe.log.end(params)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
