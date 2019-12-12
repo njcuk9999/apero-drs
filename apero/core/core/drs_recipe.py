@@ -1717,7 +1717,7 @@ def convert_to_command(self, params, runargs):
             # deal with keyword arguments
             if argname in kwargs:
                 # add to command
-                command += '-{0} {1} '.format(argname, value)
+                command += '--{0} {1} '.format(argname, value)
         # append to out (removing trailing white spaces)
         outputs.append(command.strip())
     # return outputs
