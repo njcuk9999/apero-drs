@@ -2143,13 +2143,15 @@ def mk_tellu_quality_control(params, tprops, infile, **kwargs):
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
     else:
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
-    return qc_params
+    return qc_params, passed
 
 
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
@@ -2269,13 +2271,15 @@ def fit_tellu_quality_control(params, infile, **kwargs):
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
     else:
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
-    return qc_params
+    return qc_params, passed
 
 
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
