@@ -18,6 +18,7 @@ import os
 import time
 import numpy as np
 import glob
+import sys
 
 from apero.core import constants
 from apero.locale import drs_text
@@ -334,6 +335,27 @@ def synchronized(lock, name):
         return wrapperfunc
     # return the wrapped function
     return wrap
+
+
+def locker(params, lockfile, my_func, *args, **kwargs):
+    # define lock file
+    lock = Lock(params, lockfile)
+    # ------------------------------------------------------------------
+    # define wrapper lock file function
+    @synchronized(lock, params['PID'])
+    def locked_function():
+        return my_func(*args, **kwargs)
+    # ------------------------------------------------------------------
+    # try to run locked read function
+    try:
+        return locked_function()
+    except KeyboardInterrupt:
+        lock.reset()
+        sys.exit()
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
 
 
 def reset_lock_dir(params, log=False):
