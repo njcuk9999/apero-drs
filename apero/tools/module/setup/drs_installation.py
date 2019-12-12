@@ -8,12 +8,14 @@ Created on 2019-11-09 10:44
 @author: ncook
 Version 0.0.1
 """
+import importlib
 import numpy as np
 import sys
 import os
 import shutil
 import readline
 import glob
+from collections import OrderedDict
 
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
@@ -60,7 +62,7 @@ ENV_CONFIG = 'DRS_UCONFIG'
 SETUP_PATH = './tools/resources/setup/'
 
 VALIDATE_CODE = 'apero_validate.py'
-RESET_CODE = 'apero_reset.py'
+RESET_CODE = 'apero_reset'
 # set descriptions for data paths
 # TODO: these should be in the constants file?
 DATA_PATHS = dict()
@@ -284,6 +286,12 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 optionstr = ' or '.join(np.array(options, dtype=str))
                 cprint('Response must be {0}'.format(optionstr), 'y')
                 check = True
+    # deal with path
+    if dtype == 'path':
+        if '.' not in uinput:
+            if not uinput.endswith(os.sep):
+                uinput += os.sep
+
     # deal with returning default
     if uinput == '' and default is not None:
         return default
@@ -473,6 +481,22 @@ def copy_configs(params, all_params):
     return all_params
 
 
+def create_configs(params, all_params):
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    # get config directory
+    userconfig = all_params['USERCONFIG']
+    # loop around instruments
+    for instrument in drs_instruments:
+        if instrument in all_params:
+            # load params for instrument
+            iparams = constants.load(instrument.upper())
+
+            # create lines
+            config_lines, const_lines = find_user_params(iparams, instrument)
+
+
+
 def update_configs(all_params):
     # loop around instruments
     for instrument in INSTRUMENTS:
@@ -607,6 +631,11 @@ def clean_install(params, all_params):
     package = params['DRS_PACKAGE']
     # get root directory
     tool_path = constants.get_relative_folder(package, TOOL_RECIPEPATH)
+
+    # append tool path
+    sys.path.append(tool_path)
+    toolmod = importlib.import_module(RESET_CODE)
+
     # loop around instruments
     for instrument in INSTRUMENTS:
         # skip is we are not installing instrument
@@ -627,11 +656,9 @@ def clean_install(params, all_params):
         add_paths(all_params)
         # construct reset command
         if not cond1:
-            cmd = 'python {0}/{1} {2} --quiet --warn'
+            toolmod.main(instrument=instrument, quiet=None, warn=1)
         else:
-            cmd = 'python {0}/{1} {2} --quiet'
-        # run command
-        os.system(cmd.format(tool_path, RESET_CODE, instrument))
+            toolmod.main(instrument=instrument, quiet=None)
     # return all params
     return all_params
 
@@ -781,6 +808,179 @@ def reset_paths_empty(params, all_params):
     # if we have got here return False --> none are empty
     return False
 
+
+# =============================================================================
+# create user files functions
+# =============================================================================
+def find_user_params(params, instrument):
+    # storage of parameters of different types
+    active_config = OrderedDict()
+    inactive_config = OrderedDict()
+    active_const = OrderedDict()
+    inactive_const = OrderedDict()
+
+    config_groups = []
+    const_groups = []
+
+    # loop around all parameters
+    for param in params:
+        # ------------------------------------------------------------------
+        # get instance
+        instance = params.instances[param]
+        # if we don't have instance we continue
+        if instance is None:
+            continue
+        # get group name
+        group = instance.group
+        # get user variable
+        user = instance.user
+        # get active variable
+        active = instance.active
+        # ------------------------------------------------------------------
+        # if we have no group we don't want this in config files
+        if group is None:
+            continue
+        # if user if False we don't want this in config files
+        if user is False:
+            continue
+        # ------------------------------------------------------------------
+        # get source of data
+        source = params.sources[param]
+        # get config/const
+        if 'user_config' in source:
+            kind = 'config'
+        elif 'default_config' in source:
+            kind = 'config'
+        elif 'default_constants' in source:
+            kind = 'const'
+        elif 'user_constants' in source:
+            kind = 'const'
+        else:
+            continue
+        # ------------------------------------------------------------------
+        # add group to group storage (in correct order)
+        if kind == 'config' and group not in config_groups:
+            config_groups.append(group)
+        elif group not in const_groups:
+            const_groups.append(group)
+        # ------------------------------------------------------------------
+        # decide on group
+        if active and kind == 'config':
+            if group in active_config:
+                active_config[group].append([instance, params[param]])
+            else:
+                active_config[group] = [[instance, params[param]]]
+        elif active and kind == 'const':
+            if group in active_const:
+                active_const[group].append([instance, params[param]])
+            else:
+                active_const[group] = [[instance, params[param]]]
+        elif not active and kind == 'config':
+            if group in inactive_config:
+                inactive_config[group].append([instance, params[param]])
+            else:
+                inactive_config[group] = [[instance, params[param]]]
+        elif not active and kind == 'const':
+            if group in inactive_const:
+                inactive_const[group].append([instance, params[param]])
+            else:
+                inactive_const[group] = [[instance, params[param]]]
+    # ------------------------------------------------------------------
+    # create config file
+    config_lines = create_file(instrument, 'config', active_config,
+                               inactive_config, config_groups)
+    # create const file
+    const_lines = create_file(instrument, 'constant', active_const,
+                              inactive_const, const_groups)
+    # ------------------------------------------------------------------
+
+
+
+def create_file(instrument, kind, active, inactive, grouplist):
+    lines = []
+    lines += user_header('{0} {1} file'.format(instrument, kind))
+
+    # loop around groups
+    for group in grouplist:
+
+        if group in active:
+            # TODO: finish here
+            pass
+
+
+
+def user_header(title):
+    lines = []
+    lines.append('# {0} \n'.format('-' * 77))
+    lines.append('# ')
+    lines.append('  {0}'.format(title))
+    lines.append('# ')
+    lines.append('# {0} \n'.format('-' * 77))
+
+# =============================================================================
+# update functions
+# =============================================================================
+def update(params):
+    # set function name
+    func_name = __NAME__ + '.update()'
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    # get config path
+    config_env = params['DRS_USERENV']
+    # check for config environment set
+    config_path = os.getenv(config_env)
+    # deal with no config path set
+    if config_path is None:
+        cprint('Error: Cannot run update. Must be in apero environment '
+               '(i.e. source apero.{SYSTEM}.setup).', 'r')
+        sys.exit()
+    # ----------------------------------------------------------------------
+    # find all installed instruments
+    instruments = []
+    files = os.listdir(config_path)
+    # loop through filenames
+    for filename in files:
+        # get abspath
+        abspath = os.path.join(config_path, filename)
+        # check if valid instrument
+        if os.path.isdir(abspath) and filename.upper() in drs_instruments:
+            instruments.append(filename.upper())
+    # ----------------------------------------------------------------------
+    # set up dictionary
+    all_params = dict()
+     # loop around instruments
+    for instrument in instruments:
+        # ------------------------------------------------------------------
+        # set up instrument storage
+        istorage = ParamDict()
+        # add user config
+        all_params['USERCONFIG'] = config_path
+        istorage['USERCONFIG'] = config_path
+        istorage.set_source('USERCONFIG', func_name)
+        # load params for instrument
+        iparams = constants.load(instrument.upper())
+        # ------------------------------------------------------------------
+        # loop around data paths
+        for datapath in DATA_PATHS.keys():
+            # get data paths
+            istorage[datapath] = str(iparams[datapath])
+            istorage.set_source(datapath, iparams.sources[datapath])
+        # ------------------------------------------------------------------
+        # add clean install
+        istorage['CLEAN_INSTALL'] = False
+        istorage.set_source('CLEAN_INSTALL', func_name)
+        # add ds9
+        istorage['DRS_DS9_PATH'] = iparams['DRS_DS9_PATH']
+        istorage.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
+        # add pdflatex
+        istorage['DRS_PDFLATEX_PATH'] = iparams['DRS_PDFLATEX_PATH']
+        istorage.set_source('DRS_PDFLATEX_PATH',
+                            iparams.sources['DRS_PDFLATEX_PATH'])
+        # ------------------------------------------------------------------
+        # add to all_params
+        all_params[instrument] = istorage
+    # return all params
+    return all_params
 
 
 # =============================================================================

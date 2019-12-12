@@ -49,7 +49,7 @@ class Const:
     def __init__(self, name, value=None, dtype=None, dtypei=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
-                 group=None):
+                 group=None, user=False, active=False):
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -63,6 +63,8 @@ class Const:
         self.datatype = datatype
         self.dataformat = dataformat
         self.group = group
+        self.user = user
+        self.active = active
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
@@ -100,7 +102,20 @@ class Const:
         # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
                      self.options, self.maximum, self.minimum, source=source,
-                     unit=self.unit)
+                     unit=self.unit, default=self.default,
+                     datatype=self.datatype, dataformat=self.dataformat,
+                     group=self.group, user=self.user, active=self.active)
+
+    def write_line(self):
+
+        lines = []
+        # add description
+
+
+
+        if self.active:
+            # TODO: finish here
+            pass
 
 
 class Keyword(Const):
@@ -185,7 +200,9 @@ class Keyword(Const):
         # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
                        self.comment, self.options, self.maximum,
-                       self.minimum, source=source)
+                       self.minimum, source=source, unit=self.unit,
+                       default=self.default, datatype=self.datatype,
+                       dataformat=self.dataformat, group=self.group)
 
 
 # =============================================================================
@@ -349,6 +366,33 @@ def update_file(filename, dictionary):
         emsg = ('\n\t\t {0}: File "{1}" cannot be written to by {2}. '
                 '\n\t\t Error was: {3}')
         raise ConfigError(emsg.format(type(e), filename, func_name, e))
+
+
+def textwrap(input_string, length):
+    # Modified version of this: https://stackoverflow.com/a/16430754
+    new_string = []
+    for s in input_string.split("\n"):
+        if s == "":
+            new_string.append('')
+        wlen = 0
+        line = []
+        for dor in s.split():
+            if wlen + len(dor) + 1 <= length:
+                line.append(dor)
+                wlen += len(dor) + 1
+            else:
+                new_string.append(" ".join(line))
+                line = [dor]
+                wlen = len(dor)
+        if len(line):
+            new_string.append(" ".join(line))
+
+    # add a tab to all but first line
+    new_string2 = [new_string[0]]
+    for it in range(1, len(new_string)):
+        new_string2.append('\t' + new_string[it])
+
+    return new_string2
 
 
 # =============================================================================
