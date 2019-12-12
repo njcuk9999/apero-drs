@@ -598,7 +598,7 @@ class RecipeLog:
         self.set.append(newlog)
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            newlog.write(params)
         # return newlog (for use)
         return newlog
 
@@ -618,6 +618,12 @@ class RecipeLog:
             qargs = [qc_names[it], qc_values[it], qc_logic[it]]
             self.qc_value += '{0}={1} ({2})'.format(*qargs)
 
+        # whether to write (update) recipe log file
+        if write:
+            self.write(params)
+
+    def no_qc(self, params, write=True):
+        self.passed_qc = True
         # whether to write (update) recipe log file
         if write:
             self.write(params)
@@ -663,6 +669,7 @@ class RecipeLog:
 
     def _make_row(self):
         row = OrderedDict()
+        row['RECIPE'] = self.name
         row['PID'] = self.pid
         row['LEVEL'] = self.level
         row['SUBLEVEL'] = self.level_iteration
