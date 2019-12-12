@@ -18,6 +18,8 @@ import numpy as np
 import os
 import sys
 from time import sleep
+from astropy.table import Table
+from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
@@ -499,6 +501,269 @@ class Printer():
             sleep(sleeptimer)
 
 
+class RecipeLog:
+
+    def __init__(self, name, params, level=0):
+        # get the recipe name
+        self.name = str(name)
+        self.defaultpath = str(params['DRS_DATA_MSG'])
+        self.logfitsfile = 'log.fits'
+        self.inputdir = str(params['INPATH'])
+        self.outputdir = str(params['OUTPATH'])
+        # set the pid
+        self.pid = str(params['PID'])
+        # set the night name directory
+        self.directory = str(params['NIGHTNAME'])
+        # get lof fits path
+        self.logfitspath = self._get_write_dir()
+        # define lockfile (we need to lock the directory while this is
+        #   being done)
+        self.lockfile = self.directory + '_log'
+        # set the log file name
+        self.log_file = 'None'
+        # set the inputs
+        self.args = ''
+        self.kwargs = ''
+        self.skwargs = ''
+        # set that recipe started
+        self.started = True
+        # set the iteration
+        self.set = []
+        # set the level (top level=0)
+        self.level = level
+        # set the level criteria
+        self.level_criteria = ''
+        self.level_iteration = 0
+        # set qc
+        self.passed_qc = False
+        # set qc paarams
+        self.qc_value = ''
+        # set the errors
+        self.errors = ''
+        # set that recipe ended
+        self.ended = False
+        # set lock function
+        self.lfunc = None
+
+    def copy(self, rlog):
+        self.name = str(rlog.name)
+        self.defaultpath = str(rlog.defaultpath)
+        self.inputdir = str(rlog.inputdir)
+        self.outputdir = str(rlog.outputdir)
+        self.pid = str(rlog.pid)
+        self.directory = str(rlog.directory)
+        self.logfitspath = str(rlog.logfitspath)
+        self.lockfile = str(rlog.lockfile)
+        self.log_file = str(rlog.log_file)
+        self.args = str(rlog.args)
+        self.kwargs = str(rlog.kwargs)
+        self.skwargs = str(rlog.skwargs)
+        self.level_criteria = str(rlog.level_criteria)
+        self.lfunc = rlog.lfunc
+
+    def set_log_file(self, logfile):
+        self.log_file = logfile
+
+    def set_inputs(self, params, rargs, rkwargs, rskwargs):
+        # deal with not having inputs
+        if 'INPUTS' not in params:
+            return
+        # get inputs
+        inputs = params['INPUTS']
+        # ------------------------------------------------------------------
+        # deal with arguments
+        self.args = _input_str(inputs, rargs, kind='arg')
+        # ------------------------------------------------------------------
+        # deal with kwargs
+        self.kwargs = _input_str(inputs, rkwargs, kind='kwargs')
+        # ------------------------------------------------------------------
+        # deal with special kwargs
+        self.skwargs = _input_str(inputs, rskwargs, kind='skwargs')
+
+    def set_lock_func(self, func):
+        self.lfunc = func
+
+    def add_level(self, params, key, value, write=True):
+        # get new level
+        level = self.level + 1
+        # create new log
+        newlog = RecipeLog(self.name, params, level=level)
+        # copy from parent
+        newlog.copy(self)
+        # record level criteria
+        newlog.level_criteria += '{0}={1} '.format(key, value)
+        # update the level iteration
+        newlog.level_iteration = len(self.set)
+        # add newlog to set
+        self.set.append(newlog)
+        # whether to write (update) recipe log file
+        if write:
+            self.write(params)
+        # return newlog (for use)
+        return newlog
+
+    def add_qc(self, params, qc_params, passed, write=True):
+        # update passed
+        if passed in [1, True, '1']:
+            self.passed_qc = True
+        else:
+            self.passed_qc = False
+        # update qc params
+        qc_names, qc_values, qc_logic, qc_pass = qc_params
+        for it in range(len(qc_names)):
+            # deal with no qc set
+            if qc_names[it] in ['None', None, '']:
+                continue
+            # deal with qc set
+            qargs = [qc_names[it], qc_values[it], qc_logic[it]]
+            self.qc_value += '{0}={1} ({2})'.format(*qargs)
+
+        # whether to write (update) recipe log file
+        if write:
+            self.write(params)
+
+    def end(self, params, write=True):
+
+        self.ended = True
+        # whether to write (update) recipe log file
+        if write:
+            self.write(params)
+
+    def write(self, params):
+        if self.lfunc is None:
+            return self._writer()
+        else:
+            return self.lfunc(params, self.lockfile, self._writer)
+
+    # private methods
+    def _get_write_dir(self):
+        # ------------------------------------------------------------------
+        # get log path
+        if self.outputdir not in ['None', '', None]:
+            path = self.outputdir
+            # if we have a night name add it
+            if self.directory not in ['None', '', None]:
+                path = os.path.join(path, self.directory)
+        # else use the default path
+        else:
+            path = self.defaultpath
+        # ------------------------------------------------------------------
+        # check that directory exists
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except:
+                # TODO: move to language database
+                emsg = 'RecipeLogError: Cannot make path {0} for recipe log.'
+                eargs = [path]
+                raise DrsError(emsg.format(*eargs))
+        # ------------------------------------------------------------------
+        # return absolute log file path
+        return os.path.join(path, self.logfitsfile)
+
+    def _make_row(self):
+        row = OrderedDict()
+        row['PID'] = self.pid
+        row['LEVEL'] = self.level
+        row['SUBLEVEL'] = self.level_iteration
+        row['LEVEL_CRIT'] = self.level_criteria
+        row['INPATH'] = self.inputdir
+        row['OUTPATH'] = self.outputdir
+        row['DIRECTORY'] = self.directory
+        row['LOGFILE'] = self.log_file
+        row['ARGS'] = self.args
+        row['KWARGS'] = self.kwargs
+        row['SKWARGS'] = self.skwargs
+        row['STARTED'] = self.started
+        row['PASSED_QC'] = self.passed_qc
+        row['QC_VALUES'] = self.qc_value
+        row['ERRORS'] = self.errors
+        row['ENDED'] = self.ended
+        return row
+
+    def _get_rows(self):
+        rows = []
+        # case where we have no sets
+        if len(self.set) == 0:
+            rows.append(self._make_row())
+        else:
+            # else we have children
+            for child in self.set:
+                rows += child._get_rows()
+        # return rows
+        return rows
+
+    def _writer(self):
+        # get write path
+        writepath = self.logfitspath
+        # ------------------------------------------------------------------
+        # check to see if table already exists
+        if os.path.exists(writepath):
+            try:
+                table = Table.read(writepath)
+            except:
+                # TODO: move to language database
+                emsg = 'RecipeLogError: Cannot read file {0}'
+                eargs = [writepath]
+                raise DrsError(emsg.format(*eargs))
+        else:
+            table = None
+        # ------------------------------------------------------------------
+        # if pid in table remove all lines containing it (start with a clean
+        #   table)
+        if table is not None:
+            # find all rows with same PID
+            mask = self.pid == table['PID']
+            # find all rows with same level iteration
+            mask &= self.level_iteration == table['SUBLEVEL']
+            # keep all files that don't match mask
+            if np.sum(mask) > 0:
+                table = table[~mask]
+        # ------------------------------------------------------------------
+        # generate row(s) to add to table
+        rows = self._get_rows()
+        # ------------------------------------------------------------------
+        # add rows to table
+        # ------------------------------------------------------------------
+        tabledict = OrderedDict()
+        # ------------------------------------------------------------------
+        # populate with old table
+        if table is not None:
+            for col in table.colnames:
+                # deal with having
+                tabledict[col] = list(table[col])
+        # ------------------------------------------------------------------
+        # loop around rows and add to tabledict
+        for row in rows:
+            # loop around columns in row
+            for col in row:
+                # get column value
+                cvalue = row[col]
+                # deal with '' and None
+                if cvalue in ['', 'None', None]:
+                    cvalue = 'None'
+                # append to table
+                if col in tabledict:
+                    tabledict[col].append(cvalue)
+                # deal with column not in table dict (should only happen when
+                #   we have no previous rows/no previous table)
+                else:
+                    tabledict[col] = [cvalue]
+        # ------------------------------------------------------------------
+        # create new master table
+        mastertable = Table()
+        for col in tabledict:
+            mastertable[col] = tabledict[col]
+        # ------------------------------------------------------------------
+        # write to disk
+        try:
+            mastertable.write(writepath, format='fits', overwrite=True)
+        except Exception as e:
+            # TODO: move to language database
+            emsg = 'RecipeLogError: Cannot write file {0} \n\t Error {1}: {2}'
+            eargs = [writepath, type(e), str(e)]
+            raise DrsError(emsg.format(*eargs))
+
 # =============================================================================
 # Define our instance of wlog
 # =============================================================================
@@ -507,7 +772,7 @@ wlog = Logger()
 
 
 # =============================================================================
-# Define function
+# Define Logger functions
 # =============================================================================
 def find_param(params=None, key=None, name=None, kwargs=None, func=None,
                mapf=None, dtype=None, paramdict=None, required=True,
@@ -1192,6 +1457,48 @@ def get_drs_data_msg(params, group=None):
                 return './'
         else:
             return default_msg
+
+
+# =============================================================================
+# Define Recipe Log functions
+# =============================================================================
+def _input_str(inputs, argdict, kind='arg'):
+    # setup input str
+    inputstr = ''
+    # deal with kind
+    if kind == 'arg':
+        prefix = ''
+    else:
+        prefix = '--'
+    # deal with arguments
+    for argname in argdict:
+        # get arg
+        arg = argdict[argname]
+        # strip prefix (may or may not have one)
+        argname = argname.strip(prefix)
+        # get input arg
+        iarg = inputs[argname.strip(prefix)]
+        # add prefix (add prefix whether it had one or not)
+        argname = prefix + argname
+        # deal with file arguments
+        if arg.dtype in ['file', 'files']:
+            if not isinstance(iarg, list):
+                continue
+            # get string and drsfile
+            strfiles = iarg[0]
+            drsfiles = iarg[1]
+            # deal with having string (force to list)
+            if isinstance(strfiles, str):
+                strfiles = [strfiles]
+                drsfiles = [drsfiles]
+            for f_it in range(len(strfiles)):
+                # add to list
+                fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
+                inputstr += '{0}[1]={2}[{3}] '.format(*fargs)
+        else:
+            inputstr += '{0}={1} '.format(argname, iarg)
+    # return the input string
+    return inputstr.strip()
 
 
 # =============================================================================
