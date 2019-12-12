@@ -147,6 +147,8 @@ def __main__(recipe, params):
     # Quality control
     # ------------------------------------------------------------------
     qc_params, passed = dark.master_qc(params)
+    # update recipe log
+    recipe.log.add_qc(params, qc_params, passed)
 
     # ----------------------------------------------------------------------
     # Save master dark to file
@@ -164,6 +166,11 @@ def __main__(recipe, params):
     # Construct summary document
     # ------------------------------------------------------------------
     dark.master_summary(recipe, params, qc_params, dark_table)
+
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

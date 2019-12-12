@@ -145,6 +145,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -228,7 +232,10 @@ def __main__(recipe, params):
         # Quality control
         # ------------------------------------------------------------------
         pargs = [tellu_props, infile]
-        qc_params = telluric.mk_tellu_quality_control(params, *pargs)
+        qc_params, passed = telluric.mk_tellu_quality_control(params, *pargs)
+        # update recipe log
+        log1.add_qc(params, qc_params, passed)
+
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
@@ -246,6 +253,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         telluric.mk_tellu_summary(recipe, it, params, qc_params, tellu_props,
                                   fiber)
+        # ------------------------------------------------------------------
+        # update recipe log file
+        # ------------------------------------------------------------------
+        log1.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

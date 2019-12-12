@@ -20,6 +20,7 @@ from apero.core.core import drs_startup
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.extract import other as extractother
+from apero.science.calib import thermal
 
 
 # =============================================================================
@@ -125,6 +126,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -138,6 +143,13 @@ def __main__(recipe, params):
         thermal_files = extractother.extract_thermal_files(*eargs)
 
         # TODO: deal with sky darks here
+
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        qc_params, passed = thermal.quality_control(params)
+        # update recipe log
+        log1.add_qc(params, qc_params, passed)
 
         # ------------------------------------------------------------------
         # Write thermal files to file
@@ -157,6 +169,10 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # add output from thermal files
             drs_database.add_file(params, thermal_files[fiber])
+        # ------------------------------------------------------------------
+        # update recipe log file
+        # ------------------------------------------------------------------
+        log1.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code
