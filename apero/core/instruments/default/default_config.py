@@ -54,50 +54,70 @@ Const = constant_functions.Const
 # =============================================================================
 # global settings
 # =============================================================================
+cgroup = 'GLOBAL SETTINGS'
 # Whether to plotting (True or 1 to plotting)
-DRS_PLOT = Const('DRS_PLOT', value=0, dtype=int, source=__NAME__)
+DRS_PLOT = Const('DRS_PLOT', value=0, dtype=int, source=__NAME__, user=True,
+                 active=True, group=cgroup)
 
 # Whether to run in debug mode
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = Const('DRS_DEBUG', value=0, dtype=int, source=__NAME__)
+DRS_DEBUG = Const('DRS_DEBUG', value=0, dtype=int, source=__NAME__, user=True,
+                  active=True, group=cgroup)
+
+# Language
+LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
+                 source=__NAME__, user=True, active=True, group=cgroup)
 
 # =============================================================================
 # path settings
 # =============================================================================
+cgroup = 'PATH SETTINGS'
 #   Define the root installation directory
-DRS_ROOT = Const('DRS_ROOT', dtype='path', source=__NAME__)
+DRS_ROOT = Const('DRS_ROOT', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/apero-drs/')
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = Const('DRS_DATA_RAW', dtype='path', source=__NAME__)
+DRS_DATA_RAW = Const('DRS_DATA_RAW', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/raw')
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype='path', source=__NAME__)
+DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/reduced')
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = Const('DRS_CALIB_DB', dtype='path', source=__NAME__)
+DRS_CALIB_DB = Const('DRS_CALIB_DB', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/calibDB')
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_TELLU_DB = Const('DRS_TELLU_DB', dtype='path', source=__NAME__)
+DRS_TELLU_DB = Const('DRS_TELLU_DB', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/telluDB')
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__)
+DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/msg')
 
 #   Define the working directory
-DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__)
+DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__,
+                         user=True, active=True, group=cgroup,
+                         value='/drs/data/tmp')
 
 #   Define the plotting directory
-DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__)
+DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/plot')
 
 #   Define the run directory
-DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__)
+DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__, user=True,
+                 active=True, group=cgroup, value='/drs/data/runs')
 
 #   Define ds9 path (optional)
-DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype=str, source=__NAME__)
+DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype=str, source=__NAME__, user=True,
+                     active=True, group=cgroup, value='None')
 
 #   Define latex path (optional)
-DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__)
+DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
+                          user=True, active=True, group=cgroup, value='None')
 
 # =============================================================================
 # =============================================================================
@@ -125,9 +145,6 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
 # Date
 DRS_DATE = Const('DATE', value='2019-12-10', dtype=str, source=__NAME__)
 
-# Language
-LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
-                 source=__NAME__)
 
 # =============================================================================
 # DRS SETTINGS

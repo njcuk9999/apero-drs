@@ -66,6 +66,11 @@ Optional Arguments:
 
 --skip         skip the python module checks (Not recommended)
 
+--dev          activate developer mode (adds all constants to user config/
+               constant files
+
+--update       updates installation (not clean install)
+
 --help, -h     show this help message and exit
 
  ***************************************************************************
@@ -243,43 +248,7 @@ def tab_input(message, root=None):
     return uinput
 
 
-
-
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-
-
-    # get arguments
-    args = sys.argv
-    # ----------------------------------------------------------------------
-    # Help
-    # ----------------------------------------------------------------------
-    if '--help' in args or '-h' in args:
-        print(HELP_MESSAGE.format(DRS_PATH))
-        sys.exit()
-
-    # ----------------------------------------------------------------------
-    # Validate modules
-    # ----------------------------------------------------------------------
-    if '--skip' not in args:
-        validate()
-
-    # ----------------------------------------------------------------------
-    # Importing DRS paths
-    # ----------------------------------------------------------------------
-    # set import condition to True
-    cond = True
-    # set guess path
-    drs_path = str(DRS_PATH)
-    # set modules to None
-    constants, install = None, None
-    # catch Ctrl+C
-    signal.signal(signal.SIGINT, catch_sigint)
+def check_install():
     # loop until we can import modules
     while cond:
         # try to import the drs
@@ -313,8 +282,60 @@ if __name__ == "__main__":
         except Exception as _:
             print('Cannot import {0}. Exiting'.format(install_mod))
             sys.exit()
+
+        # add apero to the PYTHONPATH
+        if 'PYTHONPATH' in os.environ:
+            oldpath = os.environ['PYTHONPATH']
+            os.environ['PYTHONPATH'] = drs_path + os.pathsep + oldpath
+        else:
+            os.environ['PYTHONPATH'] = drs_path
+        # add to active path
+        os.sys.path = [drs_path] + os.sys.path
+
         # if we have reached this point we can break out of the while loop
-        break
+        return constants, install, drs_path
+
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+
+
+    # get arguments
+    args = sys.argv
+    # ----------------------------------------------------------------------
+    # Help
+    if '--help' in args or '-h' in args:
+        print(HELP_MESSAGE.format(DRS_PATH))
+        sys.exit()
+    # Validate modules
+    if '--skip' not in args:
+        validate()
+    # Dev mode
+    if '--dev' in args:
+        devmode = True
+    else:
+        devmode = False
+    # Update mode
+    if '--update' in args:
+        update = True
+    else:
+        update = False
+
+    # ----------------------------------------------------------------------
+    # Importing DRS paths
+    # ----------------------------------------------------------------------
+    # set import condition to True
+    cond = True
+    # set guess path
+    drs_path = str(DRS_PATH)
+    # catch Ctrl+C
+    signal.signal(signal.SIGINT, catch_sigint)
+    # get install paths
+    constants, install, root = check_install()
 
     # ----------------------------------------------------------------------
     # start up
@@ -329,8 +350,14 @@ if __name__ == "__main__":
     if '--gui' in args:
         print('GUI features not implemented yet.')
         sys.exit()
-    else:
+    # get parameters from user input
+    elif not update:
         allparams = install.user_interface(params)
+    else:
+        allparams = install.update(params)
+    # add root to allparams
+    allparams['ROOT'] = root
+
     # ----------------------------------------------------------------------
     # End of user setup
     # ----------------------------------------------------------------------

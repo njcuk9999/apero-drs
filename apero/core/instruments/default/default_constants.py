@@ -255,6 +255,7 @@ Const = constant_functions.Const
 # =============================================================================
 # DRS DATA SETTINGS
 # =============================================================================
+cgroup = 'DRS DATA SETTINGS'
 # Define the data engineering path
 DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
                          source=__NAME__)
@@ -265,18 +266,21 @@ DATA_CORE = Const('DATA_CORE', value=None, dtype=str, source=__NAME__)
 # Define whether to force wave solution from calibration database (instead of
 #  using header wave solution if available)
 CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=False, group=cgroup)
 
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+const_group = 'COMMON IMAGE SETTINGS'
 # Define the fibers
 FIBER_TYPES = Const('FIBER_TYPES', dtype=str, value=None, source=__NAME__)
 
 # Defines whether to by default combine images that are inputted at the same
 # time
 INPUT_COMBINE_IMAGES = Const('INPUT_COMBINE_IMAGES', dtype=bool, value=True,
-                             source=__NAME__)
+                             source=__NAME__, user=True, active=False,
+                             group=cgroup)
 
 # Defines whether to, by default, flip images that are inputted
 INPUT_FLIP_IMAGE = Const('INPUT_FLIP_IMAGE', dtype=bool, value=True,
@@ -403,6 +407,7 @@ FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
+cgroup = 'PRE-PROCESSING SETTINGS'
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
                             minimum=0, source=__NAME__)
@@ -459,7 +464,7 @@ RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', value=None, dtype=int,
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
-                     source=__NAME__)
+                     source=__NAME__, user=True, active=False, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -1111,18 +1116,21 @@ EXTRACT_S1D_PLOT_ZOOM2 = Const('EXTRACT_S1D_PLOT_ZOOM2', value=None,
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION: THERMAL SETTINGS'
 # whether to apply the thermal correction to extractions
 THERMAL_CORRECT = Const('THERMAL_CORRECT', value=None, dtype=bool,
-                        source=__NAME__)
+                        source=__NAME__, user=True, active=False, group=cgroup)
 
 # define whether to always extract thermals (i.e. overwrite existing files)
 THERMAL_ALWAYS_EXTRACT = Const('THERMAL_ALWAYS_EXTRACT', value=None,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__,
+                               user=True, active=False, group=cgroup)
 
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF'
 THERMAL_EXTRACT_TYPE = Const('THERMAL_EXTRACT_TYPE', value=None, dtype=str,
-                             source=__NAME__)
+                             source=__NAME__, user=True, active=False,
+                             group=cgroup)
 
 # define DPRTYPEs we need to correct thermal background using
 #  telluric absorption (TAPAS)
@@ -1166,6 +1174,7 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
                            source=__NAME__)
@@ -1193,16 +1202,18 @@ WAVE_LINELIST_AMPCOL = Const('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
 # define whether to always extract HC/FP files in the wave code (even if they
 #    have already been extracted
 WAVE_ALWAYS_EXTRACT = Const('WAVE_ALWAYS_EXTRACT', value=None, dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__, user=True, active=False,
+                            group=cgroup)
 
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF'
 WAVE_EXTRACT_TYPE = Const('WAVE_EXTRACT_TYPE', value=None, dtype=str,
-                          source=__NAME__, options=['E2DS', 'E2DSFF'])
+                          source=__NAME__, options=['E2DS', 'E2DSFF'],
+                          user=True, active=False, group=cgroup)
 
 # define the fit degree for the wavelength solution
 WAVE_FIT_DEGREE = Const('WAVE_FIT_DEGREE', value=None, dtype=int,
-                        source=__NAME__)
+                        source=__NAME__, user=True, active=False, group=cgroup)
 
 # Define intercept and slope for a pixel shift
 WAVE_PIXEL_SHIFT_INTER = Const('WAVE_PIXEL_SHIFT_INTER', value=None,
@@ -1225,9 +1236,10 @@ WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION: WAVE HC SETTING'
 # Define the mode to calculate the hc wave solution
 WAVE_MODE_HC = Const('WAVE_MODE_HC', value=None, dtype=int, source=__NAME__,
-                     options=[0])
+                     options=[0], user=True, active=False, group=cgroup)
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 #     so a 2*W+1 window
@@ -1390,9 +1402,10 @@ WAVE_LITTROW_QC_DEV_MAX = Const('WAVE_LITTROW_QC_DEV_MAX', value=None,
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION: WAVE FP SETTING'
 # Define the mode to calculate the fp wave solution
 WAVE_MODE_FP = Const('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
-                     options=[0, 1])
+                     options=[0, 1], user=True, active=False, group=cgroup)
 
 # Define the initial value of FP effective cavity width 2xd in nm
 WAVE_FP_DOPD0 = Const('WAVE_FP_DOPD0', value=None, dtype=float,
@@ -1744,20 +1757,24 @@ MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
+cgroup = 'OBJECT: FIT TELLURIC SETTINGS'
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
-                                  dtype=int, source=__NAME__, minimum=1)
+                                  dtype=int, source=__NAME__, minimum=1,
+                                  user=True, active=False, group=cgroup)
 
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
 #     offset of the PCs this is performed in the pixel space and NOT the
 #     velocity space as this is should be due to an instrument shift
 FTELLU_ADD_DERIV_PC = Const('FTELLU_ADD_DERIV_PC', value=None, dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__, user=True, active=False,
+                            group=cgroup)
 
 # Define whether to fit the derivatives instead of the principal components
 FTELLU_FIT_DERIV_PC = Const('FTELLU_FIT_DERIV_PC', value=None, dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__, user=True, active=False,
+                            group=cgroup)
 
 # The number of pixels required (per order) to be able to interpolate the
 #    template on to a berv shifted wavelength grid
@@ -1804,23 +1821,28 @@ FTELLU_SPLOT_ORDER = Const('FTELLU_SPLOT_ORDER', value=None,
 # =============================================================================
 # OBJECT: MAKE TEMPLATE SETTINGS
 # =============================================================================
+cgroup = 'OBJECT: MAKE TEMPLATE SETTINGS'
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
 TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
-                          source=__NAME__)
+                          source=__NAME__, user=True, active=False,
+                          group=cgroup)
 
 # the fiber required for input template files
 TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None, dtype=str,
-                            source=__NAME__)
+                            source=__NAME__, user=True, active=False,
+                            group=cgroup)
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
 MKTEMPLATE_FILETYPE = Const('MKTEMPLATE_FILETYPE', value=None, dtype=str,
-                            source=__NAME__)
+                            source=__NAME__, user=True, active=False,
+                            group=cgroup)
 
 # the fiber required for input template files
 MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
-                              source=__NAME__)
+                              source=__NAME__, user=True, active=False,
+                              group=cgroup)
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
@@ -1849,19 +1871,22 @@ MKTEMPLATE_S1D_LOWF_SIZE = Const('MKTEMPLATE_S1D_LOWF_SIZE', value=None,
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION: CCF SETTINGS'
 # Define the ccf mask path
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__)
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
-                         source=__NAME__)
+                         source=__NAME__, user=True, active=False,
+                         group=cgroup)
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
                        source=__NAME__,
                        options=['AA', 'Angstrom', 'nm', 'nanometer', 'um',
                                 'micron', 'mm', 'millimeter', 'cm',
-                                'centimeter', 'm', 'meter'])
+                                'centimeter', 'm', 'meter'],
+                       user=True, active=False, group=cgroup)
 
 # Define the CCF mask format (must be an astropy.table format)
 CCF_MASK_FMT = Const('CCF_MASK_FMT', value=None, dtype=str, source=__NAME__)
@@ -1881,11 +1906,13 @@ CCF_MAX_CCF_WID_STEP_RATIO = Const('CCF_MAX_CCF_WID_STEP_RATIO', value=None,
 
 # Define the width of the CCF range [km/s]
 CCF_DEFAULT_WIDTH = Const('CCF_DEFAULT_WIDTH', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0)
+                          source=__NAME__, minimum=0.0,
+                          user=True, active=False, group=cgroup)
 
 # Define the computations steps of the CCF [km/s]
 CCF_DEFAULT_STEP = Const('CCF_DEFAULT_STEP', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0)
+                         source=__NAME__, minimum=0.0,
+                         user=True, active=False, group=cgroup)
 
 #   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
@@ -1908,7 +1935,8 @@ CCF_N_ORD_MAX = Const('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__,
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
-                             source=__NAME__)
+                             source=__NAME__, user=True, active=False,
+                             group=cgroup)
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
@@ -1941,6 +1969,7 @@ CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS
 # =============================================================================
+cgroup = 'OBJECT: POLARISATION SETTINGS'
 #  Define all possible fibers used for polarimetry
 #     (define as a string list)
 POLAR_VALID_FIBERS = Const('POLAR_VALID_FIBERS', value=None, dtype=str,
@@ -1955,7 +1984,8 @@ POLAR_VALID_STOKES = Const('POLAR_VALID_STOKES', value=None, dtype=str,
 #    currently must be either:
 #         - Ratio
 #         - Difference
-POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__)
+POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__,
+                     user=True, active=False, group=cgroup)
 
 #  Define the polarimetry continuum bin size (for plotting)
 POLAR_CONT_BINSIZE = Const('POLAR_CONT_BINSIZE', value=None, dtype=int,
@@ -1976,7 +2006,9 @@ POLAR_CONT_TELLMASK_UPPER = Const('POLAR_CONT_TELLMASK_UPPER', value=None,
                                   dtype=float, source=__NAME__)
 
 #  Perform LSD analysis
-POLAR_LSD_ANALYSIS = Const('POLAR_LSD_ANALYSIS', value=None, dtype=str, source=__NAME__)
+POLAR_LSD_ANALYSIS = Const('POLAR_LSD_ANALYSIS', value=None, dtype=str,
+                           source=__NAME__, user=True, active=False,
+                           group=cgroup)
 
 #  Define the spectral lsd mask directory for lsd polar calculations
 POLAR_LSD_PATH = Const('POLAR_LSD_PATH', value=None, dtype=str, source=__NAME__)
@@ -2082,240 +2114,299 @@ POLAR_LSD_NLFIT2 = Const('POLAR_LSD_NLFIT2', value=None, dtype=bool,
 # =============================================================================
 # DEBUG PLOT SETTINGS
 # =============================================================================
+cgroup = 'DEBUG PLOT SETTINGS'
 # turn on dark image region debug plot
 PLOT_DARK_IMAGE_REGIONS = Const('PLOT_DARK_IMAGE_REGIONS', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__,
+                                user=True, active=True, group=cgroup)
 
 # turn on dark histogram debug plot
 PLOT_DARK_HISTOGRAM = Const('PLOT_DARK_HISTOGRAM', value=False, dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__, user=True, active=True,
+                            group=cgroup)
 
 # turn on badpix map debug plot
 PLOT_BADPIX_MAP = Const('PLOT_BADPIX_MAP', value=False, dtype=bool,
-                        source=__NAME__)
+                        source=__NAME__, user=True, active=True,
+                        group=cgroup)
 
 # turn on the localisation cent min max debug plot
 PLOT_LOC_MINMAX_CENTS = Const('PLOT_LOC_MINMAX_CENTS', value=False,
-                              dtype=bool, source=__NAME__)
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup)
 
 # turn on the localisation cent/thres debug plot
 PLOT_LOC_MIN_CENTS_THRES = Const('PLOT_LOC_MIN_CENTS_THRES', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=True, group=cgroup)
 
 # turn on the localisation finding orders debug plot
 PLOT_LOC_FINDING_ORDERS = Const('PLOT_LOC_FINDING_ORDERS', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the image above saturation threshold debug plot
 PLOT_LOC_IM_SAT_THRES = Const('PLOT_LOC_IM_SAT_THRES', value=False,
-                              dtype=bool, source=__NAME__)
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup)
 
 # turn on the order number vs rms debug plot
 PLOT_LOC_ORD_VS_RMS = Const('PLOT_LOC_ORD_VS_RMS', value=False,
-                            dtype=bool, source=__NAME__)
+                            dtype=bool, source=__NAME__, user=True,
+                            active=True, group=cgroup)
 
 # turn on the localisation check coeffs debug plot
 PLOT_LOC_CHECK_COEFFS = Const('PLOT_LOC_CHECK_COEFFS', value=False,
-                              dtype=bool, source=__NAME__)
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup)
 
 # turn on the localisation fit residuals plot (warning: done many times)
 PLOT_LOC_FIT_RESIDUALS = Const('PLOT_LOC_FIT_RESIDUALS', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=True, group=cgroup)
 
 # turn on the shape dx debug plot
-PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__)
+PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__,
+                      user=True, active=True, group=cgroup)
 
 # turn on the shape angle offset (all orders in loop) debug plot
 PLOT_SHAPE_ANGLE_OFFSET_ALL = Const('PLOT_SHAPE_ANGLE_OFFSET_ALL', value=False,
-                                    dtype=bool, source=__NAME__)
+                                    dtype=bool, source=__NAME__,
+                                    user=True, active=True, group=cgroup)
 
 # turn on the shape angle offset (one selected order) debug plot
 PLOT_SHAPE_ANGLE_OFFSET = Const('PLOT_SHAPE_ANGLE_OFFSET', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__,
+                                user=True, active=True, group=cgroup)
 
 # turn on the shape local zoom plot
 PLOT_SHAPEL_ZOOM_SHIFT = Const('PLOT_SHAPEL_ZOOM_SHIFT', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=True, group=cgroup)
 
 # turn on the shape linear transform params plot
 PLOT_SHAPE_LINEAR_TPARAMS = Const('PLOT_SHAPE_LINEAR_TPARAMS', value=False,
-                                  dtype=bool, source=__NAME__)
+                                  dtype=bool, source=__NAME__, user=True,
+                                  active=True, group=cgroup)
 
 # turn on the flat order fit edges debug plot (loop)
 PLOT_FLAT_ORDER_FIT_EDGES1 = Const('PLOT_FLAT_ORDER_FIT_EDGES1', value=False,
-                                   dtype=bool, source=__NAME__)
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=True, group=cgroup)
 
 # turn on the flat order fit edges debug plot (selected order)
 PLOT_FLAT_ORDER_FIT_EDGES2 = Const('PLOT_FLAT_ORDER_FIT_EDGES2', value=False,
-                                   dtype=bool, source=__NAME__)
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=True, group=cgroup)
 
 # turn on the flat blaze order debug plot (loop)
 PLOT_FLAT_BLAZE_ORDER1 = Const('PLOT_FLAT_BLAZE_ORDER1', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=True, group=cgroup)
 
 # turn on the flat blaze order debug plot (selected order)
 PLOT_FLAT_BLAZE_ORDER2 = Const('PLOT_FLAT_BLAZE_ORDER2', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=True, group=cgroup)
 
 # turn on thermal background (in extract) debug plot
 PLOT_THERMAL_BACKGROUND = Const('PLOT_THERMAL_BACKGROUND', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the extraction spectral order debug plot (loop)
 PLOT_EXTRACT_SPECTRAL_ORDER1 = Const('PLOT_EXTRACT_SPECTRAL_ORDER1',
-                                     value=False, dtype=bool, source=__NAME__)
+                                     value=False, dtype=bool, source=__NAME__,
+                                     user=True, active=True, group=cgroup)
 
 # turn on the extraction spectral order debug plot (selected order)
 PLOT_EXTRACT_SPECTRAL_ORDER2 = Const('PLOT_EXTRACT_SPECTRAL_ORDER2',
-                                     value=False, dtype=bool, source=__NAME__)
+                                     value=False, dtype=bool, source=__NAME__,
+                                     user=True, active=True, group=cgroup)
 
 # turn on the extraction 1d spectrum debug plot
 PLOT_EXTRACT_S1D = Const('PLOT_EXTRACT_S1D', value=False, dtype=bool,
-                         source=__NAME__)
+                         source=__NAME__, user=True, active=True, group=cgroup)
 
 # turn on the extraction 1d spectrum weight (before/after) debug plot
 PLOT_EXTRACT_S1D_WEIGHT = Const('PLOT_EXTRACT_S1D_WEIGHT', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the wave solution hc guess debug plot (in loop)
 PLOT_WAVE_HC_GUESS = Const('PLOT_WAVE_HC_GUESS', value=False,
-                           dtype=bool, source=__NAME__)
+                           dtype=bool, source=__NAME__, user=True, active=True,
+                           group=cgroup)
 
 # turn on the wave solution hc brightest lines debug plot
 PLOT_WAVE_HC_BRIGHTEST_LINES = Const('PLOT_WAVE_HC_BRIGHTEST_LINES',
-                                     value=False, dtype=bool, source=__NAME__)
+                                     value=False, dtype=bool, source=__NAME__,
+                                     user=True, active=True, group=cgroup)
 
 # turn on the wave solution hc triplet fit grid debug plot
 PLOT_WAVE_HC_TFIT_GRID = Const('PLOT_WAVE_HC_TFIT_GRID', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=True, group=cgroup)
 
 # turn on the wave solution hc resolution map debug plot
 PLOT_WAVE_HC_RESMAP = Const('PLOT_WAVE_HC_RESMAP', value=False,
-                            dtype=bool, source=__NAME__)
+                            dtype=bool, source=__NAME__, user=True,
+                            active=True, group=cgroup)
 
 # turn on the wave solution littrow check debug plot
 PLOT_WAVE_LITTROW_CHECK1 = Const('PLOT_WAVE_LITTROW_CHECK1', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=True, group=cgroup)
 
 # turn on the wave solution littrow extrapolation debug plot
 PLOT_WAVE_LITTROW_EXTRAP1 = Const('PLOT_WAVE_LITTROW_EXTRAP1', value=False,
-                                  dtype=bool, source=__NAME__)
+                                  dtype=bool, source=__NAME__, user=True,
+                                  active=True, group=cgroup)
 
 # turn on the wave solution littrow check debug plot
 PLOT_WAVE_LITTROW_CHECK2 = Const('PLOT_WAVE_LITTROW_CHECK2', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=True, group=cgroup)
 
 # turn on the wave solution littrow extrapolation debug plot
 PLOT_WAVE_LITTROW_EXTRAP2 = Const('PLOT_WAVE_LITTROW_EXTRAP2', value=False,
-                                  dtype=bool, source=__NAME__)
+                                  dtype=bool, source=__NAME__, user=True,
+                                  active=True, group=cgroup)
 
 # turn on the wave solution final fp order debug plot
 PLOT_WAVE_FP_FINAL_ORDER = Const('PLOT_WAVE_FP_FINAL_ORDER', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=True, group=cgroup)
 
 # turn on the wave solution fp local width offset debug plot
 PLOT_WAVE_FP_LWID_OFFSET = Const('PLOT_WAVE_FP_LWID_OFFSET', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=True, group=cgroup)
 
 # turn on the wave solution fp wave residual debug plot
 PLOT_WAVE_FP_WAVE_RES = Const('PLOT_WAVE_FP_WAVE_RES', value=False,
-                              dtype=bool, source=__NAME__)
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup)
 
 # turn on the wave solution fp fp_m_x residual debug plot
 PLOT_WAVE_FP_M_X_RES = Const('PLOT_WAVE_FP_M_X_RES', value=False,
-                             dtype=bool, source=__NAME__)
+                             dtype=bool, source=__NAME__, user=True,
+                             active=True, group=cgroup)
 
 # turn on the wave solution fp interp cavity width 1/m_d hc debug plot
 PLOT_WAVE_FP_IPT_CWID_1MHC = Const('PLOT_WAVE_FP_IPT_CWID_1MHC', value=False,
-                                   dtype=bool, source=__NAME__)
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=True, group=cgroup)
 
 # turn on the wave solution fp interp cavity width ll hc and fp debug plot
 PLOT_WAVE_FP_IPT_CWID_LLHC = Const('PLOT_WAVE_FP_IPT_CWID_LLHC', value=False,
-                                   dtype=bool, source=__NAME__)
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=True, group=cgroup)
 
 # turn on the wave solution old vs new wavelength difference debug plot
 PLOT_WAVE_FP_LL_DIFF = Const('PLOT_WAVE_FP_LL_DIFF', value=False, dtype=bool,
-                             source=__NAME__)
+                             source=__NAME__, user=True, active=True,
+                             group=cgroup)
 
 # turn on the wave solution fp multi order debug plot
 PLOT_WAVE_FP_MULTI_ORDER = Const('PLOT_WAVE_FP_MULTI_ORDER', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=True, group=cgroup)
 
 # turn on the wave solution fp single order debug plot
 PLOT_WAVE_FP_SINGLE_ORDER = Const('PLOT_WAVE_FP_SINGLE_ORDER', value=False,
-                                  dtype=bool, source=__NAME__)
+                                  dtype=bool, source=__NAME__, user=True,
+                                  active=True, group=cgroup)
 
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the make tellu wave flux debug plot (single order)
 PLOT_MKTELLU_WAVE_FLUX2 = Const('PLOT_MKTELLU_WAVE_FLUX2', value=False,
-                                dtype=bool, source=__NAME__)
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the fit tellu pca component debug plot (in loop)
 PLOT_FTELLU_PCA_COMP1 = Const('PLOT_FTELLU_PCA_COMP1', value=False,
-                             dtype=bool, source=__NAME__)
+                             dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup)
 
 # turn on the fit tellu pca component debug plot (single order)
 PLOT_FTELLU_PCA_COMP2 = Const('PLOT_FTELLU_PCA_COMP2', value=False,
-                             dtype=bool, source=__NAME__)
+                             dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup)
 
 # turn on the fit tellu reconstructed spline debug plot (in loop)
 PLOT_FTELLU_RECON_SPLINE1 = Const('PLOT_FTELLU_RECON_SPLINE1', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                  active=True, group=cgroup)
 
 # turn on the fit tellu reconstructed spline debug plot (single order)
 PLOT_FTELLU_RECON_SPLINE2 = Const('PLOT_FTELLU_RECON_SPLINE2', value=False,
-                                 dtype=bool, source=__NAME__)
+                                 dtype=bool, source=__NAME__, user=True,
+                                  active=True, group=cgroup)
 
 # turn on the fit tellu wave shift debug plot (in loop)
 PLOT_FTELLU_WAVE_SHIFT1 = Const('PLOT_FTELLU_WAVE_SHIFT1', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the fit tellu wave shift debug plot (single order)
 PLOT_FTELLU_WAVE_SHIFT2 = Const('PLOT_FTELLU_WAVE_SHIFT2', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the fit tellu reconstructed absorption debug plot (in loop)
 PLOT_FTELLU_RECON_ABSO1 = Const('PLOT_FTELLU_RECON_ABSO1', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the fit tellu reconstructed absorption debug plot (single order)
 PLOT_FTELLU_RECON_ABSO2 = Const('PLOT_FTELLU_RECON_ABSO12', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup)
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,
-                             dtype=bool, source=__NAME__)
+                             dtype=bool, source=__NAME__, user=True,
+                             active=True, group=cgroup)
 
 # turn on the ccf rv fit debug plot (for the mean order value)
 PLOT_CCF_RV_FIT = Const('PLOT_CCF_RV_FIT', value=False,
-                        dtype=bool, source=__NAME__)
+                        dtype=bool, source=__NAME__, user=True, active=True,
+                        group=cgroup)
 
 # turn on the ccf spectral order vs wavelength debug plot
 PLOT_CCF_SWAVE_REF = Const('PLOT_CCF_SWAVE_REF', value=False,
-                           dtype=bool, source=__NAME__)
+                           dtype=bool, source=__NAME__, user=True, active=True,
+                           group=cgroup)
 
 # turn on the ccf photon uncertainty debug plot
 PLOT_CCF_PHOTON_UNCERT = Const('PLOT_CCF_PHOTON_UNCERT', value=False,
-                               dtype=bool, source=__NAME__)
+                               dtype=bool, source=__NAME__, user=True,
+                               active=True, group=cgroup)
 
 # turn on the polar continuum debug plot
 PLOT_POLAR_CONTINUUM = Const('PLOT_POLAR_CONTINUUM', value=False,
-                        dtype=bool, source=__NAME__)
+                        dtype=bool, source=__NAME__, user=True, active=True,
+                             group=cgroup)
 
 # turn on the polar results debug plot
 PLOT_POLAR_RESULTS = Const('PLOT_POLAR_RESULTS', value=False,
-                        dtype=bool, source=__NAME__)
+                        dtype=bool, source=__NAME__, user=True, active=True,
+                           group=cgroup)
 
 # turn on the polar stokes i debug plot
 PLOT_POLAR_STOKES_I = Const('PLOT_POLAR_STOKES_I', value=False,
-                        dtype=bool, source=__NAME__)
+                        dtype=bool, source=__NAME__, user=True, active=True,
+                            group=cgroup)
 
 # turn on the polar lsd debug plot
 PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
-                        dtype=bool, source=__NAME__)
+                        dtype=bool, source=__NAME__, user=True, active=True,
+                       group=cgroup)
 
 # =============================================================================
 # TOOLS SETTINGS
