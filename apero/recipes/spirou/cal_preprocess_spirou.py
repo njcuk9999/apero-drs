@@ -189,7 +189,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control to check for corrupt files
         # ------------------------------------------------------------------
-        qc_params, passed = preprocessing.quality_control(params)
+        qargs = [snr_hotpix, infile, rms_list]
+        qc_params, passed = preprocessing.quality_control(params ,*qargs)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
         if not passed:
