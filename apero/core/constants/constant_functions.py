@@ -49,7 +49,7 @@ class Const:
     def __init__(self, name, value=None, dtype=None, dtypei=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, user=False, active=False):
+                 group=None, user=False, active=False, description=None):
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -65,6 +65,7 @@ class Const:
         self.group = group
         self.user = user
         self.active = active
+        self.description = description
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
@@ -104,18 +105,79 @@ class Const:
                      self.options, self.maximum, self.minimum, source=source,
                      unit=self.unit, default=self.default,
                      datatype=self.datatype, dataformat=self.dataformat,
-                     group=self.group, user=self.user, active=self.active)
+                     group=self.group, user=self.user, active=self.active,
+                     description=self.description)
 
-    def write_line(self):
-
-        lines = []
+    def write_line(self, value=None):
+        # set up line list
+        lines = ['']
+        # deal with value
+        if value is None:
+            value = self.value
+        # ------------------------------------------------------------------
         # add description
+        # -------------------------------------------------------------------
+        # check if we have a description defined
+        if self.description is not None:
+            description = self.description.strip().capitalize()
+            # wrap long descriptions by words
+            wrapdesc = textwrap(description, 77)
+            # loop around wrapped lines and add as comments
+            for wline in wrapdesc:
+                # add wrapped line to
+                lines.append('# {0}'.format(wline))
+        # if we don't have descriptions add a default one
+        else:
+            lines.append('# {0} [DESCRIPTION NEEDED]'.format(self.name))
+        # -------------------------------------------------------------------
+        # add default set up values
+        # -------------------------------------------------------------------
+        dline = '#\t'
+        # add data type
+        if self.dtype is not None:
+            if self.dtype in [str, 'str']:
+                dline += 'dtype=string '
+            elif self.dtype in [int, 'int']:
+                dline += 'dtype=int '
+            elif self.dtype in [float, 'float']:
+                dline += 'dtype=float '
+            elif self.dtype in [bool, 'bool']:
+                dline += 'dtype=bool '
+            elif self.dtype == 'path':
+                dline += 'dtype=file-path '
+        # add maximum / minimum constraints (if present)
+        if self.minimum is not None:
+            dline += 'min={0} '.format(self.minimum)
+        if self.maximum is not None:
+            dline += 'max={0} '.format(self.maximum)
+        # add default
+        if self.dtype != 'path':
+            dline += 'default={0} '.format(value)
+        # append line to lines
+        lines.append(dline.strip())
+        # -------------------------------------------------------------------
+        # add options if present
+        # -------------------------------------------------------------------
+        if self.options is not None:
+            # make sure options are strings
+            stroptions = list(map(lambda x: '{0}'.format(x), self.options))
+            # add options string
+            oline = '#\toptions = {0}'.format(', '.join(stroptions))
+            # append line to lines
+            lines.append(oline.strip())
 
-
-
-        if self.active:
-            # TODO: finish here
-            pass
+        # ------------------------------------------------------------------
+        # construct line to add (for user changing)
+        # -------------------------------------------------------------------
+        # construct line
+        aline = '{0} = {1}'.format(self.name, value)
+        # if not active add as comment
+        if not self.active:
+            aline = '# ' + aline
+        # add to lines
+        lines.append(aline)
+        # return lines
+        return lines
 
 
 class Keyword(Const):
@@ -345,7 +407,7 @@ def update_file(filename, dictionary):
         # create replacement string
         rstring = '{0} = {1}\n'.format(key, value)
         # find any line that starts with
-        mask = clines.startswith(key)
+        mask = clines.startswith(key + ' = ')
         # if we have this entry update it
         if np.sum(mask) > 0:
             # get line numbers
