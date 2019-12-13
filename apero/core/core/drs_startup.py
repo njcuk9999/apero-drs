@@ -115,6 +115,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
+    # deal with quiet in fkwargs
+    if 'quiet' in fkwargs:
+        quiet = True
+        del fkwargs['quiet']
     # set up process id
     pid, htime = _assign_pid()
     # Clean WLOG
