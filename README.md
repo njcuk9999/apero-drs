@@ -44,7 +44,7 @@
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- working (untested) V0.6.003
+- working (untested) V0.6.006
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
