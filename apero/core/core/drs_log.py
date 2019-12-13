@@ -1189,30 +1189,7 @@ def printlog(logobj, params, message, key='all', colour=None):
 
 
 def textwrap(input_string, length):
-    # Modified version of this: https://stackoverflow.com/a/16430754
-    new_string = []
-    for s in input_string.split("\n"):
-        if s == "":
-            new_string.append('')
-        wlen = 0
-        line = []
-        for dor in s.split():
-            if wlen + len(dor) + 1 <= length:
-                line.append(dor)
-                wlen += len(dor) + 1
-            else:
-                new_string.append(" ".join(line))
-                line = [dor]
-                wlen = len(dor)
-        if len(line):
-            new_string.append(" ".join(line))
-
-    # add a tab to all but first line
-    new_string2 = [new_string[0]]
-    for it in range(1, len(new_string)):
-        new_string2.append('\t' + new_string[it])
-
-    return new_string2
+    return constants.constant_functions.textwrap(input_string, length)
 
 
 def printcolour(logobj, params, key='all', func_name=None, colour=None):
