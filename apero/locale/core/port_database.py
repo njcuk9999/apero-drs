@@ -119,13 +119,7 @@ def validate_csv(files):
         # remove all bad characters
 
 
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
+def main():
     # ----------------------------------------------------------------------
     # get abspath from relative path
     database_path = drs_text.get_relative_folder(PACKAGE, DATABASE_PATH)
@@ -165,6 +159,15 @@ if __name__ == "__main__":
     opaths = convert_csv(database, DATABASE_NAMES, OUTPUT_NAMES, database_path)
     # validate csv files
     validate_csv(opaths)
+
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    main()
 
 
 # =============================================================================
