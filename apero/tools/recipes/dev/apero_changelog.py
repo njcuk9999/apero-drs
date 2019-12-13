@@ -92,9 +92,10 @@ def main(preview=1, **kwargs):
 
 
 def __main__(recipe, params):
+    # Note: no instrument defined so do not use instrument only features
 
     # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    textdict = TextDict('None', params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
@@ -151,13 +152,6 @@ def __main__(recipe, params):
         else:
             os.remove('tmp.txt')
 
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

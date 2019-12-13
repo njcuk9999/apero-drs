@@ -60,6 +60,8 @@ Arguments:
 # Define functions
 # =============================================================================
 def main():
+    # Note: cannot use any package other than apero.locale - as we are
+    #       updating the language in this package
 
     # get arguments
     args = sys.argv
