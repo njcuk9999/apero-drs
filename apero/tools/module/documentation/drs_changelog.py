@@ -42,7 +42,7 @@ VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
 DATESTR_PREFIX = 'DRS_DATE = Const('
 
 VERSIONSTR = "DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str,"
-DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__)"
+DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__,"
 
 
 # =============================================================================
