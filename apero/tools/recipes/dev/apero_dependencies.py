@@ -86,6 +86,8 @@ def main(directory=None, files=None, **kwargs):
 
 
 def __main__(recipe, params):
+    # Note: no instrument defined so do not use instrument only features
+
     # ----------------------------------------------------------------------
     # define DRS path
     drs_path = constants.get_relative_folder(params['DRS_PACKAGE'], '')
@@ -116,13 +118,6 @@ def __main__(recipe, params):
             WLOG(params, '', '\t{0: <16}({1})'.format(*args))
         else:
             WLOG(params, '', '\t{0}'.format(*args))
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
