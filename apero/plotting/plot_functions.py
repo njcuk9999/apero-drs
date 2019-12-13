@@ -260,6 +260,14 @@ def remove_first_last_ticks(frame, axis='x'):
     return frame
 
 
+def add_grid(frame):
+    frame.minorticks_on()
+    # Don't allow the axis to be on top of your data
+    frame.grid(which='major', linestyle='-', linewidth='0.5', color='black',
+               alpha=0.75, zorder=1)
+    frame.grid(which='minor', linestyle=':', linewidth='0.5', color='black',
+                alpha=0.5, zorder=0)
+
 # =============================================================================
 # Define test plotting functions
 # =============================================================================
@@ -3318,6 +3326,64 @@ polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 
 # add to definitions
 definitions += [polar_continuum, polar_results, polar_stokes_i, polar_lsd]
+
+# =============================================================================
+# Define tool functions
+# =============================================================================
+def plot_logstats_bar(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    started = kwargs['started']
+    passed = kwargs['passed']
+    ended = kwargs['ended']
+    urecipes = kwargs['urecipes']
+    # make arrays
+    x = np.arange(0, len(urecipes))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    # ------------------------------------------------------------------
+    width = 0.3
+    frames[0].bar(x - width, started, color='b', label='started',
+                  align='center', width=width, zorder=5, alpha=0.875)
+    frames[0].bar(x, passed, color='r', label='passed QC',
+                  align='center', width=width, zorder=5, alpha=0.875)
+    frames[0].bar(x + width, ended, color='g', label='finished',
+                  align='center', width=width, zorder=5, alpha=0.875)
+    frames[0].set_xticks(x, minor=False)
+    frames[0].set_xticklabels(urecipes, rotation=90)
+    frames[0].legend(loc=0)
+    frames[0].set_ylabel('Number of recipes')
+    add_grid(frames[0])
+    # ------------------------------------------------------------------
+    width = 0.4
+    frames[1].bar(x - width / 2, 100 * (started - passed)/started,
+                  color='r', label='failed QC', align='center',
+                  width=width, zorder=5, alpha=0.875)
+    frames[1].bar(x + width / 2, 100 * (started - ended)/started,
+                  color='g', label='unfinished (error)', align='center',
+                  width=width, zorder=5, alpha=0.875)
+    frames[1].set_xticks(x)
+    frames[1].set_xticklabels(urecipes, rotation=90)
+    frames[1].legend(loc=0)
+    frames[1].set_ylabel('Percent of total recipes [%]')
+    add_grid(frames[1])
+    # adjust size
+    fig.subplots_adjust(hspace=0, wspace=0.05, bottom=0.3, top=0.98,
+                        left=0.05, right=0.99)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
+
+# add to definitions
+definitions += [logstats_bar]
 
 
 # =============================================================================
