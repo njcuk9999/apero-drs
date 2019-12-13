@@ -64,12 +64,14 @@ Optional Arguments:
 
 --gui          use GUI to install (Not yet supported)  
 
---skip         skip the python module checks (Not recommended)
+--skip         skip the python module checks (Not recommended for first time
+               installation)
 
---dev          activate developer mode (adds all constants to user config/
-               constant files
+--dev          activate developer mode (prompts for all config/constant groups
+               and add them to your config/constant files)
 
---update       updates installation (not clean install)
+--update       updates installation (not clean install) and checks for
+               updates to your current config files
 
 --help, -h     show this help message and exit
 
@@ -248,12 +250,12 @@ def tab_input(message, root=None):
     return uinput
 
 
-def check_install():
+def check_install(drs_path):
     # loop until we can import modules
     while cond:
         # try to import the drs
         try:
-            drs = importlib.import_module(drs_path)
+            _ = importlib.import_module(drs_path)
         except Exception as _:
             umsg = '\nCannot find {0}. Please enter {0} installation path:'
             # user input required
@@ -293,7 +295,7 @@ def check_install():
         os.sys.path = [drs_path] + os.sys.path
 
         # if we have reached this point we can break out of the while loop
-        return constants, install, drs_path
+        return constants, install
 
 
 
@@ -302,8 +304,6 @@ def check_install():
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
-
-
     # get arguments
     args = sys.argv
     # ----------------------------------------------------------------------
@@ -335,13 +335,13 @@ if __name__ == "__main__":
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
-    constants, install, root = check_install()
+    constants, install = check_install(drs_path)
 
     # ----------------------------------------------------------------------
     # start up
     # ----------------------------------------------------------------------
     # get global parameters
-    params = constants.load()
+    params = constants.load(from_file=False)
 
     # ----------------------------------------------------------------------
     # Start of user setup
@@ -355,8 +355,8 @@ if __name__ == "__main__":
         allparams = install.user_interface(params)
     else:
         allparams = install.update(params)
-    # add root to allparams
-    allparams['ROOT'] = root
+    # add dev mode to allparams
+    allparams['DEVMODE'] = devmode
 
     # ----------------------------------------------------------------------
     # End of user setup
@@ -377,12 +377,12 @@ if __name__ == "__main__":
     allparams = install.bin_paths(params, allparams)
     # ----------------------------------------------------------------------
     # copy config files to config dir
-    install.cprint('\n- Copying config files', 'm')
-    allparams = install.copy_configs(params, allparams)
+    install.cprint('\n- Creating config files', 'm')
+    allparams = install.create_configs(params, allparams)
     # ----------------------------------------------------------------------
     # update config values from iparams
     install.cprint('\n- Updating config files', 'm')
-    allparams = install.update_configs(allparams)
+    allparams = install.update_configs(params, allparams)
     # ----------------------------------------------------------------------
     # create source files to add environmental variables
     install.cprint('\n- Creating shell script(s)', 'm')
