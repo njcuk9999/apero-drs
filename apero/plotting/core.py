@@ -206,6 +206,11 @@ class Plotter:
         if plot_obj.kind == 'debug':
             if self.plotoption == 0:
                 return 0
+
+        # deal with show graphs
+        if plot_obj.kind == 'show':
+            self._get_matplotlib(force=True)
+
         # ------------------------------------------------------------------
         # must be in plot lists (unless recipe is not defined)
         if self.recipe is None:
@@ -928,7 +933,7 @@ class Plotter:
                 self.has_debugs = True
 
 
-    def _get_matplotlib(self):
+    def _get_matplotlib(self, force=False):
         """
         Deal with the difference plotting modes and get the correct backend
         This sets self.plt, self.matplotlib and self.mpl_toolkits
@@ -945,7 +950,10 @@ class Plotter:
         # ------------------------------------------------------------------
         # if we do not have debug plots or we are in plotoption = 0
         #    then we do not need any fancy backend and can just use Agg
-        if not self.has_debugs or self.plotoption < 1:
+        cond1 = not self.has_debugs or self.plotoption < 1
+        cond2 = not force
+        # both conditions are met set to Agg (no plotting)
+        if cond1 and cond2:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             from  mpl_toolkits import axes_grid1
