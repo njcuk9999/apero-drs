@@ -49,7 +49,7 @@ HELP_MESSAGE = """
 	AUTHORS: N. Cook, E. Artigau, F. Bouchy, M. Hobson, C. Moutou, 
 	         I. Boisse, E. Martioli
 
- Usage: install.p [options]
+ Usage: install.py [options]
 
 
  ***************************************************************************
@@ -72,6 +72,8 @@ Optional Arguments:
 
 --update       updates installation (not clean install) and checks for
                updates to your current config files
+               
+--upgrade      (see --update)
 
 --help, -h     show this help message and exit
 
@@ -307,6 +309,8 @@ if __name__ == "__main__":
     # get arguments
     args = sys.argv
     # ----------------------------------------------------------------------
+    # very basic argument parser
+    # ----------------------------------------------------------------------
     # Help
     if '--help' in args or '-h' in args:
         print(HELP_MESSAGE.format(DRS_PATH))
@@ -320,7 +324,7 @@ if __name__ == "__main__":
     else:
         devmode = False
     # Update mode
-    if '--update' in args:
+    if '--update' in args or '--upgrade' in args:
         update = True
     else:
         update = False
