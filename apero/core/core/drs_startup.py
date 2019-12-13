@@ -29,9 +29,9 @@ from apero.io import drs_table
 from apero.io import drs_path
 from apero.io import drs_lock
 from apero import plotting
-from . import drs_log
-from . import drs_recipe
-from . import drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_recipe
+from apero.core.core import drs_file
 
 # =============================================================================
 # Define variables
@@ -236,9 +236,13 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     params['OUTFILES'] = OrderedDict()
     params.set_source('OUTFILES', func_name)
     # -------------------------------------------------------------------------
-    if params['INPATH'] is not None and params['NIGHTNAME'] is not None:
+    cond1 = instrument is not None
+    cond2 = params['INPATH'] is not None
+    cond3 = params['OUTPATH'] is not None
+    cond4 = params['NIGHTNAME'] is not None
+    if cond1 and cond2 and cond4:
         _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
-    if params['OUTPATH'] is not None and params['NIGHTNAME'] is not None:
+    if cond1 and cond3 and cond4:
         _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
     # -------------------------------------------------------------------------
     # We must have DRS_DATA_MSG
@@ -265,16 +269,17 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         recipe.plot = plotting.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # add the recipe log
-    recipe.log = drs_log.RecipeLog(recipe.name, params)
-    # add log file to log
-    recipe.log.set_log_file(drs_log.get_logfilepath(WLOG, params))
-    # add inputs to log
-    recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
-                          recipe.specialargs)
-    # set lock function
-    recipe.log.set_lock_func(drs_lock.locker)
-    # write recipe log
-    recipe.log.write(params)
+    if instrument is not None:
+        recipe.log = drs_log.RecipeLog(recipe.name, params)
+        # add log file to log
+        recipe.log.set_log_file(drs_log.get_logfilepath(WLOG, params))
+        # add inputs to log
+        recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
+                              recipe.specialargs)
+        # set lock function
+        recipe.log.set_lock_func(drs_lock.locker)
+        # write recipe log
+        recipe.log.write(params)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
