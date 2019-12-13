@@ -2,6 +2,66 @@ Changelog
 =========
 
 
+0.6.006 (2019-12-13)
+--------------------
+- Update non-instrument specified recipes (and make sure
+  apero_processing can be run correctly from main call. [Neil Cook]
+- Drs_startup.py - need to be careful when we don't have an instrument
+  set. [Neil Cook]
+- Setup.install.py - correct help string. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py + tools.recipes.general.py - add
+  log stat code to apero_log_stats.py. [Neil Cook]
+- Plotting.plot_functions.py - add plot_logstats_bar plot. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add logstats recipe.
+  [Neil Cook]
+- Update language database and add recipe to apero_tools. [Neil Cook]
+- Tools.module.documentation.drs_changelog.py - update
+  VERSIONSTR/DATESTR with changes to const files. [Neil Cook]
+- Update default_config/default_constants with groups and some
+  descriptions. [Neil Cook]
+- Core.core.drs_startup.py - allow quiet to be passed from fkwargs.
+  [Neil Cook]
+- Core.core.drs_log.py - move textwrap to constants. [Neil Cook]
+- Core.constants.param_functions.py - add "from_file" and "cache"
+  optiosn to load_config (for installation purposes) [Neil Cook]
+- Core.constants.constant_functions.py - move textwrapper here, add
+  description to constants, add write_line method for writing user
+  configs + add '=' to end of update string to make constants unique.
+  [Neil Cook]
+- Setup.install.py + drs_installation.py - add an update mode to the
+  install.py (and fix reset bug) [Neil Cook]
+
+
+0.6.005 (2019-12-12)
+--------------------
+- Updates to installation script (UNFINISHED) [Neil Cook]
+- Io.drs_lock.py - change warning message (name.lock) [Neil Cook]
+- Cal_preprocessing_spirou.py - typo fix qc inputs. [Neil Cook]
+- Core.core.drs_recipe.py - change "-" to "--" [Neil Cook]
+- Update tools with recipe log. [Neil Cook]
+- Science.telluric.genearl.py - return qc_params and passed in qc
+  functions. [Neil Cook]
+- Core.core.drs_log.py - add no_qc and RECIPE to log file and only write
+  newlog on add_level. [Neil Cook]
+- Cal_thermal_spirou.py - add no_qc. [Neil Cook]
+- Science.preprocessing.general.py - add quality control to function.
+  [Neil Cook]
+- Science.calib.badpix.py - remove redundant code. [Neil Cook]
+- Modify recipes and add recipe logging. [Neil Cook]
+
+
+0.6.004 (2019-12-12)
+--------------------
+- Recipe.spirou.* - test locking [not working yet] [Neil Cook]
+- Io.drs_lock.py - provide function to lock function. [Neil Cook]
+- Core.ocre.drs_startup.py - setup the recipe log. [Neil Cook]
+- Core.core.drs_recipe.py - add a self.log to store to RecipeLog. [Neil
+  Cook]
+- Core.core.drs_log.py - add RecipeLog. [Neil Cook]
+- Make sure all arguments that are words start with -- [Neil Cook]
+- Update date/changelog/version. [Neil Cook]
+
+
 0.6.003 (2019-12-10)
 --------------------
 - Update README.md. [Neil Cook]
