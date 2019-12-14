@@ -175,8 +175,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # -------------------------------------------------------------------------
     # need to deal with instrument set in input arguments
     if 'INSTRUMENT' in recipe.drs_params['INPUTS']:
+        # set instrumet
+        instrument = recipe.drs_params['INPUTS']['INSTRUMENT']
         # update the instrument
-        recipe.instrument = recipe.drs_params['INPUTS']['INSTRUMENT']
+        recipe.instrument = instrument
         # quietly load DRS parameters (for setup)
         recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
         # update filemod and recipemod
