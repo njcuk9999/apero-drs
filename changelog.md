@@ -2,6 +2,33 @@ Changelog
 =========
 
 
+0.6.007 (2019-12-16)
+--------------------
+- Tools/bin/apero_log_stats.py - start adding options for stats on
+  specific recipes. [Neil Cook]
+- Science/extract/other.py - add extra printout to show files were
+  extracted and loaded from extraction (before silent in log) [Neil
+  Cook]
+- Science/extract/extraction.py - add extra arguments for
+  calculate_blaze_flat_sinc. [Neil Cook]
+- Science.calib.flat_blaze.py - fix issue with fitting blaze function
+  (and given better error if curve_fit fails) [Neil Cook]
+- Science.calib.dark.py and science.calib.shape.py - make sure files for
+  cubes are deep copied (try to prevent memory issues) [Neil Cook]
+- Cal_wave_spirou.py - update convergence test on hc solution (EA bug
+  fix) [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add recipe argument
+  to log stats. [Neil Cook]
+- Data.core.runs - limited_run.ini - update the default limited run.
+  [Neil Cook]
+- Install.py / drs_installation.py - Allow user to define all userinputs
+  from the command line (Issue #579) [Neil Cook]
+- Drs_startup.py - need to re-set the instrument when found in params.
+  [Neil Cook]
+- Update changelog/data/version/readme. [Neil Cook]
+
+
 0.6.006 (2019-12-13)
 --------------------
 - Update non-instrument specified recipes (and make sure
