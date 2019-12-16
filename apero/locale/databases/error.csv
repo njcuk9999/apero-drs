@@ -947,7 +947,7 @@
 "40-015-00006","ALL","prints which flat dymap file we are using","{0} = filename","Reading flat dymap file: {0}","",""
 "40-015-00007","ALL","prints which blaze dymap file we are using","{0} = filename","Reading blaze dymap file: {0}","",""
 "40-015-00008","ALL","prints that ff_rms failed QC","{0} = max rms; {1} = qc limit for max rms","Fiber {0}: Max RMS was greater than expected. {1} > limit ({2})","",""
-"","","","","","",""
+"40-015-00009","ALL","prints that the sinc fitting failed","{0} = order number; {1} = fiber; {2} = iteration; {3} = guess; {4} = lower bounds; {5} = upper bounds; {6} = function name","Error fitting sinc to blaze. Order = {0} Fiber = {1} Iteration = {2} \n\t Guess: {3} \n\t Lower: {4} \n\t Upper: {5} \n\t Error {6}: {7} \n\t Function = {8}","",""
 "","","","","","",""
 "40-016-00000","ALL","Extraction/Thermal/BERV messages","None","","",""
 "40-016-00001","ALL","prints the extracted orders S/N and number of cosmic rays","{0} = fiber name; {1} = order number; {2} = signal to noise ratio; {3} = number of cosmic rays","On fiber {0} order {1}: S/N= {2:.1f} Nbcosmic= {3}","",""
