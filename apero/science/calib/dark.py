@@ -256,7 +256,8 @@ def construct_dark_table(params, filenames, **kwargs):
     # log progress
     WLOG(params, '', TextEntry('40-011-10002', args=[time_thres]))
     # match files by time
-    matched_id = drs_path.group_files_by_time(params, dark_time, time_thres)
+    matched_id = drs_path.group_files_by_time(params, np.array(dark_time),
+                                              time_thres)
 
     # ----------------------------------------------------------------------
     # Make table
