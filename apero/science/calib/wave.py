@@ -1713,16 +1713,16 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         recon0 = np.zeros_like(wave_catalog)
         amps0 = np.zeros(mp.nansum(order_fit_cont))
 
-        # TODO: Remove breakpoint
-        constants.breakpoint(params)
-
         # Loop sigma_clip_num times for sigma clipping and numerical
         #    convergence. In most cases ~10 iterations would be fine but this
         #    is fast
 
+        # set up convergence criteria (initial set to infinitely large)
         sig_prev = np.inf
-
+        # set up the loop number
         sigma_it = 0
+        # set the initial value of sig to a large number (but not as large as
+        #   sig_prev
         sig = 1e9
         while (sig < sig_prev) and (sigma_it < sigma_clip_num):
             sig_prev = sig
