@@ -37,14 +37,14 @@
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.6.001
+- developer (tested) V0.6.007
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for 
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- working (untested) V0.6.006
+- working (untested) V0.6.007
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
