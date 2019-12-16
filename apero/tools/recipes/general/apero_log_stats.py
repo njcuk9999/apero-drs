@@ -95,12 +95,16 @@ def __main__(recipe, params):
     # get arguments
     nightname = params['INPUTS']['NIGHTNAME']
     kind = params['INPUTS']['kind']
+    recipename = params['INPUTS']['recipe']
     # load path from kind
     if kind == 'red':
         path = params['DRS_DATA_REDUC']
     else:
         path = params['DRS_DATA_WORKING']
     path = '/scratch2/spirou/mini_data/reduced'
+
+    # deal with recipe name
+    recipename = logstats.search_recipes(params, recipe, recipename)
 
     # set up plotting (no plotting before this)
     recipe.plot.set_location(0)
@@ -115,12 +119,24 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Open log files
     # ----------------------------------------------------------------------
-    mastertable = logstats.make_log_table(params, logfiles, nightnames)
+    mastertable = logstats.make_log_table(params, logfiles, nightnames,
+                                          recipename)
+    if mastertable is None:
+        if recipename is not None:
+            wargs = [recipename]
+            wmsg = 'No entries found for recipe="{0}"'
+            WLOG(params, 'warning', wmsg.format(*wargs))
+        else:
+            WLOG(params, 'warning', 'No entries found.')
 
     # ----------------------------------------------------------------------
     # print stats
     # ----------------------------------------------------------------------
-    logstats.calculate_stats(params, recipe, mastertable)
+    if recipename is None:
+        logstats.calculate_stats(params, recipe, mastertable)
+    else:
+        logstats.calculate_recipe_stats(params, recipe, mastertable)
+
 
     # ------------------------------------------------------------------
     # update recipe log file
