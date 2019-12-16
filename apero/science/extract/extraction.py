@@ -126,6 +126,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     blaze = np.zeros([nbo, dim2]) * np.nan
     rms = np.repeat([np.nan], nbo)
     fluxval = np.repeat([np.nan], nbo)
+
     # loop around orders
     for order_num in range(nbo):
         # ------------------------------------------------------------------
@@ -163,8 +164,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                 # fargs = [e2dsi, fluxi, blaze_cut, blaze_deg]
                 # fout = flat_blaze.calculate_blaze_flat(*fargs)
                 fargs = [e2dsi, blaze_scut, blaze_sigfit, blaze_bpercentile,
-                         blaze_niter]
-                fout = flat_blaze.calculate_blaze_flat_sinc(*fargs)
+                         order_num, fiber, blaze_niter]
+                fout = flat_blaze.calculate_blaze_flat_sinc(params, *fargs)
                 e2dsi, flati, blazei, rmsi = fout
                 # log process (for fiber # and order # S/N = , FF rms = )
                 wargs = [fiber, order_num, snri, rmsi]
