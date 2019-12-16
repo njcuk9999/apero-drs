@@ -155,6 +155,9 @@ logstats.set_kwarg(name='--nightname', dtype=str, default='',
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
                   options=['tmp', 'red'],
                   helpstr=Help['LOGSTAT_HELP_KIND'])
+# TODO: add help string
+logstats.set_kwarg(name='--recipe', dtype=str, default='None',
+                   helpstr='')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
