@@ -1713,10 +1713,20 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         recon0 = np.zeros_like(wave_catalog)
         amps0 = np.zeros(mp.nansum(order_fit_cont))
 
+        # TODO: Remove breakpoint
+        constants.breakpoint(params)
+
         # Loop sigma_clip_num times for sigma clipping and numerical
         #    convergence. In most cases ~10 iterations would be fine but this
         #    is fast
-        for sigma_it in range(sigma_clip_num):
+
+        sig_prev = np.inf
+
+        sigma_it = 0
+        sig = 1e9
+        while (sig < sig_prev) and (sigma_it < sigma_clip_num):
+            sig_prev = sig
+
             # calculate the linear minimization
             largs = [wave_catalog - recon0, lin_mod_slice]
             with warnings.catch_warnings(record=True) as _:
@@ -1801,6 +1811,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
             wargs = [sigma_it, sig, sig1, len(wave_catalog)]
             WLOG(params, '', TextEntry('40-017-00009', args=wargs))
+            sigma_it +=1
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
