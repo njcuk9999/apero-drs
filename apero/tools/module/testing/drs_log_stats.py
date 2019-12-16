@@ -48,6 +48,10 @@ STARTCOL = 'STARTED'
 PASSEDCOL = 'PASSED_QC'
 ENDCOL = 'ENDED'
 
+
+# TODO: Move all text to language database
+
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -97,8 +101,7 @@ def get_log_files(params, recipe, path, nightname=None):
     return logfiles, nightnames
 
 
-
-def make_log_table(params, logfiles, nightnames):
+def make_log_table(params, logfiles, nightnames, recipename):
     # log progress
     WLOG(params, '', 'Loading log files')
     # define dict storage
@@ -109,6 +112,15 @@ def make_log_table(params, logfiles, nightnames):
         WLOG(params, '', '\t - Loading {0}'.format(logfile))
         # open file
         table = Table.read(logfile, format='fits')
+
+        # filter by recipe name if provided
+        if recipename is not None:
+            mask = table['RECIPE'] == recipename
+            if np.sum(mask) != 0:
+                table = table[mask]
+            else:
+                continue
+
         # add a night column to masterdict
         if 'NIGHT' not in masterdict:
             masterdict['NIGHT'] = [nightnames[l_it]] * len(table)
@@ -120,12 +132,49 @@ def make_log_table(params, logfiles, nightnames):
                 masterdict[col] = list(table[col])
             else:
                 masterdict[col] += list(table[col])
+
+    if len(masterdict['NIGHT']) == 0:
+        return None
+
     # once we have the master dict convert to table
     mastertable = Table()
     for col in masterdict:
         mastertable[col] = masterdict[col]
     # return master table
     return mastertable
+
+
+def search_recipes(params, recipe, recipename):
+    # deal with no recipename set
+    if recipename in ['None', '', None]:
+        return None
+
+    # deal with recipe name
+    if not recipename.endswith('.py'):
+        recipename += '.py'
+
+    # try to locate recipe in recipes
+    recipes = recipe.recipemod.recipes
+
+    # loop around recipes
+    for trial_recipe in recipes:
+        # try to see if recipe is matched
+        if recipename == trial_recipe.name:
+            # log that we found recipe
+            wargs = [recipename]
+            wmsg = 'Found and filtering by recipe="{0}"'
+            WLOG(params, '', wmsg.format(*wargs))
+            # return recipe
+            return recipename
+
+    # log that we did not find recipe
+    wargs = [recipename]
+    wmsg = 'Did not find recipe="{0}" not filtering by recipe.'
+    WLOG(params, 'warning', wmsg.format(*wargs))
+
+    # if we have got to this point return None
+    return None
+
 
 
 def calculate_stats(params, recipe, mastertable):
@@ -186,6 +235,12 @@ def calculate_stats(params, recipe, mastertable):
     pkwargs = dict(started=started_arr, passed=passed_arr, ended=ended_arr,
                    urecipes=urecipes)
     recipe.plot('LOGSTATS_BAR', **pkwargs)
+
+
+
+def calculate_recipe_stats(params, recipe, mastertable):
+    pass
+
 
 
 # =============================================================================
