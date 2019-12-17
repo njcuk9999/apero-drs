@@ -1074,7 +1074,7 @@ WAVE_HC_TFIT_MINTOT_LINES.value = 200
 # WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
 
 WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
-WAVE_HC_TFIT_ORDER_FIT_CONT.value = '10, 8, 6, 2, 2'
+WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 8, 4, 1, 1'
 
 
 # Number of times to loop through the sigma clip for triplet fit
