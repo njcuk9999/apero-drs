@@ -1516,7 +1516,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         brightest_lines = np.zeros(len(xgau), dtype=bool)
         # loop around order
-        for order_num in set(orders):
+        for order_num in np.unique(orders):
             # find all order_nums that belong to this order
             good = orders == order_num
             # get the peaks for this order
@@ -1685,6 +1685,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         ew = ew[good]
         gauss_rms_dev = gauss_rms_dev[good]
         peak2 = peak2[good]
+
         # ------------------------------------------------------------------
         # Quality check on the total number of lines found
         # ------------------------------------------------------------------
@@ -1697,18 +1698,19 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # Linear model slice generation
         # ------------------------------------------------------------------
         # storage for the linear model slice
-        lin_mod_slice = np.zeros((len(xgau), mp.nansum(order_fit_cont)))
+        # lin_mod_slice = np.zeros((len(xgau), mp.nansum(order_fit_cont)))
         # construct the unit vectors for wavelength model
-        # loop around order fit continuity values
-        ii = 0
-        for expo_xpix in range(len(order_fit_cont)):
-            # loop around orders
-            for expo_order in range(order_fit_cont[expo_xpix]):
-                part1 = orders ** expo_order
-                part2 = np.array(xgau) ** expo_xpix
-                lin_mod_slice[:, ii] = part1 * part2
-                # iterate
-                ii += 1
+        # # loop around order fit continuity values
+        # ii = 0
+        # for expo_xpix in range(len(order_fit_cont)):
+        #     # loop around orders
+        #     for expo_order in range(order_fit_cont[expo_xpix]):
+        #         part1 = orders ** expo_order
+        #         part2 = np.array(xgau) ** expo_xpix
+        #         lin_mod_slice[:, ii] = part1 * part2
+        #         # iterate
+        #         ii += 1
+
         # ------------------------------------------------------------------
         # Sigma clipping
         # ------------------------------------------------------------------
@@ -1720,20 +1722,21 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         #    convergence. In most cases ~10 iterations would be fine but this
         #    is fast
 
-        # set up convergence criteria (initial set to infinitely large)
-        sig_prev = np.inf
         # set up the loop number
         sigma_it = 0
         # set the initial value of sig to a large number (but not as large as
         #   sig_prev
-        sig = 1e9
+        sig = np.inf
         while sigma_it < sigma_clip_num:
             sig_prev = sig
 
             # calculate the linear minimization
-            largs = [wave_catalog - recon0, lin_mod_slice]
-            with warnings.catch_warnings(record=True) as _:
-                amps, recon = mp.linear_minimization(*largs)
+            # largs = [wave_catalog - recon0, lin_mod_slice]
+            # with warnings.catch_warnings(record=True) as _:
+            #      amps, recon = mp.linear_minimization(*largs)
+            amps, recon = wave_lmfit(orders, xgau, wave_catalog, recon0,
+                                     order_fit_cont, nbo)
+
             # add the amps and recon to new storage
             amps0 = amps0 + amps
             recon0 = recon0 + recon
@@ -1758,6 +1761,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 break
 
             absdev = np.abs(dv / sig)
+
             # initialize lists for saving
             recon0_aux = []
             lin_mod_slice_aux = []
@@ -1896,6 +1900,48 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     llprops.set_sources(keys, func_name)
     # return llprops
     return llprops
+
+
+def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
+    # set up an empty set of coefficents
+    coeffs = np.zeros([nbo, len(order_fit_cont)])
+    # get degree from order fit continuum
+    fitdeg = len(order_fit_cont) - 1
+    # define an array for the order numbers
+    ordpix = np.arange(nbo)
+    # loop around orders
+    for order_num in range(nbo):
+        # find all places where orders is in the order
+        good = orders == order_num
+        # only fit orders with more points than the order fit continuum
+        #  parameters
+        if np.sum(good) > len(order_fit_cont):
+            # calc residuals
+            res = wave_catalog - recon0
+            # calculate coefficients
+            coeffs[order_num] = np.polyfit(xgau[good], res[good], fitdeg)
+    # set up storage of the amps
+    amps = []
+    # loop around the coefficients in order fit continuum (backwards)
+    for icoeff in list(range(len(order_fit_cont)))[::-1]:
+        # only fit good coeffs (non-zero)
+        good = coeffs[:, icoeff] != 0
+        # calculate the fit in the order direction
+        ordfit = np.polyfit(ordpix[good], coeffs[good, icoeff],
+                            order_fit_cont[::-1][icoeff]-1)
+        # add to storage
+        amps += list(ordfit[::-1])
+        # recalculate the coeff values
+        coeffs[:, icoeff] = np.polyval(ordfit, ordpix)
+    # recalculate the recon
+    recon = np.zeros_like(xgau)
+    for order_num in range(nbo):
+        # find all places where orders is in the order
+        good = orders == order_num
+        # calculate the recon for this order
+        recon[good] = np.polyval(coeffs[order_num,:], xgau[good])
+    # return amps and recon
+    return amps, recon
 
 
 def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
