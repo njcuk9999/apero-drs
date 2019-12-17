@@ -4,6 +4,13 @@ Changelog
 
 0.6.008 (2019-12-17)
 --------------------
+- Core.core.drs_recipe.py - add other list arguments -- attempt to
+  correct bug. [Neil Cook]
+- Core.core.drs_recipe.py - add other list arguments (i.e. --fpfiles=X Y
+  Z) as separate elements of str_arg_list. [Neil Cook]
+- Core.core.drs_recipe.py - add other list arguments (i.e. --fpfiles=X Y
+  Z) as separate elements of str_arg_list. [Neil Cook]
+- Update date/version/changelog/readme. [Neil Cook]
 - README.md - correct typo "processing" --> "apero_processing" [Neil
   Cook]
 - Setup/install.py - install.update does not require "args" as input.
