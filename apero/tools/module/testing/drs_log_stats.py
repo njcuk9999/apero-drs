@@ -393,6 +393,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # ----------------------------------------------------------------------
     # recipe.plot()
 
+
 def hover_bars(fig, frame, x, y, texts, align=None):
     # define the text box
     textbox = frame.annotate("", xy=(0.0, 0.0), xytext=(0.0, 0.0),
@@ -451,7 +452,7 @@ class ToolTip():
         print(x, y, centx, centy, centx-x, centy-y)
 
         self.textbox.xy = (x, y)
-        self.textbox.xytext = (-centx + x, - centy + y)
+
         # get text for this bar
         text = self.bartexts[it]
         if text is not None:
