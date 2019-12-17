@@ -686,16 +686,20 @@ class DrsRecipe(object):
         if values is None:
             return
         # if we have an optional argument
-        if '-' in arg.argname:
+        if '--' in arg.argname:
             strfmt = '{0}={1}'
         # if we have a positional argument
         else:
             strfmt = '{1}'
         # now add these arguments (as a string) to str_arg_list
-        if type(values) == list:
+        if isinstance(values, list):
+            # need to add all values to string
+            listvalues = ''
             for value in values:
-                strarg = [arg.argname, value]
-                self.str_arg_list.append(strfmt.format(*strarg))
+                listvalues += '{0} '.format(value)
+            # finally append the string to str_arg_list
+            strarg = [arg.argname, listvalues.strip()]
+            self.str_arg_list.append(strfmt.format(*strarg))
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))
