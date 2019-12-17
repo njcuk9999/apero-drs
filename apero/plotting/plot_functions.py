@@ -3327,6 +3327,7 @@ polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 # add to definitions
 definitions += [polar_continuum, polar_results, polar_stokes_i, polar_lsd]
 
+
 # =============================================================================
 # Define tool functions
 # =============================================================================
