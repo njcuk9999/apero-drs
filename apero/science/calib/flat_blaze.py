@@ -155,25 +155,25 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     # bounds = [(thres * 0.5, 0.0, 0.0, -np.inf, -np.inf, -1e-2),
     #           (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-2)]
     # pass without DC and SLOPE
-    bounds0 = [(thres * 0.5, 0.0, 0.0, -1e-20, -1e-20, -1e-20),
-               (thres * 1.5, np.inf, np.max(xpix), 1e-20, 1e-20, 1e-20)]
+    bounds = [ (0, 0.0, 0.0, -np.inf, -1e-20, -np.inf),
+               (thres * 1.5, np.inf, np.max(xpix), np.inf, 1e-20, np.inf)]
     # set a counter
     n_it = -1
     # ------------------------------------------------------------------
     # try to fit and if there is a failure catch it
     try:
         # we optimize over pixels that are not NaN
-        popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                                 method='dogbox', bounds=bounds0)
+        #popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
+        #                         method='dogbox', bounds=bounds)
         # set the first guess for the full fit to the fit without slope and
         #   quadratic terms
-        fit_guess = popt0
+        #fit_guess = popt0
         # set the quad, cube and slope to zero (pass without DC and SLOPE)
-        fit_guess[[3, 4, 5]] = 0.0
+        #fit_guess[[3, 4, 5]] = 0.0
 
         # we optimize over pixels that are not NaN (this time with no bounds)
         popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                               method='trf')
+                               bounds = bounds)
         # ------------------------------------------------------------------
         # set the model to zeros at first
         blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
@@ -196,8 +196,8 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     except RuntimeError as e:
         strlist = 'amp={0} period={1} lin={2} quad={3} cube={4} slope={5}'
         strguess = strlist.format(*fit_guess)
-        strlower = strlist.format(*bounds0[0])
-        strupper = strlist.format(*bounds0[1])
+        strlower = strlist.format(*bounds[0])
+        strupper = strlist.format(*bounds[1])
         eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
                  type(e), str(e), func_name]
         WLOG(params, 'error', TextEntry('40-015-00009', args=eargs))
