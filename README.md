@@ -297,9 +297,9 @@ __NOTE__: there is a --help option available for every recipe
 
 ---
 
-### Using `processing.py`
+### Using `apero_processing.py`
 
-`processing.py` can be used in a few different ways but always requires the following
+`apero_processing.py` can be used in a few different ways but always requires the following
 
 1) The instrument (`SPIROU`)
 
@@ -307,7 +307,7 @@ __NOTE__: there is a --help option available for every recipe
 
 i.e.
 ```
-apero/tools/bin/processing.py SPIROU limited_run.ini
+tools/bin/apero_processing.py SPIROU limited_run.ini
 ```
 
 #### The processing run files ( `{RUN_FILE}`)
@@ -320,9 +320,9 @@ By default it processes every night and every file that can be found in the `{DR
 One can turn on specific nights to process in several ways 
 (a) setting the `NIGHT_NAME` in the selected `{RUN_FILE}`
 (b) adding a night to the `BNIGHTNAMES` (blacklist = reject) or `WNIGHTNAMES` (whitelist = keep)
-(c) adding an extra argument to `processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) 
+(c) adding an extra argument to `apero_processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) 
 
-One can also just process a single file by adding an extra argument to `processing.py` (`--filename`)
+One can also just process a single file by adding an extra argument to `apero_processing.py` (`--filename`)
 
 One can also tell the recipe to only process specific targets 
 (when the recipes can accept targets -- i.e. extraction, telluric fitting, CCF) 
