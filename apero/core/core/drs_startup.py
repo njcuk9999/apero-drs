@@ -117,7 +117,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         fkwargs = dict()
     # deal with quiet in fkwargs
     if 'quiet' in fkwargs:
-        quiet = True
+        if fkwargs['quiet'] in [True, 'True', 1]:
+            quiet = True
         del fkwargs['quiet']
     # set up process id
     pid, htime = _assign_pid()
