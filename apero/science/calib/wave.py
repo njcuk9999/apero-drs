@@ -1491,9 +1491,6 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     lin_mod_slice = []
     recon0 = []
 
-    # TODO: remove break point
-    constants.breakpoint(params)
-
     # ------------------------------------------------------------------
     # triplet loop
     # ------------------------------------------------------------------
@@ -1727,7 +1724,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # set the initial value of sig to a large number (but not as large as
         #   sig_prev
         sig = 1e9
-        while (sig < sig_prev) and (sigma_it < sigma_clip_num):
+        while sigma_it < sigma_clip_num:
             sig_prev = sig
 
             # calculate the linear minimization
@@ -1753,6 +1750,10 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             dv = ((wave_catalog / recon0) - 1) * speed_of_light
             # calculate the standard deviation
             sig = mp.nanstd(dv)
+            # do not continue if sig is larger than sig_prev
+            if sig > sig_prev:
+                break
+
             absdev = np.abs(dv / sig)
             # initialize lists for saving
             recon0_aux = []
