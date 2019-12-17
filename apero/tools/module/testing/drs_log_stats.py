@@ -380,8 +380,10 @@ def calculate_recipe_stats(params, mastertable, recipename):
     tth = ToolTipHover(tooltip1, tooltip2)
     fig.canvas.mpl_connect("motion_notify_event", tth.hover)
 
-    fig.subplots_adjust(bottom=0.2, right=0.95, left=0.05, top=0.95,
+    fig.subplots_adjust(bottom=0.2, right=0.95, left=0.05, top=0.90,
                        hspace=0, wspace=0.1)
+
+    plt.suptitle('Recipe = {0}'.format(recipename))
     plt.show()
     plt.close()
 
@@ -389,21 +391,13 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # recipe.plot()
 
 def hover_bars(fig, frame, x, y, texts, align=None):
-
-    if align is None:
-        xytext = (-20, 20)
-    elif align == 'right':
-        xytext = (20, 20)
-    else:
-        xytext = (-20, 20)
-
     # define the text box
-    textbox = frame.annotate("", xy=(0, 0), xytext=xytext,
+    textbox = frame.annotate("", xy=(0.0, 0.0), xytext=(0.0, 0.0),
                              textcoords="offset points",
                              bbox=dict(boxstyle="round", fc="white",
                                        ec="k", lw=2),
                              arrowprops=dict(arrowstyle="->"),
-                             va='center', transform=frame.transAxes)
+                             va='center', zorder=100)
     # storage for bars
     allbars = []
     # loop around bars
@@ -447,7 +441,14 @@ class ToolTip():
     def activate_text(self, it, bar):
         x = bar.get_x() + bar.get_width() / 2
         y = bar.get_y() + bar.get_height() / 2
+        xmin, xmax, ymin, ymax = self.frame.axis()
+        centx = 0.5 * (xmax + xmin)
+        centy = 0.5 * (ymax + ymin)
+
+        print(x, y, centx, centy, centx-x, centy-y)
+
         self.textbox.xy = (x, y)
+        self.textbox.xytext = (-centx + x, - centy + y)
         # get text for this bar
         text = self.bartexts[it]
         if text is not None:
@@ -465,7 +466,6 @@ class ToolTipHover:
 
 
 def _extend_xticks(frame, values):
-    frame.set_xticks(np.arange(len(values)))
     frame.set_xticklabels(values, rotation=90)
     frame.set_xlim(-1, len(values))
 
