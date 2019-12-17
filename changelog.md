@@ -2,6 +2,48 @@ Changelog
 =========
 
 
+0.6.008 (2019-12-17)
+--------------------
+- README.md - correct typo "processing" --> "apero_processing" [Neil
+  Cook]
+- Setup/install.py - install.update does not require "args" as input.
+  [Neil Cook]
+- Drs_log_stat - reset the code to remove xytext change (doesn't work
+  currently) [Neil Cook]
+- Science.calib.wave.py - add EA changes (no linear_minimisation now use
+  wave_lmfit) [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.core.drs_startup.py - only start in quiet mod if fkwargs['quiet']
+  is True. [Neil Cook]
+- Core.core.drs_recipe.py - fix bug introduced by having --arguments
+  only (need to append all list items to string for self.str_arg_list.
+  [Neil Cook]
+- Core.instruments.spirou.default_constants.py - tweak hc tfit order fit
+  continuum parameters (EA) [Neil Cook]
+- Core.instruments.spirou.default_constants.py - change hc tfit order
+  fit continuum constants (EA) [Neil Cook]
+- Core.instruments.spirou.default_constants.py - lower the values of the
+  wave hc tfit order fit continnum (EA) [Neil Cook]
+- Science.calib.wave.py - add breakpoint to test problem. [Neil Cook]
+- Science.calib.wave.py - attempt fix of wave solution triplets rms
+  diverging. [Neil Cook]
+- Science.calib.wave.py - add breakpoint. [Neil Cook]
+- Science.calib.flat_blaze.py - EA played with bounds. [Neil Cook]
+- Tools.recipes.general.apero_log_stats.py - tweak plot. [Neil Cook]
+- Tools.recipes.general.apero_log_stats.py - tweak plot. [Neil Cook]
+- Tools.recipes.general.apero_log_stats.py - add recipe mode - correct
+  bug. [Neil Cook]
+- Tools.recipes.general.apero_log_stats.py - add recipe mode. [Neil
+  Cook]
+- Plotting.plot_functions.py - correct pep8. [Neil Cook]
+- Science.calib.wave.py - remove break points. [Neil Cook]
+- Science.calib.flat_blaze.py - add comments to EA new additions. [Neil
+  Cook]
+- Science.calib.dark.py - correct bug dark_time must be an array. [Neil
+  Cook]
+- Changelog/readme/date/version. [Neil Cook]
+
+
 0.6.007 (2019-12-16)
 --------------------
 - Tools/bin/apero_log_stats.py - start adding options for stats on
