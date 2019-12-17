@@ -1070,8 +1070,12 @@ WAVE_HC_TFIT_MINTOT_LINES.value = 200
 #     we force that the zeroth element of the xpix of the wavelegnth
 #     grid is fitted with a 12th order polynomial as a function of
 #     order number (format = string list separated by commas)
+# these values are too high and lead to stability problems in the fit
+# WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
+
 WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
-WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
+WAVE_HC_TFIT_ORDER_FIT_CONT.value = '8, 5, 3, 1, 1'
+
 
 # Number of times to loop through the sigma clip for triplet fit
 WAVE_HC_TFIT_SIGCLIP_NUM = WAVE_HC_TFIT_SIGCLIP_NUM.copy(__NAME__)
