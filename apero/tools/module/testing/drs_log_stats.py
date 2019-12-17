@@ -318,9 +318,12 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # ----------------------------------------------------------------------
     # get log files
     logfiles = mastertable[LOGCOL]
+    # log that we are getting log files
+    WLOG(params, '', 'Obtaining individual log files')
     # for each log file get all log errors and warnings
     errors, warns = [], []
     for logfile in logfiles:
+        WLOG(params, '', '\t - Loading: {0}'.format(logfile))
         error, warn = _create_log_objs(logfile)
         errors += error
         warns += warn
