@@ -417,7 +417,7 @@ if __name__ == '__main__':
     elif not args.update:
         allparams = install.user_interface(params, args)
     else:
-        allparams = install.update(params, args)
+        allparams = install.update(params)
     # add dev mode to allparams
     allparams['DEVMODE'] = args.devmode
 
