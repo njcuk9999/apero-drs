@@ -121,13 +121,27 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mastertable = logstats.make_log_table(params, logfiles, nightnames,
                                           recipename)
+    # Deal with printing stats
     if mastertable is None:
         if recipename is not None:
+            # TODO: Add to language database
             wargs = [recipename]
             wmsg = 'No entries found for recipe="{0}"'
             WLOG(params, 'warning', wmsg.format(*wargs))
         else:
+            # TODO: Add to language database
             WLOG(params, 'warning', 'No entries found.')
+    else:
+        if recipename is not None:
+            # TODO: Add to language database
+            wmsg = '{0} entries found for recipe="{1}"'
+            wargs = [len(mastertable), recipename]
+            WLOG(params, '', wmsg.format(*wargs))
+        else:
+            # TODO: Add to language database
+            wmsg = '{0} entries found.'
+            wargs = [len(mastertable)]
+            WLOG(params, '', wmsg.format(*wargs))
 
     # ----------------------------------------------------------------------
     # print stats
