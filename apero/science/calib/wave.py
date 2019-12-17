@@ -1491,6 +1491,9 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     lin_mod_slice = []
     recon0 = []
 
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
     # ------------------------------------------------------------------
     # triplet loop
     # ------------------------------------------------------------------
