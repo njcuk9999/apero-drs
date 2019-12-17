@@ -149,7 +149,7 @@ def __main__(recipe, params):
     if recipename is None:
         logstats.calculate_stats(params, recipe, mastertable)
     else:
-        logstats.calculate_recipe_stats(params, recipe, mastertable)
+        logstats.calculate_recipe_stats(params, mastertable, recipename)
 
 
     # ------------------------------------------------------------------

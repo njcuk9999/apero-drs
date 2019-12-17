@@ -305,7 +305,7 @@ def calculate_stats(params, recipe, mastertable):
     recipe.plot('LOGSTATS_BAR', **pkwargs)
 
 
-def calculate_recipe_stats(params, recipe, mastertable, recipename):
+def calculate_recipe_stats(params, mastertable, recipename):
     # started
     started = np.sum(mastertable[STARTCOL])
     # passed qc
