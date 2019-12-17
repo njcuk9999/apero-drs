@@ -694,13 +694,11 @@ class DrsRecipe(object):
         # now add these arguments (as a string) to str_arg_list
         if isinstance(values, list):
             # add the first argument
-            strarg = [arg.argname, values[0]]
-            self.str_arg_list.append(strfmt.format(*strarg))
+            self.str_arg_list.append(strfmt.format(arg.argname))
             # add the rest as separate arguments
-            if len(values) > 1:
-                for value in values[1:]:
-                    # finally append the string to str_arg_list
-                    self.str_arg_list.append(value)
+            for value in values:
+                # finally append the string to str_arg_list
+                self.str_arg_list.append(value)
 
         else:
             strarg = [arg.argname, values]
