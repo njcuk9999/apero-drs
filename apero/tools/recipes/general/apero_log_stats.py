@@ -112,6 +112,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get log files
     # ----------------------------------------------------------------------
+    WLOG(params, '', 'Analysing log files')
     # get log files
     logfiles, nightnames = logstats.get_log_files(params, recipe, path,
                                                   nightname)
