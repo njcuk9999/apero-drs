@@ -341,9 +341,9 @@ def __main__(recipe, params):
                 WLOG(params, 'warning', TextEntry('10-017-00007'))
                 fpprops = None
 
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # Construct summary document
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # if we have a wave solution wave summary from fpprops
             if (fp_e2ds_file is not None) and passed:
                 wave.wave_summary(recipe, params, fpprops, fiber, qc_params)

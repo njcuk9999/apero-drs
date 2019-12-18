@@ -50,14 +50,12 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(instrument=None, **kwargs):
     """
-    Main function for cal_dark_spirou.py
+    Main function for apero_log_stats.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
+    :param instrument: str, the instrument name
+    :param kwargs: additional keyword arguments
 
-    :type directory: str
-    :type files: list[str]
+    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -96,6 +94,8 @@ def __main__(recipe, params):
     nightname = params['INPUTS']['NIGHTNAME']
     kind = params['INPUTS']['kind']
     recipename = params['INPUTS']['recipe']
+    since = params['INPUTS']['since']
+    before = params['INPUTS']['before']
     # load path from kind
     if kind == 'red':
         path = params['DRS_DATA_REDUC']
@@ -105,7 +105,10 @@ def __main__(recipe, params):
 
     # deal with recipe name
     recipename = logstats.search_recipes(params, recipe, recipename)
-
+    # deal with since value
+    since = logstats.get_time(params, since, 'since')
+    # deal with before value
+    before = logstats.get_time(params, before, 'before')
     # set up plotting (no plotting before this)
     recipe.plot.set_location(0)
 
@@ -120,7 +123,7 @@ def __main__(recipe, params):
     # Open log files
     # ----------------------------------------------------------------------
     mastertable = logstats.make_log_table(params, logfiles, nightnames,
-                                          recipename)
+                                          recipename, since, before)
     # Deal with printing stats
     if mastertable is None:
         if recipename is not None:

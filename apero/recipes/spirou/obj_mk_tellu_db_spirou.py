@@ -59,15 +59,14 @@ obj_mk_template = rd.obj_mk_template
 # Everything else is controlled from recipe_definition
 def main(cores=None, filetype=None, **kwargs):
     """
-    Main function for cal_extract_spirou.py
+    Main function for obj_mk_tellu_db_spirou.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
+    :param cores: int, the number of cores to use
+    :param filetype: str, the allowed DPRTYPE
+    :param kwargs: additional keyword arguments
 
-    :type directory: str
-    :type files: list[str]
-
+    :type cores: int
+    :type filetype: str
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space

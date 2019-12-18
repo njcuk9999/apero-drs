@@ -63,7 +63,7 @@ DRS_DATE = Const('DATE', value='{0}', dtype=str,
 # =============================================================================
 def main(preview=1, **kwargs):
     """
-    Main function for drs_changelog.py
+    Main function for apero_changelog.py
 
     :param preview: bool, if True does not save before previewing if False
                     saves without previewing

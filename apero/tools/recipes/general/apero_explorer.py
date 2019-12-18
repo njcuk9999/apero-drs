@@ -40,14 +40,12 @@ ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 # =============================================================================
 def main(instrument=None, **kwargs):
     """
-    Main function for cal_dark_spirou.py
+    Main function for apero_explorer.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
+    :param instrument: str, the instrument name
+    :param kwargs: additional keyword arguments
 
-    :type directory: str
-    :type files: list[str]
+    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
