@@ -194,7 +194,7 @@ def __main__(recipe, params):
             # load initial wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                            fiber=fiber)
+                                            fiber=fiber, master=True)
             # check that wave parameters are consistent with required number
             #   of parameters (from constants)
             iwprops = wave.check_wave_consistency(params, iwprops)
