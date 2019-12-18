@@ -1042,7 +1042,7 @@ WAVE_HC_NMAX_BRIGHT.value = 20
 
 # Number of times to run the fit triplet algorithm
 WAVE_HC_NITER_FIT_TRIPLET = WAVE_HC_NITER_FIT_TRIPLET.copy(__NAME__)
-WAVE_HC_NITER_FIT_TRIPLET.value = 1
+WAVE_HC_NITER_FIT_TRIPLET.value = 3
 
 # Maximum distance between catalog line and init guess line to accept
 #     line in m/s
