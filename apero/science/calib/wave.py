@@ -1567,6 +1567,8 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 wave_catalog[w_it] = wavell[id_match]
                 amp_catalog[w_it] = ampll[id_match]
                 dv[w_it] = distv
+
+
         # ------------------------------------------------------------------
         # loop through orders and reject bright lines not within
         #     +- HC_TFIT_DVCUT km/s histogram peak
@@ -1743,13 +1745,13 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # with warnings.catch_warnings(record=True) as _:
             #   amps, recon = mp.linear_minimization(*largs)
             #   recon  = np.zeros_like(largs[0])
-            amps, recon = wave_lmfit(orders, xgau, wave_catalog, recon0,
+            coeffs, recon = wave_lmfit(orders, xgau, wave_catalog, recon0,
                                              order_fit_cont, nbo)
 
-            # add the amps and recon to new storage
-            amps0 = amps0 + amps
-            recon0 = recon0 + recon
-            print(np.nanstd(wave_catalog-recon0))
+            # # add the amps and recon to new storage
+            # amps0 = amps0 + amps
+            # recon0 = recon0 + recon
+            # print(np.nanstd(wave_catalog-recon0))
 
             # # loop around the amplitudes and normalise
             # for a_it in range(len(amps0)):
@@ -1764,7 +1766,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             #     amps0[a_it] += ampsx
             #     recon0 += (ampsx * lin_mod_slice[:, a_it])
             # recalculate dv [in km/s]
-            dv = ((wave_catalog / recon0) - 1) * speed_of_light
+            dv = ((wave_catalog / recon) - 1) * speed_of_light
             # calculate the standard deviation
             sig = mp.nanstd(dv)
             # do not continue if sig is larger than sig_prev
@@ -1795,7 +1797,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                     # create mask for worst line
                     sig_mask = absdev_ord < mp.nanmax(absdev_ord)
                     # apply mask
-                    recon0_aux.append(recon0[omask][sig_mask])
+                    recon0_aux.append(recon[omask][sig_mask])
                     #lin_mod_slice_aux.append(lin_mod_slice[omask][sig_mask])
                     wave_catalog_aux.append(wave_catalog[omask][sig_mask])
                     amp_catalog_aux.append(amp_catalog[omask][sig_mask])
@@ -1807,7 +1809,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                     peak2_aux.append(peak2[omask][sig_mask])
                 # if all below threshold keep all
                 else:
-                    recon0_aux.append(recon0[omask])
+                    recon0_aux.append(recon[omask])
                     #lin_mod_slice_aux.append(lin_mod_slice[omask])
                     wave_catalog_aux.append(wave_catalog[omask])
                     amp_catalog_aux.append(amp_catalog[omask])
@@ -1929,9 +1931,9 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
         #  parameters
         if np.sum(good) > len(order_fit_cont):
             # calc residuals
-            res = wave_catalog - recon0
+            #res = wave_catalog - recon0
             # calculate coefficients
-            coeffs[order_num] = np.polyfit(xgau[good], res[good], fitdeg)
+            coeffs[order_num] = np.polyfit(xgau[good], wave_catalog[good], fitdeg)
     # set up storage of the amps
     amps = []
     # loop around the coefficients in order fit continuum (backwards)
@@ -1953,7 +1955,7 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
         # calculate the recon for this order
         recon[good] = np.polyval(coeffs[order_num,:], xgau[good])
     # return amps and recon
-    return amps, recon
+    return coeffs, recon
 
 
 def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
