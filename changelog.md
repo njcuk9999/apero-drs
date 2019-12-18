@@ -2,6 +2,29 @@ Changelog
 =========
 
 
+0.6.009 (2019-12-18)
+--------------------
+- Core.core.drs_log.py + drs_log_stats.py - add option to save time of
+  file and then do log analysis on --since --before log files only.
+  [Neil Cook]
+- Recipes/test/blank_spirou.py - blank recipe. [Neil Cook]
+- Update doc strings for recipes. [Neil Cook]
+- Misc/updates_to_drs/mk_night_wave.py - EA code to do nightly
+  wavelength solution. [Neil Cook]
+- Plotting.plot_functions.py - log scale on some wave plots. [Neil Cook]
+- Science.calib.wave.py - update wave triplet fit by EA. [Neil Cook]
+- Science.calib.wave.py - add breakpoint to look at wave res map
+  problem. [Neil Cook]
+- Science.calib.wave.py - EA changes to triplets fit. [Neil Cook]
+- Recipe/spirou/cal_wave_spirou.py - force initial wavelength solution
+  as the master. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - change the number of
+  triplet iterations to 1. [Neil Cook]
+- Science.calib.wave.py - EA modifications to triplet fitting. [Neil
+  Cook]
+- Update changelog.md to include core.core.drs_recipe fixes. [Neil Cook]
+
+
 0.6.008 (2019-12-17)
 --------------------
 - Core.core.drs_recipe.py - add other list arguments -- attempt to
