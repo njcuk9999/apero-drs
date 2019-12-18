@@ -1574,6 +1574,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # width in dv [km/s] - though used for number of bins?
         # TODO: Question: Why km/s --> number
         nbins = 2 * int(cat_guess_dist) // 1000
+
         # loop around all order
         for order_num in set(orders):
             # get the good pixels in this order
@@ -1665,6 +1666,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             else:
                 wave_catalog[good] = np.nan
                 dv[good] = np.nan
+
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
@@ -1694,12 +1696,16 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             eargs = [mp.nansum(good), min_tot_num_lines, func_name]
             WLOG(params, 'error', TextEntry('00-017-00003', args=eargs))
 
+
+
+
+
         # ------------------------------------------------------------------
         # Linear model slice generation
         # ------------------------------------------------------------------
-        # storage for the linear model slice
+        # # storage for the linear model slice
         # lin_mod_slice = np.zeros((len(xgau), mp.nansum(order_fit_cont)))
-        # construct the unit vectors for wavelength model
+        # # construct the unit vectors for wavelength model
         # # loop around order fit continuity values
         # ii = 0
         # for expo_xpix in range(len(order_fit_cont)):
@@ -1727,31 +1733,36 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # set the initial value of sig to a large number (but not as large as
         #   sig_prev
         sig = np.inf
+
+
         while sigma_it < sigma_clip_num:
             sig_prev = sig
 
             # calculate the linear minimization
             # largs = [wave_catalog - recon0, lin_mod_slice]
             # with warnings.catch_warnings(record=True) as _:
-            #      amps, recon = mp.linear_minimization(*largs)
+            #   amps, recon = mp.linear_minimization(*largs)
+            #   recon  = np.zeros_like(largs[0])
             amps, recon = wave_lmfit(orders, xgau, wave_catalog, recon0,
-                                     order_fit_cont, nbo)
+                                             order_fit_cont, nbo)
 
             # add the amps and recon to new storage
             amps0 = amps0 + amps
             recon0 = recon0 + recon
-            # loop around the amplitudes and normalise
-            for a_it in range(len(amps0)):
-                # work out the residuals
-                res = (wave_catalog - recon0)
-                # work out the sum of residuals
-                sum_r = mp.nansum(res * lin_mod_slice[:, a_it])
-                sum_l2 = mp.nansum(lin_mod_slice[:, a_it] ** 2)
-                # normalise by sum squared
-                ampsx = sum_r / sum_l2
-                # add this contribution on
-                amps0[a_it] += ampsx
-                recon0 += (ampsx * lin_mod_slice[:, a_it])
+            print(np.nanstd(wave_catalog-recon0))
+
+            # # loop around the amplitudes and normalise
+            # for a_it in range(len(amps0)):
+            #     # work out the residuals
+            #     res = (wave_catalog - recon0)
+            #     # work out the sum of residuals
+            #     sum_r = mp.nansum(res * lin_mod_slice[:, a_it])
+            #     sum_l2 = mp.nansum(lin_mod_slice[:, a_it] ** 2)
+            #     # normalise by sum squared
+            #     ampsx = sum_r / sum_l2
+            #     # add this contribution on
+            #     amps0[a_it] += ampsx
+            #     recon0 += (ampsx * lin_mod_slice[:, a_it])
             # recalculate dv [in km/s]
             dv = ((wave_catalog / recon0) - 1) * speed_of_light
             # calculate the standard deviation
@@ -1764,7 +1775,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
 
             # initialize lists for saving
             recon0_aux = []
-            lin_mod_slice_aux = []
+            #lin_mod_slice_aux = []
             wave_catalog_aux = []
             amp_catalog_aux = []
             xgau_aux = []
@@ -1785,7 +1796,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                     sig_mask = absdev_ord < mp.nanmax(absdev_ord)
                     # apply mask
                     recon0_aux.append(recon0[omask][sig_mask])
-                    lin_mod_slice_aux.append(lin_mod_slice[omask][sig_mask])
+                    #lin_mod_slice_aux.append(lin_mod_slice[omask][sig_mask])
                     wave_catalog_aux.append(wave_catalog[omask][sig_mask])
                     amp_catalog_aux.append(amp_catalog[omask][sig_mask])
                     xgau_aux.append(xgau[omask][sig_mask])
@@ -1797,7 +1808,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 # if all below threshold keep all
                 else:
                     recon0_aux.append(recon0[omask])
-                    lin_mod_slice_aux.append(lin_mod_slice[omask])
+                    #lin_mod_slice_aux.append(lin_mod_slice[omask])
                     wave_catalog_aux.append(wave_catalog[omask])
                     amp_catalog_aux.append(amp_catalog[omask])
                     xgau_aux.append(xgau[omask])
@@ -1809,7 +1820,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # save aux lists to initial arrays
             orders = np.concatenate(orders_aux)
             recon0 = np.concatenate(recon0_aux)
-            lin_mod_slice = np.concatenate(lin_mod_slice_aux)
+            #lin_mod_slice = np.concatenate(lin_mod_slice_aux)
             wave_catalog = np.concatenate(wave_catalog_aux)
             amp_catalog = np.concatenate(amp_catalog_aux)
             xgau = np.concatenate(xgau_aux)
@@ -1857,6 +1868,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # add to wave_map2
             wcoeffs = poly_wave_sol[order_num, :][::-1]
             wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
+
     # save parameters to llprops
     llprops['WAVE_CATALOG'] = wave_catalog
     llprops['AMP_CATALOG'] = amp_catalog
@@ -1870,12 +1882,12 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     llprops['DV_T'] = dv
     llprops['EW_T'] = ew
     llprops['PEAK_T'] = peak2
-    llprops['LIN_MOD_SLICE'] = lin_mod_slice
+    #llprops['LIN_MOD_SLICE'] = lin_mod_slice
     llprops['RECON0'] = recon0
     # set sources
     keys = ['WAVE_CATALOG', 'AMP_CATALOG', 'SIG', 'SIG1', 'POLY_WAVE_SOL',
             'WAVE_MAP2', 'XGAU_T', 'ORD_T', 'GAUSS_RMS_DEV_T', 'DV_T',
-            'EW_T', 'PEAK_T', 'LIN_MOD_SLICE', 'RECON0']
+            'EW_T', 'PEAK_T', 'RECON0']
     llprops.set_sources(keys, func_name)
     # save constants to llprops (required for reproduction)
     llprops['WAVE_FIT_DEGREE'] = iprops['DEG']
@@ -1932,7 +1944,7 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
         # add to storage
         amps += list(ordfit[::-1])
         # recalculate the coeff values
-        coeffs[:, icoeff] = np.polyval(ordfit, ordpix)
+        coeffs[~good, icoeff] = np.polyval(ordfit, ordpix[~good])
     # recalculate the recon
     recon = np.zeros_like(xgau)
     for order_num in range(nbo):
