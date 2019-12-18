@@ -1848,7 +1848,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         xpix = np.arange(nbpix)
         wave_map2 = np.zeros((nbo, nbpix))
-        poly_wave_sol = np.zeros_like(iprops['COEFFS'])
+        poly_wave_sol = np.array(coeffs)[:,::-1] # np.zeros_like(iprops['COEFFS'])
 
         # loop around the orders
         for order_num in range(nbo):
@@ -1857,16 +1857,20 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 # log that no values were found
                 wargs = [order_num]
                 WLOG(params, 'warning', TextEntry('10-017-00005', args=wargs))
+
+            #poly_wave_map[order_num] =
             # loop around order fit continuum to propagate new coefficients
-            ii = 0
-            for expo_xpix in range(len(order_fit_cont)):
-                for expo_order in range(order_fit_cont[expo_xpix]):
-                    # calculate new coefficient
-                    new_coeff = (order_num ** expo_order) * amps0[ii]
-                    # add to poly wave solution
-                    poly_wave_sol[order_num, expo_xpix] += new_coeff
-                    # iterate
-                    ii += 1
+            #ii = 0
+
+            #for iord in range(coeffs.shape[0]):
+            #for expo_xpix in range(len(order_fit_cont)):
+            #    for expo_order in range(order_fit_cont[expo_xpix]):
+            #         # calculate new coefficient
+            #         new_coeff = (order_num ** expo_order) * amps0[ii]
+            #         # add to poly wave solution
+            #         poly_wave_sol[order_num, expo_xpix] += new_coeff
+            #         # iterate
+            #         ii += 1
             # add to wave_map2
             wcoeffs = poly_wave_sol[order_num, :][::-1]
             wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
