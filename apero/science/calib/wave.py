@@ -1961,6 +1961,10 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
 def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     func_name = __NAME__ + '.generate_resolution_map()'
 
+
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
     # get constants from params / kwargs
     resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
                          kwargs, func_name, mapf='list', dtype=int)
