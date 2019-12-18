@@ -1957,14 +1957,14 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
         # plot frame1
         frame1.scatter(wave[good], dv[good], s=5, color=colour)
         # plot frame2
-        frame2.scatter(1.0 / rms[good], dv[good], s=5, color=colour)
+        frame2.scatter(np.log10(1.0 / rms[good]), dv[good], s=5, color=colour)
         # plot frame3
         frame3.scatter(xgau[good] % 1, dv[good], s=5, color=colour)
         # plot frame4
         frame4.scatter(ew[good], dv[good], s=5, color=colour)
     # set up labels
     frame1.set(xlabel='Wavelength [nm]', ylabel='dv [km/s]')
-    frame2.set(xlabel='Line SNR estimate', ylabel='dv [km/s]')
+    frame2.set(xlabel='log_{10}(Line SNR estimate)', ylabel='dv [km/s]')
     frame3.set(xlabel='Modulo pixel position', ylabel='dv [km/s]')
     frame4.set(xlabel='e-width of fitted line', ylabel='dv [km/s]')
     # add title
@@ -2479,13 +2479,17 @@ def plot_wave_fp_multi_order(plotter, graph, kwargs):
         # get colour and style from order parity
         col_plot = col[np.mod(order_num, 2)]
         lty_plot = lty[np.mod(order_num, 2)]
+
+        # log hc data
+        with warnings.catch_warnings(record=True) as _:
+            loghcdata = np.log10(hcdata[order_num])
         # plot hc spectra
-        frame.plot(wave_map[order_num], hcdata[order_num])
+        frame.plot(wave_map[order_num], loghcdata)
         # plot used HC lines
-        frame.vlines(hc_ll_plot, 0, np.nanmax(hcdata[order_num]),
+        frame.vlines(hc_ll_plot, 0, np.nanmax(loghcdata),
                      color=col_plot, linestyles=lty_plot)
         # set axis labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='Normalised flux',
+    frame.set(xlabel='Wavelength [nm]', ylabel='log_{10}(Normalised flux)',
               title='HC spectra + used HC lines')
     # ------------------------------------------------------------------
     # wrap up using plotter
@@ -2523,7 +2527,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # get the maximum point for this order
-        maxpoint = np.max(hcdata[order_num])
+        maxpoint = mp.nanmax(hcdata[order_num])
         # plot order and flux
         frame.plot(wave[order_num], hcdata[order_num], label='HC Spectrum')
         # loop around lines in order
@@ -2531,10 +2535,14 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
             # get x and y
             x = all_lines[order_num][it][0] + all_lines[order_num][it][3]
             ymaxi = all_lines[order_num][it][2]
+            # log ydata
+            with warnings.catch_warnings(record=True) as _:
+                logydata = np.log10(ymaxi)
             # plot lines to their corresponding amplitude
-            frame.vlines(x, 0, ymaxi, color='m', label='fitted lines')
+            frame.vlines(x, 0, logydata, color='m', label='fitted lines')
             # plot lines to the top of the figure
-            frame.vlines(x, 0, maxpoint, color='gray', linestyles='dotted')
+            frame.vlines(x, 0, np.log10(maxpoint), color='gray',
+                         linestyles='dotted')
         # plot
         ulegend(frame, plotter, loc=0)
         # set limits and title
