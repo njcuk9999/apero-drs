@@ -512,6 +512,7 @@ class RecipeLog:
         self.outputdir = str(params['OUTPATH'])
         # set the pid
         self.pid = str(params['PID'])
+        self.htime = str(params['DATE_NOW'])
         # set the night name directory
         self.directory = str(params['NIGHTNAME'])
         # get lof fits path
@@ -551,6 +552,7 @@ class RecipeLog:
         self.inputdir = str(rlog.inputdir)
         self.outputdir = str(rlog.outputdir)
         self.pid = str(rlog.pid)
+        self.htime = str(rlog.htime)
         self.directory = str(rlog.directory)
         self.logfitspath = str(rlog.logfitspath)
         self.lockfile = str(rlog.lockfile)
@@ -671,6 +673,7 @@ class RecipeLog:
         row = OrderedDict()
         row['RECIPE'] = self.name
         row['PID'] = self.pid
+        row['HTIME'] = self.htime
         row['LEVEL'] = self.level
         row['SUBLEVEL'] = self.level_iteration
         row['LEVEL_CRIT'] = self.level_criteria

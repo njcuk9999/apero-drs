@@ -177,7 +177,8 @@ def get_log_files(params, recipe, path, nightname=None):
     return logfiles, nightnames
 
 
-def make_log_table(params, logfiles, nightnames, recipename):
+def make_log_table(params, logfiles, nightnames, recipename, since=None,
+                   before=None):
     # log progress
     WLOG(params, '', 'Loading log files')
     # define dict storage
@@ -193,11 +194,35 @@ def make_log_table(params, logfiles, nightnames, recipename):
         if recipename is not None:
             logrecipes = np.char.array(np.array(table['RECIPE'], dtype=str))
             logrecipes = logrecipes.replace('.py', '').strip()
-            # test mask
-            mask = logrecipes == recipename.replace('.py', '').strip()
-            if np.sum(mask) != 0:
-                table = table[mask]
+            # create recipe mask
+            rmask = logrecipes == recipename.replace('.py', '').strip()
+            # test if we have any rows left
+            if np.sum(rmask) != 0:
+                # apply mask to table
+                table = table[rmask]
             else:
+                # else skip to next log
+                continue
+
+        # filter by time "since" and "before"
+        # TODO: remove if statement once we always have HTIME
+        if 'HTIME' in table:
+            # get htimes as astropy time objects
+            htimes = Time(table['HTIME'], format='iso')
+            # accept all values originally
+            hmask = np.ones(htimes, dtype=bool)
+
+            # use masks from since and before
+            if since not in ['None', None, '']:
+                hmask &= htimes >= since
+            if before not in ['None', None, '']:
+                hmask &= htimes <= before
+            # test if we have any rows left
+            if np.sum(hmask) != 0:
+                # apply hmask to table
+                table = table[hmask]
+            else:
+                # else skip to next log
                 continue
 
         # add a night column to masterdict
@@ -254,6 +279,22 @@ def search_recipes(params, recipe, recipename):
 
     # if we have got to this point return None
     return None
+
+
+def get_time(params, inputtime, kind='time'):
+    # deal with no time given
+    if inputtime in [None, 'None', '']:
+        return None
+    # else try to make astropy Time instance
+    try:
+        outtime = Time(inputtime, format='iso')
+    except Exception as e:
+        eargs = [kind, inputtime, type(e), str(e)]
+        emsg = 'Time "{0}"="{1}" not understood. \n\t Error {1}: {2}'
+        WLOG(params, 'error', emsg.format(*eargs))
+        outtime = None
+    # return astropy time
+    return outtime
 
 
 def calculate_stats(params, recipe, mastertable):
