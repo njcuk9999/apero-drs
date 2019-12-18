@@ -157,7 +157,19 @@ logstats.set_kwarg(name='--kind', dtype=str, default='red',
                   helpstr=Help['LOGSTAT_HELP_KIND'])
 # TODO: add help string
 logstats.set_kwarg(name='--recipe', dtype=str, default='None',
-                   helpstr='')
+                   helpstr='Define a recipe name (the full python name) to'
+                           'filter all results by - this will change the '
+                           'analysis done on the log files')
+logstats.set_kwarg(name='--since', dtype=str, default='None',
+                   helpstr='Define a date and time for the earliest log. '
+                           'Must be in the form yyyy-mm-dd HH:MM:SS or '
+                           'yyyy-mm-dd (and the time will be assumed '
+                           'midnight).')
+logstats.set_kwarg(name='--before', dtype=str, default='None',
+                   helpstr='Define a date and time for the most recent log. '
+                           'Must be in the form yyyy-mm-dd HH:MM:SS or '
+                           'yyyy-mm-dd (and the time will be assumed '
+                           'midnight).')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
