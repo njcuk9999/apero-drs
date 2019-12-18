@@ -55,7 +55,7 @@ EXTRACT_NAME = 'cal_extract_spirou.py'
 # Everything else is controlled from recipe_definition
 def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     """
-    Main function for cal_badpix_spirou.py
+    Main function for cal_wave_master_spirou.py
 
     :param directory: string, the night name sub-directory
     :param hcfiles: list of strings or string, the list of hc files
@@ -197,7 +197,7 @@ def __main__(recipe, params):
             # load initial wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                            fiber=fiber)
+                                            fiber=fiber, master=True)
             # check that wave parameters are consistent with required number
             #   of parameters (from constants)
             iwprops = wave.check_wave_consistency(params, iwprops)
@@ -355,7 +355,7 @@ def __main__(recipe, params):
             # Construct summary document
             # --------------------------------------------------------------
             # if we have a wave solution wave summary from fpprops
-            if fp_e2ds_file is not None:
+            if (fp_e2ds_file is not None) and passed:
                 wave.wave_summary(recipe, params, fpprops, fiber, qc_params)
             else:
                 wave.wave_summary(recipe, params, hcprops, fiber, qc_params)
