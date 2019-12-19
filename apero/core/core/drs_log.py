@@ -513,6 +513,7 @@ class RecipeLog:
         # set the pid
         self.pid = str(params['PID'])
         self.htime = str(params['DATE_NOW'])
+        self.group = str(params['DRS_GROUP'])
         # set the night name directory
         self.directory = str(params['NIGHTNAME'])
         # get lof fits path
@@ -526,6 +527,7 @@ class RecipeLog:
         self.args = ''
         self.kwargs = ''
         self.skwargs = ''
+        self.runstring = ''
         # set that recipe started
         self.started = True
         # set the iteration
@@ -553,10 +555,12 @@ class RecipeLog:
         self.outputdir = str(rlog.outputdir)
         self.pid = str(rlog.pid)
         self.htime = str(rlog.htime)
+        self.group = str(rlog.group)
         self.directory = str(rlog.directory)
         self.logfitspath = str(rlog.logfitspath)
         self.lockfile = str(rlog.lockfile)
         self.log_file = str(rlog.log_file)
+        self.runstring = str(rlog.runstring)
         self.args = str(rlog.args)
         self.kwargs = str(rlog.kwargs)
         self.skwargs = str(rlog.skwargs)
@@ -572,15 +576,22 @@ class RecipeLog:
             return
         # get inputs
         inputs = params['INPUTS']
+        # start run string
+        if self.name.endswith('.py'):
+            self.runstring = '{0} '.format(self.name)
+        else:
+            self.runstring = '{0}.py '.format(self.name)
         # ------------------------------------------------------------------
         # deal with arguments
-        self.args = _input_str(inputs, rargs, kind='arg')
+        self.args = self._input_str(inputs, rargs, kind='arg')
         # ------------------------------------------------------------------
         # deal with kwargs
-        self.kwargs = _input_str(inputs, rkwargs, kind='kwargs')
+        self.kwargs = self._input_str(inputs, rkwargs, kind='kwargs')
         # ------------------------------------------------------------------
         # deal with special kwargs
-        self.skwargs = _input_str(inputs, rskwargs, kind='skwargs')
+        self.skwargs = self._input_str(inputs, rskwargs, kind='skwargs')
+        # strip the runstring
+        self.runstring.strip()
 
     def set_lock_func(self, func):
         self.lfunc = func
@@ -643,6 +654,66 @@ class RecipeLog:
         else:
             return self.lfunc(params, self.lockfile, self._writer)
 
+    def _input_str(self, inputs, argdict, kind='arg'):
+        # setup input str
+        inputstr = ''
+        # deal with kind
+        if kind == 'arg':
+            prefix = ''
+        else:
+            prefix = '--'
+        # deal with arguments
+        for argname in argdict:
+            # get arg
+            arg = argdict[argname]
+            # strip prefix (may or may not have one)
+            argname = argname.strip(prefix)
+            # get input arg
+            iarg = inputs[argname.strip(prefix)]
+            # add prefix (add prefix whether it had one or not)
+            argname = prefix + argname
+            # deal with file arguments
+            if arg.dtype in ['file', 'files']:
+                if not isinstance(iarg, list):
+                    continue
+                # get string and drsfile
+                strfiles = iarg[0]
+                drsfiles = iarg[1]
+                # deal with having string (force to list)
+                if isinstance(strfiles, str):
+                    strfiles = [strfiles]
+                    drsfiles = [drsfiles]
+
+                # add argname to run string
+                if kind != 'arg':
+                    self.runstring += '{0} '.format(argname)
+                # loop around fiels and add them
+                for f_it in range(len(strfiles)):
+                    # add to list
+                    fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
+                    inputstr += '{0}[1]={2}[{3}] '.format(*fargs)
+                    # add to run string
+                    if strfiles[f_it] in ['None', None, '']:
+                        continue
+                    else:
+                        basefile = os.path.basename(strfiles[f_it])
+                        self.runstring += '{0} '.format(basefile)
+            else:
+                inputstr += '{0}={1} '.format(argname, iarg)
+                # skip Nones
+                if iarg in ['None', None, '']:
+                    continue
+                # add to run string
+                if isinstance(iarg, str):
+                    iarg = os.path.basename(iarg)
+                if kind != 'arg':
+                    self.runstring += '{0}={1} '.format(argname, iarg)
+                else:
+                    self.runstring += '{0} '.format(iarg)
+
+        # return the input string
+        return inputstr.strip()
+
     # private methods
     def _get_write_dir(self):
         # ------------------------------------------------------------------
@@ -674,6 +745,7 @@ class RecipeLog:
         row['RECIPE'] = self.name
         row['PID'] = self.pid
         row['HTIME'] = self.htime
+        row['GROUP'] = self.group
         row['LEVEL'] = self.level
         row['SUBLEVEL'] = self.level_iteration
         row['LEVEL_CRIT'] = self.level_criteria
@@ -681,6 +753,7 @@ class RecipeLog:
         row['OUTPATH'] = self.outputdir
         row['DIRECTORY'] = self.directory
         row['LOGFILE'] = self.log_file
+        row['RUNSTRING'] = self.runstring
         row['ARGS'] = self.args
         row['KWARGS'] = self.kwargs
         row['SKWARGS'] = self.skwargs
@@ -1449,43 +1522,7 @@ def get_drs_data_msg(params, group=None):
 # =============================================================================
 # Define Recipe Log functions
 # =============================================================================
-def _input_str(inputs, argdict, kind='arg'):
-    # setup input str
-    inputstr = ''
-    # deal with kind
-    if kind == 'arg':
-        prefix = ''
-    else:
-        prefix = '--'
-    # deal with arguments
-    for argname in argdict:
-        # get arg
-        arg = argdict[argname]
-        # strip prefix (may or may not have one)
-        argname = argname.strip(prefix)
-        # get input arg
-        iarg = inputs[argname.strip(prefix)]
-        # add prefix (add prefix whether it had one or not)
-        argname = prefix + argname
-        # deal with file arguments
-        if arg.dtype in ['file', 'files']:
-            if not isinstance(iarg, list):
-                continue
-            # get string and drsfile
-            strfiles = iarg[0]
-            drsfiles = iarg[1]
-            # deal with having string (force to list)
-            if isinstance(strfiles, str):
-                strfiles = [strfiles]
-                drsfiles = [drsfiles]
-            for f_it in range(len(strfiles)):
-                # add to list
-                fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
-                inputstr += '{0}[1]={2}[{3}] '.format(*fargs)
-        else:
-            inputstr += '{0}={1} '.format(argname, iarg)
-    # return the input string
-    return inputstr.strip()
+
 
 
 # =============================================================================
