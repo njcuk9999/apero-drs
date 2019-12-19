@@ -140,6 +140,9 @@ class Database():
                 f = open(self.abspath, 'r')
                 lines = list(f.readlines())
                 f.close()
+            except KeyboardInterrupt as e:
+                lock.reset()
+                raise e
             except Exception as e:
                 # error message
                 eargs = [self.dbname, type(e), e, self.abspath, func_name]
@@ -202,9 +205,9 @@ class Database():
         # try to run locked read function
         try:
             locked_read()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             lock.reset()
-            sys.exit()
+            raise e
         except Exception as e:
             # reset lock
             lock.reset()
@@ -730,9 +733,9 @@ def _copy_db_file(params, dbname, inpath, outpath):
     # try to run locked copy function
     try:
         locked_copy()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
@@ -767,7 +770,6 @@ def _read_lines_from_database(params, dbname):
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockdir = os.path.dirname(abspath)
     lockfile = os.path.basename(abspath)
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
@@ -827,9 +829,9 @@ def _read_lines_from_database(params, dbname):
     # try to run locked makedirs
     try:
         database = locked_readlines()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
@@ -875,9 +877,9 @@ def _write_line_to_database(params, key, dbname, outfile, line, log=True):
     # try to run locked makedirs
     try:
         locked_writelines()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
