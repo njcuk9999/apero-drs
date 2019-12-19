@@ -478,6 +478,19 @@ class PseudoConstants:
     def FIBER_WAVE_TYPES(self, fiber):
         return fiber
 
+    def FIBER_DPR_POS(self, dprtype, fiber):
+        """
+        When we have a DPRTYPE figure out what is in the fiber requested
+
+        :param dprtype: str in form fiber1_fiber2 type in each
+                        (e.g. DARK, FLAT, FP, HC, OBJ etc)
+        :param fiber: str, the fiber requested
+
+        :return:
+        """
+        func_name = 'FIBER_DPR_POS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
         func_name = 'FIBER_LOC_COEFF_EXT'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
