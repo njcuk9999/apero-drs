@@ -192,8 +192,9 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         pconst = constants.pload(recipe.instrument)
         recipe.filemod = pconst.FILEMOD()
         recipe.recipemod = pconst.RECIPEMOD()
-        # need to set DRS_GROUP
-        recipe.drs_params.set('DRS_GROUP', drsgroup, func_name)
+        # set DRS_GROUP
+        recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
+        recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
         # do not need to display if we have special keywords
