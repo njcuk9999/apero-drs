@@ -1159,7 +1159,7 @@
 "40-502-00008","ALL","prints that we are skipping link (subdirs)","{0} = link name","\t Skipping link: {0}","",""
 "40-502-00009","ALL","prints that we are removing file (subdirs)","{0} = filename","\t Removing file: {0}","",""
 "40-502-00010","ALL","prints that we are removing directory (subdirs)","{0} = directory name","\t Removing directory: {0}","",""
-"40-502-00011","ALL","","","","",""
+"40-502-00011","ALL","prints a reset confirmation for the log fits files","None","Are you sure you wish to reset the log fits files (through the DRS)? \t If you are sure you want to reset type 'yes'","",""
 "","","","","","",""
 "","","","","","",""
 "","","","","","",""
