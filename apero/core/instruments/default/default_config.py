@@ -35,7 +35,7 @@ __all__ = [  # global settings
     # DISPLAY/LOGGING SETTINGS
     'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
     'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
-    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT',
+    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT', 'DRS_LOG_FITS_NAME',
     # PLOT SETTINGS
     'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
     'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
@@ -400,6 +400,11 @@ DRS_LOG_EXIT_TYPE = Const('DRS_LOG_EXIT_TYPE', value='sys', dtype=str,
 # Defines the DRS log format
 DRS_LOG_FORMAT = Const('DRS_LOG_FORMAT', value='{0}-{1}|{2}|{3}',
                        dtype=str, source=__NAME__, group=cgroup)
+
+# Define the log fits file name
+DRS_LOG_FITS_NAME = Const('DRS_LOG_FITS_NAME', value='log.fits', dtype=str,
+                          source=__NAME__, group=cgroup)
+
 
 # =============================================================================
 # PLOT SETTINGS
