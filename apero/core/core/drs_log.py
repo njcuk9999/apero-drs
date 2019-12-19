@@ -643,6 +643,12 @@ class RecipeLog:
         if write:
             self.write(params)
 
+    def add_error(self, params, errortype, errormsg, write=True):
+        self.errors += '"{0}":"{1}" '.format(errortype, errormsg)
+        # whether to write (update) recipe log file
+        if write:
+            self.write(params)
+
     def end(self, params, write=True):
 
         self.ended = True
