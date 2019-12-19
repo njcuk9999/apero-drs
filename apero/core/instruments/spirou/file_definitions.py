@@ -737,6 +737,8 @@ out_wave_hclist_master = drs_input('WAVE_HCLIST_MASTER',
                                    filetype='.fits',
                                    intype=[out_ext_e2ds, out_ext_e2dsff],
                                    suffix='_wavem_hclines',
+                                   dbname='calibration', dbkey='WAVEHCL',
+                                   datatype='table',
                                    outfunc=out.calib_file)
 
 # fp line file from master
@@ -746,6 +748,8 @@ out_wave_fplist_master = drs_input('WAVE_FPLIST_MASTER',
                                    filetype='.fits',
                                    intype=[out_ext_e2ds, out_ext_e2dsff],
                                    suffix='_wavem_fplines',
+                                   dbname='calibration', dbkey='WAVEFPL',
+                                   datatype='table',
                                    outfunc=out.calib_file)
 
 # wave master
