@@ -227,11 +227,18 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs, printonly=True)
     # -------------------------------------------------------------------------
+    # We must have DRS_DATA_MSG_FULL (the full path for this recipe)
+    drs_data_msg_full = drs_log.get_drs_data_msg(recipe.drs_params, reset=True,
+                                                 group=drsgroup)
+    recipe.drs_params['DRS_DATA_MSG_FULL'] = drs_data_msg_full
+    recipe.drs_params.set_source('DRS_DATA_MSG_FULL', func_name)
+    # -------------------------------------------------------------------------
     # update params in log
     WLOG.pin = recipe.drs_params.copy()
+    # copy params
+    params = recipe.drs_params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    params = recipe.drs_params.copy()
     params['INPATH'] = recipe.get_input_dir()
     params['OUTPATH'] = recipe.get_output_dir()
     if 'DIRECTORY' in params['INPUTS']:
@@ -252,11 +259,6 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
     if cond1 and cond3 and cond4:
         _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
-    # -------------------------------------------------------------------------
-    # We must have DRS_DATA_MSG_FULL (the full path for this recipe)
-    params['DRS_DATA_MSG_FULL'] = drs_log.get_drs_data_msg(params, reset=True,
-                                                           group=drsgroup)
-    params.set_source('DRS_DATA_MSG_FULL', func_name)
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
     if 'DATA_DICT' in fkwargs:
