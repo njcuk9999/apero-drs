@@ -57,6 +57,8 @@ pcheck = core.pcheck
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
+# Get function string
+display_func = drs_log.display_func
 
 
 # =============================================================================
@@ -435,6 +437,326 @@ def check_wave_consistency(params, props, **kwargs):
         props.set_sources(['WAVEMAP', 'COEFFS', 'DEG'], func_name)
     # return props
     return props
+
+
+
+
+# =============================================================================
+# Define wave ref functions
+# =============================================================================
+def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
+
+    # TODO: Move to constants file
+    params.unlock()
+    # min SNR to consider the line
+    params['WAVEREF_NSIG_MIN'] = 15
+    # minimum distance to the edge of the array to consider a line
+    params['WAVEREF_EDGE_WMAX'] = 20
+    # value in pixel (+/-) for the box size around each HC line to perform fit
+    params['WAVEREF_HC_BOXSIZE'] = 5
+    # get valid hc dprtypes
+    params['WAVEREF_HC_FIBTYPES'] = 'HCONE, HCTWO'
+    # get valid fp dprtypes
+    params['WAVEREF_FP_FIBTYPES'] = 'FP'
+    # get the degree to fix master wavelength to in hc mode
+    params['WAVEREF_FITDEG'] = 5
+    # define the lowest N for fp peaks
+    params['WAVEREF_FP_NLOW'] = 9000
+    # define the highest N for fp peaks
+    params['WAVEREF_FP_NHIGH'] = 30000
+    # define the number of iterations required to do the Fp polynomial inversion
+    params['WAVEREF_FP_POLYINV'] = 4
+
+    # set the function name
+    func_name = display_func(params, __NAME__, 'get_master_lines')
+    # get parameters from params and kwargs
+    nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', 'nsig_min', kwargs, func_name)
+    wmax = pcheck(params, 'WAVEREF_E2DS_WMAX', 'wmax', kwargs, func_name)
+    hcboxsize = pcheck(params, 'WAVEREEF_HC_BOXSIZE', 'hcboxsize', kwargs,
+                       func_name)
+    hcfibtypes = pcheck(params, 'WAVEREF_HC_FIBTYPES', 'hcfibtypes', kwargs,
+                        func_name, mapf='list', dtype=str)
+    fpfibtypes = pcheck(params, 'WAVEREF_FP_FIBTYPES', 'fpfibtypes', kwargs,
+                        func_name, mapf='list', dtype=str)
+    fitdeg = pcheck(params, 'WAVEREF_FITDEG', 'fitdeg', kwargs, func_name)
+    fp_nlow = pcheck(params, 'WAVEREF_FP_NLOW', 'fp_nlow', kwargs,
+                     func_name)
+    fp_nhigh = pcheck(params, 'WAVEREF_FP_NHIGH', 'fp_nhigh', kwargs,
+                      func_name)
+    fp_inv_itr = pcheck(params, 'WAVEREF_FP_POLYINV', 'fp_inv_itr', kwargs,
+                        func_name)
+
+    # ------------------------------------------------------------------
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # get the shape from the wavemap
+    nbo, nbpix = wavemap.shape
+    # get dprtype
+    dprtype = e2dsfile.get_key('KW_DPRTYPE', dtype=str)
+    # get fiber type
+    fiber = e2dsfile.get_key('KW_FIBER', dtype=str)
+    # get fiber type
+    fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
+    # set up the xpixels
+    xpix = np.arange(nbpix)
+
+    # ----------------------------------------------------------------------
+    # get the lines for HC files
+    # ----------------------------------------------------------------------
+    if fibtype in hcfibtypes:
+        # load the line list
+        wavell, ampll = drs_data.load_linelist(params, **kwargs)
+        # storage for outputs
+        list_waves, list_orders, list_pixels = [], [], []
+        # loop around orders and get the lines that fall within each
+        #    diffraction order
+        for order_num in range(nbo):
+            # we have a wavelength value, we get an approximate pixel
+            # value by fitting wavelength to pixel
+            owave = wavemap[order_num]
+            fit_reverse = np.polyfit(owave, xpix, fitdeg)
+            # we find lines within the order
+            good = (wavell > np.min(owave)) & (wavell < np.max(owave))
+            # we check that there is at least 1 line and append our line list
+            if np.sum(good) != 0:
+                # get the pixels positions based on out owave fit
+                pixfit = np.polyval(fit_reverse, wavell[good])
+                # append lists
+                list_waves += list(wavell[good])
+                list_orders += list(np.repeat(order_num, np.sum(good)))
+                list_pixels += list(pixfit)
+        # make line lists np arrays
+        list_waves = np.array(list_waves)
+        list_orders = np.array(list_orders)
+        list_pixels = np.array(list_pixels)
+        # keep lines that are  not too close to image edge
+        keep = (list_pixels > wmax) & (list_pixels < (nbpix - wmax))
+        # apply to list arrays
+        list_waves = list_waves[keep]
+        list_orders = list_orders[keep]
+        list_pixels = list_pixels[keep]
+        # set wfit to a constant for HC
+        list_wfit = np.repeat(hcboxsize, len(list_pixels))
+
+    # ----------------------------------------------------------------------
+    # get the lines for FP files
+    # ----------------------------------------------------------------------
+    elif fibtype in fpfibtypes:
+        # load the cavity polynomial from file
+        cavity_length_poly = drs_data.load_cavity_file(params, raw=True)
+        # range of the N FP peaks
+        nth_peak = np.arange(fp_nlow, fp_nhigh)
+        # storage for the wavelength centers
+        wave0 = np.ones_like(nth_peak, dtype=float)
+        # start the wave inversion of the polynomial at a sensible value
+        wave0 = wave0 * np.nanmean(wavemap)
+        # need a few iterations to invert polynomial relations
+        for _ in range(fp_inv_itr):
+            wave0 = np.polyval(cavity_length_poly[::-1], wave0)
+            wave0 = wave0 * 2 / nth_peak
+        # keep lines within the master_wavelength domain
+        keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
+        wave0 = wave0[keep]
+        # sort by wavelength
+        wave0 = wave0[np.argsort(wave0)]
+        # storage for outputs
+        list_waves, list_orders, list_pixels, list_wfit = [], [], [], []
+        # loop around orders and get the lines that fall within each
+        #    diffraction order
+        for order_num in range(nbo):
+            # we have a wavelength value, we get an approximate pixel
+            # value by fitting wavelength to pixel
+            owave = wavemap[order_num]
+            fit_reverse = np.polyfit(owave, xpix, fitdeg)
+            # we find lines within the order
+            good = (wave0 > np.min(owave)) & (wave0 < np.max(owave))
+            # we check that there is at least 1 line and append our line list
+            if np.sum(good) != 0:
+                # get the pixels positions based on out owave fit
+                pixfit = np.polyval(fit_reverse, wave0[good])
+                # get the dpix coeffs
+                dpixc = np.polyfit(pixfit[1:], xpix[1:] - xpix[:-1], 2)
+                # use this to get the rounded width?
+                wfit = np.ceil(np.polyval(dpixc, pixfit), 2)
+                # append to the lists
+                list_waves += list(wave0[good])
+                list_orders += list(np.repeat(order_num, np.sum(good)))
+                list_pixels += list(pixfit)
+                list_wfit += list(wfit)
+        # make line lists np arrays
+        list_waves = np.array(list_waves)
+        list_orders = np.array(list_orders)
+        list_pixels = np.array(list_pixels)
+        list_wfit = np.array(list_wfit, dtype=int)
+        # keep lines that are  not too close to image edge
+        keep = (list_pixels > wmax) & (list_pixels < (nbpix - wmax))
+        # apply to list arrays
+        list_waves = list_waves[keep]
+        list_orders = list_orders[keep]
+        list_pixels = list_pixels[keep]
+        list_wfit = list_wfit[keep]
+
+    # ----------------------------------------------------------------------
+    # else we break
+    # ----------------------------------------------------------------------
+    else:
+        eargs = [e2dsfile.name, dprtype, fiber, func_name, hcfibtypes,
+                 fpfibtypes]
+        # TODO: Move to language DB
+        emsg = ('Error e2ds file = "{0}" (dprtype={1} fiber={2}) not valid '
+                'for {3}\n\t Valid HC types: {4} \n\t Valid FP types = {5}')
+        WLOG(params, '', emsg.format(*eargs))
+        list_waves = []
+        list_orders = []
+        list_pixels = []
+        list_wfit = []
+
+    # ----------------------------------------------------------------------
+    # Fit the peaks
+    # ----------------------------------------------------------------------
+    # set up storage
+    pixel_m = np.array(list_pixels)
+    wave_m = np.zeros_like(list_waves)
+    ewidth = np.zeros_like(list_pixels)
+    amp = np.zeros_like(list_pixels)
+    nsig = np.repeat(np.nan, len(list_pixels))
+    # ----------------------------------------------------------------------
+    # loop around orders
+    for order_num in range(nbo):
+        # log progress
+        # TODO: Move to language DB
+        eargs = [order_num, nbo, fiber, fibtype]
+        emsg = 'Order {0}/{1} Fiber {2} (type={3})'
+        WLOG(params, '', emsg.format(*eargs))
+        # get the order spectrum
+        sorder = e2dsfile.data[order_num]
+        # find all lines in this order
+        good = np.where(list_orders == order_num)[0]
+        # get order lines
+        order_waves = list_waves[good]
+        order_pixels = list_pixels[good]
+        order_wfit = list_pixels[good]
+        # ------------------------------------------------------------------
+        # loop around lines
+        for it in range(len(order_waves)):
+            # get the x pixel position
+            xpix = int(np.round(order_pixels[it]))
+            # get the width
+            wfit = int(np.round(order_wfit[it]))
+            # get the pixels within this peak
+            index = np.arange(xpix - wfit, xpix + wfit + 1)
+            # get the flux value in this peak
+            ypix = sorder[index]
+            # --------------------------------------------------------------
+            # only continue if we have some finite values
+            if np.sum(np.isfinite(ypix)) > 0:
+                # get ypix max and min
+                ymax, ymin = mp.nanmax(ypix), mp.nanmin(ypix)
+                # get up a gauss fit guess
+                guess = [ymax - ymin, xpix, 1, ymin]
+                # try fitting a gaussian with a slope
+                try:
+                    out = mp.fit_gauss_with_slope(index, ypix, guess, True)
+                    popt, pcov, model = out
+                    # calculate the RMS of the fit
+                    rms = mp.nanstd(ypix - model)
+                    # if we find 'good' values add to storage
+                    cond1 = np.abs(popt[1] - xpix) < 1
+                    cond2 = (popt[2] < 2) and (popt[2] > 0.5)
+                    if cond1 and cond2:
+                        amp[good[it]] = popt[0]
+                        pixel_m[good[it]] = popt[1]
+                        ewidth[good[it]] = popt[2]
+                        nsig[good[it]] = popt[0] / rms
+                # ignore any bad lines
+                except RuntimeError:
+                    pass
+
+    # lines that are not at a high enough SNR are flagged as NaN
+    # we do NOT remove these lines as we want all tables to have
+    # exactly the same length
+    bad = ~(nsig > nsig_min)
+    nsig[bad] = np.nan
+    ewidth[bad] = np.nan
+    amp[bad] = np.nan
+    pixel_m[bad] = np.nan
+    wave_m[bad] = np.nan
+    # calculate the difference
+    diffpix = pixel_m - list_pixels
+
+    # ----------------------------------------------------------------------
+    # Plot the expected lines vs measured line positions
+    # ----------------------------------------------------------------------
+    # debug plot expected lines vs measured positions
+    recipe.plot('WAVEREF_EXPECTED', orders=list_orders, wavemap=list_waves,
+                diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype)
+
+    # ----------------------------------------------------------------------
+    # Create table to store them in
+    # ----------------------------------------------------------------------
+    columnnames = ['WAVE_REF', 'WAVE_MEAS', 'PIXEL_REF', 'PIXEL_MEAS',
+                   'ORDER', 'WFIT', 'EWIDTH_MEAS', 'AMP_MEAS', 'NSIG', 'DIFF']
+    columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
+                    list_wfit, ewidth, amp, nsig, diffpix]
+    # make table
+    table = drs_table.make_table(params, columnnames, columnvalues)
+    # return table
+    return table
+
+
+def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
+                       fpwavefile, fiber):
+    # ------------------------------------------------------------------
+    # write hc lines
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    hcfile = recipe.outputs['WAVE_HCLIST'].newcopy(recipe=recipe,
+                                                   fiber=fiber)
+    # construct the filename from file instance
+    hcfile.construct_filename(params, infile=hce2ds)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    hcfile.copy_hdict(fpwavefile)
+    # set output key
+    hcfile.add_hkey('KW_OUTPUT', value=hcfile.name)
+    # set data
+    hcfile.data = hclines
+    hcfile.datatype = 'table'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, hcfile.filename]
+    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    # write image to file
+    hcfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(hcfile)
+    # ------------------------------------------------------------------
+    # write fp lines
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    fpfile = recipe.outputs['WAVE_FPLIST'].newcopy(recipe=recipe,
+                                                   fiber=fiber)
+    # construct the filename from file instance
+    fpfile.construct_filename(params, infile=fpe2ds)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    fpfile.copy_hdict(fpwavefile)
+    # set output key
+    fpfile.add_hkey('KW_OUTPUT', value=fpfile.name)
+    # set data
+    fpfile.data = fplines
+    fpfile.datatype = 'table'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, fpfile.filename]
+    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    # write image to file
+    fpfile.write()
+    # add to output files (for indexing)
+    recipe.add_output_file(fpfile)
+    # ------------------------------------------------------------------
+    # return hc  and fp line files
+    return hcfile, fpfile
 
 
 # =============================================================================

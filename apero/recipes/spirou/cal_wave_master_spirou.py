@@ -329,6 +329,35 @@ def __main__(recipe, params):
                     fp_update.write()
                     # add to output files (for indexing)
                     recipe.add_output_file(fp_update)
+
+                # ----------------------------------------------------------
+                # Construct master line reference files
+                # ----------------------------------------------------------
+                wavemap = fpprops['LL_FINAL']
+                # generate the hc reference lines
+                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap)
+                hclines = wave.get_master_lines(params, recipe, *hcargs)
+                # generate the fp reference lines
+                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap)
+                fplines = wave.get_master_lines(params, recipe, *fpargs)
+
+                # ----------------------------------------------------------
+                # Write master line references to file
+                # ----------------------------------------------------------
+                wmargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines,
+                          fpwavefile, fiber]
+                out = wave.write_master_lines(params, recipe, *wmargs)
+                hclinefile, fplinefile = out
+
+                # ----------------------------------------------------------
+                # Update calibDB with line references
+                # ----------------------------------------------------------
+                if passed:
+                    # copy the hc line ref file to the calibDB
+                    drs_database.add_file(params, hclinefile)
+                    # copy the fp line ref file to the calibDB
+                    drs_database.add_file(params, fplinefile)
+
                 # ----------------------------------------------------------
                 # update recipe log file for fp fiber
                 # ----------------------------------------------------------
@@ -345,13 +374,6 @@ def __main__(recipe, params):
                 fpprops = None
 
             # --------------------------------------------------------------
-            # Construct master files
-            # --------------------------------------------------------------
-
-
-
-
-            # --------------------------------------------------------------
             # Construct summary document
             # --------------------------------------------------------------
             # if we have a wave solution wave summary from fpprops
@@ -359,8 +381,6 @@ def __main__(recipe, params):
                 wave.wave_summary(recipe, params, fpprops, fiber, qc_params)
             else:
                 wave.wave_summary(recipe, params, hcprops, fiber, qc_params)
-
-
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)
