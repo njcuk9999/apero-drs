@@ -373,21 +373,21 @@ def reset_lock_dir(params, log=False):
     # deal with empty contents
     if len(contents) == 0:
         if log:
-            print('Removing empty directory: {0}'.format(lockpath))
+            WLOG(params, '', 'Removing empty directory: {0}'.format(lockpath))
         os.rmdir(lockpath)
     # walk through folder and remove empty directories
     for item in contents:
         if os.path.isdir(item):
-            __remove_empty__(item, log=log)
+            __remove_empty__(params, item, log=log)
 
 
-def __remove_empty__(directory, remove_head=True, log=False):
+def __remove_empty__(params, directory, remove_head=True, log=False):
     # get the contents of the directory
     contents = glob.glob(os.path.join(directory, '*'))
     # if we have an empty directory remove it
     if len(contents) == 0 and remove_head:
         if log:
-            print('Removing empty directory: {0}'.format(directory))
+            WLOG(params, '', 'Removing empty directory: {0}'.format(directory))
         os.rmdir(directory)
         return True
     # assume the directory is empty
@@ -396,7 +396,7 @@ def __remove_empty__(directory, remove_head=True, log=False):
     for item in contents:
         # if item is a directory then empty this directory first
         if os.path.isdir(item):
-            empty &= __remove_empty__(item, log=log)
+            empty &= __remove_empty__(params, item, log=log)
         # if item is a file this directory is not empty
         if os.path.isfile(item):
             empty &= False
