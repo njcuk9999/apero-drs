@@ -96,6 +96,8 @@ class DrsRecipe(object):
         self.allowedfibers = None
         # shortname set to name initially
         self.shortname = str(self.name)
+        # recipe kind (for logging)
+        self.kind = None
         # save recipe module
         self.recipemod = None
         # import module
@@ -479,6 +481,8 @@ class DrsRecipe(object):
         self.allowedfibers = copy.deepcopy(recipe.allowedfibers)
         # shortname
         self.shortname = str(recipe.shortname)
+        # recipe kind (for logging)
+        self.kind = copy.deepcopy(recipe.kind)
         # import module
         self.module = self.module
         # output directory
