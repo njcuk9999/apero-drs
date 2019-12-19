@@ -354,9 +354,9 @@ def locker(params, lockfile, my_func, *args, **kwargs):
     # try to run locked read function
     try:
         return locked_function()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
@@ -370,6 +370,11 @@ def reset_lock_dir(params, log=False):
         return
     # get contents head directory (we will loop through these sub directories)
     contents = glob.glob(os.path.join(lockpath, '*'))
+    # deal with empty contents
+    if len(contents) == 0:
+        if log:
+            print('Removing empty directory: {0}'.format(lockpath))
+        os.rmdir(lockpath)
     # walk through folder and remove empty directories
     for item in contents:
         if os.path.isdir(item):
@@ -425,8 +430,9 @@ if __name__ == "__main__":
         # this is where we run the function
         try:
             lockprint()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             mylock.reset()
+            raise e
 
     for jjjt in range(2):
         jobs = []

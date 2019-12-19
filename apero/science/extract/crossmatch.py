@@ -148,9 +148,9 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
     # try to run locked makedirs
     try:
         return locked_lookuptable()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
