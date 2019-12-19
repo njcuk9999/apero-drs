@@ -508,7 +508,7 @@ class RecipeLog:
         self.name = str(name)
         self.kind = str(params['DRS_RECIPE_KIND'])
         self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
-        self.logfitsfile = 'log.fits'
+        self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
         self.inputdir = str(params['INPATH'])
         self.outputdir = str(params['OUTPATH'])
         # set the pid
