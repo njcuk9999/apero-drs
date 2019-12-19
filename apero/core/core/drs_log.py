@@ -506,6 +506,7 @@ class RecipeLog:
     def __init__(self, name, params, level=0):
         # get the recipe name
         self.name = str(name)
+        self.kind = str(params['DRS_RECIPE_KIND'])
         self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
         self.logfitsfile = 'log.fits'
         self.inputdir = str(params['INPATH'])
@@ -550,6 +551,7 @@ class RecipeLog:
 
     def copy(self, rlog):
         self.name = str(rlog.name)
+        self.kind = str(rlog.kind)
         self.defaultpath = str(rlog.defaultpath)
         self.inputdir = str(rlog.inputdir)
         self.outputdir = str(rlog.outputdir)
@@ -743,6 +745,7 @@ class RecipeLog:
     def _make_row(self):
         row = OrderedDict()
         row['RECIPE'] = self.name
+        row['KIND'] = self.kind
         row['PID'] = self.pid
         row['HTIME'] = self.htime
         row['GROUP'] = self.group
