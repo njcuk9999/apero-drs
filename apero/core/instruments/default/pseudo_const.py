@@ -126,7 +126,9 @@ class PseudoConstants:
         index_file = self.INDEX_OUTPUT_FILENAME()
         # construct the index lock file name
         oargs = [night_name, index_file]
-        opath = os.path.join(params['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
+        # get msg path
+        msgpath = params['DRS_DATA_MSG_FULL']
+        opath = os.path.join(msgpath, '{0}_{1}'.format(*oargs))
         # return the index lock file name
         return opath
 
@@ -276,13 +278,11 @@ class PseudoConstants:
         # deal with no dir_data_msg
         if dir_data_msg is None:
             dir_data_msg = str(params['DRS_DATA_MSG'])
-
         # deal with no PID
         if 'PID' not in params:
             pid = 'UNKNOWN-PID'
         else:
             pid = str(params['PID'])
-
         # deal with no recipe
         if 'RECIPE' not in params:
             recipe = 'UNKNOWN-RECIPE'

@@ -69,7 +69,7 @@ class Lock:
         self.lockname = self.__clean_name(lockname)
         self.params = params
         # get the lock path
-        lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+        lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
         if not os.path.exists(lockpath):
             os.mkdir(lockpath)
 
@@ -365,7 +365,7 @@ def locker(params, lockfile, my_func, *args, **kwargs):
 
 def reset_lock_dir(params, log=False):
     # get the lock path
-    lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+    lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
     if not os.path.exists(lockpath):
         return
     # get contents head directory (we will loop through these sub directories)
