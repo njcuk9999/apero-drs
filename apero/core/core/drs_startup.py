@@ -289,7 +289,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         recipe.plot = plotting.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # add the recipe log
-    if instrument is not None:
+    if (instrument is not None) and (params['DRS_RECIPE_KIND'] == 'recipe'):
         recipe.log = drs_log.RecipeLog(recipe.name, params)
         # add log file to log
         recipe.log.set_log_file(drs_log.get_logfilepath(WLOG, params))
@@ -350,7 +350,8 @@ def run(func, recipe, params):
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            recipe.log.add_error(params, 'KeyboardInterrupt', '')
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, 'KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except drs_exceptions.LogExit as e:
@@ -365,7 +366,8 @@ def run(func, recipe, params):
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            recipe.log.add_error(params, type(e), str(e))
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except Exception as e:
@@ -381,7 +383,8 @@ def run(func, recipe, params):
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            recipe.log.add_error(params, type(e), str(e))
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except SystemExit as e:
@@ -397,7 +400,8 @@ def run(func, recipe, params):
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            recipe.log.add_error(params, type(e), str(e))
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
     # return llmain and success
