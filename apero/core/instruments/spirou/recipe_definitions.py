@@ -693,7 +693,8 @@ cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_FP_IPT_CWID_LLHC',
                                 'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
                                 'WAVE_FP_SINGLE_ORDER',
-                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
+                                'WAVEREF_EXPECTED')
 cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_CHECK',
                                   'SUM_WAVE_LITTROW_EXTRAP',
