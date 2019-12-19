@@ -304,10 +304,10 @@ class Logger:
         report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
         if type(message) is HelpEntry:
-            raw_message2 = msg_obj.get(self.d_helptext, report=report,
+            raw_message2 = msg_obj.get(self.d_helptext, report=True,
                                        reportlevel=key)
         else:
-            raw_message2 = msg_obj.get(self.d_textdict, report=report,
+            raw_message2 = msg_obj.get(self.d_textdict, report=True,
                                        reportlevel=key)
         # split by '\n'
         raw_messages2 = raw_message2.split('\n')
@@ -506,7 +506,7 @@ class RecipeLog:
     def __init__(self, name, params, level=0):
         # get the recipe name
         self.name = str(name)
-        self.defaultpath = str(params['DRS_DATA_MSG'])
+        self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
         self.logfitsfile = 'log.fits'
         self.inputdir = str(params['INPATH'])
         self.outputdir = str(params['OUTPATH'])
@@ -1474,9 +1474,19 @@ def _clean_message(message):
     return message
 
 
-def get_drs_data_msg(params, group=None):
+def get_drs_data_msg(params, group=None, reset=False):
+    # if we have a full path in params we use this
+    if 'DRS_DATA_MSG_FULL' in params and not reset:
+        return params['DRS_DATA_MSG_FULL']
+    # ----------------------------------------------------------------------
     # get from params
     dir_data_msg = params.get('DRS_DATA_MSG', None)
+    # ----------------------------------------------------------------------
+    if 'DRS_RECIPE_KIND' is not None:
+        kind = params['DRS_RECIPE_KIND'].lower()
+        dir_data_msg = os.path.join(dir_data_msg, kind)
+    else:
+        dir_data_msg = os.path.join(dir_data_msg, 'other')
     # ----------------------------------------------------------------------
     # deal with a group directory
     if (group is not None) and (dir_data_msg is not None):
@@ -1484,12 +1494,18 @@ def get_drs_data_msg(params, group=None):
         if os.path.exists(dir_data_msg):
             # join to group name
             dir_data_msg = os.path.join(dir_data_msg, group)
-            # try to create group directory
-            try:
-                os.makedirs(dir_data_msg)
-            # if we have an exception continue
-            except Exception as _:
-                pass
+    # ----------------------------------------------------------------------
+    # add night name dir (if available
+    if ('NIGHTNAME' in params) and (dir_data_msg is not None):
+        if params['NIGHTNAME'] not in [None, 'None', '']:
+            dir_data_msg = os.path.join(dir_data_msg, params['NIGHTNAME'])
+    # ----------------------------------------------------------------------
+    # try to create directory
+    if not os.path.exists(dir_data_msg):
+        try:
+            os.makedirs(dir_data_msg)
+        except Exception:
+            pass
     # ----------------------------------------------------------------------
     # if None use we have to create it
     if dir_data_msg is None:
