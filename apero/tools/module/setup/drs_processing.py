@@ -1497,7 +1497,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # flag not finished
                 finished = False
                 event.set()
-                sys.exit()
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:

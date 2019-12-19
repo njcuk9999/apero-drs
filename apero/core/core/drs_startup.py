@@ -254,7 +254,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
     # -------------------------------------------------------------------------
     # We must have DRS_DATA_MSG_FULL (the full path for this recipe)
-    params['DRS_DATA_MSG_FULL'] = drs_log.get_drs_data_msg(params, reset=True)
+    params['DRS_DATA_MSG_FULL'] = drs_log.get_drs_data_msg(params, reset=True,
+                                                           group=drsgroup)
     params.set_source('DRS_DATA_MSG_FULL', func_name)
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
