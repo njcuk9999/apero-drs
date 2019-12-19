@@ -101,6 +101,9 @@ def reset_tmp_folders(params, log=True):
     tmp_dir = params['DRS_DATA_WORKING']
     # loop around files and folders in calib_dir
     remove_all(params, tmp_dir, log)
+    # remake path
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
 
 
 def reset_reduced_folders(params, log=True):
@@ -110,6 +113,9 @@ def reset_reduced_folders(params, log=True):
     red_dir = params['DRS_DATA_REDUC']
     # loop around files and folders in calib_dir
     remove_all(params, red_dir, log)
+    # remake path
+    if not os.path.exists(red_dir):
+        os.makedirs(red_dir)
 
 
 def reset_calibdb(params, log=True):
@@ -145,6 +151,9 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True,
     # loop around files and folders in calib_dir
     if empty_first:
         remove_all(params, db_dir, log)
+    # remake path
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path, log)
 
@@ -195,6 +204,9 @@ def reset_log(params, log=True):
     current_logfile = drs_log.get_logfilepath(WLOG, params)
     # loop around files and folders in reduced dir
     remove_all(params, log_dir, skipfiles=[current_logfile], log=log)
+    # remake path
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
 
 def reset_plot(params, log=True):
@@ -204,6 +216,9 @@ def reset_plot(params, log=True):
     plot_dir = params['DRS_DATA_PLOT']
     # loop around files and folders in reduced dir
     remove_all(params, plot_dir, log=log)
+    # remake path
+    if not os.path.exists(plot_dir):
+        os.makedirs(plot_dir)
 
 
 def reset_run(params, log=True):
@@ -212,7 +227,9 @@ def reset_run(params, log=True):
     reset_path = params['DRS_RESET_RUN_PATH']
     # loop around files and folders in reduced dir
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
-
+    # remake path
+    if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
 
 
 def reset_log_fits(params, log=True):
@@ -268,7 +285,7 @@ def remove_all(params, path, log=True, skipfiles=None):
     for filename in allfiles:
         remove_files(params, filename, log, skipfiles)
     # remove dirs
-    drs_lock.__remove_empty__(params, path, remove_head=False, log=True)
+    drs_lock.__remove_empty__(params, path, log=True)
 
 
 def remove_files(params, path, log=True, skipfiles=None):
