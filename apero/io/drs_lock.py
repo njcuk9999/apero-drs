@@ -368,40 +368,29 @@ def reset_lock_dir(params, log=False):
     lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
     if not os.path.exists(lockpath):
         return
-    # get contents head directory (we will loop through these sub directories)
-    contents = glob.glob(os.path.join(lockpath, '*'))
-    # deal with empty contents
-    if len(contents) == 0:
-        if log:
-            WLOG(params, '', 'Removing empty directory: {0}'.format(lockpath))
-        os.rmdir(lockpath)
-    # walk through folder and remove empty directories
-    for item in contents:
-        if os.path.isdir(item):
-            __remove_empty__(params, item, log=log)
+    # remove empties
+    __remove_empty__(params, lockpath, remove_head=False, log=False)
 
 
-def __remove_empty__(params, directory, remove_head=True, log=False):
-    # get the contents of the directory
-    contents = glob.glob(os.path.join(directory, '*'))
-    # if we have an empty directory remove it
-    if len(contents) == 0 and remove_head:
+def __remove_empty__(params, path, remove_head=True, log=False):
+    if not os.path.isdir(path):
+        return
+
+    # remove empty subfolders
+    files = os.listdir(path)
+    if len(files):
+        for f in files:
+            fullpath = os.path.join(path, f)
+            if os.path.isdir(fullpath):
+                __remove_empty__(params, fullpath, log=log)
+
+    # if folder empty, delete it
+    files = os.listdir(path)
+    if len(files) == 0 and remove_head:
         if log:
-            WLOG(params, '', 'Removing empty directory: {0}'.format(directory))
-        os.rmdir(directory)
-        return True
-    # assume the directory is empty
-    empty = True
-    # loop around i
-    for item in contents:
-        # if item is a directory then empty this directory first
-        if os.path.isdir(item):
-            empty &= __remove_empty__(params, item, log=log)
-        # if item is a file this directory is not empty
-        if os.path.isfile(item):
-            empty &= False
-    # return whether folder is empty
-    return empty
+            WLOG(params, '', "Removing empty folder: {0}".format(path))
+        os.rmdir(path)
+
 
 
 # =============================================================================
