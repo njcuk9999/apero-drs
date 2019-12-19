@@ -2041,6 +2041,11 @@ PLOT_WAVE_FP_MULTI_ORDER.value = True
 PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
 PLOT_WAVE_FP_SINGLE_ORDER.value = True
 
+# turn on the wave lines hc/fp expected vs measured debug plot
+#  (will plot once for hc once for fp)
+PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
+PLOT_WAVEREF_EXPECTED.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False

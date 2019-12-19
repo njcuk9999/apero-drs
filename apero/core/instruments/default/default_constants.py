@@ -228,6 +228,7 @@ __all__ = [
     'PLOT_WAVE_FP_WAVE_RES', 'PLOT_WAVE_FP_M_X_RES', 'PLOT_WAVE_FP_LL_DIFF',
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
+    'PLOT_WAVEREF_EXPECTED',
     # debug telluric plot settings
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
@@ -2560,6 +2561,15 @@ PLOT_WAVE_FP_SINGLE_ORDER = Const('PLOT_WAVE_FP_SINGLE_ORDER', value=False,
                                   active=True, group=cgroup,
                                   description='turn on the wave solution fp '
                                               'single order debug plot')
+
+# turn on the wave lines hc/fp expected vs measured debug plot
+#  (will plot once for hc once for fp)
+PLOT_WAVEREF_EXPECTED = Const('PLOT_WAVEREF_EXPECTED', value=False,
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup,
+                              description='turn on the wave lines hc/fp '
+                                          'expected vs measured debug plot'
+                                          '(will plot once for hc once for fp)')
 
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
