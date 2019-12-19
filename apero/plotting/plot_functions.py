@@ -2557,6 +2557,40 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_waveref_expected(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    orders = kwargs['orders']
+    wavemap = kwargs['wavemap']
+    diff = kwargs['diff']
+    fiber = kwargs['fiber']
+    fibtype = kwargs['fibtype']
+    nbo = kwargs['nbo']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    for order_num in nbo:
+        # get order mask
+        omask = order_num == orders
+        # plot points
+        frame.scatter(wavemap[omask], diff[omask])
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference')
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'mode{0}_fiber{1}'.format(fibtype, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+
 wave_hc_guess = Graph('WAVE_HC_GUESS', kind='debug',
                       func=plot_wave_hc_guess)
 wave_hc_brightest_lines = Graph('WAVE_HC_BRIGHTEST_LINES', kind='debug',
@@ -2605,6 +2639,9 @@ wave_fp_multi_order = Graph('WAVE_FP_MULTI_ORDER', kind='debug',
                             func=plot_wave_fp_multi_order)
 wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
                              func=plot_wave_fp_single_order)
+waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
+                         func=plot_waveref_expected)
+
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
@@ -2613,7 +2650,7 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
                 wave_fp_multi_order, wave_fp_single_order,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
-                sum_wave_fp_ipt_cwid_1mhc]
+                sum_wave_fp_ipt_cwid_1mhc, waveref_expected]
 
 
 # =============================================================================
