@@ -96,11 +96,11 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     reset1, reset2, reset3 = True, True, True
     reset4, reset5, reset6 = True, True, True
-    reset7 = True
+    reset7, reset8 = True, True
     # ----------------------------------------------------------------------
     # tmp folder
     if warn:
-        reset1 = drs_reset.reset_confirmation(params, 'Tmp',
+        reset1 = drs_reset.reset_confirmation(params, 'Working',
                                               params['DRS_DATA_WORKING'])
     if reset1:
         drs_reset.reset_tmp_folders(params, log)
@@ -118,7 +118,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # calibration folder
     if warn:
-        reset3 = drs_reset.reset_confirmation(params, 'CalibDB',
+        reset3 = drs_reset.reset_confirmation(params, 'Calibration',
                                               params['DRS_CALIB_DB'])
     if reset3:
         drs_reset.reset_calibdb(params, log)
@@ -127,7 +127,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # telluric folder
     if warn:
-        reset4 = drs_reset.reset_confirmation(params, 'TelluDB',
+        reset4 = drs_reset.reset_confirmation(params, 'Telluric',
                                               params['DRS_TELLU_DB'])
     if reset4:
         drs_reset.reset_telludb(params, log)
@@ -143,7 +143,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # plot folder
     if warn:
-        reset6 = drs_reset.reset_confirmation(params, 'Plot',
+        reset6 = drs_reset.reset_confirmation(params, 'Plotting',
                                               params['DRS_DATA_PLOT'])
     if reset6:
         drs_reset.reset_plot(params)
@@ -158,14 +158,14 @@ def __main__(recipe, params):
         drs_reset.reset_run(params)
     else:
         WLOG(params, '', 'Not resetting run files.')
-
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
+    # ----------------------------------------------------------------------
+    # plot folder
+    if warn:
+        reset8 = drs_reset.reset_confirmation(params, 'log_fits')
+    if reset8:
+        drs_reset.reset_log_fits(params)
+    else:
+        WLOG(params, '', 'Not resetting log.fits files.')
 
     # ----------------------------------------------------------------------
     # End of main code

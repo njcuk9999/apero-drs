@@ -93,13 +93,7 @@ def __main__(recipe, params):
     app = file_explorer.App(datastore=datastore)
     app.geometry("1024x768")
     app.mainloop()
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

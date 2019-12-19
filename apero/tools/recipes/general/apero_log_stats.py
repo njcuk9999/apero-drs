@@ -154,15 +154,6 @@ def __main__(recipe, params):
     else:
         logstats.calculate_recipe_stats(params, mastertable, recipename)
 
-
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
-
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
