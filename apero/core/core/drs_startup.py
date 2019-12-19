@@ -152,7 +152,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     else:
         drsgroup = None
     # set DRS_GROUP
-    recipe.drs_params.set('DRS_GROUP', drsgroup, func_name, source=func_name)
+    recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
     recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
     # -------------------------------------------------------------------------
     # need to set debug mode now
@@ -274,7 +274,6 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # -------------------------------------------------------------------------
     # push display into log (before was print only)
     if not quiet:
-        print(params['DRS_DATA_MSG_FULL'])
         # display title
         _display_drs_title(recipe.drs_params, drsgroup, logonly=True)
         # display initial parameterisation
@@ -335,27 +334,71 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
-        except Exception as e:
+        except KeyboardInterrupt as e:
+            # get trace back
             string_trackback = traceback.format_exc()
+            # on Ctrl + C was not a success
             success = False
-            emsg = TextEntry('01-010-00001', args=[type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+            # print the error
+            WLOG(params, 'error', 'SIGINT or CTRL-C detected. Exiting',
+                 raise_exception=False, wrap=False, printonly=True)
+            # log the error
+            WLOG(params, 'error', string_trackback,
+                 raise_exception=False, wrap=False, logonly=True)
+            # save params to llmain
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
-        except SystemExit as e:
-            string_trackback = traceback.format_exc()
-            success = False
-            emsg = TextEntry('01-010-00001', args=[type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
-            llmain = dict(e=e, tb=string_trackback, params=params,
-                          recipe=recipe)
+            # add error to log file
+            recipe.log.add_error(params, 'KeyboardInterrupt', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
         except drs_exceptions.LogExit as e:
+            # get trace back
             string_trackback = traceback.format_exc()
+            # on LogExit was not a success
             success = False
+            # log the error
+            WLOG(params, 'error', string_trackback,
+                 raise_exception=False, wrap=False, logonly=True)
+            # save params to llmain
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
+            # add error to log file
+            recipe.log.add_error(params, type(e), str(e))
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
+        except Exception as e:
+            # get the trace back
+            string_trackback = traceback.format_exc()
+            # on LogExit was not a success
+            success = False
+            # construct the error with a trace back
+            emsg = TextEntry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
+            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+            # save params to llmain
+            llmain = dict(e=e, tb=string_trackback, params=params,
+                          recipe=recipe)
+            # add error to log file
+            recipe.log.add_error(params, type(e), str(e))
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
+        except SystemExit as e:
+            # get the trace back
+            string_trackback = traceback.format_exc()
+            # on LogExit was not a success
+            success = False
+            # construct the error with a trace back
+            emsg = TextEntry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + TextEntry(string_trackback)
+            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
+            # save params to llmain
+            llmain = dict(e=e, tb=string_trackback, params=params,
+                          recipe=recipe)
+            # add error to log file
+            recipe.log.add_error(params, type(e), str(e))
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
     # return llmain and success
     return llmain, success
 
@@ -484,9 +527,9 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         # this is where we run the function
         try:
             locked_indexing()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             lock.reset()
-            sys.exit()
+            raise e
         except Exception as e:
             lock.reset()
             # re-raise error
@@ -540,6 +583,8 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         newrecipe = DrsRecipe()
         newrecipe.copy(recipe)
         outdict['recipe'] = newrecipe
+        if 'tb' in llmain:
+            outdict['trace'] = llmain['tb']
         # copy success
         outdict['success'] = bool(success)
         # copy qc passed
@@ -1695,9 +1740,9 @@ def _make_dirs(params, path):
     # try to run locked makedirs
     try:
         locked_makedirs()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
