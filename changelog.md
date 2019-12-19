@@ -2,6 +2,68 @@ Changelog
 =========
 
 
+0.6.010 (2019-12-19)
+--------------------
+- Science.calib.wave.py + recipes.spirou.cal_wave_master_spirou.py - add
+  hc/fp line creation from EA. [Neil Cook]
+- Core.instruments.*.default_constants.py - add PLOT_WAVEREF_EXPECTED.
+  [Neil Cook]
+- Plotting.plot_functions.py - add plot_waveref_expected. [Neil Cook]
+- Io.drs_data.py - add a raw mode for getting the cavity file. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.py - add plot WAVEREF_EXPECTED for hc/fp
+  lines. [Neil Cook]
+- Core.instrumnets.*.pseudo_const.py - add FIBER_DPR_POS (correct dpr
+  type for fiber) [Neil Cook]
+- Core.instruments.spirou.file_defintions.py - add dbname,key and
+  datatype for hc and fp master line files. [Neil Cook]
+- Re-make directories (if they don't exist) [Neil Cook]
+- Io.drs_lock.py - replace __remove__empty__ function. [Neil Cook]
+- Core.core.drs_log.py - only continue with DRS_DATA_MSG_FULL if it
+  exists. [Neil Cook]
+- Core.core.drs_startup.py - fix location of where we define
+  drs_data_msg_full the first time. [Neil Cook]
+- Core.core.drs_startup.py - must pass group to log dir. [Neil Cook]
+- Tools.module.setup.drs_processing.py - deal with KeyboardInterrupt.
+  [Neil Cook]
+- Drs_log.py - sort out log structure. [Neil Cook]
+- Drs_reset.py - should not remove read of path. [Neil Cook]
+- Update the reset codes to reset log.fits files. [Neil Cook]
+- Core.core.drs_startup.py - only use recipe.log if recipe_kind =
+  'recipe' [Neil Cook]
+- Core.core.drs_log.py - set logfitsfiles name from constants. [Neil
+  Cook]
+- Core.instruments.default.default_config.py - add DRS_LOG_FITS_NAME.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_lock.py - replace print statements for WLOG. [Neil Cook]
+- Add reset options to run files. [Neil Cook]
+- Remove recipe.log from non-recipe scripts (i.e. tools) [Neil Cook]
+- Core.core.drs_startup.py - address not initially having instrument for
+  DRS_RECIPE_KIND. [Neil Cook]
+- Core.core.drs_startup.py - correctly manage KeyboardInterrupts. [Neil
+  Cook]
+- Correctly manage KeyboardInterrupts. [Neil Cook]
+- Core.core.drs_log.py - add way to add an error (if found at the right
+  time) [Neil Cook]
+- Core.instruments.default.pseudo_const.py and io.drs_lock.py - update
+  drs_data_msg path (to full path) [Neil Cook]
+- Core.core.drs_startup.py - get recipe kind and add to params and
+  figure out how to log to files only once we have correct information.
+  [Neil Cook]
+- Core.core.drs_log.py - add recipe_kind to recipe_log. [Neil Cook]
+- Core.instruments.*.recipe_definitions.py - add a kind to every recipes
+  ("test","recipe","tool","processing") for logging. [Neil Cook]
+- Core.core.drs_recipe.py - add a recipe kind (for logging) [Neil Cook]
+- Core.core.drs_log.py - sort logs into night names and by recipe_kind.
+  [Neil Cook]
+- Core.core.drs_log.py - add group and runstring to recipe log fits
+  file. [Neil Cook]
+- Update date/version/changelog/readme. [Neil Cook]
+- Update doc string. [Neil Cook]
+
+
 0.6.009 (2019-12-18)
 --------------------
 - Core.core.drs_log.py + drs_log_stats.py - add option to save time of
