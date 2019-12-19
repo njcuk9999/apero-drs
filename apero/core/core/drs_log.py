@@ -1486,7 +1486,9 @@ def _clean_message(message):
 def get_drs_data_msg(params, group=None, reset=False):
     # if we have a full path in params we use this
     if 'DRS_DATA_MSG_FULL' in params and not reset:
-        return params['DRS_DATA_MSG_FULL']
+        # check that path exists - if it does skip next steps
+        if os.path.exists(params['DRS_DATA_MSG_FULL']):
+            return params['DRS_DATA_MSG_FULL']
     # ----------------------------------------------------------------------
     # get from params
     dir_data_msg = params.get('DRS_DATA_MSG', None)
