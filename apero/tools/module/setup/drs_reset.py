@@ -60,6 +60,7 @@ def reset_confirmation(params, name, directory=None):
     if directory is not None:
         # test if empty
         empty = is_empty(directory)
+        WLOG(params, '', 'Empty directory found.')
         if empty:
             return True
     # ----------------------------------------------------------------------
@@ -267,7 +268,7 @@ def remove_all(params, path, log=True, skipfiles=None):
     for filename in allfiles:
         remove_files(params, filename, log, skipfiles)
     # remove dirs
-    drs_lock.__remove_empty__(params, path, log=True)
+    drs_lock.__remove_empty__(params, path, remove_head=False, log=True)
 
 
 def remove_files(params, path, log=True, skipfiles=None):
