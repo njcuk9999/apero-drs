@@ -1491,20 +1491,22 @@ def get_drs_data_msg(params, group=None, reset=False):
     # get from params
     dir_data_msg = params.get('DRS_DATA_MSG', None)
     # ----------------------------------------------------------------------
-    if 'DRS_RECIPE_KIND' is not None:
+    # only sort by recipe kind if group is None
+    if ('DRS_RECIPE_KIND' is not None) and (group is None):
         kind = params['DRS_RECIPE_KIND'].lower()
         dir_data_msg = os.path.join(dir_data_msg, kind)
+    # if we have a group then put it in processing folder
+    elif group is not None:
+        dir_data_msg = os.path.join(dir_data_msg, 'processing')
     else:
         dir_data_msg = os.path.join(dir_data_msg, 'other')
     # ----------------------------------------------------------------------
-    # deal with a group directory
+    # deal with a group directory (groups must be in sub-directory)
     if (group is not None) and (dir_data_msg is not None):
-        # check that dir_data_msg exists before joining
-        if os.path.exists(dir_data_msg):
-            # join to group name
-            dir_data_msg = os.path.join(dir_data_msg, group)
+        # join to group name
+        dir_data_msg = os.path.join(dir_data_msg, group)
     # ----------------------------------------------------------------------
-    # add night name dir (if available
+    # add night name dir (if available) - put into sub-directory
     if ('NIGHTNAME' in params) and (dir_data_msg is not None):
         if params['NIGHTNAME'] not in [None, 'None', '']:
             dir_data_msg = os.path.join(dir_data_msg, params['NIGHTNAME'])
