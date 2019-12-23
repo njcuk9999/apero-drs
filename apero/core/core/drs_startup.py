@@ -302,7 +302,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         # set lock function
         recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
-        recipe.log.write(params)
+        recipe.log.write_logfile(params)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params

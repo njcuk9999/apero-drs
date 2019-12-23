@@ -613,7 +613,7 @@ class RecipeLog:
         self.set.append(newlog)
         # whether to write (update) recipe log file
         if write:
-            newlog.write(params)
+            newlog.write_logfile(params)
         # return newlog (for use)
         return newlog
 
@@ -635,30 +635,30 @@ class RecipeLog:
 
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
 
     def no_qc(self, params, write=True):
         self.passed_qc = True
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
 
     def add_error(self, params, errortype, errormsg, write=True):
         self.errors += '"{0}":"{1}" '.format(errortype, errormsg)
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
 
     def end(self, params, write=True):
 
         self.ended = True
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
 
-    def write(self, params):
+    def write_logfile(self, params):
         if self.lfunc is None:
-            return self._writer()
+            return 0
         else:
             return self.lfunc(params, self.lockfile, self._writer)
 
@@ -792,11 +792,12 @@ class RecipeLog:
         # check to see if table already exists
         if os.path.exists(writepath):
             try:
+                print('RecipeLog: Reading file: {0}'.format(writepath))
                 table = Table.read(writepath)
-            except:
+            except Exception as e:
                 # TODO: move to language database
-                emsg = 'RecipeLogError: Cannot read file {0}'
-                eargs = [writepath]
+                emsg = 'RecipeLogError: Cannot read file {0} \n\t {1}: {2}'
+                eargs = [writepath, type(e), str(e)]
                 raise DrsError(emsg.format(*eargs))
         else:
             table = None
@@ -849,6 +850,7 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # write to disk
         try:
+            print('RecipeLog: Writing file: {0}'.format(writepath))
             mastertable.write(writepath, format='fits', overwrite=True)
         except Exception as e:
             # TODO: move to language database
