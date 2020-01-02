@@ -125,7 +125,7 @@ def __main__(recipe, params):
     num_files = len(infiles)
 
     # TODO: Remove breakpoint
-    constants.breakpoint(params)
+    constants.breakpoint()
 
     # ----------------------------------------------------------------------
     # Loop around input files
