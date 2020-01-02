@@ -1,11 +1,12 @@
 
 
+
 <!doctype html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Glossary &#8212; APERO 0.6.010 documentation</title>
+    <title>Constants &#8212; APERO 0.6.010 documentation</title>
     <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/apero.css" />
@@ -18,12 +19,48 @@
     <script type="text/javascript" src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developer how to guide" href="../dev/dev_main.html" />
-    <link rel="prev" title="The Tools" href="../user/tools.html" />
+    <link rel="prev" title="Adding a new plot" href="../dev/adding_new_plot.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <!--[if lt IE 9]>
     <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
   </head><body>
 <div class="pageheader">
 
@@ -31,13 +68,14 @@
     <li><a href="../index.html">Home</a></li>
     <li><a href="../user/installation.html">Install</a></li>
     <li><a href="https://github.com/njcuk9999/apero-drs">Github</a></li>
-    <li><a href="../index.html">PDF</a></li>
+    <li><a href="../../../_build/latex/apero-docs.pdf">PDF</a></li>
   </ul>
     <div>
     <a href="../index.html">
       <img src="../_static/images/apero_logo.png" alt="APERO" />
     </a>
-    A PipelinE to Reduce Observations
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
     </div>
 
 </div>
@@ -49,22 +87,22 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../dev/dev_main.html" title="Developer how to guide"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="../user/tools.html" title="The Tools"
+          <a href="../dev/adding_new_plot.html" title="Adding a new plot"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.010 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Constants</a></li>
+<li><a class="reference internal" href="#id1">Glossary</a></li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../user/tools.html"
-                        title="previous chapter">The Tools</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../dev/dev_main.html"
-                        title="next chapter">Developer how to guide</a></p>
+  <p class="topless"><a href="../dev/adding_new_plot.html"
+                        title="previous chapter">Adding a new plot</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -90,18 +128,34 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="glossary">
-<span id="id1"></span><h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="constants">
+<span id="glossary"></span><h1>Constants<a class="headerlink" href="#constants" title="Permalink to this headline">¶</a></h1>
 <dl class="glossary simple">
-<dt id="term-drs-uconfig">DRS_UCONFIG</dt><dd><p>The directory containing the users configurations files (default is <code class="file docutils literal notranslate"><span class="pre">/home/user/apero/</span></code>)</p>
+<dt id="term-drs-uconfig">DRS_UCONFIG</dt><dd><ul class="simple">
+<li><p>The directory containing the users configurations files</p></li>
+<li><p>default is <code class="file docutils literal notranslate"><span class="pre">/home/user/apero/</span></code></p></li>
+</ul>
 </dd>
-<dt id="term-instrument">INSTRUMENT</dt><dd><p>This is the instrument used at a specific telescope. Some settings are instrument specific.
-Currently supported instruments are:
-- <cite>SPIROU</cite></p>
+<dt id="term-instrument">INSTRUMENT</dt><dd><ul class="simple">
+<li><p>This is the instrument used at a specific telescope. Some settings are instrument specific.</p></li>
+<li><p>Currently supported instruments are::
+SPIROU</p></li>
+</ul>
 </dd>
-<dt id="term-ds9">ds9</dt><dd><p>An astronomical imaging and data visualization application (<a class="reference external" href="http://ds9.si.edu/site/Home.html">see here</a>).</p>
+</dl>
+</div>
+<div class="section" id="id1">
+<h1>Glossary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<dl class="glossary simple">
+<dt id="term-ds9">ds9</dt><dd><ul class="simple">
+<li><p>An astronomical imaging and data visualization application</p></li>
+<li><p>see <a class="reference external" href="http://ds9.si.edu/site/Home.html">ds9.si.edu</a></p></li>
+</ul>
 </dd>
-<dt id="term-pdflatex">pdflatex</dt><dd><p>The pdf latex compiler (<a class="reference external" href="https://www.latex-project.org/get/">see here</a>).</p>
+<dt id="term-pdflatex">pdflatex</dt><dd><ul class="simple">
+<li><p>The pdf latex compiler</p></li>
+<li><p>see <a class="reference external" href="https://www.latex-project.org/get/">www.latex-project.org</a></p></li>
+</ul>
 </dd>
 </dl>
 </div>
@@ -119,10 +173,7 @@ Currently supported instruments are:
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../dev/dev_main.html" title="Developer how to guide"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="../user/tools.html" title="The Tools"
+          <a href="../dev/adding_new_plot.html" title="Adding a new plot"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.010 documentation</a> &#187;</li> 
       </ul>

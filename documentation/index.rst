@@ -3,18 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-************************************************************************************ 
-APERO: A PipelinE to Reduce Observations
-************************************************************************************ 
-   
-APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
-It is the official pipeline for:
+.. only:: html
 
-* `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
-* NIRPS (Currently under construction)
+  APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
+  It is the official pipeline for:
+
+  * `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
+  * NIRPS (Currently under construction)
 
 
-APERO User Documentation
+User Documentation
 ===========================================
 
 .. toctree::
@@ -27,10 +25,9 @@ APERO User Documentation
    user/todo.rst
    user/recipes.rst
    user/tools.rst
-   misc/glossary.rst
 
 
-APERO Developer guide
+Developer guide
 ===========================================
 
 Below is a guide for those developping APERO for the current set of instruments and for future instruments.
@@ -42,10 +39,15 @@ Below is a guide for those developping APERO for the current set of instruments 
    dev/dev_main.rst
 
    
-Indices and tables
+Other
 ==================
 
 *  :ref:`genindex`
 *  :ref:`modindex`
 *  :ref:`search`
 
+.. toctree::
+   :maxdepth: 1
+   
+   misc/glossary.rst
+   
