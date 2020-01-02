@@ -294,8 +294,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # add the recipe log
     if (instrument is not None) and (params['DRS_RECIPE_KIND'] == 'recipe'):
         recipe.log = drs_log.RecipeLog(recipe.name, params)
-        # add log file to log
-        recipe.log.set_log_file(drs_log.get_logfilepath(WLOG, params))
+        # add log file to log (without group - different groups may need to
+        #    lock same file)
+        logfile = drs_log.get_logfilepath(WLOG, params, use_group=False)
+        recipe.log.set_log_file(logfile)
         # add inputs to log
         recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
                               recipe.specialargs)
