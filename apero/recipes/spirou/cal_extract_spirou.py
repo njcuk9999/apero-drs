@@ -124,9 +124,6 @@ def __main__(recipe, params):
     # get the number of infiles
     num_files = len(infiles)
 
-    # TODO: Remove breakpoint
-    constants.breakpoint()
-
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
