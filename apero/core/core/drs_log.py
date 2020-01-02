@@ -1181,7 +1181,7 @@ def warninglogger(p, w, funcname=None):
                 displayed_warnings.append(wmsg)
 
 
-def get_logfilepath(logobj, params):
+def get_logfilepath(logobj, params, use_group=True):
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
     generates an ConfigError exception.
@@ -1193,7 +1193,9 @@ def get_logfilepath(logobj, params):
     """
     # -------------------------------------------------------------------------
     # deal with group
-    if 'DRS_GROUP' in params:
+    if not use_group:
+        group = None
+    elif 'DRS_GROUP' in params:
         group = params['DRS_GROUP']
     else:
         group = None
