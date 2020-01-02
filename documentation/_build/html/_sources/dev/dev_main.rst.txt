@@ -16,3 +16,9 @@ The methodology and how things work in APERO.
   adding_new_recipe.rst
   adding_new_filetype.rst
   adding_new_plot.rst
+
+   
+  
+.. only:: html
+
+  :ref:`Back to top <dev_main>`

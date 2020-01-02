@@ -5,14 +5,17 @@
 Installation
 ************************************************************************************
 
-Below is the guide for first time installation and upgrade
+.. only:: html
 
-* :ref:`_prerequisites`
-* :ref:`_download`
-* :ref:`_setup`
-* :ref:`_update`
+  Below is the guide for first time installation and upgrade
 
-.. _prerequisites:
+  * :ref:`installation-prerequisites`
+  * :ref:`installation-download`
+  * :ref:`installation-setup`
+  * :ref:`installation-update`
+
+
+.. _installation-prerequisites:
 
 ====================================================================================
 Prerequisites 
@@ -39,13 +42,18 @@ The following python modules are recommended::
   tqdm
   
 
-.. _download:
-  
+
+.. only:: html
+
+  :ref:`Back to top <installation>`
+
+.. _installation-download:
+
 ====================================================================================
 Download from GitHub
 ====================================================================================
 
-Step 1
+Clone
 -------------------------------------------------------------------------------------------
 
 Clone from `github <https://github.com/njcuk9999/apero-drs>`_::
@@ -55,10 +63,14 @@ Clone from `github <https://github.com/njcuk9999/apero-drs>`_::
 This may take some time (in future most of the data required will be a separate download), 
 and we still have many (now redundant) files from the spirou_py3 repository.
 
+.. _installation-choose-branch:
 
-Step 2
+Choose branch
 -------------------------------------------------------------------------------------------
-Choose which version:
+
+Change to the `apero-drs` directory
+
+Choose which branch:
 
 * master version
       This is the version currently recommended for all general use. 
@@ -68,6 +80,7 @@ Choose which version:
       Change to this branch with::
       
       > git checkout master
+      > git pull origin master
 
 * developer version
       Note the developer version should have been tested and semi-stable but 
@@ -78,6 +91,7 @@ Choose which version:
       Change to this branch with::
       
       > git checkout developer
+      > git pull origin developer
     
 * working version
       Note the working version will be the most up-to-date version but has not been
@@ -86,14 +100,20 @@ Choose which version:
       Change to this branch with::
       
       > git checkout working
+      > git pull origin working
 
-.. _setup:
+
+.. only:: html
+
+  :ref:`Back to top <installation>`
+
+.. _installation-setup:
       
 ====================================================================================
 Setup
 ====================================================================================
 
-Step 1: Run the installation script
+Run the installation script
 -------------------------------------------------------------------------------------------
 
 Change to the `apero-drs` directory
@@ -103,7 +123,7 @@ Run the installation script::
   python setup/install.py
 
 
-Step 2: Step-by-step guide
+Step-by-step guide
 -------------------------------------------------------------------------------------------
 
 Follow the step-by-step guide:
@@ -138,7 +158,7 @@ Follow the step-by-step guide:
 .. note:: A to E will repeat for all installable instruments (To step up just one use the `--instrument` argument
 
 
-Step 3: Additional options
+Additional options
 -------------------------------------------------------------------------------------------
 
 One will be prompted to give installation paths to various optional tools (currently :term:`ds9`
@@ -148,9 +168,29 @@ command)
 
 
 
-.. _update::
+.. only:: html
+
+  :ref:`Back to top <installation>`
+
+.. _installation-update:
 
 ====================================================================================
 Updating from github
 ====================================================================================
 
+1. Choose a branch (as in :ref:`installation-choose-branch`)
+
+2. Update the branch (pull from github)::
+    
+    > git pull origin {branch}
+
+3. Update using the installation script::
+
+    > python setup/install.py --update
+
+This will use all current settings and update the 
+
+
+.. only:: html
+
+  :ref:`Back to top <installation>`

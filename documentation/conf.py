@@ -30,8 +30,15 @@ release = '0.6.010'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-]
+extensions = ['sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -49,11 +56,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'bizstyle'
 
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
 
 # add custom css
 def setup(app):
@@ -98,7 +105,7 @@ latex_elements = {
         \usepackage{color}
         \usepackage{transparent}
         \usepackage{eso-pic}
-        \usepackage{lipsum}
+        %% \usepackage{lipsum}
 
         \usepackage{footnotebackref} %%link at the footnote to go to the place of footnote in the text
 
@@ -171,32 +178,32 @@ latex_elements = {
             \vspace*{40mm} %%% * is used to give space from top
             \textbf{\Huge {APERO Documentation}}
 
-            \vspace{0mm}
+            \vspace{5mm}
             \begin{figure}[!h]
                 \centering
-                \includegraphics[scale=0.3]{logo.jpg}
+                \includegraphics[scale=1]{apero_logo.png}
             \end{figure}
-
-            \vspace{0mm}
-            \Large \textbf{{Meher Krishna Patel}}
-
-            \small Created on : Octorber, 2017
+            
+            \vspace{5mm}
+            \Large \textbf{Version 0.6.010}
+            
+            \vspace{5mm}
+            \Large \textbf{{Neil Cook}}
 
             \vspace*{0mm}
             \small  Last updated : \MonthYearFormat\today
 
 
             %% \vfill adds at the bottom
-            \vfill
-            \small \textit{More documents are freely available at }{\href{http://pythondsp.readthedocs.io/en/latest/pythondsp/toc.html}{PythonDSP}}
+            %% \vfill
+            %% \small \textit{More documents are freely available at }{\href{http://pythondsp.readthedocs.io/en/latest/pythondsp/toc.html}{PythonDSP}}
         \end{titlepage}
 
         \clearpage
         \pagenumbering{roman}
         \tableofcontents
-        \listoffigures
-        \listoftables
-        \clearpage
+        %%\listoffigures
+        %%\listoftables
         \pagenumbering{arabic}
 
         ''',
@@ -217,12 +224,11 @@ latex_elements = {
 
 }
 
-latex_logo = '_static/logo.jpg'
+latex_logo = '_static/images/apero_logo.png'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'main.tex', 'Sphinx format for Latex and HTML',
-     'Meher Krishna Patel', 'report')
+    ('index', 'apero-docs.tex', 'APERO Documentation', 'Neil Cook', 'report')
 ]

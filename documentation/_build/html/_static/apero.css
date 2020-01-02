@@ -20,6 +20,7 @@ body {
     background-color: black;
     text-align: left;
     padding: 10px 15px;
+    color: white;
 }
 
 .pageheader ul {
@@ -50,7 +51,43 @@ body {
 }
 
 
-div.sphinxsidebar {
+/*div.sphinxsidebar {
     max-height: 100%;
     overflow-y: auto;
+} */
+
+
+
+div.sphinxsidebarwrapper {
+    position: relative;
+    top: 0px;
+    padding: 0;
 }
+
+div.sphinxsidebar {
+    margin: 0;
+    padding: 0 15px 0 15px;
+    width: 210px;
+    float: left;
+    font-size: 1em;
+    text-align: left;
+}
+
+div.sphinxsidebar .logo {
+    font-size: 1.8em;
+    color: #0A507A;
+    font-weight: 300;
+    text-align: center;
+}
+
+div.sphinxsidebar .logo img {
+    vertical-align: middle;
+}
+
+div.sphinxsidebar .download a img {
+    vertical-align: middle;
+}
+
+
+
+
