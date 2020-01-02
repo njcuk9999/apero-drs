@@ -858,6 +858,7 @@ class RecipeLog:
             eargs = [writepath, type(e), str(e)]
             raise DrsError(emsg.format(*eargs))
 
+
 # =============================================================================
 # Define our instance of wlog
 # =============================================================================
