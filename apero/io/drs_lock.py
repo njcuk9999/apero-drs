@@ -142,7 +142,8 @@ class Lock:
                     timer += 1
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
-                        wargs = [self.lockname, filename]
+                        abspath = os.path.join(self.path, filename)
+                        wargs = [self.lockname, abspath]
                         # warn that lock is waiting due to making the lock file
                         wmsg = TextEntry('10-101-00002', args=wargs)
                         WLOG(self.params, 'warning', wmsg)
@@ -222,7 +223,8 @@ class Lock:
         name = self.__clean_name(name)
         # log progress: lock file added to queue
         filename = name + '.lock'
-        WLOG(self.params, '', TextEntry('40-101-00002', args=[filename]))
+        abspath = os.path.join(self.path, filename)
+        WLOG(self.params, '', TextEntry('40-101-00002', args=[abspath]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
@@ -248,7 +250,8 @@ class Lock:
         # if the unique name is first in the list then we can unlock this file
         if filename == first:
             # log that lock file is unlocked
-            WLOG(self.params, '', TextEntry('40-101-00003', args=[filename]))
+            abspath = os.path.join(self.path, filename)
+            WLOG(self.params, '', TextEntry('40-101-00003', args=[abspath]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -263,7 +266,8 @@ class Lock:
         """
         # log that lock file has been removed from the queue
         filename = name + '.lock'
-        WLOG(self.params, '', TextEntry('40-101-00004', args=[filename]))
+        abspath = os.path.join(self.path, filename)
+        WLOG(self.params, '', TextEntry('40-101-00004', args=[abspath]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
