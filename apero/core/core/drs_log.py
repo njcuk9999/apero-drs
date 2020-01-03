@@ -1195,13 +1195,16 @@ def get_logfilepath(logobj, params, use_group=True):
     # deal with group
     if not use_group:
         group = None
+        reset = True
     elif 'DRS_GROUP' in params:
         group = params['DRS_GROUP']
+        reset = False
     else:
         group = None
+        reset = False
     # -------------------------------------------------------------------------
     # get dir_data_msg key
-    dir_data_msg = get_drs_data_msg(params, group)
+    dir_data_msg = get_drs_data_msg(params, group, reset=reset)
     # -------------------------------------------------------------------------
     # add log file to path
     lpath = logobj.pconstant.LOG_FILE_NAME(params, dir_data_msg)
