@@ -1,5 +1,5 @@
 
-.. tools:
+.. _tools:
 
 ************************************************************************************
 The Tools
@@ -7,3 +7,7 @@ The Tools
 
 These are all userful tools to use with APERO.
  
+
+.. only:: html
+
+  :ref:`Back to top <tools>`

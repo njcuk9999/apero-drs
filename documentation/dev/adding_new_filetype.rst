@@ -5,3 +5,6 @@
 Adding a new filetype
 ************************************************************************************ 
  
+.. only:: html
+
+  :ref:`Back to top <add_new_filetype>`
