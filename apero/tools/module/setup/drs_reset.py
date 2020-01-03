@@ -195,7 +195,6 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
 
 
 def reset_log(params, log=True):
-    constants.breakpoint(params)
     # log progress
     WLOG(params, '', TextEntry('40-502-00003', args=['log']))
     # remove files from reduced folder
