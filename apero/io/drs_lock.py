@@ -69,7 +69,7 @@ class Lock:
         self.lockname = self.__clean_name(lockname)
         self.params = params
         # get the lock path
-        lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
+        lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
         if not os.path.exists(lockpath):
             os.mkdir(lockpath)
 
