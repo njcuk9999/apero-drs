@@ -1,11 +1,12 @@
 
 
+
 <!doctype html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>APERO: A PipelinE to Reduce Observations &#8212; APERO 0.6.010 documentation</title>
+    <title>User Documentation &#8212; APERO 0.6.010 documentation</title>
     <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/apero.css" />
@@ -19,10 +20,49 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Installation" href="user/installation.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <!--[if lt IE 9]>
     <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+      .related { display: none; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
   </head><body>
 <div class="pageheader">
 
@@ -30,13 +70,14 @@
     <li><a href="#">Home</a></li>
     <li><a href="user/installation.html">Install</a></li>
     <li><a href="https://github.com/njcuk9999/apero-drs">Github</a></li>
-    <li><a href="#">PDF</a></li>
+    <li><a href="../../_build/latex/apero-docs.pdf">PDF</a></li>
   </ul>
     <div>
     <a href="#">
       <img src="_static/images/apero_logo.png" alt="APERO" />
     </a>
-    A PipelinE to Reduce Observations
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
     </div>
 
 </div>
@@ -57,12 +98,9 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">APERO: A PipelinE to Reduce Observations</a><ul>
-<li><a class="reference internal" href="#apero-user-documentation">APERO User Documentation</a></li>
-<li><a class="reference internal" href="#apero-developer-guide">APERO Developer guide</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">User Documentation</a></li>
+<li><a class="reference internal" href="#developer-guide">Developer guide</a></li>
+<li><a class="reference internal" href="#other">Other</a></li>
 </ul>
 
   <h4>Next topic</h4>
@@ -93,16 +131,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="apero-a-pipeline-to-reduce-observations">
-<h1>APERO: A PipelinE to Reduce Observations<a class="headerlink" href="#apero-a-pipeline-to-reduce-observations" title="Permalink to this headline">¶</a></h1>
-<p>APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
+  <p>APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
 It is the official pipeline for:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/SPIRou/">SPIROU</a> (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope <a class="reference external" href="https://www.cfht.hawaii.edu/">CFHT</a>.</p></li>
 <li><p>NIRPS (Currently under construction)</p></li>
 </ul>
-<div class="section" id="apero-user-documentation">
-<h2>APERO User Documentation<a class="headerlink" href="#apero-user-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="user-documentation">
+<h1>User Documentation<a class="headerlink" href="#user-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
@@ -110,6 +146,7 @@ It is the official pipeline for:</p>
 <li class="toctree-l2"><a class="reference internal" href="user/installation.html#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/installation.html#download-from-github">Download from GitHub</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/installation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/installation.html#updating-from-github">Updating from github</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/using_apero.html">Using APERO</a></li>
@@ -117,12 +154,11 @@ It is the official pipeline for:</p>
 <li class="toctree-l1"><a class="reference internal" href="user/todo.html">TODO</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/recipes.html">The recipes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/tools.html">The Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="misc/glossary.html">Glossary</a></li>
 </ul>
 </div>
 </div>
-<div class="section" id="apero-developer-guide">
-<h2>APERO Developer guide<a class="headerlink" href="#apero-developer-guide" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="developer-guide">
+<h1>Developer guide<a class="headerlink" href="#developer-guide" title="Permalink to this headline">¶</a></h1>
 <p>Below is a guide for those developping APERO for the current set of instruments and for future instruments.</p>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contents:</span></p>
@@ -138,12 +174,17 @@ It is the official pipeline for:</p>
 </ul>
 </div>
 </div>
-<div class="section" id="indices-and-tables">
-<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="other">
+<h1>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="misc/glossary.html">Constants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="misc/glossary.html#id1">Glossary</a></li>
 </ul>
 </div>
 </div>

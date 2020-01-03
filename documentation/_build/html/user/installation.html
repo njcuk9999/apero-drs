@@ -1,5 +1,6 @@
 
 
+
 <!doctype html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -19,11 +20,48 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Using APERO" href="using_apero.html" />
-    <link rel="prev" title="APERO: A PipelinE to Reduce Observations" href="../index.html" />
+    <link rel="prev" title="User Documentation" href="../index.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <!--[if lt IE 9]>
     <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
   </head><body>
 <div class="pageheader">
 
@@ -31,13 +69,14 @@
     <li><a href="../index.html">Home</a></li>
     <li><a href="#">Install</a></li>
     <li><a href="https://github.com/njcuk9999/apero-drs">Github</a></li>
-    <li><a href="../index.html">PDF</a></li>
+    <li><a href="../../../_build/latex/apero-docs.pdf">PDF</a></li>
   </ul>
     <div>
     <a href="../index.html">
       <img src="../_static/images/apero_logo.png" alt="APERO" />
     </a>
-    A PipelinE to Reduce Observations
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
     </div>
 
 </div>
@@ -52,7 +91,7 @@
           <a href="using_apero.html" title="Using APERO"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="APERO: A PipelinE to Reduce Observations"
+          <a href="../index.html" title="User Documentation"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.010 documentation</a> &#187;</li> 
       </ul>
@@ -64,23 +103,24 @@
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li><a class="reference internal" href="#download-from-github">Download from GitHub</a><ul>
-<li><a class="reference internal" href="#step-1">Step 1</a></li>
-<li><a class="reference internal" href="#step-2">Step 2</a></li>
+<li><a class="reference internal" href="#clone">Clone</a></li>
+<li><a class="reference internal" href="#choose-branch">Choose branch</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#setup">Setup</a><ul>
-<li><a class="reference internal" href="#step-1-run-the-installation-script">Step 1: Run the installation script</a></li>
-<li><a class="reference internal" href="#step-2-step-by-step-guide">Step 2: Step-by-step guide</a></li>
-<li><a class="reference internal" href="#step-3-additional-options">Step 3: Additional options</a></li>
+<li><a class="reference internal" href="#run-the-installation-script">Run the installation script</a></li>
+<li><a class="reference internal" href="#step-by-step-guide">Step-by-step guide</a></li>
+<li><a class="reference internal" href="#additional-options">Additional options</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#updating-from-github">Updating from github</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="../index.html"
-                        title="previous chapter">APERO: A PipelinE to Reduce Observations</a></p>
+                        title="previous chapter">User Documentation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="using_apero.html"
                         title="next chapter">Using APERO</a></p>
@@ -111,8 +151,15 @@
             
   <div class="section" id="installation">
 <span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Below is the guide for first time installation and upgrade</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#installation-prerequisites"><span class="std std-ref">Prerequisites</span></a></p></li>
+<li><p><a class="reference internal" href="#installation-download"><span class="std std-ref">Download from GitHub</span></a></p></li>
+<li><p><a class="reference internal" href="#installation-setup"><span class="std std-ref">Setup</span></a></p></li>
+<li><p><a class="reference internal" href="#installation-update"><span class="std std-ref">Updating from github</span></a></p></li>
+</ul>
 <div class="section" id="prerequisites">
-<span id="id2"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<span id="installation-prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
 <p>APERO is tested with <a class="reference external" href="https://www.python.org/download/releases/3.0/">python 3</a></p>
 <p>The following python modules are required:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">astropy</span>
@@ -132,11 +179,12 @@
 <span class="n">tqdm</span>
 </pre></div>
 </div>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </div>
 <div class="section" id="download-from-github">
-<span id="download"></span><h2>Download from GitHub<a class="headerlink" href="#download-from-github" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="step-1">
-<h3>Step 1<a class="headerlink" href="#step-1" title="Permalink to this headline">¶</a></h3>
+<span id="installation-download"></span><h2>Download from GitHub<a class="headerlink" href="#download-from-github" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="clone">
+<h3>Clone<a class="headerlink" href="#clone" title="Permalink to this headline">¶</a></h3>
 <p>Clone from <a class="reference external" href="https://github.com/njcuk9999/apero-drs">github</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">njcuk9999</span><span class="o">/</span><span class="n">apero</span><span class="o">-</span><span class="n">drs</span>
 </pre></div>
@@ -144,9 +192,10 @@
 <p>This may take some time (in future most of the data required will be a separate download),
 and we still have many (now redundant) files from the spirou_py3 repository.</p>
 </div>
-<div class="section" id="step-2">
-<h3>Step 2<a class="headerlink" href="#step-2" title="Permalink to this headline">¶</a></h3>
-<p>Choose which version:</p>
+<div class="section" id="choose-branch">
+<span id="installation-choose-branch"></span><h3>Choose branch<a class="headerlink" href="#choose-branch" title="Permalink to this headline">¶</a></h3>
+<p>Change to the <cite>apero-drs</cite> directory</p>
+<p>Choose which branch:</p>
 <ul>
 <li><dl>
 <dt>master version</dt><dd><p>This is the version currently recommended for all general use.
@@ -154,6 +203,7 @@ It may not contain the most up-to-date features until long term support
 and stability can be verified.</p>
 <p>Change to this branch with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">master</span>
+<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">master</span>
 </pre></div>
 </div>
 </dd>
@@ -166,6 +216,7 @@ non-developers or for data put on archives. Some changes may not be
 in this version that are in the working version.</p>
 <p>Change to this branch with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">developer</span>
+<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">developer</span>
 </pre></div>
 </div>
 </dd>
@@ -176,26 +227,28 @@ in this version that are in the working version.</p>
 tested for stability - use at own risk.</p>
 <p>Change to this branch with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">working</span>
+<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">working</span>
 </pre></div>
 </div>
 </dd>
 </dl>
 </li>
 </ul>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id3"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="step-1-run-the-installation-script">
-<h3>Step 1: Run the installation script<a class="headerlink" href="#step-1-run-the-installation-script" title="Permalink to this headline">¶</a></h3>
+<span id="installation-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="run-the-installation-script">
+<h3>Run the installation script<a class="headerlink" href="#run-the-installation-script" title="Permalink to this headline">¶</a></h3>
 <p>Change to the <cite>apero-drs</cite> directory</p>
 <p>Run the installation script:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="step-2-step-by-step-guide">
-<h3>Step 2: Step-by-step guide<a class="headerlink" href="#step-2-step-by-step-guide" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="step-by-step-guide">
+<h3>Step-by-step guide<a class="headerlink" href="#step-by-step-guide" title="Permalink to this headline">¶</a></h3>
 <p>Follow the step-by-step guide:</p>
 <ul>
 <li><p>A: User configuration path</p>
@@ -237,13 +290,32 @@ you will just set one path and all folders (raw, tmp, reduced, calibDB etc)) wil
 <p>A to E will repeat for all installable instruments (To step up just one use the <cite>–instrument</cite> argument</p>
 </div>
 </div>
-<div class="section" id="step-3-additional-options">
-<h3>Step 3: Additional options<a class="headerlink" href="#step-3-additional-options" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="additional-options">
+<h3>Additional options<a class="headerlink" href="#additional-options" title="Permalink to this headline">¶</a></h3>
 <p>One will be prompted to give installation paths to various optional tools (currently <a class="reference internal" href="../misc/glossary.html#term-ds9"><span class="xref std std-term">ds9</span></a>
 and <a class="reference internal" href="../misc/glossary.html#term-pdflatex"><span class="xref std std-term">pdflatex</span></a>
 note the user will not be prompted if these were automatically found using the <cite>where</cite>
 command)</p>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </div>
+</div>
+<div class="section" id="updating-from-github">
+<span id="installation-update"></span><h2>Updating from github<a class="headerlink" href="#updating-from-github" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>Choose a branch (as in <a class="reference internal" href="#installation-choose-branch"><span class="std std-ref">Choose branch</span></a>)</p></li>
+<li><p>Update the branch (pull from github):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="p">{</span><span class="n">branch</span><span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update using the installation script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">setup</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">update</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This will use all current settings and update the</p>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </div>
 </div>
 
@@ -263,7 +335,7 @@ command)</p>
           <a href="using_apero.html" title="Using APERO"
              >next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="APERO: A PipelinE to Reduce Observations"
+          <a href="../index.html" title="User Documentation"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.010 documentation</a> &#187;</li> 
       </ul>

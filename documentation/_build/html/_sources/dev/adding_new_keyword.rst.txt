@@ -5,3 +5,6 @@
 Adding a new keyword
 ************************************************************************************ 
  
+.. only:: html
+
+  :ref:`Back to top <adding_new_keyword>`

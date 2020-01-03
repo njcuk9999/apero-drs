@@ -1,5 +1,6 @@
 
 
+
 <!doctype html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -18,12 +19,49 @@
     <script type="text/javascript" src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Glossary" href="../misc/glossary.html" />
+    <link rel="next" title="Developer how to guide" href="../dev/dev_main.html" />
     <link rel="prev" title="The recipes" href="recipes.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <!--[if lt IE 9]>
     <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
   </head><body>
 <div class="pageheader">
 
@@ -31,13 +69,14 @@
     <li><a href="../index.html">Home</a></li>
     <li><a href="installation.html">Install</a></li>
     <li><a href="https://github.com/njcuk9999/apero-drs">Github</a></li>
-    <li><a href="../index.html">PDF</a></li>
+    <li><a href="../../../_build/latex/apero-docs.pdf">PDF</a></li>
   </ul>
     <div>
     <a href="../index.html">
       <img src="../_static/images/apero_logo.png" alt="APERO" />
     </a>
-    A PipelinE to Reduce Observations
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
     </div>
 
 </div>
@@ -49,7 +88,7 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../misc/glossary.html" title="Glossary"
+          <a href="../dev/dev_main.html" title="Developer how to guide"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="recipes.html" title="The recipes"
@@ -63,8 +102,8 @@
   <p class="topless"><a href="recipes.html"
                         title="previous chapter">The recipes</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../misc/glossary.html"
-                        title="next chapter">Glossary</a></p>
+  <p class="topless"><a href="../dev/dev_main.html"
+                        title="next chapter">Developer how to guide</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -91,8 +130,9 @@
           <div class="body" role="main">
             
   <div class="section" id="the-tools">
-<h1>The Tools<a class="headerlink" href="#the-tools" title="Permalink to this headline">¶</a></h1>
+<span id="tools"></span><h1>The Tools<a class="headerlink" href="#the-tools" title="Permalink to this headline">¶</a></h1>
 <p>These are all userful tools to use with APERO.</p>
+<p><a class="reference internal" href="#tools"><span class="std std-ref">Back to top</span></a></p>
 </div>
 
 
@@ -108,7 +148,7 @@
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../misc/glossary.html" title="Glossary"
+          <a href="../dev/dev_main.html" title="Developer how to guide"
              >next</a> |</li>
         <li class="right" >
           <a href="recipes.html" title="The recipes"
