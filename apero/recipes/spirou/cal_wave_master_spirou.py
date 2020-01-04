@@ -250,7 +250,7 @@ def __main__(recipe, params):
                 # update wave solution
                 hc_update = wave.add_wave_keys(hc_update, wprops)
                 # write hc update
-                hc_update.write()
+                hc_update.write_file()
                 # add to output files (for indexing)
                 recipe.add_output_file(hc_update)
 
@@ -317,7 +317,7 @@ def __main__(recipe, params):
                     # update wave solution
                     hc_update = wave.add_wave_keys(hc_update, wprops)
                     # write hc update
-                    hc_update.write()
+                    hc_update.write_file()
                     # log that we are updating the HC file with wave params
                     wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
                     WLOG(params, '', TextEntry('40-017-00038', args=wargs))
@@ -326,7 +326,7 @@ def __main__(recipe, params):
                     # update wave solution
                     fp_update = wave.add_wave_keys(fp_update, wprops)
                     # write hc update
-                    fp_update.write()
+                    fp_update.write_file()
                     # add to output files (for indexing)
                     recipe.add_output_file(fp_update)
 
