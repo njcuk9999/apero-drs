@@ -594,7 +594,7 @@ def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-011-00012', args=[outfile.filename]))
     # write image to file
-    outfile.write()
+    outfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # return outfile
