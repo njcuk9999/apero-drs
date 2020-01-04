@@ -505,45 +505,46 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         if quiet is None:
             quiet = False
     # -------------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    lockfile = os.path.basename(opath)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
+    if outputs not in [None, 'None', '']:
+        # define a synchoronized lock for indexing (so multiple instances
+        #  do not run at the same time)
+        lockfile = os.path.basename(opath)
+        # start a lock
+        lock = drs_lock.Lock(params, lockfile)
 
-    # make locked indexing function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_indexing():
-        # Must now deal with errors and make sure we close the lock file
-        try:
-            if outputs == 'pp':
-                # index outputs to pp dir
-                _index_pp(params, recipe)
-            elif outputs == 'reduced':
-                # index outputs to reduced dir
-                _index_outputs(params, recipe)
-        # Must close lock file
-        except drs_exceptions.LogExit as e_:
-            # log error
-            eargs = [type(e_), e_.errormessage, func_name]
-            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-        except Exception as e_:
-            # log error
-            eargs = [type(e_), e_, func_name]
-            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-    # -------------------------------------------------------------------------
-    # index if we have outputs
-    if (outputs is not None) and (outputs != 'None') and success:
-        # this is where we run the function
-        try:
-            locked_indexing()
-        except KeyboardInterrupt as e:
-            lock.reset()
-            raise e
-        except Exception as e:
-            lock.reset()
-            # re-raise error
-            raise e
+        # make locked indexing function
+        @drs_lock.synchronized(lock, params['PID'])
+        def locked_indexing():
+            # Must now deal with errors and make sure we close the lock file
+            try:
+                if outputs == 'pp':
+                    # index outputs to pp dir
+                    _index_pp(params, recipe)
+                elif outputs == 'reduced':
+                    # index outputs to reduced dir
+                    _index_outputs(params, recipe)
+            # Must close lock file
+            except drs_exceptions.LogExit as e_:
+                # log error
+                eargs = [type(e_), e_.errormessage, func_name]
+                WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+            except Exception as e_:
+                # log error
+                eargs = [type(e_), e_, func_name]
+                WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+        # -------------------------------------------------------------------------
+        # index if we have outputs
+        if (outputs is not None) and (outputs != 'None') and success:
+            # this is where we run the function
+            try:
+                locked_indexing()
+            except KeyboardInterrupt as e:
+                lock.reset()
+                raise e
+            except Exception as e:
+                lock.reset()
+                # re-raise error
+                raise e
 
     # -------------------------------------------------------------------------
     # log end message
