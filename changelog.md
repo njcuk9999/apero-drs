@@ -2,6 +2,79 @@ Changelog
 =========
 
 
+0.6.015 (2020-01-04)
+--------------------
+- Add apero-data and gitignore contents. [Neil Cook]
+- Core.instruments.default.deafult_config.py - change default locations
+  to a relative location. [Neil Cook]
+- Core.core.drs_startup.py - do not index if there are no outputs
+  (including lock) [Neil Cook]
+- Tools.recipe.general.apero_validate.py - remove recipe log from non-
+  instrument recipe. [Neil Cook]
+- Io.drs_lock.py - remove unused imports. [Neil Cook]
+- Io.drs_fits.py - all writing to file must be locked (for
+  parellisation) based on filename. [Neil Cook]
+- Science.telluric.general.py - change write --> write_file. [Neil Cook]
+- Science.polar.general.py - change write --> write_file. [Neil Cook]
+- Science.extract.general.py - change write --> write_file. [Neil Cook]
+- Science.calib.wave.py - change write --> write_file. [Neil Cook]
+- Science.calib.shape.py - change write --> write_file. [Neil Cook]
+- Science.calib.localisation.py - change write --> write_file. [Neil
+  Cook]
+- Science.calib.flat_blaze.py - change write --> write_file. [Neil Cook]
+- Science.calib.dark.py - change write --> write_file. [Neil Cook]
+- Science.calib.badpix.py - change write --> write_file. [Neil Cook]
+- Recipe.spirou.cal_wave_spirou.py - change write --> write_file. [Neil
+  Cook]
+- Recipe.spirou.cal_Wave_master_spirou.py - change write --> write_file.
+  [Neil Cook]
+- Recipe.spirou.cal_thermal_spirou.py - change write --> write_file.
+  [Neil Cook]
+- Recipes.spirou.cal_preprocess_spirou.py - change write --> write_file.
+  [Neil Cook]
+- Recipes.spirou.cal_extract_spirou.py - change write --> writelog.
+  [Neil Cook]
+- Core.core.drs_file.py - change write --> write_file (more unique)
+  [Neil Cook]
+
+
+0.6.014 (2020-01-03)
+--------------------
+- Io.drs_lock.py - make all lock files under the DRS_DATA_MSG path (not
+  the group modified path) [Neil Cook]
+- Io.drs_lock.py - add absolute path to the files. [Neil Cook]
+- Merge remote-tracking branch 'origin/neil' into neil. [Neil Cook]
+- Core.core.drs_log.py - if use_group=False need to reset drs_data_msg
+  (otherwise it will already have group name in even if group=None)
+  [Neil Cook]
+- Tools.module.setup.drs_reset.py - remove breakpoint. [Neil Cook]
+
+
+0.6.013 (2020-01-02)
+--------------------
+- Continue work on sphinx documentation (html and linux) [njcuk9999]
+- Recipes.spirou.cal_extract_spirou.py - remove breakpoint. [Neil Cook]
+- Core.core.drs_startup.py - make sure log file does not use group
+  (different groups may need to lock same file) [Neil Cook]
+- Core.core.drs_log.py - give an option to turn off using group. [Neil
+  Cook]
+- Recipes.spirou.cal_extract_spirou.py - force breakpoint. [Neil Cook]
+- Recipes.spirou.cal_extract_spirou.py - add breakpoint to help find
+  problem. [Neil Cook]
+- Core.core.drs_log.py - pep8 correction. [Neil Cook]
+
+
+0.6.012 (2019-12-31)
+--------------------
+- Start of documentation with Sphinx. [njcuk9999]
+
+
+0.6.011 (2019-12-23)
+--------------------
+- Core.core.drs_log.py - try to catch log problems. [Neil Cook]
+- Update date/version/changelog/readme. [Neil Cook]
+
+
 0.6.010 (2019-12-19)
 --------------------
 - Science.calib.wave.py + recipes.spirou.cal_wave_master_spirou.py - add
