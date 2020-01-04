@@ -17,13 +17,10 @@ from __future__ import division
 import os
 import time
 import numpy as np
-import glob
-import sys
 
 from apero.core import constants
 from apero.locale import drs_text
 from apero.core.core import drs_log
-
 
 # =============================================================================
 # Define variables
