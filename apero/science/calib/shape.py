@@ -1460,7 +1460,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # log that we are saving dxmap to file
     WLOG(params, '', TextEntry('40-014-00037', args=[outfile.filename]))
     # write image to file
-    outfile.write()
+    outfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # ----------------------------------------------------------------------
@@ -1476,7 +1476,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile1.copy_hdict(outfile)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = image
-        debugfile1.write()
+        debugfile1.write_file()
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
         # out file
@@ -1486,7 +1486,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile2.copy_hdict(outfile)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = image2
-        debugfile2.write()
+        debugfile2.write_file()
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)
     # return outfile
