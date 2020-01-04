@@ -727,7 +727,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     wargs = [fiber, hcfile.filename]
     WLOG(params, '', TextEntry('40-017-00039', args=wargs))
     # write image to file
-    hcfile.write()
+    hcfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(hcfile)
     # ------------------------------------------------------------------
@@ -751,7 +751,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     wargs = [fiber, fpfile.filename]
     WLOG(params, '', TextEntry('40-017-00039', args=wargs))
     # write image to file
-    fpfile.write()
+    fpfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(fpfile)
     # ------------------------------------------------------------------
@@ -1438,7 +1438,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00019', args=wargs))
     # write image to file
-    wavefile.write()
+    wavefile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -4558,7 +4558,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00037', args=wargs))
     # write image to file
-    wavefile.write()
+    wavefile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
