@@ -68,6 +68,10 @@ def get_args():
     parser.add_argument('--gui', action='store_true', default=False,
                         dest='gui',
                         help='use GUI to install (Not yet supported) ')
+    parser.add_argument('--name', action='store', dest='name',
+                        help='The name for this specific installation'
+                             '(Allows the creation of multiple profiles with'
+                             ' different settings)')
 
     # add setup args
     parser.add_argument('--root', action='store', dest='root',
@@ -420,6 +424,8 @@ if __name__ == '__main__':
         allparams = install.update(params)
     # add dev mode to allparams
     allparams['DEVMODE'] = args.devmode
+    # add name
+    allparams['PROFILENAME'] = args.name
 
     # ----------------------------------------------------------------------
     # End of user setup
