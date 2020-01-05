@@ -47,8 +47,8 @@ ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # -----------------------------------------------------------------------------
 INSTRUMENTS = ['SPIROU', 'NIRPS']
-DEFAULT_USER_PATH = '~/apero/config/'
-DEFAULT_DATA_PATH = '~/apero/data/'
+DEFAULT_USER_PATH = '~/apero/default/'
+DEFAULT_DATA_PATH = '~/apero/data/default/'
 
 UCONFIG = 'user_config.ini'
 UCONST = 'user_constants.ini'
@@ -96,6 +96,9 @@ User config path:
 
     This is the path where your user configuration will be saved.
     If it doesn't exist you will be prompted to create it. 
+    
+    Note if creating multiple profiles (with --name) this should not be
+    the same directory for each profile (must be different).
 """
 
 message2 = """
@@ -125,23 +128,23 @@ message4 = """
 
     i) Add an alias in your ~/.bashrc or ~/.bash_profile or 
        ~/.tcshrc or ~/.profile 
-       and then type "apero" every time you wish to run apero.
+       and then type "{NAME}" every time you wish to run apero.
        i.e. for bash
-            alias apero="source {DRS_UCONFIG}apero.bash.setup"
+            alias {NAME}="source {DRS_UCONFIG}{NAME}.bash.setup"
        i.e. for sh
-            alias apero "source {DRS_UCONFIG}apero.sh.setup"
+            alias {NAME} "source {DRS_UCONFIG}{NAME}.sh.setup"
     
     
-    ii) Add the contents of {DRS_UCONFIG}apero.{SYSTEM}.setup 
+    ii) Add the contents of {DRS_UCONFIG}{NAME}.{SYSTEM}.setup 
         to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
     
 
-    iii) type "source {DRS_UCONFIG}apero.{SYSTEM}.setup" every 
+    iii) type "source {DRS_UCONFIG}{NAME}.{SYSTEM}.setup" every 
          time you wish to run apero.
            i.e. for bash
-                source {DRS_UCONFIG}apero.bash.setup
+                source {DRS_UCONFIG}{NAME}.bash.setup
            i.e. for sh
-                source {DRS_UCONFIG}apero.sh.setup
+                source {DRS_UCONFIG}{NAME}.sh.setup
 
 
 Note: here {SYSTEM} is "bash" or "sh" or "win" depending on your system.
@@ -164,6 +167,22 @@ pdflatex not found (optional).
 Please enter path to pdflatex or leave blank to skip
 
 """
+
+
+prompt1 = r"""
+
+# =======================
+# COLOURED PROMPT
+# =======================
+RED="\e[1;31m"
+BLUE="\e[1;34m"
+YELLOW="\e[0;33m"
+WHITE="\e[0;37m"
+END="\e[m"
+export PS1=" ${YELLOW}{NAME} ${WHITE}\d \t ${BLUE}\u@\h: ${RED}\w${END}\n>>   "
+unset RED BLUE YELLOW WHITE END
+"""
+
 
 # =============================================================================
 # Define setup/general functions
@@ -353,12 +372,23 @@ def user_interface(params, args):
     cprint(printheader(), 'm')
     print('\n')
     # ------------------------------------------------------------------
+    # deal with having a profile name
+    profilename = args.name
+    # set default user path
+    if profilename not in ['None', None, '']:
+        profilename = profilename.strip().replace(' ', '_').lower()
+        default_upath = DEFAULT_USER_PATH.replace('default', profilename)
+        default_dpath = DEFAULT_DATA_PATH.replace('default', profilename)
+    else:
+        default_upath = DEFAULT_USER_PATH
+        default_dpath = DEFAULT_DATA_PATH
+    # ------------------------------------------------------------------
     # Step 1: Ask for user config path
     # ------------------------------------------------------------------
     promptuser, userconfig = check_path_arg('config', args.config)
     # if we still need to get user config ask user to get it
     if promptuser:
-        userconfig = ask(message1, 'path', default=DEFAULT_USER_PATH)
+        userconfig = ask(message1, 'path', default=default_upath)
     # add user config to all_params
     all_params['USERCONFIG'] = userconfig
     # ------------------------------------------------------------------
@@ -424,7 +454,7 @@ def user_interface(params, args):
                 if promptuser:
                     # get question and default
                     question, default = DATA_PATHS[path]
-                    defaultpath = os.path.join(DEFAULT_DATA_PATH, default)
+                    defaultpath = os.path.join(default_dpath, default)
                     # ask question and assign path
                     iparams[path] = ask(question, 'path', default=defaultpath)
                     iparams.set_source(path, __NAME__)
@@ -435,11 +465,11 @@ def user_interface(params, args):
         # ------------------------------------------------------------------
         elif data_promptuser:
             create = False
-            directory = DEFAULT_DATA_PATH
+            directory = default_dpath
             # loop until we have an answer
             while not create:
                 directory = ask('Data directory', 'path',
-                                default=DEFAULT_DATA_PATH)
+                                default=default_dpath)
                 # ask to create directory
                 pathquestion = 'Path "{0}" does not exist. Create?'
 
@@ -686,16 +716,25 @@ def update_configs(params, all_params):
 def create_shell_scripts(params, all_params):
     # get package
     package = params['DRS_PACKAGE']
+
+    if all_params['PROFILENAME'] not in [None, 'None', '']:
+        pname = all_params['PROFILENAME'].replace(' ', '_')
+    else:
+        pname = package
+
     # find setup files
     setup_path = constants.get_relative_folder(package, SETUP_PATH)
 
     # deal with windows
     if os.name == 'nt':
-        setup_files = ['{0}.win.setup'.format(package.lower())]
+        setup_infiles = ['{0}.win.setup'.format(package.lower())]
+        setup_outfiles = ['{0}.win.setup'.format(pname.lower())]
     # deal with unix
     elif os.name == 'posix':
-        setup_files = ['{0}.bash.setup'.format(package.lower())]
-        setup_files += ['{0}.sh.setup'.format(package.lower())]
+        setup_infiles = ['{0}.bash.setup'.format(package.lower())]
+        setup_infiles += ['{0}.sh.setup'.format(package.lower())]
+        setup_outfiles = ['{0}.bash.setup'.format(pname.lower())]
+        setup_outfiles += ['{0}.sh.setup'.format(pname.lower())]
     # else generate error message
     else:
         # print error message
@@ -712,13 +751,20 @@ def create_shell_scripts(params, all_params):
     text['TOOL_PATH'] = all_params['DRS_TOOL_PATH']
     text['USER_CONFIG'] = all_params['USERCONFIG']
     text['ROOT_PATH'] = os.path.dirname(all_params['DRS_ROOT'])
+    text['NAME'] = all_params['PROFILENAME']
     # ----------------------------------------------------------------------
     # loop around setup files
-    for setup_file in setup_files:
-        # get absolute path
-        inpath = os.path.join(setup_path, setup_file)
+    for it, setup_file in enumerate(setup_infiles):
+
+        # deal with having profile name
+        if all_params['PROFILENAME'] not in [None, 'None', '']:
+            # get absolute path
+            inpath = os.path.join(setup_path, setup_file + '.profile')
+        else:
+            # get absolute path
+            inpath = os.path.join(setup_path, setup_file)
         # get output path
-        outpath = os.path.join(all_params['USERCONFIG'], setup_file)
+        outpath = os.path.join(all_params['USERCONFIG'], setup_outfiles[it])
         # ------------------------------------------------------------------
         # make sure in path exists
         if not os.path.exists(inpath):
@@ -923,6 +969,10 @@ def print_options(params, all_params):
     text = dict()
     text['DRS_UCONFIG'] = all_params['USERCONFIG']
     text['SYSTEM'] = '{SYSTEM}'
+    if all_params['PROFILENAME'] not in ['None', None, '']:
+        text['NAME'] = all_params['PROFILENAME']
+    else:
+        text['NAME'] = params['DRS_PACKAGE']
     # print the messages
     print('\n\n')
     cprint(printheader(), 'm')
