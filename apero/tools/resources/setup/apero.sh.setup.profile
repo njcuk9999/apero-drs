@@ -11,6 +11,9 @@ setenv PYTHONPATH "{TOOL_PATH}":$PYTHONPATH
 setenv PYTHONPATH "{BIN_PATH}":$PYTHONPATH
 setenv PYTHONPATH "{ROOT_PATH}":$PYTHONPATH
 
+# setup aliases
+alias gointroot "cd {ROOT_PATH}"
+
 # setup drs config path
 setenv DRS_UCONFIG "{USER_CONFIG}"
 
