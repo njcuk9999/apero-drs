@@ -976,6 +976,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_all_results = []
     ccf_lines = []
     ccf_all_snr = []
+    ccf_norm_all = []
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1002,6 +1003,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
         # set the spectrum or blaze NaN pixels to zero (dealt with by divide)
@@ -1042,10 +1044,12 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
         # normalise each orders CCF to median
-        ccf_ord = ccf_ord / mp.nanmedian(ccf_ord)
+        ccf_norm = mp.nanmedian(ccf_ord)
+        ccf_ord = ccf_ord / ccf_norm
         # ------------------------------------------------------------------
         # fit the CCF with a gaussian
         fargs = [order_num, rv_ccf, ccf_ord, fit_type]
@@ -1065,6 +1069,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         ccf_noise_all.append(ccf_noise)
         ccf_lines.append(numlines)
         ccf_all_snr.append(ccf_snr)
+        ccf_norm_all.append(ccf_norm)
 
     # store outputs in param dict
     props = ParamDict()
@@ -1076,10 +1081,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     props['CCF_SNR'] = np.array(ccf_all_snr)
     props['CCF_FIT'] = np.array(ccf_all_fit)
     props['CCF_FIT_COEFFS'] = np.array(ccf_all_results)
+    props['CCF_NORM'] = np.array(ccf_norm_all)
 
     # set sources
     keys = ['RV_CCF', 'CCF', 'TOT_LINE', 'CCF_NOISE', 'CCF_FIT', 'CCF_SNR',
-            'CCF_FIT_COEFFS', 'CCF_LINES']
+            'CCF_FIT_COEFFS', 'CCF_LINES', 'CCF_NORM']
     props.set_sources(keys, func_name)
     # return props
     return props
@@ -1181,6 +1187,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     table2['FWHM'] = coeffs[:, 2]
     table2['DC'] = coeffs[:, 3]
     table2['SNR'] = props['CCF_SNR']
+    table2['NORM'] = props['CCF_NORM']
     # ----------------------------------------------------------------------
     # archive ccf to fits file
     # ----------------------------------------------------------------------
