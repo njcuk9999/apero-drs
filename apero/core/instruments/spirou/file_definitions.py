@@ -46,7 +46,7 @@ raw_prefix = 'RAW_'
 raw_files = []
 # =============================================================================
 # generic raw file
-raw_file = drs_finput('DRS_RAW', iletype='.fits', suffix='',
+raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
                       outfunc=out.blank)
 # -----------------------------------------------------------------------------
 # raw dark files
@@ -722,6 +722,7 @@ out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                outfunc=out.set_file,
                                filename='cal_wave_results')
+
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               fibers=['AB', 'A', 'B', 'C'],
