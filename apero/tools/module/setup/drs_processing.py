@@ -1459,7 +1459,10 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TIMING'] = 0
                 pp['FINISHED'] = True
                 return_dict[priority] = pp
-                continue
+                # deal with a master not passing
+                #   we cannot idely skip master files
+                if not run_item.master:
+                    continue
             # --------------------------------------------------------------
             # start time
             starttime = time.time()
