@@ -748,7 +748,7 @@ cal_wave_night.description = Help['WAVE_DESC']
 cal_wave_night.epilog = Help['WAVE_EXAMPLE']
 cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff)
-cal_wave_night.set_debug_plots()
+cal_wave_night.set_debug_plots('PLOT_WAVENIGHT_ITERPLOT', 'WAVENIGHT_DIFFPLOT')
 cal_wave_night.set_summary_plots()
 cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
