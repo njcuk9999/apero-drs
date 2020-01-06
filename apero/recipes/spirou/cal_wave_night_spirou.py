@@ -75,7 +75,8 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, hcfiles=hcfiles, **kwargs)
+    fkwargs = dict(directory=directory, hcfiles=hcfiles,
+                   fpfiles=fpfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -89,7 +90,6 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     # End Message
     # ----------------------------------------------------------------------
     return core.end_main(params, llmain, recipe, success)
-
 
 
 def __main__(recipe, params):
@@ -154,7 +154,54 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
-        pass
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
+        # set up plotting (no plotting before this)
+        recipe.plot.set_location(it)
+        # print file iteration progress
+        core.file_processing_update(params, it, num_files)
+        # get this iterations files
+        hcfile = hcfiles[it]
+        fpfile = fpfiles[it]
+        # ------------------------------------------------------------------
+        # extract the hc file and fp file
+        # ------------------------------------------------------------------
+        # set up parameters
+        eargs = [params, recipe, EXTRACT_NAME, hcfile, fpfile]
+        # run extraction
+        hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs)
+
+        # ------------------------------------------------------------------
+        # Loop around fibers
+        # ------------------------------------------------------------------
+        for fiber in fiber_types:
+            # ------------------------------------------------------------------
+            # add level to recipe log
+            log_hc = log1.add_level(params, 'mode=hc fiber', fiber)
+            # ------------------------------------------------------------------
+            # log fiber process
+            core.fiber_processing_update(params, fiber)
+            # get hc and fp outputs
+            hc_e2ds_file = hc_outputs[fiber]
+            fp_e2ds_file = fp_outputs[fiber]
+            # --------------------------------------------------------------
+            # get master hc lines and fp lines from calibDB
+            wargs = []
+            wout = wave.get_wavelines(params, recipe, *wargs)
+            mhclines, mhclsource, mfplines, mfplsource = wout
+            # --------------------------------------------------------------
+            # load wavelength solution (start point) for this fiber
+            #    this should only be a master wavelength solution
+            wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
+                                           fiber=fiber, master=True)
+            # --------------------------------------------------------------
+            # calculate the night wavelength solution
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
+            wprops = wave.night_wavesolution(params, recipe, *wargs)
+
+
 
     # ----------------------------------------------------------------------
     # End of main code
