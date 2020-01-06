@@ -2046,6 +2046,14 @@ PLOT_WAVE_FP_SINGLE_ORDER.value = True
 PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
 PLOT_WAVEREF_EXPECTED.value = True
 
+# turn on the wave per night iteration debug plot
+PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)
+PLOT_WAVENIGHT_ITERPLOT.value = True
+
+# turn on the wave per night diff debug plot
+PLOT_WAVENIGHT_DIFFPLOT = PLOT_WAVENIGHT_DIFFPLOT.copy(__NAME__)
+PLOT_WAVENIGHT_DIFFPLOT.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False
