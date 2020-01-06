@@ -140,6 +140,7 @@ cal_shape_master = DrsRecipe(__INSTRUMENT__)
 cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_wave = DrsRecipe(__INSTRUMENT__)
 cal_wave_master = DrsRecipe(__INSTRUMENT__)
+cal_wave_night = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
@@ -155,7 +156,8 @@ cal_update_berv = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
-           cal_shape, cal_shape_master, cal_thermal, cal_wave, cal_wave_master,
+           cal_shape, cal_shape_master, cal_thermal,
+           cal_wave, cal_wave_master, cal_wave_night,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
            obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec_spirou,
            obj_pol_spirou, test, cal_update_berv]
@@ -731,6 +733,49 @@ cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
 cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=Help['FPMODE_HELP'], options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
+
+# -----------------------------------------------------------------------------
+# cal_wave_night
+# -----------------------------------------------------------------------------
+cal_wave_night.name = 'cal_wave_night_spirou.py'
+cal_wave_night.shortname = 'WAVE'
+cal_wave_night.instrument = __INSTRUMENT__
+cal_wave_night.outputdir = 'reduced'
+cal_wave_night.inputdir = 'tmp'
+cal_wave_night.inputtype = 'pp'
+cal_wave_night.extension = 'fits'
+cal_wave_night.description = Help['WAVE_DESC']
+cal_wave_night.epilog = Help['WAVE_EXAMPLE']
+cal_wave_night.kind = 'recipe'
+cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff)
+cal_wave_night.set_debug_plots()
+cal_wave_night.set_summary_plots()
+cal_wave_night.set_arg(pos=0, **directory)
+cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+                         nargs='+', filelogic='exclusive', required=True,
+                         helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+cal_wave_night.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                         nargs='+', filelogic='exclusive', required=True,
+                         helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+cal_wave_night.set_kwarg(**add_db)
+cal_wave_night.set_kwarg(**badfile)
+cal_wave_night.set_kwarg(**dobad)
+cal_wave_night.set_kwarg(**backsub)
+cal_wave_night.set_kwarg(**blazefile)
+cal_wave_night.set_kwarg(default=True, **combine)
+cal_wave_night.set_kwarg(**darkfile)
+cal_wave_night.set_kwarg(**dodark)
+cal_wave_night.set_kwarg(**fiber)
+cal_wave_night.set_kwarg(**flipimage)
+cal_wave_night.set_kwarg(**fluxunits)
+cal_wave_night.set_kwarg(**locofile)
+cal_wave_night.set_kwarg(**orderpfile)
+cal_wave_night.set_kwarg(**plot)
+cal_wave_night.set_kwarg(**resize)
+cal_wave_night.set_kwarg(**shapexfile)
+cal_wave_night.set_kwarg(**shapeyfile)
+cal_wave_night.set_kwarg(**shapelfile)
+cal_wave_night.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
