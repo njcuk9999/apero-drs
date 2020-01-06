@@ -199,9 +199,49 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
-            wprops = wave.night_wavesolution(params, recipe, *wargs)
+            nprops = wave.night_wavesolution(params, recipe, *wargs)
 
+            # ----------------------------------------------------------
+            # wave solution quality control
+            # ----------------------------------------------------------
+            qc_params, passed = wave.night_quality_control(params, nprops)
 
+            # ----------------------------------------------------------
+            # write wave solution to file
+            # ----------------------------------------------------------
+            wavefile = wave.night_write_wavesolution(params, recipe, nprops)
+
+            # ----------------------------------------------------------
+            # Update calibDB with solution
+            # ----------------------------------------------------------
+            if passed:
+                # copy the hc wave solution file to the calibDB
+                drs_database.add_file(params, wavefile)
+
+            # ----------------------------------------------------------
+            # Update header of current files with FP solution
+            # ----------------------------------------------------------
+            if passed and params['INPUTS']['DATABASE']:
+                # log that we are updating the HC file with wave params
+                wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
+                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+                # create copy of input e2ds hc file
+                hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
+                # update wave solution
+                hc_update = wave.add_wave_keys(hc_update, wprops)
+                # write hc update
+                hc_update.write_file()
+                # log that we are updating the HC file with wave params
+                wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
+                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+                # create copy of input e2ds fp file
+                fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
+                # update wave solution
+                fp_update = wave.add_wave_keys(fp_update, wprops)
+                # write hc update
+                fp_update.write_file()
+                # add to output files (for indexing)
+                recipe.add_output_file(fp_update)
 
     # ----------------------------------------------------------------------
     # End of main code
