@@ -462,6 +462,7 @@ for ite in range(nite):
 # difference in wavelength for the HC lines
 dv = (tbl_hc2['WAVELENGTH_MEASURED'] / tbl_hc1['WAVELENGTH_MEASURED'] - 1) * c
 
+# TODO: Question: NOT USED!!!
 keep = (np.abs(dv) < 5 * np.nanmedian(np.abs(dv)))
 keep &= (tbl_hc1['NSIG'] > nsig_min)
 keep &= (tbl_hc2['NSIG'] > nsig_min)
