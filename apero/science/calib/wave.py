@@ -125,8 +125,6 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     filename = kwargs.get('filename', None)
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
                    func_name)
-
-
     # ------------------------------------------------------------------------
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
@@ -369,6 +367,122 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     return wprops
 
 
+def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
+    # set up function name
+    func_name = display_func(params, __NAME__, 'get_wavelines')
+    # get parameters from params/kwargs
+    hclinefile = kwargs.get('hclinefile', None)
+    fplinefile = kwargs.get('fplinefile', None)
+    # deal with fibers that we don't have
+    usefiber = 'AB'
+    # ------------------------------------------------------------------------
+    # check infile is instance of DrsFitsFile
+    if infile is not None:
+        if not isinstance(infile, drs_file.DrsFitsFile):
+            eargs = [type(infile), func_name]
+            WLOG(params, 'error', TextEntry('00-017-00001', args=eargs))
+    # ------------------------------------------------------------------------
+    # deal with no header but an infile
+    if header is None and infile is not None:
+        header = infile.header
+    # deal with still having no header
+    if header is None:
+        # TODO: Move to language DB
+        eargs = [func_name]
+        emsg = 'No header defined. Cannot continue. \n\t Function = {0}'
+        WLOG(params, 'error', emsg.format(*eargs))
+    # ------------------------------------------------------------------------
+    # get file definitions (wave solution FP and wave solution HC)
+    out_wave_fp = core.get_file_definition('WAVE_FPLIST_MASTER',
+                                           params['INSTRUMENT'], kind='red')
+    out_wave_hc = core.get_file_definition('WAVE_HCLIST_MASTER',
+                                           params['INSTRUMENT'], kind='red')
+    # get calibration key
+    key_fp = out_wave_fp.get_dbkey(fiber=usefiber)
+    key_hc = out_wave_hc.get_dbkey(fiber=usefiber)
+
+    # check for filename in inputs
+    hclinefile = general.get_input_files(params, 'HCLINEFILE', key_fp, header,
+                                         hclinefile)
+    fplinefile = general.get_input_files(params, 'FPLINEFILE', key_hc, header,
+                                         fplinefile)
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol = cdb.file_col
+    # ------------------------------------------------------------------------
+    # get hc lines
+    # ------------------------------------------------------------------------
+    # if filename is defined get wave file from this file
+    if hclinefile is not None:
+        # construct new infile instance
+        hclfile = out_wave_fp.newcopy(filename=hclinefile, recipe=recipe,
+                                      fiber=usefiber)
+    else:
+        # get the wave entries
+        hcentries = drs_database.get_key_from_db(params, key_hc, cdb, header,
+                                                   n_ent=1, required=False)
+        # if there are still no wave entries use master wave file
+        if len(hcentries) == 0:
+            # Raise error - no hc lines found
+            # TODO: move to language DB
+            eargs = [func_name]
+            emsg = ('No HC lines master file found. Please run wave_master '
+                     'recipe. Function = {0}')
+            WLOG(params, 'error', emsg.format(*eargs))
+            hcfilepath = None
+        else:
+            # get badpix filename
+            hcfilename = hcentries[filecol][0]
+            hcfilepath = os.path.join(params['DRS_CALIB_DB'], hcfilename)
+        # construct new infile instance (first fp solution then hc solutions)
+        hclfile = out_wave_hc.newcopy(filename=hcfilepath, recipe=recipe,
+                                      fiber=usefiber)
+    # read data/header
+    hclfile.read()
+    # get wave map
+    hclines = np.array(hclfile.data)
+    # set wave source of wave file
+    hcsource = 'filename'
+    # ------------------------------------------------------------------------
+    # get fp lines
+    # ------------------------------------------------------------------------
+    # if filename is defined get wave file from this file
+    if fplinefile is not None:
+        # construct new infile instance
+        fplfile = out_wave_fp.newcopy(filename=fplinefile, recipe=recipe,
+                                      fiber=usefiber)
+    else:
+        # get the wave entries
+        fpentries = drs_database.get_key_from_db(params, key_fp, cdb, header,
+                                                   n_ent=1, required=False)
+        # if there are still no wave entries use master wave file
+        if len(fpentries) == 0:
+            # Raise error - no fp lines found
+            # TODO: move to language DB
+            eargs = [func_name]
+            emsg = ('No FP lines master file found. Please run wave_master '
+                     'recipe. Function = {0}')
+            WLOG(params, 'error', emsg.format(*eargs))
+            fpfilepath = None
+        else:
+            # get badpix filename
+            fpfilename = fpentries[filecol][0]
+            fpfilepath = os.path.join(params['DRS_CALIB_DB'], fpfilename)
+        # construct new infile instance (first fp solution then hc solutions)
+        fplfile = out_wave_hc.newcopy(filename=fpfilepath, recipe=recipe,
+                                      fiber=usefiber)
+    # read data/header
+    fplfile.read()
+    # get wave map
+    fplines = np.array(hclfile.data)
+    # set wave source of wave file
+    fpsource = 'filename'
+    # ------------------------------------------------------------------------
+    # return the lines and sources
+    return hclines, hcsource, fplines, fpsource
+
+
 def add_wave_keys(infile, props):
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
@@ -437,8 +551,6 @@ def check_wave_consistency(params, props, **kwargs):
         props.set_sources(['WAVEMAP', 'COEFFS', 'DEG'], func_name)
     # return props
     return props
-
-
 
 
 # =============================================================================
@@ -757,6 +869,51 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # ------------------------------------------------------------------
     # return hc  and fp line files
     return hcfile, fpfile
+
+
+def update_wavelength_measured(params, reftable, wavemap):
+    """
+    Update a line table with a wavelength solution
+
+    Takes the measured pixel values and splines the wavelength solution to
+    derive the equivalent measured wavelengths
+
+    :param params:
+    :param reftable:
+    :param wavemap:
+
+    :return:
+    """
+    # set function name
+    func_name = display_func(params, __NAME__, 'update_wavelength_measured')
+    # check columns for table
+    keys  = ['ORDER', 'PIXEL_MEASURED', 'WAVELENGTH_MEASURED']
+    for key in keys:
+        if key not in reftable:
+            eargs = [key, func_name]
+            emsg = ('Key "{0}" not found in {1} reference table. '
+                    '\n\t Function = {2}')
+            WLOG(params, 'error', emsg.format(*eargs))
+            return None
+    # get columns from table
+    orders = reftable['ORDER']
+    pix_measured = reftable['PIXEL_MEASURED']
+    wave_measured = reftable['WAVELENGTH_MEASURED']
+
+    # loop around orders
+    for order_num in np.unique(orders):
+        # index array
+        indices = np.arange(len(wavemap[order_num]))
+        # find all lines in this order
+        good = (order_num == orders) & np.isfinite(pix_measured)
+        # create spline for these lines
+        spline = mp.iuv_spline(indices, wavemap[order_num])
+        # add values for each line
+        wave_measured[good] = spline(pix_measured[good])
+    # push measured wavelength back into table
+    reftable['WAVELENGTH_MEASURED'] = wave_measured
+    # return table
+    return reftable
 
 
 # =============================================================================
@@ -4728,6 +4885,104 @@ def wave_summary(recipe, params, llprops, fiber, qc_params):
     recipe.plot.add_stat('KW_WFP_MASKUNITS', value=llprops['MASK_UNITS'],
                          fiber=fiber)
 
+
+# =============================================================================
+# Define night functions
+# =============================================================================
+def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
+                       **kwargs):
+
+    # TODO: Move to constants file
+    params.unlock()
+    # high-order wavelength solution correction cannot be smaller than 2,
+    #   we remove 0 and 1
+    params['WAVE_NIGHT_HIGHF_CORR_DEG'] = 7
+
+    # number of iterations for convergence
+    params['WAVE_NIGHT_NITERATIONS'] = 30
+
+    # size in nm of the median bin of residuals for higher-order correction
+    params['WAVE_NIGHT_DWAVE_BIN'] = 50
+
+    # min number of lines to be included in a median bin for high-order
+    # correction
+    params['WAVE_NIGHT_NMIN_LINES'] = 100
+
+    # starting points for the cavity corrections
+    params['WAVE_NIGHT_DCAVITY'] = 0
+
+
+
+    # ----------------------------------------------------------------------
+    # set function name
+    func_name = display_func(params, __NAME__, 'night_wavesolution')
+    # ----------------------------------------------------------------------
+    # get parameters from params/kwargs
+    highf_corr_deg = pcheck(params, 'WAVE_NIGHT_HIGHF_CORR_DEG',
+                            'highf_corr_deg', kwargs, func_name)
+    niterations = pcheck(params, 'WAVE_NIGHT_NITERATIONS', 'niterations',
+                         kwargs, func_name)
+    dwave_bin = pcheck(params, 'WAVE_NIGHT_DWAVE_BIN', 'dwave_bin',
+                       kwargs, func_name)
+    nmin_lines = pcheck(params, 'WAVE_NIGHT_NMIN_LINES', 'nmin_lines',
+                        kwargs, func_name)
+    d_cavity = pcheck(params, 'WAVE_NIGHT_DCAVITY', 'd_cavity', kwargs,
+                      func_name)
+
+    # ----------------------------------------------------------------------
+    # get the master wavelength solution
+    mwave = wprops['WAVEMAP']
+    # ----------------------------------------------------------------------
+    # pixel and order indices
+    order_map, x_map = np.indices(mwave.shape, dtype=float)
+    # gradients to be used in the linear model
+    gradient_mwave = np.gradient(mwave, axis=1)
+    # normalized as this is a simple scaling factor later on
+    gradient_mwave = gradient_mwave / np.mean(gradient_mwave)
+    # ----------------------------------------------------------------------
+    # Update the wavelength of lines with the master solution
+    # ----------------------------------------------------------------------
+    # log progress
+    wmsg = 'Updating measured wavelength'
+    WLOG(params, '', wmsg)
+    # update wavelength measured in line list table
+    mhcl = update_wavelength_measured(params, mhcl, mwave)
+    mfpl = update_wavelength_measured(params, mfpl, mwave)
+    # ----------------------------------------------------------------------
+    # Construct night line list
+    # ----------------------------------------------------------------------
+    # log progress
+    wmsg = 'Constructing night list list'
+    WLOG(params, '', wmsg)
+    # generate the hc reference lines
+    hcargs = dict(e2dsfile=hce2ds, wavemap=mwave)
+    rhcl = get_master_lines(params, recipe, *hcargs)
+    # generate the fp reference lines
+    fpargs = dict(e2dsfile=fpe2ds, wavemap=mwave)
+    rfpl = get_master_lines(params, recipe, *fpargs)
+    # ----------------------------------------------------------------------
+    # set up storage
+    # linear model
+    amps_cumu = np.zeros(4)
+    # high order correction terms
+    highf_deg_corr = np.zeros(highf_corr_deg + 1)
+    # ----------------------------------------------------------------------
+    # Iterative loop to update wavelength
+    # ----------------------------------------------------------------------
+    for iteration in niterations:
+        # log progress
+        # TODO: move to language DB
+        wargs = [iteration + 1, niterations]
+        wmsg = 'Night wave fit iteration {0} of {1}'
+        WLOG(params, '', wmsg.format(*wargs))
+        # ------------------------------------------------------------------
+        # model wavelength for the night with linear + HC model
+        # ------------------------------------------------------------------
+        # nightly wavelength starts off as master wave solution
+        nightly_wavelength = np.array(mwave)
+        # add a constant soffset in pixels
+        nightly_wavelength += amps_cumu[0]
+        #
 
 # =============================================================================
 # Start of code
