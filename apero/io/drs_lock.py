@@ -60,6 +60,7 @@ class Lock:
         :param lockname:
         :param lockpath:
         """
+        func_name = __NAME__ + '.Lock.__init__()'
         # set the bad characters to clean
         self.bad_chars = ['/', '\\' , '.', ',']
         # replace all . and whitespace with _
@@ -67,9 +68,24 @@ class Lock:
         self.params = params
         # get the lock path
         lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
-        if not os.path.exists(lockpath):
-            os.mkdir(lockpath)
-
+        # ------------------------------------------------------------------
+        # making the lock dir could be accessed in parallel several times
+        #   at once so try 10 times with a wait in between
+        it, error = 0, None
+        while not os.path.exists(lockpath) and it < 10:
+            try:
+                os.mkdir(lockpath)
+            except Exception as e:
+                error = e
+                # add one to the number of tries
+                it += 1
+                # sleep for one second to allow another process to complete this
+                time.sleep(1)
+        # if we had an error and got to 10 tries then cause an error
+        if error is not None and it == 10:
+            eargs = [type(error), error, lockpath, func_name]
+            WLOG(params, 'error', TextEntry('00-503-00016', args=eargs))
+        # ------------------------------------------------------------------
         self.maxwait = params.get('DB_MAX_WAIT', 100)
         self.path = os.path.join(lockpath, self.lockname)
         self.queue = []
