@@ -9,6 +9,7 @@ Created on 2019-02-18 at 10:59
 
 @author: cook
 """
+from astropy.io import fits
 import numpy as np
 import os
 from astropy.table import Table
@@ -16,6 +17,8 @@ from collections import OrderedDict
 import pandas as pd
 import sys
 import threading
+import warnings
+
 
 # try to deal with python 2/3 compatibility
 if sys.version_info.major > 2:
@@ -35,6 +38,7 @@ from apero.core import math as mp
 from apero import core
 from apero.tools.module.gui import widgets
 from apero.tools.module.setup import drs_processing
+from apero import plotting
 
 # =============================================================================
 # Define variables
@@ -52,13 +56,9 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 # -----------------------------------------------------------------------------
 # define the program name
-PROGRAM_NAME = 'DRS File Explorer'
+PROGRAM_NAME = 'APERO File Explorer'
 # define the default path
 ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC', 'DRS_DATA_RAW']
-# Define allowed instruments
-# TODO: get instruments from params?
-INSTRUMENTS = ['SPIROU', 'NIRPS']
-INSTRUMENTS = ['SPIROU']
 # define min column length
 MIN_TABLE_COL_WIDTH = 25
 
@@ -106,6 +106,8 @@ class Navbar:
                                        variable=self.master.command_ds9,
                                        command=self.activate_ds9_check)
         self.menubar.add_cascade(label='Settings', menu=self.settingsmenu)
+        # set initial value of command_plot to True
+        self.master.command_plot.set(True)
         # ---------------------------------------------------------------------
         # add help menu
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -199,7 +201,7 @@ class LocationSection:
                                anchor=tk.W)
         self.label1.pack(side=tk.LEFT, anchor=tk.W)
         # define choices
-        choices = INSTRUMENTS
+        choices = self.master.datastore.params['DRS_INSTRUMENTS']
         self.box1 = ttk.Combobox(self.frame1, values=choices,
                                  state="readonly", width=20)
         self.box1.current(0)
@@ -538,12 +540,19 @@ class TableSection:
             self.open_plot(abspath)
 
     def open_ds9(self, abspath):
+        # id_plot_file
+        plotid = _id_plot_file(abspath)
+        # can only open images in ds9
+        if plotid != 'image':
+            return
+        # -------------------------------------------------------------
         # update status
         self.master.status_bar.status.set('Opening DS9...')
         # construct command
         ds9path = self.master.datastore.params['DRS_DS9_PATH']
         if ds9path in [None, 'None', '']:
             print('ds9 not found. Define path in DRS_DS9_PATH')
+            return
         command = '{0} {1} &'.format(ds9path, abspath)
         try:
             os.system(command)
@@ -556,18 +565,69 @@ class TableSection:
 
     # TODO: Move plot to plotting
     def open_plot(self, abspath):
+        # get params
+        params = self.master.datastore.params
+        # id_plot_file
+        plotid = _id_plot_file(abspath)
+        # can only open images and s1d in plot
+        if plotid is None:
+            return
+        # -----------------------------------------------------------------
         # update status
         self.master.status_bar.status.set('Opening Plot interface...')
+        # -----------------------------------------------------------------
+        # try to print graph
         try:
-            import matplotlib.pyplot as plt
-            from astropy.io import fits
-            data = fits.getdata(abspath)
-            plt.imshow(data, origin='lower', aspect='auto')
-            plt.show()
-            plt.close()
+            # --------------------------------------------------------------
+            # plot s1d
+            if plotid == 's1d':
+                # load table
+                table = Table.read(abspath)
+                header = fits.getheader(abspath, ext=1)
+                # get data
+                x = table['wavelength']
+                y = table['flux']
+                # scale data (by percentiles)
+                with warnings.catch_warnings(record=True) as _:
+                    mask = y > np.nanpercentile(y, 5)
+                    mask &= y < np.nanpercentile(y, 95)
+                    x, y = x[mask], y[mask]
+                # set arguments
+                pkwargs = dict()
+                pkwargs['x'] = x
+                pkwargs['y'] = y
+                pkwargs['xlabel'] = 'Wavelength [nm]'
+                pkwargs['ylabel'] = 'Flux'
+                # set name
+                name = 'PLOT'
+            # --------------------------------------------------------------
+            # plot image
+            else:
+                # load data
+                image, header = fits.getdata(abspath, header=True)
+                # set argument
+                pkwargs = dict()
+                pkwargs['image'] = image
+                pkwargs['vmin'] = np.nanpercentile(image, 5)
+                pkwargs['vmax'] = np.nanpercentile(image, 95)
+                # set name
+                name = 'IMAGE'
+            # --------------------------------------------------------------
+            # add title
+            title = '{0}\n'.format(os.path.basename(abspath))
+            if 'OBJECT' in header:
+                title += 'OBJECT={0} '.format(header['OBJECT'])
+            if 'DPRTYPE' in header:
+                title += 'DPRTYPE={0}'.format(header['DPRTYPE'])
+            pkwargs['title'] = title
+            # --------------------------------------------------------------
+            plotting.main(params, name, **pkwargs)
+        # --------------------------------------------------------------
+        # else print the error and move on
         except Exception as e:
-            print('Error cannot plot {0}'.format(abspath))
-            print('\tError {0}: {1}'.format(type(e), e))
+            WLOG(params, '', 'Error cannot plot {0}'.format(abspath),
+                 colour='red')
+            WLOG(params, '', '\tError {0}: {1}'.format(type(e), e))
         # reset status
         self.master.status_bar.status.set('')
 
@@ -911,6 +971,25 @@ class LoadData:
         print('Writing {0}'.format(filename))
         table.write(filename, format=fmt, overwrite=True)
         print('Writing complete.')
+
+
+# =============================================================================
+# Misc functions
+# =============================================================================
+def _id_plot_file(abspath):
+    # get file base name
+    basename = os.path.basename(abspath)
+    # test for preprocessed file
+    if basename.endswith('_pp.fits'):
+        return 'image'
+    # test for s1d --> s1d
+    if 's1d' in basename and basename.endswith('.fits'):
+        return 's1d'
+    # generic fits files --> image
+    if basename.endswith('.fits'):
+        return 'image'
+    # finally just return None
+    return None
 
 
 # =============================================================================

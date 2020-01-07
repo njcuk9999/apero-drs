@@ -174,34 +174,17 @@ def __main__(recipe, params):
     # convert to numpy array
     filenames = np.array(filenames)
 
-    # TODO remove debug --------------------------START---------------------
-    from astropy.table import Table
-    import os
-    master_fp_file1 = 'DEBUG_FP_MASTER_CUBE_{0}.npy'.format(fpfile.basename)
-    master_fp_file2 = 'DEBUG_FP_MASTER_CUBE_{0}'.format(fpfile.basename)
+    # ----------------------------------------------------------------------
+    # Get all fp file properties
+    # ----------------------------------------------------------------------
+    fp_table = shape.construct_fp_table(params, filenames)
 
-    if os.path.exists(master_fp_file1):
-        fpcube = np.load(master_fp_file1)
-        fp_table = Table.read(master_fp_file2)
-    else:
-        # TODO remove debug --------------------------END---------------------
-        # ----------------------------------------------------------------------
-        # Get all fp file properties
-        # ----------------------------------------------------------------------
-        fp_table = shape.construct_fp_table(params, filenames)
+    # ----------------------------------------------------------------------
+    # match files by date and median to produce master fp
+    # ----------------------------------------------------------------------
 
-        # ----------------------------------------------------------------------
-        # match files by date and median to produce master fp
-        # ----------------------------------------------------------------------
-
-        cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
-        fpcube, fp_table = shape.construct_master_fp(*cargs)
-
-        # TODO remove debug --------------------------START---------------------
-        np.save(master_fp_file1, fpcube)
-        fp_table.write(master_fp_file2, overwrite=True)
-        # TODO remove debug --------------------------END---------------------
-
+    cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
+    fpcube, fp_table = shape.construct_master_fp(*cargs)
 
     # log process (master construction complete + number of groups added)
     wargs = [len(fpcube)]
@@ -249,6 +232,8 @@ def __main__(recipe, params):
     # Quality control
     # ------------------------------------------------------------------
     qc_params, passed = shape.shape_master_qc(params)
+    # update recipe log
+    recipe.log.add_qc(params, qc_params, passed)
 
     # ------------------------------------------------------------------
     # write files
@@ -273,6 +258,10 @@ def __main__(recipe, params):
     # Construct summary document
     # ------------------------------------------------------------------
     shape.write_shape_master_summary(recipe, params, fp_table, qc_params)
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

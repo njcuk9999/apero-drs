@@ -34,7 +34,6 @@ from apero.tools.module.setup import drs_reset
 from apero.science import telluric
 from apero.science import preprocessing
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -77,6 +76,8 @@ RUN_KEYS['RESET_CALIB'] = False
 RUN_KEYS['RESET_TELLU'] = False
 RUN_KEYS['RESET_LOG'] = False
 RUN_KEYS['RESET_PLOT'] = False
+RUN_KEYS['RESET_RUN'] = False
+RUN_KEYS['RESET_LOGFITS'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 
@@ -98,6 +99,7 @@ class Run:
         self.master = False
         self.recipemod = None
         self.kwargs = dict()
+        self.fileargs = dict()
         # set parameters
         self.kind = None
         self.nightname = None
@@ -235,6 +237,87 @@ class Run:
         # get properties
         self.get_recipe_kind()
         self.get_night_name()
+
+    def prerun_test(self):
+        """
+        Just before running test that all files required are present
+        Due to the way users can skip tests this is needed and this
+        knowledge will not be known apriori
+
+        :return:
+        """
+        # get params and recipe
+        params, recipe = self.params, self.recipe
+        # ------------------------------------------------------------------
+        # get the input directory
+        input_dir = recipe.get_input_dir()
+        # check whether input directory exists
+        if not os.path.exists(input_dir):
+            wargs = [input_dir]
+            WLOG(params, 'warning', TextEntry('10-503-00008', args=wargs))
+            return False
+        # ------------------------------------------------------------------
+        # if we have a directory add it to the input dir
+        if 'directory' in self.kwargs:
+            input_dir = os.path.join(input_dir, self.kwargs['directory'])
+            # check whether directory exists (if present)
+            if not os.path.exists(input_dir):
+                wargs = [self.kwargs['directory'], input_dir]
+                WLOG(params, 'warning', TextEntry('10-503-00009', args=wargs))
+                return False
+        # ------------------------------------------------------------------
+        # loop around positional arguments
+        for argname in recipe.args:
+            # skip if not present in kwargs
+            if argname not in self.kwargs:
+                continue
+            # get arg instance
+            arg = recipe.args[argname]
+            # only do this for arguments with filetype 'files' or 'file'
+            if arg.dtype in ['files', 'file']:
+                files = self.kwargs[argname]
+                # make sure we have a list of files
+                if not isinstance(files, list):
+                    files = [files]
+                # loop around files
+                for filename in files:
+                    # construct path
+                    abspath = os.path.join(input_dir, filename)
+                    # check if path exists
+                    if not os.path.exists(abspath):
+                        # log warning
+                        wargs = [argname, abspath]
+                        wmsg = TextEntry('10-503-00010', args=wargs)
+                        WLOG(params, 'warning', wmsg)
+                        return False
+        # ------------------------------------------------------------------
+        # loop around optional arguments
+        for kwargname in self.recipe.kwargs:
+            # skip if not present in kwargs
+            if kwargname not in self.kwargs:
+                continue
+            # get arg instance
+            kwarg = self.recipe.kwargs[kwargname]
+            # only do this for arguments with filetype 'files' or 'file'
+            if kwarg.dtype in ['files', 'file']:
+                files = self.kwargs[kwargname]
+                # make sure we have a list of files
+                if not isinstance(files, list):
+                    files = [files]
+                # loop around files
+                for filename in files:
+                    # construct path
+                    abspath = os.path.join(input_dir, filename)
+                    # check if path exists
+                    if not os.path.exists(abspath):
+                        # log warning
+                        wargs = [kwargname, abspath]
+                        wmsg = TextEntry('10-503-00010', args=wargs)
+                        WLOG(params, 'warning', wmsg)
+                        return False
+        # ------------------------------------------------------------------
+        # if all have passed we return True
+        return True
 
     def __str__(self):
         return self.__repr__()
@@ -421,9 +504,9 @@ def fix_run_file(runfile):
         # convert to character array
         lines = np.char.array(lines)
         # replace all equal signs
-        lines = lines.replace('=', '@'*50, 1)
+        lines = lines.replace('=', '@' * 50, 1)
         lines = lines.replace('=', ' ')
-        lines = lines.replace('@'*50, '=')
+        lines = lines.replace('@' * 50, '=')
         # open run file
         runf = open(runfile, 'w')
         # write to file
@@ -499,29 +582,44 @@ def reset_files(params):
     if not params['RESET_ALLOWED']:
         return 0
     if params['RESET_TMP']:
-        reset = drs_reset.reset_confirmation(params, 'tmp')
+        reset = drs_reset.reset_confirmation(params, 'Working',
+                                             params['DRS_DATA_WORKING'])
         if reset:
             drs_reset.reset_tmp_folders(params, log=True)
     if params['RESET_REDUCED']:
-        reset = drs_reset.reset_confirmation(params, 'reduced')
+        reset = drs_reset.reset_confirmation(params, 'Reduced',
+                                             params['DRS_DATA_REDUC'])
         if reset:
             drs_reset.reset_reduced_folders(params, log=True)
     if params['RESET_CALIB']:
-        reset = drs_reset.reset_confirmation(params, 'calibration')
+        reset = drs_reset.reset_confirmation(params, 'Calibration',
+                                             params['DRS_CALIB_DB'])
         if reset:
             drs_reset.reset_calibdb(params, log=True)
     if params['RESET_TELLU']:
-        reset = drs_reset.reset_confirmation(params, 'telluric')
+        reset = drs_reset.reset_confirmation(params, 'Telluric',
+                                             params['DRS_TELLU_DB'])
         if reset:
             drs_reset.reset_telludb(params, log=True)
     if params['RESET_LOG']:
-        reset = drs_reset.reset_confirmation(params, 'log')
+        reset = drs_reset.reset_confirmation(params, 'Log',
+                                             params['DRS_DATA_MSG'])
         if reset:
             drs_reset.reset_log(params)
     if params['RESET_PLOT']:
-        reset = drs_reset.reset_confirmation(params, 'plot')
+        reset = drs_reset.reset_confirmation(params, 'Plotting',
+                                             params['DRS_DATA_PLOT'])
         if reset:
             drs_reset.reset_plot(params)
+    if params['RESET_RUN']:
+        reset = drs_reset.reset_confirmation(params, 'Run',
+                                             params['DRS_DATA_RUN'])
+        if reset:
+            drs_reset.reset_run(params)
+    if params['RESET_LOGFITS']:
+        reset = drs_reset.reset_confirmation(params, 'log_fits')
+        if reset:
+            drs_reset.reset_log_fits(params)
 
 
 def find_raw_files(params, recipe, **kwargs):
@@ -650,7 +748,7 @@ def display_timing(params, outlist):
             WLOG(params, '', '\t\t{0}'.format(outlist[key]['RUNSTRING']),
                  wrap=False)
             WLOG(params, '', '')
-        # add to total time
+            # add to total time
             tot_time += outlist[key]['TIMING']
     # add total time
     WLOG(params, '', params['DRS_HEADER'])
@@ -733,7 +831,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
             elif len(kwargs[kwarg]) != length:
                 # log error we need all lists to have the same number of
                 #    elements
-                eargs = [kwarg,length, func_name]
+                eargs = [kwarg, length, func_name]
                 WLOG(params, 'error', TextEntry('00-503-00010', args=eargs))
     # length could still be None should be 1
     if length is None:
@@ -760,7 +858,6 @@ def generate_run_table(params, recipe, *args, **kwargs):
         run_table[row] = command
     # return run table
     return run_table
-
 
 
 # =============================================================================
@@ -828,7 +925,6 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
 
 
 def skip_run_object(params, runobj):
-
     # create text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get recipe and runstring
@@ -1083,17 +1179,18 @@ def _check_for_sequences(rvalues, mod):
 
 
 def _generate_run_from_sequence(params, sequence, table, **kwargs):
-
     func_name = __NAME__ + '.generate_run_from_sequence()'
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    # get all telluric stars
+    tstars, wfilename = telluric.get_whitelist(params)
     # get filemod and recipe mod
     pconst = constants.pload(params['INSTRUMENT'])
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
-    sequence[1].process_adds(params)
+    sequence[1].process_adds(params, tstars=list(tstars))
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # storage for new runs to add
@@ -1278,7 +1375,6 @@ def prompt(params):
 # =============================================================================
 def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                     cores=1, event=None, group=None):
-
     # get textdict
     textdict = TextDict(params['instrument'], params['LANGUAGE'])
     # deal with empty return_dict
@@ -1350,6 +1446,24 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # log message
             WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
             # --------------------------------------------------------------
+            # do a final test that files exist
+            passed = run_item.prerun_test()
+            # --------------------------------------------------------------
+            # deal with pre run test failing (file(s) not found)
+            if not passed:
+                # deal with returns
+                pp['ERROR'] = []
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = ''
+                pp['TIMING'] = 0
+                pp['FINISHED'] = True
+                return_dict[priority] = pp
+                # deal with a master not passing
+                #   we cannot idely skip master files
+                if not run_item.master:
+                    continue
+            # --------------------------------------------------------------
             # start time
             starttime = time.time()
             # try to run the main function
@@ -1378,8 +1492,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage unexpected errors
             except KeyboardInterrupt:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug', 'LINEAR PROCESS: Ctrl+C detected')
                 # deal with returns
                 pp['ERROR'] = []
                 pp['WARNING'] = []
@@ -1391,9 +1503,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: drs exception log exit')
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1414,9 +1523,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage unexpected errors
             except Exception as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: Error {0}: {1}'.format(type(e), e))
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1436,9 +1542,6 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage unexpected errors
             except SystemExit as e:
-                # TODO: Remove or add to language database
-                WLOG(params, 'debug',
-                     'LINEAR PROCESS: SystemExit {0}: {1}'.format(type(e), e))
                 # noinspection PyBroadException
                 try:
                     import traceback
@@ -1836,7 +1939,6 @@ def _group_progress(params, g_it, grouplist, groupname):
 
 
 def _group_tasks(runlist, cores):
-
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names
@@ -1886,7 +1988,6 @@ def _group_tasks(runlist, cores):
 
 # TODO: Remove or replace with _group_tasks
 def _group_tasks1(runlist, cores):
-
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names
@@ -1937,10 +2038,8 @@ def _group_tasks1(runlist, cores):
     return out_groups, out_names
 
 
-
 # TODO: Remove or replace with _group_tasks
 def _group_tasks2(runlist, cores):
-
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names

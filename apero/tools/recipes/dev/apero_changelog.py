@@ -11,12 +11,10 @@ Created on 2019-07-26 at 09:40
 """
 import os
 import shutil
-from datetime import datetime
 
 from apero import core
 from apero.core import constants
 from apero import locale
-from apero.io import drs_path
 from apero.tools.module.documentation import drs_changelog
 
 # =============================================================================
@@ -36,14 +34,10 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
-# -----------------------------------------------------------------------------
-rargs = [Constants, Constants['DRS_PACKAGE'], '../']
-PATH = drs_path.get_relative_folder(*rargs)
-FILENAME = os.path.join(PATH, 'changelog.md')
-VERSIONFILE = os.path.join(PATH, 'VERSION.txt')
-rargs = [Constants, Constants['DRS_PACKAGE'], './core/instruments/default/']
-CONSTPATH = drs_path.get_relative_folder(*rargs)
-CONSTFILE = os.path.join(CONSTPATH, 'default_config.py')
+# --------------------------------------------------------------------------
+CLOGFILENAME = '../changelog.md'
+VERSIONFILE = '../version.txt'
+CONSTFILE = './core/instruments/default/default_config.py'
 # define line parameters
 VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
 DATESTR_PREFIX = 'DRS_DATE = Const('
@@ -56,6 +50,12 @@ DATESTR = """
 DRS_DATE = Const('DATE', value='{0}', dtype=str, 
                  source=__NAME__)
 """
+# define documentation properties
+DOC_CONFPATH = '../documentation/working/conf.py'
+DOC_CONF_PREFIX = 'release = '
+DOC_INDEXPATH = '../documentation/working/index.rst'
+DOC_INDEX_PREFIX = 'Latest version: '
+DOC_CHANGELOGPATH = '../documentation/working/dev/changelog.rst'
 
 
 # =============================================================================
@@ -63,7 +63,7 @@ DRS_DATE = Const('DATE', value='{0}', dtype=str,
 # =============================================================================
 def main(preview=1, **kwargs):
     """
-    Main function for drs_changelog.py
+    Main function for apero_changelog.py
 
     :param preview: bool, if True does not save before previewing if False
                     saves without previewing
@@ -92,9 +92,18 @@ def main(preview=1, **kwargs):
 
 
 def __main__(recipe, params):
+    # Note: no instrument defined so do not use instrument only features
 
+    # get package
+    package = params['DRS_PACKAGE']
+    # get filename
+    filename = constants.get_relative_folder(package, CLOGFILENAME)
+    # get version file path
+    versionfile = constants.get_relative_folder(package, VERSIONFILE)
+    # get const file path
+    constfile = constants.get_relative_folder(package, CONSTFILE)
     # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+    textdict = TextDict('None', params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
@@ -116,7 +125,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # update DRS files
     if not params['INPUTS']['PREVIEW']:
-        drs_changelog.update_version_file(VERSIONFILE, version)
+        drs_changelog.update_version_file(versionfile, version)
         drs_changelog.update_py_version(CONSTFILE, version)
     # ----------------------------------------------------------------------
     # create new changelog
@@ -124,7 +133,7 @@ def __main__(recipe, params):
     WLOG(params, '', TextEntry('40-501-00010'))
     # if not in preview mode modify the changelog directly
     if not params['INPUTS']['PREVIEW']:
-        drs_changelog.git_change_log(FILENAME)
+        drs_changelog.git_change_log(filename)
     # else save to a tmp file
     else:
         drs_changelog.git_change_log('tmp.txt')
@@ -144,12 +153,24 @@ def __main__(recipe, params):
             drs_changelog.git_remove_tag(version)
             drs_changelog.git_tag_head(version)
             # update version file and python version file
-            drs_changelog.update_version_file(VERSIONFILE, version)
-            drs_changelog.update_py_version(CONSTFILE, version)
+            drs_changelog.update_version_file(versionfile, version)
+            drs_changelog.update_py_version(constfile, version)
             # move the tmp.txt to change log
-            shutil.move('tmp.txt', FILENAME)
+            shutil.move('tmp.txt', filename)
         else:
             os.remove('tmp.txt')
+    # ----------------------------------------------------------------------
+    # get doc paths
+    doc_confpath = constants.get_relative_folder(package, DOC_CONFPATH)
+    doc_clogpath = constants.get_relative_folder(package, DOC_CHANGELOGPATH)
+    doc_indxpath = constants.get_relative_folder(package, DOC_INDEXPATH)
+    # update documentation (conf.py)
+    strversion = '\'{0}\'\n'.format(version)
+    drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)
+    # update documentation (index.py)
+    drs_changelog.update_file(doc_indxpath, DOC_INDEX_PREFIX, version)
+    # copy change log to path
+    shutil.copy(filename, doc_clogpath)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

@@ -42,7 +42,7 @@ VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
 DATESTR_PREFIX = 'DRS_DATE = Const('
 
 VERSIONSTR = "DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str,"
-DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__)"
+DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__,"
 
 
 # =============================================================================
@@ -164,6 +164,32 @@ def update_py_version(filename, version):
 
 def preview_log(filename):
     os.system('more {0}'.format(filename))
+
+
+def update_file(filename, prefix, suffix):
+    # open file
+    ufile = open(filename, 'r')
+    lines = ufile.readlines()
+    ufile.close()
+    # storage of output lines
+    outlines = []
+    # find line
+    for line in lines:
+        # find prefix line
+        if line.startswith(prefix):
+            outline = prefix + suffix
+        else:
+            outline = line
+        # add new line at end if not there
+        if not line.endswith('\n'):
+            outline += r'\n'
+        # append to output lines
+        outlines.append(outline)
+    # save file
+    ufile = open(filename, 'w')
+    for outline in outlines:
+        ufile.write(outline)
+    ufile.close()
 
 
 # =============================================================================

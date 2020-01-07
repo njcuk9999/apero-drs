@@ -805,10 +805,10 @@ def update_paramdicts(*args, **kwargs):
             arg.set(key, value=value, source=source, instance=instance)
 
 
-def load_config(instrument=None):
+def load_config(instrument=None, from_file=True, cache=True):
     global CONFIG_CACHE
     # check config cache
-    if instrument in CONFIG_CACHE:
+    if instrument in CONFIG_CACHE and cache:
         return CONFIG_CACHE[instrument].copy()
     # deal with instrument set to 'None'
     if isinstance(instrument, str):
@@ -829,24 +829,26 @@ def load_config(instrument=None):
     for it in range(len(keys)):
         # set instance (Const/Keyword instance)
         params.set_instance(keys[it], instances[it])
-    # get instrument user config files
-    files = _get_file_names(params, instrument)
     # get constants from user config files
-    try:
-        keys, values, sources, instances  = _load_from_file(files, modules)
-    except ConfigError:
-        sys.exit(1)
-    # add to params
-    for it in range(len(keys)):
-        # set value
-        params[keys[it]] = values[it]
-        # set instance (Const/Keyword instance)
-        params.set_instance(keys[it], instances[it])
-    params.set_sources(keys=keys, sources=sources)
+    if from_file:
+        # get instrument user config files
+        files = _get_file_names(params, instrument)
+        try:
+            keys, values, sources, instances  = _load_from_file(files, modules)
+        except ConfigError:
+            sys.exit(1)
+        # add to params
+        for it in range(len(keys)):
+            # set value
+            params[keys[it]] = values[it]
+            # set instance (Const/Keyword instance)
+            params.set_instance(keys[it], instances[it])
+        params.set_sources(keys=keys, sources=sources)
     # save sources to params
     params = _save_config_params(params)
     # cache these params
-    CONFIG_CACHE[instrument] = params.copy()
+    if cache:
+        CONFIG_CACHE[instrument] = params.copy()
     # return the parameter dictionary
     return params
 

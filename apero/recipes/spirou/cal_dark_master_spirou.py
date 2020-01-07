@@ -52,14 +52,9 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(**kwargs):
     """
-    Main function for cal_dark_spirou.py
+    Main function for cal_dark_master_spirou.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
-
-    :type directory: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -147,6 +142,8 @@ def __main__(recipe, params):
     # Quality control
     # ------------------------------------------------------------------
     qc_params, passed = dark.master_qc(params)
+    # update recipe log
+    recipe.log.add_qc(params, qc_params, passed)
 
     # ----------------------------------------------------------------------
     # Save master dark to file
@@ -164,6 +161,11 @@ def __main__(recipe, params):
     # Construct summary document
     # ------------------------------------------------------------------
     dark.master_summary(recipe, params, qc_params, dark_table)
+
+    # ------------------------------------------------------------------
+    # update recipe log file
+    # ------------------------------------------------------------------
+    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

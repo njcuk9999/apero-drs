@@ -273,9 +273,9 @@ def use_barycorrpy(params, times, **kwargs):
     # try to run locked makedirs
     try:
         return locked_bervcalc()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()

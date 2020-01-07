@@ -32,9 +32,27 @@
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
 - master (long term stable) V0.5.000
-- developer (tested) V0.6.001
-- working (untested) V0.6.001
-
+    ```
+    This is the version currently recommended for all general use. It may not
+    contain the most up-to-date features until long term support and stability can
+    be verified.
+    ```
+- developer (tested) V0.6.016
+    ```
+    Note the developer version should have been tested and semi-stable but not
+    ready for full sets of processing and defintely not for release for 
+    non-developers or for data put on archives. Some changes may not be
+    in this version that are in the working version.
+    - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
+      obj_pol_spirou.py, obj_spec_spirou.py
+    ```
+- working (untested) V0.6.016
+    ```
+    Note the working version will be the most up-to-date version but has not been
+    tested for stability - use at own risk.
+    - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
+      obj_pol_spirou.py, obj_spec_spirou.py
+    ```
 ---
 ---
 
@@ -77,14 +95,18 @@ cd ./apero-drs
 ```
 git checkout master
 ```
+
+
 - For Developer version:
 ```
 git checkout developer
 ```
+
 - For Working version:
 ```
 git checkout working
 ```
+
 
 ---
 ---
@@ -126,6 +148,9 @@ E. `Clean install?` __WARNING__: If you type [Y]es you will be prompted (later) 
 the directories this means any previous data in these directories will be removed.
 Note you can always say later to individual cases.
 
+Note if you have given empty directories you MUST run a clean install to copy
+the required files to the given directories.
+
 
 F. This process will then repeat for all instruments. __NOTE: Currently only SPIRou is supported__
 
@@ -150,7 +175,7 @@ __NOTE__: these three are equivalent only do __one__
 For example 
 
 `alias apero "source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (tcsh/csh)
-`alias apero=""source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash)
+`alias apero="source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash)
 
 to `~/.bashrc` or `~/.bash_profile` or  `~/.tcshrc` or `~/.profile`
 
@@ -220,6 +245,7 @@ constant min/max/dtypes
 - deal with all python warnings
 - add EA mask generation from templates
 - add EA template matching 
+- add exposure meter recipes
 
 ---
 
@@ -276,9 +302,9 @@ __NOTE__: there is a --help option available for every recipe
 
 ---
 
-### Using `processing.py`
+### Using `apero_processing.py`
 
-`processing.py` can be used in a few different ways but always requires the following
+`apero_processing.py` can be used in a few different ways but always requires the following
 
 1) The instrument (`SPIROU`)
 
@@ -286,7 +312,7 @@ __NOTE__: there is a --help option available for every recipe
 
 i.e.
 ```
-apero/tools/bin/processing.py SPIROU limited_run.ini
+tools/bin/apero_processing.py SPIROU limited_run.ini
 ```
 
 #### The processing run files ( `{RUN_FILE}`)
@@ -299,9 +325,9 @@ By default it processes every night and every file that can be found in the `{DR
 One can turn on specific nights to process in several ways 
 (a) setting the `NIGHT_NAME` in the selected `{RUN_FILE}`
 (b) adding a night to the `BNIGHTNAMES` (blacklist = reject) or `WNIGHTNAMES` (whitelist = keep)
-(c) adding an extra argument to `processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) 
+(c) adding an extra argument to `apero_processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) 
 
-One can also just process a single file by adding an extra argument to `processing.py` (`--filename`)
+One can also just process a single file by adding an extra argument to `apero_processing.py` (`--filename`)
 
 One can also tell the recipe to only process specific targets 
 (when the recipes can accept targets -- i.e. extraction, telluric fitting, CCF) 
@@ -492,6 +518,11 @@ cal_loc [FLAT_DARK; master night]
 cal_shape_master
 ```
 
+
+Note if any step in the master sequence fails you cannot continue with the
+night runs.
+
+
 4) Run the night sequences
 
 These must be in this order but could be night-by-night or
@@ -570,13 +601,19 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 
 ---
 
+
+Note These are not in the required run order.
+Please do not run them in this order.
+See [APERO run order](#APERO-run-order) for the correct order.
+
+
 ### Preprocessing Recipe
 
 Cleans file of detector effects.
 
 #### *Run*: 
 ```
-cal_preprocessing_spirou.py [DIRECTORY] [RAW_FILES]
+cal_preprocess_spirou.py [DIRECTORY] [RAW_FILES]
 ```
 #### *Optional Arguments*: 
 ```
@@ -725,7 +762,7 @@ DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
 
 ```
 LOC_MINMAX_CENTS, LOC_MIN_CENTS_THRES, LOC_FINDING_ORDERS, LOC_IM_SAT_THRES,
-LOC_ORD_VS_RMS, LOC_CHECK_COEFFS
+LOC_ORD_VS_RMS, LOC_CHECK_COEFFS, LOC_FIT_RESIDUALS
 ```
 
 
@@ -1215,7 +1252,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 #### *Plots*:
 
 ```
-CCF_RV_FIT, CCF_RV_FIT_LOOP
+CCF_RV_FIT, CCF_RV_FIT_LOOP, CCF_SWAVE_REF, CCF_PHOTON_UNCERT
 ```
 
 

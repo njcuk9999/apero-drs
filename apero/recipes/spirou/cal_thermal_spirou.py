@@ -10,13 +10,11 @@ Created on 2019-07-05 at 16:46
 @author: cook
 """
 from __future__ import division
-import os
 
 from apero import core
 from apero import locale
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_startup
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.extract import other as extractother
@@ -125,6 +123,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -140,6 +142,12 @@ def __main__(recipe, params):
         # TODO: deal with sky darks here
 
         # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        # no quality control --> set passed_qc to True
+        log1.no_qc(params)
+
+        # ------------------------------------------------------------------
         # Write thermal files to file
         # ------------------------------------------------------------------
         # loop around fiber types
@@ -148,7 +156,7 @@ def __main__(recipe, params):
             wargs = [thermal_files[fiber].filename]
             WLOG(params, '', TextEntry('40-016-00022', args=wargs))
             # write thermal files
-            thermal_files[fiber].write()
+            thermal_files[fiber].write_file()
 
         # ------------------------------------------------------------------
         # Update the calibration database
@@ -157,6 +165,10 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # add output from thermal files
             drs_database.add_file(params, thermal_files[fiber])
+        # ------------------------------------------------------------------
+        # update recipe log file
+        # ------------------------------------------------------------------
+        log1.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

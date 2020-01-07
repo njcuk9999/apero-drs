@@ -15,6 +15,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as uu
 from astropy.table import vstack, Table
 from astropy.time import Time
+import time
 import os
 import sys
 import warnings
@@ -147,9 +148,9 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
     # try to run locked makedirs
     try:
         return locked_lookuptable()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
@@ -300,10 +301,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
     # create TAP query based on objname
     if (objname is not None) and (query is None):
         WLOG(params, '', TextEntry('40-016-00015', args=['objname']))
-        # TODO: Need to add objname search
-        # TODO: First do crossmatch with simbad to get coords
-        # TODO: Then do ra/dec crossmatch with gaia
-        pass
+        ra, dec = query_simbad(params, objname)
     # ------------------------------------------------------------------
     # create TAP query based on ra and dec
     if (ra is not None) and (dec is not None) and (query is None):
@@ -385,6 +383,89 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
             WLOG(params, 'debug', TextEntry('10-016-00010', args=wargs))
             # return no row and True to Fail
             return None, True
+
+
+def query_simbad(params, object_name):
+    """
+    Take in object name and query simbad
+    :return:
+    """
+    # check for astroquery and return a fail and warning if not installed
+    try:
+        # import astroquery
+        from astroquery.simbad import Simbad
+        # get results
+        with warnings.catch_warnings(record=True) as _:
+            # log that we are querying simbad
+            WLOG(params, '', TextEntry(''))
+            # wait 1 seconds (avoid IP being banned)
+            time.sleep(1)
+            # query simbad
+            results = Simbad.query_object(object_name)
+        # ------------------------------------------------------------------
+        # if we have no results return ra and dec as None
+        if results is None:
+            # log that we have no results for object name from simbad
+            wargs = [object_name]
+            WLOG(params, 'warning', TextEntry('10-016-00015', args=[wargs]))
+            # return unset ra/dec
+            return None, None
+        # ------------------------------------------------------------------
+        # try to get ra from results
+        if 'RA' in results.colnames:
+            ra_value = results['RA'][0]
+            ra_unit = results['RA'].unit
+        else:
+            # log that we have no RA column for object name
+            wargs = [object_name, ', '.join(results.colnames)]
+            WLOG(params, 'warning', TextEntry('10-016-00016', args=wargs))
+            # return unset ra/dec
+            return None, None
+        # ------------------------------------------------------------------
+        # try to get dec from results
+        if 'DEC' in results.colnames:
+            dec_value = results['DEC'][0]
+            dec_unit = results['DEC'].unit
+        else:
+            # log that we have no DEC column for object name
+            wargs = [object_name, ', '.join(results.colnames)]
+            WLOG(params, 'warning', TextEntry('10-016-00017', args=wargs))
+            # return unset ra/dec
+            return None, None
+        # ------------------------------------------------------------------
+        # deal with ra unit
+        if not isinstance(ra_unit, uu.Unit):
+            if str(ra_unit) == '"h:m:s"':
+                ra_unit = uu.hourangle
+            else:
+                # log that we have not ra unit
+                wargs = [object_name, str(ra_unit)]
+                WLOG(params, 'warning', TextEntry('10-016-00018', args=wargs))
+                # return unset ra/dec
+                return None, None
+        # ------------------------------------------------------------------
+        # deal with dec unit
+        if not isinstance(dec_unit, uu.Unit):
+            if str(dec_unit) == '"d:m:s"':
+                dec_unit = uu.degree
+            else:
+                # log that we have not ra unit
+                wargs = [object_name, str(dec_unit)]
+                WLOG(params, 'warning', TextEntry('10-016-00019', args=wargs))
+                # return unset ra/dec
+                return None, None
+        # ------------------------------------------------------------------
+        # get sky coordinate
+        coord = SkyCoord(ra_value, dec_value, unit=(ra_unit, dec_unit))
+        # return ra and dec
+        return coord.ra.value, coord.dec.value
+    # deal with all exceptions here
+    except Exception as e:
+        # log that there was an error with astroquery
+        wargs = [object_name, type(e), str(e)]
+        WLOG(params, 'warning', TextEntry('10-016-00020', args=wargs))
+        # return unset ra/dec
+        return None, None
 
 
 

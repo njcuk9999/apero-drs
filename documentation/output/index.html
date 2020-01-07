@@ -1,0 +1,224 @@
+
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>APERO Documentation &#8212; APERO 0.6.016 documentation</title>
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/apero.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="General User documentation" href="user/general_guide.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+      .related { display: none; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="#">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="#">
+      <img src="_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="user/general_guide.html" title="General User documentation"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">APERO 0.6.016 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">APERO Documentation</a><ul>
+<li><a class="reference internal" href="#latest-version-0-6-016">Latest version: 0.6.016</a></li>
+<li><a class="reference internal" href="#other">Other</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="user/general_guide.html"
+                        title="next chapter">General User documentation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="apero-documentation">
+<h1>APERO Documentation<a class="headerlink" href="#apero-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="latest-version-0-6-016">
+<h2>Latest version: 0.6.016<a class="headerlink" href="#latest-version-0-6-016" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
+It is the official pipeline for:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/SPIRou/">SPIROU</a> (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope <a class="reference external" href="https://www.cfht.hawaii.edu/">CFHT</a>.</p></li>
+<li><p>NIRPS (Currently under construction)</p></li>
+</ul>
+</div></blockquote>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user/general_guide.html">General User documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/general/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/general/using_apero_default.html">Using APERO with SPIRou</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/general/known_issues.html">Known Issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/general/todo.html">TODO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/general/tools_default.html">General Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user/spirou.html">SPIRou documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/spirou/using_apero_spirou.html">Using APERO with SPIRou</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/spirou/recipes_spirou.html">SPIRou Recipes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/spirou/tools_spirou.html">SPIRou Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev/developer_guide.html">Developer how to guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev/adding_new_constant.html">Adding a new constant</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/adding_new_keyword.html">Adding a new keyword</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/adding_new_recipe.html">Adding a new recipe</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/adding_new_filetype.html">Adding a new filetype</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/adding_new_plot.html">Adding a new plot</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="other">
+<h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="misc/pythoninstallation.html">Recommended python installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="misc/glossary.html">Constants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="misc/glossary.html#id1">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="misc/changelog.html">Changelog</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="user/general_guide.html" title="General User documentation"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">APERO 0.6.016 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

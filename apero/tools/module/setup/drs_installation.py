@@ -8,12 +8,14 @@ Created on 2019-11-09 10:44
 @author: ncook
 Version 0.0.1
 """
+import importlib
 import numpy as np
 import sys
 import os
 import shutil
 import readline
 import glob
+from collections import OrderedDict
 
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
@@ -45,8 +47,11 @@ ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # -----------------------------------------------------------------------------
 INSTRUMENTS = ['SPIROU', 'NIRPS']
-DEFAULT_USER_PATH = '~/apero/config/'
-DEFAULT_DATA_PATH = '~/apero/data/'
+DEFAULT_USER_PATH = '~/apero/default/'
+DEFAULT_DATA_PATH = '~/apero/data/default/'
+
+UCONFIG = 'user_config.ini'
+UCONST = 'user_constants.ini'
 
 BINPATH = '../bin/'
 TOOLPATH = '../tools/bin/'
@@ -59,7 +64,10 @@ DEV_RECIPEPATH = '../apero/tools/recipes/dev/'
 ENV_CONFIG = 'DRS_UCONFIG'
 SETUP_PATH = './tools/resources/setup/'
 
-
+VALIDATE_CODE = 'apero_validate.py'
+RESET_CODE = 'apero_reset'
+# set descriptions for data paths
+# TODO: these should be in the constants file?
 DATA_PATHS = dict()
 DATA_PATHS['DRS_DATA_RAW'] = ['Raw data directory', 'raw']
 DATA_PATHS['DRS_DATA_WORKING'] = ['Temporary data directory', 'tmp']
@@ -69,6 +77,18 @@ DATA_PATHS['DRS_TELLU_DB'] = ['Telluric DB data directory', 'telluDB']
 DATA_PATHS['DRS_DATA_PLOT'] = ['Plotting directory', 'plot']
 DATA_PATHS['DRS_DATA_RUN'] = ['Run directory', 'runs']
 DATA_PATHS['DRS_DATA_MSG'] = ['Log directory', 'msg']
+# set the reset paths (must be checked for empty)
+RESET_PATHS = ['DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_RUN']
+# set cmdline args expected for each
+DATA_ARGS = dict()
+DATA_ARGS['DRS_DATA_RAW'] = 'rawdir'
+DATA_ARGS['DRS_DATA_WORKING'] = 'tmpdir'
+DATA_ARGS['DRS_DATA_REDUC'] = 'reddir'
+DATA_ARGS['DRS_CALIB_DB'] = 'calibdir'
+DATA_ARGS['DRS_TELLU_DB'] = 'telludir'
+DATA_ARGS['DRS_DATA_PLOT'] = 'plotdir'
+DATA_ARGS['DRS_DATA_RUN'] = 'rundir'
+DATA_ARGS['DRS_DATA_MSG'] = 'logdir'
 
 # Messages for user interface
 message1 = """
@@ -76,7 +96,11 @@ User config path:
 
     This is the path where your user configuration will be saved.
     If it doesn't exist you will be prompted to create it. 
+    
+    Note if creating multiple profiles (with --name) this should not be
+    the same directory for each profile (must be different).
 """
+
 message2 = """
 Setup paths invidiually? [Y]es or [N]o
     
@@ -86,6 +110,7 @@ Setup paths invidiually? [Y]es or [N]o
     (raw, tmp, reduced, calibDB etc) will be created under this 
     directory.
 """
+
 message3 = """
 Clean install? [Y]es or [N]o
 
@@ -94,29 +119,32 @@ Clean install? [Y]es or [N]o
     will be removed.
     
 Note you can always say later to individual cases.
+
+Note if you have given empty directories you MUST run a clean install to copy
+the required files to the given directories.
 """
 
 message4 = """
 
     i) Add an alias in your ~/.bashrc or ~/.bash_profile or 
        ~/.tcshrc or ~/.profile 
-       and then type "apero" every time you wish to run apero.
+       and then type "{NAME}" every time you wish to run apero.
        i.e. for bash
-            alias apero="source {DRS_UCONFIG}apero.bash.setup"
+            alias {NAME}="source {DRS_UCONFIG}{NAME}.bash.setup"
        i.e. for sh
-            alias apero "source {DRS_UCONFIG}apero.sh.setup"
+            alias {NAME} "source {DRS_UCONFIG}{NAME}.sh.setup"
     
     
-    ii) Add the contents of {DRS_UCONFIG}apero.{SYSTEM}.setup 
+    ii) Add the contents of {DRS_UCONFIG}{NAME}.{SYSTEM}.setup 
         to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
     
 
-    iii) type "source {DRS_UCONFIG}apero.{SYSTEM}.setup" every 
+    iii) type "source {DRS_UCONFIG}{NAME}.{SYSTEM}.setup" every 
          time you wish to run apero.
            i.e. for bash
-                source {DRS_UCONFIG}apero.bash.setup
+                source {DRS_UCONFIG}{NAME}.bash.setup
            i.e. for sh
-                source {DRS_UCONFIG}apero.sh.setup
+                source {DRS_UCONFIG}{NAME}.sh.setup
 
 
 Note: here {SYSTEM} is "bash" or "sh" or "win" depending on your system.
@@ -140,8 +168,24 @@ Please enter path to pdflatex or leave blank to skip
 
 """
 
+
+prompt1 = r"""
+
+# =======================
+# COLOURED PROMPT
+# =======================
+RED="\e[1;31m"
+BLUE="\e[1;34m"
+YELLOW="\e[0;33m"
+WHITE="\e[0;37m"
+END="\e[m"
+export PS1=" ${YELLOW}{NAME} ${WHITE}\d \t ${BLUE}\u@\h: ${RED}\w${END}\n>>   "
+unset RED BLUE YELLOW WHITE END
+"""
+
+
 # =============================================================================
-# Define functions
+# Define setup/general functions
 # =============================================================================
 def cprint(message, colour='g'):
     """
@@ -272,6 +316,12 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 optionstr = ' or '.join(np.array(options, dtype=str))
                 cprint('Response must be {0}'.format(optionstr), 'y')
                 check = True
+    # deal with path
+    if dtype == 'path':
+        if '.' not in uinput:
+            if not uinput.endswith(os.sep):
+                uinput += os.sep
+
     # deal with returning default
     if uinput == '' and default is not None:
         return default
@@ -280,11 +330,40 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
         return uinput
 
 
-def user_interface(params):
+def check_path_arg(name, value):
+    promptuser = True
+    # check if user config is None (i.e. set from cmd line)
+    if value is not None:
+        cprint('\t - {0} set from cmd ({1})'.format(name, value))
+        if not os.path.exists(value):
+            # check whether to create path
+            pathquestion = 'Path "{0}" does not exist. Create?'
+            promptuser = not ask(pathquestion.format(value), dtype='YN')
+            # make the directory if we are not going to prompt the user
+            if not promptuser:
+                os.makedirs(value)
+        # if path exists we do not need to prompt user
+        else:
+            promptuser = False
+    # return prompt usr and value
+    return promptuser, value
+
+
+def user_interface(params, args):
     # set function name
     func_name = __NAME__ + '.user_interface()'
     # get default from params
     package = params['DRS_PACKAGE']
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+
+    # deal with instrument from args
+    if args.instrument is not None:
+        drs_instruments = [args.instrument]
+        one_instrument = True
+    else:
+        one_instrument = False
+
     # storage of answers
     all_params = dict()
     # title
@@ -293,11 +372,27 @@ def user_interface(params):
     cprint(printheader(), 'm')
     print('\n')
     # ------------------------------------------------------------------
+    # deal with having a profile name
+    profilename = args.name
+    # set default user path
+    if profilename not in ['None', None, '']:
+        profilename = profilename.strip().replace(' ', '_').lower()
+        default_upath = DEFAULT_USER_PATH.replace('default', profilename)
+        default_dpath = DEFAULT_DATA_PATH.replace('default', profilename)
+    else:
+        default_upath = DEFAULT_USER_PATH
+        default_dpath = DEFAULT_DATA_PATH
+    # ------------------------------------------------------------------
     # Step 1: Ask for user config path
-    userconfig = ask(message1, 'path', default=DEFAULT_USER_PATH)
+    # ------------------------------------------------------------------
+    promptuser, userconfig = check_path_arg('config', args.config)
+    # if we still need to get user config ask user to get it
+    if promptuser:
+        userconfig = ask(message1, 'path', default=default_upath)
+    # add user config to all_params
     all_params['USERCONFIG'] = userconfig
     # ------------------------------------------------------------------
-    for instrument in INSTRUMENTS:
+    for instrument in drs_instruments:
         # ------------------------------------------------------------------
         cprint('\n' + printheader(), 'm')
         cprint('Settings for {0}'.format(instrument), 'm')
@@ -307,10 +402,13 @@ def user_interface(params):
         iparams = ParamDict()
         # ------------------------------------------------------------------
         # Step 2: Ask for instruments to install
-        install = ask('Install {0}?'.format(instrument), dtype='YN')
-        if not install:
-            continue
-        cprint(printheader(), 'g')
+        # ------------------------------------------------------------------
+        # if one_instrument we know user already wants to install so dont' ask
+        if not one_instrument:
+            install = ask('Install {0}?'.format(instrument), dtype='YN')
+            if not install:
+                continue
+            cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # set user config
         iparams['USERCONFIG'] = os.path.join(userconfig, instrument.lower())
@@ -319,151 +417,277 @@ def user_interface(params):
         if not os.path.exists(iparams['USERCONFIG']):
             os.mkdir(iparams['USERCONFIG'])
         # ------------------------------------------------------------------
+
+        promptuser, datadir = check_path_arg('datadir', args.datadir)
+
+        # check for data paths in args
+        data_prompts, data_values = dict(), dict()
+        data_promptuser = False
+        for path in DATA_ARGS:
+            if not promptuser:
+                value = None
+                promptuser1 = False
+            else:
+                value = getattr(args, DATA_ARGS[path])
+                promptuser1, value = check_path_arg(path, value)
+                data_prompts[path] = promptuser1
+            data_values[path] = value
+            data_promptuser |= promptuser1
+
+        # ------------------------------------------------------------------
         # Step 3: Ask for data paths
-        advanced = ask(message2, dtype='YN')
-        cprint(printheader(), 'g')
+        # ------------------------------------------------------------------
+
+        if promptuser and data_promptuser:
+            advanced = ask(message2, dtype='YN')
+            cprint(printheader(), 'g')
+        else:
+            advanced = False
         # ------------------------------------------------------------------
         # if advanced then loop through all options
         if advanced:
             # loop around paths
             for path in DATA_PATHS:
-                # get question and default
-                question, default = DATA_PATHS[path]
-                defaultpath = os.path.join(DEFAULT_DATA_PATH, default)
-                # ask question and assign path
-                iparams[path] = ask(question, 'path', default=defaultpath)
-                iparams.set_source(path, __NAME__)
-                cprint(printheader(), 'g')
+                # get arg value
+                promptuser = data_prompts[path]
+                argvalue = data_values[path]
+                if promptuser:
+                    # get question and default
+                    question, default = DATA_PATHS[path]
+                    defaultpath = os.path.join(default_dpath, default)
+                    # ask question and assign path
+                    iparams[path] = ask(question, 'path', default=defaultpath)
+                    iparams.set_source(path, __NAME__)
+                    cprint(printheader(), 'g')
+                else:
+                    iparams[path] = argvalue
+                    iparams.set_source(path, 'command line')
         # ------------------------------------------------------------------
-        else:
-            directory = ask('Data directory', 'path', default=DEFAULT_DATA_PATH)
+        elif data_promptuser:
+            create = False
+            directory = default_dpath
+            # loop until we have an answer
+            while not create:
+                directory = ask('Data directory', 'path',
+                                default=default_dpath)
+                # ask to create directory
+                pathquestion = 'Path "{0}" does not exist. Create?'
 
-            created = False
-            # loop around paths
+                if not os.path.exists(directory):
+                    create = ask(pathquestion.format(directory),
+                                 dtype='YN')
+                    if create:
+                        os.makedirs(directory)
+                        mkdir = '\n\t - Making directory "{0}"'
+                        cprint(mkdir.format(directory), 'g')
+                else:
+                    create = True
+            # loop around paths and create them
             for path in DATA_PATHS:
-                # get question and default
+                # get questions and default
                 question, default = DATA_PATHS[path]
                 # assign path
                 iparams[path] = os.path.join(directory, default)
                 iparams.set_source(path, __NAME__)
                 # check whether path exists
                 if not os.path.exists(iparams[path]):
-                    pathquestion = 'Path "{0}" does not exist. Create?'
-                    create = ask(pathquestion.format(iparams[path]), dtype='YN')
-                    if create:
-                        if not os.path.exists(iparams[path]):
-                            os.makedirs(iparams[path])
-                        cprint(printheader(), 'g')
-                        created = True
-            if not created:
-                cprint(printheader(), 'g')
+                    os.makedirs(iparams[path])
+                    mkdir = '\n\t - Making directory "{0}"'
+                    cprint(mkdir.format(iparams[path]), 'g')
+            cprint(printheader(), 'g')
+
+        else:
+            for path in DATA_PATHS:
+                # get questions and default
+                question, default = DATA_PATHS[path]
+                value = data_values[path]
+                if value is None and datadir is not None:
+                    iparams[path] = os.path.join(datadir, default)
+                    iparams.set_source(path, 'command line + default')
+                    pargs = [path, iparams[path]]
+                    cprint('\t - {0} set from datadir ({1})'.format(*pargs))
+                else:
+                    # assign path
+                    iparams[path] = value
+                    iparams.set_source(path, 'command line')
+
         # ------------------------------------------------------------------
         # Step 4: Ask for plot mode
-        plot = ask('Plot mode required', dtype='int', options=[0, 1, 2],
-                   optiondesc=['0: No plotting',
-                               '1: Plots display at end of code',
-                               '2: Plots display immediately and pause code'],
-                   default=0)
-        iparams['DRS_PLOT'] = plot
-        iparams.set_source('DRS_PLOT', __NAME__)
-        # add header line
-        cprint(printheader(), 'g')
+        # ------------------------------------------------------------------
+        # find value in args
+        if args.plotmode is None:
+
+            plot = ask('Plot mode required', dtype='int', options=[0, 1, 2],
+                       optiondesc=['0: No plotting',
+                                   '1: Plots display at end of code',
+                                   '2: Plots display immediately and '
+                                   'pause code'],
+                       default=0)
+            iparams['DRS_PLOT'] = plot
+            iparams.set_source('DRS_PLOT', __NAME__)
+            # add header line
+            cprint(printheader(), 'g')
+        else:
+            cprint('\t - DRS_PLOT set from cmd ({0})'.format(args.plotmode))
+            iparams['DRS_PLOT'] = args.plotmode
+            iparams.set_source('DRS_PLOT', 'command line')
+
         # ------------------------------------------------------------------
         # Step 5: Ask whether we want a clean install
-        iparams['CLEAN_INSTALL'] = ask(message3, dtype='YN')
-        iparams.set_source('CLEAN_INSTALL', func_name)
+        # ------------------------------------------------------------------
+        if args.clean is None:
+            iparams['CLEAN_INSTALL'] = ask(message3, dtype='YN')
+            iparams.set_source('CLEAN_INSTALL', func_name)
+        else:
+            cprint('\t - CLEAN set from cmd ({0})'.format(args.clean))
+            iparams['CLEAN_INSTALL'] = eval(args.clean)
+            iparams.set_source('CLEAN_INSTALL', 'command line')
 
         # ------------------------------------------------------------------
         # Step 6: Check for programs
         # ------------------------------------------------------------------
-        # add header line
-        cprint(printheader(), 'g')
-        cprint('Recommended external programs (optional)')
-        # get ds9
-        if 'DRS_DS9_PATH' in all_params:
-            ds9path = all_params['DRS_DS9_PATH']
+        if args.ds9path is None or args.pdfpath is None:
+            # set the values of ds9path and pdfpath initial to None
+            ds9path, pdfpath = None, None
+            # ------------------------------------------------------------------
+            # ds9 path
+            # ------------------------------------------------------------------
+            # add header line
+            cprint(printheader(), 'g')
+            cprint('Recommended external programs (optional)')
+            # check command line args
+            if args.ds9path is not None:
+                if args.ds9path == 'None':
+                    promptuser, ds9path = False, None
+
+                else:
+                    promptuser, ds9path = check_path_arg('ds9dir', args.datadir)
+            # get ds9
+            if 'DRS_DS9_PATH' in all_params:
+                ds9path = all_params['DRS_DS9_PATH']
+            elif ds9path is None:
+                ds9path = shutil.which('ds9')
+            # deal with no ds9 path found
+            if ds9path is None and promptuser:
+                iparams['DRS_DS9_PATH'] = ask(message5, dtype='path',
+                                              default='None', required=False)
+                iparams.set_source('DRS_DS9_PATH', 'user')
+            else:
+                iparams['DRS_DS9_PATH'] = ds9path
+                iparams.set_source('DRS_DS9_PATH', func_name)
+                cprint('\n\t - Found ds9', 'g')
+            # add it/update all_params
+            all_params['DRS_DS9_PATH'] = ds9path
+            # ------------------------------------------------------------------
+            # pdf latex path
+            # ------------------------------------------------------------------
+            # check command line args
+            if args.pdfpath is not None:
+                if args.pdfpath == 'None':
+                    promptuser, pdfpath = False, args.pdfpath
+
+                else:
+                    promptuser, pdfpath = check_path_arg('pdfdir', args.pdfpath)
+            # get pdflatex
+            if 'DRS_PDFLATEX_PATH' in all_params:
+                pdfpath = all_params['DRS_PDFLATEX_PATH']
+            elif pdfpath is None:
+                pdfpath = shutil.which('pdflatex')
+            # deal with no ds9 path found
+            if pdfpath is None and promptuser:
+                iparams['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
+                                                   default='None',
+                                                   required=False)
+                iparams.set_source('DRS_PDFLATEX_PATH', 'user')
+            else:
+                iparams['DRS_PDFLATEX_PATH'] = pdfpath
+                iparams.set_source('DRS_PDFLATEX_PATH', func_name)
+                cprint('\n\t - Found pdflatex', 'g')
+            # add it/update all_params
+            all_params['DRS_PDFLATEX_PATH'] = pdfpath
         else:
-            ds9path = shutil.which('ds9')
-        # deal with no ds9 path found
-        if ds9path is None:
-            iparams['DRS_DS9_PATH'] = ask(message5, dtype='path',
-                                          default='None', required=False)
-        else:
-            iparams['DRS_DS9_PATH'] = ds9path
-            cprint('\n\t - Found ds9', 'g')
-        # add it/update all_params
-        all_params['DRS_DS9_PATH'] = ds9path
-        # ------------------------------------------------------------------
-        # get pdflatex
-        if 'DRS_PDFLATEX_PATH' in all_params:
-            latexpath = all_params['DRS_PDFLATEX_PATH']
-        else:
-            latexpath = shutil.which('pdflatex')
-        # deal with no ds9 path found
-        if latexpath is None:
-            iparams['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
-                                               default='None', required=False)
-        else:
-            iparams['DRS_PDFLATEX_PATH'] = latexpath
-            cprint('\n\t - Found pdflatex', 'g')
-        # add it/update all_params
-        all_params['DRS_PDFLATEX_PATH'] = latexpath
+            cprint('\t - DS9PATH set from cmd ({0})'.format(args.ds9path))
+            cprint('\t - PDFPATH set from cmd ({0})'.format(args.pdfpath))
         # ------------------------------------------------------------------
         # add iparams to all params
         all_params[instrument] = iparams
-
+        # ------------------------------------------------------------------
     cprint(printheader(), 'm')
     # ----------------------------------------------------------------------
     # return all parameters
     return all_params
 
 
-def copy_configs(params, all_params):
-    # set function name
-    func_name = __NAME__ + '.copy_configs()'
-
-    # get properties from iparams
-    duser_config = params['DRS_USER_DEFAULT']
+# =============================================================================
+# Define installation functions
+# =============================================================================
+def bin_paths(params, all_params):
+    # get package
     package = params['DRS_PACKAGE']
-    # get installation root
-    all_params['DRS_ROOT'] = constants.get_relative_folder(package, '')
-    # loop around instruments
-    for instrument in INSTRUMENTS:
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    # add root path
+    root = constants.get_relative_folder(package, '')
+    # add bin path
+    bin_path = constants.get_relative_folder(package, BINPATH)
+    # add tools bin path
+    tool_path = constants.get_relative_folder(package, TOOLPATH)
+    # add tools dev path
+    dev_path = constants.get_relative_folder(package, DEVPATH)
+    # add to all_params
+    all_params['DRS_BIN_PATH'] = bin_path
+    all_params['DRS_TOOL_PATH'] = tool_path
+    all_params['DRS_DEV_PATH'] = dev_path
+    all_params['DRS_ROOT'] = root
+    # loop through instruments
+    for instrument in drs_instruments:
         # only deal with instrument user wants to set up
         if instrument not in list(all_params.keys()):
             continue
-        # get iparams
-        iparams = all_params[instrument]
-        iparams['DRS_ROOT'] = all_params['DRS_ROOT']
-        iparams.set_source('DRS_ROOT', func_name)
-        # get config path
-        configpath = constants.get_relative_folder(package, duser_config)
-        # get instrument config path
-        diconfigpath = os.path.join(configpath, instrument.lower())
-        # get filelist
-        files = glob.glob(diconfigpath + '/*')
-        newfiles = []
-        # get new config path
-        userconfig = iparams['USERCONFIG']
-        # copy contents of diconfigpath to userconfig
-        for filename in files:
-            # get new file location
-            newpath = os.path.join(userconfig, os.path.basename(filename))
-            # copy file from old to new
-            if not os.path.exists(newpath):
-                shutil.copy(filename, newpath)
-            # store new config file locations
-            newfiles.append(newpath)
-        # store filenames in iparams
-        iparams['CONFIGFILES'] = newfiles
-        iparams.set_source('CONFIGFILES', func_name)
+        # add drs root to all_params
+        all_params[instrument]['DRS_ROOT'] = root
+    # return the updated all params
+    return all_params
+
+
+def create_configs(params, all_params):
+    # set function name
+    func_name = __NAME__ + '.create_configs()'
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    # get config directory
+    userconfig = all_params['USERCONFIG']
+    # get dev mode
+    devmode = all_params['DEVMODE']
+    # loop around instruments
+    for instrument in drs_instruments:
+        if instrument in all_params:
+            # load params for instrument
+            iparams = constants.load(instrument.upper(), from_file=False,
+                                     cache=False)
+            # load params for all_params
+            aparams = all_params[instrument]
+            uargs = [iparams, instrument, devmode]
+            config_lines, const_lines = create_ufiles(*uargs)
+            # get user path
+            upath = os.path.join(userconfig, instrument.lower())
+            # write / update config and const
+            uconfig = ufile_write(aparams, config_lines, upath, UCONFIG,
+                                  'config')
+            uconst = ufile_write(aparams, const_lines, upath, UCONST,
+                                 'constant')
+            # store filenames in iparams
+            all_params[instrument]['CONFIGFILES'] = [uconfig, uconst]
+            all_params[instrument].set_source('CONFIGFILES', func_name)
     # return all_params
     return all_params
 
 
-def update_configs(all_params):
+def update_configs(params, all_params):
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # loop around instruments
-    for instrument in INSTRUMENTS:
+    for instrument in drs_instruments:
         # only deal with instrument user wants to set up
         if instrument not in list(all_params.keys()):
             continue
@@ -489,36 +713,28 @@ def update_configs(all_params):
     return all_params
 
 
-def bin_paths(params, all_params):
-    # get package
-    package = params['DRS_PACKAGE']
-    # add bin path
-    bin_path = constants.get_relative_folder(package, BINPATH)
-    # add tools bin path
-    tool_path = constants.get_relative_folder(package, TOOLPATH)
-    # add tools dev path
-    dev_path = constants.get_relative_folder(package, DEVPATH)
-    # add to all_params
-    all_params['DRS_BIN_PATH'] = bin_path
-    all_params['DRS_TOOL_PATH'] = tool_path
-    all_params['DRS_DEV_PATH'] = dev_path
-    # return the updated all params
-    return all_params
-
-
 def create_shell_scripts(params, all_params):
     # get package
     package = params['DRS_PACKAGE']
+
+    if all_params['PROFILENAME'] not in [None, 'None', '']:
+        pname = all_params['PROFILENAME'].replace(' ', '_')
+    else:
+        pname = package
+
     # find setup files
     setup_path = constants.get_relative_folder(package, SETUP_PATH)
 
     # deal with windows
     if os.name == 'nt':
-        setup_files = ['{0}.win.setup'.format(package.lower())]
+        setup_infiles = ['{0}.win.setup'.format(package.lower())]
+        setup_outfiles = ['{0}.win.setup'.format(pname.lower())]
     # deal with unix
     elif os.name == 'posix':
-        setup_files = ['{0}.bash.setup'.format(package.lower())]
-        setup_files += ['{0}.sh.setup'.format(package.lower())]
+        setup_infiles = ['{0}.bash.setup'.format(package.lower())]
+        setup_infiles += ['{0}.sh.setup'.format(package.lower())]
+        setup_outfiles = ['{0}.bash.setup'.format(pname.lower())]
+        setup_outfiles += ['{0}.sh.setup'.format(pname.lower())]
     # else generate error message
     else:
         # print error message
@@ -527,7 +743,7 @@ def create_shell_scripts(params, all_params):
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], 'apero-validate.py')
+    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], VALIDATE_CODE)
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
@@ -535,13 +751,20 @@ def create_shell_scripts(params, all_params):
     text['TOOL_PATH'] = all_params['DRS_TOOL_PATH']
     text['USER_CONFIG'] = all_params['USERCONFIG']
     text['ROOT_PATH'] = os.path.dirname(all_params['DRS_ROOT'])
+    text['NAME'] = all_params['PROFILENAME']
     # ----------------------------------------------------------------------
     # loop around setup files
-    for setup_file in setup_files:
-        # get absolute path
-        inpath = os.path.join(setup_path, setup_file)
+    for it, setup_file in enumerate(setup_infiles):
+
+        # deal with having profile name
+        if all_params['PROFILENAME'] not in [None, 'None', '']:
+            # get absolute path
+            inpath = os.path.join(setup_path, setup_file + '.profile')
+        else:
+            # get absolute path
+            inpath = os.path.join(setup_path, setup_file)
         # get output path
-        outpath = os.path.join(all_params['USERCONFIG'], setup_file)
+        outpath = os.path.join(all_params['USERCONFIG'], setup_outfiles[it])
         # ------------------------------------------------------------------
         # make sure in path exists
         if not os.path.exists(inpath):
@@ -595,22 +818,34 @@ def clean_install(params, all_params):
     package = params['DRS_PACKAGE']
     # get root directory
     tool_path = constants.get_relative_folder(package, TOOL_RECIPEPATH)
+
+    # append tool path
+    sys.path.append(tool_path)
+    toolmod = importlib.import_module(RESET_CODE)
+
     # loop around instruments
     for instrument in INSTRUMENTS:
         # skip is we are not installing instrument
         if instrument not in all_params:
             continue
+        # check if all directories are empty
+        cond1 = not reset_paths_empty(params, all_params)
+        cond2 = not all_params[instrument]['CLEAN_INSTALL']
         # check if user wants a clean install
-        if not all_params[instrument]['CLEAN_INSTALL']:
+        if cond1 and cond2:
             continue
+        # if we are forcing clean install let the user know
+        if not cond1:
+            cprint('\t - Empty directory found -- forcing clean install.', 'y')
         # log that we are performing clean install
         cprint('\t - Performing clean installation', 'm')
         # add to environment
         add_paths(all_params)
         # construct reset command
-        cmd = 'python {0}/apero-reset.py {1} --quiet'
-        # run command
-        os.system(cmd.format(tool_path, instrument))
+        if not cond1:
+            toolmod.main(instrument=instrument, quiet=True, warn=False)
+        else:
+            toolmod.main(instrument=instrument, quiet=True, warn=True)
     # return all params
     return all_params
 
@@ -734,12 +969,293 @@ def print_options(params, all_params):
     text = dict()
     text['DRS_UCONFIG'] = all_params['USERCONFIG']
     text['SYSTEM'] = '{SYSTEM}'
+    if all_params['PROFILENAME'] not in ['None', None, '']:
+        text['NAME'] = all_params['PROFILENAME']
+    else:
+        text['NAME'] = params['DRS_PACKAGE']
     # print the messages
     print('\n\n')
     cprint(printheader(), 'm')
     cprint(' To run apero do one of the following:', 'm')
     cprint(printheader(), 'm')
     cprint(message4.format(**text), 'g')
+
+
+def reset_paths_empty(params, all_params):
+    # loop around instruments
+    for instrument in params['DRS_INSTRUMENTS']:
+        # skip if we are not installing instrument
+        if instrument not in all_params:
+            continue
+        # get instrument params
+        iparams = all_params[instrument]
+        # look for paths
+        for path in RESET_PATHS:
+            # get instrument path
+            ipath = iparams[path]
+            # check for empty
+            if len(os.listdir(ipath)) == 0:
+                return True
+    # if we have got here return False --> none are empty
+    return False
+
+
+# =============================================================================
+# create user files functions
+# =============================================================================
+def create_ufiles(params, instrument, devmode):
+    # storage of parameters of different types
+    config = OrderedDict()
+    const = OrderedDict()
+    # ------------------------------------------------------------------
+    config_groups = []
+    const_groups = []
+    # ------------------------------------------------------------------
+    # dev groups
+    dev_groups = dict()
+
+    # ------------------------------------------------------------------
+    # loop around all parameters and find which need to be added
+    #  to config file and const file
+    for param in params:
+        # ------------------------------------------------------------------
+        # get instance
+        instance = params.instances[param]
+        # if we don't have instance we continue
+        if instance is None:
+            continue
+        # get group name
+        group = instance.group
+        # get user variable
+        user = instance.user
+        # ------------------------------------------------------------------
+        # if we have no group we don't want this in config files
+        if group is None:
+            continue
+        # if user if False we don't want this in config files
+        if user is False and not devmode:
+            continue
+        # ------------------------------------------------------------------
+        # get source of data
+        source = params.sources[param]
+        # get config/const
+        if 'user_config' in source:
+            kind = 'config'
+        elif 'default_config' in source:
+            kind = 'config'
+        elif 'default_constants' in source:
+            kind = 'const'
+        elif 'user_constants' in source:
+            kind = 'const'
+        else:
+            continue
+        # ------------------------------------------------------------------
+        # deal with asking the user for groups in devmode
+        if devmode and user is False:
+            # deal with first time seeing this group
+            if group not in dev_groups:
+                cprint(printheader(), 'g')
+                umessage = ('DEV MODE: Add all constants in group "{0}" '
+                            'to {1} file?')
+                output = ask(umessage.format(group, kind), dtype='YN')
+                dev_groups[group] = output
+            # else skip if user has choosen that they don't want this group
+            if not dev_groups[group]:
+                continue
+        # ------------------------------------------------------------------
+        # add group to group storage (in correct order)
+        if kind == 'config' and group not in config_groups:
+            config_groups.append(group)
+        elif group not in const_groups:
+            const_groups.append(group)
+        # ------------------------------------------------------------------
+        # decide on group
+        if kind == 'config':
+            if group in config:
+                config[group].append([instance, params[param]])
+            else:
+                config[group] = [[instance, params[param]]]
+        elif kind == 'const':
+            if group in const:
+                const[group].append([instance, params[param]])
+            else:
+                const[group] = [[instance, params[param]]]
+    # ------------------------------------------------------------------
+    # create config file
+    config_lines = create_ufile(instrument, 'config', config, config_groups,
+                                devmode)
+    # create const file
+    const_lines = create_ufile(instrument, 'constant', const, const_groups,
+                               devmode)
+    # ------------------------------------------------------------------
+    return config_lines, const_lines
+
+
+def create_ufile(instrument, kind, dictionary, grouplist, devmode):
+    lines = []
+    lines += user_header('{0} {1} file'.format(instrument, kind))
+    # loop around groups
+    for group in grouplist:
+        # only add if we have parameters that are needed in that group
+        if group in dictionary:
+            # add a header if this is a new group
+            lines += ['']
+            lines += user_header(group)
+            # loop around group parameters
+            for item in range(len(dictionary[group])):
+                # get instance of this parameter
+                instance = dictionary[group][item][0]
+                # get value of this parameter
+                value = dictionary[group][item][1]
+                # create line
+                lines += instance.write_line(value=value)
+    # return lines
+    return lines
+
+
+def user_header(title):
+    lines = []
+    lines.append('# {0}'.format('-' * 77))
+    lines.append('# ')
+    lines.append('#  {0}'.format(title))
+    lines.append('# ')
+    lines.append('# {0}'.format('-' * 77))
+    return lines
+
+
+def ufile_write(aparams, lines, upath, ufile, kind):
+    # make directory if it doesn't exist
+    if not os.path.exists(upath):
+        os.makedirs(upath)
+    # ----------------------------------------------------------------------
+    # define config file path
+    ufilepath = os.path.join(upath, ufile)
+    # ----------------------------------------------------------------------
+    # deal with config file existing
+    if os.path.exists(ufilepath):
+        # need to open current
+        u_file = open(ufilepath, 'r')
+        current_lines = u_file.readlines()
+        u_file.close()
+        # now need to check these lines against lines
+        for l_it, line in enumerate(lines):
+            # we shouldn't worry about old comment lines
+            if line.strip().startswith('#'):
+                continue
+            if len(line) == 0:
+                continue
+            # get variable name
+            variable, value = line.split('=')
+            variable = variable.strip()
+            value = value.strip()
+            cvalue, cline = None, ''
+            # do not correct variables that we will automatically set later
+            #   ( set by user)
+            if variable in aparams:
+                continue
+            # loop around current lines
+            for c_it, cline in enumerate(current_lines):
+                if cline.strip().startswith('#'):
+                    continue
+                if len(cline) == 0:
+                    continue
+                if variable in cline:
+                    cvariable, cvalue = cline.split('=')
+                    cvariable = cvariable.strip()
+                    cvalue = cvalue.strip().strip('\n')
+                    # only if we have a matching variable
+                    if cvariable == variable:
+                        break
+            # if line is the same we continue
+            if value == cvalue:
+                continue
+            # deal with line found
+            elif cvalue is not None:
+                # display a warning
+                umessage1 = ('\nConflicting line found in current {0} file for'
+                             'constant "{1}"')
+                cprint(umessage1.format(kind, variable), 'y')
+                umessage2 = 'Replace default:\n\t{0} \n with current:\n\t{1}'
+                output = ask(umessage2.format(value, cvalue), dtype='YN')
+                if output:
+                    lines[l_it] = cline
+    # ----------------------------------------------------------------------
+    # write files
+    u_file = open(ufilepath, 'w')
+    for line in lines:
+        if not line.endswith('\n'):
+            u_file.write(line + '\n')
+        else:
+            u_file.write(line)
+    u_file.close()
+    # return user file path
+    return ufilepath
+
+
+# =============================================================================
+# update functions
+# =============================================================================
+def update(params):
+    # set function name
+    func_name = __NAME__ + '.update()'
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    # get config path
+    config_env = params['DRS_USERENV']
+    # check for config environment set
+    config_path = os.getenv(config_env)
+    # deal with no config path set
+    if config_path is None:
+        cprint('Error: Cannot run update. Must be in apero environment '
+               '(i.e. source apero.{SYSTEM}.setup).', 'r')
+        sys.exit()
+    # ----------------------------------------------------------------------
+    # find all installed instruments
+    instruments = []
+    files = os.listdir(config_path)
+    # loop through filenames
+    for filename in files:
+        # get abspath
+        abspath = os.path.join(config_path, filename)
+        # check if valid instrument
+        if os.path.isdir(abspath) and filename.upper() in drs_instruments:
+            instruments.append(filename.upper())
+    # ----------------------------------------------------------------------
+    # set up dictionary
+    all_params = dict()
+     # loop around instruments
+    for instrument in instruments:
+        # ------------------------------------------------------------------
+        # set up instrument storage
+        istorage = ParamDict()
+        # add user config
+        all_params['USERCONFIG'] = config_path
+        istorage['USERCONFIG'] = config_path
+        istorage.set_source('USERCONFIG', func_name)
+        # load params for instrument
+        iparams = constants.load(instrument.upper(), cache=False)
+        # ------------------------------------------------------------------
+        # loop around data paths
+        for datapath in DATA_PATHS.keys():
+            # get data paths
+            istorage[datapath] = str(iparams[datapath])
+            istorage.set_source(datapath, iparams.sources[datapath])
+        # ------------------------------------------------------------------
+        # add clean install
+        istorage['CLEAN_INSTALL'] = False
+        istorage.set_source('CLEAN_INSTALL', func_name)
+        # add ds9
+        istorage['DRS_DS9_PATH'] = iparams['DRS_DS9_PATH']
+        istorage.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
+        # add pdflatex
+        istorage['DRS_PDFLATEX_PATH'] = iparams['DRS_PDFLATEX_PATH']
+        istorage.set_source('DRS_PDFLATEX_PATH',
+                            iparams.sources['DRS_PDFLATEX_PATH'])
+        # ------------------------------------------------------------------
+        # add to all_params
+        all_params[instrument] = istorage
+    # return all params
+    return all_params
 
 
 # =============================================================================

@@ -25,6 +25,7 @@ from apero.locale import drs_text
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -95,6 +96,8 @@ class DrsRecipe(object):
         self.allowedfibers = None
         # shortname set to name initially
         self.shortname = str(self.name)
+        # recipe kind (for logging)
+        self.kind = None
         # save recipe module
         self.recipemod = None
         # import module
@@ -131,8 +134,10 @@ class DrsRecipe(object):
         self.output_files = dict()
         self.debug_plots = []
         self.summary_plots = []
-        # the plotter
+        # the plotter class
         self.plot = None
+        # set the log class
+        self.log = None
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
         # get drs params
@@ -476,6 +481,8 @@ class DrsRecipe(object):
         self.allowedfibers = copy.deepcopy(recipe.allowedfibers)
         # shortname
         self.shortname = str(recipe.shortname)
+        # recipe kind (for logging)
+        self.kind = copy.deepcopy(recipe.kind)
         # import module
         self.module = self.module
         # output directory
@@ -526,6 +533,8 @@ class DrsRecipe(object):
                 self.outputs[output] = newouput
         # copy plotter
         self.plot = recipe.plot
+        # copy logger
+        self.log = recipe.log
         # plot options
         self.debug_plots = list(recipe.debug_plots)
         self.summary_plots = list(recipe.summary_plots)
@@ -562,7 +571,7 @@ class DrsRecipe(object):
         # return the runlist
         return runlist
 
-    def add_extra(self, params, arguments):
+    def add_extra(self, params, arguments, tstars=None):
         # set function name
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
         # loop around arguments
@@ -582,6 +591,12 @@ class DrsRecipe(object):
                         value = value.split(',')
                         # make sure there are no white spaces
                         value = np.char.strip(value)
+                # deal with telluric targets being None
+                if arguments[argname] == 'TELLURIC_TARGETS':
+                    if isinstance(value, (type(None), str)):
+                        if value in ['None', None, '']:
+                            value = tstars
+
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -675,16 +690,20 @@ class DrsRecipe(object):
         if values is None:
             return
         # if we have an optional argument
-        if '-' in arg.argname:
+        if '--' in arg.argname:
             strfmt = '{0}={1}'
         # if we have a positional argument
         else:
             strfmt = '{1}'
         # now add these arguments (as a string) to str_arg_list
-        if type(values) == list:
+        if isinstance(values, list):
+            # add the first argument
+            if '--' in arg.argname:
+                self.str_arg_list.append(arg.argname)
+            # add the rest as separate arguments
             for value in values:
-                strarg = [arg.argname, value]
-                self.str_arg_list.append(strfmt.format(*strarg))
+                # finally append the string to str_arg_list
+                self.str_arg_list.append(value)
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))
@@ -1125,10 +1144,12 @@ class DrsRunSequence(object):
     def add(self, recipe, **kwargs):
         self.adds.append([recipe, dict(kwargs)])
 
-    def process_adds(self, params):
+    def process_adds(self, params, tstars=None):
         # set function name
         func_name = display_func(params, 'process_adds', __NAME__,
                                  class_name='DrsRunSequence')
+        # set telluric stars (may be needed)
+        self.tstars = tstars
         # get filemod and recipe mod
         pconst = constants.pload(self.instrument)
         filemod = pconst.FILEMOD()
@@ -1172,7 +1193,7 @@ class DrsRunSequence(object):
     def update_args(self, params, frecipe, fargs):
         # deal with arguments overwrite
         if 'arguments' in fargs:
-            frecipe.add_extra(params, fargs['arguments'])
+            frecipe.add_extra(params, fargs['arguments'], tstars=self.tstars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
         frecipe.args = self._update_arg(frecipe.args, fargs)
@@ -1704,7 +1725,7 @@ def convert_to_command(self, params, runargs):
             # deal with keyword arguments
             if argname in kwargs:
                 # add to command
-                command += '-{0} {1} '.format(argname, value)
+                command += '--{0} {1} '.format(argname, value)
         # append to out (removing trailing white spaces)
         outputs.append(command.strip())
     # return outputs

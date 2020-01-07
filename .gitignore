@@ -179,3 +179,7 @@ fabric.properties
 /bin/*.py
 /tools/bin/*.py
 /tools/dev/*.py
+
+# Ignore everythign in apero data except readme
+/apero-data/*
+!/apero-data/*.md

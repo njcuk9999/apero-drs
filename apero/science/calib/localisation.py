@@ -324,6 +324,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     plimits = OrderedDict()
     # loop around each order
     rorder_num = 0
+    # loop around orders
     for order_num in range(num_orders):
         # get the shape of the image
         nx2 = image.shape[1]
@@ -335,7 +336,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
         # "central col+locstep" pixel (first column calculated) then we
         # calculate row centers to the LEFT edge - hence the order of columns
         columns = list(range(central_col + locstep, nx2 - locstep, locstep))
-        columns += list(range(central_col, locstep, -locstep))
+        columns += list(range(central_col - locstep, locstep, -locstep))
         # ------------------------------------------------------------------
         # storage for plotting
         col_vals, maxycc, minxcc, maxxcc = [], -np.inf, np.inf, -np.inf
@@ -345,6 +346,10 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
         # uses the central position found at the nearest column to it
         # must also correct for conversion to int by adding 0.5
         # center, width = 0, 0
+        columns = np.array(columns)
+
+        columns = columns[np.argsort(np.abs(columns - central_col))]
+
         for col in columns:
             # for pixels>central pixel we need to get row center from last
             # iteration (or posc) this is to the LEFT
@@ -360,37 +365,25 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             # now make sure our extraction isn't out of bounds
             if rowtop <= 0 or rowbottom >= nx2:
                 break
-            # TODO: This value may need changing - What does it do?
-            # if col <= (800 - order_num*30):
-            if col <= (750 - rowcenter * 0.7):
-                break
-            # make sure we are not in the image_gap
-            if (rowtop < image_gap) and (rowbottom > image_gap):
-                break
             # get the pixel values between row bottom and row top for
             # this column
-            ovalues = image[rowtop:rowbottom, col]
-            # only use if max - min above threshold = 100 * sigdet
-            truethres = nm_thres * sigdet
-            cond = mp.nanmax(ovalues) - mp.nanmin(ovalues) > truethres
-            if cond:
-                # as we are not normalised threshold needs multiplying by
-                # the maximum value
-                threshold = mp.nanmax(ovalues) * back_thres
-                # find the row center position and the width of the order
-                # for this column
-                lkwargs = dict(values=ovalues, threshold=threshold,
-                               min_width=widthmin)
-                center, width = locate_order_center(**lkwargs)
-                # need to add on row top (as centers are relative positions)
-                center = center + rowtop
-                # if the width is zero set the position back to the original
-                # position
-                if width == 0:
-                    # to force the order curvature
-                    center = float(rowcenter) - center_drop
-            else:
-                width = 0
+            # median over whole box of pixels to avoid outliers
+            imagebox = image[rowtop:rowbottom, col:col+locstep]
+            # get the values
+            ovalues = mp.nanmedian(imagebox, axis=1)
+            # as we are not normalised threshold needs multiplying by
+            # the maximum value
+            threshold = mp.nanmax(ovalues) * back_thres
+            # find the row center position and the width of the order
+            # for this column
+            lkwargs = dict(values=ovalues, threshold=threshold,
+                           min_width=widthmin)
+            center, width = locate_order_center(**lkwargs)
+            # need to add on row top (as centers are relative positions)
+            center = center + rowtop
+            # if the width is zero set the position back to the original
+            # position
+            if width == 0:
                 # to force the order curvature
                 center = float(rowcenter) - center_drop
             # add these positions to storage
@@ -434,8 +427,8 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             WLOG(params, '', TextEntry('40-013-00007', args=wargs))
             # --------------------------------------------------------------
             # sigma fit params for center
-            sigfargs = [params, xpix, cent_y, cf_data, cent_poly_deg,
-                        cent_max_rmpts[rorder_num]]
+            sigfargs = [params, recipe, xpix, cent_y, cf_data, cent_poly_deg,
+                        cent_max_rmpts[rorder_num], rorder_num]
             sigfkwargs = dict(ic_max_ptp=max_ptp_cent, ic_max_ptp_frac=None,
                               ic_ptporms=ptporms_cent, ic_max_rms=max_rms_cent,
                               kind='center')
@@ -449,8 +442,8 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             cent_max_rmpts[rorder_num] = cf_data['max_rmpts']
             # --------------------------------------------------------------
             # sigma fit params for width
-            sigfargs = [params, xpix, wid_y, wf_data, wid_poly_deg,
-                        wid_max_rmpts[rorder_num]]
+            sigfargs = [params, recipe, xpix, wid_y, wf_data, wid_poly_deg,
+                        wid_max_rmpts[rorder_num], rorder_num]
             sigfkwargs = dict(ic_max_ptp=-np.inf, ic_max_ptp_frac=max_ptp_wid,
                               ic_ptporms=None, ic_max_rms=max_rms_wid,
                               kind='fwhm')
@@ -802,7 +795,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
     # write image to file
-    orderpfile.write()
+    orderpfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(orderpfile)
     # ------------------------------------------------------------------
@@ -854,7 +847,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-013-00019', args=[loco1file.filename]))
     # write image to file
-    loco1file.write()
+    loco1file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(loco1file)
     # ------------------------------------------------------------------
@@ -876,7 +869,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
     # write image to file
-    loco2file.write()
+    loco2file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(loco2file)
     # ------------------------------------------------------------------
@@ -904,7 +897,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         wargs = [loco3file.filename]
         WLOG(params, '', TextEntry('40-013-00021', args=wargs))
         # write image to file
-        loco3file.write()
+        loco3file.write_file()
         # add to output files (for indexing)
         recipe.add_output_file(loco3file)
     # ------------------------------------------------------------------
@@ -1131,9 +1124,9 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
     return fitdata
 
 
-def sigmaclip_order_fit(params, x, y, fitdata, f_order, max_rmpts,
-                        ic_max_ptp, ic_max_ptp_frac, ic_ptporms, ic_max_rms,
-                        kind):
+def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
+                        rnum, ic_max_ptp, ic_max_ptp_frac, ic_ptporms,
+                        ic_max_rms, kind):
     """
     Performs a sigma clip fit for this order, uses the ctro positions or
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
@@ -1230,10 +1223,8 @@ def sigmaclip_order_fit(params, x, y, fitdata, f_order, max_rmpts,
         wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
         WLOG(params, '', TextEntry('40-013-00008', args=wargs))
         # add residuals to loc
-        # debug plot
-        if params['DRS_PLOT'] and params['DRS_DEBUG'] == 2:
-            # TODO: Add sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)
-            pass
+        recipe.plot('LOC_FIT_RESIDUALS', x=x, y=res, xo=xo, rnum=rnum,
+                    kind=kind)
         # add one to the max rmpts
         max_rmpts += 1
         # remove the largest residual (set wmask = 0 at that position)

@@ -126,7 +126,9 @@ class PseudoConstants:
         index_file = self.INDEX_OUTPUT_FILENAME()
         # construct the index lock file name
         oargs = [night_name, index_file]
-        opath = os.path.join(params['DRS_DATA_MSG'], '{0}_{1}'.format(*oargs))
+        # get msg path
+        msgpath = params['DRS_DATA_MSG_FULL']
+        opath = os.path.join(msgpath, '{0}_{1}'.format(*oargs))
         # return the index lock file name
         return opath
 
@@ -276,13 +278,11 @@ class PseudoConstants:
         # deal with no dir_data_msg
         if dir_data_msg is None:
             dir_data_msg = str(params['DRS_DATA_MSG'])
-
         # deal with no PID
         if 'PID' not in params:
             pid = 'UNKNOWN-PID'
         else:
             pid = str(params['PID'])
-
         # deal with no recipe
         if 'RECIPE' not in params:
             recipe = 'UNKNOWN-RECIPE'
@@ -290,7 +290,7 @@ class PseudoConstants:
             recipe = str(params['RECIPE'].replace('.py', ''))
         # construct the logfile path
         largs = [pid, recipe]
-        lpath = os.path.join(dir_data_msg, 'APEROL-{0}_{1}'.format(*largs))
+        lpath = os.path.join(dir_data_msg, 'APEROL-{0}_{1}.log'.format(*largs))
 
         # return lpath
         return lpath
@@ -477,6 +477,19 @@ class PseudoConstants:
 
     def FIBER_WAVE_TYPES(self, fiber):
         return fiber
+
+    def FIBER_DPR_POS(self, dprtype, fiber):
+        """
+        When we have a DPRTYPE figure out what is in the fiber requested
+
+        :param dprtype: str in form fiber1_fiber2 type in each
+                        (e.g. DARK, FLAT, FP, HC, OBJ etc)
+        :param fiber: str, the fiber requested
+
+        :return:
+        """
+        func_name = 'FIBER_DPR_POS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
         func_name = 'FIBER_LOC_COEFF_EXT'
