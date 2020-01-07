@@ -103,7 +103,7 @@ def load_linelist(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-017-00002', args=eargs))
 
 
-def load_cavity_file(params, **kwargs):
+def load_cavity_file(params, raw=False, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_badpix()')
     relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
@@ -134,6 +134,9 @@ def load_cavity_file(params, **kwargs):
         table, outf = load_table_file(params, filename, relfolder, kwargs,
                                       func_name)
         WLOG(params, '', TextEntry('40-999-00001', args=outf))
+        # deal with returning raw data
+        if raw:
+            return np.array(table[wavecol])
         # push columns into numpy arrays and force to floats
         coeff_values = np.array(table[wavecol], dtype=float)
         ncoeff = len(coeff_values)

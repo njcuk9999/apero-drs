@@ -24,6 +24,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero import locale
 from apero.io import drs_table
+from apero.io import drs_lock
 
 # =============================================================================
 # Define variables
@@ -419,12 +420,38 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
 # =============================================================================
 # Define write functions
 # =============================================================================
-def write(params, filename, data, header, datatype, dtype=None, func=None):
+def writefits(params, filename, data, header, datatype, dtype=None, func=None):
+    # ------------------------------------------------------------------
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockfile = os.path.basename(filename)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile)
+    # ------------------------------------------------------------------
+    # make locked read function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_write():
+        return _write_fits(params, filename, data, header, datatype, dtype,
+                           func)
+    # ------------------------------------------------------------------
+    # try to run locked read function
+    try:
+        locked_write()
+    except KeyboardInterrupt as e:
+        lock.reset()
+        raise e
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
+
+
+def _write_fits(params, filename, data, header, datatype, dtype=None, func=None):
     # deal with function name coming from somewhere else
     if func is None:
-        func_name = __NAME__ + '.write()'
+        func_name = __NAME__ + '.writefits()'
     else:
-        func_name = '{0} (via {1})'.format(func, __NAME__ + '.write()')
+        func_name = '{0} (via {1})'.format(func, __NAME__ + '.writefits()')
     # ----------------------------------------------------------------------
     # check if file exists and remove it if it does
     if os.path.exists(filename):

@@ -51,14 +51,12 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(instrument=None, **kwargs):
     """
-    Main function for cal_extract_spirou.py
+    Main function for apero_listing.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
+    :param instrument: str, the instrument name
+    :param kwargs: additional keyword arguments
 
-    :type directory: str
-    :type files: list[str]
+    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -164,14 +162,6 @@ def __main__(recipe, params):
                                       index_path)
         # save to file
         drs_startup.save_index_file(params, istore, index_path)
-
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

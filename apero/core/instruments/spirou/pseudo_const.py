@@ -202,6 +202,23 @@ class PseudoConstants(DefaultConstants):
         else:
             return 'C'
 
+    def FIBER_DPR_POS(self, dprtype, fiber):
+        """
+        When we have a DPRTYPE figure out what is in the fiber requested
+
+        :param dprtype: str in form fiber1_fiber2 type in each
+                        (e.g. DARK, FLAT, FP, HC, OBJ etc)
+        :param fiber: str, the fiber requested
+
+        :return:
+        """
+        dprtypes = dprtype.split('_')
+
+        if fiber in ['AB', 'A', 'B']:
+            return dprtypes[0]
+        else:
+            return dprtypes[1]
+
     def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
         """
         Extract the localisation coefficients based on how they are stored

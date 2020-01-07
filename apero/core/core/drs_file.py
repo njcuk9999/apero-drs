@@ -401,7 +401,7 @@ class DrsInputFile:
     def read(self, ext=None, check=False):
         pass
 
-    def write(self):
+    def write_file(self):
         pass
 
     # -------------------------------------------------------------------------
@@ -1410,8 +1410,8 @@ class DrsFitsFile(DrsInputFile):
         for key in self.hdict:
             self.header[key] = (self.hdict[key], self.hdict.comments[key])
 
-    def write(self):
-        func_name = __NAME__ + '.DrsFitsFile.write()'
+    def write_file(self):
+        func_name = __NAME__ + '.DrsFitsFile.write_file()'
         # get params
         params = self.recipe.drs_params
         # ---------------------------------------------------------------------
@@ -1420,8 +1420,8 @@ class DrsFitsFile(DrsInputFile):
         # copy keys from hdict into header
         self.update_header_with_hdict()
         # write to file
-        drs_fits.write(params, self.filename, self.data, self.header,
-                       self.datatype, self.dtype, func=func_name)
+        drs_fits.writefits(params, self.filename, self.data, self.header,
+                           self.datatype, self.dtype, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
@@ -1462,9 +1462,9 @@ class DrsFitsFile(DrsInputFile):
         header_list = [self.header] + header_list
         datatype_list = [self.datatype] + datatype_list
         dtype_list = [self.dtype] + dtype_list
-        # write to file
-        drs_fits.write(params, self.filename, data_list, header_list,
-                       datatype_list, dtype_list, func=func_name)
+        # writefits to file
+        drs_fits.writefits(params, self.filename, data_list, header_list,
+                           datatype_list, dtype_list, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
@@ -2360,7 +2360,7 @@ class DrsNpyFile(DrsInputFile):
         else:
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
 
-    def write(self, params):
+    def write_file(self, params):
         func_name = __NAME__ + '.DrsNpyFile.read()'
 
         if self.filename is None:

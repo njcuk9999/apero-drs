@@ -35,7 +35,7 @@ __all__ = [  # global settings
     # DISPLAY/LOGGING SETTINGS
     'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
     'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
-    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT',
+    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT', 'DRS_LOG_FITS_NAME',
     # PLOT SETTINGS
     'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
     'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
@@ -86,53 +86,53 @@ LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
 cgroup = 'PATH SETTINGS'
 #   Define the root installation directory
 DRS_ROOT = Const('DRS_ROOT', dtype='path', source=__NAME__, user=True,
-                 active=True, group=cgroup, value='/drs/apero-drs/',
+                 active=True, group=cgroup, value='./',
                  description='Define the root installation directory')
 
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = Const('DRS_DATA_RAW', dtype='path', source=__NAME__, user=True,
-                     active=True, group=cgroup, value='/drs/data/raw',
+                     active=True, group=cgroup, value='./apero-data/raw',
                      description='Define the folder with the raw data files in')
 
 #   Define the directory that the reduced data should be saved to/read from
 DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype='path', source=__NAME__,
                        user=True,
-                       active=True, group=cgroup, value='/drs/data/reduced',
+                       active=True, group=cgroup, value='./apero-data/reduced',
                        description='Define the directory that the reduced data '
                                    'should be saved to/read from')
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = Const('DRS_CALIB_DB', dtype='path', source=__NAME__, user=True,
-                     active=True, group=cgroup, value='/drs/data/calibDB',
+                     active=True, group=cgroup, value='./apero-data/calibDB',
                      description='Define the directory that the calibration '
                                  'files should be saved to/read from')
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_TELLU_DB = Const('DRS_TELLU_DB', dtype='path', source=__NAME__, user=True,
-                     active=True, group=cgroup, value='/drs/data/telluDB',
+                     active=True, group=cgroup, value='./apero-data/telluDB',
                      description='Define the directory that the calibration '
                                  'files should be saved to/read from')
 
 #   Define the directory that the log messages are stored in
 DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__, user=True,
-                     active=True, group=cgroup, value='/drs/data/msg',
+                     active=True, group=cgroup, value='./apero-data/msg',
                      description='Define the directory that the log messages '
                                  'are stored in')
 
 #   Define the working directory
 DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__,
                          user=True, active=True, group=cgroup,
-                         value='/drs/data/tmp',
+                         value='./apero-data/working',
                          description='Define the working directory')
 
 #   Define the plotting directory
 DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__, user=True,
-                      active=True, group=cgroup, value='/drs/data/plot',
+                      active=True, group=cgroup, value='./apero-data/plot',
                       description='Define the plotting directory')
 
 #   Define the run directory
 DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__, user=True,
-                     active=True, group=cgroup, value='/drs/data/runs',
+                     active=True, group=cgroup, value='./apero-data/runs',
                      description='Define the run directory')
 
 #   Define ds9 path (optional)
@@ -156,7 +156,7 @@ DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
 # =============================================================================
 cgroup = 'INTERNAL: General properites'
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.6.006', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value='0.6.016', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Authors
@@ -170,7 +170,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value='2019-12-13', dtype=str, source=__NAME__,
+DRS_DATE = Const('DATE', value='2020-01-07', dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================
@@ -400,6 +400,11 @@ DRS_LOG_EXIT_TYPE = Const('DRS_LOG_EXIT_TYPE', value='sys', dtype=str,
 # Defines the DRS log format
 DRS_LOG_FORMAT = Const('DRS_LOG_FORMAT', value='{0}-{1}|{2}|{3}',
                        dtype=str, source=__NAME__, group=cgroup)
+
+# Define the log fits file name
+DRS_LOG_FITS_NAME = Const('DRS_LOG_FITS_NAME', value='log.fits', dtype=str,
+                          source=__NAME__, group=cgroup)
+
 
 # =============================================================================
 # PLOT SETTINGS

@@ -218,9 +218,9 @@ def write_table(params, table, filename, fmt='fits', header=None):
     # try to run locked makedirs
     try:
         locked_write()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()

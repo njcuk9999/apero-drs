@@ -194,7 +194,7 @@ def __main__(recipe, params):
             # load initial wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                            fiber=fiber)
+                                            fiber=fiber, master=True)
             # check that wave parameters are consistent with required number
             #   of parameters (from constants)
             iwprops = wave.check_wave_consistency(params, iwprops)
@@ -247,7 +247,7 @@ def __main__(recipe, params):
                 # update wave solution
                 hc_update = wave.add_wave_keys(hc_update, wprops)
                 # write hc update
-                hc_update.write()
+                hc_update.write_file()
                 # add to output files (for indexing)
                 recipe.add_output_file(hc_update)
 
@@ -314,7 +314,7 @@ def __main__(recipe, params):
                     # update wave solution
                     hc_update = wave.add_wave_keys(hc_update, wprops)
                     # write hc update
-                    hc_update.write()
+                    hc_update.write_file()
                     # log that we are updating the HC file with wave params
                     wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
                     WLOG(params, '', TextEntry('40-017-00038', args=wargs))
@@ -323,7 +323,7 @@ def __main__(recipe, params):
                     # update wave solution
                     fp_update = wave.add_wave_keys(fp_update, wprops)
                     # write hc update
-                    fp_update.write()
+                    fp_update.write_file()
                     # add to output files (for indexing)
                     recipe.add_output_file(fp_update)
                 # ----------------------------------------------------------
@@ -341,11 +341,11 @@ def __main__(recipe, params):
                 WLOG(params, 'warning', TextEntry('10-017-00007'))
                 fpprops = None
 
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # Construct summary document
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # if we have a wave solution wave summary from fpprops
-            if fp_e2ds_file is not None:
+            if (fp_e2ds_file is not None) and passed:
                 wave.wave_summary(recipe, params, fpprops, fiber, qc_params)
             else:
                 wave.wave_summary(recipe, params, hcprops, fiber, qc_params)

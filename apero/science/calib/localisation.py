@@ -795,7 +795,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
     # write image to file
-    orderpfile.write()
+    orderpfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(orderpfile)
     # ------------------------------------------------------------------
@@ -847,7 +847,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-013-00019', args=[loco1file.filename]))
     # write image to file
-    loco1file.write()
+    loco1file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(loco1file)
     # ------------------------------------------------------------------
@@ -869,7 +869,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
     # write image to file
-    loco2file.write()
+    loco2file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(loco2file)
     # ------------------------------------------------------------------
@@ -897,7 +897,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         wargs = [loco3file.filename]
         WLOG(params, '', TextEntry('40-013-00021', args=wargs))
         # write image to file
-        loco3file.write()
+        loco3file.write_file()
         # add to output files (for indexing)
         recipe.add_output_file(loco3file)
     # ------------------------------------------------------------------

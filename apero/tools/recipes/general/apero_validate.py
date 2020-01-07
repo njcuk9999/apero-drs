@@ -45,7 +45,7 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(instrument=None, **kwargs):
     """
-    Main function for cal_dark_spirou.py
+    Main function for apero_validate.py
 
     :param directory: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -88,13 +88,6 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     WLOG(params, '', 'Validation complete')
-    # ------------------------------------------------------------------
-    # update recipe log file
-    # ------------------------------------------------------------------
-    # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
-    # update log
-    recipe.log.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

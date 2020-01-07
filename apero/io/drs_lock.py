@@ -17,13 +17,10 @@ from __future__ import division
 import os
 import time
 import numpy as np
-import glob
-import sys
 
 from apero.core import constants
 from apero.locale import drs_text
 from apero.core.core import drs_log
-
 
 # =============================================================================
 # Define variables
@@ -63,6 +60,7 @@ class Lock:
         :param lockname:
         :param lockpath:
         """
+        func_name = __NAME__ + '.Lock.__init__()'
         # set the bad characters to clean
         self.bad_chars = ['/', '\\' , '.', ',']
         # replace all . and whitespace with _
@@ -70,9 +68,24 @@ class Lock:
         self.params = params
         # get the lock path
         lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
-        if not os.path.exists(lockpath):
-            os.mkdir(lockpath)
-
+        # ------------------------------------------------------------------
+        # making the lock dir could be accessed in parallel several times
+        #   at once so try 10 times with a wait in between
+        it, error = 0, None
+        while not os.path.exists(lockpath) and it < 10:
+            try:
+                os.mkdir(lockpath)
+            except Exception as e:
+                error = e
+                # add one to the number of tries
+                it += 1
+                # sleep for one second to allow another process to complete this
+                time.sleep(1)
+        # if we had an error and got to 10 tries then cause an error
+        if error is not None and it == 10:
+            eargs = [type(error), error, lockpath, func_name]
+            WLOG(params, 'error', TextEntry('00-503-00016', args=eargs))
+        # ------------------------------------------------------------------
         self.maxwait = params.get('DB_MAX_WAIT', 100)
         self.path = os.path.join(lockpath, self.lockname)
         self.queue = []
@@ -142,7 +155,8 @@ class Lock:
                     timer += 1
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
-                        wargs = [self.lockname, filename]
+                        abspath = os.path.join(self.path, filename)
+                        wargs = [self.lockname, abspath]
                         # warn that lock is waiting due to making the lock file
                         wmsg = TextEntry('10-101-00002', args=wargs)
                         WLOG(self.params, 'warning', wmsg)
@@ -222,7 +236,8 @@ class Lock:
         name = self.__clean_name(name)
         # log progress: lock file added to queue
         filename = name + '.lock'
-        WLOG(self.params, '', TextEntry('40-101-00002', args=[filename]))
+        abspath = os.path.join(self.path, filename)
+        WLOG(self.params, '', TextEntry('40-101-00002', args=[abspath]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
@@ -248,7 +263,8 @@ class Lock:
         # if the unique name is first in the list then we can unlock this file
         if filename == first:
             # log that lock file is unlocked
-            WLOG(self.params, '', TextEntry('40-101-00003', args=[filename]))
+            abspath = os.path.join(self.path, filename)
+            WLOG(self.params, '', TextEntry('40-101-00003', args=[abspath]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -263,7 +279,8 @@ class Lock:
         """
         # log that lock file has been removed from the queue
         filename = name + '.lock'
-        WLOG(self.params, '', TextEntry('40-101-00004', args=[filename]))
+        abspath = os.path.join(self.path, filename)
+        WLOG(self.params, '', TextEntry('40-101-00004', args=[abspath]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
@@ -354,9 +371,9 @@ def locker(params, lockfile, my_func, *args, **kwargs):
     # try to run locked read function
     try:
         return locked_function()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         lock.reset()
-        sys.exit()
+        raise e
     except Exception as e:
         # reset lock
         lock.reset()
@@ -365,38 +382,32 @@ def locker(params, lockfile, my_func, *args, **kwargs):
 
 def reset_lock_dir(params, log=False):
     # get the lock path
-    lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+    lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
     if not os.path.exists(lockpath):
         return
-    # get contents head directory (we will loop through these sub directories)
-    contents = glob.glob(os.path.join(lockpath, '*'))
-    # walk through folder and remove empty directories
-    for item in contents:
-        if os.path.isdir(item):
-            __remove_empty__(item, log=log)
+    # remove empties
+    __remove_empty__(params, lockpath, remove_head=False, log=False)
 
 
-def __remove_empty__(directory, remove_head=True, log=False):
-    # get the contents of the directory
-    contents = glob.glob(os.path.join(directory, '*'))
-    # if we have an empty directory remove it
-    if len(contents) == 0 and remove_head:
+def __remove_empty__(params, path, remove_head=True, log=False):
+    if not os.path.isdir(path):
+        return
+
+    # remove empty subfolders
+    files = os.listdir(path)
+    if len(files):
+        for f in files:
+            fullpath = os.path.join(path, f)
+            if os.path.isdir(fullpath):
+                __remove_empty__(params, fullpath, log=log)
+
+    # if folder empty, delete it
+    files = os.listdir(path)
+    if len(files) == 0 and remove_head:
         if log:
-            print('Removing empty directory: {0}'.format(directory))
-        os.rmdir(directory)
-        return True
-    # assume the directory is empty
-    empty = True
-    # loop around i
-    for item in contents:
-        # if item is a directory then empty this directory first
-        if os.path.isdir(item):
-            empty &= __remove_empty__(item, log=log)
-        # if item is a file this directory is not empty
-        if os.path.isfile(item):
-            empty &= False
-    # return whether folder is empty
-    return empty
+            WLOG(params, '', "Removing empty folder: {0}".format(path))
+        os.rmdir(path)
+
 
 
 # =============================================================================
@@ -425,8 +436,9 @@ if __name__ == "__main__":
         # this is where we run the function
         try:
             lockprint()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             mylock.reset()
+            raise e
 
     for jjjt in range(2):
         jobs = []
