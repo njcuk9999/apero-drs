@@ -41,13 +41,14 @@ listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
+remake_doc = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
 recipes = [test, changelog, explorer, processing, listing, logstats,
-           remake_db, req_check, reset, validate]
+           remake_db, remake_doc, req_check, reset, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -114,6 +115,15 @@ changelog.description = Help['CHANGELOG_DESCRIPTION']
 changelog.kind = 'tool'
 changelog.set_arg(pos=0, name='preview', dtype='bool',
                   helpstr=Help['PREVIEW_HELP'])
+
+# -----------------------------------------------------------------------------
+# apero_documentation.py
+# -----------------------------------------------------------------------------
+remake_doc.name = 'apero_documentation.py'
+remake_doc.instrument = __INSTRUMENT__
+# TODO: Move to language DB
+remake_doc.description = 'Re-make the apero documentation'
+remake_doc.kind = 'tool'
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
