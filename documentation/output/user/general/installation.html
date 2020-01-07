@@ -1,0 +1,352 @@
+
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Installation &#8212; APERO 0.6.016 documentation</title>
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Using APERO with SPIRou" href="using_apero_default.html" />
+    <link rel="prev" title="General User documentation" href="../general_guide.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a href="../../index.html">Home</a></li>
+    <li><a href="../installation.html">Install</a></li>
+    <li><a href="https://github.com/njcuk9999/apero-drs">Github</a></li>
+    <li><a href="../../../../_build/latex/apero-docs.pdf">PDF</a></li>
+  </ul>
+    <div>
+    <a href="../../index.html">
+      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="using_apero_default.html" title="Using APERO with SPIRou"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../general_guide.html" title="General User documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.016 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#download-from-github">Download from GitHub</a><ul>
+<li><a class="reference internal" href="#clone">Clone</a></li>
+<li><a class="reference internal" href="#choose-branch">Choose branch</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#setup">Setup</a><ul>
+<li><a class="reference internal" href="#run-the-installation-script">Run the installation script</a></li>
+<li><a class="reference internal" href="#step-by-step-guide">Step-by-step guide</a></li>
+<li><a class="reference internal" href="#additional-options">Additional options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#updating-from-github">Updating from github</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../general_guide.html"
+                        title="previous chapter">General User documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="using_apero_default.html"
+                        title="next chapter">Using APERO with SPIRou</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/user/general/installation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Below is the guide for first time installation and upgrade</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#installation-prerequisites"><span class="std std-ref">Prerequisites</span></a></p></li>
+<li><p><a class="reference internal" href="#installation-download"><span class="std std-ref">Download from GitHub</span></a></p></li>
+<li><p><a class="reference internal" href="#installation-setup"><span class="std std-ref">Setup</span></a></p></li>
+<li><p><a class="reference internal" href="#installation-update"><span class="std std-ref">Updating from github</span></a></p></li>
+</ul>
+<div class="section" id="prerequisites">
+<span id="installation-prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>APERO is tested with <a class="reference external" href="https://www.python.org/download/releases/3.0/">python 3</a></p>
+<p>The following python modules are required:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">astropy</span>
+<span class="n">matplotlib</span>
+<span class="n">numpy</span>
+<span class="n">scipy</span>
+</pre></div>
+</div>
+<p>The following python modules are recommended:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">astroquery</span>
+<span class="n">barycorrpy</span>
+<span class="n">bottleneck</span>
+<span class="n">ipdb</span>
+<span class="n">numba</span>
+<span class="n">pandas</span>
+<span class="n">PIL</span>
+<span class="n">tqdm</span>
+</pre></div>
+</div>
+<p>See :ref: <cite>here &lt;python_install&gt;</cite> for guide to intalling python and modules with
+the recommended setup.</p>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
+</div>
+<div class="section" id="download-from-github">
+<span id="installation-download"></span><h2>Download from GitHub<a class="headerlink" href="#download-from-github" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="clone">
+<h3>Clone<a class="headerlink" href="#clone" title="Permalink to this headline">¶</a></h3>
+<p>Clone from <a class="reference external" href="https://github.com/njcuk9999/apero-drs">github</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">njcuk9999</span><span class="o">/</span><span class="n">apero</span><span class="o">-</span><span class="n">drs</span>
+</pre></div>
+</div>
+<p>This may take some time (in future most of the data required will be a separate download),
+and we still have many (now redundant) files from the spirou_py3 repository.</p>
+</div>
+<div class="section" id="choose-branch">
+<span id="installation-choose-branch"></span><h3>Choose branch<a class="headerlink" href="#choose-branch" title="Permalink to this headline">¶</a></h3>
+<p>Change to the <cite>apero-drs</cite> directory</p>
+<p>Choose which branch:</p>
+<ul>
+<li><dl>
+<dt>master version</dt><dd><p>This is the version currently recommended for all general use.
+It may not contain the most up-to-date features until long term support
+and stability can be verified.</p>
+<p>Change to this branch with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">master</span>
+<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">master</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>developer version</dt><dd><p>Note the developer version should have been tested and semi-stable but
+not ready for full sets of processing and definitely not for release for
+non-developers or for data put on archives. Some changes may not be
+in this version that are in the working version.</p>
+<p>Change to this branch with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">developer</span>
+<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">developer</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>working version</dt><dd><p>Note the working version will be the most up-to-date version but has not been
+tested for stability - use at own risk.</p>
+<p>Change to this branch with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">working</span>
+<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">working</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+</ul>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
+</div>
+</div>
+<div class="section" id="setup">
+<span id="installation-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="run-the-installation-script">
+<h3>Run the installation script<a class="headerlink" href="#run-the-installation-script" title="Permalink to this headline">¶</a></h3>
+<p>Change to the <cite>apero-drs</cite> directory</p>
+<p>Run the installation script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="step-by-step-guide">
+<h3>Step-by-step guide<a class="headerlink" href="#step-by-step-guide" title="Permalink to this headline">¶</a></h3>
+<p>Follow the step-by-step guide:</p>
+<ul>
+<li><p>A: User configuration path</p>
+<blockquote>
+<div><p>This is the path where your configuration will be saved. If it doesn’t exist you will be prompted to create it. (This will be referred to as <a class="reference internal" href="../../misc/glossary.html#term-drs-uconfig"><span class="xref std std-term">DRS_UCONFIG</span></a>
+from now on (default is <code class="file docutils literal notranslate"><span class="pre">/home/user/apero/</span></code>)</p>
+</div></blockquote>
+</li>
+<li><p>B: Instrument settings</p>
+<blockquote>
+<div><p>Install <a class="reference internal" href="../../misc/glossary.html#term-instrument"><span class="xref std std-term">INSTRUMENT</span></a>.
+If yes it will install the instrument if not then it will not install the instrument. Currently only SPIRou is supported</p>
+</div></blockquote>
+</li>
+<li><p>C: Set up paths</p>
+<blockquote>
+<div><p>The first question will ask  whether to set up paths individually. If <cite>[Y]es</cite>
+it will allow you to set each path separately (i.e. for raw, tmp, reduced, calibDB etc). If <cite>[N]o</cite>
+you will just set one path and all folders (raw, tmp, reduced, calibDB etc)) will be created under this directory.</p>
+</div></blockquote>
+</li>
+<li><p>D: Setting the directory/directories</p>
+<blockquote>
+<div><p>Will prompt you to enter the directory path/paths (will ask you for each if you answered that paths be set up individually in step C above.</p>
+</div></blockquote>
+</li>
+<li><p>E: Clean install</p>
+<blockquote>
+<div><p>If you type [Y]es you will be prompted (later) to reset the directories this means any previous data in these directories will be removed. Note you can always say later to individual cases.</p>
+</div></blockquote>
+</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Resetting a directory will remove all files/sub-directories from within these folders</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A to E will repeat for all installable instruments (To step up just one use the <cite>–instrument</cite> argument</p>
+</div>
+</div>
+<div class="section" id="additional-options">
+<h3>Additional options<a class="headerlink" href="#additional-options" title="Permalink to this headline">¶</a></h3>
+<p>One will be prompted to give installation paths to various optional tools (currently <a class="reference internal" href="../../misc/glossary.html#term-ds9"><span class="xref std std-term">ds9</span></a>
+and <a class="reference internal" href="../../misc/glossary.html#term-pdflatex"><span class="xref std std-term">pdflatex</span></a>
+note the user will not be prompted if these were automatically found using the <cite>where</cite>
+command)</p>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
+</div>
+</div>
+<div class="section" id="updating-from-github">
+<span id="installation-update"></span><h2>Updating from github<a class="headerlink" href="#updating-from-github" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>Choose a branch (as in <a class="reference internal" href="#installation-choose-branch"><span class="std std-ref">Choose branch</span></a>)</p></li>
+<li><p>Update the branch (pull from github):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="p">{</span><span class="n">branch</span><span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update using the installation script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">setup</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">update</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This will use all current settings and update the</p>
+<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="using_apero_default.html" title="Using APERO with SPIRou"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../general_guide.html" title="General User documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.016 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>
