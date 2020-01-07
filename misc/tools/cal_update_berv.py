@@ -51,14 +51,11 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(**kwargs):
     """
-    Main function for cal_extract_spirou.py
+    Main function for cal_update_berv.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
+    :param kwargs: additional keyword arguments
 
-    :type directory: str
-    :type files: list[str]
+    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 

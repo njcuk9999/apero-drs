@@ -20,6 +20,8 @@ from apero.core import drs_log
 from apero import locale
 from apero.core import constants
 from apero.io import drs_data
+from apero.io import drs_lock
+
 
 # =============================================================================
 # Define variables
@@ -58,6 +60,7 @@ def reset_confirmation(params, name, directory=None):
     if directory is not None:
         # test if empty
         empty = is_empty(directory)
+        WLOG(params, '', 'Empty directory found.')
         if empty:
             return True
     # ----------------------------------------------------------------------
@@ -65,7 +68,11 @@ def reset_confirmation(params, name, directory=None):
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # Ask if user wants to reset
-    WLOG(params, '', TextEntry('40-502-00001', args=[name]), colour='yellow')
+    if name == 'log_fits':
+        WLOG(params, '', TextEntry('40-502-00011'), colour='yellow')
+    else:
+        WLOG(params, '', TextEntry('40-502-00001', args=[name]),
+             colour='yellow')
     if directory is not None:
         WLOG(params, '', '\t({0})'.format(directory), colour='yellow')
     # ----------------------------------------------------------------------
@@ -94,6 +101,9 @@ def reset_tmp_folders(params, log=True):
     tmp_dir = params['DRS_DATA_WORKING']
     # loop around files and folders in calib_dir
     remove_all(params, tmp_dir, log)
+    # remake path
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
 
 
 def reset_reduced_folders(params, log=True):
@@ -103,6 +113,9 @@ def reset_reduced_folders(params, log=True):
     red_dir = params['DRS_DATA_REDUC']
     # loop around files and folders in calib_dir
     remove_all(params, red_dir, log)
+    # remake path
+    if not os.path.exists(red_dir):
+        os.makedirs(red_dir)
 
 
 def reset_calibdb(params, log=True):
@@ -138,6 +151,9 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True,
     # loop around files and folders in calib_dir
     if empty_first:
         remove_all(params, db_dir, log)
+    # remake path
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path, log)
 
@@ -187,6 +203,9 @@ def reset_log(params, log=True):
     current_logfile = drs_log.get_logfilepath(WLOG, params)
     # loop around files and folders in reduced dir
     remove_all(params, log_dir, skipfiles=[current_logfile], log=log)
+    # remake path
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
 
 def reset_plot(params, log=True):
@@ -196,6 +215,9 @@ def reset_plot(params, log=True):
     plot_dir = params['DRS_DATA_PLOT']
     # loop around files and folders in reduced dir
     remove_all(params, plot_dir, log=log)
+    # remake path
+    if not os.path.exists(plot_dir):
+        os.makedirs(plot_dir)
 
 
 def reset_run(params, log=True):
@@ -204,6 +226,31 @@ def reset_run(params, log=True):
     reset_path = params['DRS_RESET_RUN_PATH']
     # loop around files and folders in reduced dir
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
+    # remake path
+    if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
+
+
+def reset_log_fits(params, log=True):
+    # need to find the log.fits files
+    logfiles = []
+    #   in the tmp folder
+    path = params['DRS_DATA_WORKING']
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
+                logfiles.append(os.path.join(root, filename))
+    #   in the red folder
+    path = params['DRS_DATA_REDUC']
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
+                logfiles.append(os.path.join(root, filename))
+    # remove these files
+    for logfile in logfiles:
+        if log:
+            WLOG(params, '', TextEntry('40-502-00004', args=[logfile]))
+        os.remove(logfile)
 
 
 def remove_all(params, path, log=True, skipfiles=None):
@@ -237,43 +284,7 @@ def remove_all(params, path, log=True, skipfiles=None):
     for filename in allfiles:
         remove_files(params, filename, log, skipfiles)
     # remove dirs
-    remove_subdirs(params, path, log, skipfiles)
-
-
-def remove_subdirs(params, path, log=True, skipfiles=None):
-    # deal with no skip files
-    if skipfiles is None:
-        skipfiles = []
-    # get all sub-directories within path
-    subdirs = glob.glob(os.path.join(path, '*'))
-    # loop around each sub directory
-    for subdir in subdirs:
-        # if in skip files then skip
-        if subdir in skipfiles:
-            continue
-        # if path is link skip
-        if os.path.islink(subdir):
-            WLOG(params, '', TextEntry('40-502-00008', args=[subdir]))
-            continue
-        # if path is file delete file
-        if os.path.isfile(subdir):
-            WLOG(params, '', TextEntry('40-502-00009', args=[subdir]))
-            # if debug just print that we are removing file
-            if DEBUG:
-                if not log:
-                    WLOG(params, '', TextEntry('40-502-00009', args=[subdir]))
-            # remove file
-            else:
-                os.remove(subdir)
-        # if there is no file remove tree of empty directories
-        if log:
-            WLOG(params, '', TextEntry('40-502-00010', args=[subdir]))
-        # if debug just print that we are removing file
-        if DEBUG:
-            print('\t\tRemoved {0}'.format(subdir))
-        # remove directories
-        else:
-            shutil.rmtree(subdir)
+    drs_lock.__remove_empty__(params, path, log=True)
 
 
 def remove_files(params, path, log=True, skipfiles=None):
@@ -297,7 +308,7 @@ def remove_files(params, path, log=True, skipfiles=None):
         WLOG(params, '', TextEntry('40-502-00004', args=[path]))
     # if in debug mode just log
     if DEBUG:
-        print('\t\tRemoved {0}'.format(path))
+        WLOG(params, '', '\t\tRemoved {0}'.format(path))
     # else remove file
     else:
         os.remove(path)

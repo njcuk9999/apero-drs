@@ -55,7 +55,7 @@ pcheck = core.pcheck
 # Everything else is controlled from recipe_definition
 def main(directory=None, files=None, **kwargs):
     """
-    Main function for cal_shape_master_spirou.py
+    Main function for cal_shape_spirou.py
 
     :param directory: string, the night name sub-directory
     :param files: list of strings or string, the list of fp files

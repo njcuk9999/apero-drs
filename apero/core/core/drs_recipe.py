@@ -96,6 +96,8 @@ class DrsRecipe(object):
         self.allowedfibers = None
         # shortname set to name initially
         self.shortname = str(self.name)
+        # recipe kind (for logging)
+        self.kind = None
         # save recipe module
         self.recipemod = None
         # import module
@@ -479,6 +481,8 @@ class DrsRecipe(object):
         self.allowedfibers = copy.deepcopy(recipe.allowedfibers)
         # shortname
         self.shortname = str(recipe.shortname)
+        # recipe kind (for logging)
+        self.kind = copy.deepcopy(recipe.kind)
         # import module
         self.module = self.module
         # output directory
@@ -686,16 +690,20 @@ class DrsRecipe(object):
         if values is None:
             return
         # if we have an optional argument
-        if '-' in arg.argname:
+        if '--' in arg.argname:
             strfmt = '{0}={1}'
         # if we have a positional argument
         else:
             strfmt = '{1}'
         # now add these arguments (as a string) to str_arg_list
-        if type(values) == list:
+        if isinstance(values, list):
+            # add the first argument
+            if '--' in arg.argname:
+                self.str_arg_list.append(arg.argname)
+            # add the rest as separate arguments
             for value in values:
-                strarg = [arg.argname, value]
-                self.str_arg_list.append(strfmt.format(*strarg))
+                # finally append the string to str_arg_list
+                self.str_arg_list.append(value)
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))

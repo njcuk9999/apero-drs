@@ -107,13 +107,22 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     return e2ds, flat, blaze, rms
 
 
-def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
+def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile,
+                              order_num, fiber, niter=2,):
+    # get function name
+    func_name = __NAME__ + '.calculate_blaze_flat_sinc()'
     # ----------------------------------------------------------------------
     # defnie the x positions
-    xpix = np.arange(len(e2ds))
+    xpix = np.arange(len(e2ds_ini))
     # ------------------------------------------------------------------
+
+    e2ds = mp.medfilt_1d(e2ds_ini,15)
+
     # region over which we will fit
     keep = np.isfinite(e2ds)
+    with warnings.catch_warnings(record=True) as _:
+        keep &= e2ds > 0.05 * np.nanmax(e2ds)
+
     # ------------------------------------------------------------------
     # guess of peak value, we do not take the max as there may be a
     #     hot/bad pix in the order
@@ -143,44 +152,72 @@ def calculate_blaze_flat_sinc(e2ds, peak_cut, nsigfit, badpercentile, niter=2):
     fit_guess = [thres, nthres * 2.0, pospeak, 0, 0, 0]
     # ------------------------------------------------------------------
     # we set reasonable bounds
-    bounds = [(thres * 0.5, nthres * 0.1, xlower, -np.inf, -np.inf, -1e-2),
-              (thres * 1.5, nthres * 10, xupper, np.inf, np.inf, 1e-2)]
-    # we optimize over pixels that are not NaN
-    popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                           bounds=bounds)
+    # bounds = [(thres * 0.5, 0.0, 0.0, -np.inf, -np.inf, -1e-2),
+    #           (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-2)]
+    # pass without DC and SLOPE
+    bounds = [ (0, 0.0, 0.0, -np.inf, -1e-20, -np.inf),
+               (thres * 1.5, np.inf, np.max(xpix), np.inf, 1e-20, np.inf)]
+    # set a counter
+    n_it = -1
     # ------------------------------------------------------------------
-    # set the model to zeros at first
-    blaze = np.zeros_like(e2ds)
+    # try to fit and if there is a failure catch it
+    try:
+        # we optimize over pixels that are not NaN
+        #popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
+        #                         method='dogbox', bounds=bounds)
+        # set the first guess for the full fit to the fit without slope and
+        #   quadratic terms
+        #fit_guess = popt0
+        # set the quad, cube and slope to zero (pass without DC and SLOPE)
+        #fit_guess[[3, 4, 5]] = 0.0
 
-    # now we iterate using a sigma clip
-    for _ in range(niter):
-        # we construct a model with the peak cut-off
+        # we optimize over pixels that are not NaN (this time with no bounds)
+        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
+                               bounds = bounds)
+        # ------------------------------------------------------------------
+        # set the model to zeros at first
         blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
                         popt[5], peak_cut=peak_cut)
-        # we find residuals to the fit and normalize them
-        residual = (e2ds - blaze)
-        residual /= mp.nanmedian(np.abs(residual))
-        # we keep only non-NaN model points (i.e. above peak_cut) and
-        # within +- Nsigfit dispersion elements
-        with warnings.catch_warnings(record=True) as _:
-            keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
-        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                               p0=fit_guess, bounds=bounds)
+
+        # # now we iterate using a sigma clip
+        # for n_it in range(niter):
+        #     # we construct a model with the peak cut-off
+        #     blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
+        #                     popt[5], peak_cut=peak_cut)
+        #     # we find residuals to the fit and normalize them
+        #     residual = (e2ds - blaze)
+        #     residual /= mp.nanmedian(np.abs(residual))
+        #     # we keep only non-NaN model points (i.e. above peak_cut) and
+        #     # within +- Nsigfit dispersion elements
+        #     with warnings.catch_warnings(record=True) as _:
+        #         keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
+        #     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+        #                            p0=fit_guess) #, bounds=bounds)
+    except RuntimeError as e:
+        strlist = 'amp={0} period={1} lin={2} quad={3} cube={4} slope={5}'
+        strguess = strlist.format(*fit_guess)
+        strlower = strlist.format(*bounds[0])
+        strupper = strlist.format(*bounds[1])
+        eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
+                 type(e), str(e), func_name]
+        WLOG(params, 'error', TextEntry('40-015-00009', args=eargs))
+        blaze = None
+
     # ----------------------------------------------------------------------
     # remove nan in the blaze also in the e2ds
     # ----------------------------------------------------------------------
     blazemask = np.isnan(blaze)
-    e2ds[blazemask] = np.nan
+    e2ds_ini[blazemask] = np.nan
     # calculate the flat
     with warnings.catch_warnings(record=True) as _:
-        flat = e2ds / blaze
+        flat = e2ds_ini / blaze
     # ----------------------------------------------------------------------
     # calculate the rms
     # ----------------------------------------------------------------------
     rms = mp.nanstd(flat[keep])
     # ----------------------------------------------------------------------
     # return values
-    return e2ds, flat, blaze, rms
+    return e2ds_ini, flat, blaze, rms
 
 
 def get_flat(params, header, fiber, filename=None):
@@ -350,7 +387,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00003', args=[blazefile.filename]))
     # write image to file
-    blazefile.write()
+    blazefile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(blazefile)
     # --------------------------------------------------------------
@@ -372,7 +409,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00004', args=[flatfile.filename]))
     # write image to file
-    flatfile.write()
+    flatfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(flatfile)
     # --------------------------------------------------------------
@@ -394,7 +431,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00005', args=[e2dsllfile.filename]))
     # write image to file
-    e2dsllfile.write()
+    e2dsllfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file

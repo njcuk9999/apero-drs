@@ -41,13 +41,14 @@ listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
+remake_doc = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
 recipes = [test, changelog, explorer, processing, listing, logstats,
-           remake_db, req_check, reset, validate]
+           remake_db, remake_doc, req_check, reset, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -97,6 +98,7 @@ test.inputtype = 'pp'
 test.extension = 'fits'
 test.description = Help['TEST_DESCRIPTION']
 test.epilog = Help['TEST_EXAMPLE']
+test.kind = 'test'
 test.set_arg(pos=0, **directory)
 test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
                files=[sf.pp_file], filelogic='inclusive',
@@ -110,8 +112,18 @@ test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
 changelog.name = 'apero_changelog.py'
 changelog.instrument = __INSTRUMENT__
 changelog.description = Help['CHANGELOG_DESCRIPTION']
+changelog.kind = 'tool'
 changelog.set_arg(pos=0, name='preview', dtype='bool',
                   helpstr=Help['PREVIEW_HELP'])
+
+# -----------------------------------------------------------------------------
+# apero_documentation.py
+# -----------------------------------------------------------------------------
+remake_doc.name = 'apero_documentation.py'
+remake_doc.instrument = __INSTRUMENT__
+# TODO: Move to language DB
+remake_doc.description = 'Re-make the apero documentation'
+remake_doc.kind = 'tool'
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -120,6 +132,7 @@ changelog.set_arg(pos=0, name='preview', dtype='bool',
 explorer.name = 'apero_explorer.py'
 explorer.instrument = __INSTRUMENT__
 explorer.description = Help['EXPLORER_DESCRIPTION']
+explorer.kind = 'tool'
 explorer.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['EXPLORER_INST_HEPL'],
                  options=['SPIROU', 'NIRPS'])
@@ -130,6 +143,7 @@ explorer.set_arg(pos=0, name='instrument', dtype='options',
 listing.name = 'apero_listing.py'
 listing.instrument = __INSTRUMENT__
 listing.description = Help['LISTING_DESC']
+listing.kind = 'tool'
 listing.set_arg(pos=0, name='instrument', dtype='options',
                 helpstr=Help['LISTING_HELP_INSTRUMENT'],
                 options=['SPIROU', 'NIRPS'])
@@ -145,6 +159,7 @@ listing.set_kwarg(name='--kind', dtype=str, default='raw',
 logstats.name = 'apero_log_stats.py'
 logstats.instrument = __INSTRUMENT__
 logstats.description = Help['LOGSTAT_DESC']
+logstats.kind = 'tool'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_arg(pos=0, name='instrument', dtype='options',
@@ -155,6 +170,21 @@ logstats.set_kwarg(name='--nightname', dtype=str, default='',
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
                   options=['tmp', 'red'],
                   helpstr=Help['LOGSTAT_HELP_KIND'])
+# TODO: add help string
+logstats.set_kwarg(name='--recipe', dtype=str, default='None',
+                   helpstr='Define a recipe name (the full python name) to'
+                           'filter all results by - this will change the '
+                           'analysis done on the log files')
+logstats.set_kwarg(name='--since', dtype=str, default='None',
+                   helpstr='Define a date and time for the earliest log. '
+                           'Must be in the form yyyy-mm-dd HH:MM:SS or '
+                           'yyyy-mm-dd (and the time will be assumed '
+                           'midnight).')
+logstats.set_kwarg(name='--before', dtype=str, default='None',
+                   helpstr='Define a date and time for the most recent log. '
+                           'Must be in the form yyyy-mm-dd HH:MM:SS or '
+                           'yyyy-mm-dd (and the time will be assumed '
+                           'midnight).')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
@@ -163,6 +193,7 @@ logstats.set_kwarg(**plot)
 remake_db.name = 'apero_mkdb.py'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = Help['REMAKE_DESC']
+remake_db.kind = 'tool'
 remake_db.set_arg(pos=0, name='instrument', dtype='options',
                   helpstr=Help['REMAKE_HELP_INSTRUMENT'],
                   options=['SPIROU', 'NIRPS'])
@@ -178,6 +209,7 @@ remake_db.set_kwarg(name='--kind', dtype='options',
 processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
 processing.description = Help['PROCESS_DESCRIPTION']
+processing.kind = 'processing'
 processing.set_arg(pos=0, name='instrument', dtype='options',
                    helpstr=Help['PROCESS_INST_HELP'],
                    options=['SPIROU', 'NIRPS'])
@@ -204,7 +236,7 @@ processing.set_kwarg(name='--test', dtype=str, default='None',
 req_check.name = 'apero_dependencies.py'
 req_check.instrument = __INSTRUMENT__
 req_check.description = Help['DEPENDENCIES_DESCRIPTION']
-
+req_check.kind = 'tool'
 
 # -----------------------------------------------------------------------------
 # apero_reset.py
@@ -212,6 +244,7 @@ req_check.description = Help['DEPENDENCIES_DESCRIPTION']
 reset.name = 'apero_reset.py'
 reset.instrument = __INSTRUMENT__
 reset.description = Help['RESET_DESCRIPTION']
+reset.kind = 'tool'
 reset.set_arg(pos=0, name='instrument', dtype='options',
               helpstr=Help['RESET_INST_HELP'], options=['SPIROU', 'NIRPS'])
 reset.set_kwarg(name='--log', dtype='bool', default=True,
@@ -226,6 +259,7 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
 validate.name = 'apero_validate.py'
 validate.instrument = __INSTRUMENT__
 validate.description = Help['VALIDATE_DESCRIPTION']
+validate.kind = 'tool'
 validate.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['VALIDATE_INST_HELP'],
                  options=['SPIROU', 'NIRPS'])

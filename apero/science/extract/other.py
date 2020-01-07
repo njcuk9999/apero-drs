@@ -242,6 +242,9 @@ def extract_files(params, recipe, infile, outfile, always_extract,
 
         # loop around fibers
         for fiber in fiber_types:
+            # log that we are reading file
+            wargs = [e2ds_files[fiber]]
+            WLOG(params, '', TextEntry('40-016-00023', args=wargs))
             # construct output key
             outkey = '{0}_{1}'.format(extract_type, fiber)
             # copy file to dictionary

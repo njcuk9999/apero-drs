@@ -304,10 +304,10 @@ class Logger:
         report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
         if type(message) is HelpEntry:
-            raw_message2 = msg_obj.get(self.d_helptext, report=report,
+            raw_message2 = msg_obj.get(self.d_helptext, report=True,
                                        reportlevel=key)
         else:
-            raw_message2 = msg_obj.get(self.d_textdict, report=report,
+            raw_message2 = msg_obj.get(self.d_textdict, report=True,
                                        reportlevel=key)
         # split by '\n'
         raw_messages2 = raw_message2.split('\n')
@@ -506,12 +506,15 @@ class RecipeLog:
     def __init__(self, name, params, level=0):
         # get the recipe name
         self.name = str(name)
-        self.defaultpath = str(params['DRS_DATA_MSG'])
-        self.logfitsfile = 'log.fits'
+        self.kind = str(params['DRS_RECIPE_KIND'])
+        self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
+        self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
         self.inputdir = str(params['INPATH'])
         self.outputdir = str(params['OUTPATH'])
         # set the pid
         self.pid = str(params['PID'])
+        self.htime = str(params['DATE_NOW'])
+        self.group = str(params['DRS_GROUP'])
         # set the night name directory
         self.directory = str(params['NIGHTNAME'])
         # get lof fits path
@@ -525,6 +528,7 @@ class RecipeLog:
         self.args = ''
         self.kwargs = ''
         self.skwargs = ''
+        self.runstring = ''
         # set that recipe started
         self.started = True
         # set the iteration
@@ -547,14 +551,18 @@ class RecipeLog:
 
     def copy(self, rlog):
         self.name = str(rlog.name)
+        self.kind = str(rlog.kind)
         self.defaultpath = str(rlog.defaultpath)
         self.inputdir = str(rlog.inputdir)
         self.outputdir = str(rlog.outputdir)
         self.pid = str(rlog.pid)
+        self.htime = str(rlog.htime)
+        self.group = str(rlog.group)
         self.directory = str(rlog.directory)
         self.logfitspath = str(rlog.logfitspath)
         self.lockfile = str(rlog.lockfile)
         self.log_file = str(rlog.log_file)
+        self.runstring = str(rlog.runstring)
         self.args = str(rlog.args)
         self.kwargs = str(rlog.kwargs)
         self.skwargs = str(rlog.skwargs)
@@ -570,15 +578,22 @@ class RecipeLog:
             return
         # get inputs
         inputs = params['INPUTS']
+        # start run string
+        if self.name.endswith('.py'):
+            self.runstring = '{0} '.format(self.name)
+        else:
+            self.runstring = '{0}.py '.format(self.name)
         # ------------------------------------------------------------------
         # deal with arguments
-        self.args = _input_str(inputs, rargs, kind='arg')
+        self.args = self._input_str(inputs, rargs, kind='arg')
         # ------------------------------------------------------------------
         # deal with kwargs
-        self.kwargs = _input_str(inputs, rkwargs, kind='kwargs')
+        self.kwargs = self._input_str(inputs, rkwargs, kind='kwargs')
         # ------------------------------------------------------------------
         # deal with special kwargs
-        self.skwargs = _input_str(inputs, rskwargs, kind='skwargs')
+        self.skwargs = self._input_str(inputs, rskwargs, kind='skwargs')
+        # strip the runstring
+        self.runstring.strip()
 
     def set_lock_func(self, func):
         self.lfunc = func
@@ -598,7 +613,7 @@ class RecipeLog:
         self.set.append(newlog)
         # whether to write (update) recipe log file
         if write:
-            newlog.write(params)
+            newlog.write_logfile(params)
         # return newlog (for use)
         return newlog
 
@@ -620,26 +635,92 @@ class RecipeLog:
 
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
 
     def no_qc(self, params, write=True):
         self.passed_qc = True
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
+
+    def add_error(self, params, errortype, errormsg, write=True):
+        self.errors += '"{0}":"{1}" '.format(errortype, errormsg)
+        # whether to write (update) recipe log file
+        if write:
+            self.write_logfile(params)
 
     def end(self, params, write=True):
 
         self.ended = True
         # whether to write (update) recipe log file
         if write:
-            self.write(params)
+            self.write_logfile(params)
 
-    def write(self, params):
+    def write_logfile(self, params):
         if self.lfunc is None:
-            return self._writer()
+            return 0
         else:
             return self.lfunc(params, self.lockfile, self._writer)
+
+    def _input_str(self, inputs, argdict, kind='arg'):
+        # setup input str
+        inputstr = ''
+        # deal with kind
+        if kind == 'arg':
+            prefix = ''
+        else:
+            prefix = '--'
+        # deal with arguments
+        for argname in argdict:
+            # get arg
+            arg = argdict[argname]
+            # strip prefix (may or may not have one)
+            argname = argname.strip(prefix)
+            # get input arg
+            iarg = inputs[argname.strip(prefix)]
+            # add prefix (add prefix whether it had one or not)
+            argname = prefix + argname
+            # deal with file arguments
+            if arg.dtype in ['file', 'files']:
+                if not isinstance(iarg, list):
+                    continue
+                # get string and drsfile
+                strfiles = iarg[0]
+                drsfiles = iarg[1]
+                # deal with having string (force to list)
+                if isinstance(strfiles, str):
+                    strfiles = [strfiles]
+                    drsfiles = [drsfiles]
+
+                # add argname to run string
+                if kind != 'arg':
+                    self.runstring += '{0} '.format(argname)
+                # loop around fiels and add them
+                for f_it in range(len(strfiles)):
+                    # add to list
+                    fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
+                    inputstr += '{0}[1]={2}[{3}] '.format(*fargs)
+                    # add to run string
+                    if strfiles[f_it] in ['None', None, '']:
+                        continue
+                    else:
+                        basefile = os.path.basename(strfiles[f_it])
+                        self.runstring += '{0} '.format(basefile)
+            else:
+                inputstr += '{0}={1} '.format(argname, iarg)
+                # skip Nones
+                if iarg in ['None', None, '']:
+                    continue
+                # add to run string
+                if isinstance(iarg, str):
+                    iarg = os.path.basename(iarg)
+                if kind != 'arg':
+                    self.runstring += '{0}={1} '.format(argname, iarg)
+                else:
+                    self.runstring += '{0} '.format(iarg)
+
+        # return the input string
+        return inputstr.strip()
 
     # private methods
     def _get_write_dir(self):
@@ -670,7 +751,10 @@ class RecipeLog:
     def _make_row(self):
         row = OrderedDict()
         row['RECIPE'] = self.name
+        row['KIND'] = self.kind
         row['PID'] = self.pid
+        row['HTIME'] = self.htime
+        row['GROUP'] = self.group
         row['LEVEL'] = self.level
         row['SUBLEVEL'] = self.level_iteration
         row['LEVEL_CRIT'] = self.level_criteria
@@ -678,6 +762,7 @@ class RecipeLog:
         row['OUTPATH'] = self.outputdir
         row['DIRECTORY'] = self.directory
         row['LOGFILE'] = self.log_file
+        row['RUNSTRING'] = self.runstring
         row['ARGS'] = self.args
         row['KWARGS'] = self.kwargs
         row['SKWARGS'] = self.skwargs
@@ -707,11 +792,12 @@ class RecipeLog:
         # check to see if table already exists
         if os.path.exists(writepath):
             try:
+                print('RecipeLog: Reading file: {0}'.format(writepath))
                 table = Table.read(writepath)
-            except:
+            except Exception as e:
                 # TODO: move to language database
-                emsg = 'RecipeLogError: Cannot read file {0}'
-                eargs = [writepath]
+                emsg = 'RecipeLogError: Cannot read file {0} \n\t {1}: {2}'
+                eargs = [writepath, type(e), str(e)]
                 raise DrsError(emsg.format(*eargs))
         else:
             table = None
@@ -764,12 +850,14 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # write to disk
         try:
+            print('RecipeLog: Writing file: {0}'.format(writepath))
             mastertable.write(writepath, format='fits', overwrite=True)
         except Exception as e:
             # TODO: move to language database
             emsg = 'RecipeLogError: Cannot write file {0} \n\t Error {1}: {2}'
             eargs = [writepath, type(e), str(e)]
             raise DrsError(emsg.format(*eargs))
+
 
 # =============================================================================
 # Define our instance of wlog
@@ -1093,7 +1181,7 @@ def warninglogger(p, w, funcname=None):
                 displayed_warnings.append(wmsg)
 
 
-def get_logfilepath(logobj, params):
+def get_logfilepath(logobj, params, use_group=True):
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
     generates an ConfigError exception.
@@ -1105,13 +1193,18 @@ def get_logfilepath(logobj, params):
     """
     # -------------------------------------------------------------------------
     # deal with group
-    if 'DRS_GROUP' in params:
+    if not use_group:
+        group = None
+        reset = True
+    elif 'DRS_GROUP' in params:
         group = params['DRS_GROUP']
+        reset = False
     else:
         group = None
+        reset = False
     # -------------------------------------------------------------------------
     # get dir_data_msg key
-    dir_data_msg = get_drs_data_msg(params, group)
+    dir_data_msg = get_drs_data_msg(params, group, reset=reset)
     # -------------------------------------------------------------------------
     # add log file to path
     lpath = logobj.pconstant.LOG_FILE_NAME(params, dir_data_msg)
@@ -1398,22 +1491,42 @@ def _clean_message(message):
     return message
 
 
-def get_drs_data_msg(params, group=None):
+def get_drs_data_msg(params, group=None, reset=False):
+    # if we have a full path in params we use this
+    if 'DRS_DATA_MSG_FULL' in params and not reset:
+        # check that path exists - if it does skip next steps
+        if os.path.exists(params['DRS_DATA_MSG_FULL']):
+            return params['DRS_DATA_MSG_FULL']
+    # ----------------------------------------------------------------------
     # get from params
     dir_data_msg = params.get('DRS_DATA_MSG', None)
     # ----------------------------------------------------------------------
-    # deal with a group directory
+    # only sort by recipe kind if group is None
+    if ('DRS_RECIPE_KIND' is not None) and (group is None):
+        kind = params['DRS_RECIPE_KIND'].lower()
+        dir_data_msg = os.path.join(dir_data_msg, kind)
+    # if we have a group then put it in processing folder
+    elif group is not None:
+        dir_data_msg = os.path.join(dir_data_msg, 'processing')
+    else:
+        dir_data_msg = os.path.join(dir_data_msg, 'other')
+    # ----------------------------------------------------------------------
+    # deal with a group directory (groups must be in sub-directory)
     if (group is not None) and (dir_data_msg is not None):
-        # check that dir_data_msg exists before joining
-        if os.path.exists(dir_data_msg):
-            # join to group name
-            dir_data_msg = os.path.join(dir_data_msg, group)
-            # try to create group directory
-            try:
-                os.makedirs(dir_data_msg)
-            # if we have an exception continue
-            except Exception as _:
-                pass
+        # join to group name
+        dir_data_msg = os.path.join(dir_data_msg, group)
+    # ----------------------------------------------------------------------
+    # add night name dir (if available) - put into sub-directory
+    if ('NIGHTNAME' in params) and (dir_data_msg is not None):
+        if params['NIGHTNAME'] not in [None, 'None', '']:
+            dir_data_msg = os.path.join(dir_data_msg, params['NIGHTNAME'])
+    # ----------------------------------------------------------------------
+    # try to create directory
+    if not os.path.exists(dir_data_msg):
+        try:
+            os.makedirs(dir_data_msg)
+        except Exception:
+            pass
     # ----------------------------------------------------------------------
     # if None use we have to create it
     if dir_data_msg is None:
@@ -1446,43 +1559,7 @@ def get_drs_data_msg(params, group=None):
 # =============================================================================
 # Define Recipe Log functions
 # =============================================================================
-def _input_str(inputs, argdict, kind='arg'):
-    # setup input str
-    inputstr = ''
-    # deal with kind
-    if kind == 'arg':
-        prefix = ''
-    else:
-        prefix = '--'
-    # deal with arguments
-    for argname in argdict:
-        # get arg
-        arg = argdict[argname]
-        # strip prefix (may or may not have one)
-        argname = argname.strip(prefix)
-        # get input arg
-        iarg = inputs[argname.strip(prefix)]
-        # add prefix (add prefix whether it had one or not)
-        argname = prefix + argname
-        # deal with file arguments
-        if arg.dtype in ['file', 'files']:
-            if not isinstance(iarg, list):
-                continue
-            # get string and drsfile
-            strfiles = iarg[0]
-            drsfiles = iarg[1]
-            # deal with having string (force to list)
-            if isinstance(strfiles, str):
-                strfiles = [strfiles]
-                drsfiles = [drsfiles]
-            for f_it in range(len(strfiles)):
-                # add to list
-                fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
-                inputstr += '{0}[1]={2}[{3}] '.format(*fargs)
-        else:
-            inputstr += '{0}={1} '.format(argname, iarg)
-    # return the input string
-    return inputstr.strip()
+
 
 
 # =============================================================================

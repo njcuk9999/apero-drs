@@ -156,7 +156,7 @@ def __main__(recipe, params):
             wargs = [thermal_files[fiber].filename]
             WLOG(params, '', TextEntry('40-016-00022', args=wargs))
             # write thermal files
-            thermal_files[fiber].write()
+            thermal_files[fiber].write_file()
 
         # ------------------------------------------------------------------
         # Update the calibration database
