@@ -51,9 +51,11 @@ DRS_DATE = Const('DATE', value='{0}', dtype=str,
                  source=__NAME__)
 """
 # define documentation properties
-DOC_CONFPATH = '../documentation/conf.py'
+DOC_CONFPATH = '../documentation/working/conf.py'
 DOC_CONF_PREFIX = 'release = '
-DOC_CHANGELOGPATH = '../documentation/dev/changelog.rst'
+DOC_INDEXPATH = '../documentation/working/index.rst'
+DOC_INDEX_PREFIX = 'Latest version: '
+DOC_CHANGELOGPATH = '../documentation/working/dev/changelog.rst'
 
 
 # =============================================================================
@@ -161,10 +163,12 @@ def __main__(recipe, params):
     # get doc paths
     doc_confpath = constants.get_relative_folder(package, DOC_CONFPATH)
     doc_clogpath = constants.get_relative_folder(package, DOC_CHANGELOGPATH)
-
+    doc_indxpath = constants.get_relative_folder(package, DOC_INDEXPATH)
+    # update documentation (conf.py)
     strversion = '\'{0}\'\n'.format(version)
-    # update documentation
     drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)
+    # update documentation (index.py)
+    drs_changelog.update_file(doc_indxpath, DOC_INDEX_PREFIX, version)
     # copy change log to path
     shutil.copy(filename, doc_clogpath)
     # ----------------------------------------------------------------------
