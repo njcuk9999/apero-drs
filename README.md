@@ -37,17 +37,21 @@
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.6.010
+- developer (tested) V0.6.016
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for 
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
+    - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
+      obj_pol_spirou.py, obj_spec_spirou.py
     ```
-- working (untested) V0.6.010
+- working (untested) V0.6.016
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
+    - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
+      obj_pol_spirou.py, obj_spec_spirou.py
     ```
 ---
 ---
@@ -241,6 +245,7 @@ constant min/max/dtypes
 - deal with all python warnings
 - add EA mask generation from templates
 - add EA template matching 
+- add exposure meter recipes
 
 ---
 
