@@ -28,7 +28,7 @@ CONSTANTS_PATH = 'core.constants'
 INSTALL_PATH = 'tools.module.setup.drs_installation'
 # set modules required
 REQ_MODULES = dict()
-REQ_MODULES['astropy'] = [2, 0, 3]
+REQ_MODULES['astropy'] = [3, 2, 0]
 REQ_MODULES['matplotlib'] = [2, 1, 2]
 REQ_MODULES['numpy'] = [1, 14, 0]
 REQ_MODULES['scipy'] = [1, 0, 0]
