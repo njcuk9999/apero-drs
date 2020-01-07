@@ -124,7 +124,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             wargs = [orderpsfile.filename]
             WLOG(params, '', TextEntry('40-013-00024', args=wargs))
             # save for use later (as .npy)
-            orderpsfile.write(params)
+            orderpsfile.write_file(params)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
         orderprofilefiles[fiber] = orderpfilename
@@ -716,7 +716,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfile.filename]
     WLOG(params, '', TextEntry('40-016-00005', args=wargs))
     # write image to file
-    e2dsfile.write()
+    e2dsfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
     # ----------------------------------------------------------------------
@@ -740,7 +740,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfffile.filename]
     WLOG(params, '', TextEntry('40-016-00006', args=wargs))
     # write image to file
-    e2dsfffile.write()
+    e2dsfffile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
     # ----------------------------------------------------------------------
@@ -762,7 +762,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsllfile.filename]
     WLOG(params, '', TextEntry('40-016-00007', args=wargs))
     # write image to file
-    e2dsllfile.write()
+    e2dsllfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------
@@ -788,7 +788,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = ['wave', s1dwfile.filename]
     WLOG(params, '', TextEntry('40-016-00010', args=wargs))
     # write image to file
-    s1dwfile.write()
+    s1dwfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(s1dwfile)
     # ----------------------------------------------------------------------
@@ -814,7 +814,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = ['velocity', s1dvfile.filename]
     WLOG(params, '', TextEntry('40-016-00010', args=wargs))
     # write image to file
-    s1dvfile.write()
+    s1dvfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(s1dvfile)
     # ----------------------------------------------------------------------

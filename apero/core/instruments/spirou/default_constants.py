@@ -7,8 +7,8 @@ Created on 2019-01-17
 """
 from apero.core.instruments.default.default_constants import *
 
-# TODO: Note: If variables are not showing up MUST CHECK __all__ definition
-# TODO:    in import * module
+# Note: If variables are not showing up MUST CHECK __all__ definition
+#       in import * module
 
 __NAME__ = 'core.instruments.spirou.default_constants.py'
 
@@ -1070,8 +1070,12 @@ WAVE_HC_TFIT_MINTOT_LINES.value = 200
 #     we force that the zeroth element of the xpix of the wavelegnth
 #     grid is fitted with a 12th order polynomial as a function of
 #     order number (format = string list separated by commas)
+# these values are too high and lead to stability problems in the fit
+# WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
+
 WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
-WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
+WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 8, 4, 1, 1'
+
 
 # Number of times to loop through the sigma clip for triplet fit
 WAVE_HC_TFIT_SIGCLIP_NUM = WAVE_HC_TFIT_SIGCLIP_NUM.copy(__NAME__)
@@ -1901,6 +1905,10 @@ PLOT_LOC_FINDING_ORDERS.value = False
 PLOT_LOC_IM_SAT_THRES = PLOT_LOC_IM_SAT_THRES.copy(__NAME__)
 PLOT_LOC_IM_SAT_THRES.value = True
 
+# turn on the localisation fit residuals plot (warning: done many times)
+PLOT_LOC_FIT_RESIDUALS = PLOT_LOC_FIT_RESIDUALS.copy(__NAME__)
+PLOT_LOC_FIT_RESIDUALS.value = False
+
 # turn on the order number vs rms debug plot
 PLOT_LOC_ORD_VS_RMS = PLOT_LOC_ORD_VS_RMS.copy(__NAME__)
 PLOT_LOC_ORD_VS_RMS.value = True
@@ -2033,6 +2041,19 @@ PLOT_WAVE_FP_MULTI_ORDER.value = True
 PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
 PLOT_WAVE_FP_SINGLE_ORDER.value = True
 
+# turn on the wave lines hc/fp expected vs measured debug plot
+#  (will plot once for hc once for fp)
+PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
+PLOT_WAVEREF_EXPECTED.value = True
+
+# turn on the wave per night iteration debug plot
+PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)
+PLOT_WAVENIGHT_ITERPLOT.value = True
+
+# turn on the wave per night diff debug plot
+PLOT_WAVENIGHT_DIFFPLOT = PLOT_WAVENIGHT_DIFFPLOT.copy(__NAME__)
+PLOT_WAVENIGHT_DIFFPLOT.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False
@@ -2080,6 +2101,14 @@ PLOT_CCF_RV_FIT_LOOP.value = True
 # turn on the ccf rv fit debug plot (for the mean order value)
 PLOT_CCF_RV_FIT = PLOT_CCF_RV_FIT.copy(__NAME__)
 PLOT_CCF_RV_FIT.value = True
+
+# turn on the ccf spectral order vs wavelength debug plot
+PLOT_CCF_SWAVE_REF = PLOT_CCF_SWAVE_REF.copy(__NAME__)
+PLOT_CCF_SWAVE_REF.value = False
+
+# turn on the ccf photon uncertainty debug plot
+PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
+PLOT_CCF_PHOTON_UNCERT.value = True
 
 # turn on the polar continuum debug plot
 PLOT_POLAR_CONTINUUM = PLOT_POLAR_CONTINUUM.copy(__NAME__)

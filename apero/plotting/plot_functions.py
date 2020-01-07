@@ -50,7 +50,7 @@ class Graph:
                  description=None, figsize=None, dpi=None):
         self.name = name
         # set kind
-        if kind in ['debug', 'summary']:
+        if kind in ['debug', 'summary', 'show']:
             self.kind = kind
         else:
             self.kind = None
@@ -140,6 +140,53 @@ class Graph:
         return fig, gs
 
 
+class CrossCursor(object):
+    def __init__(self, frame, color='r', alpha=0.5):
+        self.frame = frame
+        # the horizontal line
+        self.lx = frame.axhline(color=color, alpha=alpha)
+        # the vertical line
+        self.ly = frame.axvline(color=color, alpha=alpha)
+        # set up the text box
+        bbox = dict(facecolor='white', edgecolor='blue', pad=5.0)
+        # text location in axes coords
+        self.txt = frame.text(0.8, 0.9, '', horizontalalignment='center',
+                              verticalalignment='center', color='blue',
+                              transform=frame.transAxes, bbox=bbox)
+        # start off the text without values
+        self.txt.set_text('x=NaN, y=NaN')
+
+
+    def mouse_move(self, event):
+        if not event.inaxes:
+            return
+        # get the new x and y locations
+        x, y = event.xdata, event.ydata
+        # update the line positions
+        self.lx.set_ydata(y)
+        self.ly.set_xdata(x)
+        # set the text
+        self.txt.set_text('x={0:.2f}, y={1:.2f}'.format(x, y))
+        # update canvas
+        self.frame.figure.canvas.draw()
+
+
+class ClickCursor(object):
+    def __init__(self, fig, frame):
+        self.fig = fig
+        self.frame = frame
+
+    def mouse_click(self, event):
+        if self.fig.canvas.manager.toolbar._active:
+            return
+        if not event.inaxes:
+            return
+        # get the new x and y locations
+        x, y = event.xdata, event.ydata
+        # print the position of the cursor
+        print('PLOT x={0:.2f}, y={1:.2f}'.format(x, y))
+
+
 # =============================================================================
 # Define user graph functions
 # =============================================================================
@@ -212,6 +259,14 @@ def remove_first_last_ticks(frame, axis='x'):
         frame.set_xticklabels(yticklabels)
     return frame
 
+
+def add_grid(frame):
+    frame.minorticks_on()
+    # Don't allow the axis to be on top of your data
+    frame.grid(which='major', linestyle='-', linewidth='0.5', color='black',
+               alpha=0.75, zorder=1)
+    frame.grid(which='minor', linestyle=':', linewidth='0.5', color='black',
+                alpha=0.5, zorder=0)
 
 # =============================================================================
 # Define test plotting functions
@@ -610,6 +665,39 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_loc_fit_residuals(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    axes_grid1 = plotter.axes_grid1
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = kwargs['x']
+    y = kwargs['y']
+    xo = kwargs['xo']
+    rnum = kwargs['rnum']
+    kind = kwargs['kind']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # plot residuals of data - fit
+    frame.plot(x, y, marker='_')
+    # set title and limits
+    frame.set(title='{0} fit residual of order {1}'.format(kind, rnum),
+              xlim=(0, len(xo)), ylim=(np.min(y), np.max(y)))
+    # ------------------------------------------------------------------
+    # update suffix
+    suffix = 'kind{0}_order{1}'.format(kind, rnum)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_loc_ord_vs_rms(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -825,6 +913,8 @@ loc_finding_orders = Graph('LOC_FINDING_ORDERS', kind='debug',
                            func=plot_loc_finding_orders)
 loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
                          func=plot_loc_im_sat_thres)
+loc_fit_residuals = Graph('LOC_FIT_RESIDUALS', kind='debug',
+                         func=plot_loc_fit_residuals)
 loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
                        func=plot_loc_ord_vs_rms)
 loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
@@ -842,6 +932,7 @@ sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
 # add to definitions
 definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
                 loc_im_sat_thres, loc_ord_vs_rms, loc_check_coeffs,
+                loc_fit_residuals,
                 sum_loc_im_sat_thres, sum_plot_loc_im_corner]
 
 
@@ -1866,14 +1957,14 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
         # plot frame1
         frame1.scatter(wave[good], dv[good], s=5, color=colour)
         # plot frame2
-        frame2.scatter(1.0 / rms[good], dv[good], s=5, color=colour)
+        frame2.scatter(np.log10(1.0 / rms[good]), dv[good], s=5, color=colour)
         # plot frame3
         frame3.scatter(xgau[good] % 1, dv[good], s=5, color=colour)
         # plot frame4
         frame4.scatter(ew[good], dv[good], s=5, color=colour)
     # set up labels
     frame1.set(xlabel='Wavelength [nm]', ylabel='dv [km/s]')
-    frame2.set(xlabel='Line SNR estimate', ylabel='dv [km/s]')
+    frame2.set(xlabel='log_{10}(Line SNR estimate)', ylabel='dv [km/s]')
     frame3.set(xlabel='Modulo pixel position', ylabel='dv [km/s]')
     frame4.set(xlabel='e-width of fitted line', ylabel='dv [km/s]')
     # add title
@@ -2388,13 +2479,17 @@ def plot_wave_fp_multi_order(plotter, graph, kwargs):
         # get colour and style from order parity
         col_plot = col[np.mod(order_num, 2)]
         lty_plot = lty[np.mod(order_num, 2)]
+
+        # log hc data
+        with warnings.catch_warnings(record=True) as _:
+            loghcdata = np.log10(hcdata[order_num])
         # plot hc spectra
-        frame.plot(wave_map[order_num], hcdata[order_num])
+        frame.plot(wave_map[order_num], loghcdata)
         # plot used HC lines
-        frame.vlines(hc_ll_plot, 0, np.nanmax(hcdata[order_num]),
+        frame.vlines(hc_ll_plot, 0, np.nanmax(loghcdata),
                      color=col_plot, linestyles=lty_plot)
         # set axis labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='Normalised flux',
+    frame.set(xlabel='Wavelength [nm]', ylabel='log_{10}(Normalised flux)',
               title='HC spectra + used HC lines')
     # ------------------------------------------------------------------
     # wrap up using plotter
@@ -2432,7 +2527,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # get the maximum point for this order
-        maxpoint = np.max(hcdata[order_num])
+        maxpoint = mp.nanmax(hcdata[order_num])
         # plot order and flux
         frame.plot(wave[order_num], hcdata[order_num], label='HC Spectrum')
         # loop around lines in order
@@ -2440,10 +2535,14 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
             # get x and y
             x = all_lines[order_num][it][0] + all_lines[order_num][it][3]
             ymaxi = all_lines[order_num][it][2]
+            # log ydata
+            with warnings.catch_warnings(record=True) as _:
+                logydata = np.log10(ymaxi)
             # plot lines to their corresponding amplitude
-            frame.vlines(x, 0, ymaxi, color='m', label='fitted lines')
+            frame.vlines(x, 0, logydata, color='m', label='fitted lines')
             # plot lines to the top of the figure
-            frame.vlines(x, 0, maxpoint, color='gray', linestyles='dotted')
+            frame.vlines(x, 0, np.log10(maxpoint), color='gray',
+                         linestyles='dotted')
         # plot
         ulegend(frame, plotter, loc=0)
         # set limits and title
@@ -2456,6 +2555,183 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
+
+
+def plot_waveref_expected(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    orders = kwargs['orders']
+    wavemap = kwargs['wavemap']
+    diff = kwargs['diff']
+    fiber = kwargs['fiber']
+    fibtype = kwargs['fibtype']
+    nbo = kwargs['nbo']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    for order_num in nbo:
+        # get order mask
+        omask = order_num == orders
+        # plot points
+        frame.scatter(wavemap[omask], diff[omask])
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference')
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'mode{0}_fiber{1}'.format(fibtype, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wavenight_iterplot(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    plotdata1 = kwargs['plotdata'][0]
+    plotdata2 = kwargs['plotdata'][1]
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2, sharex=True,
+                                   sharey=True)
+    # ------------------------------------------------------------------
+    # get x and y data for first set
+    x1, y1 = plotdata1['fp'], plotdata1['dl_fp']
+    x2, y2 = plotdata1['hc'], plotdata1['dl_hc']
+    # plot fp data
+    frames[0].plot(x1, y1, label='FP')
+    frames[0].plot(x2, y2, label='HC')
+    # ------------------------------------------------------------------
+    # get x and y data for second set
+    x3, y3 = plotdata2['fp'], plotdata2['dl_fp']
+    x4, y4 = plotdata2['hc'], plotdata2['dl_hc']
+    # plot fp data
+    frames[1].plot(x3, y3, label='FP')
+    frames[1].plot(x4, y4, label='HC')
+    # ------------------------------------------------------------------
+    # add legends
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=0)
+    # ------------------------------------------------------------------
+    # set labels
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='$\Delta$ Wavelength (nm)',
+                  title='First iteration')
+    frames[1].set(xlabel='Wavelength [nm]', ylabel='$\Delta$ Wavelength (nm)',
+                  title='Last iteration')
+    # ------------------------------------------------------------------
+    # sort out y limits
+    ylim1 = np.nanpercentile(y1, [1, 99])
+    ylim2 = np.nanpercentile(y2, [1, 99])
+    ylim3 = np.nanpercentile(y3, [1, 99])
+    ylim4 = np.nanpercentile(y4, [1, 99])
+    # first calculate the lower and upper limits for all sets
+    ylower = np.min(list(ylim1) + list(ylim2) + list(ylim3) + list(ylim4))
+    yupper = np.max(list(ylim1) + list(ylim2) + list(ylim3) + list(ylim4))
+    # add some margin
+    ydiff = yupper - ylower
+    ylim = [ylower - 0.2 * ydiff, yupper + 0.2 * ydiff]
+    # set ylim
+    frames[0].set_ylim(*ylim)
+    frames[1].set_ylim(*ylim)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wavenight_diffplot(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    xhc, yhc = kwargs['xhc'], kwargs['yhc']
+    xfp, yfp = kwargs['xfp'], kwargs['yfp']
+    model = kwargs['model']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # add data to plot
+    frame.scatter(xhc, yhc, color='g', marker='o', label='Binned HC')
+    frame.scatter(xfp, yfp, color='r', marker='o', label='Binned FP')
+    frame.plot(xfp, model, color='k', label='Model')
+    # add legend and labels
+    frame.legend(loc=0)
+    frame.set(xlabel='Wavelength [nm]', ylabel='dv [m/s]', ylim=[-25, 25])
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wavenight_histplot(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = kwargs['x']
+    y = kwargs['y']
+    nbpix = kwargs['nbpix']
+    fpbinx = kwargs.get('fpbinx', 100)
+    fpbiny = kwargs.get('fpbiny', 10)
+    fplinebin = kwargs.get('fplinebin', 200)
+    ampsize = kwargs.get('ampsize', 256)
+    maxdv = kwargs.get('maxdv', 50)
+    dvstep = kwargs.get('dvstep', 10)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharey=True)
+    # ------------------------------------------------------------------
+    # plot 1 - full range
+    # ------------------------------------------------------------------
+    # get all dv values within dv range
+    keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
+    # plot the full range
+    frames[0].hist2d(x[keep], y[keep], bins=[fpbinx, fpbiny])
+    # loop and plot bins
+    for pix in np.arange(0, nbpix, fplinebin):
+        # get valid pixels for this bin
+        good = (x > pix) & (x < (pix + fplinebin))
+        # plot bin points
+        frames[0].plot(mp.nanmedian(x[good]), mp.nanmedian(y[good]), color='r',
+                       marker='o')
+    # set labels and title
+    frames[0].set(xlabel='pixel', ylabel='dv [m/s]', title='Pixel Historgram')
+    # ------------------------------------------------------------------
+    # plot 2 - mod amp range
+    # ------------------------------------------------------------------
+    # get all dv values within dv range
+    keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
+    # work out x mod ampsize
+    xmod = x % ampsize
+    # plot mod ampsize
+    frames[1].hist2d(xmod[keep], y[keep], bins=[fpbinx, fpbiny])
+    # loop around bins of amp size
+    for pix in np.arange(0, ampsize, dvstep):
+        # get valid pixels for this bin
+        good = (xmod > pix) & (xmod < (pix + dvstep))
+        # plot bin points
+        frames[0].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
+                       color='r', marker='o')
+    # set labels and title
+    frames[0].set(xlabel='pixel % {0}'.format(ampsize),
+                  ylabel='dv [m/s]',
+                  title='Pixel modulo {0} Historgram'.format(ampsize))
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
 
 
 wave_hc_guess = Graph('WAVE_HC_GUESS', kind='debug',
@@ -2506,6 +2782,13 @@ wave_fp_multi_order = Graph('WAVE_FP_MULTI_ORDER', kind='debug',
                             func=plot_wave_fp_multi_order)
 wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
                              func=plot_wave_fp_single_order)
+waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
+                         func=plot_waveref_expected)
+wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
+                           func=plot_wavenight_iterplot)
+wavenight_diffplot = Graph('WAVENIGHT_DIFFPLOT', kind='debug',
+                           func=plot_wavenight_diffplot)
+
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
@@ -2514,7 +2797,8 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
                 wave_fp_multi_order, wave_fp_single_order,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
-                sum_wave_fp_ipt_cwid_1mhc]
+                sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
+                wavenight_diffplot]
 
 
 # =============================================================================
@@ -2961,11 +3245,91 @@ def plot_ccf_rv_fit(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_ccf_swave_ref(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wavemap = kwargs['wavemap']
+    image = kwargs['image']
+    fiber = kwargs['fiber']
+    nbo = kwargs['nbo']
+    # optional arguments
+    order = kwargs.get('order', None)
+    orders = kwargs.get('orders', None)
+    # ------------------------------------------------------------------
+    if order is None and orders is None:
+        order_gen = plotter.plotloop(np.arange(nbo))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    # else we check whether orders is set
+    elif orders is not None:
+        order_gen = list(orders)
+    # else we just deal with the order specified
+    elif order is not None:
+        order_gen = [order]
+    else:
+        order_gen = [0]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frame = graph.set_figure(plotter)
+        # ------------------------------------------------------------------
+        # plot fits
+        frame.plot(wavemap[order_num], image[order_num])
+        # set title labels limits
+        title = 'spectral order {0} fiber {1}'
+        frame.set(xlabel='Wavelength [nm]', ylabel='flux',
+                  title=title.format(order_num, fiber))
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_ccf_photon_uncert(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = kwargs.get('x')
+    y = kwargs.get('y')
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # plot fits
+    frame.plot(x, y)
+    # set title labels limits
+    title = 'Photon noise uncertainty versus spectral order'
+    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
+              title=title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 ccf_rv_fit_loop = Graph('CCF_RV_FIT_LOOP', kind='debug', func=plot_ccf_rv_fit)
 ccf_rv_fit = Graph('CCF_RV_FIT', kind='debug', func=plot_ccf_rv_fit)
+ccf_swave_ref = Graph('CCF_SWAVE_REF', kind='debug', func=plot_ccf_swave_ref)
+ccf_photon_uncert = Graph('CCF_PHOTON_UNCERT', kind='debug',
+                          func=plot_ccf_photon_uncert)
+sum_ccf_rv_fit = Graph('SUM_CCF_RV_FIT', kind='summary', func=plot_ccf_rv_fit)
+sum_ccf_photon_uncert = Graph('SUM_CCF_PHOTON_UNCERT', kind='summary',
+                          func=plot_ccf_photon_uncert)
 
 # add to definitions
-definitions += [ccf_rv_fit, ccf_rv_fit_loop]
+definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
+                ccf_photon_uncert, sum_ccf_rv_fit, sum_ccf_photon_uncert]
 
 
 # =============================================================================
@@ -3155,6 +3519,177 @@ polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 
 # add to definitions
 definitions += [polar_continuum, polar_results, polar_stokes_i, polar_lsd]
+
+
+# =============================================================================
+# Define tool functions
+# =============================================================================
+def plot_logstats_bar(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    started = kwargs['started']
+    passed = kwargs['passed']
+    ended = kwargs['ended']
+    urecipes = kwargs['urecipes']
+    # make arrays
+    x = np.arange(0, len(urecipes))
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    # ------------------------------------------------------------------
+    width = 0.3
+    frames[0].bar(x - width, started, color='b', label='started',
+                  align='center', width=width, zorder=5, alpha=0.875)
+    frames[0].bar(x, passed, color='r', label='passed QC',
+                  align='center', width=width, zorder=5, alpha=0.875)
+    frames[0].bar(x + width, ended, color='g', label='finished',
+                  align='center', width=width, zorder=5, alpha=0.875)
+    frames[0].set_xticks(x, minor=False)
+    frames[0].set_xticklabels(urecipes, rotation=90)
+    frames[0].legend(loc=0)
+    frames[0].set_ylabel('Number of recipes')
+    add_grid(frames[0])
+    # ------------------------------------------------------------------
+    width = 0.4
+    frames[1].bar(x - width / 2, 100 * (started - passed)/started,
+                  color='r', label='failed QC', align='center',
+                  width=width, zorder=5, alpha=0.875)
+    frames[1].bar(x + width / 2, 100 * (started - ended)/started,
+                  color='g', label='unfinished (error)', align='center',
+                  width=width, zorder=5, alpha=0.875)
+    frames[1].set_xticks(x)
+    frames[1].set_xticklabels(urecipes, rotation=90)
+    frames[1].legend(loc=0)
+    frames[1].set_ylabel('Percent of total recipes [%]')
+    add_grid(frames[1])
+    # adjust size
+    fig.subplots_adjust(hspace=0, wspace=0.05, bottom=0.3, top=0.98,
+                        left=0.05, right=0.99)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
+
+# add to definitions
+definitions += [logstats_bar]
+
+
+# =============================================================================
+# Define other plotting functions
+# =============================================================================
+def plot_image(plotter, graph, kwargs):
+    """
+    Generic image plotter
+
+    :param plotter:
+    :param graph:
+    :param kwargs:
+    :return:
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    image = kwargs['image']
+    origin = kwargs.get('origin', 'lower')
+    aspect = kwargs.get('aspect', 'auto')
+    vmin = kwargs.get('vmin', None)
+    vmax = kwargs.get('vmax', None)
+    xlabel = kwargs.get('xlabel', None)
+    ylabel = kwargs.get('ylabel', None)
+    title = kwargs.get('title', None)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # add cursor
+    cursor = ClickCursor(fig, frame)
+    fig.canvas.mpl_connect('button_press_event', cursor.mouse_click)
+    # ------------------------------------------------------------------
+    # plot image
+    frame.imshow(image, origin=origin, aspect=aspect, vmin=vmin,
+                 vmax=vmax)
+    # ------------------------------------------------------------------
+    # adjust axes
+    if xlabel is not None:
+        frame.set_xlabel(xlabel)
+    if ylabel is not None:
+        frame.set_ylabel(ylabel)
+    if title is not None:
+        frame.set_title(title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_plot(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # copy kwargs
+    kwargs = dict(kwargs)
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    x = np.array(kwargs['x'])
+    del kwargs['x']
+    y = np.array(kwargs['y'])
+    del kwargs['y']
+    # ------------------------------------------------------------------
+    # we don't want fiber in kwargs
+    if 'fiber' in kwargs:
+        del kwargs['fiber']
+
+    # ------------------------------------------------------------------
+    # get the xlabel and clean from keyword args
+    xlabel = kwargs.get('xlabel', None)
+    if 'xlabel' in kwargs:
+        del kwargs['xlabel']
+    # get the ylabel and clean from keyword args
+    ylabel = kwargs.get('ylabel', None)
+    if 'ylabel' in kwargs:
+        del kwargs['ylabel']
+    # get the title (and clean from keyword args)
+    title = kwargs.get('title', None)
+    if 'title' in kwargs:
+        del kwargs['title']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # add cursor
+    cursor = ClickCursor(fig, frame)
+    fig.canvas.mpl_connect('button_press_event', cursor.mouse_click)
+    # ------------------------------------------------------------------
+    # plot image
+    frame.plot(x, y, **kwargs)
+    # ------------------------------------------------------------------
+    # adjust axes
+    if xlabel is not None:
+        frame.set_xlabel(xlabel)
+    if ylabel is not None:
+        frame.set_ylabel(ylabel)
+    if title is not None:
+        frame.set_title(title)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+general_image = Graph('IMAGE', kind='show', func=plot_image)
+general_plot = Graph('PLOT', kind='show', func=plot_plot)
+
+# add to definitions
+definitions += [general_image, general_plot]
+
 
 
 # =============================================================================

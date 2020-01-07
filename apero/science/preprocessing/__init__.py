@@ -10,6 +10,7 @@ Version 0.0.1
 """
 from apero.science.preprocessing import identification
 from apero.science.preprocessing import detector
+from apero.science.preprocessing import general
 
 __all__ = []
 
@@ -31,6 +32,8 @@ median_filter_dark_amps = detector.median_filter_dark_amp
 median_one_over_f_noise = detector.median_one_over_f_noise
 
 test_for_corrupt_files = detector.test_for_corrupt_files
+
+quality_control = general.quality_control
 
 # =============================================================================
 # End of code

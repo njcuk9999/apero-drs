@@ -210,7 +210,12 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
 # =============================================================================
 # Define master dark functions
 # =============================================================================
-def construct_dark_table(params, filenames):
+def construct_dark_table(params, filenames, **kwargs):
+    # define function
+    func_name = __NAME__ + '.construct_dark_table()'
+    # get parameters from params
+    time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
+                        func_name)
     # define storage for table columns
     dark_time, dark_exp, dark_pp_version = [], [], []
     basenames, nightnames, dprtypes = [], [], []
@@ -243,12 +248,27 @@ def construct_dark_table(params, filenames):
         dark_cass_temp.append(float(cass_temp))
         dark_humidity.append(float(humidity))
         dprtypes.append(str(dprtype))
+
+
+    # ----------------------------------------------------------------------
+    # match files by date
+    # ----------------------------------------------------------------------
+    # log progress
+    WLOG(params, '', TextEntry('40-011-10002', args=[time_thres]))
+    # match files by time
+    matched_id = drs_path.group_files_by_time(params, np.array(dark_time),
+                                              time_thres)
+
+    # ----------------------------------------------------------------------
+    # Make table
+    # ----------------------------------------------------------------------
     # convert lists to table
     columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
-               'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE']
+               'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE',
+               'GROUP']
     values = [nightnames, basenames, filenames, dark_time, dark_exp,
               dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
-              dprtypes]
+              dprtypes, matched_id]
     # make table using columns and values
     dark_table = drs_table.make_table(params, columns, values)
     # return table
@@ -258,23 +278,13 @@ def construct_dark_table(params, filenames):
 def construct_master_dark(params, recipe, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
     # get constants from p
-    time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
-                        func_name)
     med_size = pcheck(params, 'DARK_MASTER_MED_SIZE', 'med_size', kwargs,
                       func_name)
-
     # get col data from dark_table
     filenames = dark_table['FILENAME']
     dark_times = dark_table['MJDATE']
     filetypes = dark_table['DPRTYPE']
-
-    # ----------------------------------------------------------------------
-    # match files by date
-    # ----------------------------------------------------------------------
-    # log progress
-    WLOG(params, '', TextEntry('40-011-10002', args=[time_thres]))
-    # match files by time
-    matched_id = drs_path.group_files_by_time(params, dark_times, time_thres)
+    matched_id = dark_table['GROUP']
     # get the most recent position
     lastpos = np.argmax(dark_times)
     # load up the most recent dark
@@ -307,7 +317,9 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
             # read data
             data_it = drs_fits.read(params, filename)
             # add to cube
-            cube.append(data_it)
+            cube.append(np.array(data_it))
+            # delete fits table
+            del data_it
         # median dark cube
         with warnings.catch_warnings(record=True) as _:
             groupdark = mp.nanmedian(cube, axis=0)
@@ -372,12 +384,10 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
         with warnings.catch_warnings(record=True) as _:
             lf_dark = mp.nanmedian(tmp, axis=0)
         dark_cube1[it] -= lf_dark
-
         # clean out
         del bindark
         del tmp
         del lf_dark
-
     # -------------------------------------------------------------------------
     # log process
     WLOG(params, 'info', TextEntry('40-011-10008'))
@@ -584,7 +594,7 @@ def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-011-00012', args=[outfile.filename]))
     # write image to file
-    outfile.write()
+    outfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # return outfile

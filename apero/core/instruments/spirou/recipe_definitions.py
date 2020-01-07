@@ -139,6 +139,8 @@ cal_shape = DrsRecipe(__INSTRUMENT__)
 cal_shape_master = DrsRecipe(__INSTRUMENT__)
 cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_wave = DrsRecipe(__INSTRUMENT__)
+cal_wave_master = DrsRecipe(__INSTRUMENT__)
+cal_wave_night = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
@@ -154,7 +156,8 @@ cal_update_berv = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
-           cal_shape, cal_shape_master, cal_thermal, cal_wave,
+           cal_shape, cal_shape_master, cal_thermal,
+           cal_wave, cal_wave_master, cal_wave_night,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
            obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec_spirou,
            obj_pol_spirou, test, cal_update_berv]
@@ -207,12 +210,13 @@ test.inputtype = 'pp'
 test.extension = 'fits'
 test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
+test.kind = 'test'
 test.set_arg(pos=0, **directory)
-test.set_kwarg(name='-filelist1', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
                files=[sf.pp_dark_dark_int, sf.pp_flat_flat],
                filelogic='inclusive',
                helpstr=Help['TEST_FILELIST1_HELP'], required=True)
-test.set_kwarg(name='-filelist2', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
                files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
                required=True)
 test.set_kwarg(**plot)
@@ -238,6 +242,7 @@ cal_pp.inputtype = 'raw'
 cal_pp.extension = 'fits'
 cal_pp.description = Help['PREPROCESS_DESC']
 cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
+cal_pp.kind = 'recipe'
 cal_pp.set_outputs(PP_FILE=sf.pp_file)
 cal_pp.set_arg(pos=0, **directory)
 cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
@@ -257,14 +262,15 @@ cal_badpix.inputtype = 'pp'
 cal_badpix.extension = 'fits'
 cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
+cal_badpix.kind = 'recipe'
 cal_badpix.set_outputs(BADPIX=sf.out_badpix, BACKMAP=sf.out_backmap)
 cal_badpix.set_debug_plots('BADPIX_MAP')
 cal_badpix.set_summary_plots('SUM_BADPIX_MAP')
 cal_badpix.set_arg(pos=0, **directory)
-cal_badpix.set_kwarg(name='-flatfiles', dtype='files', files=[sf.pp_flat_flat],
+cal_badpix.set_kwarg(name='--flatfiles', dtype='files', files=[sf.pp_flat_flat],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
-cal_badpix.set_kwarg(name='-darkfiles', dtype='files',
+cal_badpix.set_kwarg(name='--darkfiles', dtype='files',
                      files=[sf.pp_dark_dark_tel, sf.pp_dark_dark_int],
                      nargs='+', filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
@@ -287,6 +293,7 @@ cal_dark.intputtype = 'pp'
 cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
+cal_dark.kind = 'recipe'
 cal_dark.set_outputs(DARK_INT_FILE=sf.out_dark_int,
                      DARK_TEL_FIEL=sf.out_dark_tel,
                      DARK_SKY_FILE=sf.out_dark_sky)
@@ -315,6 +322,7 @@ cal_dark_master.intputtype = 'pp'
 cal_dark_master.extension = 'fits'
 cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
+cal_dark_master.kind = 'recipe'
 cal_dark_master.set_outputs(DARK_MASTER_FILE=sf.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str,
                           default='DARK_DARK_TEL, DARK_DARK_INT',
@@ -334,6 +342,7 @@ cal_loc.inputtype = 'pp'
 cal_loc.extension = 'fits'
 cal_loc.description = Help['LOC_DESC']
 cal_loc.epilog = Help['LOC_EXAMPLE']
+cal_loc.kind = 'recipe'
 cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     LOCO_FILE=sf.out_loc_loco,
                     FWHM_FILE=sf.out_loc_fwhm,
@@ -341,7 +350,8 @@ cal_loc.set_outputs(ORDERP_FILE=sf.out_loc_orderp,
                     DEBUG_BACK=sf.debug_back)
 cal_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
                         'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
-                        'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS')
+                        'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS',
+                        'LOC_FIT_RESIDUALS')
 cal_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
@@ -372,6 +382,7 @@ cal_shape_master.inputtype = 'pp'
 cal_shape_master.extension = 'fits'
 cal_shape_master.description = Help['SHAPE_DESC']
 cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
+cal_shape_master.kind = 'recipe'
 cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
                              DXMAP_FILE=sf.out_shape_dxmap,
                              DYMAP_FILE=sf.out_shape_dymap,
@@ -385,11 +396,11 @@ cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
-cal_shape_master.set_kwarg(name='-hcfiles', dtype='files',
+cal_shape_master.set_kwarg(name='--hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
-cal_shape_master.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(**add_db)
@@ -417,6 +428,7 @@ cal_shape.inputtype = 'pp'
 cal_shape.extension = 'fits'
 cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
+cal_shape.kind = 'recipe'
 cal_shape.set_outputs(LOCAL_SHAPE_FILE=sf.out_shape_local,
                       SHAPEL_IN_FP_FILE=sf.out_shapel_debug_ifp,
                       SHAPEL_OUT_FP_FILE=sf.out_shapel_debug_ofp,
@@ -453,6 +465,7 @@ cal_ff.inputtype = 'pp'
 cal_ff.extension = 'fits'
 cal_ff.description = Help['FLAT_DESC']
 cal_ff.epilog = Help['FLAT_EXAMPLE']
+cal_ff.kind = 'recipe'
 cal_ff.set_outputs(FLAT_FILE=sf.out_ff_flat,
                    BLAZE_FILE=sf.out_ff_blaze,
                    E2DSLL_FILE=sf.out_ext_e2dsll,
@@ -495,8 +508,8 @@ cal_thermal.inputtype = 'pp'
 cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
-# TODO: Need to add THERMALS_FILE once thermal code can handle it
-# TODO:    (Need to correct Sky lines)
+cal_thermal.kind = 'recipe'
+# TODO: Need to add out_thermal_e2ds_sky
 cal_thermal.set_outputs(THERMAL_E2DS_FILE=sf.out_ext_e2dsff,
                         THERMALI_FILE=sf.out_thermal_e2ds_int,
                         THERMALT_FILE=sf.out_thermal_e2ds_tel)
@@ -538,6 +551,7 @@ cal_extract.inputtype = 'pp'
 cal_extract.extension = 'fits'
 cal_extract.description = Help['EXTRACT_DESC']
 cal_extract.epilog = Help['EXTRACT_EXAMPLE']
+cal_extract.kind = 'recipe'
 cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         E2DSFF_FILE=sf.out_ext_e2dsff,
                         E2DSLL_FILE=sf.out_ext_e2dsll,
@@ -583,7 +597,7 @@ cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# cal_WAVE_E2DS_spirou
+# cal_wave_spirou
 # -----------------------------------------------------------------------------
 cal_wave.name = 'cal_wave_spirou.py'
 cal_wave.shortname = 'WAVE'
@@ -594,6 +608,7 @@ cal_wave.inputtype = 'pp'
 cal_wave.extension = 'fits'
 cal_wave.description = Help['WAVE_DESC']
 cal_wave.epilog = Help['WAVE_EXAMPLE']
+cal_wave.kind = 'recipe'
 cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                      WAVE_HCLL=sf.out_wave_hcline,
                      WAVE_HCRES=sf.out_wave_hcres,
@@ -612,14 +627,15 @@ cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                          'WAVE_FP_SINGLE_ORDER',
                          'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
-                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP')
+                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP',
+                           'SUM_CCF_RV_FIT')
 cal_wave.set_arg(pos=0, **directory)
-cal_wave.set_kwarg(name='-hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+cal_wave.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                    nargs='+', filelogic='exclusive', required=True,
                    helpstr=Help['WAVE_HCFILES_HELP'], default=[])
 # note required is False (so we don't need fpfiles but reprocess is True
 #    so reprocessing script will fill both hc and fp files
-cal_wave.set_kwarg(name='-fpfiles', dtype='files', files=[sf.pp_fp_fp],
+cal_wave.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
                    nargs='+', filelogic='exclusive', reprocess=True,
                    helpstr=Help['WAVE_FPFILES_HELP'], default=[])
 cal_wave.set_kwarg(**add_db)
@@ -641,10 +657,125 @@ cal_wave.set_kwarg(**shapexfile)
 cal_wave.set_kwarg(**shapeyfile)
 cal_wave.set_kwarg(**shapelfile)
 cal_wave.set_kwarg(**wavefile)
-cal_wave.set_kwarg(name='-hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
+cal_wave.set_kwarg(name='--hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
                    options=['0'], default_ref='WAVE_MODE_HC')
-cal_wave.set_kwarg(name='-fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
+cal_wave.set_kwarg(name='--fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
                    options=['0', '1'], default_ref='WAVE_MODE_FP')
+
+# -----------------------------------------------------------------------------
+# cal_wave_master
+# -----------------------------------------------------------------------------
+cal_wave_master.name = 'cal_wave_master_spirou.py'
+cal_wave_master.shortname = 'WAVE'
+cal_wave_master.instrument = __INSTRUMENT__
+cal_wave_master.outputdir = 'reduced'
+cal_wave_master.inputdir = 'tmp'
+cal_wave_master.inputtype = 'pp'
+cal_wave_master.extension = 'fits'
+cal_wave_master.description = Help['WAVE_DESC']
+cal_wave_master.epilog = Help['WAVE_EXAMPLE']
+cal_wave_master.kind = 'recipe'
+cal_wave_master.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
+                            WAVE_HCLL=sf.out_wave_hcline,
+                            WAVE_HCRES=sf.out_wave_hcres,
+                            WAVE_HCMAP=sf.out_wave_hc,
+                            WAVE_FPMAP=sf.out_wave_fp,
+                            WAVE_MAP=sf.out_wave_master,
+                            WAVE_FPRESTAB=sf.out_wave_res_table,
+                            WAVE_FPLLTAB=sf.out_wave_ll_table,
+                            WAVE_HCLIST=sf.out_wave_hclist_master,
+                            WAVE_FPLIST=sf.out_wave_fplist_master)
+cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
+                                'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
+                                'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
+                                'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
+                                'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
+                                'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
+                                'WAVE_FP_IPT_CWID_1MHC',
+                                'WAVE_FP_IPT_CWID_LLHC',
+                                'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
+                                'WAVE_FP_SINGLE_ORDER',
+                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
+                                'WAVEREF_EXPECTED')
+cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
+                                  'SUM_WAVE_LITTROW_CHECK',
+                                  'SUM_WAVE_LITTROW_EXTRAP',
+                                  'SUM_CCF_RV_FIT')
+cal_wave_master.set_arg(pos=0, **directory)
+cal_wave_master.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+                          nargs='+', filelogic='exclusive', required=True,
+                          helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+cal_wave_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                          nargs='+', filelogic='exclusive', required=True,
+                          helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+cal_wave_master.set_kwarg(**add_db)
+cal_wave_master.set_kwarg(**badfile)
+cal_wave_master.set_kwarg(**dobad)
+cal_wave_master.set_kwarg(**backsub)
+cal_wave_master.set_kwarg(**blazefile)
+cal_wave_master.set_kwarg(default=True, **combine)
+cal_wave_master.set_kwarg(**darkfile)
+cal_wave_master.set_kwarg(**dodark)
+cal_wave_master.set_kwarg(**fiber)
+cal_wave_master.set_kwarg(**flipimage)
+cal_wave_master.set_kwarg(**fluxunits)
+cal_wave_master.set_kwarg(**locofile)
+cal_wave_master.set_kwarg(**orderpfile)
+cal_wave_master.set_kwarg(**plot)
+cal_wave_master.set_kwarg(**resize)
+cal_wave_master.set_kwarg(**shapexfile)
+cal_wave_master.set_kwarg(**shapeyfile)
+cal_wave_master.set_kwarg(**shapelfile)
+cal_wave_master.set_kwarg(**wavefile)
+cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
+                          helpstr=Help['HCMODE_HELP'], options=['0'],
+                          default_ref='WAVE_MODE_HC')
+cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
+                          helpstr=Help['FPMODE_HELP'], options=['0', '1'],
+                          default_ref='WAVE_MODE_FP')
+
+# -----------------------------------------------------------------------------
+# cal_wave_night
+# -----------------------------------------------------------------------------
+cal_wave_night.name = 'cal_wave_night_spirou.py'
+cal_wave_night.shortname = 'WAVE'
+cal_wave_night.instrument = __INSTRUMENT__
+cal_wave_night.outputdir = 'reduced'
+cal_wave_night.inputdir = 'tmp'
+cal_wave_night.inputtype = 'pp'
+cal_wave_night.extension = 'fits'
+cal_wave_night.description = Help['WAVE_DESC']
+cal_wave_night.epilog = Help['WAVE_EXAMPLE']
+cal_wave_night.kind = 'recipe'
+cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff)
+cal_wave_night.set_debug_plots('PLOT_WAVENIGHT_ITERPLOT', 'WAVENIGHT_DIFFPLOT')
+cal_wave_night.set_summary_plots()
+cal_wave_night.set_arg(pos=0, **directory)
+cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
+                         nargs='+', filelogic='exclusive', required=True,
+                         helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+cal_wave_night.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                         nargs='+', filelogic='exclusive', required=True,
+                         helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+cal_wave_night.set_kwarg(**add_db)
+cal_wave_night.set_kwarg(**badfile)
+cal_wave_night.set_kwarg(**dobad)
+cal_wave_night.set_kwarg(**backsub)
+cal_wave_night.set_kwarg(**blazefile)
+cal_wave_night.set_kwarg(default=True, **combine)
+cal_wave_night.set_kwarg(**darkfile)
+cal_wave_night.set_kwarg(**dodark)
+cal_wave_night.set_kwarg(**fiber)
+cal_wave_night.set_kwarg(**flipimage)
+cal_wave_night.set_kwarg(**fluxunits)
+cal_wave_night.set_kwarg(**locofile)
+cal_wave_night.set_kwarg(**orderpfile)
+cal_wave_night.set_kwarg(**plot)
+cal_wave_night.set_kwarg(**resize)
+cal_wave_night.set_kwarg(**shapexfile)
+cal_wave_night.set_kwarg(**shapeyfile)
+cal_wave_night.set_kwarg(**shapelfile)
+cal_wave_night.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -668,9 +799,11 @@ cal_ccf.inputtype = 'reduced'
 cal_ccf.extension = 'fits'
 cal_ccf.description = Help['CCF_DESC']
 cal_ccf.epilog = Help['CCF_EXAMPLE']
+cal_ccf.kind = 'recipe'
 cal_ccf.set_outputs(CCF_RV=sf.out_ccf_fits)
-cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-cal_ccf.set_summary_plots()
+cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
+                        'CCF_PHOTON_UNCERT')
+cal_ccf.set_summary_plots('SUM_CCF_PHOTON_UNCERT', 'SUM_CCF_RV_FIT')
 cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
@@ -702,6 +835,7 @@ obj_mk_tellu.inputtype = 'reduced'
 obj_mk_tellu.extension = 'fits'
 obj_mk_tellu.description = Help['MKTELL_DESC']
 obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
+obj_mk_tellu.kind = 'recipe'
 obj_mk_tellu.set_outputs(TELLU_CONV=sf.out_tellu_conv,
                          TELLU_TRANS=sf.out_tellu_trans)
 obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2')
@@ -727,6 +861,7 @@ obj_mk_tellu_db.outputdir = 'reduced'
 obj_mk_tellu_db.inputdir = 'reduced'
 obj_mk_tellu_db.inputtype = 'reduced'
 obj_mk_tellu_db.extension = 'fits'
+obj_mk_tellu_db.kind = 'recipe'
 obj_mk_tellu_db.description = Help['MKTELLDB_DESC']
 obj_mk_tellu_db.epilog = Help['MKTELLDB_EXAMPLE']
 obj_mk_tellu_db.set_outputs()
@@ -757,6 +892,7 @@ obj_fit_tellu.inputtype = 'reduced'
 obj_fit_tellu.extension = 'fits'
 obj_fit_tellu.description = Help['FTELLU_DESC']
 obj_fit_tellu.epilog = Help['FTELLU_EXAMPLE']
+obj_fit_tellu.kind = 'recipe'
 obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           TELLU_OBJ=sf.out_tellu_obj,
                           SC1D_W_FILE=sf.out_tellu_sc1d_w,
@@ -793,6 +929,7 @@ obj_fit_tellu_db.inputtype = 'reduced'
 obj_fit_tellu_db.extension = 'fits'
 obj_fit_tellu_db.description = Help['FTELLUDB_DESC']
 obj_fit_tellu_db.epilog = Help['FTELLUDB_EXAMPLE']
+obj_fit_tellu_db.kind = 'recipe'
 obj_fit_tellu_db.set_outputs()
 obj_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
                            helpstr=Help['FTELLUDB_CORES'])
@@ -824,6 +961,7 @@ obj_mk_template.inputtype = 'reduced'
 obj_mk_template.extension = 'fits'
 obj_mk_template.description = Help['MKTEMP_DESC']
 obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
+obj_mk_template.kind = 'recipe'
 obj_mk_template.set_outputs(TELLU_TEMP=sf.out_tellu_template,
                             TELLU_BIGCUBE=sf.out_tellu_bigcube,
                             TELLU_BIGCUBE0=sf.out_tellu_bigcube0,
@@ -833,11 +971,11 @@ obj_mk_template.set_debug_plots('EXTRACT_S1D')
 obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D')
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=Help['MKTEMP_OBJNAME_HELP'])
-obj_mk_template.set_kwarg(name='-filetype', dtype=str,
+obj_mk_template.set_kwarg(name='--filetype', dtype=str,
                           default_ref='MKTEMPLATE_FILETYPE',
                           helpstr=Help['MKTEMP_FILETYPE'],
                           options=['EXT_E2DS', 'EXT_E2DS_FF'])
-obj_mk_template.set_kwarg(name='-fiber', dtype=str,
+obj_mk_template.set_kwarg(name='--fiber', dtype=str,
                           default_ref='MKTEMPLATE_FIBER_TYPE',
                           helpstr=Help['MKTEMP_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
@@ -858,6 +996,7 @@ pol_spirou.inputtype = 'reduced'
 pol_spirou.extension = 'fits'
 pol_spirou.description = Help['FTELLU_DESC']
 pol_spirou.epilog = Help['FTELLU_EXAMPLE']
+pol_spirou.kind = 'recipe'
 pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
                        POL_NULL1=sf.out_pol_null1,
                        POL_NULL2=sf.out_pol_null2,
@@ -896,6 +1035,7 @@ obj_spec_spirou.inputtype = 'reduced'
 obj_spec_spirou.extension = 'fits'
 obj_spec_spirou.description = ''
 obj_spec_spirou.epilog = ''
+obj_spec_spirou.kind = 'recipe'
 obj_spec_spirou.set_arg(pos=0, **directory)
 obj_spec_spirou.set_arg(name='files', dtype='files', pos='1+',
                         files=[sf.pp_file],
@@ -940,6 +1080,7 @@ cal_update_berv.inputtype = 'reduced'
 cal_update_berv.extension = 'fits'
 cal_update_berv.description = Help['FTELLU_DESC']
 cal_update_berv.epilog = Help['FTELLU_EXAMPLE']
+cal_update_berv.kind = 'misc'
 cal_update_berv.set_outputs()
 cal_update_berv.set_debug_plots()
 cal_update_berv.set_kwarg(**plot)
@@ -1103,19 +1244,19 @@ calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
 tellu_run = drs_recipe.DrsRunSequence('telluric_run', __INSTRUMENT__)
 # extract science
 tellu_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.pp_obj_dark, sf.pp_obj_fp])
+              files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # other telluric recipes
 tellu_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              files=[sf.out_ext_e2dsff], fiber='AB',
+              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 tellu_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              files=[sf.out_ext_e2dsff], fiber='AB',
+              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 tellu_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-                arguments=dict(objname='TELLURIC_TARGETS'))
+              fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+              arguments=dict(objname='TELLURIC_TARGETS'))
 tellu_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # science run (for trigger)

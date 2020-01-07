@@ -45,7 +45,7 @@ TextDict = locale.drs_text.TextDict
 # Everything else is controlled from recipe_definition
 def main(instrument=None, **kwargs):
     """
-    Main function for cal_dark_spirou.py
+    Main function for apero_validate.py
 
     :param directory: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process

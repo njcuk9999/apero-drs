@@ -351,7 +351,6 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
 def quality_control(params):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ------------------------------------------------------------------
     # TODO: Needs quality control doing
     # add to qc header lists
@@ -422,7 +421,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
     # write image to file
-    badpixfile.write()
+    badpixfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(badpixfile)
     # ----------------------------------------------------------------------
@@ -444,7 +443,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-012-00014', args=[backmapfile.filename]))
     # write image to file
-    backmapfile.write()
+    backmapfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(backmapfile)
     # return output files

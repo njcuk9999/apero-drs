@@ -397,7 +397,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         wargs = [out_tellu_conv.filename]
         WLOG(params, '', TextEntry('40-019-00002', args=wargs))
         # save
-        out_tellu_conv.write(params)
+        out_tellu_conv.write_file(params)
 
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
@@ -1025,7 +1025,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save_')
         # write to npy file
         abso_npy.data = abso
-        abso_npy.write(params)
+        abso_npy.write_file(params)
     # ----------------------------------------------------------------------
     # log the absorption cube
     # ----------------------------------------------------------------------
@@ -2143,13 +2143,15 @@ def mk_tellu_quality_control(params, tprops, infile, **kwargs):
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
     else:
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
-    return qc_params
+    return qc_params, passed
 
 
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
@@ -2227,7 +2229,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-019-00011', args=[transfile.filename]))
     # write image to file
-    transfile.write()
+    transfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(transfile)
     # ------------------------------------------------------------------
@@ -2269,13 +2271,15 @@ def fit_tellu_quality_control(params, infile, **kwargs):
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         WLOG(params, 'info', TextEntry('40-005-10001'))
+        passed = 1
     else:
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
-    return qc_params
+    return qc_params, passed
 
 
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
@@ -2370,7 +2374,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-019-00023', args=[corrfile.filename]))
     # write image to file
-    corrfile.write()
+    corrfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(corrfile)
     # ------------------------------------------------------------------
@@ -2400,7 +2404,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     wargs = ['wave', sc1dwfile.filename]
     WLOG(params, '', TextEntry('40-019-00024', args=wargs))
     # write image to file
-    sc1dwfile.write()
+    sc1dwfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(sc1dwfile)
     # ------------------------------------------------------------------
@@ -2423,7 +2427,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     wargs = ['velocity', sc1dvfile.filename]
     WLOG(params, '', TextEntry('40-019-00024', args=wargs))
     # write image to file
-    sc1dvfile.write()
+    sc1dvfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(sc1dvfile)
 
@@ -2445,7 +2449,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # log that we are saving recon e2ds file
     WLOG(params, '', TextEntry('40-019-00025', args=[reconfile.filename]))
     # write image to file
-    reconfile.write()
+    reconfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(reconfile)
     # ------------------------------------------------------------------
@@ -2468,7 +2472,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     wargs = ['wave', rc1dwfile.filename]
     WLOG(params, '', TextEntry('40-019-00026', args=wargs))
     # write image to file
-    rc1dwfile.write()
+    rc1dwfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(rc1dwfile)
     # ------------------------------------------------------------------
@@ -2491,7 +2495,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     wargs = ['velocity', rc1dvfile.filename]
     WLOG(params, '', TextEntry('40-019-00026', args=wargs))
     # write image to file
-    rc1dvfile.write()
+    rc1dvfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(rc1dvfile)
     # ------------------------------------------------------------------

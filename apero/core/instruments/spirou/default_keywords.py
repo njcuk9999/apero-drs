@@ -8,9 +8,8 @@ Created on 2019-01-17
 from apero.core.instruments.default.default_keywords import *
 from astropy import units as uu
 
-# TODO: Note: If variables are not showing up MUST CHECK __all__ definition
-# TODO:    in import * module
-
+# Note: If variables are not showing up MUST CHECK __all__ definition
+#       in import * module
 __NAME__ = 'config.instruments.spirou.default_keywords.py'
 
 # -----------------------------------------------------------------------------

@@ -128,6 +128,10 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # ------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
+        # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
@@ -144,6 +148,8 @@ def __main__(recipe, params):
             if 'OBJNAME' in skip_conditions[0]:
                 wargs = skip_conditions[2]
                 WLOG(params, 'warning', TextEntry('10-016-00013', args=wargs))
+            # write log here
+            log1.writelog()
             # skip this file
             continue
         # ------------------------------------------------------------------
@@ -191,6 +197,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # loop around fiber types
         for fiber in fibertypes:
+            # ------------------------------------------------------------------
+            # add level to recipe log
+            log2 = log1.add_level(params, 'fiber', fiber)
+            # ------------------------------------------------------------------
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]
             WLOG(params, 'info', TextEntry('40-016-00014', args=wargs))
@@ -265,6 +275,8 @@ def __main__(recipe, params):
             # Quality control
             # --------------------------------------------------------------
             qc_params, passed = extract.qc_extraction(params, eprops)
+            # update recipe log
+            log2.add_qc(params, qc_params, passed)
 
             # --------------------------------------------------------------
             # write files
@@ -307,6 +319,10 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             extract.extract_summary(recipe, params, qc_params, e2dsfile,
                                     shapelocal, eprops, fiber)
+            # ------------------------------------------------------------------
+            # update recipe log file
+            # ------------------------------------------------------------------
+            log2.end(params)
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)

@@ -69,11 +69,22 @@ clean = latex.clean
 # Define plotting class
 # =============================================================================
 class Plotter:
-    def __init__(self, params, recipe=None):
+    def __init__(self, params, recipe=None, mode=None):
         self.params = params
         self.recipe = recipe
-        self.recipename = '{0} ({1})'.format(recipe.name, recipe.shortname)
-        self.plotoption = params['DRS_PLOT']
+
+        if recipe is None:
+            self.recipename = 'Unknown'
+            self.used_command = 'None'
+        else:
+            self.recipename = '{0} ({1})'.format(recipe.name, recipe.shortname)
+            self.used_command = self.recipe.used_command
+        # deal with plot mode
+        if mode is None:
+            self.plotoption = params['DRS_PLOT']
+        else:
+            self.plotoption = mode
+
         self.names = OrderedDict()
         self.plot_switches = OrderedDict()
         self.has_debugs = False
@@ -155,7 +166,9 @@ class Plotter:
         """
         # ------------------------------------------------------------------
         # deal with location not set
-        if self.location is None:
+        if self.recipe is None:
+            self.location = './'
+        elif self.location is None:
             WLOG(self.params, 'error', TextEntry('00-100-00003'))
         # ------------------------------------------------------------------
         # deal with no plot needed
@@ -181,7 +194,7 @@ class Plotter:
         # deal with debug plots (that should be skipped if PLOT_{NAME} is False)
         if name in self.plot_switches:
             # do not need to turn off/on summary plots
-            if plot_obj.kind == 'summary':
+            if plot_obj.kind in ['summary', 'show']:
                 pass
             # if it is check whether it is set to False
             elif not self.plot_switches[name]:
@@ -193,9 +206,17 @@ class Plotter:
         if plot_obj.kind == 'debug':
             if self.plotoption == 0:
                 return 0
+
+        # deal with show graphs
+        if plot_obj.kind == 'show':
+            self._get_matplotlib(force=True)
+
         # ------------------------------------------------------------------
-        # must be in plot lists
-        if name in self.recipe.debug_plots:
+        # must be in plot lists (unless recipe is not defined)
+        if self.recipe is None:
+            # log: plotting debug plot
+            WLOG(self.params, '', TextEntry('40-100-00007', args=[name]))
+        elif name in self.recipe.debug_plots:
             # log: plotting debug plot
             WLOG(self.params, '', TextEntry('40-100-00002', args=[name]))
         elif name in self.recipe.summary_plots:
@@ -236,6 +257,10 @@ class Plotter:
             #   summary mode
             self.loop_allowed = False
             return True
+
+        elif graph.kind == 'show':
+            self.loop_allowed = False
+            return True
         else:
             # must make sure we are not asking user to see plot in
             #   summary mode
@@ -269,6 +294,10 @@ class Plotter:
             self.plt.close()
             # 2. add graph to summary plots
             self.summary_graphs[graph.filename] = graph.copy()
+        # deal with show plots
+        elif graph.kind == 'show':
+            self.plt.show()
+            self.plt.close()
         else:
             pass
 
@@ -423,8 +452,6 @@ class Plotter:
         # deal with iteration set
         if iteration is not None:
             self.set_location(iteration)
-        # get recipe short name
-        name = self.recipe.name
         # deal with no stats
         if stats is None:
             # process stats
@@ -487,7 +514,7 @@ class Plotter:
         doc.add_title(summary_title, summary_authors)
         # display the arguments used
         doc.newline()
-        argv = ' '.join(clean(self.recipe.used_command))
+        argv = ' '.join(clean(self.used_command))
         doc.add_text(self.textdict['40-100-01002'].format(argv))
         doc.newline()
         # add graph section
@@ -533,7 +560,7 @@ class Plotter:
         doc.write_latex()
         # get log file
         logfile = drs_log.get_logfilepath(WLOG, self.params)
-        doc.compile(logfile + '.latex')
+        doc.compile(logfile.replace('.log', '.latex'))
         # check that pdf was created
         if not os.path.exists(doc.pdffilename):
             wargs = [doc.pdffilename]
@@ -636,7 +663,6 @@ class Plotter:
         # get recipe short name
         shortname = self.recipename
         pid = self.params['PID'].lower()
-        name = self.recipe.name
         # summary info
         sargs = [shortname, pid]
         summary_title = self.textdict['40-100-01006'].format(*sargs)
@@ -647,7 +673,7 @@ class Plotter:
         doc.add_title(summary_title, summary_authors)
         # display the arguments used
         doc.newline()
-        argv = ' '.join(self.recipe.used_command)
+        argv = ' '.join(self.used_command)
         doc.add_text(self.textdict['40-100-01002'].format(argv))
         doc.newline()
         # add graph section
@@ -884,7 +910,10 @@ class Plotter:
         to see if we have any debug plots
         :return:
         """
-        debug_plots = self.recipe.debug_plots
+        if self.recipe is None:
+            debug_plots = []
+        else:
+            debug_plots = self.recipe.debug_plots
         # loop around keys in parameter dictionary
         for name in self.names:
             # get kind
@@ -900,8 +929,11 @@ class Plotter:
             # if recipe is allowed to use plot (in recipe.set_plots)
             if name in debug_plots and kind == 'debug':
                 self.has_debugs = True
+            elif kind == 'show':
+                self.has_debugs = True
 
-    def _get_matplotlib(self):
+
+    def _get_matplotlib(self, force=False):
         """
         Deal with the difference plotting modes and get the correct backend
         This sets self.plt, self.matplotlib and self.mpl_toolkits
@@ -918,7 +950,10 @@ class Plotter:
         # ------------------------------------------------------------------
         # if we do not have debug plots or we are in plotoption = 0
         #    then we do not need any fancy backend and can just use Agg
-        if not self.has_debugs or self.plotoption < 1:
+        cond1 = not self.has_debugs or self.plotoption < 1
+        cond2 = not force
+        # both conditions are met set to Agg (no plotting)
+        if cond1 and cond2:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             from  mpl_toolkits import axes_grid1
@@ -1026,6 +1061,23 @@ def _sigfig(value, digits=5):
     except ValueError:
         pass
     return value
+
+
+def main(params, graph_name, mode=2, **kwargs):
+    """
+    Call the plotter without a class instance already loaded
+    :param params:
+    :param graph_name:
+    :param mode:
+    :param kwargs:
+    :return:
+    """
+    # update
+    # get plotter
+    plotter = Plotter(params, None, mode=mode)
+    # use plotter to plot
+    plotter(graph_name, **kwargs)
+
 
 
 # =============================================================================

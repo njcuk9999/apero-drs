@@ -211,7 +211,6 @@ def gauss_fit_nn(xpix, ypix, nn):
 
 def gauss_fit_s(x, a, x0, sigma, zp, slope):
     gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
-    # TODO: Question: Changed from (x - np.mean(x))
     correction = (x - x0) * slope
     return gauss + correction
 
