@@ -1,0 +1,212 @@
+
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>TODO &#8212; APERO 0.6.016 documentation</title>
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="General Tools" href="tools_default.html" />
+    <link rel="prev" title="Known Issues" href="known_issues.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a href="../../index.html">Home</a></li>
+    <li><a href="../installation.html">Install</a></li>
+    <li><a href="https://github.com/njcuk9999/apero-drs">Github</a></li>
+    <li><a href="../../../../_build/latex/apero-docs.pdf">PDF</a></li>
+  </ul>
+    <div>
+    <a href="../../index.html">
+      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tools_default.html" title="General Tools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="known_issues.html" title="Known Issues"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.016 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TODO</a><ul>
+<li><a class="reference internal" href="#in-progress">In progress</a></li>
+<li><a class="reference internal" href="#as-soon-as-possible">As soon as possible</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="known_issues.html"
+                        title="previous chapter">Known Issues</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tools_default.html"
+                        title="next chapter">General Tools</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/user/general/todo.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="todo">
+<span id="id1"></span><h1>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
+<p>This is the currently list of items that need to still be completed.
+Last updated: 2020-01-07 (NJC).</p>
+<div class="section" id="in-progress">
+<h2>In progress<a class="headerlink" href="#in-progress" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>finish <cite>obj_spec_spirou</cite> and <cite>obj_pol_spirou</cite> [Do not use them now]</p></li>
+<li><p>output files like CFHT (e.fits, p.fits, v.fits etc)</p></li>
+<li><p>go through all summary plots and decide which plots, write figure captions,
+improve plots, write quality control description, decide which header keys to print</p></li>
+<li><p>display func for all functions</p></li>
+<li><p>add doc strings to all functions, descriptions to all constants, review all
+constant min/max/dtypes</p></li>
+<li><p>add more debug printouts</p></li>
+<li><p>deal with all python warnings</p></li>
+<li><p>write documentation</p></li>
+</ul>
+</div>
+<div class="section" id="as-soon-as-possible">
+<h2>As soon as possible<a class="headerlink" href="#as-soon-as-possible" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>add <cite>plot== 3</cite> (all debug plots shown) and <cite>plot==4</cite> (all debug plots saved) modes</p></li>
+<li><p>move <cite>object_query_list.fits</cite> to <cite>calibDB</cite></p></li>
+<li><p>write  paper</p></li>
+<li><p>setup instrument tool</p></li>
+<li><p>add exposure meter recipes (<cite>cal_exposuremeter_spirou.py</cite>)</p></li>
+<li><p>Windows compatibility</p></li>
+<li><p>output in form required for CFHT/CADC (discussion required)</p></li>
+<li><p>co-production of e2ds and e2dsff</p></li>
+<li><p>uncertainty propagation</p></li>
+<li><p>proper SNR calculation</p></li>
+<li><p>add <cite>cal_drift</cite> recipe?</p></li>
+<li><p>NIRPS integration</p></li>
+<li><p>uncertainty propagation</p></li>
+<li><p>data separate download from DRS</p></li>
+<li><p>add EA mask generation from templates</p></li>
+<li><p>add EA template matching</p></li>
+</ul>
+<p><a class="reference internal" href="#todo"><span class="std std-ref">Back to top</span></a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="tools_default.html" title="General Tools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="known_issues.html" title="Known Issues"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.016 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>
