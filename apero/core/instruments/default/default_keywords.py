@@ -95,6 +95,10 @@ __all__ = [# input keys
            'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
            'KW_WFP_DETNOISE', 'KW_WFP_NMAX', 'KW_WFP_MASKMIN', 'KW_WFP_MASKWID',
            'KW_WFP_MASKUNITS',
+           # wave night values
+           'KW_WNT_HIGHF_CD', 'KW_WNT_NITER', 'KW_WNT_DCAVITY', 'KW_WNT_MINSNR',
+           'KW_WNT_REDCUT', 'KW_WNT_DWAVE_BIN', 'KW_WNT_NMIN_LINES',
+           'KW_WNT_NSIG_FIT',
            # mktellu values
            'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
            'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
@@ -939,6 +943,35 @@ KW_WFP_MASKWID = Keyword('KW_WFP_MASKWID', key='', dtype=float, source=__NAME__)
 # The units of the input CCF mask (converted to nm in code)
 KW_WFP_MASKUNITS = Keyword('KW_WFP_MASKUNITS', key='', dtype=str,
                            source=__NAME__)
+
+# high-order wavelength solution correction used in wave night
+KW_WNT_HIGHF_CD = Keyword('KW_WNT_HIGHF_CD', key='', dtype=int,
+                          source=__NAME__)
+
+# number of iterations for convergence used in wave night
+KW_WNT_NITER = Keyword('KW_WNT_NITER', key='', dtype=int, source=__NAME__)
+
+# starting point for the cavity corrections used in wave night
+KW_WNT_DCAVITY = Keyword('KW_WNT_DCAVITY', key='', dtype=int, source=__NAME__)
+
+# min SNR for incluing in the model used in wave night
+KW_WNT_MINSNR = Keyword('KW_WNT_MINSNR', key='', dtype=int, source=__NAME__)
+
+# red cut off for fit constaint [nm] used in wave night
+KW_WNT_REDCUT = Keyword('KW_WNT_REDCUT', key='', dtype=int, source=__NAME__)
+
+# size [nm] of the median bin of residuals for higher-order correction used
+#    in wave night
+KW_WNT_DWAVE_BIN = Keyword('KW_WNT_DWAVE_BIN', key='', dtype=int,
+                           source=__NAME__)
+
+# min number of lines to be included in a median bin for high-order
+# correction used in wave night
+KW_WNT_NMIN_LINES = Keyword('KW_WNT_NMIN_LINES', key='', dtype=int,
+                            source=__NAME__)
+
+# sigma clipping for the fit used in wave night
+KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
