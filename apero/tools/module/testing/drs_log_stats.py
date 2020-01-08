@@ -364,6 +364,10 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # for each log file get all log errors and warnings
     errors, warns = [], []
     for logfile in logfiles:
+        if not os.path.exists(logfile):
+            WLOG(params, 'warning', '\t - No log file: {0}'.format(logfile))
+            errors += 'No log file'
+            continue
         WLOG(params, '', '\t - Loading: {0}'.format(logfile))
         error, warn = _create_log_objs(logfile)
         errors += error
