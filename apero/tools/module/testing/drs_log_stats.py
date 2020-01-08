@@ -90,8 +90,7 @@ class LogObj:
         # get the log time (from string)
         time2 = line.split('-')[0]
         hour2, min2, sec2 = time2.split(':')
-        hour2 = eval(hour2)
-
+        hour2 = int(hour2)
         # figure out which day our log entry is on
         if hour2 > hour1:
             date2 = Time(self.mdate) - TimeDelta(1 * uu.day)
@@ -374,7 +373,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
                 errors += 'No log file'
                 continue
         WLOG(params, '', '\t - Loading: {0}'.format(logfile))
-        error, warn = _create_log_objs(logfile)
+        error, warn = _create_log_objs(params, logfile)
         errors += error
         warns += warn
     # ----------------------------------------------------------------------
@@ -541,7 +540,7 @@ def _print_stats(params, started, passed, ended, urecipe):
     WLOG(params, '', msg.format(*uargs))
 
 
-def _create_log_objs(logfile):
+def _create_log_objs(params, logfile):
     # open log file
     lfile = open(logfile, 'r')
     lines = lfile.readlines()
@@ -558,12 +557,24 @@ def _create_log_objs(logfile):
 
     for line in lines:
         # find if we have an error string
-        errorlines, ecode = _id_logmessage(line, errorlines, ecode, ERRORSTR,
-                                           ERRORPREFIX, ERRORSUFFIX, mdate)
+        try:
+            errorlines, ecode = _id_logmessage(line, errorlines, ecode,
+                                               ERRORSTR, ERRORPREFIX,
+                                               ERRORSUFFIX, mdate)
+        except Exception as e:
+            emsg = 'Skipping Line(E): {0}\n{1}:{2}'
+            eargs = [line, type(e), str(e)]
+            WLOG(params, 'warning', emsg.format(*eargs))
+            continue
         # find if we have a warning string
-        warnlines, wcode = _id_logmessage(line, warnlines, wcode, WARNINGSTR,
-                                          WARNPREFIX, WARNSUFFIX, mdate)
-
+        try:
+            warnlines, wcode = _id_logmessage(line, warnlines, wcode,
+                                              WARNINGSTR, WARNPREFIX,
+                                              WARNSUFFIX, mdate)
+        except Exception as e:
+            emsg = 'Skipping Line(W): {0}\n{1}:{2}'
+            eargs = [line, type(e), str(e)]
+            WLOG(params, 'warning', emsg.format(*eargs))
     # return errors and warnings
     return errorlines, warnlines
 
