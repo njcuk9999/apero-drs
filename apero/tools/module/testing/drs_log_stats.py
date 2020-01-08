@@ -388,7 +388,11 @@ def calculate_recipe_stats(params, mastertable, recipename):
             errorcount[error.code] += 1
         else:
             errorcount[error.code] = 1
-        errormessages[error.code] = error.msg
+        if error.code in errormessages:
+            errormessages[error.code].append(error.msg)
+        else:
+            errormessages[error.code] = [error.msg]
+
     # loop around warnings
     for warn in warns:
         if warn.code in warncount:
@@ -396,18 +400,25 @@ def calculate_recipe_stats(params, mastertable, recipename):
         else:
             warncount[warn.code] = 1
         warnmessages[warn.code] = warn.msg
+
+        if warn.code in warnmessages:
+            warnmessages[warn.code].append(warn.msg)
+        else:
+            warnmessages[warn.code] = [warn.msg]
+
     # ----------------------------------------------------------------------
-    error_codes, error_msgs, error_counts = [], [], []
-    warn_codes, warn_msgs, warn_counts = [], [], []
+    error_codes, error_msgs, error_sample, error_counts = [], [], [], []
+    warn_codes, warn_msgs, warn_sample, warn_counts = [], [], [], []
     for error in errorcount:
         error_codes.append(error)
-        error_msgs.append(errormessages[error])
+        error_msgs += errormessages[error]
         error_counts.append(errorcount[error])
+        error_sample += errormessages[error][-1]
     for warn in warncount:
         warn_codes.append(warn)
-        warn_msgs.append(warnmessages[warn])
+        warn_msgs += warnmessages[warn]
         warn_counts.append(warncount[warn])
-
+        warn_sample += warnmessages[warn][-1]
     # print unique error messages
     used_errors = []
     WLOG(params, '', '')
@@ -435,9 +446,9 @@ def calculate_recipe_stats(params, mastertable, recipename):
 
     fig, frames = plt.subplots(nrows=1, ncols=2)
     tooltip1 = hover_bars(fig, frames[0], error_codes, error_counts,
-                          error_msgs, align='right')
+                          error_sample, align='right')
     tooltip2 = hover_bars(fig, frames[1], warn_codes, warn_counts,
-                          warn_msgs, align='left')
+                          warn_sample, align='left')
 
     # set labels
     frames[0].set(xlabel='Error Codes', ylabel='Number of Errors found',
