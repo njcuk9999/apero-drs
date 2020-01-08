@@ -248,6 +248,24 @@ def make_log_table(params, logfiles, nightnames, recipename, since=None,
     return mastertable
 
 
+def save_master(params, mastertable, path, recipename, makemaster):
+    if mastertable is not None and makemaster:
+        # define master name
+        mastername = 'MASTER_LOG.fits'
+        # deal with having a recipename
+        if recipename is not None:
+            # construct recipe master name
+            rmname = recipename.replace('.py', '').replace('.', '_').strip()
+            # update master name
+            mastername = mastername.replace('.fits', '_' + rmname)
+        # construct absolute path
+        absmtable = os.path.join(path, mastername)
+        # log saving of table
+        WLOG(params, 'info', 'Saving master log to: {0}'.format(absmtable))
+        # save table
+        mastertable.write(absmtable, format='fits', overwrite=True)
+
+
 def search_recipes(params, recipe, recipename):
     # deal with no recipename set
     if recipename in ['None', '', None]:

@@ -185,6 +185,12 @@ logstats.set_kwarg(name='--before', dtype=str, default='None',
                            'Must be in the form yyyy-mm-dd HH:MM:SS or '
                            'yyyy-mm-dd (and the time will be assumed '
                            'midnight).')
+logstats.set_kwarg(name='--master', dtype=bool, default=False,
+                   helpstr='Whether to save a master log to the drs path '
+                           '(MASTER_LOG.fits). '
+                           'i.e. for --kind=red the DATA_DIR/reduced/ dir). '
+                           'Note if --recipe is set this will add a suffix'
+                           'to the output name. ')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
