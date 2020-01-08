@@ -415,12 +415,12 @@ def calculate_recipe_stats(params, mastertable, recipename):
         error_codes.append(error)
         error_msgs += errormessages[error]
         error_counts.append(errorcount[error])
-        error_sample += errormessages[error][-1]
+        error_sample.append(errormessages[error][-1])
     for warn in warncount:
         warn_codes.append(warn)
         warn_msgs += warnmessages[warn]
         warn_counts.append(warncount[warn])
-        warn_sample += warnmessages[warn][-1]
+        warn_sample.append(warnmessages[warn][-1])
     # print unique error messages
     used_errors = []
     WLOG(params, '', '')
