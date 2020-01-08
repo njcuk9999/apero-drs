@@ -206,7 +206,7 @@ class Keyword(Const):
 
     def set(self, key=None, value=None, dtype=None, comment=None,
             options=None, unit=None, default=None, datatype=None,
-            dataformat=None, group=None):
+            dataformat=None, group=None, author=None, parent=None):
         if key is not None:
             self.key = key
         if value is not None:
@@ -227,6 +227,10 @@ class Keyword(Const):
             self.dataformat = dataformat
         if group is not None:
             self.group = group
+        if parent is not None:
+            self.parent = parent
+        if author is not None:
+            self.author = author
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
