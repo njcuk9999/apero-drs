@@ -521,8 +521,8 @@ class RecipeLog:
         self.logfitspath = self._get_write_dir()
         # define lockfile (we need to lock the directory while this is
         #   being done)
-        self.lockfile = self.directory + '_log'
-        # set the log file name
+        self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
+        # set the log file name (just used to save log directory)
         self.log_file = 'None'
         # set the inputs
         self.args = ''
