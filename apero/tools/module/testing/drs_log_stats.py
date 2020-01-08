@@ -416,6 +416,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
         if error_msg not in used_errors:
             WLOG(params, '', '\t{0}: {1}'.format(it + 1, error_msg))
             used_errors.append(error_msg)
+            WLOG(params, '', '')
     # print unique warning messages
     used_warnings = []
     WLOG(params, '', '')
@@ -424,6 +425,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
         if warn_msg not in used_warnings:
             WLOG(params, '', '\t{0}: {1}'.format(it + 1, warn_msg))
             used_warnings.append(warn_msg)
+            WLOG(params, '', '')
 
     # ----------------------------------------------------------------------
     import matplotlib
