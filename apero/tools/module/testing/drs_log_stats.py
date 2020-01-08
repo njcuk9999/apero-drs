@@ -378,10 +378,12 @@ def calculate_recipe_stats(params, mastertable, recipename):
         warns += warn
     # ----------------------------------------------------------------------
     # tabulate the number of errors and warnings found for this recipe
+    # ----------------------------------------------------------------------
     errorcount = OrderedDict()
     errormessages = OrderedDict()
     warncount = OrderedDict()
     warnmessages = OrderedDict()
+    # ----------------------------------------------------------------------
     # loop around errors
     for error in errors:
         # store counts
@@ -394,7 +396,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
             errormessages[error.code].append(error.msg)
         else:
             errormessages[error.code] = [error.msg]
-
+    # ----------------------------------------------------------------------
     # loop around warnings
     for warn in warns:
         # store counts
@@ -407,7 +409,8 @@ def calculate_recipe_stats(params, mastertable, recipename):
             warnmessages[warn.code].append(warn.msg)
         else:
             warnmessages[warn.code] = [warn.msg]
-
+    # ----------------------------------------------------------------------
+    # push these counts into lists
     # ----------------------------------------------------------------------
     error_codes, error_msgs, error_sample, error_counts = [], [], [], []
     warn_codes, warn_msgs, warn_sample, warn_counts = [], [], [], []
@@ -421,25 +424,44 @@ def calculate_recipe_stats(params, mastertable, recipename):
         warn_msgs += warnmessages[warn]
         warn_counts.append(warncount[warn])
         warn_sample.append(warnmessages[warn][-1])
+    # ----------------------------------------------------------------------
+    # Error Print out
+    # ----------------------------------------------------------------------
     # print unique error messages
-    used_errors = []
+    used_errors = dict()
     WLOG(params, '', '')
     WLOG(params, 'info', 'Unique error messages: ')
+    # count number of time unique message appear
     for it, error_msg in enumerate(error_msgs):
         if error_msg not in used_errors:
-            WLOG(params, '', '\t{0}: {1}'.format(it + 1, error_msg))
-            used_errors.append(error_msg)
-            WLOG(params, '', '')
+            used_errors[error_msg] = 1
+        else:
+            used_errors[error_msg] += 1
+    # display unique messages
+    for it, error_msg in enumerate(used_errors):
+        num = used_errors[error_msg]
+        WLOG(params, '', '\t{0} N={1}: {2}'.format(it + 1, num, error_msg))
+        WLOG(params, '', '')
+    # ----------------------------------------------------------------------
+    # Warning Print out
+    # ----------------------------------------------------------------------
     # print unique warning messages
-    used_warnings = []
+    used_warnings = dict()
     WLOG(params, '', '')
     WLOG(params, 'info', 'Unique warning messages: ')
+    # count number of time unique message appear
     for it, warn_msg in enumerate(warn_msgs):
         if warn_msg not in used_warnings:
-            WLOG(params, '', '\t{0}: {1}'.format(it + 1, warn_msg))
-            used_warnings.append(warn_msg)
-            WLOG(params, '', '')
-
+            used_warnings[warn_msg] = 1
+        else:
+            used_warnings[warn_msg] += 1
+    # display unique messages
+    for it, warn_msg in enumerate(used_warnings):
+        num = used_warnings[warn_msg]
+        WLOG(params, '', '\t{0} N={1}: {2}'.format(it + 1, num, warn_msg))
+        WLOG(params, '', '')
+    # ----------------------------------------------------------------------
+    # PLOT
     # ----------------------------------------------------------------------
     import matplotlib
     matplotlib.use('Qt5Agg')
