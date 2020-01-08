@@ -364,10 +364,15 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # for each log file get all log errors and warnings
     errors, warns = [], []
     for logfile in logfiles:
+        # deal with log file not existing
         if not os.path.exists(logfile):
-            WLOG(params, 'warning', '\t - No log file: {0}'.format(logfile))
-            errors += 'No log file'
-            continue
+            # try to find it
+            found, logfile = _find_log_file(params, logfile)
+            # if not found report warning
+            if not found:
+                WLOG(params, 'warning', '\t - No log file: {0}'.format(logfile))
+                errors += 'No log file'
+                continue
         WLOG(params, '', '\t - Loading: {0}'.format(logfile))
         error, warn = _create_log_objs(logfile)
         errors += error
@@ -410,6 +415,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
     import matplotlib
     matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
+    plt.ioff()
 
     fig, frames = plt.subplots(nrows=1, ncols=2)
     tooltip1 = hover_bars(fig, frames[0], error_codes, error_counts,
@@ -432,7 +438,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
                        hspace=0, wspace=0.1)
 
     plt.suptitle('Recipe = {0}'.format(recipename))
-    plt.show()
+    plt.show(block=True)
     plt.close()
 
     # ----------------------------------------------------------------------
@@ -581,6 +587,20 @@ def _id_logmessage(line, storage, code, logstr, logprefix, logsuffix,
             storage[-1].addline(line)
     # return the storage and the code (changed or not)
     return storage, code
+
+
+def _find_log_file(params, logfile):
+    # log dir
+    logdir = params['DRS_DATA_MSG']
+    # get basename of logfile
+    basename = os.path.basename(logfile)
+    # walk through dirs
+    for root, dirs, files in os.walk(logdir):
+        for filename in files:
+            if basename == filename:
+                return True, os.path.join(root, filename)
+    # if we have gotten to here we haven't found file
+    return False, None
 
 
 # =============================================================================
