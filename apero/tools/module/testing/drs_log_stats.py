@@ -157,7 +157,7 @@ def get_log_files(params, recipe, path, nightname=None):
         WLOG(params, 'error', 'No night directories found.')
     # ----------------------------------------------------------------------
     # locate log files
-    logfitsfile = recipe.log.logfitsfile
+    logfitsfile = params['DRS_LOG_FITS_NAME']
     # log files
     logfiles, nightnames = [], []
     # loop around nights
