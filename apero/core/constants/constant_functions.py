@@ -49,7 +49,8 @@ class Const:
     def __init__(self, name, value=None, dtype=None, dtypei=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, user=False, active=False, description=None):
+                 group=None, user=False, active=False, description=None,
+                 author=None, parent=None):
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -66,6 +67,8 @@ class Const:
         self.user = user
         self.active = active
         self.description = description
+        self.author = author
+        self.parent = parent
 
     def validate(self, test_value=None, quiet=False, source=None):
         # deal with no test value (use value set at module level)
@@ -106,7 +109,8 @@ class Const:
                      unit=self.unit, default=self.default,
                      datatype=self.datatype, dataformat=self.dataformat,
                      group=self.group, user=self.user, active=self.active,
-                     description=self.description)
+                     description=self.description, author=self.author,
+                     parent=self.parent)
 
     def write_line(self, value=None):
         # set up line list
@@ -184,10 +188,10 @@ class Keyword(Const):
     def __init__(self, name, key=None, value=None, dtype=None, comment=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
-                 group=None):
+                 group=None, author=None, parent=None):
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
-                       group)
+                       group, author, parent)
         self.key = key
         self.comment = comment
         self.kind = 'Keyword'
@@ -197,6 +201,8 @@ class Keyword(Const):
         self.datatype = datatype
         self.dataformat = dataformat
         self.group = group
+        self.author = author
+        self.parent = parent
 
     def set(self, key=None, value=None, dtype=None, comment=None,
             options=None, unit=None, default=None, datatype=None,
@@ -264,7 +270,8 @@ class Keyword(Const):
                        self.comment, self.options, self.maximum,
                        self.minimum, source=source, unit=self.unit,
                        default=self.default, datatype=self.datatype,
-                       dataformat=self.dataformat, group=self.group)
+                       dataformat=self.dataformat, group=self.group,
+                       author=self.author, parent=self.parent)
 
 
 # =============================================================================

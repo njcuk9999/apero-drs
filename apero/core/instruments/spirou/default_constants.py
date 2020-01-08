@@ -1364,6 +1364,80 @@ WAVE_CCF_MASK_WIDTH.value = 1.7
 WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
 
+
+# =============================================================================
+# CALIBRATION: WAVE NIGHT SETTINGS
+# =============================================================================
+# high-order wavelength solution correction cannot be smaller than 2,
+#   we remove 0 and 1
+WAVE_NIGHT_HIGHF_CORR_DEG = WAVE_NIGHT_HIGHF_CORR_DEG.copy(__NAME__)
+WAVE_NIGHT_HIGHF_CORR_DEG.value = 7
+
+# number of iterations for convergence
+WAVE_NIGHT_NITERATIONS = WAVE_NIGHT_NITERATIONS.copy(__NAME__)
+WAVE_NIGHT_NITERATIONS.value = 30
+
+# starting points for the cavity corrections
+WAVE_NIGHT_DCAVITY = WAVE_NIGHT_DCAVITY.copy(__NAME__)
+WAVE_NIGHT_DCAVITY.value = 0
+
+# min SNR for incluing in the model
+WAVE_NIGHT_NSIG_MIN = WAVE_NIGHT_NSIG_MIN.copy(__NAME__)
+WAVE_NIGHT_NSIG_MIN.value = 30
+
+# red cut off for fit constaint [nm]
+WAVE_NIGHT_REDEND_CUTOFF = WAVE_NIGHT_REDEND_CUTOFF.copy(__NAME__)
+WAVE_NIGHT_REDEND_CUTOFF.value = 2350
+
+# size in nm of the median bin of residuals for higher-order correction
+WAVE_NIGHT_DWAVE_BIN = WAVE_NIGHT_DWAVE_BIN.copy(__NAME__)
+WAVE_NIGHT_DWAVE_BIN.value = 50
+
+# min number of lines to be included in a median bin for high-order
+# correction
+WAVE_NIGHT_NMIN_LINES = WAVE_NIGHT_NMIN_LINES.copy(__NAME__)
+WAVE_NIGHT_NMIN_LINES.value = 100
+
+# sigma clipping for the fit
+WAVE_NIGHT_NSIG_FIT_CUT = WAVE_NIGHT_NSIG_FIT_CUT.copy(__NAME__)
+WAVE_NIGHT_NSIG_FIT_CUT.value = 5
+
+# wave night plot hc bin lower bound [nm]
+WAVENIGHT_PLT_HCBINL = WAVENIGHT_PLT_HCBINL.copy(__NAME__)
+WAVENIGHT_PLT_HCBINL.value = 900
+
+# wave night plot hc bin upper bound [nm]
+WAVENIGHT_PLT_HCBINU = WAVENIGHT_PLT_HCBINU.copy(__NAME__)
+WAVENIGHT_PLT_HCBINU.value = 2500
+
+# wave night plot hc bin size [nm]
+WAVENIGHT_PLT_HCBINSZ = WAVENIGHT_PLT_HCBINSZ.copy(__NAME__)
+WAVENIGHT_PLT_HCBINSZ.value = 50
+
+# wave night plot fp histogram 2d number of x bins
+WAVENIGHT_PLT_FPBX = WAVENIGHT_PLT_FPBX.copy(__NAME__)
+WAVENIGHT_PLT_FPBX.value = 100
+
+# wave night plot fp histogram 2d number of y bins
+WAVENIGHT_PLT_FPBY = WAVENIGHT_PLT_FPBY.copy(__NAME__)
+WAVENIGHT_PLT_FPBY.value = 10
+
+# wave night plot fp line bin size
+WAVENIGHT_PLT_FPLB = WAVENIGHT_PLT_FPLB.copy(__NAME__)
+WAVENIGHT_PLT_FPLB.value = 200
+
+# wave night plot amplifier size (for modulo amplifier  structures)
+WAVENIGHT_PLT_AMPSIZE = WAVENIGHT_PLT_AMPSIZE.copy(__NAME__)
+WAVENIGHT_PLT_AMPSIZE.value = 256
+
+# wave night plot max +/- dv to keep in the histogram plots
+WAVENIGHT_PLT_MAXDV = WAVENIGHT_PLT_MAXDV.copy(__NAME__)
+WAVENIGHT_PLT_MAXDV.value = 50
+
+# wave night plot modulo amplifier step (bin) size
+WAVENIGHT_PLT_DVSTEP = WAVENIGHT_PLT_DVSTEP.copy(__NAME__)
+WAVENIGHT_PLT_DVSTEP.value = 10
+
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
