@@ -408,9 +408,24 @@ def calculate_recipe_stats(params, mastertable, recipename):
         warn_msgs.append(warnmessages[warn])
         warn_counts.append(warncount[warn])
 
+    # print unique error messages
+    used_errors = []
+    WLOG(params, '', '')
+    WLOG(params, 'info', 'Unique error messages: ')
+    for it, error_msg in enumerate(error_msgs):
+        if error_msg not in used_errors:
+            WLOG(params, '', '\t{0}: {1}'.format(it + 1, error_msg))
+            used_errors.append(error_msg)
+    # print unique warning messages
+    used_warnings = []
+    WLOG(params, '', '')
+    WLOG(params, 'info', 'Unique warning messages: ')
+    for it, warn_msg in enumerate(warn_msgs):
+        if warn_msg not in used_warnings:
+            WLOG(params, '', '\t{0}: {1}'.format(it + 1, warn_msg))
+            used_warnings.append(warn_msg)
 
-
-
+    # ----------------------------------------------------------------------
     import matplotlib
     matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
@@ -498,8 +513,6 @@ class ToolTip():
         xmin, xmax, ymin, ymax = self.frame.axis()
         centx = 0.5 * (xmax + xmin)
         centy = 0.5 * (ymax + ymin)
-
-        print(x, y, centx, centy, centx-x, centy-y)
 
         self.textbox.xy = (x, y)
 
