@@ -1684,7 +1684,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
                       func_name)
     gauss_rms_dev_min = pcheck(params, 'WAVE_HC_FITBOX_RMS_DEVMIN',
                                'grms_devmin', kwargs, func_name)
-    gauss_rms_dev_max = pcheck(params, 'wAVE_HC_FITBOX_RMS_DEVMAX',
+    gauss_rms_dev_max = pcheck(params, 'WAVE_HC_FITBOX_RMS_DEVMAX',
                                'grms_devmax', kwargs, func_name)
     ew_min = pcheck(params, 'WAVE_HC_FITBOX_EWMIN', 'ew_min', kwargs,
                     func_name)
@@ -2919,14 +2919,15 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     # ----------------------------------------------------------------------
     # test if n_order_init is in remove_orders
     if n_order_final in remove_orders:
-        wargs = ["IC_N_ORD_FINAL", params['IC_N_ORD_FINAL'],
-                 "IC_LITTROW_REMOVE_ORDERS", func_name]
+        wargs = ['WAVE_LITTROW_ORDER_FINAL_{0}'.format(1),
+                 params['WAVE_LITTROW_ORDER_FINAL_{0}'.format(1)],
+                 "WAVE_LITTROW_REMOVE_ORDERS", func_name]
         WLOG(params, 'error', TextEntry('00-017-00004', args=wargs))
     # ----------------------------------------------------------------------
     # check that all remove orders exist
     for remove_order in remove_orders:
         if remove_order not in np.arange(n_order_final):
-            wargs = [remove_order, 'IC_LITTROW_REMOVE_ORDERS', n_order_init,
+            wargs = [remove_order, 'WAVE_LITTROW_REMOVE_ORDERS', n_order_init,
                      n_order_final, func_name]
             WLOG(params, 'error', TextEntry('00-017-00005', args=wargs))
     # ----------------------------------------------------------------------
@@ -4891,64 +4892,6 @@ def wave_summary(recipe, params, llprops, fiber, qc_params):
 # =============================================================================
 def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
                        **kwargs):
-
-    # TODO: Move to constants file
-    params.unlock()
-    # high-order wavelength solution correction cannot be smaller than 2,
-    #   we remove 0 and 1
-    params['WAVE_NIGHT_HIGHF_CORR_DEG'] = 7
-
-    # number of iterations for convergence
-    params['WAVE_NIGHT_NITERATIONS'] = 30
-
-    # starting points for the cavity corrections
-    params['WAVE_NIGHT_DCAVITY'] = 0
-
-    # min SNR for incluing in the model
-    params['WAVE_NIGHT_NSIG_MIN'] = 30
-
-    # red cut off for fit constaint [nm]
-    params['WAVE_NIGHT_REDEND_CUTOFF'] = 2350
-
-    # size in nm of the median bin of residuals for higher-order correction
-    params['WAVE_NIGHT_DWAVE_BIN'] = 50
-
-    # min number of lines to be included in a median bin for high-order
-    # correction
-    params['WAVE_NIGHT_NMIN_LINES'] = 100
-
-    # sigma clipping for the fit
-    params['WAVE_NIGHT_NSIG_FIT_CUT'] = 5
-
-    # wave night plot hc bin lower bound [nm]
-    params['WAVE_NIGHT_PLT_HCBINL'] = 900
-
-    # wave night plot hc bin upper bound [nm]
-    params['WAVENIGHT_PLT_HCBINU'] = 2500
-
-    # wave night plot hc bin size [nm]
-    params['WAVENIGHT_PLT_HCBINSZ'] = 50
-
-    # wave night plot fp histogram 2d number of x bins
-    params['WAVENIGHT_PLT_FPBX'] = 100
-
-    # wave night plot fp histogram 2d number of y bins
-    params['WAVENIGHT_PLT_FPBY'] = 10
-
-    # wave night plot fp line bin size
-    params['WAVENIGHT_PLT_FPLB'] = 200
-
-    # wave night plot amplifier size (for modulo amplifier  structures)
-    params['WAVENIGHT_PLT_AMPSIZE'] = 256
-
-    # wave night plot max +/- dv to keep in the histogram plots
-    params['WAVENIGHT_PLT_MAXDV'] = 50
-
-    # wave night plot modulo amplifier step (bin) size
-    params['WAVENIGHT_PLT_DVSTEP'] = 10
-
-
-    # ----------------------------------------------------------------------
     # set function name
     func_name = display_func(params, __NAME__, 'night_wavesolution')
     # ----------------------------------------------------------------------
@@ -4970,7 +4913,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     nsig_fit_cut = pcheck(params, 'WAVE_NIGHT_NSIG_FIT_CUT', 'nsig_fit_cut',
                           kwargs, func_name)
 
-    hc_bin_lower = pcheck(params, 'WAVE_NIGHT_PLT_HCBINL', 'hc_bin_lower',
+    hc_bin_lower = pcheck(params, 'WAVENIGHT_PLT_HCBINL', 'hc_bin_lower',
                           kwargs, func_name)
     hc_bin_high = pcheck(params, 'WAVENIGHT_PLT_HCBINU', 'hc_bin_high',
                          kwargs, func_name)
