@@ -2,6 +2,65 @@ Changelog
 =========
 
 
+0.6.017 (2020-01-08)
+--------------------
+- Setup.install.py - add dev section to modules (sphinx, ipdb,
+  gitchangelog) [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - change dtype to
+  'bool' [Neil Cook]
+- Tools.recipe.general.apero_log_stats.py - allow saving of all the log
+  files to one file. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - update recipe print outs.
+  [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - correct error/warn sample.
+  [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - correct typo. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - keep all error/warning
+  messages and use error/warn samples to keep just one for each code.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Tools.module.testing.drs_log.stats.py - add separations between
+  warnings/errors. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - add print out of unique
+  errors/warnings. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - change eval --> int. [Neil
+  Cook]
+- Drs_startup.py log file should use group (only used to save where log
+  files are correctly) [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - try to locate log file if not
+  found immediately. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - add check if log file exists.
+  [Neil Cook]
+- Plotting.core.py - try fix to plt.show, plt.close. [Neil Cook]
+- Core.constants.constant_functions.py - add parent/author to set
+  method. [Neil Cook]
+- Correct README.md. [Neil Cook]
+- Sciecne.calib.wave.py - correct typo IC_LITTROW --> WAVE_LITTROW, move
+  wave night params to config. [Neil Cook]
+- Constants - start adding parents to keywords and add wave_night
+  constants. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - change where we get the log
+  fits file from. [Neil Cook]
+- Data/spirou/reset/runs/batch_run.ini - correct batch run as example of
+  EA mini_data. [Neil Cook]
+- Tools/resource/setup/* - update all environmental variables. [Neil
+  Cook]
+- Misc.tools.ccf_plot.py - basic plot to plot all ccfs for a given
+  object (minus the mean) [Neil Cook]
+- Setup.install.py - astropy must be v3.2 or greater. [Neil Cook]
+- Tools.recipes.dev.apero_changelog.py - update locations of docs. [Neil
+  Cook]
+- Tools.recipes.dev.apero_documentation - add codes to build
+  documentation [unfinished] [Neil Cook]
+- Re-build documentation. [Neil Cook]
+- Update documentation (add fontawesome icons) [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add remake_doc
+  (apero_documentation) to recipe definitions. [Neil Cook]
+- Reorganise documentation - move build into working dir and have an
+  output dir. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.6.016 (2020-01-07)
 --------------------
 - Update docs - known_issues and todo. [Neil Cook]
@@ -3501,7 +3560,7 @@ Changelog
 - Merge branch 'master' into input_redo. [Neil Cook]
 - File_explorer.py - move data loading / mask applying to different
   threads. [Neil Cook]
-- `*.__init__.py` - fix imports (should be empty) [Neil Cook]
+- *.__init__.py - fix imports (should be empty) [Neil Cook]
 - Locale.core.__init__.py - fix imports (should be empty) [Neil Cook]
 - File_explorer.py - update length and add new instrument box. [Neil
   Cook]
@@ -4791,7 +4850,7 @@ Changelog
 - Cal_preprocess_spirou.py - better message for corrupt file. [Neil
   Cook]
 - SpirouImage.py - catch warning "RuntimeWarning: All-NaN slice
-  encountered `r = func(a, **kwargs)`" [Neil Cook]
+  encountered r = func(a, **kwargs)" [Neil Cook]
 - Cal_preprocess_spirou.py - pep8 tidy up of QC. [Neil Cook]
 - SpirouImage.py - add get_full_flat, get_hot_pixels,
   test_for_corrupt_files functions (for checking corruption in
@@ -6157,7 +6216,7 @@ Changelog
 - SpirouPlot.py - modify tellu_fit_debug_shift_plot to only plot one
   order. [Neil Cook]
 - Recipe_control.txt - allow cal_CCF_E2DS_FP_spirou to use A, B files
-  and `TELLU_CORRECTED/POL_` files. [Neil Cook]
+  and TELLU_CORRECTED/POL_ files. [Neil Cook]
 - Update unit tests. [Neil Cook]
 - Obj_fit_telluy.py - todo question about possibly broken plot. [Neil
   Cook]
@@ -8243,7 +8302,7 @@ Changelog
 - Possible bug fix: tried to reduce repetition of displayed warnings.
   [njcuk9999]
 - Update tellu recipes: added AIRMASS header key. [njcuk9999]
-- Bug fix: fix file name ```'_s1d_{0}.fits'``` -->
+- Bug fix: fix file name ````'_s1d_{0}.fits'``` -->
   ```'_s1d_{0}.fits'.format(p['FIBER'])``` [njcuk9999]
 - Update tellu recipes: add required line in master telluDB. [njcuk9999]
 - Update tellu recipes: add obj_mk_tell_template to recipe control.
@@ -13001,7 +13060,7 @@ Other
   to uppercase (now ParamDict is case-insensitive), added source_keys,
   __capitalise_keys__, __capitalise__key__ functions, added list to set
   of evaluate allowed types. [Neil Cook]
-- Reloaded keywords USE_KEYS, added ParamDict call, added `kw_LOC_` keys,
+- Reloaded keywords USE_KEYS, added ParamDict call, added kw_LOC_ keys,
   added source to overwritten warning. [Neil Cook]
 - Renamed AddNewKey to AddKey. [Neil Cook]
 - Added wrapper function for add_new_key (add_new_keys), [Neil Cook]
