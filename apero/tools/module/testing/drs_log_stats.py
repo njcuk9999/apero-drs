@@ -384,10 +384,12 @@ def calculate_recipe_stats(params, mastertable, recipename):
     warnmessages = OrderedDict()
     # loop around errors
     for error in errors:
+        # store counts
         if error.code in errorcount:
             errorcount[error.code] += 1
         else:
             errorcount[error.code] = 1
+        # store messages
         if error.code in errormessages:
             errormessages[error.code].append(error.msg)
         else:
@@ -395,12 +397,12 @@ def calculate_recipe_stats(params, mastertable, recipename):
 
     # loop around warnings
     for warn in warns:
+        # store counts
         if warn.code in warncount:
             warncount[warn.code] += 1
         else:
             warncount[warn.code] = 1
-        warnmessages[warn.code] = warn.msg
-
+        # store messages
         if warn.code in warnmessages:
             warnmessages[warn.code].append(warn.msg)
         else:
