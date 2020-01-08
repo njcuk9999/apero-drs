@@ -283,8 +283,9 @@ class Plotter:
                 self.plots_active = True
             # if plot = 2 we need to show the plot
             elif self.plotoption == 2:
-                self.plt.show()
-                self.plt.close()
+                self.plt.show(block=True)
+                if not self.plt.isinteractive():
+                    self.plt.close()
         # deal with summary plots
         elif graph.kind == 'summary':
             # 1. save to file
@@ -296,8 +297,9 @@ class Plotter:
             self.summary_graphs[graph.filename] = graph.copy()
         # deal with show plots
         elif graph.kind == 'show':
-            self.plt.show()
-            self.plt.close()
+            self.plt.show(block=True)
+            if not self.plt.isinteractive():
+                self.plt.close()
         else:
             pass
 
