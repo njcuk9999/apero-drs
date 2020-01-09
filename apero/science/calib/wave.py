@@ -376,6 +376,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
     # deal with fibers that we don't have
     usefiber = 'AB'
     # ------------------------------------------------------------------------
+    # log progress
+    WLOG(params, '', TextEntry('40-017-00040'))
+    # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
@@ -387,10 +390,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         header = infile.header
     # deal with still having no header
     if header is None:
-        # TODO: Move to language DB
+        # log error: header not defined.
         eargs = [func_name]
-        emsg = 'No header defined. Cannot continue. \n\t Function = {0}'
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', TextEntry('00-017-00009', args=eargs))
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
     out_wave_fp = core.get_file_definition('WAVE_FPLIST_MASTER',
@@ -424,12 +426,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
                                                    n_ent=1, required=False)
         # if there are still no wave entries use master wave file
         if len(hcentries) == 0:
-            # Raise error - no hc lines found
-            # TODO: move to language DB
-            eargs = [func_name]
-            emsg = ('No HC lines master file found. Please run wave_master '
-                     'recipe. Function = {0}')
-            WLOG(params, 'error', emsg.format(*eargs))
+            # Raise error - no master hc lines found
+            eargs = ['HC', 'cal_wave_master', func_name]
+            WLOG(params, 'error', TextEntry('00-017-00010', args=eargs))
             hcfilepath = None
         else:
             # get badpix filename
@@ -458,12 +457,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
                                                    n_ent=1, required=False)
         # if there are still no wave entries use master wave file
         if len(fpentries) == 0:
-            # Raise error - no fp lines found
-            # TODO: move to language DB
-            eargs = [func_name]
-            emsg = ('No FP lines master file found. Please run wave_master '
-                     'recipe. Function = {0}')
-            WLOG(params, 'error', emsg.format(*eargs))
+            # Raise error - no master fp lines found
+            eargs = ['FP', 'cal_wave_master', func_name]
+            WLOG(params, 'error', TextEntry('00-017-00010', args=eargs))
             fpfilepath = None
         else:
             # get badpix filename
@@ -871,7 +867,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     return hcfile, fpfile
 
 
-def update_wavelength_measured(params, reftable, wavemap):
+def update_wavelength_measured(params, reftable, wavemap, kind):
     """
     Update a line table with a wavelength solution
 
@@ -890,10 +886,8 @@ def update_wavelength_measured(params, reftable, wavemap):
     keys  = ['ORDER', 'PIXEL_MEAS', 'WAVE_MEAS']
     for key in keys:
         if key not in reftable:
-            eargs = [key, func_name]
-            emsg = ('Key "{0}" not found in {1} reference table. '
-                    '\n\t Function = {2}')
-            WLOG(params, 'error', emsg.format(*eargs))
+            eargs = [key, kind, func_name]
+            WLOG(params, 'error', TextEntry('00-017-00011', args=eargs))
             return None
     # get columns from table
     orders = reftable['ORDER']
@@ -4949,8 +4943,8 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     wmsg = 'Updating measured wavelength (master)'
     WLOG(params, '', wmsg)
     # update wavelength measured in line list table
-    mhcl = update_wavelength_measured(params, mhcl, mwave)
-    mfpl = update_wavelength_measured(params, mfpl, mwave)
+    mhcl = update_wavelength_measured(params, mhcl, mwave, kind='HC')
+    mfpl = update_wavelength_measured(params, mfpl, mwave, kind='FP')
     # ----------------------------------------------------------------------
     # Construct night line list
     # ----------------------------------------------------------------------
