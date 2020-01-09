@@ -169,8 +169,6 @@ def get_args():
 
 
 def validate():
-
-
     # python version check
     if sys.version_info.major < 3:
         print('\tFatal Error: Python 2 is not supported')
