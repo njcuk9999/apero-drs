@@ -22,6 +22,7 @@ from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
+from apero.science import velocity
 from apero.science.extract import other as extractother
 
 
@@ -120,8 +121,8 @@ def __main__(recipe, params):
         for infile in fpfiles:
             rawfpfiles.append(infile.basename)
 
-    # deal with input data from function
-    if 'hcfiles' in params['DATA_DICT']:
+    # deal with input hc/fp data from function
+    if 'hcfiles' in params['DATA_DICT'] and 'fpfiles' in params['DATA_DICT']:
         hcfiles = params['DATA_DICT']['hcfiles']
         fpfiles = params['DATA_DICT']['fpfiles']
         rawhcfiles = params['DATA_DICT']['rawhcfiles']
@@ -131,20 +132,18 @@ def __main__(recipe, params):
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
         hcfiles = [drs_fits.combine(params, hcfiles, math='median')]
-        # get combined file
-        if fpfiles is not None:
-            fpfiles = [drs_fits.combine(params, fpfiles, math='median')]
+        fpfiles = [drs_fits.combine(params, fpfiles, math='median')]
         combine = True
     else:
         combine = False
+
     # get the number of infiles
     num_files = len(hcfiles)
 
     # warn user if lengths differ
-    if fpfiles is not None:
-        if len(hcfiles) != len(fpfiles):
-            wargs = [len(hcfiles), len(fpfiles)]
-            WLOG(params, 'error', TextEntry('10-017-00002', args=wargs))
+    if len(hcfiles) != len(fpfiles):
+        wargs = [len(hcfiles), len(fpfiles)]
+        WLOG(params, 'error', TextEntry('10-017-00002', args=wargs))
     # get the number of files
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)
@@ -197,9 +196,27 @@ def __main__(recipe, params):
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                            fiber=fiber, master=True)
             # --------------------------------------------------------------
+            # define the header as being from the hc e2ds file
+            hcheader = hc_e2ds_file.header
+            # load the blaze file for this fiber
+            blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
+            # --------------------------------------------------------------
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
+
+            # ----------------------------------------------------------
+            # ccf computation
+            # ----------------------------------------------------------
+            # get the FP (reference) fiber
+            pconst = constants.pload(params['INSTRUMENT'])
+            sfiber, rfiber = pconst.FIBER_CCF()
+            # compute the ccf
+            ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
+                       nprops['WAVEMAP'], rfiber]
+            rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
+            # merge rvprops into llprops (shallow copy)
+            nprops.merge(rvprops)
 
             # ----------------------------------------------------------
             # wave solution quality control
@@ -209,7 +226,9 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # write wave solution to file
             # ----------------------------------------------------------
-            wavefile = wave.night_write_wavesolution(params, recipe, nprops)
+            wargs = [nprops, hcfile, fpfile, fiber, combine, rawhcfiles,
+                     rawfpfiles, qc_params, wprops['WAVEINST']]
+            wavefile = wave.night_write_wavesolution(params, recipe, *wargs)
 
             # ----------------------------------------------------------
             # Update calibDB with solution
