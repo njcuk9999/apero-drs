@@ -676,15 +676,14 @@ cal_wave_master.description = Help['WAVE_DESC']
 cal_wave_master.epilog = Help['WAVE_EXAMPLE']
 cal_wave_master.kind = 'recipe'
 cal_wave_master.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
-                            WAVE_HCLL=sf.out_wave_hcline,
-                            WAVE_HCRES=sf.out_wave_hcres,
-                            WAVE_HCMAP=sf.out_wave_hc,
-                            WAVE_FPMAP=sf.out_wave_fp,
-                            WAVE_MAP=sf.out_wave_master,
-                            WAVE_FPRESTAB=sf.out_wave_res_table,
-                            WAVE_FPLLTAB=sf.out_wave_ll_table,
-                            WAVE_HCLIST=sf.out_wave_hclist_master,
-                            WAVE_FPLIST=sf.out_wave_fplist_master)
+                            WAVEM_HCLL=sf.out_wavem_hcline,
+                            WAVEM_HCRES=sf.out_wavem_hcres,
+                            WAVEM_HCMAP=sf.out_wavem_hc,
+                            WAVEM_FPMAP=sf.out_wavem_fp,
+                            WAVEM_FPRESTAB=sf.out_wavem_res_table,
+                            WAVEM_FPLLTAB=sf.out_wavem_ll_table,
+                            WAVEM_HCLIST=sf.out_wave_hclist_master,
+                            WAVEM_FPLIST=sf.out_wave_fplist_master)
 cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
                                 'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
@@ -747,7 +746,7 @@ cal_wave_night.extension = 'fits'
 cal_wave_night.description = Help['WAVE_DESC']
 cal_wave_night.epilog = Help['WAVE_EXAMPLE']
 cal_wave_night.kind = 'recipe'
-cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff)
+cal_wave_night.set_outputs(WAVE_NIGHT_WAVE=sf.out_wave_night)
 cal_wave_night.set_debug_plots('PLOT_WAVENIGHT_ITERPLOT', 'WAVENIGHT_DIFFPLOT')
 cal_wave_night.set_summary_plots()
 cal_wave_night.set_arg(pos=0, **directory)
