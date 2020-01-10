@@ -169,8 +169,12 @@ def __main__(recipe, params):
     drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)
     # update documentation (index.py)
     drs_changelog.update_file(doc_indxpath, DOC_INDEX_PREFIX, version)
+
     # copy change log to path
     shutil.copy(filename, doc_clogpath)
+    # need to re-format change log to conform to rst format
+    drs_changelog.format_rst(doc_clogpath)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
