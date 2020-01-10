@@ -181,8 +181,11 @@
 \pagestyle{normal}
 \phantomsection\label{\detokenize{index::doc}}
 
-\begin{quote}
 
+
+\chapter{Latest version: 0.6.018}
+\label{\detokenize{index:latest-version-0-6-018}}
+APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
 It is the official pipeline for:
 \begin{itemize}
 \item {} 
@@ -192,18 +195,17 @@ It is the official pipeline for:
 NIRPS (Currently under construction)
 
 \end{itemize}
-\end{quote}
 
 
-\chapter{General User documentation}
+\section{General User documentation}
 \label{\detokenize{user/general_guide:general-user-documentation}}\label{\detokenize{user/general_guide:general-guide}}\label{\detokenize{user/general_guide::doc}}
 This section provides a general guide to using APERO.
 
 
-\section{Installation}
+\subsection{Installation}
 \label{\detokenize{user/general/installation:installation}}\label{\detokenize{user/general/installation:id1}}\label{\detokenize{user/general/installation::doc}}
 
-\subsection{Prerequisites}
+\subsubsection{Prerequisites}
 \label{\detokenize{user/general/installation:prerequisites}}\label{\detokenize{user/general/installation:installation-prerequisites}}
 APERO is tested with \sphinxhref{https://www.python.org/download/releases/3.0/}{python 3}
 
@@ -233,10 +235,10 @@ See :ref: \sphinxtitleref{here \textless{}python\_install\textgreater{}} for gui
 the recommended setup.
 
 
-\subsection{Download from GitHub}
+\subsubsection{Download from GitHub}
 \label{\detokenize{user/general/installation:download-from-github}}\label{\detokenize{user/general/installation:installation-download}}
 
-\subsubsection{Clone}
+\paragraph{Clone}
 \label{\detokenize{user/general/installation:clone}}
 Clone from \sphinxhref{https://github.com/njcuk9999/apero-drs}{github}:
 
@@ -248,7 +250,7 @@ This may take some time (in future most of the data required will be a separate 
 and we still have many (now redundant) files from the spirou\_py3 repository.
 
 
-\subsubsection{Choose branch}
+\paragraph{Choose branch}
 \label{\detokenize{user/general/installation:choose-branch}}\label{\detokenize{user/general/installation:installation-choose-branch}}
 Change to the \sphinxtitleref{apero-drs} directory
 
@@ -302,10 +304,10 @@ Change to this branch with:
 \end{itemize}
 
 
-\subsection{Setup}
+\subsubsection{Setup}
 \label{\detokenize{user/general/installation:setup}}\label{\detokenize{user/general/installation:installation-setup}}
 
-\subsubsection{Run the installation script}
+\paragraph{Run the installation script}
 \label{\detokenize{user/general/installation:run-the-installation-script}}
 Change to the \sphinxtitleref{apero-drs} directory
 
@@ -316,7 +318,7 @@ Run the installation script:
 \end{sphinxVerbatim}
 
 
-\subsubsection{Step-by-step guide}
+\paragraph{Step-by-step guide}
 \label{\detokenize{user/general/installation:step-by-step-guide}}
 Follow the step-by-step guide:
 \begin{itemize}
@@ -370,7 +372,7 @@ A to E will repeat for all installable instruments (To step up just one use the 
 \end{sphinxadmonition}
 
 
-\subsubsection{Additional options}
+\paragraph{Additional options}
 \label{\detokenize{user/general/installation:additional-options}}
 One will be prompted to give installation paths to various optional tools (currently {\hyperref[\detokenize{misc/glossary:term-ds9}]{\sphinxtermref{\DUrole{xref,std,std-term}{ds9}}}}
 and {\hyperref[\detokenize{misc/glossary:term-pdflatex}]{\sphinxtermref{\DUrole{xref,std,std-term}{pdflatex}}}}
@@ -378,7 +380,7 @@ note the user will not be prompted if these were automatically found using the \
 command)
 
 
-\subsection{Updating from github}
+\subsubsection{Updating from github}
 \label{\detokenize{user/general/installation:updating-from-github}}\label{\detokenize{user/general/installation:installation-update}}\begin{enumerate}
 \sphinxsetlistlabels{\arabic}{enumi}{enumii}{}{.}%
 \item {} 
@@ -403,18 +405,18 @@ Update using the installation script:
 This will use all current settings and update the
 
 
-\section{Using APERO with SPIRou}
+\subsection{Using APERO with SPIRou}
 \label{\detokenize{user/general/using_apero_default:using-apero-with-spirou}}\label{\detokenize{user/general/using_apero_default:using-apero-default}}\label{\detokenize{user/general/using_apero_default::doc}}
 This section describes the process to use APERO.
 
 
-\section{Known Issues}
+\subsection{Known Issues}
 \label{\detokenize{user/general/known_issues:known-issues}}\label{\detokenize{user/general/known_issues:id1}}\label{\detokenize{user/general/known_issues::doc}}
 Currently known issues and problems with APERO.
 Last updated: 2020-01-07 (NJC).
 
 
-\subsection{Recipes}
+\subsubsection{Recipes}
 \label{\detokenize{user/general/known_issues:recipes}}\begin{itemize}
 \item {} 
 CCF still showing problems with noise - problem with wavelength solution?
@@ -428,7 +430,7 @@ no uncertainties propagated in recipes
 \end{itemize}
 
 
-\subsection{External}
+\subsubsection{External}
 \label{\detokenize{user/general/known_issues:external}}\begin{itemize}
 \item {} 
 barycorrpy requires astropy 2.0.16 and 3.2.3 to run (IERS table mirror links
@@ -437,13 +439,13 @@ in older versions out of date - server offline)
 \end{itemize}
 
 
-\section{TODO}
+\subsection{TODO}
 \label{\detokenize{user/general/todo:todo}}\label{\detokenize{user/general/todo:id1}}\label{\detokenize{user/general/todo::doc}}
 This is the currently list of items that need to still be completed.
 Last updated: 2020-01-07 (NJC).
 
 
-\subsection{In progress}
+\subsubsection{In progress}
 \label{\detokenize{user/general/todo:in-progress}}\begin{itemize}
 \item {} 
 finish \sphinxtitleref{obj\_spec\_spirou} and \sphinxtitleref{obj\_pol\_spirou} {[}Do not use them now{]}
@@ -474,7 +476,7 @@ write documentation
 \end{itemize}
 
 
-\subsection{As soon as possible}
+\subsubsection{As soon as possible}
 \label{\detokenize{user/general/todo:as-soon-as-possible}}\begin{itemize}
 \item {} 
 add \sphinxtitleref{plot== 3} (all debug plots shown) and \sphinxtitleref{plot==4} (all debug plots saved) modes
@@ -527,7 +529,7 @@ add EA template matching
 \end{itemize}
 
 
-\section{General Tools}
+\subsection{General Tools}
 \label{\detokenize{user/general/tools_default:general-tools}}\label{\detokenize{user/general/tools_default:tools-default}}\label{\detokenize{user/general/tools_default::doc}}
 
 \bigskip\hrule\bigskip
@@ -541,43 +543,43 @@ For instrument specific guide see:
 \end{itemize}
 
 
-\chapter{SPIRou documentation}
+\section{SPIRou documentation}
 \label{\detokenize{user/spirou:spirou-documentation}}\label{\detokenize{user/spirou:spirou-main}}\label{\detokenize{user/spirou::doc}}
 
-\section{Using APERO with SPIRou}
+\subsection{Using APERO with SPIRou}
 \label{\detokenize{user/spirou/using_apero_spirou:using-apero-with-spirou}}\label{\detokenize{user/spirou/using_apero_spirou:using-apero-spirou}}\label{\detokenize{user/spirou/using_apero_spirou::doc}}
 This section describes the process to use APERO.
 
 
-\section{SPIRou Recipes}
+\subsection{SPIRou Recipes}
 \label{\detokenize{user/spirou/recipes_spirou:spirou-recipes}}\label{\detokenize{user/spirou/recipes_spirou:recipes-spirou}}\label{\detokenize{user/spirou/recipes_spirou::doc}}
 This section describes are all the SPIROU recipes to use with APERO.
 
 
-\section{SPIRou Tools}
+\subsection{SPIRou Tools}
 \label{\detokenize{user/spirou/tools_spirou:spirou-tools}}\label{\detokenize{user/spirou/tools_spirou:tools-spirou}}\label{\detokenize{user/spirou/tools_spirou::doc}}
 These are all userful tools to use with APERO.
 
 
-\chapter{Developer how to guide}
+\section{Developer how to guide}
 \label{\detokenize{dev/developer_guide:developer-how-to-guide}}\label{\detokenize{dev/developer_guide:dev-main}}\label{\detokenize{dev/developer_guide::doc}}
 Below is a guide for those developing APERO for the current set of instruments
 and for future instruments.
 
 
-\section{Adding a new constant}
+\subsection{Adding a new constant}
 \label{\detokenize{dev/adding_new_constant:adding-a-new-constant}}\label{\detokenize{dev/adding_new_constant:add-new-constant}}\label{\detokenize{dev/adding_new_constant::doc}}
 
-\section{Adding a new keyword}
+\subsection{Adding a new keyword}
 \label{\detokenize{dev/adding_new_keyword:adding-a-new-keyword}}\label{\detokenize{dev/adding_new_keyword:adding-new-keyword}}\label{\detokenize{dev/adding_new_keyword::doc}}
 
-\section{Adding a new recipe}
+\subsection{Adding a new recipe}
 \label{\detokenize{dev/adding_new_recipe:adding-a-new-recipe}}\label{\detokenize{dev/adding_new_recipe:add-new-recipe}}\label{\detokenize{dev/adding_new_recipe::doc}}
 
-\section{Adding a new filetype}
+\subsection{Adding a new filetype}
 \label{\detokenize{dev/adding_new_filetype:adding-a-new-filetype}}\label{\detokenize{dev/adding_new_filetype:add-new-filetype}}\label{\detokenize{dev/adding_new_filetype::doc}}
 
-\section{Adding a new plot}
+\subsection{Adding a new plot}
 \label{\detokenize{dev/adding_new_plot:adding-a-new-plot}}\label{\detokenize{dev/adding_new_plot:add-new-plot}}\label{\detokenize{dev/adding_new_plot::doc}}
 
 \chapter{Other}
