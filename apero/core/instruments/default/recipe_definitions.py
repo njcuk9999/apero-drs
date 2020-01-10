@@ -124,6 +124,11 @@ remake_doc.instrument = __INSTRUMENT__
 # TODO: Move to language DB
 remake_doc.description = 'Re-make the apero documentation'
 remake_doc.kind = 'tool'
+# TODO: Move Help to language DB
+remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
+                     helpstr='[Bool] If True upload documentation to '
+                             'defined server (for web access)')
+
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
