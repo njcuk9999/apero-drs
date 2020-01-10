@@ -130,7 +130,7 @@
 
 \title{APERO Documentation}
 \date{Jan 10, 2020}
-\release{0.6.017}
+\release{0.6.018}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
 \renewcommand{\releasename}{ }
@@ -154,7 +154,7 @@
             \end{figure}
             
             \vspace{5mm}
-            \Large \textbf{Version 0.6.017}
+            \Large \textbf{Version 0.6.018}
             
             \vspace{5mm}
             \Large \textbf{{Neil Cook}}
@@ -183,7 +183,6 @@
 
 \begin{quote}
 
-APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
 It is the official pipeline for:
 \begin{itemize}
 \item {} 
@@ -708,8 +707,92 @@ see \sphinxhref{https://www.latex-project.org/get/}{www.latex-project.org}
 \section{Changelog}
 \label{\detokenize{misc/changelog:changelog}}\label{\detokenize{misc/changelog::doc}}
 
-\subsection{0.6.017 (2020-01-08)}
+\subsection{0.6.018 (2020-01-10)}
 \label{\detokenize{misc/changelog:id1}}\begin{itemize}
+\item {} 
+\sphinxtitleref{Recipes.spirou.obj\_mk\_template\_spirou.py} - add logging for when file
+is skipped (and qc passes) {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Recipe.dev.apero\_changelog.py} and
+\sphinxtitleref{module.documentation.drs\_changelog.py} - need to format changelog so it
+works as .rst file (for documentation) {[}Neil Cook{]}
+
+\item {} 
+Update documentation. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Tools.module.documentation.drs\_documentation.py} - make sure we copy
+the contents of output folder not the folder itself. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Tools.recipes.dev.apero\_documentation.py} - add update option to making
+documentation (for updating doc website) {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Tools.module.testing.drs\_log\_stats.py} - make sure path is in nights
+list + sort by htime. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Tools.resources.setup.apero.bash.setup*} - correct typo \textendash{} missing
+speech mark. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Science.calib.wave.py} - seperate master and old wave writing functions
++ add in night qc and write functions. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Cal\_wave\_night\_spirou.py} - add in ccf computation. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Cal\_wave\_master\_spirou.py} - change writing functions to master
+functions (to separate from \sphinxtitleref{cal\_wave} \textendash{} old) - master now writes to
+key WAVEM. {[}Neil Cook{]}
+
+\item {} 
+Update the \sphinxtitleref{master\_*\_SPIROU.txt} files - default master files now
+\sphinxtitleref{WAVEM\_D\_\{fiber\}} {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Core.instruments.spirou.recipe\_definitions.py} - need a set of files
+for master (can remove non-master if we go with master/night recipes)
+{[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Core.instruments.spirou.file\_definitions.py} - need a set of files for
+master (can remove non-master if we go with master/night recipes)
+{[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Core.instruments.spirou.default\_keywords.py} - group all wave header
+keys. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Core.core.drs\_startup.py} - add argument ‘required’ to
+\sphinxtitleref{get\_file\_definition} to allow not finding a key and return None if this
+is the case. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Core.core.drs\_log.py} - add pipes to the end of each qc to ease
+splitting in log analysis. {[}Neil Cook{]}
+
+\item {} 
+Update language database. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Science.calib.wave.py} - move logs to language database. {[}Neil Cook{]}
+
+\item {} 
+\sphinxtitleref{Setup.install.py} - remove blank spaces. {[}Neil Cook{]}
+
+\item {} 
+Update date/version/changelog/documentation. {[}Neil Cook{]}
+
+\end{itemize}
+
+
+\subsection{0.6.017 (2020-01-08)}
+\label{\detokenize{misc/changelog:id2}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Setup.install.py} - add dev section to modules (sphinx, ipdb,
 gitchangelog) {[}Neil Cook{]}
@@ -831,7 +914,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.6.016 (2020-01-07)}
-\label{\detokenize{misc/changelog:id2}}\begin{itemize}
+\label{\detokenize{misc/changelog:id3}}\begin{itemize}
 \item {} 
 Update docs - \sphinxtitleref{known\_issues} and todo. {[}Neil Cook{]}
 
@@ -904,7 +987,7 @@ Update changelog/version/date. {[}Neil Cook{]}
 
 
 \subsection{0.6.015 (2020-01-04)}
-\label{\detokenize{misc/changelog:id3}}\begin{itemize}
+\label{\detokenize{misc/changelog:id4}}\begin{itemize}
 \item {} 
 Add apero-data and gitignore contents. {[}Neil Cook{]}
 
@@ -983,7 +1066,7 @@ Cook{]}
 
 
 \subsection{0.6.014 (2020-01-03)}
-\label{\detokenize{misc/changelog:id4}}\begin{itemize}
+\label{\detokenize{misc/changelog:id5}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Io.drs\_lock.py} - make all lock files under the \sphinxtitleref{DRS\_DATA\_MSG} path (not
 the group modified path) {[}Neil Cook{]}
@@ -1006,7 +1089,7 @@ Merge remote-tracking branch ‘origin/neil’ into neil. {[}Neil Cook{]}
 
 
 \subsection{0.6.013 (2020-01-02)}
-\label{\detokenize{misc/changelog:id5}}\begin{itemize}
+\label{\detokenize{misc/changelog:id6}}\begin{itemize}
 \item {} 
 Continue work on sphinx documentation (html and linux) {[}njcuk9999{]}
 
@@ -1035,7 +1118,7 @@ problem. {[}Neil Cook{]}
 
 
 \subsection{0.6.012 (2019-12-31)}
-\label{\detokenize{misc/changelog:id6}}\begin{itemize}
+\label{\detokenize{misc/changelog:id7}}\begin{itemize}
 \item {} 
 Start of documentation with Sphinx. {[}njcuk9999{]}
 
@@ -1043,7 +1126,7 @@ Start of documentation with Sphinx. {[}njcuk9999{]}
 
 
 \subsection{0.6.011 (2019-12-23)}
-\label{\detokenize{misc/changelog:id7}}\begin{itemize}
+\label{\detokenize{misc/changelog:id8}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.core.drs\_log.py} - try to catch log problems. {[}Neil Cook{]}
 
@@ -1054,7 +1137,7 @@ Update date/version/changelog/readme. {[}Neil Cook{]}
 
 
 \subsection{0.6.010 (2019-12-19)}
-\label{\detokenize{misc/changelog:id8}}\begin{itemize}
+\label{\detokenize{misc/changelog:id9}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.wave.py} + \sphinxtitleref{recipes.spirou.cal\_wave\_master\_spirou.py} - add
 hc/fp line creation from EA. {[}Neil Cook{]}
@@ -1191,7 +1274,7 @@ Update doc string. {[}Neil Cook{]}
 
 
 \subsection{0.6.009 (2019-12-18)}
-\label{\detokenize{misc/changelog:id9}}\begin{itemize}
+\label{\detokenize{misc/changelog:id10}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.core.drs\_log.py} + \sphinxtitleref{drs\_log\_stats.py} - add option to save time of
 file and then do log analysis on \textendash{}since \textendash{}before log files only.
@@ -1239,7 +1322,7 @@ Update changelog.md to include \sphinxtitleref{core.core.drs\_recipe} fixes. {[}
 
 
 \subsection{0.6.008 (2019-12-17)}
-\label{\detokenize{misc/changelog:id10}}\begin{itemize}
+\label{\detokenize{misc/changelog:id11}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.core.drs\_recipe.py} - add other list arguments \textendash{} attempt to
 correct bug. {[}Neil Cook{]}
@@ -1343,7 +1426,7 @@ Changelog/readme/date/version. {[}Neil Cook{]}
 
 
 \subsection{0.6.007 (2019-12-16)}
-\label{\detokenize{misc/changelog:id11}}\begin{itemize}
+\label{\detokenize{misc/changelog:id12}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools/bin/apero\_log\_stats.py} - start adding options for stats on
 specific recipes. {[}Neil Cook{]}
@@ -1395,7 +1478,7 @@ Update changelog/data/version/readme. {[}Neil Cook{]}
 
 
 \subsection{0.6.006 (2019-12-13)}
-\label{\detokenize{misc/changelog:id12}}\begin{itemize}
+\label{\detokenize{misc/changelog:id13}}\begin{itemize}
 \item {} 
 Update non-instrument specified recipes (and make sure
 \sphinxtitleref{apero\_processing} can be run correctly from main call. {[}Neil Cook{]}
@@ -1454,7 +1537,7 @@ configs + add ‘=’ to end of update string to make constants unique.
 
 
 \subsection{0.6.005 (2019-12-12)}
-\label{\detokenize{misc/changelog:id13}}\begin{itemize}
+\label{\detokenize{misc/changelog:id14}}\begin{itemize}
 \item {} 
 Updates to installation script (UNFINISHED) {[}Neil Cook{]}
 
@@ -1495,7 +1578,7 @@ Modify recipes and add recipe logging. {[}Neil Cook{]}
 
 
 \subsection{0.6.004 (2019-12-12)}
-\label{\detokenize{misc/changelog:id14}}\begin{itemize}
+\label{\detokenize{misc/changelog:id15}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe.spirou.*} - test locking {[}not working yet{]} {[}Neil Cook{]}
 
@@ -1522,7 +1605,7 @@ Update date/changelog/version. {[}Neil Cook{]}
 
 
 \subsection{0.6.003 (2019-12-10)}
-\label{\detokenize{misc/changelog:id15}}\begin{itemize}
+\label{\detokenize{misc/changelog:id16}}\begin{itemize}
 \item {} 
 Update README.md. {[}Neil Cook{]}
 
@@ -1600,7 +1683,7 @@ Update config/changelog/readme/version. {[}Neil Cook{]}
 
 
 \subsection{0.6.002 (2019-12-09)}
-\label{\detokenize{misc/changelog:id16}}\begin{itemize}
+\label{\detokenize{misc/changelog:id17}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.core.drs\_recipe.py} - change souce of tellurics (shouldn’t be
 here) {[}Neil Cook{]}
@@ -1715,7 +1798,7 @@ Update the read me with recipe + output descriptions. {[}Neil Cook{]}
 
 
 \subsection{0.6.001 (2019-12-06)}
-\label{\detokenize{misc/changelog:id17}}\begin{itemize}
+\label{\detokenize{misc/changelog:id18}}\begin{itemize}
 \item {} 
 Remove old breakpoints. {[}Neil Cook{]}
 
@@ -1759,7 +1842,7 @@ the cores. {[}Neil Cook{]}
 
 
 \subsection{0.5.124 (2019-12-05)}
-\label{\detokenize{misc/changelog:id18}}\begin{itemize}
+\label{\detokenize{misc/changelog:id19}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_processing.py} - set \sphinxtitleref{multi\_process} back to group
 by core (Process) {[}Neil Cook{]}
@@ -1814,7 +1897,7 @@ Remove dashes from program names to allow importing. {[}Neil Cook{]}
 
 
 \subsection{0.5.123 (2019-12-05)}
-\label{\detokenize{misc/changelog:id19}}\begin{itemize}
+\label{\detokenize{misc/changelog:id20}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.drs\_startup.py} - make sure pids are really unlikely to be the
 same (add random component) {[}Neil Cook{]}
@@ -1840,7 +1923,7 @@ Cook{]}
 
 
 \subsection{0.5.122 (2019-12-04)}
-\label{\detokenize{misc/changelog:id20}}\begin{itemize}
+\label{\detokenize{misc/changelog:id21}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Misc.problems.parellel\_test\_20191203.py} - minimum working version of
 parallisation problem. {[}Neil Cook{]}
@@ -1882,7 +1965,7 @@ Add \sphinxtitleref{DRS\_DS9\_PATH} and \sphinxtitleref{DRS\_PDFLATEX\_PATH} to 
 
 
 \subsection{0.5.121 (2019-12-02)}
-\label{\detokenize{misc/changelog:id21}}\begin{itemize}
+\label{\detokenize{misc/changelog:id22}}\begin{itemize}
 \item {} 
 Add README.md to bin and dev tool folders. {[}Neil Cook{]}
 
@@ -1933,7 +2016,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.120 (2019-11-29)}
-\label{\detokenize{misc/changelog:id22}}\begin{itemize}
+\label{\detokenize{misc/changelog:id23}}\begin{itemize}
 \item {} 
 Replace old locking mechanism with new one. {[}Neil Cook{]}
 
@@ -2011,7 +2094,7 @@ Cook{]}
 
 
 \subsection{0.5.119 (2019-11-29)}
-\label{\detokenize{misc/changelog:id23}}\begin{itemize}
+\label{\detokenize{misc/changelog:id24}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Io.drs\_lock.py} - change name of function in @sync call. {[}Neil Cook{]}
 
@@ -2119,7 +2202,7 @@ None) {[}Neil Cook{]}
 
 
 \subsection{0.5.118 (2019-11-27)}
-\label{\detokenize{misc/changelog:id24}}\begin{itemize}
+\label{\detokenize{misc/changelog:id25}}\begin{itemize}
 \item {} 
 Etiennes speed up codes. {[}Neil Cook{]}
 
@@ -2230,7 +2313,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.117 (2019-11-26)}
-\label{\detokenize{misc/changelog:id25}}\begin{itemize}
+\label{\detokenize{misc/changelog:id26}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipes.spirou.obj\_fit\_tellu\_db\_spirou.py} + \sphinxtitleref{obj\_mk\_tellu\_db\_spirou.py}
 + \sphinxtitleref{obj\_spec\_spirou.py} - add global output list for displaying errors at
@@ -2395,7 +2478,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.116 (2019-11-15)}
-\label{\detokenize{misc/changelog:id26}}\begin{itemize}
+\label{\detokenize{misc/changelog:id27}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_processing.py} - remove breakpoint. {[}Neil Cook{]}
 
@@ -2485,7 +2568,7 @@ width is good (ccfstep \textless{} ccfwidth / 10) {[}Neil Cook{]}
 
 
 \subsection{0.5.115 (2019-11-14)}
-\label{\detokenize{misc/changelog:id27}}\begin{itemize}
+\label{\detokenize{misc/changelog:id28}}\begin{itemize}
 \item {} 
 Update language database. {[}Neil Cook{]}
 
@@ -2590,7 +2673,7 @@ Cook{]}
 
 
 \subsection{0.5.114 (2019-11-14)}
-\label{\detokenize{misc/changelog:id28}}\begin{itemize}
+\label{\detokenize{misc/changelog:id29}}\begin{itemize}
 \item {} 
 Science.preprocessing.identification - add the \sphinxtitleref{fix\_headers} wrapper
 (passes it to instrument pseudo constants) + add a debug in id process
@@ -2650,7 +2733,7 @@ and update references to \sphinxtitleref{DARK\_DARK} \textendash{}\textgreater{}
 
 
 \subsection{0.5.113 (2019-11-12)}
-\label{\detokenize{misc/changelog:id29}}\begin{itemize}
+\label{\detokenize{misc/changelog:id30}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.instruments.spirou.recipe\_defintions.py} - add blazefile, flatfile
 and thermal file arguments to required recipes. {[}Neil Cook{]}
@@ -2695,7 +2778,7 @@ Cook{]}
 
 
 \subsection{0.5.112 (2019-11-12)}
-\label{\detokenize{misc/changelog:id30}}\begin{itemize}
+\label{\detokenize{misc/changelog:id31}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipes/spirou/obj\_pol\_spirou.py} and \sphinxtitleref{science/polar/general.py} - add
 polar s1d (calculation, file writing and plotting) {[}Neil Cook{]}
@@ -2725,7 +2808,7 @@ Cook{]}
 
 
 \subsection{0.5.111 (2019-11-09)}
-\label{\detokenize{misc/changelog:id31}}\begin{itemize}
+\label{\detokenize{misc/changelog:id32}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_installation.py} - add \sphinxtitleref{user\_interface},
 \sphinxtitleref{copy\_configs} and \sphinxtitleref{update\_configs}. {[}njcuk9999{]}
@@ -2746,7 +2829,7 @@ installation script. {[}njcuk9999{]}
 
 
 \subsection{0.5.110 (2019-11-09)}
-\label{\detokenize{misc/changelog:id32}}\begin{itemize}
+\label{\detokenize{misc/changelog:id33}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_pol\_spirou.py} - add generate stats + plotting + writing of files.
 {[}Neil Cook{]}
@@ -2827,7 +2910,7 @@ Cook{]}
 
 
 \subsection{0.5.109 (2019-11-07)}
-\label{\detokenize{misc/changelog:id33}}\begin{itemize}
+\label{\detokenize{misc/changelog:id34}}\begin{itemize}
 \item {} 
 Update \sphinxtitleref{construct\_filename} \textendash{}\textgreater{} \sphinxtitleref{construct\_path}. {[}Neil Cook{]}
 
@@ -2860,7 +2943,7 @@ Data/spirou/lsd - add lsd masks and meta data. {[}Neil Cook{]}
 
 
 \subsection{0.5.108 (2019-11-07)}
-\label{\detokenize{misc/changelog:id34}}\begin{itemize}
+\label{\detokenize{misc/changelog:id35}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.telluric.general.py} - curve fit forces floats - cast kp as
 bool after it was forced to floats. {[}Neil Cook{]}
@@ -2881,7 +2964,7 @@ quicker + skip those that use barycorrpy already. {[}Neil Cook{]}
 
 
 \subsection{0.5.107 (2019-11-06)}
-\label{\detokenize{misc/changelog:id35}}\begin{itemize}
+\label{\detokenize{misc/changelog:id36}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe/spirou/obj\_pol\_spirou.py} - continue adding to polar recipe.
 {[}Neil Cook{]}
@@ -2900,7 +2983,7 @@ Cook{]}
 
 
 \subsection{0.5.106 (2019-11-05)}
-\label{\detokenize{misc/changelog:id36}}\begin{itemize}
+\label{\detokenize{misc/changelog:id37}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Berv.py} - set \sphinxtitleref{leap\_update} to False, add file update to
 \sphinxtitleref{cal\_update\_berv.py}. {[}njcuk9999{]}
@@ -2947,7 +3030,7 @@ Add gui stuff. {[}njcuk9999{]}
 
 
 \subsection{0.5.105 (2019-11-03)}
-\label{\detokenize{misc/changelog:id37}}\begin{itemize}
+\label{\detokenize{misc/changelog:id38}}\begin{itemize}
 \item {} 
 First commit of a gui module. {[}njcuk9999{]}
 
@@ -2971,7 +3054,7 @@ to processing.py. {[}njcuk9999{]}
 
 
 \subsection{0.5.104 (2019-11-01)}
-\label{\detokenize{misc/changelog:id38}}\begin{itemize}
+\label{\detokenize{misc/changelog:id39}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.dark.py} - rearrange steps. {[}njcuk9999{]}
 
@@ -2986,7 +3069,7 @@ to processing.py. {[}njcuk9999{]}
 
 
 \subsection{0.5.103 (2019-11-01)}
-\label{\detokenize{misc/changelog:id39}}\begin{itemize}
+\label{\detokenize{misc/changelog:id40}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Io.drs\_table.py} - fix problem with hdu lists. {[}njcuk9999{]}
 
@@ -3009,7 +3092,7 @@ Add \sphinxtitleref{PI\_NAME} to raw columns in index files. {[}Neil Cook{]}
 
 
 \subsection{0.5.102 (2019-10-30)}
-\label{\detokenize{misc/changelog:id40}}\begin{itemize}
+\label{\detokenize{misc/changelog:id41}}\begin{itemize}
 \item {} 
 Merge remote-tracking branch ‘origin/dev’ into dev. {[}njcuk9999{]}
 
@@ -3025,7 +3108,7 @@ DrsRecipeException. {[}njcuk9999{]}
 
 
 \subsection{0.5.101 (2019-10-29)}
-\label{\detokenize{misc/changelog:id41}}\begin{itemize}
+\label{\detokenize{misc/changelog:id42}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.localisation.py} - remove break point. {[}Neil Cook{]}
 
@@ -3043,7 +3126,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.100 (2019-10-28)}
-\label{\detokenize{misc/changelog:id42}}\begin{itemize}
+\label{\detokenize{misc/changelog:id43}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.telluric.general.py} - catch all berv = nan (not allowed) {[}Neil
 Cook{]}
@@ -3105,7 +3188,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.099 (2019-10-25)}
-\label{\detokenize{misc/changelog:id43}}\begin{itemize}
+\label{\detokenize{misc/changelog:id44}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.polar.general.py} - add PolarObj class and \sphinxtitleref{validate\_polar\_files}
 + \sphinxtitleref{valid\_polar\_file} functions. {[}Neil Cook{]}
@@ -3193,7 +3276,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.098 (2019-10-24)}
-\label{\detokenize{misc/changelog:id44}}\begin{itemize}
+\label{\detokenize{misc/changelog:id45}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe.spirou.cal\_wave\_spirou.py} + \sphinxtitleref{sciecne.calib.wave.py} - add summary
 plot functionality. {[}Neil Cook{]}
@@ -3245,7 +3328,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.097 (2019-10-23)}
-\label{\detokenize{misc/changelog:id45}}\begin{itemize}
+\label{\detokenize{misc/changelog:id46}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.velocity.general.py} - change arguments \sphinxtitleref{(found\_rv} \textendash{}\textgreater{} rv) {[}Neil
 Cook{]}
@@ -3293,7 +3376,7 @@ dictionary. {[}Neil Cook{]}
 
 
 \subsection{0.5.096 (2019-10-17)}
-\label{\detokenize{misc/changelog:id46}}\begin{itemize}
+\label{\detokenize{misc/changelog:id47}}\begin{itemize}
 \item {} 
 Update language database. {[}Neil Cook{]}
 
@@ -3321,7 +3404,7 @@ ccf plot) {[}Neil Cook{]}
 
 
 \subsection{0.5.095 (2019-10-16)}
-\label{\detokenize{misc/changelog:id47}}\begin{itemize}
+\label{\detokenize{misc/changelog:id48}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Math.fast.py} - rearrange imports. {[}Neil Cook{]}
 
@@ -3375,7 +3458,7 @@ objname arguments. {[}Neil Cook{]}
 
 
 \subsection{0.5.094 (2019-10-15)}
-\label{\detokenize{misc/changelog:id48}}\begin{itemize}
+\label{\detokenize{misc/changelog:id49}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.instruemnts.spirou.recipe\_definitions.py} - fix the full run and
 remove science run sequences. {[}Neil Cook{]}
@@ -3422,7 +3505,7 @@ Plotting - make sure location is set in all recipes. {[}Neil Cook{]}
 
 
 \subsection{0.5.093 (2019-10-14)}
-\label{\detokenize{misc/changelog:id49}}\begin{itemize}
+\label{\detokenize{misc/changelog:id50}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.instruments.spirou.recipe\_definitions.py} +
 \sphinxtitleref{recipes.spirou.obj\_fit\_tellu\_spirou.py} - must add s1d plot args to
@@ -3432,7 +3515,7 @@ Plotting - make sure location is set in all recipes. {[}Neil Cook{]}
 
 
 \subsection{0.5.092 (2019-10-13)}
-\label{\detokenize{misc/changelog:id50}}\begin{itemize}
+\label{\detokenize{misc/changelog:id51}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Plotting.core.py} + \sphinxtitleref{latex.py} - update layout for stat + qc tables + try
 to latex floating orders. {[}Neil Cook{]}
@@ -3499,7 +3582,7 @@ table. {[}Neil Cook{]}
 
 
 \subsection{0.5.091 (2019-10-11)}
-\label{\detokenize{misc/changelog:id51}}\begin{itemize}
+\label{\detokenize{misc/changelog:id52}}\begin{itemize}
 \item {} 
 Add a section to how to (to fill in later) {[}Neil Cook{]}
 
@@ -3538,7 +3621,7 @@ flat recipes. {[}Neil Cook{]}
 
 
 \subsection{0.5.090 (2019-10-10)}
-\label{\detokenize{misc/changelog:id52}}\begin{itemize}
+\label{\detokenize{misc/changelog:id53}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe.spirou.cal\_shape\_master\_spirou.py} + \sphinxtitleref{science.calib.shape.py} -
 add plots. {[}Neil Cook{]}
@@ -3567,7 +3650,7 @@ Cook{]}
 
 
 \subsection{0.5.089 (2019-10-10)}
-\label{\detokenize{misc/changelog:id53}}\begin{itemize}
+\label{\detokenize{misc/changelog:id54}}\begin{itemize}
 \item {} 
 Continue adding plotting. {[}Neil Cook{]}
 
@@ -3604,7 +3687,7 @@ Cook{]}
 
 
 \subsection{0.5.088 (2019-10-08)}
-\label{\detokenize{misc/changelog:id54}}\begin{itemize}
+\label{\detokenize{misc/changelog:id55}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - add plot closing and fix bugs
 with \sphinxtitleref{nightname/str\_arg\_list} and self.recipe.args. {[}Neil Cook{]}
@@ -3652,7 +3735,7 @@ terrapipe. {[}Neil Cook{]}
 
 
 \subsection{0.5.087 (2019-10-07)}
-\label{\detokenize{misc/changelog:id55}}\begin{itemize}
+\label{\detokenize{misc/changelog:id56}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Core.constants.param\_functions.py} - if breakpoints does not have
 params force \sphinxtitleref{allow\_breakpoints}. {[}Neil Cook{]}
@@ -3661,7 +3744,7 @@ params force \sphinxtitleref{allow\_breakpoints}. {[}Neil Cook{]}
 
 
 \subsection{0.5.086 (2019-10-06)}
-\label{\detokenize{misc/changelog:id56}}\begin{itemize}
+\label{\detokenize{misc/changelog:id57}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - deal with input nightname and
 filename. {[}njcuk9999{]}
@@ -3698,7 +3781,7 @@ stopping at certain point in the code easily. {[}njcuk9999{]}
 
 
 \subsection{0.5.085 (2019-10-05)}
-\label{\detokenize{misc/changelog:id57}}\begin{itemize}
+\label{\detokenize{misc/changelog:id58}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - add filename and nightname from
 inputs. {[}njcuk9999{]}
@@ -3753,7 +3836,7 @@ Core.constants - move . imports to terrapipe imports. {[}njcuk9999{]}
 
 
 \subsection{0.5.084 (2019-10-04)}
-\label{\detokenize{misc/changelog:id58}}\begin{itemize}
+\label{\detokenize{misc/changelog:id59}}\begin{itemize}
 \item {} 
 Update language database. {[}Neil Cook{]}
 
@@ -3768,7 +3851,7 @@ Plotting - add in latex functions and summary plot. {[}Neil Cook{]}
 
 
 \subsection{0.5.083 (2019-10-03)}
-\label{\detokenize{misc/changelog:id59}}\begin{itemize}
+\label{\detokenize{misc/changelog:id60}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.modules.setup.drs\_reprocess.py} - change closeall (now in
 plotter) {[}Neil Cook{]}
@@ -3838,7 +3921,7 @@ Update object list. {[}njcuk9999{]}
 
 
 \subsection{0.5.082 (2019-10-02)}
-\label{\detokenize{misc/changelog:id60}}\begin{itemize}
+\label{\detokenize{misc/changelog:id61}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - deal with traceback as a list or
 string. {[}Neil Cook{]}
@@ -3883,7 +3966,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.081 (2019-10-01)}
-\label{\detokenize{misc/changelog:id61}}\begin{itemize}
+\label{\detokenize{misc/changelog:id62}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.velocity.general.py} - add \sphinxtitleref{locate\_reference\_file} function and
 work on calculating ccf (now combining with nanmean) {[}Neil Cook{]}
@@ -3933,7 +4016,7 @@ constants. {[}Neil Cook{]}
 
 
 \subsection{0.5.080 (2019-09-30)}
-\label{\detokenize{misc/changelog:id62}}\begin{itemize}
+\label{\detokenize{misc/changelog:id63}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - fix error in printing errors at
 end (and add these errors to the log properly) {[}Neil Cook{]}
@@ -3993,7 +4076,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.079 (2019-09-26)}
-\label{\detokenize{misc/changelog:id63}}\begin{itemize}
+\label{\detokenize{misc/changelog:id64}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - take out pushing skip to recipes
 and add in pushing debug to recipes, rename DEBUG \textendash{}\textgreater{} \sphinxtitleref{TEST\_RUN} to do a
@@ -4081,7 +4164,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.078 (2019-09-25)}
-\label{\detokenize{misc/changelog:id64}}\begin{itemize}
+\label{\detokenize{misc/changelog:id65}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Misc.mk\_template\_s1d.py} - etiennes code to be added to \sphinxtitleref{mk\_template}.
 {[}Neil Cook{]}
@@ -4131,7 +4214,7 @@ keywords. {[}Neil Cook{]}
 
 
 \subsection{0.5.077 (2019-09-24)}
-\label{\detokenize{misc/changelog:id65}}\begin{itemize}
+\label{\detokenize{misc/changelog:id66}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.velocity.general.py} - add \sphinxtitleref{compute\_ccf\_sciecne} and
 \sphinxtitleref{fill\_e2ds\_nans} functions (continued work on \sphinxtitleref{cal\_ccf\_spirou)} {[}Neil
@@ -4175,7 +4258,7 @@ param dict into another) {[}Neil Cook{]}
 
 
 \subsection{0.5.076 (2019-09-23)}
-\label{\detokenize{misc/changelog:id66}}\begin{itemize}
+\label{\detokenize{misc/changelog:id67}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.telluric.general.py} - re calculate \sphinxtitleref{tapas\_water} and \sphinxtitleref{tapas\_other}
 after shift. {[}Neil Cook{]}
@@ -4210,7 +4293,7 @@ Update changelog/date/version. {[}Neil Cook{]}
 
 
 \subsection{0.5.075 (2019-09-20)}
-\label{\detokenize{misc/changelog:id67}}\begin{itemize}
+\label{\detokenize{misc/changelog:id68}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - set filemod and recipemod for
 srecipes that do not have them set. {[}Neil Cook{]}
@@ -4234,7 +4317,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.074 (2019-09-19)}
-\label{\detokenize{misc/changelog:id68}}\begin{itemize}
+\label{\detokenize{misc/changelog:id69}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.telluric.general.py} - add an upper and lower limit to keep for
 the pca fit. {[}Neil Cook{]}
@@ -4302,7 +4385,7 @@ Update changelog.md. {[}Neil Cook{]}
 
 
 \subsection{0.5.073 (2019-09-18)}
-\label{\detokenize{misc/changelog:id69}}\begin{itemize}
+\label{\detokenize{misc/changelog:id70}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - add shortname to Run class,
 check that all recipes in run table are valid, print group name
@@ -4372,7 +4455,7 @@ Update date/changelog/version. {[}Neil Cook{]}
 
 
 \subsection{0.5.072 (2019-09-17)}
-\label{\detokenize{misc/changelog:id70}}\begin{itemize}
+\label{\detokenize{misc/changelog:id71}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.bin.reset.py} - remove instrument re-definition (now done in
 core.setup) {[}Neil Cook{]}
@@ -4472,7 +4555,7 @@ coluns are added (via list comprehension) {[}Neil Cook{]}
 
 
 \subsection{0.5.071 (2019-09-16)}
-\label{\detokenize{misc/changelog:id71}}\begin{itemize}
+\label{\detokenize{misc/changelog:id72}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - add \sphinxtitleref{generate\_run\_table} to
 generate \sphinxtitleref{run\_table} from a set of args/kwargs. {[}Neil Cook{]}
@@ -4579,7 +4662,7 @@ coming from header (need to check both key and output{[}0{]} for kwargs)
 
 
 \subsection{0.5.070 (2019-09-13)}
-\label{\detokenize{misc/changelog:id72}}\begin{itemize}
+\label{\detokenize{misc/changelog:id73}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.bin.reprocess.py} - change how master table is defined (keys
 \sphinxtitleref{‘KW\_MID\_OBS\_TIME}’ and \sphinxtitleref{‘KW\_DPRTYPE}’ need values creating as not in raw
@@ -4758,7 +4841,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.069 (2019-09-11)}
-\label{\detokenize{misc/changelog:id73}}\begin{itemize}
+\label{\detokenize{misc/changelog:id74}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.general.py} - fix loading of tapas (in thermal
 correction 1) {[}Neil Cook{]}
@@ -4881,7 +4964,7 @@ Update version/date/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.068 (2019-09-10)}
-\label{\detokenize{misc/changelog:id74}}\begin{itemize}
+\label{\detokenize{misc/changelog:id75}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.modlue.setup.drs\_reprocess.py} - load “adds” when checking
 sequences (taken out of recipe init) {[}Neil Cook{]}
@@ -4951,7 +5034,7 @@ Cook{]}
 
 
 \subsection{0.5.067 (2019-09-06)}
-\label{\detokenize{misc/changelog:id75}}\begin{itemize}
+\label{\detokenize{misc/changelog:id76}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.berv.py} - add additional flag for when estiamte is
 used/not used. {[}njcuk9999{]}
@@ -4980,7 +5063,7 @@ Update language database. {[}njcuk9999{]}
 
 
 \subsection{0.5.066 (2019-09-05)}
-\label{\detokenize{misc/changelog:id76}}\begin{itemize}
+\label{\detokenize{misc/changelog:id77}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_fit\_tellu.py} - update how far we have got. {[}njcuk9999{]}
 
@@ -5013,7 +5096,7 @@ terrapipe. {[}njcuk9999{]}
 
 
 \subsection{0.5.065 (2019-09-04)}
-\label{\detokenize{misc/changelog:id77}}\begin{itemize}
+\label{\detokenize{misc/changelog:id78}}\begin{itemize}
 \item {} 
 Update language database. {[}njcuk9999{]}
 
@@ -5056,7 +5139,7 @@ file. {[}njcuk9999{]}
 
 
 \subsection{0.5.064 (2019-09-02)}
-\label{\detokenize{misc/changelog:id78}}\begin{itemize}
+\label{\detokenize{misc/changelog:id79}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.wave.py} - add NBPIX to wprops. {[}njcuk9999{]}
 
@@ -5127,7 +5210,7 @@ key. {[}njcuk9999{]}
 
 
 \subsection{0.5.063 (2019-08-31)}
-\label{\detokenize{misc/changelog:id79}}\begin{itemize}
+\label{\detokenize{misc/changelog:id80}}\begin{itemize}
 \item {} 
 Data.core..pdbrc - add pdb/ipdb script to run on execution (after
 copying to working directory) {[}njcuk9999{]}
@@ -5215,7 +5298,7 @@ when really know what you are doing) {[}njcuk9999{]}
 
 
 \subsection{0.5.062 (2019-08-30)}
-\label{\detokenize{misc/changelog:id80}}\begin{itemize}
+\label{\detokenize{misc/changelog:id81}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - fix copying (deep copy)
 {[}njcuk9999{]}
@@ -5274,7 +5357,7 @@ stop setting keys to params. {[}njcuk9999{]}
 
 
 \subsection{0.5.061 (2019-08-29)}
-\label{\detokenize{misc/changelog:id81}}\begin{itemize}
+\label{\detokenize{misc/changelog:id82}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.rv.general.py} - fix tabbing typo + other fixes (found after
 first run) {[}njcuk9999{]}
@@ -5348,7 +5431,7 @@ change. {[}njcuk9999{]}
 
 
 \subsection{0.5.060 (2019-08-28)}
-\label{\detokenize{misc/changelog:id82}}\begin{itemize}
+\label{\detokenize{misc/changelog:id83}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - fix updating keys in Run
 (runstring/args/kwargs), deal with wrong nightname. {[}njcuk9999{]}
@@ -5368,7 +5451,7 @@ constants. {[}njcuk9999{]}
 
 
 \subsection{0.5.059 (2019-08-27)}
-\label{\detokenize{misc/changelog:id83}}\begin{itemize}
+\label{\detokenize{misc/changelog:id84}}\begin{itemize}
 \item {} 
 Science.rv.general - add \sphinxtitleref{get\_ccf\_mask}, coravelation, \sphinxtitleref{delta\_v\_rms\_2d}
 \sphinxtitleref{calculate\_ccf} correlbin and \sphinxtitleref{fit\_ccf} functions. {[}njcuk9999{]}
@@ -5403,7 +5486,7 @@ Update language database. {[}njcuk9999{]}
 
 
 \subsection{0.5.058 (2019-08-22)}
-\label{\detokenize{misc/changelog:id84}}\begin{itemize}
+\label{\detokenize{misc/changelog:id85}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Neil\_TODO.md} - currently needed before release of terrapipe. {[}Neil
 Cook{]}
@@ -5450,7 +5533,7 @@ Cook{]}
 
 
 \subsection{0.5.057 (2019-08-21)}
-\label{\detokenize{misc/changelog:id85}}\begin{itemize}
+\label{\detokenize{misc/changelog:id86}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.wave.py} - continue to add wave fp code. {[}Neil Cook{]}
 
@@ -5482,7 +5565,7 @@ Update language database. {[}Neil Cook{]}
 
 
 \subsection{0.5.056 (2019-08-21)}
-\label{\detokenize{misc/changelog:id86}}\begin{itemize}
+\label{\detokenize{misc/changelog:id87}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Constants\_SPIROU\_H4RG.py} - add comments for @melissa-hobson to try to
 explain. {[}Neil Cook{]}
@@ -5514,7 +5597,7 @@ kwstore in same way) {[}Neil Cook{]}
 
 
 \subsection{0.5.055 (2019-08-19)}
-\label{\detokenize{misc/changelog:id87}}\begin{itemize}
+\label{\detokenize{misc/changelog:id88}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.wave.py} - continued integration of wave from SpirouDRS.
 {[}Neil Cook{]}
@@ -5542,7 +5625,7 @@ Core.instruments - add wave constants. {[}Neil Cook{]}
 
 
 \subsection{0.5.054 (2019-08-16)}
-\label{\detokenize{misc/changelog:id88}}\begin{itemize}
+\label{\detokenize{misc/changelog:id89}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - change how \sphinxtitleref{find\_recipe} works.
 {[}Neil Cook{]}
@@ -5751,7 +5834,7 @@ hobson{]}
 
 
 \subsection{0.5.053 (2019-08-15)}
-\label{\detokenize{misc/changelog:id89}}\begin{itemize}
+\label{\detokenize{misc/changelog:id90}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.module.setup.drs\_reprocess.py} - correct how we determine whether
 we have errors in odict. {[}Neil Cook{]}
@@ -5826,7 +5909,7 @@ call. {[}Neil Cook{]}
 
 
 \subsection{0.5.052 (2019-08-14)}
-\label{\detokenize{misc/changelog:id90}}\begin{itemize}
+\label{\detokenize{misc/changelog:id91}}\begin{itemize}
 \item {} 
 Update object query list. {[}Neil Cook{]}
 
@@ -5840,7 +5923,7 @@ Reprocessing fix - continue work. {[}Neil Cook{]}
 
 
 \subsection{0.5.051 (2019-08-13)}
-\label{\detokenize{misc/changelog:id91}}\begin{itemize}
+\label{\detokenize{misc/changelog:id92}}\begin{itemize}
 \item {} 
 Reprocessing - continue work on reprocessing. {[}Neil Cook{]}
 
@@ -5912,7 +5995,7 @@ Update changelog/version/date. {[}Neil Cook{]}
 
 
 \subsection{0.5.050 (2019-08-12)}
-\label{\detokenize{misc/changelog:id92}}\begin{itemize}
+\label{\detokenize{misc/changelog:id93}}\begin{itemize}
 \item {} 
 Tools.reprocess - add processing (linear/parallel) functionality.
 {[}Neil Cook{]}
@@ -5954,7 +6037,7 @@ Cook{]}
 
 
 \subsection{0.5.049 (2019-08-10)}
-\label{\detokenize{misc/changelog:id93}}\begin{itemize}
+\label{\detokenize{misc/changelog:id94}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_reprocess.py} - address new bugs. {[}Neil Cook{]}
 
@@ -5985,7 +6068,7 @@ Core.instruments - add repreocessing constants. {[}Neil Cook{]}
 
 
 \subsection{0.5.048 (2019-08-08)}
-\label{\detokenize{misc/changelog:id94}}\begin{itemize}
+\label{\detokenize{misc/changelog:id95}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tools.reset.py} - remove \sphinxtitleref{update\_params} and set \sphinxtitleref{\_\_INSTRUMENT\_\_} from
 recipe update. {[}Neil Cook{]}
@@ -6036,7 +6119,7 @@ class. {[}Neil Cook{]}
 
 
 \subsection{0.5.047 (2019-08-07)}
-\label{\detokenize{misc/changelog:id95}}\begin{itemize}
+\label{\detokenize{misc/changelog:id96}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_reprocess.py} - add RUN and SKIP names (unfinished) {[}Neil Cook{]}
 
@@ -6055,7 +6138,7 @@ adding output file definitions to files) {[}Neil Cook{]}
 
 
 \subsection{0.5.046 (2019-08-06)}
-\label{\detokenize{misc/changelog:id96}}\begin{itemize}
+\label{\detokenize{misc/changelog:id97}}\begin{itemize}
 \item {} 
 Tools.bin - first commit of reprocessing (not finished) {[}Neil Cook{]}
 
@@ -6092,7 +6175,7 @@ Update todo statements (more specific) {[}Neil Cook{]}
 
 
 \subsection{0.5.045 (2019-07-27)}
-\label{\detokenize{misc/changelog:id97}}\begin{itemize}
+\label{\detokenize{misc/changelog:id98}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Sciecne.extract.extraction.py} - remove use of params{[}‘FIBER’{]} {[}Neil
 Cook{]}
@@ -6282,7 +6365,7 @@ Cook{]}
 
 
 \subsection{0.5.043 (2019-07-25)}
-\label{\detokenize{misc/changelog:id98}}\begin{itemize}
+\label{\detokenize{misc/changelog:id99}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.berv.py} - add features to query gaia / lookup table.
 {[}Neil Cook{]}
@@ -6319,7 +6402,7 @@ Cook{]}
 
 
 \subsection{0.5.042 (2019-07-23)}
-\label{\detokenize{misc/changelog:id99}}\begin{itemize}
+\label{\detokenize{misc/changelog:id100}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.berv.py} - continue work on adding berv calculation.
 {[}Neil Cook{]}
@@ -6371,7 +6454,7 @@ Cook{]}
 
 
 \subsection{0.5.041 (2019-07-19)}
-\label{\detokenize{misc/changelog:id100}}\begin{itemize}
+\label{\detokenize{misc/changelog:id101}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.general.py} - correct typo: \sphinxtitleref{red\_limt} \textendash{}\textgreater{} \sphinxtitleref{red\_limit}.
 {[}Neil Cook{]}
@@ -6394,7 +6477,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.040 (2019-07-19)}
-\label{\detokenize{misc/changelog:id101}}\begin{itemize}
+\label{\detokenize{misc/changelog:id102}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.general.py} - add s1d funtionality and add log message
 to thermal correction. {[}Neil Cook{]}
@@ -6433,7 +6516,7 @@ only copy basename for paths, add key formating for 1d and 2d keys.
 
 
 \subsection{0.5.039 (2019-07-18)}
-\label{\detokenize{misc/changelog:id102}}\begin{itemize}
+\label{\detokenize{misc/changelog:id103}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.extract.general.py} - fix typo \sphinxtitleref{“red\_limt}” \textendash{}\textgreater{} \sphinxtitleref{“red\_limit}” {[}Neil
 Cook{]}
@@ -6543,7 +6626,7 @@ files. {[}Neil Cook{]}
 
 
 \subsection{0.5.037 (2019-07-10)}
-\label{\detokenize{misc/changelog:id103}}\begin{itemize}
+\label{\detokenize{misc/changelog:id104}}\begin{itemize}
 \item {} 
 Extraction/flat/blaze - continue work to port changes from spiroudrs.
 {[}Neil Cook{]}
@@ -6635,7 +6718,7 @@ params.dictp to add a dtype for list/dict elements. {[}Neil Cook{]}
 
 
 \subsection{0.5.035 (2019-07-08)}
-\label{\detokenize{misc/changelog:id104}}\begin{itemize}
+\label{\detokenize{misc/changelog:id105}}\begin{itemize}
 \item {} 
 Update language database. {[}Neil Cook{]}
 
@@ -6744,7 +6827,7 @@ for fibers) {[}Neil Cook{]}
 
 
 \subsection{0.5.034 (2019-07-05)}
-\label{\detokenize{misc/changelog:id105}}\begin{itemize}
+\label{\detokenize{misc/changelog:id106}}\begin{itemize}
 \item {} 
 README.md - move from recipes to terrapipe.recipes. {[}Neil Cook{]}
 
@@ -6835,7 +6918,7 @@ shape \sphinxtitleref{outputs/shape\_local} recipe definition. {[}Neil Cook{]}
 
 
 \subsection{0.5.032 (2019-07-03)}
-\label{\detokenize{misc/changelog:id106}}\begin{itemize}
+\label{\detokenize{misc/changelog:id107}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.wave.py} - correct bug in loading keys from wave header.
 {[}Neil Cook{]}
@@ -6974,7 +7057,7 @@ Cook{]}
 
 
 \subsection{0.5.029 (2019-06-27)}
-\label{\detokenize{misc/changelog:id107}}\begin{itemize}
+\label{\detokenize{misc/changelog:id108}}\begin{itemize}
 \item {} 
 Update date/version/changelog. {[}Neil Cook{]}
 
@@ -6985,7 +7068,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.028 (2019-06-27)}
-\label{\detokenize{misc/changelog:id108}}\begin{itemize}
+\label{\detokenize{misc/changelog:id109}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.shape.py} - fix \sphinxtitleref{construct\_master\_fp} (add \sphinxtitleref{fp\_table}
 results) + place holder for \sphinxtitleref{calculate\_dxmap}. {[}Neil Cook{]}
@@ -7080,7 +7163,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.027 (2019-06-26)}
-\label{\detokenize{misc/changelog:id109}}\begin{itemize}
+\label{\detokenize{misc/changelog:id110}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_path.py} - make sure \sphinxtitleref{night\_name} does not start with a separator in
 \sphinxtitleref{“get\_nightname}” function. {[}Neil Cook{]}
@@ -7167,7 +7250,7 @@ terrapipe. {[}Neil Cook{]}
 
 
 \subsection{0.5.026 (2019-06-25)}
-\label{\detokenize{misc/changelog:id110}}\begin{itemize}
+\label{\detokenize{misc/changelog:id111}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Science.calib.dark.py} - add dark master functionality. {[}Neil Cook{]}
 
@@ -7202,7 +7285,7 @@ Update version/changelog and date. {[}Neil Cook{]}
 
 
 \subsection{0.5.025 (2019-06-24)}
-\label{\detokenize{misc/changelog:id111}}\begin{itemize}
+\label{\detokenize{misc/changelog:id112}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_obj\_template.py} + spirouTelluric - move location of GetBERV.
 {[}njcuk9999{]}
@@ -7219,7 +7302,7 @@ file last) {[}njcuk9999{]}
 
 
 \subsection{0.5.024 (2019-06-24)}
-\label{\detokenize{misc/changelog:id112}}\begin{itemize}
+\label{\detokenize{misc/changelog:id113}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTable.py} - remove the index file before writing it. {[}Neil Cook{]}
 
@@ -7234,7 +7317,7 @@ already read headers. {[}Neil Cook{]}
 
 
 \subsection{0.5.023 (2019-06-23)}
-\label{\detokenize{misc/changelog:id113}}\begin{itemize}
+\label{\detokenize{misc/changelog:id114}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRgen.py} - fix problem when two independent file types defined
 (i.e. \sphinxtitleref{DARK\_FLAT} and \sphinxtitleref{FLAT\_DARK)} {[}Neil Cook{]}
@@ -7247,7 +7330,7 @@ doesn’t) {[}Neil Cook{]}
 
 
 \subsection{0.5.022 (2019-06-21)}
-\label{\detokenize{misc/changelog:id114}}\begin{itemize}
+\label{\detokenize{misc/changelog:id115}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRgen.py} - rename \sphinxtitleref{obj\_mk\_tellu\_new} \textendash{}\textgreater{} \sphinxtitleref{obj\_mk\_tellu}. {[}Neil Cook{]}
 
@@ -7286,7 +7369,7 @@ Cook{]}
 
 
 \subsection{0.5.021 (2019-06-20)}
-\label{\detokenize{misc/changelog:id115}}\begin{itemize}
+\label{\detokenize{misc/changelog:id116}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouBERV.py} - update comments to be more specific about inputs.
 {[}njcuk9999{]}
@@ -7305,7 +7388,7 @@ Update berv tests. {[}njcuk9999{]}
 
 
 \subsection{0.5.020 (2019-06-19)}
-\label{\detokenize{misc/changelog:id116}}\begin{itemize}
+\label{\detokenize{misc/changelog:id117}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouKeywords.py} - add keywords to list. {[}njcuk9999{]}
 
@@ -7332,7 +7415,7 @@ a list) {[}njcuk9999{]}
 
 
 \subsection{0.5.019 (2019-06-18)}
-\label{\detokenize{misc/changelog:id117}}\begin{itemize}
+\label{\detokenize{misc/changelog:id118}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - add warning capture for oweight (divide by NaNs okay)
 {[}njcuk9999{]}
@@ -7347,7 +7430,7 @@ a list) {[}njcuk9999{]}
 
 
 \subsection{0.5.018 (2019-06-17)}
-\label{\detokenize{misc/changelog:id118}}\begin{itemize}
+\label{\detokenize{misc/changelog:id119}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTelluric.py} - add \sphinxtitleref{tau\_h20} and \sphinxtitleref{tau\_rest} to code. {[}Neil Cook{]}
 
@@ -7381,7 +7464,7 @@ Cook{]}
 
 
 \subsection{0.5.017 (2019-06-14)}
-\label{\detokenize{misc/changelog:id119}}\begin{itemize}
+\label{\detokenize{misc/changelog:id120}}\begin{itemize}
 \item {} 
 SpirouReprocess - update the reprocessing codes. {[}Neil Cook{]}
 
@@ -7395,7 +7478,7 @@ SpirouReprocess - update the reprocessing codes. {[}Neil Cook{]}
 
 
 \subsection{0.5.016 (2019-06-13)}
-\label{\detokenize{misc/changelog:id120}}\begin{itemize}
+\label{\detokenize{misc/changelog:id121}}\begin{itemize}
 \item {} 
 SpirouReprocessing - continue work. {[}Neil Cook{]}
 
@@ -7410,7 +7493,7 @@ Cook{]}
 
 
 \subsection{0.5.015 (2019-06-12)}
-\label{\detokenize{misc/changelog:id121}}\begin{itemize}
+\label{\detokenize{misc/changelog:id122}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouReprocess.py} - continue writing code. {[}Neil Cook{]}
 
@@ -8354,7 +8437,7 @@ screen) {[}Neil Cook{]}
 
 
 \subsection{0.5.014 (2019-06-11)}
-\label{\detokenize{misc/changelog:id122}}\begin{itemize}
+\label{\detokenize{misc/changelog:id123}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouReprocess.py} - add processing (parallalised) to reprocess. {[}Neil
 Cook{]}
@@ -8370,7 +8453,7 @@ Cook{]}
 
 
 \subsection{0.5.013 (2019-06-10)}
-\label{\detokenize{misc/changelog:id123}}\begin{itemize}
+\label{\detokenize{misc/changelog:id124}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouReprocess.py} - first commit reworking of reprocessing script and
 run files (works for unit test and any/all reprocessing) {[}Neil Cook{]}
@@ -8424,7 +8507,7 @@ individual fiber type not DPRTYPE. {[}Neil Cook{]}
 
 
 \subsection{0.5.012 (2019-06-08)}
-\label{\detokenize{misc/changelog:id124}}\begin{itemize}
+\label{\detokenize{misc/changelog:id125}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouUnitRecipes.py} - remove \sphinxtitleref{cal\_SHAPE\_spirou} and add
 \sphinxtitleref{cal\_shape\_spirou}. {[}Neil Cook{]}
@@ -8480,7 +8563,7 @@ Cook{]}
 
 
 \subsection{0.5.011 (2019-06-07)}
-\label{\detokenize{misc/changelog:id125}}\begin{itemize}
+\label{\detokenize{misc/changelog:id126}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_shape\_master.py} - apply dxmap and dymap + remove reference to
 FPFILES (\textendash{}\textgreater{} FPFILE) {[}Neil Cook{]}
@@ -8542,7 +8625,7 @@ Cook{]}
 
 
 \subsection{0.5.010 (2019-06-06)}
-\label{\detokenize{misc/changelog:id126}}\begin{itemize}
+\label{\detokenize{misc/changelog:id127}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - add \sphinxtitleref{get\_x\_shape\_map} and \sphinxtitleref{get\_y\_shape\_map} functions and
 aliases. {[}Neil Cook{]}
@@ -8585,7 +8668,7 @@ dxmap and dymap. {[}Neil Cook{]}
 
 
 \subsection{0.5.009 (2019-06-05)}
-\label{\detokenize{misc/changelog:id127}}\begin{itemize}
+\label{\detokenize{misc/changelog:id128}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - start adding etiennes new adaptations to
 \sphinxtitleref{register\_fp\_2}. {[}Neil Cook{]}
@@ -8635,7 +8718,7 @@ barycorrpy. {[}Neil Cook{]}
 
 
 \subsection{0.5.008 (2019-06-04)}
-\label{\detokenize{misc/changelog:id128}}\begin{itemize}
+\label{\detokenize{misc/changelog:id129}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - correction to \sphinxtitleref{register\_fp}. {[}Neil Cook{]}
 
@@ -8667,7 +8750,7 @@ slow down the code (not to be used for science data) {[}Neil Cook{]}
 
 
 \subsection{0.5.007 (2019-06-03)}
-\label{\detokenize{misc/changelog:id129}}\begin{itemize}
+\label{\detokenize{misc/changelog:id130}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_shape\_master.py} - continued work integrating fp master function.
 {[}njcuk9999{]}
@@ -8722,7 +8805,7 @@ Fixed a bug with db locking check. {[}Chris Usher{]}
 
 
 \subsection{0.5.006 (2019-06-01)}
-\label{\detokenize{misc/changelog:id130}}\begin{itemize}
+\label{\detokenize{misc/changelog:id131}}\begin{itemize}
 \item {} 
 Updated to match changes on dev. {[}Chris Usher{]}
 
@@ -8752,7 +8835,7 @@ Cook{]}
 
 
 \subsection{0.5.005 (2019-05-30)}
-\label{\detokenize{misc/changelog:id131}}\begin{itemize}
+\label{\detokenize{misc/changelog:id132}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouBERVest.py} - first commit (test of berv estimate) {[}Neil Cook{]}
 
@@ -8792,7 +8875,7 @@ Add \sphinxtitleref{“DRS\_DATE}” and \sphinxtitleref{“DATE\_NOW}” to all
 
 
 \subsection{0.5.004 (2019-05-29)}
-\label{\detokenize{misc/changelog:id132}}\begin{itemize}
+\label{\detokenize{misc/changelog:id133}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - correct \sphinxtitleref{get\_files} function. {[}Neil Cook{]}
 
@@ -8821,7 +8904,7 @@ Add \sphinxtitleref{“DRS\_DATE}” and \sphinxtitleref{“DATE\_NOW}” to all
 
 
 \subsection{0.5.003 (2019-05-28)}
-\label{\detokenize{misc/changelog:id133}}\begin{itemize}
+\label{\detokenize{misc/changelog:id134}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - add \sphinxtitleref{get\_files} function. {[}njcuk9999{]}
 
@@ -8852,7 +8935,7 @@ Update date/version/changelog. {[}njcuk9999{]}
 
 
 \subsection{0.5.002 (2019-05-27)}
-\label{\detokenize{misc/changelog:id134}}\begin{itemize}
+\label{\detokenize{misc/changelog:id135}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPlot.py} - add \sphinxtitleref{output\_rv} to \sphinxtitleref{ccf\_rv\_ccf\_plot}. {[}njcuk9999{]}
 
@@ -8919,7 +9002,7 @@ integrated into \sphinxtitleref{cal\_CCF} actual) {[}njcuk9999{]}
 
 
 \subsection{0.5.001 (2019-05-27)}
-\label{\detokenize{misc/changelog:id135}}\begin{itemize}
+\label{\detokenize{misc/changelog:id136}}\begin{itemize}
 \item {} 
 Merge branch ‘master’ into neil. {[}Neil Cook{]}
 
@@ -8974,7 +9057,7 @@ Update date/version/update notes/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.5.000 (2019-05-10)}
-\label{\detokenize{misc/changelog:id136}}\begin{itemize}
+\label{\detokenize{misc/changelog:id137}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouDB.py} - add lock file in waiting printout. {[}Neil Cook{]}
 
@@ -9169,7 +9252,7 @@ Test.run. {[}Neil Cook{]}
 
 
 \subsection{0.4.123 (2019-05-03)}
-\label{\detokenize{misc/changelog:id137}}\begin{itemize}
+\label{\detokenize{misc/changelog:id138}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_changelog\_2.py} - update comments for new changelogger. {[}Neil Cook{]}
 
@@ -9233,7 +9316,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.122 (2019-05-02)}
-\label{\detokenize{misc/changelog:id138}}\begin{itemize}
+\label{\detokenize{misc/changelog:id139}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_changelog\_2.py} - add updating of drs files. {[}Neil Cook{]}
 
@@ -9278,7 +9361,7 @@ Update version. {[}Neil Cook{]}
 
 
 \subsection{0.4.121 (2019-04-30)}
-\label{\detokenize{misc/changelog:id139}}\begin{itemize}
+\label{\detokenize{misc/changelog:id140}}\begin{itemize}
 \item {} 
 Update trigger. {[}Neil Cook{]}
 
@@ -9290,7 +9373,7 @@ Cook{]}
 
 
 \subsection{0.4.120 (2019-04-29)}
-\label{\detokenize{misc/changelog:id140}}\begin{itemize}
+\label{\detokenize{misc/changelog:id141}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Compare\_outputs.py} - change paths. {[}Neil Cook{]}
 
@@ -9298,7 +9381,7 @@ Cook{]}
 
 
 \subsection{0.4.119 (2019-04-26)}
-\label{\detokenize{misc/changelog:id141}}\begin{itemize}
+\label{\detokenize{misc/changelog:id142}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Extract\_trigger.py} - correct mistake with extraction trigger. {[}Neil
 Cook{]}
@@ -9365,7 +9448,7 @@ Cook{]}
 
 
 \subsection{0.4.118 (2019-04-25)}
-\label{\detokenize{misc/changelog:id142}}\begin{itemize}
+\label{\detokenize{misc/changelog:id143}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - write new s1d function. {[}Neil Cook{]}
 
@@ -9455,7 +9538,7 @@ np.nanmedian etc. {[}Neil Cook{]}
 
 
 \subsection{0.4.117 (2019-04-24)}
-\label{\detokenize{misc/changelog:id143}}\begin{itemize}
+\label{\detokenize{misc/changelog:id144}}\begin{itemize}
 \item {} 
 Change all np.polyfit to SpirouDRS.spirouCore.spirouMath.nanpolyfit.
 {[}Neil Cook{]}
@@ -9497,7 +9580,7 @@ Update test.run. {[}Neil Cook{]}
 
 
 \subsection{0.4.116 (2019-04-10)}
-\label{\detokenize{misc/changelog:id144}}\begin{itemize}
+\label{\detokenize{misc/changelog:id145}}\begin{itemize}
 \item {} 
 Update test.run. {[}njcuk9999{]}
 
@@ -9533,7 +9616,7 @@ Update test.run. {[}njcuk9999{]}
 
 
 \subsection{0.4.115 (2019-04-08)}
-\label{\detokenize{misc/changelog:id145}}\begin{itemize}
+\label{\detokenize{misc/changelog:id146}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouEXTOR.py} - add options in extraction method to test different
 weighting systems. {[}njcuk9999{]}
@@ -9563,7 +9646,7 @@ weighting systems. {[}njcuk9999{]}
 
 
 \subsection{0.4.114 (2019-04-07)}
-\label{\detokenize{misc/changelog:id146}}\begin{itemize}
+\label{\detokenize{misc/changelog:id147}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_FF\_RAW\_spirou.py} - re-add in new background subtraction. {[}Neil
 Cook{]}
@@ -9607,7 +9690,7 @@ Cook{]}
 
 
 \subsection{0.4.113 (2019-04-06)}
-\label{\detokenize{misc/changelog:id147}}\begin{itemize}
+\label{\detokenize{misc/changelog:id148}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_FF\_RAW\_spirou.py} - remove background subtraction (for test) {[}Neil
 Cook{]}
@@ -9622,7 +9705,7 @@ Test.run - update test.run. {[}Neil Cook{]}
 
 
 \subsection{0.4.112 (2019-04-05)}
-\label{\detokenize{misc/changelog:id148}}\begin{itemize}
+\label{\detokenize{misc/changelog:id149}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouEXTOR.py} - remove weighting of raw pixels less than zero to very
 low value. {[}njcuk9999{]}
@@ -9703,7 +9786,7 @@ new method! {[}njcuk9999{]}
 
 
 \subsection{0.4.111 (2019-04-04)}
-\label{\detokenize{misc/changelog:id149}}\begin{itemize}
+\label{\detokenize{misc/changelog:id150}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_SHAPE\_spirou.py} - fix typo in output filenames (only affected
 debug outputs) {[}njcuk9999{]}
@@ -9723,7 +9806,7 @@ debug outputs) {[}njcuk9999{]}
 
 
 \subsection{0.4.108 (2019-04-03)}
-\label{\detokenize{misc/changelog:id150}}\begin{itemize}
+\label{\detokenize{misc/changelog:id151}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPlot.py} - allow all orders to be plot in tellu plot. {[}Neil Cook{]}
 
@@ -9731,7 +9814,7 @@ debug outputs) {[}njcuk9999{]}
 
 
 \subsection{0.4.109 (2019-04-03)}
-\label{\detokenize{misc/changelog:id151}}\begin{itemize}
+\label{\detokenize{misc/changelog:id152}}\begin{itemize}
 \item {} 
 Update test.run. {[}njcuk9999{]}
 
@@ -9769,7 +9852,7 @@ Merge branch ‘neil’ into dev. {[}njcuk9999{]}
 
 
 \subsection{0.4.110 (2019-04-03)}
-\label{\detokenize{misc/changelog:id152}}\begin{itemize}
+\label{\detokenize{misc/changelog:id153}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW}: fixes to m(x) residuals plot. {[}melissa-hobson{]}
 
@@ -9801,7 +9884,7 @@ SpirouKeywords: add wave FP CCF keys to list. {[}melissa-hobson{]}
 
 
 \subsection{0.4.107 (2019-04-02)}
-\label{\detokenize{misc/changelog:id153}}\begin{itemize}
+\label{\detokenize{misc/changelog:id154}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW}: modified FP CCF keywords spirouKeywords: added unique
 WFP keywords for wave FP CCF keys. {[}melissa-hobson{]}
@@ -9832,7 +9915,7 @@ Config save. {[}melissa-hobson{]}
 
 
 \subsection{0.4.106 (2019-03-29)}
-\label{\detokenize{misc/changelog:id154}}\begin{itemize}
+\label{\detokenize{misc/changelog:id155}}\begin{itemize}
 \item {} 
 Github backup before merging with master. {[}melissa-hobson{]}
 
@@ -9843,7 +9926,7 @@ Github backup before merging with master. {[}melissa-hobson{]}
 
 
 \subsection{0.4.104 (2019-03-28)}
-\label{\detokenize{misc/changelog:id155}}\begin{itemize}
+\label{\detokenize{misc/changelog:id156}}\begin{itemize}
 \item {} 
 Fix bug in extraction modes for \sphinxtitleref{cal\_exposure\_meter} and
 \sphinxtitleref{cal\_wave\_mapper}. {[}Neil Cook{]}
@@ -9876,7 +9959,7 @@ Update \sphinxtitleref{date/version/changelog/update\_notes}. {[}Neil Cook{]}
 
 
 \subsection{0.4.102 (2019-03-28)}
-\label{\detokenize{misc/changelog:id156}}\begin{itemize}
+\label{\detokenize{misc/changelog:id157}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_extract\_RAW\_spirou.py} - turn off \sphinxtitleref{ic\_extract} debug. {[}Neil Cook{]}
 
@@ -9890,7 +9973,7 @@ Merge branch \sphinxtitleref{‘extract\_issue555}’ into neil. {[}Neil Cook{]}
 
 
 \subsection{0.4.105 (2019-03-28)}
-\label{\detokenize{misc/changelog:id157}}\begin{itemize}
+\label{\detokenize{misc/changelog:id158}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_HC\_E2DS\_EA}: log statistics \sphinxtitleref{cal\_WAVE\_NEW}: improved cross-order FP
 peak matching, store m(x) fits, remove modulo-1-pixel line center
@@ -9900,7 +9983,7 @@ errors. {[}melissa-hobson{]}
 
 
 \subsection{0.4.101 (2019-03-25)}
-\label{\detokenize{misc/changelog:id158}}\begin{itemize}
+\label{\detokenize{misc/changelog:id159}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPlot.py} - add the debanana plot in. {[}Neil Cook{]}
 
@@ -9915,7 +9998,7 @@ reduced. {[}Neil Cook{]}
 
 
 \subsection{0.4.100 (2019-03-22)}
-\label{\detokenize{misc/changelog:id159}}\begin{itemize}
+\label{\detokenize{misc/changelog:id160}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouLOCOR.py} - add \sphinxtitleref{get\_fiber\_data} function and
 \sphinxtitleref{get\_straightened\_orderprofile} function. {[}Neil Cook{]}
@@ -9973,7 +10056,7 @@ Cook{]}
 
 
 \subsection{0.4.099 (2019-03-20)}
-\label{\detokenize{misc/changelog:id160}}\begin{itemize}
+\label{\detokenize{misc/changelog:id161}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tellu\_file\_number\_test.py} - distinguish between \sphinxtitleref{TELL\_OBJ} and \sphinxtitleref{TELL\_MAP}
 in counting from telluDB. {[}Neil Cook{]}
@@ -9987,7 +10070,7 @@ Neil \textendash{}\textgreater{} Master. Confirmed successful unit tests.
 
 
 \subsection{0.4.098 (2019-03-19)}
-\label{\detokenize{misc/changelog:id161}}\begin{itemize}
+\label{\detokenize{misc/changelog:id162}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_extract\_RAW\_spirou.py} - fix problem with width getting for fiber
 A. {[}Neil Cook{]}
@@ -9999,7 +10082,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.097 (2019-03-19)}
-\label{\detokenize{misc/changelog:id162}}\begin{itemize}
+\label{\detokenize{misc/changelog:id163}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouKeywords.py} - remove the “1” suffix (no longer needed) {[}Neil
 Cook{]}
@@ -10071,7 +10154,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.096 (2019-03-18)}
-\label{\detokenize{misc/changelog:id163}}\begin{itemize}
+\label{\detokenize{misc/changelog:id164}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tellu\_file\_number\_test.py} - update the paths. {[}Neil Cook{]}
 
@@ -10090,7 +10173,7 @@ Update \sphinxtitleref{extract\_trigger.py}. {[}Neil Cook{]}
 
 
 \subsection{0.4.095 (2019-03-16)}
-\label{\detokenize{misc/changelog:id164}}\begin{itemize}
+\label{\detokenize{misc/changelog:id165}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_obj\_template.py} - copy all cdb from other outputs. {[}Neil Cook{]}
 
@@ -10131,7 +10214,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.094 (2019-03-15)}
-\label{\detokenize{misc/changelog:id165}}\begin{itemize}
+\label{\detokenize{misc/changelog:id166}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouConst.py} - remove \sphinxtitleref{DRS\_EOUT} from forbidden keys (it should follow
 extracted file) {[}Neil Cook{]}
@@ -10226,7 +10309,7 @@ Cook{]}
 
 
 \subsection{0.4.093 (2019-03-14)}
-\label{\detokenize{misc/changelog:id166}}\begin{itemize}
+\label{\detokenize{misc/changelog:id167}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_preprocess\_spirou.py} - fix filename (should only be filename not
 path) {[}Neil Cook{]}
@@ -10238,7 +10321,7 @@ Update date/version/changelog/notes. {[}Neil Cook{]}
 
 
 \subsection{0.4.092 (2019-03-14)}
-\label{\detokenize{misc/changelog:id167}}\begin{itemize}
+\label{\detokenize{misc/changelog:id168}}\begin{itemize}
 \item {} 
 Make sure all input files are added to header in form: INF\#\#\#\# where
 the first digit shows the file-set and the other three the position
@@ -10262,7 +10345,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.091 (2019-03-13)}
-\label{\detokenize{misc/changelog:id168}}\begin{itemize}
+\label{\detokenize{misc/changelog:id169}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_DARK\_spirou.py} and \sphinxtitleref{spirouImage.py} - tweak changes to all SKYDARK
 files to be used. {[}Neil Cook{]}
@@ -10336,7 +10419,7 @@ Update extraction trigger. {[}Neil Cook{]}
 
 
 \subsection{0.4.090 (2019-03-12)}
-\label{\detokenize{misc/changelog:id169}}\begin{itemize}
+\label{\detokenize{misc/changelog:id170}}\begin{itemize}
 \item {} 
 Update extraction trigger. {[}Neil Cook{]}
 
@@ -10361,7 +10444,7 @@ Add \sphinxtitleref{qc\_pass} parameter (flag for each qc parameter) {[}Neil Coo
 
 
 \subsection{0.4.103 (2019-03-12)}
-\label{\detokenize{misc/changelog:id170}}\begin{itemize}
+\label{\detokenize{misc/changelog:id171}}\begin{itemize}
 \item {} 
 Updates to \sphinxtitleref{cal\_WAVE\_NEW\_2}. {[}melissa-hobson{]}
 
@@ -10372,7 +10455,7 @@ Updated to \sphinxtitleref{cal\_HC}, \sphinxtitleref{cal\_WAVE\_NEW}. {[}melissa
 
 
 \subsection{0.4.089 (2019-03-11)}
-\label{\detokenize{misc/changelog:id171}}\begin{itemize}
+\label{\detokenize{misc/changelog:id172}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Extract\_trigger.py} - update the settings ready for re-runs of
 extractions. {[}Neil Cook{]}
@@ -10400,7 +10483,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.088 (2019-03-09)}
-\label{\detokenize{misc/changelog:id172}}\begin{itemize}
+\label{\detokenize{misc/changelog:id173}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouLSD.py} - fix str to float bug. {[}Neil Cook{]}
 
@@ -10494,7 +10577,7 @@ in loc. {[}Neil Cook{]}
 
 
 \subsection{0.4.087 (2019-03-08)}
-\label{\detokenize{misc/changelog:id173}}\begin{itemize}
+\label{\detokenize{misc/changelog:id174}}\begin{itemize}
 \item {} 
 Change AddKey \textendash{}\textgreater{} AddKey1DList for QC names/values/logic. {[}Neil Cook{]}
 
@@ -10515,7 +10598,7 @@ Cook{]}
 
 
 \subsection{0.4.086 (2019-03-08)}
-\label{\detokenize{misc/changelog:id174}}\begin{itemize}
+\label{\detokenize{misc/changelog:id175}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouBERV.py} - add BERVHOUR to loc (for saving to header) {[}Neil Cook{]}
 
@@ -10572,7 +10655,7 @@ Fixed lock timer bug and added barycorr retry.
 
 
 \subsection{0.4.085 (2019-03-07)}
-\label{\detokenize{misc/changelog:id175}}\begin{itemize}
+\label{\detokenize{misc/changelog:id176}}\begin{itemize}
 \item {} 
 Fixed lock timer bug and added barycorr retry. {[}Chris Usher{]}
 
@@ -10580,7 +10663,7 @@ Fixed lock timer bug and added barycorr retry. {[}Chris Usher{]}
 
 
 \subsection{0.4.084 (2019-03-05)}
-\label{\detokenize{misc/changelog:id176}}\begin{itemize}
+\label{\detokenize{misc/changelog:id177}}\begin{itemize}
 \item {} 
 Delete \sphinxtitleref{wave\_comp\_night.py}. {[}melissa-hobson{]}
 
@@ -10596,7 +10679,7 @@ Melissa
 
 
 \subsection{0.4.083 (2019-02-28)}
-\label{\detokenize{misc/changelog:id177}}\begin{itemize}
+\label{\detokenize{misc/changelog:id178}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SPlt.debug\_locplot\_finding\_orders} pauses correctly after each plot;
 plot limit modified to improve visualization. {[}melissa-hobson{]}
@@ -10609,7 +10692,7 @@ duplicate call to \sphinxtitleref{locplot\_y\_miny\_maxy}. {[}melissa-hobson{]}
 
 
 \subsection{0.4.081 (2019-02-22)}
-\label{\detokenize{misc/changelog:id178}}\begin{itemize}
+\label{\detokenize{misc/changelog:id179}}\begin{itemize}
 \item {} 
 Littrow check plot: ylimits added based on QCs and results. {[}melissa-
 hobson{]}
@@ -10642,7 +10725,7 @@ update
 
 
 \subsection{0.4.076 (2019-02-22)}
-\label{\detokenize{misc/changelog:id179}}\begin{itemize}
+\label{\detokenize{misc/changelog:id180}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouLOCOR.py} - fix problem with \sphinxtitleref{locplot\_im\_sat\_threshold} plot. {[}Neil
 Cook{]}
@@ -10651,7 +10734,7 @@ Cook{]}
 
 
 \subsection{0.4.082 (2019-02-22)}
-\label{\detokenize{misc/changelog:id180}}\begin{itemize}
+\label{\detokenize{misc/changelog:id181}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPlot.py} - fix problem with \sphinxtitleref{locplot\_im\_sat\_threshold} plot. {[}Neil
 Cook{]}
@@ -10675,7 +10758,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.075 (2019-02-21)}
-\label{\detokenize{misc/changelog:id181}}\begin{itemize}
+\label{\detokenize{misc/changelog:id182}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTelluric.py} - need to stop if not index files found. {[}Neil Cook{]}
 
@@ -10683,7 +10766,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.073 (2019-02-19)}
-\label{\detokenize{misc/changelog:id182}}\begin{itemize}
+\label{\detokenize{misc/changelog:id183}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_validate\_spirou.py} - fix bug it version checking (found by
 Melissa) {[}Neil Cook{]}
@@ -10702,7 +10785,7 @@ Melissa) {[}Neil Cook{]}
 
 
 \subsection{0.4.074 (2019-02-19)}
-\label{\detokenize{misc/changelog:id183}}\begin{itemize}
+\label{\detokenize{misc/changelog:id184}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTelluric.py} - remove hard coded number of orders. {[}njcuk9999{]}
 
@@ -10713,7 +10796,7 @@ Melissa) {[}Neil Cook{]}
 
 
 \subsection{0.4.080 (2019-02-18)}
-\label{\detokenize{misc/changelog:id184}}\begin{itemize}
+\label{\detokenize{misc/changelog:id185}}\begin{itemize}
 \item {} 
 Testing linear minimization FP wave sol fitting. {[}melissa-hobson{]}
 
@@ -10736,7 +10819,7 @@ than linear interpolation) - wave sol comparison. {[}melissa-hobson{]}
 
 
 \subsection{0.4.072 (2019-02-13)}
-\label{\detokenize{misc/changelog:id185}}\begin{itemize}
+\label{\detokenize{misc/changelog:id186}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_tellu\_db.py} - need to only print errors if we have errors.
 {[}Neil Cook{]}
@@ -10749,7 +10832,7 @@ than linear interpolation) - wave sol comparison. {[}melissa-hobson{]}
 
 
 \subsection{0.4.071 (2019-02-12)}
-\label{\detokenize{misc/changelog:id186}}\begin{itemize}
+\label{\detokenize{misc/changelog:id187}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Extract\_trigger.py} - make sure \sphinxtitleref{obj\_fit\_tellu} errors are stored. {[}Neil
 Cook{]}
@@ -10809,7 +10892,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.070 (2019-02-12)}
-\label{\detokenize{misc/changelog:id187}}\begin{itemize}
+\label{\detokenize{misc/changelog:id188}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouFITS.py} - add UpdateWaveSolution \sphinxtitleref{(update\_wave\_sol)} function to
 update correctly the HC and FP files. {[}Neil Cook{]}
@@ -10826,7 +10909,7 @@ headers when updating wave solution. {[}Neil Cook{]}
 
 
 \subsection{0.4.069 (2019-02-11)}
-\label{\detokenize{misc/changelog:id188}}\begin{itemize}
+\label{\detokenize{misc/changelog:id189}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py} - Big Bug FIX ASAP. {[}Neil Cook{]}
 
@@ -10886,7 +10969,7 @@ DRS startup - need to make data/msg etc folders if they don’t exist.
 
 
 \subsection{0.4.068 (2019-02-10)}
-\label{\detokenize{misc/changelog:id189}}\begin{itemize}
+\label{\detokenize{misc/changelog:id190}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPlot.py} - make sure plots are unique. {[}njcuk9999{]}
 
@@ -10928,7 +11011,7 @@ calls require “p” as an argument) {[}njcuk9999{]}
 
 
 \subsection{0.4.067 (2019-02-08)}
-\label{\detokenize{misc/changelog:id190}}\begin{itemize}
+\label{\detokenize{misc/changelog:id191}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_preprocess\_spirou.py} - print out the corruption check value. {[}Neil
 Cook{]}
@@ -11032,7 +11115,7 @@ parameters (used in the big cube) {[}Neil Cook{]}
 
 
 \subsection{0.4.066 (2019-02-07)}
-\label{\detokenize{misc/changelog:id191}}\begin{itemize}
+\label{\detokenize{misc/changelog:id192}}\begin{itemize}
 \item {} 
 Update the leapseconds. {[}Neil Cook{]}
 
@@ -11088,7 +11171,7 @@ functions. {[}Neil Cook{]}
 
 
 \subsection{0.4.065 (2019-02-06)}
-\label{\detokenize{misc/changelog:id192}}\begin{itemize}
+\label{\detokenize{misc/changelog:id193}}\begin{itemize}
 \item {} 
 Add a note to locale README.md. {[}Neil Cook{]}
 
@@ -11102,7 +11185,7 @@ Update language database. {[}Neil Cook{]}
 
 
 \subsection{0.4.079 (2019-02-06)}
-\label{\detokenize{misc/changelog:id193}}\begin{itemize}
+\label{\detokenize{misc/changelog:id194}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW} corrected Littrow extrapolation for reddest orders.
 {[}melissa-hobson{]}
@@ -11111,7 +11194,7 @@ Update language database. {[}Neil Cook{]}
 
 
 \subsection{0.4.064 (2019-02-05)}
-\label{\detokenize{misc/changelog:id194}}\begin{itemize}
+\label{\detokenize{misc/changelog:id195}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_startup.py} - tweak display settings for interactive + debug mode
 in drs setup text. {[}Neil Cook{]}
@@ -11185,7 +11268,7 @@ database. {[}Neil Cook{]}
 
 
 \subsection{0.4.063 (2019-02-04)}
-\label{\detokenize{misc/changelog:id195}}\begin{itemize}
+\label{\detokenize{misc/changelog:id196}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_tellu\_db.py} - do not reset tellu db in code (do it manually
 before) {[}Neil Cook{]}
@@ -11222,7 +11305,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.078 (2019-02-04)}
-\label{\detokenize{misc/changelog:id196}}\begin{itemize}
+\label{\detokenize{misc/changelog:id197}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW} update: no longer breaks if FP peak(s) next to reference
 line are missing. {[}melissa-hobson{]}
@@ -11231,7 +11314,7 @@ line are missing. {[}melissa-hobson{]}
 
 
 \subsection{0.4.062 (2019-02-03)}
-\label{\detokenize{misc/changelog:id197}}\begin{itemize}
+\label{\detokenize{misc/changelog:id198}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Port\_database.py} - just try to open csv files as they are done in the
 drs \textendash{} hits problems here and not later. {[}njcuk9999{]}
@@ -11260,7 +11343,7 @@ Update language database. {[}njcuk9999{]}
 
 
 \subsection{0.4.061 (2019-02-01)}
-\label{\detokenize{misc/changelog:id198}}\begin{itemize}
+\label{\detokenize{misc/changelog:id199}}\begin{itemize}
 \item {} 
 Update language database. {[}Neil Cook{]}
 
@@ -11286,7 +11369,7 @@ Update langauge databases. {[}Neil Cook{]}
 
 
 \subsection{0.4.077 (2019-02-01)}
-\label{\detokenize{misc/changelog:id199}}\begin{itemize}
+\label{\detokenize{misc/changelog:id200}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW\_E2DS} attempt to fix issues with FP line adjacent to
 reference peak being missing. {[}melissa-hobson{]}
@@ -11326,7 +11409,7 @@ update melissa
 
 
 \subsection{0.4.060 (2019-01-31)}
-\label{\detokenize{misc/changelog:id200}}\begin{itemize}
+\label{\detokenize{misc/changelog:id201}}\begin{itemize}
 \item {} 
 Update langauge databases. {[}Neil Cook{]}
 
@@ -11340,7 +11423,7 @@ Update langauge databases. {[}Neil Cook{]}
 
 
 \subsection{0.4.021 (2019-01-30)}
-\label{\detokenize{misc/changelog:id201}}\begin{itemize}
+\label{\detokenize{misc/changelog:id202}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTelluric.py} - continue to write/upgrade new \sphinxtitleref{mk\_tellu} functions
 and functions for \sphinxtitleref{mk\_tellu\_db}. {[}Neil Cook{]}
@@ -11369,7 +11452,7 @@ to spirouTelluric. {[}Neil Cook{]}
 
 
 \subsection{0.4.059 (2019-01-30)}
-\label{\detokenize{misc/changelog:id202}}\begin{itemize}
+\label{\detokenize{misc/changelog:id203}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_tellu\_new.py} - update code with Etienne’s changes. {[}Neil Cook{]}
 
@@ -11381,7 +11464,7 @@ tellurics \textendash{} creates the telluric database. {[}Neil Cook{]}
 
 
 \subsection{0.4.020 (2019-01-29)}
-\label{\detokenize{misc/changelog:id203}}\begin{itemize}
+\label{\detokenize{misc/changelog:id204}}\begin{itemize}
 \item {} 
 Update .gitignore to ignore .npy files. {[}Neil Cook{]}
 
@@ -11411,7 +11494,7 @@ Cook{]}
 
 
 \subsection{0.4.058 (2019-01-28)}
-\label{\detokenize{misc/changelog:id204}}\begin{itemize}
+\label{\detokenize{misc/changelog:id205}}\begin{itemize}
 \item {} 
 Upgrade of language database. {[}Neil Cook{]}
 
@@ -11446,7 +11529,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.017 (2019-01-28)}
-\label{\detokenize{misc/changelog:id205}}\begin{itemize}
+\label{\detokenize{misc/changelog:id206}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouLog.py} - fix a bug in logger (only a problem when log breaks)
 {[}Neil Cook{]}
@@ -11455,7 +11538,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.057 (2019-01-26)}
-\label{\detokenize{misc/changelog:id206}}\begin{itemize}
+\label{\detokenize{misc/changelog:id207}}\begin{itemize}
 \item {} 
 Modify test recipes with upgrades. {[}Neil Cook{]}
 
@@ -11493,7 +11576,7 @@ Update \sphinxtitleref{user\_config.ini}. {[}Neil Cook{]}
 
 
 \subsection{0.4.056 (2019-01-25)}
-\label{\detokenize{misc/changelog:id207}}\begin{itemize}
+\label{\detokenize{misc/changelog:id208}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_startup.py} - tweak the system information display section. {[}Neil
 Cook{]}
@@ -11515,7 +11598,7 @@ Update language databases. {[}Neil Cook{]}
 
 
 \subsection{0.4.055 (2019-01-24)}
-\label{\detokenize{misc/changelog:id208}}\begin{itemize}
+\label{\detokenize{misc/changelog:id209}}\begin{itemize}
 \item {} 
 Add READMEs to explain empty directories. {[}Neil Cook{]}
 
@@ -11573,7 +11656,7 @@ from. {[}Neil Cook{]}
 
 
 \subsection{0.4.054 (2019-01-23)}
-\label{\detokenize{misc/changelog:id209}}\begin{itemize}
+\label{\detokenize{misc/changelog:id210}}\begin{itemize}
 \item {} 
 Moved locale module to drsmodule root. {[}Neil Cook{]}
 
@@ -11631,7 +11714,7 @@ directory. {[}Neil Cook{]}
 
 
 \subsection{0.4.053 (2019-01-22)}
-\label{\detokenize{misc/changelog:id210}}\begin{itemize}
+\label{\detokenize{misc/changelog:id211}}\begin{itemize}
 \item {} 
 Added error.csv and “language.xls” - use language.xls to edit strings
 for each language (given a specific key) {[}Neil Cook{]}
@@ -11695,7 +11778,7 @@ Renamed drsmodule.configuration to drsmodule.config. {[}Neil Cook{]}
 
 
 \subsection{0.4.052 (2019-01-21)}
-\label{\detokenize{misc/changelog:id211}}\begin{itemize}
+\label{\detokenize{misc/changelog:id212}}\begin{itemize}
 \item {} 
 Add source config file to error messages. {[}Neil Cook{]}
 
@@ -11744,7 +11827,7 @@ Add test user config for NIRPS. {[}Neil Cook{]}
 
 
 \subsection{0.4.051 (2019-01-19)}
-\label{\detokenize{misc/changelog:id212}}\begin{itemize}
+\label{\detokenize{misc/changelog:id213}}\begin{itemize}
 \item {} 
 Add minor changes to \sphinxtitleref{drs\_recipe.py} and \sphinxtitleref{drs\_startup.py}. {[}Neil Cook{]}
 
@@ -11771,7 +11854,7 @@ Cook{]}
 
 
 \subsection{0.4.050 (2019-01-18)}
-\label{\detokenize{misc/changelog:id213}}\begin{itemize}
+\label{\detokenize{misc/changelog:id214}}\begin{itemize}
 \item {} 
 Move constants functions from package \textendash{}\textgreater{} core (remove package module)
 {[}Neil Cook{]}
@@ -11827,7 +11910,7 @@ Cook{]}
 
 
 \subsection{0.4.049 (2019-01-17)}
-\label{\detokenize{misc/changelog:id214}}\begin{itemize}
+\label{\detokenize{misc/changelog:id215}}\begin{itemize}
 \item {} 
 Added additional file to INTROOT 2 (remanage) {[}Neil Cook{]}
 
@@ -11871,7 +11954,7 @@ fix when there is no directory from pos args. {[}Neil Cook{]}
 
 
 \subsection{0.4.048 (2019-01-16)}
-\label{\detokenize{misc/changelog:id215}}\begin{itemize}
+\label{\detokenize{misc/changelog:id216}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_processing.py} - for now comment out main call (while testing)
 {[}Neil Cook{]}
@@ -11892,7 +11975,7 @@ optional arguments) {[}Neil Cook{]}
 
 
 \subsection{0.4.047 (2019-01-15)}
-\label{\detokenize{misc/changelog:id216}}\begin{itemize}
+\label{\detokenize{misc/changelog:id217}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_dependencies.py} - remove looking in the /misc/ folder for
 dependecies/code stats. {[}Neil Cook{]}
@@ -11918,7 +12001,7 @@ obtained via kwargs \sphinxtitleref{(get\_params)} {[}Neil Cook{]}
 
 
 \subsection{0.4.016 (2019-01-15)}
-\label{\detokenize{misc/changelog:id217}}\begin{itemize}
+\label{\detokenize{misc/changelog:id218}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouLog.py} - fixed an error with logging (if p not set crashes
 because there was no \sphinxtitleref{DRS\_DEBUG} key \textendash{} fixed now) {[}Neil Cook{]}
@@ -11932,7 +12015,7 @@ for now using the old correlbin which works for these. {[}Neil Cook{]}
 
 
 \subsection{0.4.046 (2019-01-11)}
-\label{\detokenize{misc/changelog:id218}}\begin{itemize}
+\label{\detokenize{misc/changelog:id219}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe\_spirou.py} - change nomenclature require kwarg arguments have
 ‘-‘ optional have ‘\textendash{}’ {[}Neil Cook{]}
@@ -11980,7 +12063,7 @@ added to all recipes) {[}Neil Cook{]}
 
 
 \subsection{0.4.045 (2019-01-09)}
-\label{\detokenize{misc/changelog:id219}}\begin{itemize}
+\label{\detokenize{misc/changelog:id220}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe.py} - test on \sphinxtitleref{cal\_HC\_E2DS\_spirou.py}. {[}Neil Cook{]}
 
@@ -12040,7 +12123,7 @@ descriptions/examples/help. {[}Neil Cook{]}
 
 
 \subsection{0.4.044 (2019-01-08)}
-\label{\detokenize{misc/changelog:id220}}\begin{itemize}
+\label{\detokenize{misc/changelog:id221}}\begin{itemize}
 \item {} 
 SpirouConst.py, spirouRecipe, \sphinxtitleref{spirouStartup2.py} - move around the
 header \textendash{}\textgreater{} into spirouConst.py. {[}Neil Cook{]}
@@ -12099,7 +12182,7 @@ Neil \textendash{}\textgreater{} Master. Confirmed unit tests completed successf
 
 
 \subsection{0.4.015 (2019-01-08)}
-\label{\detokenize{misc/changelog:id221}}\begin{itemize}
+\label{\detokenize{misc/changelog:id222}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPOLAR.py} - fix dependence on \sphinxtitleref{KW\_ACQTIME\_KEY\_JUL} \textendash{}\textgreater{} \sphinxtitleref{KW\_ACQTIME}.
 {[}Neil Cook{]}
@@ -12126,7 +12209,7 @@ Move old tests to \sphinxtitleref{spirouUnitTests/old\_tests}. {[}Neil Cook{]}
 
 
 \subsection{0.4.014 (2019-01-07)}
-\label{\detokenize{misc/changelog:id222}}\begin{itemize}
+\label{\detokenize{misc/changelog:id223}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouDB.py} - changed from reading human date to reading julian date,
 changed to use astropy.timea. {[}Neil Cook{]}
@@ -12158,7 +12241,7 @@ consistency) {[}Neil Cook{]}
 
 
 \subsection{0.4.043 (2018-12-21)}
-\label{\detokenize{misc/changelog:id223}}\begin{itemize}
+\label{\detokenize{misc/changelog:id224}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_processing.py} - continued work on \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
@@ -12172,7 +12255,7 @@ consistency) {[}Neil Cook{]}
 
 
 \subsection{0.4.013 (2018-12-19)}
-\label{\detokenize{misc/changelog:id224}}\begin{itemize}
+\label{\detokenize{misc/changelog:id225}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouLog.py} - fix for printlogandcmd now having argument “colour”
 {[}Neil Cook{]}
@@ -12184,7 +12267,7 @@ consistency) {[}Neil Cook{]}
 
 
 \subsection{0.4.042 (2018-12-19)}
-\label{\detokenize{misc/changelog:id225}}\begin{itemize}
+\label{\detokenize{misc/changelog:id226}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRecipe.py} - continue input redo upgrade. {[}Neil Cook{]}
 
@@ -12208,7 +12291,7 @@ Cook{]}
 
 
 \subsection{0.4.041 (2018-12-18)}
-\label{\detokenize{misc/changelog:id226}}\begin{itemize}
+\label{\detokenize{misc/changelog:id227}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe.py} - continued update of input redo. {[}Neil Cook{]}
 
@@ -12231,7 +12314,7 @@ Merge branch ‘neil’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.4.012 (2018-12-18)}
-\label{\detokenize{misc/changelog:id227}}\begin{itemize}
+\label{\detokenize{misc/changelog:id228}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouStartup.py} - update display. {[}Neil Cook{]}
 
@@ -12269,7 +12352,7 @@ filename) {[}Neil Cook{]}
 
 
 \subsection{0.4.040 (2018-12-17)}
-\label{\detokenize{misc/changelog:id228}}\begin{itemize}
+\label{\detokenize{misc/changelog:id229}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRecipe.py} - continued work on input redo. {[}Neil Cook{]}
 
@@ -12303,7 +12386,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.4.011 (2018-12-17)}
-\label{\detokenize{misc/changelog:id229}}\begin{itemize}
+\label{\detokenize{misc/changelog:id230}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_obj\_template.py} - fix bug when forcing calibDB from wave
 solution (calibDB needs to be re-read each time) {[}Neil Cook{]}
@@ -12324,7 +12407,7 @@ solution (calibDB needs to be re-read each time) {[}Neil Cook{]}
 
 
 \subsection{0.4.010 (2018-12-16)}
-\label{\detokenize{misc/changelog:id230}}\begin{itemize}
+\label{\detokenize{misc/changelog:id231}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Wave\_sol\_to\_header.py} - code to update header of all e2ds/e2dsff
 (object and fpfps) in a \sphinxtitleref{night\_name} or all files. {[}Neil Cook{]}
@@ -12341,7 +12424,7 @@ Update \sphinxtitleref{date/version/changelog/update\_notes}. {[}Neil Cook{]}
 
 
 \subsection{0.4.039 (2018-12-15)}
-\label{\detokenize{misc/changelog:id231}}\begin{itemize}
+\label{\detokenize{misc/changelog:id232}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouFile.py} - continued work on input redo. {[}Neil Cook{]}
 
@@ -12352,7 +12435,7 @@ Update \sphinxtitleref{date/version/changelog/update\_notes}. {[}Neil Cook{]}
 
 
 \subsection{0.4.009 (2018-12-14)}
-\label{\detokenize{misc/changelog:id232}}\begin{itemize}
+\label{\detokenize{misc/changelog:id233}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_CCF\_E2DS\_FP\_spirou.py} - fix if \sphinxtitleref{CCF\_RV2} not in whdr. {[}Neil Cook{]}
 
@@ -12413,7 +12496,7 @@ reprocessing code. {[}Neil Cook{]}
 
 
 \subsection{0.4.038 (2018-12-14)}
-\label{\detokenize{misc/changelog:id233}}\begin{itemize}
+\label{\detokenize{misc/changelog:id234}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRecipe.py} and \sphinxtitleref{spirouStartup2.py} - continued update to input
 redo. {[}Neil Cook{]}
@@ -12426,7 +12509,7 @@ reprocessing code. {[}Neil Cook{]}
 
 
 \subsection{0.4.037 (2018-12-13)}
-\label{\detokenize{misc/changelog:id234}}\begin{itemize}
+\label{\detokenize{misc/changelog:id235}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRecipe.py} - update to check code (put into DrsRecipe class as
 methods) {[}Neil Cook{]}
@@ -12448,7 +12531,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.4.008 (2018-12-13)}
-\label{\detokenize{misc/changelog:id235}}\begin{itemize}
+\label{\detokenize{misc/changelog:id236}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Constants\_SPIROU\_H4RG}: new constants for start/end littrow orders.
 {[}melissa-hobson{]}
@@ -12501,7 +12584,7 @@ Update melissa from master
 
 
 \subsection{0.4.007 (2018-12-13)}
-\label{\detokenize{misc/changelog:id236}}\begin{itemize}
+\label{\detokenize{misc/changelog:id237}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Extract\_trigger.py} - changes to reprocessing code (correct order)
 {[}Neil Cook{]}
@@ -12524,7 +12607,7 @@ Code to check the telluric corrections. {[}Neil Cook{]}
 
 
 \subsection{0.4.006 (2018-12-12)}
-\label{\detokenize{misc/changelog:id237}}\begin{itemize}
+\label{\detokenize{misc/changelog:id238}}\begin{itemize}
 \item {} 
 Add .idea to .gitignore. {[}Neil Cook{]}
 
@@ -12585,7 +12668,7 @@ Update date/version/changelog/ update notes. {[}Neil Cook{]}
 
 
 \subsection{0.4.005 (2018-12-11)}
-\label{\detokenize{misc/changelog:id238}}\begin{itemize}
+\label{\detokenize{misc/changelog:id239}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTable.py} - fix an error with missing end card. {[}Neil Cook{]}
 
@@ -12603,7 +12686,7 @@ Cook{]}
 
 
 \subsection{0.4.036 (2018-12-11)}
-\label{\detokenize{misc/changelog:id239}}\begin{itemize}
+\label{\detokenize{misc/changelog:id240}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_validate\_spirou.py} - correct \sphinxtitleref{cal\_validate} for new wlog. {[}Neil
 Cook{]}
@@ -12615,7 +12698,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.4.004 (2018-12-10)}
-\label{\detokenize{misc/changelog:id240}}\begin{itemize}
+\label{\detokenize{misc/changelog:id241}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouConst.py} - undo change to global file. {[}Neil Cook{]}
 
@@ -12626,7 +12709,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.4.035 (2018-12-10)}
-\label{\detokenize{misc/changelog:id241}}\begin{itemize}
+\label{\detokenize{misc/changelog:id242}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouStartup2.py} - upgrade WLOG (requires \sphinxtitleref{drs\_params} to track pid)
 {[}Neil Cook{]}
@@ -12660,7 +12743,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}njcuk9999{]}
 
 
 \subsection{0.4.003 (2018-12-10)}
-\label{\detokenize{misc/changelog:id242}}\begin{itemize}
+\label{\detokenize{misc/changelog:id243}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py} - correct pep8 and add TODO’s for problems.
 {[}Neil Cook{]}
@@ -12731,7 +12814,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.4.001 (2018-12-08)}
-\label{\detokenize{misc/changelog:id243}}\begin{itemize}
+\label{\detokenize{misc/changelog:id244}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Unit\_Test} runs - update test for run. {[}Neil Cook{]}
 
@@ -12746,7 +12829,7 @@ Begin() {[}Neil Cook{]}
 
 
 \subsection{0.4.002 (2018-12-08)}
-\label{\detokenize{misc/changelog:id244}}\begin{itemize}
+\label{\detokenize{misc/changelog:id245}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Constants\_SPIROU\_H4RG.py} - add \sphinxtitleref{“fitsopen\_max\_wait}” time. {[}Neil Cook{]}
 
@@ -12757,7 +12840,7 @@ Begin() {[}Neil Cook{]}
 
 
 \subsection{0.3.077 (2018-12-07)}
-\label{\detokenize{misc/changelog:id245}}\begin{itemize}
+\label{\detokenize{misc/changelog:id246}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTable.py} - add lock files around writing to fits file (avoids
 writing at the same time) {[}Neil Cook{]}
@@ -12789,7 +12872,7 @@ files. {[}Neil Cook{]}
 
 
 \subsection{0.3.076 (2018-12-05)}
-\label{\detokenize{misc/changelog:id246}}\begin{itemize}
+\label{\detokenize{misc/changelog:id247}}\begin{itemize}
 \item {} 
 SpirouDRS/spirouUnitTest folder - major redo of logging system (to
 allow passing of process-id) {[}Neil Cook{]}
@@ -12882,7 +12965,7 @@ are needed. {[}Neil Cook{]}
 
 
 \subsection{0.3.075 (2018-12-04)}
-\label{\detokenize{misc/changelog:id247}}\begin{itemize}
+\label{\detokenize{misc/changelog:id248}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouImage.py} - adjust warning for getting \sphinxtitleref{unix\_time} from string
 (where time is not valid) - warning or error? {[}Neil Cook{]}
@@ -12891,7 +12974,7 @@ are needed. {[}Neil Cook{]}
 
 
 \subsection{0.3.074 (2018-12-03)}
-\label{\detokenize{misc/changelog:id248}}\begin{itemize}
+\label{\detokenize{misc/changelog:id249}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouConst.py} - modify colour for white screen people. {[}Neil Cook{]}
 
@@ -12986,7 +13069,7 @@ moved to ./misc) {[}Neil Cook{]}
 
 
 \subsection{0.3.073 (2018-11-30)}
-\label{\detokenize{misc/changelog:id249}}\begin{itemize}
+\label{\detokenize{misc/changelog:id250}}\begin{itemize}
 \item {} 
 Update test.run. {[}njcuk9999{]}
 
@@ -12994,7 +13077,7 @@ Update test.run. {[}njcuk9999{]}
 
 
 \subsection{0.3.072 (2018-11-28)}
-\label{\detokenize{misc/changelog:id250}}\begin{itemize}
+\label{\detokenize{misc/changelog:id251}}\begin{itemize}
 \item {} 
 Changes to parallelisation (test) {[}njcuk9999{]}
 
@@ -13008,7 +13091,7 @@ Changes to parallelisation (test) {[}njcuk9999{]}
 
 
 \subsection{0.3.071 (2018-11-27)}
-\label{\detokenize{misc/changelog:id251}}\begin{itemize}
+\label{\detokenize{misc/changelog:id252}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Extract\_trigger.py} - correct problems with pre-processing automation.
 {[}njcuk9999{]}
@@ -13026,7 +13109,7 @@ Dev shape redo - tested on \sphinxtitleref{Cal\_test.run} and \sphinxtitleref{Te
 
 
 \subsection{0.3.070 (2018-11-26)}
-\label{\detokenize{misc/changelog:id252}}\begin{itemize}
+\label{\detokenize{misc/changelog:id253}}\begin{itemize}
 \item {} 
 Update test.run. {[}njcuk9999{]}
 
@@ -13040,7 +13123,7 @@ Update date/version/changelog. {[}njcuk9999{]}
 
 
 \subsection{0.3.069 (2018-11-26)}
-\label{\detokenize{misc/changelog:id253}}\begin{itemize}
+\label{\detokenize{misc/changelog:id254}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Run\_off\_listing.py} - correct to try/except in \sphinxtitleref{run\_off\_listing.py}.
 {[}njcuk9999{]}
@@ -13064,7 +13147,7 @@ files) {[}njcuk9999{]}
 
 
 \subsection{0.3.068 (2018-11-24)}
-\label{\detokenize{misc/changelog:id254}}\begin{itemize}
+\label{\detokenize{misc/changelog:id255}}\begin{itemize}
 \item {} 
 Update extraction trigger. {[}njcuk9999{]}
 
@@ -13095,7 +13178,7 @@ Update date/version/changelog. {[}njcuk9999{]}
 
 
 \subsection{0.3.067 (2018-11-24)}
-\label{\detokenize{misc/changelog:id255}}\begin{itemize}
+\label{\detokenize{misc/changelog:id256}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_Test.run} - add \sphinxtitleref{cal\_SHAPE\_spirou2} to \sphinxtitleref{Cal\_Test.run}. {[}njcuk9999{]}
 
@@ -13137,7 +13220,7 @@ and multiple fp files. {[}njcuk9999{]}
 
 
 \subsection{0.3.066 (2018-11-23)}
-\label{\detokenize{misc/changelog:id256}}\begin{itemize}
+\label{\detokenize{misc/changelog:id257}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouFits.py} - fix bug with hdict being empty (possible on some
 writes) {[}njcuk9999{]}
@@ -13146,7 +13229,7 @@ writes) {[}njcuk9999{]}
 
 
 \subsection{0.3.065 (2018-11-22)}
-\label{\detokenize{misc/changelog:id257}}\begin{itemize}
+\label{\detokenize{misc/changelog:id258}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTable.py} - updated the error outputs to include filename.
 {[}njcuk9999{]}
@@ -13192,7 +13275,7 @@ into \sphinxtitleref{cal\_SHAPE}. {[}njcuk9999{]}
 
 
 \subsection{0.3.064 (2018-11-21)}
-\label{\detokenize{misc/changelog:id258}}\begin{itemize}
+\label{\detokenize{misc/changelog:id259}}\begin{itemize}
 \item {} 
 Add copy of old xt code (to compare with new one for changes)
 {[}njcuk9999{]}
@@ -13233,7 +13316,7 @@ Update version/dates/changelog.txt. {[}njcuk9999{]}
 
 
 \subsection{0.3.063 (2018-11-20)}
-\label{\detokenize{misc/changelog:id259}}\begin{itemize}
+\label{\detokenize{misc/changelog:id260}}\begin{itemize}
 \item {} 
 Add test files to misc. {[}njcuk9999{]}
 
@@ -13247,7 +13330,7 @@ Runs - update the unit tests. {[}njcuk9999{]}
 
 
 \subsection{0.4.034 (2018-11-14)}
-\label{\detokenize{misc/changelog:id260}}\begin{itemize}
+\label{\detokenize{misc/changelog:id261}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe.py} - change permissions for file. {[}njcuk9999{]}
 
@@ -13255,7 +13338,7 @@ Runs - update the unit tests. {[}njcuk9999{]}
 
 
 \subsection{0.3.062 (2018-11-14)}
-\label{\detokenize{misc/changelog:id261}}\begin{itemize}
+\label{\detokenize{misc/changelog:id262}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Fit\_triplets} sigma-clip change. {[}melissa-hobson{]}
 
@@ -13292,7 +13375,7 @@ Bug fix for \sphinxtitleref{fit\_gaussian} triplet (fixes \#507) {[}melissa-hobs
 
 
 \subsection{0.4.033 (2018-11-09)}
-\label{\detokenize{misc/changelog:id262}}\begin{itemize}
+\label{\detokenize{misc/changelog:id263}}\begin{itemize}
 \item {} 
 Continued work on input redo. {[}Neil Cook{]}
 
@@ -13308,7 +13391,7 @@ Francois \textendash{}\textgreater{} Dev, Neil\textendash{}\textgreater{} Dev, D
 
 
 \subsection{0.3.060 (2018-11-08)}
-\label{\detokenize{misc/changelog:id263}}\begin{itemize}
+\label{\detokenize{misc/changelog:id264}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_EA} match to master. {[}melissa-hobson{]}
 
@@ -13316,7 +13399,7 @@ Francois \textendash{}\textgreater{} Dev, Neil\textendash{}\textgreater{} Dev, D
 
 
 \subsection{0.3.061 (2018-11-08)}
-\label{\detokenize{misc/changelog:id264}}\begin{itemize}
+\label{\detokenize{misc/changelog:id265}}\begin{itemize}
 \item {} 
 Update date/version/changelog. {[}Neil Cook{]}
 
@@ -13324,7 +13407,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.056 (2018-11-08)}
-\label{\detokenize{misc/changelog:id265}}\begin{itemize}
+\label{\detokenize{misc/changelog:id266}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouWAVE.py} - Melissa’s fix for Issue \#507 -\textgreater{}   “\textless{}” needs to be “\textless{}=”
 {[}Neil Cook{]}
@@ -13339,7 +13422,7 @@ Add hcone files for the \sphinxtitleref{cal\_DRIFTCCF\_E2DS} recipe. {[}Francois
 
 
 \subsection{0.4.032 (2018-11-07)}
-\label{\detokenize{misc/changelog:id266}}\begin{itemize}
+\label{\detokenize{misc/changelog:id267}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouFile.py} - continue to fill out drs file fits methods. {[}Neil
 Cook{]}
@@ -13348,7 +13431,7 @@ Cook{]}
 
 
 \subsection{0.3.055 (2018-11-07)}
-\label{\detokenize{misc/changelog:id267}}\begin{itemize}
+\label{\detokenize{misc/changelog:id268}}\begin{itemize}
 \item {} 
 New UrNe CCF mask based on lines used for the wavelength solution and
 to be used to compute DRIFT on hcone files. {[}FrancoisBouchy{]}
@@ -13357,7 +13440,7 @@ to be used to compute DRIFT on hcone files. {[}FrancoisBouchy{]}
 
 
 \subsection{0.4.031 (2018-11-06)}
-\label{\detokenize{misc/changelog:id268}}\begin{itemize}
+\label{\detokenize{misc/changelog:id269}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe.py} - tested \sphinxtitleref{cal\_badpix\_spirou.py}. {[}Neil Cook{]}
 
@@ -13383,7 +13466,7 @@ when we don’t have p) {[}Neil Cook{]}
 
 
 \subsection{0.4.030 (2018-11-05)}
-\label{\detokenize{misc/changelog:id269}}\begin{itemize}
+\label{\detokenize{misc/changelog:id270}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe.py} - tested \sphinxtitleref{cal\_FF\_RAW\_spirou.py} inputs. {[}Neil Cook{]}
 
@@ -13409,7 +13492,7 @@ spirouFile.DrsInputFile. {[}Neil Cook{]}
 
 
 \subsection{0.4.029 (2018-11-04)}
-\label{\detokenize{misc/changelog:id270}}\begin{itemize}
+\label{\detokenize{misc/changelog:id271}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRecipe.py} - move DrsInputs from here to spirouFile.py.
 {[}njcuk9999{]}
@@ -13425,7 +13508,7 @@ spirouFile. {[}njcuk9999{]}
 
 
 \subsection{0.4.028 (2018-11-02)}
-\label{\detokenize{misc/changelog:id271}}\begin{itemize}
+\label{\detokenize{misc/changelog:id272}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRecipes.py} - add todo. {[}Neil Cook{]}
 
@@ -13467,7 +13550,7 @@ DrsFitsFile. {[}Neil Cook{]}
 
 
 \subsection{0.3.059 (2018-11-01)}
-\label{\detokenize{misc/changelog:id272}}\begin{itemize}
+\label{\detokenize{misc/changelog:id273}}\begin{itemize}
 \item {} 
 Test of not using Littrow sols for \sphinxtitleref{cal\_WAVE\_EA}. {[}melissa-hobson{]}
 
@@ -13475,7 +13558,7 @@ Test of not using Littrow sols for \sphinxtitleref{cal\_WAVE\_EA}. {[}melissa-ho
 
 
 \subsection{0.4.027 (2018-11-01)}
-\label{\detokenize{misc/changelog:id273}}\begin{itemize}
+\label{\detokenize{misc/changelog:id274}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouStartup2.py} - continue work on input code. {[}Neil Cook{]}
 
@@ -13492,7 +13575,7 @@ Test of not using Littrow sols for \sphinxtitleref{cal\_WAVE\_EA}. {[}melissa-ho
 
 
 \subsection{0.3.058 (2018-10-31)}
-\label{\detokenize{misc/changelog:id274}}\begin{itemize}
+\label{\detokenize{misc/changelog:id275}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW} update. {[}melissa-hobson{]}
 
@@ -13500,7 +13583,7 @@ Test of not using Littrow sols for \sphinxtitleref{cal\_WAVE\_EA}. {[}melissa-ho
 
 
 \subsection{0.4.026 (2018-10-31)}
-\label{\detokenize{misc/changelog:id275}}\begin{itemize}
+\label{\detokenize{misc/changelog:id276}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe.py} - add new comment. {[}Neil Cook{]}
 
@@ -13535,7 +13618,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.3.054 (2018-10-30)}
-\label{\detokenize{misc/changelog:id276}}\begin{itemize}
+\label{\detokenize{misc/changelog:id277}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_wavsol.py} - fixed bugs and added STD for H band. {[}Neil Cook{]}
 
@@ -13550,7 +13633,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.3.057 (2018-10-30)}
-\label{\detokenize{misc/changelog:id277}}\begin{itemize}
+\label{\detokenize{misc/changelog:id278}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW} update. {[}melissa-hobson{]}
 
@@ -13566,7 +13649,7 @@ update melissa
 
 
 \subsection{0.3.053 (2018-10-29)}
-\label{\detokenize{misc/changelog:id278}}\begin{itemize}
+\label{\detokenize{misc/changelog:id279}}\begin{itemize}
 \item {} 
 Add \sphinxtitleref{hc\_test.run} back to unit tests. {[}Neil Cook{]}
 
@@ -13582,7 +13665,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.052 (2018-10-29)}
-\label{\detokenize{misc/changelog:id279}}\begin{itemize}
+\label{\detokenize{misc/changelog:id280}}\begin{itemize}
 \item {} 
 Pep8 clean up. {[}Neil Cook{]}
 
@@ -13590,7 +13673,7 @@ Pep8 clean up. {[}Neil Cook{]}
 
 
 \subsection{0.3.051 (2018-10-26)}
-\label{\detokenize{misc/changelog:id280}}\begin{itemize}
+\label{\detokenize{misc/changelog:id281}}\begin{itemize}
 \item {} 
 Pep8 clean up. {[}Neil Cook{]}
 
@@ -13609,7 +13692,7 @@ Update date/version/changelog/update-notes. {[}Neil Cook{]}
 
 
 \subsection{0.3.050 (2018-10-26)}
-\label{\detokenize{misc/changelog:id281}}\begin{itemize}
+\label{\detokenize{misc/changelog:id282}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouKeywords.py} - add separate set of header keys for the FP
 analysis. {[}Neil Cook{]}
@@ -13647,7 +13730,7 @@ Update date/version/update notes/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.049 (2018-10-25)}
-\label{\detokenize{misc/changelog:id282}}\begin{itemize}
+\label{\detokenize{misc/changelog:id283}}\begin{itemize}
 \item {} 
 Tellurics2.run - add a second telluric run - to preprocess, extract
 and \sphinxtitleref{mk\_tellu} missed tellurics. {[}Neil Cook{]}
@@ -13686,7 +13769,7 @@ New \sphinxtitleref{unit\_test} runs for maestria with missed Gl699 targets. {[}
 
 
 \subsection{0.3.048 (2018-10-24)}
-\label{\detokenize{misc/changelog:id283}}\begin{itemize}
+\label{\detokenize{misc/changelog:id284}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouRV.py} - need to deal with the differing fibers (for now
 manually) {[}Neil Cook{]}
@@ -13773,7 +13856,7 @@ Update \sphinxtitleref{date/version/update\_notes/changelog}. {[}Neil Cook{]}
 
 
 \subsection{0.3.047 (2018-10-23)}
-\label{\detokenize{misc/changelog:id284}}\begin{itemize}
+\label{\detokenize{misc/changelog:id285}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_Test.run} - add \sphinxtitleref{cal\_wave\_mapper} to tested recipes. {[}Neil Cook{]}
 
@@ -13818,7 +13901,7 @@ output of badpix mask. {[}Neil Cook{]}
 
 
 \subsection{0.3.046 (2018-10-22)}
-\label{\detokenize{misc/changelog:id285}}\begin{itemize}
+\label{\detokenize{misc/changelog:id286}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_mk\_tellu.py} - make sure the NaNs do not propagate through to the
 convolution (NaN \sphinxtitleref{*} 0.0 = NaN —\textgreater{} need 0.0) {[}Neil Cook{]}
@@ -13848,7 +13931,7 @@ instead of shifting transmission after. {[}Neil Cook{]}
 
 
 \subsection{0.3.045 (2018-10-22)}
-\label{\detokenize{misc/changelog:id286}}\begin{itemize}
+\label{\detokenize{misc/changelog:id287}}\begin{itemize}
 \item {} 
 Updated permissions on spirouUnitTest files (chmod +x) {[}Neil Cook{]}
 
@@ -13897,7 +13980,7 @@ Update date/version/changelog/update notes. {[}Neil Cook{]}
 
 
 \subsection{0.3.043 (2018-10-19)}
-\label{\detokenize{misc/changelog:id287}}\begin{itemize}
+\label{\detokenize{misc/changelog:id288}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Unit\_test} runs - add maestria tests. {[}Neil Cook{]}
 
@@ -14004,7 +14087,7 @@ Update HC/WAVE test. {[}Neil Cook{]}
 
 
 \subsection{0.3.042 (2018-10-18)}
-\label{\detokenize{misc/changelog:id288}}\begin{itemize}
+\label{\detokenize{misc/changelog:id289}}\begin{itemize}
 \item {} 
 Update date/version/changelog. {[}Neil Cook{]}
 
@@ -14094,7 +14177,7 @@ to limit the number of files used for a recipe. {[}Neil Cook{]}
 
 
 \subsection{0.3.040 (2018-10-17)}
-\label{\detokenize{misc/changelog:id289}}\begin{itemize}
+\label{\detokenize{misc/changelog:id290}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Extract\_trigger.py} - add filters to allow only certain files to be
 process based on DPRTYPE. {[}Neil Cook{]}
@@ -14142,7 +14225,7 @@ and including extraction) {[}Neil Cook{]}
 
 
 \subsection{0.3.041 (2018-10-17)}
-\label{\detokenize{misc/changelog:id290}}\begin{itemize}
+\label{\detokenize{misc/changelog:id291}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouStartup.py} - fixed problem when no column is present (set to
 None) {[}Neil Cook{]}
@@ -14197,7 +14280,7 @@ identifying source of output files. {[}Neil Cook{]}
 
 
 \subsection{0.3.038 (2018-10-16)}
-\label{\detokenize{misc/changelog:id291}}\begin{itemize}
+\label{\detokenize{misc/changelog:id292}}\begin{itemize}
 \item {} 
 Update version/date/changelog/update notes. {[}Neil Cook{]}
 
@@ -14252,7 +14335,7 @@ work. {[}Neil Cook{]}
 
 
 \subsection{0.3.039 (2018-10-16)}
-\label{\detokenize{misc/changelog:id292}}\begin{itemize}
+\label{\detokenize{misc/changelog:id293}}\begin{itemize}
 \item {} 
 New recipe to compute the drift of simultaneous FP on Fiber C with
 fp.mas. {[}FrancoisBouchy{]}
@@ -14261,7 +14344,7 @@ fp.mas. {[}FrancoisBouchy{]}
 
 
 \subsection{0.3.044 (2018-10-16)}
-\label{\detokenize{misc/changelog:id293}}\begin{itemize}
+\label{\detokenize{misc/changelog:id294}}\begin{itemize}
 \item {} 
 New function \sphinxtitleref{DRIFTCCF\_E2DS\_TBL\_FILE} to save driftccf file
 \sphinxtitleref{DRIFTCCF\_E2DS\_FITS\_FILE} still to be adapted. {[}FrancoisBouchy{]}
@@ -14270,7 +14353,7 @@ New function \sphinxtitleref{DRIFTCCF\_E2DS\_TBL\_FILE} to save driftccf file
 
 
 \subsection{0.3.037 (2018-10-15)}
-\label{\detokenize{misc/changelog:id294}}\begin{itemize}
+\label{\detokenize{misc/changelog:id295}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouKeywords.py} - add the two new header keys for bigcube list.
 {[}Neil Cook{]}
@@ -14334,7 +14417,7 @@ Cook{]}
 
 
 \subsection{0.3.036 (2018-10-14)}
-\label{\detokenize{misc/changelog:id295}}\begin{itemize}
+\label{\detokenize{misc/changelog:id296}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouEXTOR.py}  - fix bug where whole order is zeros - will break
 spline. {[}Neil Cook{]}
@@ -14357,7 +14440,7 @@ Update notes and changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.035 (2018-10-12)}
-\label{\detokenize{misc/changelog:id296}}\begin{itemize}
+\label{\detokenize{misc/changelog:id297}}\begin{itemize}
 \item {} 
 Update unit test runs. {[}Neil Cook{]}
 
@@ -14464,7 +14547,7 @@ table, reporting the table file. {[}melissa-hobson{]}
 
 
 \subsection{0.3.034 (2018-10-11)}
-\label{\detokenize{misc/changelog:id297}}\begin{itemize}
+\label{\detokenize{misc/changelog:id298}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Unit\_test.py} - make sure all plots are closed. {[}Neil Cook{]}
 
@@ -14578,7 +14661,7 @@ Resolved merging conflicts. {[}Eder{]}
 
 
 \subsection{0.3.032 (2018-10-11)}
-\label{\detokenize{misc/changelog:id298}}\begin{itemize}
+\label{\detokenize{misc/changelog:id299}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Unit\_tests} - update \sphinxtitleref{tellu\_test2} and test. {[}Neil Cook{]}
 
@@ -14621,7 +14704,7 @@ Update date/version/update notes and changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.031 (2018-10-10)}
-\label{\detokenize{misc/changelog:id299}}\begin{itemize}
+\label{\detokenize{misc/changelog:id300}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tellu\_Test2.run} - add additional test to test different wavelength
 solutions in telluric recipes. {[}Neil Cook{]}
@@ -14723,7 +14806,7 @@ solution. {[}Neil Cook{]}
 
 
 \subsection{0.3.030 (2018-10-09)}
-\label{\detokenize{misc/changelog:id300}}\begin{itemize}
+\label{\detokenize{misc/changelog:id301}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouUnitRecipes.py} - remove the moved HC/WAVE recipes from import
 (no longer in bin folder) {[}Neil Cook{]}
@@ -14777,7 +14860,7 @@ Update date/version/changelog/update notes. {[}Neil Cook{]}
 
 
 \subsection{0.4.025 (2018-10-06)}
-\label{\detokenize{misc/changelog:id301}}\begin{itemize}
+\label{\detokenize{misc/changelog:id302}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Input\_file.txt} - update list of inputs (Issue \#475) {[}Neil Cook{]}
 
@@ -14791,7 +14874,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.3.029 (2018-10-06)}
-\label{\detokenize{misc/changelog:id302}}\begin{itemize}
+\label{\detokenize{misc/changelog:id303}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_FF\_RAW\_spirou.py} - update extraction to deal with different
 outputs. {[}Neil Cook{]}
@@ -14827,7 +14910,7 @@ Extract redo \textendash{}\textgreater{} Merge \sphinxtitleref{(cal\_WAVE\_E2DS\
 
 
 \subsection{0.3.028 (2018-10-05)}
-\label{\detokenize{misc/changelog:id303}}\begin{itemize}
+\label{\detokenize{misc/changelog:id304}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Update\_note.txt} - update with note about setting extraction to 4b
 (default = 3d) {[}Neil Cook{]}
@@ -14843,7 +14926,7 @@ Update - version/date/changelog/update notes. {[}Neil Cook{]}
 
 
 \subsection{0.3.027 (2018-10-05)}
-\label{\detokenize{misc/changelog:id304}}\begin{itemize}
+\label{\detokenize{misc/changelog:id305}}\begin{itemize}
 \item {} 
 Timings.txt - update timings with new runs. {[}Neil Cook{]}
 
@@ -14901,7 +14984,7 @@ Update date/version/update notes and changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.026 (2018-10-05)}
-\label{\detokenize{misc/changelog:id305}}\begin{itemize}
+\label{\detokenize{misc/changelog:id306}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_Test.run} - add \sphinxtitleref{cal\_SHAPE\_spirou.py} to unit test. {[}Neil Cook{]}
 
@@ -14936,7 +15019,7 @@ constants file. {[}Neil Cook{]}
 
 
 \subsection{0.3.025 (2018-10-04)}
-\label{\detokenize{misc/changelog:id306}}\begin{itemize}
+\label{\detokenize{misc/changelog:id307}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouFITS.py} - get shape file from header. {[}Neil Cook{]}
 
@@ -14991,7 +15074,7 @@ calibDB. {[}Neil Cook{]}
 
 
 \subsection{0.3.024 (2018-10-03)}
-\label{\detokenize{misc/changelog:id307}}\begin{itemize}
+\label{\detokenize{misc/changelog:id308}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_SHAPE\_spirou.py} - fix typo dx{[}iw{]} = coeffs{[}1{]} \textendash{}\textgreater{} dx{[}iw{]} =
 gcoeffs{[}1{]} {[}Neil Cook{]}
@@ -15163,7 +15246,7 @@ methods. {[}Neil Cook{]}
 
 
 \subsection{0.3.023 (2018-10-02)}
-\label{\detokenize{misc/changelog:id308}}\begin{itemize}
+\label{\detokenize{misc/changelog:id309}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_CCF\_E2DS\_spirou.py} - fix order out GetWaveSolution outputs (Issue
 \#464) {[}Neil Cook{]}
@@ -15280,7 +15363,7 @@ Cook{]}
 
 
 \subsection{0.3.022 (2018-10-01)}
-\label{\detokenize{misc/changelog:id309}}\begin{itemize}
+\label{\detokenize{misc/changelog:id310}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTHORCA.\_\_init\_\_.py} - remove use of GetE2DSll - use
 GetWaveSolution (Issue \#468) {[}Neil Cook{]}
@@ -15406,7 +15489,7 @@ quiet mode. {[}Neil Cook{]}
 
 
 \subsection{0.3.021 (2018-09-26)}
-\label{\detokenize{misc/changelog:id310}}\begin{itemize}
+\label{\detokenize{misc/changelog:id311}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouWAVE.py} - adapt to allow force creating of linelist. {[}Neil Cook{]}
 
@@ -15424,7 +15507,7 @@ computation. {[}Neil Cook{]}
 
 
 \subsection{0.3.020 (2018-09-25)}
-\label{\detokenize{misc/changelog:id311}}\begin{itemize}
+\label{\detokenize{misc/changelog:id312}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouPlot.py} - pass font changes for all graphs (via matplotlib.rc)
 {[}Neil Cook{]}
@@ -15454,7 +15537,7 @@ Neil \textendash{}\textgreater{} Master (Fixes for issue \#464)
 
 
 \subsection{0.3.019 (2018-09-24)}
-\label{\detokenize{misc/changelog:id312}}\begin{itemize}
+\label{\detokenize{misc/changelog:id313}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_DRIFTPEAK\_E2DS\_spirou.py} - fix typo bug with
 \sphinxtitleref{drift\_peak\_allowed\_types}. {[}Neil Cook{]}
@@ -15486,7 +15569,7 @@ Dev
 
 
 \subsection{0.3.018 (2018-09-21)}
-\label{\detokenize{misc/changelog:id313}}\begin{itemize}
+\label{\detokenize{misc/changelog:id314}}\begin{itemize}
 \item {} 
 Update timings. {[}Neil Cook{]}
 
@@ -15497,7 +15580,7 @@ Update date/version/changelog/timings. {[}Neil Cook{]}
 
 
 \subsection{0.3.017 (2018-09-21)}
-\label{\detokenize{misc/changelog:id314}}\begin{itemize}
+\label{\detokenize{misc/changelog:id315}}\begin{itemize}
 \item {} 
 \sphinxtitleref{SpirouTHORCA.py} - fix code to not have min/max of \sphinxtitleref{HC/FP\_N\_ORD}
 START/FINAL for cal WAVE/cal HC. {[}Neil Cook{]}
@@ -15518,7 +15601,7 @@ START/FINAL for cal HC. {[}Neil Cook{]}
 
 
 \subsection{0.3.016 (2018-09-21)}
-\label{\detokenize{misc/changelog:id315}}\begin{itemize}
+\label{\detokenize{misc/changelog:id316}}\begin{itemize}
 \item {} 
 Remove user specific ignore (should not be needed) {[}Neil Cook{]}
 
@@ -15561,7 +15644,7 @@ Update version/changelog/date/update notes. {[}Neil Cook{]}
 
 
 \subsection{0.3.015 (2018-09-19)}
-\label{\detokenize{misc/changelog:id316}}\begin{itemize}
+\label{\detokenize{misc/changelog:id317}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Unit\_tests}: fix bug in run names. {[}Neil Cook{]}
 
@@ -15569,7 +15652,7 @@ Update version/changelog/date/update notes. {[}Neil Cook{]}
 
 
 \subsection{0.3.012 (2018-09-19)}
-\label{\detokenize{misc/changelog:id317}}\begin{itemize}
+\label{\detokenize{misc/changelog:id318}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Unit\_tests}: add \sphinxtitleref{cal\_CCF} test to \sphinxtitleref{Tellu\_Test.run}. {[}Neil Cook{]}
 
@@ -15596,7 +15679,7 @@ Update date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.3.013 (2018-09-19)}
-\label{\detokenize{misc/changelog:id318}}\begin{itemize}
+\label{\detokenize{misc/changelog:id319}}\begin{itemize}
 \item {} 
 New CCF mask provided by Xavier on 2018 Sept 19. {[}FrancoisBouchy{]}
 
@@ -15610,7 +15693,7 @@ Adaptation for telluric corrected spectra. {[}FrancoisBouchy{]}
 
 
 \subsection{0.3.011 (2018-09-19)}
-\label{\detokenize{misc/changelog:id319}}\begin{itemize}
+\label{\detokenize{misc/changelog:id320}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe\_control.txt} - add e2dsff files to \sphinxtitleref{cal\_drift} codes and \sphinxtitleref{cal\_ccf}.
 {[}Neil Cook{]}
@@ -15627,7 +15710,7 @@ header (Issue \#456) {[}Neil Cook{]}
 
 
 \subsection{0.4.024 (2018-09-18)}
-\label{\detokenize{misc/changelog:id320}}\begin{itemize}
+\label{\detokenize{misc/changelog:id321}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe.py} - continue work on getting new input method to work.
 {[}Neil Cook{]}
@@ -15654,7 +15737,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.3.010 (2018-09-18)}
-\label{\detokenize{misc/changelog:id321}}\begin{itemize}
+\label{\detokenize{misc/changelog:id322}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Tellu\_test.run}: add actual non-hot stars to telluric test. {[}Neil Cook{]}
 
@@ -15668,7 +15751,7 @@ Merge branch ‘master’ into \sphinxtitleref{input\_redo}. {[}Neil Cook{]}
 
 
 \subsection{0.3.009 (2018-09-17)}
-\label{\detokenize{misc/changelog:id322}}\begin{itemize}
+\label{\detokenize{misc/changelog:id323}}\begin{itemize}
 \item {} 
 Test runs: update \sphinxtitleref{tellu\_test.run}. {[}Neil Cook{]}
 
@@ -15693,7 +15776,7 @@ SpirouPlot: fix telluric plots (labels, titles, limits) {[}Neil Cook{]}
 
 
 \subsection{0.4.023 (2018-09-17)}
-\label{\detokenize{misc/changelog:id323}}\begin{itemize}
+\label{\detokenize{misc/changelog:id324}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Test\_recipe}: todo’s added. {[}Neil Cook{]}
 
@@ -15701,7 +15784,7 @@ SpirouPlot: fix telluric plots (labels, titles, limits) {[}Neil Cook{]}
 
 
 \subsection{0.4.022 (2018-09-14)}
-\label{\detokenize{misc/changelog:id324}}\begin{itemize}
+\label{\detokenize{misc/changelog:id325}}\begin{itemize}
 \item {} 
 Input update: \sphinxtitleref{spirouStartup.\_\_init\_\_.py} aliases / imports to
 spirouStartup2 (temporary) {[}Neil Cook{]}
@@ -15734,7 +15817,7 @@ V0.3 cand \textendash{}\textgreater{} master. Confirm unit tests successful.
 
 
 \subsection{0.3.008 (2018-09-13)}
-\label{\detokenize{misc/changelog:id325}}\begin{itemize}
+\label{\detokenize{misc/changelog:id326}}\begin{itemize}
 \item {} 
 Version.txt: update/check dependencies. {[}Neil Cook{]}
 
@@ -15751,7 +15834,7 @@ Timings.txt: For Neil reference only \sphinxtitleref{unit\_test} timings. {[}Nei
 
 
 \subsection{0.3.007 (2018-09-13)}
-\label{\detokenize{misc/changelog:id326}}\begin{itemize}
+\label{\detokenize{misc/changelog:id327}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Drs\_changelog.py}: undo pep8 name change (and redo properly) {[}Neil
 Cook{]}
@@ -15789,7 +15872,7 @@ array (instead of an array of zeros) {[}Neil Cook{]}
 
 
 \subsection{0.3.006 (2018-09-12)}
-\label{\detokenize{misc/changelog:id327}}\begin{itemize}
+\label{\detokenize{misc/changelog:id328}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Off\_listing.py}: fix bug and add to index (if prompted by user) {[}Neil
 Cook{]}
@@ -15825,7 +15908,7 @@ Pep8 updates. {[}Neil Cook{]}
 
 
 \subsection{0.3.005 (2018-09-11)}
-\label{\detokenize{misc/changelog:id328}}\begin{itemize}
+\label{\detokenize{misc/changelog:id329}}\begin{itemize}
 \item {} 
 Pep8 updates. {[}Neil Cook{]}
 
@@ -15851,7 +15934,7 @@ Update date/version/changelog/update notes. {[}Neil Cook{]}
 
 
 \subsection{0.3.033 (2018-09-11)}
-\label{\detokenize{misc/changelog:id329}}\begin{itemize}
+\label{\detokenize{misc/changelog:id330}}\begin{itemize}
 \item {} 
 Added BJD\# and MEANBJD to header of polar products. {[}Eder{]}
 
@@ -15868,7 +15951,7 @@ Minor changes. {[}Eder{]}
 
 
 \subsection{0.3.004 (2018-09-11)}
-\label{\detokenize{misc/changelog:id330}}\begin{itemize}
+\label{\detokenize{misc/changelog:id331}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Recipe\_control.txt} \textendash{}\textgreater{} add cases (for fiber) for \sphinxtitleref{visu\_E2DS\_spirou}.
 {[}Neil Cook{]}
@@ -15960,7 +16043,7 @@ file (TAPAS) now via telluDB. {[}Neil Cook{]}
 
 
 \subsection{0.3.003 (2018-09-10)}
-\label{\detokenize{misc/changelog:id331}}\begin{itemize}
+\label{\detokenize{misc/changelog:id332}}\begin{itemize}
 \item {} 
 Update notes - update. {[}Neil Cook{]}
 
@@ -16094,7 +16177,7 @@ Cook{]}
 
 
 \subsection{0.3.002 (2018-09-07)}
-\label{\detokenize{misc/changelog:id332}}\begin{itemize}
+\label{\detokenize{misc/changelog:id333}}\begin{itemize}
 \item {} 
 Added an \sphinxtitleref{all\_order} plot of fitted gaussians (as discussed in \#442)
 Saved additional values to loc in spirouWAVE functions that were
@@ -16108,7 +16191,7 @@ value (fix for \#393) {[}melissa-hobson{]}
 
 
 \subsection{0.3.000 (2018-09-06)}
-\label{\detokenize{misc/changelog:id333}}\begin{itemize}
+\label{\detokenize{misc/changelog:id334}}\begin{itemize}
 \item {} 
 Issue \#418 \sphinxtitleref{spirouStartup.py} - Make directory for \sphinxtitleref{NIGHT\_NAME} in
 \sphinxtitleref{TMP\_DIR}, index.fits saves to \sphinxtitleref{TMP\_DIR}, files are now checked for RAW in
@@ -16228,7 +16311,7 @@ spirouStartup.End dealing with outputs. {[}Neil Cook{]}
 
 
 \subsection{0.2.128 (2018-09-06)}
-\label{\detokenize{misc/changelog:id334}}\begin{itemize}
+\label{\detokenize{misc/changelog:id335}}\begin{itemize}
 \item {} 
 SpirouPlot: updated \sphinxtitleref{wave\_ea\_plot\_per\_order\_hcguess}: - plots stay open
 until manually closed - each plot shows only the gaussian fits
@@ -16238,7 +16321,7 @@ corresponding to the order (Fixes \#442) {[}melissa-hobson{]}
 
 
 \subsection{0.2.124 (2018-09-05)}
-\label{\detokenize{misc/changelog:id335}}\begin{itemize}
+\label{\detokenize{misc/changelog:id336}}\begin{itemize}
 \item {} 
 Issue \#429 - add output header key to identify output files
 \sphinxtitleref{(KW\_OUTPUT)} - defined in \sphinxtitleref{output\_keys.py} (SpirouDRS/data), and added
@@ -16311,7 +16394,7 @@ Issue \#429 - add output header key to identify output files
 
 
 \subsection{0.2.125 (2018-09-05)}
-\label{\detokenize{misc/changelog:id336}}\begin{itemize}
+\label{\detokenize{misc/changelog:id337}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou}: updated HC section from
 \sphinxtitleref{cal\_HC\_E2DS\_EA\_spirou.py}. {[}melissa-hobson{]}
@@ -16359,7 +16442,7 @@ Update version/changelog and date. {[}Neil Cook{]}
 
 
 \subsection{0.2.126 (2018-09-05)}
-\label{\detokenize{misc/changelog:id337}}\begin{itemize}
+\label{\detokenize{misc/changelog:id338}}\begin{itemize}
 \item {} 
 Commit local changes. {[}Melissa Hobson{]}
 
@@ -16367,7 +16450,7 @@ Commit local changes. {[}Melissa Hobson{]}
 
 
 \subsection{0.2.127 (2018-09-05)}
-\label{\detokenize{misc/changelog:id338}}\begin{itemize}
+\label{\detokenize{misc/changelog:id339}}\begin{itemize}
 \item {} 
 SpirouRV (for \sphinxtitleref{cal\_DRIFTPEAK\_E2DS\_spirou)} - Fix repetition of warning
 messages in while loop. {[}njcuk9999{]}
@@ -16376,7 +16459,7 @@ messages in while loop. {[}njcuk9999{]}
 
 
 \subsection{0.2.123 (2018-09-04)}
-\label{\detokenize{misc/changelog:id339}}\begin{itemize}
+\label{\detokenize{misc/changelog:id340}}\begin{itemize}
 \item {} 
 Move \sphinxtitleref{cal\_HC\_E2DS\_EA} constants to here. {[}Neil Cook{]}
 
@@ -16391,7 +16474,7 @@ Updated date/version/changelog. {[}Neil Cook{]}
 
 
 \subsection{0.2.121 (2018-09-04)}
-\label{\detokenize{misc/changelog:id340}}\begin{itemize}
+\label{\detokenize{misc/changelog:id341}}\begin{itemize}
 \item {} 
 Add placeholder marker for the new \sphinxtitleref{cal\_HC\_E2DS\_EA\_spirou} work. {[}Neil
 Cook{]}
@@ -16434,7 +16517,7 @@ Neil \textendash{}\textgreater{} Dev 2
 
 
 \subsection{0.2.122 (2018-09-03)}
-\label{\detokenize{misc/changelog:id341}}\begin{itemize}
+\label{\detokenize{misc/changelog:id342}}\begin{itemize}
 \item {} 
 Manually incorporated possibility to read wavelength solution from
 calibDB (from dev2) {[}melissa-hobson{]}
@@ -16448,7 +16531,7 @@ corrected checks spirouWAVE.py: corrections to new FP functions.
 
 
 \subsection{0.2.120 (2018-08-31)}
-\label{\detokenize{misc/changelog:id342}}\begin{itemize}
+\label{\detokenize{misc/changelog:id343}}\begin{itemize}
 \item {} 
 Update date and version. {[}Neil Cook{]}
 
@@ -16469,7 +16552,7 @@ Reset \sphinxtitleref{cal\_CCF} set NaNs to zeros (Issue \#389) {[}Neil Cook{]}
 
 
 \subsection{0.2.117 (2018-08-31)}
-\label{\detokenize{misc/changelog:id343}}\begin{itemize}
+\label{\detokenize{misc/changelog:id344}}\begin{itemize}
 \item {} 
 Added new wavelength solution and deleted files in \sphinxtitleref{data\_example} (not
 needed - run \sphinxtitleref{cal\_reset} or \sphinxtitleref{cal\_validate)} {[}Neil Cook{]}
@@ -16484,7 +16567,7 @@ TC3 initial wavelength solution
 
 
 \subsection{0.2.116 (2018-08-30)}
-\label{\detokenize{misc/changelog:id344}}\begin{itemize}
+\label{\detokenize{misc/changelog:id345}}\begin{itemize}
 \item {} 
 Add \sphinxtitleref{off\_listing\_REDUC\_spirou} to recipes available for testing. {[}Neil
 Cook{]}
@@ -16515,7 +16598,7 @@ Add writing of file for \sphinxtitleref{off\_listing}. {[}Neil Cook{]}
 
 
 \subsection{0.2.114 (2018-08-29)}
-\label{\detokenize{misc/changelog:id345}}\begin{itemize}
+\label{\detokenize{misc/changelog:id346}}\begin{itemize}
 \item {} 
 Added fixes to triplet fitting function. {[}Neil Cook{]}
 
@@ -16567,7 +16650,7 @@ Cook{]}
 
 
 \subsection{0.2.115 (2018-08-29)}
-\label{\detokenize{misc/changelog:id346}}\begin{itemize}
+\label{\detokenize{misc/changelog:id347}}\begin{itemize}
 \item {} 
 TC3 initial wavelength solution. {[}melissa-hobson{]}
 
@@ -16575,7 +16658,7 @@ TC3 initial wavelength solution. {[}melissa-hobson{]}
 
 
 \subsection{0.2.113 (2018-08-28)}
-\label{\detokenize{misc/changelog:id347}}\begin{itemize}
+\label{\detokenize{misc/changelog:id348}}\begin{itemize}
 \item {} 
 First commit - Etienne’s \sphinxtitleref{cal\_HC} - added functions for \sphinxtitleref{cal\_hc\_ea}. {[}Neil
 Cook{]}
@@ -16625,7 +16708,7 @@ Set \sphinxtitleref{pixel\_shift\_inter} and \sphinxtitleref{pixel\_shift\_slope
 
 
 \subsection{0.2.118 (2018-08-27)}
-\label{\detokenize{misc/changelog:id348}}\begin{itemize}
+\label{\detokenize{misc/changelog:id349}}\begin{itemize}
 \item {} 
 Issue \#399 - copied in extra files \sphinxtitleref{(FILE\_B} and read me files) required
 by iers (but not currently linked to) {[}njcuk9999{]}
@@ -16655,7 +16738,7 @@ Neil \textendash{}\textgreater{} Master
 
 
 \subsection{0.2.119 (2018-08-27)}
-\label{\detokenize{misc/changelog:id349}}\begin{itemize}
+\label{\detokenize{misc/changelog:id350}}\begin{itemize}
 \item {} 
 Added location to save astropy iers file (Issue \#389) {[}Neil Cook{]}
 
@@ -16670,7 +16753,7 @@ Issue \#399: barycorrpy offline file. {[}Neil Cook{]}
 
 
 \subsection{0.2.112 (2018-08-27)}
-\label{\detokenize{misc/changelog:id350}}\begin{itemize}
+\label{\detokenize{misc/changelog:id351}}\begin{itemize}
 \item {} 
 Updated date, version and changelog. {[}Neil Cook{]}
 
@@ -16678,7 +16761,7 @@ Updated date, version and changelog. {[}Neil Cook{]}
 
 
 \subsection{0.2.107 (2018-08-27)}
-\label{\detokenize{misc/changelog:id351}}\begin{itemize}
+\label{\detokenize{misc/changelog:id352}}\begin{itemize}
 \item {} 
 Updated date, version and changelog. {[}Neil Cook{]}
 
@@ -16690,7 +16773,7 @@ Cook{]}
 
 
 \subsection{0.2.106 (2018-08-27)}
-\label{\detokenize{misc/changelog:id352}}\begin{itemize}
+\label{\detokenize{misc/changelog:id353}}\begin{itemize}
 \item {} 
 Set \sphinxtitleref{pixel\_shift\_inter} and \sphinxtitleref{pixel\_shift\_slope} back to zero (Issue \#411)
 {[}Neil Cook{]}
@@ -16699,7 +16782,7 @@ Set \sphinxtitleref{pixel\_shift\_inter} and \sphinxtitleref{pixel\_shift\_slope
 
 
 \subsection{0.2.105 (2018-08-24)}
-\label{\detokenize{misc/changelog:id353}}\begin{itemize}
+\label{\detokenize{misc/changelog:id354}}\begin{itemize}
 \item {} 
 Fix for Issue \#406 - \sphinxtitleref{cal\_CCF} does not accept StokesI or e2dsff -
 fixed. {[}Neil Cook{]}
@@ -16731,7 +16814,7 @@ Cook{]}
 
 
 \subsection{0.2.104 (2018-08-23)}
-\label{\detokenize{misc/changelog:id354}}\begin{itemize}
+\label{\detokenize{misc/changelog:id355}}\begin{itemize}
 \item {} 
 Add \sphinxtitleref{check\_blacklist} and \sphinxtitleref{get\_blacklist} functions (Issue \#419) {[}Neil
 Cook{]}
@@ -16765,7 +16848,7 @@ Update date version and changelog. {[}Neil Cook{]}
 
 
 \subsection{0.2.110 (2018-08-23)}
-\label{\detokenize{misc/changelog:id355}}\begin{itemize}
+\label{\detokenize{misc/changelog:id356}}\begin{itemize}
 \item {} 
 Update \sphinxtitleref{cal\_HC\_E2DS\_spirou.py}. {[}Neil Cook{]}
 
@@ -16780,7 +16863,7 @@ update pep8
 
 
 \subsection{0.2.103 (2018-08-23)}
-\label{\detokenize{misc/changelog:id356}}\begin{itemize}
+\label{\detokenize{misc/changelog:id357}}\begin{itemize}
 \item {} 
 Re-write of \sphinxtitleref{median\_one\_over\_f\_noise} function (Issue \#420) {[}Neil Cook{]}
 
@@ -16794,7 +16877,7 @@ Using new function (re-write) from issue \#420. {[}Neil Cook{]}
 
 
 \subsection{0.2.111 (2018-08-23)}
-\label{\detokenize{misc/changelog:id357}}\begin{itemize}
+\label{\detokenize{misc/changelog:id358}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py} update. {[}melissa-hobson{]}
 
@@ -16802,7 +16885,7 @@ Using new function (re-write) from issue \#420. {[}Neil Cook{]}
 
 
 \subsection{0.2.109 (2018-08-22)}
-\label{\detokenize{misc/changelog:id358}}\begin{itemize}
+\label{\detokenize{misc/changelog:id359}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: moved FP solution to spirouWAVE. {[}melissa-
 hobson{]}
@@ -16811,7 +16894,7 @@ hobson{]}
 
 
 \subsection{0.2.108 (2018-08-21)}
-\label{\detokenize{misc/changelog:id359}}\begin{itemize}
+\label{\detokenize{misc/changelog:id360}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: - check to remove double-fitted or
 spurious FP peaks - incorporation of FP lines (now working with no
@@ -16846,7 +16929,7 @@ Update changelog. {[}njcuk9999{]}
 
 
 \subsection{0.2.102 (2018-08-18)}
-\label{\detokenize{misc/changelog:id360}}\begin{itemize}
+\label{\detokenize{misc/changelog:id361}}\begin{itemize}
 \item {} 
 Issue \#411: reset \sphinxtitleref{cal\_wave} changes from Melissa (not working with
 \sphinxtitleref{unit\_test} 20180409all.run. {[}njcuk9999{]}
@@ -16866,7 +16949,7 @@ Update date version and changelog. {[}njcuk9999{]}
 
 
 \subsection{0.2.099 (2018-08-18)}
-\label{\detokenize{misc/changelog:id361}}\begin{itemize}
+\label{\detokenize{misc/changelog:id362}}\begin{itemize}
 \item {} 
 Fix to file name (allow e2ds and e2dsff by only replaceing \sphinxtitleref{“\_A.fits}”
 {[}njcuk9999{]}
@@ -16902,7 +16985,7 @@ Update date, version, changelog. {[}njcuk9999{]}
 
 
 \subsection{0.2.101 (2018-08-18)}
-\label{\detokenize{misc/changelog:id362}}\begin{itemize}
+\label{\detokenize{misc/changelog:id363}}\begin{itemize}
 \item {} 
 Update spirouMath.py. {[}Neil Cook{]}
 
@@ -16912,7 +16995,7 @@ fix pep8
 
 
 \subsection{0.2.096 (2018-08-18)}
-\label{\detokenize{misc/changelog:id363}}\begin{itemize}
+\label{\detokenize{misc/changelog:id364}}\begin{itemize}
 \item {} 
 Issue \#382 - added a position to check for FLATFILE and DARKFILE (must
 agree with \sphinxtitleref{recipe\_control.txt)} {[}njcuk9999{]}
@@ -16921,7 +17004,7 @@ agree with \sphinxtitleref{recipe\_control.txt)} {[}njcuk9999{]}
 
 
 \subsection{0.2.095 (2018-08-17)}
-\label{\detokenize{misc/changelog:id364}}\begin{itemize}
+\label{\detokenize{misc/changelog:id365}}\begin{itemize}
 \item {} 
 Issue \#401 - Added check that number of \sphinxtitleref{TELLU\_MAP} files \textgreater{} number of
 PCA components. {[}njcuk9999{]}
@@ -16937,7 +17020,7 @@ Issue \#405 - add message when reset userinput is not “yes” {[}njcuk9999{]}
 
 
 \subsection{0.2.098 (2018-08-17)}
-\label{\detokenize{misc/changelog:id365}}\begin{itemize}
+\label{\detokenize{misc/changelog:id366}}\begin{itemize}
 \item {} 
 Fixed memory issue by avoiding direct use of an nxn S\textasciicircum{}2 matrix. {[}Eder{]}
 
@@ -16945,7 +17028,7 @@ Fixed memory issue by avoiding direct use of an nxn S\textasciicircum{}2 matrix.
 
 
 \subsection{0.2.094 (2018-08-16)}
-\label{\detokenize{misc/changelog:id366}}\begin{itemize}
+\label{\detokenize{misc/changelog:id367}}\begin{itemize}
 \item {} 
 Issue \#392: added per-processed version keyword. {[}njcuk9999{]}
 
@@ -17011,7 +17094,7 @@ Issue \#407: fix bug where split lines not all printed to log file
 
 
 \subsection{0.2.097 (2018-08-16)}
-\label{\detokenize{misc/changelog:id367}}\begin{itemize}
+\label{\detokenize{misc/changelog:id368}}\begin{itemize}
 \item {} 
 NaN-to-zero change moved from \sphinxtitleref{obj\_fit\_tellu} to \sphinxtitleref{cal\_CCF} - warning
 printed if there are NaNs in the e2ds input to \sphinxtitleref{cal\_CCF} - Ref: \#389,
@@ -17044,7 +17127,7 @@ Updated date, changelog and version. {[}njcuk9999{]}
 
 
 \subsection{0.2.093 (2018-08-15)}
-\label{\detokenize{misc/changelog:id368}}\begin{itemize}
+\label{\detokenize{misc/changelog:id369}}\begin{itemize}
 \item {} 
 Update telluric unit test. {[}njcuk9999{]}
 
@@ -17095,7 +17178,7 @@ Fixed \sphinxtitleref{\_\_NAME\_\_} of \sphinxtitleref{obj\_fit\_tellu}
 
 
 \subsection{0.2.092 (2018-08-15)}
-\label{\detokenize{misc/changelog:id369}}\begin{itemize}
+\label{\detokenize{misc/changelog:id370}}\begin{itemize}
 \item {} 
 Update config.py. {[}Neil Cook{]}
 
@@ -17115,7 +17198,7 @@ should be ignored by github
 
 
 \subsection{0.2.089 (2018-08-14)}
-\label{\detokenize{misc/changelog:id370}}\begin{itemize}
+\label{\detokenize{misc/changelog:id371}}\begin{itemize}
 \item {} 
 Implemented Least Squares Deconvolution (LSD) Analysis to polar
 module. {[}Eder{]}
@@ -17131,7 +17214,7 @@ module. {[}Eder{]}
 
 
 \subsection{0.2.090 (2018-08-14)}
-\label{\detokenize{misc/changelog:id371}}\begin{itemize}
+\label{\detokenize{misc/changelog:id372}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Obj\_fit\_tellu.py}: re-add blaze, set NaNs to zero in final e2ds
 (UNTESTED), as per \#389, \#390. {[}melissa-hobson{]}
@@ -17148,7 +17231,7 @@ set even when \sphinxtitleref{DRS\_INTERACTIVE} was set. Fixes \#395. {[}melissa
 
 
 \subsection{0.2.091 (2018-08-14)}
-\label{\detokenize{misc/changelog:id372}}\begin{itemize}
+\label{\detokenize{misc/changelog:id373}}\begin{itemize}
 \item {} 
 Fixed \sphinxtitleref{\_\_NAME\_\_} of \sphinxtitleref{obj\_fit\_tellu}. {[}Chris Usher{]}
 
@@ -17156,7 +17239,7 @@ Fixed \sphinxtitleref{\_\_NAME\_\_} of \sphinxtitleref{obj\_fit\_tellu}. {[}Chri
 
 
 \subsection{0.2.088 (2018-08-13)}
-\label{\detokenize{misc/changelog:id373}}\begin{itemize}
+\label{\detokenize{misc/changelog:id374}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: began incorporation of FP lines (work in
 progress) {[}melissa-hobson{]}
@@ -17165,7 +17248,7 @@ progress) {[}melissa-hobson{]}
 
 
 \subsection{0.2.087 (2018-08-09)}
-\label{\detokenize{misc/changelog:id374}}\begin{itemize}
+\label{\detokenize{misc/changelog:id375}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: incorporated extrapolation of Littrow
 solution for last two orders; added save to calibDB of good solutions.
@@ -17206,7 +17289,7 @@ Update date, version and change log. {[}njcuk9999{]}
 
 
 \subsection{0.2.083 (2018-08-08)}
-\label{\detokenize{misc/changelog:id375}}\begin{itemize}
+\label{\detokenize{misc/changelog:id376}}\begin{itemize}
 \item {} 
 Update spirouFITS.py. {[}Neil Cook{]}
 
@@ -17216,7 +17299,7 @@ Made the warning handling more readable and added TODO, this should be handled p
 
 
 \subsection{0.2.072 (2018-08-08)}
-\label{\detokenize{misc/changelog:id376}}\begin{itemize}
+\label{\detokenize{misc/changelog:id377}}\begin{itemize}
 \item {} 
 Correctioned some constants and added value to loc. {[}njcuk9999{]}
 
@@ -17277,7 +17360,7 @@ Add the background subtraction - from @FrancoisBouchy. {[}njcuk9999{]}
 
 
 \subsection{0.2.084 (2018-08-08)}
-\label{\detokenize{misc/changelog:id377}}\begin{itemize}
+\label{\detokenize{misc/changelog:id378}}\begin{itemize}
 \item {} 
 Added fiber position identification from fiber type. {[}njcuk9999{]}
 
@@ -17292,7 +17375,7 @@ added possibility to set a pixel shift. {[}njcuk9999{]}
 
 
 \subsection{0.2.085 (2018-08-08)}
-\label{\detokenize{misc/changelog:id378}}\begin{itemize}
+\label{\detokenize{misc/changelog:id379}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: - added possibility to have a linear pixel
 shift when getting the initial wavelength solution (needed for TC2-TC3
@@ -17305,7 +17388,7 @@ for outputs of \sphinxtitleref{cal\_WAVE\_E2DS\_spirou.py} and \sphinxtitleref{c
 
 
 \subsection{0.2.086 (2018-08-08)}
-\label{\detokenize{misc/changelog:id379}}\begin{itemize}
+\label{\detokenize{misc/changelog:id380}}\begin{itemize}
 \item {} 
 Suppress warnings about truncating FITS comments. {[}Chris Usher{]}
 
@@ -17320,7 +17403,7 @@ Fixed scrambled FITS headers. {[}Chris Usher{]}
 
 
 \subsection{0.2.082 (2018-08-07)}
-\label{\detokenize{misc/changelog:id380}}\begin{itemize}
+\label{\detokenize{misc/changelog:id381}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: added posibility to set a pixel shift
 \sphinxtitleref{recipe\_control.txt}: put correct DPRTYPE for \sphinxtitleref{cal\_WAVE} checks. {[}Melissa
@@ -17330,7 +17413,7 @@ Hobson{]}
 
 
 \subsection{0.2.081 (2018-08-03)}
-\label{\detokenize{misc/changelog:id381}}\begin{itemize}
+\label{\detokenize{misc/changelog:id382}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: - added informational printouts - fixed
 figures - fixed asymmetry that allowed lines to be found in two
@@ -17356,7 +17439,7 @@ update Melissa from Francois
 
 
 \subsection{0.2.080 (2018-08-01)}
-\label{\detokenize{misc/changelog:id382}}\begin{itemize}
+\label{\detokenize{misc/changelog:id383}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_E2DS\_EA\_spirou.py}: first version of \sphinxtitleref{cal\_WAVE} developed by
 @eartigau, adapted to DRS format. {[}Melissa Hobson{]}
@@ -17401,7 +17484,7 @@ INTROOT/SpirouDRS/spirouTHORCA/spirouTHORCA.py
 
 
 \subsection{0.2.079 (2018-07-27)}
-\label{\detokenize{misc/changelog:id383}}\begin{itemize}
+\label{\detokenize{misc/changelog:id384}}\begin{itemize}
 \item {} 
 Title to the plots + Action TODO to find the right FIBER type.
 {[}FrancoisBouchy{]}
@@ -17443,7 +17526,7 @@ Put to zero part of spectra where the blaze is not define.
 
 
 \subsection{0.2.077 (2018-07-25)}
-\label{\detokenize{misc/changelog:id384}}\begin{itemize}
+\label{\detokenize{misc/changelog:id385}}\begin{itemize}
 \item {} 
 Improvement for the localisation. {[}FrancoisBouchy{]}
 
@@ -17473,7 +17556,7 @@ INTROOT/SpirouDRS/spirouImage/spirouImage.py
 
 
 \subsection{0.2.078 (2018-07-25)}
-\label{\detokenize{misc/changelog:id385}}\begin{itemize}
+\label{\detokenize{misc/changelog:id386}}\begin{itemize}
 \item {} 
 Inserted filename, MJD, and MJDEND keywords from expsoures in polar
 sequence to the header of polarimetry products. {[}Eder{]}
@@ -17509,7 +17592,7 @@ eder Removing function duplicated function \sphinxtitleref{calculate\_stokes\_I}
 
 
 \subsection{0.2.071 (2018-07-20)}
-\label{\detokenize{misc/changelog:id386}}\begin{itemize}
+\label{\detokenize{misc/changelog:id387}}\begin{itemize}
 \item {} 
 Update test run. {[}njcuk9999{]}
 
@@ -17577,7 +17660,7 @@ Fix bug in \sphinxtitleref{get\_param} call. {[}njcuk9999{]}
 
 
 \subsection{0.2.070 (2018-07-19)}
-\label{\detokenize{misc/changelog:id387}}\begin{itemize}
+\label{\detokenize{misc/changelog:id388}}\begin{itemize}
 \item {} 
 Add telluric database reset to \sphinxtitleref{cal\_validate}. {[}njcuk9999{]}
 
@@ -17634,7 +17717,7 @@ Merge remote-tracking branch ‘origin/neil’ into neil. {[}njcuk9999{]}
 
 
 \subsection{0.2.069 (2018-07-18)}
-\label{\detokenize{misc/changelog:id388}}\begin{itemize}
+\label{\detokenize{misc/changelog:id389}}\begin{itemize}
 \item {} 
 Integrate telluric recipes with test runs: updated after test runs.
 {[}njcuk9999{]}
@@ -17684,7 +17767,7 @@ telluric) {[}njcuk9999{]}
 
 
 \subsection{0.5.038 (2018-07-17)}
-\label{\detokenize{misc/changelog:id389}}\begin{itemize}
+\label{\detokenize{misc/changelog:id390}}\begin{itemize}
 \item {} 
 Merge pull request \#376 from njcuk9999/neil. {[}Neil Cook{]}
 
@@ -17697,7 +17780,7 @@ Update date/version/changelog. {[}njcuk9999{]}
 
 
 \subsection{0.2.68 (2018-07-17)}
-\label{\detokenize{misc/changelog:id390}}\begin{itemize}
+\label{\detokenize{misc/changelog:id391}}\begin{itemize}
 \item {} 
 Copy (same) {[}njcuk9999{]}
 
@@ -17771,7 +17854,7 @@ Neil
 
 
 \subsection{0.2.67 (2018-07-16)}
-\label{\detokenize{misc/changelog:id391}}\begin{itemize}
+\label{\detokenize{misc/changelog:id392}}\begin{itemize}
 \item {} 
 Telluric integration: bug fixes (after move of functions) {[}njcuk9999{]}
 
@@ -17827,7 +17910,7 @@ Updated date and veresion and changelog. {[}njcuk9999{]}
 
 
 \subsection{0.2.066 (2018-07-15)}
-\label{\detokenize{misc/changelog:id392}}\begin{itemize}
+\label{\detokenize{misc/changelog:id393}}\begin{itemize}
 \item {} 
 Add new mask from Xavier. {[}njcuk9999{]}
 
@@ -17953,7 +18036,7 @@ Continued to merge Etiennes code. {[}njcuk9999{]}
 
 
 \subsection{0.2.065 (2018-07-13)}
-\label{\detokenize{misc/changelog:id393}}\begin{itemize}
+\label{\detokenize{misc/changelog:id394}}\begin{itemize}
 \item {} 
 Add functions: \sphinxtitleref{calculate\_absorption\_pca}, \sphinxtitleref{get\_berv\_value}. {[}njcuk9999{]}
 
@@ -18030,7 +18113,7 @@ First commit - generic functions for database management. {[}njcuk9999{]}
 
 
 \subsection{0.2.076 (2018-07-13)}
-\label{\detokenize{misc/changelog:id394}}\begin{itemize}
+\label{\detokenize{misc/changelog:id395}}\begin{itemize}
 \item {} 
 New correlation Mask made by XD. {[}FrancoisBouchy{]}
 
@@ -18067,7 +18150,7 @@ New function to build S1D spectra. {[}FrancoisBouchy{]}
 
 
 \subsection{0.2.064 (2018-07-12)}
-\label{\detokenize{misc/changelog:id395}}\begin{itemize}
+\label{\detokenize{misc/changelog:id396}}\begin{itemize}
 \item {} 
 First commit - added \sphinxtitleref{obj\_mk\_tellu} functions. {[}njcuk9999{]}
 
@@ -18123,7 +18206,7 @@ adding them to telluDB. {[}njcuk9999{]}
 
 
 \subsection{0.2.063 (2018-07-11)}
-\label{\detokenize{misc/changelog:id396}}\begin{itemize}
+\label{\detokenize{misc/changelog:id397}}\begin{itemize}
 \item {} 
 Add \sphinxtitleref{master\_tellu\_spirou} file. {[}njcuk9999{]}
 
@@ -18243,7 +18326,7 @@ database) {[}njcuk9999{]}
 
 
 \subsection{0.2.062 (2018-07-10)}
-\label{\detokenize{misc/changelog:id397}}\begin{itemize}
+\label{\detokenize{misc/changelog:id398}}\begin{itemize}
 \item {} 
 Added filename functions \sphinxtitleref{(WAVE\_MAP\_SPE\_FILE} and \sphinxtitleref{WAVE\_MAP\_SPE0\_FILE)}
 {[}njcuk9999{]}
@@ -18278,7 +18361,7 @@ Fix for choice of fiber(s) {[}njcuk9999{]}
 
 
 \subsection{0.2.061 (2018-07-09)}
-\label{\detokenize{misc/changelog:id398}}\begin{itemize}
+\label{\detokenize{misc/changelog:id399}}\begin{itemize}
 \item {} 
 Removed berv calculation from RV module. {[}njcuk9999{]}
 
@@ -18323,7 +18406,7 @@ Moved berv calculation to extraction. {[}njcuk9999{]}
 
 
 \subsection{0.2.060 (2018-07-05)}
-\label{\detokenize{misc/changelog:id399}}\begin{itemize}
+\label{\detokenize{misc/changelog:id400}}\begin{itemize}
 \item {} 
 Fix and test of \sphinxtitleref{find\_lines}. {[}Neil Cook{]}
 
@@ -18331,7 +18414,7 @@ Fix and test of \sphinxtitleref{find\_lines}. {[}Neil Cook{]}
 
 
 \subsection{0.5.033 (2018-07-04)}
-\label{\detokenize{misc/changelog:id400}}\begin{itemize}
+\label{\detokenize{misc/changelog:id401}}\begin{itemize}
 \item {} 
 Merge pull request \#372 from njcuk9999/neil. {[}Neil Cook{]}
 
@@ -18344,7 +18427,7 @@ Update changelog/date/version. {[}Neil Cook{]}
 
 
 \subsection{0.2.059 (2018-07-04)}
-\label{\detokenize{misc/changelog:id401}}\begin{itemize}
+\label{\detokenize{misc/changelog:id402}}\begin{itemize}
 \item {} 
 Update change log. {[}Neil Cook{]}
 
@@ -18383,7 +18466,7 @@ Neil
 
 
 \subsection{0.2.074 (2018-07-04)}
-\label{\detokenize{misc/changelog:id402}}\begin{itemize}
+\label{\detokenize{misc/changelog:id403}}\begin{itemize}
 \item {} 
 Removed duplicated function \sphinxtitleref{calculate\_stokes\_I} in spirouPOLAR.py.
 {[}Eder{]}
@@ -18392,7 +18475,7 @@ Removed duplicated function \sphinxtitleref{calculate\_stokes\_I} in spirouPOLAR
 
 
 \subsection{0.2.058 (2018-07-03)}
-\label{\detokenize{misc/changelog:id403}}\begin{itemize}
+\label{\detokenize{misc/changelog:id404}}\begin{itemize}
 \item {} 
 Add generic change log (not used but for history) {[}Neil Cook{]}
 
@@ -18543,7 +18626,7 @@ Updated date and version. {[}Neil Cook{]}
 
 
 \subsection{0.5.031 (2018-06-29)}
-\label{\detokenize{misc/changelog:id404}}\begin{itemize}
+\label{\detokenize{misc/changelog:id405}}\begin{itemize}
 \item {} 
 Merge pull request \#366 from njcuk9999/neil. {[}Neil Cook{]}
 
@@ -18589,7 +18672,7 @@ Update variable definitions. {[}Neil Cook{]}
 
 
 \subsection{0.5.030 (2018-06-28)}
-\label{\detokenize{misc/changelog:id405}}\begin{itemize}
+\label{\detokenize{misc/changelog:id406}}\begin{itemize}
 \item {} 
 Merge pull request \#364 from njcuk9999/neil. {[}Neil Cook{]}
 
@@ -18599,7 +18682,7 @@ Neil
 
 
 \subsection{0.2.057 (2018-06-28)}
-\label{\detokenize{misc/changelog:id406}}\begin{itemize}
+\label{\detokenize{misc/changelog:id407}}\begin{itemize}
 \item {} 
 Updated date and version and added new recipes. {[}Neil Cook{]}
 
@@ -18642,7 +18725,7 @@ spirouFile and update calls accordingly. {[}Neil Cook{]}
 
 
 \subsection{0.2.075 (2018-06-28)}
-\label{\detokenize{misc/changelog:id407}}\begin{itemize}
+\label{\detokenize{misc/changelog:id408}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Visu\_WAVE\_spirou.py}: correct call to GetLampParams. {[}melissa-hobson{]}
 
@@ -18650,7 +18733,7 @@ spirouFile and update calls accordingly. {[}Neil Cook{]}
 
 
 \subsection{0.2.056 (2018-06-27)}
-\label{\detokenize{misc/changelog:id408}}\begin{itemize}
+\label{\detokenize{misc/changelog:id409}}\begin{itemize}
 \item {} 
 First commit of spirouPOLOAR module tex file. {[}Neil Cook{]}
 
@@ -18721,7 +18804,7 @@ Added a skip check to \sphinxtitleref{check\_file}. {[}Neil Cook{]}
 
 
 \subsection{0.2.055 (2018-06-26)}
-\label{\detokenize{misc/changelog:id409}}\begin{itemize}
+\label{\detokenize{misc/changelog:id410}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{cal\_hc} and \sphinxtitleref{cal\_wave} to unit test definitions. {[}Neil Cook{]}
 
@@ -18929,7 +19012,7 @@ fiber position (for use w/odometer names) - previous version moved to
 
 
 \subsection{0.2.073 (2018-06-26)}
-\label{\detokenize{misc/changelog:id410}}\begin{itemize}
+\label{\detokenize{misc/changelog:id411}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_HC\_E2DS\_spirou.py}: added fiber position identification from fiber
 type \sphinxtitleref{spirouTHORCA.decide\_on\_lamp\_type}: - changed to identify lamp from
@@ -18957,7 +19040,7 @@ Melissa
 
 
 \subsection{0.254 (2018-06-24)}
-\label{\detokenize{misc/changelog:id411}}\begin{itemize}
+\label{\detokenize{misc/changelog:id412}}\begin{itemize}
 \item {} 
 Update date and version. {[}Neil Cook{]}
 
@@ -19040,7 +19123,7 @@ thus accessible outside via \sphinxtitleref{ll{[}‘p’{]}{[}‘LOGGING\_ERROR�
 
 
 \subsection{0.253 (2018-06-22)}
-\label{\detokenize{misc/changelog:id412}}\begin{itemize}
+\label{\detokenize{misc/changelog:id413}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_WAVE\_NEW\_E2DS\_spirou.py}: first version (untested) {[}melissa-hobson{]}
 
@@ -19214,7 +19297,7 @@ update melissa
 
 
 \subsection{0.2.052 (2018-06-21)}
-\label{\detokenize{misc/changelog:id413}}\begin{itemize}
+\label{\detokenize{misc/changelog:id414}}\begin{itemize}
 \item {} 
 Implemented polarimetric errors calculation. {[}Eder{]}
 
@@ -19237,7 +19320,7 @@ No big changes, just testing a few things
 
 
 \subsection{0.2.051 (2018-06-20)}
-\label{\detokenize{misc/changelog:id414}}\begin{itemize}
+\label{\detokenize{misc/changelog:id415}}\begin{itemize}
 \item {} 
 No main file. {[}Neil Cook{]}
 
@@ -19290,7 +19373,7 @@ Neil
 
 
 \subsection{0.2.049 (2018-06-19)}
-\label{\detokenize{misc/changelog:id415}}\begin{itemize}
+\label{\detokenize{misc/changelog:id416}}\begin{itemize}
 \item {} 
 Corrected bug in \sphinxtitleref{night\_name} error reporting. {[}Neil Cook{]}
 
@@ -19322,7 +19405,7 @@ Fixed bug with processed suffix. {[}Neil Cook{]}
 
 
 \subsection{0.2.050 (2018-06-19)}
-\label{\detokenize{misc/changelog:id416}}\begin{itemize}
+\label{\detokenize{misc/changelog:id417}}\begin{itemize}
 \item {} 
 Changed config to my local paths. {[}Eder{]}
 
@@ -19351,7 +19434,7 @@ removed master need for user config file
 
 
 \subsection{0.2.048 (2018-06-18)}
-\label{\detokenize{misc/changelog:id417}}\begin{itemize}
+\label{\detokenize{misc/changelog:id418}}\begin{itemize}
 \item {} 
 Rebuilt pdfs. {[}Neil Cook{]}
 
@@ -19448,7 +19531,7 @@ Issue \#330: integrating \sphinxtitleref{pol\_spirou} from @edermartioli into DR
 
 
 \subsection{0.2.046 (2018-06-15)}
-\label{\detokenize{misc/changelog:id418}}\begin{itemize}
+\label{\detokenize{misc/changelog:id419}}\begin{itemize}
 \item {} 
 Fixed hidden bug (formats should be allowed to be None - chosen by
 astropy. {[}Neil Cook{]}
@@ -19492,7 +19575,7 @@ verified - tested all recipes on H2RG and H4RG (except \sphinxtitleref{cal\_HC},
 
 
 \subsection{0.2.047 (2018-06-15)}
-\label{\detokenize{misc/changelog:id419}}\begin{itemize}
+\label{\detokenize{misc/changelog:id420}}\begin{itemize}
 \item {} 
 Flux ratio display with 3 digit. {[}FrancoisBouchy{]}
 
@@ -19510,7 +19593,7 @@ Correction to avoid division by zero. {[}FrancoisBouchy{]}
 
 
 \subsection{0.2.045 (2018-06-14)}
-\label{\detokenize{misc/changelog:id420}}\begin{itemize}
+\label{\detokenize{misc/changelog:id421}}\begin{itemize}
 \item {} 
 Work on Issue \#155 - fix for new single file return. {[}Neil Cook{]}
 
@@ -19598,7 +19681,7 @@ Work on Issue \#155 - modified return of recipe. {[}Neil Cook{]}
 
 
 \subsection{0.2.044 (2018-06-13)}
-\label{\detokenize{misc/changelog:id421}}\begin{itemize}
+\label{\detokenize{misc/changelog:id422}}\begin{itemize}
 \item {} 
 Modified run order. {[}Neil Cook{]}
 
@@ -19712,7 +19795,7 @@ filename and header (via SingleFileSetup) {[}Neil Cook{]}
 
 
 \subsection{0.2.043 (2018-06-12)}
-\label{\detokenize{misc/changelog:id422}}\begin{itemize}
+\label{\detokenize{misc/changelog:id423}}\begin{itemize}
 \item {} 
 Work on issue \#155 - added recipe control file. {[}Neil Cook{]}
 
@@ -19765,7 +19848,7 @@ Neil
 
 
 \subsection{0.2.041 (2018-06-11)}
-\label{\detokenize{misc/changelog:id423}}\begin{itemize}
+\label{\detokenize{misc/changelog:id424}}\begin{itemize}
 \item {} 
 Updated date and version. {[}Neil Cook{]}
 
@@ -19816,7 +19899,7 @@ sigma. {[}Neil Cook{]}
 
 
 \subsection{0.2.039 (2018-06-08)}
-\label{\detokenize{misc/changelog:id424}}\begin{itemize}
+\label{\detokenize{misc/changelog:id425}}\begin{itemize}
 \item {} 
 Continued work on \sphinxtitleref{cal\_HC} (Issue \#176) - test of fit gauss functions.
 {[}Neil Cook{]}
@@ -19870,7 +19953,7 @@ Dev
 
 
 \subsection{0.2.036 (2018-06-07)}
-\label{\detokenize{misc/changelog:id425}}\begin{itemize}
+\label{\detokenize{misc/changelog:id426}}\begin{itemize}
 \item {} 
 Find lines test \sphinxtitleref{(cal\_HC} test) {[}njcuk9999{]}
 
@@ -19897,7 +19980,7 @@ Continued work on \sphinxtitleref{cal\_HC}. {[}njcuk9999{]}
 
 
 \subsection{0.2.037 (2018-06-07)}
-\label{\detokenize{misc/changelog:id426}}\begin{itemize}
+\label{\detokenize{misc/changelog:id427}}\begin{itemize}
 \item {} 
 Added default user config path. {[}Neil Cook{]}
 
@@ -19957,7 +20040,7 @@ spirouPlot. {[}Neil Cook{]}
 
 
 \subsection{0.2.035 (2018-05-29)}
-\label{\detokenize{misc/changelog:id427}}\begin{itemize}
+\label{\detokenize{misc/changelog:id428}}\begin{itemize}
 \item {} 
 Fix matplotlib bug. {[}njcuk9999{]}
 
@@ -20033,7 +20116,7 @@ Edited ccf. {[}njcuk9999{]}
 
 
 \subsection{0.2.034 (2018-05-28)}
-\label{\detokenize{misc/changelog:id428}}\begin{itemize}
+\label{\detokenize{misc/changelog:id429}}\begin{itemize}
 \item {} 
 Updated for \sphinxtitleref{cal\_hc}. {[}njcuk9999{]}
 
@@ -20072,7 +20155,7 @@ Added new trial method to newbervmain (using barycorrpy) {[}njcuk9999{]}
 
 
 \subsection{0.2.033 (2018-05-26)}
-\label{\detokenize{misc/changelog:id429}}\begin{itemize}
+\label{\detokenize{misc/changelog:id430}}\begin{itemize}
 \item {} 
 Updated date and version number. {[}njcuk9999{]}
 
@@ -20217,7 +20300,7 @@ Update H2RG dependency flag. {[}njcuk9999{]}
 
 
 \subsection{0.2.029 (2018-05-25)}
-\label{\detokenize{misc/changelog:id430}}\begin{itemize}
+\label{\detokenize{misc/changelog:id431}}\begin{itemize}
 \item {} 
 Update of \sphinxtitleref{cal\_DRIFT\_E2DS\_spirou}. Results now comparable to
 \sphinxtitleref{cal\_DRIFTPEAK\_E2DS\_spirou}. {[}FrancoisBouchy{]}
@@ -20243,7 +20326,7 @@ Merge remote-tracking branch ‘origin/neil’ into neil. {[}njcuk9999{]}
 
 
 \subsection{0.2.030 (2018-05-25)}
-\label{\detokenize{misc/changelog:id431}}\begin{itemize}
+\label{\detokenize{misc/changelog:id432}}\begin{itemize}
 \item {} 
 Worked on \sphinxtitleref{fit\_1d\_solution} (complete?), added to doc strings (gparams)
 {[}njcuk9999{]}
@@ -20262,7 +20345,7 @@ fitgaus code) {[}njcuk9999{]}
 
 
 \subsection{0.2.031 (2018-05-25)}
-\label{\detokenize{misc/changelog:id432}}\begin{itemize}
+\label{\detokenize{misc/changelog:id433}}\begin{itemize}
 \item {} 
 Update \sphinxtitleref{cal\_CCF\_E2DS\_spirou.py}. {[}melissa-hobson{]}
 
@@ -20277,7 +20360,7 @@ Neil
 
 
 \subsection{0.2.026 (2018-05-18)}
-\label{\detokenize{misc/changelog:id433}}\begin{itemize}
+\label{\detokenize{misc/changelog:id434}}\begin{itemize}
 \item {} 
 Update readme. {[}Neil Cook{]}
 
@@ -20402,7 +20485,7 @@ Added recipe to reset (while in development only) {[}Neil Cook{]}
 
 
 \subsection{0.2.027 (2018-05-18)}
-\label{\detokenize{misc/changelog:id434}}\begin{itemize}
+\label{\detokenize{misc/changelog:id435}}\begin{itemize}
 \item {} 
 4 digit to diplay the dark statistics. {[}FrancoisBouchy{]}
 
@@ -20466,7 +20549,7 @@ INTROOT/SpirouDRS/spirouImage/spirouImage.py
 
 
 \subsection{0.2.025 (2018-05-17)}
-\label{\detokenize{misc/changelog:id435}}\begin{itemize}
+\label{\detokenize{misc/changelog:id436}}\begin{itemize}
 \item {} 
 Fix to Issue \#227 - added \sphinxtitleref{cal\_drift} and drift peak to tests. {[}Neil
 Cook{]}
@@ -20498,7 +20581,7 @@ detection of badlines. {[}Neil Cook{]}
 
 
 \subsection{0.2.024 (2018-05-16)}
-\label{\detokenize{misc/changelog:id436}}\begin{itemize}
+\label{\detokenize{misc/changelog:id437}}\begin{itemize}
 \item {} 
 Removed dependency on \sphinxtitleref{cal\_drift\_raw}. {[}Neil Cook{]}
 
@@ -20575,7 +20658,7 @@ Merge remote-tracking branch ‘origin/neil’ into neil. {[}Neil Cook{]}
 
 
 \subsection{0.2.023 (2018-05-15)}
-\label{\detokenize{misc/changelog:id437}}\begin{itemize}
+\label{\detokenize{misc/changelog:id438}}\begin{itemize}
 \item {} 
 Updated run. {[}Neil Cook{]}
 
@@ -20635,7 +20718,7 @@ Fix to \sphinxtitleref{unit\_test} comparison table. {[}Neil Cook{]}
 
 
 \subsection{0.2.022 (2018-05-14)}
-\label{\detokenize{misc/changelog:id438}}\begin{itemize}
+\label{\detokenize{misc/changelog:id439}}\begin{itemize}
 \item {} 
 Update README.md. {[}Neil Cook{]}
 
@@ -20716,7 +20799,7 @@ suffix to get fiber type. {[}Neil Cook{]}
 
 
 \subsection{0.2.021 (2018-05-12)}
-\label{\detokenize{misc/changelog:id439}}\begin{itemize}
+\label{\detokenize{misc/changelog:id440}}\begin{itemize}
 \item {} 
 Fix to issue \#300 - added \sphinxtitleref{correct\_for\_badpix} function. {[}Neil Cook{]}
 
@@ -20871,7 +20954,7 @@ Neil
 
 
 \subsection{0.2.019 (2018-05-09)}
-\label{\detokenize{misc/changelog:id440}}\begin{itemize}
+\label{\detokenize{misc/changelog:id441}}\begin{itemize}
 \item {} 
 Fitgaus fortan code (for testing only) {[}Neil Cook{]}
 
@@ -20908,7 +20991,7 @@ from format) {[}Neil Cook{]}
 
 
 \subsection{0.2.020 (2018-05-09)}
-\label{\detokenize{misc/changelog:id441}}\begin{itemize}
+\label{\detokenize{misc/changelog:id442}}\begin{itemize}
 \item {} 
 Faction of dead pixels display with 4 digits Display the number of
 cosmic rays (bad pixels) detected by the extraction. {[}FrancoisBouchy{]}
@@ -20962,7 +21045,7 @@ update to master
 
 
 \subsection{0.2.018 (2018-05-07)}
-\label{\detokenize{misc/changelog:id442}}\begin{itemize}
+\label{\detokenize{misc/changelog:id443}}\begin{itemize}
 \item {} 
 Fix to latex format. {[}Neil Cook{]}
 
@@ -21059,7 +21142,7 @@ Neil
 
 
 \subsection{0.2.017 (2018-05-04)}
-\label{\detokenize{misc/changelog:id443}}\begin{itemize}
+\label{\detokenize{misc/changelog:id444}}\begin{itemize}
 \item {} 
 Updated date and versions. {[}Neil Cook{]}
 
@@ -21169,7 +21252,7 @@ clear what inputs are expected. {[}Neil Cook{]}
 
 
 \subsection{0.2.016 (2018-05-03)}
-\label{\detokenize{misc/changelog:id444}}\begin{itemize}
+\label{\detokenize{misc/changelog:id445}}\begin{itemize}
 \item {} 
 Pep8 update all ParamDict constants to capitals. {[}Neil Cook{]}
 
@@ -21201,7 +21284,7 @@ completion. {[}Neil Cook{]}
 
 
 \subsection{0.2.015 (2018-05-02)}
-\label{\detokenize{misc/changelog:id445}}\begin{itemize}
+\label{\detokenize{misc/changelog:id446}}\begin{itemize}
 \item {} 
 Notebook additions - conversion to html. {[}Neil Cook{]}
 
@@ -21229,7 +21312,7 @@ Notebook additions - code to convert. {[}Neil Cook{]}
 
 
 \subsection{0.2.014 (2018-05-01)}
-\label{\detokenize{misc/changelog:id446}}\begin{itemize}
+\label{\detokenize{misc/changelog:id447}}\begin{itemize}
 \item {} 
 Rebuild pdfs. {[}Neil Cook{]}
 
@@ -21290,7 +21373,7 @@ Redefining unit tests - add function alias. {[}Neil Cook{]}
 
 
 \subsection{0.2.012 (2018-04-30)}
-\label{\detokenize{misc/changelog:id447}}\begin{itemize}
+\label{\detokenize{misc/changelog:id448}}\begin{itemize}
 \item {} 
 Regarding issue \#264 - change no longer needed - revert to earlier
 version. {[}Neil Cook{]}
@@ -21325,7 +21408,7 @@ keep compatibility with H2RG
 
 
 \subsection{0.2.013 (2018-04-30)}
-\label{\detokenize{misc/changelog:id448}}\begin{itemize}
+\label{\detokenize{misc/changelog:id449}}\begin{itemize}
 \item {} 
 Update constant parameters for localization, flat-field and blaze.
 {[}FrancoisBouchy{]}
@@ -21358,7 +21441,7 @@ manually adding francois changes
 
 
 \subsection{0.2.009 (2018-04-27)}
-\label{\detokenize{misc/changelog:id449}}\begin{itemize}
+\label{\detokenize{misc/changelog:id450}}\begin{itemize}
 \item {} 
 Fix to issue \#264 - spirouFLAT.MEasurEBlazeForOrder now requires p
 (for H2RG dependency) {[}Neil Cook{]}
@@ -21418,7 +21501,7 @@ Francois
 
 
 \subsection{0.2.010 (2018-04-27)}
-\label{\detokenize{misc/changelog:id450}}\begin{itemize}
+\label{\detokenize{misc/changelog:id451}}\begin{itemize}
 \item {} 
 Update constant parameters for flat-field and blaze. {[}FrancoisBouchy{]}
 
@@ -21442,7 +21525,7 @@ Neil
 
 
 \subsection{0.2.011 (2018-04-27)}
-\label{\detokenize{misc/changelog:id451}}\begin{itemize}
+\label{\detokenize{misc/changelog:id452}}\begin{itemize}
 \item {} 
 Manually adding francois changes. {[}njcuk9999{]}
 
@@ -21518,7 +21601,7 @@ Reset to master. {[}njcuk9999{]}
 
 
 \subsection{0.2.008 (2018-04-26)}
-\label{\detokenize{misc/changelog:id452}}\begin{itemize}
+\label{\detokenize{misc/changelog:id453}}\begin{itemize}
 \item {} 
 Reset paths to defaults (shouldn’t have overwritten) {[}Neil Cook{]}
 
@@ -21554,7 +21637,7 @@ Added francois files via direct upload
 
 
 \subsection{0.2.007 (2018-04-25)}
-\label{\detokenize{misc/changelog:id453}}\begin{itemize}
+\label{\detokenize{misc/changelog:id454}}\begin{itemize}
 \item {} 
 Fix to \sphinxtitleref{cal\_badpix} to allow use with H2RG (required bool mask for
 \sphinxtitleref{bad\_pixel\_mask2)} {[}Neil Cook{]}
@@ -21568,7 +21651,7 @@ Melissa
 
 
 \subsection{0.2.0097 (2018-04-25)}
-\label{\detokenize{misc/changelog:id454}}\begin{itemize}
+\label{\detokenize{misc/changelog:id455}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_DARK}: increased decimals shown \sphinxtitleref{constants\_SPIROU\_H4RG}: adjusted
 dark cut limit \sphinxtitleref{spirou\_PLOT}: added labels and titles to figures;
@@ -21700,7 +21783,7 @@ update to master
 
 
 \subsection{0.2.006 (2018-04-23)}
-\label{\detokenize{misc/changelog:id455}}\begin{itemize}
+\label{\detokenize{misc/changelog:id456}}\begin{itemize}
 \item {} 
 Corrected order of inputs in \sphinxtitleref{cal\_BADPIX} main definition. {[}melissa-
 hobson{]}
@@ -21779,7 +21862,7 @@ Neil
 
 
 \subsection{0.2.005 (2018-04-20)}
-\label{\detokenize{misc/changelog:id456}}
+\label{\detokenize{misc/changelog:id457}}
 
 \subsubsection{Fix}
 \label{\detokenize{misc/changelog:fix}}\begin{itemize}
@@ -21842,7 +21925,7 @@ Issue \#219 - Add Etiennes pre-processing code to recipe. {[}Neil Cook{]}
 
 
 \subsection{0.2.004 (2018-04-19)}
-\label{\detokenize{misc/changelog:id457}}\begin{itemize}
+\label{\detokenize{misc/changelog:id458}}\begin{itemize}
 \item {} 
 Fix to handling of custom arguments to accept only a list of
 filenames. {[}Neil Cook{]}
@@ -21857,7 +21940,7 @@ Dealing with Issue \#219 - pre-processing - unfinished. {[}Neil Cook{]}
 
 
 \subsection{0.2.003 (2018-04-18)}
-\label{\detokenize{misc/changelog:id458}}\begin{itemize}
+\label{\detokenize{misc/changelog:id459}}\begin{itemize}
 \item {} 
 Fix to Issue \#215 - spirouImage.WriteImage do not use dtype=’float64’
 {[}Neil Cook{]}
@@ -21870,7 +21953,7 @@ Fix to Issue \#215 - spirouImage.WriteImage do not use dtype=’float64’
 
 
 \subsection{0.2.001 (2018-04-17)}
-\label{\detokenize{misc/changelog:id459}}\begin{itemize}
+\label{\detokenize{misc/changelog:id460}}\begin{itemize}
 \item {} 
 Continuation of Issue \#176 - writing \sphinxtitleref{cal\_HC} - very stuck on replacing
 fitgaus.fitgaus. {[}Neil Cook{]}
@@ -21965,7 +22048,7 @@ Update spirouPlot.py. {[}Neil Cook{]}
 
 
 \subsection{0.2.002 (2018-04-17)}
-\label{\detokenize{misc/changelog:id460}}\begin{itemize}
+\label{\detokenize{misc/changelog:id461}}\begin{itemize}
 \item {} 
 Copied the matplotlib backend fix into spirouLOCOR.py. {[}Chris Usher{]}
 
@@ -22043,7 +22126,7 @@ Preprocessing script (currently does rotation only) {[}melissa-hobson{]}
 
 
 \subsection{0.1.037 (2018-04-16)}
-\label{\detokenize{misc/changelog:id461}}\begin{itemize}
+\label{\detokenize{misc/changelog:id462}}\begin{itemize}
 \item {} 
 Spirou tools addition - compare two files (plot images and diff in a
 user-friendly manner) {[}Neil Cook{]}
@@ -22081,7 +22164,7 @@ only rotation) {[}Neil Cook{]}
 
 
 \subsection{0.1.036 (2018-04-13)}
-\label{\detokenize{misc/changelog:id462}}\begin{itemize}
+\label{\detokenize{misc/changelog:id463}}\begin{itemize}
 \item {} 
 Issue \#176 - Added catalogue line lists to SpirouDRS data folder.
 {[}Neil Cook{]}
@@ -22137,7 +22220,7 @@ Issue \#176 - modified to allow running without function (temporarily)
 
 
 \subsection{0.1.035 (2018-04-12)}
-\label{\detokenize{misc/changelog:id463}}\begin{itemize}
+\label{\detokenize{misc/changelog:id464}}\begin{itemize}
 \item {} 
 Issue \#176 - added \sphinxtitleref{get\_lamp\_parameters}, \sphinxtitleref{fiirst\_guess\_at\_wave\_soltuion}
 (unfinished), and \sphinxtitleref{decide\_on\_lamp\_type} functions. {[}Neil Cook{]}
@@ -22194,7 +22277,7 @@ Update to version ready for new alpha release 0.1.035. {[}Neil Cook{]}
 
 
 \subsection{0.1.0349 (2018-04-11)}
-\label{\detokenize{misc/changelog:id464}}\begin{itemize}
+\label{\detokenize{misc/changelog:id465}}\begin{itemize}
 \item {} 
 Added unit test for \sphinxtitleref{cal\_HC\_E2DS\_spirou}. {[}Neil Cook{]}
 
@@ -22223,7 +22306,7 @@ Fix to issue \#176 - in progress - updating \sphinxtitleref{cal\_HC\_E2DS}. {[}N
 
 
 \subsection{0.1.0348 (2018-04-09)}
-\label{\detokenize{misc/changelog:id465}}\begin{itemize}
+\label{\detokenize{misc/changelog:id466}}\begin{itemize}
 \item {} 
 Fix to issue \#152 - User/Custom \sphinxtitleref{config.py} file - rebuilt pdfs. {[}Neil
 Cook{]}
@@ -22319,7 +22402,7 @@ removed new constant (test)
 
 
 \subsection{0.1.0346 (2018-04-06)}
-\label{\detokenize{misc/changelog:id466}}\begin{itemize}
+\label{\detokenize{misc/changelog:id467}}\begin{itemize}
 \item {} 
 Fix to issue \#173 - Need a versioned text file. {[}Neil Cook{]}
 
@@ -22379,7 +22462,7 @@ Fix to issue \#159 - matplotlib plots freeze on macOSX. {[}Neil Cook{]}
 
 
 \subsection{0.1.0344 (2018-04-05)}
-\label{\detokenize{misc/changelog:id467}}\begin{itemize}
+\label{\detokenize{misc/changelog:id468}}\begin{itemize}
 \item {} 
 Fixed typo in call to \sphinxtitleref{deal\_with+prefixes} (requires filename if p not
 defined) and fixed \sphinxtitleref{\_\_NAME\_\_} {[}Neil Cook{]}
@@ -22468,7 +22551,7 @@ Same? {[}Neil Cook{]}
 
 
 \subsection{0.1.0342 (2018-03-28)}
-\label{\detokenize{misc/changelog:id468}}\begin{itemize}
+\label{\detokenize{misc/changelog:id469}}\begin{itemize}
 \item {} 
 Removed new constant (test) {[}Neil Cook{]}
 
@@ -22509,7 +22592,7 @@ Dev
 
 
 \subsection{0.1.034 (2018-03-25)}
-\label{\detokenize{misc/changelog:id469}}\begin{itemize}
+\label{\detokenize{misc/changelog:id470}}\begin{itemize}
 \item {} 
 New unit test (not comp full run) {[}Neil Cook{]}
 
@@ -22526,7 +22609,7 @@ Added new test full run no compare. {[}Neil Cook{]}
 
 
 \subsection{0.1.033 (2018-03-22)}
-\label{\detokenize{misc/changelog:id470}}\begin{itemize}
+\label{\detokenize{misc/changelog:id471}}\begin{itemize}
 \item {} 
 New example 7. {[}Neil Cook{]}
 
@@ -22654,7 +22737,7 @@ Corrected spelling. {[}Neil Cook{]}
 
 
 \subsection{0.1.032 (2018-03-19)}
-\label{\detokenize{misc/changelog:id471}}\begin{itemize}
+\label{\detokenize{misc/changelog:id472}}\begin{itemize}
 \item {} 
 Corrected spelling. {[}Neil Cook{]}
 
@@ -22726,7 +22809,7 @@ Dev
 
 
 \subsection{0.1.031 (2018-03-14)}
-\label{\detokenize{misc/changelog:id472}}\begin{itemize}
+\label{\detokenize{misc/changelog:id473}}\begin{itemize}
 \item {} 
 Updated image size. {[}Neil Cook{]}
 
@@ -22737,7 +22820,7 @@ Update readme. {[}Neil Cook{]}
 
 
 \subsection{0.1.030 (2018-03-13)}
-\label{\detokenize{misc/changelog:id473}}\begin{itemize}
+\label{\detokenize{misc/changelog:id474}}\begin{itemize}
 \item {} 
 Conversion to html. {[}Neil Cook{]}
 
@@ -22776,7 +22859,7 @@ Rerun code. {[}Neil Cook{]}
 
 
 \subsection{0.1.029 (2018-03-07)}
-\label{\detokenize{misc/changelog:id474}}\begin{itemize}
+\label{\detokenize{misc/changelog:id475}}\begin{itemize}
 \item {} 
 Ipython notebooks converted to html. {[}Neil Cook{]}
 
@@ -22850,7 +22933,7 @@ Updated exit message. {[}Neil Cook{]}
 
 
 \subsection{0.1.028 (2018-03-06)}
-\label{\detokenize{misc/changelog:id475}}\begin{itemize}
+\label{\detokenize{misc/changelog:id476}}\begin{itemize}
 \item {} 
 Added note about using texteidter and smart speechmarks. {[}Neil Cook{]}
 
@@ -22999,7 +23082,7 @@ Cook{]}
 
 
 \subsection{0.1.027 (2018-03-01)}
-\label{\detokenize{misc/changelog:id476}}\begin{itemize}
+\label{\detokenize{misc/changelog:id477}}\begin{itemize}
 \item {} 
 Rebuilt pdfs. {[}Neil Cook{]}
 
@@ -23092,7 +23175,7 @@ Twaeked import. {[}Neil Cook{]}
 
 
 \subsection{0.1.026 (2018-02-27)}
-\label{\detokenize{misc/changelog:id477}}\begin{itemize}
+\label{\detokenize{misc/changelog:id478}}\begin{itemize}
 \item {} 
 Changed printing in function + added warning that user will reset all
 processed files. {[}Neil Cook{]}
@@ -23185,7 +23268,7 @@ Example - slight change to format. {[}Neil Cook{]}
 
 
 \subsection{0.1.025 (2018-02-26)}
-\label{\detokenize{misc/changelog:id478}}\begin{itemize}
+\label{\detokenize{misc/changelog:id479}}\begin{itemize}
 \item {} 
 Small fixes to refix pep8 across module/suppressing known and required
 pep8 exceptions. {[}Neil Cook{]}
@@ -23266,7 +23349,7 @@ Pep8 fixes. {[}Neil Cook{]}
 
 
 \subsection{0.1.024 (2018-02-23)}
-\label{\detokenize{misc/changelog:id479}}\begin{itemize}
+\label{\detokenize{misc/changelog:id480}}\begin{itemize}
 \item {} 
 Rebuilt pdf. {[}Neil Cook{]}
 
@@ -23361,7 +23444,7 @@ Updated examples and interactive mode figures. {[}Neil Cook{]}
 
 
 \subsection{0.1.023 (2018-02-21)}
-\label{\detokenize{misc/changelog:id480}}\begin{itemize}
+\label{\detokenize{misc/changelog:id481}}\begin{itemize}
 \item {} 
 Cal drift raw plot files for docs. {[}Neil Cook{]}
 
@@ -23418,7 +23501,7 @@ Fix for loadcalibdb. {[}Neil Cook{]}
 
 
 \subsection{0.1.022 (2018-02-20)}
-\label{\detokenize{misc/changelog:id481}}\begin{itemize}
+\label{\detokenize{misc/changelog:id482}}\begin{itemize}
 \item {} 
 Major changes to code. {[}Neil Cook{]}
 
@@ -23426,7 +23509,7 @@ Major changes to code. {[}Neil Cook{]}
 
 
 \subsection{0.1.021 (2018-02-19)}
-\label{\detokenize{misc/changelog:id482}}\begin{itemize}
+\label{\detokenize{misc/changelog:id483}}\begin{itemize}
 \item {} 
 Rebuilt pdfs. {[}Neil Cook{]}
 
@@ -23493,7 +23576,7 @@ Changed comment. {[}Neil Cook{]}
 
 
 \subsection{0.1.020 (2018-02-16)}
-\label{\detokenize{misc/changelog:id483}}\begin{itemize}
+\label{\detokenize{misc/changelog:id484}}\begin{itemize}
 \item {} 
 Update README.md. {[}Neil Cook{]}
 
@@ -23738,7 +23821,7 @@ link to logo change
 
 
 \subsection{0.1.019 (2018-02-15)}
-\label{\detokenize{misc/changelog:id484}}\begin{itemize}
+\label{\detokenize{misc/changelog:id485}}\begin{itemize}
 \item {} 
 Corrected need for mainfitsfile to define \sphinxtitleref{arg\_file\_names} and
 fitsfilename. {[}Neil Cook{]}
@@ -23788,7 +23871,7 @@ Updated keys (missed \sphinxtitleref{order\_profile)} {[}Neil Cook{]}
 
 
 \subsection{0.1.018 (2018-02-14)}
-\label{\detokenize{misc/changelog:id485}}\begin{itemize}
+\label{\detokenize{misc/changelog:id486}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Cal\_slit} graphs. {[}Neil Cook{]}
 
@@ -23855,7 +23938,7 @@ Fixed subsection title and some paths. {[}Neil Cook{]}
 
 
 \subsection{0.1.017 (2018-02-13)}
-\label{\detokenize{misc/changelog:id486}}\begin{itemize}
+\label{\detokenize{misc/changelog:id487}}\begin{itemize}
 \item {} 
 Cal loc figures. {[}Neil Cook{]}
 
@@ -23969,7 +24052,7 @@ Updated shebang and \sphinxtitleref{\_\_main\_\_} exiting. {[}Neil Cook{]}
 
 
 \subsection{0.1.016 (2018-02-12)}
-\label{\detokenize{misc/changelog:id487}}\begin{itemize}
+\label{\detokenize{misc/changelog:id488}}\begin{itemize}
 \item {} 
 Rebuilt pdf. {[}Neil Cook{]}
 
@@ -24025,7 +24108,7 @@ Edited receipe. {[}Neil Cook{]}
 
 
 \subsection{0.1.015 (2018-02-09)}
-\label{\detokenize{misc/changelog:id488}}\begin{itemize}
+\label{\detokenize{misc/changelog:id489}}\begin{itemize}
 \item {} 
 Rebuilt pdfs. {[}Neil Cook{]}
 
@@ -24150,7 +24233,7 @@ Updated indentation of minipages. {[}Neil Cook{]}
 
 
 \subsection{0.1.014 (2018-02-07)}
-\label{\detokenize{misc/changelog:id489}}\begin{itemize}
+\label{\detokenize{misc/changelog:id490}}\begin{itemize}
 \item {} 
 First commit - move recipe to individual file. {[}Neil Cook{]}
 
@@ -24191,7 +24274,7 @@ Moved individual recipes to indivudal files. {[}Neil Cook{]}
 
 
 \subsection{0.1.013 (2018-02-06)}
-\label{\detokenize{misc/changelog:id490}}\begin{itemize}
+\label{\detokenize{misc/changelog:id491}}\begin{itemize}
 \item {} 
 First commit module description for thorca. {[}Neil Cook{]}
 
@@ -24226,7 +24309,7 @@ Changed wave to \sphinxtitleref{wave\_ll} in loc. {[}Neil Cook{]}
 
 
 \subsection{0.1.012 (2018-02-05)}
-\label{\detokenize{misc/changelog:id491}}\begin{itemize}
+\label{\detokenize{misc/changelog:id492}}\begin{itemize}
 \item {} 
 Added spirouRV and spirouTHORCA imports to init. {[}Neil Cook{]}
 
@@ -24331,7 +24414,7 @@ Refactor imageLocSuperimp \textendash{}\textgreater{} ImageLocSuperimp. {[}Neil 
 
 
 \subsection{0.1.011 (2018-02-02)}
-\label{\detokenize{misc/changelog:id492}}\begin{itemize}
+\label{\detokenize{misc/changelog:id493}}\begin{itemize}
 \item {} 
 First commit - module tex file. {[}Neil Cook{]}
 
@@ -24392,7 +24475,7 @@ Updated some constants descriptions. {[}Neil Cook{]}
 
 
 \subsection{0.1.010 (2018-02-01)}
-\label{\detokenize{misc/changelog:id493}}\begin{itemize}
+\label{\detokenize{misc/changelog:id494}}\begin{itemize}
 \item {} 
 Updated doc strings with parameter dictionary descriptions. {[}Neil
 Cook{]}
@@ -24438,7 +24521,7 @@ Update doc string (p and loc) {[}Neil Cook{]}
 
 
 \subsection{0.1.009 (2018-01-31)}
-\label{\detokenize{misc/changelog:id494}}\begin{itemize}
+\label{\detokenize{misc/changelog:id495}}\begin{itemize}
 \item {} 
 Updated doc strings. {[}Neil Cook{]}
 
@@ -24500,7 +24583,7 @@ Cosmetic change to comment. {[}Neil Cook{]}
 
 
 \subsection{0.1.008 (2018-01-30)}
-\label{\detokenize{misc/changelog:id495}}\begin{itemize}
+\label{\detokenize{misc/changelog:id496}}\begin{itemize}
 \item {} 
 Added spacing. {[}Neil Cook{]}
 
@@ -24564,7 +24647,7 @@ Added \sphinxtitleref{badpix\_norm\_percentile} constant constant. {[}Neil Cook{
 
 
 \subsection{0.1.007 (2018-01-29)}
-\label{\detokenize{misc/changelog:id496}}\begin{itemize}
+\label{\detokenize{misc/changelog:id497}}\begin{itemize}
 \item {} 
 Rebuild pdf. {[}Neil Cook{]}
 
@@ -24599,7 +24682,7 @@ Updated doc strings {[}unfinished{]} {[}Neil Cook{]}
 
 
 \subsection{0.1.006 (2018-01-26)}
-\label{\detokenize{misc/changelog:id497}}\begin{itemize}
+\label{\detokenize{misc/changelog:id498}}\begin{itemize}
 \item {} 
 Added test help file - for \sphinxtitleref{cal\_DARK\_spirou}. {[}Neil Cook{]}
 
@@ -24703,7 +24786,7 @@ Updated descriptions and unix/string time getting. {[}Neil Cook{]}
 
 
 \subsection{0.1.005 (2018-01-24)}
-\label{\detokenize{misc/changelog:id498}}\begin{itemize}
+\label{\detokenize{misc/changelog:id499}}\begin{itemize}
 \item {} 
 Update versions + date. {[}Neil Cook{]}
 
@@ -24818,7 +24901,7 @@ Fixed error with \sphinxtitleref{DRS\_NAME}, \sphinxtitleref{DRS\_VERSION}. {[}N
 
 
 \subsection{0.1.004 (2018-01-22)}
-\label{\detokenize{misc/changelog:id499}}\begin{itemize}
+\label{\detokenize{misc/changelog:id500}}\begin{itemize}
 \item {} 
 Added test data link. {[}Neil Cook{]}
 
@@ -25017,7 +25100,7 @@ merge
 
 
 \subsection{0.1.003 (2018-01-16)}
-\label{\detokenize{misc/changelog:id500}}\begin{itemize}
+\label{\detokenize{misc/changelog:id501}}\begin{itemize}
 \item {} 
 Update README.md. {[}Neil Cook{]}
 
@@ -25569,7 +25652,7 @@ Commit to Master
 
 
 \subsection{0.1.002 (2018-01-12)}
-\label{\detokenize{misc/changelog:id501}}\begin{itemize}
+\label{\detokenize{misc/changelog:id502}}\begin{itemize}
 \item {} 
 Updated progress. {[}Neil Cook{]}
 
@@ -25628,7 +25711,7 @@ Fixed header error. {[}Neil Cook{]}
 
 
 \subsection{0.1.001 (2018-01-11)}
-\label{\detokenize{misc/changelog:id502}}\begin{itemize}
+\label{\detokenize{misc/changelog:id503}}\begin{itemize}
 \item {} 
 Updated progress. {[}Neil Cook{]}
 
@@ -25700,7 +25783,7 @@ Added \sphinxtitleref{cal\_CCF} section. {[}Neil Cook{]}
 
 
 \subsection{0.1.000 (2018-01-10)}
-\label{\detokenize{misc/changelog:id503}}\begin{itemize}
+\label{\detokenize{misc/changelog:id504}}\begin{itemize}
 \item {} 
 Readded \sphinxtitleref{cal\_CCF} to unit test 2. {[}Neil Cook{]}
 
@@ -25844,7 +25927,7 @@ Removed \sphinxtitleref{ic\_debug} and replaced with \sphinxtitleref{drs\_debug}
 
 
 \subsection{0.0.048 (2018-01-09)}
-\label{\detokenize{misc/changelog:id504}}\begin{itemize}
+\label{\detokenize{misc/changelog:id505}}\begin{itemize}
 \item {} 
 Fixed import and removed \sphinxtitleref{cal\_CCF} (problem with code) from unit tests.
 {[}Neil Cook{]}
@@ -25928,7 +26011,7 @@ Added calibdb prefix (from update to V48) {[}Neil Cook{]}
 
 
 \subsection{0.0.046 (2018-01-08)}
-\label{\detokenize{misc/changelog:id505}}\begin{itemize}
+\label{\detokenize{misc/changelog:id506}}\begin{itemize}
 \item {} 
 Updated text for conversion from .txt to \sphinxtitleref{.py} config files. {[}Neil Cook{]}
 
@@ -26055,7 +26138,7 @@ Updated to version 48 (untested) {[}Neil Cook{]}
 
 
 \subsection{0.0.045 (2017-12-21)}
-\label{\detokenize{misc/changelog:id506}}\begin{itemize}
+\label{\detokenize{misc/changelog:id507}}\begin{itemize}
 \item {} 
 Added coravelation and sub functions, added ccf fit functions and misc
 functions. {[}Neil Cook{]}
@@ -26094,7 +26177,7 @@ What. {[}Neil Cook{]}
 
 
 \subsection{0.0.044 (2017-12-20)}
-\label{\detokenize{misc/changelog:id507}}\begin{itemize}
+\label{\detokenize{misc/changelog:id508}}\begin{itemize}
 \item {} 
 Temporarily put mask in bin folder (where does it go?) {[}Neil Cook{]}
 
@@ -26133,7 +26216,7 @@ Added data to loc. {[}Neil Cook{]}
 
 
 \subsection{0.0.043 (2017-12-19)}
-\label{\detokenize{misc/changelog:id508}}\begin{itemize}
+\label{\detokenize{misc/changelog:id509}}\begin{itemize}
 \item {} 
 Need to finish code. {[}Neil Cook{]}
 
@@ -26181,7 +26264,7 @@ Cosmetic changes to comments. {[}Neil Cook{]}
 
 
 \subsection{0.0.042 (2017-12-18)}
-\label{\detokenize{misc/changelog:id509}}\begin{itemize}
+\label{\detokenize{misc/changelog:id510}}\begin{itemize}
 \item {} 
 First commit (similar to \sphinxtitleref{cal\_drift\_e2ds)} \textendash{} currently unfinished.
 {[}Neil Cook{]}
@@ -26220,7 +26303,7 @@ Updated progress. {[}Neil Cook{]}
 
 
 \subsection{0.0.041 (2017-12-14)}
-\label{\detokenize{misc/changelog:id510}}\begin{itemize}
+\label{\detokenize{misc/changelog:id511}}\begin{itemize}
 \item {} 
 Rebuilt pdf. {[}Neil Cook{]}
 
@@ -26270,7 +26353,7 @@ Fixes to \sphinxtitleref{cal\_drift-peak} - now works in gaussfit and non-gaussf
 
 
 \subsection{0.0.040 (2017-12-13)}
-\label{\detokenize{misc/changelog:id511}}\begin{itemize}
+\label{\detokenize{misc/changelog:id512}}\begin{itemize}
 \item {} 
 Rebuild pdf. {[}Neil Cook{]}
 
@@ -26310,7 +26393,7 @@ Added many sections (code finished - untested) {[}Neil Cook{]}
 
 
 \subsection{0.0.039 (2017-12-12)}
-\label{\detokenize{misc/changelog:id512}}\begin{itemize}
+\label{\detokenize{misc/changelog:id513}}\begin{itemize}
 \item {} 
 Corrected \sphinxtitleref{cal\_drift\_e2ds} test (file was wrong) {[}Neil Cook{]}
 
@@ -26356,7 +26439,7 @@ Cosmetic changes. {[}Neil Cook{]}
 
 
 \subsection{0.0.038 (2017-12-11)}
-\label{\detokenize{misc/changelog:id513}}\begin{itemize}
+\label{\detokenize{misc/changelog:id514}}\begin{itemize}
 \item {} 
 Updated readme progress. {[}Neil Cook{]}
 
@@ -26407,7 +26490,7 @@ Checked against old versions and updated edit date. {[}Neil Cook{]}
 
 
 \subsection{0.0.037 (2017-12-08)}
-\label{\detokenize{misc/changelog:id514}}\begin{itemize}
+\label{\detokenize{misc/changelog:id515}}\begin{itemize}
 \item {} 
 Rebuild pdfs. {[}Neil Cook{]}
 
@@ -26511,7 +26594,7 @@ Returned locals. {[}Neil Cook{]}
 
 
 \subsection{0.0.036 (2017-12-07)}
-\label{\detokenize{misc/changelog:id515}}\begin{itemize}
+\label{\detokenize{misc/changelog:id516}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{get\_fiber\_type} function. {[}Neil Cook{]}
 
@@ -26591,7 +26674,7 @@ Fixed badpixelfits construction. {[}Neil Cook{]}
 
 
 \subsection{0.0.035 (2017-12-06)}
-\label{\detokenize{misc/changelog:id516}}\begin{itemize}
+\label{\detokenize{misc/changelog:id517}}\begin{itemize}
 \item {} 
 Moved \sphinxtitleref{unit\_Test1} to unit test module. {[}Neil Cook{]}
 
@@ -26688,7 +26771,7 @@ Added latex code example. {[}Neil Cook{]}
 
 
 \subsection{0.0.034 (2017-12-05)}
-\label{\detokenize{misc/changelog:id517}}\begin{itemize}
+\label{\detokenize{misc/changelog:id518}}\begin{itemize}
 \item {} 
 First commit of \sphinxtitleref{output\_keywords} chapter (filled and completed) {[}Neil
 Cook{]}
@@ -26751,7 +26834,7 @@ Removed sections added intro paragraph. {[}Neil Cook{]}
 
 
 \subsection{0.0.033 (2017-12-04)}
-\label{\detokenize{misc/changelog:id518}}\begin{itemize}
+\label{\detokenize{misc/changelog:id519}}\begin{itemize}
 \item {} 
 Image change. {[}Neil Cook{]}
 
@@ -26802,7 +26885,7 @@ Wrote section (from readme) {[}Neil Cook{]}
 
 
 \subsection{0.0.032 (2017-12-01)}
-\label{\detokenize{misc/changelog:id519}}\begin{itemize}
+\label{\detokenize{misc/changelog:id520}}\begin{itemize}
 \item {} 
 Rebuilt pdf. {[}Neil Cook{]}
 
@@ -26858,7 +26941,7 @@ Added source for \sphinxtitleref{fib\_type}. {[}Neil Cook{]}
 
 
 \subsection{0.0.031 (2017-11-30)}
-\label{\detokenize{misc/changelog:id520}}\begin{itemize}
+\label{\detokenize{misc/changelog:id521}}\begin{itemize}
 \item {} 
 Cosmetic change to spacing. {[}Neil Cook{]}
 
@@ -26919,7 +27002,7 @@ Removed \sphinxtitleref{drs\_name} and \sphinxtitleref{drs\_version} from config
 
 
 \subsection{0.0.030 (2017-11-29)}
-\label{\detokenize{misc/changelog:id521}}\begin{itemize}
+\label{\detokenize{misc/changelog:id522}}\begin{itemize}
 \item {} 
 Rebuilt pdf files. {[}Neil Cook{]}
 
@@ -27006,7 +27089,7 @@ Deleted and merged dev and user. {[}Neil Cook{]}
 
 
 \subsection{0.0.029 (2017-11-28)}
-\label{\detokenize{misc/changelog:id522}}\begin{itemize}
+\label{\detokenize{misc/changelog:id523}}\begin{itemize}
 \item {} 
 First commit of user version of \sphinxtitleref{data\_architecture} (not to be kept -
 use if statements?) {[}Neil Cook{]}
@@ -27069,7 +27152,7 @@ Renamed \sphinxtitleref{cal\_validate\_drs} to \sphinxtitleref{cal\_validate\_sp
 
 
 \subsection{0.0.028 (2017-11-27)}
-\label{\detokenize{misc/changelog:id523}}\begin{itemize}
+\label{\detokenize{misc/changelog:id524}}\begin{itemize}
 \item {} 
 Added latex gitignore. {[}Neil Cook{]}
 
@@ -27129,7 +27212,7 @@ Updated links in table of contents. {[}Neil Cook{]}
 
 
 \subsection{0.0.027 (2017-11-24)}
-\label{\detokenize{misc/changelog:id524}}\begin{itemize}
+\label{\detokenize{misc/changelog:id525}}\begin{itemize}
 \item {} 
 Updated section naming in readme. {[}Neil Cook{]}
 
@@ -27156,7 +27239,7 @@ Corrected unit test. {[}Neil Cook{]}
 
 
 \subsection{0.0.026 (2017-11-23)}
-\label{\detokenize{misc/changelog:id525}}\begin{itemize}
+\label{\detokenize{misc/changelog:id526}}\begin{itemize}
 \item {} 
 Made unit test compatible with python 2 (ordered dict) {[}Neil Cook{]}
 
@@ -27249,7 +27332,7 @@ Moved \sphinxtitleref{\_\_main\_\_} code to main function. {[}Neil Cook{]}
 
 
 \subsection{0.0.025 (2017-11-22)}
-\label{\detokenize{misc/changelog:id526}}\begin{itemize}
+\label{\detokenize{misc/changelog:id527}}\begin{itemize}
 \item {} 
 Cosmetic changes to layout. {[}Neil Cook{]}
 
@@ -27280,7 +27363,7 @@ Cook{]}
 
 
 \subsection{0.0.024 (2017-11-21)}
-\label{\detokenize{misc/changelog:id527}}\begin{itemize}
+\label{\detokenize{misc/changelog:id528}}\begin{itemize}
 \item {} 
 Modified readme with change in plot function. {[}Neil Cook{]}
 
@@ -27350,7 +27433,7 @@ Renamed ReadImage to ReadImageAndCombine for clarity. {[}Neil Cook{]}
 
 
 \subsection{0.0.023 (2017-11-20)}
-\label{\detokenize{misc/changelog:id528}}\begin{itemize}
+\label{\detokenize{misc/changelog:id529}}\begin{itemize}
 \item {} 
 Updated progress section. {[}Neil Cook{]}
 
@@ -27405,7 +27488,7 @@ added plot section, added saving e2ds to file. {[}Neil Cook{]}
 
 
 \subsection{0.0.021 (2017-11-17)}
-\label{\detokenize{misc/changelog:id529}}\begin{itemize}
+\label{\detokenize{misc/changelog:id530}}\begin{itemize}
 \item {} 
 Added p to spiouCDB.GetDatabase (for \sphinxtitleref{max\_time} constants) {[}Neil Cook{]}
 
@@ -27568,7 +27651,7 @@ section. {[}Neil Cook{]}
 
 
 \subsection{0.0.020 (2017-11-16)}
-\label{\detokenize{misc/changelog:id530}}\begin{itemize}
+\label{\detokenize{misc/changelog:id531}}\begin{itemize}
 \item {} 
 Add calibDB to p in startup if calibdb required (should be faster than
 reloading it each time) {[}Neil Cook{]}
@@ -27625,7 +27708,7 @@ Added dprtype find from header, added test code. {[}Neil Cook{]}
 
 
 \subsection{0.0.019 (2017-11-15)}
-\label{\detokenize{misc/changelog:id531}}\begin{itemize}
+\label{\detokenize{misc/changelog:id532}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{cal\_FF\_RAW} summary of changes section, updated progress. {[}Neil
 Cook{]}
@@ -27659,7 +27742,7 @@ Cook{]}
 
 
 \subsection{0.0.018 (2017-11-14)}
-\label{\detokenize{misc/changelog:id532}}\begin{itemize}
+\label{\detokenize{misc/changelog:id533}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{convert\_to\_adu} function, fixed \sphinxtitleref{get\_gain/get\_sigdet/get\_param}
 functions. {[}Neil Cook{]}
@@ -27703,7 +27786,7 @@ loop, added skip for \sphinxtitleref{max\_signal} QC. {[}Neil Cook{]}
 
 
 \subsection{0.0.017 (2017-11-13)}
-\label{\detokenize{misc/changelog:id533}}\begin{itemize}
+\label{\detokenize{misc/changelog:id534}}\begin{itemize}
 \item {} 
 First commit, added some well used constants (constants but need input
 and functions so not formed from basic string/int/float/list) {[}Neil
@@ -27810,7 +27893,7 @@ Added read tilt slit angle section. {[}Neil Cook{]}
 
 
 \subsection{0.0.016 (2017-11-10)}
-\label{\detokenize{misc/changelog:id534}}\begin{itemize}
+\label{\detokenize{misc/changelog:id535}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{fib\_type} to fiber types constants, added \sphinxtitleref{cal\_ff} params, added a
 qc param. {[}Neil Cook{]}
@@ -27849,7 +27932,7 @@ Chnaged ccdsigdet to sigdet, added test (no need to specific files)
 
 
 \subsection{0.0.015 (2017-11-09)}
-\label{\detokenize{misc/changelog:id535}}\begin{itemize}
+\label{\detokenize{misc/changelog:id536}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{cal\_slit} section. {[}Neil Cook{]}
 
@@ -27904,7 +27987,7 @@ Edited description of slit param. {[}Neil Cook{]}
 
 
 \subsection{0.0.014 (2017-11-08)}
-\label{\detokenize{misc/changelog:id536}}\begin{itemize}
+\label{\detokenize{misc/changelog:id537}}\begin{itemize}
 \item {} 
 Added doc string for extract and added ExtractABorder alias to init.
 {[}Neil Cook{]}
@@ -27958,7 +28041,7 @@ Changed plt.ion to sPlt controller function. {[}Neil Cook{]}
 
 
 \subsection{0.0.013 (2017-11-07)}
-\label{\detokenize{misc/changelog:id537}}\begin{itemize}
+\label{\detokenize{misc/changelog:id538}}\begin{itemize}
 \item {} 
 Added doc for \sphinxtitleref{get\_loc\_coefficients}, \sphinxtitleref{initial\_order\_fit},
 \sphinxtitleref{sigmaclip\_oder\_fit} and \sphinxtitleref{image\_localization\_superposition} added
@@ -28030,7 +28113,7 @@ Removed unused cocde from \sphinxtitleref{cal\_loc\_RAW}. {[}Neil Cook{]}
 
 
 \subsection{0.0.012 (2017-11-03)}
-\label{\detokenize{misc/changelog:id538}}\begin{itemize}
+\label{\detokenize{misc/changelog:id539}}\begin{itemize}
 \item {} 
 Updated comments in \sphinxtitleref{constants\_SPIROU}. {[}Neil Cook{]}
 
@@ -28044,7 +28127,7 @@ Changed splt to sPlt. {[}Neil Cook{]}
 
 
 \subsection{0.0.011 (2017-11-02)}
-\label{\detokenize{misc/changelog:id539}}\begin{itemize}
+\label{\detokenize{misc/changelog:id540}}\begin{itemize}
 \item {} 
 Added timer, moved plots to spirouPlots, moved functions to
 spirouLOCOR, updated AddNewKey \textendash{}\textgreater{} AddKey, added quality control
@@ -28095,7 +28178,7 @@ First commit - all plotting functions moved here. {[}Neil Cook{]}
 
 
 \subsection{0.0.010 (2017-11-01)}
-\label{\detokenize{misc/changelog:id540}}\begin{itemize}
+\label{\detokenize{misc/changelog:id541}}\begin{itemize}
 \item {} 
 \sphinxtitleref{Set\_source} for param dicts. {[}Neil Cook{]}
 
@@ -28132,7 +28215,7 @@ Cook{]}
 
 
 \subsection{0.0.009 (2017-10-31)}
-\label{\detokenize{misc/changelog:id541}}\begin{itemize}
+\label{\detokenize{misc/changelog:id542}}\begin{itemize}
 \item {} 
 Modified \sphinxtitleref{measure\_background\_and\_get\_central\_pixels} to accept and
 return loc made a copy of data2  (data2o) for localisation with 0 on
@@ -28199,7 +28282,7 @@ Added call to AddNewKey. {[}Neil Cook{]}
 
 
 \subsection{0.0.008 (2017-10-30)}
-\label{\detokenize{misc/changelog:id542}}\begin{itemize}
+\label{\detokenize{misc/changelog:id543}}\begin{itemize}
 \item {} 
 File migration and new imports. {[}Neil Cook{]}
 
@@ -28258,7 +28341,7 @@ Reordered files. {[}Neil Cook{]}
 
 
 \subsection{0.0.007 (2017-10-27)}
-\label{\detokenize{misc/changelog:id543}}\begin{itemize}
+\label{\detokenize{misc/changelog:id544}}\begin{itemize}
 \item {} 
 Reworked fit order into “initial order fit” and \sphinxtitleref{“sigmaclip\_order\_fit}”
 added and tested order fitting sections. {[}Neil Cook{]}
@@ -28283,7 +28366,7 @@ finding one for center + width of individual (subtle differences)
 
 
 \subsection{0.0.006 (2017-10-26)}
-\label{\detokenize{misc/changelog:id544}}\begin{itemize}
+\label{\detokenize{misc/changelog:id545}}\begin{itemize}
 \item {} 
 Revert “added example of BoxSmoothedImage with mode ‘convolve’ vs
 ‘manual’” This reverts commit f7637bf. {[}Neil Cook{]}
@@ -28334,7 +28417,7 @@ Added BoxSmoothedImage with mode ‘convolve’ vs ‘manual’ {[}Neil Cook{]}
 
 
 \subsection{0.0.005 (2017-10-25)}
-\label{\detokenize{misc/changelog:id545}}\begin{itemize}
+\label{\detokenize{misc/changelog:id546}}\begin{itemize}
 \item {} 
 Added \sphinxtitleref{locate\_central\_positions} function. {[}Neil Cook{]}
 
@@ -28406,7 +28489,7 @@ Updated comment with spelling correction. {[}Neil Cook{]}
 
 
 \subsection{0.0.004 (2017-10-24)}
-\label{\detokenize{misc/changelog:id546}}\begin{itemize}
+\label{\detokenize{misc/changelog:id547}}\begin{itemize}
 \item {} 
 Set out plan for code. {[}Neil Cook{]}
 
@@ -28421,7 +28504,7 @@ Cook{]}
 
 
 \subsection{0.0.003 (2017-10-16)}
-\label{\detokenize{misc/changelog:id547}}\begin{itemize}
+\label{\detokenize{misc/changelog:id548}}\begin{itemize}
 \item {} 
 Added nbframes as a parameter to get in \sphinxtitleref{run\_startup} function. {[}Neil
 Cook{]}
@@ -28469,7 +28552,7 @@ Updated the README with summary of changes to \sphinxtitleref{cal\_DARK\_spirou.
 
 
 \subsection{0.0.002 (2017-10-13)}
-\label{\detokenize{misc/changelog:id548}}\begin{itemize}
+\label{\detokenize{misc/changelog:id549}}\begin{itemize}
 \item {} 
 Added check for reduced directory (and make if needed) added check
 from calib directory (and make if needed) {[}Neil Cook{]}
@@ -28519,7 +28602,7 @@ section added identification of bad pixels section. {[}Neil Cook{]}
 
 
 \subsection{0.0.001 (2017-10-12)}
-\label{\detokenize{misc/changelog:id549}}\begin{itemize}
+\label{\detokenize{misc/changelog:id550}}\begin{itemize}
 \item {} 
 Added evaluate value function to try to interpret the value in a
 config file (i.e. set to float/int/bool before setting to a string)
