@@ -2,7 +2,7 @@
 # bash setup file
 
 # setup paths
-export PATH={ROOT_PATH}":"{BIN_PATH}":"{TOOL_PATH}":$PATH
+export PATH="{ROOT_PATH}":"{BIN_PATH}":"{TOOL_PATH}":$PATH
 
 # setup up python path
 export PYTHONPATH="{ROOT_PATH}":"{BIN_PATH}":"{TOOL_PATH}":$PYTHONPATH
