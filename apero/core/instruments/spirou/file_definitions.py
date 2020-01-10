@@ -679,6 +679,106 @@ calib_file.addset(out_thermal_e2ds_int)
 calib_file.addset(out_thermal_e2ds_tel)
 
 # -----------------------------------------------------------------------------
+# wave files (master)
+# -----------------------------------------------------------------------------
+# wave solution using hc only
+out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVE_HC',
+                         fibers=['AB', 'A', 'B', 'C'],
+                         filetype='.fits',
+                         intype=[out_ext_e2ds, out_ext_e2dsff],
+                         suffix='_wavem_hc',
+                         dbname='calibration', dbkey='WAVEM',
+                         outfunc=out.calib_file)
+
+# wave solution using hc + fp
+out_wavem_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
+                         fibers=['AB', 'A', 'B', 'C'],
+                         filetype='.fits',
+                         intype=[out_ext_e2ds, out_ext_e2dsff],
+                         suffix='_wavem_fp',
+                         dbname='calibration', dbkey='WAVEM',
+                         outfunc=out.calib_file)
+
+# hc initial linelist
+out_wavem_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
+                            fibers=['AB', 'A', 'B', 'C'],
+                            filetype='.dat',
+                            intype=[out_ext_e2ds, out_ext_e2dsff],
+                            suffix='_mlinelist',
+                            outfunc=out.calib_file)
+
+# hc resolution map
+out_wavem_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
+                            fibers=['AB', 'A', 'B', 'C'],
+                            filetype='.fits',
+                            intype=[out_ext_e2ds, out_ext_e2dsff],
+                            suffix='_wavemres',
+                            outfunc=out.calib_file)
+
+# fp global results table
+out_wavem_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
+                               fibers=['AB', 'A', 'B', 'C'],
+                               filetype='.tbl',
+                               intype=[out_ext_e2ds, out_ext_e2dsff],
+                               outfunc=out.set_file,
+                               filename='cal_wave_results')
+
+# fp line list table
+out_wavem_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.tbl',
+                              intype=[out_ext_e2ds, out_ext_e2dsff],
+                              suffix='_mhc_lines',
+                              outfunc=out.calib_file)
+
+# hc line file from master
+out_wave_hclist_master = drs_input('WAVE_HCLIST_MASTER',
+                                   KW_OUTPUT='WAVE_HCLIST_MASTER',
+                                   fibers=['AB', 'A', 'B', 'C'],
+                                   filetype='.fits',
+                                   intype=[out_ext_e2ds, out_ext_e2dsff],
+                                   suffix='_wavem_hclines',
+                                   dbname='calibration', dbkey='WAVEHCL',
+                                   datatype='table',
+                                   outfunc=out.calib_file)
+
+# fp line file from master
+out_wave_fplist_master = drs_input('WAVE_FPLIST_MASTER',
+                                   KW_OUTPUT='WAVE_FPLIST_MASTER',
+                                   fibers=['AB', 'A', 'B', 'C'],
+                                   filetype='.fits',
+                                   intype=[out_ext_e2ds, out_ext_e2dsff],
+                                   suffix='_wavem_fplines',
+                                   dbname='calibration', dbkey='WAVEFPL',
+                                   datatype='table',
+                                   outfunc=out.calib_file)
+
+# the default wave master
+out_wave_master = drs_finput('WAVEM_D', KW_OUTPUT='WAVEM_SOL',
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_wavem',
+                             dbname='calibration', dbkey='WAVEM_D',
+                             outfunc=out.calib_file)
+
+# add wave outputs to output fileset
+out_file.addset(out_wavem_hc)
+out_file.addset(out_wavem_fp)
+out_file.addset(out_wavem_hcline)
+out_file.addset(out_wavem_hcres)
+out_file.addset(out_wavem_res_table)
+out_file.addset(out_wavem_ll_table)
+out_file.addset(out_wave_hclist_master)
+out_file.addset(out_wave_fplist_master)
+out_file.addset(out_wave_master)
+calib_file.addset(out_wavem_hc)
+calib_file.addset(out_wavem_fp)
+calib_file.addset(out_wave_master)
+calib_file.addset(out_wave_hclist_master)
+calib_file.addset(out_wave_fplist_master)
+
+# -----------------------------------------------------------------------------
 # wave files
 # -----------------------------------------------------------------------------
 # wave solution using hc only
@@ -698,6 +798,16 @@ out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          suffix='_wave_fp',
                          dbname='calibration', dbkey='WAVE',
                          outfunc=out.calib_file)
+
+
+# wave solution using night modifications
+out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_FP',
+                            fibers=['AB', 'A', 'B', 'C'],
+                            filetype='.fits',
+                            intype=[out_ext_e2ds, out_ext_e2dsff],
+                            suffix='_wave_night',
+                            dbname='calibration', dbkey='WAVE',
+                            outfunc=out.calib_file)
 
 # hc initial linelist
 out_wave_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
@@ -731,48 +841,17 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               suffix='_hc_lines',
                               outfunc=out.calib_file)
 
-# hc line file from master
-out_wave_hclist_master = drs_input('WAVE_HCLIST_MASTER',
-                                   KW_OUTPUT='WAVE_HCLIST_MASTER',
-                                   fibers=['AB', 'A', 'B', 'C'],
-                                   filetype='.fits',
-                                   intype=[out_ext_e2ds, out_ext_e2dsff],
-                                   suffix='_wavem_hclines',
-                                   dbname='calibration', dbkey='WAVEHCL',
-                                   datatype='table',
-                                   outfunc=out.calib_file)
-
-# fp line file from master
-out_wave_fplist_master = drs_input('WAVE_FPLIST_MASTER',
-                                   KW_OUTPUT='WAVE_FPLIST_MASTER',
-                                   fibers=['AB', 'A', 'B', 'C'],
-                                   filetype='.fits',
-                                   intype=[out_ext_e2ds, out_ext_e2dsff],
-                                   suffix='_wavem_fplines',
-                                   dbname='calibration', dbkey='WAVEFPL',
-                                   datatype='table',
-                                   outfunc=out.calib_file)
-
-# wave master
-out_wave_master = drs_finput('WAVEM', KW_OUTPUT='WAVEM_SOL',
-                             fibers=['AB', 'A', 'B', 'C'],
-                             filetype='.fits',
-                             intype=[out_ext_e2ds, out_ext_e2dsff],
-                             suffix='_wavem',
-                             dbname='calibration', dbkey='WAVEM',
-                             outfunc=out.calib_file)
-
 # add wave outputs to output fileset
 out_file.addset(out_wave_hc)
 out_file.addset(out_wave_fp)
+out_file.addset(out_wave_night)
 out_file.addset(out_wave_hcline)
 out_file.addset(out_wave_hcres)
 out_file.addset(out_wave_res_table)
 out_file.addset(out_wave_ll_table)
-out_file.addset(out_wave_master)
 calib_file.addset(out_wave_hc)
 calib_file.addset(out_wave_fp)
-calib_file.addset(out_wave_master)
+calib_file.addset(out_wave_night)
 
 # -----------------------------------------------------------------------------
 # TODO: fill in definitions
