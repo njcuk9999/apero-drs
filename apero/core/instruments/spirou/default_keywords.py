@@ -693,523 +693,528 @@ KW_BERV_OBSTIME_METHOD.set(key='BERVOBSM',
 # Number of orders in wave image
 KW_WAVE_NBO = KW_WAVE_NBO.copy(__NAME__)
 KW_WAVE_NBO.set(key='WAVEORDN', comment='nb orders in total',
-                parent=None)
+                parent=None, group='wave')
 
 # fit degree for wave solution
 KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
 KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit',
-                parent=None)
+                parent=None, group='wave')
 
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used',
-                  parent=None)
+                  parent=None, group='wave')
 
 # the wave source of the wave file used
 KW_WAVESOURCE = KW_WAVESOURCE.copy(__NAME__)
 KW_WAVESOURCE.set(key='WAVESOUR', comment='Source of the wave solution used.',
-                  parent=None)
+                  parent=None, group='wave')
 
 # the wave coefficients
 KW_WAVECOEFFS = KW_WAVECOEFFS.copy(__NAME__)
 KW_WAVECOEFFS.set(key='WAVE{0:04d}', comment='Wavelength coefficients',
-                  parent=None)
+                  parent=None, group='wave')
 
 # the initial wave file used for wave solution
 KW_INIT_WAVE = KW_INIT_WAVE.copy(__NAME__)
 KW_INIT_WAVE.set(key='WAVEINIT', comment='Initial wavelength solution used',
-                 parent=None)
+                 parent=None, group='wave')
 
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used
 KW_WAVE_FITDEG = KW_WAVE_FITDEG.copy(__NAME__)
 KW_WAVE_FITDEG.set(key='WAVE_DEG', comment='fit degree used for wave sol',
-                   parent='WAVE_FIT_DEGREE')
+                   parent='WAVE_FIT_DEGREE', group='wave')
 
 # the mode used to calculate the hc wave solution
 KW_WAVE_MODE_HC = KW_WAVE_MODE_HC.copy(__NAME__)
 KW_WAVE_MODE_HC.set(key='WAVHCMOD', comment='mode used to calc hc wave sol',
-                    parent='WAVE_MODE_HC')
+                    parent='WAVE_MODE_HC', group='wave')
 
 # the mode used to calculate the fp wave solution
 KW_WAVE_MODE_FP = KW_WAVE_MODE_FP.copy(__NAME__)
 KW_WAVE_MODE_FP.set(key='WAVFPMOD', comment='mode used to calc fp wave sol',
-                    parent='WAVE_MODE_FP')
+                    parent='WAVE_MODE_FP', group='wave')
 
 # the echelle number of the first order used
 KW_WAVE_ECHELLE_START = KW_WAVE_ECHELLE_START.copy(__NAME__)
 KW_WAVE_ECHELLE_START.set(key='WAV_ECH0', comment='Echelle no. of first order',
-                          parent='WAVE_T_ORDER_START')
+                          parent='WAVE_T_ORDER_START', group='wave')
 
 # the width of the box for fitting hc lines used
 KW_WAVE_HCG_WSIZE = KW_WAVE_HCG_WSIZE.copy(__NAME__)
 KW_WAVE_HCG_WSIZE.set(key='WAVHGSIZ', comment='HC Gauss peak fit box width',
-                      parent='WAVE_HC_FITBOX_SIZE')
+                      parent='WAVE_HC_FITBOX_SIZE', group='wave')
 
 # the sigma above local rms for fitting hc lines used
 KW_WAVE_HCG_SIGPEAK = KW_WAVE_HCG_SIGPEAK.copy(__NAME__)
 KW_WAVE_HCG_SIGPEAK.set(key='WAVHGSPK',
                         comment='HC Gauss peak fit rms sig peak',
-                        parent='WAVE_HC_FITBOX_SIGMA')
+                        parent='WAVE_HC_FITBOX_SIGMA', group='wave')
 
 # the fit degree for the gaussian peak fitting used
 KW_WAVE_HCG_GFITMODE = KW_WAVE_HCG_GFITMODE.copy(__NAME__)
 KW_WAVE_HCG_GFITMODE.set(key='WAVHGGFM',
                          comment='HC Gauss peak fit, fit degree',
-                         parent='WAVE_HC_FITBOX_GFIT_DEG')
+                         parent='WAVE_HC_FITBOX_GFIT_DEG', group='wave')
 
 # the min rms for gaussian peak fitting used
 KW_WAVE_HCG_FB_RMSMIN = KW_WAVE_HCG_FB_RMSMIN.copy(__NAME__)
 KW_WAVE_HCG_FB_RMSMIN.set(key='WAVHGRMN',
                           comment='HC Gauss peak fit, min rms for peak',
-                          parent='WAVE_HC_FITBOX_RMS_DEVMIN')
+                          parent='WAVE_HC_FITBOX_RMS_DEVMIN', group='wave')
 
 # the max rms for gaussian peak fitting used
 KW_WAVE_HCG_FB_RMSMAX = KW_WAVE_HCG_FB_RMSMAX.copy(__NAME__)
 KW_WAVE_HCG_FB_RMSMAX.set(key='WAVHGRMX',
                           comment='HC Gauss peak fit, max rms for peak',
-                          parent='WAVE_HC_FITBOX_RMS_DEVMAX')
+                          parent='WAVE_HC_FITBOX_RMS_DEVMAX', group='wave')
 
 # the min e-width of the line for gaussian peak fitting used
 KW_WAVE_HCG_EWMIN = KW_WAVE_HCG_EWMIN.copy(__NAME__)
 KW_WAVE_HCG_EWMIN.set(key='WAVHGEW0', comment='HC Gauss peak fit, e-width min',
-                      parent='WAVE_HC_FITBOX_EWMIN')
+                      parent='WAVE_HC_FITBOX_EWMIN', group='wave')
 
 # the min e-width of the line for gaussian peak fitting used
 KW_WAVE_HCG_EWMAX = KW_WAVE_HCG_EWMAX.copy(__NAME__)
 KW_WAVE_HCG_EWMAX.set(key='WAVHGEW1', comment='HC Gauss peak fit, e-width max',
-                      parent='WAVE_HC_FITBOX_EWMAX')
+                      parent='WAVE_HC_FITBOX_EWMAX', group='wave')
 
 # the filename for the HC line list generated
 KW_WAVE_HCLL_FILE = KW_WAVE_HCLL_FILE.copy(__NAME__)
 KW_WAVE_HCLL_FILE.set(key='WAVEHCLL', comment='HC line list file generated',
-                      parent=None)
+                      parent=None, group='wave')
 
 # the number of bright lines to used in triplet fit
 KW_WAVE_TRP_NBRIGHT = KW_WAVE_TRP_NBRIGHT.copy(__NAME__)
 KW_WAVE_TRP_NBRIGHT.set(key='WAVTNBRI',
                         comment='Triplet fit - no. bright lines used',
-                        parent='WAVE_HC_NMAX_BRIGHT')
+                        parent='WAVE_HC_NMAX_BRIGHT', group='wave')
 
 # the number of iterations done in triplet fit
 KW_WAVE_TRP_NITER = KW_WAVE_TRP_NITER.copy(__NAME__)
 KW_WAVE_TRP_NITER.set(key='WAVTNITR',
                       comment='Triplet fit - no. iterations used',
-                      parent='WAVE_HC_NITER_FIT_TRIPLET')
+                      parent='WAVE_HC_NITER_FIT_TRIPLET', group='wave')
 
 # the max distance between catalog line and initial guess line in triplet fit
 KW_WAVE_TRP_CATGDIST = KW_WAVE_TRP_CATGDIST.copy(__NAME__)
 KW_WAVE_TRP_CATGDIST.set(key='WAVTCATD',
                          comment='Triplet fit - max dist btwn line cat & guess',
-                         parent='WAVE_HC_MAX_DV_CAT_GUESS')
+                         parent='WAVE_HC_MAX_DV_CAT_GUESS', group='wave')
 
 # the fit degree for triplet fit
 KW_WAVE_TRP_FITDEG = KW_WAVE_TRP_FITDEG.copy(__NAME__)
 KW_WAVE_TRP_FITDEG.set(key='WAVTFDEG', comment='Triplet fit - fit degree',
-                       parent='WAVE_HC_TFIT_DEG')
+                       parent='WAVE_HC_TFIT_DEG', group='wave')
 
 # the minimum number of lines required per order in triplet fit
 KW_WAVE_TRP_MIN_NLINES = KW_WAVE_TRP_MIN_NLINES.copy(__NAME__)
 KW_WAVE_TRP_MIN_NLINES.set(key='WAVTMINL',
                            comment='Triplet fit - min no. lines req. per order',
-                           parent='WAVE_HC_TFIT_MINNUM_LINES')
+                           parent='WAVE_HC_TFIT_MINNUM_LINES', group='wave')
 
 # the total number of lines required in triplet fit
 KW_WAVE_TRP_TOT_NLINES = KW_WAVE_TRP_TOT_NLINES.copy(__NAME__)
 KW_WAVE_TRP_TOT_NLINES.set(key='WAVTTOTL',
                            comment='Triplet fit - total no. lines required',
-                           parent='WAVE_HC_TFIT_MINTOT_LINES')
+                           parent='WAVE_HC_TFIT_MINTOT_LINES', group='wave')
 
 # the degree(s) of fit to ensure continuity in triplet fit
 KW_WAVE_TRP_ORDER_FITCONT = KW_WAVE_TRP_ORDER_FITCONT.copy(__NAME__)
 KW_WAVE_TRP_ORDER_FITCONT.set(key='WAVTO{0:03d}',
                               comment='Triplet fit - order continuity fit',
-                              parent='WAVE_HC_TFIT_ORDER_FIT_CONT')
+                              parent='WAVE_HC_TFIT_ORDER_FIT_CONT', group='wave')
 
 # the iteration number for sigma clip in triplet fit
 KW_WAVE_TRP_SCLIPNUM = KW_WAVE_TRP_SCLIPNUM.copy(__NAME__)
 KW_WAVE_TRP_SCLIPNUM.set(key='WAVT_SCN',
                          comment='Triplet fit - iter no. for sig clip',
-                         parent='WAVE_HC_TFIT_SIGCLIP_NUM')
+                         parent='WAVE_HC_TFIT_SIGCLIP_NUM', group='wave')
 
 # the sigma clip threshold in triplet fit
 KW_WAVE_TRP_SCLIPTHRES = KW_WAVE_TRP_SCLIPTHRES.copy(__NAME__)
 KW_WAVE_TRP_SCLIPTHRES.set(key='WAVT_SCT',
                            comment='Triplet fit - sig clip threshold',
-                           parent='WAVE_HC_TFIT_SIGCLIP_THRES')
+                           parent='WAVE_HC_TFIT_SIGCLIP_THRES', group='wave')
 
 # the distance away in dv to reject order triplet in triplet fit
 KW_WAVE_TRP_DVCUTORD = KW_WAVE_TRP_DVCUTORD.copy(__NAME__)
 KW_WAVE_TRP_DVCUTORD.set(key='WAVT_DVO',
                          comment='Triplet fit - dist in dv per order to reject',
-                         parent='WAVE_HC_TFIT_DVCUT_ORDER')
+                         parent='WAVE_HC_TFIT_DVCUT_ORDER', group='wave')
 
 # the distance away in dv to reject all triplet in triplet fit
 KW_WAVE_TRP_DVCUTALL = KW_WAVE_TRP_DVCUTALL.copy(__NAME__)
 KW_WAVE_TRP_DVCUTALL.set(key='WAVT_DVA',
                          comment='Triplet fit - dist in dv all to reject',
-                         parent='WAVE_HC_TFIT_DVCUT_ALL')
+                         parent='WAVE_HC_TFIT_DVCUT_ALL', group='wave')
 
 # the wave resolution map dimensions
 KW_WAVE_RES_MAPSIZE = KW_WAVE_RES_MAPSIZE.copy(__NAME__)
 KW_WAVE_RES_MAPSIZE.set(key='WAVRE{0:03d}',
                         comment='Wave res map - map dimensions',
-                        parent='WAVE_HC_RESMAP_SIZE')
+                        parent='WAVE_HC_RESMAP_SIZE', group='wave')
 
 # the width of the box for wave resolution map
 KW_WAVE_RES_WSIZE = KW_WAVE_RES_WSIZE.copy(__NAME__)
 KW_WAVE_RES_WSIZE.set(key='WAVRSIZE',
                       comment='Wave res map - width of box',
-                      parent='WAVE_HC_FITBOX_SIZE')
+                      parent='WAVE_HC_FITBOX_SIZE', group='wave')
 
 # the max deviation in rms allowed in wave resolution map
 KW_WAVE_RES_MAXDEVTHRES = KW_WAVE_RES_MAXDEVTHRES.copy(__NAME__)
 KW_WAVE_RES_MAXDEVTHRES.set(key='WAVRDEV',
                             comment='Wave res map - max dev in rms allowed',
-                            parent='WAVE_HC_RES_MAXDEV_THRES')
+                            parent='WAVE_HC_RES_MAXDEV_THRES', group='wave')
 
 # the littrow start order used for HC
 KW_WAVE_LIT_START_1 = KW_WAVE_LIT_START_1.copy(__NAME__)
 KW_WAVE_LIT_START_1.set(key='WAVL1_ST', comment='Littrow HC - start value',
                         parent=['WAVE_LITTROW_ORDER_INIT_1',
-                                'WAVE_LITTROW_ORDER_INIT_2'])
+                                'WAVE_LITTROW_ORDER_INIT_2'],
+                        group='wave')
 
 # the littrow end order used for HC
 KW_WAVE_LIT_END_1 = KW_WAVE_LIT_END_1.copy(__NAME__)
 KW_WAVE_LIT_END_1.set(key='WAVL1_EN', comment='Littrow HC - end value',
                       parent=['WAVE_LITTROW_ORDER_FINAL_1',
-                              'WAVE_LITTROW_ORDER_FINAL_2'])
+                              'WAVE_LITTROW_ORDER_FINAL_2'],
+                      group='wave')
 
 # the orders removed from the littrow test
 KW_WAVE_LIT_RORDERS = KW_WAVE_LIT_RORDERS.copy(__NAME__)
 KW_WAVE_LIT_RORDERS.set(key='WAVLR{0:03d}', comment='Littrow - removed orders',
-                        parent='WAVE_LITTROW_REMOVE_ORDERS')
+                        parent='WAVE_LITTROW_REMOVE_ORDERS', group='wave')
 
 # the littrow order initial value used for HC
 KW_WAVE_LIT_ORDER_INIT_1 = KW_WAVE_LIT_ORDER_INIT_1.copy(__NAME__)
 KW_WAVE_LIT_ORDER_INIT_1.set(key='WAVL1OIN',
                              comment='Littrow HC - order init value',
-                             parent='WAVE_LITTROW_ORDER_INIT_1')
+                             parent='WAVE_LITTROW_ORDER_INIT_1', group='wave')
 
 # the littrow order start value used for HC
 KW_WAVE_LIT_ORDER_START_1 = KW_WAVE_LIT_ORDER_START_1.copy(__NAME__)
 KW_WAVE_LIT_ORDER_START_1.set(key='WAVL1OST',
                               comment='Littrow HC - order start value',
-                              parent='WAVE_N_ORD_START')
+                              parent='WAVE_N_ORD_START', group='wave')
 
 # the littrow order end value used for HC
 KW_WAVE_LIT_ORDER_END_1 = KW_WAVE_LIT_ORDER_END_1.copy(__NAME__)
 KW_WAVE_LIT_ORDER_END_1.set(key='WAVL1OEN',
                             comment='Littrow HC - order end value',
-                            parent='WAVE_N_ORD_FINAL')
+                            parent='WAVE_N_ORD_FINAL', group='wave')
 
 # the littrow x cut step value used for HC
 KW_WAVE_LITT_XCUTSTEP_1 = KW_WAVE_LITT_XCUTSTEP_1.copy(__NAME__)
 KW_WAVE_LITT_XCUTSTEP_1.set(key='WAVL1XCT',
                             comment='Littrow HC - x cut step value',
-                            parent='WAVE_LITTROW_CUT_STEP_1')
+                            parent='WAVE_LITTROW_CUT_STEP_1', group='wave')
 
 # the littrow fit degree value used for HC
 KW_WAVE_LITT_FITDEG_1 = KW_WAVE_LITT_FITDEG_1.copy(__NAME__)
 KW_WAVE_LITT_FITDEG_1.set(key='WAVL1FDG',
                           comment='Littrow HC - littrow fit degree',
-                          parent='WAVE_LITTROW_FIG_DEG_1')
+                          parent='WAVE_LITTROW_FIG_DEG_1', group='wave')
 
 # the littrow extrapolation fit degree value used for HC
 KW_WAVE_LITT_EXT_FITDEG_1 = KW_WAVE_LITT_EXT_FITDEG_1.copy(__NAME__)
 KW_WAVE_LITT_EXT_FITDEG_1.set(key='WAVL1EDG',
                               comment='Littrow HC - extrapolation fit degree',
-                              parent='WAVE_LITTROW_EXT_ORDER_FIT_DEG')
+                              parent='WAVE_LITTROW_EXT_ORDER_FIT_DEG',
+                              group='wave')
 
 # the littrow extrapolation start order value used for HC
 KW_WAVE_LITT_EXT_ORD_START_1 = KW_WAVE_LITT_EXT_ORD_START_1.copy(__NAME__)
 KW_WAVE_LITT_EXT_ORD_START_1.set(key='WAVL1EST',
                                  comment='Littrow HC - extrap start order',
-                                 parent='WAVE_LITTROW_ORDER_INIT_1')
+                                 parent='WAVE_LITTROW_ORDER_INIT_1',
+                                 group='wave')
 
 # the first order used for FP wave sol improvement
 KW_WFP_ORD_START = KW_WFP_ORD_START.copy(__NAME__)
 KW_WFP_ORD_START.set(key='WFP_ORD0',
                      comment='First order used for FP wave sol.',
-                     parent='WAVE_N_ORD_START')
+                     parent='WAVE_N_ORD_START', group='wave')
 
 # the last order used for FP wave sol improvement
 KW_WFP_ORD_FINAL = KW_WFP_ORD_FINAL.copy(__NAME__)
 KW_WFP_ORD_FINAL.set(key='WFP_ORD1',
                      comment='Last order used for FP wave sol.',
-                     parent='WAVE_N_ORD_FINAL')
+                     parent='WAVE_N_ORD_FINAL', group='wave')
 
 # the blaze threshold used for FP wave sol improvement
 KW_WFP_BLZ_THRES = KW_WFP_BLZ_THRES.copy(__NAME__)
 KW_WFP_BLZ_THRES.set(key='WFPBLZTH',
                      comment='Blaze threshold used for FP wave sol.',
-                     parent='WAVE_FP_BLAZE_THRES')
+                     parent='WAVE_FP_BLAZE_THRES', group='wave')
 
 # the minimum fp peak pixel sep used for FP wave sol improvement
 KW_WFP_XDIFF_MIN = KW_WFP_XDIFF_MIN.copy(__NAME__)
 KW_WFP_XDIFF_MIN.set(key='WFPXDIF0',
                      comment='Min fp peak pixel sep for FP wave sol.',
-                     parent='WAVE_FP_XDIF_MIN')
+                     parent='WAVE_FP_XDIF_MIN', group='wave')
 
 # the maximum fp peak pixel sep used for FP wave sol improvement
 KW_WFP_XDIFF_MAX = KW_WFP_XDIFF_MAX.copy(__NAME__)
 KW_WFP_XDIFF_MAX.set(key='WFPXDIF1',
                      comment='Max fp peak pixel sep for FP wave sol.',
-                     parent='WAVE_FP_XDIF_MAX')
+                     parent='WAVE_FP_XDIF_MAX', group='wave')
 
 # the initial value of the FP effective cavity width used
 KW_WFP_DOPD0 = KW_WFP_DOPD0.copy(__NAME__)
 KW_WFP_DOPD0.set(key='WFPDOPD0',
                  comment='initial value of Fp effective cavity width',
-                 parent='WAVE_FP_DOPD0')
+                 parent='WAVE_FP_DOPD0', group='wave')
 
 # the  maximum fraction wavelength offset btwn xmatch fp peaks used
 KW_WFP_LL_OFFSET = KW_WFP_LL_OFFSET.copy(__NAME__)
 KW_WFP_LL_OFFSET.set(key='WFPLLOFF',
                      comment='max frac. wavelength offset btwn fp peaks',
-                     parent='WAVE_FP_LL_OFFSET')
+                     parent='WAVE_FP_LL_OFFSET', group='wave')
 
 # the max dv to keep hc lines used
 KW_WFP_DVMAX = KW_WFP_DVMAX.copy(__NAME__)
 KW_WFP_DVMAX.set(key='WFPDVMAX',
                  comment='max dv to kee[ hc lines for fp wave sol.',
-                 parent='WAVE_FP_DV_MAX')
+                 parent='WAVE_FP_DV_MAX', group='wave')
 
 # the used polynomial fit degree (to fit wave solution)
 KW_WFP_LLFITDEG = KW_WFP_LLFITDEG.copy(__NAME__)
 KW_WFP_LLFITDEG.set(key='WFPLLDEG',
                     comment='Used poly fit degree for fp wave sol.',
-                    parent='WAVE_FP_LL_DEGR_FIT')
+                    parent='WAVE_FP_LL_DEGR_FIT', group='wave')
 
 # whether the cavity file was updated
 KW_WFP_UPDATECAV = KW_WFP_UPDATECAV.copy(__NAME__)
 KW_WFP_UPDATECAV.set(key='WFPUPCAV',
                      comment='Whether wave sol. was used to update cav file',
-                     parent='WAVE_FP_UPDATE_CAVITY')
+                     parent='WAVE_FP_UPDATE_CAVITY', group='wave')
 
 # the mode used to fit the FP cavity
 KW_WFP_FPCAV_MODE = KW_WFP_FPCAV_MODE.copy(__NAME__)
 KW_WFP_FPCAV_MODE.set(key='WFPCAVMO',
                       comment='The mode used to fit the FP cavity',
-                      parent='WAVE_FP_CAVFIT_MODE')
+                      parent='WAVE_FP_CAVFIT_MODE', group='wave')
 
 # the mode used to fit the wavelength
 KW_WFP_LLFIT_MODE = KW_WFP_LLFIT_MODE.copy(__NAME__)
 KW_WFP_LLFIT_MODE.set(key='WFPLLFMO',
                       comment='The mode used to fit the wavelength sol.',
-                      parent='WAVE_FP_LLFIT_MODE')
+                      parent='WAVE_FP_LLFIT_MODE', group='wave')
 
 # the minimum instrumental error used
 KW_WFP_ERRX_MIN = KW_WFP_ERRX_MIN.copy(__NAME__)
 KW_WFP_ERRX_MIN.set(key='WFPERRXM',
                     comment='The minimum instrumental error used for wave sol.',
-                    parent='WAVE_FP_ERRX_MIN')
+                    parent='WAVE_FP_ERRX_MIN', group='wave')
 
 # the max rms for the wave sol sig clip
 KW_WFP_MAXLL_FIT_RMS = KW_WFP_MAXLL_FIT_RMS.copy(__NAME__)
 KW_WFP_MAXLL_FIT_RMS.set(key='WFPMAXLL',
                          comment='The max rms for the FP wave sol sig cut',
-                         parent='WAVE_FP_MAX_LLFIT_RMS')
+                         parent='WAVE_FP_MAX_LLFIT_RMS', group='wave')
 
 # the echelle number used for the first order
 KW_WFP_T_ORD_START = KW_WFP_T_ORD_START.copy(__NAME__)
 KW_WFP_T_ORD_START.set(key='WFPTORD',
                        comment='The echelle number of order 0 (fp wave sol.)',
-                       parent='WAVE_T_ORDER_START')
+                       parent='WAVE_T_ORDER_START', group='wave')
 
 # the weight below which fp lines are rejected
 KW_WFP_WEI_THRES = KW_WFP_WEI_THRES.copy(__NAME__)
 KW_WFP_WEI_THRES.set(key='WFPWTHRE',
                      comment='The weight below which FP lines are rejected',
-                     parent='WAVE_FP_WEIGHT_THRES')
+                     parent='WAVE_FP_WEIGHT_THRES', group='wave')
 
 # the polynomial degree fit order used for fitting the fp cavity
 KW_WFP_CAVFIT_DEG = KW_WFP_CAVFIT_DEG.copy(__NAME__)
 KW_WFP_CAVFIT_DEG.set(key='WFPCVFIT',
                       comment='The fit degree used for fitting the fp cavity',
-                      parent='WAVE_FP_CAVFIT_DEG')
+                      parent='WAVE_FP_CAVFIT_DEG', group='wave')
 
 # the largest jump in fp that was allowed
 KW_WFP_LARGE_JUMP = KW_WFP_LARGE_JUMP.copy(__NAME__)
 KW_WFP_LARGE_JUMP.set(key='WFPLJUMP',
                       comment='The largest jump in fp that is allowed',
-                      parent='WAVE_FP_LARGE_JUMP')
+                      parent='WAVE_FP_LARGE_JUMP', group='wave')
 
 # the index to start crossmatching fps at
 KW_WFP_CM_INDX = KW_WFP_CM_INDX.copy(__NAME__)
 KW_WFP_CM_INDX.set(key='WFPCMIND',
                    comment='The index to start crossmatch at',
-                   parent='WAVE_FP_CM_IND')
+                   parent='WAVE_FP_CM_IND', group='wave')
 
 # border size allowed to fit fps used
 KW_WFP_BORDER = KW_WFP_BORDER.copy(__NAME__)
 KW_WFP_BORDER.set(key='WFPBORDR',
                   comment='Allowed border size for fittin FPs',
-                  parent='WAVE_FP_BORDER_SIZE')
+                  parent='WAVE_FP_BORDER_SIZE', group='wave')
 
 # the box size used to fit fps (half-size)
 KW_WFP_BSIZE = KW_WFP_BSIZE.copy(__NAME__)
 KW_WFP_BSIZE.set(key='WFPBSIZE', comment='half box size used to fit FPs',
-                 parent='WAVE_FP_FPBOX_SIZE')
+                 parent='WAVE_FP_FPBOX_SIZE', group='wave')
 
 # the sigma above median a peak must have to be a valid fp peak used
 KW_WFP_SIGLIM = KW_WFP_SIGLIM.copy(__NAME__)
 KW_WFP_SIGLIM.set(key='WFPSIGLM',
                   comment='sigma above median for FP peak to be valid',
-                  parent='WAVE_FP_PEAK_SIG_LIM')
+                  parent='WAVE_FP_PEAK_SIG_LIM', group='wave')
 
 # the lamp value that was used
 KW_WFP_LAMP = KW_WFP_LAMP.copy(__NAME__)
 KW_WFP_LAMP.set(key='WFPLAMP', comment='Lamp value used for FP wave sol.',
-                parent=None)
+                parent=None, group='wave')
 
 # the minimum spacing between peaks used
 KW_WFP_IPEAK_SPACE = KW_WFP_IPEAK_SPACE.copy(__NAME__)
 KW_WFP_IPEAK_SPACE.set(key='WFPIPKSP',
                        comment='Min spacing between FP peaks used.',
-                       parent='WAVE_FP_IPEAK_SPACING')
+                       parent='WAVE_FP_IPEAK_SPACING', group='wave')
 
 # the expected width of the FP peaks used
 KW_WFP_EXPWIDTH = KW_WFP_EXPWIDTH.copy(__NAME__)
 KW_WFP_EXPWIDTH.set(key='WFPEXPWD', comment='expected width of FP peaks',
-                    parent='WAVE_FP_EXP_WIDTH')
+                    parent='WAVE_FP_EXP_WIDTH', group='wave')
 
 # the normalised cut width for large peaks used
 KW_WFP_CUTWIDTH = KW_WFP_CUTWIDTH.copy(__NAME__)
 KW_WFP_CUTWIDTH.set(key='WFPCUTWD',
                     comment='Normalised cut width used for large FP peaks',
-                    parent='WAVE_FP_NORM_WIDTH_CUT')
+                    parent='WAVE_FP_NORM_WIDTH_CUT', group='wave')
 
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = KW_WFP_FILE.copy(__NAME__)
 KW_WFP_FILE.set(key='WFP_FILE', comment='WFP source file',
-                parent=None)
+                parent=None, group='wave')
 
 # drift of the FP file used for the wavelength solution
 KW_WFP_DRIFT = KW_WFP_DRIFT.copy(__NAME__)
 KW_WFP_DRIFT.set(key='WFPDRIFT',
                  comment='Wavelength sol absolute CCF FP Drift [km/s]',
-                 parent=None)
+                 parent=None, group='wave')
 
 # FWHM of the wave FP file CCF
 KW_WFP_FWHM = KW_WFP_FWHM.copy(__NAME__)
 KW_WFP_FWHM.set(key='WFPFWHM', comment='FWHM of wave sol FP CCF [km/s]',
-                parent=None)
+                parent=None, group='wave')
 
 # Contrast of the wave FP file CCF
 KW_WFP_CONTRAST = KW_WFP_CONTRAST.copy(__NAME__)
 KW_WFP_CONTRAST.set(key='WFPCONT', comment='wave sol FP Contrast of CCF (%)',
-                    parent=None)
+                    parent=None, group='wave')
 
 # Mask for the wave FP file CCF
 KW_WFP_MASK = KW_WFP_MASK.copy(__NAME__)
 KW_WFP_MASK.set(key='WFPMASK', comment='wave sol FP Mask filename',
-                parent='WAVE_CCF_MASK')
+                parent='WAVE_CCF_MASK', group='wave')
 
 # Number of lines for the wave FP file CCF
 KW_WFP_LINES = KW_WFP_LINES.copy(__NAME__)
 KW_WFP_LINES.set(key='WFPLINE', comment='wave sol FP nbr of lines used',
-                 parent=None)
+                 parent=None, group='wave')
 
 # Target RV for the wave FP file CCF
 KW_WFP_TARG_RV = KW_WFP_TARG_RV.copy(__NAME__)
 KW_WFP_TARG_RV.set(key='WFPTRV', comment='wave sol FP target RV [km/s]',
-                   parent='WAVE_CCF_TARGET_RV')
+                   parent='WAVE_CCF_TARGET_RV', group='wave')
 
 # Width for the wave FP file CCF
 KW_WFP_WIDTH = KW_WFP_WIDTH.copy(__NAME__)
 KW_WFP_WIDTH.set(key='WFPWIDTH', comment='wave sol FP CCF width [km/s]',
-                 parent='WAVE_CCF_WIDTH')
+                 parent='WAVE_CCF_WIDTH', group='wave')
 
 # Step for the wave FP file CCF
 KW_WFP_STEP = KW_WFP_STEP.copy(__NAME__)
 KW_WFP_STEP.set(key='WFPSTEP', comment='wave sol FP CCF step [km/s]',
-                parent='WAVE_CCF_STEP')
+                parent='WAVE_CCF_STEP', group='wave')
 
 # The sigdet used for FP file CCF
 KW_WFP_SIGDET = KW_WFP_SIGDET.copy(__NAME__)
 KW_WFP_SIGDET.set(key='WFPCSDET', comment='wave sol FP CCF sigdet used',
-                  parent='WAVE_CCF_NOISE_SIGDET')
+                  parent='WAVE_CCF_NOISE_SIGDET', group='wave')
 
 # The boxsize used for FP file CCF
 KW_WFP_BOXSIZE = KW_WFP_BOXSIZE.copy(__NAME__)
 KW_WFP_BOXSIZE.set(key='WFPCBSZ', comment='wave sol FP CCF boxsize used',
-                   parent='WAVE_CCF_NOISE_BOXSIZE')
+                   parent='WAVE_CCF_NOISE_BOXSIZE', group='wave')
 
 # The max flux used for the FP file CCF
 KW_WFP_MAXFLUX = KW_WFP_MAXFLUX.copy(__NAME__)
 KW_WFP_MAXFLUX.set(key='WFPCMFLX', comment='wave sol FP CCF max flux used',
-                   parent='CCF_N_ORD_MAX')
+                   parent='CCF_N_ORD_MAX', group='wave')
 
 # The det noise used for the FP file CCF
 KW_WFP_DETNOISE = KW_WFP_DETNOISE.copy(__NAME__)
 KW_WFP_DETNOISE.set(key='WFPCDETN', comment='wave sol FP CCF det noise used',
-                    parent='WAVE_CCF_DETNOISE')
+                    parent='WAVE_CCF_DETNOISE', group='wave')
 
 # the highest order used for the FP file CCF
 KW_WFP_NMAX = KW_WFP_NMAX.copy(__NAME__)
-KW_WFP_NMAX.set(key='WFPCNMAX', comment='wave sol FP CCF highest order used')
+KW_WFP_NMAX.set(key='WFPCNMAX', comment='wave sol FP CCF highest order used',
+                parent='WAVE_CCF_N_ORD_MAX', group='wave')
 
 # The weight of the CCF mask (if 1 force all weights equal) used for FP CCF
 KW_WFP_MASKMIN = KW_WFP_MASKMIN.copy(__NAME__)
 KW_WFP_MASKMIN.set(key='WFPCMMIN', comment='wave sol FP CCF mask weight used',
-                   parent='WAVE_CCF_MASK_MIN_WEIGHT')
+                   parent='WAVE_CCF_MASK_MIN_WEIGHT', group='wave')
 
 # The width of the CCF mask template line (if 0 use natural) used for FP CCF
 KW_WFP_MASKWID = KW_WFP_MASKWID.copy(__NAME__)
 KW_WFP_MASKWID.set(key='WFPCMWID', comment='wave sol FP CCF mask width used',
-                   parent='WAVE_CCF_MASK_WIDTH')
+                   parent='WAVE_CCF_MASK_WIDTH', group='wave')
 
 # The units of the input CCF mask (converted to nm in code)
 KW_WFP_MASKUNITS = KW_WFP_MASKUNITS.copy(__NAME__)
 KW_WFP_MASKUNITS.set(key='WFPCMUNT', comment='wave sol FP CCF mask units used',
-                     parent='WAVE_CCF_MASK_UNITS')
+                     parent='WAVE_CCF_MASK_UNITS', group='wave')
 
 # high-order wavelength solution correction used in wave night
 KW_WNT_HIGHF_CD = KW_WNT_HIGHF_CD.copy(__NAME__)
 KW_WNT_HIGHF_CD.set(key='WNTCRDEG', comment='wave night high-order corr used',
-                    parent='WAVE_NIGHT_HIGHF_CORR_DEG')
+                    parent='WAVE_NIGHT_HIGHF_CORR_DEG', group='wave')
 
 # number of iterations for convergence used in wave night
 KW_WNT_NITER = KW_WNT_NITER.copy(__NAME__)
 KW_WNT_NITER.set(key='WNTNITER', comment='wave night n iterations used',
-                 parent='WAVE_NIGHT_NITERATIONS')
+                 parent='WAVE_NIGHT_NITERATIONS', group='wave')
 
 # starting point for the cavity corrections used in wave night
 KW_WNT_DCAVITY = KW_WNT_DCAVITY.copy(__NAME__)
 KW_WNT_DCAVITY.set(key='WNTDCVTY',
                    comment='wave night starting point for cavity corr used',
-                   parent='WAVE_NIGHT_DCAVITY')
+                   parent='WAVE_NIGHT_DCAVITY', group='wave')
 
 # min SNR for incluing in the model used in wave night
 KW_WNT_MINSNR = KW_WNT_MINSNR.copy(__NAME__)
 KW_WNT_MINSNR.set(key='WNTMNSNR',
                   comment='wave night min SNR for including in model used',
-                  parent='WAVE_NIGHT_NSIG_MIN')
+                  parent='WAVE_NIGHT_NSIG_MIN', group='wave')
 
 # red cut off for fit constaint [nm] used in wave night
 KW_WNT_REDCUT = KW_WNT_REDCUT.copy(__NAME__)
 KW_WNT_REDCUT.set(key='WNTRDCUT', comment='wave night red cut off [nm] used',
-                  parent='WAVE_NIGHT_REDEND_CUTOFF')
+                  parent='WAVE_NIGHT_REDEND_CUTOFF', group='wave')
 
 # size [nm] of the median bin of residuals for higher-order correction used
 #    in wave night
 KW_WNT_DWAVE_BIN = KW_WNT_DWAVE_BIN.copy(__NAME__)
 KW_WNT_DWAVE_BIN.set(key='WNTDWAVEB',
                      comment='wave night med bin of res for high ord corr used',
-                     parent='WAVE_NIGHT_DWAVE_BIN')
+                     parent='WAVE_NIGHT_DWAVE_BIN', group='wave')
 
 # min number of lines to be included in a median bin for high-order
 # correction used in wave night
 KW_WNT_NMIN_LINES = KW_WNT_NMIN_LINES.copy(__NAME__)
 KW_WNT_NMIN_LINES.set(key='WNTNMINL',
                       comment='wave night min nlines for medbin highord used',
-                      parent='WAVE_NIGHT_NMIN_LINES')
+                      parent='WAVE_NIGHT_NMIN_LINES', group='wave')
 
 # sigma clipping for the fit used in wave night
 KW_WNT_NSIG_FIT = KW_WNT_NSIG_FIT.copy(__NAME__)
 KW_WNT_NSIG_FIT.set(key='WNTNSIGF', comment='wave night sig clip fit cut used',
-                    parent='WAVE_NIGHT_NSIG_FIT_CUT')
+                    parent='WAVE_NIGHT_NSIG_FIT_CUT', group='wave')
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
