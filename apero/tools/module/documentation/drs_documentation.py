@@ -160,6 +160,9 @@ def upload(params):
     package = params['DRS_PACKAGE']
     # get paths
     out_dir = constants.get_relative_folder(package, OUT_DIR)
+    # make sure we copy contents not directory
+    if not out_dir.endswith(os.sep):
+        out_dir += os.sep
     # get rsync dict
     rdict = dict()
     rdict['SSH'] = SSH_OPTIONS
